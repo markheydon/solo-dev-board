@@ -2,7 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Domain\SoloDevBoard.Domain\SoloDevBoard.Domain.csproj" />
-    <ProjectReference Include="..\..\Infrastructure\SoloDevBoard.Infrastructure\SoloDevBoard.Infrastructure.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

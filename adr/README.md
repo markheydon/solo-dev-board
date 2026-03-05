@@ -23,10 +23,11 @@ Each ADR follows this format:
 | ADR | Title | Status |
 |-----|-------|--------|
 | [ADR-0001](0001-blazor-server.md) | Use Blazor Server for the Front-End | Accepted |
-| [ADR-0002](0002-testing-framework.md) | Use xUnit and NSubstitute for Testing | Accepted |
+| [ADR-0002](0002-testing-framework.md) | Use xUnit and NSubstitute for Testing | Superseded by ADR-0006 |
 | [ADR-0003](0003-bicep-infrastructure.md) | Use Bicep for Azure Infrastructure as Code | Accepted |
 | [ADR-0004](0004-layered-architecture.md) | Use Layered / Clean Architecture | Accepted |
 | [ADR-0005](0005-github-api-strategy.md) | GitHub API Strategy — REST + GraphQL with PAT and GitHub App Authentication | Accepted |
+| [ADR-0006](0006-moq-mocking-library.md) | Switch Mocking Library from NSubstitute to Moq | Accepted |
 
 ## Adding a New ADR
 

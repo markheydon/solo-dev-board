@@ -23,10 +23,10 @@ jobs:
           dotnet-version: "10.x"
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore SoloDevBoard.slnx
 
       - name: Build solution
-        run: dotnet build --no-restore
+        run: dotnet build SoloDevBoard.slnx --no-restore
 
       - name: Run tests
-        run: dotnet test --no-build --verbosity normal
+        run: dotnet test SoloDevBoard.slnx --no-build --verbosity normal

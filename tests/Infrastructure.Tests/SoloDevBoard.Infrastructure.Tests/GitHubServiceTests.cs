@@ -1,17 +1,16 @@
-using NSubstitute;
+using Moq;
 using SoloDevBoard.Domain.Entities;
-using SoloDevBoard.Infrastructure;
 
 namespace SoloDevBoard.Infrastructure.Tests;
 
 public sealed class GitHubServiceTests
 {
-    private readonly IHttpClientFactory _httpClientFactory = Substitute.For<IHttpClientFactory>();
+    private readonly Mock<IHttpClientFactory> _httpClientFactoryMock = new();
     private readonly GitHubService _sut;
 
     public GitHubServiceTests()
     {
-        _sut = new GitHubService(_httpClientFactory);
+        _sut = new GitHubService(_httpClientFactoryMock.Object);
     }
 
     [Fact]

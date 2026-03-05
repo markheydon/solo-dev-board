@@ -36,13 +36,13 @@ jobs:
           dotnet-version: "10.x"
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore src/App/SoloDevBoard.App/SoloDevBoard.App.csproj
 
       - name: Build in Release configuration
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build src/App/SoloDevBoard.App/SoloDevBoard.App.csproj --configuration Release --no-restore
 
       - name: Publish application
-        run: dotnet publish --configuration Release --no-build --output ./publish
+        run: dotnet publish src/App/SoloDevBoard.App/SoloDevBoard.App.csproj --configuration Release --no-build --output ./publish
 
       # Authenticate with Azure using OIDC (no long-lived secrets required)
       - name: Log in to Azure

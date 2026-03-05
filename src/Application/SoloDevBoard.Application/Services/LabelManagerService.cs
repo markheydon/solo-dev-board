@@ -1,5 +1,4 @@
 using SoloDevBoard.Domain.Entities;
-using SoloDevBoard.Infrastructure;
 
 namespace SoloDevBoard.Application.Services;
 

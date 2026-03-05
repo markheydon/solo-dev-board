@@ -51,7 +51,7 @@ git clone https://github.com/your-username/solo-dev-board.git
 cd solo-dev-board
 
 # Restore dependencies
-dotnet restore
+dotnet restore SoloDevBoard.slnx
 
 # Set your GitHub token using .NET User Secrets
 dotnet user-secrets set "GitHub:Token" "<your-pat>" --project src/App/SoloDevBoard.App

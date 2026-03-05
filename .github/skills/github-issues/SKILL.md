@@ -26,7 +26,7 @@ Manage GitHub issues using the `@modelcontextprotocol/server-github` MCP server.
    - These markdown templates mirror the YAML issue forms in `.github/ISSUE_TEMPLATE/`
    - YAML templates are canonical structure (used by humans via GitHub UI)
    - Markdown templates are for AI programmatic creation (via MCP tools)
-   - See [references/TEMPLATE_SYNC.md](references/TEMPLATE_SYNC.md) for synchronization governance
+   - See [references/TEMPLATE_SYNC.md](references/TEMPLATE_SYNC.md) for synchronisation governance
 4. **Execute**: Call the appropriate MCP tool
 5. **Confirm**: Report the issue URL to user
 

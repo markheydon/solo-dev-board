@@ -1,3 +1,4 @@
+using SoloDevBoard.Application.Services;
 using SoloDevBoard.Domain.Entities;
 
 namespace SoloDevBoard.Infrastructure;

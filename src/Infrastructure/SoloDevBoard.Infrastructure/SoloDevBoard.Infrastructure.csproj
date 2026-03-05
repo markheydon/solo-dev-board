@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Application\SoloDevBoard.Application\SoloDevBoard.Application.csproj" />
     <ProjectReference Include="..\..\Domain\SoloDevBoard.Domain\SoloDevBoard.Domain.csproj" />
   </ItemGroup>
 

@@ -46,7 +46,7 @@ SoloDevBoard supports two authentication modes:
 2. **Restore dependencies:**
 
    ```bash
-   dotnet restore
+   dotnet restore SoloDevBoard.slnx
    ```
 
 3. **Configure your GitHub token** (see [Configuration](#configuration) below).

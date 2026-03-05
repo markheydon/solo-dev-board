@@ -73,7 +73,7 @@ Your task is to ensure .NET/C# code in `${selection}` meets the SoloDevBoard sta
 ## Performance & Security
 
 - Use modern C# features that improve clarity without reducing maintainability
-- Implement proper input validation and sanitization
+- Implement proper input validation and sanitisation
 - Use parameterized queries for database operations
 - Never introduce secrets or credentials into source-controlled files
 

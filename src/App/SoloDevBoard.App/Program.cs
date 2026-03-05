@@ -1,10 +1,15 @@
 using SoloDevBoard.App.Components;
+using SoloDevBoard.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Register Infrastructure services (GitHub API integration).
+// The Infrastructure project is referenced here solely as the DI composition root.
+builder.Services.AddInfrastructureServices();
 
 var app = builder.Build();
 
