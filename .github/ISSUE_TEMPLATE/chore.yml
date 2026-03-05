@@ -1,0 +1,77 @@
+name: "Chore / Technical Debt"
+description: "Track a maintenance task, refactoring, or technical debt item."
+title: "[Chore] "
+labels:
+  - "type/chore"
+  - "priority/low"
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for maintenance tasks, refactoring work, dependency updates, or technical debt.
+        All text should be written in **UK English**.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Description"
+      description: "A clear description of the chore or technical debt item."
+      placeholder: "What needs to be done and why?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: "Motivation / Context"
+      description: "Why is this work needed? What problem does it solve or what risk does it mitigate?"
+      placeholder: |
+        - This dependency is outdated and has known security advisories.
+        - This module has grown beyond its original scope and should be split.
+        - This code is difficult to test and needs refactoring.
+    validations:
+      required: true
+
+  - type: textarea
+    id: definition-of-done
+    attributes:
+      label: "Definition of Done"
+      description: "How will we know when this chore is complete?"
+      placeholder: |
+        - [ ] Dependency updated to latest stable version
+        - [ ] All existing tests pass
+        - [ ] No new warnings introduced
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: "Area"
+      description: "Which area of the codebase or project does this chore relate to?"
+      options:
+        - "area/dashboard"
+        - "area/migration"
+        - "area/labels"
+        - "area/board-rules"
+        - "area/triage"
+        - "area/workflows"
+        - "area/infrastructure"
+        - "area/docs"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "Priority"
+      description: "How urgent is this chore?"
+      options:
+        - "priority/low"
+        - "priority/medium"
+        - "priority/high"
+        - "priority/critical"
+      default: 0
+    validations:
+      required: false

@@ -1,0 +1,60 @@
+name: CD - Deploy to Azure
+
+# This is a skeleton workflow. Before enabling, you must:
+#   1. Register an Azure service principal (or use Managed Identity with OIDC).
+#   2. Add the following secrets to this repository:
+#        AZURE_CLIENT_ID       — Service principal / managed identity client ID
+#        AZURE_TENANT_ID       — Azure AD tenant ID
+#        AZURE_SUBSCRIPTION_ID — Azure subscription ID
+#        AZURE_WEBAPP_NAME     — The name of the Azure App Service to deploy to
+#   3. Configure the 'production' environment in GitHub repository settings.
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    # Allows manual trigger from the GitHub Actions UI
+
+permissions:
+  id-token: write   # Required for OIDC authentication with Azure
+  contents: read    # Required to check out the repository
+
+jobs:
+  deploy:
+    name: Build, Publish, and Deploy
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.x"
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build in Release configuration
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Publish application
+        run: dotnet publish --configuration Release --no-build --output ./publish
+
+      # Authenticate with Azure using OIDC (no long-lived secrets required)
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Deploy the published artefacts to the configured Azure App Service
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          package: ./publish

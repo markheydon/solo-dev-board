@@ -416,3 +416,6 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Client-side library files (managed by libman/npm)
+**/wwwroot/lib/

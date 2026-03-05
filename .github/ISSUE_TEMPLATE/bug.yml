@@ -1,0 +1,90 @@
+name: "Bug Report"
+description: "Report a bug or unexpected behaviour in SoloDevBoard."
+title: "[Bug] "
+labels:
+  - "type/bug"
+  - "priority/high"
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug!
+        Please provide as much detail as possible so the issue can be reproduced and fixed.
+        All text should be written in **UK English**.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Description"
+      description: "A clear and concise description of the bug."
+      placeholder: "What is happening that shouldn't be?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: "Steps to Reproduce"
+      description: "List the steps required to reproduce the bug."
+      placeholder: |
+        1. Navigate to '...'
+        2. Click on '...'
+        3. Observe '...'
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behaviour
+    attributes:
+      label: "Expected Behaviour"
+      description: "What did you expect to happen?"
+      placeholder: "Describe the expected behaviour."
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behaviour
+    attributes:
+      label: "Actual Behaviour"
+      description: "What actually happened?"
+      placeholder: "Describe the actual behaviour, including any error messages."
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: "Environment"
+      description: "Details about the environment where the bug occurred."
+      value: |
+        - **OS:** (e.g. Windows 11, Ubuntu 24.04)
+        - **.NET version:** (e.g. 10.0.x)
+        - **Browser (if applicable):** (e.g. Chrome 125)
+        - **SoloDevBoard version / commit:** (e.g. v0.1.0 or commit SHA)
+        - **Deployment:** (e.g. local, Azure App Service)
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Relevant Logs or Screenshots"
+      description: "Paste any relevant log output or attach screenshots."
+      render: shell
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "Priority"
+      description: "How severe is this bug?"
+      options:
+        - "priority/low"
+        - "priority/medium"
+        - "priority/high"
+        - "priority/critical"
+      default: 2
+    validations:
+      required: false
