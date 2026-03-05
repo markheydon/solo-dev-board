@@ -113,6 +113,35 @@ When referencing or suggesting labels for GitHub Issues and PRs, follow the taxo
 
 ---
 
+## Open Source & Security
+
+This repository is **open source and public**. The following guidelines ensure security and code quality:
+
+### Secrets Management
+
+- **Golden Rule:** Never commit secrets, credentials, API keys, or personal data to this repository.
+- **GitHub Tokens:** Must be stored exclusively in **Azure Key Vault** (production/Azure deployment) or .NET User Secrets (local development).
+- **Local Development:** Use `dotnet user-secrets` to manage sensitive configuration. See `docs/getting-started.md` for setup instructions.
+- **App Settings Files:** `appsettings.json` and related files leave sensitive fields empty and instantiate with environment variables or secrets at runtime.
+- **CI/CD:** GitHub Actions workflows use OIDC authentication with Azure (no long-lived secrets) and GitHub Secrets context for sensitive data.
+- **Bicep Deployments:** Infrastructure as Code uses Key Vault references (`@Microsoft.KeyVault(...)`) with RBAC-based access control.
+
+### Contributing & Pull Requests
+
+- All contributions are welcome under the MIT license.
+- Ensure no secrets appear in your commits before submitting a PR.
+- Use `.gitignore` to exclude local secrets (`.env`, `secrets.json`, etc.).
+- Review [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
+
+### .gitignore Protections
+
+The repository includes patterns to prevent accidental secret commits:
+- `*.env` — environment variable files
+- `**/secrets.json` — .NET User Secrets
+- `*.user` — Visual Studio user-specific files
+
+---
+
 ## Documentation Sync
 
 When code changes are made, ensure the following are kept in sync:

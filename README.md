@@ -1,6 +1,6 @@
 # SoloDevBoard
 
-[![CI](https://github.com/your-username/solo-dev-board/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/solo-dev-board/actions/workflows/ci.yml)
+[![CI](https://github.com/markheydon/solo-dev-board/actions/workflows/ci.yml/badge.svg)](https://github.com/markheydon/solo-dev-board/actions/workflows/ci.yml)
 
 > **A single pane of glass for solo developers managing GitHub workloads across multiple repositories.**
 
@@ -47,7 +47,7 @@ SoloDevBoard is a **.NET 10 Blazor Server** application that consolidates your G
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/solo-dev-board.git
+git clone https://github.com/markheydon/solo-dev-board.git
 cd solo-dev-board
 
 # Restore dependencies
