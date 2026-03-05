@@ -1,0 +1,173 @@
+# SoloDevBoard — Implementation Plan
+
+<!-- AI Collaborator Instructions: See the "AI Collaborator Instructions" section at the bottom of this file before making changes to this plan. -->
+
+This document describes the phased implementation of SoloDevBoard. Each phase has a clear goal, a set of key tasks, and defined dependencies.
+
+For the full feature scope, see [SCOPE.md](SCOPE.md). For individual feature backlogs, see [BACKLOG.md](BACKLOG.md).
+
+---
+
+## Phase 1 — Foundation
+
+**Goal:** Establish a working Blazor Server application with GitHub authentication, a basic repository listing, and an empty dashboard shell. This phase produces a deployable skeleton.
+
+**Milestone:** v0.1.0
+
+### Key Tasks
+
+- [ ] Scaffold solution structure: `App`, `Application`, `Domain`, `Infrastructure` projects
+- [ ] Configure nullable reference types, implicit usings, and coding conventions across all projects
+- [ ] Implement GitHub Personal Access Token (PAT) authentication flow
+- [ ] Implement GitHub App authentication flow (optional in this phase, required before v1.0)
+- [ ] Implement `IGitHubService` interface in `Application` layer
+- [ ] Implement `GitHubRestClient` in `Infrastructure` layer (using `Octokit` or `HttpClient` + `System.Text.Json`)
+- [ ] Implement basic repository listing: fetch and display all repositories the authenticated user has access to
+- [ ] Create a basic dashboard shell page in Blazor (empty panels for each of the 6 features)
+- [ ] Configure `appsettings.json` and user secrets for local development
+- [ ] Set up xUnit test projects; write smoke tests for `GitHubRestClient`
+- [ ] Set up CI workflow (`.github/workflows/ci.yml`) — build and test on every PR
+- [ ] Deploy to Azure App Service using Bicep (`infra/main.bicep`) — confirm the app runs in the cloud
+
+### Dependencies
+
+- GitHub PAT or GitHub App credentials for local development
+- Azure subscription for deployment validation
+
+---
+
+## Phase 2 — Label Manager + Audit Dashboard
+
+**Goal:** Deliver the first two user-facing features: the ability to manage labels across repositories, and an audit view of repository health.
+
+**Milestone:** v0.2.0
+
+### Key Tasks
+
+#### Label Manager
+- [ ] Design `Label` domain record and `ILabelRepository` interface
+- [ ] Implement `GitHubLabelRepository` in `Infrastructure`
+- [ ] Implement `LabelService` in `Application` (CRUD, sync operations)
+- [ ] Build Blazor UI components for the Label Manager
+- [ ] Implement label synchronisation logic (compare source and target, produce diff, apply changes)
+- [ ] Write unit tests for `LabelService` using NSubstitute
+- [ ] Write integration tests for `GitHubLabelRepository` (against GitHub API test org or mocked HTTP)
+- [ ] Update `docs/user-guide/label-manager.md`
+
+#### Audit Dashboard
+- [ ] Design `AuditReport` domain record
+- [ ] Implement `AuditService` in `Application` (aggregate data from multiple repositories)
+- [ ] Build Blazor UI components for the Audit Dashboard
+- [ ] Implement health indicators: unlabelled issues, stale PRs, failing workflows, label inconsistencies
+- [ ] Write unit tests for `AuditService`
+- [ ] Update `docs/user-guide/audit-dashboard.md`
+
+### Dependencies
+
+- Phase 1 complete (GitHub client, repository listing, authenticated session)
+
+---
+
+## Phase 3 — One-Click Migration + Triage UI
+
+**Goal:** Allow users to migrate repository configuration (labels, milestones) and provide a streamlined issue triage experience.
+
+**Milestone:** v0.3.0
+
+### Key Tasks
+
+#### One-Click Migration
+- [ ] Design `MigrationPlan` and `MigrationResult` domain records
+- [ ] Implement `MigrationService` in `Application` (diff, preview, apply)
+- [ ] Build Blazor UI: source/target repository selection, diff preview, confirmation, summary
+- [ ] Support migration of: labels, milestones (phase 1); project board columns (phase 2 of this feature)
+- [ ] Write unit tests for `MigrationService`
+- [ ] Update `docs/user-guide/one-click-migration.md`
+
+#### Triage UI
+- [ ] Design `TriageSession` and `TriageAction` domain records
+- [ ] Implement `TriageService` in `Application`
+- [ ] Build focused Blazor triage view with keyboard shortcut support
+- [ ] Implement quick actions: label, assign milestone, add to project, close as duplicate
+- [ ] Write unit tests for `TriageService`
+- [ ] Update `docs/user-guide/triage-ui.md`
+
+### Dependencies
+
+- Phase 2 complete (Label Manager, GitHub label/milestone API integration)
+
+---
+
+## Phase 4 — Board Rules Visualiser + Workflow Templates
+
+**Goal:** Deliver the remaining two features: a visual representation of project board automation rules, and a template library for GitHub Actions workflows.
+
+**Milestone:** v0.4.0
+
+### Key Tasks
+
+#### Board Rules Visualiser
+- [ ] Investigate GitHub Projects v2 GraphQL API for automation rule access
+- [ ] Design `BoardRule` and `BoardDiagram` domain records
+- [ ] Implement `BoardRuleService` in `Application`
+- [ ] Implement GraphQL client in `Infrastructure` (see ADR-0005)
+- [ ] Build interactive diagram Blazor component (consider using a JS interop charting library)
+- [ ] Write unit tests for `BoardRuleService`
+- [ ] Update `docs/user-guide/board-rules-visualiser.md`
+
+#### Workflow Templates
+- [ ] Design `WorkflowTemplate` domain record
+- [ ] Implement `WorkflowTemplateService` in `Application`
+- [ ] Build Blazor UI: template browser, parameter editor, apply to repositories, staleness tracker
+- [ ] Include built-in templates: CI (dotnet), CD (Azure App Service), Dependabot
+- [ ] Write unit tests for `WorkflowTemplateService`
+- [ ] Update `docs/user-guide/workflow-templates.md`
+
+### Dependencies
+
+- Phase 1 complete (GitHub GraphQL client infrastructure)
+- Phase 2 complete (repository selection component)
+
+---
+
+## Phase 5 — Polish, Testing, and Azure Deployment
+
+**Goal:** Achieve production quality: comprehensive test coverage, performance profiling, accessibility review, and a stable Azure deployment pipeline.
+
+**Milestone:** v1.0.0
+
+### Key Tasks
+
+- [ ] Achieve ≥80% unit test coverage across `Application` and `Domain` projects
+- [ ] Perform accessibility audit of all Blazor components (WCAG 2.1 AA)
+- [ ] Conduct performance review: identify and address slow GitHub API calls (caching, pagination)
+- [ ] Implement GitHub App authentication fully (superseding PAT for production)
+- [ ] Complete Bicep infrastructure: Key Vault integration, managed identity, slot deployments
+- [ ] Enable CD pipeline with production environment gate (`.github/workflows/cd.yml`)
+- [ ] Write end-to-end tests for critical user journeys
+- [ ] Write comprehensive `docs/` content for all features
+- [ ] Tag v1.0.0 release on GitHub with release notes
+
+### Dependencies
+
+- Phases 1–4 complete
+
+---
+
+## AI Collaborator Instructions
+
+### When Copilot Chat is asked to "Add feature X"
+
+1. Check whether the feature is already in `plan/SCOPE.md`. If not, discuss with the developer whether it should be added to scope.
+2. Identify which phase the feature belongs to (or create a new phase if necessary) and add it to this file.
+3. Add the feature's epics and user stories to `plan/BACKLOG.md`.
+4. Create a stub page in `docs/user-guide/<feature>.md`.
+5. Open a GitHub Issue using the `feature.yml` template with the appropriate labels from `plan/LABEL_STRATEGY.md`.
+6. Only then begin implementing the feature, following the architecture rules in `.github/copilot-instructions.md`.
+
+### Keeping Docs in Sync with Code
+
+- When a phase task is completed, tick it off in this document.
+- When a feature's user-facing doc is written, update the stub notice in `docs/user-guide/<feature>.md`.
+- When a new ADR is created, add it to `adr/README.md`.
+- When a new environment variable is introduced, update `docs/getting-started.md` and `infra/README.md`.

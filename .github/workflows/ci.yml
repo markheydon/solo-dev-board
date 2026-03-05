@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.x"
+
+      - name: Restore dependencies
+        run: dotnet restore SoloDevBoard.slnx
+
+      - name: Build solution
+        run: dotnet build SoloDevBoard.slnx --no-restore
+
+      - name: Run tests
+        run: dotnet test SoloDevBoard.slnx --no-build --verbosity normal

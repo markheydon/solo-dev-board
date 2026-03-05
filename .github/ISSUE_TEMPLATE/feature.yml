@@ -1,0 +1,94 @@
+name: "Feature / User Story"
+description: "Propose a new feature or user story for SoloDevBoard."
+title: "[Feature] "
+labels:
+  - "type/feature"
+  - "priority/medium"
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! Please fill in as much detail as possible.
+        All text should be written in **UK English**.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Description"
+      description: "A clear and concise description of the feature."
+      placeholder: "Describe what you'd like to see added or changed."
+    validations:
+      required: true
+
+  - type: textarea
+    id: user-story
+    attributes:
+      label: "User Story"
+      description: "Describe the feature from the user's perspective."
+      value: |
+        **As a** solo developer,
+        **I want** [goal],
+        **So that** [benefit].
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: "Acceptance Criteria"
+      description: "List the conditions that must be met for this feature to be considered complete."
+      placeholder: |
+        - [ ] Given ... when ... then ...
+        - [ ] The UI displays ...
+        - [ ] The API returns ...
+    validations:
+      required: true
+
+  - type: input
+    id: epic-milestone
+    attributes:
+      label: "Related Epic / Milestone"
+      description: "Which epic or milestone does this belong to? (e.g. Phase 2 — Label Manager)"
+      placeholder: "e.g. Phase 2 — Label Manager"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "Priority"
+      description: "How important is this feature?"
+      options:
+        - "priority/low"
+        - "priority/medium"
+        - "priority/high"
+        - "priority/critical"
+      default: 1
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: "Feature Area"
+      description: "Which area of SoloDevBoard does this feature relate to?"
+      options:
+        - "area/dashboard"
+        - "area/migration"
+        - "area/labels"
+        - "area/board-rules"
+        - "area/triage"
+        - "area/workflows"
+        - "area/infrastructure"
+        - "area/docs"
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: "Additional Context"
+      description: "Any other context, screenshots, or links relevant to this feature request."
+    validations:
+      required: false
