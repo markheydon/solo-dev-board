@@ -69,7 +69,7 @@ SoloDevBoard.Infrastructure  → GitHub API clients, persistence, external integ
 ## Testing
 
 - **Framework:** xUnit
-- **Mocking:** NSubstitute
+- **Mocking:** Moq
 - **Naming convention:** `MethodUnderTest_Scenario_ExpectedOutcome`
 - Test projects mirror the structure of source projects.
 - Arrange / Act / Assert sections separated by blank lines (no comments required).
@@ -135,3 +135,65 @@ When code changes are made, ensure the following are kept in sync:
 - When reviewing a PR diff, flag any non-UK English spelling in comments or strings.
 - When generating Bicep, always add `@description` decorators and use symbolic resource names.
 - Do not generate any secrets or credentials in generated files.
+
+---
+
+## Skill Trigger Matrix
+
+Use the following active skill set for this repository:
+
+- `pm-feature-workflow`
+- `breakdown-plan`
+- `github-issues`
+- `gh-cli`
+- `breakdown-test`
+- `create-architectural-decision-record`
+- `documentation-writer`
+- `dotnet-best-practices`
+- `fluentui-blazor`
+
+Optional companion skills:
+
+- `csharp-xunit`
+- `csharp-docs`
+
+Default workflow order for feature delivery:
+
+1. Orchestration: `pm-feature-workflow`
+2. Planning: `breakdown-plan`
+3. Issue lifecycle: `github-issues` (and `gh-cli` for bulk operations)
+4. Test planning: `breakdown-test`
+5. Implementation: `dotnet-best-practices` and `fluentui-blazor` as needed
+6. Architecture decision capture: `create-architectural-decision-record` when required
+7. Documentation updates: `documentation-writer`
+
+Execution gates:
+
+1. Do not start coding before planning and issue creation are complete.
+2. Do not close feature work before tests and documentation updates are complete.
+3. Scope-impacting changes must update `plan/SCOPE.md` and `plan/BACKLOG.md`.
+
+---
+
+## PM Daily Workflow
+
+For daily product management operations, use the **PM operating system** defined in:
+- **Runbook:** `plan/PM_RUNBOOK.md` — daily/weekly workflow guide
+- **Agents:** `.github/agents/*.agent.md` — specialised execution modes
+- **Prompts:** `.github/prompts/*.prompt.md` — reusable workflow patterns
+
+### Custom Agents
+
+- **PM Orchestrator** (`.github/agents/pm-orchestrator.agent.md`) — backlog selection, scope validation, technical planning, issue creation
+- **Delivery Agent** (`.github/agents/delivery.agent.md`) — implementation, tests, docs, ADRs
+- **Review Agent** (`.github/agents/review.agent.md`) — quality gates, PR creation, issue closure
+
+### Workflow Prompts
+
+- **`daily-start.prompt.md`** — morning status check + next action recommendation
+- **`plan-next-issue.prompt.md`** — select from backlog + create technical plan + setup GitHub issues
+- **`execute-feature.prompt.md`** — implement code + tests + docs
+- **`review-and-close.prompt.md`** — validate quality + create PR + close issue
+- **`weekly-pm-review.prompt.md`** — milestone health + release confidence + priority recommendations
+
+**Workflow reference:** See `plan/PM_RUNBOOK.md` for daily operating rhythm, decision tree, and command quick reference.
