@@ -1,7 +1,7 @@
 # ADR-0006: Switch Mocking Library from NSubstitute to Moq
 
 **Date:** 2026-03-05
-**Status:** Accepted — supersedes [ADR-0002](0002-testing-framework.md)
+**Status:** Accepted — supersedes [ADR-0002](0002-testing-framework.md); assertion library aspect superseded by [ADR-0008](0008-remove-fluentassertions.md)
 
 ---
 
@@ -20,7 +20,7 @@ The human product manager confirmed that **Moq** is the intended mocking library
 
 **Use Moq** as the mocking library for all SoloDevBoard unit tests, in place of NSubstitute.
 
-The xUnit testing framework and optional FluentAssertions (as established in ADR-0002) remain unchanged.
+The xUnit testing framework remains unchanged. Note: FluentAssertions was later removed by [ADR-0008](0008-remove-fluentassertions.md) due to its commercial licence being incompatible with the project's open-source status.
 
 ---
 
@@ -52,3 +52,4 @@ NSubstitute remains a capable library, but switching to Moq eliminates the incon
 - All existing tests using NSubstitute have been rewritten using the Moq API.
 - ADR-0002 is marked as **Superseded** by this ADR.
 - `copilot-instructions.md` and `.github/skills/dotnet-best-practices/SKILL.md` already reference Moq; no further documentation changes are required.
+- FluentAssertions: see [ADR-0008](0008-remove-fluentassertions.md) for the decision to remove it.

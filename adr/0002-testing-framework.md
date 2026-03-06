@@ -1,7 +1,7 @@
 # ADR-0002: Use xUnit and NSubstitute for Testing
 
 **Date:** 2025-01-01
-**Status:** Superseded by [ADR-0006](0006-moq-mocking-library.md)
+**Status:** Superseded by [ADR-0006](0006-moq-mocking-library.md) (mocking library); assertion library aspect also superseded by [ADR-0008](0008-remove-fluentassertions.md)
 
 ---
 

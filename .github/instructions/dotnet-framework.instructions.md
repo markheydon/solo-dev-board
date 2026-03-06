@@ -30,7 +30,7 @@ This repository uses SDK-style projects:
 ## Testing Baseline
 - Test framework: `xUnit`.
 - Mocking framework: `Moq`.
-- Assertions: `FluentAssertions`.
+- Assertions: xUnit built-in `Assert.*` methods. **Do not use FluentAssertions** — it requires a commercial licence under the Xceed Software licence and is prohibited in this open-source project (see ADR-0008).
 - Naming convention: `MethodUnderTest_Scenario_ExpectedOutcome`.
 - Structure tests using Arrange / Act / Assert with blank lines between sections.
 

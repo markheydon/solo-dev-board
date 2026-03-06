@@ -7,6 +7,9 @@ description: 'Ensure that C# types are documented with XML comments and follow b
 
 - Public members should be documented with XML comments.
 - It is encouraged to document internal members as well, especially if they are complex or not self-explanatory.
+- Private methods that contain non-obvious or complex logic (e.g. pagination, parsing, filtering, error handling) **must** have an XML `<summary>` comment.
+- Private DTO and mapping records (used for serialisation or API response mapping) should have a one-line `<summary>` describing their role — for example, which API endpoint they represent or what they serialise.
+- Use inline `//` comments within method bodies for non-obvious logic: parsing decisions, API quirks, filtering rationale, or any code where the intent is not immediately clear from the identifier names alone.
 
 ## Guidance for all APIs
 
@@ -20,6 +23,7 @@ description: 'Ensure that C# types are documented with XML comments and follow b
 - Use `<seealso>` for standalone (not in a sentence) references to other types or members in the "See also" section of the online docs.
 - Use `<inheritdoc/>` to inherit documentation from base classes or interfaces.
   - Unless there is major behaviour change, in which case you should document the differences.
+  - If an implementation applies filtering, pagination, mapping transformations, or any logic not implied by the interface contract, add a `<remarks>` block alongside `<inheritdoc/>` to describe it. Do not rely on `<inheritdoc/>` alone when the implementation diverges from a literal reading of the interface.
 
 ## Methods
 

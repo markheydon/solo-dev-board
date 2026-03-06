@@ -50,7 +50,7 @@ Your goal is to help me write effective unit tests with XUnit, covering both sta
 - Use `Assert.Contains`/`Assert.DoesNotContain` for collections
 - Use `Assert.Matches`/`Assert.DoesNotMatch` for regex pattern matching
 - Use `Assert.Throws<T>` or `await Assert.ThrowsAsync<T>` to test exceptions
-- Use `FluentAssertions` for readable and expressive assertions
+- **Do not use FluentAssertions** — it requires a commercial licence under the Xceed Software licence and is prohibited in this open-source project (see ADR-0008). Use xUnit's built-in `Assert.*` methods exclusively.
 
 ## Mocking and Isolation
 

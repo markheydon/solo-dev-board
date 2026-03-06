@@ -73,7 +73,7 @@ SoloDevBoard.Infrastructure  → GitHub API clients, persistence, external integ
 - **Naming convention:** `MethodUnderTest_Scenario_ExpectedOutcome`
 - Test projects mirror the structure of source projects.
 - Arrange / Act / Assert sections separated by blank lines (no comments required).
-- Use `FluentAssertions` for assertion readability where appropriate.
+- Use xUnit's built-in `Assert.*` methods for all assertions. **Do not add FluentAssertions** — it requires a commercial licence and is prohibited in this open-source project (see ADR-0008).
 
 ---
 

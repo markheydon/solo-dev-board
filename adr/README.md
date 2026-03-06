@@ -27,8 +27,9 @@ Each ADR follows this format:
 | [ADR-0003](0003-bicep-infrastructure.md) | Use Bicep for Azure Infrastructure as Code | Accepted |
 | [ADR-0004](0004-layered-architecture.md) | Use Layered / Clean Architecture | Accepted |
 | [ADR-0005](0005-github-api-strategy.md) | GitHub API Strategy — REST + GraphQL with PAT and GitHub App Authentication | Accepted |
-| [ADR-0006](0006-moq-mocking-library.md) | Switch Mocking Library from NSubstitute to Moq | Accepted |
+| [ADR-0006](0006-moq-mocking-library.md) | Switch Mocking Library from NSubstitute to Moq | Accepted (assertion library aspect superseded by ADR-0008) |
 | [ADR-0007](0007-multi-tenancy-authentication-phased-approach.md) | Multi-Tenancy Authentication — Phased Approach | Accepted |
+| [ADR-0008](0008-remove-fluentassertions.md) | Remove FluentAssertions — Use xUnit Built-in Assertions Only | Accepted |
 
 ## Adding a New ADR
 
