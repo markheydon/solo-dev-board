@@ -44,6 +44,11 @@ For the full feature scope, see [SCOPE.md](SCOPE.md). For individual feature bac
 
 ### Key Tasks
 
+#### Architecture Preparation (Multi-Tenancy Readiness)
+- [ ] Define `ICurrentUserContext` interface in `SoloDevBoard.Application` to represent the authenticated user's identity and API token (see ADR-0007)
+- [ ] Implement a single-user adapter for `ICurrentUserContext` in `SoloDevBoard.Infrastructure` (reads from `IOptions<GitHubAuthOptions>` — no behaviour change from Phase 1)
+- [ ] Refactor `IGitHubService` and all Application-layer services to inject and use `ICurrentUserContext` — no service may access `IOptions<GitHubAuthOptions>` directly
+
 #### Label Manager
 - [ ] Design `Label` domain record and `ILabelRepository` interface
 - [ ] Implement `GitHubLabelRepository` in `Infrastructure`
@@ -141,7 +146,9 @@ For the full feature scope, see [SCOPE.md](SCOPE.md). For individual feature bac
 - [ ] Achieve ≥80% unit test coverage across `Application` and `Domain` projects
 - [ ] Perform accessibility audit of all Blazor components (WCAG 2.1 AA)
 - [ ] Conduct performance review: identify and address slow GitHub API calls (caching, pagination)
-- [ ] Implement GitHub App authentication fully (superseding PAT for production)
+- [ ] Implement GitHub App authentication and GitHub OAuth login flow for multi-user support (see ADR-0005, ADR-0007)
+- [ ] Replace single-user `ICurrentUserContext` adapter with a per-request, per-user implementation backed by the OAuth session
+- [ ] Implement per-user token storage in Azure Key Vault
 - [ ] Complete Bicep infrastructure: Key Vault integration, managed identity, slot deployments
 - [ ] Enable CD pipeline with production environment gate (`.github/workflows/cd.yml`)
 - [ ] Write end-to-end tests for critical user journeys

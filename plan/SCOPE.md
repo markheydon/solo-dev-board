@@ -36,7 +36,7 @@ Browse, customise, and apply GitHub Actions workflow templates across repositori
 
 The following are explicitly **not** in scope for the current version of SoloDevBoard:
 
-- **Multi-user / team features** — SoloDevBoard is designed for a single developer. No authentication, authorisation, or user management beyond the owner's GitHub identity.
+- **Multi-user / team features** — SoloDevBoard is currently designed for a single developer. No multi-user authentication, authorisation, or user management is in scope for Phases 1–4. Multi-tenancy (allowing any developer to sign in with their own GitHub account) is a deferred goal, targeted for Phase 5 (v1.0.0) — see [ADR-0007](../adr/0007-multi-tenancy-authentication-phased-approach.md).
 - **Non-GitHub providers** — GitLab, Bitbucket, Azure DevOps, and other platforms are not supported. GitHub.com is the only supported provider initially.
 - **Mobile application** — SoloDevBoard is a web application. No native iOS or Android app is planned.
 - **Real-time collaboration** — No shared sessions, shared boards, or live collaboration features.
@@ -83,3 +83,4 @@ The following are explicitly **not** in scope for the current version of SoloDev
 | Date | Change | Author |
 |------|--------|--------|
 | 2025-01-01 | Initial scope defined | Solo developer |
+| 2026-03-06 | Multi-user / team features updated from permanently out of scope to deferred (Phase 5). `ICurrentUserContext` interface preparation added to Phase 2. See ADR-0007. | Solo developer |
