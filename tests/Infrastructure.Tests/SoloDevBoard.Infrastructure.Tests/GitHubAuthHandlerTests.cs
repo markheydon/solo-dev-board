@@ -34,7 +34,7 @@ public sealed class GitHubAuthHandlerTests
     }
 
     [Fact]
-    public async Task SendAsync_EmptyPersonalAccessToken_ThrowsArgumentException()
+    public async Task SendAsync_EmptyPersonalAccessToken_ThrowsInvalidOperationException()
     {
         // Arrange
         var options = Options.Create(new GitHubAuthOptions
@@ -55,7 +55,7 @@ public sealed class GitHubAuthHandlerTests
         var act = async () => _ = await invoker.SendAsync(request, CancellationToken.None);
 
         // Assert
-        await Assert.ThrowsAsync<ArgumentException>(act);
+        await Assert.ThrowsAsync<InvalidOperationException>(act);
     }
 
     private sealed class TerminalHandler : HttpMessageHandler
