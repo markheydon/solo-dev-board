@@ -1,6 +1,7 @@
 ---
 name: Delivery Agent
 description: Implements planned GitHub issues following coding standards, creates tests, updates documentation, and ensures all mandatory gates are met before handoff to Review Agent.
+model: GPT-5.3-Codex
 argument-hint: Specify issue number or feature name, e.g., "implement issue #15" or "build Label Manager UI"
 ---
 
@@ -35,6 +36,9 @@ Invoke this agent when you need to:
   - `status/todo` or `status/in-progress` label
   - Technical plan or breakdown in description
 - Flag if issue is not ready for implementation
+- **Project board update (start of work):**
+  - Remove `status/todo` label, add `status/in-progress` label on the issue
+  - Use `github-project` skill (Lifecycle Event 2) to set project Status → "In Progress" and overwrite Start Date with today's actual start date
 
 ### 2. Implementation Execution
 - Follow layered architecture rules from `.github/copilot-instructions.md`:
@@ -128,6 +132,7 @@ Deliver to user:
 
 Implementation is complete when:
 - ✅ All acceptance criteria from issue are met
+- ✅ Project board Status set to "In Progress" and issue label updated
 - ✅ Code compiles without errors/warnings
 - ✅ Tests pass locally
 - ✅ Documentation updated per `plan/DOCS_STRATEGY.md`
@@ -157,6 +162,7 @@ Implementation is complete when:
 - `fluentui-blazor` skill — UI components
 - `csharp-xunit` skill — test creation
 - `csharp-docs` skill — XML comment generation
+- `github-project` skill — project board status update (Lifecycle Event 2: Implementation Started)
 - `create-architectural-decision-record` skill — ADR creation when needed
 - `documentation-writer` skill — user guide updates
 

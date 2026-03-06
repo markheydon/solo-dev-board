@@ -1,6 +1,7 @@
 ---
 name: Plan Next Issue
 description: Selects next backlog item (or specific feature), validates scope, creates technical plan via breakdown-plan skill, and sets up GitHub issues with correct metadata. Invokes PM Orchestrator Agent.
+agent: PM Orchestrator
 ---
 
 # Plan Next Issue Workflow
@@ -72,7 +73,14 @@ This prompt invokes the **PM Orchestrator Agent**, which executes:
 - Assign to current milestone if applicable
 - Link dependencies (parent/child, blocked-by relationships)
 
-### 6. Test Strategy
+### 6. Project Board Sync
+- Use `github-project` skill (Lifecycle Event 1) to add each created issue to the **SoloDevBoard Roadmap** project (#8)
+- Set Phase matching the issue's milestone (see Phase Assignment Rules in `github-project` skill)
+- Set Priority matching the `priority/` label applied to each issue
+- Set Status to "Todo" for all new issues
+- Set Start Date and Target Date from the Roadmap Date Guidelines in `github-project` skill
+
+### 7. Test Strategy
 - Invoke `breakdown-test` skill
 - Create test issues linked to feature issues
 - Define quality gates and acceptance test scenarios
@@ -86,6 +94,7 @@ This prompt invokes the **PM Orchestrator Agent**, which executes:
 - **Technical plan** embedded in epic/feature issue descriptions
 - **Test issues** linked to feature work
 - **ADR** if architectural decision required
+- **Project board items** — all issues added to SoloDevBoard Roadmap with Phase/Priority/Status/dates
 
 ### Artefacts Updated
 - **`plan/BACKLOG.md`** — item marked as planned/in-progress

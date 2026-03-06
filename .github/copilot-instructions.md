@@ -174,6 +174,7 @@ Use the following active skill set for this repository:
 - `pm-feature-workflow`
 - `breakdown-plan`
 - `github-issues`
+- `github-project`
 - `gh-cli`
 - `breakdown-test`
 - `create-architectural-decision-record`
@@ -190,7 +191,7 @@ Default workflow order for feature delivery:
 
 1. Orchestration: `pm-feature-workflow`
 2. Planning: `breakdown-plan`
-3. Issue lifecycle: `github-issues` (and `gh-cli` for bulk operations)
+3. Issue lifecycle: `github-issues` (and `gh-cli` for bulk operations), then `github-project` to sync the project board
 4. Test planning: `breakdown-test`
 5. Implementation: `dotnet-best-practices` and `fluentui-blazor` as needed
 6. Architecture decision capture: `create-architectural-decision-record` when required

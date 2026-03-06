@@ -63,6 +63,20 @@ gh run list --repo owner/repo --workflow ci.yml --limit 10
 
 # Add an issue to a project (requires project permissions)
 gh project item-add 5 --owner owner --url https://github.com/owner/repo/issues/123
+
+# === SoloDevBoard Roadmap (Project #8) ===
+
+# List all project items and their current state
+gh project item-list 8 --owner markheydon --format json
+
+# Add an issue to the SoloDevBoard Roadmap
+gh project item-add 8 --owner markheydon --url https://github.com/markheydon/solo-dev-board/issues/123
+
+# View the roadmap board in the browser
+Start-Process "https://github.com/users/markheydon/projects/8"
+
+# NOTE: Updating project field values (Phase, Priority, Status, dates) requires GraphQL mutations.
+# See `.github/skills/github-project/SKILL.md` for complete command patterns and all field/option IDs.
 ```
 
 ### Safety Rules

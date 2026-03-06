@@ -16,7 +16,7 @@ Run a deterministic feature workflow so the user can act as product manager whil
 1. Select the next candidate from `plan/BACKLOG.md`.
 2. Confirm scope alignment in `plan/SCOPE.md`.
 3. Trigger planning with `breakdown-plan`.
-4. Create or update GitHub issues with `github-issues` (use `gh-cli` for bulk changes).
+4. Create or update GitHub issues with `github-issues` (use `gh-cli` for bulk changes), then sync each issue to the project board with `github-project` skill (set Phase, Priority, Status=Todo, and roadmap dates).
 5. Trigger quality planning with `breakdown-test`.
 6. Implement using repository standards (`dotnet-best-practices`, and `fluentui-blazor` for UI work).
 7. Create or update ADRs when architectural decisions are introduced.

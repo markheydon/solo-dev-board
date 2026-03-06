@@ -1,6 +1,7 @@
 ---
 name: Review and Close
 description: Creates PR, validates quality gates, verifies documentation sync, runs tests, and closes issues after approval. Invokes Review Agent.
+agent: Review Agent
 ---
 
 # Review and Close Workflow
@@ -88,6 +89,7 @@ This prompt invokes the **Review Agent**, which executes:
   - Remove `status/in-review`
   - Add `status/done`
 - Close issue with comment linking PR
+- **Project board update:** Use `github-project` skill (Lifecycle Event 3) to set project Status → "Done"
 - Update `plan/BACKLOG.md` marking item complete
 - Suggest next backlog item for PM Orchestrator
 
@@ -105,6 +107,7 @@ This prompt invokes the **Review Agent**, which executes:
 
 ### Artefacts Updated (Post-Merge)
 - **Issue status** — `status/in-review` → `status/done`, issue closed
+- **Project board** — Status set to "Done" via `github-project` skill
 - **`plan/BACKLOG.md`** — item marked complete
 - **`plan/RELEASE_PLAN.md`** — updated if release impact (flagged for user)
 

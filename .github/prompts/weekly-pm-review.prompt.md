@@ -1,6 +1,7 @@
 ---
 name: Weekly PM Review
 description: Weekly governance ritual — assesses milestone health, scope drift, release confidence, backlog hygiene, and identifies blockers. Produces executive summary and next week's priorities.
+agent: PM Orchestrator
 ---
 
 # Weekly PM Review Workflow

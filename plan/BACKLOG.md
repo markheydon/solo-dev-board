@@ -10,9 +10,16 @@ This backlog is organised by the six core features (epics) of SoloDevBoard. For 
 
 Labels: `type/epic`, `area/infrastructure`
 
-- [ ] As a solo developer, I want the application to authenticate with GitHub using my Personal Access Token so that I can access my repositories.
+<!-- Epic #4: Phase 1 — Foundation Completion (status/todo, milestone: v0.1.0) -->
+<!-- Feature #5: GitHub API Integration with PAT Authentication -->
+
+- [x] Scaffold solution structure (`App`, `Application`, `Domain`, `Infrastructure` projects) — _done_
+- [x] Configure nullable reference types, implicit usings, and coding conventions — _done_
+- [x] Set up xUnit test projects — _done_
+- [x] Set up CI workflow (`.github/workflows/ci.yml`) — _done_
+- [ ] As a solo developer, I want the application to authenticate with GitHub using my Personal Access Token so that I can access my repositories. _(planned: #6, #7 — status/todo)_
 - [ ] As a solo developer, I want to authenticate with a GitHub App so that I can use fine-grained permissions without a long-lived PAT.
-- [ ] As a solo developer, I want to see a list of all my GitHub repositories so that I can select which ones to manage.
+- [ ] As a solo developer, I want to see a list of all my GitHub repositories so that I can select which ones to manage. _(planned: #8 — status/todo)_
 - [ ] As a solo developer, I want my GitHub token to be stored securely in Azure Key Vault so that it is never exposed in configuration files.
 - [ ] As a solo developer, I want the application to be deployed to Azure App Service so that I can access it from any device.
 
