@@ -17,9 +17,8 @@ public sealed class GitHubAuthHandler(IOptions<GitHubAuthOptions> authOptions) :
 
         if (string.IsNullOrWhiteSpace(_authOptions.PersonalAccessToken))
         {
-            throw new ArgumentException(
-                "GitHub personal access token is not configured.",
-                $"{GitHubAuthOptions.SectionName}:{nameof(GitHubAuthOptions.PersonalAccessToken)}");
+            throw new InvalidOperationException(
+                $"GitHub personal access token is not configured. Check configuration key '{GitHubAuthOptions.SectionName}:{nameof(GitHubAuthOptions.PersonalAccessToken)}'.");
         }
 
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _authOptions.PersonalAccessToken);
