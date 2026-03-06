@@ -17,7 +17,7 @@ Labels: `type/epic`, `area/infrastructure`
 - [x] Configure nullable reference types, implicit usings, and coding conventions — _done_
 - [x] Set up xUnit test projects — _done_
 - [x] Set up CI workflow (`.github/workflows/ci.yml`) — _done_
-- [x] As a solo developer, I want the application to authenticate with GitHub using my Personal Access Token so that I can access my repositories. _(#6 done — merged PR #13, 2026-03-06; #7 status/in-review)_
+- [x] As a solo developer, I want the application to authenticate with GitHub using my Personal Access Token so that I can access my repositories. _(#6 done — merged PR #13, 2026-03-06; #7 done — merged PR #17, 2026-03-06)_
 - [ ] As a solo developer, I want service interfaces to resolve user identity via an `ICurrentUserContext` abstraction so that the application can support multiple users in the future without structural rework. _(Phase 2 enabler — see ADR-0007)_
 - [ ] As a solo developer, I want to authenticate with a GitHub App so that I can use fine-grained permissions without a long-lived PAT. _(Phase 5 — see ADR-0007)_
 - [ ] As a solo developer, I want to see a list of all my GitHub repositories so that I can select which ones to manage. _(planned: #8 — status/todo)_
