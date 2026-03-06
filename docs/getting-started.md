@@ -71,26 +71,30 @@ Located at `src/App/SoloDevBoard.App/appsettings.json`. The relevant section is:
 
 ```json
 {
-  "GitHub": {
-    "Token": "",
-    "BaseUrl": "https://api.github.com"
+   "GitHubAuth": {
+      "PersonalAccessToken": "",
+      "GitHubAppId": "",
+      "GitHubAppPrivateKey": "",
+      "UseGitHubApp": false
   }
 }
 ```
 
-Leave `Token` empty in `appsettings.json` and supply it via an environment variable or user secrets instead.
+Leave `PersonalAccessToken` empty in `appsettings.json` and supply it via an environment variable or user secrets instead.
 
 ### Environment Variables
 
 | Variable | Description |
 |---|---|
-| `GitHub__Token` | Your GitHub Personal Access Token |
-| `GitHub__BaseUrl` | Override the GitHub API base URL (optional; useful for GitHub Enterprise) |
+| `GitHubAuth__PersonalAccessToken` | Your GitHub Personal Access Token |
+| `GitHubAuth__GitHubAppId` | GitHub App ID (when using GitHub App mode) |
+| `GitHubAuth__GitHubAppPrivateKey` | GitHub App private key in PEM format |
+| `GitHubAuth__UseGitHubApp` | Set to `true` to use GitHub App authentication |
 
 To set the token for local development using .NET User Secrets:
 
 ```bash
-dotnet user-secrets set "GitHub:Token" "<your-token>" --project src/App/SoloDevBoard.App
+dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-token>" --project src/App/SoloDevBoard.App
 ```
 
 ### Azure Key Vault (Production)
