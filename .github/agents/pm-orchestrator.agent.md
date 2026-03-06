@@ -58,7 +58,7 @@ Invoke this agent when you need to:
 - Use markdown templates from `.github/skills/github-issues/references/templates.md`
 - **Note:** Markdown templates mirror YAML issue forms (`.github/ISSUE_TEMPLATE/*.yml`) which define the canonical structure
 - Assign to current milestone if applicable
-- Link dependencies and parent/child relationships
+- Note parent/child sub-issue hierarchy (Epic→Feature→Story/Enabler/Test) and any blocking relationships — GitHub CLI cannot set either; produce a **Manual Linking Required** table in the handoff for the user to set via the GitHub UI
 
 ### 5. Project Board Sync
 - Use `github-project` skill to add each created issue to the **SoloDevBoard Roadmap** project (#8)
@@ -115,6 +115,18 @@ Deliver to user:
 2. **Issue links**: Direct links to created issues
 3. **Next action**: "Ready for Delivery Agent — run 'implement issue #X'"
 4. **Blockers**: Any dependencies or scope questions that need resolution
+5. **Manual Linking Required** — table of parent/child and blocking relationships to set via the GitHub UI (since `gh` CLI supports neither; see [cli/cli#11757](https://github.com/cli/cli/issues/11757) and [cli/cli#10298](https://github.com/cli/cli/issues/10298)):
+
+   **Sub-issues** (open parent issue → Sub-issues → Add):
+   | Parent Issue | Child Issue(s) | Relationship |
+   |---|---|---|
+   | #X Epic title | #Y Feature title | Epic → Feature |
+   | #Y Feature title | #Z Enabler, #A Story, #B Test | Feature → deliverables |
+
+   **Blocking** (open issue → Relationships → Mark as blocking):
+   | Blocking Issue | Blocked Issue | Type |
+   |---|---|---|
+   | #Z Enabler title | #A Story, #B Story | blocks |
 
 ---
 

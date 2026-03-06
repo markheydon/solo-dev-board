@@ -71,7 +71,7 @@ This prompt invokes the **PM Orchestrator Agent**, which executes:
   - `size/` — xs, s, m, l, xl
   - `status/todo` for new items
 - Assign to current milestone if applicable
-- Link dependencies (parent/child, blocked-by relationships)
+- Note parent/child hierarchy and blocking relationships — GitHub CLI supports neither; list both in the **Manual Linking Required** section of the handoff for the user to set via the GitHub UI
 
 ### 6. Project Board Sync
 - Use `github-project` skill (Lifecycle Event 1) to add each created issue to the **SoloDevBoard Roadmap** project (#8)
@@ -124,6 +124,22 @@ This prompt invokes the **PM Orchestrator Agent**, which executes:
 - Unit tests: Label validation, filtering logic
 - Integration tests: GitHub API label operations
 - UI tests: Component rendering, user interactions
+
+## Manual Linking Required
+Set these relationships via the GitHub UI — `gh` CLI supports neither sub-issues nor blocking (see [cli/cli#11757](https://github.com/cli/cli/issues/11757), [cli/cli#10298](https://github.com/cli/cli/issues/10298)):
+
+**Sub-issues** (open parent issue → Sub-issues → Add):
+
+| Parent Issue | Child Issue(s) | Relationship |
+|---|---|---|
+| #30 Label Management System (Epic) | #31 Label Manager UI (Feature) | Epic → Feature |
+| #31 Label Manager UI (Feature) | #32, #33, #34, #35, #36 | Feature → deliverables |
+
+**Blocking** (open issue → Relationships → Mark as blocking):
+
+| Blocking Issue | Blocked Issue | Type |
+|---|---|---|
+| _(none for this feature)_ | — | — |
 
 ## Next Action
 ✅ Ready for implementation — Use `execute-feature` prompt with issue #31
