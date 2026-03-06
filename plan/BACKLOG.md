@@ -17,7 +17,7 @@ Labels: `type/epic`, `area/infrastructure`
 - [x] Configure nullable reference types, implicit usings, and coding conventions — _done_
 - [x] Set up xUnit test projects — _done_
 - [x] Set up CI workflow (`.github/workflows/ci.yml`) — _done_
-- [ ] As a solo developer, I want the application to authenticate with GitHub using my Personal Access Token so that I can access my repositories. _(planned: #6 in-progress, #7 status/todo)_
+- [x] As a solo developer, I want the application to authenticate with GitHub using my Personal Access Token so that I can access my repositories. _(#6 done — merged PR #13, 2026-03-06; #7 status/todo)_
 - [ ] As a solo developer, I want to authenticate with a GitHub App so that I can use fine-grained permissions without a long-lived PAT.
 - [ ] As a solo developer, I want to see a list of all my GitHub repositories so that I can select which ones to manage. _(planned: #8 — status/todo)_
 - [ ] As a solo developer, I want my GitHub token to be stored securely in Azure Key Vault so that it is never exposed in configuration files.
