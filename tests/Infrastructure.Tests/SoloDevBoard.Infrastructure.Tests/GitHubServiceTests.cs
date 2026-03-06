@@ -329,7 +329,6 @@ public sealed class GitHubServiceTests
         ]);
         var sut = CreateSubject(handler);
 
-        // Act
         // Act / Assert
         var exception = await Assert.ThrowsAsync<HttpRequestException>(
           async () => _ = await sut.GetRepositoriesAsync("owner"));
@@ -373,25 +372,25 @@ public sealed class GitHubServiceTests
 
         public List<HttpRequestMessage> Requests { get; } = [];
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            Requests.Add(CloneRequest(request));
+          Requests.Add(await CloneRequestAsync(request, cancellationToken).ConfigureAwait(false));
 
             if (_responses.Count == 0)
             {
                 throw new InvalidOperationException("No mocked responses are left in the queue.");
             }
 
-            return Task.FromResult(_responses.Dequeue());
+          return _responses.Dequeue();
         }
 
-        private static HttpRequestMessage CloneRequest(HttpRequestMessage request)
+        private static async Task<HttpRequestMessage> CloneRequestAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var clone = new HttpRequestMessage(request.Method, request.RequestUri);
 
             if (request.Content is not null)
             {
-                var content = request.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var content = await request.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
                 var mediaType = request.Content.Headers.ContentType?.MediaType ?? "application/json";
                 clone.Content = new StringContent(content, Encoding.UTF8, mediaType);
             }
