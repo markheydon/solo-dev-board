@@ -10,6 +10,10 @@ public sealed class GitHubServiceTests
 
     public GitHubServiceTests()
     {
+        _httpClientFactoryMock
+            .Setup(factory => factory.CreateClient(GitHubService.GitHubApiClientName))
+            .Returns(new HttpClient());
+
         _sut = new GitHubService(_httpClientFactoryMock.Object);
     }
 
@@ -22,6 +26,9 @@ public sealed class GitHubServiceTests
         // Assert
         Assert.NotNull(result);
         Assert.Empty(result);
+        _httpClientFactoryMock.Verify(
+            factory => factory.CreateClient(GitHubService.GitHubApiClientName),
+            Times.Once);
     }
 
     [Fact]

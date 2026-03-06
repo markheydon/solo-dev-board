@@ -9,7 +9,7 @@ builder.Services.AddRazorComponents()
 
 // Register Infrastructure services (GitHub API integration).
 // The Infrastructure project is referenced here solely as the DI composition root.
-builder.Services.AddInfrastructureServices();
+builder.Services.AddInfrastructureServices(builder.Configuration);
 
 var app = builder.Build();
 
