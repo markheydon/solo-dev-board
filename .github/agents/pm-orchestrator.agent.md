@@ -1,6 +1,7 @@
 ---
 name: PM Orchestrator
 description: Selects next backlog item, validates scope alignment, creates technical plan via breakdown-plan skill, and sets up GitHub issues with correct labels/milestones. Hands off to Delivery Agent when planning is complete.
+model: Claude Sonnet 4.6
 argument-hint: Specify "next item", "plan feature X", or "what should I work on"
 ---
 
@@ -59,7 +60,15 @@ Invoke this agent when you need to:
 - Assign to current milestone if applicable
 - Link dependencies and parent/child relationships
 
-### 5. Quality Planning
+### 5. Project Board Sync
+- Use `github-project` skill to add each created issue to the **SoloDevBoard Roadmap** project (#8)
+- Set **Phase** based on the issue's milestone (see Phase Assignment Rules in `github-project` skill)
+- Set **Priority** matching the `priority/` label applied to the issue
+- Set **Status** to "Todo" for all newly created issues
+- Set **Start Date** and **Target Date** using the Roadmap Date Guidelines in `github-project` skill
+- Follow Lifecycle Event 1 command pattern from `.github/skills/github-project/SKILL.md`
+
+### 6. Quality Planning
 - Invoke `breakdown-test` skill for test strategy
 - Ensure test issues are created alongside feature issues
 - Verify Definition of Done criteria are explicit
@@ -117,6 +126,7 @@ Planning is complete when:
 - ✅ GitHub issues created with correct labels/milestones
 - ✅ Test strategy defined via `breakdown-test`
 - ✅ Dependencies and acceptance criteria documented
+- ✅ All created issues added to project board with Phase/Priority/Status/dates set
 - ✅ No scope ambiguity or blockers
 - ✅ Handoff package delivered
 
@@ -137,6 +147,7 @@ Planning is complete when:
 - `breakdown-plan` skill — technical decomposition
 - `breakdown-test` skill — quality planning
 - `github-issues` skill — issue creation/updates
+- `github-project` skill — project board sync (Lifecycle Event 1: Issue Created)
 
 **Hands off to:**
 - **Delivery Agent** — for implementation execution (code, tests, docs)

@@ -1,6 +1,7 @@
 ---
 name: Execute Feature
 description: Implements a planned GitHub issue following coding standards, creates tests, updates documentation, and ensures all mandatory gates are met. Invokes Delivery Agent.
+agent: Delivery Agent
 ---
 
 # Execute Feature Workflow
@@ -44,6 +45,7 @@ This prompt invokes the **Delivery Agent**, which executes:
   - `status/todo` or `status/in-progress` label
   - Technical plan or breakdown in description
 - **If issue not ready:** Escalate to PM Orchestrator for re-planning
+- **Project board update:** Remove `status/todo` label, add `status/in-progress`; use `github-project` skill (Lifecycle Event 2) to set project Status → "In Progress"
 
 ### 2. Implementation Execution
 - Follow layered architecture from `.github/copilot-instructions.md`:

@@ -1,6 +1,7 @@
 ---
 name: Daily Start
 description: Morning startup workflow for PM — reviews backlog, checks active work, identifies blockers, and recommends next action.
+agent: PM Orchestrator
 ---
 
 # Daily Start Workflow

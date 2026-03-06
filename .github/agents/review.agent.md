@@ -1,6 +1,7 @@
 ---
 name: Review Agent
 description: Creates PR, validates quality gates, verifies documentation sync, runs tests, and closes issues after approval. Ensures release readiness before marking work complete.
+model: Claude Sonnet 4.6
 argument-hint: Specify "review issue #X" or "create PR and close issue #Y"
 ---
 
@@ -35,7 +36,7 @@ Invoke this agent when you need to:
   - Labels matching primary issue labels
   - Milestone assignment if applicable
 - Use `.github/pull_request_template.md` if present
-- Link PR to GitHub project board if tracking enabled
+- Link PR to GitHub project board — the Linked pull requests field updates automatically when the PR references the issue
 
 ### 2. Quality Gate Validation
 
@@ -76,6 +77,7 @@ Invoke this agent when you need to:
 - Add closing comment summarizing validation results
 - Link PR in issue comments
 - Close issue with "Closes #X" in PR merge commit
+- **Project board update (post-merge):** Use `github-project` skill (Lifecycle Event 3) to set project Status → "Done" and overwrite Target Date with today's actual completion date
 
 ### 5. Handoff to Next Work
 - Update `plan/BACKLOG.md` to mark item as complete
@@ -148,6 +150,7 @@ Review is complete when:
 
 **Post-merge:** After user approves and merge completes:
 - ✅ Issue closed with `status/done`
+- ✅ Project board Status set to "Done" via `github-project` skill
 - ✅ Backlog marked complete
 - ✅ Release plan updated if needed
 
@@ -167,6 +170,7 @@ Review is complete when:
 - `get_errors` tool — compile error check
 - `github-issues` skill — issue updates and closure
 - `gh-cli` skill — PR creation and label management (if bulk operations needed)
+- `github-project` skill — project board status update (Lifecycle Event 3: Issue Closed)
 
 **Hands off to:**
 - **Delivery Agent** — if quality gate failures require fixes
