@@ -71,11 +71,11 @@ Located at `src/App/SoloDevBoard.App/appsettings.json`. The relevant section is:
 
 ```json
 {
-   "GitHubAuth": {
-      "PersonalAccessToken": "",
-      "GitHubAppId": "",
-      "GitHubAppPrivateKey": "",
-      "UseGitHubApp": false
+  "GitHubAuth": {
+    "PersonalAccessToken": "",
+    "GitHubAppId": "",
+    "GitHubAppPrivateKey": "",
+    "UseGitHubApp": false
   }
 }
 ```
