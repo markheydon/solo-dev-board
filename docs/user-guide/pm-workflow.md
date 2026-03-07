@@ -5,8 +5,6 @@ parent: User Guide
 nav_order: 7
 ---
 
-# Cross-Repo PM Workflow
-
 > ⚠️ **Under Development** — This feature is planned for Phase 5 (v0.5.0). This page will be updated as the feature progresses.
 
 ---

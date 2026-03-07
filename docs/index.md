@@ -1,10 +1,8 @@
 ---
-layout: home
+layout: default
 title: SoloDevBoard
 nav_order: 1
 ---
-
-# SoloDevBoard
 
 > **A single pane of glass for solo developers managing GitHub workloads across multiple repositories.**
 

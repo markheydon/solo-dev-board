@@ -1,4 +1,9 @@
-# Dashboard Shell
+---
+layout: default
+title: Dashboard Shell
+parent: User Guide
+nav_order: 1
+---
 
 The Dashboard is the home page for SoloDevBoard and provides a single entry point into each core feature area.
 

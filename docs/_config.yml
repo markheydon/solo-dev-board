@@ -1,3 +1,6 @@
-theme: minima
+remote_theme: just-the-docs/just-the-docs
 title: SoloDevBoard
 description: A single pane of glass for solo developers managing GitHub workloads
+plugins:
+  - jekyll-remote-theme
+  - jekyll-seo-tag

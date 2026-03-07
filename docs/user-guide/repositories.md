@@ -5,8 +5,6 @@ parent: User Guide
 nav_order: 0
 ---
 
-# Repositories
-
 The Repositories page shows the repositories available to your authenticated GitHub account in one place.
 
 ---

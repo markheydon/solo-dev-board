@@ -5,8 +5,6 @@ parent: User Guide
 nav_order: 5
 ---
 
-# Triage UI
-
 > ⚠️ **Under Development** — This feature is planned for Phase 3. This page will be updated as the feature progresses.
 
 ---

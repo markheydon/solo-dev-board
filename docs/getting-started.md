@@ -4,8 +4,6 @@ title: Getting Started
 nav_order: 2
 ---
 
-# Getting Started
-
 This guide walks you through the prerequisites and steps required to run SoloDevBoard locally and deploy it to Azure.
 
 ---

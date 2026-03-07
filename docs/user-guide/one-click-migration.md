@@ -5,8 +5,6 @@ parent: User Guide
 nav_order: 2
 ---
 
-# One-Click Migration
-
 > ⚠️ **Under Development** — This feature is planned for Phase 3. This page will be updated as the feature progresses.
 
 ---

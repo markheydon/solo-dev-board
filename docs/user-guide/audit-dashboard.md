@@ -5,8 +5,6 @@ parent: User Guide
 nav_order: 1
 ---
 
-# Audit Dashboard
-
 > ⚠️ **Under Development** — This feature is being built as part of Phase 2. This page will be updated as the feature progresses.
 
 ---

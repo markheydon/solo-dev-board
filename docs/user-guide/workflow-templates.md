@@ -5,8 +5,6 @@ parent: User Guide
 nav_order: 6
 ---
 
-# Workflow Templates
-
 > ⚠️ **Under Development** — This feature is planned for Phase 4. This page will be updated as the feature progresses.
 
 ---

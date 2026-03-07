@@ -5,8 +5,6 @@ parent: User Guide
 nav_order: 3
 ---
 
-# Label Manager
-
 > ⚠️ **Under Development** — This feature is planned for Phase 2. This page will be updated as the feature progresses.
 
 ---
