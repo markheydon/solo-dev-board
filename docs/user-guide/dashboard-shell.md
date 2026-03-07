@@ -31,7 +31,7 @@ Use the left menu for direct access to:
 
 - Dashboard
 - Repositories
-- Migration
+- Migrate
 - Labels
 - Board Rules
 - Triage
