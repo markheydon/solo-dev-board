@@ -38,8 +38,9 @@ Invoke this agent when you need to:
 - Flag if issue is not ready for implementation
 - **Project board update (start of work):**
   - Remove `status/todo` label, add `status/in-progress` label on the issue
-  - Use `github-project` skill (Lifecycle Event 2) to set project Status → "In Progress" and overwrite Start Date with today's actual start date
-  - **Cascade to parents (Lifecycle Event 2a):** For each parent Feature and Epic of the issue being implemented, check if it is still "Todo" on the project board. If so, move it to "In Progress" and overwrite its Start Date with today's date, and update its label from `status/todo` to `status/in-progress`. This ensures the Epic Board and Feature Board show accurate status as soon as any child work begins.
+  - Use `github-project` skill (Lifecycle Event 2) to set project Status → "In Progress", Start Date → today, and Target Date → today + calendar days from the issue's `size/` label (xs/s=+1, m=+3, l=+7, xl=+14)
+  - **Sibling date cascade (if first issue started in the Feature):** For each unstarted sibling in the same Feature (in dependency/issue-number order), set its Start Date = previous issue's Target Date + 1 day and its Target Date = Start Date + its own size estimate
+  - **Cascade to parents (Lifecycle Event 2a):** For each parent Feature and Epic still "Todo" on the project board, move to "In Progress", set Start Date = today, set Target Date = latest sibling Target Date calculated above, and update labels from `status/todo` to `status/in-progress`
 
 ### 2. Feature Branch Creation
 
