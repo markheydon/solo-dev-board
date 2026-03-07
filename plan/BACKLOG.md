@@ -18,7 +18,7 @@ Labels: `type/epic`, `area/infrastructure`
 - [x] Set up xUnit test projects — _done_
 - [x] Set up CI workflow (`.github/workflows/ci.yml`) — _done_
 - [x] As a solo developer, I want the application to authenticate with GitHub using my Personal Access Token so that I can access my repositories. _(#6 done — merged PR #13, 2026-03-06; #7 done — merged PR #17, 2026-03-06)_
-- [x] As a solo developer, I want service interfaces to resolve user identity via an `ICurrentUserContext` abstraction so that the application can support multiple users in the future without structural rework. _(Phase 2 enabler — see ADR-0007 — **done: Feature #21, Enablers #22 #23 #24, Test #25, milestone v0.2.0**)_
+- [x] As a solo developer, I want service interfaces to resolve user identity via an `ICurrentUserContext` abstraction so that the application can support multiple users in the future without structural rework. _(Phase 2 enabler — see ADR-0007 — **done: Feature #21, Enablers #22 #23 #24, Test #25, milestone v0.2.0, PR #26**)_
 - [ ] As a solo developer, I want to authenticate with a GitHub App so that I can use fine-grained permissions without a long-lived PAT. _(Phase 5 — see ADR-0007)_
 - [x] As a solo developer, I want to see a list of all my GitHub repositories so that I can select which ones to manage. _(issue #8 done — merged PR #18, 2026-03-07)_
 - [x] As a solo developer, I want an empty dashboard shell page with navigation cards for each feature so that the application has a clear entry point. _(issue #9 done — merged PR #19, 2026-03-07)_
