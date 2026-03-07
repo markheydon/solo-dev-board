@@ -45,7 +45,7 @@ This prompt invokes the **Delivery Agent**, which executes:
   - `status/todo` or `status/in-progress` label
   - Technical plan or breakdown in description
 - **If issue not ready:** Escalate to PM Orchestrator for re-planning
-- **Project board update:** Remove `status/todo` label, add `status/in-progress`; use `github-project` skill (Lifecycle Event 2) to set project Status → "In Progress"
+- **Project board update:** Remove `status/todo` label, add `status/in-progress`; use `github-project` skill (Lifecycle Event 2) to set project Status → "In Progress" and **overwrite Start Date with today's actual start date** (not the original planned date — this is a required step, not optional)
 
 ### 2. Implementation Execution
 - Follow layered architecture from `.github/copilot-instructions.md`:

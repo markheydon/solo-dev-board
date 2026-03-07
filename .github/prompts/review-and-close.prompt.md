@@ -62,6 +62,7 @@ This prompt invokes the **Review Agent**, which executes:
 - Check `plan/IMPLEMENTATION_PLAN.md` phase alignment
 
 ### 2. PR Creation
+- **Before raising the PR:** Update `plan/BACKLOG.md` to mark the item as complete and commit that change to the feature branch so it is included in the PR merge. This prevents an uncommitted planning artefact after merge.
 - Create pull request with:
   - Title following convention: `[type/label] Brief description`
   - PR body linking issues: `Closes #X`, `Relates to #Y`
@@ -89,8 +90,7 @@ This prompt invokes the **Review Agent**, which executes:
   - Remove `status/in-review`
   - Add `status/done`
 - Close issue with comment linking PR
-- **Project board update:** Use `github-project` skill (Lifecycle Event 3) to set project Status → "Done"
-- Update `plan/BACKLOG.md` marking item complete
+- **Project board update:** Use `github-project` skill (Lifecycle Event 3) to set project Status → "Done" and **overwrite Target Date with today's actual completion date** (not the original planned date)
 - Suggest next backlog item for PM Orchestrator
 
 ---
@@ -107,8 +107,7 @@ This prompt invokes the **Review Agent**, which executes:
 
 ### Artefacts Updated (Post-Merge)
 - **Issue status** — `status/in-review` → `status/done`, issue closed
-- **Project board** — Status set to "Done" via `github-project` skill
-- **`plan/BACKLOG.md`** — item marked complete
+- **Project board** — Status set to "Done", Target Date overwritten with actual completion date via `github-project` skill
 - **`plan/RELEASE_PLAN.md`** — updated if release impact (flagged for user)
 
 ### Review Summary Delivered

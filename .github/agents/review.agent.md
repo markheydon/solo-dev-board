@@ -30,6 +30,7 @@ Invoke this agent when you need to:
 ## Responsibilities
 
 ### 1. PR Creation
+- **Before raising the PR:** Update `plan/BACKLOG.md` to mark the item as complete and commit that change to the feature branch. This ensures the planning artefact is part of the PR merge commit rather than being left uncommitted after merge.
 - Create pull request with:
   - Descriptive title following convention: `[type/label] Brief description`
   - PR body linking to issues: `Closes #X`, `Relates to #Y`
@@ -77,10 +78,9 @@ Invoke this agent when you need to:
 - Add closing comment summarizing validation results
 - Link PR in issue comments
 - Close issue with "Closes #X" in PR merge commit
-- **Project board update (post-merge):** Use `github-project` skill (Lifecycle Event 3) to set project Status → "Done" and overwrite Target Date with today's actual completion date
+- **Project board update (post-merge):** Use `github-project` skill (Lifecycle Event 3) to set project Status → "Done" and **overwrite Target Date with today's actual completion date** (not the original planned date — this is a required step, not optional)
 
 ### 5. Handoff to Next Work
-- Update `plan/BACKLOG.md` to mark item as complete
 - Suggest next item from backlog for PM Orchestrator
 - Flag any follow-up items or technical debt discovered during review
 
@@ -150,8 +150,7 @@ Review is complete when:
 
 **Post-merge:** After user approves and merge completes:
 - ✅ Issue closed with `status/done`
-- ✅ Project board Status set to "Done" via `github-project` skill
-- ✅ Backlog marked complete
+- ✅ Project board Status set to "Done" and Target Date overwritten with actual completion date
 - ✅ Release plan updated if needed
 
 ---
