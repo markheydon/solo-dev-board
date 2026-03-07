@@ -47,7 +47,21 @@ This prompt invokes the **Delivery Agent**, which executes:
 - **If issue not ready:** Escalate to PM Orchestrator for re-planning
 - **Project board update:** Remove `status/todo` label, add `status/in-progress`; use `github-project` skill (Lifecycle Event 2) to set project Status → "In Progress" and **overwrite Start Date with today's actual start date** (not the original planned date — this is a required step, not optional)
 
-### 2. Implementation Execution
+### 2. Feature Branch Creation
+
+Before any code is written, the Delivery Agent must create a dedicated feature branch from `main`:
+
+```bash
+git checkout main
+git pull origin main
+git checkout -b feature/issue-$issueNumber-brief-description
+```
+
+**Branch naming:** `feature/issue-N-kebab-case-description` (e.g. `feature/issue-31-label-manager-ui`).
+
+All source code, tests, and documentation changes are committed to this branch. The branch reaches `main` only via a pull request created by the Review Agent — **never commit implementation code directly to `main`**.
+
+### 3. Implementation Execution
 - Follow layered architecture from `.github/copilot-instructions.md`:
   - **Domain** → no external dependencies
   - **Application** → depends on Domain only
@@ -57,19 +71,19 @@ This prompt invokes the **Delivery Agent**, which executes:
 - Use Fluent UI Blazor components per `.github/skills/fluentui-blazor/SKILL.md` for UI work
 - **UK English only:** All comments, strings, user-facing text in UK English
 
-### 3. Test Creation
+### 4. Test Creation
 - Add xUnit tests following `.github/skills/csharp-xunit/SKILL.md`
 - Test naming: `MethodUnderTest_Scenario_ExpectedOutcome`
-- Use Moq for mocking, FluentAssertions for assertions
+- Use Moq for mocking; xUnit built-in `Assert.*` for assertions — **FluentAssertions is prohibited** (see ADR-0008)
 - Test projects mirror source project structure
 - Arrange/Act/Assert sections separated by blank lines
 
-### 4. Documentation Updates
+### 5. Documentation Updates
 - Update `docs/user-guide/*.md` if feature is user-facing
 - Update `docs/index.md` quick links if new doc page added
 - Add XML doc comments (`///`) to all public members
 
-### 5. ADR Creation (if needed)
+### 6. ADR Creation (if needed)
 - Invoke `create-architectural-decision-record` skill if:
   - Architectural decision introduced during implementation
   - Design pattern chosen
@@ -77,7 +91,7 @@ This prompt invokes the **Delivery Agent**, which executes:
 - Place ADR in `adr/` directory
 - Update `adr/README.md` index
 
-### 6. Backlog Synchronisation
+### 7. Backlog Synchronisation
 - Update `plan/BACKLOG.md` to reflect implementation progress
 - Flag scope changes in `plan/SCOPE.md` for user review
 

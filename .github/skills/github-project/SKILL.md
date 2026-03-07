@@ -240,7 +240,11 @@ if ($parentItemId) {
 }
 ```
 
-**Apply this for both the immediate parent Feature and the grandparent Epic.** In practice for SoloDevBoard, the hierarchy is always Epic → Feature → Story/Enabler/Test, so at most two cascade checks are needed per delivery start. (Review Agent responsibility, post-merge)
+**Apply this for both the immediate parent Feature and the grandparent Epic.** In practice for SoloDevBoard, the hierarchy is always Epic → Feature → Story/Enabler/Test, so at most two cascade checks are needed per delivery start.
+
+---
+
+### Event 3: Issue Closed (Review Agent responsibility, post-merge)
 
 When a PR is merged and the issue is closed, update Status to "Done" and **overwrite Target Date with today's actual completion date**. This replaces the planned estimate set at Event 1, giving a true record of when the work finished.
 
@@ -254,6 +258,30 @@ gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { 
 # Step 3: Overwrite Target Date with today's actual completion date
 $actualEndDate = (Get-Date -Format 'yyyy-MM-dd')
 gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { projectId: `"PVT_kwHOAJefG84BQ6bh`" itemId: `"$itemId`" fieldId: `"PVTF_lAHOAJefG84BQ6bhzg-5WQw`" value: { date: `"$actualEndDate`" } }) { projectV2Item { id } } }" | Out-Null
+```
+
+---
+
+### Event 3a: Cascade "Done" to Parent Feature and Epic (Review Agent responsibility, post-merge)
+
+After closing a Story, Enabler, or Test via Event 3, check whether **all sibling issues** under the same parent Feature are now closed. If so, apply Event 3 to the Feature (close it, `status/done`, board Status→Done, Target Date→today). Then repeat: if all Features under the parent Epic are also closed, apply Event 3 to the Epic too.
+
+**How to check:** In the GitHub UI, open the parent Feature issue and inspect the Sub-issues widget — if all sub-issues are marked closed, the cascade applies. Repeat for the Epic.
+
+```powershell
+# For the parent Feature ($featureIssueNumber) — run after each child closure:
+$featureItemId = gh api graphql --field query='query { repository(owner: "markheydon", name: "solo-dev-board") { issue(number: '$featureIssueNumber') { projectItems(first: 10) { nodes { id project { number } } } } } }' --jq '.data.repository.issue.projectItems.nodes[] | select(.project.number == 8) | .id'
+
+# Close the Feature issue (only if ALL children are closed):
+gh issue edit $featureIssueNumber --repo markheydon/solo-dev-board --remove-label "status/in-progress" --add-label "status/done"
+gh issue close $featureIssueNumber --repo markheydon/solo-dev-board --comment "All child issues are complete. Closing Feature as done."
+
+# Update project board — Status → Done and Target Date → today
+gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { projectId: `"PVT_kwHOAJefG84BQ6bh`" itemId: `"$featureItemId`" fieldId: `"PVTSSF_lAHOAJefG84BQ6bhzg-5WGY`" value: { singleSelectOptionId: `"98236657`" } }) { projectV2Item { id } } }" | Out-Null
+$actualEndDate = (Get-Date -Format 'yyyy-MM-dd')
+gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { projectId: `"PVT_kwHOAJefG84BQ6bh`" itemId: `"$featureItemId`" fieldId: `"PVTF_lAHOAJefG84BQ6bhzg-5WQw`" value: { date: `"$actualEndDate`" } }) { projectV2Item { id } } }" | Out-Null
+
+# Repeat identically for the parent Epic ($epicIssueNumber) if all its Features are now closed.
 ```
 
 ---

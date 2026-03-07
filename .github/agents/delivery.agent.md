@@ -41,7 +41,21 @@ Invoke this agent when you need to:
   - Use `github-project` skill (Lifecycle Event 2) to set project Status → "In Progress" and overwrite Start Date with today's actual start date
   - **Cascade to parents (Lifecycle Event 2a):** For each parent Feature and Epic of the issue being implemented, check if it is still "Todo" on the project board. If so, move it to "In Progress" and overwrite its Start Date with today's date, and update its label from `status/todo` to `status/in-progress`. This ensures the Epic Board and Feature Board show accurate status as soon as any child work begins.
 
-### 2. Implementation Execution
+### 2. Feature Branch Creation
+
+**MANDATORY — Always create a feature branch before writing any code.**
+
+```powershell
+git checkout main
+git pull origin main
+git checkout -b feature/issue-$issueNumber-kebab-case-description
+```
+
+Branch naming convention: `feature/issue-N-kebab-case-description` (e.g. `feature/issue-15-label-manager-ui`).
+
+All source code, tests, and documentation changes are committed to this branch. The branch must reach `main` only via a pull request created and merged by the Review Agent — never commit implementation work directly to `main`.
+
+### 3. Implementation Execution
 - Follow layered architecture rules from `.github/copilot-instructions.md`:
   - Domain → no external dependencies
   - Application → depends on Domain only
@@ -51,19 +65,19 @@ Invoke this agent when you need to:
 - Use Fluent UI Blazor components per `.github/skills/fluentui-blazor/SKILL.md` when building UI
 - **UK English requirement:** All code comments, string literals, user-facing text in UK English
 
-### 3. Test Creation
+### 4. Test Creation
 - Add or update xUnit tests following `.github/skills/csharp-xunit/SKILL.md`
 - Test naming: `MethodUnderTest_Scenario_ExpectedOutcome`
-- Use Moq for mocking, FluentAssertions for assertions
+- Use Moq for mocking; xUnit built-in `Assert.*` for assertions — **FluentAssertions is prohibited** (see ADR-0008)
 - Test projects mirror source project structure
 - Arrange/Act/Assert sections separated by blank lines
 
-### 4. Documentation Updates
+### 5. Documentation Updates
 - Update `docs/user-guide/*.md` if feature is user-facing
 - Update `docs/index.md` quick links if new doc page added
 - Add XML doc comments (`///`) to all public members per `.github/skills/csharp-docs/SKILL.md`
 
-### 5. ADR Creation (when needed)
+### 6. ADR Creation (when needed)
 - Invoke `create-architectural-decision-record` skill if:
   - Architectural decision introduced
   - Design pattern chosen
@@ -71,7 +85,7 @@ Invoke this agent when you need to:
 - Place ADR in `adr/` directory
 - Update `adr/README.md` index
 
-### 6. Backlog Synchronisation
+### 7. Backlog Synchronisation
 - Update `plan/BACKLOG.md` to reflect implementation progress
 - Update `plan/SCOPE.md` if scope changed during implementation (flag for user review)
 
@@ -84,7 +98,8 @@ Invoke this agent when you need to:
 ❌ **Do not change scope without user approval** — flag scope drift and pause for decision  
 ❌ **Do not skip tests or documentation** — mandatory gates must be met  
 ❌ **Do not use US English spelling** — UK English only (colour, organise, behaviour, etc.)  
-❌ **Do not create files outside the layered architecture** — respect Domain/Application/Infrastructure/App boundaries
+❌ **Do not create files outside the layered architecture** — respect Domain/Application/Infrastructure/App boundaries  
+❌ **Do not commit implementation code directly to `main`** — always work on a `feature/issue-N-description` branch; the branch reaches `main` only via a merged pull request
 
 ---
 
@@ -132,6 +147,7 @@ Deliver to user:
 ## Completion Criteria
 
 Implementation is complete when:
+- ✅ Working on a `feature/issue-N-description` branch (never directly on `main`)
 - ✅ All acceptance criteria from issue are met
 - ✅ Project board Status set to "In Progress" and issue label updated
 - ✅ Code compiles without errors/warnings

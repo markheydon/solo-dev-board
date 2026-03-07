@@ -30,8 +30,9 @@ Invoke this agent when you need to:
 ## Responsibilities
 
 ### 1. PR Creation
-- **Before raising the PR:** Update `plan/BACKLOG.md` to mark the item as complete and commit that change to the feature branch. This ensures the planning artefact is part of the PR merge commit rather than being left uncommitted after merge.
-- Create pull request with:
+- **Before raising the PR:** Confirm that implementation was done on a `feature/issue-N-description` branch (not directly on `main`). If the work is already on `main` without a feature branch, flag this to the user as a process violation.
+- Update `plan/BACKLOG.md` to mark the item as complete and commit that change to the feature branch. This ensures the planning artefact is part of the PR merge commit rather than being left uncommitted after merge.
+- Create pull request targeting `main` from the feature branch with:
   - Descriptive title following convention: `[type/label] Brief description`
   - PR body linking to issues: `Closes #X`, `Relates to #Y`
   - Labels matching primary issue labels
@@ -79,6 +80,7 @@ Invoke this agent when you need to:
 - Link PR in issue comments
 - Close issue with "Closes #X" in PR merge commit
 - **Project board update (post-merge):** Use `github-project` skill (Lifecycle Event 3) to set project Status → "Done" and **overwrite Target Date with today's actual completion date** (not the original planned date — this is a required step, not optional)
+- **Cascade to parents (Lifecycle Event 3a):** After closing the issue, check whether all sibling issues under the same parent Feature are now closed. If so, close the Feature (apply Event 3 to it). Then check whether all Features under the parent Epic are closed; if so, close the Epic too. See `github-project` skill Event 3a for the full command pattern.
 
 ### 5. Handoff to Next Work
 - Suggest next item from backlog for PM Orchestrator
