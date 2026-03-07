@@ -18,13 +18,13 @@ public sealed class GitHubService : IGitHubService
     /// <param name="httpClientFactory">The factory used to create named <see cref="HttpClient"/> instances.</param>
     public GitHubService(IHttpClientFactory httpClientFactory)
     {
-        _httpClientFactory = httpClientFactory;
+        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
     }
 
     /// <inheritdoc/>
     public async Task<IReadOnlyList<Repository>> GetRepositoriesAsync(CancellationToken cancellationToken = default)
     {
-        var client = _httpClientFactory.CreateClient(GitHubApiClientName);
+        var client = CreateAuthenticatedClient();
         const string endpoint = "/user/repos?sort=updated&per_page=100";
         var repositories = await GetPagedAsync<RepositoryResponseDto, Repository>(
                 client,
@@ -41,7 +41,7 @@ public sealed class GitHubService : IGitHubService
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
 
-        var client = _httpClientFactory.CreateClient(GitHubApiClientName);
+        var client = CreateAuthenticatedClient();
         var endpoint = $"/users/{Uri.EscapeDataString(owner)}/repos?per_page=100";
         var repositories = await GetPagedAsync<RepositoryResponseDto, Repository>(
                 client,
@@ -64,7 +64,7 @@ public sealed class GitHubService : IGitHubService
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
         ArgumentException.ThrowIfNullOrWhiteSpace(repo);
 
-        var client = _httpClientFactory.CreateClient(GitHubApiClientName);
+        var client = CreateAuthenticatedClient();
         var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/issues?state=all&per_page=100";
         var issues = await GetPagedAsync<IssueResponseDto, Issue>(
                 client,
@@ -82,7 +82,7 @@ public sealed class GitHubService : IGitHubService
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
         ArgumentException.ThrowIfNullOrWhiteSpace(repo);
 
-        var client = _httpClientFactory.CreateClient(GitHubApiClientName);
+        var client = CreateAuthenticatedClient();
         var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/pulls?state=all&per_page=100";
         var pullRequests = await GetPagedAsync<PullRequestResponseDto, PullRequest>(
                 client,
@@ -100,7 +100,7 @@ public sealed class GitHubService : IGitHubService
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
         ArgumentException.ThrowIfNullOrWhiteSpace(repo);
 
-        var client = _httpClientFactory.CreateClient(GitHubApiClientName);
+        var client = CreateAuthenticatedClient();
         var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/milestones?state=all&per_page=100";
         var milestones = await GetPagedAsync<MilestoneResponseDto, Milestone>(
                 client,
@@ -118,7 +118,7 @@ public sealed class GitHubService : IGitHubService
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
         ArgumentException.ThrowIfNullOrWhiteSpace(repo);
 
-        var client = _httpClientFactory.CreateClient(GitHubApiClientName);
+        var client = CreateAuthenticatedClient();
         var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/labels?per_page=100";
         var labels = await GetPagedAsync<LabelResponseDto, Label>(
                 client,
@@ -137,7 +137,7 @@ public sealed class GitHubService : IGitHubService
         ArgumentException.ThrowIfNullOrWhiteSpace(repo);
         ArgumentNullException.ThrowIfNull(label);
 
-        var client = _httpClientFactory.CreateClient(GitHubApiClientName);
+        var client = CreateAuthenticatedClient();
         var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/labels";
 
         using var response = await client.PostAsJsonAsync(endpoint, LabelUpsertRequestDto.FromDomain(label), JsonOptions, cancellationToken).ConfigureAwait(false);
@@ -157,7 +157,7 @@ public sealed class GitHubService : IGitHubService
         ArgumentException.ThrowIfNullOrWhiteSpace(labelName);
         ArgumentNullException.ThrowIfNull(label);
 
-        var client = _httpClientFactory.CreateClient(GitHubApiClientName);
+        var client = CreateAuthenticatedClient();
         var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/labels/{Uri.EscapeDataString(labelName)}";
 
         using var request = new HttpRequestMessage(HttpMethod.Patch, endpoint)
@@ -181,11 +181,17 @@ public sealed class GitHubService : IGitHubService
         ArgumentException.ThrowIfNullOrWhiteSpace(repo);
         ArgumentException.ThrowIfNullOrWhiteSpace(labelName);
 
-        var client = _httpClientFactory.CreateClient(GitHubApiClientName);
+        var client = CreateAuthenticatedClient();
         var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/labels/{Uri.EscapeDataString(labelName)}";
 
         using var response = await client.DeleteAsync(endpoint, cancellationToken).ConfigureAwait(false);
         await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
+    }
+
+    private HttpClient CreateAuthenticatedClient()
+    {
+        // Authentication is handled by the configured GitHubAuthHandler on the named HttpClient.
+        return _httpClientFactory.CreateClient(GitHubApiClientName);
     }
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)

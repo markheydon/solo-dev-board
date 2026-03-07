@@ -44,13 +44,13 @@ public sealed class GitHubServiceTests
         Assert.Equal("https://api.github.com/user/repos?sort=updated&per_page=100", handler.Requests[0].RequestUri!.ToString());
     }
 
-      [Fact]
-      public async Task GetRepositoriesAsync_EmptyResponse_ReturnsEmptyList()
-      {
+    [Fact]
+    public async Task GetRepositoriesAsync_EmptyResponse_ReturnsEmptyList()
+    {
         // Arrange
         var handler = new QueueMessageHandler(
         [
-          CreateJsonResponse(HttpStatusCode.OK, "[]"),
+            CreateJsonResponse(HttpStatusCode.OK, "[]"),
         ]);
 
         var sut = CreateSubject(handler);
@@ -62,7 +62,7 @@ public sealed class GitHubServiceTests
         Assert.Empty(result);
         Assert.Single(handler.Requests);
         Assert.Equal("https://api.github.com/user/repos?sort=updated&per_page=100", handler.Requests[0].RequestUri!.ToString());
-      }
+    }
 
     [Fact]
     public async Task GetRepositoriesAsync_MultiplePages_ReturnsMappedRepositories()
@@ -392,26 +392,26 @@ public sealed class GitHubServiceTests
         Assert.Equal(HttpStatusCode.Unauthorized, exception.StatusCode);
     }
 
-      [Fact]
-      public async Task CreateLabelAsync_ApiReturnsBadRequest_ThrowsHttpRequestException()
-      {
+    [Fact]
+    public async Task CreateLabelAsync_ApiReturnsBadRequest_ThrowsHttpRequestException()
+    {
         // Arrange
         var handler = new QueueMessageHandler([
-          new HttpResponseMessage(HttpStatusCode.BadRequest)
-          {
-            Content = new StringContent("{\"message\":\"Validation failed\"}", Encoding.UTF8, "application/json"),
-          },
+            new HttpResponseMessage(HttpStatusCode.BadRequest)
+            {
+                Content = new StringContent("{\"message\":\"Validation failed\"}", Encoding.UTF8, "application/json"),
+            },
         ]);
         var sut = CreateSubject(handler);
         var label = new Label { Name = "bug", Colour = "d73a4a", Description = "Something is not working" };
 
         // Act / Assert
         var exception = await Assert.ThrowsAsync<HttpRequestException>(
-          async () => _ = await sut.CreateLabelAsync("owner", "repo", label));
+            async () => _ = await sut.CreateLabelAsync("owner", "repo", label));
 
         Assert.Equal(HttpStatusCode.BadRequest, exception.StatusCode);
         Assert.Contains("GitHub API request failed", exception.Message, StringComparison.Ordinal);
-      }
+    }
 
     private static GitHubService CreateSubject(HttpMessageHandler handler)
     {
@@ -451,14 +451,14 @@ public sealed class GitHubServiceTests
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-          Requests.Add(await CloneRequestAsync(request, cancellationToken).ConfigureAwait(false));
+            Requests.Add(await CloneRequestAsync(request, cancellationToken).ConfigureAwait(false));
 
             if (_responses.Count == 0)
             {
                 throw new InvalidOperationException("No mocked responses are left in the queue.");
             }
 
-          return _responses.Dequeue();
+            return _responses.Dequeue();
         }
 
         private static async Task<HttpRequestMessage> CloneRequestAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -467,7 +467,7 @@ public sealed class GitHubServiceTests
 
             if (request.Content is not null)
             {
-            var content = await request.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+              var content = await request.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
                 var mediaType = request.Content.Headers.ContentType?.MediaType ?? "application/json";
                 clone.Content = new StringContent(content, Encoding.UTF8, mediaType);
             }
