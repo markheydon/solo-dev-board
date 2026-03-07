@@ -34,6 +34,7 @@ It is built with the solo developer in mind: opinionated defaults, minimal confi
 ## Quick Links
 
 - 📖 [Getting Started](getting-started.md) — prerequisites, local setup, and configuration
+- 🗂️ [Repositories Guide](user-guide/repositories.md) — view repositories available to your authenticated account
 - 👤 [User Guide](user-guide/) — detailed guides for each feature
 - 🏗️ [Infrastructure](../infra/README.md) — deploying to Azure with Bicep
 - 📋 [Backlog](../plan/BACKLOG.md) — what's planned

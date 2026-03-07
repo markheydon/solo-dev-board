@@ -5,6 +5,11 @@ namespace SoloDevBoard.Application.Services;
 /// <summary>Provides access to GitHub API operations.</summary>
 public interface IGitHubService
 {
+    /// <summary>Retrieves repositories accessible to the authenticated GitHub user.</summary>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A read-only list of repositories visible to the authenticated user.</returns>
+    Task<IReadOnlyList<Repository>> GetRepositoriesAsync(CancellationToken cancellationToken = default);
+
     /// <summary>Retrieves all repositories for the specified owner.</summary>
     /// <param name="owner">The GitHub account owner login.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>

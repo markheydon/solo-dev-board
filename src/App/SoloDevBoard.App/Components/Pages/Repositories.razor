@@ -1,0 +1,47 @@
+@page "/repositories"
+@rendermode InteractiveServer
+
+<PageTitle>Repositories</PageTitle>
+
+<h1>Repositories</h1>
+
+<p>Browse repositories available to your authenticated GitHub account.</p>
+
+@if (isLoading)
+{
+    <div aria-live="polite" role="status">
+        <FluentProgressRing aria-label="Loading repositories" />
+        <p>Loading repositories...</p>
+    </div>
+}
+else if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <FluentCard aria-live="assertive" role="alert">
+        <h2>Unable to load repositories</h2>
+        <p>@errorMessage</p>
+        <FluentButton Appearance="Appearance.Accent" @onclick="ReloadAsync">Try again</FluentButton>
+    </FluentCard>
+}
+else if (repositories.Count == 0)
+{
+    <FluentCard aria-live="polite">
+        <h2>No repositories found</h2>
+        <p>No repositories were returned for your account.</p>
+    </FluentCard>
+}
+else
+{
+    <FluentDataGrid TGridItem="SoloDevBoard.Domain.Entities.Repository"
+                    Items="@repositories.AsQueryable()"
+                    AriaLabel="GitHub repositories"
+                    GridTemplateColumns="2fr 1fr 1fr"
+                    ResizeColumnOnAllRows="true">
+        <PropertyColumn Property="@(repository => repository.Name)" Title="Name" Sortable="true" />
+        <TemplateColumn Title="Visibility" Align="Align.Center">
+            @(context.IsPrivate ? "Private" : "Public")
+        </TemplateColumn>
+        <TemplateColumn Title="Last Updated (UTC)" Align="Align.End">
+            @context.UpdatedAt.UtcDateTime.ToString("dd MMM yyyy", System.Globalization.CultureInfo.InvariantCulture)
+        </TemplateColumn>
+    </FluentDataGrid>
+}

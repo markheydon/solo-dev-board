@@ -22,6 +22,21 @@ public sealed class GitHubService : IGitHubService
     }
 
     /// <inheritdoc/>
+    public async Task<IReadOnlyList<Repository>> GetRepositoriesAsync(CancellationToken cancellationToken = default)
+    {
+        var client = _httpClientFactory.CreateClient(GitHubApiClientName);
+        const string endpoint = "/user/repos?sort=updated&per_page=100";
+        var repositories = await GetPagedAsync<RepositoryResponseDto, Repository>(
+                client,
+                endpoint,
+                static dto => dto.ToDomain(),
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        return repositories;
+    }
+
+    /// <inheritdoc/>
     public async Task<IReadOnlyList<Repository>> GetRepositoriesAsync(string owner, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
