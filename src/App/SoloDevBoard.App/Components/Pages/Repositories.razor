@@ -1,4 +1,5 @@
 @page "/repositories"
+@rendermode InteractiveServer
 
 <PageTitle>Repositories</PageTitle>
 
@@ -39,8 +40,8 @@ else
         <TemplateColumn Title="Visibility" Align="Align.Center">
             @(context.IsPrivate ? "Private" : "Public")
         </TemplateColumn>
-        <TemplateColumn Title="Last Updated" Align="Align.End">
-            @context.UpdatedAt.ToLocalTime().ToString("dd MMM yyyy")
+        <TemplateColumn Title="Last Updated (UTC)" Align="Align.End">
+            @context.UpdatedAt.UtcDateTime.ToString("dd MMM yyyy", System.Globalization.CultureInfo.InvariantCulture)
         </TemplateColumn>
     </FluentDataGrid>
 }
