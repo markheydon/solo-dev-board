@@ -78,7 +78,7 @@ The following **must** stay synchronised across formats:
 | YAML Template | Markdown Template | Key Fields | Default Labels |
 |---------------|-------------------|------------|----------------|
 | `bug.yml` | Bug Report | Description, Steps to Reproduce, Expected Behaviour, Actual Behaviour, Environment, Logs/Screenshots | `type/bug`, `priority/high` |
-| `feature.yml` | Feature/User Story | Description, User Story, Acceptance Criteria, Related Epic/Milestone, Area | `type/feature`, `priority/medium`, optionally `area/*` |
+| `feature.yml` | Feature/User Story | Description, User Story, Acceptance Criteria, Related Epic/Milestone, Area | `type/story` (user story), `type/feature` (feature grouping), `priority/medium`, optionally `area/*` |
 | `chore.yml` | Chore/Technical Debt | Description, Motivation/Context, Definition of Done, Area | `type/chore`, `priority/low`, optionally `area/*` |
 
 ---
@@ -146,7 +146,7 @@ YAML templates have `dropdown` fields for priority and area. Markdown templates 
 
 Example:
 ```markdown
-**Labels to apply:** `type/feature`, `priority/medium` (default), optionally add `area/` label (dashboard, migration, labels, board-rules, triage, workflows, infrastructure, docs)
+**Labels to apply:** `type/story`, `priority/medium` (default), optionally add `area/` label (dashboard, migration, labels, board-rules, triage, workflows, infrastructure, docs)
 ```
 
 ### User Story Template Pattern

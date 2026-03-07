@@ -144,7 +144,7 @@ This prompt invokes the **Review Agent**, which executes:
 - **PR #50**: [feature] Label Manager UI with FluentDataGrid
 - **Link**: https://github.com/markheydon/solo-dev-board/pull/50
 - **Closes**: #31
-- **Labels**: type/feature, priority/high, area/labels, size/m
+- **Labels**: type/story, priority/high, area/labels, size/m
 - **Milestone**: Phase 1
 
 ## Release Impact

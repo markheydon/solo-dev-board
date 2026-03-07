@@ -96,7 +96,7 @@ When Copilot Chat is asked to add a feature, it **must** perform the following s
 
 When referencing or suggesting labels for GitHub Issues and PRs, follow the taxonomy defined in **`plan/LABEL_STRATEGY.md`**. Key label groups:
 
-- `type/` — feature, bug, chore, documentation, epic
+- `type/` — epic, feature, story, enabler, test, bug, chore, documentation
 - `priority/` — critical, high, medium, low
 - `status/` — todo, in-progress, blocked, in-review, done
 - `area/` — dashboard, migration, labels, board-rules, triage, workflows, infrastructure, docs

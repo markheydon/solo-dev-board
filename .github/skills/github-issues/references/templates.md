@@ -48,7 +48,9 @@
 
 **Mirrors:** `.github/ISSUE_TEMPLATE/feature.yml`
 
-**Labels to apply:** `type/feature`, `priority/medium` (default), optionally add `area/` label (dashboard, migration, labels, board-rules, triage, workflows, infrastructure, docs)
+**Labels to apply:** `type/story`, `priority/medium` (default), optionally add `area/` label (dashboard, migration, labels, board-rules, triage, workflows, infrastructure, docs)
+
+> Use `type/feature` for Feature-tier issues grouping multiple stories. Use `type/enabler` for technical prerequisite issues. Use `type/test` for test coverage issues.
 
 ```markdown
 ## Description

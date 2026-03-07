@@ -16,11 +16,14 @@ Describes the nature of the issue or PR.
 
 | Label | Colour | Description |
 |-------|--------|-------------|
-| `type/feature` | `#0075ca` | A new feature or user story |
+| `type/epic` | `#6f42c1` | A high-level grouping of related features (spans a full phase) |
+| `type/feature` | `#0075ca` | A Feature — groups related stories within an epic |
+| `type/story` | `#1d76db` | A user-facing Story delivering a discrete piece of value |
+| `type/enabler` | `#e4e669` | An Enabler — technical prerequisite that unblocks stories |
+| `type/test` | `#bfd4f2` | A Test issue — test coverage deliverable (unit, component, integration) |
 | `type/bug` | `#d73a4a` | A bug or unexpected behaviour |
-| `type/chore` | `#e4e669` | Maintenance, dependency updates, or technical debt |
+| `type/chore` | `#fef2c0` | Maintenance, dependency updates, or technical debt |
 | `type/documentation` | `#0052cc` | Documentation additions or improvements |
-| `type/epic` | `#6f42c1` | A high-level grouping of related features or stories |
 
 ---
 
@@ -87,8 +90,8 @@ Provides an estimate of the effort required. Use story points or t-shirt sizing 
 To create all labels in a repository, you can use the GitHub CLI:
 
 ```bash
-# Example: create the type/feature label
-gh label create "type/feature" --color "0075ca" --description "A new feature or user story" --repo <owner>/<repo>
+# Example: create the type/story label
+gh label create "type/story" --color "1d76db" --description "A user-facing Story delivering a discrete piece of value" --repo <owner>/<repo>
 ```
 
 A script to create all labels at once will be provided in `infra/scripts/create-labels.sh` (planned for Phase 1).
@@ -100,11 +103,14 @@ A script to create all labels at once will be provided in `infra/scripts/create-
 ### When to Apply Each Label
 
 #### `type/` — Always required on issues and PRs
-- Apply `type/feature` to issues representing new functionality.
+- Apply `type/epic` to parent issues that span a full phase and group related features.
+- Apply `type/feature` to issues that group related stories within an epic (e.g. `[Feature] GitHub API Integration`).
+- Apply `type/story` to user-facing delivery issues (e.g. `[Story] Implement REST API calls`).
+- Apply `type/enabler` to technical prerequisite issues that unblock stories (e.g. `[Enabler] Configure HttpClient`).
+- Apply `type/test` to issues whose primary deliverable is test coverage (e.g. `[Test] Unit tests for GitHubService`).
 - Apply `type/bug` to issues representing unexpected or broken behaviour.
-- Apply `type/chore` to maintenance tasks, refactoring, or dependency updates.
+- Apply `type/chore` to maintenance tasks, refactoring, or dependency updates with no user-facing change.
 - Apply `type/documentation` to issues or PRs that only touch documentation.
-- Apply `type/epic` to parent issues that group related user stories.
 
 #### `priority/` — Always required on issues
 - Apply `priority/critical` only when the issue is blocking all progress or affects production.

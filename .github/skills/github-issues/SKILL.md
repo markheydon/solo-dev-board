@@ -122,7 +122,7 @@ Always apply at least one `type/` and one `priority/` label.
 
 | Group | Examples |
 |-------|----------|
-| `type/` | `type/feature`, `type/bug`, `type/chore`, `type/documentation`, `type/epic` |
+| `type/` | `type/epic`, `type/feature`, `type/story`, `type/enabler`, `type/test`, `type/bug`, `type/chore`, `type/documentation` |
 | `priority/` | `priority/critical`, `priority/high`, `priority/medium`, `priority/low` |
 | `status/` | `status/todo`, `status/in-progress`, `status/blocked`, `status/in-review`, `status/done` |
 | `area/` | `area/dashboard`, `area/migration`, `area/labels`, `area/board-rules`, `area/triage`, `area/workflows`, `area/infrastructure`, `area/docs` |

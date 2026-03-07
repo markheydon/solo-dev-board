@@ -37,9 +37,9 @@ Always apply at least one `type/` and one `priority/` label on issue creation.
 # Create an issue with repo taxonomy labels
 gh issue create \
 	--repo owner/repo \
-	--title "Feature: Add OAuth login" \
+	--title "[Story] Add OAuth login" \
 	--body-file issue.md \
-	--label "type/feature,priority/high,status/todo,area/infrastructure"
+	--label "type/story,priority/high,status/todo,area/infrastructure"
 
 # List open todo issues for a work area
 gh issue list \
