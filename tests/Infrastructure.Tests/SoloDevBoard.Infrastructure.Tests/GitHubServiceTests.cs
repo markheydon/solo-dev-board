@@ -44,6 +44,26 @@ public sealed class GitHubServiceTests
         Assert.Equal("https://api.github.com/user/repos?sort=updated&per_page=100", handler.Requests[0].RequestUri!.ToString());
     }
 
+      [Fact]
+      public async Task GetRepositoriesAsync_EmptyResponse_ReturnsEmptyList()
+      {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+          CreateJsonResponse(HttpStatusCode.OK, "[]"),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var result = await sut.GetRepositoriesAsync();
+
+        // Assert
+        Assert.Empty(result);
+        Assert.Single(handler.Requests);
+        Assert.Equal("https://api.github.com/user/repos?sort=updated&per_page=100", handler.Requests[0].RequestUri!.ToString());
+      }
+
     [Fact]
     public async Task GetRepositoriesAsync_MultiplePages_ReturnsMappedRepositories()
     {
@@ -371,6 +391,27 @@ public sealed class GitHubServiceTests
 
         Assert.Equal(HttpStatusCode.Unauthorized, exception.StatusCode);
     }
+
+      [Fact]
+      public async Task CreateLabelAsync_ApiReturnsBadRequest_ThrowsHttpRequestException()
+      {
+        // Arrange
+        var handler = new QueueMessageHandler([
+          new HttpResponseMessage(HttpStatusCode.BadRequest)
+          {
+            Content = new StringContent("{\"message\":\"Validation failed\"}", Encoding.UTF8, "application/json"),
+          },
+        ]);
+        var sut = CreateSubject(handler);
+        var label = new Label { Name = "bug", Colour = "d73a4a", Description = "Something is not working" };
+
+        // Act / Assert
+        var exception = await Assert.ThrowsAsync<HttpRequestException>(
+          async () => _ = await sut.CreateLabelAsync("owner", "repo", label));
+
+        Assert.Equal(HttpStatusCode.BadRequest, exception.StatusCode);
+        Assert.Contains("GitHub API request failed", exception.Message, StringComparison.Ordinal);
+      }
 
     private static GitHubService CreateSubject(HttpMessageHandler handler)
     {

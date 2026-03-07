@@ -58,6 +58,56 @@ public sealed class GitHubAuthHandlerTests
         await Assert.ThrowsAsync<InvalidOperationException>(act);
     }
 
+    [Fact]
+    public async Task SendAsync_WhitespacePersonalAccessToken_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var options = Options.Create(new GitHubAuthOptions
+        {
+            PersonalAccessToken = "   "
+        });
+
+        var terminalHandler = new TerminalHandler();
+        using var handler = new GitHubAuthHandler(options)
+        {
+            InnerHandler = terminalHandler
+        };
+
+        using var invoker = new HttpMessageInvoker(handler);
+        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/user");
+
+        // Act
+        var act = async () => _ = await invoker.SendAsync(request, CancellationToken.None);
+
+        // Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(act);
+    }
+
+    [Fact]
+    public async Task SendAsync_NullPersonalAccessToken_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var options = Options.Create(new GitHubAuthOptions
+        {
+            PersonalAccessToken = null!
+        });
+
+        var terminalHandler = new TerminalHandler();
+        using var handler = new GitHubAuthHandler(options)
+        {
+            InnerHandler = terminalHandler
+        };
+
+        using var invoker = new HttpMessageInvoker(handler);
+        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/user");
+
+        // Act
+        var act = async () => _ = await invoker.SendAsync(request, CancellationToken.None);
+
+        // Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(act);
+    }
+
     private sealed class TerminalHandler : HttpMessageHandler
     {
         public HttpRequestMessage? LastRequest { get; private set; }
