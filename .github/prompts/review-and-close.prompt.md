@@ -66,8 +66,9 @@ This prompt invokes the **Review Agent**, which executes:
 - Create pull request with:
   - Title following convention: `[type/label] Brief description`
   - PR body linking issues: `Closes #X`, `Relates to #Y`
-  - Labels matching primary issue labels
-  - Milestone assignment if applicable
+  - **Assignee:** always assign to `markheydon` (the sole developer on this project)
+  - **Labels:** copy `type/`, `priority/`, `area/`, and `size/` labels from the linked issue; add `status/in-review`; do **not** carry over `status/in-progress` or `status/todo`
+  - Milestone assignment if applicable (same milestone as linked issue)
 - Use `.github/pull_request_template.md` if present
 - Link PR to GitHub project board if tracking enabled
 
@@ -266,6 +267,11 @@ PR created but flagged for release impact review.
 ## Quality Gate Checklist
 
 The Review Agent validates this checklist automatically:
+
+### Pull Request Metadata
+- [ ] PR assigned to `markheydon`
+- [ ] PR labels set: `type/`, `priority/`, `area/`, `size/` from issue + `status/in-review`
+- [ ] PR milestone matches linked issue milestone
 
 ### Code Quality
 - [ ] `get_errors` shows zero errors/warnings
