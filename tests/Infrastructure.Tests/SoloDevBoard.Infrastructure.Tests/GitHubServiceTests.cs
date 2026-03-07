@@ -1,4 +1,5 @@
 using Moq;
+using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Domain.Entities;
 using System.Net;
 using System.Text;
@@ -43,6 +44,48 @@ public sealed class GitHubServiceTests
         Assert.Single(handler.Requests);
         Assert.Equal("https://api.github.com/user/repos?sort=updated&per_page=100", handler.Requests[0].RequestUri!.ToString());
     }
+
+      [Fact]
+      public async Task GetRepositoriesAsync_WhenCalled_UsesAccessTokenFromCurrentUserContext()
+      {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+          CreateJsonResponse(HttpStatusCode.OK, "[]"),
+        ]);
+
+        var currentUserContextMock = new Mock<ICurrentUserContext>();
+        currentUserContextMock.Setup(context => context.GetAccessToken()).Returns("test-token");
+
+        var sut = CreateSubject(handler, currentUserContextMock);
+
+        // Act
+        _ = await sut.GetRepositoriesAsync();
+
+        // Assert
+        currentUserContextMock.Verify(context => context.GetAccessToken(), Times.Once);
+      }
+
+      [Fact]
+      public async Task GetRepositoriesAsync_EmptyAccessToken_ThrowsInvalidOperationException()
+      {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+          CreateJsonResponse(HttpStatusCode.OK, "[]"),
+        ]);
+
+        var currentUserContextMock = new Mock<ICurrentUserContext>();
+        currentUserContextMock.Setup(context => context.GetAccessToken()).Returns(string.Empty);
+
+        var sut = CreateSubject(handler, currentUserContextMock);
+
+        // Act
+        var act = async () => _ = await sut.GetRepositoriesAsync();
+
+        // Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(act);
+      }
 
       [Fact]
       public async Task GetRepositoriesAsync_EmptyResponse_ReturnsEmptyList()
@@ -413,7 +456,7 @@ public sealed class GitHubServiceTests
         Assert.Contains("GitHub API request failed", exception.Message, StringComparison.Ordinal);
       }
 
-    private static GitHubService CreateSubject(HttpMessageHandler handler)
+    private static GitHubService CreateSubject(HttpMessageHandler handler, Mock<ICurrentUserContext>? currentUserContextMock = null)
     {
         var client = new HttpClient(handler)
         {
@@ -425,7 +468,15 @@ public sealed class GitHubServiceTests
             .Setup(factory => factory.CreateClient(GitHubService.GitHubApiClientName))
             .Returns(client);
 
-        return new GitHubService(httpClientFactoryMock.Object);
+        if (currentUserContextMock is null)
+        {
+          currentUserContextMock = new Mock<ICurrentUserContext>();
+          currentUserContextMock
+            .Setup(context => context.GetAccessToken())
+            .Returns("test-token");
+        }
+
+        return new GitHubService(httpClientFactoryMock.Object, currentUserContextMock.Object);
     }
 
     private static HttpResponseMessage CreateJsonResponse(HttpStatusCode statusCode, string json, string? linkHeader = null)

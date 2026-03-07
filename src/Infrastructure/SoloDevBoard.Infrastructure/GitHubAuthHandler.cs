@@ -1,27 +1,27 @@
 using System.Net.Http.Headers;
-using Microsoft.Extensions.Options;
+using SoloDevBoard.Application.Identity;
 
 namespace SoloDevBoard.Infrastructure;
 
 /// <summary>
 /// Injects GitHub PAT authentication into outbound API requests.
 /// </summary>
-public sealed class GitHubAuthHandler(IOptions<GitHubAuthOptions> authOptions) : DelegatingHandler
+public sealed class GitHubAuthHandler(ICurrentUserContext currentUserContext) : DelegatingHandler
 {
-    private readonly GitHubAuthOptions _authOptions = authOptions?.Value ?? throw new ArgumentNullException(nameof(authOptions));
+    private readonly ICurrentUserContext _currentUserContext = currentUserContext ?? throw new ArgumentNullException(nameof(currentUserContext));
 
     /// <inheritdoc/>
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        if (string.IsNullOrWhiteSpace(_authOptions.PersonalAccessToken))
+        var accessToken = _currentUserContext.GetAccessToken();
+        if (string.IsNullOrWhiteSpace(accessToken))
         {
-            throw new InvalidOperationException(
-                $"GitHub personal access token is not configured. Check configuration key '{GitHubAuthOptions.SectionName}:{nameof(GitHubAuthOptions.PersonalAccessToken)}'.");
+            throw new InvalidOperationException("GitHub access token returned by the current user context is empty.");
         }
 
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _authOptions.PersonalAccessToken);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         return base.SendAsync(request, cancellationToken);
     }

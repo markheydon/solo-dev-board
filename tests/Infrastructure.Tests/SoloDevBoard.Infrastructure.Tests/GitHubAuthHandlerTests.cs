@@ -1,21 +1,20 @@
 using System.Net;
-using Microsoft.Extensions.Options;
+using Moq;
+using SoloDevBoard.Application.Identity;
 
 namespace SoloDevBoard.Infrastructure.Tests;
 
 public sealed class GitHubAuthHandlerTests
 {
     [Fact]
-    public async Task SendAsync_ValidPersonalAccessToken_AddsBearerAuthorisationHeader()
+    public async Task SendAsync_ValidAccessToken_AddsBearerAuthorisationHeader()
     {
         // Arrange
-        var options = Options.Create(new GitHubAuthOptions
-        {
-            PersonalAccessToken = "test-token"
-        });
+        var currentUserContextMock = new Mock<ICurrentUserContext>();
+        currentUserContextMock.Setup(context => context.GetAccessToken()).Returns("test-token");
 
         var terminalHandler = new TerminalHandler();
-        using var handler = new GitHubAuthHandler(options)
+        using var handler = new GitHubAuthHandler(currentUserContextMock.Object)
         {
             InnerHandler = terminalHandler
         };
@@ -31,19 +30,18 @@ public sealed class GitHubAuthHandlerTests
         Assert.NotNull(terminalHandler.LastRequest!.Headers.Authorization);
         Assert.Equal("Bearer", terminalHandler.LastRequest.Headers.Authorization!.Scheme);
         Assert.Equal("test-token", terminalHandler.LastRequest.Headers.Authorization.Parameter);
+        currentUserContextMock.Verify(context => context.GetAccessToken(), Times.Once);
     }
 
     [Fact]
-    public async Task SendAsync_EmptyPersonalAccessToken_ThrowsInvalidOperationException()
+    public async Task SendAsync_EmptyAccessToken_ThrowsInvalidOperationException()
     {
         // Arrange
-        var options = Options.Create(new GitHubAuthOptions
-        {
-            PersonalAccessToken = string.Empty
-        });
+        var currentUserContextMock = new Mock<ICurrentUserContext>();
+        currentUserContextMock.Setup(context => context.GetAccessToken()).Returns(string.Empty);
 
         var terminalHandler = new TerminalHandler();
-        using var handler = new GitHubAuthHandler(options)
+        using var handler = new GitHubAuthHandler(currentUserContextMock.Object)
         {
             InnerHandler = terminalHandler
         };
@@ -59,16 +57,14 @@ public sealed class GitHubAuthHandlerTests
     }
 
     [Fact]
-    public async Task SendAsync_WhitespacePersonalAccessToken_ThrowsInvalidOperationException()
+    public async Task SendAsync_WhitespaceAccessToken_ThrowsInvalidOperationException()
     {
         // Arrange
-        var options = Options.Create(new GitHubAuthOptions
-        {
-            PersonalAccessToken = "   "
-        });
+        var currentUserContextMock = new Mock<ICurrentUserContext>();
+        currentUserContextMock.Setup(context => context.GetAccessToken()).Returns("   ");
 
         var terminalHandler = new TerminalHandler();
-        using var handler = new GitHubAuthHandler(options)
+        using var handler = new GitHubAuthHandler(currentUserContextMock.Object)
         {
             InnerHandler = terminalHandler
         };
@@ -84,16 +80,14 @@ public sealed class GitHubAuthHandlerTests
     }
 
     [Fact]
-    public async Task SendAsync_NullPersonalAccessToken_ThrowsInvalidOperationException()
+    public async Task SendAsync_NullAccessToken_ThrowsInvalidOperationException()
     {
         // Arrange
-        var options = Options.Create(new GitHubAuthOptions
-        {
-            PersonalAccessToken = null!
-        });
+        var currentUserContextMock = new Mock<ICurrentUserContext>();
+        currentUserContextMock.Setup(context => context.GetAccessToken()).Returns((string)null!);
 
         var terminalHandler = new TerminalHandler();
-        using var handler = new GitHubAuthHandler(options)
+        using var handler = new GitHubAuthHandler(currentUserContextMock.Object)
         {
             InnerHandler = terminalHandler
         };

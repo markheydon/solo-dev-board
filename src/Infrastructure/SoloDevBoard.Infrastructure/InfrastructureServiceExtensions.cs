@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services;
+using SoloDevBoard.Infrastructure.Identity;
 
 namespace SoloDevBoard.Infrastructure;
 
@@ -20,6 +22,8 @@ public static class InfrastructureServiceExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.Configure<GitHubAuthOptions>(configuration.GetSection(GitHubAuthOptions.SectionName));
+        // Scoped now to align with the future per-request user context in Phase 6.
+        services.AddScoped<ICurrentUserContext, SingleUserCurrentUserContext>();
         services.AddTransient<GitHubAuthHandler>();
 
         services
