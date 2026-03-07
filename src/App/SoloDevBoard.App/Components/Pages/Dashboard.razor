@@ -13,7 +13,7 @@
         <FluentCard class="feature-panel" aria-label="@($"{feature.Name} panel")">
             <h2>@feature.Name</h2>
             <p>@feature.Description</p>
-            <a class="feature-link" href="@feature.Route">Open feature</a>
+            <a class="feature-link" href="@feature.Route">@($"Open {feature.Name}")</a>
         </FluentCard>
     }
 </div>
