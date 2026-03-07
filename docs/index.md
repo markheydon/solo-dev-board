@@ -34,6 +34,7 @@ It is built with the solo developer in mind: opinionated defaults, minimal confi
 ## Quick Links
 
 - 📖 [Getting Started](getting-started.md) — prerequisites, local setup, and configuration
+- 🧭 [Dashboard Shell Guide](user-guide/dashboard-shell.md) — navigate all six feature areas from the home page
 - 🗂️ [Repositories Guide](user-guide/repositories.md) — view repositories available to your authenticated account
 - 👤 [User Guide](user-guide/) — detailed guides for each feature
 - 🏗️ [Infrastructure](../infra/README.md) — deploying to Azure with Bicep
