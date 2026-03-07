@@ -30,6 +30,8 @@ Each ADR follows this format:
 | [ADR-0006](0006-moq-mocking-library.md) | Switch Mocking Library from NSubstitute to Moq | Accepted (assertion library aspect superseded by ADR-0008) |
 | [ADR-0007](0007-multi-tenancy-authentication-phased-approach.md) | Multi-Tenancy Authentication — Phased Approach | Accepted |
 | [ADR-0008](0008-remove-fluentassertions.md) | Remove FluentAssertions — Use xUnit Built-in Assertions Only | Accepted |
+| [ADR-0009](0009-fluent-ui-blazor-component-library.md) | Use Microsoft Fluent UI Blazor Component Library | Accepted |
+| [ADR-0010](0010-bunit-component-testing.md) | Use bUnit for Blazor Component Testing | Accepted |
 
 ## Adding a New ADR
 

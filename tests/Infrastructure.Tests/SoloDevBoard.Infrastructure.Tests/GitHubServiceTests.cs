@@ -9,6 +9,42 @@ namespace SoloDevBoard.Infrastructure.Tests;
 public sealed class GitHubServiceTests
 {
     [Fact]
+    public async Task GetRepositoriesAsync_AuthenticatedUser_UsesUserReposEndpoint()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                [
+                  {
+                    "id": 3,
+                    "name": "repo-auth",
+                    "full_name": "mark/repo-auth",
+                    "description": "Authenticated repo",
+                    "html_url": "https://github.com/mark/repo-auth",
+                    "private": false,
+                    "created_at": "2026-03-01T10:00:00Z",
+                    "updated_at": "2026-03-02T11:00:00Z"
+                  }
+                ]
+                """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var result = await sut.GetRepositoriesAsync();
+
+        // Assert
+        Assert.Single(result);
+        Assert.Equal("repo-auth", result[0].Name);
+        Assert.Single(handler.Requests);
+        Assert.Equal("https://api.github.com/user/repos?sort=updated&per_page=100", handler.Requests[0].RequestUri!.ToString());
+    }
+
+    [Fact]
     public async Task GetRepositoriesAsync_MultiplePages_ReturnsMappedRepositories()
     {
         // Arrange

@@ -22,7 +22,7 @@ For the full feature scope, see [SCOPE.md](SCOPE.md). For individual feature bac
 - [ ] Implement GitHub App authentication flow (optional in this phase, required before v1.0)
 - [ ] Implement `IGitHubService` interface in `Application` layer
 - [ ] Implement `GitHubRestClient` in `Infrastructure` layer (using `Octokit` or `HttpClient` + `System.Text.Json`)
-- [ ] Implement basic repository listing: fetch and display all repositories the authenticated user has access to
+- [x] Implement basic repository listing: fetch and display all repositories the authenticated user has access to _(issue #8 done — 2026-03-07)_
 - [ ] Create a basic dashboard shell page in Blazor (empty panels for each of the 6 features)
 - [ ] Configure `appsettings.json` and user secrets for local development
 - [ ] Set up xUnit test projects; write smoke tests for `GitHubRestClient`

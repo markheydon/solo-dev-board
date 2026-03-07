@@ -1,0 +1,20 @@
+{
+  "recommendations": [
+    // C# Dev Kit — IntelliSense, debugging, test explorer, solution explorer
+    "ms-dotnettools.csdevkit",
+    // C# language support (transitive dependency of C# Dev Kit)
+    "ms-dotnettools.csharp",
+    // .NET runtime installer (required by C# Dev Kit)
+    "ms-dotnettools.vscode-dotnet-runtime",
+    // GitHub Pull Requests and Issues — PR review, issue tracking
+    "github.vscode-pull-request-github",
+    // GitHub Copilot — AI code completion
+    "github.copilot",
+    // GitHub Copilot Chat — AI assistant
+    "github.copilot-chat",
+    // Bicep — Azure infrastructure templates in infra/
+    "ms-azuretools.vscode-bicep",
+    // EditorConfig — consistent formatting via .editorconfig
+    "editorconfig.editorconfig"
+  ]
+}

@@ -5,6 +5,10 @@
     <ProjectReference Include="..\..\Infrastructure\SoloDevBoard.Infrastructure\SoloDevBoard.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>

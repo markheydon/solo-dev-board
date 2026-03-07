@@ -279,7 +279,7 @@ The Review Agent validates this checklist automatically:
 - [ ] Test naming follows `MethodUnderTest_Scenario_ExpectedOutcome`
 - [ ] Tests pass locally (`dotnet test`)
 - [ ] Test projects mirror source structure
-- [ ] Moq for mocking, FluentAssertions for assertions
+- [ ] Moq for mocking, xUnit built-in `Assert.*` for assertions (FluentAssertions is prohibited per ADR-0008)
 
 ### Documentation
 - [ ] User-facing features have `docs/user-guide/*.md`

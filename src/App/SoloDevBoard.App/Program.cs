@@ -1,4 +1,6 @@
+using Microsoft.FluentUI.AspNetCore.Components;
 using SoloDevBoard.App.Components;
+using SoloDevBoard.Application.Services;
 using SoloDevBoard.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,6 +8,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddFluentUIComponents();
+builder.Services.AddScoped<IRepositoryService, RepositoryService>();
 
 // Register Infrastructure services (GitHub API integration).
 // The Infrastructure project is referenced here solely as the DI composition root.
