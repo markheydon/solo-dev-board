@@ -1,0 +1,33 @@
+@page "/"
+@rendermode InteractiveServer
+
+<PageTitle>Dashboard</PageTitle>
+
+<h1>Dashboard</h1>
+
+<p>Navigate to each SoloDevBoard feature from a single starting point.</p>
+
+<div class="dashboard-grid">
+    @foreach (var feature in features)
+    {
+        <FluentCard class="feature-panel" aria-label="@($"{feature.Name} panel")">
+            <h2>@feature.Name</h2>
+            <p>@feature.Description</p>
+            <a class="feature-link" href="@feature.Route">@($"Open {feature.Name}")</a>
+        </FluentCard>
+    }
+</div>
+
+@code {
+    private static readonly IReadOnlyList<FeatureCardModel> features =
+    [
+        new("Audit Dashboard", "Consolidated overview of repository health and delivery signals.", "/audit"),
+        new("One-Click Migration", "Copy labels, milestones, and board configuration across repositories.", "/migrate"),
+        new("Label Manager", "Manage and synchronise labels across repositories.", "/labels"),
+        new("Board Rules Visualiser", "Inspect project automation flow and board behaviour.", "/board-rules"),
+        new("Triage UI", "Process incoming issues quickly with a focused triage experience.", "/triage"),
+        new("Workflow Templates", "Apply and maintain workflow templates consistently.", "/workflows"),
+    ];
+
+    private sealed record FeatureCardModel(string Name, string Description, string Route);
+}
