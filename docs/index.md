@@ -28,6 +28,7 @@ It is built with the solo developer in mind: opinionated defaults, minimal confi
 | **Board Rules Visualiser** | Visualise the automation rules configured on your GitHub project boards to understand how issues flow between columns. |
 | **Triage UI** | A focused, keyboard-friendly interface for triaging incoming issues — apply labels, assign milestones, and close duplicates quickly. |
 | **Workflow Templates** | Browse, apply, and customise GitHub Actions workflow templates across your repositories without leaving SoloDevBoard. |
+| **Cross-Repo PM Workflow** | A Daily Focus view, cross-repository Backlog Review, and Iteration Planning tool — the UI-based evolution of the [github-workflows](https://github.com/markheydon/github-workflows) PM operating system. |
 
 ---
 
@@ -37,6 +38,7 @@ It is built with the solo developer in mind: opinionated defaults, minimal confi
 - 🧭 [Dashboard Shell Guide](user-guide/dashboard-shell.md) — navigate all six feature areas from the home page
 - 🗂️ [Repositories Guide](user-guide/repositories.md) — view repositories available to your authenticated account
 - 👤 [User Guide](user-guide/) — detailed guides for each feature
+- 📅 [Cross-Repo PM Workflow](user-guide/pm-workflow.md) — daily focus, backlog review, and iteration planning
 - 🏗️ [Infrastructure](../infra/README.md) — deploying to Azure with Bicep
 - 📋 [Backlog](../plan/BACKLOG.md) — what's planned
 

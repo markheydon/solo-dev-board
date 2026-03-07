@@ -18,7 +18,7 @@ Labels: `type/epic`, `area/infrastructure`
 - [x] Set up xUnit test projects — _done_
 - [x] Set up CI workflow (`.github/workflows/ci.yml`) — _done_
 - [x] As a solo developer, I want the application to authenticate with GitHub using my Personal Access Token so that I can access my repositories. _(#6 done — merged PR #13, 2026-03-06; #7 done — merged PR #17, 2026-03-06)_
-- [ ] As a solo developer, I want service interfaces to resolve user identity via an `ICurrentUserContext` abstraction so that the application can support multiple users in the future without structural rework. _(Phase 2 enabler — see ADR-0007)_
+- [ ] As a solo developer, I want service interfaces to resolve user identity via an `ICurrentUserContext` abstraction so that the application can support multiple users in the future without structural rework. _(Phase 2 enabler — see ADR-0007 — **planned: Feature #21, Enablers #22 #23 #24, Test #25, milestone v0.2.0**)_
 - [ ] As a solo developer, I want to authenticate with a GitHub App so that I can use fine-grained permissions without a long-lived PAT. _(Phase 5 — see ADR-0007)_
 - [x] As a solo developer, I want to see a list of all my GitHub repositories so that I can select which ones to manage. _(issue #8 done — merged PR #18, 2026-03-07)_
 - [x] As a solo developer, I want an empty dashboard shell page with navigation cards for each feature so that the application has a clear entry point. _(issue #9 done — merged PR #19, 2026-03-07)_
@@ -41,6 +41,9 @@ Labels: `type/epic`, `area/dashboard`
 - [ ] As a solo developer, I want to filter the Audit Dashboard by repository so that I can focus on one project at a time.
 - [ ] As a solo developer, I want the Audit Dashboard to refresh automatically so that I always see current data.
 - [ ] As a solo developer, I want to export an audit summary as a Markdown report so that I can paste it into a planning document.
+- [ ] As a solo developer, I want to see my project board state at a glance (item count per status column and current active load) so that I can assess capacity before committing to more work.
+- [ ] As a solo developer, I want to see which repositories have had no open issue or PR activity in the last 14 days so that neglected repos are surfaced rather than silently forgotten.
+- [ ] As a solo developer, I want to see open issues and pull requests flagged as `priority-high` across all repositories so that urgent work is never buried in per-repository noise.
 
 ---
 
@@ -97,6 +100,7 @@ Labels: `type/epic`, `area/triage`
 - [ ] As a solo developer, I want to skip an issue and return to it later so that I am not blocked by difficult triage decisions.
 - [ ] As a solo developer, I want to see a progress indicator during a triage session so that I know how many issues remain.
 - [ ] As a solo developer, I want to see a summary at the end of a triage session showing all actions taken so that I have a record of what was done.
+- [ ] As a solo developer, I want to triage unlabelled pull requests alongside issues so that my entire GitHub workload, including open PRs, is managed in one place.
 
 ---
 
@@ -111,6 +115,40 @@ Labels: `type/epic`, `area/workflows`
 - [ ] As a solo developer, I want to be alerted when a repository's workflow file differs from the canonical template so that I can update it.
 - [ ] As a solo developer, I want built-in templates for .NET CI, Azure CD, and Dependabot so that I have useful starting points out of the box.
 - [ ] As a solo developer, I want to define my own custom template repositories so that I can share templates across my own projects.
+
+---
+
+## Epic 7: Cross-Repo PM Workflow
+
+Labels: `type/epic`, `area/dashboard`
+
+> This epic represents the long-term destination of SoloDevBoard: a UI-based implementation of the two-mode PM operating system established in the companion [markheydon/github-workflows](https://github.com/markheydon/github-workflows) repository. That system uses AI agents and prompts to manage cross-repo workloads; SoloDevBoard replaces those text-based prompts with a proper visual interface, removing the dependency on VS Code and Copilot for day-to-day PM operations.
+
+### Daily Focus
+
+- [ ] As a solo developer, I want a Daily Focus view that shows my project board state (item count per status column and active load) so that I have an instant overview when I start my working day.
+- [ ] As a solo developer, I want to see the top three unblocked work items I should focus on today, ranked by priority across all my repositories, so that I can start working without spending time deciding what to pick up.
+- [ ] As a solo developer, I want to be alerted when items have been in my Up Next board column for three or more days without progressing so that I address stalling before it accumulates.
+- [ ] As a solo developer, I want to see pull requests that have been in an In Review state for three or more days so that I can make a timely merge, close, or return-to-progress decision.
+
+### Backlog Review
+
+- [ ] As a solo developer, I want a cross-repository backlog view that groups work by priority (urgent, ready to start, blocked, deferred) so that I can see my full workload in one place without jumping between repositories.
+- [ ] As a solo developer, I want to see open issues and pull requests with no core label flagged prominently so that items needing triage are never missed.
+- [ ] As a solo developer, I want to identify epics that are close to completion (all child stories closed) so that I can close them and keep my backlog clean.
+- [ ] As a solo developer, I want the backlog view to distinguish between issues and open pull requests so that I can see both work-to-do and work-awaiting-review at a glance.
+
+### Iteration Planning
+
+- [ ] As a solo developer, I want to select issues and pull requests from across my repositories and move them to my Up Next board column in a single planning session so that my work queue is populated quickly and intentionally.
+- [ ] As a solo developer, I want the planning view to show my current active load and warn me when I exceed a configurable capacity limit so that I avoid over-committing.
+- [ ] As a solo developer, I want to resolve stalled Up Next items (move to Ice Box, mark as Blocked, or re-commit) before adding new work so that my board remains an accurate picture of intent at all times.
+- [ ] As a solo developer, I want to optionally assign a milestone to planned items in a single step so that iteration scoping is part of the planning flow rather than a separate task.
+
+### Repo Management
+
+- [ ] As a solo developer, I want to define a list of excluded repositories so that personal, archived, or irrelevant repos are not surfaced in cross-repo PM operations.
+- [ ] As a solo developer, I want to see a summary of issue and PR counts per repository so that I can quickly identify where work is concentrated.
 
 ---
 

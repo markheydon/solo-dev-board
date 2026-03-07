@@ -135,7 +135,47 @@ For the full feature scope, see [SCOPE.md](SCOPE.md). For individual feature bac
 
 ---
 
-## Phase 5 — Polish, Testing, and Azure Deployment
+## Phase 5 — Cross-Repo PM Workflow
+
+**Goal:** Deliver Epic 7 — the UI-based implementation of the two-mode PM operating system from [markheydon/github-workflows](https://github.com/markheydon/github-workflows). This phase transforms SoloDevBoard from a collection of individual tools into a cohesive planning environment.
+
+**Milestone:** v0.5.0
+
+### Key Tasks
+
+#### Daily Focus
+- [ ] Design `DailyFocusReport` and `BoardSnapshot` domain records
+- [ ] Implement `DailyFocusService` in `Application` (board state, stalled items, top-priority recommendations)
+- [ ] Build Blazor Daily Focus view: board state summary, stalled item alerts, top-3 recommended work items
+- [ ] Implement stalled item detection (Up Next for 3+ days; PRs In Review for 3+ days)
+- [ ] Write unit tests for `DailyFocusService`
+- [ ] Update `docs/user-guide/pm-workflow.md`
+
+#### Backlog Review
+- [ ] Implement `BacklogReviewService` in `Application` (cross-repo, priority-grouped, PR-aware)
+- [ ] Build Blazor Backlog Review view: groups for urgent, ready, blocked, deferred; neglected repo alerts
+- [ ] Implement neglected repo detection (no issue or PR activity in 14 days)
+- [ ] Write unit tests for `BacklogReviewService`
+- [ ] Update `docs/user-guide/pm-workflow.md`
+
+#### Iteration Planning
+- [ ] Design `IterationPlan` domain record
+- [ ] Implement `IterationPlanningService` in `Application` (capacity enforcement, stale resolution, milestone assignment)
+- [ ] Build Blazor Iteration Planning view: capacity indicator, stale item resolution, Up Next curation, optional milestone assignment
+- [ ] Write unit tests for `IterationPlanningService`
+- [ ] Update `docs/user-guide/pm-workflow.md`
+
+#### Repo Management
+- [ ] Implement excluded-repos configuration (persisted per user, applied to all cross-repo operations)
+- [ ] Build Blazor settings UI for managing excluded repositories
+
+### Dependencies
+
+- Phases 1–4 complete (repository selection, label management, board API integration, GitHub Projects v2 GraphQL client)
+
+---
+
+## Phase 6 — Polish, Testing, and Azure Deployment
 
 **Goal:** Achieve production quality: comprehensive test coverage, performance profiling, accessibility review, and a stable Azure deployment pipeline.
 
@@ -157,7 +197,7 @@ For the full feature scope, see [SCOPE.md](SCOPE.md). For individual feature bac
 
 ### Dependencies
 
-- Phases 1–4 complete
+- Phases 1–5 complete
 
 ---
 

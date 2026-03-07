@@ -6,6 +6,8 @@
 
 SoloDevBoard is a **single pane of glass** for solo developers who maintain multiple GitHub repositories. The goal is to eliminate context-switching and reduce the friction of routine GitHub housekeeping tasks — triaging issues, managing labels, auditing project health, and deploying workflow configurations — by surfacing everything in one cohesive, AI-friendly application.
 
+> **Motivating context:** SoloDevBoard was directly inspired by the AI-driven PM workflow built in the companion repository [markheydon/github-workflows](https://github.com/markheydon/github-workflows). That system uses VS Code Copilot agents and prompts to manage cross-repo workloads across two operating modes — a weekly **PM Mode** (scan all repos, triage issues and PRs, curate the project board) and a daily **Work Mode** (pick the next item from a pre-curated board). SoloDevBoard's long-term destination is to provide a proper visual interface for everything that system does today via text prompts and scripts: daily focus views, cross-repo backlog prioritisation, iteration planning, label strategy enforcement, workflow migration, and issue triage. Each intermediate phase delivers individual tooling features; Epic 7 (Cross-Repo PM Workflow, Phase 5) closes the loop by bringing the planning intelligence into the UI.
+
 ---
 
 ## In Scope
@@ -30,13 +32,16 @@ A focused, keyboard-friendly interface for triaging incoming GitHub issues one a
 ### 6. Workflow Templates
 Browse, customise, and apply GitHub Actions workflow templates across repositories, with tracking of which repositories have which templates applied.
 
+### 7. Cross-Repo PM Workflow
+A UI-based implementation of the two-mode PM operating system from [markheydon/github-workflows](https://github.com/markheydon/github-workflows): a Daily Focus view (board state, stalled items, top priorities), a cross-repository Backlog Review (prioritised work across all repos, neglected repo detection), and an Iteration Planning tool (capacity management, Up Next curation, milestone assignment). This epic represents the ultimate destination of SoloDevBoard.
+
 ---
 
 ## Out of Scope
 
 The following are explicitly **not** in scope for the current version of SoloDevBoard:
 
-- **Multi-user / team features** — SoloDevBoard is currently designed for a single developer. No multi-user authentication, authorisation, or user management is in scope for Phases 1–4. Multi-tenancy (allowing any developer to sign in with their own GitHub account) is a deferred goal, targeted for Phase 5 (v1.0.0) — see [ADR-0007](../adr/0007-multi-tenancy-authentication-phased-approach.md).
+- **Multi-user / team features** — SoloDevBoard is currently designed for a single developer. No multi-user authentication, authorisation, or user management is in scope for Phases 1–5. Multi-tenancy (allowing any developer to sign in with their own GitHub account) is a deferred goal, targeted for Phase 6 (v1.0.0) — see [ADR-0007](../adr/0007-multi-tenancy-authentication-phased-approach.md).
 - **Non-GitHub providers** — GitLab, Bitbucket, Azure DevOps, and other platforms are not supported. GitHub.com is the only supported provider initially.
 - **Mobile application** — SoloDevBoard is a web application. No native iOS or Android app is planned.
 - **Real-time collaboration** — No shared sessions, shared boards, or live collaboration features.
@@ -84,3 +89,4 @@ The following are explicitly **not** in scope for the current version of SoloDev
 |------|--------|--------|
 | 2025-01-01 | Initial scope defined | Solo developer |
 | 2026-03-06 | Multi-user / team features updated from permanently out of scope to deferred (Phase 5). `ICurrentUserContext` interface preparation added to Phase 2. See ADR-0007. | Solo developer |
+| 2026-03-07 | Added Epic 7 (Cross-Repo PM Workflow) to In Scope. Updated Project Vision to document the motivating context from markheydon/github-workflows. Phase 5 added to IMPLEMENTATION_PLAN.md for this epic. | Solo developer |
