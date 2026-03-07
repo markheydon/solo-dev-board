@@ -22,8 +22,8 @@ public static class InfrastructureServiceExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.Configure<GitHubAuthOptions>(configuration.GetSection(GitHubAuthOptions.SectionName));
-        // Scoped now to align with the future per-request user context in Phase 6.
-        services.AddScoped<ICurrentUserContext, SingleUserCurrentUserContext>();
+        // Application-wide current user context for the single-user scenario.
+        services.AddSingleton<ICurrentUserContext, SingleUserCurrentUserContext>();
         services.AddTransient<GitHubAuthHandler>();
 
         services

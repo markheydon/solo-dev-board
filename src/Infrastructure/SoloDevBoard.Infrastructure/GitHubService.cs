@@ -1,7 +1,5 @@
 using SoloDevBoard.Application.Services;
-using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Domain.Entities;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -15,15 +13,12 @@ public sealed class GitHubService : IGitHubService
     public const string GitHubApiClientName = "GitHubApiClient";
 
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ICurrentUserContext _currentUserContext;
 
     /// <summary>Initialises a new instance of the <see cref="GitHubService"/> class.</summary>
     /// <param name="httpClientFactory">The factory used to create named <see cref="HttpClient"/> instances.</param>
-    /// <param name="currentUserContext">Provides the GitHub access token for the current user context.</param>
-    public GitHubService(IHttpClientFactory httpClientFactory, ICurrentUserContext currentUserContext)
+    public GitHubService(IHttpClientFactory httpClientFactory)
     {
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
-        _currentUserContext = currentUserContext ?? throw new ArgumentNullException(nameof(currentUserContext));
     }
 
     /// <inheritdoc/>
@@ -195,15 +190,8 @@ public sealed class GitHubService : IGitHubService
 
     private HttpClient CreateAuthenticatedClient()
     {
-        var accessToken = _currentUserContext.GetAccessToken();
-        if (string.IsNullOrWhiteSpace(accessToken))
-        {
-            throw new InvalidOperationException("GitHub access token returned by the current user context is empty.");
-        }
-
-        var client = _httpClientFactory.CreateClient(GitHubApiClientName);
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-        return client;
+        // Authentication is handled by the configured GitHubAuthHandler on the named HttpClient.
+        return _httpClientFactory.CreateClient(GitHubApiClientName);
     }
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)

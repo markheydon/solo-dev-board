@@ -4,7 +4,7 @@ using SoloDevBoard.Application.Identity;
 namespace SoloDevBoard.Infrastructure;
 
 /// <summary>
-/// Injects GitHub PAT authentication into outbound API requests.
+/// Injects GitHub access token authentication into outbound API requests.
 /// </summary>
 public sealed class GitHubAuthHandler(ICurrentUserContext currentUserContext) : DelegatingHandler
 {
