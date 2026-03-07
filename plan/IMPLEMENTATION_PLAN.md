@@ -45,9 +45,9 @@ For the full feature scope, see [SCOPE.md](SCOPE.md). For individual feature bac
 ### Key Tasks
 
 #### Architecture Preparation (Multi-Tenancy Readiness)
-- [ ] Define `ICurrentUserContext` interface in `SoloDevBoard.Application` to represent the authenticated user's identity and API token (see ADR-0007)
-- [ ] Implement a single-user adapter for `ICurrentUserContext` in `SoloDevBoard.Infrastructure` (reads from `IOptions<GitHubAuthOptions>` — no behaviour change from Phase 1)
-- [ ] Refactor `IGitHubService` and all Application-layer services to inject and use `ICurrentUserContext` — no service may access `IOptions<GitHubAuthOptions>` directly
+- [x] Define `ICurrentUserContext` interface in `SoloDevBoard.Application` to represent the authenticated user's identity and API token (see ADR-0007)
+- [x] Implement a single-user adapter for `ICurrentUserContext` in `SoloDevBoard.Infrastructure` (reads from `IOptions<GitHubAuthOptions>` — no behaviour change from Phase 1)
+- [x] Refactor `IGitHubService` and all Application-layer services to inject and use `ICurrentUserContext` — no service may access `IOptions<GitHubAuthOptions>` directly
 
 #### Label Manager
 - [ ] Design `Label` domain record and `ILabelRepository` interface
