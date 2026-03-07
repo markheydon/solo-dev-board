@@ -39,6 +39,7 @@ Invoke this agent when you need to:
 - **Project board update (start of work):**
   - Remove `status/todo` label, add `status/in-progress` label on the issue
   - Use `github-project` skill (Lifecycle Event 2) to set project Status → "In Progress" and overwrite Start Date with today's actual start date
+  - **Cascade to parents (Lifecycle Event 2a):** For each parent Feature and Epic of the issue being implemented, check if it is still "Todo" on the project board. If so, move it to "In Progress" and overwrite its Start Date with today's date, and update its label from `status/todo` to `status/in-progress`. This ensures the Epic Board and Feature Board show accurate status as soon as any child work begins.
 
 ### 2. Implementation Execution
 - Follow layered architecture rules from `.github/copilot-instructions.md`:

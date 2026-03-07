@@ -187,6 +187,9 @@ gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { 
 # Step 7: Set planned Target Date (ISO 8601 from Phase table, e.g. "2026-03-31")
 # Will be overwritten with actual completion date when issue is closed (Event 3)
 gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { projectId: `"PVT_kwHOAJefG84BQ6bh`" itemId: `"$itemId`" fieldId: `"PVTF_lAHOAJefG84BQ6bhzg-5WQw`" value: { date: `"$targetDate`" } }) { projectV2Item { id } } }" | Out-Null
+
+# Step 8: Assign the issue to markheydon
+gh issue edit $issueNumber --repo markheydon/solo-dev-board --add-assignee markheydon
 ```
 
 ---
@@ -215,7 +218,29 @@ gh issue edit $issueNumber --repo markheydon/solo-dev-board --remove-label "stat
 
 ---
 
-### Event 3: Issue Closed (Review Agent responsibility, post-merge)
+### Event 2a: Cascade "In Progress" to Parent Feature and Epic (Delivery Agent responsibility)
+
+When starting work on a Story, Enabler, or Test, check whether the parent Feature and Epic are still "Todo" on the project board. If so, move them to "In Progress" and overwrite their Start Date. This is a **one-time transition** — once a parent is "In Progress" it remains so until all children are done and it is closed.
+
+This rule exists because Features and Epics have no direct implementation start — they transition to "In Progress" when the **first child issue** begins work.
+
+```powershell
+# For each parent issue number ($parentIssueNumber = Feature or Epic issue number):
+
+# Step 1: Check current project status — only proceed if still "Todo"
+$parentItemId = gh api graphql --field query='query { repository(owner: "markheydon", name: "solo-dev-board") { issue(number: '$parentIssueNumber') { projectItems(first: 10) { nodes { id status: fieldValueByName(name: "Status") { ... on ProjectV2ItemFieldSingleSelectValue { name } } project { number } } } } } }' --jq '.data.repository.issue.projectItems.nodes[] | select(.project.number == 8) | select(.status.name == "Todo") | .id'
+
+# Step 2: If $parentItemId is non-empty, update Status → In Progress and Start Date → today
+if ($parentItemId) {
+    $actualStartDate = (Get-Date -Format 'yyyy-MM-dd')
+    gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { projectId: `"PVT_kwHOAJefG84BQ6bh`" itemId: `"$parentItemId`" fieldId: `"PVTSSF_lAHOAJefG84BQ6bhzg-5WGY`" value: { singleSelectOptionId: `"47fc9ee4`" } }) { projectV2Item { id } } }" | Out-Null
+    gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { projectId: `"PVT_kwHOAJefG84BQ6bh`" itemId: `"$parentItemId`" fieldId: `"PVTF_lAHOAJefG84BQ6bhzg-5WQE`" value: { date: `"$actualStartDate`" } }) { projectV2Item { id } } }" | Out-Null
+    # Also update the issue label
+    gh issue edit $parentIssueNumber --repo markheydon/solo-dev-board --remove-label "status/todo" --add-label "status/in-progress"
+}
+```
+
+**Apply this for both the immediate parent Feature and the grandparent Epic.** In practice for SoloDevBoard, the hierarchy is always Epic → Feature → Story/Enabler/Test, so at most two cascade checks are needed per delivery start. (Review Agent responsibility, post-merge)
 
 When a PR is merged and the issue is closed, update Status to "Done" and **overwrite Target Date with today's actual completion date**. This replaces the planned estimate set at Event 1, giving a true record of when the work finished.
 

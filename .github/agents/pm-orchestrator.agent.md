@@ -50,7 +50,7 @@ Invoke this agent when you need to:
 ### 4. Issue Creation
 - Use `github-issues` skill to create GitHub issues
 - Apply correct labels per `plan/LABEL_STRATEGY.md`:
-  - `type/` (feature, bug, chore, documentation, epic)
+  - `type/` (epic, feature, story, enabler, test, bug, chore, documentation)
   - `priority/` (critical, high, medium, low)
   - `area/` (dashboard, migration, labels, board-rules, triage, workflows, infrastructure, docs)
   - `size/` (xs, s, m, l, xl)
@@ -58,6 +58,7 @@ Invoke this agent when you need to:
 - Use markdown templates from `.github/skills/github-issues/references/templates.md`
 - **Note:** Markdown templates mirror YAML issue forms (`.github/ISSUE_TEMPLATE/*.yml`) which define the canonical structure
 - Assign to current milestone if applicable
+- **Assign to `markheydon`** — all issues must be assigned at creation (see github-project skill Event 1)
 - Note parent/child sub-issue hierarchy (Epic→Feature→Story/Enabler/Test) and any blocking relationships — GitHub CLI cannot set either; produce a **Manual Linking Required** table in the handoff for the user to set via the GitHub UI
 
 ### 5. Project Board Sync
