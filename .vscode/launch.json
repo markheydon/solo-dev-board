@@ -6,10 +6,7 @@
       "name": "Launch SoloDevBoard (Development)",
       "type": "dotnet",
       "request": "launch",
-      "projectPath": "${workspaceFolder}/src/App/SoloDevBoard.App/SoloDevBoard.App.csproj",
-      "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+      "projectPath": "${workspaceFolder}/src/App/SoloDevBoard.App/SoloDevBoard.App.csproj"
     }
   ]
 }
