@@ -7,9 +7,29 @@
 .repository-selector-controls {
     display: grid;
     gap: 0.75rem;
+    position: relative;
+    isolation: isolate;
 }
 
 .repository-selector-controls ::deep fluent-autocomplete {
     display: block;
     width: 100%;
+}
+
+.repository-selector-controls ::deep .fluent-autocomplete-multiselect {
+    width: 100%;
+}
+
+.repository-selector-controls ::deep .fluent-autocomplete-multiselect fluent-anchored-region {
+    z-index: 10000 !important;
+}
+
+.repository-selector-controls ::deep .fluent-autocomplete-multiselect div[role="listbox"] {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: none !important;
+    max-height: 50vh !important;
+    overflow-y: auto !important;
+    box-sizing: border-box;
+    z-index: 10000 !important;
 }
