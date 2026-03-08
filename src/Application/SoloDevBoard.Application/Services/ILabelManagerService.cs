@@ -1,5 +1,3 @@
-using SoloDevBoard.Domain.Entities;
-
 namespace SoloDevBoard.Application.Services;
 
 /// <summary>Provides label management operations.</summary>
@@ -10,7 +8,7 @@ public interface ILabelManagerService
     /// <param name="repo">The repository name.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>A read-only list of labels for the repository.</returns>
-    Task<IReadOnlyList<Label>> GetLabelsAsync(string owner, string repo, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<LabelDto>> GetLabelsAsync(string owner, string repo, CancellationToken cancellationToken = default);
 
     /// <summary>Synchronises labels from a source repository to a target repository.</summary>
     /// <param name="sourceOwner">The GitHub account owner login for the source repository.</param>
