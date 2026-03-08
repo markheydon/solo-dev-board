@@ -80,7 +80,7 @@ Your task is to ensure .NET/C# code in `${selection}` meets the SoloDevBoard sta
 ## Code Quality
 
 - Ensure SOLID principles compliance
-- Avoid code duplication through base classes and utilities
+- **Avoid code duplication (DRY):** Before writing any helper, paging loop, error-handling utility, or serialisation logic, search the same assembly (and sibling assemblies at the same layer) for an existing method that already does it. Prefer promoting an existing `private static` to `internal static` over copy-pasting. New helpers are only justified when no equivalent exists.
 - Use meaningful names that reflect domain concepts
 - Keep methods focused and cohesive
 - Implement proper disposal patterns for resources

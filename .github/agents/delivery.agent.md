@@ -65,6 +65,7 @@ All source code, tests, and documentation changes are committed to this branch. 
 - Apply C# 14 and .NET 10 conventions per `.github/instructions/dotnet-framework.instructions.md`
 - Use Fluent UI Blazor components per `.github/skills/fluentui-blazor/SKILL.md` when building UI
 - **UK English requirement:** All code comments, string literals, user-facing text in UK English
+- **Search before you write (DRY):** Before writing any helper method, paging loop, error-handling utility, or serialisation logic, search the assembly being modified (and adjacent assemblies in the same layer) for an existing method that already does it. If an equivalent `private static` method exists in a sibling class, promote it to `internal static` rather than duplicating it. Only create new utilities when no equivalent exists anywhere in the codebase.
 
 ### 4. Test Creation
 - Add or update xUnit tests following `.github/skills/csharp-xunit/SKILL.md`
@@ -100,6 +101,7 @@ All source code, tests, and documentation changes are committed to this branch. 
 - Run `get_errors` on each modified file — no diagnostics permitted.
 
 #### Review each changed source file for:
+- **DRY / no duplication** — for every new `private static` or `internal static` helper introduced, verify no equivalent method already exists elsewhere in the same assembly or a sibling assembly at the same layer. If a duplicate is found, remove it and reuse the existing method (promoting its visibility if necessary).
 - **XML doc comments** — every `public` type, method, property, and constructor has a `///` summary; no public member is undocumented.
 - **UK English** — scan all comments, string literals, exception messages, and user-facing text for US spellings (`behavior`, `color`, `organize`, `center`, `favorite`, etc.).
 - **Guard clauses** — every public constructor uses `ArgumentNullException.ThrowIfNull` (or `ArgumentException.ThrowIfNullOrWhiteSpace` for strings) for each injected dependency.
