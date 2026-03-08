@@ -51,6 +51,15 @@ SoloDevBoard.Infrastructure  → GitHub API clients, persistence, external integ
 - **App** depends on Application (calls use cases via services/mediators).
 - Use constructor injection throughout; avoid service locator patterns.
 
+### Boundary Data Shapes (ADR-0011)
+
+Two explicit rules govern what types cross each boundary:
+
+1. **Repository boundary (Infrastructure ↔ Application):** `IRepository` interfaces return and accept **domain entity records** (`Label`, `Repository`, etc.). Infrastructure translates external API responses to domain records before crossing this boundary.
+2. **Application→App boundary:** All public Application service interfaces (`I*Service`, `I*Manager`) return and accept **DTO records** (`LabelDto`, `RepositoryDto`, etc.) defined in `SoloDevBoard.Application`. **Domain entities must never appear in the public signature of these interfaces.**
+
+DTOs are `sealed record` types named `<Entity>Dto`, co-located in `SoloDevBoard.Application` alongside the service interface that uses them. Mapping from domain entity to DTO happens in the Application service implementation — not in Razor components, not via AutoMapper.
+
 ---
 
 ## Coding Conventions

@@ -32,6 +32,7 @@ Each ADR follows this format:
 | [ADR-0008](0008-remove-fluentassertions.md) | Remove FluentAssertions — Use xUnit Built-in Assertions Only | Accepted |
 | [ADR-0009](0009-fluent-ui-blazor-component-library.md) | Use Microsoft Fluent UI Blazor Component Library | Accepted |
 | [ADR-0010](0010-bunit-component-testing.md) | Use bUnit for Blazor Component Testing | Accepted |
+| [ADR-0011](0011-boundary-data-shapes.md) | Boundary Data Shapes — DTOs at the Application→App Boundary | Accepted |
 
 ## Adding a New ADR
 
