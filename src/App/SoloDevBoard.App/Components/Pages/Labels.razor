@@ -101,6 +101,7 @@ else if (hasLoadedLabels)
         <FluentDataGrid TGridItem="Labels.LabelRow"
                         Items="@filteredRows.AsQueryable()"
                         AriaLabel="Consolidated labels"
+                        RowSize="DataGridRowSize.Large"
                         GridTemplateColumns="2fr 1fr 3fr 2fr 2fr 2fr"
                         ResizeColumnOnAllRows="true"
                         data-testid="labels-grid">
