@@ -169,6 +169,7 @@ public sealed class LabelServiceTests
         _labelRepositoryMock
             .Setup(repository => repository.GetLabelsAsync("source-owner", "source-repo", It.IsAny<CancellationToken>()))
             .ReturnsAsync([
+                new Label { Name = "priority/high", Colour = "d93f0b", Description = "High", RepositoryName = "source-repo" },
                 new Label { Name = "type/story", Colour = "1d76db", Description = "Story", RepositoryName = "source-repo" },
             ]);
 
@@ -184,6 +185,10 @@ public sealed class LabelServiceTests
             .ReturnsAsync((string _, string repo, string name, Label value, CancellationToken _) => value with { Name = name, RepositoryName = repo });
 
         _labelRepositoryMock
+            .Setup(repository => repository.CreateLabelAsync("target-owner", "target-repo", It.Is<Label>(label => label.Name == "priority/high"), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string _, string repo, Label value, CancellationToken _) => value with { RepositoryName = repo });
+
+        _labelRepositoryMock
             .Setup(repository => repository.DeleteLabelAsync("target-owner", "target-repo", "status/obsolete", It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
@@ -193,9 +198,10 @@ public sealed class LabelServiceTests
         var result = await sut.SyncLabelsAsync("source-owner", "source-repo", "target-owner", "target-repo", applyChanges: true);
 
         // Assert
-        Assert.Empty(result.ToAdd);
+        Assert.Single(result.ToAdd);
         Assert.Single(result.ToUpdate);
         Assert.Single(result.ToDelete);
+        _labelRepositoryMock.Verify(repository => repository.CreateLabelAsync("target-owner", "target-repo", It.Is<Label>(label => label.Name == "priority/high"), It.IsAny<CancellationToken>()), Times.Once);
         _labelRepositoryMock.Verify(repository => repository.UpdateLabelAsync("target-owner", "target-repo", "type/story", It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Once);
         _labelRepositoryMock.Verify(repository => repository.DeleteLabelAsync("target-owner", "target-repo", "status/obsolete", It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -211,10 +217,15 @@ public sealed class LabelServiceTests
 
         // Assert
         Assert.Contains(result, label => label.Name == "type/story" && label.Colour == "1d76db");
+        Assert.Contains(result, label => label.Name == "type/feature" && label.Description == "A Feature — groups related stories within an epic");
+        Assert.Contains(result, label => label.Name == "type/enabler" && label.Description == "An Enabler — technical prerequisite that unblocks stories");
+        Assert.Contains(result, label => label.Name == "type/test" && label.Description == "A Test issue — test coverage deliverable (unit, component, integration)");
         Assert.Contains(result, label => label.Name == "priority/high" && label.Colour == "d93f0b");
+        Assert.Contains(result, label => label.Name == "priority/critical" && label.Description == "Blocking — must be resolved immediately");
         Assert.Contains(result, label => label.Name == "status/in-progress" && label.Colour == "0e8a16");
         Assert.Contains(result, label => label.Name == "area/labels" && label.Colour == "c5def5");
         Assert.Contains(result, label => label.Name == "size/m" && label.Colour == "fef2c0");
+        Assert.Contains(result, label => label.Name == "size/xs" && label.Description == "Trivial — less than 1 hour (e.g. typo fix, config change)");
     }
 
     [Fact]

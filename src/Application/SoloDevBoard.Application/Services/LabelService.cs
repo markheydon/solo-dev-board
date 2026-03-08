@@ -8,15 +8,15 @@ public sealed class LabelService : ILabelManagerService
     private static readonly IReadOnlyList<LabelDto> RecommendedTaxonomy =
     [
         new("type/epic", "6f42c1", "A high-level grouping of related features (spans a full phase)", string.Empty),
-        new("type/feature", "0075ca", "A Feature - groups related stories within an epic", string.Empty),
+        new("type/feature", "0075ca", "A Feature — groups related stories within an epic", string.Empty),
         new("type/story", "1d76db", "A user-facing Story delivering a discrete piece of value", string.Empty),
-        new("type/enabler", "e4e669", "An Enabler - technical prerequisite that unblocks stories", string.Empty),
-        new("type/test", "bfd4f2", "A Test issue - test coverage deliverable (unit, component, integration)", string.Empty),
+        new("type/enabler", "e4e669", "An Enabler — technical prerequisite that unblocks stories", string.Empty),
+        new("type/test", "bfd4f2", "A Test issue — test coverage deliverable (unit, component, integration)", string.Empty),
         new("type/bug", "d73a4a", "A bug or unexpected behaviour", string.Empty),
         new("type/chore", "fef2c0", "Maintenance, dependency updates, or technical debt", string.Empty),
         new("type/documentation", "0052cc", "Documentation additions or improvements", string.Empty),
 
-        new("priority/critical", "b60205", "Blocking - must be resolved immediately", string.Empty),
+        new("priority/critical", "b60205", "Blocking — must be resolved immediately", string.Empty),
         new("priority/high", "d93f0b", "Should be addressed in the current sprint or release", string.Empty),
         new("priority/medium", "fbca04", "Should be addressed soon but is not blocking", string.Empty),
         new("priority/low", "c2e0c6", "Nice to have; can be deferred", string.Empty),
@@ -36,7 +36,7 @@ public sealed class LabelService : ILabelManagerService
         new("area/infrastructure", "e4e669", "Azure infrastructure, CI/CD, deployment", string.Empty),
         new("area/docs", "0052cc", "Documentation, user guides, ADRs, planning docs", string.Empty),
 
-        new("size/xs", "dde8c9", "Trivial - less than 1 hour (e.g. typo fix, config change)", string.Empty),
+        new("size/xs", "dde8c9", "Trivial — less than 1 hour (e.g. typo fix, config change)", string.Empty),
         new("size/s", "c5def5", "Small - less than half a day", string.Empty),
         new("size/m", "fef2c0", "Medium - half a day to one day", string.Empty),
         new("size/l", "f9d0c4", "Large - two to three days", string.Empty),
@@ -96,7 +96,7 @@ public sealed class LabelService : ILabelManagerService
             createdLabels.Add(MapToDto(created, repository));
         }
 
-        return createdLabels;
+        return createdLabels.ToArray();
     }
 
     /// <inheritdoc/>
@@ -116,7 +116,7 @@ public sealed class LabelService : ILabelManagerService
             updatedLabels.Add(MapToDto(updated, repository));
         }
 
-        return updatedLabels;
+        return updatedLabels.ToArray();
     }
 
     /// <inheritdoc/>
