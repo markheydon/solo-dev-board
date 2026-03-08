@@ -87,8 +87,35 @@ All source code, tests, and documentation changes are committed to this branch. 
 - Update `adr/README.md` index
 
 ### 7. Backlog Synchronisation
-- Update `plan/BACKLOG.md` to reflect implementation progress
-- Update `plan/SCOPE.md` if scope changed during implementation (flag for user review)
+- Update `plan/BACKLOG.md` to reflect implementation progress.
+- Update `plan/SCOPE.md` if scope changed during implementation (flag for user review).
+
+### 8. Self-Review (Pre-Handoff)
+
+**Mandatory before marking implementation complete.** Perform an explicit pass over every file changed in this implementation. This step exists to catch issues before the GitHub coding review agent sees the PR — resolving them now avoids a second implementation round-trip.
+
+#### Run automated checks first
+- Run `dotnet build` — zero errors, zero warnings required.
+- Run `dotnet test` — all tests must pass.
+- Run `get_errors` on each modified file — no diagnostics permitted.
+
+#### Review each changed source file for:
+- **XML doc comments** — every `public` type, method, property, and constructor has a `///` summary; no public member is undocumented.
+- **UK English** — scan all comments, string literals, exception messages, and user-facing text for US spellings (`behavior`, `color`, `organize`, `center`, `favorite`, etc.).
+- **Guard clauses** — every public constructor uses `ArgumentNullException.ThrowIfNull` (or `ArgumentException.ThrowIfNullOrWhiteSpace` for strings) for each injected dependency.
+- **Async correctness** — every `await` in Application/Infrastructure code appends `.ConfigureAwait(false)`; no `.Result`, `.Wait()`, or `.GetAwaiter().GetResult()` present.
+- **Layer boundaries** — no domain entity types in public Application service interface signatures (use DTOs); no Application or Infrastructure types referenced directly in Razor components.
+- **Collection types** — public API methods return `IReadOnlyList<T>` or `IReadOnlyDictionary<TKey,TValue>`, not `List<T>` or `Dictionary<TKey,TValue>`.
+- **File-scoped namespaces** — all `.cs` files use `namespace Foo.Bar;` (not block-scoped).
+- **No business logic in Razor** — `.razor` files contain only rendering and event wiring; non-trivial logic lives in code-behind or Application layer.
+
+#### Review each changed test file for:
+- **Test naming** — every test method follows `MethodUnderTest_Scenario_ExpectedOutcome`.
+- **AAA structure** — Arrange, Act, and Assert blocks each separated by a blank line.
+- **Assertion library** — only `Assert.*` from xUnit; no `FluentAssertions` imports or usage.
+- **No magic strings** — shared literals extracted to constants where reused across tests.
+
+**If any item above fails:** fix it before proceeding. Do not hand off to the Review Agent with known self-review findings outstanding.
 
 ---
 
