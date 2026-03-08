@@ -24,7 +24,7 @@ public sealed class LabelsTests : BunitContext
     }
 
     [Fact]
-    public void Labels_WhileServiceIsLoading_ShowsLoadingState()
+    public void Labels_WhileRepositoryServiceIsLoading_ShowsLoadingState()
     {
         // Arrange
         var repositoriesTask = new TaskCompletionSource<IReadOnlyList<Repository>>();
@@ -36,11 +36,36 @@ public sealed class LabelsTests : BunitContext
         var cut = Render<Labels>();
 
         // Assert
-        Assert.Contains("Loading labels", cut.Markup);
+        Assert.Contains("Loading repositories", cut.Markup);
     }
 
     [Fact]
-    public void Labels_ServiceReturnsNoLabels_ShowsEmptyState()
+    public void Labels_InitialLoad_DoesNotFetchLabelsUntilRequested()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new Repository { Name = "repo-a", FullName = "owner/repo-a" },
+            ]);
+
+        // Act
+        var cut = Render<Labels>();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Select repositories to begin", cut.Markup);
+            Assert.Contains("Load selected repositories", cut.Markup);
+        });
+
+        _labelManagerServiceMock.Verify(
+            service => service.GetLabelsForRepositoriesAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public void Labels_LoadRequestedAndNoLabelsReturned_ShowsEmptyState()
     {
         // Arrange
         _repositoryServiceMock
@@ -55,6 +80,10 @@ public sealed class LabelsTests : BunitContext
 
         // Act
         var cut = Render<Labels>();
+        cut.WaitForAssertion(() => Assert.Contains("repo-checkbox-repo-a", cut.Markup));
+
+        cut.Find("[data-testid='repo-checkbox-repo-a']").Change(true);
+        cut.Find("[data-testid='load-labels-button']").Click();
 
         // Assert
         cut.WaitForAssertion(() =>
@@ -65,41 +94,57 @@ public sealed class LabelsTests : BunitContext
     }
 
     [Fact]
-    public void Labels_RepositoriesHavePartialLabels_ShowsGapAnalysisInGrid()
+    public void Labels_SelectedRepositoriesAcrossOwners_LoadsEachOwnerAndShowsGapAnalysis()
     {
         // Arrange
         _repositoryServiceMock
             .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync([
-                new Repository { Name = "repo-a", FullName = "owner/repo-a" },
-                new Repository { Name = "repo-b", FullName = "owner/repo-b" },
+                new Repository { Name = "repo-a", FullName = "owner-a/repo-a" },
+                new Repository { Name = "repo-b", FullName = "owner-b/repo-b" },
             ]);
 
         _labelManagerServiceMock
-            .Setup(service => service.GetLabelsForRepositoriesAsync("owner", It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
+            .Setup(service => service.GetLabelsForRepositoriesAsync("owner-a", It.Is<IReadOnlyList<string>>(repositories => repositories.SequenceEqual(new[] { "repo-a" })), It.IsAny<CancellationToken>()))
             .ReturnsAsync([
                 new LabelDto("type/story", "1d76db", "Story label", "repo-a"),
                 new LabelDto("priority/high", "d93f0b", "High priority", "repo-a"),
+            ]);
+
+        _labelManagerServiceMock
+            .Setup(service => service.GetLabelsForRepositoriesAsync("owner-b", It.Is<IReadOnlyList<string>>(repositories => repositories.SequenceEqual(new[] { "repo-b" })), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
                 new LabelDto("priority/high", "d93f0b", "High priority", "repo-b"),
             ]);
 
         // Act
         var cut = Render<Labels>();
+        cut.WaitForAssertion(() => Assert.Contains("repo-checkbox-repo-a", cut.Markup));
+
+        cut.Find("[data-testid='repo-checkbox-repo-a']").Change(true);
+        cut.Find("[data-testid='repo-checkbox-repo-b']").Change(true);
+        cut.Find("[data-testid='load-labels-button']").Click();
 
         // Assert
         cut.WaitForAssertion(() =>
         {
             Assert.Contains("type/story", cut.Markup);
             Assert.Contains("Story label", cut.Markup);
-            Assert.Contains("repo-a", cut.Markup);
-            Assert.Contains("repo-b", cut.Markup);
-            Assert.Contains("Missing In", cut.Markup);
-            Assert.Contains("priority/high", cut.Markup);
+            Assert.Contains("owner-a/repo-a", cut.Markup);
+            Assert.Contains("owner-b/repo-b", cut.Markup);
         });
+
+        _labelManagerServiceMock.Verify(
+            service => service.GetLabelsForRepositoriesAsync("owner-a", It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        _labelManagerServiceMock.Verify(
+            service => service.GetLabelsForRepositoriesAsync("owner-b", It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
-    public void Labels_FilterApplied_FiltersRowsByName()
+    public void Labels_FilterAppliedAfterLoad_FiltersRowsByName()
     {
         // Arrange
         _repositoryServiceMock
@@ -115,7 +160,12 @@ public sealed class LabelsTests : BunitContext
                 new LabelDto("status/done", "cfd3d7", "Completed", "repo-a"),
             ]);
 
+        // Act
         var cut = Render<Labels>();
+        cut.WaitForAssertion(() => Assert.Contains("repo-checkbox-repo-a", cut.Markup));
+
+        cut.Find("[data-testid='repo-checkbox-repo-a']").Change(true);
+        cut.Find("[data-testid='load-labels-button']").Click();
 
         cut.WaitForAssertion(() => Assert.Contains("type/story", cut.Markup));
 

@@ -21,33 +21,127 @@ public partial class Labels : ComponentBase
     public ILogger<Labels> Logger { get; set; } = default!;
 
     private IReadOnlyList<Repository> availableRepositories = [];
-    private IReadOnlyList<string> selectedRepositoryNames = [];
+    private IReadOnlyList<string> selectedRepositoryFullNames = [];
     private IReadOnlyList<LabelRow> rows = [];
     private IReadOnlyList<LabelRow> filteredRows = [];
-    private bool isLoading = true;
+    private bool isLoadingRepositories = true;
+    private bool isLoadingLabels;
+    private bool hasLoadedLabels;
     private string? errorMessage;
+    private bool hasInitialised;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await LoadDataAsync();
+        if (!firstRender || hasInitialised)
+        {
+            return;
+        }
+
+        hasInitialised = true;
+        await LoadRepositoriesAsync();
+        StateHasChanged();
     }
 
-    private async Task ReloadAsync()
+    private async Task ReloadRepositoriesAsync()
     {
-        await LoadDataAsync();
+        await LoadRepositoriesAsync();
     }
 
-    private async Task LoadDataAsync()
+    private async Task LoadRepositoriesAsync()
     {
-        isLoading = true;
+        isLoadingRepositories = true;
         errorMessage = null;
+        rows = [];
+        filteredRows = [];
+        hasLoadedLabels = false;
 
         try
         {
             availableRepositories = await RepositoryService.GetRepositoriesAsync();
-            selectedRepositoryNames = availableRepositories.Select(repository => repository.Name).ToArray();
+            selectedRepositoryFullNames = [];
+        }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = $"GitHub API request failed. {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load labels.");
+            errorMessage = "An unexpected error occurred while loading labels.";
+        }
+        finally
+        {
+            isLoadingRepositories = false;
+        }
+    }
 
-            await RefreshRowsAsync();
+    private void OnRepositorySelectionChanged(string repositoryFullName, object? value)
+    {
+        var isSelected = value switch
+        {
+            bool b => b,
+            string s when bool.TryParse(s, out var parsed) => parsed,
+            _ => false,
+        };
+
+        var selected = selectedRepositoryFullNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        if (isSelected)
+        {
+            selected.Add(repositoryFullName);
+        }
+        else
+        {
+            selected.Remove(repositoryFullName);
+        }
+
+        selectedRepositoryFullNames = selected.OrderBy(name => name, StringComparer.OrdinalIgnoreCase).ToArray();
+    }
+
+    private async Task LoadLabelsForSelectionAsync()
+    {
+        errorMessage = null;
+        hasLoadedLabels = true;
+
+        if (selectedRepositoryFullNames.Count == 0)
+        {
+            rows = [];
+            ApplyFilter();
+            return;
+        }
+
+        isLoadingLabels = true;
+
+        try
+        {
+            var selectedRepositories = availableRepositories
+                .Where(repository => selectedRepositoryFullNames.Contains(repository.FullName, StringComparer.OrdinalIgnoreCase))
+                .ToArray();
+
+            var repositoryGroups = selectedRepositories
+                .Select(repository => (Repository: repository, Owner: ResolveOwner(repository.FullName)))
+                .Where(item => !string.IsNullOrWhiteSpace(item.Owner))
+                .GroupBy(item => item.Owner, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            var consolidatedLabels = new List<LabelDto>();
+
+            foreach (var ownerGroup in repositoryGroups)
+            {
+                var owner = ownerGroup.Key;
+                var repositoriesForOwner = ownerGroup
+                    .Select(item => item.Repository.Name)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+
+                var labels = await LabelManagerService
+                    .GetLabelsForRepositoriesAsync(owner, repositoriesForOwner);
+
+                consolidatedLabels.AddRange(labels.Select(label => label with { RepositoryName = $"{owner}/{label.RepositoryName}" }));
+            }
+
+            BuildRows(consolidatedLabels, selectedRepositoryFullNames);
         }
         catch (HttpRequestException ex)
         {
@@ -57,56 +151,20 @@ public partial class Labels : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to load labels.");
+            Logger.LogError(ex, "Failed to load labels for selected repositories.");
             errorMessage = "An unexpected error occurred while loading labels.";
             rows = [];
             filteredRows = [];
         }
         finally
         {
-            isLoading = false;
+            isLoadingLabels = false;
         }
     }
 
-    private async Task OnRepositorySelectionChanged(string repositoryName, object? value)
+    private void BuildRows(IReadOnlyList<LabelDto> labels, IReadOnlyList<string> selectedFullNames)
     {
-        var isSelected = value is bool b && b;
-        var selected = selectedRepositoryNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        if (isSelected)
-        {
-            selected.Add(repositoryName);
-        }
-        else
-        {
-            selected.Remove(repositoryName);
-        }
-
-        selectedRepositoryNames = selected.OrderBy(name => name, StringComparer.OrdinalIgnoreCase).ToArray();
-
-        await RefreshRowsAsync();
-    }
-
-    private async Task RefreshRowsAsync()
-    {
-        if (selectedRepositoryNames.Count == 0)
-        {
-            rows = [];
-            ApplyFilter();
-            return;
-        }
-
-        var owner = ResolveOwner();
-        if (string.IsNullOrWhiteSpace(owner))
-        {
-            rows = [];
-            ApplyFilter();
-            return;
-        }
-
-        var labels = await LabelManagerService.GetLabelsForRepositoriesAsync(owner, selectedRepositoryNames);
-
-        var selectedSet = selectedRepositoryNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var selectedSet = selectedFullNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         rows = labels
             .GroupBy(label => label.Name, StringComparer.OrdinalIgnoreCase)
@@ -138,18 +196,14 @@ public partial class Labels : ComponentBase
         ApplyFilter();
     }
 
-    private string ResolveOwner()
+    private static string ResolveOwner(string fullName)
     {
-        var firstFullName = availableRepositories
-            .Select(repository => repository.FullName)
-            .FirstOrDefault(fullName => !string.IsNullOrWhiteSpace(fullName));
-
-        if (string.IsNullOrWhiteSpace(firstFullName))
+        if (string.IsNullOrWhiteSpace(fullName))
         {
             return string.Empty;
         }
 
-        var parts = firstFullName.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var parts = fullName.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         return parts.Length > 0 ? parts[0] : string.Empty;
     }
 
@@ -177,6 +231,10 @@ public partial class Labels : ComponentBase
             ApplyFilter();
         }
     }
+
+    private bool ShowLoadingState => isLoadingRepositories || isLoadingLabels;
+
+    private bool ShowInitialState => !ShowLoadingState && string.IsNullOrWhiteSpace(errorMessage) && !hasLoadedLabels;
 
     /// <summary>Represents a consolidated label row for the grid view.</summary>
     /// <param name="Name">The label name.</param>

@@ -22,12 +22,20 @@
                 <label class="repository-option" for="repo-@repository.Name">
                     <input id="repo-@repository.Name"
                            type="checkbox"
-                           checked="@selectedRepositoryNames.Contains(repository.Name, StringComparer.OrdinalIgnoreCase)"
-                           @onchange="@(args => OnRepositorySelectionChanged(repository.Name, args.Value))" />
-                    @repository.Name
+                           data-testid="repo-checkbox-@repository.Name"
+                           checked="@selectedRepositoryFullNames.Contains(repository.FullName, StringComparer.OrdinalIgnoreCase)"
+                           @onchange="@(args => OnRepositorySelectionChanged(repository.FullName, args.Value))" />
+                    @repository.FullName
                 </label>
             }
         </div>
+
+        <FluentButton Appearance="Appearance.Accent"
+                      data-testid="load-labels-button"
+                      Disabled="@ShowLoadingState"
+                      @onclick="LoadLabelsForSelectionAsync">
+            Load selected repositories
+        </FluentButton>
     }
 </FluentCard>
 
@@ -41,11 +49,11 @@
            data-testid="label-filter" />
 </FluentCard>
 
-@if (isLoading)
+@if (ShowLoadingState)
 {
     <div aria-live="polite" role="status" data-testid="labels-loading-state">
         <FluentProgressRing aria-label="Loading labels" />
-        <p>Loading labels...</p>
+        <p>@(isLoadingRepositories ? "Loading repositories..." : "Loading labels...")</p>
     </div>
 }
 else if (!string.IsNullOrWhiteSpace(errorMessage))
@@ -53,7 +61,15 @@ else if (!string.IsNullOrWhiteSpace(errorMessage))
     <FluentCard aria-live="assertive" role="alert">
         <h2>Unable to load labels</h2>
         <p>@errorMessage</p>
-        <FluentButton Appearance="Appearance.Accent" @onclick="ReloadAsync">Try again</FluentButton>
+        <FluentButton Appearance="Appearance.Accent" @onclick="ReloadRepositoriesAsync">Reload repositories</FluentButton>
+        <FluentButton Appearance="Appearance.Stealth" @onclick="LoadLabelsForSelectionAsync">Try loading labels again</FluentButton>
+    </FluentCard>
+}
+else if (ShowInitialState)
+{
+    <FluentCard aria-live="polite" data-testid="labels-initial-state">
+        <h2>Select repositories to begin</h2>
+        <p>Select one or more repositories, then choose <em>Load selected repositories</em>.</p>
     </FluentCard>
 }
 else if (filteredRows.Count == 0)
