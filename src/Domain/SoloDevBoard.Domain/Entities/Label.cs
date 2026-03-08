@@ -11,4 +11,7 @@ public sealed record Label
 
     /// <summary>Gets the label description.</summary>
     public string Description { get; init; } = string.Empty;
+
+    /// <summary>Gets the repository name this label belongs to.</summary>
+    public string RepositoryName { get; init; } = string.Empty;
 }
