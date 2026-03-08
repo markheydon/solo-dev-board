@@ -7,6 +7,20 @@ namespace SoloDevBoard.App.Components.Dialogs;
 /// <summary>Provides the code-behind for the label operation dialog component.</summary>
 public partial class LabelOperationDialog
 {
+    private static readonly IReadOnlyList<ColourOption> CommonColourOptions =
+    [
+        new("Red", "#d73a4a"),
+        new("Orange", "#fb8500"),
+        new("Yellow", "#d4c441"),
+        new("Green", "#2da44e"),
+        new("Teal", "#0a9396"),
+        new("Blue", "#0969da"),
+        new("Purple", "#8250df"),
+        new("Pink", "#bf3989"),
+        new("Grey", "#8c959f"),
+        new("Black", "#24292f"),
+    ];
+
     /// <summary>Gets or sets the dialog request payload.</summary>
     [Parameter]
     public LabelOperationDialogRequest Content { get; set; } = new(
@@ -25,6 +39,7 @@ public partial class LabelOperationDialog
     private readonly LabelOperationFormModel model = new();
     private HashSet<string> selectedRepositoryNames = new(StringComparer.OrdinalIgnoreCase);
     private string? validationMessage;
+    private bool showColourSelector;
     private string SubmitButtonText => Content.Mode == LabelOperationMode.Edit ? "Save" : "Create";
 
     /// <inheritdoc/>
@@ -46,6 +61,25 @@ public partial class LabelOperationDialog
         }
 
         validationMessage = null;
+        showColourSelector = false;
+    }
+
+    private void ToggleColourSelector()
+    {
+        showColourSelector = !showColourSelector;
+    }
+
+    private void SelectPresetColour(string hex)
+    {
+        model.Colour = hex;
+    }
+
+    private void OnCustomColourChanged(ChangeEventArgs args)
+    {
+        if (args.Value is string value && !string.IsNullOrWhiteSpace(value))
+        {
+            model.Colour = value;
+        }
     }
 
     private async Task OnValidSubmitAsync()
@@ -136,4 +170,6 @@ public partial class LabelOperationDialog
         public string DisplayColour
             => $"#{NormalisedColour}";
     }
+
+    private sealed record ColourOption(string Name, string Hex);
 }

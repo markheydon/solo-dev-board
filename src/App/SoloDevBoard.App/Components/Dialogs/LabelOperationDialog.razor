@@ -21,17 +21,54 @@ else
                              Placeholder="#ededed"
                              @bind-Value="model.Colour"
                              data-testid="label-colour-input" />
-            <span class="colour-swatch"
-                  style="background-color:@model.DisplayColour"
-                  title="@model.DisplayColour"
-                  data-testid="label-colour-swatch"></span>
+            <button type="button"
+                    class="colour-swatch-button"
+                    @onclick="ToggleColourSelector"
+                    title="Choose colour"
+                    aria-label="Choose colour"
+                    aria-expanded="@showColourSelector"
+                    data-testid="label-colour-swatch-button">
+                <span class="colour-swatch"
+                      style="background-color:@model.DisplayColour"
+                      title="@model.DisplayColour"
+                      data-testid="label-colour-swatch"></span>
+            </button>
         </div>
+
+        @if (showColourSelector)
+        {
+            <div class="colour-selector-panel" data-testid="label-colour-selector">
+                <p>Common colours</p>
+                <div class="colour-options">
+                    @foreach (var colourOption in CommonColourOptions)
+                    {
+                        <button type="button"
+                                class="colour-option-button"
+                                title="@colourOption.Name"
+                                aria-label="@("Select " + colourOption.Name)"
+                                @onclick="() => SelectPresetColour(colourOption.Hex)">
+                            <span class="colour-option-swatch" style="background-color:@colourOption.Hex"></span>
+                        </button>
+                    }
+                </div>
+
+                <label class="custom-colour-picker" for="custom-colour-input">Custom colour</label>
+                <input id="custom-colour-input"
+                       type="color"
+                       value="@model.DisplayColour"
+                       @onchange="OnCustomColourChanged"
+                       data-testid="label-custom-colour-input" />
+            </div>
+        }
+
         <FluentValidationMessage For="@(() => model.Colour)" />
 
-        <FluentTextArea Label="Description"
-                        Placeholder="Optional description"
-                        @bind-Value="model.Description"
-                        data-testid="label-description-input" />
+        <div class="description-input-row">
+            <FluentTextArea Label="Description"
+                            Placeholder="Optional description"
+                            @bind-Value="model.Description"
+                            data-testid="label-description-input" />
+        </div>
 
         <div class="repository-selector" data-testid="dialog-repository-selector">
             <p>Target repositories</p>
@@ -94,6 +131,66 @@ else
         height: 1.5rem;
         margin-block-end: 0.5rem;
         width: 1.5rem;
+    }
+
+    .colour-swatch-button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        line-height: 0;
+        padding: 0;
+    }
+
+    .colour-swatch-button:focus-visible {
+        outline: 2px solid #0969da;
+        outline-offset: 2px;
+    }
+
+    .colour-selector-panel {
+        background: var(--neutral-layer-1, #fff);
+        border: 1px solid var(--neutral-stroke-layer-rest, #bfbfbf);
+        border-radius: 0.5rem;
+        margin-block: 0.5rem 0.75rem;
+        padding: 0.75rem;
+    }
+
+    .description-input-row {
+        margin-block-start: 0.5rem;
+    }
+
+    .colour-selector-panel p {
+        font-weight: 600;
+        margin: 0 0 0.5rem;
+    }
+
+    .colour-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-block-end: 0.75rem;
+    }
+
+    .colour-option-button {
+        background: none;
+        border: 1px solid #8a8a8a;
+        border-radius: 999px;
+        display: inline-flex;
+        padding: 0.2rem;
+    }
+
+    .colour-option-swatch {
+        border: 1px solid rgb(0 0 0 / 18%);
+        border-radius: 999px;
+        display: inline-block;
+        height: 1rem;
+        width: 1rem;
+    }
+
+    .custom-colour-picker {
+        display: block;
+        font-weight: 600;
+        margin-block-end: 0.25rem;
     }
 
     .repository-selector {
