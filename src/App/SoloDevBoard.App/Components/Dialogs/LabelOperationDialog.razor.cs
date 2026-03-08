@@ -25,6 +25,7 @@ public partial class LabelOperationDialog
     private readonly LabelOperationFormModel model = new();
     private HashSet<string> selectedRepositoryNames = new(StringComparer.OrdinalIgnoreCase);
     private string? validationMessage;
+    private string SubmitButtonText => Content.Mode == LabelOperationMode.Edit ? "Save" : "Create";
 
     /// <inheritdoc/>
     protected override void OnParametersSet()

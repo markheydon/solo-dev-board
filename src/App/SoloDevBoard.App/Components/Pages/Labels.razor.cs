@@ -200,7 +200,7 @@ public partial class Labels : ComponentBase
             selectedFullNames,
             selectedFullNames);
 
-        var result = await ShowLabelOperationDialogAsync("New label", "Create", request);
+        var result = await ShowLabelOperationDialogAsync("New label", request);
         if (result is null)
         {
             return;
@@ -232,7 +232,7 @@ public partial class Labels : ComponentBase
             selectedFullNames,
             defaultSelection);
 
-        var result = await ShowLabelOperationDialogAsync("Edit label", "Save", request);
+        var result = await ShowLabelOperationDialogAsync("Edit label", request);
         if (result is null)
         {
             return;
@@ -264,7 +264,7 @@ public partial class Labels : ComponentBase
             selectedFullNames,
             defaultSelection);
 
-        var result = await ShowLabelOperationDialogAsync("Delete label", "Delete", request);
+        var result = await ShowLabelOperationDialogAsync("Delete label", request);
         if (result is null)
         {
             return;
@@ -273,17 +273,19 @@ public partial class Labels : ComponentBase
         await ExecuteDeleteAsync(result);
     }
 
-    private async Task<LabelOperationDialogResult?> ShowLabelOperationDialogAsync(string title, string primaryAction, LabelOperationDialogRequest request)
+    private async Task<LabelOperationDialogResult?> ShowLabelOperationDialogAsync(string title, LabelOperationDialogRequest request)
     {
         var dialog = await DialogService.ShowDialogAsync<LabelOperationDialog, LabelOperationDialogRequest>(
             request,
             new DialogParameters
             {
                 Title = title,
-                PrimaryAction = primaryAction,
-                SecondaryAction = "Cancel",
                 Width = "36rem",
                 PreventDismissOnOverlayClick = true,
+                PrimaryAction = null,
+                SecondaryAction = null,
+                PrimaryActionEnabled = false,
+                SecondaryActionEnabled = false,
             });
 
         var dialogResult = await dialog.Result;
@@ -292,7 +294,14 @@ public partial class Labels : ComponentBase
             return null;
         }
 
-        return dialogResult.Data as LabelOperationDialogResult;
+        if (dialogResult.Data is not LabelOperationDialogResult result)
+        {
+            Logger.LogWarning("Label operation dialog closed without a valid result payload for {Mode}.", request.Mode);
+            ToastService.ShowWarning("No changes were saved. Please use the form action button in the dialog.");
+            return null;
+        }
+
+        return result;
     }
 
     private async Task ExecuteCreateAsync(LabelOperationDialogResult operation)

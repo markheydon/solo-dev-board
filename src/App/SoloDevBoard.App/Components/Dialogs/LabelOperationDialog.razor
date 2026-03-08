@@ -51,7 +51,7 @@ else
             <p role="alert">@validationMessage</p>
         }
 
-        <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit">Apply</FluentButton>
+        <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit">@SubmitButtonText</FluentButton>
         <FluentButton Appearance="Appearance.Stealth" @onclick="CancelAsync">Cancel</FluentButton>
     </EditForm>
 }
