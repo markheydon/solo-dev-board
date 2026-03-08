@@ -30,7 +30,6 @@ public partial class Labels : ComponentBase
     private bool hasLoadedLabels;
     private string? errorMessage;
     private bool hasInitialised;
-    private int archivedRepositoryCount;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -59,11 +58,7 @@ public partial class Labels : ComponentBase
 
         try
         {
-            var repositories = await RepositoryService.GetRepositoriesAsync();
-            archivedRepositoryCount = repositories.Count(repository => repository.IsArchived);
-
-            availableRepositories = repositories
-                .Where(repository => !repository.IsArchived)
+            availableRepositories = (await RepositoryService.GetRepositoriesAsync())
                 .OrderBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
 
@@ -244,9 +239,7 @@ public partial class Labels : ComponentBase
     private bool ShowInitialState => !ShowLoadingState && string.IsNullOrWhiteSpace(errorMessage) && !hasLoadedLabels;
 
     private string RepositorySelectorSummary
-        => archivedRepositoryCount == 0
-            ? $"Showing {availableRepositories.Count} active repositories."
-            : $"Showing {availableRepositories.Count} active repositories. {archivedRepositoryCount} archived {(archivedRepositoryCount == 1 ? "repository is" : "repositories are")} hidden by default.";
+        => $"Showing {availableRepositories.Count} active repositories. Archived repositories are hidden by default.";
 
     /// <summary>Represents a consolidated label row for the grid view.</summary>
     /// <param name="Name">The label name.</param>

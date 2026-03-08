@@ -34,7 +34,11 @@ public sealed class GitHubService : IGitHubService
                 cancellationToken)
             .ConfigureAwait(false);
 
-        return repositories;
+        // GitHub's repository list endpoints do not expose an archived filter.
+        // Centralise the active-repository default here so callers do not repeat it.
+        return repositories
+            .Where(repository => !repository.IsArchived)
+            .ToArray();
     }
 
     /// <inheritdoc/>
@@ -52,7 +56,11 @@ public sealed class GitHubService : IGitHubService
                 cancellationToken)
             .ConfigureAwait(false);
 
-        return repositories;
+        // GitHub's repository list endpoints do not expose an archived filter.
+        // Centralise the active-repository default here so callers do not repeat it.
+        return repositories
+            .Where(repository => !repository.IsArchived)
+            .ToArray();
     }
 
     /// <inheritdoc/>

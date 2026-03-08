@@ -73,7 +73,6 @@ public sealed class LabelsTests : BunitContext
             .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync([
                 new Repository { Name = "repo-a", FullName = "owner/repo-a", IsArchived = false },
-                new Repository { Name = "repo-archived", FullName = "owner/repo-archived", IsArchived = true },
             ]);
 
         // Act
@@ -83,7 +82,7 @@ public sealed class LabelsTests : BunitContext
         cut.WaitForAssertion(() =>
         {
             Assert.Contains("Showing 1 active repositories", cut.Markup);
-            Assert.Contains("1 archived repository is hidden by default", cut.Markup);
+            Assert.Contains("Archived repositories are hidden by default", cut.Markup);
         });
     }
 

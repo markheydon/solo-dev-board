@@ -67,7 +67,7 @@ public sealed class GitHubServiceTests
     }
 
     [Fact]
-    public async Task GetRepositoriesAsync_MultiplePages_ReturnsMappedRepositories()
+    public async Task GetRepositoriesAsync_MultiplePages_ExcludesArchivedRepositories()
     {
         // Arrange
         var handler = new QueueMessageHandler(
@@ -115,10 +115,10 @@ public sealed class GitHubServiceTests
         var result = await sut.GetRepositoriesAsync("owner");
 
         // Assert
-        Assert.Equal(2, result.Count);
+        Assert.Single(result);
         Assert.Equal("repo-one", result[0].Name);
-        Assert.Equal(string.Empty, result[1].Description);
-        Assert.True(result[1].IsArchived);
+        Assert.Equal("First repo", result[0].Description);
+        Assert.False(result[0].IsArchived);
         Assert.Equal(2, handler.Requests.Count);
         Assert.Equal("https://api.github.com/users/owner/repos?per_page=100", handler.Requests[0].RequestUri!.ToString());
         Assert.Equal("https://api.github.com/users/owner/repos?page=2&per_page=100", handler.Requests[1].RequestUri!.ToString());
