@@ -33,7 +33,8 @@ Current interactions:
 The create and edit dialogs include:
 - Required label name validation.
 - Optional description input.
-- Hexadecimal colour input with a live swatch preview.
+- Hexadecimal colour input with a clickable swatch that opens a colour picker.
+- Colour picker includes ten preset colours and a custom hex colour input.
 - Default colour value of `#ededed` when no colour is provided.
 - Multi-repository selection before submitting the operation.
 
