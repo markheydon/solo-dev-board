@@ -1,0 +1,15 @@
+.repository-selector-card {
+    overflow: visible;
+    position: relative;
+    z-index: 2;
+}
+
+.repository-selector-controls {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.repository-selector-controls ::deep fluent-autocomplete {
+    display: block;
+    width: 100%;
+}

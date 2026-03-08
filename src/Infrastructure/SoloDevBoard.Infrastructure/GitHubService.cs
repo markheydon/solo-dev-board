@@ -26,16 +26,19 @@ public sealed class GitHubService : IGitHubService
     {
         var client = CreateAuthenticatedClient();
         const string endpoint = "/user/repos?sort=updated&per_page=100";
-        var repositories = await GetPagedAsync<RepositoryResponseDto, Repository>(
+        return await GetPagedAsync<RepositoryResponseDto, Repository>(
                 client,
                 endpoint,
                 static dto => dto.ToDomain(),
             JsonOptions,
                 cancellationToken)
             .ConfigureAwait(false);
+    }
 
-        // GitHub's repository list endpoints do not expose an archived filter.
-        // Centralise the active-repository default here so callers do not repeat it.
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<Repository>> GetActiveRepositoriesAsync(CancellationToken cancellationToken = default)
+    {
+        var repositories = await GetRepositoriesAsync(cancellationToken).ConfigureAwait(false);
         return repositories
             .Where(repository => !repository.IsArchived)
             .ToArray();
@@ -48,16 +51,19 @@ public sealed class GitHubService : IGitHubService
 
         var client = CreateAuthenticatedClient();
         var endpoint = $"/users/{Uri.EscapeDataString(owner)}/repos?per_page=100";
-        var repositories = await GetPagedAsync<RepositoryResponseDto, Repository>(
+        return await GetPagedAsync<RepositoryResponseDto, Repository>(
                 client,
                 endpoint,
                 static dto => dto.ToDomain(),
             JsonOptions,
                 cancellationToken)
             .ConfigureAwait(false);
+    }
 
-        // GitHub's repository list endpoints do not expose an archived filter.
-        // Centralise the active-repository default here so callers do not repeat it.
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<Repository>> GetActiveRepositoriesAsync(string owner, CancellationToken cancellationToken = default)
+    {
+        var repositories = await GetRepositoriesAsync(owner, cancellationToken).ConfigureAwait(false);
         return repositories
             .Where(repository => !repository.IsArchived)
             .ToArray();

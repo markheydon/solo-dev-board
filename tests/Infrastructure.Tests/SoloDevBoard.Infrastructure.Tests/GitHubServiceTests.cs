@@ -67,7 +67,7 @@ public sealed class GitHubServiceTests
     }
 
     [Fact]
-    public async Task GetRepositoriesAsync_MultiplePages_ExcludesArchivedRepositories()
+    public async Task GetRepositoriesAsync_MultiplePages_ReturnsMappedRepositories()
     {
         // Arrange
         var handler = new QueueMessageHandler(
@@ -113,6 +113,64 @@ public sealed class GitHubServiceTests
 
         // Act
         var result = await sut.GetRepositoriesAsync("owner");
+
+        // Assert
+        Assert.Equal(2, result.Count);
+        Assert.Equal("repo-one", result[0].Name);
+        Assert.Equal(string.Empty, result[1].Description);
+        Assert.True(result[1].IsArchived);
+        Assert.Equal(2, handler.Requests.Count);
+        Assert.Equal("https://api.github.com/users/owner/repos?per_page=100", handler.Requests[0].RequestUri!.ToString());
+        Assert.Equal("https://api.github.com/users/owner/repos?page=2&per_page=100", handler.Requests[1].RequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task GetActiveRepositoriesAsync_MultiplePages_ExcludesArchivedRepositories()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                [
+                  {
+                    "id": 1,
+                    "name": "repo-one",
+                    "full_name": "owner/repo-one",
+                    "description": "First repo",
+                    "html_url": "https://github.com/owner/repo-one",
+                    "private": false,
+                    "archived": false,
+                    "created_at": "2026-03-01T10:00:00Z",
+                    "updated_at": "2026-03-02T11:00:00Z"
+                  }
+                ]
+                """,
+                "<https://api.github.com/users/owner/repos?page=2&per_page=100>; rel=\"next\""),
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                [
+                  {
+                    "id": 2,
+                    "name": "repo-two",
+                    "full_name": "owner/repo-two",
+                    "description": null,
+                    "html_url": "https://github.com/owner/repo-two",
+                    "private": true,
+                    "archived": true,
+                    "created_at": "2026-03-03T10:00:00Z",
+                    "updated_at": "2026-03-04T11:00:00Z"
+                  }
+                ]
+                """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var result = await sut.GetActiveRepositoriesAsync("owner");
 
         // Assert
         Assert.Single(result);

@@ -22,6 +22,7 @@ public partial class Labels : ComponentBase
     public ILogger<Labels> Logger { get; set; } = default!;
 
     private IReadOnlyList<Repository> availableRepositories = [];
+    private IEnumerable<Repository> visibleRepositoryOptions = [];
     private IEnumerable<Repository> selectedRepositories = [];
     private IReadOnlyList<LabelRow> rows = [];
     private IReadOnlyList<LabelRow> filteredRows = [];
@@ -30,6 +31,7 @@ public partial class Labels : ComponentBase
     private bool hasLoadedLabels;
     private string? errorMessage;
     private bool hasInitialised;
+    private string repositorySearchText = string.Empty;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -58,11 +60,13 @@ public partial class Labels : ComponentBase
 
         try
         {
-            availableRepositories = (await RepositoryService.GetRepositoriesAsync())
+            availableRepositories = (await RepositoryService.GetActiveRepositoriesAsync())
                 .OrderBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
 
+            visibleRepositoryOptions = availableRepositories;
             selectedRepositories = [];
+            repositorySearchText = string.Empty;
         }
         catch (HttpRequestException ex)
         {
@@ -79,19 +83,20 @@ public partial class Labels : ComponentBase
         }
     }
 
-    private Task OnRepositoryOptionsSearchAsync(OptionsSearchEventArgs<Repository> args)
+    private void OnRepositoryOptionsSearch(OptionsSearchEventArgs<Repository> args)
     {
         if (string.IsNullOrWhiteSpace(args.Text))
         {
-            args.Items = availableRepositories;
-            return Task.CompletedTask;
+            visibleRepositoryOptions = availableRepositories;
+            args.Items = visibleRepositoryOptions;
+            return;
         }
 
         var filter = args.Text.Trim();
-        args.Items = availableRepositories
-            .Where(repository => repository.FullName.Contains(filter, StringComparison.OrdinalIgnoreCase));
-
-        return Task.CompletedTask;
+        visibleRepositoryOptions = availableRepositories
+            .Where(repository => repository.FullName.Contains(filter, StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+        args.Items = visibleRepositoryOptions;
     }
 
     private async Task LoadLabelsForSelectionAsync()
@@ -236,7 +241,27 @@ public partial class Labels : ComponentBase
 
     private bool ShowLoadingState => isLoadingRepositories || isLoadingLabels;
 
-    private bool ShowInitialState => !ShowLoadingState && string.IsNullOrWhiteSpace(errorMessage) && !hasLoadedLabels;
+    private bool ShowLabelFilter => hasLoadedLabels && rows.Count > 0 && !ShowLoadingState && string.IsNullOrWhiteSpace(errorMessage);
+
+    private string RepositorySearchText
+    {
+        get => repositorySearchText;
+        set
+        {
+            repositorySearchText = value;
+
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                visibleRepositoryOptions = availableRepositories;
+                return;
+            }
+
+            var filter = value.Trim();
+            visibleRepositoryOptions = availableRepositories
+                .Where(repository => repository.FullName.Contains(filter, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+        }
+    }
 
     private string RepositorySelectorSummary
         => $"Showing {availableRepositories.Count} active repositories. Archived repositories are hidden by default.";

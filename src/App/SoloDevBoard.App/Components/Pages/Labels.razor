@@ -8,7 +8,7 @@
 
 <p>View labels across selected repositories and identify missing labels quickly.</p>
 
-<FluentCard>
+<FluentCard class="repository-selector-card">
     <h2>Repository Selector</h2>
 
     @if (availableRepositories.Count == 0)
@@ -17,38 +17,44 @@
     }
     else
     {
-        <FluentAutocomplete TOption="Repository"
-                            Label="Repositories"
-                            Placeholder="Search and select active repositories"
-                            Multiple="true"
-                            MaximumOptionsSearch="12"
-                            Items="@availableRepositories"
-                            OptionText="@(repository => repository.FullName)"
-                            OptionValue="@(repository => repository.FullName)"
-                            @bind-SelectedOptions="selectedRepositories"
-                            OnOptionsSearch="OnRepositoryOptionsSearchAsync"
-                            data-testid="repository-autocomplete" />
+        <div class="repository-selector-controls">
+            <FluentAutocomplete TOption="Repository"
+                                Label="Repositories"
+                                Placeholder="Search and select active repositories"
+                                Items="@visibleRepositoryOptions"
+                                Multiple="true"
+                                MaximumOptionsSearch="12"
+                                OptionText="@(repository => repository.FullName)"
+                                OptionValue="@(repository => repository.FullName)"
+                                @bind-ValueText="RepositorySearchText"
+                                @bind-SelectedOptions="selectedRepositories"
+                                OnOptionsSearch="OnRepositoryOptionsSearch"
+                                data-testid="repository-autocomplete" />
 
-        <p data-testid="repository-selector-summary">@RepositorySelectorSummary</p>
+            <p data-testid="repository-selector-summary">@RepositorySelectorSummary</p>
 
-        <FluentButton Appearance="Appearance.Accent"
-                      data-testid="load-labels-button"
-                      Disabled="@(ShowLoadingState || !selectedRepositories.Any())"
-                      @onclick="LoadLabelsForSelectionAsync">
-            Load selected repositories
-        </FluentButton>
+            <FluentButton Appearance="Appearance.Accent"
+                          data-testid="load-labels-button"
+                          Disabled="@(ShowLoadingState || !selectedRepositories.Any())"
+                          @onclick="LoadLabelsForSelectionAsync">
+                Load selected repositories
+            </FluentButton>
+        </div>
     }
 </FluentCard>
 
-<FluentCard>
-    <h2>Filter</h2>
-    <input type="search"
-           class="label-filter"
-           placeholder="Filter by label name"
-            @bind="SearchText"
-           @bind:event="oninput"
-           data-testid="label-filter" />
-</FluentCard>
+@if (ShowLabelFilter)
+{
+    <FluentCard>
+        <h2>Filter</h2>
+        <input type="search"
+               class="label-filter"
+               placeholder="Filter by label name"
+               @bind="SearchText"
+               @bind:event="oninput"
+               data-testid="label-filter" />
+    </FluentCard>
+}
 
 @if (ShowLoadingState)
 {
@@ -66,14 +72,7 @@ else if (!string.IsNullOrWhiteSpace(errorMessage))
         <FluentButton Appearance="Appearance.Stealth" @onclick="LoadLabelsForSelectionAsync">Try loading labels again</FluentButton>
     </FluentCard>
 }
-else if (ShowInitialState)
-{
-    <FluentCard aria-live="polite" data-testid="labels-initial-state">
-        <h2>Select repositories to begin</h2>
-        <p>Select one or more repositories, then choose <em>Load selected repositories</em>.</p>
-    </FluentCard>
-}
-else if (filteredRows.Count == 0)
+else if (hasLoadedLabels && filteredRows.Count == 0)
 {
     <FluentCard aria-live="polite" data-testid="labels-empty-state">
         <h2>No labels found</h2>

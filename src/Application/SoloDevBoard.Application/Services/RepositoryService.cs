@@ -18,4 +18,8 @@ public sealed class RepositoryService : IRepositoryService
     /// <inheritdoc/>
     public Task<IReadOnlyList<Repository>> GetRepositoriesAsync(CancellationToken cancellationToken = default)
         => _gitHubService.GetRepositoriesAsync(cancellationToken);
+
+    /// <inheritdoc/>
+    public Task<IReadOnlyList<Repository>> GetActiveRepositoriesAsync(CancellationToken cancellationToken = default)
+        => _gitHubService.GetActiveRepositoriesAsync(cancellationToken);
 }

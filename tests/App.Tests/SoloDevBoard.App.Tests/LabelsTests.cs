@@ -29,7 +29,7 @@ public sealed class LabelsTests : BunitContext
         // Arrange
         var repositoriesTask = new TaskCompletionSource<IReadOnlyList<Repository>>();
         _repositoryServiceMock
-            .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
             .Returns(repositoriesTask.Task);
 
         // Act
@@ -44,7 +44,7 @@ public sealed class LabelsTests : BunitContext
     {
         // Arrange
         _repositoryServiceMock
-            .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync([
                 new Repository { Name = "repo-a", FullName = "owner/repo-a" },
             ]);
@@ -55,9 +55,10 @@ public sealed class LabelsTests : BunitContext
         // Assert
         cut.WaitForAssertion(() =>
         {
-            Assert.Contains("Select repositories to begin", cut.Markup);
             Assert.Contains("Load selected repositories", cut.Markup);
             Assert.Contains("Showing 1 active repositories", cut.Markup);
+            Assert.Empty(cut.FindAll("[data-testid='label-filter']"));
+            Assert.Empty(cut.FindAll("[data-testid='labels-initial-state']"));
         });
 
         _labelManagerServiceMock.Verify(
@@ -70,7 +71,7 @@ public sealed class LabelsTests : BunitContext
     {
         // Arrange
         _repositoryServiceMock
-            .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync([
                 new Repository { Name = "repo-a", FullName = "owner/repo-a", IsArchived = false },
             ]);
@@ -93,7 +94,7 @@ public sealed class LabelsTests : BunitContext
         var repoA = new Repository { Name = "repo-a", FullName = "owner/repo-a" };
 
         _repositoryServiceMock
-            .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync([repoA]);
 
         _labelManagerServiceMock
@@ -123,7 +124,7 @@ public sealed class LabelsTests : BunitContext
         var repoB = new Repository { Name = "repo-b", FullName = "owner-b/repo-b" };
 
         _repositoryServiceMock
-            .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync([repoA, repoB]);
 
         _labelManagerServiceMock
@@ -171,7 +172,7 @@ public sealed class LabelsTests : BunitContext
         var repoA = new Repository { Name = "repo-a", FullName = "owner/repo-a" };
 
         _repositoryServiceMock
-            .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync([repoA]);
 
         _labelManagerServiceMock
@@ -189,6 +190,7 @@ public sealed class LabelsTests : BunitContext
         cut.Find("[data-testid='load-labels-button']").Click();
 
         cut.WaitForAssertion(() => Assert.Contains("type/story", cut.Markup));
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='label-filter']")));
 
         // Act
         var filter = cut.Find("[data-testid='label-filter']");
