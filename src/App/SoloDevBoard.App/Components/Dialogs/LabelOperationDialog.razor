@@ -70,28 +70,7 @@ else
                             data-testid="label-description-input" />
         </div>
 
-        @RepositorySelectorContent
-
-        @ValidationMessageContent
-
-        <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit">@SubmitButtonText</FluentButton>
-        <FluentButton Appearance="Appearance.Stealth" @onclick="CancelAsync">Cancel</FluentButton>
-    </EditForm>
-}
-
-@if (Content.Mode == LabelOperationMode.Delete)
-{
-    @RepositorySelectorContent
-
-    @ValidationMessageContent
-
-    <FluentButton Appearance="Appearance.Accent" @onclick="ConfirmDeleteAsync">Delete label</FluentButton>
-    <FluentButton Appearance="Appearance.Stealth" @onclick="CancelAsync">Cancel</FluentButton>
-}
-
-@code {
-    private RenderFragment RepositorySelectorContent =>
-        @<div class="repository-selector" data-testid="dialog-repository-selector">
+        <div class="repository-selector" data-testid="dialog-repository-selector">
             <p>Target repositories</p>
             @foreach (var repository in Content.AvailableRepositories)
             {
@@ -102,14 +81,40 @@ else
                     @repository
                 </label>
             }
-        </div>;
+        </div>
 
-    private RenderFragment ValidationMessageContent =>
-        @<>
-            @if (!string.IsNullOrWhiteSpace(validationMessage))
-            {
-                <p role="alert">@validationMessage</p>
-            }
-        </>;
+        @if (!string.IsNullOrWhiteSpace(validationMessage))
+        {
+            <p role="alert">@validationMessage</p>
+        }
+
+        <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit">@SubmitButtonText</FluentButton>
+        <FluentButton Appearance="Appearance.Stealth" @onclick="CancelAsync">Cancel</FluentButton>
+    </EditForm>
 }
+
+@if (Content.Mode == LabelOperationMode.Delete)
+{
+    <div class="repository-selector" data-testid="dialog-repository-selector">
+        <p>Target repositories</p>
+        @foreach (var repository in Content.AvailableRepositories)
+        {
+            <label>
+                <input type="checkbox"
+                       checked="@selectedRepositoryNames.Contains(repository)"
+                       @onchange="args => OnRepositoryToggleChanged(repository, args)" />
+                @repository
+            </label>
+        }
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(validationMessage))
+    {
+        <p role="alert">@validationMessage</p>
+    }
+
+    <FluentButton Appearance="Appearance.Accent" @onclick="ConfirmDeleteAsync">Delete label</FluentButton>
+    <FluentButton Appearance="Appearance.Stealth" @onclick="CancelAsync">Cancel</FluentButton>
+}
+
 
