@@ -173,17 +173,12 @@ public sealed class GitHubLabelRepositoryTests
             .Setup(context => context.GetAccessToken())
             .Throws(new InvalidOperationException("Token missing."));
 
-        var httpClientFactoryMock = new Mock<IHttpClientFactory>();
-        var sut = new GitHubLabelRepository(httpClientFactoryMock.Object, currentUserContextMock.Object);
+        var authHandler = new GitHubAuthHandler(currentUserContextMock.Object)
+        {
+            InnerHandler = new QueueMessageHandler([new HttpResponseMessage(HttpStatusCode.OK)]),
+        };
 
-        // Act / Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            async () => _ = await sut.GetLabelsAsync("owner", "repo"));
-    }
-
-    private static GitHubLabelRepository CreateSubject(HttpMessageHandler handler)
-    {
-        var client = new HttpClient(handler)
+        var client = new HttpClient(authHandler)
         {
             BaseAddress = new Uri("https://api.github.com"),
         };
@@ -193,12 +188,36 @@ public sealed class GitHubLabelRepositoryTests
             .Setup(factory => factory.CreateClient(GitHubService.GitHubApiClientName))
             .Returns(client);
 
+        var sut = new GitHubLabelRepository(httpClientFactoryMock.Object);
+
+        // Act / Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            async () => _ = await sut.GetLabelsAsync("owner", "repo"));
+    }
+
+    private static GitHubLabelRepository CreateSubject(HttpMessageHandler handler)
+    {
         var currentUserContextMock = new Mock<ICurrentUserContext>();
         currentUserContextMock
             .Setup(context => context.GetAccessToken())
             .Returns("test-token");
 
-        return new GitHubLabelRepository(httpClientFactoryMock.Object, currentUserContextMock.Object);
+        var authHandler = new GitHubAuthHandler(currentUserContextMock.Object)
+        {
+            InnerHandler = handler,
+        };
+
+        var client = new HttpClient(authHandler)
+        {
+            BaseAddress = new Uri("https://api.github.com"),
+        };
+
+        var httpClientFactoryMock = new Mock<IHttpClientFactory>();
+        httpClientFactoryMock
+            .Setup(factory => factory.CreateClient(GitHubService.GitHubApiClientName))
+            .Returns(client);
+
+        return new GitHubLabelRepository(httpClientFactoryMock.Object);
     }
 
     private static HttpResponseMessage CreateJsonResponse(HttpStatusCode statusCode, string json)

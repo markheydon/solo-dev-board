@@ -30,6 +30,7 @@ public sealed class GitHubService : IGitHubService
                 client,
                 endpoint,
                 static dto => dto.ToDomain(),
+            JsonOptions,
                 cancellationToken)
             .ConfigureAwait(false);
 
@@ -47,6 +48,7 @@ public sealed class GitHubService : IGitHubService
                 client,
                 endpoint,
                 static dto => dto.ToDomain(),
+            JsonOptions,
                 cancellationToken)
             .ConfigureAwait(false);
 
@@ -70,6 +72,7 @@ public sealed class GitHubService : IGitHubService
                 client,
                 endpoint,
                 static dto => dto.PullRequest is null ? dto.ToDomain() : null,
+            JsonOptions,
                 cancellationToken)
             .ConfigureAwait(false);
 
@@ -88,6 +91,7 @@ public sealed class GitHubService : IGitHubService
                 client,
                 endpoint,
                 static dto => dto.ToDomain(),
+            JsonOptions,
                 cancellationToken)
             .ConfigureAwait(false);
 
@@ -106,6 +110,7 @@ public sealed class GitHubService : IGitHubService
                 client,
                 endpoint,
                 static dto => dto.ToDomain(),
+            JsonOptions,
                 cancellationToken)
             .ConfigureAwait(false);
 
@@ -124,6 +129,7 @@ public sealed class GitHubService : IGitHubService
                 client,
                 endpoint,
                 static dto => dto.ToDomain(),
+            JsonOptions,
                 cancellationToken)
             .ConfigureAwait(false);
 
@@ -205,7 +211,7 @@ public sealed class GitHubService : IGitHubService
     /// </summary>
     /// <param name="response">The HTTP response to inspect.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
-    private static async Task EnsureSuccessStatusCodeAsync(HttpResponseMessage response, CancellationToken cancellationToken)
+    internal static async Task EnsureSuccessStatusCodeAsync(HttpResponseMessage response, CancellationToken cancellationToken)
     {
         if (response.IsSuccessStatusCode)
         {
@@ -222,7 +228,7 @@ public sealed class GitHubService : IGitHubService
     /// <summary>Creates an <see cref="HttpRequestException"/> describing an unexpected or empty API response body.</summary>
     /// <param name="message">A description of the specific problem with the response.</param>
     /// <param name="endpoint">The API endpoint URL that produced the invalid response.</param>
-    private static HttpRequestException CreateInvalidResponseException(string message, string endpoint)
+    internal static HttpRequestException CreateInvalidResponseException(string message, string endpoint)
         => new($"GitHub API returned an invalid response for endpoint '{endpoint}'. {message}");
 
     /// <summary>
@@ -239,10 +245,11 @@ public sealed class GitHubService : IGitHubService
     /// </param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>A read-only list of all mapped domain entities across all pages.</returns>
-    private static async Task<IReadOnlyList<TDomain>> GetPagedAsync<TDto, TDomain>(
+    internal static async Task<IReadOnlyList<TDomain>> GetPagedAsync<TDto, TDomain>(
         HttpClient client,
         string initialEndpoint,
         Func<TDto, TDomain?> map,
+        JsonSerializerOptions jsonOptions,
         CancellationToken cancellationToken)
         where TDomain : class
     {
@@ -255,7 +262,7 @@ public sealed class GitHubService : IGitHubService
             using var response = await client.GetAsync(nextUrl, cancellationToken).ConfigureAwait(false);
             await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
 
-            var dtos = await response.Content.ReadFromJsonAsync<List<TDto>>(JsonOptions, cancellationToken).ConfigureAwait(false)
+            var dtos = await response.Content.ReadFromJsonAsync<List<TDto>>(jsonOptions, cancellationToken).ConfigureAwait(false)
                 ?? throw CreateInvalidResponseException("The list response body was empty.", nextUrl);
 
             foreach (var dto in dtos)
@@ -283,7 +290,7 @@ public sealed class GitHubService : IGitHubService
     /// <c>&lt;https://api.github.com/...?page=2&gt;; rel="next", &lt;...&gt;; rel="last"</c>.
     /// This method parses that header and returns the URL for the <c>rel="next"</c> entry.
     /// </remarks>
-    private static string? GetNextPageUrl(HttpResponseMessage response)
+    internal static string? GetNextPageUrl(HttpResponseMessage response)
     {
         if (!response.Headers.TryGetValues("Link", out var values))
         {
