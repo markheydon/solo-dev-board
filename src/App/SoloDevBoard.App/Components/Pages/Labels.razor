@@ -52,6 +52,7 @@
         <input type="search"
                class="label-filter"
                placeholder="Filter by label name"
+             aria-label="Filter labels by name"
                @bind="SearchText"
                @bind:event="oninput"
                data-testid="label-filter" />
@@ -68,10 +69,17 @@
 else if (!string.IsNullOrWhiteSpace(errorMessage))
 {
     <FluentCard aria-live="assertive" role="alert">
-        <h2>Unable to load labels</h2>
+        <h2>@ErrorTitle</h2>
         <p>@errorMessage</p>
-        <FluentButton Appearance="Appearance.Accent" @onclick="ReloadRepositoriesAsync">Reload repositories</FluentButton>
-        <FluentButton Appearance="Appearance.Stealth" @onclick="LoadLabelsForSelectionAsync">Try loading labels again</FluentButton>
+        @if (availableRepositories.Count == 0)
+        {
+            <FluentButton Appearance="Appearance.Accent" @onclick="ReloadRepositoriesAsync">Try loading repositories again</FluentButton>
+        }
+        else
+        {
+            <FluentButton Appearance="Appearance.Accent" @onclick="ReloadRepositoriesAsync">Reload repositories</FluentButton>
+            <FluentButton Appearance="Appearance.Stealth" @onclick="LoadLabelsForSelectionAsync">Try loading labels again</FluentButton>
+        }
     </FluentCard>
 }
 else if (hasLoadedLabels && filteredRows.Count == 0)

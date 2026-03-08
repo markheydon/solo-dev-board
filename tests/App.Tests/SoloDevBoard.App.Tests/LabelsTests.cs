@@ -5,6 +5,7 @@ using Moq;
 using SoloDevBoard.App.Components.Pages;
 using SoloDevBoard.Application.Services;
 using SoloDevBoard.Domain.Entities;
+using System.Net.Http;
 
 namespace SoloDevBoard.App.Tests;
 
@@ -193,15 +194,37 @@ public sealed class LabelsTests : BunitContext
         cut.WaitForAssertion(() => Assert.Contains("type/story", cut.Markup));
         cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='label-filter']")));
 
+        var filterInput = cut.Find("[data-testid='label-filter']");
+        Assert.Equal("Filter labels by name", filterInput.GetAttribute("aria-label"));
+
         // Act
-        var filter = cut.Find("[data-testid='label-filter']");
-        filter.Input("status");
+        filterInput.Input("status");
 
         // Assert
         cut.WaitForAssertion(() =>
         {
             Assert.Contains("status/done", cut.Markup);
             Assert.DoesNotContain("type/story", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public void Labels_RepositoryLoadFails_ShowsRepositorySpecificErrorAndAction()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Service unavailable"));
+
+        // Act
+        var cut = Render<Labels>();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Unable to load repositories", cut.Markup);
+            Assert.Contains("Try loading repositories again", cut.Markup);
+            Assert.DoesNotContain("Try loading labels again", cut.Markup);
         });
     }
 

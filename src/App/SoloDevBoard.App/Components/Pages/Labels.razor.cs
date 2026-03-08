@@ -29,6 +29,7 @@ public partial class Labels : ComponentBase
     private bool isLoadingRepositories = true;
     private bool isLoadingLabels;
     private bool hasLoadedLabels;
+    private bool hasRepositoryLoadFailure;
     private string? errorMessage;
     private bool hasInitialised;
     private string repositorySearchText = string.Empty;
@@ -53,6 +54,7 @@ public partial class Labels : ComponentBase
     private async Task LoadRepositoriesAsync()
     {
         isLoadingRepositories = true;
+        hasRepositoryLoadFailure = false;
         errorMessage = null;
         rows = [];
         filteredRows = [];
@@ -70,12 +72,14 @@ public partial class Labels : ComponentBase
         }
         catch (HttpRequestException ex)
         {
+            hasRepositoryLoadFailure = true;
             errorMessage = $"GitHub API request failed. {ex.Message}";
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to load labels.");
-            errorMessage = "An unexpected error occurred while loading labels.";
+            hasRepositoryLoadFailure = true;
+            Logger.LogError(ex, "Failed to load repositories.");
+            errorMessage = "An unexpected error occurred while loading repositories.";
         }
         finally
         {
@@ -101,6 +105,7 @@ public partial class Labels : ComponentBase
 
     private async Task LoadLabelsForSelectionAsync()
     {
+        hasRepositoryLoadFailure = false;
         errorMessage = null;
         hasLoadedLabels = true;
 
@@ -242,6 +247,10 @@ public partial class Labels : ComponentBase
     private bool ShowLoadingState => isLoadingRepositories || isLoadingLabels;
 
     private bool ShowLabelFilter => hasLoadedLabels && rows.Count > 0 && !ShowLoadingState && string.IsNullOrWhiteSpace(errorMessage);
+
+    private string ErrorTitle => hasRepositoryLoadFailure
+        ? "Unable to load repositories"
+        : "Unable to load labels";
 
     private string RepositorySearchText
     {

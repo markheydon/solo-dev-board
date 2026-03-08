@@ -247,7 +247,8 @@ public sealed class GitHubService : IGitHubService
 
     /// <summary>
     /// Repairs common mojibake artefacts seen in externally sourced text.
-    /// This preserves user readability when punctuation has been decoded incorrectly upstream.
+    /// This preserves user readability when punctuation has been decoded incorrectly upstream,
+    /// normalising malformed dash-like sequences to ASCII separator text.
     /// </summary>
     /// <param name="value">The source text to repair.</param>
     /// <returns>A cleaned string suitable for UI display.</returns>
