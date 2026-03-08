@@ -11,6 +11,7 @@ public sealed class LabelManagerService : ILabelManagerService
     /// <param name="gitHubService">The GitHub service used to retrieve label data.</param>
     public LabelManagerService(IGitHubService gitHubService)
     {
+        ArgumentNullException.ThrowIfNull(gitHubService);
         _gitHubService = gitHubService;
     }
 
@@ -18,7 +19,7 @@ public sealed class LabelManagerService : ILabelManagerService
     public async Task<IReadOnlyList<LabelDto>> GetLabelsAsync(string owner, string repo, CancellationToken cancellationToken = default)
     {
         var labels = await _gitHubService.GetLabelsAsync(owner, repo, cancellationToken).ConfigureAwait(false);
-        return labels.Select(MapToDto).ToArray();
+        return labels.Select(label => MapToDto(label, repo)).ToArray();
     }
 
     /// <inheritdoc/>
@@ -28,6 +29,6 @@ public sealed class LabelManagerService : ILabelManagerService
         return Task.CompletedTask;
     }
 
-    private static LabelDto MapToDto(Label label)
-        => new(label.Name, label.Colour, label.Description, label.RepositoryName);
+    private static LabelDto MapToDto(Label label, string repositoryName)
+        => new(label.Name, label.Colour, label.Description, repositoryName);
 }

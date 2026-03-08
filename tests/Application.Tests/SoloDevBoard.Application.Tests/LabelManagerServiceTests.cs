@@ -10,6 +10,19 @@ public sealed class LabelManagerServiceTests
     private readonly Mock<IGitHubService> _gitHubServiceMock = new();
 
     [Fact]
+    public void Constructor_GitHubServiceIsNull_ThrowsArgumentNullException()
+    {
+        // Arrange
+        IGitHubService? gitHubService = null;
+
+        // Act
+        var action = () => _ = new LabelManagerService(gitHubService!);
+
+        // Assert
+        Assert.Throws<ArgumentNullException>(action);
+    }
+
+    [Fact]
     public async Task GetLabelsAsync_GitHubServiceReturnsLabels_ReturnsMappedLabelDtos()
     {
         // Arrange
@@ -20,14 +33,14 @@ public sealed class LabelManagerServiceTests
                 Name = "type/story",
                 Colour = "1d76db",
                 Description = "A user-facing Story delivering a discrete piece of value",
-                RepositoryName = "solo-dev-board",
+                RepositoryName = string.Empty,
             },
             new()
             {
                 Name = "priority/high",
                 Colour = "d93f0b",
                 Description = "Should be addressed in the current sprint or release",
-                RepositoryName = "solo-dev-board",
+                RepositoryName = string.Empty,
             },
         };
 
@@ -45,12 +58,12 @@ public sealed class LabelManagerServiceTests
         Assert.Equal("type/story", result[0].Name);
         Assert.Equal("1d76db", result[0].Colour);
         Assert.Equal("A user-facing Story delivering a discrete piece of value", result[0].Description);
-        Assert.Equal("solo-dev-board", result[0].RepositoryName);
+        Assert.Equal("repo", result[0].RepositoryName);
 
         Assert.Equal("priority/high", result[1].Name);
         Assert.Equal("d93f0b", result[1].Colour);
         Assert.Equal("Should be addressed in the current sprint or release", result[1].Description);
-        Assert.Equal("solo-dev-board", result[1].RepositoryName);
+        Assert.Equal("repo", result[1].RepositoryName);
     }
 
     [Fact]
