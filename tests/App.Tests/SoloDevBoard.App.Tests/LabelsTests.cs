@@ -59,6 +59,7 @@ public sealed class LabelsTests : BunitContext
             Assert.Contains("Showing 1 active repositories", cut.Markup);
             Assert.Empty(cut.FindAll("[data-testid='label-filter']"));
             Assert.Empty(cut.FindAll("[data-testid='labels-initial-state']"));
+            Assert.Empty(cut.FindAll("[data-testid='labels-grid']"));
         });
 
         _labelManagerServiceMock.Verify(

@@ -24,6 +24,8 @@
                                 Items="@visibleRepositoryOptions"
                                 Multiple="true"
                                 MaximumOptionsSearch="12"
+                                ComponentWidth="100%"
+                                ListStyleValue="width: 100%; max-height: 22rem; z-index: 10000;"
                                 OptionText="@(repository => repository.FullName)"
                                 OptionValue="@(repository => repository.FullName)"
                                 @bind-ValueText="RepositorySearchText"
@@ -79,7 +81,7 @@ else if (hasLoadedLabels && filteredRows.Count == 0)
         <p>No labels were returned for the selected repositories.</p>
     </FluentCard>
 }
-else
+else if (hasLoadedLabels)
 {
     <FluentDataGrid TGridItem="Labels.LabelRow"
                     Items="@filteredRows.AsQueryable()"

@@ -246,6 +246,35 @@ public sealed class GitHubService : IGitHubService
         => new($"GitHub API returned an invalid response for endpoint '{endpoint}'. {message}");
 
     /// <summary>
+    /// Repairs common mojibake artefacts seen in externally sourced text.
+    /// This preserves user readability when punctuation has been decoded incorrectly upstream.
+    /// </summary>
+    /// <param name="value">The source text to repair.</param>
+    /// <returns>A cleaned string suitable for UI display.</returns>
+    internal static string RepairCommonMojibake(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        return value
+            .Replace("\u00D4\u00C7\u00F6", " - ", StringComparison.Ordinal)
+            .Replace("\u00E2\u20AC\u201D", " - ", StringComparison.Ordinal)
+            .Replace("\u00E2\u20AC\u201C", " - ", StringComparison.Ordinal)
+            .Replace("\u00E2\u20AC\u2122", "'", StringComparison.Ordinal)
+            .Replace("\u00E2\u20AC\u0153", "\"", StringComparison.Ordinal)
+            .Replace("\u00E2\u20AC\u009D", "\"", StringComparison.Ordinal)
+            .Replace("\u00E2\u20AC\u00A6", "...", StringComparison.Ordinal)
+            .Replace("\u00C2", string.Empty, StringComparison.Ordinal)
+            .Replace("  -  ", " - ", StringComparison.Ordinal)
+            .Replace("  - ", " - ", StringComparison.Ordinal)
+            .Replace(" -  ", " - ", StringComparison.Ordinal)
+            .Replace("  ", " ", StringComparison.Ordinal)
+            .Trim();
+    }
+
+    /// <summary>
     /// Fetches all pages of a paged GitHub API endpoint and accumulates mapped domain entities
     /// across all pages, following <c>Link: rel="next"</c> headers until no further pages exist.
     /// </summary>
@@ -543,7 +572,7 @@ public sealed class GitHubService : IGitHubService
         {
             Name = Name,
             Colour = Colour,
-            Description = Description ?? string.Empty,
+            Description = RepairCommonMojibake(Description),
         };
     }
 
