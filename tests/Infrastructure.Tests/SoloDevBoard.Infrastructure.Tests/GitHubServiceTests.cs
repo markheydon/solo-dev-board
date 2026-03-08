@@ -25,6 +25,7 @@ public sealed class GitHubServiceTests
                     "description": "Authenticated repo",
                     "html_url": "https://github.com/mark/repo-auth",
                     "private": false,
+                    "archived": false,
                     "created_at": "2026-03-01T10:00:00Z",
                     "updated_at": "2026-03-02T11:00:00Z"
                   }
@@ -40,6 +41,7 @@ public sealed class GitHubServiceTests
         // Assert
         Assert.Single(result);
         Assert.Equal("repo-auth", result[0].Name);
+        Assert.False(result[0].IsArchived);
         Assert.Single(handler.Requests);
         Assert.Equal("https://api.github.com/user/repos?sort=updated&per_page=100", handler.Requests[0].RequestUri!.ToString());
     }
@@ -81,6 +83,7 @@ public sealed class GitHubServiceTests
                     "description": "First repo",
                     "html_url": "https://github.com/owner/repo-one",
                     "private": false,
+                    "archived": false,
                     "created_at": "2026-03-01T10:00:00Z",
                     "updated_at": "2026-03-02T11:00:00Z"
                   }
@@ -98,6 +101,7 @@ public sealed class GitHubServiceTests
                     "description": null,
                     "html_url": "https://github.com/owner/repo-two",
                     "private": true,
+                    "archived": true,
                     "created_at": "2026-03-03T10:00:00Z",
                     "updated_at": "2026-03-04T11:00:00Z"
                   }
@@ -114,6 +118,7 @@ public sealed class GitHubServiceTests
         Assert.Equal(2, result.Count);
         Assert.Equal("repo-one", result[0].Name);
         Assert.Equal(string.Empty, result[1].Description);
+        Assert.True(result[1].IsArchived);
         Assert.Equal(2, handler.Requests.Count);
         Assert.Equal("https://api.github.com/users/owner/repos?per_page=100", handler.Requests[0].RequestUri!.ToString());
         Assert.Equal("https://api.github.com/users/owner/repos?page=2&per_page=100", handler.Requests[1].RequestUri!.ToString());

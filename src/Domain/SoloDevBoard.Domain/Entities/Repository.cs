@@ -21,6 +21,9 @@ public sealed record Repository : IAggregate
     /// <summary>Gets a value indicating whether the repository is private.</summary>
     public bool IsPrivate { get; init; }
 
+    /// <summary>Gets a value indicating whether the repository is archived.</summary>
+    public bool IsArchived { get; init; }
+
     /// <summary>Gets the date and time when the repository was created.</summary>
     public DateTimeOffset CreatedAt { get; init; }
 

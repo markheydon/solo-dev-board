@@ -25,7 +25,8 @@ Key goals of the Label Manager:
 The read-only consolidated label view is now available on the `Labels` page.
 
 Current interactions:
-- Select one or more repositories in the repository selector.
+- Search and select one or more active repositories in the repository selector.
+- Archived repositories are hidden by default in the selector.
 - Use the label name filter input to narrow the visible rows.
 - Review each row for label name, colour, description, repositories containing that label, and repositories missing that label.
 

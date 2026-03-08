@@ -57,6 +57,7 @@ public sealed class LabelsTests : BunitContext
         {
             Assert.Contains("Select repositories to begin", cut.Markup);
             Assert.Contains("Load selected repositories", cut.Markup);
+            Assert.Contains("Showing 1 active repositories", cut.Markup);
         });
 
         _labelManagerServiceMock.Verify(
@@ -65,14 +66,36 @@ public sealed class LabelsTests : BunitContext
     }
 
     [Fact]
-    public void Labels_LoadRequestedAndNoLabelsReturned_ShowsEmptyState()
+    public void Labels_RepositoriesLoaded_ArchivedRepositoriesAreHiddenByDefault()
     {
         // Arrange
         _repositoryServiceMock
             .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync([
-                new Repository { Name = "repo-a", FullName = "owner/repo-a" },
+                new Repository { Name = "repo-a", FullName = "owner/repo-a", IsArchived = false },
+                new Repository { Name = "repo-archived", FullName = "owner/repo-archived", IsArchived = true },
             ]);
+
+        // Act
+        var cut = Render<Labels>();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Showing 1 active repositories", cut.Markup);
+            Assert.Contains("1 archived repository is hidden by default", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task Labels_LoadRequestedAndNoLabelsReturned_ShowsEmptyState()
+    {
+        // Arrange
+        var repoA = new Repository { Name = "repo-a", FullName = "owner/repo-a" };
+
+        _repositoryServiceMock
+            .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([repoA]);
 
         _labelManagerServiceMock
             .Setup(service => service.GetLabelsForRepositoriesAsync("owner", It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
@@ -80,9 +103,9 @@ public sealed class LabelsTests : BunitContext
 
         // Act
         var cut = Render<Labels>();
-        cut.WaitForAssertion(() => Assert.Contains("repo-checkbox-repo-a", cut.Markup));
+        cut.WaitForAssertion(() => _ = cut.FindComponent<FluentAutocomplete<Repository>>());
 
-        cut.Find("[data-testid='repo-checkbox-repo-a']").Change(true);
+        await SelectRepositoriesAsync(cut, repoA);
         cut.Find("[data-testid='load-labels-button']").Click();
 
         // Assert
@@ -94,15 +117,15 @@ public sealed class LabelsTests : BunitContext
     }
 
     [Fact]
-    public void Labels_SelectedRepositoriesAcrossOwners_LoadsEachOwnerAndShowsGapAnalysis()
+    public async Task Labels_SelectedRepositoriesAcrossOwners_LoadsEachOwnerAndShowsGapAnalysis()
     {
         // Arrange
+        var repoA = new Repository { Name = "repo-a", FullName = "owner-a/repo-a" };
+        var repoB = new Repository { Name = "repo-b", FullName = "owner-b/repo-b" };
+
         _repositoryServiceMock
             .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
-                new Repository { Name = "repo-a", FullName = "owner-a/repo-a" },
-                new Repository { Name = "repo-b", FullName = "owner-b/repo-b" },
-            ]);
+            .ReturnsAsync([repoA, repoB]);
 
         _labelManagerServiceMock
             .Setup(service => service.GetLabelsForRepositoriesAsync("owner-a", It.Is<IReadOnlyList<string>>(repositories => repositories.SequenceEqual(new[] { "repo-a" })), It.IsAny<CancellationToken>()))
@@ -119,10 +142,9 @@ public sealed class LabelsTests : BunitContext
 
         // Act
         var cut = Render<Labels>();
-        cut.WaitForAssertion(() => Assert.Contains("repo-checkbox-repo-a", cut.Markup));
+        cut.WaitForAssertion(() => _ = cut.FindComponent<FluentAutocomplete<Repository>>());
 
-        cut.Find("[data-testid='repo-checkbox-repo-a']").Change(true);
-        cut.Find("[data-testid='repo-checkbox-repo-b']").Change(true);
+        await SelectRepositoriesAsync(cut, repoA, repoB);
         cut.Find("[data-testid='load-labels-button']").Click();
 
         // Assert
@@ -144,14 +166,14 @@ public sealed class LabelsTests : BunitContext
     }
 
     [Fact]
-    public void Labels_FilterAppliedAfterLoad_FiltersRowsByName()
+    public async Task Labels_FilterAppliedAfterLoad_FiltersRowsByName()
     {
         // Arrange
+        var repoA = new Repository { Name = "repo-a", FullName = "owner/repo-a" };
+
         _repositoryServiceMock
             .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
-                new Repository { Name = "repo-a", FullName = "owner/repo-a" },
-            ]);
+            .ReturnsAsync([repoA]);
 
         _labelManagerServiceMock
             .Setup(service => service.GetLabelsForRepositoriesAsync("owner", It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
@@ -162,9 +184,9 @@ public sealed class LabelsTests : BunitContext
 
         // Act
         var cut = Render<Labels>();
-        cut.WaitForAssertion(() => Assert.Contains("repo-checkbox-repo-a", cut.Markup));
+        cut.WaitForAssertion(() => _ = cut.FindComponent<FluentAutocomplete<Repository>>());
 
-        cut.Find("[data-testid='repo-checkbox-repo-a']").Change(true);
+        await SelectRepositoriesAsync(cut, repoA);
         cut.Find("[data-testid='load-labels-button']").Click();
 
         cut.WaitForAssertion(() => Assert.Contains("type/story", cut.Markup));
@@ -178,6 +200,16 @@ public sealed class LabelsTests : BunitContext
         {
             Assert.Contains("status/done", cut.Markup);
             Assert.DoesNotContain("type/story", cut.Markup);
+        });
+    }
+
+    private static async Task SelectRepositoriesAsync(IRenderedComponent<Labels> cut, params Repository[] repositories)
+    {
+        var autocomplete = cut.FindComponent<FluentAutocomplete<Repository>>();
+
+        await cut.InvokeAsync(async () =>
+        {
+            await autocomplete.Instance.SelectedOptionsChanged.InvokeAsync(repositories);
         });
     }
 }

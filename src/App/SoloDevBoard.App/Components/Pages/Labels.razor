@@ -1,5 +1,6 @@
 @page "/labels"
 @rendermode InteractiveServer
+@using SoloDevBoard.Domain.Entities
 
 <PageTitle>Label Manager</PageTitle>
 
@@ -12,27 +13,27 @@
 
     @if (availableRepositories.Count == 0)
     {
-        <p>No repositories are available for label analysis.</p>
+        <p>No active repositories are available for label analysis.</p>
     }
     else
     {
-        <div class="repository-selector" data-testid="repository-selector">
-            @foreach (var repository in availableRepositories)
-            {
-                <label class="repository-option" for="repo-@repository.Name">
-                    <input id="repo-@repository.Name"
-                           type="checkbox"
-                           data-testid="repo-checkbox-@repository.Name"
-                           checked="@selectedRepositoryFullNames.Contains(repository.FullName, StringComparer.OrdinalIgnoreCase)"
-                           @onchange="@(args => OnRepositorySelectionChanged(repository.FullName, args.Value))" />
-                    @repository.FullName
-                </label>
-            }
-        </div>
+        <FluentAutocomplete TOption="Repository"
+                            Label="Repositories"
+                            Placeholder="Search and select active repositories"
+                            Multiple="true"
+                            MaximumOptionsSearch="12"
+                            Items="@availableRepositories"
+                            OptionText="@(repository => repository.FullName)"
+                            OptionValue="@(repository => repository.FullName)"
+                            @bind-SelectedOptions="selectedRepositories"
+                            OnOptionsSearch="OnRepositoryOptionsSearchAsync"
+                            data-testid="repository-autocomplete" />
+
+        <p data-testid="repository-selector-summary">@RepositorySelectorSummary</p>
 
         <FluentButton Appearance="Appearance.Accent"
                       data-testid="load-labels-button"
-                      Disabled="@ShowLoadingState"
+                      Disabled="@(ShowLoadingState || !selectedRepositories.Any())"
                       @onclick="LoadLabelsForSelectionAsync">
             Load selected repositories
         </FluentButton>

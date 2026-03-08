@@ -343,6 +343,9 @@ public sealed class GitHubService : IGitHubService
         [JsonPropertyName("private")]
         public bool IsPrivate { get; init; }
 
+        [JsonPropertyName("archived")]
+        public bool IsArchived { get; init; }
+
         [JsonPropertyName("created_at")]
         public DateTimeOffset CreatedAt { get; init; }
 
@@ -357,6 +360,7 @@ public sealed class GitHubService : IGitHubService
             Description = Description ?? string.Empty,
             Url = Url,
             IsPrivate = IsPrivate,
+            IsArchived = IsArchived,
             CreatedAt = CreatedAt,
             UpdatedAt = UpdatedAt,
         };

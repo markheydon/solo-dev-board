@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.FluentUI.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using SoloDevBoard.Application.Services;
 using SoloDevBoard.Domain.Entities;
@@ -21,7 +22,7 @@ public partial class Labels : ComponentBase
     public ILogger<Labels> Logger { get; set; } = default!;
 
     private IReadOnlyList<Repository> availableRepositories = [];
-    private IReadOnlyList<string> selectedRepositoryFullNames = [];
+    private IEnumerable<Repository> selectedRepositories = [];
     private IReadOnlyList<LabelRow> rows = [];
     private IReadOnlyList<LabelRow> filteredRows = [];
     private bool isLoadingRepositories = true;
@@ -29,6 +30,7 @@ public partial class Labels : ComponentBase
     private bool hasLoadedLabels;
     private string? errorMessage;
     private bool hasInitialised;
+    private int archivedRepositoryCount;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -57,8 +59,15 @@ public partial class Labels : ComponentBase
 
         try
         {
-            availableRepositories = await RepositoryService.GetRepositoriesAsync();
-            selectedRepositoryFullNames = [];
+            var repositories = await RepositoryService.GetRepositoriesAsync();
+            archivedRepositoryCount = repositories.Count(repository => repository.IsArchived);
+
+            availableRepositories = repositories
+                .Where(repository => !repository.IsArchived)
+                .OrderBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            selectedRepositories = [];
         }
         catch (HttpRequestException ex)
         {
@@ -75,27 +84,19 @@ public partial class Labels : ComponentBase
         }
     }
 
-    private void OnRepositorySelectionChanged(string repositoryFullName, object? value)
+    private Task OnRepositoryOptionsSearchAsync(OptionsSearchEventArgs<Repository> args)
     {
-        var isSelected = value switch
+        if (string.IsNullOrWhiteSpace(args.Text))
         {
-            bool b => b,
-            string s when bool.TryParse(s, out var parsed) => parsed,
-            _ => false,
-        };
-
-        var selected = selectedRepositoryFullNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        if (isSelected)
-        {
-            selected.Add(repositoryFullName);
-        }
-        else
-        {
-            selected.Remove(repositoryFullName);
+            args.Items = availableRepositories;
+            return Task.CompletedTask;
         }
 
-        selectedRepositoryFullNames = selected.OrderBy(name => name, StringComparer.OrdinalIgnoreCase).ToArray();
+        var filter = args.Text.Trim();
+        args.Items = availableRepositories
+            .Where(repository => repository.FullName.Contains(filter, StringComparison.OrdinalIgnoreCase));
+
+        return Task.CompletedTask;
     }
 
     private async Task LoadLabelsForSelectionAsync()
@@ -103,7 +104,17 @@ public partial class Labels : ComponentBase
         errorMessage = null;
         hasLoadedLabels = true;
 
-        if (selectedRepositoryFullNames.Count == 0)
+        var selectedRepositoryList = selectedRepositories
+            .Where(repository => !string.IsNullOrWhiteSpace(repository.FullName))
+            .DistinctBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var selectedRepositoryFullNames = selectedRepositoryList
+            .Select(repository => repository.FullName)
+            .OrderBy(fullName => fullName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (selectedRepositoryFullNames.Length == 0)
         {
             rows = [];
             ApplyFilter();
@@ -114,11 +125,7 @@ public partial class Labels : ComponentBase
 
         try
         {
-            var selectedRepositories = availableRepositories
-                .Where(repository => selectedRepositoryFullNames.Contains(repository.FullName, StringComparer.OrdinalIgnoreCase))
-                .ToArray();
-
-            var repositoryGroups = selectedRepositories
+            var repositoryGroups = selectedRepositoryList
                 .Select(repository => (Repository: repository, Owner: ResolveOwner(repository.FullName)))
                 .Where(item => !string.IsNullOrWhiteSpace(item.Owner))
                 .GroupBy(item => item.Owner, StringComparer.OrdinalIgnoreCase)
@@ -235,6 +242,11 @@ public partial class Labels : ComponentBase
     private bool ShowLoadingState => isLoadingRepositories || isLoadingLabels;
 
     private bool ShowInitialState => !ShowLoadingState && string.IsNullOrWhiteSpace(errorMessage) && !hasLoadedLabels;
+
+    private string RepositorySelectorSummary
+        => archivedRepositoryCount == 0
+            ? $"Showing {availableRepositories.Count} active repositories."
+            : $"Showing {availableRepositories.Count} active repositories. {archivedRepositoryCount} archived {(archivedRepositoryCount == 1 ? "repository is" : "repositories are")} hidden by default.";
 
     /// <summary>Represents a consolidated label row for the grid view.</summary>
     /// <param name="Name">The label name.</param>
