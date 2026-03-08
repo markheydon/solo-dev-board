@@ -1,0 +1,71 @@
+.repository-selector-card {
+    background: var(--neutral-layer-1, #fff);
+    border: 1px solid var(--neutral-stroke-layer-rest, #d1d1d1);
+    border-radius: 0.625rem;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+    margin: 0 0 1rem;
+    padding: 1rem;
+    overflow: visible;
+    position: relative;
+    z-index: 2;
+}
+
+.repository-selector-controls {
+    display: grid;
+    gap: 0.75rem;
+    position: relative;
+    isolation: isolate;
+}
+
+.repository-selector-controls ::deep fluent-autocomplete {
+    display: block;
+    width: 100%;
+}
+
+.repository-selector-controls ::deep .fluent-autocomplete-multiselect {
+    width: 100%;
+}
+
+.repository-selector-controls ::deep .fluent-autocomplete-multiselect fluent-anchored-region {
+    display: block !important;
+    inline-size: 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background-color: #fff !important;
+    opacity: 1 !important;
+    z-index: 10000 !important;
+}
+
+.repository-selector-controls ::deep .fluent-autocomplete-multiselect div[role="listbox"] {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: none !important;
+    max-height: 50vh !important;
+    overflow-y: auto !important;
+    box-sizing: border-box;
+    padding: 0 !important;
+    background-color: #fff !important;
+    opacity: 1 !important;
+    border: 1px solid var(--neutral-stroke-layer-rest, #bfbfbf) !important;
+    border-radius: 0.375rem !important;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 18%) !important;
+    z-index: 10000 !important;
+}
+
+.repository-selector-controls ::deep .fluent-autocomplete-multiselect div[role="listbox"] fluent-option {
+    background-color: #fff !important;
+    opacity: 1 !important;
+}
+
+.labels-results-surface {
+    position: relative;
+    z-index: 1;
+}
+
+.labels-results-surface ::deep .header,
+.labels-results-surface ::deep .sticky-header,
+.labels-results-surface ::deep tr[row-type='sticky-header'] > th {
+    z-index: 0 !important;
+}

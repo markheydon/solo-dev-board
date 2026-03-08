@@ -1,9 +1,111 @@
 @page "/labels"
+@rendermode InteractiveServer
+@using SoloDevBoard.Domain.Entities
 
 <PageTitle>Label Manager</PageTitle>
 
 <h1>Label Manager</h1>
 
-<FluentCard>
-    <p>This feature is coming soon.</p>
-</FluentCard>
+<p>View labels across selected repositories and identify missing labels quickly.</p>
+
+<section class="repository-selector-card">
+    <h2>Repository Selector</h2>
+
+    @if (availableRepositories.Count == 0)
+    {
+        <p>No active repositories are available for label analysis.</p>
+    }
+    else
+    {
+        <div class="repository-selector-controls">
+            <FluentAutocomplete TOption="Repository"
+                                Label="Repositories"
+                                Placeholder="Search and select active repositories"
+                                Items="@visibleRepositoryOptions"
+                                Multiple="true"
+                                MaximumOptionsSearch="12"
+                                ComponentWidth="100%"
+                                ListStyleValue="width: 100%; max-height: 22rem; z-index: 10000;"
+                                OptionText="@(repository => repository.FullName)"
+                                OptionValue="@(repository => repository.FullName)"
+                                @bind-ValueText="RepositorySearchText"
+                                @bind-SelectedOptions="selectedRepositories"
+                                OnOptionsSearch="OnRepositoryOptionsSearch"
+                                data-testid="repository-autocomplete" />
+
+            <p data-testid="repository-selector-summary">@RepositorySelectorSummary</p>
+
+            <FluentButton Appearance="Appearance.Accent"
+                          data-testid="load-labels-button"
+                          Disabled="@(ShowLoadingState || !selectedRepositories.Any())"
+                          @onclick="LoadLabelsForSelectionAsync">
+                Load selected repositories
+            </FluentButton>
+        </div>
+    }
+</section>
+
+@if (ShowLabelFilter)
+{
+    <FluentCard>
+        <h2>Filter</h2>
+        <input type="search"
+               class="label-filter"
+               placeholder="Filter by label name"
+             aria-label="Filter labels by name"
+               @bind="SearchText"
+               @bind:event="oninput"
+               data-testid="label-filter" />
+    </FluentCard>
+}
+
+@if (ShowLoadingState)
+{
+    <div aria-live="polite" role="status" data-testid="labels-loading-state">
+        <FluentProgressRing aria-label="Loading labels" />
+        <p>@(isLoadingRepositories ? "Loading repositories..." : "Loading labels...")</p>
+    </div>
+}
+else if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <FluentCard aria-live="assertive" role="alert">
+        <h2>@ErrorTitle</h2>
+        <p>@errorMessage</p>
+        @if (availableRepositories.Count == 0)
+        {
+            <FluentButton Appearance="Appearance.Accent" @onclick="ReloadRepositoriesAsync">Try loading repositories again</FluentButton>
+        }
+        else
+        {
+            <FluentButton Appearance="Appearance.Accent" @onclick="ReloadRepositoriesAsync">Reload repositories</FluentButton>
+            <FluentButton Appearance="Appearance.Stealth" @onclick="LoadLabelsForSelectionAsync">Try loading labels again</FluentButton>
+        }
+    </FluentCard>
+}
+else if (hasLoadedLabels && filteredRows.Count == 0)
+{
+    <FluentCard aria-live="polite" data-testid="labels-empty-state">
+        <h2>No labels found</h2>
+        <p>No labels were returned for the selected repositories.</p>
+    </FluentCard>
+}
+else if (hasLoadedLabels)
+{
+    <div class="labels-results-surface">
+        <FluentDataGrid TGridItem="Labels.LabelRow"
+                        Items="@filteredRows.AsQueryable()"
+                        AriaLabel="Consolidated labels"
+                        GridTemplateColumns="2fr 1fr 3fr 2fr 2fr"
+                        ResizeColumnOnAllRows="true"
+                        data-testid="labels-grid">
+            <PropertyColumn Property="@(row => row.Name)" Title="Label" Sortable="true" />
+            <TemplateColumn Title="Colour" Align="Align.Center">
+                <span style="display:inline-block; width:1rem; height:1rem; border-radius:50%; border:1px solid #6a6a6a; background-color:#@context.Colour;"
+                      title="@($"#{context.Colour}")"></span>
+            </TemplateColumn>
+            <PropertyColumn Property="@(row => row.Description)" Title="Description" />
+            <PropertyColumn Property="@(row => row.RepositoriesWithLabelText)" Title="Repositories" />
+            <PropertyColumn Property="@(row => row.MissingRepositoriesText)" Title="Missing In" />
+        </FluentDataGrid>
+    </div>
+}

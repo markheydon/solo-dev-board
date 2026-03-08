@@ -25,6 +25,7 @@ public sealed class GitHubServiceTests
                     "description": "Authenticated repo",
                     "html_url": "https://github.com/mark/repo-auth",
                     "private": false,
+                    "archived": false,
                     "created_at": "2026-03-01T10:00:00Z",
                     "updated_at": "2026-03-02T11:00:00Z"
                   }
@@ -40,6 +41,7 @@ public sealed class GitHubServiceTests
         // Assert
         Assert.Single(result);
         Assert.Equal("repo-auth", result[0].Name);
+        Assert.False(result[0].IsArchived);
         Assert.Single(handler.Requests);
         Assert.Equal("https://api.github.com/user/repos?sort=updated&per_page=100", handler.Requests[0].RequestUri!.ToString());
     }
@@ -81,6 +83,7 @@ public sealed class GitHubServiceTests
                     "description": "First repo",
                     "html_url": "https://github.com/owner/repo-one",
                     "private": false,
+                    "archived": false,
                     "created_at": "2026-03-01T10:00:00Z",
                     "updated_at": "2026-03-02T11:00:00Z"
                   }
@@ -98,6 +101,7 @@ public sealed class GitHubServiceTests
                     "description": null,
                     "html_url": "https://github.com/owner/repo-two",
                     "private": true,
+                    "archived": true,
                     "created_at": "2026-03-03T10:00:00Z",
                     "updated_at": "2026-03-04T11:00:00Z"
                   }
@@ -114,6 +118,65 @@ public sealed class GitHubServiceTests
         Assert.Equal(2, result.Count);
         Assert.Equal("repo-one", result[0].Name);
         Assert.Equal(string.Empty, result[1].Description);
+        Assert.True(result[1].IsArchived);
+        Assert.Equal(2, handler.Requests.Count);
+        Assert.Equal("https://api.github.com/users/owner/repos?per_page=100", handler.Requests[0].RequestUri!.ToString());
+        Assert.Equal("https://api.github.com/users/owner/repos?page=2&per_page=100", handler.Requests[1].RequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task GetActiveRepositoriesAsync_MultiplePages_ExcludesArchivedRepositories()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                [
+                  {
+                    "id": 1,
+                    "name": "repo-one",
+                    "full_name": "owner/repo-one",
+                    "description": "First repo",
+                    "html_url": "https://github.com/owner/repo-one",
+                    "private": false,
+                    "archived": false,
+                    "created_at": "2026-03-01T10:00:00Z",
+                    "updated_at": "2026-03-02T11:00:00Z"
+                  }
+                ]
+                """,
+                "<https://api.github.com/users/owner/repos?page=2&per_page=100>; rel=\"next\""),
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                [
+                  {
+                    "id": 2,
+                    "name": "repo-two",
+                    "full_name": "owner/repo-two",
+                    "description": null,
+                    "html_url": "https://github.com/owner/repo-two",
+                    "private": true,
+                    "archived": true,
+                    "created_at": "2026-03-03T10:00:00Z",
+                    "updated_at": "2026-03-04T11:00:00Z"
+                  }
+                ]
+                """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var result = await sut.GetActiveRepositoriesAsync("owner");
+
+        // Assert
+        Assert.Single(result);
+        Assert.Equal("repo-one", result[0].Name);
+        Assert.Equal("First repo", result[0].Description);
+        Assert.False(result[0].IsArchived);
         Assert.Equal(2, handler.Requests.Count);
         Assert.Equal("https://api.github.com/users/owner/repos?per_page=100", handler.Requests[0].RequestUri!.ToString());
         Assert.Equal("https://api.github.com/users/owner/repos?page=2&per_page=100", handler.Requests[1].RequestUri!.ToString());
@@ -285,6 +348,35 @@ public sealed class GitHubServiceTests
         Assert.Single(result);
         Assert.Equal(string.Empty, result[0].Description);
         Assert.Equal("https://api.github.com/repos/owner/repo/labels?per_page=100", handler.Requests[0].RequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task GetLabelsAsync_MojibakeDescription_RepairsDescription()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                [
+                  {
+                    "name": "out-of-scope",
+                    "color": "d4c5f9",
+                    "description": "Intentionally deferred \u00d4\u00c7\u00f6 may be revisited later."
+                  }
+                ]
+                """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var result = await sut.GetLabelsAsync("owner", "repo");
+
+        // Assert
+        Assert.Single(result);
+        Assert.Equal("Intentionally deferred - may be revisited later.", result[0].Description);
     }
 
     [Fact]

@@ -16,6 +16,7 @@ public sealed class RepositoryTests
             Description = "A test repository",
             Url = "https://github.com/owner/my-repo",
             IsPrivate = false,
+            IsArchived = false,
             CreatedAt = new DateTimeOffset(2024, 1, 1, 0, 0, 0, TimeSpan.Zero),
             UpdatedAt = new DateTimeOffset(2024, 6, 1, 0, 0, 0, TimeSpan.Zero),
         };
@@ -25,14 +26,15 @@ public sealed class RepositoryTests
         Assert.Equal("my-repo", repository.Name);
         Assert.Equal("owner/my-repo", repository.FullName);
         Assert.False(repository.IsPrivate);
+        Assert.False(repository.IsArchived);
     }
 
     [Fact]
     public void Repository_Records_WithSameValues_ShouldBeEqual()
     {
         // Arrange
-        var repo1 = new Repository { Id = 42, Name = "test", FullName = "owner/test" };
-        var repo2 = new Repository { Id = 42, Name = "test", FullName = "owner/test" };
+        var repo1 = new Repository { Id = 42, Name = "test", FullName = "owner/test", IsArchived = true };
+        var repo2 = new Repository { Id = 42, Name = "test", FullName = "owner/test", IsArchived = true };
 
         // Assert
         Assert.Equal(repo1, repo2);
