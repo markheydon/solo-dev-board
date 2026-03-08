@@ -10,7 +10,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddFluentUIComponents();
-builder.Services.AddScoped<IRepositoryService, RepositoryService>();
+builder.Services.AddApplicationServices();
 
 // Register Infrastructure services (GitHub API integration).
 // The Infrastructure project is referenced here solely as the DI composition root.
