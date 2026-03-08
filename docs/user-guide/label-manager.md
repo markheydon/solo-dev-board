@@ -22,10 +22,14 @@ Key goals of the Label Manager:
 
 ## How to Use
 
-*Coming soon — this section will describe the Label Manager interface and workflows once the feature is complete.*
+The read-only consolidated label view is now available on the `Labels` page.
+
+Current interactions:
+- Select one or more repositories in the repository selector.
+- Use the label name filter input to narrow the visible rows.
+- Review each row for label name, colour, description, repositories containing that label, and repositories missing that label.
 
 Planned interactions include:
-- Viewing all labels across selected repositories in a unified list.
 - Creating a new label and pushing it to multiple repositories simultaneously.
 - Editing a label's name, colour, or description.
 - Synchronising a target repository's labels to match a source repository or a defined template.

@@ -1,9 +1,83 @@
 @page "/labels"
+@rendermode InteractiveServer
 
 <PageTitle>Label Manager</PageTitle>
 
 <h1>Label Manager</h1>
 
+<p>View labels across selected repositories and identify missing labels quickly.</p>
+
 <FluentCard>
-    <p>This feature is coming soon.</p>
+    <h2>Repository Selector</h2>
+
+    @if (availableRepositories.Count == 0)
+    {
+        <p>No repositories are available for label analysis.</p>
+    }
+    else
+    {
+        <div class="repository-selector" data-testid="repository-selector">
+            @foreach (var repository in availableRepositories)
+            {
+                <label class="repository-option" for="repo-@repository.Name">
+                    <input id="repo-@repository.Name"
+                           type="checkbox"
+                           checked="@selectedRepositoryNames.Contains(repository.Name, StringComparer.OrdinalIgnoreCase)"
+                           @onchange="@(args => OnRepositorySelectionChanged(repository.Name, args.Value))" />
+                    @repository.Name
+                </label>
+            }
+        </div>
+    }
 </FluentCard>
+
+<FluentCard>
+    <h2>Filter</h2>
+    <input type="search"
+           class="label-filter"
+           placeholder="Filter by label name"
+            @bind="SearchText"
+           @bind:event="oninput"
+           data-testid="label-filter" />
+</FluentCard>
+
+@if (isLoading)
+{
+    <div aria-live="polite" role="status" data-testid="labels-loading-state">
+        <FluentProgressRing aria-label="Loading labels" />
+        <p>Loading labels...</p>
+    </div>
+}
+else if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <FluentCard aria-live="assertive" role="alert">
+        <h2>Unable to load labels</h2>
+        <p>@errorMessage</p>
+        <FluentButton Appearance="Appearance.Accent" @onclick="ReloadAsync">Try again</FluentButton>
+    </FluentCard>
+}
+else if (filteredRows.Count == 0)
+{
+    <FluentCard aria-live="polite" data-testid="labels-empty-state">
+        <h2>No labels found</h2>
+        <p>No labels were returned for the selected repositories.</p>
+    </FluentCard>
+}
+else
+{
+    <FluentDataGrid TGridItem="Labels.LabelRow"
+                    Items="@filteredRows.AsQueryable()"
+                    AriaLabel="Consolidated labels"
+                    GridTemplateColumns="2fr 1fr 3fr 2fr 2fr"
+                    ResizeColumnOnAllRows="true"
+                    data-testid="labels-grid">
+        <PropertyColumn Property="@(row => row.Name)" Title="Label" Sortable="true" />
+        <TemplateColumn Title="Colour" Align="Align.Center">
+            <span style="display:inline-block; width:1rem; height:1rem; border-radius:50%; border:1px solid #6a6a6a; background-color:#@context.Colour;"
+                  title="@($"#{context.Colour}")"></span>
+        </TemplateColumn>
+        <PropertyColumn Property="@(row => row.Description)" Title="Description" />
+        <PropertyColumn Property="@(row => row.RepositoriesWithLabelText)" Title="Repositories" />
+        <PropertyColumn Property="@(row => row.MissingRepositoriesText)" Title="Missing In" />
+    </FluentDataGrid>
+}
