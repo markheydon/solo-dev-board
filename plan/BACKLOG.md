@@ -66,7 +66,7 @@ Labels: `type/epic`, `area/migration`
 Labels: `type/epic`, `area/labels`
 
 <!-- Feature #27: Label Manager (planned 2026-03-07, milestone v0.2.0) -->
-<!-- Enablers: #28 Label domain + ILabelRepository, #29 GitHubLabelRepository, #31 LabelService -->
+<!-- Enablers: #28 Label domain + ILabelRepository (done — merged PR #28-pr, 2026-03-08), #29 GitHubLabelRepository, #31 LabelService -->
 <!-- Stories: #35 View labels, #33 CRUD labels, #32 Synchronise labels, #34 Apply taxonomy -->
 <!-- Tests: #38 LabelService unit tests, #37 GitHubLabelRepository unit tests, #36 bUnit UI tests -->
 
