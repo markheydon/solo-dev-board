@@ -70,23 +70,9 @@ else
                             data-testid="label-description-input" />
         </div>
 
-        <div class="repository-selector" data-testid="dialog-repository-selector">
-            <p>Target repositories</p>
-            @foreach (var repository in Content.AvailableRepositories)
-            {
-                <label>
-                    <input type="checkbox"
-                           checked="@selectedRepositoryNames.Contains(repository, StringComparer.OrdinalIgnoreCase)"
-                           @onchange="args => OnRepositoryToggleChanged(repository, args)" />
-                    @repository
-                </label>
-            }
-        </div>
+        @RepositorySelectorContent
 
-        @if (!string.IsNullOrWhiteSpace(validationMessage))
-        {
-            <p role="alert">@validationMessage</p>
-        }
+        @ValidationMessageContent
 
         <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit">@SubmitButtonText</FluentButton>
         <FluentButton Appearance="Appearance.Stealth" @onclick="CancelAsync">Cancel</FluentButton>
@@ -95,116 +81,35 @@ else
 
 @if (Content.Mode == LabelOperationMode.Delete)
 {
-    <div class="repository-selector" data-testid="dialog-repository-selector">
-        <p>Target repositories</p>
-        @foreach (var repository in Content.AvailableRepositories)
-        {
-            <label>
-                <input type="checkbox"
-                       checked="@selectedRepositoryNames.Contains(repository, StringComparer.OrdinalIgnoreCase)"
-                       @onchange="args => OnRepositoryToggleChanged(repository, args)" />
-                @repository
-            </label>
-        }
-    </div>
+    @RepositorySelectorContent
 
-    @if (!string.IsNullOrWhiteSpace(validationMessage))
-    {
-        <p role="alert">@validationMessage</p>
-    }
+    @ValidationMessageContent
 
     <FluentButton Appearance="Appearance.Accent" @onclick="ConfirmDeleteAsync">Delete label</FluentButton>
     <FluentButton Appearance="Appearance.Stealth" @onclick="CancelAsync">Cancel</FluentButton>
 }
 
-<style>
-    .colour-input-row {
-        align-items: end;
-        display: flex;
-        gap: 0.75rem;
-    }
+@code {
+    private RenderFragment RepositorySelectorContent =>
+        @<div class="repository-selector" data-testid="dialog-repository-selector">
+            <p>Target repositories</p>
+            @foreach (var repository in Content.AvailableRepositories)
+            {
+                <label>
+                    <input type="checkbox"
+                           checked="@selectedRepositoryNames.Contains(repository)"
+                           @onchange="args => OnRepositoryToggleChanged(repository, args)" />
+                    @repository
+                </label>
+            }
+        </div>;
 
-    .colour-swatch {
-        border: 1px solid #6a6a6a;
-        border-radius: 999px;
-        display: inline-block;
-        height: 1.5rem;
-        margin-block-end: 0.5rem;
-        width: 1.5rem;
-    }
-
-    .colour-swatch-button {
-        background: none;
-        border: none;
-        cursor: pointer;
-        display: inline-flex;
-        line-height: 0;
-        padding: 0;
-    }
-
-    .colour-swatch-button:focus-visible {
-        outline: 2px solid #0969da;
-        outline-offset: 2px;
-    }
-
-    .colour-selector-panel {
-        background: var(--neutral-layer-1, #fff);
-        border: 1px solid var(--neutral-stroke-layer-rest, #bfbfbf);
-        border-radius: 0.5rem;
-        margin-block: 0.5rem 0.75rem;
-        padding: 0.75rem;
-    }
-
-    .description-input-row {
-        margin-block-start: 0.5rem;
-    }
-
-    .colour-selector-panel p {
-        font-weight: 600;
-        margin: 0 0 0.5rem;
-    }
-
-    .colour-options {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-block-end: 0.75rem;
-    }
-
-    .colour-option-button {
-        background: none;
-        border: 1px solid #8a8a8a;
-        border-radius: 999px;
-        display: inline-flex;
-        padding: 0.2rem;
-    }
-
-    .colour-option-swatch {
-        border: 1px solid rgb(0 0 0 / 18%);
-        border-radius: 999px;
-        display: inline-block;
-        height: 1rem;
-        width: 1rem;
-    }
-
-    .custom-colour-picker {
-        display: block;
-        font-weight: 600;
-        margin-block-end: 0.25rem;
-    }
-
-    .repository-selector {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-        margin-block: 0.75rem;
-        max-height: 12rem;
-        overflow-y: auto;
-    }
-
-    .repository-selector p {
-        font-weight: 600;
-        margin: 0 0 0.25rem;
-    }
-    </style>
+    private RenderFragment ValidationMessageContent =>
+        @<>
+            @if (!string.IsNullOrWhiteSpace(validationMessage))
+            {
+                <p role="alert">@validationMessage</p>
+            }
+        </>;
+}
 

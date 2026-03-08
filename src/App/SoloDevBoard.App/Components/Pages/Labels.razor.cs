@@ -320,7 +320,6 @@ public partial class Labels : ComponentBase
             }
 
             ToastService.ShowSuccess($"Created '{operation.LabelName}' in {changedRepositoryCount} repositories.");
-            await LoadLabelsForSelectionAsync();
         }
         catch (HttpRequestException ex)
         {
@@ -330,6 +329,10 @@ public partial class Labels : ComponentBase
         {
             Logger.LogError(ex, "Failed to create label {LabelName}.", operation.LabelName);
             ToastService.ShowError($"An unexpected error occurred while creating '{operation.LabelName}'.");
+        }
+        finally
+        {
+            await LoadLabelsForSelectionAsync();
         }
     }
 
@@ -349,7 +352,6 @@ public partial class Labels : ComponentBase
             }
 
             ToastService.ShowSuccess($"Updated '{operation.OriginalLabelName}' across {changedRepositoryCount} repositories.");
-            await LoadLabelsForSelectionAsync();
         }
         catch (HttpRequestException ex)
         {
@@ -359,6 +361,10 @@ public partial class Labels : ComponentBase
         {
             Logger.LogError(ex, "Failed to update label {LabelName}.", operation.OriginalLabelName);
             ToastService.ShowError($"An unexpected error occurred while updating '{operation.OriginalLabelName}'.");
+        }
+        finally
+        {
+            await LoadLabelsForSelectionAsync();
         }
     }
 
@@ -377,7 +383,6 @@ public partial class Labels : ComponentBase
             }
 
             ToastService.ShowSuccess($"Deleted '{operation.OriginalLabelName}' from {changedRepositoryCount} repositories.");
-            await LoadLabelsForSelectionAsync();
         }
         catch (HttpRequestException ex)
         {
@@ -387,6 +392,10 @@ public partial class Labels : ComponentBase
         {
             Logger.LogError(ex, "Failed to delete label {LabelName}.", operation.OriginalLabelName);
             ToastService.ShowError($"An unexpected error occurred while deleting '{operation.OriginalLabelName}'.");
+        }
+        finally
+        {
+            await LoadLabelsForSelectionAsync();
         }
     }
 
