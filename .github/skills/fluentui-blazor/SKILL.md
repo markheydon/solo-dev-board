@@ -229,3 +229,58 @@ For detailed guidance on specific topics, see:
 - [Layout and navigation](references/LAYOUT-AND-NAVIGATION.md)
 - [Data grid](references/DATAGRID.md)
 - [Theming](references/THEMING.md)
+
+## Advanced UI Debugging Playbook
+
+Use this section when a Fluent component renders but behaves incorrectly in real UI flows (clipping, overlap, invisible popups, incorrect stacking, or partial-width overlays).
+
+### 1. Diagnose with DOM-first inspection.
+
+- Inspect the live element in browser developer tools before changing markup.
+- Confirm which element actually renders the popup (for autocomplete this is usually inside `fluent-anchored-region` and `div[role=listbox]`).
+- Record computed values for `display`, `position`, `z-index`, `width`, `max-width`, `overflow`, and `background`.
+
+### 2. Check ancestor constraints first.
+
+- Walk up ancestor containers and find any `overflow: hidden`, `transform`, `filter`, `contain`, or `isolation` rules that can create clipping or stacking contexts.
+- Prefer removing or relocating the constraining wrapper before introducing deep CSS overrides.
+- If a card-like wrapper clips overlays, switch to a simpler container and recreate visual styling explicitly.
+
+### 3. Prefer component parameters before deep CSS.
+
+- Set documented Fluent parameters first (for example `ComponentWidth`, `ListStyleValue`, `Position`, and option templates where applicable).
+- Use deep CSS only when parameter configuration cannot solve the issue.
+- Keep overrides narrowly scoped to the page/component root to avoid global side effects.
+
+### 4. For list popup readability, enforce opaque surfaces.
+
+- Ensure popup containers and option rows have explicit non-transparent backgrounds.
+- Add border/shadow to separate popup from underlying content.
+- Validate with underlying high-contrast content (for example a data grid header) to confirm no bleed-through.
+
+### 5. Verify both empty and populated states.
+
+- Test with no table/grid rendered.
+- Test with the full table/grid rendered underneath.
+- Test with long option lists, scrolling, and narrow viewport widths.
+
+## First-Time-Right Delivery Workflow (Fluent UI)
+
+Apply this exact sequence for user-facing UI tasks.
+
+1. Capture acceptance criteria in observable terms.
+    Example: "Popup width matches selector width.", "No bleed-through from grid headers.", "No clipping at card boundaries.".
+2. Implement the smallest change that can satisfy all criteria.
+3. Perform live browser verification before commit.
+    Verify desktop and mobile breakpoints, both empty and data-populated states.
+4. Run automated checks.
+    Run targeted component tests, then solution build/test.
+5. Do not commit until visual acceptance is confirmed by screenshot or explicit user confirmation.
+
+## Specific Guardrails for `FluentAutocomplete`
+
+- Always bind `Items` and `OnOptionsSearch` together.
+- Keep `OptionText` and `OptionValue` stable and deterministic.
+- Avoid wrappers that unintentionally clip anchored overlays.
+- If overlap appears, style both popup container and options as opaque.
+- If width collapses, inspect whether listbox is `inline-flex` and explicitly force full-width block/flex behaviour.
