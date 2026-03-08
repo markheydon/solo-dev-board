@@ -35,8 +35,9 @@ Invoke this agent when you need to:
 - Create pull request targeting `main` from the feature branch with:
   - Descriptive title following convention: `[type/label] Brief description`
   - PR body linking to issues: `Closes #X`, `Relates to #Y`
-  - Labels matching primary issue labels
-  - Milestone assignment if applicable
+  - **Assignee:** always assign to `markheydon` (the sole developer on this project)
+  - **Labels:** copy `type/`, `priority/`, `area/`, and `size/` labels from the linked issue; add `status/in-review`; do **not** carry over `status/in-progress` or `status/todo`
+  - Milestone assignment if applicable (same milestone as the linked issue)
 - Use `.github/pull_request_template.md` if present
 - Link PR to GitHub project board — the Linked pull requests field updates automatically when the PR references the issue
 
@@ -223,6 +224,11 @@ Output: "PR created. ⚠️ Breaking change detected—update RELEASE_PLAN.md be
 
 Use this checklist for every review:
 
+### Pull Request Metadata
+- [ ] PR assigned to `markheydon`
+- [ ] PR labels: `type/`, `priority/`, `area/`, `size/` copied from issue; `status/in-review` added; `status/in-progress` and `status/todo` excluded
+- [ ] PR milestone matches linked issue milestone
+
 ### Code Quality
 - [ ] `get_errors` shows zero errors/warnings
 - [ ] UK English verified (no "behavior", "color", "organize", etc.)
@@ -235,7 +241,7 @@ Use this checklist for every review:
 - [ ] Test naming follows `MethodUnderTest_Scenario_ExpectedOutcome`
 - [ ] Tests pass locally (`dotnet test`)
 - [ ] Test projects mirror source project structure
-- [ ] Moq used for mocking, FluentAssertions for assertions
+- [ ] Moq used for mocking, xUnit built-in `Assert.*` for assertions (**FluentAssertions is prohibited** per ADR-0008)
 
 ### Documentation
 - [ ] User-facing features have `docs/user-guide/*.md`

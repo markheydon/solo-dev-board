@@ -20,6 +20,8 @@
 
 > **All code comments, string literals, user-facing text, documentation, and commit messages MUST be written in UK English.**
 
+> **All bullet point list items that form complete sentences MUST end with a full stop (`.`).** This applies to all documentation: planning files, user guides, ADRs, agent definitions, prompt files, and inline code comments.
+
 Use the following spellings consistently:
 - `colour` (not color)
 - `organise` (not organize)

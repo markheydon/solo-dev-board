@@ -35,6 +35,7 @@ public static class InfrastructureServiceExtensions
             .AddHttpMessageHandler<GitHubAuthHandler>();
 
         services.AddScoped<IGitHubService, GitHubService>();
+        services.AddScoped<ILabelRepository, GitHubLabelRepository>();
 
         return services;
     }

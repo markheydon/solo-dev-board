@@ -92,8 +92,34 @@ All source code, tests, and documentation changes are committed to this branch. 
 - Update `adr/README.md` index
 
 ### 7. Backlog Synchronisation
-- Update `plan/BACKLOG.md` to reflect implementation progress
-- Flag scope changes in `plan/SCOPE.md` for user review
+- Update `plan/BACKLOG.md` to reflect implementation progress.
+- Flag scope changes in `plan/SCOPE.md` for user review.
+
+### 8. Self-Review (Pre-Handoff)
+
+**Mandatory before marking implementation complete.** The Delivery Agent performs an explicit review pass over every file it has changed. This catches issues before the GitHub coding review agent sees the PR, avoiding a second implementation round-trip.
+
+#### Automated checks
+- `dotnet build` — zero errors, zero warnings.
+- `dotnet test` — all tests passing.
+- `get_errors` on each modified file — no diagnostics.
+
+#### Source file checks
+- Every `public` type, method, property, and constructor has a `///` XML doc comment.
+- All comments, strings, and user-facing text use UK English (no `behavior`, `color`, `organize`, `center`, etc.).
+- Every public constructor guards injected dependencies with `ArgumentNullException.ThrowIfNull` / `ArgumentException.ThrowIfNullOrWhiteSpace`.
+- Every `await` in Application/Infrastructure uses `.ConfigureAwait(false)`; no sync-over-async (`.Result`, `.Wait()`).
+- Public API methods return `IReadOnlyList<T>` / `IReadOnlyDictionary<TKey,TValue>`, not mutable collection types.
+- All `.cs` files use file-scoped namespaces.
+- No business logic in `.razor` files — logic lives in code-behind or Application layer.
+- No layer boundary violations (no domain entities in Application service public signatures; no Infrastructure types in Razor components).
+
+#### Test file checks
+- Every test method is named `MethodUnderTest_Scenario_ExpectedOutcome`.
+- Arrange / Act / Assert blocks are each separated by a blank line.
+- Only `Assert.*` from xUnit — no `FluentAssertions` (prohibited, ADR-0008).
+
+**If any check fails:** fix before handing off. Do not pass known self-review findings to the Review Agent.
 
 ---
 
@@ -271,14 +297,15 @@ Your choice?
 ## Mandatory Gates (Before Implementation Complete)
 
 Implementation is NOT complete until:
-- ✅ All acceptance criteria met
-- ✅ Code compiles without errors/warnings
-- ✅ Tests pass locally
-- ✅ Documentation updated (user-facing features only)
-- ✅ ADR created (architectural decisions only)
-- ✅ UK English verified throughout
-- ✅ Layered architecture rules followed
-- ✅ Backlog synchronised
+- ✅ All acceptance criteria met.
+- ✅ Code compiles without errors/warnings.
+- ✅ Tests pass locally.
+- ✅ Documentation updated (user-facing features only).
+- ✅ ADR created (architectural decisions only).
+- ✅ UK English verified throughout.
+- ✅ Layered architecture rules followed.
+- ✅ Backlog synchronised.
+- ✅ **Self-review (Step 8) completed** — all source and test file checks passed with no outstanding findings.
 
 **If any gate fails:** Agent escalates to you for resolution, does NOT proceed to review.
 
