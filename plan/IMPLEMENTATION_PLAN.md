@@ -55,7 +55,7 @@ For the full feature scope, see [SCOPE.md](SCOPE.md). For individual feature bac
 - [ ] Implement `LabelService` in `Application` (CRUD, sync operations)
 - [ ] Build Blazor UI components for the Label Manager
 - [ ] Implement label synchronisation logic (compare source and target, produce diff, apply changes)
-- [ ] Write unit tests for `LabelService` using NSubstitute
+- [ ] Write unit tests for `LabelService` using Moq
 - [ ] Write integration tests for `GitHubLabelRepository` (against GitHub API test org or mocked HTTP)
 - [ ] Update `docs/user-guide/label-manager.md`
 
