@@ -1,0 +1,113 @@
+@implements IDialogContentComponent<LabelOperationDialogRequest>
+
+@if (Content.Mode == LabelOperationMode.Delete)
+{
+    <p>Delete label <strong>@Content.OriginalLabelName</strong> from the selected repositories.</p>
+}
+else
+{
+    <EditForm Model="model" OnValidSubmit="OnValidSubmitAsync">
+        <DataAnnotationsValidator />
+        <FluentValidationSummary />
+
+        <FluentTextField Label="Label name"
+                         Required
+                         @bind-Value="model.LabelName"
+                         data-testid="label-name-input" />
+        <FluentValidationMessage For="@(() => model.LabelName)" />
+
+        <div class="colour-input-row">
+            <FluentTextField Label="Colour"
+                             Placeholder="#ededed"
+                             @bind-Value="model.Colour"
+                             data-testid="label-colour-input" />
+            <span class="colour-swatch"
+                  style="background-color:@model.DisplayColour"
+                  title="@model.DisplayColour"
+                  data-testid="label-colour-swatch"></span>
+        </div>
+        <FluentValidationMessage For="@(() => model.Colour)" />
+
+        <FluentTextArea Label="Description"
+                        Placeholder="Optional description"
+                        @bind-Value="model.Description"
+                        data-testid="label-description-input" />
+
+        <div class="repository-selector" data-testid="dialog-repository-selector">
+            <p>Target repositories</p>
+            @foreach (var repository in Content.AvailableRepositories)
+            {
+                <label>
+                    <input type="checkbox"
+                           checked="@selectedRepositoryNames.Contains(repository, StringComparer.OrdinalIgnoreCase)"
+                           @onchange="args => OnRepositoryToggleChanged(repository, args)" />
+                    @repository
+                </label>
+            }
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(validationMessage))
+        {
+            <p role="alert">@validationMessage</p>
+        }
+
+        <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit">Apply</FluentButton>
+        <FluentButton Appearance="Appearance.Stealth" @onclick="CancelAsync">Cancel</FluentButton>
+    </EditForm>
+}
+
+@if (Content.Mode == LabelOperationMode.Delete)
+{
+    <div class="repository-selector" data-testid="dialog-repository-selector">
+        <p>Target repositories</p>
+        @foreach (var repository in Content.AvailableRepositories)
+        {
+            <label>
+                <input type="checkbox"
+                       checked="@selectedRepositoryNames.Contains(repository, StringComparer.OrdinalIgnoreCase)"
+                       @onchange="args => OnRepositoryToggleChanged(repository, args)" />
+                @repository
+            </label>
+        }
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(validationMessage))
+    {
+        <p role="alert">@validationMessage</p>
+    }
+
+    <FluentButton Appearance="Appearance.Accent" @onclick="ConfirmDeleteAsync">Delete label</FluentButton>
+    <FluentButton Appearance="Appearance.Stealth" @onclick="CancelAsync">Cancel</FluentButton>
+}
+
+<style>
+    .colour-input-row {
+        align-items: end;
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .colour-swatch {
+        border: 1px solid #6a6a6a;
+        border-radius: 999px;
+        display: inline-block;
+        height: 1.5rem;
+        margin-block-end: 0.5rem;
+        width: 1.5rem;
+    }
+
+    .repository-selector {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        margin-block: 0.75rem;
+        max-height: 12rem;
+        overflow-y: auto;
+    }
+
+    .repository-selector p {
+        font-weight: 600;
+        margin: 0 0 0.25rem;
+    }
+    </style>
+

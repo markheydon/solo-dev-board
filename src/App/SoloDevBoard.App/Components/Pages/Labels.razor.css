@@ -69,3 +69,8 @@
 .labels-results-surface ::deep tr[row-type='sticky-header'] > th {
     z-index: 0 !important;
 }
+
+.label-action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
