@@ -2,45 +2,75 @@
 
 <PageTitle>Repositories</PageTitle>
 
-<h1>Repositories</h1>
+<MudStack Spacing="3">
+    <MudText Typo="Typo.h4">Repositories</MudText>
+    <MudText Typo="Typo.body1">Browse repositories available to your authenticated GitHub account.</MudText>
 
-<p>Browse repositories available to your authenticated GitHub account.</p>
+    @if (isLoading)
+    {
+        <MudPaper Class="repositories-state pa-4" Elevation="1" aria-live="polite" role="status">
+            <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" aria-label="Loading repositories" />
+                <MudText Typo="Typo.body1">Loading repositories...</MudText>
+            </MudStack>
+        </MudPaper>
+    }
+    else if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <MudPaper Class="repositories-state pa-4" Elevation="1" aria-live="assertive" role="alert">
+            <MudStack Spacing="2">
+                <MudText Typo="Typo.h6">Unable to load repositories</MudText>
+                <MudText Typo="Typo.body2">@errorMessage</MudText>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ReloadAsync">Try again</MudButton>
+            </MudStack>
+        </MudPaper>
+    }
+    else if (repositories.Count == 0)
+    {
+        <MudPaper Class="repositories-state pa-4" Elevation="1" aria-live="polite">
+            <MudStack Spacing="1">
+                <MudText Typo="Typo.h6">No repositories found</MudText>
+                <MudText Typo="Typo.body2">No repositories were returned for your account.</MudText>
+            </MudStack>
+        </MudPaper>
+    }
+    else
+    {
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudStack Spacing="3">
+                <MudTextField @bind-Value="repositorySearchTerm"
+                              Label="Search repositories"
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              Immediate="true"
+                              Clearable="true"
+                              Class="repository-search" />
 
-@if (isLoading)
-{
-    <div aria-live="polite" role="status">
-        <FluentProgressRing aria-label="Loading repositories" />
-        <p>Loading repositories...</p>
-    </div>
-}
-else if (!string.IsNullOrWhiteSpace(errorMessage))
-{
-    <FluentCard aria-live="assertive" role="alert">
-        <h2>Unable to load repositories</h2>
-        <p>@errorMessage</p>
-        <FluentButton Appearance="Appearance.Accent" @onclick="ReloadAsync">Try again</FluentButton>
-    </FluentCard>
-}
-else if (repositories.Count == 0)
-{
-    <FluentCard aria-live="polite">
-        <h2>No repositories found</h2>
-        <p>No repositories were returned for your account.</p>
-    </FluentCard>
-}
-else
-{
-    <FluentDataGrid TGridItem="SoloDevBoard.Domain.Entities.Repository"
-                    Items="@repositories.AsQueryable()"
-                    AriaLabel="GitHub repositories"
-                    GridTemplateColumns="2fr 1fr 1fr"
-                    ResizeColumnOnAllRows="true">
-        <PropertyColumn Property="@(repository => repository.Name)" Title="Name" Sortable="true" />
-        <TemplateColumn Title="Visibility" Align="Align.Center">
-            @(context.IsPrivate ? "Private" : "Public")
-        </TemplateColumn>
-        <TemplateColumn Title="Last Updated (UTC)" Align="Align.End">
-            @context.UpdatedAt.UtcDateTime.ToString("dd MMM yyyy", System.Globalization.CultureInfo.InvariantCulture)
-        </TemplateColumn>
-    </FluentDataGrid>
-}
+                <MudDataGrid T="SoloDevBoard.Domain.Entities.Repository"
+                             Items="FilteredRepositories"
+                             Hover="true"
+                             Dense="true"
+                             SortMode="SortMode.Multiple">
+                    <Columns>
+                        <PropertyColumn Property="repository => repository.Name" Title="Name" Sortable="true" />
+                        <TemplateColumn Title="Visibility">
+                            <CellTemplate>
+                                <MudChip Color="@(context.Item.IsPrivate ? Color.Warning : Color.Success)"
+                                         Variant="Variant.Outlined"
+                                         Size="Size.Small">
+                                    @(context.Item.IsPrivate ? "Private" : "Public")
+                                </MudChip>
+                            </CellTemplate>
+                        </TemplateColumn>
+                        <TemplateColumn Title="Last Updated (UTC)">
+                            <CellTemplate>
+                                @context.Item.UpdatedAt.UtcDateTime.ToString("dd MMM yyyy", System.Globalization.CultureInfo.InvariantCulture)
+                            </CellTemplate>
+                        </TemplateColumn>
+                    </Columns>
+                </MudDataGrid>
+            </MudStack>
+        </MudPaper>
+    }
+</MudStack>

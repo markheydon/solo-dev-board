@@ -2,20 +2,32 @@
 
 <PageTitle>Dashboard</PageTitle>
 
-<h1>Dashboard</h1>
+<MudStack Spacing="3">
+    <MudText Typo="Typo.h4">Dashboard</MudText>
+    <MudText Typo="Typo.body1">Navigate to each SoloDevBoard feature from a single starting point.</MudText>
 
-<p>Navigate to each SoloDevBoard feature from a single starting point.</p>
-
-<div class="dashboard-grid">
-    @foreach (var feature in features)
-    {
-        <FluentCard class="feature-panel" aria-label="@($"{feature.Name} panel")">
-            <h2>@feature.Name</h2>
-            <p>@feature.Description</p>
-            <a class="feature-link" href="@feature.Route">@($"Open {feature.Name}")</a>
-        </FluentCard>
-    }
-</div>
+    <MudGrid Class="dashboard-grid">
+        @foreach (var feature in features)
+        {
+            <MudItem xs="12" sm="6" xl="4">
+                <MudCard Class="feature-panel" aria-label="@($"{feature.Name} panel")">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">@feature.Name</MudText>
+                        <MudText Typo="Typo.body2" Class="feature-description">@feature.Description</MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Href="@feature.Route"
+                                   Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.ArrowForward">
+                            @($"Open {feature.Name}")
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+</MudStack>
 
 @code {
     private static readonly IReadOnlyList<FeatureCardModel> features =

@@ -1,7 +1,7 @@
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.FluentUI.AspNetCore.Components;
 using Moq;
+using MudBlazor.Services;
 using SoloDevBoard.App.Components.Pages;
 using SoloDevBoard.Application.Services;
 using SoloDevBoard.Domain.Entities;
@@ -14,13 +14,13 @@ public sealed class RepositoriesTests : BunitContext
     private readonly Mock<IRepositoryService> _repositoryServiceMock = new();
 
     /// <summary>
-    /// Initialises the bUnit test context with Fluent UI services and a loose JS interop mode
-    /// so that Fluent UI web components render without requiring a real browser JavaScript runtime.
+    /// Initialises the bUnit test context with MudBlazor services and a loose JS interop mode
+    /// so that MudBlazor components render without requiring a real browser JavaScript runtime.
     /// </summary>
     public RepositoriesTests()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
-        Services.AddFluentUIComponents();
+        Services.AddMudServices();
         Services.AddScoped(_ => _repositoryServiceMock.Object);
     }
 

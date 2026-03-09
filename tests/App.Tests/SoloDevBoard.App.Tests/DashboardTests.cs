@@ -1,6 +1,6 @@
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.FluentUI.AspNetCore.Components;
+using MudBlazor.Services;
 using SoloDevBoard.App.Components.Pages;
 
 namespace SoloDevBoard.App.Tests;
@@ -9,12 +9,12 @@ namespace SoloDevBoard.App.Tests;
 public sealed class DashboardTests : BunitContext
 {
     /// <summary>
-    /// Initialises Fluent UI services and loose JS interop so Fluent components render in bUnit.
+    /// Initialises MudBlazor services and loose JS interop so MudBlazor components render in bUnit.
     /// </summary>
     public DashboardTests()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
-        Services.AddFluentUIComponents();
+        Services.AddMudServices();
     }
 
     [Fact]
@@ -43,7 +43,10 @@ public sealed class DashboardTests : BunitContext
         var cut = Render<Dashboard>();
 
         // Assert
-        var links = cut.FindAll("a.feature-link").Select(link => link.GetAttribute("href")).ToList();
+        var links = cut.FindAll("a")
+            .Select(link => link.GetAttribute("href"))
+            .Where(href => !string.IsNullOrWhiteSpace(href))
+            .ToList();
 
         Assert.Equal(6, links.Count);
         Assert.Contains("/audit", links);
