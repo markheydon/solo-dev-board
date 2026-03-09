@@ -66,6 +66,7 @@ The following are explicitly **not** in scope for the current version of SoloDev
 - **Open source:** The project is intended to be open source under the MIT Licence.
 - **AI-driven development:** The project is developed with GitHub Copilot as an active collaborator. All planning documents are written to be machine-readable and actionable by AI agents.
 - **Minimal dependencies:** Prefer the .NET ecosystem and well-established open source libraries. Avoid adding dependencies without an ADR.
+- **UI component library:** MudBlazor is the sole UI component library for the Blazor front-end (see [ADR-0012](../adr/0012-switch-to-mudblazor-component-library.md)). Raw HTML form elements are not used where a MudBlazor equivalent exists.
 
 ---
 
@@ -90,3 +91,4 @@ The following are explicitly **not** in scope for the current version of SoloDev
 | 2025-01-01 | Initial scope defined | Solo developer |
 | 2026-03-06 | Multi-user / team features updated from permanently out of scope to deferred (Phase 5). `ICurrentUserContext` interface preparation added to Phase 2. See ADR-0007. | Solo developer |
 | 2026-03-07 | Added Epic 7 (Cross-Repo PM Workflow) to In Scope. Updated Project Vision to document the motivating context from markheydon/github-workflows. Phase 5 added to IMPLEMENTATION_PLAN.md for this epic. | Solo developer |
+| 2026-03-09 | Added constraint: MudBlazor is the sole UI component library (ADR-0012). Fluent UI Blazor library removed. Existing UI features (Repositories page, Label Manager) to be refactored. | Solo developer |

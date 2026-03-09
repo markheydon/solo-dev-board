@@ -191,7 +191,7 @@ Use the following active skill set for this repository:
 - `create-architectural-decision-record`
 - `documentation-writer`
 - `dotnet-best-practices`
-- `fluentui-blazor`
+- `mudblazor`
 
 Optional companion skills:
 

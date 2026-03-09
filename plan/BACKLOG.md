@@ -27,6 +27,22 @@ Labels: `type/epic`, `area/infrastructure`
 - [ ] As a solo developer, I want my GitHub token to be stored securely in Azure Key Vault so that it is never exposed in configuration files.
 - [ ] As a solo developer, I want the application to be deployed to Azure App Service so that I can access it from any device.
 
+### MudBlazor Migration (Infrastructure Chore)
+
+<!-- Planned 2026-03-09 per ADR-0012 — replaces Fluent UI Blazor with MudBlazor across the full application -->
+<!-- Epic #63; area/infrastructure, priority/high, milestone v0.2.0 -->
+<!-- Enablers: #64 NuGet swap + service wiring, #65 GitHub AI assets -->
+<!-- Stories: #66 Dashboard refactor, #67 Repositories refactor, #68 Label Manager refactor -->
+<!-- Tests: #69 bUnit test updates -->
+
+- [ ] As a solo developer, I want the application switched from Fluent UI Blazor to MudBlazor so that UI delivery by AI agents is more reliable and requires fewer workarounds. _(ADR-0012, Epic #63 — status/todo)_
+  - [ ] Enabler: Remove Fluent UI NuGet packages; add MudBlazor; wire up services in `Program.cs` and providers in `MainLayout.razor`. _(#64)_
+  - [ ] Enabler: Verify/complete `.github/skills/mudblazor/` skill and `.github/instructions/blazor.instructions.md` replacement. _(#65)_
+  - [ ] Story: Refactor the Dashboard shell page (Fluent UI layout and navigation → MudBlazor equivalents). _(#66)_
+  - [ ] Story: Refactor the Repositories page (Fluent UI → MudBlazor components). _(#67)_
+  - [ ] Story: Refactor the Label Manager page and Label Operation dialog (Fluent UI → MudBlazor; replace hand-rolled colour picker with `MudColorPicker`). _(#68)_
+  - [ ] Test: Update bUnit test projects — replace `AddFluentUIComponents()` with MudBlazor service registration. _(#69)_
+
 ---
 
 ## Epic 1: Audit Dashboard
