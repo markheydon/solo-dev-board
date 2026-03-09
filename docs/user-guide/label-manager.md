@@ -5,10 +5,6 @@ parent: User Guide
 nav_order: 3
 ---
 
-> ⚠️ **Under Development** — This feature is planned for Phase 2. This page will be updated as the feature progresses.
-
----
-
 ## Overview
 
 The Label Manager provides a unified interface for creating, editing, deleting, and synchronising GitHub labels across multiple repositories. Rather than managing labels repository by repository through the GitHub web interface, you can define a canonical label taxonomy once and push it to all relevant repositories.
@@ -22,17 +18,27 @@ Key goals of the Label Manager:
 
 ## How to Use
 
-The read-only consolidated label view is now available on the `Labels` page.
+The consolidated label view and bulk CRUD operations are available on the `Labels` page.
 
 Current interactions:
 - Search and select one or more active repositories in the repository selector.
 - Archived repositories are hidden by default in the selector.
 - Use the label name filter input to narrow the visible rows.
 - Review each row for label name, colour, description, repositories containing that label, and repositories missing that label.
+- Select **New label** to open a dialog and create a label across one or more selected repositories.
+- Select **Edit** on a row to rename a label, recolour it, or update its description across selected repositories.
+- Select **Delete** on a row to remove that label from selected repositories after confirming the operation.
+- Review success or failure feedback from toast notifications after each operation.
+
+The create and edit dialogs include:
+- Required label name validation.
+- Optional description input.
+- Hexadecimal colour input with a clickable swatch that opens a colour picker.
+- Colour picker includes ten preset colours and a custom hex colour input.
+- Default colour value of `#ededed` when no colour is provided.
+- Multi-repository selection before submitting the operation.
 
 Planned interactions include:
-- Creating a new label and pushing it to multiple repositories simultaneously.
-- Editing a label's name, colour, or description.
 - Synchronising a target repository's labels to match a source repository or a defined template.
 - Flagging and resolving label conflicts.
 

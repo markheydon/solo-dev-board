@@ -1,5 +1,4 @@
 @page "/labels"
-@rendermode InteractiveServer
 @using SoloDevBoard.Domain.Entities
 
 <PageTitle>Label Manager</PageTitle>
@@ -34,6 +33,13 @@
                                 data-testid="repository-autocomplete" />
 
             <p data-testid="repository-selector-summary">@RepositorySelectorSummary</p>
+
+            <FluentButton Appearance="Appearance.Accent"
+                          data-testid="new-label-button"
+                          Disabled="@(ShowLoadingState || !selectedRepositories.Any())"
+                          @onclick="ShowCreateDialogAsync">
+                New label
+            </FluentButton>
 
             <FluentButton Appearance="Appearance.Accent"
                           data-testid="load-labels-button"
@@ -95,7 +101,8 @@ else if (hasLoadedLabels)
         <FluentDataGrid TGridItem="Labels.LabelRow"
                         Items="@filteredRows.AsQueryable()"
                         AriaLabel="Consolidated labels"
-                        GridTemplateColumns="2fr 1fr 3fr 2fr 2fr"
+                        RowSize="DataGridRowSize.Large"
+                        GridTemplateColumns="2fr 1fr 3fr 2fr 2fr 2fr"
                         ResizeColumnOnAllRows="true"
                         data-testid="labels-grid">
             <PropertyColumn Property="@(row => row.Name)" Title="Label" Sortable="true" />
@@ -106,6 +113,20 @@ else if (hasLoadedLabels)
             <PropertyColumn Property="@(row => row.Description)" Title="Description" />
             <PropertyColumn Property="@(row => row.RepositoriesWithLabelText)" Title="Repositories" />
             <PropertyColumn Property="@(row => row.MissingRepositoriesText)" Title="Missing In" />
+            <TemplateColumn Title="Actions">
+                <div class="label-action-buttons">
+                    <FluentButton Appearance="Appearance.Outline"
+                                  data-testid="edit-label-button"
+                                  @onclick="() => ShowEditDialogAsync(context)">
+                        Edit
+                    </FluentButton>
+                    <FluentButton Appearance="Appearance.Stealth"
+                                  data-testid="delete-label-button"
+                                  @onclick="() => ShowDeleteDialogAsync(context)">
+                        Delete
+                    </FluentButton>
+                </div>
+            </TemplateColumn>
         </FluentDataGrid>
     </div>
 }

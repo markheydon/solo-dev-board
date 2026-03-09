@@ -57,6 +57,7 @@ public sealed class LabelsTests : BunitContext
         cut.WaitForAssertion(() =>
         {
             Assert.Contains("Load selected repositories", cut.Markup);
+            Assert.Contains("New label", cut.Markup);
             Assert.Contains("Showing 1 active repositories", cut.Markup);
             Assert.Empty(cut.FindAll("[data-testid='label-filter']"));
             Assert.Empty(cut.FindAll("[data-testid='labels-initial-state']"));
@@ -193,6 +194,11 @@ public sealed class LabelsTests : BunitContext
 
         cut.WaitForAssertion(() => Assert.Contains("type/story", cut.Markup));
         cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='label-filter']")));
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Equal(2, cut.FindAll("[data-testid='edit-label-button']").Count);
+            Assert.Equal(2, cut.FindAll("[data-testid='delete-label-button']").Count);
+        });
 
         var filterInput = cut.Find("[data-testid='label-filter']");
         Assert.Equal("Filter labels by name", filterInput.GetAttribute("aria-label"));
