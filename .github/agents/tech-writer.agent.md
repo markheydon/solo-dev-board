@@ -82,7 +82,7 @@ Follow Diátaxis framework principles from `.github/skills/documentation-writer/
 - Clear heading hierarchy (H1 for title, H2 for sections, H3 for subsections).
 - Code examples using triple-backtick fenced blocks with language identifiers.
 - Screenshots or diagrams where they add clarity (reference in prose).
-- Cross-references to related guides using relative links: `[Label Manager](label-manager.md)`.
+- Cross-references to related guides using relative links: `\[Label Manager\]\(label-manager.md\)`.
 - Consistent terminology with ADRs and planning docs.
 
 **Style requirements:**
@@ -151,7 +151,7 @@ Maintain consistency with the layered architecture (see ADR-0004 and ADR-0011):
 ### Cross-References and Links
 - **ADRs**: Reference as "ADR-0011" (no "the", no "document", just the ID).
 - **Planning files**: Use full path in prose: "`plan/BACKLOG.md`".
-- **User guides**: Use relative markdown links: `[Label Manager](label-manager.md)`.
+- **User guides**: Use relative markdown links: `\[Label Manager\]\(label-manager.md\)`.
 - **Code elements**: Use backticks for types, methods, properties: `ILabelService`, `GetLabelsAsync()`, `LabelDto`.
 - **GitHub issues**: Reference as "#15" (with link if in markdown).
 
