@@ -191,7 +191,7 @@ Use the following active skill set for this repository:
 - `create-architectural-decision-record`
 - `documentation-writer`
 - `dotnet-best-practices`
-- `fluentui-blazor`
+- `mudblazor`
 
 Optional companion skills:
 
@@ -204,15 +204,15 @@ Default workflow order for feature delivery:
 2. Planning: `breakdown-plan`
 3. Issue lifecycle: `github-issues` (and `gh-cli` for bulk operations), then `github-project` to sync the project board
 4. Test planning: `breakdown-test`
-5. Implementation: `dotnet-best-practices` and `fluentui-blazor` as needed
+5. Implementation: `dotnet-best-practices` and `mudblazor` as needed
 6. Architecture decision capture: `create-architectural-decision-record` when required
-7. Documentation updates: `documentation-writer`
+7. Documentation updates: **Tech Writer agent** (invoked by PM Orchestrator or Delivery Agent; uses `documentation-writer` skill internally)
 
 Execution gates:
 
 1. Do not start coding before planning and issue creation are complete.
 2. Do not close feature work before tests and documentation updates are complete.
-3. Scope-impacting changes must update `plan/SCOPE.md` and `plan/BACKLOG.md`.
+3. Scope-impacting changes must update `plan/SCOPE.md` and `plan/BACKLOG.md` (via Tech Writer agent).
 
 ---
 
@@ -226,7 +226,8 @@ For daily product management operations, use the **PM operating system** defined
 ### Custom Agents
 
 - **PM Orchestrator** (`.github/agents/pm-orchestrator.agent.md`) — backlog selection, scope validation, technical planning, issue creation
-- **Delivery Agent** (`.github/agents/delivery.agent.md`) — implementation, tests, docs, ADRs
+- **Delivery Agent** (`.github/agents/delivery.agent.md`) — implementation, tests, in-code XML docs
+- **Tech Writer** (`.github/agents/tech-writer.agent.md`) — BACKLOG/SCOPE/ADR/user guide documentation, UK English enforcement
 - **Review Agent** (`.github/agents/review.agent.md`) — quality gates, PR creation, issue closure
 
 ### Workflow Prompts

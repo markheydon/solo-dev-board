@@ -1,77 +1,78 @@
 ---
-description: 'Blazor component and application patterns'
+description: 'Blazor component and application patterns for SoloDevBoard (MudBlazor)'
 applyTo: '**/*.razor, **/*.razor.cs, **/*.razor.css'
 ---
 
-## Blazor Code Style and Structure
+## UI Library — MudBlazor
 
-- Write idiomatic and efficient Blazor and C# code.
-- Follow .NET and Blazor conventions.
-- Use Razor Components appropriately for component-based UI development.
-- Prefer inline functions for smaller components but separate complex logic into code-behind or service classes.
-- Async/await should be used where applicable to ensure non-blocking UI operations.
+This project uses **MudBlazor** as its sole UI component library (see ADR-0012).
+
+- **Never use raw HTML form elements** where a MudBlazor component exists. Use `<MudTextField>`, `<MudSelect>`, `<MudAutocomplete>`, `<MudCheckBox>`, `<MudSwitch>`, `<MudColorPicker>`, etc.
+- **Never use raw `<input>`, `<select>`, `<textarea>`, `<button>`** in Razor components — always use the `<Mud*>` equivalent.
+- **Never use `<style>` blocks** inside `.razor` files — use `.razor.css` isolated stylesheets for all component-scoped CSS.
+- For any pattern where you cannot find a MudBlazor component, add a `// TODO: no MudBlazor equivalent found` comment and use a scoped `.razor.css` class for styling, never an inline `<style>` block.
+- Consult the **mudblazor skill** (`.github/skills/mudblazor/SKILL.md`) for component usage patterns, layout structure, and known pitfalls before implementing any new Razor component.
+
+## Blazor Code Style
+
+- Write idiomatic C# and Razor markup.
+- Prefer code-behind files (`.razor.cs`) for any component logic beyond simple one-liners; keep `.razor` files focused on markup.
+- Business logic must not appear in Razor components — call Application-layer services instead.
+- Use `async`/`await` for all service calls and lifecycle methods that perform I/O.
+- Use `EventCallback<T>` for component events; never use `Action` or `Func` for cross-component communication.
+- Use `@bind` and `@bind:get`/`@bind:set` for two-way binding.
+- Scoped CSS lives in `.razor.css` files alongside the component — never in a shared stylesheet unless the style genuinely applies globally.
 
 ## Naming Conventions
 
-- Follow PascalCase for component names, method names, and public members.
-- Use camelCase for private fields and local variables.
-- Prefix interface names with "I" (e.g., IUserService).
+- PascalCase for component names, public members, and method names.
+- camelCase for private fields and local variables.
+- Prefix interface names with `I` (e.g. `ILabelManagerService`).
+- Component files: `<FeatureName>.razor`, `<FeatureName>.razor.cs`, `<FeatureName>.razor.css`.
 
-## Blazor and .NET Specific Guidelines
+## Lifecycle and State
 
-- Utilise Blazor's built-in features for component lifecycle (e.g., OnInitializedAsync, OnParametersSetAsync).
-- Use data binding effectively with @bind.
-- Leverage Dependency Injection for services in Blazor.
-- Structure Blazor components and services following Separation of Concerns.
-- Always use the latest version C#, currently C# 14 features like record types, pattern matching, and global usings.
+- Initialise data in `OnInitializedAsync`, not in constructors or field initialisers.
+- Use `StateHasChanged()` only when the render cycle cannot detect changes automatically (e.g. after a callback from a non-UI thread).
+- Do not call `StateHasChanged()` inside `OnInitializedAsync` — it is called automatically.
+- Use `[Parameter]` for inputs, `[CascadingParameter]` for ambient context (e.g. theme, auth state).
 
-## Error Handling and Validation
+## Error Handling
 
-- Implement proper error handling for Blazor pages and API calls.
-- Use logging for error tracking in the backend and consider capturing UI-level errors in Blazor with tools like ErrorBoundary.
-- Implement validation using FluentValidation or DataAnnotations in forms.
+- Wrap service calls in `try`/`catch` in code-behind methods; display errors via `ISnackbar` notifications.
+- Use `<ErrorBoundary>` for page-level error containment.
+- Log errors via the injected `ILogger<T>`.
 
-## Blazor API and Performance Optimisation
+## MudBlazor Layout
 
-- Utilise Blazor server-side or WebAssembly optimally based on the project requirements.
-- Use asynchronous methods (async/await) for API calls or UI actions that could block the main thread.
-- Optimise Razor components by reducing unnecessary renders and using StateHasChanged() efficiently.
-- Minimise the component render tree by avoiding re-renders unless necessary, using ShouldRender() where appropriate.
-- Use EventCallbacks for handling user interactions efficiently, passing only minimal data when triggering events.
+The application layout uses the standard MudBlazor shell:
 
-## Caching Strategies
+```
+MudLayout
+  MudAppBar (top navigation bar)
+  MudDrawer (side navigation, MudNavMenu + MudNavLink items)
+  MudMainContent
+    MudContainer (page content)
+```
 
-- Implement in-memory caching for frequently used data, especially for Blazor Server apps. Use IMemoryCache for lightweight caching solutions.
-- For Blazor WebAssembly, utilise localStorage or sessionStorage to cache application state between user sessions.
-- Consider Distributed Cache strategies (like Redis or SQL Server Cache) for larger applications that need shared state across multiple users or clients.
-- Cache API calls by storing responses to avoid redundant calls when data is unlikely to change, thus improving the user experience.
+Do not deviate from this structure without an ADR.
 
-## State Management Libraries
+## MudBlazor Dialog Pattern
 
-- Use Blazor's built-in Cascading Parameters and EventCallbacks for basic state sharing across components.
-- Implement advanced state management solutions using libraries like Fluxor or BlazorState when the application grows in complexity.
-- For client-side state persistence in Blazor WebAssembly, consider using Blazored.LocalStorage or Blazored.SessionStorage to maintain state between page reloads.
-- For server-side Blazor, use Scoped Services and the StateContainer pattern to manage state within user sessions while minimising re-renders.
+- Inject `IDialogService` and call `await DialogService.ShowAsync<TDialog>(...)` to open dialogs.
+- Dialog components inherit from `ComponentBase` and receive parameters via `[Parameter]`.
+- Use `MudDialog` with `TitleContent`, `DialogContent`, and `DialogActions` fragments inside dialog components.
+- Do not use inline modals or JS interop modals.
 
-## API Design and Integration
+## MudBlazor Snackbar / Notification Pattern
 
-- Use HttpClient or other appropriate services to communicate with external APIs or your own backend.
-- Implement error handling for API calls using try-catch and provide proper user feedback in the UI.
+- Inject `ISnackbar` and call `Snackbar.Add(message, Severity.X)` for user notifications.
+- Use `Severity.Success`, `Severity.Error`, `Severity.Warning`, `Severity.Info`.
 
-## Testing and Debugging in Visual Studio
+## Testing
 
-- All unit testing and integration testing should be done in Visual Studio Enterprise.
-- Test Blazor components and services using xUnit, NUnit, or MSTest.
-- Use Moq or NSubstitute for mocking dependencies during tests.
-- Debug Blazor UI issues using browser developer tools and Visual Studio's debugging tools for backend and server-side issues.
-- For performance profiling and optimisation, rely on Visual Studio's diagnostics tools.
-
-## Security and Authentication
-
-- Implement Authentication and Authorization in the Blazor app where necessary using ASP.NET Identity or JWT tokens for API authentication.
-- Use HTTPS for all web communication and ensure proper CORS policies are implemented.
-
-## API Documentation and Swagger
-
-- Use Swagger/OpenAPI for API documentation for your backend API services.
-- Ensure XML documentation for models and API methods for enhancing Swagger documentation.
+- bUnit tests register MudBlazor services via `ctx.Services.AddMudServices()`.
+- Set `ctx.JSInterop.Mode = JSRuntimeMode.Loose` as the default for MudBlazor component tests.
+- Use `ctx.JSInterop.SetupVoid(...)` only when a test must assert specific JS interop calls.
+- Tests must not reference `AddFluentUIComponents()` or Fluent UI namespaces.
+- Follow the naming convention `MethodUnderTest_Scenario_ExpectedOutcome`.

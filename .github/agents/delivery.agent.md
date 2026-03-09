@@ -75,21 +75,38 @@ All source code, tests, and documentation changes are committed to this branch. 
 - Arrange/Act/Assert sections separated by blank lines
 
 ### 5. Documentation Updates
-- Update `docs/user-guide/*.md` if feature is user-facing
-- Update `docs/index.md` quick links if new doc page added
-- Add XML doc comments (`///`) to all public members per `.github/skills/csharp-docs/SKILL.md`
+- **Delegate to Tech Writer agent** for all user-facing documentation:
+  - `docs/user-guide/*.md` — create or update guide for user-facing features
+  - `docs/index.md` — add quick link if new guide page created
+  - `plan/BACKLOG.md` — mark implementation progress (coordinate with PM Orchestrator)
+  - `plan/SCOPE.md` — flag scope changes for user review (Tech Writer produces prose after approval)
+- **Provide structured input** to Tech Writer:
+  - Purpose: what was implemented and why (e.g., "user-facing feature completed", "scope drift identified")
+  - Key points: outline of feature functionality, UI elements, user workflows
+  - Context: related ADRs (e.g., ADR-0011 for DTO boundaries), issue numbers, architectural layers involved
+  - Target file: exact path to update (e.g., `docs/user-guide/label-manager.md`)
+- **Do not write documentation prose directly** — provide outline; let Tech Writer produce UK-English-compliant text
+- Add XML doc comments (`///`) to all public members per `.github/skills/csharp-docs/SKILL.md` (in-code comments are Delivery Agent's responsibility)
 
 ### 6. ADR Creation (when needed)
-- Invoke `create-architectural-decision-record` skill if:
-  - Architectural decision introduced
-  - Design pattern chosen
-  - Technology selection made
-- Place ADR in `adr/` directory
-- Update `adr/README.md` index
+- **Identify when an ADR is required**:
+  - Architectural decision introduced during implementation
+  - Design pattern chosen for component or service structure
+  - Technology selection made (library, framework, external dependency)
+- **Delegate writing to Tech Writer agent**:
+  - Provide decision summary: what was decided and why
+  - List alternatives considered and why they were rejected
+  - Describe positive and negative consequences
+  - Reference related ADRs and code files affected
+- Tech Writer produces ADR using template from `create-architectural-decision-record` skill
+- Tech Writer places ADR in `adr/` directory and updates `adr/README.md`
+- **Do not write ADR prose directly** — provide decision outline; Tech Writer ensures UK English and structural compliance
 
 ### 7. Backlog Synchronisation
-- Update `plan/BACKLOG.md` to reflect implementation progress.
-- Update `plan/SCOPE.md` if scope changed during implementation (flag for user review).
+- **Coordinate with Tech Writer agent** for planning file updates:
+  - `plan/BACKLOG.md` — mark implementation progress or completion
+  - `plan/SCOPE.md` — flag scope drift and provide rationale for changes (requires user approval before Tech Writer updates)
+- **Do not modify planning files directly** — provide status change or scope justification outline; Tech Writer updates prose
 
 ### 8. Self-Review (Pre-Handoff)
 
@@ -129,7 +146,8 @@ All source code, tests, and documentation changes are committed to this branch. 
 ❌ **Do not skip tests or documentation** — mandatory gates must be met  
 ❌ **Do not use US English spelling** — UK English only (colour, organise, behaviour, etc.)  
 ❌ **Do not create files outside the layered architecture** — respect Domain/Application/Infrastructure/App boundaries  
-❌ **Do not commit implementation code directly to `main`** — always work on a `feature/issue-N-description` branch; the branch reaches `main` only via a merged pull request
+❌ **Do not commit implementation code directly to `main`** — always work on a `feature/issue-N-description` branch; the branch reaches `main` only via a merged pull request  
+❌ **Do not write documentation prose directly** — delegate BACKLOG, SCOPE, ADR, and user guide updates to Tech Writer agent (in-code XML comments are still Delivery Agent's responsibility)
 
 ---
 
@@ -149,9 +167,10 @@ When complete, this agent produces:
 ### Artefacts Created/Modified
 - **Source code** in `src/` following layered architecture
 - **Test code** in `tests/` with full coverage of new/changed logic
-- **Documentation** in `docs/user-guide/` if user-facing feature
-- **ADR** in `adr/` if architectural decision made
-- **Backlog updates** in `plan/BACKLOG.md`
+- **XML doc comments** (`///`) on all public members in source code
+- **Documentation** in `docs/user-guide/` if user-facing feature (created via Tech Writer agent)
+- **ADR** in `adr/` if architectural decision made (created via Tech Writer agent)
+- **Backlog updates** in `plan/BACKLOG.md` (updated via Tech Writer agent)
 
 ### Quality Gates Met
 - ✅ Code follows .NET 10/C# 14 conventions

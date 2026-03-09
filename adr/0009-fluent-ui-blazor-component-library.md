@@ -1,7 +1,7 @@
 # ADR-0009: Use Microsoft Fluent UI Blazor Component Library
 
 **Date:** 2026-03-07
-**Status:** Accepted
+**Status:** Superseded by [ADR-0012](0012-switch-to-mudblazor-component-library.md)
 
 ---
 
