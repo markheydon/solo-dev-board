@@ -556,7 +556,15 @@ public partial class Labels : ComponentBase
         : "Unable to load labels";
 
     private string RepositorySelectorSummary
-        => $"Showing {availableRepositories.Count} active repositories. {selectedRepositories.Count} selected. Archived repositories are hidden by default.";
+    {
+        get
+        {
+            var repositoryCount = availableRepositories.Count;
+            var repositoryNoun = repositoryCount == 1 ? "repository" : "repositories";
+
+            return $"Showing {repositoryCount} active {repositoryNoun}. {selectedRepositories.Count} selected. Archived repositories are hidden by default.";
+        }
+    }
 
     private static string GetColourSwatchStyle(string colour)
     {

@@ -155,7 +155,7 @@ public partial class LabelOperationDialog
         [Required(ErrorMessage = "Label name is required.")]
         public string LabelName { get; set; } = string.Empty;
 
-        [RegularExpression("^#?[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$", ErrorMessage = "Use a valid six-character hexadecimal colour.")]
+        [RegularExpression("^#?[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$", ErrorMessage = "Use a valid six- or eight-character hexadecimal colour.")]
         public string Colour
         {
             get => colour;

@@ -54,7 +54,7 @@ public sealed class LabelsTests
         {
             Assert.Contains("Load selected repositories", cut.Markup);
             Assert.Contains("New label", cut.Markup);
-            Assert.Contains("Showing 1 active repositories", cut.Markup);
+            Assert.Contains("Showing 1 active repository", cut.Markup);
             Assert.Empty(cut.FindAll("[data-testid='label-filter']"));
             Assert.Empty(cut.FindAll("[data-testid='labels-grid']"));
         });
@@ -82,7 +82,7 @@ public sealed class LabelsTests
         // Assert
         cut.WaitForAssertion(() =>
         {
-            Assert.Contains("Showing 1 active repositories", cut.Markup);
+            Assert.Contains("Showing 1 active repository", cut.Markup);
             Assert.Contains("Archived repositories are hidden by default", cut.Markup);
         });
     }
