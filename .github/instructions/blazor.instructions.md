@@ -61,7 +61,7 @@ Do not deviate from this structure without an ADR.
 
 - Inject `IDialogService` and call `await DialogService.ShowAsync<TDialog>(...)` to open dialogs.
 - Dialog components inherit from `ComponentBase` and receive parameters via `[Parameter]`.
-- Use `MudDialog`, `MudDialogTitle`, `MudDialogContent`, `MudDialogActions` inside dialog components.
+- Use `MudDialog` with `TitleContent`, `DialogContent`, and `DialogActions` fragments inside dialog components.
 - Do not use inline modals or JS interop modals.
 
 ## MudBlazor Snackbar / Notification Pattern
@@ -72,6 +72,7 @@ Do not deviate from this structure without an ADR.
 ## Testing
 
 - bUnit tests register MudBlazor services via `ctx.Services.AddMudServices()`.
-- Use `ctx.JSInterop.SetupVoid(...)` for any MudBlazor JS interop calls that surface in tests.
+- Set `ctx.JSInterop.Mode = JSRuntimeMode.Loose` as the default for MudBlazor component tests.
+- Use `ctx.JSInterop.SetupVoid(...)` only when a test must assert specific JS interop calls.
 - Tests must not reference `AddFluentUIComponents()` or Fluent UI namespaces.
 - Follow the naming convention `MethodUnderTest_Scenario_ExpectedOutcome`.

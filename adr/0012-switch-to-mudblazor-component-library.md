@@ -23,6 +23,12 @@ ADR-0009 selected `Microsoft.FluentUI.AspNetCore.Components` as the UI component
 
 SoloDevBoard is developed entirely through AI agents (GitHub Copilot Delivery Agent) with no human UI engineering. This places a premium on a library that:
 
+- Is well-represented in AI training data (many real-world examples, consistent patterns).
+- Has a predictable, consistent parameter API that the agent can generalise across components.
+- Handles popup-rendering components (autocomplete, select, dialog, snackbar) without stacking context issues.
+- Provides all required components as first-class citizens (including colour pickers, multi-selects).
+- Requires minimal CSS correction to achieve acceptable default presentation.
+
 
 Fluent UI Blazor scores poorly on these criteria because of its FAST web component foundation.
 

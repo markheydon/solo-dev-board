@@ -14,7 +14,7 @@ using MudBlazor.Services;
 using Moq;
 using Xunit;
 
-public class LabelsPageTests : TestContext
+public class LabelsPageTests : BunitContext
 {
     public LabelsPageTests()
     {

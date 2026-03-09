@@ -22,8 +22,10 @@ description: >
 ### NuGet Package
 
 ```xml
-<PackageReference Include="MudBlazor" Version="7.*" />
+<PackageReference Include="MudBlazor" />
 ```
+
+This repository uses Central Package Management. Define or update the `MudBlazor` version in `Directory.Packages.props` via `<PackageVersion Include="MudBlazor" Version="..." />`.
 
 ### Program.cs
 
