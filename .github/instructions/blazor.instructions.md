@@ -74,5 +74,5 @@ Do not deviate from this structure without an ADR.
 - bUnit tests register MudBlazor services via `ctx.Services.AddMudServices()`.
 - Set `ctx.JSInterop.Mode = JSRuntimeMode.Loose` as the default for MudBlazor component tests.
 - Use `ctx.JSInterop.SetupVoid(...)` only when a test must assert specific JS interop calls.
-- Tests must not reference `AddFluentUIComponents()` or Fluent UI namespaces.
+- Tests must register MudBlazor services only and must not reference retired pre-migration UI service registrations or namespaces.
 - Follow the naming convention `MethodUnderTest_Scenario_ExpectedOutcome`.
