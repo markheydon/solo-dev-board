@@ -264,7 +264,7 @@ public partial class Labels : ComponentBase
             $"#{row.Colour}",
             row.Description,
             selectedFullNames,
-            selectedFullNames,
+            row.RepositoriesWithLabel,
             defaultSelection);
 
         var result = await ShowLabelOperationDialogAsync("Delete label", request);

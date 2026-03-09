@@ -74,7 +74,7 @@ else
             <p>Target repositories</p>
             @if (Content.Mode == LabelOperationMode.Edit)
             {
-                <p class="repository-selector-hint">Only repositories that already contain this label can be edited.</p>
+                <p class="repository-selector-hint">Only repositories that already contain this label can be selected.</p>
             }
             @foreach (var repository in Content.AvailableRepositories)
             {
@@ -102,6 +102,7 @@ else
 {
     <div class="repository-selector" data-testid="dialog-repository-selector">
         <p>Target repositories</p>
+        <p class="repository-selector-hint">Only repositories that already contain this label can be selected.</p>
         @foreach (var repository in Content.AvailableRepositories)
         {
             <label class="@(CanSelectRepository(repository) ? string.Empty : "repository-option-disabled")">

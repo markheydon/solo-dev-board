@@ -38,6 +38,7 @@ public partial class LabelOperationDialog
     public FluentDialog Dialog { get; set; } = default!;
 
     private readonly LabelOperationFormModel model = new();
+    private HashSet<string> selectableRepositoryNames = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<string> selectedRepositoryNames = new(StringComparer.OrdinalIgnoreCase);
     private string? validationMessage;
     private bool showColourSelector;
@@ -46,13 +47,13 @@ public partial class LabelOperationDialog
     /// <inheritdoc/>
     protected override void OnParametersSet()
     {
-        var selectableRepositories = Content.SelectableRepositories
+        selectableRepositoryNames = Content.SelectableRepositories
             .Where(repository => !string.IsNullOrWhiteSpace(repository))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        if (selectableRepositories.Count == 0)
+        if (selectableRepositoryNames.Count == 0 && Content.Mode == LabelOperationMode.Create)
         {
-            selectableRepositories = Content.AvailableRepositories
+            selectableRepositoryNames = Content.AvailableRepositories
                 .Where(repository => !string.IsNullOrWhiteSpace(repository))
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
         }
@@ -62,12 +63,12 @@ public partial class LabelOperationDialog
         model.Description = Content.Description;
 
         selectedRepositoryNames = Content.SelectedRepositories
-            .Where(repository => selectableRepositories.Contains(repository))
+            .Where(repository => selectableRepositoryNames.Contains(repository))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         if (selectedRepositoryNames.Count == 0)
         {
-            selectedRepositoryNames = selectableRepositories;
+            selectedRepositoryNames = selectableRepositoryNames;
         }
 
         validationMessage = null;
@@ -168,7 +169,7 @@ public partial class LabelOperationDialog
 
     private bool CanSelectRepository(string repository)
     {
-        return Content.SelectableRepositories.Contains(repository, StringComparer.OrdinalIgnoreCase);
+        return selectableRepositoryNames.Contains(repository);
     }
 
     /// <summary>Represents form state and validation for label operation dialogs.</summary>
