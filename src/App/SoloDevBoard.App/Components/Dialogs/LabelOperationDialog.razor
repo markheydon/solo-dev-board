@@ -72,11 +72,16 @@ else
 
         <div class="repository-selector" data-testid="dialog-repository-selector">
             <p>Target repositories</p>
+            @if (Content.Mode == LabelOperationMode.Edit)
+            {
+                <p class="repository-selector-hint">Only repositories that already contain this label can be edited.</p>
+            }
             @foreach (var repository in Content.AvailableRepositories)
             {
-                <label>
+                <label class="@(CanSelectRepository(repository) ? string.Empty : "repository-option-disabled")">
                     <input type="checkbox"
                            checked="@selectedRepositoryNames.Contains(repository)"
+                           disabled="@(!CanSelectRepository(repository))"
                            @onchange="args => OnRepositoryToggleChanged(repository, args)" />
                     @repository
                 </label>
@@ -99,9 +104,10 @@ else
         <p>Target repositories</p>
         @foreach (var repository in Content.AvailableRepositories)
         {
-            <label>
+            <label class="@(CanSelectRepository(repository) ? string.Empty : "repository-option-disabled")">
                 <input type="checkbox"
                        checked="@selectedRepositoryNames.Contains(repository)"
+                       disabled="@(!CanSelectRepository(repository))"
                        @onchange="args => OnRepositoryToggleChanged(repository, args)" />
                 @repository
             </label>

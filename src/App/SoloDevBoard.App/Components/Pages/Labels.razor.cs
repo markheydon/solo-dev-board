@@ -198,6 +198,7 @@ public partial class Labels : ComponentBase
             "#ededed",
             string.Empty,
             selectedFullNames,
+            selectedFullNames,
             selectedFullNames);
 
         var result = await ShowLabelOperationDialogAsync("New label", request);
@@ -230,6 +231,7 @@ public partial class Labels : ComponentBase
             $"#{row.Colour}",
             row.Description == "No description" ? string.Empty : row.Description,
             selectedFullNames,
+            row.RepositoriesWithLabel,
             defaultSelection);
 
         var result = await ShowLabelOperationDialogAsync("Edit label", request);
@@ -261,6 +263,7 @@ public partial class Labels : ComponentBase
             row.Name,
             $"#{row.Colour}",
             row.Description,
+            selectedFullNames,
             selectedFullNames,
             defaultSelection);
 
@@ -323,6 +326,7 @@ public partial class Labels : ComponentBase
         }
         catch (HttpRequestException ex)
         {
+            Logger.LogError(ex, "GitHub API request failed while creating label {LabelName}.", operation.LabelName);
             ToastService.ShowError($"GitHub API request failed while creating '{operation.LabelName}'. {ex.Message}");
         }
         catch (Exception ex)
@@ -355,6 +359,7 @@ public partial class Labels : ComponentBase
         }
         catch (HttpRequestException ex)
         {
+            Logger.LogError(ex, "GitHub API request failed while updating label {LabelName}.", operation.OriginalLabelName);
             ToastService.ShowError($"GitHub API request failed while updating '{operation.OriginalLabelName}'. {ex.Message}");
         }
         catch (Exception ex)
@@ -386,6 +391,7 @@ public partial class Labels : ComponentBase
         }
         catch (HttpRequestException ex)
         {
+            Logger.LogError(ex, "GitHub API request failed while deleting label {LabelName}.", operation.OriginalLabelName);
             ToastService.ShowError($"GitHub API request failed while deleting '{operation.OriginalLabelName}'. {ex.Message}");
         }
         catch (Exception ex)

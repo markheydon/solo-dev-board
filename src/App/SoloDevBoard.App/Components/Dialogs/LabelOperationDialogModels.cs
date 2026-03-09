@@ -20,6 +20,7 @@ public enum LabelOperationMode
 /// <param name="Colour">The initial hexadecimal colour value.</param>
 /// <param name="Description">The initial label description.</param>
 /// <param name="AvailableRepositories">The full repository names available for selection.</param>
+/// <param name="SelectableRepositories">The full repository names that can be selected for the operation.</param>
 /// <param name="SelectedRepositories">The full repository names selected by default.</param>
 public sealed record LabelOperationDialogRequest(
     LabelOperationMode Mode,
@@ -28,6 +29,7 @@ public sealed record LabelOperationDialogRequest(
     string Colour,
     string Description,
     IReadOnlyList<string> AvailableRepositories,
+    IReadOnlyList<string> SelectableRepositories,
     IReadOnlyList<string> SelectedRepositories);
 
 /// <summary>Represents the output from a label operation dialog.</summary>

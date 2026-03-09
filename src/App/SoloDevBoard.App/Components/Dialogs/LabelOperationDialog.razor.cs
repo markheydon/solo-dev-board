@@ -30,6 +30,7 @@ public partial class LabelOperationDialog
         "#ededed",
         string.Empty,
         [],
+        [],
         []);
 
     /// <summary>Gets or sets the active Fluent dialog instance.</summary>
@@ -45,19 +46,28 @@ public partial class LabelOperationDialog
     /// <inheritdoc/>
     protected override void OnParametersSet()
     {
+        var selectableRepositories = Content.SelectableRepositories
+            .Where(repository => !string.IsNullOrWhiteSpace(repository))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        if (selectableRepositories.Count == 0)
+        {
+            selectableRepositories = Content.AvailableRepositories
+                .Where(repository => !string.IsNullOrWhiteSpace(repository))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+
         model.LabelName = Content.LabelName;
         model.Colour = string.IsNullOrWhiteSpace(Content.Colour) ? "#ededed" : Content.Colour;
         model.Description = Content.Description;
 
         selectedRepositoryNames = Content.SelectedRepositories
-            .Where(repository => !string.IsNullOrWhiteSpace(repository))
+            .Where(repository => selectableRepositories.Contains(repository))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         if (selectedRepositoryNames.Count == 0)
         {
-            selectedRepositoryNames = Content.AvailableRepositories
-                .Where(repository => !string.IsNullOrWhiteSpace(repository))
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            selectedRepositoryNames = selectableRepositories;
         }
 
         validationMessage = null;
@@ -109,6 +119,11 @@ public partial class LabelOperationDialog
 
     private void OnRepositoryToggleChanged(string repository, ChangeEventArgs args)
     {
+        if (!CanSelectRepository(repository))
+        {
+            return;
+        }
+
         var isChecked = args.Value switch
         {
             bool value => value,
@@ -149,6 +164,11 @@ public partial class LabelOperationDialog
             selectedRepositoryNames.OrderBy(name => name, StringComparer.OrdinalIgnoreCase).ToArray());
 
         await Dialog.CloseAsync(result);
+    }
+
+    private bool CanSelectRepository(string repository)
+    {
+        return Content.SelectableRepositories.Contains(repository, StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>Represents form state and validation for label operation dialogs.</summary>
