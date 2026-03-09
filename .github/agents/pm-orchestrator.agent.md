@@ -74,6 +74,18 @@ Invoke this agent when you need to:
 - Ensure test issues are created alongside feature issues
 - Verify Definition of Done criteria are explicit
 
+### 7. Documentation Updates
+- **Delegate to Tech Writer agent** for all planning artefact updates:
+  - `plan/BACKLOG.md` — mark item as planned/in-progress with epic/feature structure
+  - `plan/SCOPE.md` — update if scope clarification was required during planning
+  - `adr/*.md` — create new ADR if architectural decision was made during breakdown
+- **Provide structured input** to Tech Writer:
+  - Purpose: what changed and why (e.g., "feature planned", "architecture decision made")
+  - Key points: outline or bullet list of content to include (user stories, acceptance criteria, decision rationale)
+  - Context: related ADRs, issues, or planning items to reference
+  - Target file: exact path to update (e.g., `plan/BACKLOG.md`, `adr/0013-new-decision.md`)
+- **Do not write documentation prose** — orchestrate the update requirement; let Tech Writer produce the text
+
 ---
 
 ## Boundaries (What NOT to Do)
@@ -82,7 +94,8 @@ Invoke this agent when you need to:
 ❌ **Do not modify existing code files** — scope is planning artefacts and issue metadata  
 ❌ **Do not close issues** — that's Review Agent's responsibility after validation  
 ❌ **Do not override user scope decisions** — flag scope drift but get approval before changing `plan/SCOPE.md`  
-❌ **Do not create issues without applying label taxonomy** — all issues must follow `plan/LABEL_STRATEGY.md`
+❌ **Do not create issues without applying label taxonomy** — all issues must follow `plan/LABEL_STRATEGY.md`  
+❌ **Do not write documentation prose directly** — delegate all doc writing to Tech Writer agent
 
 ---
 
@@ -106,9 +119,9 @@ When complete, this agent produces:
 - Dependency relationships established
 
 ### Artefacts Updated
-- `plan/BACKLOG.md` — item marked as planned/in-progress
-- `plan/SCOPE.md` — updated if scope clarification needed
-- `adr/*.md` — new ADR created if architectural decision required
+- `plan/BACKLOG.md` — item marked as planned/in-progress (via Tech Writer agent)
+- `plan/SCOPE.md` — updated if scope clarification needed (via Tech Writer agent)
+- `adr/*.md` — new ADR created if architectural decision required (via Tech Writer agent)
 
 ### Handoff Package
 Deliver to user:
@@ -161,6 +174,7 @@ Planning is complete when:
 - `breakdown-test` skill — quality planning
 - `github-issues` skill — issue creation/updates
 - `github-project` skill — project board sync (Lifecycle Event 1: Issue Created)
+- **Tech Writer agent** — BACKLOG.md, SCOPE.md, and ADR updates (provides outline, Tech Writer produces prose)
 
 **Hands off to:**
 - **Delivery Agent** — for implementation execution (code, tests, docs)
