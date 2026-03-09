@@ -31,8 +31,8 @@ public partial class Labels : ComponentBase
     public ISnackbar Snackbar { get; set; } = default!;
 
     private IReadOnlyList<Repository> availableRepositories = [];
-    private IEnumerable<Repository> visibleRepositoryOptions = [];
     private IReadOnlyList<Repository> selectedRepositories = [];
+    private Repository? repositoryAutocompleteValue;
     private IReadOnlyList<LabelRow> rows = [];
     private IReadOnlyList<LabelRow> filteredRows = [];
     private bool isLoadingRepositories = true;
@@ -40,7 +40,6 @@ public partial class Labels : ComponentBase
     private bool hasLoadedLabels;
     private bool hasRepositoryLoadFailure;
     private string? errorMessage;
-    private string repositorySearchText = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -67,9 +66,8 @@ public partial class Labels : ComponentBase
                 .OrderBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
 
-            visibleRepositoryOptions = availableRepositories;
             selectedRepositories = [];
-            repositorySearchText = string.Empty;
+            repositoryAutocompleteValue = null;
         }
         catch (HttpRequestException ex)
         {
@@ -88,11 +86,49 @@ public partial class Labels : ComponentBase
         }
     }
 
-    private void OnSelectedRepositoriesChanged(IEnumerable<Repository> repositories)
+    private Task OnRepositorySelectedAsync(Repository? repository)
     {
-        selectedRepositories = repositories
-            .Where(repository => !string.IsNullOrWhiteSpace(repository.FullName))
-            .DistinctBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase)
+        if (repository is null || string.IsNullOrWhiteSpace(repository.FullName))
+        {
+            return Task.CompletedTask;
+        }
+
+        if (!selectedRepositories.Any(item => item.FullName.Equals(repository.FullName, StringComparison.OrdinalIgnoreCase)))
+        {
+            selectedRepositories = selectedRepositories
+                .Append(repository)
+                .OrderBy(item => item.FullName, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+
+        repositoryAutocompleteValue = null;
+        return Task.CompletedTask;
+    }
+
+    private Task<IEnumerable<Repository>> SearchRepositoriesAsync(string? value, CancellationToken cancellationToken)
+    {
+        IEnumerable<Repository> matches = availableRepositories;
+
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            var filter = value.Trim();
+            matches = matches.Where(repository =>
+                repository.FullName.Contains(filter, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var selectedNames = selectedRepositories
+            .Select(repository => repository.FullName)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        matches = matches.Where(repository => !selectedNames.Contains(repository.FullName));
+
+        return Task.FromResult(matches);
+    }
+
+    private void RemoveSelectedRepository(string repositoryFullName)
+    {
+        selectedRepositories = selectedRepositories
+            .Where(repository => !repository.FullName.Equals(repositoryFullName, StringComparison.OrdinalIgnoreCase))
             .ToArray();
     }
 
@@ -519,28 +555,17 @@ public partial class Labels : ComponentBase
         ? "Unable to load repositories"
         : "Unable to load labels";
 
-    private string RepositorySearchText
-    {
-        get => repositorySearchText;
-        set
-        {
-            repositorySearchText = value;
-
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                visibleRepositoryOptions = availableRepositories;
-                return;
-            }
-
-            var filter = value.Trim();
-            visibleRepositoryOptions = availableRepositories
-                .Where(repository => repository.FullName.Contains(filter, StringComparison.OrdinalIgnoreCase))
-                .ToArray();
-        }
-    }
-
     private string RepositorySelectorSummary
-        => $"Showing {availableRepositories.Count} active repositories. Archived repositories are hidden by default.";
+        => $"Showing {availableRepositories.Count} active repositories. {selectedRepositories.Count} selected. Archived repositories are hidden by default.";
+
+    private static string GetColourSwatchStyle(string colour)
+    {
+        var normalised = string.IsNullOrWhiteSpace(colour)
+            ? "ededed"
+            : colour.Trim().TrimStart('#');
+
+        return $"background-color: #{normalised};";
+    }
 
     /// <summary>Represents a consolidated label row for the grid view.</summary>
     /// <param name="Name">The label name.</param>

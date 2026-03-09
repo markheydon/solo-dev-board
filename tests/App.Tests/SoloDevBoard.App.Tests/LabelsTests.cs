@@ -105,7 +105,7 @@ public sealed class LabelsTests
 
         // Act
         var cut = ctx.Render<Labels>();
-        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-select']"));
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
 
         await SelectRepositoriesAsync(cut, repoA);
         cut.Find("[data-testid='load-labels-button']").Click();
@@ -146,7 +146,7 @@ public sealed class LabelsTests
 
         // Act
         var cut = ctx.Render<Labels>();
-        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-select']"));
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
 
         await SelectRepositoriesAsync(cut, repoA, repoB);
         cut.Find("[data-testid='load-labels-button']").Click();
@@ -190,7 +190,7 @@ public sealed class LabelsTests
 
         // Act
         var cut = ctx.Render<Labels>();
-        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-select']"));
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
 
         await SelectRepositoriesAsync(cut, repoA);
         cut.Find("[data-testid='load-labels-button']").Click();
@@ -257,11 +257,14 @@ public sealed class LabelsTests
 
     private static async Task SelectRepositoriesAsync(IRenderedComponent<Labels> cut, params Repository[] repositories)
     {
-        var select = cut.FindComponent<MudSelect<Repository>>();
+        var autocomplete = cut.FindComponent<MudAutocomplete<Repository>>();
 
         await cut.InvokeAsync(async () =>
         {
-            await select.Instance.SelectedValuesChanged.InvokeAsync(repositories);
+            foreach (var repository in repositories)
+            {
+                await autocomplete.Instance.ValueChanged.InvokeAsync(repository);
+            }
         });
     }
 }

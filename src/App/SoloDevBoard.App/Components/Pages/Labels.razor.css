@@ -7,6 +7,10 @@
     gap: 0.75rem;
 }
 
+.selected-repositories {
+    row-gap: 0.5rem;
+}
+
 .labels-results-surface {
     width: 100%;
 }
@@ -23,4 +27,12 @@
 
 .colour-chip {
     font-family: Consolas, "Courier New", monospace;
+}
+
+.colour-swatch {
+    border: 1px solid rgb(0 0 0 / 22%);
+    border-radius: 50%;
+    display: inline-block;
+    height: 1rem;
+    width: 1rem;
 }

@@ -18,30 +18,36 @@
             else
             {
                 <MudStack Class="repository-selector-controls" Spacing="2">
-                    <MudTextField @bind-Value="RepositorySearchText"
-                                  Label="Filter repositories"
-                                  Placeholder="Type to filter the repository list"
-                                  Variant="Variant.Outlined"
-                                  Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Filled.Search"
-                                  Immediate="true" />
+                    <MudAutocomplete T="Repository"
+                                     Value="repositoryAutocompleteValue"
+                                     ValueChanged="OnRepositorySelectedAsync"
+                                     SearchFunc="SearchRepositoriesAsync"
+                                     ToStringFunc="repository => repository?.FullName ?? string.Empty"
+                                     Label="Repositories"
+                                     Placeholder="Search repositories and select"
+                                     Variant="Variant.Outlined"
+                                     MinCharacters="0"
+                                     Clearable="true"
+                                     Immediate="true"
+                                     Disabled="ShowLoadingState"
+                                     Adornment="Adornment.Start"
+                                     AdornmentIcon="@Icons.Material.Filled.Search"
+                                     data-testid="repository-autocomplete" />
 
-                    <div data-testid="repository-select">
-                        <MudSelect T="Repository"
-                                   Label="Repositories"
-                                   MultiSelection="true"
-                                   SelectedValues="selectedRepositories"
-                                   SelectedValuesChanged="OnSelectedRepositoriesChanged"
-                                   ToStringFunc="repository => repository?.FullName ?? string.Empty"
-                                   Variant="Variant.Outlined"
-                                   Disabled="ShowLoadingState"
-                                   AnchorOrigin="Origin.BottomCenter">
-                            @foreach (var repository in visibleRepositoryOptions)
+                    @if (selectedRepositories.Count > 0)
+                    {
+                        <MudStack Row="true" Spacing="1" Class="selected-repositories" data-testid="selected-repositories">
+                            @foreach (var repository in selectedRepositories)
                             {
-                                <MudSelectItem T="Repository" Value="@repository">@repository.FullName</MudSelectItem>
+                                <MudChip T="string"
+                                         Variant="Variant.Outlined"
+                                         Color="Color.Primary"
+                                         OnClose="() => RemoveSelectedRepository(repository.FullName)">
+                                    @repository.FullName
+                                </MudChip>
                             }
-                        </MudSelect>
-                    </div>
+                        </MudStack>
+                    }
 
                     <MudText Typo="Typo.body2" data-testid="repository-selector-summary">@RepositorySelectorSummary</MudText>
 
@@ -134,7 +140,12 @@ else if (hasLoadedLabels)
                 <PropertyColumn Property="row => row.Name" Title="Label" Sortable="true" />
                 <TemplateColumn T="Labels.LabelRow" Title="Colour">
                     <CellTemplate>
-                        <MudChip Class="colour-chip" Variant="Variant.Outlined" Size="Size.Small">@($"#{context.Item.Colour}")</MudChip>
+                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                            <span class="colour-swatch"
+                                  style="@GetColourSwatchStyle(context.Item.Colour)"
+                                  title="@($"#{context.Item.Colour}")"></span>
+                            <MudChip Class="colour-chip" Variant="Variant.Outlined" Size="Size.Small">@($"#{context.Item.Colour}")</MudChip>
+                        </MudStack>
                     </CellTemplate>
                 </TemplateColumn>
                 <PropertyColumn Property="row => row.Description" Title="Description" />

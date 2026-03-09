@@ -150,18 +150,40 @@ public partial class LabelOperationDialog
     /// <summary>Represents form state and validation for label operation dialogs.</summary>
     private sealed class LabelOperationFormModel
     {
+        private string colour = "#ededed";
+
         [Required(ErrorMessage = "Label name is required.")]
         public string LabelName { get; set; } = string.Empty;
 
-        [RegularExpression("^#?[0-9a-fA-F]{6}$", ErrorMessage = "Use a valid six-character hexadecimal colour.")]
-        public string Colour { get; set; } = "#ededed";
+        [RegularExpression("^#?[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$", ErrorMessage = "Use a valid six-character hexadecimal colour.")]
+        public string Colour
+        {
+            get => colour;
+            set => colour = value;
+        }
 
         public string Description { get; set; } = string.Empty;
 
         public string NormalisedColour
-            => string.IsNullOrWhiteSpace(Colour)
-                ? "ededed"
-                : Colour.Trim().TrimStart('#').ToLowerInvariant();
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(Colour))
+                {
+                    return "ededed";
+                }
+
+                var hex = Colour.Trim().TrimStart('#').ToLowerInvariant();
+
+                // MudColorPicker may emit 8-digit hex with alpha; labels API expects 6-digit RGB.
+                if (hex.Length == 8)
+                {
+                    hex = hex[..6];
+                }
+
+                return hex;
+            }
+        }
 
         public string DisplayColour
             => $"#{NormalisedColour}";

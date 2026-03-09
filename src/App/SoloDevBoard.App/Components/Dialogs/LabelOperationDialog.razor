@@ -21,12 +21,19 @@
                               data-testid="label-name-input" />
                 <ValidationMessage For="@(() => model.LabelName)" />
 
-                <MudColorPicker @bind-Text="model.Colour"
-                                Label="Colour"
-                                ColorPickerMode="ColorPickerMode.HEX"
-                                Variant="Variant.Outlined"
-                                Class="mt-2"
-                                data-testid="label-colour-input" />
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Class="mt-2">
+                    <MudColorPicker @bind-Text="model.Colour"
+                                    Label="Colour"
+                                    ColorPickerMode="ColorPickerMode.HEX"
+                                    Variant="Variant.Outlined"
+                                    Class="dialog-colour-picker"
+                                    data-testid="label-colour-input" />
+                    <span class="dialog-colour-preview"
+                          style="@($"background-color: {model.DisplayColour};")"
+                          title="@model.DisplayColour"
+                          data-testid="label-colour-preview"></span>
+                </MudStack>
+                <MudText Typo="Typo.caption">Current colour: @model.DisplayColour</MudText>
                 <ValidationMessage For="@(() => model.Colour)" />
 
                 <MudTextField @bind-Value="model.Description"

@@ -16,3 +16,15 @@
     color: #7a7a7a;
     opacity: 0.75;
 }
+
+.dialog-colour-picker {
+    flex: 1 1 auto;
+}
+
+.dialog-colour-preview {
+    border: 1px solid rgb(0 0 0 / 24%);
+    border-radius: 0.4rem;
+    display: inline-block;
+    height: 2.5rem;
+    width: 2.5rem;
+}
