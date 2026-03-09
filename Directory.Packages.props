@@ -5,7 +5,7 @@
 
   <!-- UI -->
   <ItemGroup>
-    <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.13.1" />
+    <PackageVersion Include="MudBlazor" Version="9.1.0" />
   </ItemGroup>
 
   <!-- Infrastructure -->

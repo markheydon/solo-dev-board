@@ -1,7 +1,8 @@
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.FluentUI.AspNetCore.Components;
 using Moq;
+using MudBlazor;
+using MudBlazor.Services;
 using SoloDevBoard.App.Components.Pages;
 using SoloDevBoard.Application.Services;
 using SoloDevBoard.Domain.Entities;
@@ -9,49 +10,42 @@ using SoloDevBoard.Domain.Entities;
 namespace SoloDevBoard.App.Tests;
 
 /// <summary>Component tests for the <see cref="Repositories"/> page.</summary>
-public sealed class RepositoriesTests : BunitContext
+public sealed class RepositoriesTests
 {
     private readonly Mock<IRepositoryService> _repositoryServiceMock = new();
 
-    /// <summary>
-    /// Initialises the bUnit test context with Fluent UI services and a loose JS interop mode
-    /// so that Fluent UI web components render without requiring a real browser JavaScript runtime.
-    /// </summary>
-    public RepositoriesTests()
-    {
-        JSInterop.Mode = JSRuntimeMode.Loose;
-        Services.AddFluentUIComponents();
-        Services.AddScoped(_ => _repositoryServiceMock.Object);
-    }
-
     [Fact]
-    public void Repositories_WhileServiceIsLoading_ShowsLoadingIndicator()
+    public async Task Repositories_WhileServiceIsLoading_ShowsLoadingIndicator()
     {
-        // Arrange — keep the service call permanently pending so the component stays in loading state
+        // Arrange
         var tcs = new TaskCompletionSource<IReadOnlyList<Repository>>();
         _repositoryServiceMock
-            .Setup(s => s.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
             .Returns(tcs.Task);
 
-        // Act — render before the async initialisation completes
-        var cut = Render<Repositories>();
+        await using var ctx = CreateContext();
 
-        // Assert — initial render must show loading indicator, not data or error states
+        // Act
+        var cut = ctx.Render<Repositories>();
+
+        // Assert
         Assert.Contains("Loading repositories", cut.Markup);
         Assert.DoesNotContain("Unable to load repositories", cut.Markup);
         Assert.DoesNotContain("No repositories found", cut.Markup);
     }
 
     [Fact]
-    public void Repositories_ServiceThrowsHttpRequestException_ShowsErrorMessage()
+    public async Task Repositories_ServiceThrowsHttpRequestException_ShowsErrorMessage()
     {
         // Arrange
         _repositoryServiceMock
-            .Setup(s => s.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("Connection refused"));
 
+        await using var ctx = CreateContext();
+
         // Act
-        var cut = Render<Repositories>();
+        var cut = ctx.Render<Repositories>();
 
         // Assert
         cut.WaitForAssertion(() =>
@@ -63,15 +57,17 @@ public sealed class RepositoriesTests : BunitContext
     }
 
     [Fact]
-    public void Repositories_ServiceThrowsUnexpectedException_ShowsGenericErrorMessage()
+    public async Task Repositories_ServiceThrowsUnexpectedException_ShowsGenericErrorMessage()
     {
         // Arrange
         _repositoryServiceMock
-            .Setup(s => s.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Internal failure"));
 
+        await using var ctx = CreateContext();
+
         // Act
-        var cut = Render<Repositories>();
+        var cut = ctx.Render<Repositories>();
 
         // Assert
         cut.WaitForAssertion(() =>
@@ -79,15 +75,17 @@ public sealed class RepositoriesTests : BunitContext
     }
 
     [Fact]
-    public void Repositories_ServiceReturnsEmptyList_ShowsEmptyState()
+    public async Task Repositories_ServiceReturnsEmptyList_ShowsEmptyState()
     {
         // Arrange
         _repositoryServiceMock
-            .Setup(s => s.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(Array.Empty<Repository>());
 
+        await using var ctx = CreateContext();
+
         // Act
-        var cut = Render<Repositories>();
+        var cut = ctx.Render<Repositories>();
 
         // Assert
         cut.WaitForAssertion(() =>
@@ -98,7 +96,7 @@ public sealed class RepositoriesTests : BunitContext
     }
 
     [Fact]
-    public void Repositories_ServiceReturnsRepositories_ShowsRepositoryNamesInGrid()
+    public async Task Repositories_ServiceReturnsRepositories_ShowsRepositoryNamesInGrid()
     {
         // Arrange
         var repositories = new List<Repository>
@@ -108,11 +106,13 @@ public sealed class RepositoriesTests : BunitContext
         };
 
         _repositoryServiceMock
-            .Setup(s => s.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(repositories);
 
+        await using var ctx = CreateContext();
+
         // Act
-        var cut = Render<Repositories>();
+        var cut = ctx.Render<Repositories>();
 
         // Assert
         cut.WaitForAssertion(() =>
@@ -121,5 +121,19 @@ public sealed class RepositoriesTests : BunitContext
             Assert.Contains("my-private-repo", cut.Markup);
             Assert.DoesNotContain("Loading repositories", cut.Markup);
         });
+    }
+
+    private BunitContext CreateContext()
+    {
+        var ctx = new BunitContext();
+        ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+        ctx.Services.AddMudServices();
+        ctx.Services.AddScoped(_ => _repositoryServiceMock.Object);
+
+        ctx.Render<MudPopoverProvider>();
+        ctx.Render<MudDialogProvider>();
+        ctx.Render<MudSnackbarProvider>();
+
+        return ctx;
     }
 }

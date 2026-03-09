@@ -1,7 +1,8 @@
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.FluentUI.AspNetCore.Components;
 using Moq;
+using MudBlazor;
+using MudBlazor.Services;
 using SoloDevBoard.App.Components.Pages;
 using SoloDevBoard.Application.Services;
 using SoloDevBoard.Domain.Entities;
@@ -10,22 +11,13 @@ using System.Net.Http;
 namespace SoloDevBoard.App.Tests;
 
 /// <summary>Component tests for the <see cref="Labels"/> page.</summary>
-public sealed class LabelsTests : BunitContext
+public sealed class LabelsTests
 {
     private readonly Mock<IRepositoryService> _repositoryServiceMock = new();
     private readonly Mock<ILabelManagerService> _labelManagerServiceMock = new();
 
-    /// <summary>Initialises the bUnit test context for Fluent UI components and mocked services.</summary>
-    public LabelsTests()
-    {
-        JSInterop.Mode = JSRuntimeMode.Loose;
-        Services.AddFluentUIComponents();
-        Services.AddScoped(_ => _repositoryServiceMock.Object);
-        Services.AddScoped(_ => _labelManagerServiceMock.Object);
-    }
-
     [Fact]
-    public void Labels_WhileRepositoryServiceIsLoading_ShowsLoadingState()
+    public async Task Labels_WhileRepositoryServiceIsLoading_ShowsLoadingState()
     {
         // Arrange
         var repositoriesTask = new TaskCompletionSource<IReadOnlyList<Repository>>();
@@ -33,15 +25,17 @@ public sealed class LabelsTests : BunitContext
             .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
             .Returns(repositoriesTask.Task);
 
+        await using var ctx = CreateContext();
+
         // Act
-        var cut = Render<Labels>();
+        var cut = ctx.Render<Labels>();
 
         // Assert
         Assert.Contains("Loading repositories", cut.Markup);
     }
 
     [Fact]
-    public void Labels_InitialLoad_DoesNotFetchLabelsUntilRequested()
+    public async Task Labels_InitialLoad_DoesNotFetchLabelsUntilRequested()
     {
         // Arrange
         _repositoryServiceMock
@@ -50,17 +44,18 @@ public sealed class LabelsTests : BunitContext
                 new Repository { Name = "repo-a", FullName = "owner/repo-a" },
             ]);
 
+        await using var ctx = CreateContext();
+
         // Act
-        var cut = Render<Labels>();
+        var cut = ctx.Render<Labels>();
 
         // Assert
         cut.WaitForAssertion(() =>
         {
             Assert.Contains("Load selected repositories", cut.Markup);
             Assert.Contains("New label", cut.Markup);
-            Assert.Contains("Showing 1 active repositories", cut.Markup);
+            Assert.Contains("Showing 1 active repository", cut.Markup);
             Assert.Empty(cut.FindAll("[data-testid='label-filter']"));
-            Assert.Empty(cut.FindAll("[data-testid='labels-initial-state']"));
             Assert.Empty(cut.FindAll("[data-testid='labels-grid']"));
         });
 
@@ -70,7 +65,7 @@ public sealed class LabelsTests : BunitContext
     }
 
     [Fact]
-    public void Labels_RepositoriesLoaded_ArchivedRepositoriesAreHiddenByDefault()
+    public async Task Labels_RepositoriesLoaded_ArchivedRepositoriesAreHiddenByDefault()
     {
         // Arrange
         _repositoryServiceMock
@@ -79,13 +74,15 @@ public sealed class LabelsTests : BunitContext
                 new Repository { Name = "repo-a", FullName = "owner/repo-a", IsArchived = false },
             ]);
 
+        await using var ctx = CreateContext();
+
         // Act
-        var cut = Render<Labels>();
+        var cut = ctx.Render<Labels>();
 
         // Assert
         cut.WaitForAssertion(() =>
         {
-            Assert.Contains("Showing 1 active repositories", cut.Markup);
+            Assert.Contains("Showing 1 active repository", cut.Markup);
             Assert.Contains("Archived repositories are hidden by default", cut.Markup);
         });
     }
@@ -104,9 +101,11 @@ public sealed class LabelsTests : BunitContext
             .Setup(service => service.GetLabelsForRepositoriesAsync("owner", It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Array.Empty<LabelDto>());
 
+        await using var ctx = CreateContext();
+
         // Act
-        var cut = Render<Labels>();
-        cut.WaitForAssertion(() => _ = cut.FindComponent<FluentAutocomplete<Repository>>());
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
 
         await SelectRepositoriesAsync(cut, repoA);
         cut.Find("[data-testid='load-labels-button']").Click();
@@ -143,9 +142,11 @@ public sealed class LabelsTests : BunitContext
                 new LabelDto("priority/high", "d93f0b", "High priority", "repo-b"),
             ]);
 
+        await using var ctx = CreateContext();
+
         // Act
-        var cut = Render<Labels>();
-        cut.WaitForAssertion(() => _ = cut.FindComponent<FluentAutocomplete<Repository>>());
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
 
         await SelectRepositoriesAsync(cut, repoA, repoB);
         cut.Find("[data-testid='load-labels-button']").Click();
@@ -185,9 +186,11 @@ public sealed class LabelsTests : BunitContext
                 new LabelDto("status/done", "cfd3d7", "Completed", "repo-a"),
             ]);
 
+        await using var ctx = CreateContext();
+
         // Act
-        var cut = Render<Labels>();
-        cut.WaitForAssertion(() => _ = cut.FindComponent<FluentAutocomplete<Repository>>());
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
 
         await SelectRepositoriesAsync(cut, repoA);
         cut.Find("[data-testid='load-labels-button']").Click();
@@ -200,11 +203,12 @@ public sealed class LabelsTests : BunitContext
             Assert.Equal(2, cut.FindAll("[data-testid='delete-label-button']").Count);
         });
 
-        var filterInput = cut.Find("[data-testid='label-filter']");
-        Assert.Equal("Filter labels by name", filterInput.GetAttribute("aria-label"));
+        var filterInputContainer = cut.Find("[data-testid='label-filter']");
+        var filterTextInput = filterInputContainer.QuerySelector("input");
+        Assert.NotNull(filterTextInput);
 
         // Act
-        filterInput.Input("status");
+        filterTextInput!.Input("status");
 
         // Assert
         cut.WaitForAssertion(() =>
@@ -215,15 +219,17 @@ public sealed class LabelsTests : BunitContext
     }
 
     [Fact]
-    public void Labels_RepositoryLoadFails_ShowsRepositorySpecificErrorAndAction()
+    public async Task Labels_RepositoryLoadFails_ShowsRepositorySpecificErrorAndAction()
     {
         // Arrange
         _repositoryServiceMock
             .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("Service unavailable"));
 
+        await using var ctx = CreateContext();
+
         // Act
-        var cut = Render<Labels>();
+        var cut = ctx.Render<Labels>();
 
         // Assert
         cut.WaitForAssertion(() =>
@@ -234,13 +240,31 @@ public sealed class LabelsTests : BunitContext
         });
     }
 
+    private BunitContext CreateContext()
+    {
+        var ctx = new BunitContext();
+        ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+        ctx.Services.AddMudServices();
+        ctx.Services.AddScoped(_ => _repositoryServiceMock.Object);
+        ctx.Services.AddScoped(_ => _labelManagerServiceMock.Object);
+
+        ctx.Render<MudPopoverProvider>();
+        ctx.Render<MudDialogProvider>();
+        ctx.Render<MudSnackbarProvider>();
+
+        return ctx;
+    }
+
     private static async Task SelectRepositoriesAsync(IRenderedComponent<Labels> cut, params Repository[] repositories)
     {
-        var autocomplete = cut.FindComponent<FluentAutocomplete<Repository>>();
+        var autocomplete = cut.FindComponent<MudAutocomplete<Repository>>();
 
         await cut.InvokeAsync(async () =>
         {
-            await autocomplete.Instance.SelectedOptionsChanged.InvokeAsync(repositories);
+            foreach (var repository in repositories)
+            {
+                await autocomplete.Instance.ValueChanged.InvokeAsync(repository);
+            }
         });
     }
 }

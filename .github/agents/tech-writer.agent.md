@@ -82,7 +82,7 @@ Follow Diátaxis framework principles from `.github/skills/documentation-writer/
 - Clear heading hierarchy (H1 for title, H2 for sections, H3 for subsections).
 - Code examples using triple-backtick fenced blocks with language identifiers.
 - Screenshots or diagrams where they add clarity (reference in prose).
-- Cross-references to related guides using relative links: `[Label Manager](label-manager.md)`.
+- Cross-references to related guides using relative links: `\[Label Manager\]\(label-manager.md\)`.
 - Consistent terminology with ADRs and planning docs.
 
 **Style requirements:**
@@ -151,7 +151,7 @@ Maintain consistency with the layered architecture (see ADR-0004 and ADR-0011):
 ### Cross-References and Links
 - **ADRs**: Reference as "ADR-0011" (no "the", no "document", just the ID).
 - **Planning files**: Use full path in prose: "`plan/BACKLOG.md`".
-- **User guides**: Use relative markdown links: `[Label Manager](label-manager.md)`.
+- **User guides**: Use relative markdown links: `\[Label Manager\]\(label-manager.md\)`.
 - **Code elements**: Use backticks for types, methods, properties: `ILabelService`, `GetLabelsAsync()`, `LabelDto`.
 - **GitHub issues**: Reference as "#15" (with link if in markdown).
 
@@ -161,7 +161,7 @@ Maintain consistency with the layered architecture (see ADR-0004 and ADR-0011):
 
 Provide ONE of:
 - **Outline + file path**: "Update `plan/BACKLOG.md` with Epic: Label Management. Features: create, edit, delete, bulk operations. User can organise repositories with custom labels.".
-- **Decision summary for ADR**: "Create ADR for switching to MudBlazor. Decision: replace Fluent UI Blazor with MudBlazor. Reason: better DataGrid, colour picker, and community support. Consequence: migration effort for existing components.".
+- **Decision summary for ADR**: "Create ADR for standardising on MudBlazor. Decision: adopt MudBlazor as the sole UI component library. Reason: better data grid, colour picker, and community support. Consequence: migration effort for existing components.".
 - **User guide topic**: "Write user guide for Label Manager. Cover: accessing the page, creating labels, editing colours, deleting labels, applying to repositories.".
 - **Index update**: "Add link to `docs/index.md` for new Triage UI guide under Features section.".
 
@@ -264,10 +264,10 @@ Output:
 **Example 2: ADR for architectural decision**
 ```
 Input (from PM Orchestrator):
-"Create ADR for decision: switch component library from Fluent UI Blazor to MudBlazor.
-Reason: MudBlazor has better DataGrid component, built-in colour picker, more active community.
-Consequence: must migrate all existing Fluent components (Dashboard, Labels, Repositories pages).
-Alternatives: stay with Fluent UI Blazor, use raw HTML/CSS."
+"Create ADR for decision: standardise the UI component library on MudBlazor.
+Reason: MudBlazor has a better data grid component, a built-in colour picker, and a more active community.
+Consequence: must migrate all existing legacy UI components (Dashboard, Labels, Repositories pages).
+Alternatives: keep the current library, use raw HTML/CSS."
 
 Output:
 [Creates adr/0012-switch-to-mudblazor-component-library.md with full ADR structure]

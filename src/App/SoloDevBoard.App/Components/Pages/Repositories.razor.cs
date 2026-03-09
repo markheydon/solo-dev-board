@@ -19,6 +19,16 @@ public partial class Repositories : ComponentBase
     private IReadOnlyList<Repository> repositories = [];
     private bool isLoading = true;
     private string? errorMessage;
+    private string? repositorySearchTerm;
+
+    private IReadOnlyList<Repository> FilteredRepositories =>
+        string.IsNullOrWhiteSpace(repositorySearchTerm)
+            ? repositories
+            : repositories
+                .Where(repository =>
+                    repository.Name.Contains(repositorySearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    repository.FullName.Contains(repositorySearchTerm, StringComparison.OrdinalIgnoreCase))
+                .ToList();
 
     protected override async Task OnInitializedAsync()
     {

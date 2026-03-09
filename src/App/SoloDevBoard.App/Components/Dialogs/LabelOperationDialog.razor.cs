@@ -1,26 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Components;
-using Microsoft.FluentUI.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
+using MudBlazor;
 
 namespace SoloDevBoard.App.Components.Dialogs;
 
 /// <summary>Provides the code-behind for the label operation dialog component.</summary>
 public partial class LabelOperationDialog
 {
-    private static readonly IReadOnlyList<ColourOption> CommonColourOptions =
-    [
-        new("Red", "#d73a4a"),
-        new("Orange", "#fb8500"),
-        new("Yellow", "#d4c441"),
-        new("Green", "#2da44e"),
-        new("Teal", "#0a9396"),
-        new("Blue", "#0969da"),
-        new("Purple", "#8250df"),
-        new("Pink", "#bf3989"),
-        new("Grey", "#8c959f"),
-        new("Black", "#24292f"),
-    ];
-
     /// <summary>Gets or sets the dialog request payload.</summary>
     [Parameter]
     public LabelOperationDialogRequest Content { get; set; } = new(
@@ -33,16 +20,28 @@ public partial class LabelOperationDialog
         [],
         []);
 
-    /// <summary>Gets or sets the active Fluent dialog instance.</summary>
+    /// <summary>Gets or sets the active MudBlazor dialog instance.</summary>
     [CascadingParameter]
-    public FluentDialog Dialog { get; set; } = default!;
+    public IMudDialogInstance MudDialog { get; set; } = default!;
 
     private readonly LabelOperationFormModel model = new();
     private HashSet<string> selectableRepositoryNames = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<string> selectedRepositoryNames = new(StringComparer.OrdinalIgnoreCase);
+    private EditContext editContext = default!;
     private string? validationMessage;
-    private bool showColourSelector;
-    private string SubmitButtonText => Content.Mode == LabelOperationMode.Edit ? "Save" : "Create";
+    private string DialogTitle => Content.Mode switch
+    {
+        LabelOperationMode.Create => "New label",
+        LabelOperationMode.Edit => "Edit label",
+        _ => "Delete label",
+    };
+
+    private string SubmitButtonText => Content.Mode switch
+    {
+        LabelOperationMode.Create => "Create",
+        LabelOperationMode.Edit => "Save",
+        _ => "Delete label",
+    };
 
     /// <inheritdoc/>
     protected override void OnParametersSet()
@@ -59,7 +58,11 @@ public partial class LabelOperationDialog
         }
 
         model.LabelName = Content.LabelName;
-        model.Colour = string.IsNullOrWhiteSpace(Content.Colour) ? "#ededed" : Content.Colour;
+        model.Colour = string.IsNullOrWhiteSpace(Content.Colour)
+            ? "#ededed"
+            : Content.Colour.StartsWith('#')
+                ? Content.Colour
+                : $"#{Content.Colour}";
         model.Description = Content.Description;
 
         selectedRepositoryNames = Content.SelectedRepositories
@@ -71,30 +74,17 @@ public partial class LabelOperationDialog
             selectedRepositoryNames = new HashSet<string>(selectableRepositoryNames, StringComparer.OrdinalIgnoreCase);
         }
 
+        editContext = new EditContext(model);
         validationMessage = null;
-        showColourSelector = false;
     }
 
-    private void ToggleColourSelector()
+    private async Task ConfirmAsync()
     {
-        showColourSelector = !showColourSelector;
-    }
-
-    private void SelectPresetColour(string hex)
-    {
-        model.Colour = hex;
-    }
-
-    private void OnCustomColourChanged(ChangeEventArgs args)
-    {
-        if (args.Value is string value && !string.IsNullOrWhiteSpace(value))
+        if (Content.Mode != LabelOperationMode.Delete && !editContext.Validate())
         {
-            model.Colour = value;
+            return;
         }
-    }
 
-    private async Task OnValidSubmitAsync()
-    {
         if (!TryValidateSelection())
         {
             return;
@@ -103,34 +93,18 @@ public partial class LabelOperationDialog
         await CloseDialogAsync();
     }
 
-    private async Task ConfirmDeleteAsync()
+    private Task CancelAsync()
     {
-        if (!TryValidateSelection())
-        {
-            return;
-        }
-
-        await CloseDialogAsync();
+        MudDialog.Cancel();
+        return Task.CompletedTask;
     }
 
-    private async Task CancelAsync()
-    {
-        await Dialog.CancelAsync();
-    }
-
-    private void OnRepositoryToggleChanged(string repository, ChangeEventArgs args)
+    private void OnRepositoryToggleChanged(string repository, bool isChecked)
     {
         if (!CanSelectRepository(repository))
         {
             return;
         }
-
-        var isChecked = args.Value switch
-        {
-            bool value => value,
-            string value when bool.TryParse(value, out var parsedValue) => parsedValue,
-            _ => false,
-        };
 
         if (isChecked)
         {
@@ -154,7 +128,7 @@ public partial class LabelOperationDialog
         return false;
     }
 
-    private async Task CloseDialogAsync()
+    private Task CloseDialogAsync()
     {
         var result = new LabelOperationDialogResult(
             Content.Mode,
@@ -164,7 +138,8 @@ public partial class LabelOperationDialog
             model.Description.Trim(),
             selectedRepositoryNames.OrderBy(name => name, StringComparer.OrdinalIgnoreCase).ToArray());
 
-        await Dialog.CloseAsync(result);
+        MudDialog.Close(DialogResult.Ok(result));
+        return Task.CompletedTask;
     }
 
     private bool CanSelectRepository(string repository)
@@ -175,22 +150,42 @@ public partial class LabelOperationDialog
     /// <summary>Represents form state and validation for label operation dialogs.</summary>
     private sealed class LabelOperationFormModel
     {
+        private string colour = "#ededed";
+
         [Required(ErrorMessage = "Label name is required.")]
         public string LabelName { get; set; } = string.Empty;
 
-        [RegularExpression("^#?[0-9a-fA-F]{6}$", ErrorMessage = "Use a valid six-character hexadecimal colour.")]
-        public string Colour { get; set; } = "#ededed";
+        [RegularExpression("^#?[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$", ErrorMessage = "Use a valid six- or eight-character hexadecimal colour.")]
+        public string Colour
+        {
+            get => colour;
+            set => colour = value;
+        }
 
         public string Description { get; set; } = string.Empty;
 
         public string NormalisedColour
-            => string.IsNullOrWhiteSpace(Colour)
-                ? "ededed"
-                : Colour.Trim().TrimStart('#').ToLowerInvariant();
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(Colour))
+                {
+                    return "ededed";
+                }
+
+                var hex = Colour.Trim().TrimStart('#').ToLowerInvariant();
+
+                // MudColorPicker may emit 8-digit hex with alpha; labels API expects 6-digit RGB.
+                if (hex.Length == 8)
+                {
+                    hex = hex[..6];
+                }
+
+                return hex;
+            }
+        }
 
         public string DisplayColour
             => $"#{NormalisedColour}";
     }
-
-    private sealed record ColourOption(string Name, string Hex);
 }

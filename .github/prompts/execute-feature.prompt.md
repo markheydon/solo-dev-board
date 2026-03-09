@@ -68,7 +68,7 @@ All source code, tests, and documentation changes are committed to this branch. 
   - **Infrastructure** → implements Application interfaces
   - **App (Blazor)** → calls Application layer
 - Apply .NET 10 / C# 14 conventions per `.github/instructions/dotnet-framework.instructions.md`
-- Use Fluent UI Blazor components per `.github/skills/fluentui-blazor/SKILL.md` for UI work
+- Use MudBlazor components per `.github/skills/mudblazor/SKILL.md` for UI work
 - **UK English only:** All comments, strings, user-facing text in UK English
 
 ### 4. Test Creation
@@ -162,7 +162,7 @@ All source code, tests, and documentation changes are committed to this branch. 
 - `docs/index.md` — added quick link to Label Manager guide
 
 ### Architecture
-- `adr/0007-fluent-ui-datagrid.md` — ADR for FluentDataGrid selection
+- `adr/0012-switch-to-mudblazor-component-library.md` — ADR for the MudBlazor component-library decision
 - `adr/README.md` — updated index
 
 ## Test Coverage
@@ -186,7 +186,7 @@ All source code, tests, and documentation changes are committed to this branch. 
 
 - **Delivery Agent** — full implementation orchestration
 - **`dotnet-best-practices` skill** — code implementation
-- **`fluentui-blazor` skill** — UI components
+- **`mudblazor` skill** — UI components
 - **`csharp-xunit` skill** — test creation
 - **`csharp-docs` skill** — XML comment generation
 - **`create-architectural-decision-record` skill** — ADR creation (if needed)
@@ -254,7 +254,7 @@ Implement issue #31
 
 **Agent executes:**
 - Fetches issue #31 (Label Manager UI)
-- Implements Blazor page with FluentDataGrid
+- Implements Blazor page with MudBlazor components
 - Creates LabelService in Application layer
 - Enhances GitHubService with label CRUD
 - Adds 26 xUnit tests
@@ -371,6 +371,6 @@ Implementation is NOT complete until:
 Before marking implementation complete, Delivery Agent validates:
 - **Architecture:** Domain/Application/Infrastructure/App layers respected
 - **Conventions:** .NET 10, C# 14, file-scoped namespaces, primary constructors
-- **Testing:** xUnit, Moq, FluentAssertions, correct naming
+- **Testing:** xUnit, Moq, `Assert.*`, correct naming
 - **Documentation:** XML comments, user guides, ADRs
 - **Language:** UK English only (colour, organise, behaviour, licence, analyse, centre)

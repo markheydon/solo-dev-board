@@ -101,7 +101,7 @@ Implement issue #[number]
 **What it does:**
 - Invokes **Delivery Agent**
 - Writes code following layered architecture (Domain/Application/Infrastructure/App)
-- Creates xUnit tests (Moq, FluentAssertions, correct naming)
+- Creates xUnit tests (Moq, `Assert.*`, correct naming)
 - Updates user-facing docs in `docs/user-guide/` if needed
 - Creates ADR in `adr/` if architectural decision made
 - Ensures UK English throughout
@@ -302,7 +302,7 @@ START
 
 **Responsibilities:**
 - Implements code (Domain/Application/Infrastructure/App layers)
-- Creates xUnit tests (Moq, FluentAssertions)
+- Creates xUnit tests (Moq, `Assert.*`)
 - Updates user-facing docs
 - Creates ADRs for architectural decisions
 - Ensures UK English throughout
@@ -360,7 +360,7 @@ START
 **Input:** Issue number OR feature name  
 **Output:** Code + tests + docs + ADR (if needed)  
 **Duration:** 30 minutes to 8 hours (depends on size: xs → xl)  
-**Invokes:** Delivery Agent, dotnet-best-practices, fluentui-blazor, csharp-xunit, csharp-docs, create-architectural-decision-record
+**Invokes:** Delivery Agent, dotnet-best-practices, mudblazor, csharp-xunit, csharp-docs, create-architectural-decision-record
 
 ---
 

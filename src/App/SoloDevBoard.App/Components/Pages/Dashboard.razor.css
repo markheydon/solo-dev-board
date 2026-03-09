@@ -1,30 +1,14 @@
-.dashboard-grid {
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: repeat(1, minmax(0, 1fr));
-    margin-top: 1rem;
-}
-
 .feature-panel {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    min-height: 12rem;
+    height: 100%;
 }
 
-.feature-link {
-    font-weight: 600;
+.feature-description {
+    min-height: 3.5rem;
+}
+
+::deep .feature-panel .mud-card-actions {
     margin-top: auto;
-}
-
-@media (min-width: 768px) {
-    .dashboard-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-@media (min-width: 1200px) {
-    .dashboard-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
+    padding-top: 0;
 }
