@@ -11,7 +11,7 @@ This registry defines active and companion skills for SoloDevBoard.
 - `create-architectural-decision-record`: architecture decision capture
 - `documentation-writer`: user and technical documentation
 - `dotnet-best-practices`: implementation quality baseline
-- `mudblazor`: MudBlazor Blazor component library implementation guidance (replaces `fluentui-blazor` — see ADR-0012)
+- `mudblazor`: MudBlazor Blazor component library implementation guidance
 - `pm-feature-workflow`: end-to-end orchestration for high-level PM prompts
 
 ## Optional Companion Skills

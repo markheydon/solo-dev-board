@@ -28,7 +28,7 @@ Labels: `type/epic`, `area/infrastructure`
   - [x] Story: Refactor the Dashboard shell page (Fluent UI layout and navigation → MudBlazor equivalents). _(#66 — done, merged PR #72, 2026-03-09)_
   - [x] Story: Refactor the Repositories page (Fluent UI → MudBlazor components). _(#67 — done, merged PR #72, 2026-03-09)_
   - [x] Story: Refactor the Label Manager page and Label Operation dialog (Fluent UI → MudBlazor; replace hand-rolled colour picker with `MudColorPicker`). _(#68 — done, merged PR #73, 2026-03-09)_
-  - [ ] Test: Update bUnit test projects — replace `AddFluentUIComponents()` with MudBlazor service registration. _(#69)_
+  - [x] Test: Update bUnit test projects — replace `AddFluentUIComponents()` with MudBlazor service registration. _(#69 — done, PR #74 in review, 2026-03-09)_
 
 ---
 

@@ -161,7 +161,7 @@ Maintain consistency with the layered architecture (see ADR-0004 and ADR-0011):
 
 Provide ONE of:
 - **Outline + file path**: "Update `plan/BACKLOG.md` with Epic: Label Management. Features: create, edit, delete, bulk operations. User can organise repositories with custom labels.".
-- **Decision summary for ADR**: "Create ADR for switching to MudBlazor. Decision: replace Fluent UI Blazor with MudBlazor. Reason: better DataGrid, colour picker, and community support. Consequence: migration effort for existing components.".
+- **Decision summary for ADR**: "Create ADR for standardising on MudBlazor. Decision: adopt MudBlazor as the sole UI component library. Reason: better data grid, colour picker, and community support. Consequence: migration effort for existing components.".
 - **User guide topic**: "Write user guide for Label Manager. Cover: accessing the page, creating labels, editing colours, deleting labels, applying to repositories.".
 - **Index update**: "Add link to `docs/index.md` for new Triage UI guide under Features section.".
 
@@ -264,10 +264,10 @@ Output:
 **Example 2: ADR for architectural decision**
 ```
 Input (from PM Orchestrator):
-"Create ADR for decision: switch component library from Fluent UI Blazor to MudBlazor.
-Reason: MudBlazor has better DataGrid component, built-in colour picker, more active community.
-Consequence: must migrate all existing Fluent components (Dashboard, Labels, Repositories pages).
-Alternatives: stay with Fluent UI Blazor, use raw HTML/CSS."
+"Create ADR for decision: standardise the UI component library on MudBlazor.
+Reason: MudBlazor has a better data grid component, a built-in colour picker, and a more active community.
+Consequence: must migrate all existing legacy UI components (Dashboard, Labels, Repositories pages).
+Alternatives: keep the current library, use raw HTML/CSS."
 
 Output:
 [Creates adr/0012-switch-to-mudblazor-component-library.md with full ADR structure]

@@ -141,7 +141,7 @@ This prompt invokes the **Review Agent**, which executes:
 - ✅ Phase 1 alignment verified
 
 ## Pull Request Created
-- **PR #50**: [feature] Label Manager UI with FluentDataGrid
+- **PR #50**: [feature] Label Manager UI with MudBlazor
 - **Link**: https://github.com/markheydon/solo-dev-board/pull/50
 - **Closes**: #31
 - **Labels**: type/story, priority/high, area/labels, size/m

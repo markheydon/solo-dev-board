@@ -115,10 +115,10 @@ This prompt invokes the **PM Orchestrator Agent**, which executes:
   - Test #36: Label CRUD operation tests (size/xs)
 
 ## Technical Plan Summary
-- **Architecture:** Blazor Server page with FluentDataGrid component
+- **Architecture:** Blazor Server page with MudBlazor data grid components
 - **Layers affected:** App (UI), Application (service), Infrastructure (GitHub API client)
 - **Dependencies:** Requires GitHubService enhancement to support label CRUD
-- **ADR created:** ADR-0007 (Fluent UI component selection)
+- **ADR alignment:** ADR-0012 (MudBlazor component library)
 
 ## Test Strategy
 - Unit tests: Label validation, filtering logic
@@ -203,7 +203,7 @@ Plan the Label Manager UI
 
 **Output:**
 ```
-Planned "Label Manager UI" as epic #30. Created ADR-0007 for Fluent UI selection.
+Planned "Label Manager UI" as epic #30. Aligned the plan with ADR-0012 for MudBlazor.
 5 issues created (3 stories, 2 tests). Ready for execute-feature prompt.
 ```
 
