@@ -198,7 +198,73 @@ None — this is a comprehensive read-only assessment across all planning artefa
 - **Direct file reads:** `plan/BACKLOG.md`, `plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md`, `plan/RELEASE_PLAN.md`, `adr/README.md`
 - **GitHub queries:** Milestone progress, issue states, PR status (via `github-issues` skill if available)
 - **Quality checks:** `get_errors` for compile status
-- **No modifications:** This is a read-only governance review
+- **File save:** Creates `plan/weekly-updates/YYYY-MM-DD.md` with the full review artefact
+- **No other modifications:** The review is otherwise read-only
+
+---
+
+### Project Board Status Update
+
+At the end of every review, produce a **Project Board Status Update** block for the user to paste manually into the [SoloDevBoard Roadmap project](https://github.com/users/markheydon/projects/8) using **Add Status Update**:
+
+```markdown
+## Weekly Status — [Date]
+
+**Phase X (vX.X.X):** [progress summary]
+
+### Delivered this week
+- [Bullet items of closed issues / ADRs / decisions]
+
+### Next week's focus
+1. [Priority 1]
+2. [Priority 2]
+3. [Priority 3]
+
+### Health indicators
+| Metric | Value |
+|---|---|
+| Tests | X/X passing |
+| Compile errors | X |
+| Open PRs | X |
+| Active blockers | X |
+```
+
+Also provide the **manual values for the dialog**:
+- **Status:** On track / At risk / Off track (based on milestone health)
+- **Start date:** Date the current active milestone began (first issue in milestone created)
+- **Target date:** Estimated milestone completion date (velocity-based when data exists; otherwise a reasoned estimate noted as tentative)
+
+---
+
+### Project Board Metadata Refresh
+
+At the start of the **first review of a new phase** (or when the project description/README are stale), produce the following `gh` commands for the user to run once:
+
+```powershell
+# Update short description
+gh project edit 8 --owner markheydon --description "[concise one-liner]"
+
+# Update README (reflect current phase and resource links)
+gh project edit 8 --owner markheydon --readme "[markdown content with escaped newlines]"
+```
+
+Only recommend running the metadata update when the content would materially change (e.g. a new phase begins, the description is placeholder text, or key resources links are missing).
+
+---
+
+### Save Weekly Update File
+
+At the end of every review, save the complete artefact to:
+
+```
+plan/weekly-updates/YYYY-MM-DD.md
+```
+
+The file must contain, in order:
+1. Header with date and overall status.
+2. **Project Board Status Update** block (copy-paste markdown + manual dialog values).
+3. **Project Board Metadata** section (gh commands, only if update recommended).
+4. Full executive summary sections.
 
 ---
 
