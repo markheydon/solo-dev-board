@@ -1,4 +1,4 @@
-using Microsoft.FluentUI.AspNetCore.Components;
+using MudBlazor.Services;
 using SoloDevBoard.App.Components;
 using SoloDevBoard.Application.Services;
 using SoloDevBoard.Infrastructure;
@@ -9,7 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddFluentUIComponents();
+builder.Services.AddMudServices();
 builder.Services.AddApplicationServices();
 
 // Register Infrastructure services (GitHub API integration).

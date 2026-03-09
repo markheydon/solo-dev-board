@@ -63,7 +63,7 @@ All source code, tests, and documentation changes are committed to this branch. 
   - Infrastructure → implements interfaces from Application
   - App (Blazor) → calls use cases via Application layer
 - Apply C# 14 and .NET 10 conventions per `.github/instructions/dotnet-framework.instructions.md`
-- Use Fluent UI Blazor components per `.github/skills/fluentui-blazor/SKILL.md` when building UI
+- Use MudBlazor components per `.github/skills/mudblazor/SKILL.md` when building UI
 - **UK English requirement:** All code comments, string literals, user-facing text in UK English
 - **Search before you write (DRY):** Before writing any helper method, paging loop, error-handling utility, or serialisation logic, search the assembly being modified (and adjacent assemblies in the same layer) for an existing method that already does it. If an equivalent `private static` method exists in a sibling class, promote it to `internal static` rather than duplicating it. Only create new utilities when no equivalent exists anywhere in the codebase.
 
@@ -237,11 +237,11 @@ Implementation is complete when:
 - `.github/instructions/blazor.instructions.md` — Blazor patterns
 - `.github/skills/csharp-xunit/SKILL.md` — testing standards
 - `.github/skills/csharp-docs/SKILL.md` — documentation standards
-- `.github/skills/fluentui-blazor/SKILL.md` — UI component patterns
+- `.github/skills/mudblazor/SKILL.md` — UI component patterns
 
 **Invokes:**
 - `dotnet-best-practices` skill — code implementation
-- `fluentui-blazor` skill — UI components
+- `mudblazor` skill — UI components
 - `csharp-xunit` skill — test creation
 - `csharp-docs` skill — XML comment generation
 - `github-project` skill — project board status update (Lifecycle Event 2: Implementation Started)

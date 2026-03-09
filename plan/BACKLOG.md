@@ -22,9 +22,9 @@ Labels: `type/epic`, `area/infrastructure`
 <!-- Stories: #66 Dashboard refactor, #67 Repositories refactor, #68 Label Manager refactor -->
 <!-- Tests: #69 bUnit test updates -->
 
-- [ ] As a solo developer, I want the application switched from Fluent UI Blazor to MudBlazor so that UI delivery by AI agents is more reliable and requires fewer workarounds. _(ADR-0012, Epic #63 — status/todo)_
-  - [ ] Enabler: Remove Fluent UI NuGet packages; add MudBlazor; wire up services in `Program.cs` and providers in `MainLayout.razor`. _(#64)_
-  - [ ] Enabler: Verify/complete `.github/skills/mudblazor/` skill and `.github/instructions/blazor.instructions.md` replacement. _(#65)_
+- [ ] As a solo developer, I want the application switched from Fluent UI Blazor to MudBlazor so that UI delivery by AI agents is more reliable and requires fewer workarounds. _(ADR-0012, Epic #63 — status/in-progress)_
+  - [x] Enabler: Remove Fluent UI NuGet packages; add MudBlazor; wire up services in `Program.cs` and providers in `MainLayout.razor`. _(#64 — in review PR #71)_
+  - [x] Enabler: Verify/complete `.github/skills/mudblazor/` skill and `.github/instructions/blazor.instructions.md` replacement. _(#65 — in review PR #71)_
   - [ ] Story: Refactor the Dashboard shell page (Fluent UI layout and navigation → MudBlazor equivalents). _(#66)_
   - [ ] Story: Refactor the Repositories page (Fluent UI → MudBlazor components). _(#67)_
   - [ ] Story: Refactor the Label Manager page and Label Operation dialog (Fluent UI → MudBlazor; replace hand-rolled colour picker with `MudColorPicker`). _(#68)_
