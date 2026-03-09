@@ -68,7 +68,7 @@ public partial class LabelOperationDialog
 
         if (selectedRepositoryNames.Count == 0)
         {
-            selectedRepositoryNames = selectableRepositoryNames;
+            selectedRepositoryNames = new HashSet<string>(selectableRepositoryNames, StringComparer.OrdinalIgnoreCase);
         }
 
         validationMessage = null;
