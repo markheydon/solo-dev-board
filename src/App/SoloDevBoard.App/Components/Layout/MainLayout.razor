@@ -1,6 +1,6 @@
 ﻿@inherits LayoutComponentBase
 
-<MudThemeProvider />
+<MudThemeProvider Theme="@AppTheme" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -44,6 +44,30 @@
 </div>
 
 @code {
+    private static readonly MudTheme AppTheme = new()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = "#3f4a6b",
+            Secondary = "#6f7b99",
+            Tertiary = "#7f8aa8",
+            Background = "#f5f7fb",
+            Surface = "#ffffff",
+            AppbarBackground = "#3f4a6b",
+            AppbarText = "#f6f8ff",
+            DrawerBackground = "#edf1f8",
+            DrawerText = "#263046",
+            TextPrimary = "#232a3a",
+            TextSecondary = "#5f6778",
+            ActionDefault = "#5f6778",
+            ActionDisabled = "#9fa6b7",
+        },
+        LayoutProperties = new LayoutProperties
+        {
+            DefaultBorderRadius = "8px",
+        },
+    };
+
     private bool _drawerOpen = true;
 
     private void ToggleDrawer()
