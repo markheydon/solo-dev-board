@@ -1,127 +1,84 @@
-@implements IDialogContentComponent<LabelOperationDialogRequest>
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">@DialogTitle</MudText>
+    </TitleContent>
 
-@if (Content.Mode == LabelOperationMode.Delete)
-{
-    <p>Delete label <strong>@Content.OriginalLabelName</strong> from the selected repositories.</p>
-}
-else
-{
-    <EditForm Model="model" OnValidSubmit="OnValidSubmitAsync">
-        <DataAnnotationsValidator />
-        <FluentValidationSummary />
-
-        <FluentTextField Label="Label name"
-                         Required
-                         @bind-Value="model.LabelName"
-                         data-testid="label-name-input" />
-        <FluentValidationMessage For="@(() => model.LabelName)" />
-
-        <div class="colour-input-row">
-            <FluentTextField Label="Colour"
-                             Placeholder="#ededed"
-                             @bind-Value="model.Colour"
-                             data-testid="label-colour-input" />
-            <button type="button"
-                    class="colour-swatch-button"
-                    @onclick="ToggleColourSelector"
-                    title="Choose colour"
-                    aria-label="Choose colour"
-                    aria-expanded="@showColourSelector"
-                    data-testid="label-colour-swatch-button">
-                <span class="colour-swatch"
-                      style="background-color:@model.DisplayColour"
-                      title="@model.DisplayColour"
-                      data-testid="label-colour-swatch"></span>
-            </button>
-        </div>
-
-        @if (showColourSelector)
+    <DialogContent>
+        @if (Content.Mode == LabelOperationMode.Delete)
         {
-            <div class="colour-selector-panel" data-testid="label-colour-selector">
-                <p>Common colours</p>
-                <div class="colour-options">
-                    @foreach (var colourOption in CommonColourOptions)
-                    {
-                        <button type="button"
-                                class="colour-option-button"
-                                title="@colourOption.Name"
-                                aria-label="@("Select " + colourOption.Name)"
-                                @onclick="() => SelectPresetColour(colourOption.Hex)">
-                            <span class="colour-option-swatch" style="background-color:@colourOption.Hex"></span>
-                        </button>
-                    }
-                </div>
+            <MudText Typo="Typo.body1">Delete label <strong>@Content.OriginalLabelName</strong> from the selected repositories.</MudText>
+        }
+        else
+        {
+            <EditForm EditContext="editContext">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
 
-                <label class="custom-colour-picker" for="custom-colour-input">Custom colour</label>
-                <input id="custom-colour-input"
-                       type="color"
-                       value="@model.DisplayColour"
-                       @onchange="OnCustomColourChanged"
-                       data-testid="label-custom-colour-input" />
-            </div>
+                <MudTextField @bind-Value="model.LabelName"
+                              Label="Label name"
+                              Variant="Variant.Outlined"
+                              Required="true"
+                              data-testid="label-name-input" />
+                <ValidationMessage For="@(() => model.LabelName)" />
+
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Class="mt-2">
+                    <MudColorPicker @bind-Text="model.Colour"
+                                    Label="Colour"
+                                    ColorPickerMode="ColorPickerMode.HEX"
+                                    Variant="Variant.Outlined"
+                                    Class="dialog-colour-picker"
+                                    data-testid="label-colour-input" />
+                    <span class="dialog-colour-preview"
+                          style="@($"background-color: {model.DisplayColour};")"
+                          title="@model.DisplayColour"
+                          data-testid="label-colour-preview"></span>
+                </MudStack>
+                <MudText Typo="Typo.caption">Current colour: @model.DisplayColour</MudText>
+                <ValidationMessage For="@(() => model.Colour)" />
+
+                <MudTextField @bind-Value="model.Description"
+                              Label="Description"
+                              Placeholder="Optional description"
+                              Variant="Variant.Outlined"
+                              Lines="3"
+                              Class="mt-2"
+                              data-testid="label-description-input" />
+            </EditForm>
         }
 
-        <FluentValidationMessage For="@(() => model.Colour)" />
-
-        <div class="description-input-row">
-            <FluentTextArea Label="Description"
-                            Placeholder="Optional description"
-                            @bind-Value="model.Description"
-                            data-testid="label-description-input" />
-        </div>
-
-        <div class="repository-selector" data-testid="dialog-repository-selector">
-            <p>Target repositories</p>
-            @if (Content.Mode == LabelOperationMode.Edit)
+        <div class="repository-selector mt-3" data-testid="dialog-repository-selector">
+            <MudText Typo="Typo.subtitle2">Target repositories</MudText>
+            @if (Content.Mode != LabelOperationMode.Create)
             {
-                <p class="repository-selector-hint">Only repositories that already contain this label can be selected.</p>
+                <MudText Typo="Typo.caption" Class="repository-selector-hint">Only repositories that already contain this label can be selected.</MudText>
             }
+
             @foreach (var repository in Content.AvailableRepositories)
             {
-                <label class="@(CanSelectRepository(repository) ? string.Empty : "repository-option-disabled")">
-                    <input type="checkbox"
-                           checked="@selectedRepositoryNames.Contains(repository)"
-                           disabled="@(!CanSelectRepository(repository))"
-                           @onchange="args => OnRepositoryToggleChanged(repository, args)" />
-                    @repository
-                </label>
+                <div class="@(CanSelectRepository(repository) ? string.Empty : "repository-option-disabled")">
+                    <MudCheckBox T="bool"
+                                 Value="selectedRepositoryNames.Contains(repository)"
+                                 ValueChanged="isChecked => OnRepositoryToggleChanged(repository, isChecked)"
+                                 Disabled="@(!CanSelectRepository(repository))"
+                                 Label="@repository" />
+                </div>
             }
         </div>
 
         @if (!string.IsNullOrWhiteSpace(validationMessage))
         {
-            <p role="alert">@validationMessage</p>
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mt-2">@validationMessage</MudAlert>
         }
+    </DialogContent>
 
-        <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit">@SubmitButtonText</FluentButton>
-        <FluentButton Appearance="Appearance.Stealth" @onclick="CancelAsync">Cancel</FluentButton>
-    </EditForm>
-}
-
-@if (Content.Mode == LabelOperationMode.Delete)
-{
-    <div class="repository-selector" data-testid="dialog-repository-selector">
-        <p>Target repositories</p>
-        <p class="repository-selector-hint">Only repositories that already contain this label can be selected.</p>
-        @foreach (var repository in Content.AvailableRepositories)
-        {
-            <label class="@(CanSelectRepository(repository) ? string.Empty : "repository-option-disabled")">
-                <input type="checkbox"
-                       checked="@selectedRepositoryNames.Contains(repository)"
-                       disabled="@(!CanSelectRepository(repository))"
-                       @onchange="args => OnRepositoryToggleChanged(repository, args)" />
-                @repository
-            </label>
-        }
-    </div>
-
-    @if (!string.IsNullOrWhiteSpace(validationMessage))
-    {
-        <p role="alert">@validationMessage</p>
-    }
-
-    <FluentButton Appearance="Appearance.Accent" @onclick="ConfirmDeleteAsync">Delete label</FluentButton>
-    <FluentButton Appearance="Appearance.Stealth" @onclick="CancelAsync">Cancel</FluentButton>
-}
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="CancelAsync">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled"
+                   Color="@(Content.Mode == LabelOperationMode.Delete ? Color.Error : Color.Primary)"
+                   OnClick="ConfirmAsync">
+            @SubmitButtonText
+        </MudButton>
+    </DialogActions>
+</MudDialog>
 
 
