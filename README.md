@@ -8,9 +8,8 @@
 
 ## What Is SoloDevBoard?
 
-SoloDevBoard is a **.NET 10 Blazor Server** application that consolidates your GitHub repository management into a single, unified interface. If you maintain multiple GitHub repositories as a solo developer, SoloDevBoard eliminates the context-switching between repository tabs, project boards, settings pages, and workflow runs.
+ SoloDevBoard is a **.NET 10 Blazor Server** application that consolidates your GitHub repository management into a single, unified interface. If you maintain multiple GitHub repositories as a solo developer, SoloDevBoard eliminates the context-switching between repository tabs, project boards, settings pages, and workflow runs.
 
----
 
 ## Features
 
@@ -23,25 +22,15 @@ SoloDevBoard is a **.NET 10 Blazor Server** application that consolidates your G
 | **Triage UI** | Keyboard-friendly interface for triaging incoming issues quickly | 🔨 Planned — Phase 3 |
 | **Workflow Templates** | Browse, customise, and apply GitHub Actions workflow templates across repositories | 🔨 Planned — Phase 4 |
 
----
 
 ## Tech Stack
 
-- **Framework:** .NET 10 / Blazor Server / C# 14
-- **Architecture:** Layered / Clean (App → Application → Domain + Infrastructure)
-- **GitHub API:** Octokit.NET (REST) + GraphQL HTTP client
-- **Testing:** xUnit + NSubstitute + FluentAssertions
-- **Infrastructure:** Azure App Service + Azure Key Vault, deployed via Bicep
-- **CI/CD:** GitHub Actions
 
----
 
 ## Getting Started
 
 ### Prerequisites
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
-- A GitHub Personal Access Token (PAT) with `repo`, `read:org`, and `workflow` scopes
 
 ### Run Locally
 
@@ -64,7 +53,6 @@ Then open `https://localhost:5001` in your browser.
 
 See the full [Getting Started guide](docs/getting-started.md) for configuration options and Azure deployment instructions.
 
----
 
 ## Project Structure
 

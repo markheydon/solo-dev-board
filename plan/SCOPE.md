@@ -57,6 +57,11 @@ The following are explicitly **not** in scope for the current version of SoloDev
 - **.NET 10:** The application is built on .NET 10 and Blazor Server. No legacy .NET Framework support is required.
 - **Modern browser:** Users are assumed to be using a current version of Chrome, Firefox, Edge, or Safari.
 - **Internet connection:** The application requires a live connection to the GitHub API.
+ **Single-user / solo developer:** The application is used by one person who is the owner or an admin of all managed repositories.
+ **GitHub.com initially:** The application targets GitHub.com. GitHub Enterprise Server support may be considered in a future release.
+ **.NET 10:** The application is built on .NET 10 and Blazor Server. No legacy .NET Framework support is required.
+ **Modern browser:** Users are assumed to be using a current version of Chrome, Firefox, Edge, or Safari.
+ **Internet connection:** The application requires a live connection to the GitHub API.
 
 ---
 
@@ -67,6 +72,11 @@ The following are explicitly **not** in scope for the current version of SoloDev
 - **AI-driven development:** The project is developed with GitHub Copilot as an active collaborator. All planning documents are written to be machine-readable and actionable by AI agents.
 - **Minimal dependencies:** Prefer the .NET ecosystem and well-established open source libraries. Avoid adding dependencies without an ADR.
 - **UI component library:** MudBlazor is the sole UI component library for the Blazor front-end (see [ADR-0012](../adr/0012-switch-to-mudblazor-component-library.md)). Raw HTML form elements are not used where a MudBlazor equivalent exists.
+ **UK English:** All user-facing text, code comments, documentation, and commit messages must be written in UK English.
+ **Open source:** The project is intended to be open source under the MIT Licence.
+ **AI-driven development:** The project is developed with GitHub Copilot as an active collaborator. All planning documents are written to be machine-readable and actionable by AI agents.
+ **Minimal dependencies:** Prefer the .NET ecosystem and well-established open source libraries. Avoid adding dependencies without an ADR.
+ **UI component library:** MudBlazor is the sole UI component library for the Blazor front-end (see [ADR-0012](../adr/0012-switch-to-mudblazor-component-library.md)). Raw HTML form elements are not used where a MudBlazor equivalent exists.
 
 ---
 
