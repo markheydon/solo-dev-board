@@ -68,7 +68,7 @@ All source code, tests, and documentation changes are committed to this branch. 
   - **Infrastructure** → implements Application interfaces
   - **App (Blazor)** → calls Application layer
 - Apply .NET 10 / C# 14 conventions per `.github/instructions/dotnet-framework.instructions.md`
-- Use Fluent UI Blazor components per `.github/skills/fluentui-blazor/SKILL.md` for UI work
+- Use MudBlazor components per `.github/skills/mudblazor/SKILL.md` for UI work
 - **UK English only:** All comments, strings, user-facing text in UK English
 
 ### 4. Test Creation
@@ -186,7 +186,7 @@ All source code, tests, and documentation changes are committed to this branch. 
 
 - **Delivery Agent** — full implementation orchestration
 - **`dotnet-best-practices` skill** — code implementation
-- **`fluentui-blazor` skill** — UI components
+- **`mudblazor` skill** — UI components
 - **`csharp-xunit` skill** — test creation
 - **`csharp-docs` skill** — XML comment generation
 - **`create-architectural-decision-record` skill** — ADR creation (if needed)
