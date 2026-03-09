@@ -138,6 +138,21 @@ All source code, tests, and documentation changes are committed to this branch. 
 
 ---
 
+## Testing Phase — No Commits
+
+Once the user signals they are actively testing the delivered work (phrases such as "I'm testing this now", "just spotted an issue", "fix this for me", "while I'm testing", "can you tweak", or any message sent in the context of an ongoing test session), the Delivery Agent **switches to Testing Phase mode**:
+
+- **Do NOT `git commit` or `git push`** any changes during this phase.
+- Apply fixes directly to the working tree only.
+- Accumulate all fixes from the session in the working tree.
+- Confirm each fix with the user verbally ("Fixed — not yet committed").
+- Exit Testing Phase only when the user explicitly signals acceptance: "looks good", "all working", "done testing", "ready to commit", "hand off to Review Agent", or equivalent.
+- On exit, stage and commit **all accumulated fixes in a single commit** with a message that summarises the full testing session (e.g. `Fix iterative testing fixes for issue #68 — colour picker, dialog sizing, snackbar wording`).
+
+> **Why:** A sequence of commit messages saying "fix X", "fix Y", "fix Z" against a single issue misrepresents the implementation history and pollutes the branch log. A single clean commit after a testing session gives an accurate picture.
+
+---
+
 ## Boundaries (What NOT to Do)
 
 ❌ **Do not start coding before issue has clear acceptance criteria** — escalate to PM Orchestrator if plan is incomplete  
@@ -147,7 +162,8 @@ All source code, tests, and documentation changes are committed to this branch. 
 ❌ **Do not use US English spelling** — UK English only (colour, organise, behaviour, etc.)  
 ❌ **Do not create files outside the layered architecture** — respect Domain/Application/Infrastructure/App boundaries  
 ❌ **Do not commit implementation code directly to `main`** — always work on a `feature/issue-N-description` branch; the branch reaches `main` only via a merged pull request  
-❌ **Do not write documentation prose directly** — delegate BACKLOG, SCOPE, ADR, and user guide updates to Tech Writer agent (in-code XML comments are still Delivery Agent's responsibility)
+❌ **Do not write documentation prose directly** — delegate BACKLOG, SCOPE, ADR, and user guide updates to Tech Writer agent (in-code XML comments are still Delivery Agent's responsibility)  
+❌ **Do not commit or push during a Testing Phase session** — accumulate all fixes in the working tree and commit once in a single summary commit when the user signals acceptance
 
 ---
 

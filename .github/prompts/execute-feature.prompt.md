@@ -194,6 +194,47 @@ All source code, tests, and documentation changes are committed to this branch. 
 
 ---
 
+## Testing Phase — No Commits
+
+Once implementation is delivered and the user begins testing, the Delivery Agent **must not commit or push** any changes until the user explicitly signals the session is complete.
+
+### Recognising Testing Phase
+
+The Delivery Agent enters Testing Phase when the user says (or implies) any of the following:
+- "I'm testing this now"
+- "Just spotted an issue"
+- "Can you fix / tweak / adjust…"
+- "While I'm testing…"
+- "This isn't working quite right"
+- Any correction or refinement whilst they are actively using or inspecting the delivered work
+
+### Rules during Testing Phase
+
+- Apply fixes directly to the working tree.
+- Do **not** run `git commit` or `git push` after each individual fix.
+- Confirm each fix verbally: "Fixed — not yet committed."
+- Keep accumulating changes until the user signals acceptance.
+
+### Exiting Testing Phase
+
+The Delivery Agent commits when the user says (or implies):
+- "Looks good"
+- "All working"
+- "Done testing"
+- "Ready to commit"
+- "Hand off to Review Agent"
+- Or any clear signal that the testing session is over
+
+On exit: stage all accumulated changes and create **one summary commit** covering the entire testing session, e.g.:
+
+```
+Fix iterative testing fixes for issue #68 — colour picker binding, dialog sizing, snackbar wording
+```
+
+> **Why one commit:** Multiple "fix X / fix Y" commits against a single issue misrepresent the implementation history and pollute the branch log. A single summary commit accurately reflects the work done.
+
+---
+
 ## Follow-Up Prompts
 
 After implementation completes:
