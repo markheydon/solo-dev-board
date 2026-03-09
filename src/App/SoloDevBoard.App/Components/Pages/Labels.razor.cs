@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.FluentUI.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
+using MudBlazor;
 using SoloDevBoard.App.Components.Dialogs;
 using SoloDevBoard.Application.Services;
 using SoloDevBoard.Domain.Entities;
@@ -22,17 +22,17 @@ public partial class Labels : ComponentBase
     [Inject]
     public ILogger<Labels> Logger { get; set; } = default!;
 
-    /// <summary>Gets or sets the Fluent dialog service for label operations.</summary>
+    /// <summary>Gets or sets the MudBlazor dialog service for label operations.</summary>
     [Inject]
     public IDialogService DialogService { get; set; } = default!;
 
-    /// <summary>Gets or sets the Fluent toast service for user feedback.</summary>
+    /// <summary>Gets or sets the MudBlazor snackbar service for user feedback.</summary>
     [Inject]
-    public IToastService ToastService { get; set; } = default!;
+    public ISnackbar Snackbar { get; set; } = default!;
 
     private IReadOnlyList<Repository> availableRepositories = [];
     private IEnumerable<Repository> visibleRepositoryOptions = [];
-    private IEnumerable<Repository> selectedRepositories = [];
+    private IReadOnlyList<Repository> selectedRepositories = [];
     private IReadOnlyList<LabelRow> rows = [];
     private IReadOnlyList<LabelRow> filteredRows = [];
     private bool isLoadingRepositories = true;
@@ -40,19 +40,11 @@ public partial class Labels : ComponentBase
     private bool hasLoadedLabels;
     private bool hasRepositoryLoadFailure;
     private string? errorMessage;
-    private bool hasInitialised;
     private string repositorySearchText = string.Empty;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnInitializedAsync()
     {
-        if (!firstRender || hasInitialised)
-        {
-            return;
-        }
-
-        hasInitialised = true;
         await LoadRepositoriesAsync();
-        StateHasChanged();
     }
 
     private async Task ReloadRepositoriesAsync()
@@ -96,20 +88,12 @@ public partial class Labels : ComponentBase
         }
     }
 
-    private void OnRepositoryOptionsSearch(OptionsSearchEventArgs<Repository> args)
+    private void OnSelectedRepositoriesChanged(IEnumerable<Repository> repositories)
     {
-        if (string.IsNullOrWhiteSpace(args.Text))
-        {
-            visibleRepositoryOptions = availableRepositories;
-            args.Items = visibleRepositoryOptions;
-            return;
-        }
-
-        var filter = args.Text.Trim();
-        visibleRepositoryOptions = availableRepositories
-            .Where(repository => repository.FullName.Contains(filter, StringComparison.OrdinalIgnoreCase))
+        selectedRepositories = repositories
+            .Where(repository => !string.IsNullOrWhiteSpace(repository.FullName))
+            .DistinctBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase)
             .ToArray();
-        args.Items = visibleRepositoryOptions;
     }
 
     private async Task LoadLabelsForSelectionAsync()
@@ -187,7 +171,7 @@ public partial class Labels : ComponentBase
     {
         if (!TryGetSelectedRepositoryFullNames(out var selectedFullNames))
         {
-            ToastService.ShowWarning("Select at least one repository before creating a label.");
+            Snackbar.Add("Select at least one repository before creating a label.", Severity.Warning);
             return;
         }
 
@@ -216,7 +200,7 @@ public partial class Labels : ComponentBase
 
         if (!TryGetSelectedRepositoryFullNames(out var selectedFullNames))
         {
-            ToastService.ShowWarning("Select at least one repository before editing a label.");
+            Snackbar.Add("Select at least one repository before editing a label.", Severity.Warning);
             return;
         }
 
@@ -249,7 +233,7 @@ public partial class Labels : ComponentBase
 
         if (!TryGetSelectedRepositoryFullNames(out var selectedFullNames))
         {
-            ToastService.ShowWarning("Select at least one repository before deleting a label.");
+            Snackbar.Add("Select at least one repository before deleting a label.", Severity.Warning);
             return;
         }
 
@@ -278,21 +262,28 @@ public partial class Labels : ComponentBase
 
     private async Task<LabelOperationDialogResult?> ShowLabelOperationDialogAsync(string title, LabelOperationDialogRequest request)
     {
-        var dialog = await DialogService.ShowDialogAsync<LabelOperationDialog, LabelOperationDialogRequest>(
-            request,
-            new DialogParameters
-            {
-                Title = title,
-                Width = "36rem",
-                PreventDismissOnOverlayClick = true,
-                PrimaryAction = null,
-                SecondaryAction = null,
-                PrimaryActionEnabled = false,
-                SecondaryActionEnabled = false,
-            });
+        var parameters = new DialogParameters<LabelOperationDialog>
+        {
+            { dialog => dialog.Content, request },
+        };
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            BackdropClick = false,
+            CloseOnEscapeKey = true,
+        };
+
+        var dialog = await DialogService.ShowAsync<LabelOperationDialog>(title, parameters, options);
 
         var dialogResult = await dialog.Result;
-        if (dialogResult.Cancelled)
+        if (dialogResult is null)
+        {
+            return null;
+        }
+
+        if (dialogResult.Canceled)
         {
             return null;
         }
@@ -300,7 +291,7 @@ public partial class Labels : ComponentBase
         if (dialogResult.Data is not LabelOperationDialogResult result)
         {
             Logger.LogWarning("Label operation dialog closed without a valid result payload for {Mode}.", request.Mode);
-            ToastService.ShowWarning("No changes were saved. Please use the form action button in the dialog.");
+            Snackbar.Add("No changes were saved. Please use the form action button in the dialog.", Severity.Warning);
             return null;
         }
 
@@ -322,17 +313,17 @@ public partial class Labels : ComponentBase
                 changedRepositoryCount += created.Count;
             }
 
-            ToastService.ShowSuccess($"Created '{operation.LabelName}' in {changedRepositoryCount} repositories.");
+            Snackbar.Add($"Created '{operation.LabelName}' in {changedRepositoryCount} repositories.", Severity.Success);
         }
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while creating label {LabelName}.", operation.LabelName);
-            ToastService.ShowError($"GitHub API request failed while creating '{operation.LabelName}'. {ex.Message}");
+            Snackbar.Add($"GitHub API request failed while creating '{operation.LabelName}'. {ex.Message}", Severity.Error);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to create label {LabelName}.", operation.LabelName);
-            ToastService.ShowError($"An unexpected error occurred while creating '{operation.LabelName}'.");
+            Snackbar.Add($"An unexpected error occurred while creating '{operation.LabelName}'.", Severity.Error);
         }
         finally
         {
@@ -355,17 +346,17 @@ public partial class Labels : ComponentBase
                 changedRepositoryCount += updated.Count;
             }
 
-            ToastService.ShowSuccess($"Updated '{operation.OriginalLabelName}' across {changedRepositoryCount} repositories.");
+            Snackbar.Add($"Updated '{operation.OriginalLabelName}' across {changedRepositoryCount} repositories.", Severity.Success);
         }
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while updating label {LabelName}.", operation.OriginalLabelName);
-            ToastService.ShowError($"GitHub API request failed while updating '{operation.OriginalLabelName}'. {ex.Message}");
+            Snackbar.Add($"GitHub API request failed while updating '{operation.OriginalLabelName}'. {ex.Message}", Severity.Error);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to update label {LabelName}.", operation.OriginalLabelName);
-            ToastService.ShowError($"An unexpected error occurred while updating '{operation.OriginalLabelName}'.");
+            Snackbar.Add($"An unexpected error occurred while updating '{operation.OriginalLabelName}'.", Severity.Error);
         }
         finally
         {
@@ -387,17 +378,17 @@ public partial class Labels : ComponentBase
                 changedRepositoryCount += ownerGroup.Value.Count;
             }
 
-            ToastService.ShowSuccess($"Deleted '{operation.OriginalLabelName}' from {changedRepositoryCount} repositories.");
+            Snackbar.Add($"Deleted '{operation.OriginalLabelName}' from {changedRepositoryCount} repositories.", Severity.Success);
         }
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while deleting label {LabelName}.", operation.OriginalLabelName);
-            ToastService.ShowError($"GitHub API request failed while deleting '{operation.OriginalLabelName}'. {ex.Message}");
+            Snackbar.Add($"GitHub API request failed while deleting '{operation.OriginalLabelName}'. {ex.Message}", Severity.Error);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to delete label {LabelName}.", operation.OriginalLabelName);
-            ToastService.ShowError($"An unexpected error occurred while deleting '{operation.OriginalLabelName}'.");
+            Snackbar.Add($"An unexpected error occurred while deleting '{operation.OriginalLabelName}'.", Severity.Error);
         }
         finally
         {

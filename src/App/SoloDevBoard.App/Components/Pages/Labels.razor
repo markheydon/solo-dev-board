@@ -3,130 +3,166 @@
 
 <PageTitle>Label Manager</PageTitle>
 
-<h1>Label Manager</h1>
+<MudStack Spacing="3">
+    <MudText Typo="Typo.h4">Label Manager</MudText>
+    <MudText Typo="Typo.body1">View labels across selected repositories and identify missing labels quickly.</MudText>
 
-<p>View labels across selected repositories and identify missing labels quickly.</p>
+    <MudPaper Class="repository-selector-card pa-4" Elevation="1">
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h6">Repository selector</MudText>
 
-<section class="repository-selector-card">
-    <h2>Repository Selector</h2>
+            @if (availableRepositories.Count == 0)
+            {
+                <MudText Typo="Typo.body2">No active repositories are available for label analysis.</MudText>
+            }
+            else
+            {
+                <MudStack Class="repository-selector-controls" Spacing="2">
+                    <MudTextField @bind-Value="RepositorySearchText"
+                                  Label="Filter repositories"
+                                  Placeholder="Type to filter the repository list"
+                                  Variant="Variant.Outlined"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Immediate="true" />
 
-    @if (availableRepositories.Count == 0)
-    {
-        <p>No active repositories are available for label analysis.</p>
-    }
-    else
-    {
-        <div class="repository-selector-controls">
-            <FluentAutocomplete TOption="Repository"
-                                Label="Repositories"
-                                Placeholder="Search and select active repositories"
-                                Items="@visibleRepositoryOptions"
-                                Multiple="true"
-                                MaximumOptionsSearch="12"
-                                ComponentWidth="100%"
-                                ListStyleValue="width: 100%; max-height: 22rem; z-index: 10000;"
-                                OptionText="@(repository => repository.FullName)"
-                                OptionValue="@(repository => repository.FullName)"
-                                @bind-ValueText="RepositorySearchText"
-                                @bind-SelectedOptions="selectedRepositories"
-                                OnOptionsSearch="OnRepositoryOptionsSearch"
-                                data-testid="repository-autocomplete" />
+                    <div data-testid="repository-select">
+                        <MudSelect T="Repository"
+                                   Label="Repositories"
+                                   MultiSelection="true"
+                                   SelectedValues="selectedRepositories"
+                                   SelectedValuesChanged="OnSelectedRepositoriesChanged"
+                                   ToStringFunc="repository => repository?.FullName ?? string.Empty"
+                                   Variant="Variant.Outlined"
+                                   Disabled="ShowLoadingState"
+                                   AnchorOrigin="Origin.BottomCenter">
+                            @foreach (var repository in visibleRepositoryOptions)
+                            {
+                                <MudSelectItem T="Repository" Value="@repository">@repository.FullName</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </div>
 
-            <p data-testid="repository-selector-summary">@RepositorySelectorSummary</p>
+                    <MudText Typo="Typo.body2" data-testid="repository-selector-summary">@RepositorySelectorSummary</MudText>
 
-            <FluentButton Appearance="Appearance.Accent"
-                          data-testid="new-label-button"
-                          Disabled="@(ShowLoadingState || !selectedRepositories.Any())"
-                          @onclick="ShowCreateDialogAsync">
-                New label
-            </FluentButton>
+                    <MudStack Row="true" Spacing="1">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   data-testid="new-label-button"
+                                   Disabled="@(ShowLoadingState || !selectedRepositories.Any())"
+                                   OnClick="ShowCreateDialogAsync">
+                            New label
+                        </MudButton>
 
-            <FluentButton Appearance="Appearance.Accent"
-                          data-testid="load-labels-button"
-                          Disabled="@(ShowLoadingState || !selectedRepositories.Any())"
-                          @onclick="LoadLabelsForSelectionAsync">
-                Load selected repositories
-            </FluentButton>
-        </div>
-    }
-</section>
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   data-testid="load-labels-button"
+                                   Disabled="@(ShowLoadingState || !selectedRepositories.Any())"
+                                   OnClick="LoadLabelsForSelectionAsync">
+                            Load selected repositories
+                        </MudButton>
+                    </MudStack>
+                </MudStack>
+            }
+        </MudStack>
+    </MudPaper>
 
 @if (ShowLabelFilter)
 {
-    <FluentCard>
-        <h2>Filter</h2>
-        <input type="search"
-               class="label-filter"
-               placeholder="Filter by label name"
-             aria-label="Filter labels by name"
-               @bind="SearchText"
-               @bind:event="oninput"
-               data-testid="label-filter" />
-    </FluentCard>
+    <MudPaper Class="label-filter-card pa-4" Elevation="1">
+        <MudStack Spacing="1">
+            <MudText Typo="Typo.h6">Filter</MudText>
+            <div data-testid="label-filter">
+                <MudTextField @bind-Value="SearchText"
+                              Placeholder="Filter by label name"
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.FilterAlt"
+                              Immediate="true"
+                              InputType="InputType.Search" />
+            </div>
+        </MudStack>
+    </MudPaper>
 }
 
 @if (ShowLoadingState)
 {
-    <div aria-live="polite" role="status" data-testid="labels-loading-state">
-        <FluentProgressRing aria-label="Loading labels" />
-        <p>@(isLoadingRepositories ? "Loading repositories..." : "Loading labels...")</p>
-    </div>
+    <MudPaper Class="pa-4" Elevation="1" aria-live="polite" role="status" data-testid="labels-loading-state">
+        <MudStack AlignItems="AlignItems.Center" Spacing="1">
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" aria-label="Loading labels" />
+            <MudText Typo="Typo.body2">@(isLoadingRepositories ? "Loading repositories..." : "Loading labels...")</MudText>
+        </MudStack>
+    </MudPaper>
 }
 else if (!string.IsNullOrWhiteSpace(errorMessage))
 {
-    <FluentCard aria-live="assertive" role="alert">
-        <h2>@ErrorTitle</h2>
-        <p>@errorMessage</p>
+    <MudPaper Class="pa-4" Elevation="1" aria-live="assertive" role="alert">
+        <MudStack Spacing="1">
+            <MudText Typo="Typo.h6">@ErrorTitle</MudText>
+            <MudText Typo="Typo.body2">@errorMessage</MudText>
+        </MudStack>
         @if (availableRepositories.Count == 0)
         {
-            <FluentButton Appearance="Appearance.Accent" @onclick="ReloadRepositoriesAsync">Try loading repositories again</FluentButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ReloadRepositoriesAsync">Try loading repositories again</MudButton>
         }
         else
         {
-            <FluentButton Appearance="Appearance.Accent" @onclick="ReloadRepositoriesAsync">Reload repositories</FluentButton>
-            <FluentButton Appearance="Appearance.Stealth" @onclick="LoadLabelsForSelectionAsync">Try loading labels again</FluentButton>
+            <MudStack Row="true" Spacing="1" Class="mt-2">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ReloadRepositoriesAsync">Reload repositories</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="LoadLabelsForSelectionAsync">Try loading labels again</MudButton>
+            </MudStack>
         }
-    </FluentCard>
+    </MudPaper>
 }
 else if (hasLoadedLabels && filteredRows.Count == 0)
 {
-    <FluentCard aria-live="polite" data-testid="labels-empty-state">
-        <h2>No labels found</h2>
-        <p>No labels were returned for the selected repositories.</p>
-    </FluentCard>
+    <MudPaper Class="pa-4" Elevation="1" aria-live="polite" data-testid="labels-empty-state">
+        <MudText Typo="Typo.h6">No labels found</MudText>
+        <MudText Typo="Typo.body2">No labels were returned for the selected repositories.</MudText>
+    </MudPaper>
 }
 else if (hasLoadedLabels)
 {
     <div class="labels-results-surface">
-        <FluentDataGrid TGridItem="Labels.LabelRow"
-                        Items="@filteredRows.AsQueryable()"
-                        AriaLabel="Consolidated labels"
-                        RowSize="DataGridRowSize.Large"
-                        GridTemplateColumns="2fr 1fr 3fr 2fr 2fr 2fr"
-                        ResizeColumnOnAllRows="true"
-                        data-testid="labels-grid">
-            <PropertyColumn Property="@(row => row.Name)" Title="Label" Sortable="true" />
-            <TemplateColumn Title="Colour" Align="Align.Center">
-                <span style="display:inline-block; width:1rem; height:1rem; border-radius:50%; border:1px solid #6a6a6a; background-color:#@context.Colour;"
-                      title="@($"#{context.Colour}")"></span>
-            </TemplateColumn>
-            <PropertyColumn Property="@(row => row.Description)" Title="Description" />
-            <PropertyColumn Property="@(row => row.RepositoriesWithLabelText)" Title="Repositories" />
-            <PropertyColumn Property="@(row => row.MissingRepositoriesText)" Title="Missing In" />
-            <TemplateColumn Title="Actions">
-                <div class="label-action-buttons">
-                    <FluentButton Appearance="Appearance.Outline"
-                                  data-testid="edit-label-button"
-                                  @onclick="() => ShowEditDialogAsync(context)">
-                        Edit
-                    </FluentButton>
-                    <FluentButton Appearance="Appearance.Stealth"
-                                  data-testid="delete-label-button"
-                                  @onclick="() => ShowDeleteDialogAsync(context)">
-                        Delete
-                    </FluentButton>
-                </div>
-            </TemplateColumn>
-        </FluentDataGrid>
+        <MudDataGrid T="Labels.LabelRow"
+                     Items="filteredRows"
+                     Hover="true"
+                     Dense="true"
+                     SortMode="SortMode.Multiple"
+                     data-testid="labels-grid">
+            <Columns>
+                <PropertyColumn Property="row => row.Name" Title="Label" Sortable="true" />
+                <TemplateColumn T="Labels.LabelRow" Title="Colour">
+                    <CellTemplate>
+                        <MudChip Class="colour-chip" Variant="Variant.Outlined" Size="Size.Small">@($"#{context.Item.Colour}")</MudChip>
+                    </CellTemplate>
+                </TemplateColumn>
+                <PropertyColumn Property="row => row.Description" Title="Description" />
+                <PropertyColumn Property="row => row.RepositoriesWithLabelText" Title="Repositories" />
+                <PropertyColumn Property="row => row.MissingRepositoriesText" Title="Missing in" />
+                <TemplateColumn T="Labels.LabelRow" Title="Actions">
+                    <CellTemplate>
+                        <MudStack Class="label-action-buttons" Row="true" Spacing="1">
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Primary"
+                                       Size="Size.Small"
+                                       data-testid="edit-label-button"
+                                       OnClick="() => ShowEditDialogAsync(context.Item)">
+                                Edit
+                            </MudButton>
+                            <MudButton Variant="Variant.Text"
+                                       Color="Color.Error"
+                                       Size="Size.Small"
+                                       data-testid="delete-label-button"
+                                       OnClick="() => ShowDeleteDialogAsync(context.Item)">
+                                Delete
+                            </MudButton>
+                        </MudStack>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+        </MudDataGrid>
     </div>
 }
+
+</MudStack>
