@@ -14,10 +14,10 @@
                 <MudTd DataLabel="Label">@context.Name</MudTd>
                 <MudTd DataLabel="Colour">
                     <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-                        <MudIcon Icon="@Icons.Material.Filled.Circle"
-                                 Style="@GetColourIconStyle(context.Colour)"
-                                 Title="@($"#{context.Colour}")" />
-                        <MudChip T="string" Variant="Variant.Outlined" Size="Size.Small">@($"#{context.Colour}")</MudChip>
+                        <MudChip T="string"
+                                 Variant="Variant.Outlined"
+                                 Size="Size.Small"
+                                 Style="@GetColourChipStyle(context.Colour)">@($"#{context.Colour}")</MudChip>
                     </MudStack>
                 </MudTd>
                 <MudTd DataLabel="Description">@(string.IsNullOrWhiteSpace(context.Description) ? "No description" : context.Description)</MudTd>
@@ -26,26 +26,3 @@
     </div>
 }
 
-@code {
-    [Parameter]
-    public string Heading { get; set; } = string.Empty;
-
-    [Parameter]
-    public IReadOnlyList<LabelDto> Labels { get; set; } = Array.Empty<LabelDto>();
-
-    private static string GetColourIconStyle(string colour)
-    {
-        var normalised = colour?.Trim() ?? string.Empty;
-        if (normalised.StartsWith('#'))
-        {
-            normalised = normalised[1..];
-        }
-
-        if (normalised.Length != 6 || !normalised.All(Uri.IsHexDigit))
-        {
-            return "color: #9e9e9e;";
-        }
-
-        return $"color: #{normalised};";
-    }
-}

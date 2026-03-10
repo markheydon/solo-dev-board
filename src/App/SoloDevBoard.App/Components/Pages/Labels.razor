@@ -383,7 +383,9 @@ else if (hasLoadedLabels)
                         <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
                             <span style="@GetColourSwatchStyle(context.Item.Colour)"
                                   title="@($"#{context.Item.Colour}")"></span>
-                            <MudChip Variant="Variant.Outlined" Size="Size.Small">@($"#{context.Item.Colour}")</MudChip>
+                            <MudChip Variant="Variant.Outlined"
+                                     Size="Size.Small"
+                                     Style="@GetColourChipStyle(context.Item.Colour)">@($"#{context.Item.Colour}")</MudChip>
                         </MudStack>
                     </CellTemplate>
                 </TemplateColumn>

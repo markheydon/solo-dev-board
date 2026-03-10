@@ -27,9 +27,10 @@
                                     ColorPickerMode="ColorPickerMode.HEX"
                                     Variant="Variant.Outlined"
                                     data-testid="label-colour-input" />
-                    <span style="@($"background-color: {model.DisplayColour};")"
-                          title="@model.DisplayColour"
-                          data-testid="label-colour-preview"></span>
+                    <MudIcon Icon="@Icons.Material.Filled.Circle"
+                             Size="Size.Large"
+                             Style="@GetColourPickerIconStyle()"
+                             Title="@($"Current colour {ResolveDisplayColour(model.Colour)}")" />
                 </MudStack>
                 <MudText Typo="Typo.caption">Current colour: @model.DisplayColour</MudText>
                 <ValidationMessage For="@(() => model.Colour)" />
@@ -78,5 +79,3 @@
         </MudButton>
     </DialogActions>
 </MudDialog>
-
-

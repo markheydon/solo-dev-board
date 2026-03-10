@@ -147,6 +147,25 @@ public partial class LabelOperationDialog
         return selectableRepositoryNames.Contains(repository);
     }
 
+    private string GetColourPickerIconStyle()
+    {
+        return $"color: {ResolveDisplayColour(model.Colour)};";
+    }
+
+    private static string ResolveDisplayColour(string? colour)
+    {
+        var candidate = colour?.Trim().TrimStart('#') ?? string.Empty;
+
+        if (candidate.Length == 8)
+        {
+            candidate = candidate[..6];
+        }
+
+        return candidate.Length == 6 && candidate.All(Uri.IsHexDigit)
+            ? $"#{candidate}"
+            : "#ededed";
+    }
+
     /// <summary>Represents form state and validation for label operation dialogs.</summary>
     private sealed class LabelOperationFormModel
     {
