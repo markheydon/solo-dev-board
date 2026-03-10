@@ -284,6 +284,97 @@ public sealed class GitHubServiceTests
     }
 
     [Fact]
+    public async Task GetWorkflowRunsAsync_ValidResponse_ReturnsMappedWorkflowRuns()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                {
+                  "workflow_runs": [
+                    {
+                      "id": 12345,
+                      "name": ".NET CI",
+                      "status": "completed",
+                      "conclusion": "success",
+                      "head_branch": "main",
+                      "head_sha": "abc123",
+                      "created_at": "2026-03-10T08:00:00Z",
+                      "updated_at": "2026-03-10T08:05:00Z",
+                      "html_url": "https://github.com/owner/repo/actions/runs/12345"
+                    }
+                  ]
+                }
+                """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var result = await sut.GetWorkflowRunsAsync("owner", "repo");
+
+        // Assert
+        Assert.Single(result);
+        Assert.Equal(12345, result[0].Id);
+        Assert.Equal(".NET CI", result[0].WorkflowName);
+        Assert.Equal("completed", result[0].Status);
+        Assert.Equal("success", result[0].Conclusion);
+        Assert.Equal("main", result[0].HeadBranch);
+        Assert.Equal("abc123", result[0].HeadSha);
+        Assert.Equal("https://github.com/owner/repo/actions/runs/12345", result[0].HtmlUrl);
+        Assert.Single(handler.Requests);
+        Assert.Equal("https://api.github.com/repos/owner/repo/actions/runs?per_page=25", handler.Requests[0].RequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task GetWorkflowRunsAsync_EmptyWrapper_ReturnsEmptyList()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+                {
+                  "workflow_runs": []
+                }
+                """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var result = await sut.GetWorkflowRunsAsync("owner", "repo");
+
+        // Assert
+        Assert.Empty(result);
+        Assert.Single(handler.Requests);
+        Assert.Equal("https://api.github.com/repos/owner/repo/actions/runs?per_page=25", handler.Requests[0].RequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task GetWorkflowRunsAsync_OwnerIsWhitespace_ThrowsArgumentException()
+    {
+        // Arrange
+        var sut = CreateSubject(new QueueMessageHandler([]));
+
+        // Act / Assert
+        await Assert.ThrowsAsync<ArgumentException>(
+            async () => _ = await sut.GetWorkflowRunsAsync(" ", "repo"));
+    }
+
+    [Fact]
+    public async Task GetWorkflowRunsAsync_RepoIsWhitespace_ThrowsArgumentException()
+    {
+        // Arrange
+        var sut = CreateSubject(new QueueMessageHandler([]));
+
+        // Act / Assert
+        await Assert.ThrowsAsync<ArgumentException>(
+            async () => _ = await sut.GetWorkflowRunsAsync("owner", " "));
+    }
+
+    [Fact]
     public async Task GetMilestonesAsync_ValidResponse_ReturnsMappedMilestones()
     {
         // Arrange

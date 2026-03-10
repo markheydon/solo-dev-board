@@ -41,6 +41,13 @@ public interface IGitHubService
     /// <returns>A read-only list of pull requests for the specified repository.</returns>
     Task<IReadOnlyList<PullRequest>> GetPullRequestsAsync(string owner, string repo, CancellationToken cancellationToken = default);
 
+    /// <summary>Retrieves recent workflow runs for the specified repository.</summary>
+    /// <param name="owner">The GitHub account owner login.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A read-only list of recent workflow runs for the specified repository.</returns>
+    Task<IReadOnlyList<WorkflowRun>> GetWorkflowRunsAsync(string owner, string repo, CancellationToken cancellationToken = default);
+
     /// <summary>Retrieves all milestones for the specified repository.</summary>
     /// <param name="owner">The GitHub account owner login.</param>
     /// <param name="repo">The repository name.</param>
