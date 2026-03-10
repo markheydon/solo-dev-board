@@ -1,6 +1,6 @@
 ---
 name: mudblazor
-description: Guide for using the MudBlazor component library in Blazor Server applications. Use this when building or refactoring Blazor pages and components for SoloDevBoard Covers setup, layout, component usage patterns, dialog and snackbar services, data grids, forms, colour pickers, theming, and bUnit testing with MudBlazor. Also use when troubleshooting z-index, popup rendering, or styling issues.
+description: Guide for using the MudBlazor component library in Blazor Server applications. Use this when building or refactoring Blazor pages and components for SoloDevBoard. Covers setup, layout, component usage patterns, dialog and snackbar services, data grids, forms, colour pickers, theming, and bUnit testing with MudBlazor. Also use when troubleshooting z-index, popup rendering, or styling issues.
 ---
 
 # MudBlazor — Consumer Usage Guide

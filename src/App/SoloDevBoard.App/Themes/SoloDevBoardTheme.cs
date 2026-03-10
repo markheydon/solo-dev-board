@@ -1,12 +1,12 @@
 using MudBlazor;
 
-namespace SoloDevBoard.Themes // Adjust this namespace as you prefer
+namespace SoloDevBoard.Themes;
+
+/// <summary>
+/// Defines the application's themes, including light and dark palettes, typography, and layout properties.
+/// </summary>
+public static class SoloDevBoardTheme
 {
-    /// <summary>
-    /// Defines the application's themes, including light and dark palettes, typography, and layout properties.
-    /// </summary>
-    public static class SoloDevBoardTheme
-    {
         // Light palette inspired by GitHub.
         private static PaletteLight PaletteLight => new PaletteLight
         {
@@ -65,5 +65,4 @@ namespace SoloDevBoard.Themes // Adjust this namespace as you prefer
                 DrawerWidthLeft = "240px"
             }
         };
-    }
 }

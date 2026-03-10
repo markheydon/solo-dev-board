@@ -470,7 +470,7 @@ public partial class Labels : ComponentBase
     {
         showSyncPreview = false;
         syncPreviewResults = [];
-        syncOperationMessage = "Label synchronisation apply was cancelled.";
+        syncOperationMessage = "Label synchronisation preview was cancelled. No changes were applied.";
         syncOperationSeverity = Severity.Info;
     }
 
@@ -918,42 +918,7 @@ public partial class Labels : ComponentBase
         }
     }
 
-    private static string GetColourSwatchStyle(string colour)
-    {
-        var normalised = NormaliseHexColour(colour);
-        return $"background-color: #{normalised};";
-    }
-
-    private static string GetColourChipStyle(string colour)
-    {
-        var normalised = NormaliseHexColour(colour);
-        var textColour = GetReadableTextColour(normalised);
-        return $"background-color: #{normalised}; color: {textColour}; border-color: #{normalised};";
-    }
-
-    private static string GetColourIconStyle(string colour)
-    {
-        var normalised = NormaliseHexColour(colour);
-        return $"color: #{normalised};";
-    }
-
-    private static string NormaliseHexColour(string colour)
-    {
-        var candidate = colour?.Trim().TrimStart('#') ?? string.Empty;
-        return candidate.Length == 6 && candidate.All(Uri.IsHexDigit)
-            ? candidate
-            : "ededed";
-    }
-
-    private static string GetReadableTextColour(string normalisedHexColour)
-    {
-        var red = Convert.ToInt32(normalisedHexColour[..2], 16);
-        var green = Convert.ToInt32(normalisedHexColour[2..4], 16);
-        var blue = Convert.ToInt32(normalisedHexColour[4..6], 16);
-
-        var relativeLuminance = ((0.299 * red) + (0.587 * green) + (0.114 * blue)) / 255;
-        return relativeLuminance >= 0.6 ? "#1f1f1f" : "#ffffff";
-    }
+    private static string GetColourChipStyle(string colour) => LabelColourStyleHelper.GetColourChipStyle(colour);
 
     private void EnsureSyncSelections()
     {
