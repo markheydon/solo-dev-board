@@ -568,6 +568,29 @@ public sealed class LabelServiceTests
     }
 
     [Fact]
+    public async Task ApplyRecommendedTaxonomyAsync_OneRepositoryHasInvalidFormat_ReturnsErrorAndContinues()
+    {
+        // Arrange
+        _labelRepositoryMock
+            .Setup(repository => repository.GetLabelsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<Label>());
+
+        _labelRepositoryMock
+            .Setup(repository => repository.CreateLabelAsync("owner", "repo-a", It.IsAny<Label>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string _, string repo, Label value, CancellationToken _) => value with { RepositoryName = repo });
+
+        var sut = new LabelService(_labelRepositoryMock.Object);
+
+        // Act
+        var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a", "invalid-format"]);
+
+        // Assert
+        Assert.Equal(2, result.Count);
+        Assert.Contains(result, item => item.RepositoryFullName == "owner/repo-a" && item.CreatedCount == 9 && !item.HasError);
+        Assert.Contains(result, item => item.RepositoryFullName == "invalid-format" && item.HasError && item.ErrorMessage!.Contains("owner/repository format", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task GetLabelsForRepositoriesAsync_RepositoriesEmpty_ThrowsArgumentException()
     {
         // Arrange

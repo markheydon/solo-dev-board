@@ -44,6 +44,7 @@ public partial class Labels : ComponentBase
     private IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto> recommendedPreview = [];
     private IReadOnlyList<RecommendedTaxonomyRepositoryResultDto> recommendedApplyResults = [];
     private bool showRecommendedPreview;
+    private bool isPreviewingRecommendedTaxonomy;
     private bool isApplyingRecommendedTaxonomy;
     private string? taxonomyOperationMessage;
     private Severity taxonomyOperationSeverity = Severity.Info;
@@ -62,7 +63,10 @@ public partial class Labels : ComponentBase
                 .OrderBy(strategy => strategy.Name, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
 
-            selectedStrategyId = recommendedStrategies.FirstOrDefault()?.Id ?? string.Empty;
+            selectedStrategyId = recommendedStrategies
+                .FirstOrDefault(strategy => strategy.Id.Equals("solodevboard", StringComparison.OrdinalIgnoreCase))?.Id
+                ?? recommendedStrategies.FirstOrDefault()?.Id
+                ?? string.Empty;
         }
         catch (Exception ex)
         {
@@ -185,6 +189,11 @@ public partial class Labels : ComponentBase
 
     private async Task PreviewRecommendedTaxonomyAsync()
     {
+        if (isPreviewingRecommendedTaxonomy)
+        {
+            return;
+        }
+
         if (!TryGetSelectedRepositoryFullNames(out var selectedFullNames))
         {
             Snackbar.Add("Select at least one repository before previewing taxonomy changes.", Severity.Warning);
@@ -197,6 +206,7 @@ public partial class Labels : ComponentBase
             return;
         }
 
+        isPreviewingRecommendedTaxonomy = true;
         try
         {
             taxonomyOperationMessage = null;
@@ -219,6 +229,10 @@ public partial class Labels : ComponentBase
             taxonomyOperationMessage = "An unexpected error occurred while previewing taxonomy changes.";
             showRecommendedPreview = false;
             recommendedPreview = [];
+        }
+        finally
+        {
+            isPreviewingRecommendedTaxonomy = false;
         }
     }
 
@@ -699,6 +713,7 @@ public partial class Labels : ComponentBase
     private bool ShowLoadingState => isLoadingRepositories || isLoadingLabels;
 
     private bool CanPreviewRecommendedTaxonomy => !ShowLoadingState
+        && !isPreviewingRecommendedTaxonomy
         && !isApplyingRecommendedTaxonomy
         && selectedRepositories.Count > 0
         && !string.IsNullOrWhiteSpace(selectedStrategyId);
