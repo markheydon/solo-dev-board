@@ -12,6 +12,9 @@ public sealed record PullRequest : IAggregate
     /// <summary>Gets the title of the pull request.</summary>
     public string Title { get; init; } = string.Empty;
 
+    /// <summary>Gets the web URL of the pull request.</summary>
+    public string HtmlUrl { get; init; } = string.Empty;
+
     /// <summary>Gets the body content of the pull request.</summary>
     public string Body { get; init; } = string.Empty;
 

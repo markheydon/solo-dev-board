@@ -445,6 +445,9 @@ public sealed class GitHubService : IGitHubService
         [JsonPropertyName("title")]
         public string Title { get; init; } = string.Empty;
 
+        [JsonPropertyName("html_url")]
+        public string? HtmlUrl { get; init; }
+
         [JsonPropertyName("body")]
         public string? Body { get; init; }
 
@@ -474,6 +477,7 @@ public sealed class GitHubService : IGitHubService
             Id = Id,
             Number = Number,
             Title = Title,
+            HtmlUrl = HtmlUrl ?? string.Empty,
             Body = Body ?? string.Empty,
             State = State,
             AuthorLogin = User?.Login ?? string.Empty,
@@ -495,6 +499,9 @@ public sealed class GitHubService : IGitHubService
 
         [JsonPropertyName("title")]
         public string Title { get; init; } = string.Empty;
+
+        [JsonPropertyName("html_url")]
+        public string? HtmlUrl { get; init; }
 
         [JsonPropertyName("body")]
         public string? Body { get; init; }
@@ -525,6 +532,7 @@ public sealed class GitHubService : IGitHubService
             Id = Id,
             Number = Number,
             Title = Title,
+            HtmlUrl = HtmlUrl ?? string.Empty,
             Body = Body ?? string.Empty,
             State = State,
             AuthorLogin = User?.Login ?? string.Empty,

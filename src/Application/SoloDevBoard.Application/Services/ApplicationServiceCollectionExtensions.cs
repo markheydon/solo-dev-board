@@ -14,6 +14,7 @@ public static class ApplicationServiceCollectionExtensions
 
         services.AddScoped<IRepositoryService, RepositoryService>();
         services.AddScoped<ILabelManagerService, LabelService>();
+        services.AddScoped<IAuditDashboardService, AuditDashboardService>();
 
         return services;
     }
