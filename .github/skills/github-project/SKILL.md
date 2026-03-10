@@ -7,6 +7,14 @@ description: 'Manage the SoloDevBoard Roadmap GitHub Project (Project #8). Add i
 
 Centralised reference and command patterns for maintaining the **SoloDevBoard Roadmap** GitHub Projects v2 board in sync with GitHub issues throughout the planning, delivery, and review lifecycle.
 
+## Tool and Shell Preference
+
+- Use GitHub MCP tools for issue and pull request operations when the capability exists there.
+- Use `gh project` for SoloDevBoard Roadmap item operations and field updates.
+- Prefer `gh project item-edit` over raw GraphQL mutations when the CLI supports the field update directly.
+- Default to bash-safe command patterns in WSL or Linux terminals.
+- Do not use PowerShell backtick escaping, `Get-Date`, `Out-Null`, or `ConvertFrom-Json` in bash sessions.
+
 ---
 
 ## Project Reference
@@ -142,39 +150,60 @@ Skip any sibling already "In Progress" or "Done" — do not alter its dates. If 
 
 After the daily-start workflow recommends a short execution batch and the user explicitly asks for board updates, move the selected stories, enablers, or tests to **Up Next** and assign sequential **Focus Order** values.
 
-```powershell
+```bash
 # Step 1: Find the project item ID for the issue.
-$itemId = gh api graphql --field query='query { repository(owner: "markheydon", name: "solo-dev-board") { issue(number: '"$issueNumber"') { projectItems(first: 10) { nodes { id project { number } } } } } }' --jq '.data.repository.issue.projectItems.nodes[] | select(.project.number == 8) | .id'
+item_id=$(gh project item-list 8 --owner markheydon --format json --jq ".items[] | select(.content.number == $issueNumber) | .id" | head -n1)
 
 # Step 2: Set Status → Up Next.
-gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { projectId: `"PVT_kwHOAJefG84BQ6bh`" itemId: `"$itemId`" fieldId: `"PVTSSF_lAHOAJefG84BQ6bhzg-5WGY`" value: { singleSelectOptionId: `"df9275ed`" } }) { projectV2Item { id } } }" | Out-Null
+gh project item-edit \
+    --id "$item_id" \
+    --project-id "PVT_kwHOAJefG84BQ6bh" \
+    --field-id "PVTSSF_lAHOAJefG84BQ6bhzg-5WGY" \
+    --single-select-option-id "df9275ed"
 
 # Step 3: Set Focus Order to the execution sequence number.
-gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { projectId: `"PVT_kwHOAJefG84BQ6bh`" itemId: `"$itemId`" fieldId: `"PVTF_lAHOAJefG84BQ6bhzg_Lx34`" value: { number: $focusOrder } }) { projectV2Item { id } } }" | Out-Null
+gh project item-edit \
+    --id "$item_id" \
+    --project-id "PVT_kwHOAJefG84BQ6bh" \
+    --field-id "PVTF_lAHOAJefG84BQ6bhzg_Lx34" \
+    --number "$focusOrder"
 ```
 
 ### Event 1: Issue Created (PM Orchestrator responsibility)
 
 After creating a new issue, add it to the project and set Status, Phase, and Priority. **Do not set Start Date or Target Date** — dates are calculated and set only when work actually begins (Event 2).
 
-```powershell
-# Step 1: Get the issue node ID
-$nodeId = gh api "repos/markheydon/solo-dev-board/issues/$issueNumber" --jq '.node_id'
+```bash
+# Step 1: Add the issue to the project.
+issue_url="https://github.com/markheydon/solo-dev-board/issues/$issueNumber"
+gh project item-add 8 --owner markheydon --url "$issue_url" >/dev/null
 
-# Step 2: Add issue to project — capture the returned project item ID
-$itemId = gh api graphql --field query="mutation { addProjectV2ItemById(input: { projectId: `"PVT_kwHOAJefG84BQ6bh`" contentId: `"$nodeId`" }) { item { id } } }" --jq '.data.addProjectV2ItemById.item.id'
+# Step 2: Find the new project item ID.
+item_id=$(gh project item-list 8 --owner markheydon --format json --jq ".items[] | select(.content.number == $issueNumber) | .id" | head -n1)
 
-# Step 3: Set Status → Todo
-gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { projectId: `"PVT_kwHOAJefG84BQ6bh`" itemId: `"$itemId`" fieldId: `"PVTSSF_lAHOAJefG84BQ6bhzg-5WGY`" value: { singleSelectOptionId: `"f75ad846`" } }) { projectV2Item { id } } }" | Out-Null
+# Step 3: Set Status → Todo.
+gh project item-edit \
+    --id "$item_id" \
+    --project-id "PVT_kwHOAJefG84BQ6bh" \
+    --field-id "PVTSSF_lAHOAJefG84BQ6bhzg-5WGY" \
+    --single-select-option-id "f75ad846"
 
-# Step 4: Set Phase (replace $phaseOptionId with value from Phase Options table above)
-gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { projectId: `"PVT_kwHOAJefG84BQ6bh`" itemId: `"$itemId`" fieldId: `"PVTSSF_lAHOAJefG84BQ6bhzg-5WLw`" value: { singleSelectOptionId: `"$phaseOptionId`" } }) { projectV2Item { id } } }" | Out-Null
+# Step 4: Set Phase. Replace "$phase_option_id" with the value from the Phase Options table above.
+gh project item-edit \
+    --id "$item_id" \
+    --project-id "PVT_kwHOAJefG84BQ6bh" \
+    --field-id "PVTSSF_lAHOAJefG84BQ6bhzg-5WLw" \
+    --single-select-option-id "$phase_option_id"
 
-# Step 5: Set Priority (replace $priorityOptionId with value from Priority Options table above)
-gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { projectId: `"PVT_kwHOAJefG84BQ6bh`" itemId: `"$itemId`" fieldId: `"PVTSSF_lAHOAJefG84BQ6bhzg-5WMc`" value: { singleSelectOptionId: `"$priorityOptionId`" } }) { projectV2Item { id } } }" | Out-Null
+# Step 5: Set Priority. Replace "$priority_option_id" with the value from the Priority Options table above.
+gh project item-edit \
+    --id "$item_id" \
+    --project-id "PVT_kwHOAJefG84BQ6bh" \
+    --field-id "PVTSSF_lAHOAJefG84BQ6bhzg-5WMc" \
+    --single-select-option-id "$priority_option_id"
 
-# Step 6: Assign the issue to markheydon
-gh issue edit $issueNumber --repo markheydon/solo-dev-board --add-assignee markheydon
+# Step 6: Assign the issue to markheydon.
+gh issue edit "$issueNumber" --repo markheydon/solo-dev-board --add-assignee markheydon
 
 # NOTE: Start Date and Target Date are intentionally left blank at this stage.
 # They are set when work begins (Event 2), calculated from the actual start date
@@ -187,26 +216,44 @@ gh issue edit $issueNumber --repo markheydon/solo-dev-board --add-assignee markh
 
 When beginning work on an issue, set Status to "In Progress", set Start Date to today, and set Target Date using the size calibration table above. This transition can start from **Todo** or **Up Next**.
 
-```powershell
-# Step 1: Find the project item ID for the issue
-$itemId = gh api graphql --field query='query { repository(owner: "markheydon", name: "solo-dev-board") { issue(number: '"$issueNumber"') { projectItems(first: 10) { nodes { id project { number } } } } } }' --jq '.data.repository.issue.projectItems.nodes[] | select(.project.number == 8) | .id'
+```bash
+# Step 1: Find the project item ID for the issue.
+item_id=$(gh project item-list 8 --owner markheydon --format json --jq ".items[] | select(.content.number == $issueNumber) | .id" | head -n1)
 
-# Step 2: Update Status → In Progress
-gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { projectId: `"PVT_kwHOAJefG84BQ6bh`" itemId: `"$itemId`" fieldId: `"PVTSSF_lAHOAJefG84BQ6bhzg-5WGY`" value: { singleSelectOptionId: `"47fc9ee4`" } }) { projectV2Item { id } } }" | Out-Null
+# Step 2: Update Status → In Progress.
+gh project item-edit \
+    --id "$item_id" \
+    --project-id "PVT_kwHOAJefG84BQ6bh" \
+    --field-id "PVTSSF_lAHOAJefG84BQ6bhzg-5WGY" \
+    --single-select-option-id "47fc9ee4"
 
 # Optional: Clear Focus Order once work starts so the queue only shows unstarted items.
-gh project item-edit --id "$itemId" --project-id "PVT_kwHOAJefG84BQ6bh" --field-id "PVTF_lAHOAJefG84BQ6bhzg_Lx34" --clear
+gh project item-edit --id "$item_id" --project-id "PVT_kwHOAJefG84BQ6bh" --field-id "PVTF_lAHOAJefG84BQ6bhzg_Lx34" --clear
 
-# Step 3: Set Start Date = today
-$today = (Get-Date -Format 'yyyy-MM-dd')
-gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { projectId: `"PVT_kwHOAJefG84BQ6bh`" itemId: `"$itemId`" fieldId: `"PVTF_lAHOAJefG84BQ6bhzg-5WQE`" value: { date: `"$today`" } }) { projectV2Item { id } } }" | Out-Null
+# Step 3: Set Start Date = today.
+today=$(date +%F)
+gh project item-edit \
+    --id "$item_id" \
+    --project-id "PVT_kwHOAJefG84BQ6bh" \
+    --field-id "PVTF_lAHOAJefG84BQ6bhzg-5WQE" \
+    --date "$today"
 
-# Step 4: Set Target Date = today + calendar days from size calibration table
-#   xs → +1 day, s → +1 day, m → +3 days, l → +7 days, xl → +14 days
-$sizeLabel = gh api "repos/markheydon/solo-dev-board/issues/$issueNumber" --jq '[.labels[].name | select(startswith("size/"))] | first'
-$calendarDays = switch ($sizeLabel) { "size/xs" { 1 } "size/s" { 1 } "size/m" { 3 } "size/l" { 7 } "size/xl" { 14 } default { 3 } }
-$targetDate = (Get-Date).AddDays($calendarDays).ToString('yyyy-MM-dd')
-gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { projectId: `"PVT_kwHOAJefG84BQ6bh`" itemId: `"$itemId`" fieldId: `"PVTF_lAHOAJefG84BQ6bhzg-5WQw`" value: { date: `"$targetDate`" } }) { projectV2Item { id } } }" | Out-Null
+# Step 4: Set Target Date = today + calendar days from size calibration table.
+#   xs → +1 day, s → +1 day, m → +3 days, l → +7 days, xl → +14 days.
+size_label=$(gh api "repos/markheydon/solo-dev-board/issues/$issueNumber" --jq '[.labels[].name | select(startswith("size/"))] | first')
+case "$size_label" in
+    "size/xs"|"size/s") calendar_days=1 ;;
+    "size/m") calendar_days=3 ;;
+    "size/l") calendar_days=7 ;;
+    "size/xl") calendar_days=14 ;;
+    *) calendar_days=3 ;;
+esac
+target_date=$(date -d "+$calendar_days day" +%F)
+gh project item-edit \
+    --id "$item_id" \
+    --project-id "PVT_kwHOAJefG84BQ6bh" \
+    --field-id "PVTF_lAHOAJefG84BQ6bhzg-5WQw" \
+    --date "$target_date"
 ```
 
 Also update the issue label:
@@ -227,20 +274,19 @@ When starting work on a Story, Enabler, or Test, check whether the parent Featur
 
 This is a **one-time transition** — once a parent is "In Progress" it remains so until all children are done and it is closed. This rule exists because Features and Epics have no direct implementation start — they transition when the **first child issue** begins work.
 
-```powershell
-# For each parent issue number ($parentIssueNumber = Feature or Epic issue number):
+```bash
+# For each parent issue number ($parent_issue_number = Feature or Epic issue number):
 
-# Step 1: Check current project status — only proceed if still "Todo"
-$parentItemId = gh api graphql --field query='query { repository(owner: "markheydon", name: "solo-dev-board") { issue(number: '$parentIssueNumber') { projectItems(first: 10) { nodes { id status: fieldValueByName(name: "Status") { ... on ProjectV2ItemFieldSingleSelectValue { name } } project { number } } } } } }' --jq '.data.repository.issue.projectItems.nodes[] | select(.project.number == 8) | select(.status.name == "Todo") | .id'
+# Step 1: Find the parent project item ID if the parent is still in Todo.
+parent_item_id=$(gh project item-list 8 --owner markheydon --format json --jq ".items[] | select(.content.number == $parent_issue_number and .status == \"Todo\") | .id" | head -n1)
 
-# Step 2: If $parentItemId is non-empty, update Status → In Progress and Start Date → today
-if ($parentItemId) {
-    $actualStartDate = (Get-Date -Format 'yyyy-MM-dd')
-    gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { projectId: `"PVT_kwHOAJefG84BQ6bh`" itemId: `"$parentItemId`" fieldId: `"PVTSSF_lAHOAJefG84BQ6bhzg-5WGY`" value: { singleSelectOptionId: `"47fc9ee4`" } }) { projectV2Item { id } } }" | Out-Null
-    gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { projectId: `"PVT_kwHOAJefG84BQ6bh`" itemId: `"$parentItemId`" fieldId: `"PVTF_lAHOAJefG84BQ6bhzg-5WQE`" value: { date: `"$actualStartDate`" } }) { projectV2Item { id } } }" | Out-Null
-    # Also update the issue label
-    gh issue edit $parentIssueNumber --repo markheydon/solo-dev-board --remove-label "status/todo" --add-label "status/in-progress"
-}
+# Step 2: If the parent is still Todo, update Status → In Progress and Start Date → today.
+if [ -n "$parent_item_id" ]; then
+	actual_start_date=$(date +%F)
+	gh project item-edit --id "$parent_item_id" --project-id "PVT_kwHOAJefG84BQ6bh" --field-id "PVTSSF_lAHOAJefG84BQ6bhzg-5WGY" --single-select-option-id "47fc9ee4"
+	gh project item-edit --id "$parent_item_id" --project-id "PVT_kwHOAJefG84BQ6bh" --field-id "PVTF_lAHOAJefG84BQ6bhzg-5WQE" --date "$actual_start_date"
+	gh issue edit "$parent_issue_number" --repo markheydon/solo-dev-board --remove-label "status/todo" --add-label "status/in-progress"
+fi
 ```
 
 **Apply this for both the immediate parent Feature and the grandparent Epic.** In practice for SoloDevBoard, the hierarchy is always Epic → Feature → Story/Enabler/Test, so at most two cascade checks are needed per delivery start.
@@ -251,16 +297,24 @@ if ($parentItemId) {
 
 When a PR is merged and the issue is closed, update Status to "Done" and **overwrite Target Date with today's actual completion date**. This replaces the planned estimate set at Event 1, giving a true record of when the work finished.
 
-```powershell
-# Step 1: Find the project item ID for the issue
-$itemId = gh api graphql --field query='query { repository(owner: "markheydon", name: "solo-dev-board") { issue(number: '"$issueNumber"') { projectItems(first: 10) { nodes { id project { number } } } } } }' --jq '.data.repository.issue.projectItems.nodes[] | select(.project.number == 8) | .id'
+```bash
+# Step 1: Find the project item ID for the issue.
+item_id=$(gh project item-list 8 --owner markheydon --format json --jq ".items[] | select(.content.number == $issueNumber) | .id" | head -n1)
 
-# Step 2: Update Status → Done
-gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { projectId: `"PVT_kwHOAJefG84BQ6bh`" itemId: `"$itemId`" fieldId: `"PVTSSF_lAHOAJefG84BQ6bhzg-5WGY`" value: { singleSelectOptionId: `"98236657`" } }) { projectV2Item { id } } }" | Out-Null
+# Step 2: Update Status → Done.
+gh project item-edit \
+    --id "$item_id" \
+    --project-id "PVT_kwHOAJefG84BQ6bh" \
+    --field-id "PVTSSF_lAHOAJefG84BQ6bhzg-5WGY" \
+    --single-select-option-id "98236657"
 
-# Step 3: Overwrite Target Date with today's actual completion date
-$actualEndDate = (Get-Date -Format 'yyyy-MM-dd')
-gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { projectId: `"PVT_kwHOAJefG84BQ6bh`" itemId: `"$itemId`" fieldId: `"PVTF_lAHOAJefG84BQ6bhzg-5WQw`" value: { date: `"$actualEndDate`" } }) { projectV2Item { id } } }" | Out-Null
+# Step 3: Overwrite Target Date with today's actual completion date.
+actual_end_date=$(date +%F)
+gh project item-edit \
+    --id "$item_id" \
+    --project-id "PVT_kwHOAJefG84BQ6bh" \
+    --field-id "PVTF_lAHOAJefG84BQ6bhzg-5WQw" \
+    --date "$actual_end_date"
 ```
 
 ---
@@ -271,20 +325,20 @@ After closing a Story, Enabler, or Test via Event 3, check whether **all sibling
 
 **How to check:** In the GitHub UI, open the parent Feature issue and inspect the Sub-issues widget — if all sub-issues are marked closed, the cascade applies. Repeat for the Epic.
 
-```powershell
-# For the parent Feature ($featureIssueNumber) — run after each child closure:
-$featureItemId = gh api graphql --field query='query { repository(owner: "markheydon", name: "solo-dev-board") { issue(number: '$featureIssueNumber') { projectItems(first: 10) { nodes { id project { number } } } } } }' --jq '.data.repository.issue.projectItems.nodes[] | select(.project.number == 8) | .id'
+```bash
+# For the parent Feature ($feature_issue_number) — run after each child closure.
+feature_item_id=$(gh project item-list 8 --owner markheydon --format json --jq ".items[] | select(.content.number == $feature_issue_number) | .id" | head -n1)
 
-# Close the Feature issue (only if ALL children are closed):
-gh issue edit $featureIssueNumber --repo markheydon/solo-dev-board --remove-label "status/in-progress" --add-label "status/done"
-gh issue close $featureIssueNumber --repo markheydon/solo-dev-board --comment "All child issues are complete. Closing Feature as done."
+# Close the Feature issue only if all children are closed.
+gh issue edit "$feature_issue_number" --repo markheydon/solo-dev-board --remove-label "status/in-progress" --add-label "status/done"
+gh issue close "$feature_issue_number" --repo markheydon/solo-dev-board --comment "All child issues are complete. Closing Feature as done."
 
-# Update project board — Status → Done and Target Date → today
-gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { projectId: `"PVT_kwHOAJefG84BQ6bh`" itemId: `"$featureItemId`" fieldId: `"PVTSSF_lAHOAJefG84BQ6bhzg-5WGY`" value: { singleSelectOptionId: `"98236657`" } }) { projectV2Item { id } } }" | Out-Null
-$actualEndDate = (Get-Date -Format 'yyyy-MM-dd')
-gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { projectId: `"PVT_kwHOAJefG84BQ6bh`" itemId: `"$featureItemId`" fieldId: `"PVTF_lAHOAJefG84BQ6bhzg-5WQw`" value: { date: `"$actualEndDate`" } }) { projectV2Item { id } } }" | Out-Null
+# Update project board — Status → Done and Target Date → today.
+gh project item-edit --id "$feature_item_id" --project-id "PVT_kwHOAJefG84BQ6bh" --field-id "PVTSSF_lAHOAJefG84BQ6bhzg-5WGY" --single-select-option-id "98236657"
+actual_end_date=$(date +%F)
+gh project item-edit --id "$feature_item_id" --project-id "PVT_kwHOAJefG84BQ6bh" --field-id "PVTF_lAHOAJefG84BQ6bhzg-5WQw" --date "$actual_end_date"
 
-# Repeat identically for the parent Epic ($epicIssueNumber) if all its Features are now closed.
+# Repeat identically for the parent Epic ($epic_issue_number) if all its Features are now closed.
 ```
 
 ---
@@ -293,14 +347,14 @@ gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { 
 
 List all items and their current state:
 
-```powershell
-gh project item-list 8 --owner markheydon --format json | ConvertFrom-Json | Select-Object -ExpandProperty items | Select-Object id, title | Format-Table -AutoSize
+```bash
+gh project item-list 8 --owner markheydon --format json --jq '.items[] | {id, title: .title, number: .content.number, status}'
 ```
 
 View the roadmap in the browser:
 
-```powershell
-Start-Process "https://github.com/users/markheydon/projects/8"
+```bash
+gh project view 8 --owner markheydon --web
 ```
 
 ---
@@ -323,6 +377,8 @@ Map `priority/` labels to project Priority option IDs:
 - **Always** add new issues to the project board immediately after creation — never leave issues untracked.
 - Use **Up Next** only when the user explicitly wants a visible short-horizon execution queue.
 - Use **Focus Order** only on Story Board items in **Up Next**.
+- In WSL or Linux terminals, prefer the bash patterns in this file over PowerShell syntax.
+- If a project update can be expressed with `gh project item-edit`, do that before reaching for raw GraphQL.
 - **Never** set Status to "Done" before the PR is merged to `main`.
 - The **Linked pull requests** field updates automatically when a PR is created referencing the issue — no manual action needed.
 - The **Milestone** and **Labels** fields sync automatically from the issue — no manual action needed.

@@ -34,10 +34,11 @@ This repository uses SDK-style projects:
 - Naming convention: `MethodUnderTest_Scenario_ExpectedOutcome`.
 - Structure tests using Arrange / Act / Assert with blank lines between sections.
 
-## Environment Considerations (Windows environment)
-- Use Windows-style paths with backslashes (e.g., `C:\path\to\file.cs`)
-- Use Windows-appropriate commands when suggesting terminal operations
-- Consider Windows-specific behaviour when working with file system operations
+## Environment Considerations
+- Respect the current execution environment rather than assuming Windows.
+- When running in WSL or Linux terminals, use POSIX paths and bash-safe commands.
+- When running in Windows PowerShell, use Windows paths and PowerShell-native command syntax.
+- If VS Code is attached to WSL, treat the shell environment as Linux even when the host machine is Windows.
 
 ## Common .NET 10 Pitfalls and Best Practices
 

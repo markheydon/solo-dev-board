@@ -7,6 +7,19 @@ description: 'GitHub CLI guidance for SoloDevBoard issue triage, label managemen
 
 Use this skill when the user asks for command-line GitHub operations. Prioritise issue and project-management workflows used by SoloDevBoard.
 
+## Tool Selection
+
+- Prefer GitHub MCP tools for issue search, pull requests, labels, and notifications when those tools cover the requested operation.
+- Prefer `gh` for GitHub Projects v2 item operations, field edits, and ad-hoc project inspection because those workflows are not fully covered by MCP in this repository.
+- Do not fall back to `gh` after an MCP failure unless the missing capability or limitation is clear.
+- Before mutating project items, confirm authentication state with `gh auth status` and ensure the token includes the `project` scope.
+
+## Shell Selection
+
+- Default to bash examples for this repository when the current shell is WSL or Linux.
+- Do not use PowerShell backtick escaping or `Get-Date` syntax in WSL bash sessions.
+- Use cross-platform commands where possible. For example, prefer `gh project view 8 --owner markheydon --web` over shell-specific browser launch commands.
+
 ## Scope
 
 - Issue creation, updates, and triage
@@ -73,17 +86,34 @@ gh project item-list 8 --owner markheydon --format json
 gh project item-add 8 --owner markheydon --url https://github.com/markheydon/solo-dev-board/issues/123
 
 # View the roadmap board in the browser
-Start-Process "https://github.com/users/markheydon/projects/8"
+gh project view 8 --owner markheydon --web
 
-# NOTE: Updating project field values (Phase, Priority, Status, dates) requires GraphQL mutations.
-# See `.github/skills/github-project/SKILL.md` for complete command patterns and all field/option IDs.
+# Set a single-select project field on an existing item
+gh project item-edit \
+	--id "$item_id" \
+	--project-id "PVT_kwHOAJefG84BQ6bh" \
+	--field-id "PVTSSF_lAHOAJefG84BQ6bhzg-5WGY" \
+	--single-select-option-id "df9275ed"
+
+# Set a number field on an existing item
+gh project item-edit \
+	--id "$item_id" \
+	--project-id "PVT_kwHOAJefG84BQ6bh" \
+	--field-id "PVTF_lAHOAJefG84BQ6bhzg_Lx34" \
+	--number 1
+
+# NOTE: Prefer `gh project item-edit` for project field updates.
+# Use raw GraphQL only when `gh project` does not expose the required operation.
+# See `.github/skills/github-project/SKILL.md` for the SoloDevBoard-specific field IDs and queue workflow.
 ```
 
 ### Safety Rules
 
 - Use `--repo owner/repo` for multi-repository operations to avoid acting on the wrong repository.
 - Prefer `gh issue edit`/`gh pr edit` over ad-hoc API mutations for common updates.
+- Prefer `gh project item-edit` over raw `gh api graphql` mutations for project field updates.
 - For bulk operations, list and review targets first before piping into mutation commands.
 - Confirm authentication state with `gh auth status` before mutating operations.
+- In WSL or Linux, keep jq filters in single quotes and avoid PowerShell-specific quoting patterns.
 
 Refer to the [GitHub CLI documentation](https://cli.github.com/manual/) for command details.
