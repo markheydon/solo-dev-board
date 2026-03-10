@@ -13,6 +13,8 @@ nav_order: 4
 
 The Board Rules Visualiser displays the automation rules configured on your GitHub project boards as an interactive diagram. It makes it easy to understand how issues and pull requests flow between columns, which labels trigger transitions, and where bottlenecks may occur.
 
+For SoloDevBoard itself, the canonical project board now includes an **Up Next** planning state for the next short-horizon batch of stories, enablers, and tests, plus a **Focus Order** field that sequences that batch on the Story Board.
+
 Key goals of the Board Rules Visualiser:
 - Make project board automation rules visible and understandable at a glance.
 - Help diagnose automation issues where items are not flowing as expected.

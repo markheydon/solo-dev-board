@@ -12,7 +12,7 @@ agent: PM Orchestrator
 
 ## Purpose
 
-Get a concise status update and clear recommendation for what to work on next. This prompt reads your planning artefacts, checks active GitHub issues, and identifies any blockers or scope drift.
+Get a concise status update and clear recommendation for what to work on next. This prompt reads your planning artefacts, checks active GitHub issues, and identifies any blockers or scope drift. It may also identify the next batch of stories, enablers, or tests that should be placed in the board's **Up Next** queue, but it does not change the board unless the user explicitly asks for that follow-up step.
 
 ---
 
@@ -92,13 +92,21 @@ Total: 23 items | Phase 1 progress: 40% (4/10 complete)
 2. Then: Plan next high-priority item "One-Click Migration UI" (use plan-next-issue prompt)
 ```
 
+### Optional Up Next Queue
+```
+🧭 Up Next Queue (optional follow-up, no board change unless requested):
+1. Issue #38 — Focus Order 1
+2. Issue #34 — Focus Order 2
+3. Issue #32 — Focus Order 3
+```
+
 ---
 
 ## Agents/Skills Invoked
 
 - **Direct file reads:** `plan/BACKLOG.md`, `plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md`
 - **GitHub queries:** Active issues, open PRs (via `github-issues` skill if available)
-- **No modifications:** This is a read-only status check
+- **No modifications by default:** This is a read-only status check unless the user explicitly asks the agent to populate **Up Next** after reviewing the recommendation.
 
 ---
 
@@ -107,6 +115,7 @@ Total: 23 items | Phase 1 progress: 40% (4/10 complete)
 Based on the recommended action, use:
 - **If work in review:** Run `review-and-close.prompt.md` to finish pending PRs
 - **If backlog ready:** Run `plan-next-issue.prompt.md` to select and plan next item
+- **If you want a visible daily queue:** Ask the agent to move the recommended stories, enablers, or tests into **Up Next** and set **Focus Order**.
 - **If blockers present:** Resolve blockers manually, then re-run `daily-start.prompt.md`
 
 ---

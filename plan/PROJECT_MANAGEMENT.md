@@ -41,6 +41,8 @@ Created → [status/todo] → [status/in-progress] → [status/in-review] → [s
                                                PR opened (linked)
 ```
 
+The issue lifecycle labels remain the source of truth for GitHub Issues. The project board may show an additional planning state, **Up Next**, but that state is board-only and does not have a matching GitHub issue label.
+
 ### Linking Issues to PRs
 
 Reference the issue in your PR description using `Closes #<issue-number>` so GitHub automatically closes the issue when the PR is merged.
@@ -81,6 +83,15 @@ Milestones map to implementation phases and releases:
 
 SoloDevBoard uses a single **GitHub Projects (v2)** board called "SoloDevBoard". See [PROJECT_BOARD_DESIGN.md](PROJECT_BOARD_DESIGN.md) for the column structure and automation rules.
 
+### Project-Only Execution Queue
+
+- **Up Next** is a project board status used to queue the next short-horizon batch of stories, enablers, and tests.
+- **Up Next** is not a GitHub issue label and must not be added to the issue taxonomy in [LABEL_STRATEGY.md](LABEL_STRATEGY.md).
+- **Focus Order** is a project number field used to order the current **Up Next** batch on the Story Board.
+- Apply **Focus Order** only to stories, enablers, and tests that are currently in **Up Next**.
+- Leave **Focus Order** blank for Features, Epics, and all non-queued items.
+- New issues still enter the board in **Todo** unless there is an explicit instruction to build an **Up Next** queue.
+
 ---
 
 ## Keeping Issues in Sync with BACKLOG.md
@@ -100,6 +111,7 @@ When using Copilot Chat to manage issues:
 - **"Create an issue for [task]"** → Copilot should draft the issue body using the appropriate template fields, suggest labels from `LABEL_STRATEGY.md`, and suggest the appropriate milestone.
 - **"What issues are open in Phase 2?"** → Copilot should list items from `BACKLOG.md` in the Phase 2 section that are not yet ticked off.
 - **"Update the backlog for the Triage UI"** → Copilot should update `BACKLOG.md` and suggest creating corresponding GitHub Issues.
+- **"Populate Up Next for today"** → Copilot should move the selected stories, enablers, or tests to the board-only **Up Next** state and assign **Focus Order** values in the recommended sequence.
 
 ---
 

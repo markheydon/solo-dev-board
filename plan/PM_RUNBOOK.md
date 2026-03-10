@@ -35,8 +35,11 @@ Run the daily start workflow
 - Shows backlog health (priority breakdown, ready items)
 - Flags blockers (dependencies, stale work)
 - Recommends your next action
+- Identifies the next story-level batch that can be placed in **Up Next** if you request board updates.
 
 **What you produce:** Decision on what to work on today.
+
+**Queue rule:** Daily start is read-only by default. If you want the recommendation reflected on the board, explicitly ask Copilot to move the chosen stories, enablers, or tests into **Up Next** and set **Focus Order**.
 
 **Example output:**
 ```
@@ -46,6 +49,26 @@ Run the daily start workflow
 ```
 
 **Next action:** Follow the recommendation (see below for execution patterns).
+
+#### Step 2: Populate Up Next Queue (optional, 1-2 minutes)
+
+**Goal:** Turn the recommendation into a visible execution queue on the Story Board.
+
+**Run:**
+```
+Populate Up Next for today
+```
+
+**What it does:**
+- Moves the selected stories, enablers, or tests from **Todo** to **Up Next** on the GitHub Project board.
+- Sets the **Focus Order** number field so the Story Board reflects the recommended execution sequence.
+- Leaves Features and Epics unchanged.
+
+**Operating rules:**
+- Use **Up Next** only for the short-horizon batch you intend to work through next.
+- Use **Focus Order** only on stories, enablers, and tests in that batch.
+- Leave **Focus Order** blank on all other items.
+- Keep Story Board sorted by **Focus Order** ascending; do not sort Feature Board or Epic Board by **Focus Order**.
 
 ---
 
@@ -105,6 +128,10 @@ Implement issue #[number]
 - Updates user-facing docs in `docs/user-guide/` if needed
 - Creates ADR in `adr/` if architectural decision made
 - Ensures UK English throughout
+
+**Board expectation before coding starts:**
+- The issue may already be in **Up Next** if it was selected during the morning ritual.
+- Starting work moves the issue from **Up Next** or **Todo** into **In Progress**.
 
 **What you produce:**
 - Source code in `src/` (compiles, follows conventions)
@@ -197,6 +224,7 @@ Run the daily start workflow
 - Any PRs still awaiting your approval? (Approve/merge before end of day if possible)
 - Any work still `status/in-progress`? (Leave note on what's next)
 - Any new blockers? (Document in issue comments)
+- Any stale **Up Next** items? (Either keep them queued for tomorrow or clear their **Focus Order** if they no longer belong in the active batch.)
 
 #### Step 2: Update Planning Artefacts (if needed)
 - **Scope changed?** Update `plan/SCOPE.md`

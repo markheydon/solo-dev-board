@@ -1,6 +1,6 @@
 ---
 name: github-project
-description: 'Manage the SoloDevBoard Roadmap GitHub Project (Project #8). Add issues to the board, set Phase/Priority/Status/Date fields, and keep the project in sync with the issue lifecycle. Use this skill whenever creating or updating GitHub issues for SoloDevBoard.'
+description: 'Manage the SoloDevBoard Roadmap GitHub Project (Project #8). Add issues to the board, set Phase/Priority/Status/Date fields, manage the Up Next queue, and keep the project in sync with the issue lifecycle. Use this skill whenever creating or updating GitHub issues for SoloDevBoard.'
 ---
 
 # GitHub Project Board — SoloDevBoard Roadmap
@@ -36,6 +36,7 @@ Centralised reference and command patterns for maintaining the **SoloDevBoard Ro
 | Priority | `PVTSSF_lAHOAJefG84BQ6bhzg-5WMc` | Single select |
 | Start Date | `PVTF_lAHOAJefG84BQ6bhzg-5WQE` | Date |
 | Target Date | `PVTF_lAHOAJefG84BQ6bhzg-5WQw` | Date |
+| Focus Order | `PVTF_lAHOAJefG84BQ6bhzg_Lx34` | Number |
 
 ---
 
@@ -46,6 +47,7 @@ Centralised reference and command patterns for maintaining the **SoloDevBoard Ro
 | Option | ID |
 |--------|----|
 | Todo | `f75ad846` |
+| Up Next | `df9275ed` |
 | In Progress | `47fc9ee4` |
 | Done | `98236657` |
 
@@ -127,7 +129,29 @@ Skip any sibling already "In Progress" or "Done" — do not alter its dates. If 
 
 ---
 
-## Lifecycle Events
+## Queue and Lifecycle Events
+
+### Execution Queue Rules
+
+- **Up Next** is a project-only planning state for the next short-horizon batch of stories, enablers, and tests.
+- **Up Next** is not a GitHub issue label and must not be added to issues.
+- **Focus Order** is used only on Story Board items that are currently in **Up Next**.
+- Leave **Focus Order** blank for Features, Epics, and all non-queued items.
+
+### Event 1a: Daily Queue Populated (PM Orchestrator responsibility, optional)
+
+After the daily-start workflow recommends a short execution batch and the user explicitly asks for board updates, move the selected stories, enablers, or tests to **Up Next** and assign sequential **Focus Order** values.
+
+```powershell
+# Step 1: Find the project item ID for the issue.
+$itemId = gh api graphql --field query='query { repository(owner: "markheydon", name: "solo-dev-board") { issue(number: '"$issueNumber"') { projectItems(first: 10) { nodes { id project { number } } } } } }' --jq '.data.repository.issue.projectItems.nodes[] | select(.project.number == 8) | .id'
+
+# Step 2: Set Status → Up Next.
+gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { projectId: `"PVT_kwHOAJefG84BQ6bh`" itemId: `"$itemId`" fieldId: `"PVTSSF_lAHOAJefG84BQ6bhzg-5WGY`" value: { singleSelectOptionId: `"df9275ed`" } }) { projectV2Item { id } } }" | Out-Null
+
+# Step 3: Set Focus Order to the execution sequence number.
+gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { projectId: `"PVT_kwHOAJefG84BQ6bh`" itemId: `"$itemId`" fieldId: `"PVTF_lAHOAJefG84BQ6bhzg_Lx34`" value: { number: $focusOrder } }) { projectV2Item { id } } }" | Out-Null
+```
 
 ### Event 1: Issue Created (PM Orchestrator responsibility)
 
@@ -161,7 +185,7 @@ gh issue edit $issueNumber --repo markheydon/solo-dev-board --add-assignee markh
 
 ### Event 2: Implementation Started (Delivery Agent responsibility)
 
-When beginning work on an issue, set Status to "In Progress", set Start Date to today, and set Target Date using the size calibration table above.
+When beginning work on an issue, set Status to "In Progress", set Start Date to today, and set Target Date using the size calibration table above. This transition can start from **Todo** or **Up Next**.
 
 ```powershell
 # Step 1: Find the project item ID for the issue
@@ -169,6 +193,9 @@ $itemId = gh api graphql --field query='query { repository(owner: "markheydon", 
 
 # Step 2: Update Status → In Progress
 gh api graphql --field query="mutation { updateProjectV2ItemFieldValue(input: { projectId: `"PVT_kwHOAJefG84BQ6bh`" itemId: `"$itemId`" fieldId: `"PVTSSF_lAHOAJefG84BQ6bhzg-5WGY`" value: { singleSelectOptionId: `"47fc9ee4`" } }) { projectV2Item { id } } }" | Out-Null
+
+# Optional: Clear Focus Order once work starts so the queue only shows unstarted items.
+gh project item-edit --id "$itemId" --project-id "PVT_kwHOAJefG84BQ6bh" --field-id "PVTF_lAHOAJefG84BQ6bhzg_Lx34" --clear
 
 # Step 3: Set Start Date = today
 $today = (Get-Date -Format 'yyyy-MM-dd')
@@ -294,6 +321,8 @@ Map `priority/` labels to project Priority option IDs:
 ## Important Notes
 
 - **Always** add new issues to the project board immediately after creation — never leave issues untracked.
+- Use **Up Next** only when the user explicitly wants a visible short-horizon execution queue.
+- Use **Focus Order** only on Story Board items in **Up Next**.
 - **Never** set Status to "Done" before the PR is merged to `main`.
 - The **Linked pull requests** field updates automatically when a PR is created referencing the issue — no manual action needed.
 - The **Milestone** and **Labels** fields sync automatically from the issue — no manual action needed.
