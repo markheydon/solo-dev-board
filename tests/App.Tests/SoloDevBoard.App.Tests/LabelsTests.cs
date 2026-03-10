@@ -402,6 +402,121 @@ public sealed class LabelsTests
             Times.Once);
     }
 
+    [Fact]
+    public async Task Labels_WhenTwoRepositoriesAreSelected_ShowsSynchronisationControls()
+    {
+        // Arrange
+        var repoA = CreateRepository("owner", "repo-a");
+        var repoB = CreateRepository("owner", "repo-b");
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([repoA, repoB]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
+        await SelectRepositoriesAsync(cut, repoA, repoB);
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Synchronise labels", cut.Markup);
+            Assert.Single(cut.FindAll("[data-testid='preview-sync-button']"));
+            Assert.Single(cut.FindAll("[data-testid='sync-target-list']"));
+        });
+    }
+
+    [Fact]
+    public async Task Labels_ApplySynchronisation_WithPartialFailure_ShowsSummary()
+    {
+        // Arrange
+        var repoA = CreateRepository("owner", "repo-a");
+        var repoB = CreateRepository("owner", "repo-b");
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([repoA, repoB]);
+
+        _labelManagerServiceMock
+            .Setup(service => service.PreviewLabelSynchronisationAsync("owner/repo-a", It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new LabelSyncRepositoryPreviewDto("owner/repo-b", [], [], [], []),
+            ]);
+
+        _labelManagerServiceMock
+            .Setup(service => service.ApplyLabelSynchronisationAsync("owner/repo-a", It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new LabelSyncRepositoryResultDto("owner/repo-b", 1, 2, 3, 4, "GitHub API failure"),
+            ]);
+
+        _labelManagerServiceMock
+            .Setup(service => service.GetLabelsForRepositoriesAsync("owner", It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<LabelDto>());
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
+        await SelectRepositoriesAsync(cut, repoA, repoB);
+        cut.Find("[data-testid='preview-sync-button']").Click();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='confirm-sync-button']"));
+        cut.Find("[data-testid='confirm-sync-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Synchronisation summary", cut.Markup);
+            Assert.Contains("GitHub API failure", cut.Markup);
+            Assert.Contains("repository failures", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task Labels_PreviewSynchronisation_WithSourceAndTargets_ShowsPreviewCard()
+    {
+        // Arrange
+        var repoA = CreateRepository("owner", "repo-a");
+        var repoB = CreateRepository("owner", "repo-b");
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([repoA, repoB]);
+
+        _labelManagerServiceMock
+            .Setup(service => service.PreviewLabelSynchronisationAsync("owner/repo-a", It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new LabelSyncRepositoryPreviewDto(
+                    "owner/repo-b",
+                    [new LabelDto("priority/high", "d93f0b", "High", "owner/repo-b")],
+                    [],
+                    [],
+                    [new LabelDto("type/story", "1d76db", "Story", "owner/repo-b")]),
+            ]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
+        await SelectRepositoriesAsync(cut, repoA, repoB);
+
+        cut.Find("[data-testid='preview-sync-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Synchronisation preview", cut.Markup);
+            Assert.Contains("owner/repo-b", cut.Markup);
+            Assert.Contains("Labels to create", cut.Markup);
+            Assert.Contains("Labels to skip", cut.Markup);
+            Assert.Contains("Confirm synchronisation", cut.Markup);
+        });
+    }
+
     private BunitContext CreateContext()
     {
         var ctx = new BunitContext();

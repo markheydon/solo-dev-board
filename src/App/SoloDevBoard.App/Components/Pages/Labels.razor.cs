@@ -48,6 +48,15 @@ public partial class Labels : ComponentBase
     private bool isApplyingRecommendedTaxonomy;
     private string? taxonomyOperationMessage;
     private Severity taxonomyOperationSeverity = Severity.Info;
+    private string syncSourceRepositoryFullName = string.Empty;
+    private HashSet<string> syncTargetRepositoryFullNames = new(StringComparer.OrdinalIgnoreCase);
+    private IReadOnlyList<LabelSyncRepositoryPreviewDto> syncPreviewResults = [];
+    private IReadOnlyList<LabelSyncRepositoryResultDto> syncApplyResults = [];
+    private bool showSyncPreview;
+    private bool isPreviewingSync;
+    private bool isApplyingSync;
+    private string? syncOperationMessage;
+    private Severity syncOperationSeverity = Severity.Info;
 
     protected override async Task OnInitializedAsync()
     {
@@ -114,6 +123,7 @@ public partial class Labels : ComponentBase
             recommendedApplyResults = [];
             showRecommendedPreview = false;
             taxonomyOperationMessage = null;
+            ResetSyncWorkflow();
         }
         catch (HttpRequestException ex)
         {
@@ -152,6 +162,7 @@ public partial class Labels : ComponentBase
         showRecommendedPreview = false;
         recommendedApplyResults = [];
         taxonomyOperationMessage = null;
+        EnsureSyncSelections();
         return Task.CompletedTask;
     }
 
@@ -185,6 +196,41 @@ public partial class Labels : ComponentBase
         showRecommendedPreview = false;
         recommendedApplyResults = [];
         taxonomyOperationMessage = null;
+        EnsureSyncSelections();
+    }
+
+    private Task OnSyncSourceRepositoryChangedAsync(string value)
+    {
+        syncSourceRepositoryFullName = value ?? string.Empty;
+        syncTargetRepositoryFullNames.Remove(syncSourceRepositoryFullName);
+        syncPreviewResults = [];
+        showSyncPreview = false;
+        syncApplyResults = [];
+        syncOperationMessage = null;
+        return Task.CompletedTask;
+    }
+
+    private Task OnSyncTargetRepositoryChangedAsync(string repositoryFullName, bool isSelected)
+    {
+        if (string.IsNullOrWhiteSpace(repositoryFullName) || repositoryFullName.Equals(syncSourceRepositoryFullName, StringComparison.OrdinalIgnoreCase))
+        {
+            return Task.CompletedTask;
+        }
+
+        if (isSelected)
+        {
+            _ = syncTargetRepositoryFullNames.Add(repositoryFullName);
+        }
+        else
+        {
+            _ = syncTargetRepositoryFullNames.Remove(repositoryFullName);
+        }
+
+        syncPreviewResults = [];
+        showSyncPreview = false;
+        syncApplyResults = [];
+        syncOperationMessage = null;
+        return Task.CompletedTask;
     }
 
     private async Task PreviewRecommendedTaxonomyAsync()
@@ -363,6 +409,125 @@ public partial class Labels : ComponentBase
         finally
         {
             isLoadingLabels = false;
+        }
+    }
+
+    private async Task PreviewLabelSynchronisationAsync()
+    {
+        if (isPreviewingSync)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(syncSourceRepositoryFullName))
+        {
+            Snackbar.Add("Select a source repository before previewing label synchronisation.", Severity.Warning);
+            return;
+        }
+
+        var targets = syncTargetRepositoryFullNames
+            .Where(target => !target.Equals(syncSourceRepositoryFullName, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(target => target, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (targets.Length == 0)
+        {
+            Snackbar.Add("Select at least one target repository before previewing label synchronisation.", Severity.Warning);
+            return;
+        }
+
+        isPreviewingSync = true;
+        try
+        {
+            syncOperationMessage = null;
+            syncApplyResults = [];
+            syncPreviewResults = await LabelManagerService.PreviewLabelSynchronisationAsync(syncSourceRepositoryFullName, targets);
+            showSyncPreview = true;
+        }
+        catch (HttpRequestException ex)
+        {
+            Logger.LogError(ex, "GitHub API request failed while previewing synchronisation from {SourceRepository}.", syncSourceRepositoryFullName);
+            syncOperationSeverity = Severity.Error;
+            syncOperationMessage = $"GitHub API request failed while previewing synchronisation. {ex.Message}";
+            showSyncPreview = false;
+            syncPreviewResults = [];
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to preview synchronisation from {SourceRepository}.", syncSourceRepositoryFullName);
+            syncOperationSeverity = Severity.Error;
+            syncOperationMessage = "An unexpected error occurred while previewing synchronisation.";
+            showSyncPreview = false;
+            syncPreviewResults = [];
+        }
+        finally
+        {
+            isPreviewingSync = false;
+        }
+    }
+
+    private void CancelLabelSynchronisationPreview()
+    {
+        showSyncPreview = false;
+        syncPreviewResults = [];
+        syncOperationMessage = "Label synchronisation apply was cancelled.";
+        syncOperationSeverity = Severity.Info;
+    }
+
+    private async Task ApplyLabelSynchronisationAsync()
+    {
+        if (string.IsNullOrWhiteSpace(syncSourceRepositoryFullName))
+        {
+            Snackbar.Add("Select a source repository before applying label synchronisation.", Severity.Warning);
+            return;
+        }
+
+        var targets = syncTargetRepositoryFullNames
+            .Where(target => !target.Equals(syncSourceRepositoryFullName, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(target => target, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (targets.Length == 0)
+        {
+            Snackbar.Add("Select at least one target repository before applying label synchronisation.", Severity.Warning);
+            return;
+        }
+
+        isApplyingSync = true;
+        try
+        {
+            syncApplyResults = await LabelManagerService.ApplyLabelSynchronisationAsync(syncSourceRepositoryFullName, targets);
+            showSyncPreview = false;
+            syncPreviewResults = [];
+
+            var failedCount = syncApplyResults.Count(result => result.HasError);
+            var createdCount = syncApplyResults.Sum(result => result.CreatedCount);
+            var updatedCount = syncApplyResults.Sum(result => result.UpdatedCount);
+            var deletedCount = syncApplyResults.Sum(result => result.DeletedCount);
+            var skippedCount = syncApplyResults.Sum(result => result.SkippedCount);
+
+            if (failedCount == 0)
+            {
+                syncOperationSeverity = Severity.Success;
+                syncOperationMessage = $"Synchronisation completed. Created {createdCount}, updated {updatedCount}, deleted {deletedCount}, skipped {skippedCount}.";
+            }
+            else
+            {
+                syncOperationSeverity = Severity.Warning;
+                syncOperationMessage = $"Synchronisation completed with {failedCount} repository failures. Created {createdCount}, updated {updatedCount}, deleted {deletedCount}, skipped {skippedCount}.";
+            }
+
+            await LoadLabelsForSelectionAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to apply synchronisation from {SourceRepository}.", syncSourceRepositoryFullName);
+            syncOperationSeverity = Severity.Error;
+            syncOperationMessage = "An unexpected error occurred while applying synchronisation.";
+        }
+        finally
+        {
+            isApplyingSync = false;
         }
     }
 
@@ -722,6 +887,16 @@ public partial class Labels : ComponentBase
         && recommendedPreview.Count > 0
         && !isApplyingRecommendedTaxonomy;
 
+    private bool CanPreviewLabelSynchronisation => !ShowLoadingState
+        && !isPreviewingSync
+        && !isApplyingSync
+        && !string.IsNullOrWhiteSpace(syncSourceRepositoryFullName)
+        && syncTargetRepositoryFullNames.Count > 0;
+
+    private bool CanApplyLabelSynchronisation => showSyncPreview
+        && syncPreviewResults.Count > 0
+        && !isApplyingSync;
+
     private string SelectedStrategyDescription
         => recommendedStrategies.FirstOrDefault(strategy => strategy.Id.Equals(selectedStrategyId, StringComparison.OrdinalIgnoreCase))?.Description
             ?? string.Empty;
@@ -759,6 +934,57 @@ public partial class Labels : ComponentBase
             : colour.Trim().TrimStart('#');
 
         return $"color: #{normalised};";
+    }
+
+    private void EnsureSyncSelections()
+    {
+        var selectedRepositoryNames = selectedRepositories
+            .Select(repository => repository.FullName)
+            .Where(fullName => !string.IsNullOrWhiteSpace(fullName))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        if (selectedRepositoryNames.Count == 0)
+        {
+            ResetSyncWorkflow();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(syncSourceRepositoryFullName) || !selectedRepositoryNames.Contains(syncSourceRepositoryFullName))
+        {
+            syncSourceRepositoryFullName = selectedRepositoryNames
+                .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+                .First();
+        }
+
+        syncTargetRepositoryFullNames = syncTargetRepositoryFullNames
+            .Where(selectedRepositoryNames.Contains)
+            .Where(target => !target.Equals(syncSourceRepositoryFullName, StringComparison.OrdinalIgnoreCase))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        if (syncTargetRepositoryFullNames.Count == 0)
+        {
+            syncTargetRepositoryFullNames = selectedRepositoryNames
+                .Where(target => !target.Equals(syncSourceRepositoryFullName, StringComparison.OrdinalIgnoreCase))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+
+        syncPreviewResults = [];
+        showSyncPreview = false;
+        syncApplyResults = [];
+        syncOperationMessage = null;
+    }
+
+    private void ResetSyncWorkflow()
+    {
+        syncSourceRepositoryFullName = string.Empty;
+        syncTargetRepositoryFullNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        syncPreviewResults = [];
+        syncApplyResults = [];
+        showSyncPreview = false;
+        isPreviewingSync = false;
+        isApplyingSync = false;
+        syncOperationMessage = null;
+        syncOperationSeverity = Severity.Info;
     }
 
     /// <summary>Represents a consolidated label row for the grid view.</summary>

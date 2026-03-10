@@ -125,6 +125,81 @@
                             @taxonomyOperationMessage
                         </MudAlert>
                     }
+
+                    <MudDivider />
+
+                    <MudText Typo="Typo.h6">Synchronise labels</MudText>
+                    <MudText Typo="Typo.body2">Choose one source repository and one or more target repositories, preview the exact changes, then confirm before applying.</MudText>
+
+                    <MudSelect T="string"
+                               Label="Source repository"
+                               Value="syncSourceRepositoryFullName"
+                               ValueChanged="OnSyncSourceRepositoryChangedAsync"
+                               Variant="Variant.Outlined"
+                               Disabled="@(ShowLoadingState || selectedRepositories.Count < 2)"
+                               data-testid="sync-source-select">
+                        @foreach (var repository in selectedRepositories.OrderBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase))
+                        {
+                            <MudSelectItem T="string" Value="@repository.FullName">@repository.FullName</MudSelectItem>
+                        }
+                    </MudSelect>
+
+                    <MudText Typo="Typo.subtitle2">Target repositories</MudText>
+                    <MudText Typo="Typo.caption">Targets will be aligned to the source for label name, colour, and description.</MudText>
+
+                    <MudStack Spacing="1" data-testid="sync-target-list">
+                        @foreach (var repository in selectedRepositories.OrderBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase))
+                        {
+                            var isSourceRepository = repository.FullName.Equals(syncSourceRepositoryFullName, StringComparison.OrdinalIgnoreCase);
+                            <MudCheckBox T="bool"
+                                         Value="syncTargetRepositoryFullNames.Contains(repository.FullName)"
+                                         ValueChanged="isChecked => OnSyncTargetRepositoryChangedAsync(repository.FullName, isChecked)"
+                                         Disabled="@isSourceRepository"
+                                         Label="@repository.FullName"
+                                         data-testid="sync-target-checkbox" />
+                        }
+                    </MudStack>
+
+                    <MudStack Row="true" Spacing="1">
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Primary"
+                                   Disabled="@(!CanPreviewLabelSynchronisation)"
+                                   OnClick="PreviewLabelSynchronisationAsync"
+                                   data-testid="preview-sync-button">
+                            Preview synchronisation
+                        </MudButton>
+
+                        @if (showSyncPreview)
+                        {
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       Disabled="@(!CanApplyLabelSynchronisation)"
+                                       OnClick="ApplyLabelSynchronisationAsync"
+                                       data-testid="confirm-sync-button">
+                                Confirm synchronisation
+                            </MudButton>
+
+                            <MudButton Variant="Variant.Text"
+                                       Color="Color.Secondary"
+                                       OnClick="CancelLabelSynchronisationPreview"
+                                       data-testid="cancel-sync-button">
+                                Cancel
+                            </MudButton>
+                        }
+                    </MudStack>
+
+                    @if (isPreviewingSync || isApplyingSync)
+                    {
+                        <MudProgressLinear Indeterminate="true" Color="Color.Primary" data-testid="sync-progress-indicator" />
+                        <MudText Typo="Typo.body2">Synchronisation is in progress. Duplicate submissions are disabled.</MudText>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(syncOperationMessage))
+                    {
+                        <MudAlert Severity="@syncOperationSeverity" Dense="true" Variant="Variant.Outlined" data-testid="sync-operation-message">
+                            @syncOperationMessage
+                        </MudAlert>
+                    }
                 </MudStack>
             }
         </MudStack>
@@ -216,6 +291,153 @@
                     else
                     {
                         <MudText Typo="Typo.body2">Created: @result.CreatedCount, Updated: @result.UpdatedCount, Skipped: @result.SkippedCount</MudText>
+                    }
+                </MudPaper>
+            }
+        </MudStack>
+    </MudPaper>
+}
+
+@if (showSyncPreview)
+{
+    <MudPaper Class="pa-4" Elevation="1" data-testid="sync-preview-card">
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h6">Synchronisation preview</MudText>
+            @foreach (var preview in syncPreviewResults)
+            {
+                <MudPaper Class="pa-3" Outlined="true">
+                    <MudText Typo="Typo.subtitle1">@preview.RepositoryFullName</MudText>
+                    <MudText Typo="Typo.body2">Create: @preview.ToCreate.Count, Update: @preview.ToUpdate.Count, Delete: @preview.ToDelete.Count, Skip: @preview.Skipped.Count</MudText>
+
+                    @if (preview.ToCreate.Count > 0)
+                    {
+                        <div class="taxonomy-preview-section">
+                            <MudText Class="taxonomy-preview-heading" Typo="Typo.subtitle2">Labels to create</MudText>
+                            <MudTable T="LabelDto" Items="preview.ToCreate" Dense="true" Hover="true" Class="taxonomy-preview-table">
+                                <HeaderContent>
+                                    <MudTh>Label</MudTh>
+                                    <MudTh>Colour</MudTh>
+                                    <MudTh>Description</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Label">@context.Name</MudTd>
+                                    <MudTd DataLabel="Colour">
+                                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                            <MudIcon Class="taxonomy-colour-icon"
+                                                     Icon="@Icons.Material.Filled.Circle"
+                                                     Style="@GetColourIconStyle(context.Colour)"
+                                                     Title="@($"#{context.Colour}")" />
+                                            <MudChip T="string" Class="colour-chip" Variant="Variant.Outlined" Size="Size.Small">@($"#{context.Colour}")</MudChip>
+                                        </MudStack>
+                                    </MudTd>
+                                    <MudTd DataLabel="Description">@(string.IsNullOrWhiteSpace(context.Description) ? "No description" : context.Description)</MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        </div>
+                    }
+
+                    @if (preview.ToUpdate.Count > 0)
+                    {
+                        <div class="taxonomy-preview-section">
+                            <MudText Class="taxonomy-preview-heading" Typo="Typo.subtitle2">Labels to update</MudText>
+                            <MudTable T="LabelDto" Items="preview.ToUpdate" Dense="true" Hover="true" Class="taxonomy-preview-table">
+                                <HeaderContent>
+                                    <MudTh>Label</MudTh>
+                                    <MudTh>Colour</MudTh>
+                                    <MudTh>Description</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Label">@context.Name</MudTd>
+                                    <MudTd DataLabel="Colour">
+                                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                            <MudIcon Class="taxonomy-colour-icon"
+                                                     Icon="@Icons.Material.Filled.Circle"
+                                                     Style="@GetColourIconStyle(context.Colour)"
+                                                     Title="@($"#{context.Colour}")" />
+                                            <MudChip T="string" Class="colour-chip" Variant="Variant.Outlined" Size="Size.Small">@($"#{context.Colour}")</MudChip>
+                                        </MudStack>
+                                    </MudTd>
+                                    <MudTd DataLabel="Description">@(string.IsNullOrWhiteSpace(context.Description) ? "No description" : context.Description)</MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        </div>
+                    }
+
+                    @if (preview.ToDelete.Count > 0)
+                    {
+                        <div class="taxonomy-preview-section">
+                            <MudText Class="taxonomy-preview-heading" Typo="Typo.subtitle2">Labels to delete</MudText>
+                            <MudTable T="LabelDto" Items="preview.ToDelete" Dense="true" Hover="true" Class="taxonomy-preview-table">
+                                <HeaderContent>
+                                    <MudTh>Label</MudTh>
+                                    <MudTh>Colour</MudTh>
+                                    <MudTh>Description</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Label">@context.Name</MudTd>
+                                    <MudTd DataLabel="Colour">
+                                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                            <MudIcon Class="taxonomy-colour-icon"
+                                                     Icon="@Icons.Material.Filled.Circle"
+                                                     Style="@GetColourIconStyle(context.Colour)"
+                                                     Title="@($"#{context.Colour}")" />
+                                            <MudChip T="string" Class="colour-chip" Variant="Variant.Outlined" Size="Size.Small">@($"#{context.Colour}")</MudChip>
+                                        </MudStack>
+                                    </MudTd>
+                                    <MudTd DataLabel="Description">@(string.IsNullOrWhiteSpace(context.Description) ? "No description" : context.Description)</MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        </div>
+                    }
+
+                    @if (preview.Skipped.Count > 0)
+                    {
+                        <div class="taxonomy-preview-section">
+                            <MudText Class="taxonomy-preview-heading" Typo="Typo.subtitle2">Labels to skip</MudText>
+                            <MudTable T="LabelDto" Items="preview.Skipped" Dense="true" Hover="true" Class="taxonomy-preview-table">
+                                <HeaderContent>
+                                    <MudTh>Label</MudTh>
+                                    <MudTh>Colour</MudTh>
+                                    <MudTh>Description</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Label">@context.Name</MudTd>
+                                    <MudTd DataLabel="Colour">
+                                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                            <MudIcon Class="taxonomy-colour-icon"
+                                                     Icon="@Icons.Material.Filled.Circle"
+                                                     Style="@GetColourIconStyle(context.Colour)"
+                                                     Title="@($"#{context.Colour}")" />
+                                            <MudChip T="string" Class="colour-chip" Variant="Variant.Outlined" Size="Size.Small">@($"#{context.Colour}")</MudChip>
+                                        </MudStack>
+                                    </MudTd>
+                                    <MudTd DataLabel="Description">@(string.IsNullOrWhiteSpace(context.Description) ? "No description" : context.Description)</MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        </div>
+                    }
+                </MudPaper>
+            }
+        </MudStack>
+    </MudPaper>
+}
+
+@if (syncApplyResults.Count > 0)
+{
+    <MudPaper Class="pa-4" Elevation="1" data-testid="sync-summary-card">
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h6">Synchronisation summary</MudText>
+            @foreach (var result in syncApplyResults)
+            {
+                <MudPaper Class="pa-3" Outlined="true">
+                    <MudText Typo="Typo.subtitle1">@result.RepositoryFullName</MudText>
+                    @if (result.HasError)
+                    {
+                        <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Outlined">@result.ErrorMessage</MudAlert>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2">Created: @result.CreatedCount, Updated: @result.UpdatedCount, Deleted: @result.DeletedCount, Skipped: @result.SkippedCount</MudText>
                     }
                 </MudPaper>
             }

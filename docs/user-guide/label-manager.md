@@ -64,6 +64,30 @@ The apply summary is shown per repository and includes created, updated, and ski
 Strategies are currently built in for the MVP stage. Future releases can externalise strategy definitions so custom strategies can be managed without code changes.
 
 
+## Synchronise Labels Workflow
+
+The Label Manager allows you to synchronise labels from a source repository to one or more target repositories, ensuring consistent taxonomy across your projects.
+
+### Selecting Source and Target Repositories
+- Choose a source repository whose labels will be used as the reference.
+- Select one or more target repositories to receive synchronised labels.
+
+### Preview Before Apply
+- After selecting repositories, initiate the synchronisation preview.
+- The preview displays, for each target repository, which labels will be created, updated, deleted, or skipped.
+- Skipped labels are those already matching the source exactly; no action is taken for these.
+
+### Duplicate Submission Prevention
+- While synchronisation is running, the apply button is disabled to prevent duplicate submissions.
+- An in-progress indicator is shown until the operation completes.
+
+### Summary and Partial Failure Reporting
+- After synchronisation, a summary is shown for each target repository.
+- Partial failures (such as API errors affecting only some labels) are reported per repository, with guidance for retry or manual intervention.
+
+This workflow ensures you can preview all changes before applying, avoid redundant updates, and receive clear feedback on the outcome of each synchronisation operation.
+
+
 ## Configuration
 
 *Coming soon — this section will describe configuration options for the Label Manager.*
