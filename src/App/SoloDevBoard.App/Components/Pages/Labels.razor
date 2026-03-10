@@ -379,10 +379,6 @@ else if (hasLoadedLabels)
                 <TemplateColumn T="Labels.LabelRow" Title="Colour">
                     <CellTemplate>
                         <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-                            <MudIcon Icon="@Icons.Material.Filled.Circle"
-                                     Style="@GetColourIconStyle(context.Item.Colour)"
-                                     Title="@($"#{context.Item.Colour}")"
-                                     Size="Size.Small" />
                             <MudChip Variant="Variant.Outlined"
                                      Size="Size.Small"
                                      Style="@GetColourChipStyle(context.Item.Colour)">@($"#{context.Item.Colour}")</MudChip>
