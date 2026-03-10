@@ -70,6 +70,11 @@ gh issue edit 123 \
 # Inspect pull request checks
 gh pr checks 123 --repo owner/repo
 
+# Add a multi-line issue comment using a body file to preserve real line breaks
+gh issue comment 123 \
+	--repo owner/repo \
+	--body-file comment.md
+
 # Trigger and monitor workflow runs
 gh workflow run ci.yml --repo owner/repo --ref main
 gh run list --repo owner/repo --workflow ci.yml --limit 10
@@ -112,6 +117,7 @@ gh project item-edit \
 - Use `--repo owner/repo` for multi-repository operations to avoid acting on the wrong repository.
 - Prefer `gh issue edit`/`gh pr edit` over ad-hoc API mutations for common updates.
 - Prefer `gh project item-edit` over raw `gh api graphql` mutations for project field updates.
+- For multi-line issue or pull request comments, prefer `--body-file` or a heredoc-backed temp file instead of embedding `\n` escapes in `--body` strings.
 - For bulk operations, list and review targets first before piping into mutation commands.
 - Confirm authentication state with `gh auth status` before mutating operations.
 - In WSL or Linux, keep jq filters in single quotes and avoid PowerShell-specific quoting patterns.
