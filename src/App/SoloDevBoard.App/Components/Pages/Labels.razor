@@ -6,7 +6,7 @@
     <MudText Typo="Typo.h4">Label Manager</MudText>
     <MudText Typo="Typo.body1">View labels across selected repositories and identify missing labels quickly.</MudText>
 
-    <MudPaper Class="repository-selector-card pa-4" Elevation="1">
+    <MudPaper Class="pa-4" Elevation="1">
         <MudStack Spacing="2">
             <MudText Typo="Typo.h6">Repository selector</MudText>
 
@@ -16,7 +16,7 @@
             }
             else
             {
-                <MudStack Class="repository-selector-controls" Spacing="2">
+                <MudStack Spacing="2">
                     <MudAutocomplete T="RepositoryDto"
                                      Value="repositoryAutocompleteValue"
                                      ValueChanged="OnRepositorySelectedAsync"
@@ -35,7 +35,7 @@
 
                     @if (selectedRepositories.Count > 0)
                     {
-                        <MudStack Row="true" Spacing="1" Class="selected-repositories" data-testid="selected-repositories">
+                        <MudStack Row="true" Spacing="1" data-testid="selected-repositories">
                             @foreach (var repository in selectedRepositories)
                             {
                                 <MudChip T="string"
@@ -315,7 +315,7 @@
 
 @if (ShowLabelFilter)
 {
-    <MudPaper Class="label-filter-card pa-4" Elevation="1">
+    <MudPaper Class="pa-4" Elevation="1">
         <MudStack Spacing="1">
             <MudText Typo="Typo.h6">Filter</MudText>
             <div data-testid="label-filter">
@@ -369,7 +369,7 @@ else if (hasLoadedLabels && filteredRows.Count == 0)
 }
 else if (hasLoadedLabels)
 {
-    <div class="labels-results-surface">
+    <div>
         <MudDataGrid T="Labels.LabelRow"
                      Items="filteredRows"
                      Hover="true"
@@ -381,10 +381,9 @@ else if (hasLoadedLabels)
                 <TemplateColumn T="Labels.LabelRow" Title="Colour">
                     <CellTemplate>
                         <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-                            <span class="colour-swatch"
-                                  style="@GetColourSwatchStyle(context.Item.Colour)"
+                            <span style="@GetColourSwatchStyle(context.Item.Colour)"
                                   title="@($"#{context.Item.Colour}")"></span>
-                            <MudChip Class="colour-chip" Variant="Variant.Outlined" Size="Size.Small">@($"#{context.Item.Colour}")</MudChip>
+                            <MudChip Variant="Variant.Outlined" Size="Size.Small">@($"#{context.Item.Colour}")</MudChip>
                         </MudStack>
                     </CellTemplate>
                 </TemplateColumn>
@@ -393,7 +392,7 @@ else if (hasLoadedLabels)
                 <PropertyColumn Property="row => row.MissingRepositoriesText" Title="Missing in" />
                 <TemplateColumn T="Labels.LabelRow" Title="Actions">
                     <CellTemplate>
-                        <MudStack Class="label-action-buttons" Row="true" Spacing="1">
+                        <MudStack Row="true" Spacing="1">
                             <MudButton Variant="Variant.Outlined"
                                        Color="Color.Primary"
                                        Size="Size.Small"

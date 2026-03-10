@@ -6,14 +6,14 @@
     <MudText Typo="Typo.h4">Dashboard</MudText>
     <MudText Typo="Typo.body1">Navigate to each SoloDevBoard feature from a single starting point.</MudText>
 
-    <MudGrid Class="dashboard-grid">
+    <MudGrid>
         @foreach (var feature in features)
         {
             <MudItem xs="12" sm="6" xl="4">
-                <MudCard Class="feature-panel" aria-label="@($"{feature.Name} panel")">
+                <MudCard aria-label="@($"{feature.Name} panel")">
                     <MudCardContent>
                         <MudText Typo="Typo.h6">@feature.Name</MudText>
-                        <MudText Typo="Typo.body2" Class="feature-description">@feature.Description</MudText>
+                        <MudText Typo="Typo.body2">@feature.Description</MudText>
                     </MudCardContent>
                     <MudCardActions>
                         <MudButton Href="@feature.Route"

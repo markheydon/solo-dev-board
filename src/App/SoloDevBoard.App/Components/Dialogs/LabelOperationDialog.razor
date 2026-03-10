@@ -26,10 +26,8 @@
                                     Label="Colour"
                                     ColorPickerMode="ColorPickerMode.HEX"
                                     Variant="Variant.Outlined"
-                                    Class="dialog-colour-picker"
                                     data-testid="label-colour-input" />
-                    <span class="dialog-colour-preview"
-                          style="@($"background-color: {model.DisplayColour};")"
+                    <span style="@($"background-color: {model.DisplayColour};")"
                           title="@model.DisplayColour"
                           data-testid="label-colour-preview"></span>
                 </MudStack>
@@ -46,16 +44,16 @@
             </EditForm>
         }
 
-        <div class="repository-selector mt-3" data-testid="dialog-repository-selector">
+        <div class="mt-3" data-testid="dialog-repository-selector">
             <MudText Typo="Typo.subtitle2">Target repositories</MudText>
             @if (Content.Mode != LabelOperationMode.Create)
             {
-                <MudText Typo="Typo.caption" Class="repository-selector-hint">Only repositories that already contain this label can be selected.</MudText>
+                <MudText Typo="Typo.caption">Only repositories that already contain this label can be selected.</MudText>
             }
 
             @foreach (var repository in Content.AvailableRepositories)
             {
-                <div class="@(CanSelectRepository(repository) ? string.Empty : "repository-option-disabled")">
+                <div>
                     <MudCheckBox T="bool"
                                  Value="selectedRepositoryNames.Contains(repository)"
                                  ValueChanged="isChecked => OnRepositoryToggleChanged(repository, isChecked)"

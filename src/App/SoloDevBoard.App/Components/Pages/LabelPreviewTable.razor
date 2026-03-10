@@ -2,9 +2,9 @@
 
 @if (Labels.Count > 0)
 {
-    <div class="taxonomy-preview-section">
-        <MudText Class="taxonomy-preview-heading" Typo="Typo.subtitle2">@Heading</MudText>
-        <MudTable T="LabelDto" Items="Labels" Dense="true" Hover="true" Class="taxonomy-preview-table">
+    <div>
+        <MudText Typo="Typo.subtitle2">@Heading</MudText>
+        <MudTable T="LabelDto" Items="Labels" Dense="true" Hover="true">
             <HeaderContent>
                 <MudTh>Label</MudTh>
                 <MudTh>Colour</MudTh>
@@ -14,11 +14,10 @@
                 <MudTd DataLabel="Label">@context.Name</MudTd>
                 <MudTd DataLabel="Colour">
                     <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-                        <MudIcon Class="taxonomy-colour-icon"
-                                 Icon="@Icons.Material.Filled.Circle"
+                        <MudIcon Icon="@Icons.Material.Filled.Circle"
                                  Style="@GetColourIconStyle(context.Colour)"
                                  Title="@($"#{context.Colour}")" />
-                        <MudChip T="string" Class="colour-chip" Variant="Variant.Outlined" Size="Size.Small">@($"#{context.Colour}")</MudChip>
+                        <MudChip T="string" Variant="Variant.Outlined" Size="Size.Small">@($"#{context.Colour}")</MudChip>
                     </MudStack>
                 </MudTd>
                 <MudTd DataLabel="Description">@(string.IsNullOrWhiteSpace(context.Description) ? "No description" : context.Description)</MudTd>
