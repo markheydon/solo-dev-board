@@ -54,7 +54,8 @@ public sealed class AuditDashboardServiceTests
         // Arrange
         var issues = new List<Issue>
         {
-            new() { Id = 1, Number = 7, Title = "First issue", HtmlUrl = "https://example/issue/7", UpdatedAt = DateTimeOffset.UtcNow },
+            new() { Id = 1, Number = 7, Title = "First issue", State = "open", HtmlUrl = "https://example/issue/7", UpdatedAt = DateTimeOffset.UtcNow },
+            new() { Id = 2, Number = 8, Title = "Closed issue", State = "closed", HtmlUrl = "https://example/issue/8", UpdatedAt = DateTimeOffset.UtcNow },
         };
         _gitHubServiceMock
             .Setup(service => service.GetIssuesAsync("owner", "repo", It.IsAny<CancellationToken>()))
@@ -80,8 +81,9 @@ public sealed class AuditDashboardServiceTests
             .Setup(service => service.GetIssuesAsync("owner", "repo-one", It.IsAny<CancellationToken>()))
             .ReturnsAsync(
             [
-                new Issue { Id = 1, Number = 1, Labels = [] },
-                new Issue { Id = 2, Number = 2, Labels = [new Label { Name = "bug" }] },
+                new Issue { Id = 1, Number = 1, State = "open", Labels = [] },
+                new Issue { Id = 2, Number = 2, State = "open", Labels = [new Label { Name = "bug" }] },
+                new Issue { Id = 3, Number = 3, State = "closed", Labels = [] },
             ]);
         _gitHubServiceMock
             .Setup(service => service.GetPullRequestsAsync("owner", "repo-one", It.IsAny<CancellationToken>()))
@@ -89,6 +91,7 @@ public sealed class AuditDashboardServiceTests
             [
                 new PullRequest { Id = 1, Number = 11, State = "open", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-20) },
                 new PullRequest { Id = 2, Number = 12, State = "open", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-2) },
+                new PullRequest { Id = 3, Number = 13, State = "closed", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-40) },
             ]);
         _gitHubServiceMock
             .Setup(service => service.GetWorkflowRunsAsync("owner", "repo-one", It.IsAny<CancellationToken>()))
@@ -119,8 +122,9 @@ public sealed class AuditDashboardServiceTests
             .Setup(service => service.GetIssuesAsync("owner", "repo", It.IsAny<CancellationToken>()))
             .ReturnsAsync(
             [
-                new Issue { Id = 1, Number = 1, Title = "No labels", HtmlUrl = "https://example/1", Labels = [] },
-                new Issue { Id = 2, Number = 2, Title = "Has labels", HtmlUrl = "https://example/2", Labels = [new Label { Name = "bug" }] },
+                new Issue { Id = 1, Number = 1, State = "open", Title = "No labels", HtmlUrl = "https://example/1", Labels = [] },
+                new Issue { Id = 2, Number = 2, State = "open", Title = "Has labels", HtmlUrl = "https://example/2", Labels = [new Label { Name = "bug" }] },
+                new Issue { Id = 3, Number = 3, State = "closed", Title = "Closed with no labels", HtmlUrl = "https://example/3", Labels = [] },
             ]);
 
         // Act

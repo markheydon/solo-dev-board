@@ -6,6 +6,8 @@ namespace SoloDevBoard.Application.Services;
 /// <summary>Provides audit dashboard operations over multiple repositories.</summary>
 public sealed class AuditDashboardService : IAuditDashboardService
 {
+    private const int DefaultStaleDays = 14;
+
     private readonly IGitHubService _gitHubService;
     private readonly ICurrentUserContext _currentUserContext;
 
@@ -38,7 +40,10 @@ public sealed class AuditDashboardService : IAuditDashboardService
         var repositoryFullName = BuildRepositoryFullName(owner, repoName);
         var issues = await _gitHubService.GetIssuesAsync(owner, repoName, cancellationToken).ConfigureAwait(false);
 
-        return issues.Select(issue => MapIssue(issue, repositoryFullName)).ToArray();
+        return issues
+            .Where(static issue => IsOpenState(issue.State))
+            .Select(issue => MapIssue(issue, repositoryFullName))
+            .ToArray();
     }
 
     /// <inheritdoc/>
@@ -67,7 +72,7 @@ public sealed class AuditDashboardService : IAuditDashboardService
             var repositoryFullName = BuildRepositoryFullName(owner, repoName);
 
             return issues
-                .Where(static issue => issue.Labels.Count == 0)
+                .Where(static issue => IsOpenState(issue.State) && issue.Labels.Count == 0)
                 .Select(issue => MapIssue(issue, repositoryFullName))
                 .ToArray();
         });
@@ -77,7 +82,7 @@ public sealed class AuditDashboardService : IAuditDashboardService
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<PullRequestDto>> GetStalePullRequestsAsync(IReadOnlyList<string> repos, int staleDays = 14, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<PullRequestDto>> GetStalePullRequestsAsync(IReadOnlyList<string> repos, int staleDays = DefaultStaleDays, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(repos);
 
@@ -160,6 +165,9 @@ public sealed class AuditDashboardService : IAuditDashboardService
         => conclusion.Equals("failure", StringComparison.OrdinalIgnoreCase)
            || conclusion.Equals("cancelled", StringComparison.OrdinalIgnoreCase);
 
+    private static bool IsOpenState(string state)
+        => state.Equals("open", StringComparison.OrdinalIgnoreCase);
+
     private static string BuildRepositoryFullName(string owner, string repoName)
         => $"{owner}/{repoName}";
 
@@ -209,6 +217,9 @@ public sealed class AuditDashboardService : IAuditDashboardService
         var pullRequests = await pullRequestsTask.ConfigureAwait(false);
         var workflowRuns = await workflowRunsTask.ConfigureAwait(false);
 
+        var openIssues = issues.Where(static issue => IsOpenState(issue.State)).ToArray();
+        var openPullRequests = pullRequests.Where(static pullRequest => IsOpenState(pullRequest.State)).ToArray();
+
         var failingWorkflowCount = workflowRuns
             .Where(static workflowRun => !string.IsNullOrWhiteSpace(workflowRun.WorkflowName))
             .GroupBy(static workflowRun => workflowRun.WorkflowName, StringComparer.OrdinalIgnoreCase)
@@ -218,14 +229,14 @@ public sealed class AuditDashboardService : IAuditDashboardService
                 .First())
             .Count(static workflowRun => IsFailingConclusion(workflowRun.Conclusion));
 
-        var staleThreshold = DateTimeOffset.UtcNow.AddDays(-14);
+        var staleThreshold = DateTimeOffset.UtcNow.AddDays(-DefaultStaleDays);
 
         return new RepositoryAuditSummaryDto(
             repositoryFullName,
-            issues.Count,
-            pullRequests.Count,
-            issues.Count(static issue => issue.Labels.Count == 0),
-            pullRequests.Count(pullRequest => pullRequest.State.Equals("open", StringComparison.OrdinalIgnoreCase) && pullRequest.UpdatedAt < staleThreshold),
+            openIssues.Length,
+            openPullRequests.Length,
+            openIssues.Count(static issue => issue.Labels.Count == 0),
+            openPullRequests.Count(pullRequest => pullRequest.UpdatedAt < staleThreshold),
             failingWorkflowCount);
     }
 }
