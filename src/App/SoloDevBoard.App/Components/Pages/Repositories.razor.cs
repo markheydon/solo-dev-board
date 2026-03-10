@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using SoloDevBoard.Application.Services;
-using SoloDevBoard.Domain.Entities;
 
 namespace SoloDevBoard.App.Components.Pages;
 
@@ -16,12 +15,12 @@ public partial class Repositories : ComponentBase
     [Inject]
     public ILogger<Repositories> Logger { get; set; } = default!;
 
-    private IReadOnlyList<Repository> repositories = [];
+    private IReadOnlyList<RepositoryDto> repositories = [];
     private bool isLoading = true;
     private string? errorMessage;
     private string? repositorySearchTerm;
 
-    private IReadOnlyList<Repository> FilteredRepositories =>
+    private IReadOnlyList<RepositoryDto> FilteredRepositories =>
         string.IsNullOrWhiteSpace(repositorySearchTerm)
             ? repositories
             : repositories

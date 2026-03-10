@@ -35,6 +35,48 @@ public sealed class RepositoryServiceTests
     }
 
     [Fact]
+    public async Task GetRepositoriesAsync_GitHubServiceReturnsRepository_MapsAllFieldsToRepositoryDto()
+    {
+        // Arrange
+        var createdAt = new DateTimeOffset(2025, 1, 2, 3, 4, 5, TimeSpan.Zero);
+        var updatedAt = new DateTimeOffset(2026, 2, 3, 4, 5, 6, TimeSpan.Zero);
+
+        _gitHubServiceMock
+            .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new Repository
+                {
+                    Id = 42,
+                    Name = "repo-a",
+                    FullName = "owner/repo-a",
+                    Description = "Repository description",
+                    Url = "https://github.com/owner/repo-a",
+                    IsPrivate = true,
+                    IsArchived = false,
+                    CreatedAt = createdAt,
+                    UpdatedAt = updatedAt,
+                },
+            ]);
+
+        var sut = new RepositoryService(_gitHubServiceMock.Object);
+
+        // Act
+        var result = await sut.GetRepositoriesAsync();
+
+        // Assert
+        var dto = Assert.Single(result);
+        Assert.Equal(42, dto.Id);
+        Assert.Equal("repo-a", dto.Name);
+        Assert.Equal("owner/repo-a", dto.FullName);
+        Assert.Equal("Repository description", dto.Description);
+        Assert.Equal("https://github.com/owner/repo-a", dto.Url);
+        Assert.True(dto.IsPrivate);
+        Assert.False(dto.IsArchived);
+        Assert.Equal(createdAt, dto.CreatedAt);
+        Assert.Equal(updatedAt, dto.UpdatedAt);
+    }
+
+    [Fact]
     public async Task GetRepositoriesAsync_WhenCalled_PassesCancellationTokenToGitHubService()
     {
         // Arrange

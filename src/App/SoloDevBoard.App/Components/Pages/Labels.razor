@@ -1,5 +1,4 @@
 @page "/labels"
-@using SoloDevBoard.Domain.Entities
 
 <PageTitle>Label Manager</PageTitle>
 
@@ -18,7 +17,7 @@
             else
             {
                 <MudStack Class="repository-selector-controls" Spacing="2">
-                    <MudAutocomplete T="Repository"
+                    <MudAutocomplete T="SoloDevBoard.Application.Services.RepositoryDto"
                                      Value="repositoryAutocompleteValue"
                                      ValueChanged="OnRepositorySelectedAsync"
                                      SearchFunc="SearchRepositoriesAsync"
