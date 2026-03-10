@@ -85,7 +85,7 @@ Labels: `type/epic`, `area/labels`
 - [x] As a solo developer, I want to rename a label across multiple repositories simultaneously so that I can refactor my taxonomy without visiting each repo. _(#33 done — 2026-03-08)_
 - [x] As a solo developer, I want to change a label's colour across multiple repositories so that visual consistency is maintained. _(#33 done — 2026-03-08)_
 - [x] As a solo developer, I want to delete a label from multiple repositories at once so that I can clean up obsolete labels. _(#33 done — 2026-03-08)_
-- [ ] As a solo developer, I want to apply the SoloDevBoard recommended label taxonomy (from `plan/LABEL_STRATEGY.md`) to any repository so that I can start with a sensible default set of labels. _(#34 status/todo — v0.2.0)_
+- [x] As a solo developer, I want to apply recommended label taxonomy strategies to any repository so that I can start with a sensible default set of labels. _(#34 done — 2026-03-10; includes SoloDevBoard + GitHub default strategy options, preview, confirm/cancel, and per-repository summary)_
 - [x] As a solo developer, I want to see which repositories do not have a specific label so that I can identify gaps. _(#35 done — 2026-03-08)_
 - [ ] As a solo developer, I want to synchronise a target repository's labels to exactly match a source repository's labels so that they stay in lockstep. _(#32 status/todo — v0.2.0)_
 

@@ -469,6 +469,105 @@ public sealed class LabelServiceTests
     }
 
     [Fact]
+    public async Task GetRecommendedLabelStrategiesAsync_WhenCalled_ReturnsBuiltInStrategies()
+    {
+        // Arrange
+        var sut = new LabelService(_labelRepositoryMock.Object);
+
+        // Act
+        var result = await sut.GetRecommendedLabelStrategiesAsync();
+
+        // Assert
+        Assert.Equal(2, result.Count);
+        Assert.Contains(result, strategy => strategy.Id == "solodevboard");
+        Assert.Contains(result, strategy => strategy.Id == "github-default");
+    }
+
+    [Fact]
+    public async Task PreviewRecommendedTaxonomyAsync_RepositoryHasMixedState_ReturnsCreateUpdateAndSkipped()
+    {
+        // Arrange
+        _labelRepositoryMock
+            .Setup(repository => repository.GetLabelsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new Label { Name = "bug", Colour = "000000", Description = "Outdated", RepositoryName = "repo-a" },
+                new Label { Name = "documentation", Colour = "0075ca", Description = "Improvements or additions to documentation", RepositoryName = "repo-a" },
+            ]);
+
+        var sut = new LabelService(_labelRepositoryMock.Object);
+
+        // Act
+        var result = await sut.PreviewRecommendedTaxonomyAsync("github-default", ["owner/repo-a"]);
+
+        // Assert
+        var preview = Assert.Single(result);
+        Assert.Equal("owner/repo-a", preview.RepositoryFullName);
+        Assert.Contains(preview.ToCreate, label => label.Name == "enhancement");
+        Assert.Contains(preview.ToUpdate, label => label.Name == "bug");
+        Assert.Contains(preview.Skipped, label => label.Name == "documentation");
+    }
+
+    [Fact]
+    public async Task ApplyRecommendedTaxonomyAsync_LabelAlreadyMatches_SkipsWithoutMutatingApiCalls()
+    {
+        // Arrange
+        _labelRepositoryMock
+            .Setup(repository => repository.GetLabelsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new Label { Name = "bug", Colour = "d73a4a", Description = "Something is not working", RepositoryName = "repo-a" },
+                new Label { Name = "documentation", Colour = "0075ca", Description = "Improvements or additions to documentation", RepositoryName = "repo-a" },
+                new Label { Name = "duplicate", Colour = "cfd3d7", Description = "This issue or pull request already exists", RepositoryName = "repo-a" },
+                new Label { Name = "enhancement", Colour = "a2eeef", Description = "New feature or request", RepositoryName = "repo-a" },
+                new Label { Name = "good first issue", Colour = "7057ff", Description = "Good for newcomers", RepositoryName = "repo-a" },
+                new Label { Name = "help wanted", Colour = "008672", Description = "Extra attention is needed", RepositoryName = "repo-a" },
+                new Label { Name = "invalid", Colour = "e4e669", Description = "This does not appear to be valid", RepositoryName = "repo-a" },
+                new Label { Name = "question", Colour = "d876e3", Description = "Further information is requested", RepositoryName = "repo-a" },
+                new Label { Name = "wontfix", Colour = "ffffff", Description = "This will not be worked on", RepositoryName = "repo-a" },
+            ]);
+
+        var sut = new LabelService(_labelRepositoryMock.Object);
+
+        // Act
+        var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a"]);
+
+        // Assert
+        var summary = Assert.Single(result);
+        Assert.Equal(0, summary.CreatedCount);
+        Assert.Equal(0, summary.UpdatedCount);
+        Assert.Equal(9, summary.SkippedCount);
+        Assert.False(summary.HasError);
+        _labelRepositoryMock.Verify(repository => repository.CreateLabelAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Never);
+        _labelRepositoryMock.Verify(repository => repository.UpdateLabelAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ApplyRecommendedTaxonomyAsync_OneRepositoryFails_ReturnsErrorAndContinues()
+    {
+        // Arrange
+        _labelRepositoryMock
+            .Setup(repository => repository.GetLabelsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<Label>());
+
+        _labelRepositoryMock
+            .Setup(repository => repository.GetLabelsAsync("owner", "repo-b", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Rate limited"));
+
+        _labelRepositoryMock
+            .Setup(repository => repository.CreateLabelAsync("owner", "repo-a", It.IsAny<Label>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string _, string repo, Label value, CancellationToken _) => value with { RepositoryName = repo });
+
+        var sut = new LabelService(_labelRepositoryMock.Object);
+
+        // Act
+        var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a", "owner/repo-b"]);
+
+        // Assert
+        Assert.Equal(2, result.Count);
+        Assert.Contains(result, item => item.RepositoryFullName == "owner/repo-a" && item.CreatedCount == 9 && !item.HasError);
+        Assert.Contains(result, item => item.RepositoryFullName == "owner/repo-b" && item.HasError && item.ErrorMessage == "Rate limited");
+    }
+
+    [Fact]
     public async Task GetLabelsForRepositoriesAsync_RepositoriesEmpty_ThrowsArgumentException()
     {
         // Arrange
