@@ -218,56 +218,12 @@
 
                     @if (preview.ToCreate.Count > 0)
                     {
-                        <div class="taxonomy-preview-section">
-                            <MudText Class="taxonomy-preview-heading" Typo="Typo.subtitle2">Labels to create</MudText>
-                            <MudTable T="LabelDto" Items="preview.ToCreate" Dense="true" Hover="true" Class="taxonomy-preview-table">
-                            <HeaderContent>
-                                <MudTh>Label</MudTh>
-                                <MudTh>Colour</MudTh>
-                                <MudTh>Description</MudTh>
-                            </HeaderContent>
-                            <RowTemplate>
-                                <MudTd DataLabel="Label">@context.Name</MudTd>
-                                <MudTd DataLabel="Colour">
-                                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-                                        <MudIcon Class="taxonomy-colour-icon"
-                                                 Icon="@Icons.Material.Filled.Circle"
-                                                 Style="@GetColourIconStyle(context.Colour)"
-                                                 Title="@($"#{context.Colour}")" />
-                                        <MudChip T="string" Class="colour-chip" Variant="Variant.Outlined" Size="Size.Small">@($"#{context.Colour}")</MudChip>
-                                    </MudStack>
-                                </MudTd>
-                                <MudTd DataLabel="Description">@(string.IsNullOrWhiteSpace(context.Description) ? "No description" : context.Description)</MudTd>
-                            </RowTemplate>
-                        </MudTable>
-                        </div>
+                        <LabelPreviewTable Heading="Labels to create" Labels="preview.ToCreate" />
                     }
 
                     @if (preview.ToUpdate.Count > 0)
                     {
-                        <div class="taxonomy-preview-section">
-                            <MudText Class="taxonomy-preview-heading" Typo="Typo.subtitle2">Labels to update</MudText>
-                            <MudTable T="LabelDto" Items="preview.ToUpdate" Dense="true" Hover="true" Class="taxonomy-preview-table">
-                            <HeaderContent>
-                                <MudTh>Label</MudTh>
-                                <MudTh>Colour</MudTh>
-                                <MudTh>Description</MudTh>
-                            </HeaderContent>
-                            <RowTemplate>
-                                <MudTd DataLabel="Label">@context.Name</MudTd>
-                                <MudTd DataLabel="Colour">
-                                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-                                        <MudIcon Class="taxonomy-colour-icon"
-                                                 Icon="@Icons.Material.Filled.Circle"
-                                                 Style="@GetColourIconStyle(context.Colour)"
-                                                 Title="@($"#{context.Colour}")" />
-                                        <MudChip T="string" Class="colour-chip" Variant="Variant.Outlined" Size="Size.Small">@($"#{context.Colour}")</MudChip>
-                                    </MudStack>
-                                </MudTd>
-                                <MudTd DataLabel="Description">@(string.IsNullOrWhiteSpace(context.Description) ? "No description" : context.Description)</MudTd>
-                            </RowTemplate>
-                        </MudTable>
-                        </div>
+                        <LabelPreviewTable Heading="Labels to update" Labels="preview.ToUpdate" />
                     }
                 </MudPaper>
             }
@@ -311,110 +267,22 @@
 
                     @if (preview.ToCreate.Count > 0)
                     {
-                        <div class="taxonomy-preview-section">
-                            <MudText Class="taxonomy-preview-heading" Typo="Typo.subtitle2">Labels to create</MudText>
-                            <MudTable T="LabelDto" Items="preview.ToCreate" Dense="true" Hover="true" Class="taxonomy-preview-table">
-                                <HeaderContent>
-                                    <MudTh>Label</MudTh>
-                                    <MudTh>Colour</MudTh>
-                                    <MudTh>Description</MudTh>
-                                </HeaderContent>
-                                <RowTemplate>
-                                    <MudTd DataLabel="Label">@context.Name</MudTd>
-                                    <MudTd DataLabel="Colour">
-                                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-                                            <MudIcon Class="taxonomy-colour-icon"
-                                                     Icon="@Icons.Material.Filled.Circle"
-                                                     Style="@GetColourIconStyle(context.Colour)"
-                                                     Title="@($"#{context.Colour}")" />
-                                            <MudChip T="string" Class="colour-chip" Variant="Variant.Outlined" Size="Size.Small">@($"#{context.Colour}")</MudChip>
-                                        </MudStack>
-                                    </MudTd>
-                                    <MudTd DataLabel="Description">@(string.IsNullOrWhiteSpace(context.Description) ? "No description" : context.Description)</MudTd>
-                                </RowTemplate>
-                            </MudTable>
-                        </div>
+                        <LabelPreviewTable Heading="Labels to create" Labels="preview.ToCreate" />
                     }
 
                     @if (preview.ToUpdate.Count > 0)
                     {
-                        <div class="taxonomy-preview-section">
-                            <MudText Class="taxonomy-preview-heading" Typo="Typo.subtitle2">Labels to update</MudText>
-                            <MudTable T="LabelDto" Items="preview.ToUpdate" Dense="true" Hover="true" Class="taxonomy-preview-table">
-                                <HeaderContent>
-                                    <MudTh>Label</MudTh>
-                                    <MudTh>Colour</MudTh>
-                                    <MudTh>Description</MudTh>
-                                </HeaderContent>
-                                <RowTemplate>
-                                    <MudTd DataLabel="Label">@context.Name</MudTd>
-                                    <MudTd DataLabel="Colour">
-                                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-                                            <MudIcon Class="taxonomy-colour-icon"
-                                                     Icon="@Icons.Material.Filled.Circle"
-                                                     Style="@GetColourIconStyle(context.Colour)"
-                                                     Title="@($"#{context.Colour}")" />
-                                            <MudChip T="string" Class="colour-chip" Variant="Variant.Outlined" Size="Size.Small">@($"#{context.Colour}")</MudChip>
-                                        </MudStack>
-                                    </MudTd>
-                                    <MudTd DataLabel="Description">@(string.IsNullOrWhiteSpace(context.Description) ? "No description" : context.Description)</MudTd>
-                                </RowTemplate>
-                            </MudTable>
-                        </div>
+                        <LabelPreviewTable Heading="Labels to update" Labels="preview.ToUpdate" />
                     }
 
                     @if (preview.ToDelete.Count > 0)
                     {
-                        <div class="taxonomy-preview-section">
-                            <MudText Class="taxonomy-preview-heading" Typo="Typo.subtitle2">Labels to delete</MudText>
-                            <MudTable T="LabelDto" Items="preview.ToDelete" Dense="true" Hover="true" Class="taxonomy-preview-table">
-                                <HeaderContent>
-                                    <MudTh>Label</MudTh>
-                                    <MudTh>Colour</MudTh>
-                                    <MudTh>Description</MudTh>
-                                </HeaderContent>
-                                <RowTemplate>
-                                    <MudTd DataLabel="Label">@context.Name</MudTd>
-                                    <MudTd DataLabel="Colour">
-                                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-                                            <MudIcon Class="taxonomy-colour-icon"
-                                                     Icon="@Icons.Material.Filled.Circle"
-                                                     Style="@GetColourIconStyle(context.Colour)"
-                                                     Title="@($"#{context.Colour}")" />
-                                            <MudChip T="string" Class="colour-chip" Variant="Variant.Outlined" Size="Size.Small">@($"#{context.Colour}")</MudChip>
-                                        </MudStack>
-                                    </MudTd>
-                                    <MudTd DataLabel="Description">@(string.IsNullOrWhiteSpace(context.Description) ? "No description" : context.Description)</MudTd>
-                                </RowTemplate>
-                            </MudTable>
-                        </div>
+                        <LabelPreviewTable Heading="Labels to delete" Labels="preview.ToDelete" />
                     }
 
                     @if (preview.Skipped.Count > 0)
                     {
-                        <div class="taxonomy-preview-section">
-                            <MudText Class="taxonomy-preview-heading" Typo="Typo.subtitle2">Labels to skip</MudText>
-                            <MudTable T="LabelDto" Items="preview.Skipped" Dense="true" Hover="true" Class="taxonomy-preview-table">
-                                <HeaderContent>
-                                    <MudTh>Label</MudTh>
-                                    <MudTh>Colour</MudTh>
-                                    <MudTh>Description</MudTh>
-                                </HeaderContent>
-                                <RowTemplate>
-                                    <MudTd DataLabel="Label">@context.Name</MudTd>
-                                    <MudTd DataLabel="Colour">
-                                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-                                            <MudIcon Class="taxonomy-colour-icon"
-                                                     Icon="@Icons.Material.Filled.Circle"
-                                                     Style="@GetColourIconStyle(context.Colour)"
-                                                     Title="@($"#{context.Colour}")" />
-                                            <MudChip T="string" Class="colour-chip" Variant="Variant.Outlined" Size="Size.Small">@($"#{context.Colour}")</MudChip>
-                                        </MudStack>
-                                    </MudTd>
-                                    <MudTd DataLabel="Description">@(string.IsNullOrWhiteSpace(context.Description) ? "No description" : context.Description)</MudTd>
-                                </RowTemplate>
-                            </MudTable>
-                        </div>
+                        <LabelPreviewTable Heading="Labels to skip" Labels="preview.Skipped" />
                     }
                 </MudPaper>
             }

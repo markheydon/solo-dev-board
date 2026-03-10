@@ -242,10 +242,10 @@ public sealed class LabelService : ILabelManagerService
                     updatedCount++;
                 }
 
-                foreach (var labelName in preview.ToDelete)
+                foreach (var label in preview.ToDelete)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    await _labelRepository.DeleteLabelAsync(target.Owner, target.Name, labelName.Name, cancellationToken).ConfigureAwait(false);
+                    await _labelRepository.DeleteLabelAsync(target.Owner, target.Name, label.Name, cancellationToken).ConfigureAwait(false);
                     deletedCount++;
                 }
 
@@ -466,6 +466,12 @@ public sealed class LabelService : ILabelManagerService
             RepositoryName = repositoryName,
         };
 
+    /// <summary>Builds a synchronisation preview by comparing source and target label sets.</summary>
+    /// <param name="targetOwner">The target repository owner.</param>
+    /// <param name="targetRepo">The target repository name.</param>
+    /// <param name="sourceLabels">The labels from the source repository.</param>
+    /// <param name="targetLabels">The labels from the target repository.</param>
+    /// <returns>A synchronisation preview containing create, update, delete, and skip actions.</returns>
     private static LabelSyncPreviewDto BuildSyncPreview(string targetOwner, string targetRepo, IReadOnlyList<Label> sourceLabels, IReadOnlyList<Label> targetLabels)
     {
         var sourceByName = sourceLabels.ToDictionary(label => label.Name, StringComparer.OrdinalIgnoreCase);
@@ -499,6 +505,12 @@ public sealed class LabelService : ILabelManagerService
         return new LabelSyncPreviewDto(toAdd, toUpdate, toDelete, skipped);
     }
 
+    /// <summary>Applies a precomputed synchronisation preview to a target repository.</summary>
+    /// <param name="targetOwner">The target repository owner.</param>
+    /// <param name="targetRepo">The target repository name.</param>
+    /// <param name="preview">The preview describing create, update, and delete operations.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A task that completes when all preview operations have been applied.</returns>
     private async Task ApplySyncPreviewAsync(string targetOwner, string targetRepo, LabelSyncPreviewDto preview, CancellationToken cancellationToken)
     {
         foreach (var label in preview.ToAdd)
@@ -513,10 +525,10 @@ public sealed class LabelService : ILabelManagerService
             await _labelRepository.UpdateLabelAsync(targetOwner, targetRepo, label.Name, MapToDomain(label, targetRepo), cancellationToken).ConfigureAwait(false);
         }
 
-        foreach (var labelName in preview.ToDelete)
+        foreach (var label in preview.ToDelete)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            await _labelRepository.DeleteLabelAsync(targetOwner, targetRepo, labelName.Name, cancellationToken).ConfigureAwait(false);
+            await _labelRepository.DeleteLabelAsync(targetOwner, targetRepo, label.Name, cancellationToken).ConfigureAwait(false);
         }
     }
 
