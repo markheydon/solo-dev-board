@@ -12,6 +12,7 @@ public static class ApplicationServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
+        services.AddSingleton<IAppVersionService, AppVersionService>();
         services.AddScoped<IRepositoryService, RepositoryService>();
         services.AddScoped<ILabelManagerService, LabelService>();
         services.AddScoped<IAuditDashboardService, AuditDashboardService>();
