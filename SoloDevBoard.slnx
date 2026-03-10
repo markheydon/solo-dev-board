@@ -1,28 +1,14 @@
 <Solution>
-  <Folder Name="/src/" />
-  <Folder Name="/src/App/">
+  <Folder Name="/src/">
     <Project Path="src/App/SoloDevBoard.App/SoloDevBoard.App.csproj" />
-  </Folder>
-  <Folder Name="/src/Application/">
     <Project Path="src/Application/SoloDevBoard.Application/SoloDevBoard.Application.csproj" />
-  </Folder>
-  <Folder Name="/src/Domain/">
     <Project Path="src/Domain/SoloDevBoard.Domain/SoloDevBoard.Domain.csproj" />
-  </Folder>
-  <Folder Name="/src/Infrastructure/">
     <Project Path="src/Infrastructure/SoloDevBoard.Infrastructure/SoloDevBoard.Infrastructure.csproj" />
-  </Folder>
-  <Folder Name="/tests/" />
-  <Folder Name="/tests/App.Tests/">
-    <Project Path="tests/App.Tests/SoloDevBoard.App.Tests/SoloDevBoard.App.Tests.csproj" />
-  </Folder>
-  <Folder Name="/tests/Application.Tests/">
-    <Project Path="tests/Application.Tests/SoloDevBoard.Application.Tests/SoloDevBoard.Application.Tests.csproj" />
-  </Folder>
-  <Folder Name="/tests/Domain.Tests/">
-    <Project Path="tests/Domain.Tests/SoloDevBoard.Domain.Tests/SoloDevBoard.Domain.Tests.csproj" />
-  </Folder>
-  <Folder Name="/tests/Infrastructure.Tests/">
     <Project Path="tests/Infrastructure.Tests/SoloDevBoard.Infrastructure.Tests/SoloDevBoard.Infrastructure.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/App.Tests/SoloDevBoard.App.Tests/SoloDevBoard.App.Tests.csproj" />
+    <Project Path="tests/Application.Tests/SoloDevBoard.Application.Tests/SoloDevBoard.Application.Tests.csproj" />
+    <Project Path="tests/Domain.Tests/SoloDevBoard.Domain.Tests/SoloDevBoard.Domain.Tests.csproj" />
   </Folder>
 </Solution>
