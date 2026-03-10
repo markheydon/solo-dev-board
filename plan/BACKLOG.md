@@ -73,10 +73,10 @@ Labels: `type/epic`, `area/migration`
 
 Labels: `type/epic`, `area/labels`
 
-<!-- Feature #27: Label Manager (planned 2026-03-07, milestone v0.2.0) -->
+<!-- Feature #27: Label Manager — DONE 2026-03-10 (closed via PR #81 merge) -->
 <!-- Enablers: #28 Label domain + ILabelRepository (done — PR #39, 2026-03-08), #29 GitHubLabelRepository (done — 2026-03-08), #31 LabelService (done — 2026-03-08), #49 ADR-0011 retrospective — LabelDto + ILabelManagerService update (done — 2026-03-08) -->
-<!-- Stories: #35 View labels, #33 CRUD labels, #32 Synchronise labels, #34 Apply taxonomy -->
-<!-- Tests: #38 LabelService unit tests, #37 GitHubLabelRepository unit tests, #36 bUnit UI tests -->
+<!-- Stories: #35 View labels (done), #33 CRUD labels (done), #32 Synchronise labels (done), #34 Apply taxonomy (done) -->
+<!-- Tests: #38 LabelService unit tests (done), #37 GitHubLabelRepository unit tests (done), #36 bUnit UI tests (done) -->
 - [x] Test: Unit tests for LabelService (#38) — completed.
   - All CRUD, synchronisation (diff/empty diff), validation, and partial failure scenarios covered.
   - Local build and test suite passing.
