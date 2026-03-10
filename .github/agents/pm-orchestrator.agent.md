@@ -46,6 +46,7 @@ Invoke this agent when you need to:
 - Produce Epic > Feature > Story/Enabler > Test hierarchy
 - Generate acceptance criteria, dependencies, estimates
 - Identify ADR requirements if architectural decisions involved
+- For any Blazor UI work, specify the expected MudBlazor components or layout primitives and note that utility classes should be preferred over bespoke CSS unless a genuine gap is known in advance
 
 ### 4. Issue Creation
 - Use `github-issues` skill to create GitHub issues

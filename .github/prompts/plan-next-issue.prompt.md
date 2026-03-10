@@ -55,6 +55,7 @@ This prompt invokes the **PM Orchestrator Agent**, which executes:
 - Generate acceptance criteria for each work item
 - Identify dependencies and blockers
 - Estimate size (xs/s/m/l/xl)
+- For Blazor UI work, capture the intended MudBlazor components or layout primitives in the plan and assume utility classes before bespoke CSS unless a real MudBlazor gap is already known
 
 ### 4. ADR Check
 - Determine if architectural decision required
@@ -115,7 +116,7 @@ This prompt invokes the **PM Orchestrator Agent**, which executes:
   - Test #36: Label CRUD operation tests (size/xs)
 
 ## Technical Plan Summary
-- **Architecture:** Blazor Server page with MudBlazor data grid components
+- **Architecture:** Blazor Server page composed from MudBlazor components, layout primitives, and utility classes; no bespoke CSS expected by default
 - **Layers affected:** App (UI), Application (service), Infrastructure (GitHub API client)
 - **Dependencies:** Requires GitHubService enhancement to support label CRUD
 - **ADR alignment:** ADR-0012 (MudBlazor component library)

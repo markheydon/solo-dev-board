@@ -87,7 +87,8 @@ Labels: `type/epic`, `area/labels`
 - [x] As a solo developer, I want to delete a label from multiple repositories at once so that I can clean up obsolete labels. _(#33 done — 2026-03-08)_
 - [x] As a solo developer, I want to apply recommended label taxonomy strategies to any repository so that I can start with a sensible default set of labels. _(#34 done — 2026-03-10; includes SoloDevBoard + GitHub default strategy options, preview, confirm/cancel, and per-repository summary)_
 - [x] As a solo developer, I want to see which repositories do not have a specific label so that I can identify gaps. _(#35 done — 2026-03-08)_
-- [ ] As a solo developer, I want to synchronise a target repository's labels to exactly match a source repository's labels so that they stay in lockstep. _(#32 status/todo — v0.2.0)_
+- [x] As a solo developer, I want to synchronise a target repository's labels to exactly match a source repository's labels so that they stay in lockstep. _(#32 done — 2026-03-10; supports preview-first flow, multi-target selection, per-target summary, partial failure reporting, and duplicate submission prevention)_
+  - [x] Test: bUnit component tests for Label Manager UI completed. _(#36 done — 2026-03-10)_
 
 ---
 

@@ -64,6 +64,7 @@ All source code, tests, and documentation changes are committed to this branch. 
   - App (Blazor) → calls use cases via Application layer
 - Apply C# 14 and .NET 10 conventions per `.github/instructions/dotnet-framework.instructions.md`
 - Use MudBlazor components per `.github/skills/mudblazor/SKILL.md` when building UI
+- For Blazor UI work, prefer MudBlazor layout primitives and utility classes before introducing any `.razor.css`; raw HTML and custom CSS require a clear gap in MudBlazor coverage
 - **UK English requirement:** All code comments, string literals, user-facing text in UK English
 - **Search before you write (DRY):** Before writing any helper method, paging loop, error-handling utility, or serialisation logic, search the assembly being modified (and adjacent assemblies in the same layer) for an existing method that already does it. If an equivalent `private static` method exists in a sibling class, promote it to `internal static` rather than duplicating it. Only create new utilities when no equivalent exists anywhere in the codebase.
 
@@ -127,6 +128,9 @@ All source code, tests, and documentation changes are committed to this branch. 
 - **Collection types** — public API methods return `IReadOnlyList<T>` or `IReadOnlyDictionary<TKey,TValue>`, not `List<T>` or `Dictionary<TKey,TValue>`.
 - **File-scoped namespaces** — all `.cs` files use `namespace Foo.Bar;` (not block-scoped).
 - **No business logic in Razor** — `.razor` files contain only rendering and event wiring; non-trivial logic lives in code-behind or Application layer.
+- **MudBlazor-first UI** — interactive controls and layout use MudBlazor components where available; avoid raw HTML except for framework-owned host elements or genuinely unsupported cases.
+- **Utility classes before CSS** — spacing, alignment, sizing, and visibility use MudBlazor utility classes or component parameters before any `.razor.css` is introduced or expanded.
+- **Custom CSS justification** — any new or expanded `.razor.css` must be minimal and defensible because components, parameters, theming, and utility classes were insufficient.
 
 #### Review each changed test file for:
 - **Test naming** — every test method follows `MethodUnderTest_Scenario_ExpectedOutcome`.

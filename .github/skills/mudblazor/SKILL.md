@@ -1,11 +1,6 @@
 ---
 name: mudblazor
-description: >
-  Guide for using the MudBlazor component library in Blazor Server applications.
-  Use this when building or refactoring Blazor pages and components for SoloDevBoard.
-  Covers setup, layout, component usage patterns, dialog and snackbar services,
-  data grids, forms, colour pickers, theming, and bUnit testing with MudBlazor.
-  Also use when troubleshooting z-index, popup rendering, or styling issues.
+description: Guide for using the MudBlazor component library in Blazor Server applications. Use this when building or refactoring Blazor pages and components for SoloDevBoard. Covers setup, layout, component usage patterns, dialog and snackbar services, data grids, forms, colour pickers, theming, and bUnit testing with MudBlazor. Also use when troubleshooting z-index, popup rendering, or styling issues.
 ---
 
 # MudBlazor — Consumer Usage Guide
@@ -14,6 +9,20 @@ description: >
 
 **Official docs:** https://mudblazor.com/  
 **Component demos:** https://mudblazor.com/components/
+
+---
+
+## Decision Order
+
+When building or refactoring UI in SoloDevBoard, make decisions in this order:
+
+1. Use an existing MudBlazor component and its parameters.
+2. Compose MudBlazor layout primitives such as `MudStack`, `MudGrid`, `MudItem`, `MudPaper`, `MudContainer`, and `MudSpacer`.
+3. Apply MudBlazor utility classes in the component `Class` attribute for spacing, alignment, display, and sizing.
+4. Use theme configuration or built-in component properties such as `Color`, `Variant`, `Typo`, `Elevation`, `Dense`, and `GutterSize`.
+5. Only then consider isolated `.razor.css`, and only when the requirement cannot be achieved by the options above.
+
+Custom CSS is an exception, not a normal implementation tool. Raw HTML should be limited to framework-owned host elements or cases where MudBlazor genuinely has no suitable equivalent.
 
 ---
 
@@ -62,7 +71,7 @@ Without `MudPopoverProvider`, popup components (autocomplete, select) will rende
 
 ## Layout Structure
 
-The standard SoloDevBoard layout:
+The current SoloDevBoard baseline follows the official MudBlazor template shape:
 
 ```razor
 <MudLayout>
@@ -83,13 +92,22 @@ The standard SoloDevBoard layout:
         </MudNavMenu>
     </MudDrawer>
 
-    <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
-            @Body
-        </MudContainer>
+    <MudMainContent Class="pt-16 pa-4">
+        @Body
     </MudMainContent>
 </MudLayout>
 ```
+
+Use page-level `MudContainer`, `MudPaper`, `MudStack`, and `MudGrid` composition inside `@Body` rather than reworking `MainLayout` with bespoke wrappers or CSS.
+
+## Styling Guidance
+
+- Prefer component parameters and composition over styling.
+- Prefer MudBlazor utility classes such as `pa-4`, `pt-16`, `mt-4`, `d-flex`, `justify-end`, and `align-center` before writing CSS.
+- Prefer `MudStack` or `MudGrid` over raw `<div>` elements used only for layout.
+- Prefer `MudText`, `MudAlert`, `MudChip`, `MudPaper`, and `MudDivider` over styled HTML elements.
+- Do not add `<style>` blocks to Razor files.
+- Only create or extend `.razor.css` when the requirement cannot be met through components, parameters, theme settings, or utility classes. Keep the CSS isolated and minimal.
 
 ---
 
@@ -310,6 +328,11 @@ Fix: Add `<MudSnackbarProvider />` to `MainLayout.razor`.
 ### Two-way binding on MudColorPicker
 
 Use `@bind-Text` for a hex string, not `@bind-Value` when the model field is a `string`.
+
+### Custom CSS introduced too early
+
+Symptom: A component adds a new `.razor.css` file or bespoke selectors for spacing, alignment, or simple layout.
+Fix: Replace the styling with MudBlazor layout primitives or utility classes first. Only keep CSS that cannot be expressed with built-in component structure, parameters, theming, or utilities.
 
 ---
 

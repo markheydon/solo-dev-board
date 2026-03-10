@@ -328,7 +328,9 @@ public sealed class LabelServiceTests
         Assert.Single(result.ToDelete);
         Assert.Equal("type/story", result.ToAdd[0].Name);
         Assert.Equal("priority/high", result.ToUpdate[0].Name);
-        Assert.Equal("status/obsolete", result.ToDelete[0]);
+        Assert.Equal("status/obsolete", result.ToDelete[0].Name);
+        Assert.Empty(result.Skipped);
+
         _labelRepositoryMock.Verify(repository => repository.CreateLabelAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Never);
         _labelRepositoryMock.Verify(repository => repository.UpdateLabelAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Never);
         _labelRepositoryMock.Verify(repository => repository.DeleteLabelAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -376,6 +378,7 @@ public sealed class LabelServiceTests
         _labelRepositoryMock.Verify(repository => repository.CreateLabelAsync("target-owner", "target-repo", It.Is<Label>(label => label.Name == "priority/high"), It.IsAny<CancellationToken>()), Times.Once);
         _labelRepositoryMock.Verify(repository => repository.UpdateLabelAsync("target-owner", "target-repo", "type/story", It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Once);
         _labelRepositoryMock.Verify(repository => repository.DeleteLabelAsync("target-owner", "target-repo", "status/obsolete", It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Empty(result.Skipped);
     }
 
     [Fact]
@@ -408,6 +411,83 @@ public sealed class LabelServiceTests
         _labelRepositoryMock.Verify(repository => repository.CreateLabelAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Never);
         _labelRepositoryMock.Verify(repository => repository.UpdateLabelAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Never);
         _labelRepositoryMock.Verify(repository => repository.DeleteLabelAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Equal(2, result.Skipped.Count);
+    }
+
+    [Fact]
+    public async Task PreviewLabelSynchronisationAsync_MultipleTargets_ReturnsPerRepositoryPreviews()
+    {
+        // Arrange
+        _labelRepositoryMock
+            .Setup(repository => repository.GetLabelsAsync("source-owner", "source-repo", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new Label { Name = "type/story", Colour = "1d76db", Description = "Story", RepositoryName = "source-repo" },
+                new Label { Name = "priority/high", Colour = "d93f0b", Description = "High", RepositoryName = "source-repo" },
+            ]);
+
+        _labelRepositoryMock
+            .Setup(repository => repository.GetLabelsAsync("target-owner", "target-a", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new Label { Name = "priority/high", Colour = "fbca04", Description = "Old", RepositoryName = "target-a" },
+            ]);
+
+        _labelRepositoryMock
+            .Setup(repository => repository.GetLabelsAsync("target-owner", "target-b", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new Label { Name = "type/story", Colour = "1d76db", Description = "Story", RepositoryName = "target-b" },
+                new Label { Name = "priority/high", Colour = "d93f0b", Description = "High", RepositoryName = "target-b" },
+            ]);
+
+        var sut = new LabelService(_labelRepositoryMock.Object);
+
+        // Act
+        var result = await sut.PreviewLabelSynchronisationAsync(
+            "source-owner/source-repo",
+            ["target-owner/target-a", "target-owner/target-b"]);
+
+        // Assert
+        Assert.Equal(2, result.Count);
+        Assert.Contains(result, item => item.RepositoryFullName == "target-owner/target-a" && item.ToCreate.Count == 1 && item.ToUpdate.Count == 1 && item.Skipped.Count == 0);
+        Assert.Contains(result, item => item.RepositoryFullName == "target-owner/target-b" && item.ToCreate.Count == 0 && item.ToUpdate.Count == 0 && item.Skipped.Count == 2);
+    }
+
+    [Fact]
+    public async Task ApplyLabelSynchronisationAsync_TargetFails_ReturnsPartialFailureWithoutAbortingOtherTargets()
+    {
+        // Arrange
+        _labelRepositoryMock
+            .Setup(repository => repository.GetLabelsAsync("source-owner", "source-repo", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new Label { Name = "type/story", Colour = "1d76db", Description = "Story", RepositoryName = "source-repo" },
+            ]);
+
+        _labelRepositoryMock
+            .Setup(repository => repository.GetLabelsAsync("target-owner", "target-a", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<Label>());
+
+        _labelRepositoryMock
+            .Setup(repository => repository.GetLabelsAsync("target-owner", "target-b", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("GitHub API failure"));
+
+        _labelRepositoryMock
+            .Setup(repository => repository.CreateLabelAsync("target-owner", "target-a", It.IsAny<Label>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string _, string repo, Label label, CancellationToken _) => label with { RepositoryName = repo });
+
+        var sut = new LabelService(_labelRepositoryMock.Object);
+
+        // Act
+        var result = await sut.ApplyLabelSynchronisationAsync(
+            "source-owner/source-repo",
+            ["target-owner/target-a", "target-owner/target-b"]);
+
+        // Assert
+        Assert.Equal(2, result.Count);
+        Assert.Contains(result, item => item.RepositoryFullName == "target-owner/target-a" && !item.HasError && item.CreatedCount == 1);
+        Assert.Contains(result, item => item.RepositoryFullName == "target-owner/target-b" && item.HasError);
+
+        _labelRepositoryMock.Verify(
+            repository => repository.CreateLabelAsync("target-owner", "target-a", It.Is<Label>(label => label.Name == "type/story"), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]

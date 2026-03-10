@@ -163,47 +163,115 @@ public sealed class LabelService : ILabelManagerService
         var sourceLabels = await _labelRepository.GetLabelsAsync(sourceOwner, sourceRepo, cancellationToken).ConfigureAwait(false);
         var targetLabels = await _labelRepository.GetLabelsAsync(targetOwner, targetRepo, cancellationToken).ConfigureAwait(false);
 
-        var sourceByName = sourceLabels.ToDictionary(label => label.Name, StringComparer.OrdinalIgnoreCase);
-        var targetByName = targetLabels.ToDictionary(label => label.Name, StringComparer.OrdinalIgnoreCase);
-
-        var toAdd = sourceLabels
-            .Where(source => !targetByName.ContainsKey(source.Name))
-            .Select(source => MapToDto(source, targetRepo))
-            .ToArray();
-
-        var toUpdate = sourceLabels
-            .Where(source => targetByName.TryGetValue(source.Name, out var target) && !HasSameValues(source, target))
-            .Select(source => MapToDto(source, targetRepo))
-            .ToArray();
-
-        var toDelete = targetLabels
-            .Where(target => !sourceByName.ContainsKey(target.Name))
-            .Select(target => target.Name)
-            .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
+        var preview = BuildSyncPreview(targetOwner, targetRepo, sourceLabels, targetLabels);
 
         if (applyChanges)
         {
-            foreach (var label in toAdd)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                await _labelRepository.CreateLabelAsync(targetOwner, targetRepo, MapToDomain(label, targetRepo), cancellationToken).ConfigureAwait(false);
-            }
+            await ApplySyncPreviewAsync(targetOwner, targetRepo, preview, cancellationToken).ConfigureAwait(false);
+        }
 
-            foreach (var label in toUpdate)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                await _labelRepository.UpdateLabelAsync(targetOwner, targetRepo, label.Name, MapToDomain(label, targetRepo), cancellationToken).ConfigureAwait(false);
-            }
+        return preview;
+    }
 
-            foreach (var labelName in toDelete)
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<LabelSyncRepositoryPreviewDto>> PreviewLabelSynchronisationAsync(string sourceRepositoryFullName, IReadOnlyList<string> targetRepositoryFullNames, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourceRepositoryFullName);
+        var source = SplitRepositoryFullName(sourceRepositoryFullName);
+        var normalisedTargets = NormaliseRepositories(targetRepositoryFullNames);
+
+        var sourceLabels = await _labelRepository.GetLabelsAsync(source.Owner, source.Name, cancellationToken).ConfigureAwait(false);
+        var previews = new List<LabelSyncRepositoryPreviewDto>();
+
+        foreach (var targetRepositoryFullName in normalisedTargets)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var target = SplitRepositoryFullName(targetRepositoryFullName);
+            var targetLabels = await _labelRepository.GetLabelsAsync(target.Owner, target.Name, cancellationToken).ConfigureAwait(false);
+
+            var preview = BuildSyncPreview(target.Owner, target.Name, sourceLabels, targetLabels);
+            previews.Add(new LabelSyncRepositoryPreviewDto(
+                targetRepositoryFullName,
+                preview.ToAdd,
+                preview.ToUpdate,
+                preview.ToDelete,
+                preview.Skipped));
+        }
+
+        return previews
+            .OrderBy(preview => preview.RepositoryFullName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<LabelSyncRepositoryResultDto>> ApplyLabelSynchronisationAsync(string sourceRepositoryFullName, IReadOnlyList<string> targetRepositoryFullNames, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourceRepositoryFullName);
+        var source = SplitRepositoryFullName(sourceRepositoryFullName);
+        var normalisedTargets = NormaliseRepositories(targetRepositoryFullNames);
+
+        var sourceLabels = await _labelRepository.GetLabelsAsync(source.Owner, source.Name, cancellationToken).ConfigureAwait(false);
+        var results = new List<LabelSyncRepositoryResultDto>();
+
+        foreach (var targetRepositoryFullName in normalisedTargets)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var target = SplitRepositoryFullName(targetRepositoryFullName);
+            var createdCount = 0;
+            var updatedCount = 0;
+            var deletedCount = 0;
+
+            try
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                await _labelRepository.DeleteLabelAsync(targetOwner, targetRepo, labelName, cancellationToken).ConfigureAwait(false);
+                var targetLabels = await _labelRepository.GetLabelsAsync(target.Owner, target.Name, cancellationToken).ConfigureAwait(false);
+                var preview = BuildSyncPreview(target.Owner, target.Name, sourceLabels, targetLabels);
+
+                foreach (var label in preview.ToAdd)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    await _labelRepository.CreateLabelAsync(target.Owner, target.Name, MapToDomain(label, target.Name), cancellationToken).ConfigureAwait(false);
+                    createdCount++;
+                }
+
+                foreach (var label in preview.ToUpdate)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    await _labelRepository.UpdateLabelAsync(target.Owner, target.Name, label.Name, MapToDomain(label, target.Name), cancellationToken).ConfigureAwait(false);
+                    updatedCount++;
+                }
+
+                foreach (var label in preview.ToDelete)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    await _labelRepository.DeleteLabelAsync(target.Owner, target.Name, label.Name, cancellationToken).ConfigureAwait(false);
+                    deletedCount++;
+                }
+
+                results.Add(new LabelSyncRepositoryResultDto(
+                    targetRepositoryFullName,
+                    createdCount,
+                    updatedCount,
+                    deletedCount,
+                    preview.Skipped.Count,
+                    null));
+            }
+            catch (Exception ex) when (ex is HttpRequestException or KeyNotFoundException or ArgumentException)
+            {
+                results.Add(new LabelSyncRepositoryResultDto(
+                    targetRepositoryFullName,
+                    createdCount,
+                    updatedCount,
+                    deletedCount,
+                    0,
+                    ex.Message));
             }
         }
 
-        return new LabelSyncPreviewDto(toAdd, toUpdate, toDelete);
+        return results
+            .OrderBy(result => result.RepositoryFullName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
     }
 
     /// <inheritdoc/>
@@ -397,6 +465,72 @@ public sealed class LabelService : ILabelManagerService
             Description = label.Description,
             RepositoryName = repositoryName,
         };
+
+    /// <summary>Builds a synchronisation preview by comparing source and target label sets.</summary>
+    /// <param name="targetOwner">The target repository owner.</param>
+    /// <param name="targetRepo">The target repository name.</param>
+    /// <param name="sourceLabels">The labels from the source repository.</param>
+    /// <param name="targetLabels">The labels from the target repository.</param>
+    /// <returns>A synchronisation preview containing create, update, delete, and skip actions.</returns>
+    private static LabelSyncPreviewDto BuildSyncPreview(string targetOwner, string targetRepo, IReadOnlyList<Label> sourceLabels, IReadOnlyList<Label> targetLabels)
+    {
+        var sourceByName = sourceLabels.ToDictionary(label => label.Name, StringComparer.OrdinalIgnoreCase);
+        var targetByName = targetLabels.ToDictionary(label => label.Name, StringComparer.OrdinalIgnoreCase);
+        var repositoryFullName = $"{targetOwner}/{targetRepo}";
+
+        var toAdd = sourceLabels
+            .Where(source => !targetByName.ContainsKey(source.Name))
+            .Select(source => MapToDto(source, repositoryFullName))
+            .OrderBy(label => label.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var toUpdate = sourceLabels
+            .Where(source => targetByName.TryGetValue(source.Name, out var target) && !HasSameValues(source, target))
+            .Select(source => MapToDto(source, repositoryFullName))
+            .OrderBy(label => label.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var toDelete = targetLabels
+            .Where(target => !sourceByName.ContainsKey(target.Name))
+            .Select(target => MapToDto(target, repositoryFullName))
+            .OrderBy(label => label.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var skipped = sourceLabels
+            .Where(source => targetByName.TryGetValue(source.Name, out var target) && HasSameValues(source, target))
+            .Select(source => MapToDto(source, repositoryFullName))
+            .OrderBy(label => label.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        return new LabelSyncPreviewDto(toAdd, toUpdate, toDelete, skipped);
+    }
+
+    /// <summary>Applies a precomputed synchronisation preview to a target repository.</summary>
+    /// <param name="targetOwner">The target repository owner.</param>
+    /// <param name="targetRepo">The target repository name.</param>
+    /// <param name="preview">The preview describing create, update, and delete operations.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A task that completes when all preview operations have been applied.</returns>
+    private async Task ApplySyncPreviewAsync(string targetOwner, string targetRepo, LabelSyncPreviewDto preview, CancellationToken cancellationToken)
+    {
+        foreach (var label in preview.ToAdd)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await _labelRepository.CreateLabelAsync(targetOwner, targetRepo, MapToDomain(label, targetRepo), cancellationToken).ConfigureAwait(false);
+        }
+
+        foreach (var label in preview.ToUpdate)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await _labelRepository.UpdateLabelAsync(targetOwner, targetRepo, label.Name, MapToDomain(label, targetRepo), cancellationToken).ConfigureAwait(false);
+        }
+
+        foreach (var label in preview.ToDelete)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await _labelRepository.DeleteLabelAsync(targetOwner, targetRepo, label.Name, cancellationToken).ConfigureAwait(false);
+        }
+    }
 
     /// <summary>Normalises, validates, and de-duplicates repository names for bulk operations.</summary>
     /// <param name="repositories">The repository names provided by the caller.</param>

@@ -52,6 +52,20 @@ public interface ILabelManagerService
     /// <returns>A preview of labels to add, update, and delete for the target repository.</returns>
     Task<LabelSyncPreviewDto> SyncLabelsAsync(string sourceOwner, string sourceRepo, string targetOwner, string targetRepo, bool applyChanges = false, CancellationToken cancellationToken = default);
 
+    /// <summary>Builds a synchronisation preview for one source repository and multiple target repositories.</summary>
+    /// <param name="sourceRepositoryFullName">The source repository in owner/repository format.</param>
+    /// <param name="targetRepositoryFullNames">The target repositories in owner/repository format.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A read-only list of per-target synchronisation previews.</returns>
+    Task<IReadOnlyList<LabelSyncRepositoryPreviewDto>> PreviewLabelSynchronisationAsync(string sourceRepositoryFullName, IReadOnlyList<string> targetRepositoryFullNames, CancellationToken cancellationToken = default);
+
+    /// <summary>Applies synchronisation for one source repository to multiple target repositories.</summary>
+    /// <param name="sourceRepositoryFullName">The source repository in owner/repository format.</param>
+    /// <param name="targetRepositoryFullNames">The target repositories in owner/repository format.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A read-only list of per-target synchronisation results.</returns>
+    Task<IReadOnlyList<LabelSyncRepositoryResultDto>> ApplyLabelSynchronisationAsync(string sourceRepositoryFullName, IReadOnlyList<string> targetRepositoryFullNames, CancellationToken cancellationToken = default);
+
     /// <summary>Retrieves the recommended SoloDevBoard label taxonomy.</summary>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>A read-only list of recommended taxonomy labels.</returns>

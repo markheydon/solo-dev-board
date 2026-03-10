@@ -1,0 +1,28 @@
+@using SoloDevBoard.Application.Services
+
+@if (Labels.Count > 0)
+{
+    <MudStack Spacing="1">
+        <MudText Typo="Typo.subtitle2">@Heading</MudText>
+        <MudTable T="LabelDto" Items="Labels" Dense="true" Hover="true">
+            <HeaderContent>
+                <MudTh>Label</MudTh>
+                <MudTh>Colour</MudTh>
+                <MudTh>Description</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Label">@context.Name</MudTd>
+                <MudTd DataLabel="Colour">
+                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                        <MudChip T="string"
+                                 Variant="Variant.Outlined"
+                                 Size="Size.Small"
+                                 Style="@GetColourChipStyle(context.Colour)">@($"#{context.Colour}")</MudChip>
+                    </MudStack>
+                </MudTd>
+                <MudTd DataLabel="Description">@(string.IsNullOrWhiteSpace(context.Description) ? "No description" : context.Description)</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudStack>
+}
+

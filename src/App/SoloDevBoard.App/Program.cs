@@ -5,15 +5,16 @@ using SoloDevBoard.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add MudBlazor services.
+builder.Services.AddMudServices();
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddMudServices();
-builder.Services.AddApplicationServices();
-
-// Register Infrastructure services (GitHub API integration).
+// Add our services.
 // The Infrastructure project is referenced here solely as the DI composition root.
+builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
 var app = builder.Build();
@@ -26,6 +27,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+
 app.UseHttpsRedirection();
 
 app.UseAntiforgery();

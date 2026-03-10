@@ -1,41 +1,27 @@
 ﻿@inherits LayoutComponentBase
+@using SoloDevBoard.Themes
 
-<MudThemeProvider Theme="@AppTheme" />
+<MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
 <MudLayout>
     <MudAppBar Elevation="1">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu"
-                       Color="Color.Inherit"
-                       Edge="Edge.Start"
-                       OnClick="ToggleDrawer" />
-        <MudText Typo="Typo.h6">SoloDevBoard</MudText>
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudText Typo="Typo.h5" Class="ml-3">SoloDevBoard</MudText>
         <MudSpacer />
-        <MudButton Variant="Variant.Text"
-                   Color="Color.Inherit"
-                   Href="https://learn.microsoft.com/aspnet/core/"
-                   Target="_blank"
-                   StartIcon="@Icons.Material.Filled.Info">
-            About
-        </MudButton>
+        <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
+        <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
     </MudAppBar>
-
-    <MudDrawer @bind-Open="_drawerOpen"
-               Variant="DrawerVariant.Responsive"
-               Elevation="1"
-               ClipMode="DrawerClipMode.Always"
-               Class="app-drawer">
+    <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
         <NavMenu />
     </MudDrawer>
-
-    <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="py-4">
-            @Body
-        </MudContainer>
+    <MudMainContent Class="pt-16 pa-4">
+        @Body
     </MudMainContent>
 </MudLayout>
+
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
@@ -44,34 +30,25 @@
 </div>
 
 @code {
-    private static readonly MudTheme AppTheme = new()
-    {
-        PaletteLight = new PaletteLight
-        {
-            Primary = "#3f4a6b",
-            Secondary = "#6f7b99",
-            Tertiary = "#7f8aa8",
-            Background = "#f5f7fb",
-            Surface = "#ffffff",
-            AppbarBackground = "#3f4a6b",
-            AppbarText = "#f6f8ff",
-            DrawerBackground = "#edf1f8",
-            DrawerText = "#263046",
-            TextPrimary = "#232a3a",
-            TextSecondary = "#5f6778",
-            ActionDefault = "#5f6778",
-            ActionDisabled = "#9fa6b7",
-        },
-        LayoutProperties = new LayoutProperties
-        {
-            DefaultBorderRadius = "8px",
-        },
-    };
-
     private bool _drawerOpen = true;
+    private bool _isDarkMode = false;
+    private readonly MudTheme _theme = SoloDevBoardTheme.MudTheme;
 
-    private void ToggleDrawer()
+    private void DrawerToggle()
     {
         _drawerOpen = !_drawerOpen;
     }
+
+    private void DarkModeToggle()
+    {
+        _isDarkMode = !_isDarkMode;
+    }
+
+    public string DarkLightModeButtonIcon => _isDarkMode switch
+    {
+        true => Icons.Material.Rounded.AutoMode,
+        false => Icons.Material.Outlined.DarkMode,
+    };
 }
+
+
