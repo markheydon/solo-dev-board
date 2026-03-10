@@ -113,6 +113,25 @@ public sealed class GitHubService : IGitHubService
     }
 
     /// <inheritdoc/>
+    public async Task<IReadOnlyList<WorkflowRun>> GetWorkflowRunsAsync(string owner, string repo, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+
+        var client = CreateAuthenticatedClient();
+        var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/actions/runs?per_page=25";
+
+        using var response = await client.GetAsync(endpoint, cancellationToken).ConfigureAwait(false);
+        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
+
+        var workflowRunsResponse = await response.Content.ReadFromJsonAsync<WorkflowRunsResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
+            ?? throw CreateInvalidResponseException("Workflow runs response was empty.", endpoint);
+
+        return workflowRunsResponse.WorkflowRuns
+            .ConvertAll(static workflowRun => workflowRun.ToDomain());
+    }
+
+    /// <inheritdoc/>
     public async Task<IReadOnlyList<Milestone>> GetMilestonesAsync(string owner, string repo, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
@@ -514,6 +533,57 @@ public sealed class GitHubService : IGitHubService
             IsDraft = IsDraft,
             CreatedAt = CreatedAt,
             UpdatedAt = UpdatedAt,
+        };
+    }
+
+    /// <summary>DTO wrapper for workflow runs returned by the GitHub <c>GET /repos/{owner}/{repo}/actions/runs</c> endpoint.</summary>
+    private sealed record WorkflowRunsResponseDto
+    {
+        [JsonPropertyName("workflow_runs")]
+        public List<WorkflowRunResponseDto> WorkflowRuns { get; init; } = [];
+    }
+
+    /// <summary>DTO for a workflow run returned by the GitHub <c>GET /repos/{owner}/{repo}/actions/runs</c> endpoint.</summary>
+    private sealed record WorkflowRunResponseDto
+    {
+        [JsonPropertyName("id")]
+        public int Id { get; init; }
+
+        [JsonPropertyName("name")]
+        public string Name { get; init; } = string.Empty;
+
+        [JsonPropertyName("status")]
+        public string? Status { get; init; }
+
+        [JsonPropertyName("conclusion")]
+        public string? Conclusion { get; init; }
+
+        [JsonPropertyName("head_branch")]
+        public string? HeadBranch { get; init; }
+
+        [JsonPropertyName("head_sha")]
+        public string? HeadSha { get; init; }
+
+        [JsonPropertyName("created_at")]
+        public DateTimeOffset CreatedAt { get; init; }
+
+        [JsonPropertyName("updated_at")]
+        public DateTimeOffset UpdatedAt { get; init; }
+
+        [JsonPropertyName("html_url")]
+        public string? HtmlUrl { get; init; }
+
+        public WorkflowRun ToDomain() => new()
+        {
+            Id = Id,
+            WorkflowName = Name,
+            Status = Status ?? string.Empty,
+            Conclusion = Conclusion ?? string.Empty,
+            HeadBranch = HeadBranch ?? string.Empty,
+            HeadSha = HeadSha ?? string.Empty,
+            CreatedAt = CreatedAt,
+            UpdatedAt = UpdatedAt,
+            HtmlUrl = HtmlUrl ?? string.Empty,
         };
     }
 
