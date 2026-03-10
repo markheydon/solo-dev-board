@@ -12,6 +12,9 @@ public sealed record Issue : IAggregate
     /// <summary>Gets the title of the issue.</summary>
     public string Title { get; init; } = string.Empty;
 
+    /// <summary>Gets the web URL of the issue.</summary>
+    public string HtmlUrl { get; init; } = string.Empty;
+
     /// <summary>Gets the body content of the issue.</summary>
     public string Body { get; init; } = string.Empty;
 

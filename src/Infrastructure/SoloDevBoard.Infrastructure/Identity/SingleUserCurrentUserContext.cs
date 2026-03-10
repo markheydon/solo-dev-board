@@ -13,6 +13,21 @@ public sealed class SingleUserCurrentUserContext(IOptions<GitHubAuthOptions> aut
     private readonly GitHubAuthOptions _authOptions = authOptions?.Value ?? throw new ArgumentNullException(nameof(authOptions));
 
     /// <inheritdoc/>
+    public string OwnerLogin
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_authOptions.OwnerLogin))
+            {
+                throw new InvalidOperationException(
+                    $"GitHub owner login is not configured. Check configuration key '{GitHubAuthOptions.SectionName}:{nameof(GitHubAuthOptions.OwnerLogin)}'.");
+            }
+
+            return _authOptions.OwnerLogin;
+        }
+    }
+
+    /// <inheritdoc/>
     public string GetAccessToken()
     {
         if (string.IsNullOrWhiteSpace(_authOptions.PersonalAccessToken))

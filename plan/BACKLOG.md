@@ -37,7 +37,7 @@ Labels: `type/epic`, `area/infrastructure`
 Labels: `type/epic`, `area/dashboard`
 
 <!-- Feature #40: Audit Dashboard (planned 2026-03-08, milestone v0.2.0) -->
-<!-- Enablers: #41 WorkflowRun domain + IGitHubService workflow runs (done — 2026-03-10), #42 Full AuditDashboardService -->
+<!-- Enablers: #41 WorkflowRun domain + IGitHubService workflow runs (done — 2026-03-10), #42 Full AuditDashboardService (done — 2026-03-10) -->
 <!-- Stories: #43 Open issues + PR summary, #44 Health indicators, #45 Filter by repository -->
 <!-- Tests: #46 AuditDashboardService unit tests, #47 GitHubService workflow run tests, #48 bUnit UI tests -->
 
