@@ -239,11 +239,182 @@ public sealed class LabelsTests
         });
     }
 
+    [Fact]
+    public async Task Labels_PreviewRecommendedTaxonomy_WhenSelected_ShowsPreviewCard()
+    {
+        // Arrange
+        var repoA = CreateRepository("owner", "repo-a");
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([repoA]);
+
+        _labelManagerServiceMock
+            .Setup(service => service.PreviewRecommendedTaxonomyAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new RecommendedTaxonomyRepositoryPreviewDto(
+                    "owner/repo-a",
+                    [new LabelDto("type/story", "1d76db", "Story", "owner/repo-a")],
+                    [new LabelDto("priority/high", "d93f0b", "High", "owner/repo-a")],
+                    [new LabelDto("status/todo", "ffffff", "Ready", "owner/repo-a")]),
+            ]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
+
+        await SelectRepositoriesAsync(cut, repoA);
+        cut.Find("[data-testid='preview-taxonomy-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Taxonomy preview", cut.Markup);
+            Assert.Contains("owner/repo-a", cut.Markup);
+            Assert.Contains("Labels to create", cut.Markup);
+            Assert.Contains("Labels to update", cut.Markup);
+            Assert.Contains("Confirm apply taxonomy", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task Labels_ApplyRecommendedTaxonomy_WhenConfirmed_ShowsSummary()
+    {
+        // Arrange
+        var repoA = CreateRepository("owner", "repo-a");
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([repoA]);
+
+        _labelManagerServiceMock
+            .Setup(service => service.PreviewRecommendedTaxonomyAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new RecommendedTaxonomyRepositoryPreviewDto(
+                    "owner/repo-a",
+                    [new LabelDto("type/story", "1d76db", "Story", "owner/repo-a")],
+                    [],
+                    []),
+            ]);
+
+        _labelManagerServiceMock
+            .Setup(service => service.ApplyRecommendedTaxonomyAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new RecommendedTaxonomyRepositoryResultDto("owner/repo-a", 1, 0, 0, null),
+            ]);
+
+        _labelManagerServiceMock
+            .Setup(service => service.GetLabelsForRepositoriesAsync("owner", It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<LabelDto>());
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
+
+        await SelectRepositoriesAsync(cut, repoA);
+        cut.Find("[data-testid='preview-taxonomy-button']").Click();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='confirm-apply-taxonomy-button']"));
+
+        cut.Find("[data-testid='confirm-apply-taxonomy-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Apply summary", cut.Markup);
+            Assert.Contains("Created: 1, Updated: 0, Skipped: 0", cut.Markup);
+            Assert.Contains("Applied taxonomy successfully", cut.Markup);
+        });
+
+        _labelManagerServiceMock.Verify(
+            service => service.ApplyRecommendedTaxonomyAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task Labels_InitialLoad_DefaultsToSoloDevBoardStrategy()
+    {
+        // Arrange
+        var repoA = CreateRepository("owner", "repo-a");
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([repoA]);
+
+        _labelManagerServiceMock
+            .Setup(service => service.PreviewRecommendedTaxonomyAsync("solodevboard", It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new RecommendedTaxonomyRepositoryPreviewDto("owner/repo-a", [], [], []),
+            ]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
+        await SelectRepositoriesAsync(cut, repoA);
+        cut.Find("[data-testid='preview-taxonomy-button']").Click();
+
+        // Assert
+        _labelManagerServiceMock.Verify(
+            service => service.PreviewRecommendedTaxonomyAsync("solodevboard", It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task Labels_PreviewRecommendedTaxonomy_WhenClickedTwiceDuringPendingCall_CallsServiceOnce()
+    {
+        // Arrange
+        var repoA = CreateRepository("owner", "repo-a");
+        var previewTask = new TaskCompletionSource<IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto>>();
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([repoA]);
+
+        _labelManagerServiceMock
+            .Setup(service => service.PreviewRecommendedTaxonomyAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
+            .Returns(previewTask.Task);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
+        await SelectRepositoriesAsync(cut, repoA);
+
+        var previewButton = cut.Find("[data-testid='preview-taxonomy-button']");
+        previewButton.Click();
+        previewButton.Click();
+
+        await cut.InvokeAsync(() => previewTask.SetResult([
+            new RecommendedTaxonomyRepositoryPreviewDto("owner/repo-a", [], [], []),
+        ]));
+
+        cut.WaitForAssertion(() => Assert.Contains("Taxonomy preview", cut.Markup));
+
+        // Assert
+        _labelManagerServiceMock.Verify(
+            service => service.PreviewRecommendedTaxonomyAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
     private BunitContext CreateContext()
     {
         var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddMudServices();
+
+        _labelManagerServiceMock
+            .Setup(service => service.GetRecommendedLabelStrategiesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new RecommendedLabelStrategyDto("solodevboard", "SoloDevBoard", "SoloDevBoard canonical taxonomy"),
+                new RecommendedLabelStrategyDto("github-default", "GitHub default", "GitHub default labels"),
+            ]);
+
         ctx.Services.AddScoped(_ => _repositoryServiceMock.Object);
         ctx.Services.AddScoped(_ => _labelManagerServiceMock.Object);
 

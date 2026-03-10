@@ -5,7 +5,7 @@ namespace SoloDevBoard.Application.Services;
 /// <summary>Default implementation of <see cref="ILabelManagerService"/>.</summary>
 public sealed class LabelService : ILabelManagerService
 {
-    private static readonly IReadOnlyList<LabelDto> RecommendedTaxonomy =
+    private static readonly IReadOnlyList<LabelDto> SoloDevBoardRecommendedTaxonomy =
     [
         new("type/epic", "6f42c1", "A high-level grouping of related features (spans a full phase)", string.Empty),
         new("type/feature", "0075ca", "A Feature — groups related stories within an epic", string.Empty),
@@ -42,6 +42,25 @@ public sealed class LabelService : ILabelManagerService
         new("size/l", "f9d0c4", "Large - two to three days", string.Empty),
         new("size/xl", "d4c5f9", "Extra-large - more than three days; consider splitting", string.Empty),
     ];
+
+    private static readonly IReadOnlyList<LabelDto> GitHubDefaultTaxonomy =
+    [
+        new("bug", "d73a4a", "Something is not working", string.Empty),
+        new("documentation", "0075ca", "Improvements or additions to documentation", string.Empty),
+        new("duplicate", "cfd3d7", "This issue or pull request already exists", string.Empty),
+        new("enhancement", "a2eeef", "New feature or request", string.Empty),
+        new("good first issue", "7057ff", "Good for newcomers", string.Empty),
+        new("help wanted", "008672", "Extra attention is needed", string.Empty),
+        new("invalid", "e4e669", "This does not appear to be valid", string.Empty),
+        new("question", "d876e3", "Further information is requested", string.Empty),
+        new("wontfix", "ffffff", "This will not be worked on", string.Empty),
+    ];
+
+    private static readonly IReadOnlyList<RecommendedLabelStrategyDto> RecommendedStrategies =
+        BuildRecommendedStrategies();
+
+    private static readonly IReadOnlyDictionary<string, IReadOnlyList<LabelDto>> RecommendedStrategyLabelsById =
+        BuildRecommendedStrategyLabelsById();
 
     private readonly ILabelRepository _labelRepository;
 
@@ -191,7 +210,94 @@ public sealed class LabelService : ILabelManagerService
     public Task<IReadOnlyList<LabelDto>> GetRecommendedTaxonomyAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return Task.FromResult<IReadOnlyList<LabelDto>>(RecommendedTaxonomy.ToArray());
+        return Task.FromResult<IReadOnlyList<LabelDto>>(SoloDevBoardRecommendedTaxonomy.ToArray());
+    }
+
+    /// <inheritdoc/>
+    public Task<IReadOnlyList<RecommendedLabelStrategyDto>> GetRecommendedLabelStrategiesAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult<IReadOnlyList<RecommendedLabelStrategyDto>>(RecommendedStrategies.ToArray());
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto>> PreviewRecommendedTaxonomyAsync(string strategyId, IReadOnlyList<string> repositories, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(strategyId);
+        var normalisedRepositories = NormaliseRepositories(repositories);
+
+        var strategyLabels = ResolveRecommendedStrategyLabels(strategyId);
+        var previews = new List<RecommendedTaxonomyRepositoryPreviewDto>();
+
+        foreach (var repositoryFullName in normalisedRepositories)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var repository = SplitRepositoryFullName(repositoryFullName);
+            var existing = await _labelRepository.GetLabelsAsync(repository.Owner, repository.Name, cancellationToken).ConfigureAwait(false);
+            previews.Add(BuildRepositoryPreview(repositoryFullName, strategyLabels, existing));
+        }
+
+        return previews
+            .OrderBy(preview => preview.RepositoryFullName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<RecommendedTaxonomyRepositoryResultDto>> ApplyRecommendedTaxonomyAsync(string strategyId, IReadOnlyList<string> repositories, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(strategyId);
+        var normalisedRepositories = NormaliseRepositories(repositories);
+
+        var strategyLabels = ResolveRecommendedStrategyLabels(strategyId);
+        var results = new List<RecommendedTaxonomyRepositoryResultDto>();
+
+        foreach (var repositoryFullName in normalisedRepositories)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            try
+            {
+                var repository = SplitRepositoryFullName(repositoryFullName);
+                var existing = await _labelRepository.GetLabelsAsync(repository.Owner, repository.Name, cancellationToken).ConfigureAwait(false);
+                var preview = BuildRepositoryPreview(repositoryFullName, strategyLabels, existing);
+
+                foreach (var labelToCreate in preview.ToCreate)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    await _labelRepository
+                        .CreateLabelAsync(repository.Owner, repository.Name, MapToDomain(labelToCreate, repository.Name), cancellationToken)
+                        .ConfigureAwait(false);
+                }
+
+                foreach (var labelToUpdate in preview.ToUpdate)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    await _labelRepository
+                        .UpdateLabelAsync(repository.Owner, repository.Name, labelToUpdate.Name, MapToDomain(labelToUpdate, repository.Name), cancellationToken)
+                        .ConfigureAwait(false);
+                }
+
+                results.Add(new RecommendedTaxonomyRepositoryResultDto(
+                    repositoryFullName,
+                    preview.ToCreate.Count,
+                    preview.ToUpdate.Count,
+                    preview.Skipped.Count,
+                    null));
+            }
+            catch (Exception ex) when (ex is HttpRequestException or KeyNotFoundException or ArgumentException)
+            {
+                results.Add(new RecommendedTaxonomyRepositoryResultDto(
+                    repositoryFullName,
+                    0,
+                    0,
+                    0,
+                    ex.Message));
+            }
+        }
+
+        return results
+            .OrderBy(result => result.RepositoryFullName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
     }
 
     /// <summary>Maps a domain label record to the application DTO shape.</summary>
@@ -200,6 +306,84 @@ public sealed class LabelService : ILabelManagerService
     /// <returns>A mapped application label DTO.</returns>
     private static LabelDto MapToDto(Label label, string repositoryName)
         => new(label.Name, label.Colour, label.Description, repositoryName);
+
+    /// <summary>Resolves strategy labels by strategy identifier.</summary>
+    /// <param name="strategyId">The strategy identifier to resolve.</param>
+    /// <returns>The label set for the requested strategy.</returns>
+    /// <exception cref="ArgumentException">Thrown when the strategy identifier is unsupported.</exception>
+    private static IReadOnlyList<LabelDto> ResolveRecommendedStrategyLabels(string strategyId)
+    {
+        if (RecommendedStrategyLabelsById.TryGetValue(strategyId, out var labels))
+        {
+            return labels;
+        }
+
+        throw new ArgumentException($"Unsupported recommended strategy '{strategyId}'.", nameof(strategyId));
+    }
+
+    /// <summary>Builds a preview for one repository against a strategy label set.</summary>
+    /// <param name="repositoryFullName">The owner/repository full name.</param>
+    /// <param name="strategyLabels">The strategy labels to compare against.</param>
+    /// <param name="existingLabels">The labels currently present in the repository.</param>
+    /// <returns>A repository preview showing create, update, and skip actions.</returns>
+    private static RecommendedTaxonomyRepositoryPreviewDto BuildRepositoryPreview(string repositoryFullName, IReadOnlyList<LabelDto> strategyLabels, IReadOnlyList<Label> existingLabels)
+    {
+        var existingByName = existingLabels.ToDictionary(label => label.Name, StringComparer.OrdinalIgnoreCase);
+
+        var toCreate = strategyLabels
+            .Where(label => !existingByName.ContainsKey(label.Name))
+            .Select(label => label with { RepositoryName = repositoryFullName })
+            .OrderBy(label => label.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var toUpdate = strategyLabels
+            .Where(label => existingByName.TryGetValue(label.Name, out var existing)
+                && !HasSameValues(MapToDomain(label, repositoryFullName), existing))
+            .Select(label => label with { RepositoryName = repositoryFullName })
+            .OrderBy(label => label.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var skipped = strategyLabels
+            .Where(label => existingByName.TryGetValue(label.Name, out var existing)
+                && HasSameValues(MapToDomain(label, repositoryFullName), existing))
+            .Select(label => label with { RepositoryName = repositoryFullName })
+            .OrderBy(label => label.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        return new RecommendedTaxonomyRepositoryPreviewDto(repositoryFullName, toCreate, toUpdate, skipped);
+    }
+
+    /// <summary>Builds available recommended strategy descriptors.</summary>
+    /// <returns>A read-only list of recommended strategy descriptors.</returns>
+    private static IReadOnlyList<RecommendedLabelStrategyDto> BuildRecommendedStrategies()
+        =>
+        [
+            new("solodevboard", "SoloDevBoard", "The SoloDevBoard canonical taxonomy covering type, priority, status, area, and size labels."),
+            new("github-default", "GitHub default", "GitHub's default label set for new repositories."),
+        ];
+
+    /// <summary>Builds a strategy-to-label-set map keyed by strategy identifier.</summary>
+    /// <returns>A read-only dictionary from strategy identifier to strategy labels.</returns>
+    private static IReadOnlyDictionary<string, IReadOnlyList<LabelDto>> BuildRecommendedStrategyLabelsById()
+    {
+        var labelsById = new Dictionary<string, IReadOnlyList<LabelDto>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["solodevboard"] = SoloDevBoardRecommendedTaxonomy,
+            ["github-default"] = GitHubDefaultTaxonomy,
+        };
+
+        var strategyIds = RecommendedStrategies.Select(strategy => strategy.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var unresolvedIds = strategyIds
+            .Where(strategyId => !labelsById.ContainsKey(strategyId))
+            .ToArray();
+
+        if (unresolvedIds.Length > 0)
+        {
+            throw new InvalidOperationException($"Missing label definitions for recommended strategies: {string.Join(", ", unresolvedIds)}.");
+        }
+
+        return labelsById;
+    }
 
     /// <summary>Maps an application label DTO to a domain label record.</summary>
     /// <param name="label">The application label DTO to map.</param>
@@ -236,6 +420,26 @@ public sealed class LabelService : ILabelManagerService
         return normalised;
     }
 
+    /// <summary>Splits an owner/repository full name into owner and repository segments.</summary>
+    /// <param name="fullName">The full repository name in owner/repository format.</param>
+    /// <returns>The split repository coordinates.</returns>
+    /// <exception cref="ArgumentException">Thrown when the full name is missing or invalid.</exception>
+    private static RepositoryCoordinates SplitRepositoryFullName(string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+        {
+            throw new ArgumentException("Repository full name must be provided.", nameof(fullName));
+        }
+
+        var parts = fullName.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length != 2)
+        {
+            throw new ArgumentException($"Repository '{fullName}' must be in owner/repository format.", nameof(fullName));
+        }
+
+        return new RepositoryCoordinates(parts[0], parts[1]);
+    }
+
     /// <summary>Determines whether two labels have equivalent values for synchronisation purposes.</summary>
     /// <param name="left">The first label to compare.</param>
     /// <param name="right">The second label to compare.</param>
@@ -244,4 +448,7 @@ public sealed class LabelService : ILabelManagerService
         => string.Equals(left.Name, right.Name, StringComparison.OrdinalIgnoreCase)
             && string.Equals(left.Colour, right.Colour, StringComparison.OrdinalIgnoreCase)
             && string.Equals(left.Description, right.Description, StringComparison.Ordinal);
+
+    /// <summary>Represents split owner/repository coordinates.</summary>
+    private sealed record RepositoryCoordinates(string Owner, string Name);
 }

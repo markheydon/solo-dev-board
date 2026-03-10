@@ -56,4 +56,23 @@ public interface ILabelManagerService
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>A read-only list of recommended taxonomy labels.</returns>
     Task<IReadOnlyList<LabelDto>> GetRecommendedTaxonomyAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Retrieves available built-in recommended label strategies.</summary>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A read-only list of recommended strategy descriptors.</returns>
+    Task<IReadOnlyList<RecommendedLabelStrategyDto>> GetRecommendedLabelStrategiesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Builds a preview for applying a recommended taxonomy to repositories.</summary>
+    /// <param name="strategyId">The recommended strategy identifier.</param>
+    /// <param name="repositories">The target repositories in owner/repository format.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A read-only list of repository previews showing create, update, and skip actions.</returns>
+    Task<IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto>> PreviewRecommendedTaxonomyAsync(string strategyId, IReadOnlyList<string> repositories, CancellationToken cancellationToken = default);
+
+    /// <summary>Applies a recommended taxonomy to repositories and returns per-repository summaries.</summary>
+    /// <param name="strategyId">The recommended strategy identifier.</param>
+    /// <param name="repositories">The target repositories in owner/repository format.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A read-only list of per-repository results.</returns>
+    Task<IReadOnlyList<RecommendedTaxonomyRepositoryResultDto>> ApplyRecommendedTaxonomyAsync(string strategyId, IReadOnlyList<string> repositories, CancellationToken cancellationToken = default);
 }

@@ -67,10 +67,161 @@
                             Load selected repositories
                         </MudButton>
                     </MudStack>
+
+                    <MudDivider />
+
+                    <MudText Typo="Typo.h6">Apply recommended taxonomy</MudText>
+                    <MudText Typo="Typo.body2">Choose a strategy, preview changes, then confirm to apply labels across selected repositories.</MudText>
+
+                    <MudSelect T="string"
+                               Label="Recommended strategy"
+                               Value="selectedStrategyId"
+                               ValueChanged="OnStrategySelectedAsync"
+                               Variant="Variant.Outlined"
+                               Disabled="@(ShowLoadingState || !selectedRepositories.Any() || recommendedStrategies.Count == 0)"
+                               data-testid="taxonomy-strategy-select">
+                        @foreach (var strategy in recommendedStrategies)
+                        {
+                            <MudSelectItem T="string" Value="@strategy.Id">@strategy.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+
+                    @if (!string.IsNullOrWhiteSpace(SelectedStrategyDescription))
+                    {
+                        <MudText Typo="Typo.body2">@SelectedStrategyDescription</MudText>
+                    }
+
+                    <MudStack Row="true" Spacing="1">
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Primary"
+                                   Disabled="@(!CanPreviewRecommendedTaxonomy)"
+                                   OnClick="PreviewRecommendedTaxonomyAsync"
+                                   data-testid="preview-taxonomy-button">
+                            Preview recommended taxonomy
+                        </MudButton>
+
+                        @if (showRecommendedPreview)
+                        {
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       Disabled="@(!CanApplyRecommendedTaxonomy)"
+                                       OnClick="ApplyRecommendedTaxonomyAsync"
+                                       data-testid="confirm-apply-taxonomy-button">
+                                Confirm apply taxonomy
+                            </MudButton>
+
+                            <MudButton Variant="Variant.Text"
+                                       Color="Color.Secondary"
+                                       OnClick="CancelRecommendedPreview"
+                                       data-testid="cancel-apply-taxonomy-button">
+                                Cancel
+                            </MudButton>
+                        }
+                    </MudStack>
+
+                    @if (!string.IsNullOrWhiteSpace(taxonomyOperationMessage))
+                    {
+                        <MudAlert Severity="@taxonomyOperationSeverity" Dense="true" Variant="Variant.Outlined" data-testid="taxonomy-operation-message">
+                            @taxonomyOperationMessage
+                        </MudAlert>
+                    }
                 </MudStack>
             }
         </MudStack>
     </MudPaper>
+
+@if (showRecommendedPreview)
+{
+    <MudPaper Class="pa-4" Elevation="1" data-testid="taxonomy-preview-card">
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h6">Taxonomy preview</MudText>
+            @foreach (var preview in recommendedPreview)
+            {
+                <MudPaper Class="pa-3" Outlined="true">
+                    <MudText Typo="Typo.subtitle1">@preview.RepositoryFullName</MudText>
+                    <MudText Typo="Typo.body2">Create: @preview.ToCreate.Count, Update: @preview.ToUpdate.Count, Skip: @preview.Skipped.Count</MudText>
+
+                    @if (preview.ToCreate.Count > 0)
+                    {
+                        <div class="taxonomy-preview-section">
+                            <MudText Class="taxonomy-preview-heading" Typo="Typo.subtitle2">Labels to create</MudText>
+                            <MudTable T="LabelDto" Items="preview.ToCreate" Dense="true" Hover="true" Class="taxonomy-preview-table">
+                            <HeaderContent>
+                                <MudTh>Label</MudTh>
+                                <MudTh>Colour</MudTh>
+                                <MudTh>Description</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Label">@context.Name</MudTd>
+                                <MudTd DataLabel="Colour">
+                                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                        <MudIcon Class="taxonomy-colour-icon"
+                                                 Icon="@Icons.Material.Filled.Circle"
+                                                 Style="@GetColourIconStyle(context.Colour)"
+                                                 Title="@($"#{context.Colour}")" />
+                                        <MudChip T="string" Class="colour-chip" Variant="Variant.Outlined" Size="Size.Small">@($"#{context.Colour}")</MudChip>
+                                    </MudStack>
+                                </MudTd>
+                                <MudTd DataLabel="Description">@(string.IsNullOrWhiteSpace(context.Description) ? "No description" : context.Description)</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                        </div>
+                    }
+
+                    @if (preview.ToUpdate.Count > 0)
+                    {
+                        <div class="taxonomy-preview-section">
+                            <MudText Class="taxonomy-preview-heading" Typo="Typo.subtitle2">Labels to update</MudText>
+                            <MudTable T="LabelDto" Items="preview.ToUpdate" Dense="true" Hover="true" Class="taxonomy-preview-table">
+                            <HeaderContent>
+                                <MudTh>Label</MudTh>
+                                <MudTh>Colour</MudTh>
+                                <MudTh>Description</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Label">@context.Name</MudTd>
+                                <MudTd DataLabel="Colour">
+                                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                        <MudIcon Class="taxonomy-colour-icon"
+                                                 Icon="@Icons.Material.Filled.Circle"
+                                                 Style="@GetColourIconStyle(context.Colour)"
+                                                 Title="@($"#{context.Colour}")" />
+                                        <MudChip T="string" Class="colour-chip" Variant="Variant.Outlined" Size="Size.Small">@($"#{context.Colour}")</MudChip>
+                                    </MudStack>
+                                </MudTd>
+                                <MudTd DataLabel="Description">@(string.IsNullOrWhiteSpace(context.Description) ? "No description" : context.Description)</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                        </div>
+                    }
+                </MudPaper>
+            }
+        </MudStack>
+    </MudPaper>
+}
+
+@if (recommendedApplyResults.Count > 0)
+{
+    <MudPaper Class="pa-4" Elevation="1" data-testid="taxonomy-summary-card">
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h6">Apply summary</MudText>
+            @foreach (var result in recommendedApplyResults)
+            {
+                <MudPaper Class="pa-3" Outlined="true">
+                    <MudText Typo="Typo.subtitle1">@result.RepositoryFullName</MudText>
+                    @if (result.HasError)
+                    {
+                        <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Outlined">@result.ErrorMessage</MudAlert>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2">Created: @result.CreatedCount, Updated: @result.UpdatedCount, Skipped: @result.SkippedCount</MudText>
+                    }
+                </MudPaper>
+            }
+        </MudStack>
+    </MudPaper>
+}
 
 @if (ShowLabelFilter)
 {

@@ -42,6 +42,28 @@ Planned interactions include:
 - Additional bulk operations for standard label templates.
 
 
+## Applying Recommended Taxonomy
+
+You can apply a recommended label taxonomy to selected repositories using a preview and confirm workflow.
+
+1. Select one or more active repositories in the repository selector.
+2. Choose a recommended strategy.
+3. Select `Preview recommended taxonomy` to review proposed changes per repository.
+4. Confirm or cancel before any changes are applied.
+5. Review the per-repository summary after apply completes.
+
+Current built-in strategies:
+
+- `SoloDevBoard` strategy.
+- `GitHub default` strategy.
+
+The preview shows the labels that will be created, updated, and skipped for each selected repository. Labels that already match the selected strategy exactly are skipped, and no redundant API update call is made for those labels.
+
+The apply summary is shown per repository and includes created, updated, and skipped counts. If one repository fails due to a GitHub API error, the summary marks that repository with an error while still showing successful outcomes for other repositories.
+
+Strategies are currently built in for the MVP stage. Future releases can externalise strategy definitions so custom strategies can be managed without code changes.
+
+
 ## Configuration
 
 *Coming soon — this section will describe configuration options for the Label Manager.*

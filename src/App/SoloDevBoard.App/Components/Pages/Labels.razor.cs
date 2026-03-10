@@ -39,15 +39,58 @@ public partial class Labels : ComponentBase
     private bool hasLoadedLabels;
     private bool hasRepositoryLoadFailure;
     private string? errorMessage;
+    private IReadOnlyList<RecommendedLabelStrategyDto> recommendedStrategies = [];
+    private string selectedStrategyId = string.Empty;
+    private IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto> recommendedPreview = [];
+    private IReadOnlyList<RecommendedTaxonomyRepositoryResultDto> recommendedApplyResults = [];
+    private bool showRecommendedPreview;
+    private bool isPreviewingRecommendedTaxonomy;
+    private bool isApplyingRecommendedTaxonomy;
+    private string? taxonomyOperationMessage;
+    private Severity taxonomyOperationSeverity = Severity.Info;
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadRecommendedStrategiesAsync();
         await LoadRepositoriesAsync();
+    }
+
+    private async Task LoadRecommendedStrategiesAsync()
+    {
+        try
+        {
+            recommendedStrategies = (await LabelManagerService.GetRecommendedLabelStrategiesAsync())
+                .OrderBy(strategy => strategy.Name, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            selectedStrategyId = recommendedStrategies
+                .FirstOrDefault(strategy => strategy.Id.Equals("solodevboard", StringComparison.OrdinalIgnoreCase))?.Id
+                ?? recommendedStrategies.FirstOrDefault()?.Id
+                ?? string.Empty;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load recommended label strategies.");
+            recommendedStrategies = [];
+            selectedStrategyId = string.Empty;
+            taxonomyOperationSeverity = Severity.Error;
+            taxonomyOperationMessage = "Unable to load recommended taxonomy strategies.";
+        }
     }
 
     private async Task ReloadRepositoriesAsync()
     {
         await LoadRepositoriesAsync();
+    }
+
+    private Task OnStrategySelectedAsync(string strategyId)
+    {
+        selectedStrategyId = strategyId;
+        recommendedPreview = [];
+        showRecommendedPreview = false;
+        recommendedApplyResults = [];
+        taxonomyOperationMessage = null;
+        return Task.CompletedTask;
     }
 
     private async Task LoadRepositoriesAsync()
@@ -67,6 +110,10 @@ public partial class Labels : ComponentBase
 
             selectedRepositories = [];
             repositoryAutocompleteValue = null;
+            recommendedPreview = [];
+            recommendedApplyResults = [];
+            showRecommendedPreview = false;
+            taxonomyOperationMessage = null;
         }
         catch (HttpRequestException ex)
         {
@@ -101,6 +148,10 @@ public partial class Labels : ComponentBase
         }
 
         repositoryAutocompleteValue = null;
+        recommendedPreview = [];
+        showRecommendedPreview = false;
+        recommendedApplyResults = [];
+        taxonomyOperationMessage = null;
         return Task.CompletedTask;
     }
 
@@ -129,6 +180,119 @@ public partial class Labels : ComponentBase
         selectedRepositories = selectedRepositories
             .Where(repository => !repository.FullName.Equals(repositoryFullName, StringComparison.OrdinalIgnoreCase))
             .ToArray();
+
+        recommendedPreview = [];
+        showRecommendedPreview = false;
+        recommendedApplyResults = [];
+        taxonomyOperationMessage = null;
+    }
+
+    private async Task PreviewRecommendedTaxonomyAsync()
+    {
+        if (isPreviewingRecommendedTaxonomy)
+        {
+            return;
+        }
+
+        if (!TryGetSelectedRepositoryFullNames(out var selectedFullNames))
+        {
+            Snackbar.Add("Select at least one repository before previewing taxonomy changes.", Severity.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(selectedStrategyId))
+        {
+            Snackbar.Add("Select a recommended strategy before previewing taxonomy changes.", Severity.Warning);
+            return;
+        }
+
+        isPreviewingRecommendedTaxonomy = true;
+        try
+        {
+            taxonomyOperationMessage = null;
+            recommendedApplyResults = [];
+            recommendedPreview = await LabelManagerService.PreviewRecommendedTaxonomyAsync(selectedStrategyId, selectedFullNames);
+            showRecommendedPreview = true;
+        }
+        catch (HttpRequestException ex)
+        {
+            Logger.LogError(ex, "GitHub API request failed while previewing strategy {StrategyId}.", selectedStrategyId);
+            taxonomyOperationSeverity = Severity.Error;
+            taxonomyOperationMessage = $"GitHub API request failed while previewing taxonomy changes. {ex.Message}";
+            showRecommendedPreview = false;
+            recommendedPreview = [];
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to preview strategy {StrategyId}.", selectedStrategyId);
+            taxonomyOperationSeverity = Severity.Error;
+            taxonomyOperationMessage = "An unexpected error occurred while previewing taxonomy changes.";
+            showRecommendedPreview = false;
+            recommendedPreview = [];
+        }
+        finally
+        {
+            isPreviewingRecommendedTaxonomy = false;
+        }
+    }
+
+    private void CancelRecommendedPreview()
+    {
+        showRecommendedPreview = false;
+        recommendedPreview = [];
+        taxonomyOperationMessage = "Taxonomy apply was cancelled.";
+        taxonomyOperationSeverity = Severity.Info;
+    }
+
+    private async Task ApplyRecommendedTaxonomyAsync()
+    {
+        if (!TryGetSelectedRepositoryFullNames(out var selectedFullNames))
+        {
+            Snackbar.Add("Select at least one repository before applying taxonomy changes.", Severity.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(selectedStrategyId))
+        {
+            Snackbar.Add("Select a recommended strategy before applying taxonomy changes.", Severity.Warning);
+            return;
+        }
+
+        isApplyingRecommendedTaxonomy = true;
+        try
+        {
+            recommendedApplyResults = await LabelManagerService.ApplyRecommendedTaxonomyAsync(selectedStrategyId, selectedFullNames);
+            showRecommendedPreview = false;
+            recommendedPreview = [];
+
+            var failedCount = recommendedApplyResults.Count(result => result.HasError);
+            var createdCount = recommendedApplyResults.Sum(result => result.CreatedCount);
+            var updatedCount = recommendedApplyResults.Sum(result => result.UpdatedCount);
+            var skippedCount = recommendedApplyResults.Sum(result => result.SkippedCount);
+
+            if (failedCount == 0)
+            {
+                taxonomyOperationSeverity = Severity.Success;
+                taxonomyOperationMessage = $"Applied taxonomy successfully. Created {createdCount}, updated {updatedCount}, skipped {skippedCount}.";
+            }
+            else
+            {
+                taxonomyOperationSeverity = Severity.Warning;
+                taxonomyOperationMessage = $"Applied taxonomy with {failedCount} repository errors. Created {createdCount}, updated {updatedCount}, skipped {skippedCount}.";
+            }
+
+            await LoadLabelsForSelectionAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to apply strategy {StrategyId}.", selectedStrategyId);
+            taxonomyOperationSeverity = Severity.Error;
+            taxonomyOperationMessage = "An unexpected error occurred while applying taxonomy changes.";
+        }
+        finally
+        {
+            isApplyingRecommendedTaxonomy = false;
+        }
     }
 
     private async Task LoadLabelsForSelectionAsync()
@@ -548,6 +712,20 @@ public partial class Labels : ComponentBase
 
     private bool ShowLoadingState => isLoadingRepositories || isLoadingLabels;
 
+    private bool CanPreviewRecommendedTaxonomy => !ShowLoadingState
+        && !isPreviewingRecommendedTaxonomy
+        && !isApplyingRecommendedTaxonomy
+        && selectedRepositories.Count > 0
+        && !string.IsNullOrWhiteSpace(selectedStrategyId);
+
+    private bool CanApplyRecommendedTaxonomy => showRecommendedPreview
+        && recommendedPreview.Count > 0
+        && !isApplyingRecommendedTaxonomy;
+
+    private string SelectedStrategyDescription
+        => recommendedStrategies.FirstOrDefault(strategy => strategy.Id.Equals(selectedStrategyId, StringComparison.OrdinalIgnoreCase))?.Description
+            ?? string.Empty;
+
     private bool ShowLabelFilter => hasLoadedLabels && rows.Count > 0 && !ShowLoadingState && string.IsNullOrWhiteSpace(errorMessage);
 
     private string ErrorTitle => hasRepositoryLoadFailure
@@ -572,6 +750,15 @@ public partial class Labels : ComponentBase
             : colour.Trim().TrimStart('#');
 
         return $"background-color: #{normalised};";
+    }
+
+    private static string GetColourIconStyle(string colour)
+    {
+        var normalised = string.IsNullOrWhiteSpace(colour)
+            ? "ededed"
+            : colour.Trim().TrimStart('#');
+
+        return $"color: #{normalised};";
     }
 
     /// <summary>Represents a consolidated label row for the grid view.</summary>
