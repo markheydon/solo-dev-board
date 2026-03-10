@@ -10,10 +10,6 @@ on:
       - synchronize
       - ready_for_review
 
-permissions:
-  contents: write
-  pull-requests: write
-
 concurrency:
   group: dependabot-auto-merge-${{ github.event.pull_request.number }}
   cancel-in-progress: true
@@ -21,9 +17,12 @@ concurrency:
 jobs:
   enable-auto-merge:
     name: Enable Auto-Merge for Low-Risk Dependabot PRs
-    if: github.actor == 'dependabot[bot]' && github.event.pull_request.draft == false
+    if: github.actor == 'dependabot[bot]' && github.event.pull_request.user.login == 'dependabot[bot]' && startsWith(github.event.pull_request.head.ref, 'dependabot/') && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
       - name: Fetch Dependabot metadata
