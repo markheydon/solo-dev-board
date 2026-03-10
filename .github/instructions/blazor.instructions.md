@@ -9,8 +9,11 @@ This project uses **MudBlazor** as its sole UI component library (see ADR-0012).
 
 - **Never use raw HTML form elements** where a MudBlazor component exists. Use `<MudTextField>`, `<MudSelect>`, `<MudAutocomplete>`, `<MudCheckBox>`, `<MudSwitch>`, `<MudColorPicker>`, etc.
 - **Never use raw `<input>`, `<select>`, `<textarea>`, `<button>`** in Razor components — always use the `<Mud*>` equivalent.
-- **Never use `<style>` blocks** inside `.razor` files — use `.razor.css` isolated stylesheets for all component-scoped CSS.
-- For any pattern where you cannot find a MudBlazor component, add a `// TODO: no MudBlazor equivalent found` comment and use a scoped `.razor.css` class for styling, never an inline `<style>` block.
+- **Prefer MudBlazor structural components** such as `<MudStack>`, `<MudGrid>`, `<MudItem>`, `<MudPaper>`, `<MudContainer>`, `<MudSpacer>`, `<MudDivider>`, and `<MudHidden>` instead of raw layout wrappers where the library already covers the pattern.
+- **Prefer MudBlazor utility classes** in `Class` attributes for spacing, alignment, display, and sizing before creating any custom CSS.
+- **Never use `<style>` blocks** inside `.razor` files.
+- **Treat `.razor.css` as a last resort.** Only add or extend an isolated stylesheet when the requirement cannot be met with MudBlazor components, component parameters, theming, or utility classes.
+- For any pattern where you cannot find a MudBlazor component or utility-class-based solution, add a brief comment explaining the gap and keep the scoped `.razor.css` fallback minimal.
 - Consult the **mudblazor skill** (`.github/skills/mudblazor/SKILL.md`) for component usage patterns, layout structure, and known pitfalls before implementing any new Razor component.
 
 ## Blazor Code Style
@@ -21,7 +24,7 @@ This project uses **MudBlazor** as its sole UI component library (see ADR-0012).
 - Use `async`/`await` for all service calls and lifecycle methods that perform I/O.
 - Use `EventCallback<T>` for component events; never use `Action` or `Func` for cross-component communication.
 - Use `@bind` and `@bind:get`/`@bind:set` for two-way binding.
-- Scoped CSS lives in `.razor.css` files alongside the component — never in a shared stylesheet unless the style genuinely applies globally.
+- When styling is unavoidable, scoped CSS lives in `.razor.css` files alongside the component — never in a shared stylesheet unless the style genuinely applies globally.
 
 ## Naming Conventions
 
@@ -52,7 +55,7 @@ MudLayout
   MudAppBar (top navigation bar)
   MudDrawer (side navigation, MudNavMenu + MudNavLink items)
   MudMainContent
-    MudContainer (page content)
+    Page content composed with MudBlazor components and utility classes
 ```
 
 Do not deviate from this structure without an ADR.

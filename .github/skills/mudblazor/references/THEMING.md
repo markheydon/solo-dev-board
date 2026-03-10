@@ -70,6 +70,10 @@ MudBlazor uses a `MudTheme` object passed to `MudThemeProvider`.
 
 ---
 
+Before reaching for CSS variables, prefer built-in component options such as `Color`, `Variant`, `Typo`, `Elevation`, `Square`, `Rounded`, `Dense`, and layout primitives plus utility classes.
+
+---
+
 ## CSS Custom Properties
 
 MudBlazor exposes theme colours as CSS custom properties:
@@ -78,4 +82,4 @@ MudBlazor exposes theme colours as CSS custom properties:
 - `var(--mud-palette-surface)`
 - `var(--mud-palette-background)`
 
-Use these in `.razor.css` files for any custom styling that needs to stay in sync with the theme.
+Use these in `.razor.css` files only for unavoidable custom styling that still needs to stay in sync with the theme.

@@ -2,9 +2,18 @@
 
 Map UI patterns to the correct MudBlazor component. Never use a raw HTML element where a MudBlazor component exists.
 
+Decision order for UI composition:
+1. Pick a MudBlazor component.
+2. Compose with MudBlazor layout primitives.
+3. Use MudBlazor utility classes in `Class`.
+4. Fall back to isolated CSS only when the first three options cannot satisfy the requirement.
+
 | UI Pattern | MudBlazor Component | Notes |
 |------------|---------------------|-------|
+| Page section wrapper | `MudPaper`, `MudCard`, or `MudContainer` | Avoid decorative `<div>` wrappers. |
+| Responsive page layout | `MudGrid` + `MudItem` | Prefer over custom grid CSS. |
 | Single-line text input | `MudTextField<T>` | Use `Variant="Variant.Outlined"` |
+| Read-only text / heading | `MudText` | Prefer over styled `<p>` / `<h*>` wrappers when typography is the main concern. |
 | Multi-line text / textarea | `MudTextField<T>` with `Lines="N"` | Not `<textarea>` |
 | Password input | `MudTextField<string>` with `InputType.Password` | Includes show/hide toggle |
 | Search box | `MudTextField<string>` with `Adornment.End` search icon | Not `<input type="search">` |
@@ -43,5 +52,7 @@ Map UI patterns to the correct MudBlazor component. Never use a raw HTML element
 | Spacer (flex) | `MudSpacer` | Inside `MudAppBar` or `MudStack` |
 | Horizontal stack | `MudStack Row="true"` | Not `<div class="d-flex">` |
 | Vertical stack | `MudStack` | |
+| Spacing / alignment adjustment | `Class` with MudBlazor utility classes | Prefer `pa-*`, `ma-*`, `d-flex`, `justify-*`, `align-*` over custom CSS. |
+| Breakpoint visibility | `MudHidden` | Prefer over custom media-query CSS for show/hide behaviour. |
 | Avatar / icon circle | `MudAvatar` | |
 | Colour swatch display | `MudChip` with background colour style | |

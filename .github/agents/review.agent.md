@@ -48,6 +48,7 @@ Invoke this agent when you need to:
 - Verify no new errors introduced
 - Confirm layered architecture rules followed
 - Check UK English used throughout (no US spellings)
+- Check Blazor UI changes remain MudBlazor-first, using utility classes before custom CSS
 
 #### Test Coverage
 - Verify tests exist for new/changed code
@@ -96,7 +97,8 @@ Invoke this agent when you need to:
 ❌ **Do not skip documentation validation** — user-facing features must have docs  
 ❌ **Do not approve your own PRs** — review is for validation only; user approves  
 ❌ **Do not modify code during review** — escalate to Delivery Agent for fixes  
-❌ **Do not close issues with failing tests** — all tests must pass before closure
+❌ **Do not close issues with failing tests** — all tests must pass before closure  
+❌ **Do not wave through unnecessary raw HTML or custom CSS in Razor UI** — send it back to Delivery Agent unless the exception is clearly justified
 
 ---
 
@@ -235,6 +237,9 @@ Use this checklist for every review:
 - [ ] Layered architecture rules followed (Domain/Application/Infrastructure/App)
 - [ ] No business logic in Razor components
 - [ ] Constructor injection used throughout
+- [ ] Blazor UI changes use MudBlazor components for controls and structure where available
+- [ ] MudBlazor utility classes or component parameters are used before introducing custom CSS
+- [ ] Any new `.razor.css` or raw HTML usage is minimal and explicitly justified by a real MudBlazor gap
 
 ### Testing
 - [ ] xUnit tests added for new/changed code

@@ -142,7 +142,7 @@ This repository is **open source and public**. The following guidelines ensure s
 - All contributions are welcome under the MIT license.
 - Ensure no secrets appear in your commits before submitting a PR.
 - Use `.gitignore` to exclude local secrets (`.env`, `secrets.json`, etc.).
-- Review [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
+- Review [CONTRIBUTING.md](../CONTRIBUTING.md) for development guidelines.
 
 ### .gitignore Protections
 
@@ -171,6 +171,9 @@ When code changes are made, ensure the following are kept in sync:
 
 - Always respond with UK English spelling.
 - When suggesting code, follow the architecture rules above — do not place business logic in Razor components.
+- For Blazor UI work, use MudBlazor components and the official MudBlazor layout patterns first; do not reintroduce bespoke layout structures when the library already provides an equivalent.
+- Prefer MudBlazor layout primitives and utility classes in `Class` attributes for spacing, alignment, sizing, and visibility before creating or extending `.razor.css` files.
+- Treat raw HTML and custom CSS as exceptional escape hatches only. If no MudBlazor component, parameter, or utility class can satisfy the requirement, keep the fallback minimal and explain the reason in the implementation summary or PR notes.
 - When asked to "add a feature", follow the full checklist above before writing any code.
 - When reviewing a PR diff, flag any non-UK English spelling in comments or strings.
 - When generating Bicep, always add `@description` decorators and use symbolic resource names.

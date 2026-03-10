@@ -43,6 +43,7 @@ This prompt invokes the **Review Agent**, which executes:
 - Verify no new errors introduced
 - Confirm layered architecture rules followed
 - Check UK English used throughout (no US spellings)
+- Check Blazor UI changes remain MudBlazor-first, using utility classes before custom CSS
 
 #### Test Coverage
 - Verify tests exist for new/changed code
@@ -279,6 +280,9 @@ The Review Agent validates this checklist automatically:
 - [ ] Layered architecture followed (Domain/Application/Infrastructure/App)
 - [ ] No business logic in Razor components
 - [ ] Constructor injection used throughout
+- [ ] Blazor UI changes use MudBlazor components for controls and structure where available
+- [ ] MudBlazor utility classes or component parameters are used before introducing custom CSS
+- [ ] Any new `.razor.css` or raw HTML usage is minimal and explicitly justified by a real MudBlazor gap
 
 ### Testing
 - [ ] xUnit tests added for new/changed code

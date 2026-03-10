@@ -69,6 +69,7 @@ All source code, tests, and documentation changes are committed to this branch. 
   - **App (Blazor)** → calls Application layer
 - Apply .NET 10 / C# 14 conventions per `.github/instructions/dotnet-framework.instructions.md`
 - Use MudBlazor components per `.github/skills/mudblazor/SKILL.md` for UI work
+- For Blazor UI work, prefer MudBlazor layout primitives and utility classes before introducing `.razor.css`; raw HTML and custom CSS need a clear justification
 - **UK English only:** All comments, strings, user-facing text in UK English
 
 ### 4. Test Creation
@@ -113,6 +114,9 @@ All source code, tests, and documentation changes are committed to this branch. 
 - All `.cs` files use file-scoped namespaces.
 - No business logic in `.razor` files — logic lives in code-behind or Application layer.
 - No layer boundary violations (no domain entities in Application service public signatures; no Infrastructure types in Razor components).
+- MudBlazor-first UI: interactive controls and layout use MudBlazor components where available; avoid raw HTML except for framework-owned host elements or genuinely unsupported cases.
+- Utility classes before CSS: use MudBlazor utility classes or component parameters for spacing, alignment, sizing, and visibility before adding or extending `.razor.css`.
+- Any new custom CSS is minimal and justified because components, parameters, theming, and utility classes were insufficient.
 
 #### Test file checks
 - Every test method is named `MethodUnderTest_Scenario_ExpectedOutcome`.

@@ -267,7 +267,7 @@ Input (from PM Orchestrator):
 "Create ADR for decision: standardise the UI component library on MudBlazor.
 Reason: MudBlazor has a better data grid component, a built-in colour picker, and a more active community.
 Consequence: must migrate all existing legacy UI components (Dashboard, Labels, Repositories pages).
-Alternatives: keep the current library, use raw HTML/CSS."
+Alternatives: keep the current library, rely on framework-level markup plus bespoke CSS."
 
 Output:
 [Creates adr/0012-switch-to-mudblazor-component-library.md with full ADR structure]
