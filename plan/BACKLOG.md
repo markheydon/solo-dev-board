@@ -182,10 +182,10 @@ Labels: `type/chore`, `area/infrastructure`
 <!-- Feature #56: Application Version Centralisation + About Page (planned 2026-03-08, milestone v0.2.0) -->
 <!-- Enablers: #57 Centralise version in Directory.Build.props + IAppVersionService, #58 Dynamic user-agent from IAppVersionService -->
 <!-- Story: #59 About page showing app version information -->
-<!-- Tests: #60 AppVersionService unit tests, #61 About page bUnit component tests -->
+<!-- Tests: #60 AppVersionService unit tests (done — 2026-03-10), #61 About page bUnit component tests -->
 
-- [ ] As a solo developer, I want the application version to be declared in a single place so that all version references (user-agent, About page, build artefacts) remain consistent automatically. _(#57 status/todo — v0.2.0)_
-- [ ] As a solo developer, I want the GitHub API user-agent string to reflect the running application version so that it never drifts from the actual release. _(#58 status/todo — v0.2.0)_
+- [x] As a solo developer, I want the application version to be declared in a single place so that all version references (user-agent, About page, build artefacts) remain consistent automatically. _(#57 — done, 2026-03-10)_
+- [x] As a solo developer, I want the GitHub API user-agent string to reflect the running application version so that it never drifts from the actual release. _(#58 — done, 2026-03-10)_
 - [ ] As a solo developer, I want an About page showing the application version and .NET runtime version so that I always know which version I am running. _(#59 status/todo — v0.2.0)_
 - [ ] Set up Bicep infrastructure for Azure App Service, Key Vault, and managed identity.
 - [ ] Configure OIDC authentication for GitHub Actions to Azure (no long-lived credentials).

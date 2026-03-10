@@ -27,10 +27,11 @@ public static class InfrastructureServiceExtensions
         services.AddTransient<GitHubAuthHandler>();
 
         services
-            .AddHttpClient(GitHubService.GitHubApiClientName, client =>
+            .AddHttpClient(GitHubService.GitHubApiClientName, static (serviceProvider, client) =>
             {
+                var appVersionService = serviceProvider.GetRequiredService<IAppVersionService>();
                 client.BaseAddress = new Uri("https://api.github.com");
-                client.DefaultRequestHeaders.UserAgent.ParseAdd("SoloDevBoard/0.1");
+                client.DefaultRequestHeaders.UserAgent.ParseAdd(appVersionService.UserAgent);
             })
             .AddHttpMessageHandler<GitHubAuthHandler>();
 
