@@ -45,6 +45,15 @@ Created → [status/todo] → [status/in-progress] → [status/in-review] → [s
 
 Reference the issue in your PR description using `Closes #<issue-number>` so GitHub automatically closes the issue when the PR is merged.
 
+### Automated Dependency PRs
+
+- Dependabot pull requests are treated as maintenance work and should use the `type/chore` label.
+- Dependabot pull requests should normally use `priority/low`, `status/in-review`, and `area/infrastructure` unless the update affects a different area or becomes urgent.
+- Dependabot pull requests do not need a separate tracking issue unless the update uncovers breaking changes, follow-up work, or a broader remediation task.
+- Dependabot updates should be grouped by related package area where practical so each pull request stays reviewable.
+- Low-risk Dependabot patch updates may use GitHub auto-merge, but only after the standard CI workflow has passed successfully.
+- Merge Dependabot pull requests only after the standard CI workflow passes and the package change has been reviewed for relevance and release risk.
+
 ---
 
 ## Milestones
