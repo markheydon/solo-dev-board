@@ -77,7 +77,9 @@ Labels: `type/epic`, `area/labels`
 <!-- Enablers: #28 Label domain + ILabelRepository (done — PR #39, 2026-03-08), #29 GitHubLabelRepository (done — 2026-03-08), #31 LabelService (done — 2026-03-08), #49 ADR-0011 retrospective — LabelDto + ILabelManagerService update (done — 2026-03-08) -->
 <!-- Stories: #35 View labels, #33 CRUD labels, #32 Synchronise labels, #34 Apply taxonomy -->
 <!-- Tests: #38 LabelService unit tests, #37 GitHubLabelRepository unit tests, #36 bUnit UI tests -->
-
+- [x] Test: Unit tests for LabelService (#38) — completed.
+  - All CRUD, synchronisation (diff/empty diff), validation, and partial failure scenarios covered.
+  - Local build and test suite passing.
 - [x] As a solo developer, I want to see all labels across my selected repositories in a single list so that I can identify inconsistencies. _(#35 done — 2026-03-08)_
 - [x] As a solo developer, I want to create a new label and push it to multiple repositories at once so that I can maintain a consistent taxonomy efficiently. _(#33 done — 2026-03-08)_
 - [x] As a solo developer, I want to rename a label across multiple repositories simultaneously so that I can refactor my taxonomy without visiting each repo. _(#33 done — 2026-03-08)_
