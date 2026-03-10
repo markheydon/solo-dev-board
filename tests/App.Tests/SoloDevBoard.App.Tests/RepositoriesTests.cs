@@ -5,7 +5,6 @@ using MudBlazor;
 using MudBlazor.Services;
 using SoloDevBoard.App.Components.Pages;
 using SoloDevBoard.Application.Services;
-using SoloDevBoard.Domain.Entities;
 
 namespace SoloDevBoard.App.Tests;
 
@@ -18,7 +17,7 @@ public sealed class RepositoriesTests
     public async Task Repositories_WhileServiceIsLoading_ShowsLoadingIndicator()
     {
         // Arrange
-        var tcs = new TaskCompletionSource<IReadOnlyList<Repository>>();
+        var tcs = new TaskCompletionSource<IReadOnlyList<RepositoryDto>>();
         _repositoryServiceMock
             .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
             .Returns(tcs.Task);
@@ -80,7 +79,7 @@ public sealed class RepositoriesTests
         // Arrange
         _repositoryServiceMock
             .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Array.Empty<Repository>());
+            .ReturnsAsync(Array.Empty<RepositoryDto>());
 
         await using var ctx = CreateContext();
 
@@ -99,10 +98,10 @@ public sealed class RepositoriesTests
     public async Task Repositories_ServiceReturnsRepositories_ShowsRepositoryNamesInGrid()
     {
         // Arrange
-        var repositories = new List<Repository>
+        var repositories = new List<RepositoryDto>
         {
-            new() { Id = 1, Name = "my-first-repo", FullName = "owner/my-first-repo", IsPrivate = false, UpdatedAt = new DateTimeOffset(2026, 1, 15, 12, 0, 0, TimeSpan.Zero) },
-            new() { Id = 2, Name = "my-private-repo", FullName = "owner/my-private-repo", IsPrivate = true, UpdatedAt = new DateTimeOffset(2026, 2, 20, 12, 0, 0, TimeSpan.Zero) },
+            new(1, "my-first-repo", "owner/my-first-repo", string.Empty, string.Empty, false, false, DateTimeOffset.UnixEpoch, new DateTimeOffset(2026, 1, 15, 12, 0, 0, TimeSpan.Zero)),
+            new(2, "my-private-repo", "owner/my-private-repo", string.Empty, string.Empty, true, false, DateTimeOffset.UnixEpoch, new DateTimeOffset(2026, 2, 20, 12, 0, 0, TimeSpan.Zero)),
         };
 
         _repositoryServiceMock

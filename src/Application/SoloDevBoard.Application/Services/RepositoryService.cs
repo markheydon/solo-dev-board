@@ -16,10 +16,31 @@ public sealed class RepositoryService : IRepositoryService
     }
 
     /// <inheritdoc/>
-    public Task<IReadOnlyList<Repository>> GetRepositoriesAsync(CancellationToken cancellationToken = default)
-        => _gitHubService.GetRepositoriesAsync(cancellationToken);
+    public async Task<IReadOnlyList<RepositoryDto>> GetRepositoriesAsync(CancellationToken cancellationToken = default)
+    {
+        var repositories = await _gitHubService.GetRepositoriesAsync(cancellationToken).ConfigureAwait(false);
+        return repositories.Select(MapToDto).ToArray();
+    }
 
     /// <inheritdoc/>
-    public Task<IReadOnlyList<Repository>> GetActiveRepositoriesAsync(CancellationToken cancellationToken = default)
-        => _gitHubService.GetActiveRepositoriesAsync(cancellationToken);
+    public async Task<IReadOnlyList<RepositoryDto>> GetActiveRepositoriesAsync(CancellationToken cancellationToken = default)
+    {
+        var repositories = await _gitHubService.GetActiveRepositoriesAsync(cancellationToken).ConfigureAwait(false);
+        return repositories.Select(MapToDto).ToArray();
+    }
+
+    /// <summary>Maps a domain repository record to the application DTO shape.</summary>
+    /// <param name="repository">The domain repository to map.</param>
+    /// <returns>A mapped application repository DTO.</returns>
+    private static RepositoryDto MapToDto(Repository repository)
+        => new(
+            repository.Id,
+            repository.Name,
+            repository.FullName,
+            repository.Description,
+            repository.Url,
+            repository.IsPrivate,
+            repository.IsArchived,
+            repository.CreatedAt,
+            repository.UpdatedAt);
 }

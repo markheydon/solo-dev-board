@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using MudBlazor;
 using SoloDevBoard.App.Components.Dialogs;
 using SoloDevBoard.Application.Services;
-using SoloDevBoard.Domain.Entities;
 
 namespace SoloDevBoard.App.Components.Pages;
 
@@ -30,9 +29,9 @@ public partial class Labels : ComponentBase
     [Inject]
     public ISnackbar Snackbar { get; set; } = default!;
 
-    private IReadOnlyList<Repository> availableRepositories = [];
-    private IReadOnlyList<Repository> selectedRepositories = [];
-    private Repository? repositoryAutocompleteValue;
+    private IReadOnlyList<RepositoryDto> availableRepositories = [];
+    private IReadOnlyList<RepositoryDto> selectedRepositories = [];
+    private RepositoryDto? repositoryAutocompleteValue;
     private IReadOnlyList<LabelRow> rows = [];
     private IReadOnlyList<LabelRow> filteredRows = [];
     private bool isLoadingRepositories = true;
@@ -86,7 +85,7 @@ public partial class Labels : ComponentBase
         }
     }
 
-    private Task OnRepositorySelectedAsync(Repository? repository)
+    private Task OnRepositorySelectedAsync(RepositoryDto? repository)
     {
         if (repository is null || string.IsNullOrWhiteSpace(repository.FullName))
         {
@@ -105,9 +104,9 @@ public partial class Labels : ComponentBase
         return Task.CompletedTask;
     }
 
-    private Task<IEnumerable<Repository>> SearchRepositoriesAsync(string? value, CancellationToken cancellationToken)
+    private Task<IEnumerable<RepositoryDto>> SearchRepositoriesAsync(string? value, CancellationToken cancellationToken)
     {
-        IEnumerable<Repository> matches = availableRepositories;
+        IEnumerable<RepositoryDto> matches = availableRepositories;
 
         if (!string.IsNullOrWhiteSpace(value))
         {

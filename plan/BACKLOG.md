@@ -169,6 +169,13 @@ Labels: `type/epic`, `area/dashboard`
 
 Labels: `type/chore`, `area/infrastructure`
 
+<!-- ADR-0011 IRepositoryService alignment (planned 2026-03-10, milestone v0.2.0) -->
+<!-- Enabler: #54 Introduce RepositoryDto; migrate IRepositoryService to DTO boundary (done — 2026-03-10) -->
+<!-- Test: #55 Verify RepositoryDto boundary compliance — RepositoryService mapping tests + bUnit consumer updates (done — 2026-03-10) -->
+
+- [x] Enabler: Align `IRepositoryService` with ADR-0011 by introducing `RepositoryDto` as the Application→App boundary shape for repository operations; map domain `Repository` → `RepositoryDto` inside `RepositoryService`. _(#54 — done, 2026-03-10)_
+- [x] Test: Verify `RepositoryDto` boundary compliance — unit tests for `RepositoryService` field-level DTO mapping and updated bUnit tests for `Labels` and `Repositories` components. _(#55 — done, 2026-03-10)_
+
 <!-- Feature #56: Application Version Centralisation + About Page (planned 2026-03-08, milestone v0.2.0) -->
 <!-- Enablers: #57 Centralise version in Directory.Build.props + IAppVersionService, #58 Dynamic user-agent from IAppVersionService -->
 <!-- Story: #59 About page showing app version information -->

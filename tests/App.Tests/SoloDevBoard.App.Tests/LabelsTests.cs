@@ -5,7 +5,6 @@ using MudBlazor;
 using MudBlazor.Services;
 using SoloDevBoard.App.Components.Pages;
 using SoloDevBoard.Application.Services;
-using SoloDevBoard.Domain.Entities;
 using System.Net.Http;
 
 namespace SoloDevBoard.App.Tests;
@@ -20,7 +19,7 @@ public sealed class LabelsTests
     public async Task Labels_WhileRepositoryServiceIsLoading_ShowsLoadingState()
     {
         // Arrange
-        var repositoriesTask = new TaskCompletionSource<IReadOnlyList<Repository>>();
+        var repositoriesTask = new TaskCompletionSource<IReadOnlyList<RepositoryDto>>();
         _repositoryServiceMock
             .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
             .Returns(repositoriesTask.Task);
@@ -41,7 +40,7 @@ public sealed class LabelsTests
         _repositoryServiceMock
             .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync([
-                new Repository { Name = "repo-a", FullName = "owner/repo-a" },
+                CreateRepository("owner", "repo-a"),
             ]);
 
         await using var ctx = CreateContext();
@@ -71,7 +70,7 @@ public sealed class LabelsTests
         _repositoryServiceMock
             .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync([
-                new Repository { Name = "repo-a", FullName = "owner/repo-a", IsArchived = false },
+                CreateRepository("owner", "repo-a", isArchived: false),
             ]);
 
         await using var ctx = CreateContext();
@@ -91,7 +90,7 @@ public sealed class LabelsTests
     public async Task Labels_LoadRequestedAndNoLabelsReturned_ShowsEmptyState()
     {
         // Arrange
-        var repoA = new Repository { Name = "repo-a", FullName = "owner/repo-a" };
+        var repoA = CreateRepository("owner", "repo-a");
 
         _repositoryServiceMock
             .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
@@ -122,8 +121,8 @@ public sealed class LabelsTests
     public async Task Labels_SelectedRepositoriesAcrossOwners_LoadsEachOwnerAndShowsGapAnalysis()
     {
         // Arrange
-        var repoA = new Repository { Name = "repo-a", FullName = "owner-a/repo-a" };
-        var repoB = new Repository { Name = "repo-b", FullName = "owner-b/repo-b" };
+        var repoA = CreateRepository("owner-a", "repo-a");
+        var repoB = CreateRepository("owner-b", "repo-b");
 
         _repositoryServiceMock
             .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
@@ -173,7 +172,7 @@ public sealed class LabelsTests
     public async Task Labels_FilterAppliedAfterLoad_FiltersRowsByName()
     {
         // Arrange
-        var repoA = new Repository { Name = "repo-a", FullName = "owner/repo-a" };
+        var repoA = CreateRepository("owner", "repo-a");
 
         _repositoryServiceMock
             .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
@@ -255,9 +254,9 @@ public sealed class LabelsTests
         return ctx;
     }
 
-    private static async Task SelectRepositoriesAsync(IRenderedComponent<Labels> cut, params Repository[] repositories)
+    private static async Task SelectRepositoriesAsync(IRenderedComponent<Labels> cut, params RepositoryDto[] repositories)
     {
-        var autocomplete = cut.FindComponent<MudAutocomplete<Repository>>();
+        var autocomplete = cut.FindComponent<MudAutocomplete<RepositoryDto>>();
 
         await cut.InvokeAsync(async () =>
         {
@@ -267,4 +266,16 @@ public sealed class LabelsTests
             }
         });
     }
+
+    private static RepositoryDto CreateRepository(string owner, string name, bool isPrivate = false, bool isArchived = false)
+        => new(
+            Id: 0,
+            Name: name,
+            FullName: $"{owner}/{name}",
+            Description: string.Empty,
+            Url: string.Empty,
+            IsPrivate: isPrivate,
+            IsArchived: isArchived,
+            CreatedAt: DateTimeOffset.UnixEpoch,
+            UpdatedAt: DateTimeOffset.UnixEpoch);
 }

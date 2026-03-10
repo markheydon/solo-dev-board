@@ -419,3 +419,6 @@ FodyWeavers.xsd
 
 # Client-side library files (managed by libman/npm)
 **/wwwroot/lib/
+
+# Playwright files
+.playwright-mcp/
