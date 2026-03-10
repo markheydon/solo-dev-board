@@ -6,6 +6,8 @@ This document describes the phased implementation of SoloDevBoard. Each phase ha
 
 For the full feature scope, see [SCOPE.md](SCOPE.md). For individual feature backlogs, see [BACKLOG.md](BACKLOG.md).
 
+All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI component library.
+
 ---
 
 ## Phase 1 — Foundation
@@ -23,7 +25,7 @@ For the full feature scope, see [SCOPE.md](SCOPE.md). For individual feature bac
 - [ ] Implement `IGitHubService` interface in `Application` layer
 - [ ] Implement `GitHubRestClient` in `Infrastructure` layer (using `Octokit` or `HttpClient` + `System.Text.Json`)
 - [x] Implement basic repository listing: fetch and display all repositories the authenticated user has access to _(issue #8 done — 2026-03-07)_
-- [ ] Create a basic dashboard shell page in Blazor (empty panels for each of the 6 features)
+- [ ] Create a basic MudBlazor dashboard shell page (empty panels for each of the 6 features)
 - [ ] Configure `appsettings.json` and user secrets for local development
 - [ ] Set up xUnit test projects; write smoke tests for `GitHubRestClient`
 - [ ] Set up CI workflow (`.github/workflows/ci.yml`) — build and test on every PR
@@ -53,7 +55,7 @@ For the full feature scope, see [SCOPE.md](SCOPE.md). For individual feature bac
 - [ ] Design `Label` domain record and `ILabelRepository` interface
 - [ ] Implement `GitHubLabelRepository` in `Infrastructure`
 - [ ] Implement `LabelService` in `Application` (CRUD, sync operations)
-- [ ] Build Blazor UI components for the Label Manager
+- [ ] Build MudBlazor UI components for the Label Manager
 - [ ] Implement label synchronisation logic (compare source and target, produce diff, apply changes)
 - [ ] Write unit tests for `LabelService` using Moq
 - [ ] Write integration tests for `GitHubLabelRepository` (against GitHub API test org or mocked HTTP)
@@ -62,7 +64,7 @@ For the full feature scope, see [SCOPE.md](SCOPE.md). For individual feature bac
 #### Audit Dashboard
 - [ ] Design `AuditReport` domain record
 - [ ] Implement `AuditService` in `Application` (aggregate data from multiple repositories)
-- [ ] Build Blazor UI components for the Audit Dashboard
+- [ ] Build MudBlazor UI components for the Audit Dashboard
 - [ ] Implement health indicators: unlabelled issues, stale PRs, failing workflows, label inconsistencies
 - [ ] Write unit tests for `AuditService`
 - [ ] Update `docs/user-guide/audit-dashboard.md`
@@ -84,7 +86,7 @@ For the full feature scope, see [SCOPE.md](SCOPE.md). For individual feature bac
 #### One-Click Migration
 - [ ] Design `MigrationPlan` and `MigrationResult` domain records
 - [ ] Implement `MigrationService` in `Application` (diff, preview, apply)
-- [ ] Build Blazor UI: source/target repository selection, diff preview, confirmation, summary
+- [ ] Build MudBlazor UI: source/target repository selection, diff preview, confirmation, summary
 - [ ] Support migration of: labels, milestones (phase 1); project board columns (phase 2 of this feature)
 - [ ] Write unit tests for `MigrationService`
 - [ ] Update `docs/user-guide/one-click-migration.md`
@@ -92,7 +94,7 @@ For the full feature scope, see [SCOPE.md](SCOPE.md). For individual feature bac
 #### Triage UI
 - [ ] Design `TriageSession` and `TriageAction` domain records
 - [ ] Implement `TriageService` in `Application`
-- [ ] Build focused Blazor triage view with keyboard shortcut support
+- [ ] Build focused MudBlazor triage view with keyboard shortcut support
 - [ ] Implement quick actions: label, assign milestone, add to project, close as duplicate
 - [ ] Write unit tests for `TriageService`
 - [ ] Update `docs/user-guide/triage-ui.md`
@@ -116,14 +118,14 @@ For the full feature scope, see [SCOPE.md](SCOPE.md). For individual feature bac
 - [ ] Design `BoardRule` and `BoardDiagram` domain records
 - [ ] Implement `BoardRuleService` in `Application`
 - [ ] Implement GraphQL client in `Infrastructure` (see ADR-0005)
-- [ ] Build interactive diagram Blazor component (consider using a JS interop charting library)
+- [ ] Build interactive MudBlazor-based diagram component (consider using a JS interop charting library where needed)
 - [ ] Write unit tests for `BoardRuleService`
 - [ ] Update `docs/user-guide/board-rules-visualiser.md`
 
 #### Workflow Templates
 - [ ] Design `WorkflowTemplate` domain record
 - [ ] Implement `WorkflowTemplateService` in `Application`
-- [ ] Build Blazor UI: template browser, parameter editor, apply to repositories, staleness tracker
+- [ ] Build MudBlazor UI: template browser, parameter editor, apply to repositories, staleness tracker
 - [ ] Include built-in templates: CI (dotnet), CD (Azure App Service), Dependabot
 - [ ] Write unit tests for `WorkflowTemplateService`
 - [ ] Update `docs/user-guide/workflow-templates.md`
@@ -146,14 +148,14 @@ For the full feature scope, see [SCOPE.md](SCOPE.md). For individual feature bac
 #### Daily Focus
 - [ ] Design `DailyFocusReport` and `BoardSnapshot` domain records
 - [ ] Implement `DailyFocusService` in `Application` (board state, stalled items, top-priority recommendations)
-- [ ] Build Blazor Daily Focus view: board state summary, stalled item alerts, top-3 recommended work items
+- [ ] Build MudBlazor Daily Focus view: board state summary, stalled item alerts, top-3 recommended work items
 - [ ] Implement stalled item detection (Up Next for 3+ days; PRs In Review for 3+ days)
 - [ ] Write unit tests for `DailyFocusService`
 - [ ] Update `docs/user-guide/pm-workflow.md`
 
 #### Backlog Review
 - [ ] Implement `BacklogReviewService` in `Application` (cross-repo, priority-grouped, PR-aware)
-- [ ] Build Blazor Backlog Review view: groups for urgent, ready, blocked, deferred; neglected repo alerts
+- [ ] Build MudBlazor Backlog Review view: groups for urgent, ready, blocked, deferred; neglected repo alerts
 - [ ] Implement neglected repo detection (no issue or PR activity in 14 days)
 - [ ] Write unit tests for `BacklogReviewService`
 - [ ] Update `docs/user-guide/pm-workflow.md`
@@ -161,13 +163,13 @@ For the full feature scope, see [SCOPE.md](SCOPE.md). For individual feature bac
 #### Iteration Planning
 - [ ] Design `IterationPlan` domain record
 - [ ] Implement `IterationPlanningService` in `Application` (capacity enforcement, stale resolution, milestone assignment)
-- [ ] Build Blazor Iteration Planning view: capacity indicator, stale item resolution, Up Next curation, optional milestone assignment
+- [ ] Build MudBlazor Iteration Planning view: capacity indicator, stale item resolution, Up Next curation, optional milestone assignment
 - [ ] Write unit tests for `IterationPlanningService`
 - [ ] Update `docs/user-guide/pm-workflow.md`
 
 #### Repo Management
 - [ ] Implement excluded-repos configuration (persisted per user, applied to all cross-repo operations)
-- [ ] Build Blazor settings UI for managing excluded repositories
+- [ ] Build MudBlazor settings UI for managing excluded repositories
 
 ### Dependencies
 
