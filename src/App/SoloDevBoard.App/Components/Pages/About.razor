@@ -1,0 +1,32 @@
+@page "/about"
+
+<PageTitle>About</PageTitle>
+
+<MudStack Spacing="3">
+    <MudText Typo="Typo.h4">About</MudText>
+    <MudText Typo="Typo.body1">Version and runtime information for the current SoloDevBoard deployment.</MudText>
+
+    <MudPaper Class="pa-4" Elevation="1">
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h6" data-testid="about-application-name">@ApplicationName</MudText>
+
+            <MudStack Row="true" Spacing="1">
+                <MudText Typo="Typo.subtitle2">Version:</MudText>
+                <MudText Typo="Typo.body2" data-testid="about-version">@Version</MudText>
+            </MudStack>
+
+            <MudStack Row="true" Spacing="1">
+                <MudText Typo="Typo.subtitle2">.NET runtime:</MudText>
+                <MudText Typo="Typo.body2" data-testid="about-dotnet-version">@DotNetRuntimeVersion</MudText>
+            </MudStack>
+
+            <MudLink Href="@RepositoryUrl"
+                     Target="_blank"
+                     Rel="noopener noreferrer"
+                     Typo="Typo.body2"
+                     data-testid="about-repository-link">
+                View the source repository
+            </MudLink>
+        </MudStack>
+    </MudPaper>
+</MudStack>

@@ -40,6 +40,7 @@ It is built with the solo developer in mind: opinionated defaults, minimal confi
 
 - 📖 [Getting Started](getting-started.md) — prerequisites, local setup, and configuration
 - 👤 [User Guide](user-guide/) — detailed guides for each feature area
+- ℹ️ [About Guide](user-guide/about.md) — overview of the About page, version information, and repository link.
 
 ---
 
