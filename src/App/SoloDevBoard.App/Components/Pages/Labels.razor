@@ -318,15 +318,14 @@
     <MudPaper Class="pa-4" Elevation="1">
         <MudStack Spacing="1">
             <MudText Typo="Typo.h6">Filter</MudText>
-            <div data-testid="label-filter">
-                <MudTextField @bind-Value="SearchText"
-                              Placeholder="Filter by label name"
-                              Variant="Variant.Outlined"
-                              Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Filled.FilterAlt"
-                              Immediate="true"
-                              InputType="InputType.Search" />
-            </div>
+            <MudTextField @bind-Value="SearchText"
+                          Placeholder="Filter by label name"
+                          Variant="Variant.Outlined"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.FilterAlt"
+                          Immediate="true"
+                          InputType="InputType.Search"
+                          data-testid="label-filter" />
         </MudStack>
     </MudPaper>
 }
@@ -369,8 +368,7 @@ else if (hasLoadedLabels && filteredRows.Count == 0)
 }
 else if (hasLoadedLabels)
 {
-    <div>
-        <MudDataGrid T="Labels.LabelRow"
+    <MudDataGrid T="Labels.LabelRow"
                      Items="filteredRows"
                      Hover="true"
                      Dense="true"
@@ -381,8 +379,10 @@ else if (hasLoadedLabels)
                 <TemplateColumn T="Labels.LabelRow" Title="Colour">
                     <CellTemplate>
                         <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-                            <span style="@GetColourSwatchStyle(context.Item.Colour)"
-                                  title="@($"#{context.Item.Colour}")"></span>
+                            <MudIcon Icon="@Icons.Material.Filled.Circle"
+                                     Style="@GetColourIconStyle(context.Item.Colour)"
+                                     Title="@($"#{context.Item.Colour}")"
+                                     Size="Size.Small" />
                             <MudChip Variant="Variant.Outlined"
                                      Size="Size.Small"
                                      Style="@GetColourChipStyle(context.Item.Colour)">@($"#{context.Item.Colour}")</MudChip>
@@ -414,7 +414,6 @@ else if (hasLoadedLabels)
                 </TemplateColumn>
             </Columns>
         </MudDataGrid>
-    </div>
 }
 
 </MudStack>

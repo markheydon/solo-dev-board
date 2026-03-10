@@ -202,12 +202,11 @@ public sealed class LabelsTests
             Assert.Equal(2, cut.FindAll("[data-testid='delete-label-button']").Count);
         });
 
-        var filterInputContainer = cut.Find("[data-testid='label-filter']");
-        var filterTextInput = filterInputContainer.QuerySelector("input");
-        Assert.NotNull(filterTextInput);
+        // MudTextField forwards data-testid directly onto the <input> element.
+        var filterTextInput = cut.Find("[data-testid='label-filter']");
 
         // Act
-        filterTextInput!.Input("status");
+        filterTextInput.Input("status");
 
         // Assert
         cut.WaitForAssertion(() =>
