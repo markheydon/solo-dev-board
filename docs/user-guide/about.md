@@ -22,7 +22,7 @@ The About page offers a concise summary of the application's identity and techni
 
 ## How to Access
 
-- Click the **About** link in the sidebar navigation menu.
+- Click the **More options** (three dots) menu in the app bar, then select **About**.
 - Visit the `/about` route directly in your browser.
 
 ## Notes

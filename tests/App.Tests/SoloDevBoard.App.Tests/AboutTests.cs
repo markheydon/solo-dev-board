@@ -10,6 +10,7 @@ namespace SoloDevBoard.App.Tests;
 /// <summary>Component tests for the <see cref="About"/> page.</summary>
 public sealed class AboutTests : BunitContext
 {
+    private const string TestVersion = "1.2.3";
     private readonly Mock<IAppVersionService> _appVersionServiceMock = new();
 
     /// <summary>Initialises MudBlazor services and test doubles for About page rendering.</summary>
@@ -17,67 +18,44 @@ public sealed class AboutTests : BunitContext
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddMudServices();
+        ConfigureVersionService();
         Services.AddSingleton(_appVersionServiceMock.Object);
+    }
+
+    private void ConfigureVersionService()
+    {
+        _appVersionServiceMock
+            .Setup(service => service.Version)
+            .Returns(TestVersion);
+
+        _appVersionServiceMock
+            .Setup(service => service.UserAgent)
+            .Returns($"SoloDevBoard/{TestVersion}");
     }
 
     [Fact]
     public void AboutPage_RenderedWithMockedVersionService_RendersWithoutError()
     {
-        // Arrange
-        _appVersionServiceMock
-            .Setup(service => service.Version)
-            .Returns("1.2.3");
-
-        _appVersionServiceMock
-            .Setup(service => service.UserAgent)
-            .Returns("SoloDevBoard/1.2.3");
-
         // Act
-        Exception? exception = null;
-        try
-        {
-            _ = Render<About>();
-        }
-        catch (Exception ex)
-        {
-            exception = ex;
-        }
+        var cut = Render<About>();
 
         // Assert
-        Assert.Null(exception);
+        Assert.NotNull(cut);
     }
 
     [Fact]
     public void AboutPage_RenderedWithMockedVersionService_DisplaysVersionFromService()
     {
-        // Arrange
-        _appVersionServiceMock
-            .Setup(service => service.Version)
-            .Returns("1.2.3");
-
-        _appVersionServiceMock
-            .Setup(service => service.UserAgent)
-            .Returns("SoloDevBoard/1.2.3");
-
         // Act
         var cut = Render<About>();
 
         // Assert
-        Assert.Contains("1.2.3", cut.Markup);
+        Assert.Contains(TestVersion, cut.Markup);
     }
 
     [Fact]
     public void AboutPage_Rendered_DisplaysRepositoryLink()
     {
-        // Arrange
-        _appVersionServiceMock
-            .Setup(service => service.Version)
-            .Returns("1.2.3");
-
-        _appVersionServiceMock
-            .Setup(service => service.UserAgent)
-            .Returns("SoloDevBoard/1.2.3");
-
         // Act
         var cut = Render<About>();
 
@@ -89,15 +67,6 @@ public sealed class AboutTests : BunitContext
     [Fact]
     public void AboutPage_Rendered_DisplaysDotNetVersion()
     {
-        // Arrange
-        _appVersionServiceMock
-            .Setup(service => service.Version)
-            .Returns("1.2.3");
-
-        _appVersionServiceMock
-            .Setup(service => service.UserAgent)
-            .Returns("SoloDevBoard/1.2.3");
-
         // Act
         var cut = Render<About>();
 
