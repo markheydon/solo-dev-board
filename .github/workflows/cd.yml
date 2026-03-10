@@ -10,21 +10,23 @@ name: CD - Deploy to Azure
 #   3. Configure the 'production' environment in GitHub repository settings.
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
-    # Allows manual trigger from the GitHub Actions UI
+    # Keep this manual until Azure infrastructure, secrets, and environment protections are in place.
 
 permissions:
   id-token: write   # Required for OIDC authentication with Azure
   contents: read    # Required to check out the repository
+
+concurrency:
+  group: cd-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   deploy:
     name: Build, Publish, and Deploy
     runs-on: ubuntu-latest
     environment: production
+    timeout-minutes: 20
 
     steps:
       - name: Checkout repository
