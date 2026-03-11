@@ -143,15 +143,6 @@ public sealed class AuditTests
         _auditDashboardServiceMock
             .Setup(service => service.GetAuditSummaryAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(summary);
-        _auditDashboardServiceMock
-            .Setup(service => service.GetUnlabelledIssuesAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(issues);
-        _auditDashboardServiceMock
-            .Setup(service => service.GetStalePullRequestsAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(pullRequests);
-        _auditDashboardServiceMock
-            .Setup(service => service.GetFailingWorkflowRunsAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(workflows);
 
         await using var ctx = CreateContext();
 

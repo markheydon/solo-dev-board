@@ -55,7 +55,7 @@ public partial class Audit : ComponentBase
                 .OrderBy(fullName => fullName, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
 
-            selectedRepositories = [];
+            selectedRepositories.Clear();
             hasLoadedAuditSummary = false;
             ResetDashboardData();
         }

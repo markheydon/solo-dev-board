@@ -9,7 +9,7 @@
 
     @if (isLoadingRepositories)
     {
-        <MudPaper Class="pa-3" Outlined="true" data-testid="audit-repository-filter-loading">
+        <MudPaper Class="pa-3" Outlined="true" aria-live="polite" role="status" data-testid="audit-repository-filter-loading">
             <MudStack Spacing="2">
                 <MudText Typo="Typo.subtitle2">Repository filter</MudText>
                 <MudSkeleton Height="56px" Animation="Animation.Wave" />

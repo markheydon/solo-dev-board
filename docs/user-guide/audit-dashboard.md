@@ -45,8 +45,8 @@ The Audit Dashboard provides a summary of open issues, open pull requests, and r
 ## Notes
 
 Zero-state messages are shown when no items are found in a health indicator section:
-- "No unlabelled issues — great!"
-- "No stale pull requests — great!"
-- "No failing workflows — great!"
+- "No unlabelled issues — great."
+- "No stale pull requests — great."
+- "No failing workflows — great."
 
 For more information about upcoming features, see the [BACKLOG](../../plan/BACKLOG.md).
