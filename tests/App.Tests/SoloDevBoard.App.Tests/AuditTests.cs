@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using MudBlazor;
 using MudBlazor.Services;
+using SoloDevBoard.App.Components.Shared;
 using SoloDevBoard.App.Components.Pages;
 using SoloDevBoard.Application.Services;
 
@@ -12,15 +13,19 @@ namespace SoloDevBoard.App.Tests;
 public sealed class AuditTests
 {
     private readonly Mock<IAuditDashboardService> _auditDashboardServiceMock = new();
+    private readonly Mock<IRepositoryService> _repositoryServiceMock = new();
 
     [Fact]
     public async Task Audit_WhileServiceIsLoading_ShowsLoadingSkeleton()
     {
         // Arrange
-        var tcs = new TaskCompletionSource<IReadOnlyList<RepositoryAuditSummaryDto>>();
-        _auditDashboardServiceMock
-            .Setup(service => service.GetRepositorySummaryAsync(It.IsAny<CancellationToken>()))
+        var tcs = new TaskCompletionSource<IReadOnlyList<RepositoryDto>>();
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
             .Returns(tcs.Task);
+        _auditDashboardServiceMock
+            .Setup(service => service.GetAuditSummaryAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<RepositoryAuditSummaryDto>());
 
         await using var ctx = CreateContext();
 
@@ -28,7 +33,7 @@ public sealed class AuditTests
         var cut = ctx.Render<Audit>();
 
         // Assert
-        Assert.Single(cut.FindAll("[data-testid='audit-loading-state']"));
+        Assert.Single(cut.FindAll("[data-testid='audit-repository-filter-loading']"));
         Assert.Empty(cut.FindAll("[data-testid='audit-summary-table']"));
         Assert.Empty(cut.FindAll("[data-testid='audit-empty-state']"));
     }
@@ -37,9 +42,9 @@ public sealed class AuditTests
     public async Task Audit_WhenServiceReturnsNoRepositories_ShowsEmptyState()
     {
         // Arrange
-        _auditDashboardServiceMock
-            .Setup(service => service.GetRepositorySummaryAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Array.Empty<RepositoryAuditSummaryDto>());
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<RepositoryDto>());
 
         await using var ctx = CreateContext();
 
@@ -65,14 +70,26 @@ public sealed class AuditTests
             new("owner/repo-a", 4, 3, 1, 1, 0),
         };
 
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(
+            [
+                CreateRepository("owner", "repo-a"),
+                CreateRepository("owner", "repo-b"),
+            ]);
+
         _auditDashboardServiceMock
-            .Setup(service => service.GetRepositorySummaryAsync(It.IsAny<CancellationToken>()))
+            .Setup(service => service.GetAuditSummaryAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(summary);
 
         await using var ctx = CreateContext();
 
         // Act
         var cut = ctx.Render<Audit>();
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-repository-filter']")));
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo-a", "owner/repo-b" }));
+        cut.Find("[data-testid='audit-load-selected-button']").Click();
 
         // Assert
         cut.WaitForAssertion(() =>
@@ -104,6 +121,10 @@ public sealed class AuditTests
             new("owner/repo-a", 4, 2, 1, 1, 1),
         };
 
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreateRepository("owner", "repo-a")]);
+
         var issues = new List<IssueDto>
         {
             new(12, "Needs triage", "https://github.com/owner/repo-a/issues/12", "owner/repo-a", DateTimeOffset.UtcNow.AddDays(-5), DateTimeOffset.UtcNow.AddDays(-2)),
@@ -120,7 +141,7 @@ public sealed class AuditTests
         };
 
         _auditDashboardServiceMock
-            .Setup(service => service.GetRepositorySummaryAsync(It.IsAny<CancellationToken>()))
+            .Setup(service => service.GetAuditSummaryAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(summary);
         _auditDashboardServiceMock
             .Setup(service => service.GetUnlabelledIssuesAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
@@ -146,6 +167,10 @@ public sealed class AuditTests
 
         // Act
         var cut = ctx.Render<Audit>();
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-repository-filter']")));
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo-a" }));
+        cut.Find("[data-testid='audit-load-selected-button']").Click();
 
         // Assert
         cut.WaitForAssertion(() =>
@@ -178,14 +203,22 @@ public sealed class AuditTests
             new("owner/repo-a", 1, 1, 0, 0, 0),
         };
 
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreateRepository("owner", "repo-a")]);
+
         _auditDashboardServiceMock
-            .Setup(service => service.GetRepositorySummaryAsync(It.IsAny<CancellationToken>()))
+            .Setup(service => service.GetAuditSummaryAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(summary);
 
         await using var ctx = CreateContext();
 
         // Act
         var cut = ctx.Render<Audit>();
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-repository-filter']")));
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo-a" }));
+        cut.Find("[data-testid='audit-load-selected-button']").Click();
 
         // Assert
         cut.WaitForAssertion(() =>
@@ -206,8 +239,16 @@ public sealed class AuditTests
             new("owner/repo-b", 3, 1, 0, 0, 0),
         };
 
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(
+            [
+                CreateRepository("owner", "repo-a"),
+                CreateRepository("owner", "repo-b"),
+            ]);
+
         _auditDashboardServiceMock
-            .Setup(service => service.GetRepositorySummaryAsync(It.IsAny<CancellationToken>()))
+            .Setup(service => service.GetAuditSummaryAsync(It.Is<IReadOnlyList<string>>(repos => repos.Count == 2), It.IsAny<CancellationToken>()))
             .ReturnsAsync(summary);
         _auditDashboardServiceMock
             .Setup(service => service.GetAuditSummaryAsync(It.Is<IReadOnlyList<string>>(repos => repos.Count == 1 && repos[0] == "owner/repo-a"), It.IsAny<CancellationToken>()))
@@ -218,8 +259,9 @@ public sealed class AuditTests
         // Act
         var cut = ctx.Render<Audit>();
         cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-repository-filter']")));
-        var select = cut.FindComponent<MudSelect<string>>();
-        await cut.InvokeAsync(() => select.Instance.SelectedValuesChanged.InvokeAsync(new[] { "owner/repo-a" }));
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo-a" }));
+        cut.Find("[data-testid='audit-load-selected-button']").Click();
 
         // Assert
         _auditDashboardServiceMock.Verify(
@@ -260,6 +302,7 @@ public sealed class AuditTests
         var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddMudServices();
+        ctx.Services.AddScoped(_ => _repositoryServiceMock.Object);
         ctx.Services.AddScoped(_ => _auditDashboardServiceMock.Object);
 
         ctx.Render<MudPopoverProvider>();
@@ -268,4 +311,16 @@ public sealed class AuditTests
 
         return ctx;
     }
+
+    private static RepositoryDto CreateRepository(string owner, string name)
+        => new(
+            Id: 0,
+            Name: name,
+            FullName: $"{owner}/{name}",
+            Description: string.Empty,
+            Url: string.Empty,
+            IsPrivate: false,
+            IsArchived: false,
+            CreatedAt: DateTimeOffset.UnixEpoch,
+            UpdatedAt: DateTimeOffset.UnixEpoch);
 }

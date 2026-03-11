@@ -1,0 +1,64 @@
+<MudStack Spacing="2">
+    @if (!string.IsNullOrWhiteSpace(Title))
+    {
+        <MudText Typo="Typo.h6">@Title</MudText>
+    }
+
+    @if (AvailableRepositories.Count == 0)
+    {
+        <MudText Typo="Typo.body2">@EmptyStateText</MudText>
+    }
+    else
+    {
+        <MudAutocomplete T="string"
+                         Value="repositoryAutocompleteValue"
+                         ValueChanged="OnRepositorySelectedAsync"
+                         SearchFunc="SearchRepositoriesAsync"
+                         ToStringFunc="repository => repository ?? string.Empty"
+                         Label="@Label"
+                         Placeholder="@Placeholder"
+                         Variant="Variant.Outlined"
+                         MinCharacters="0"
+                         Clearable="true"
+                         Immediate="true"
+                         Disabled="Disabled"
+                         Adornment="Adornment.Start"
+                         AdornmentIcon="@Icons.Material.Filled.Search"
+                         data-testid="@AutocompleteTestId" />
+
+        @if (ShowSelectedChips && SelectedRepositories.Count > 0)
+        {
+            <MudStack Row="true" Spacing="1" data-testid="selected-repositories">
+                @foreach (var repository in SelectedRepositories)
+                {
+                    <MudChip T="string"
+                             Variant="Variant.Outlined"
+                             Color="Color.Primary"
+                             OnClose="() => RemoveSelectedRepositoryAsync(repository)">
+                        @repository
+                    </MudChip>
+                }
+            </MudStack>
+        }
+
+        @if (ShowSelectionActions)
+        {
+            <MudStack Row="true" Spacing="1">
+                <MudButton Variant="Variant.Text"
+                           Color="Color.Secondary"
+                           Disabled="@(Disabled || SelectedRepositories.Count == AvailableRepositories.Count)"
+                           OnClick="SelectAllRepositoriesAsync">
+                    Select all
+                </MudButton>
+                <MudButton Variant="Variant.Text"
+                           Color="Color.Secondary"
+                           Disabled="@(Disabled || SelectedRepositories.Count == 0)"
+                           OnClick="ClearSelectedRepositoriesAsync">
+                    Clear
+                </MudButton>
+            </MudStack>
+        }
+
+        <MudText Typo="Typo.body2" data-testid="@SummaryTestId">@SummaryText</MudText>
+    }
+</MudStack>

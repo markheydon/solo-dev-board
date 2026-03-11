@@ -27,7 +27,7 @@ public sealed class AuditDashboardServiceTests
             new() { Id = 2, Name = "repo-two", FullName = "owner/repo-two" },
         };
         _gitHubServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync("owner", It.IsAny<CancellationToken>()))
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(repositories);
         _gitHubServiceMock
             .Setup(service => service.GetIssuesAsync("owner", It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -200,6 +200,33 @@ public sealed class AuditDashboardServiceTests
         Assert.Equal("failure", workflowRun.Conclusion);
         Assert.Equal("owner/repo", workflowRun.RepositoryFullName);
         Assert.Equal("main", workflowRun.HeadBranch);
+    }
+
+    [Fact]
+    public async Task GetAuditSummaryAsync_ReposContainDifferentOwnerPrefix_UsesProvidedOwnerForRequests()
+    {
+        // Arrange
+        var repos = new[] { "another-owner/repo-one" };
+        _gitHubServiceMock
+            .Setup(service => service.GetIssuesAsync("another-owner", "repo-one", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+        _gitHubServiceMock
+            .Setup(service => service.GetPullRequestsAsync("another-owner", "repo-one", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+        _gitHubServiceMock
+            .Setup(service => service.GetWorkflowRunsAsync("another-owner", "repo-one", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        // Act
+        var result = await _sut.GetAuditSummaryAsync(repos);
+
+        // Assert
+        var summary = Assert.Single(result);
+        Assert.Equal("another-owner/repo-one", summary.RepositoryFullName);
+
+        _gitHubServiceMock.Verify(service => service.GetIssuesAsync("another-owner", "repo-one", It.IsAny<CancellationToken>()), Times.Once);
+        _gitHubServiceMock.Verify(service => service.GetPullRequestsAsync("another-owner", "repo-one", It.IsAny<CancellationToken>()), Times.Once);
+        _gitHubServiceMock.Verify(service => service.GetWorkflowRunsAsync("another-owner", "repo-one", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

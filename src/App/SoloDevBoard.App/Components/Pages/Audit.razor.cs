@@ -9,6 +9,10 @@ public partial class Audit : ComponentBase
 {
     private const int StalePullRequestDays = 14;
 
+    /// <summary>Gets or sets the repository service used to load repository options.</summary>
+    [Inject]
+    public IRepositoryService RepositoryService { get; set; } = default!;
+
     /// <summary>Gets or sets the audit dashboard application service.</summary>
     [Inject]
     public IAuditDashboardService AuditDashboardService { get; set; } = default!;
@@ -25,53 +29,54 @@ public partial class Audit : ComponentBase
     private HashSet<string> selectedRepositories = new(StringComparer.OrdinalIgnoreCase);
     private int totalOpenIssues;
     private int totalOpenPullRequests;
-    private bool isLoading = true;
-    private string? errorMessage;
+    private bool isLoadingRepositories = true;
+    private bool isLoadingAuditData;
+    private bool hasLoadedAuditSummary;
+    private string? repositoryLoadErrorMessage;
+    private string? auditLoadErrorMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadAuditSummaryAsync();
+        await LoadRepositoryOptionsAsync();
     }
 
-    private async Task LoadAuditSummaryAsync()
+    private async Task LoadRepositoryOptionsAsync()
     {
-        isLoading = true;
-        errorMessage = null;
+        isLoadingRepositories = true;
+        repositoryLoadErrorMessage = null;
+        auditLoadErrorMessage = null;
 
         try
         {
-            var summary = await AuditDashboardService.GetRepositorySummaryAsync();
-            var orderedSummary = summary
-                .OrderBy(result => result.RepositoryFullName, StringComparer.OrdinalIgnoreCase)
+            var repositories = await RepositoryService.GetActiveRepositoriesAsync();
+
+            repositoryOptions = repositories
+                .Select(repository => repository.FullName)
+                .OrderBy(fullName => fullName, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
 
-            repositoryOptions = orderedSummary
-                .Select(summaryItem => summaryItem.RepositoryFullName)
-                .ToArray();
-
-            selectedRepositories = repositoryOptions
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-            await LoadFilteredAuditDataAsync(orderedSummary);
+            selectedRepositories = [];
+            hasLoadedAuditSummary = false;
+            ResetDashboardData();
         }
         catch (HttpRequestException ex)
         {
             ResetDashboardData();
-            errorMessage = $"GitHub API request failed. {ex.Message}";
+            repositoryLoadErrorMessage = $"GitHub API request failed. {ex.Message}";
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to load audit dashboard summary.");
+            Logger.LogError(ex, "Failed to load audit dashboard repositories.");
             ResetDashboardData();
-            errorMessage = "An unexpected error occurred while loading the audit dashboard.";
+            repositoryLoadErrorMessage = "An unexpected error occurred while loading repositories for the audit dashboard.";
         }
         finally
         {
-            isLoading = false;
+            isLoadingRepositories = false;
         }
     }
 
-    private async Task OnSelectedRepositoriesChanged(IEnumerable<string> repositories)
+    private Task OnSelectedRepositoriesChanged(IReadOnlyList<string> repositories)
     {
         ArgumentNullException.ThrowIfNull(repositories);
 
@@ -79,10 +84,64 @@ public partial class Audit : ComponentBase
             .Where(static repository => !string.IsNullOrWhiteSpace(repository))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        await LoadFilteredAuditDataAsync();
+        auditLoadErrorMessage = null;
+        hasLoadedAuditSummary = false;
+        ResetDashboardData();
+        return Task.CompletedTask;
     }
 
-    private async Task LoadFilteredAuditDataAsync(IReadOnlyList<RepositoryAuditSummaryDto>? preloadedSummary = null)
+    private IReadOnlyList<string> selectedRepositoryNames
+        => selectedRepositories
+            .OrderBy(repository => repository, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+    private string RepositoryFilterSummary
+        => $"Showing {selectedRepositories.Count} selected of {repositoryOptions.Count} active repositories.";
+
+    private async Task LoadSelectedRepositoriesAsync()
+    {
+        auditLoadErrorMessage = null;
+
+        if (selectedRepositories.Count == 0)
+        {
+            hasLoadedAuditSummary = false;
+            ResetDashboardData();
+            return;
+        }
+
+        isLoadingAuditData = true;
+        hasLoadedAuditSummary = false;
+        ResetDashboardData();
+
+        // Trigger an immediate render so the loading state is visible before network calls begin.
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            await LoadFilteredAuditDataAsync();
+            hasLoadedAuditSummary = true;
+        }
+        catch (HttpRequestException ex)
+        {
+            Logger.LogError(ex, "Failed to load selected audit repositories due to a GitHub API error.");
+            hasLoadedAuditSummary = false;
+            ResetDashboardData();
+            auditLoadErrorMessage = $"GitHub API request failed. {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load selected audit repositories.");
+            hasLoadedAuditSummary = false;
+            ResetDashboardData();
+            auditLoadErrorMessage = "An unexpected error occurred while loading the audit summary.";
+        }
+        finally
+        {
+            isLoadingAuditData = false;
+        }
+    }
+
+    private async Task LoadFilteredAuditDataAsync()
     {
         var selectedRepoNames = selectedRepositories
             .OrderBy(static repository => repository, StringComparer.OrdinalIgnoreCase)
@@ -94,9 +153,7 @@ public partial class Audit : ComponentBase
             return;
         }
 
-        var summaryTask = preloadedSummary is null
-            ? AuditDashboardService.GetAuditSummaryAsync(selectedRepoNames)
-            : Task.FromResult(preloadedSummary);
+        var summaryTask = AuditDashboardService.GetAuditSummaryAsync(selectedRepoNames);
 
         var unlabelledIssuesTask = AuditDashboardService.GetUnlabelledIssuesAsync(selectedRepoNames);
         var stalePullRequestsTask = AuditDashboardService.GetStalePullRequestsAsync(selectedRepoNames, StalePullRequestDays);

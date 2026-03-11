@@ -26,9 +26,8 @@ public sealed class AuditDashboardService : IAuditDashboardService
     /// <inheritdoc/>
     public async Task<IReadOnlyList<RepositoryAuditSummaryDto>> GetRepositorySummaryAsync(CancellationToken cancellationToken = default)
     {
-        var owner = GetOwnerLogin();
-        var repositories = await _gitHubService.GetActiveRepositoriesAsync(owner, cancellationToken).ConfigureAwait(false);
-        var repoNames = repositories.Select(static repository => repository.Name).ToArray();
+        var repositories = await _gitHubService.GetActiveRepositoriesAsync(cancellationToken).ConfigureAwait(false);
+        var repoNames = repositories.Select(static repository => repository.FullName).ToArray();
 
         return await GetAuditSummaryAsync(repoNames, cancellationToken).ConfigureAwait(false);
     }
@@ -38,14 +37,14 @@ public sealed class AuditDashboardService : IAuditDashboardService
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(repo);
 
-        var owner = GetOwnerLogin();
-        var repoName = NormaliseRepoName(repo);
-        var repositoryFullName = BuildRepositoryFullName(owner, repoName);
-        var issues = await _gitHubService.GetIssuesAsync(owner, repoName, cancellationToken).ConfigureAwait(false);
+        var repositoryReference = ResolveRepositoryReference(repo);
+        var issues = await _gitHubService
+            .GetIssuesAsync(repositoryReference.Owner, repositoryReference.RepoName, cancellationToken)
+            .ConfigureAwait(false);
 
         return issues
             .Where(static issue => IsOpenState(issue.State))
-            .Select(issue => MapIssue(issue, repositoryFullName))
+            .Select(issue => MapIssue(issue, repositoryReference.FullName))
             .ToArray();
     }
 
@@ -54,9 +53,9 @@ public sealed class AuditDashboardService : IAuditDashboardService
     {
         ArgumentNullException.ThrowIfNull(repos);
 
-        var owner = GetOwnerLogin();
-        var repoNames = GetRepoNames(repos);
-        var summaryTasks = repoNames.Select(repoName => BuildRepositoryAuditSummaryAsync(owner, repoName, cancellationToken));
+        var repositoryReferences = GetRepositoryReferences(repos);
+        var summaryTasks = repositoryReferences.Select(repositoryReference =>
+            BuildRepositoryAuditSummaryAsync(repositoryReference.Owner, repositoryReference.RepoName, cancellationToken));
         var summaries = await Task.WhenAll(summaryTasks).ConfigureAwait(false);
 
         return summaries;
@@ -67,16 +66,16 @@ public sealed class AuditDashboardService : IAuditDashboardService
     {
         ArgumentNullException.ThrowIfNull(repos);
 
-        var owner = GetOwnerLogin();
-        var repoNames = GetRepoNames(repos);
-        var issueTasks = repoNames.Select(async repoName =>
+        var repositoryReferences = GetRepositoryReferences(repos);
+        var issueTasks = repositoryReferences.Select(async repositoryReference =>
         {
-            var issues = await _gitHubService.GetIssuesAsync(owner, repoName, cancellationToken).ConfigureAwait(false);
-            var repositoryFullName = BuildRepositoryFullName(owner, repoName);
+            var issues = await _gitHubService
+                .GetIssuesAsync(repositoryReference.Owner, repositoryReference.RepoName, cancellationToken)
+                .ConfigureAwait(false);
 
             return issues
                 .Where(static issue => IsOpenState(issue.State) && issue.Labels.Count == 0)
-                .Select(issue => MapIssue(issue, repositoryFullName))
+                .Select(issue => MapIssue(issue, repositoryReference.FullName))
                 .ToArray();
         });
 
@@ -94,17 +93,17 @@ public sealed class AuditDashboardService : IAuditDashboardService
             throw new ArgumentOutOfRangeException(nameof(staleDays), staleDays, "Stale days must be greater than zero.");
         }
 
-        var owner = GetOwnerLogin();
         var staleBefore = DateTimeOffset.UtcNow.AddDays(-staleDays);
-        var repoNames = GetRepoNames(repos);
-        var pullRequestTasks = repoNames.Select(async repoName =>
+        var repositoryReferences = GetRepositoryReferences(repos);
+        var pullRequestTasks = repositoryReferences.Select(async repositoryReference =>
         {
-            var pullRequests = await _gitHubService.GetPullRequestsAsync(owner, repoName, cancellationToken).ConfigureAwait(false);
-            var repositoryFullName = BuildRepositoryFullName(owner, repoName);
+            var pullRequests = await _gitHubService
+                .GetPullRequestsAsync(repositoryReference.Owner, repositoryReference.RepoName, cancellationToken)
+                .ConfigureAwait(false);
 
             return pullRequests
                 .Where(pullRequest => pullRequest.State.Equals("open", StringComparison.OrdinalIgnoreCase) && pullRequest.UpdatedAt < staleBefore)
-                .Select(pullRequest => MapPullRequest(pullRequest, repositoryFullName))
+                .Select(pullRequest => MapPullRequest(pullRequest, repositoryReference.FullName))
                 .ToArray();
         });
 
@@ -117,12 +116,12 @@ public sealed class AuditDashboardService : IAuditDashboardService
     {
         ArgumentNullException.ThrowIfNull(repos);
 
-        var owner = GetOwnerLogin();
-        var repoNames = GetRepoNames(repos);
-        var workflowTasks = repoNames.Select(async repoName =>
+        var repositoryReferences = GetRepositoryReferences(repos);
+        var workflowTasks = repositoryReferences.Select(async repositoryReference =>
         {
-            var workflowRuns = await _gitHubService.GetWorkflowRunsAsync(owner, repoName, cancellationToken).ConfigureAwait(false);
-            var repositoryFullName = BuildRepositoryFullName(owner, repoName);
+            var workflowRuns = await _gitHubService
+                .GetWorkflowRunsAsync(repositoryReference.Owner, repositoryReference.RepoName, cancellationToken)
+                .ConfigureAwait(false);
 
             return workflowRuns
                 .Where(static workflowRun => !string.IsNullOrWhiteSpace(workflowRun.WorkflowName))
@@ -132,7 +131,7 @@ public sealed class AuditDashboardService : IAuditDashboardService
                     .ThenByDescending(static workflowRun => workflowRun.CreatedAt)
                     .First())
                 .Where(static workflowRun => IsFailingConclusion(workflowRun.Conclusion))
-                .Select(workflowRun => MapWorkflowRun(workflowRun, repositoryFullName))
+                .Select(workflowRun => MapWorkflowRun(workflowRun, repositoryReference.FullName))
                 .ToArray();
         });
 
@@ -177,17 +176,20 @@ public sealed class AuditDashboardService : IAuditDashboardService
     private static string BuildRepositoryFullName(string owner, string repoName)
         => $"{owner}/{repoName}";
 
-    private static IReadOnlyList<string> GetRepoNames(IReadOnlyList<string> repos)
+    private IReadOnlyList<RepositoryReference> GetRepositoryReferences(IReadOnlyList<string> repos)
     {
         if (repos.Count == 0)
         {
             return [];
         }
 
-        return repos.Select(NormaliseRepoName).ToArray();
+        return repos
+            .Select(ResolveRepositoryReference)
+            .DistinctBy(static repositoryReference => repositoryReference.FullName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
     }
 
-    private static string NormaliseRepoName(string repo)
+    private RepositoryReference ResolveRepositoryReference(string repo)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(repo);
 
@@ -195,12 +197,15 @@ public sealed class AuditDashboardService : IAuditDashboardService
         var separatorIndex = trimmed.IndexOf('/');
         if (separatorIndex >= 0)
         {
+            var owner = trimmed[..separatorIndex];
             var repoName = trimmed[(separatorIndex + 1)..];
+
+            ArgumentException.ThrowIfNullOrWhiteSpace(owner);
             ArgumentException.ThrowIfNullOrWhiteSpace(repoName);
-            return repoName;
+            return new RepositoryReference(owner, repoName);
         }
 
-        return trimmed;
+        return new RepositoryReference(GetOwnerLogin(), trimmed);
     }
 
     private string GetOwnerLogin()
@@ -244,5 +249,10 @@ public sealed class AuditDashboardService : IAuditDashboardService
             openIssues.Count(static issue => issue.Labels.Count == 0),
             openPullRequests.Count(pullRequest => pullRequest.UpdatedAt < staleThreshold),
             failingWorkflowCount);
+    }
+
+    private sealed record RepositoryReference(string Owner, string RepoName)
+    {
+        public string FullName => BuildRepositoryFullName(Owner, RepoName);
     }
 }
