@@ -276,7 +276,7 @@ public sealed class GitHubServiceTests
         // Assert
         var issue = Assert.Single(result);
         Assert.Equal(32, issue.Number);
-        Assert.Equal(int.MaxValue, issue.Id);
+        Assert.Equal(2086799558, issue.Id);
         Assert.Single(handler.Requests);
     }
 
