@@ -10,7 +10,7 @@ public static class SoloDevBoardTheme
         // Light palette inspired by GitHub.
         private static PaletteLight PaletteLight => new PaletteLight
         {
-            Primary = "#1b1f23",
+            Primary = "#388f45",
             Secondary = "#2188ff",
             Surface = "#f6f8fa",
             Background = "#ffffff",
@@ -29,7 +29,7 @@ public static class SoloDevBoardTheme
         // Dark palette inspired by GitHub.
         private static PaletteDark PaletteDark => new PaletteDark
         {
-            Primary = "#c9d1d9",
+            Primary = "#388f45",
             Secondary = "#2188ff",
             Surface = "#161b22",
             Background = "#0d1117",

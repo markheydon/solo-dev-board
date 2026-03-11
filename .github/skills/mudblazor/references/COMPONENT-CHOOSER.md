@@ -8,6 +8,18 @@ Decision order for UI composition:
 3. Use MudBlazor utility classes in `Class`.
 4. Fall back to isolated CSS only when the first three options cannot satisfy the requirement.
 
+## Button Semantics and Colour Hierarchy
+
+Use button colour and variant to communicate intent consistently across pages.
+
+- `Color.Primary` with `Variant.Filled` is for commit actions that move work forward, such as create, save, apply, or confirm.
+- `Color.Secondary` is for meaningful non-commit actions, such as load, preview, open, or retry.
+- `Color.Default` is for neutral actions, such as edit, close, dismiss, or low-risk utility actions.
+- `Color.Error` is for destructive actions, such as delete.
+- `Variant.Text` is preferred for cancel actions.
+- `Variant.Outlined` is preferred for secondary and neutral actions when you want reduced visual emphasis.
+- Avoid using `Color.Primary` for every action in the same section, because this weakens visual hierarchy.
+
 | UI Pattern | MudBlazor Component | Notes |
 |------------|---------------------|-------|
 | Page section wrapper | `MudPaper`, `MudCard`, or `MudContainer` | Avoid decorative `<div>` wrappers. |

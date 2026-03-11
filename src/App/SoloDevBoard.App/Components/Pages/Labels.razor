@@ -59,8 +59,8 @@
                             New label
                         </MudButton>
 
-                        <MudButton Variant="Variant.Filled"
-                                   Color="Color.Primary"
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Secondary"
                                    data-testid="load-labels-button"
                                    Disabled="@(ShowLoadingState || !selectedRepositories.Any())"
                                    OnClick="LoadLabelsForSelectionAsync">
@@ -93,7 +93,7 @@
 
                     <MudStack Row="true" Spacing="1">
                         <MudButton Variant="Variant.Outlined"
-                                   Color="Color.Primary"
+                                   Color="Color.Secondary"
                                    Disabled="@(!CanPreviewRecommendedTaxonomy)"
                                    OnClick="PreviewRecommendedTaxonomyAsync"
                                    data-testid="preview-taxonomy-button">
@@ -111,7 +111,7 @@
                             </MudButton>
 
                             <MudButton Variant="Variant.Text"
-                                       Color="Color.Secondary"
+                                       Color="Color.Default"
                                        OnClick="CancelRecommendedPreview"
                                        data-testid="cancel-apply-taxonomy-button">
                                 Cancel
@@ -162,7 +162,7 @@
 
                     <MudStack Row="true" Spacing="1">
                         <MudButton Variant="Variant.Outlined"
-                                   Color="Color.Primary"
+                                   Color="Color.Secondary"
                                    Disabled="@(!CanPreviewLabelSynchronisation)"
                                    OnClick="PreviewLabelSynchronisationAsync"
                                    data-testid="preview-sync-button">
@@ -180,7 +180,7 @@
                             </MudButton>
 
                             <MudButton Variant="Variant.Text"
-                                       Color="Color.Secondary"
+                                       Color="Color.Default"
                                        OnClick="CancelLabelSynchronisationPreview"
                                        data-testid="cancel-sync-button">
                                 Cancel
@@ -348,13 +348,13 @@ else if (!string.IsNullOrWhiteSpace(errorMessage))
         </MudStack>
         @if (availableRepositories.Count == 0)
         {
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ReloadRepositoriesAsync">Try loading repositories again</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ReloadRepositoriesAsync">Try loading repositories again</MudButton>
         }
         else
         {
             <MudStack Row="true" Spacing="1" Class="mt-2">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ReloadRepositoriesAsync">Reload repositories</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="LoadLabelsForSelectionAsync">Try loading labels again</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ReloadRepositoriesAsync">Reload repositories</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="LoadLabelsForSelectionAsync">Try loading labels again</MudButton>
             </MudStack>
         }
     </MudPaper>
@@ -392,7 +392,7 @@ else if (hasLoadedLabels)
                     <CellTemplate>
                         <MudStack Row="true" Spacing="1">
                             <MudButton Variant="Variant.Outlined"
-                                       Color="Color.Primary"
+                                       Color="Color.Default"
                                        Size="Size.Small"
                                        data-testid="edit-label-button"
                                        OnClick="() => ShowEditDialogAsync(context.Item)">
