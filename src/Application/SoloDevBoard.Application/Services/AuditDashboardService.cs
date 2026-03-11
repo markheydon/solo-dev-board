@@ -143,6 +143,7 @@ public sealed class AuditDashboardService : IAuditDashboardService
             issue.Title,
             issue.HtmlUrl,
             repositoryFullName,
+            issue.CreatedAt,
             issue.UpdatedAt);
 
     private static PullRequestDto MapPullRequest(PullRequest pullRequest, string repositoryFullName)
@@ -151,6 +152,7 @@ public sealed class AuditDashboardService : IAuditDashboardService
             pullRequest.Title,
             pullRequest.HtmlUrl,
             repositoryFullName,
+            pullRequest.AuthorLogin,
             pullRequest.UpdatedAt);
 
     private static WorkflowRunDto MapWorkflowRun(WorkflowRun workflowRun, string repositoryFullName)
@@ -159,7 +161,8 @@ public sealed class AuditDashboardService : IAuditDashboardService
             workflowRun.Status,
             workflowRun.Conclusion,
             workflowRun.HtmlUrl,
-            repositoryFullName);
+            repositoryFullName,
+            workflowRun.HeadBranch);
 
     private static bool IsFailingConclusion(string conclusion)
         => conclusion.Equals("failure", StringComparison.OrdinalIgnoreCase)

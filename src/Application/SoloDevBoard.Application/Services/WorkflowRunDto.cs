@@ -6,9 +6,11 @@ namespace SoloDevBoard.Application.Services;
 /// <param name="Conclusion">The workflow run conclusion.</param>
 /// <param name="HtmlUrl">The web URL of the workflow run.</param>
 /// <param name="RepositoryFullName">The fully-qualified repository name in owner/name format.</param>
+/// <param name="HeadBranch">The branch associated with the workflow run.</param>
 public sealed record WorkflowRunDto(
     string WorkflowName,
     string Status,
     string Conclusion,
     string HtmlUrl,
-    string RepositoryFullName);
+    string RepositoryFullName,
+    string HeadBranch);
