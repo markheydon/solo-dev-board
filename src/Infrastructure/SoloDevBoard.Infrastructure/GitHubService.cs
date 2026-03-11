@@ -265,6 +265,28 @@ public sealed class GitHubService : IGitHubService
         => new($"GitHub API returned an invalid response for endpoint '{endpoint}'. {message}");
 
     /// <summary>
+    /// Converts a GitHub numeric identifier to the domain <see cref="int"/> shape.
+    /// GitHub identifiers can exceed <see cref="int.MaxValue"/>, so values are clamped
+    /// to avoid deserialisation/runtime overflow failures.
+    /// </summary>
+    /// <param name="id">The GitHub identifier to convert.</param>
+    /// <returns>An <see cref="int"/> value safe for domain mapping.</returns>
+    internal static int ConvertGitHubIdToInt(long id)
+    {
+        if (id > int.MaxValue)
+        {
+            return int.MaxValue;
+        }
+
+        if (id < int.MinValue)
+        {
+            return int.MinValue;
+        }
+
+        return (int)id;
+    }
+
+    /// <summary>
     /// Repairs common mojibake artefacts seen in externally sourced text.
     /// This preserves user readability when punctuation has been decoded incorrectly upstream,
     /// normalising malformed dash-like sequences to ASCII separator text.
@@ -389,7 +411,7 @@ public sealed class GitHubService : IGitHubService
     private sealed record RepositoryResponseDto
     {
         [JsonPropertyName("id")]
-        public int Id { get; init; }
+        public long Id { get; init; }
 
         [JsonPropertyName("name")]
         public string Name { get; init; } = string.Empty;
@@ -417,7 +439,7 @@ public sealed class GitHubService : IGitHubService
 
         public Repository ToDomain() => new()
         {
-            Id = Id,
+            Id = ConvertGitHubIdToInt(Id),
             Name = Name,
             FullName = FullName,
             Description = Description ?? string.Empty,
@@ -437,7 +459,7 @@ public sealed class GitHubService : IGitHubService
     private sealed record IssueResponseDto
     {
         [JsonPropertyName("id")]
-        public int Id { get; init; }
+        public long Id { get; init; }
 
         [JsonPropertyName("number")]
         public int Number { get; init; }
@@ -474,7 +496,7 @@ public sealed class GitHubService : IGitHubService
 
         public Issue ToDomain() => new()
         {
-            Id = Id,
+            Id = ConvertGitHubIdToInt(Id),
             Number = Number,
             Title = Title,
             HtmlUrl = HtmlUrl ?? string.Empty,
@@ -492,7 +514,7 @@ public sealed class GitHubService : IGitHubService
     private sealed record PullRequestResponseDto
     {
         [JsonPropertyName("id")]
-        public int Id { get; init; }
+        public long Id { get; init; }
 
         [JsonPropertyName("number")]
         public int Number { get; init; }
@@ -529,7 +551,7 @@ public sealed class GitHubService : IGitHubService
 
         public PullRequest ToDomain() => new()
         {
-            Id = Id,
+            Id = ConvertGitHubIdToInt(Id),
             Number = Number,
             Title = Title,
             HtmlUrl = HtmlUrl ?? string.Empty,
@@ -555,7 +577,7 @@ public sealed class GitHubService : IGitHubService
     private sealed record WorkflowRunResponseDto
     {
         [JsonPropertyName("id")]
-        public int Id { get; init; }
+        public long Id { get; init; }
 
         [JsonPropertyName("name")]
         public string Name { get; init; } = string.Empty;
@@ -583,7 +605,7 @@ public sealed class GitHubService : IGitHubService
 
         public WorkflowRun ToDomain() => new()
         {
-            Id = Id,
+            Id = ConvertGitHubIdToInt(Id),
             WorkflowName = Name,
             Status = Status ?? string.Empty,
             Conclusion = Conclusion ?? string.Empty,
@@ -599,7 +621,7 @@ public sealed class GitHubService : IGitHubService
     private sealed record MilestoneResponseDto
     {
         [JsonPropertyName("id")]
-        public int Id { get; init; }
+        public long Id { get; init; }
 
         [JsonPropertyName("number")]
         public int Number { get; init; }
@@ -624,7 +646,7 @@ public sealed class GitHubService : IGitHubService
 
         public Milestone ToDomain() => new()
         {
-            Id = Id,
+            Id = ConvertGitHubIdToInt(Id),
             Number = Number,
             Title = Title,
             Description = Description ?? string.Empty,

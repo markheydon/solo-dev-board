@@ -1,9 +1,9 @@
 @page "/"
 
-<PageTitle>Dashboard</PageTitle>
+<PageTitle>Home — SoloDevBoard</PageTitle>
 
 <MudStack Spacing="3">
-    <MudText Typo="Typo.h4">Dashboard</MudText>
+    <MudText Typo="Typo.h4">Home</MudText>
     <MudText Typo="Typo.body1">Navigate to each SoloDevBoard feature from a single starting point.</MudText>
 
     <MudGrid>
@@ -32,7 +32,8 @@
 @code {
     private static readonly IReadOnlyList<FeatureCardModel> features =
     [
-        new("Audit Dashboard", "Consolidated overview of repository health and delivery signals.", "/audit"),
+        new("Audit Dashboard", "Consolidated overview of repository health and delivery signals.", "/audit-dashboard"),
+        new("Repositories", "View and manage the GitHub repositories connected to SoloDevBoard.", "/repositories"),
         new("One-Click Migration", "Copy labels, milestones, and board configuration across repositories.", "/migrate"),
         new("Label Manager", "Manage and synchronise labels across repositories.", "/labels"),
         new("Board Rules Visualiser", "Inspect project automation flow and board behaviour.", "/board-rules"),
