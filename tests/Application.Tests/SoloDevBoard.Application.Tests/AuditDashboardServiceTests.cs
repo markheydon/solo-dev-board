@@ -115,6 +115,22 @@ public sealed class AuditDashboardServiceTests
     }
 
     [Fact]
+    public async Task GetAuditSummaryAsync_EmptyRepos_ReturnsEmptyList()
+    {
+        // Arrange
+        IReadOnlyList<string> repos = [];
+
+        // Act
+        var result = await _sut.GetAuditSummaryAsync(repos);
+
+        // Assert
+        Assert.Empty(result);
+        _gitHubServiceMock.Verify(service => service.GetIssuesAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _gitHubServiceMock.Verify(service => service.GetPullRequestsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _gitHubServiceMock.Verify(service => service.GetWorkflowRunsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
     public async Task GetUnlabelledIssuesAsync_UnlabelledIssuesExist_ReturnsOnlyUnlabelledIssues()
     {
         // Arrange
@@ -160,6 +176,28 @@ public sealed class AuditDashboardServiceTests
     }
 
     [Fact]
+    public async Task GetStalePullRequestsAsync_DefaultThreshold_ExcludesRecentAndClosedPullRequests()
+    {
+        // Arrange
+        var repos = new[] { "repo" };
+        _gitHubServiceMock
+            .Setup(service => service.GetPullRequestsAsync("owner", "repo", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(
+            [
+                new PullRequest { Id = 1, Number = 101, Title = "Stale", HtmlUrl = "https://example/pr/101", State = "open", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-21) },
+                new PullRequest { Id = 2, Number = 102, Title = "Recent", HtmlUrl = "https://example/pr/102", State = "open", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-4) },
+                new PullRequest { Id = 3, Number = 103, Title = "Closed", HtmlUrl = "https://example/pr/103", State = "closed", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-30) },
+            ]);
+
+        // Act
+        var result = await _sut.GetStalePullRequestsAsync(repos);
+
+        // Assert
+        var pullRequest = Assert.Single(result);
+        Assert.Equal(101, pullRequest.Number);
+    }
+
+    [Fact]
     public async Task GetFailingWorkflowRunsAsync_MostRecentRunFails_ReturnsWorkflowRunDto()
     {
         // Arrange
@@ -200,6 +238,44 @@ public sealed class AuditDashboardServiceTests
         Assert.Equal("failure", workflowRun.Conclusion);
         Assert.Equal("owner/repo", workflowRun.RepositoryFullName);
         Assert.Equal("main", workflowRun.HeadBranch);
+    }
+
+    [Fact]
+    public async Task GetFailingWorkflowRunsAsync_MostRecentRunIsSuccessful_ExcludesWorkflow()
+    {
+        // Arrange
+        var repos = new[] { "repo" };
+        _gitHubServiceMock
+            .Setup(service => service.GetWorkflowRunsAsync("owner", "repo", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(
+            [
+                new WorkflowRun
+                {
+                    Id = 1,
+                    WorkflowName = "build",
+                    Status = "completed",
+                    Conclusion = "failure",
+                    HtmlUrl = "https://example/run/1",
+                    UpdatedAt = DateTimeOffset.UtcNow.AddHours(-3),
+                    CreatedAt = DateTimeOffset.UtcNow.AddHours(-3),
+                },
+                new WorkflowRun
+                {
+                    Id = 2,
+                    WorkflowName = "build",
+                    Status = "completed",
+                    Conclusion = "success",
+                    HtmlUrl = "https://example/run/2",
+                    UpdatedAt = DateTimeOffset.UtcNow.AddHours(-1),
+                    CreatedAt = DateTimeOffset.UtcNow.AddHours(-1),
+                },
+            ]);
+
+        // Act
+        var result = await _sut.GetFailingWorkflowRunsAsync(repos);
+
+        // Assert
+        Assert.Empty(result);
     }
 
     [Fact]
