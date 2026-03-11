@@ -154,7 +154,7 @@ public sealed class AuditTests
             Assert.Single(cut.FindAll("[data-testid='audit-loading-state']"));
         });
 
-        summaryCompletionSource.SetResult([new RepositoryAuditSummaryDto("owner/repo-a", 1, 1, 0, 0, 0)]);
+        await cut.InvokeAsync(() => summaryCompletionSource.SetResult([new RepositoryAuditSummaryDto("owner/repo-a", 1, 1, 0, 0, 0)]));
         cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-summary-table']")));
     }
 

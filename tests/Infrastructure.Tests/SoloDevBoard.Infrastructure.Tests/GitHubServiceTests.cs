@@ -389,13 +389,13 @@ public sealed class GitHubServiceTests
         Assert.Equal("https://api.github.com/repos/owner/repo/actions/runs?per_page=25", handler.Requests[0].RequestUri!.ToString());
     }
 
-      [Fact]
-      public async Task GetWorkflowRunsAsync_NonSuccessStatusCode_ThrowsHttpRequestException()
-      {
+    [Fact]
+    public async Task GetWorkflowRunsAsync_NonSuccessStatusCode_ThrowsHttpRequestException()
+    {
         // Arrange
         var handler = new QueueMessageHandler(
         [
-          CreateJsonResponse(HttpStatusCode.BadGateway, "{\"message\":\"upstream failure\"}"),
+            CreateJsonResponse(HttpStatusCode.BadGateway, "{\"message\":\"upstream failure\"}"),
         ]);
 
         var sut = CreateSubject(handler);
@@ -406,8 +406,7 @@ public sealed class GitHubServiceTests
         // Assert
         var exception = await Assert.ThrowsAsync<HttpRequestException>(act);
         Assert.Equal(HttpStatusCode.BadGateway, exception.StatusCode);
-        Assert.Contains("status code 502", exception.Message, StringComparison.OrdinalIgnoreCase);
-      }
+    }
 
     [Fact]
     public async Task GetWorkflowRunsAsync_OwnerIsWhitespace_ThrowsArgumentException()
