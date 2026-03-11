@@ -1,10 +1,91 @@
 @page "/audit"
+@page "/audit-dashboard"
 
-<PageTitle>Audit Dashboard</PageTitle>
+<PageTitle>Audit Dashboard — SoloDevBoard</PageTitle>
 
-<MudStack Spacing="2">
+<MudStack Spacing="3">
     <MudText Typo="Typo.h4">Audit Dashboard</MudText>
-    <MudPaper Class="pa-4" Elevation="1">
-        <MudText Typo="Typo.body1">This feature is coming soon.</MudText>
-    </MudPaper>
+    <MudText Typo="Typo.body1">Review open issues and pull requests across your active repositories.</MudText>
+
+    @if (isLoading)
+    {
+        <MudPaper Class="pa-4" Elevation="1" aria-live="polite" role="status" data-testid="audit-loading-state">
+            <MudStack Spacing="2">
+                <MudSkeleton Height="28px" Width="260px" Animation="Animation.Wave" />
+                <MudGrid>
+                    <MudItem xs="12" md="4">
+                        <MudSkeleton Height="86px" Animation="Animation.Wave" />
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSkeleton Height="86px" Animation="Animation.Wave" />
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSkeleton Height="86px" Animation="Animation.Wave" />
+                    </MudItem>
+                </MudGrid>
+                <MudSkeleton Height="280px" Animation="Animation.Wave" />
+            </MudStack>
+        </MudPaper>
+    }
+    else if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <MudPaper Class="pa-4" Elevation="1" aria-live="assertive" role="alert" data-testid="audit-error-state">
+            <MudStack Spacing="2">
+                <MudText Typo="Typo.h6">Unable to load audit summary</MudText>
+                <MudText Typo="Typo.body2">@errorMessage</MudText>
+            </MudStack>
+        </MudPaper>
+    }
+    else if (repositorySummaries.Count == 0)
+    {
+        <MudPaper Class="pa-4" Elevation="1" aria-live="polite" data-testid="audit-empty-state">
+            <MudStack Spacing="1">
+                <MudText Typo="Typo.h6">No repositories found</MudText>
+                <MudText Typo="Typo.body2">No active repositories were returned for this account.</MudText>
+            </MudStack>
+        </MudPaper>
+    }
+    else
+    {
+        <MudGrid>
+            <MudItem xs="12" sm="6">
+                <MudPaper Class="pa-3" Outlined="true" data-testid="audit-total-issues-card">
+                    <MudText Typo="Typo.caption">Total open issues</MudText>
+                    <MudText Typo="Typo.h5">@totalOpenIssues</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudPaper Class="pa-3" Outlined="true" data-testid="audit-total-prs-card">
+                    <MudText Typo="Typo.caption">Total open pull requests</MudText>
+                    <MudText Typo="Typo.h5">@totalOpenPullRequests</MudText>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        <MudPaper Class="pa-2" Elevation="1" data-testid="audit-summary-table">
+            <MudDataGrid T="RepositoryAuditSummaryDto"
+                         Items="repositorySummaries"
+                         Hover="true"
+                         Dense="true"
+                         SortMode="SortMode.Multiple">
+                <Columns>
+                    <TemplateColumn Title="Repository" SortBy="summary => summary.RepositoryFullName">
+                        <CellTemplate>
+                            <MudLink Href="@BuildRepositoryUrl(context.Item.RepositoryFullName)"
+                                     Target="_blank"
+                                     rel="noopener noreferrer">
+                                @context.Item.RepositoryFullName
+                            </MudLink>
+                        </CellTemplate>
+                    </TemplateColumn>
+                    <PropertyColumn Property="summary => summary.OpenIssueCount"
+                                    Title="Open issues"
+                                    Sortable="true" />
+                    <PropertyColumn Property="summary => summary.OpenPullRequestCount"
+                                    Title="Open pull requests"
+                                    Sortable="true" />
+                </Columns>
+            </MudDataGrid>
+        </MudPaper>
+    }
 </MudStack>

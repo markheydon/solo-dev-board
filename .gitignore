@@ -422,3 +422,6 @@ FodyWeavers.xsd
 
 # Playwright files
 .playwright-mcp/
+
+# Local developer settings
+**/appsettings.Development.json

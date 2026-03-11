@@ -41,8 +41,8 @@ Labels: `type/epic`, `area/dashboard`
 <!-- Stories: #43 Open issues + PR summary, #44 Health indicators, #45 Filter by repository -->
 <!-- Tests: #46 AuditDashboardService unit tests, #47 GitHubService workflow run tests, #48 bUnit UI tests -->
 
-- [ ] As a solo developer, I want to see a summary of open issues across all my repositories so that I can quickly identify where work is needed. _(#43 status/todo — v0.2.0)_
-- [ ] As a solo developer, I want to see all open pull requests across my repositories so that I can track code review activity. _(#43 status/todo — v0.2.0)_
+- [x] As a solo developer, I want to see a summary of open issues across all my repositories so that I can quickly identify where work is needed. _(#43 status/done — v0.2.0)_
+- [x] As a solo developer, I want to see all open pull requests across my repositories so that I can track code review activity. _(#43 status/done — v0.2.0)_
 - [ ] As a solo developer, I want to see which issues have no labels so that I can identify items that need triage. _(#44 status/todo — v0.2.0)_
 - [ ] As a solo developer, I want to see which pull requests are stale (no activity in the last 14 days) so that I can follow them up. _(#44 status/todo — v0.2.0)_
 - [ ] As a solo developer, I want to see the status of GitHub Actions workflows across my repositories so that I can quickly spot build failures. _(#44 status/todo — v0.2.0)_

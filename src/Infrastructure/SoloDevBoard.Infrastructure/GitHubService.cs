@@ -265,6 +265,21 @@ public sealed class GitHubService : IGitHubService
         => new($"GitHub API returned an invalid response for endpoint '{endpoint}'. {message}");
 
     /// <summary>
+    /// Converts a GitHub numeric identifier to a 32-bit <see cref="int"/> value using an unchecked cast.
+    /// This is a lossy mapping intended only for scenarios that do not require the full unique identifier.
+    /// Callers must not rely on the returned value being unique across all GitHub entities.
+    /// </summary>
+    /// <param name="id">The GitHub identifier to convert.</param>
+    /// <returns>An <see cref="int"/> value derived from the GitHub identifier, suitable for non-unique mapping.</returns>
+    internal static int ConvertGitHubIdToInt(long id)
+    {
+        unchecked
+        {
+            return (int)id;
+        }
+    }
+
+    /// <summary>
     /// Repairs common mojibake artefacts seen in externally sourced text.
     /// This preserves user readability when punctuation has been decoded incorrectly upstream,
     /// normalising malformed dash-like sequences to ASCII separator text.
@@ -389,7 +404,7 @@ public sealed class GitHubService : IGitHubService
     private sealed record RepositoryResponseDto
     {
         [JsonPropertyName("id")]
-        public int Id { get; init; }
+        public long Id { get; init; }
 
         [JsonPropertyName("name")]
         public string Name { get; init; } = string.Empty;
@@ -417,7 +432,7 @@ public sealed class GitHubService : IGitHubService
 
         public Repository ToDomain() => new()
         {
-            Id = Id,
+            Id = ConvertGitHubIdToInt(Id),
             Name = Name,
             FullName = FullName,
             Description = Description ?? string.Empty,
@@ -437,7 +452,7 @@ public sealed class GitHubService : IGitHubService
     private sealed record IssueResponseDto
     {
         [JsonPropertyName("id")]
-        public int Id { get; init; }
+        public long Id { get; init; }
 
         [JsonPropertyName("number")]
         public int Number { get; init; }
@@ -474,7 +489,7 @@ public sealed class GitHubService : IGitHubService
 
         public Issue ToDomain() => new()
         {
-            Id = Id,
+            Id = ConvertGitHubIdToInt(Id),
             Number = Number,
             Title = Title,
             HtmlUrl = HtmlUrl ?? string.Empty,
@@ -492,7 +507,7 @@ public sealed class GitHubService : IGitHubService
     private sealed record PullRequestResponseDto
     {
         [JsonPropertyName("id")]
-        public int Id { get; init; }
+        public long Id { get; init; }
 
         [JsonPropertyName("number")]
         public int Number { get; init; }
@@ -529,7 +544,7 @@ public sealed class GitHubService : IGitHubService
 
         public PullRequest ToDomain() => new()
         {
-            Id = Id,
+            Id = ConvertGitHubIdToInt(Id),
             Number = Number,
             Title = Title,
             HtmlUrl = HtmlUrl ?? string.Empty,
@@ -555,7 +570,7 @@ public sealed class GitHubService : IGitHubService
     private sealed record WorkflowRunResponseDto
     {
         [JsonPropertyName("id")]
-        public int Id { get; init; }
+        public long Id { get; init; }
 
         [JsonPropertyName("name")]
         public string Name { get; init; } = string.Empty;
@@ -583,7 +598,7 @@ public sealed class GitHubService : IGitHubService
 
         public WorkflowRun ToDomain() => new()
         {
-            Id = Id,
+            Id = ConvertGitHubIdToInt(Id),
             WorkflowName = Name,
             Status = Status ?? string.Empty,
             Conclusion = Conclusion ?? string.Empty,
@@ -599,7 +614,7 @@ public sealed class GitHubService : IGitHubService
     private sealed record MilestoneResponseDto
     {
         [JsonPropertyName("id")]
-        public int Id { get; init; }
+        public long Id { get; init; }
 
         [JsonPropertyName("number")]
         public int Number { get; init; }
@@ -624,7 +639,7 @@ public sealed class GitHubService : IGitHubService
 
         public Milestone ToDomain() => new()
         {
-            Id = Id,
+            Id = ConvertGitHubIdToInt(Id),
             Number = Number,
             Title = Title,
             Description = Description ?? string.Empty,

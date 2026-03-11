@@ -26,7 +26,7 @@ It is built with the solo developer in mind: opinionated defaults, minimal confi
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| **Audit Dashboard** | A consolidated view of issues, open PRs, label consistency, and workflow health across all your repositories. | Coming soon |
+| **Audit Dashboard** | A consolidated view of issues, open PRs, label consistency, and workflow health across all your repositories. | Available |
 | **One-Click Migration** | Migrate labels, milestones, and project board configurations from one repository to another in a single action. | Coming soon |
 | **Label Manager** | Create, edit, synchronise, and enforce label taxonomies across multiple repositories from a single interface. | Coming soon |
 | **Board Rules Visualiser** | Visualise the automation rules configured on your GitHub project boards to understand how issues flow between columns. | Coming soon |

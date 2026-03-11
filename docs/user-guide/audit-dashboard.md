@@ -2,41 +2,36 @@
 layout: page
 title: Audit Dashboard
 parent: User Guide
-nav_order: 1
+nav_order: 2
 ---
 
-> ⚠️ **Under Development** — This feature is being built as part of Phase 2. This page will be updated as the feature progresses.
+# Audit Dashboard
 
----
+The Audit Dashboard provides a summary of open issues and open pull requests across all your GitHub repositories in SoloDevBoard.
 
-## Overview
+## Accessing the Audit Dashboard
 
-The Audit Dashboard provides a consolidated, at-a-glance view of your GitHub repositories' health. Instead of navigating to each repository individually, you can see all your open issues, pull requests, label consistency warnings, and workflow statuses in a single interface.
+- Navigate to the Audit Dashboard via the dashboard card link on the home page.
+- The route is `/audit-dashboard`. The legacy `/audit` route is also supported.
 
-Key goals of the Audit Dashboard:
-- Reduce context-switching by surfacing important signals across all repositories.
-- Highlight inconsistencies such as unlabelled issues, stale PRs, or failing workflows.
-- Provide actionable summaries rather than raw data dumps.
+## Features
 
----
+- Each repository is shown as a row in a sortable MudBlazor grid.
+- Columns include repository full name (linked to GitHub), open issue count, and open pull request count.
+- Total summary cards display aggregate open issues and open pull requests across all repositories.
+- A loading skeleton is shown while data is being fetched.
+- An empty state is displayed if no repositories are returned.
+- The browser page title is set to 'Audit Dashboard — SoloDevBoard'.
 
-## How to Use
+## Usage
 
-*Coming soon — this section will describe the step-by-step usage of the Audit Dashboard once the feature is complete.*
+1. Open the Audit Dashboard from the dashboard or navigation menu.
+2. Review the grid to see open issues and pull requests for each repository.
+3. Click a repository name to open it directly in GitHub.
+4. Use the summary cards to view total open issues and pull requests.
 
-Planned interactions include:
-- Selecting which repositories to include in the audit view.
-- Filtering by issue type, status, or label.
-- Drilling down into a specific repository or issue.
-- Exporting an audit summary.
+## Notes
 
----
+- Health indicators (such as label consistency, stale PRs, workflow status) and filtering by repository are planned for future stories and are not included in the current release.
 
-## Configuration
-
-*Coming soon — this section will describe any configuration options for the Audit Dashboard.*
-
-Planned configuration options include:
-- Repository inclusion/exclusion list.
-- Audit frequency / cache refresh interval.
-- Threshold settings for health indicators (e.g. "flag issues older than 30 days").
+For more information about upcoming features, see the [BACKLOG](../../plan/BACKLOG.md).

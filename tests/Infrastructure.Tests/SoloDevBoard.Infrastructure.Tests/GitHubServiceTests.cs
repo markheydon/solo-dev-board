@@ -244,6 +244,43 @@ public sealed class GitHubServiceTests
     }
 
     [Fact]
+    public async Task GetIssuesAsync_ResponseContainsLargeId_MapsWithoutJsonOverflow()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                [
+                  {
+                    "id": 6381766854,
+                    "number": 32,
+                    "title": "Large id issue",
+                    "body": "Details",
+                    "state": "open",
+                    "user": { "login": "mark" },
+                    "labels": [],
+                    "created_at": "2026-03-01T10:00:00Z",
+                    "updated_at": "2026-03-02T11:00:00Z"
+                  }
+                ]
+                """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var result = await sut.GetIssuesAsync("owner", "repo");
+
+        // Assert
+        var issue = Assert.Single(result);
+        Assert.Equal(32, issue.Number);
+        Assert.Equal(2086799558, issue.Id);
+        Assert.Single(handler.Requests);
+    }
+
+    [Fact]
     public async Task GetPullRequestsAsync_ValidResponse_ReturnsMappedPullRequests()
     {
         // Arrange
