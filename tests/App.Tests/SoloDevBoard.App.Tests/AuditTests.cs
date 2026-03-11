@@ -113,6 +113,52 @@ public sealed class AuditTests
     }
 
     [Fact]
+    public async Task Audit_WhenLoadingSelectedRepositories_ShowsAuditLoadingState()
+    {
+        // Arrange
+        var summaryCompletionSource = new TaskCompletionSource<IReadOnlyList<RepositoryAuditSummaryDto>>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreateRepository("owner", "repo-a")]);
+
+        _auditDashboardServiceMock
+            .Setup(service => service.GetAuditSummaryAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
+            .Returns(summaryCompletionSource.Task);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Audit>();
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-repository-filter']")));
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo-a" }));
+
+        cut.WaitForAssertion(() =>
+        {
+            var button = cut.Find("[data-testid='audit-load-selected-button']");
+            Assert.False(button.HasAttribute("disabled"));
+        });
+
+        cut.Find("[data-testid='audit-load-selected-button']").Click();
+
+        // Assert
+        _auditDashboardServiceMock.Verify(
+            service => service.GetAuditSummaryAsync(
+                It.Is<IReadOnlyList<string>>(repos => repos.Count == 1 && repos[0] == "owner/repo-a"),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='audit-loading-state']"));
+        });
+
+        await cut.InvokeAsync(() => summaryCompletionSource.SetResult([new RepositoryAuditSummaryDto("owner/repo-a", 1, 1, 0, 0, 0)]));
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-summary-table']")));
+    }
+
+    [Fact]
     public async Task Audit_WhenHealthIndicatorsExist_ShowsHealthSectionsWithCountsAndLinks()
     {
         // Arrange

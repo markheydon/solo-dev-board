@@ -390,6 +390,25 @@ public sealed class GitHubServiceTests
     }
 
     [Fact]
+    public async Task GetWorkflowRunsAsync_NonSuccessStatusCode_ThrowsHttpRequestException()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.BadGateway, "{\"message\":\"upstream failure\"}"),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var act = async () => _ = await sut.GetWorkflowRunsAsync("owner", "repo");
+
+        // Assert
+        var exception = await Assert.ThrowsAsync<HttpRequestException>(act);
+        Assert.Equal(HttpStatusCode.BadGateway, exception.StatusCode);
+    }
+
+    [Fact]
     public async Task GetWorkflowRunsAsync_OwnerIsWhitespace_ThrowsArgumentException()
     {
         // Arrange
