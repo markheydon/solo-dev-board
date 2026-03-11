@@ -5,10 +5,12 @@ namespace SoloDevBoard.Application.Services;
 /// <param name="Title">The pull request title.</param>
 /// <param name="HtmlUrl">The web URL of the pull request.</param>
 /// <param name="RepositoryFullName">The fully-qualified repository name in owner/name format.</param>
+/// <param name="AuthorLogin">The login of the pull request author.</param>
 /// <param name="UpdatedAt">The date and time when the pull request was last updated.</param>
 public sealed record PullRequestDto(
     int Number,
     string Title,
     string HtmlUrl,
     string RepositoryFullName,
+    string AuthorLogin,
     DateTimeOffset UpdatedAt);

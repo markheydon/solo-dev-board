@@ -31,7 +31,6 @@ public partial class Labels : ComponentBase
 
     private IReadOnlyList<RepositoryDto> availableRepositories = [];
     private IReadOnlyList<RepositoryDto> selectedRepositories = [];
-    private RepositoryDto? repositoryAutocompleteValue;
     private IReadOnlyList<LabelRow> rows = [];
     private IReadOnlyList<LabelRow> filteredRows = [];
     private bool isLoadingRepositories = true;
@@ -118,7 +117,6 @@ public partial class Labels : ComponentBase
                 .ToArray();
 
             selectedRepositories = [];
-            repositoryAutocompleteValue = null;
             recommendedPreview = [];
             recommendedApplyResults = [];
             showRecommendedPreview = false;
@@ -142,54 +140,17 @@ public partial class Labels : ComponentBase
         }
     }
 
-    private Task OnRepositorySelectedAsync(RepositoryDto? repository)
+    private Task OnSelectedRepositoriesChangedAsync(IReadOnlyList<string> repositoryFullNames)
     {
-        if (repository is null || string.IsNullOrWhiteSpace(repository.FullName))
-        {
-            return Task.CompletedTask;
-        }
+        ArgumentNullException.ThrowIfNull(repositoryFullNames);
 
-        if (!selectedRepositories.Any(item => item.FullName.Equals(repository.FullName, StringComparison.OrdinalIgnoreCase)))
-        {
-            selectedRepositories = selectedRepositories
-                .Append(repository)
-                .OrderBy(item => item.FullName, StringComparer.OrdinalIgnoreCase)
-                .ToArray();
-        }
-
-        repositoryAutocompleteValue = null;
-        recommendedPreview = [];
-        showRecommendedPreview = false;
-        recommendedApplyResults = [];
-        taxonomyOperationMessage = null;
-        EnsureSyncSelections();
-        return Task.CompletedTask;
-    }
-
-    private Task<IEnumerable<RepositoryDto>> SearchRepositoriesAsync(string? value, CancellationToken cancellationToken)
-    {
-        IEnumerable<RepositoryDto> matches = availableRepositories;
-
-        if (!string.IsNullOrWhiteSpace(value))
-        {
-            var filter = value.Trim();
-            matches = matches.Where(repository =>
-                repository.FullName.Contains(filter, StringComparison.OrdinalIgnoreCase));
-        }
-
-        var selectedNames = selectedRepositories
-            .Select(repository => repository.FullName)
+        var selectedNames = repositoryFullNames
+            .Where(fullName => !string.IsNullOrWhiteSpace(fullName))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        matches = matches.Where(repository => !selectedNames.Contains(repository.FullName));
-
-        return Task.FromResult(matches);
-    }
-
-    private void RemoveSelectedRepository(string repositoryFullName)
-    {
-        selectedRepositories = selectedRepositories
-            .Where(repository => !repository.FullName.Equals(repositoryFullName, StringComparison.OrdinalIgnoreCase))
+        selectedRepositories = availableRepositories
+            .Where(repository => selectedNames.Contains(repository.FullName))
+            .OrderBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
         recommendedPreview = [];
@@ -197,6 +158,7 @@ public partial class Labels : ComponentBase
         recommendedApplyResults = [];
         taxonomyOperationMessage = null;
         EnsureSyncSelections();
+        return Task.CompletedTask;
     }
 
     private Task OnSyncSourceRepositoryChangedAsync(string value)
@@ -917,6 +879,18 @@ public partial class Labels : ComponentBase
             return $"Showing {repositoryCount} active {repositoryNoun}. {selectedRepositories.Count} selected. Archived repositories are hidden by default.";
         }
     }
+
+    private IReadOnlyList<string> availableRepositoryFullNames
+        => availableRepositories
+            .Select(repository => repository.FullName)
+            .OrderBy(fullName => fullName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+    private IReadOnlyList<string> selectedRepositoryFullNames
+        => selectedRepositories
+            .Select(repository => repository.FullName)
+            .OrderBy(fullName => fullName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
 
     private static string GetColourChipStyle(string colour) => LabelColourStyleHelper.GetColourChipStyle(colour);
 

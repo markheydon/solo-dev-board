@@ -27,7 +27,7 @@ public sealed class AuditDashboardServiceTests
             new() { Id = 2, Name = "repo-two", FullName = "owner/repo-two" },
         };
         _gitHubServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync("owner", It.IsAny<CancellationToken>()))
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(repositories);
         _gitHubServiceMock
             .Setup(service => service.GetIssuesAsync("owner", It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -54,8 +54,8 @@ public sealed class AuditDashboardServiceTests
         // Arrange
         var issues = new List<Issue>
         {
-            new() { Id = 1, Number = 7, Title = "First issue", State = "open", HtmlUrl = "https://example/issue/7", UpdatedAt = DateTimeOffset.UtcNow },
-            new() { Id = 2, Number = 8, Title = "Closed issue", State = "closed", HtmlUrl = "https://example/issue/8", UpdatedAt = DateTimeOffset.UtcNow },
+            new() { Id = 1, Number = 7, Title = "First issue", State = "open", HtmlUrl = "https://example/issue/7", CreatedAt = DateTimeOffset.UtcNow.AddDays(-3), UpdatedAt = DateTimeOffset.UtcNow },
+            new() { Id = 2, Number = 8, Title = "Closed issue", State = "closed", HtmlUrl = "https://example/issue/8", CreatedAt = DateTimeOffset.UtcNow.AddDays(-10), UpdatedAt = DateTimeOffset.UtcNow },
         };
         _gitHubServiceMock
             .Setup(service => service.GetIssuesAsync("owner", "repo", It.IsAny<CancellationToken>()))
@@ -70,6 +70,7 @@ public sealed class AuditDashboardServiceTests
         Assert.Equal("First issue", dto.Title);
         Assert.Equal("https://example/issue/7", dto.HtmlUrl);
         Assert.Equal("owner/repo", dto.RepositoryFullName);
+        Assert.True(dto.CreatedAt <= dto.UpdatedAt);
     }
 
     [Fact]
@@ -146,7 +147,7 @@ public sealed class AuditDashboardServiceTests
             .ReturnsAsync(
             [
                 new PullRequest { Id = 1, Number = 11, Title = "Stale", HtmlUrl = "https://example/pr/11", State = "open", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-30) },
-                new PullRequest { Id = 2, Number = 12, Title = "Fresh", HtmlUrl = "https://example/pr/12", State = "open", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-2) },
+                new PullRequest { Id = 2, Number = 12, Title = "Fresh", HtmlUrl = "https://example/pr/12", State = "open", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-2), AuthorLogin = "octo" },
             ]);
 
         // Act
@@ -184,6 +185,7 @@ public sealed class AuditDashboardServiceTests
                     Status = "completed",
                     Conclusion = "failure",
                     HtmlUrl = "https://example/run/2",
+                    HeadBranch = "main",
                     UpdatedAt = DateTimeOffset.UtcNow.AddHours(-1),
                     CreatedAt = DateTimeOffset.UtcNow.AddHours(-1),
                 },
@@ -197,6 +199,34 @@ public sealed class AuditDashboardServiceTests
         Assert.Equal("build", workflowRun.WorkflowName);
         Assert.Equal("failure", workflowRun.Conclusion);
         Assert.Equal("owner/repo", workflowRun.RepositoryFullName);
+        Assert.Equal("main", workflowRun.HeadBranch);
+    }
+
+    [Fact]
+    public async Task GetAuditSummaryAsync_ReposContainDifferentOwnerPrefix_UsesProvidedOwnerForRequests()
+    {
+        // Arrange
+        var repos = new[] { "another-owner/repo-one" };
+        _gitHubServiceMock
+            .Setup(service => service.GetIssuesAsync("another-owner", "repo-one", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+        _gitHubServiceMock
+            .Setup(service => service.GetPullRequestsAsync("another-owner", "repo-one", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+        _gitHubServiceMock
+            .Setup(service => service.GetWorkflowRunsAsync("another-owner", "repo-one", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        // Act
+        var result = await _sut.GetAuditSummaryAsync(repos);
+
+        // Assert
+        var summary = Assert.Single(result);
+        Assert.Equal("another-owner/repo-one", summary.RepositoryFullName);
+
+        _gitHubServiceMock.Verify(service => service.GetIssuesAsync("another-owner", "repo-one", It.IsAny<CancellationToken>()), Times.Once);
+        _gitHubServiceMock.Verify(service => service.GetPullRequestsAsync("another-owner", "repo-one", It.IsAny<CancellationToken>()), Times.Once);
+        _gitHubServiceMock.Verify(service => service.GetWorkflowRunsAsync("another-owner", "repo-one", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

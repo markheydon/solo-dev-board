@@ -17,38 +17,20 @@
             else
             {
                 <MudStack Spacing="2">
-                    <MudAutocomplete T="RepositoryDto"
-                                     Value="repositoryAutocompleteValue"
-                                     ValueChanged="OnRepositorySelectedAsync"
-                                     SearchFunc="SearchRepositoriesAsync"
-                                     ToStringFunc="repository => repository?.FullName ?? string.Empty"
-                                     Label="Repositories"
-                                     Placeholder="Search repositories and select"
-                                     Variant="Variant.Outlined"
-                                     MinCharacters="0"
-                                     Clearable="true"
-                                     Immediate="true"
-                                     Disabled="ShowLoadingState"
-                                     Adornment="Adornment.Start"
-                                     AdornmentIcon="@Icons.Material.Filled.Search"
-                                     data-testid="repository-autocomplete" />
-
-                    @if (selectedRepositories.Count > 0)
-                    {
-                        <MudStack Row="true" Spacing="1" data-testid="selected-repositories">
-                            @foreach (var repository in selectedRepositories)
-                            {
-                                <MudChip T="string"
-                                         Variant="Variant.Outlined"
-                                         Color="Color.Primary"
-                                         OnClose="() => RemoveSelectedRepository(repository.FullName)">
-                                    @repository.FullName
-                                </MudChip>
-                            }
-                        </MudStack>
-                    }
-
-                    <MudText Typo="Typo.body2" data-testid="repository-selector-summary">@RepositorySelectorSummary</MudText>
+                    <RepositorySelector
+                        Title=""
+                        Label="Repositories"
+                        Placeholder="Search repositories and select"
+                        EmptyStateText="No active repositories are available for label analysis."
+                        AvailableRepositories="availableRepositoryFullNames"
+                        SelectedRepositories="selectedRepositoryFullNames"
+                        SelectedRepositoriesChanged="OnSelectedRepositoriesChangedAsync"
+                        SummaryText="@RepositorySelectorSummary"
+                        ShowSelectedChips="true"
+                        ShowSelectionActions="true"
+                        Disabled="ShowLoadingState"
+                        AutocompleteTestId="repository-autocomplete"
+                        SummaryTestId="repository-selector-summary" />
 
                     <MudStack Row="true" Spacing="1">
                         <MudButton Variant="Variant.Filled"

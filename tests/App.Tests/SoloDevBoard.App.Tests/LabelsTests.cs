@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using MudBlazor;
 using MudBlazor.Services;
+using SoloDevBoard.App.Components.Shared;
 using SoloDevBoard.App.Components.Pages;
 using SoloDevBoard.Application.Services;
 using System.Net.Http;
@@ -541,15 +542,10 @@ public sealed class LabelsTests
 
     private static async Task SelectRepositoriesAsync(IRenderedComponent<Labels> cut, params RepositoryDto[] repositories)
     {
-        var autocomplete = cut.FindComponent<MudAutocomplete<RepositoryDto>>();
+        var selector = cut.FindComponent<RepositorySelector>();
+        var selectedFullNames = repositories.Select(repository => repository.FullName).ToArray();
 
-        await cut.InvokeAsync(async () =>
-        {
-            foreach (var repository in repositories)
-            {
-                await autocomplete.Instance.ValueChanged.InvokeAsync(repository);
-            }
-        });
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(selectedFullNames));
     }
 
     private static RepositoryDto CreateRepository(string owner, string name, bool isPrivate = false, bool isArchived = false)

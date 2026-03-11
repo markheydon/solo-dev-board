@@ -43,10 +43,10 @@ Labels: `type/epic`, `area/dashboard`
 
 - [x] As a solo developer, I want to see a summary of open issues across all my repositories so that I can quickly identify where work is needed. _(#43 status/done — v0.2.0)_
 - [x] As a solo developer, I want to see all open pull requests across my repositories so that I can track code review activity. _(#43 status/done — v0.2.0)_
-- [ ] As a solo developer, I want to see which issues have no labels so that I can identify items that need triage. _(#44 status/todo — v0.2.0)_
-- [ ] As a solo developer, I want to see which pull requests are stale (no activity in the last 14 days) so that I can follow them up. _(#44 status/todo — v0.2.0)_
-- [ ] As a solo developer, I want to see the status of GitHub Actions workflows across my repositories so that I can quickly spot build failures. _(#44 status/todo — v0.2.0)_
-- [ ] As a solo developer, I want to filter the Audit Dashboard by repository so that I can focus on one project at a time. _(#45 status/todo — v0.2.0)_
+- [x] As a solo developer, I want to see which issues have no labels so that I can identify items that need triage. _(#44 status/done — v0.2.0)_
+- [x] As a solo developer, I want to see which pull requests are stale (no activity in the last 14 days) so that I can follow them up. _(#44 status/done — v0.2.0)_
+- [x] As a solo developer, I want to see the status of GitHub Actions workflows across my repositories so that I can quickly spot build failures. _(#44 status/done — v0.2.0)_
+- [x] As a solo developer, I want to filter the Audit Dashboard by repository so that I can focus on one project at a time. _(#44 status/done — v0.2.0; selection-first multi-select repository filter with shared RepositorySelector component; #45 merged into this story)_
 - [ ] As a solo developer, I want the Audit Dashboard to refresh automatically so that I always see current data.
 - [ ] As a solo developer, I want to export an audit summary as a Markdown report so that I can paste it into a planning document.
 - [ ] As a solo developer, I want to see my project board state at a glance (item count per status column and current active load) so that I can assess capacity before committing to more work.
