@@ -16,8 +16,11 @@ public sealed class AuditDashboardService : IAuditDashboardService
     /// <param name="currentUserContext">The current user context used to resolve the owner login.</param>
     public AuditDashboardService(IGitHubService gitHubService, ICurrentUserContext currentUserContext)
     {
-        _gitHubService = gitHubService ?? throw new ArgumentNullException(nameof(gitHubService));
-        _currentUserContext = currentUserContext ?? throw new ArgumentNullException(nameof(currentUserContext));
+        ArgumentNullException.ThrowIfNull(gitHubService);
+        ArgumentNullException.ThrowIfNull(currentUserContext);
+
+        _gitHubService = gitHubService;
+        _currentUserContext = currentUserContext;
     }
 
     /// <inheritdoc/>

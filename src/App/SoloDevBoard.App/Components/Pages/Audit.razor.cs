@@ -4,7 +4,7 @@ using SoloDevBoard.Application.Services;
 
 namespace SoloDevBoard.App.Components.Pages;
 
-/// <summary>Displays open issue and pull request summary counts across repositories.</summary>
+/// <summary>Displays open issue, pull request, and health indicator summaries across repositories.</summary>
 public partial class Audit : ComponentBase
 {
     private const int StalePullRequestDays = 14;
