@@ -265,25 +265,18 @@ public sealed class GitHubService : IGitHubService
         => new($"GitHub API returned an invalid response for endpoint '{endpoint}'. {message}");
 
     /// <summary>
-    /// Converts a GitHub numeric identifier to the domain <see cref="int"/> shape.
-    /// GitHub identifiers can exceed <see cref="int.MaxValue"/>, so values are clamped
-    /// to avoid deserialisation/runtime overflow failures.
+    /// Converts a GitHub numeric identifier to a 32-bit <see cref="int"/> value using an unchecked cast.
+    /// This is a lossy mapping intended only for scenarios that do not require the full unique identifier.
+    /// Callers must not rely on the returned value being unique across all GitHub entities.
     /// </summary>
     /// <param name="id">The GitHub identifier to convert.</param>
-    /// <returns>An <see cref="int"/> value safe for domain mapping.</returns>
+    /// <returns>An <see cref="int"/> value derived from the GitHub identifier, suitable for non-unique mapping.</returns>
     internal static int ConvertGitHubIdToInt(long id)
     {
-        if (id > int.MaxValue)
+        unchecked
         {
-            return int.MaxValue;
+            return (int)id;
         }
-
-        if (id < int.MinValue)
-        {
-            return int.MinValue;
-        }
-
-        return (int)id;
     }
 
     /// <summary>
