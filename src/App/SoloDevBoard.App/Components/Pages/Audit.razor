@@ -72,7 +72,8 @@
                     <TemplateColumn Title="Repository" SortBy="summary => summary.RepositoryFullName">
                         <CellTemplate>
                             <MudLink Href="@BuildRepositoryUrl(context.Item.RepositoryFullName)"
-                                     Target="_blank">
+                                     Target="_blank"
+                                     Rel="noopener noreferrer">
                                 @context.Item.RepositoryFullName
                             </MudLink>
                         </CellTemplate>
