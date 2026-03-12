@@ -230,26 +230,35 @@
                 {
                     var labelResult = GetLabelResult(repository);
                     var milestoneResult = GetMilestoneResult(repository);
+                    var showLabelSummary = migrateLabels && applyResult.LabelResults.Any(item => item.RepositoryFullName.Equals(repository, StringComparison.OrdinalIgnoreCase));
+                    var showMilestoneSummary = migrateMilestones && applyResult.MilestoneResults.Any(item => item.RepositoryFullName.Equals(repository, StringComparison.OrdinalIgnoreCase));
 
                     <MudPaper Class="pa-3" Outlined="true">
                         <MudText Typo="Typo.subtitle1">@repository</MudText>
 
-                        @if (labelResult.HasError || milestoneResult.HasError)
+                        @if ((showLabelSummary && labelResult.HasError) || (showMilestoneSummary && milestoneResult.HasError))
                         {
-                            @if (labelResult.HasError)
+                            @if (showLabelSummary && labelResult.HasError)
                             {
                                 <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Outlined">Label migration failed. @labelResult.ErrorMessage</MudAlert>
                             }
 
-                            @if (milestoneResult.HasError)
+                            @if (showMilestoneSummary && milestoneResult.HasError)
                             {
                                 <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Outlined">Milestone migration failed. @milestoneResult.ErrorMessage</MudAlert>
                             }
                         }
                         else
                         {
-                            <MudText Typo="Typo.body2">Labels - Created: @labelResult.CreatedCount, Updated: @labelResult.UpdatedCount, Deleted: @labelResult.DeletedCount, Skipped: @labelResult.SkippedCount</MudText>
-                            <MudText Typo="Typo.body2">Milestones - Created: @milestoneResult.CreatedCount, Updated: @milestoneResult.UpdatedCount, Deleted: @milestoneResult.DeletedCount, Skipped: @milestoneResult.SkippedCount</MudText>
+                            @if (showLabelSummary)
+                            {
+                                <MudText Typo="Typo.body2">Labels - Created: @labelResult.CreatedCount, Updated: @labelResult.UpdatedCount, Deleted: @labelResult.DeletedCount, Skipped: @labelResult.SkippedCount</MudText>
+                            }
+
+                            @if (showMilestoneSummary)
+                            {
+                                <MudText Typo="Typo.body2">Milestones - Created: @milestoneResult.CreatedCount, Updated: @milestoneResult.UpdatedCount, Deleted: @milestoneResult.DeletedCount, Skipped: @milestoneResult.SkippedCount</MudText>
+                            }
                         }
                     </MudPaper>
                 }

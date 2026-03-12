@@ -61,7 +61,7 @@ Select how existing artefacts in each target repository are handled when a match
 |---|---|
 | **Skip** | Conflicting items in the target are left unchanged. |
 | **Overwrite** | Conflicting items are replaced with those from the source. A warning is shown before you confirm. |
-| **Merge** | Conflicting items are updated using attributes from both source and target where possible. |
+| **Merge** | Conflicting items are replaced with source values; items that exist only in the target are preserved. |
 
 ### Step 4 — Preview changes
 
@@ -78,7 +78,7 @@ If the preview shows no actionable changes for a target repository, an informati
 
 Once you are satisfied with the preview, click **Confirm and apply**. This button only appears when there is at least one actionable change across all target repositories.
 
-If you selected the **Overwrite** strategy, a confirmation prompt is shown before any destructive changes are made.
+If you selected the **Overwrite** strategy, an on-page warning is shown before destructive changes are applied.
 
 Partial failures are reported per target repository — a failure for one target does not abort the remaining targets.
 
