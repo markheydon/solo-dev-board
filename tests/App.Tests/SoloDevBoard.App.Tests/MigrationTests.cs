@@ -283,6 +283,7 @@ public sealed class MigrationTests
         await SelectRepositoriesAsync(cut, sourceRepository, targetRepository);
 
         var targetCheckboxes = cut.FindAll("[data-testid='migration-target-checkbox']");
+        Assert.Equal(2, targetCheckboxes.Count);
         targetCheckboxes[1].Change(true);
 
         cut.Find("[data-testid='migration-preview-button']").Click();
