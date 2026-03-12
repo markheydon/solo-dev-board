@@ -170,6 +170,91 @@ public sealed class GitHubMilestoneRepositoryTests
         Assert.Equal("https://api.github.com/repos/owner/repo/milestones/8", handler.Requests[0].RequestUri!.ToString());
     }
 
+    [Fact]
+    public async Task GetMilestonesAsync_NonSuccessResponse_ThrowsHttpRequestException()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler([
+            CreateJsonResponse(HttpStatusCode.Forbidden, "{ \"message\": \"Forbidden\" }"),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var action = async () => await sut.GetMilestonesAsync("owner", "repo");
+
+        // Assert
+        await Assert.ThrowsAsync<HttpRequestException>(action);
+    }
+
+    [Fact]
+    public async Task CreateMilestoneAsync_NonSuccessResponse_ThrowsHttpRequestException()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler([
+            CreateJsonResponse(HttpStatusCode.UnprocessableEntity, "{ \"message\": \"Validation Failed\" }"),
+        ]);
+
+        var sut = CreateSubject(handler);
+        var milestone = new Milestone
+        {
+            Title = "Sprint 8",
+            Description = "Next sprint",
+            State = "open",
+        };
+
+        // Act
+        var action = async () => await sut.CreateMilestoneAsync("owner", "repo", milestone);
+
+        // Assert
+        await Assert.ThrowsAsync<HttpRequestException>(action);
+    }
+
+    [Fact]
+    public async Task UpdateMilestoneAsync_MilestoneNumberIsZero_ThrowsArgumentOutOfRangeException()
+    {
+        // Arrange
+        var sut = CreateSubject(new QueueMessageHandler([]));
+        var milestone = new Milestone
+        {
+            Title = "Sprint 8",
+            Description = "Next sprint",
+            State = "open",
+        };
+
+        // Act
+        var action = async () => await sut.UpdateMilestoneAsync("owner", "repo", 0, milestone);
+
+        // Assert
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(action);
+    }
+
+    [Fact]
+    public async Task DeleteMilestoneAsync_RepositoryIsWhitespace_ThrowsArgumentException()
+    {
+        // Arrange
+        var sut = CreateSubject(new QueueMessageHandler([]));
+
+        // Act
+        var action = async () => await sut.DeleteMilestoneAsync("owner", " ", 8);
+
+        // Assert
+        await Assert.ThrowsAsync<ArgumentException>(action);
+    }
+
+    [Fact]
+    public async Task CreateMilestoneAsync_MilestoneIsNull_ThrowsArgumentNullException()
+    {
+        // Arrange
+        var sut = CreateSubject(new QueueMessageHandler([]));
+
+        // Act
+        var action = async () => await sut.CreateMilestoneAsync("owner", "repo", null!);
+
+        // Assert
+        await Assert.ThrowsAsync<ArgumentNullException>(action);
+    }
+
     private static GitHubMilestoneRepository CreateSubject(HttpMessageHandler handler)
     {
         var currentUserContextMock = new Mock<ICurrentUserContext>();

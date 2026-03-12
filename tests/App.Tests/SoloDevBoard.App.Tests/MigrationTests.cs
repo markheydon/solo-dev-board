@@ -192,6 +192,193 @@ public sealed class MigrationTests
         });
     }
 
+    [Fact]
+    public async Task Migration_NoRepositoriesAvailable_ShowsEmptyStateMessage()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Migration>();
+
+        // Assert
+        cut.WaitForAssertion(() => Assert.Contains("No active repositories are available for migration.", cut.Markup));
+    }
+
+    [Fact]
+    public async Task Migration_PreviewClickedWithoutRequiredSelection_DoesNotInvokePreviewService()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                CreateRepository("owner", "repo-a"),
+                CreateRepository("owner", "repo-b"),
+            ]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Migration>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='migration-preview-button']"));
+        cut.Find("[data-testid='migration-preview-button']").Click();
+
+        // Assert
+        Assert.Empty(cut.FindAll("[data-testid='migration-preview-card']"));
+        _migrationServiceMock.Verify(service => service.PreviewMigrationAsync(
+            It.IsAny<string>(),
+            It.IsAny<IReadOnlyList<string>>(),
+            It.IsAny<MigrationScopeDto>(),
+            It.IsAny<MigrationConflictStrategy>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Migration_ApplyClickedTwiceDuringPendingCall_InvokesApplyServiceOnce()
+    {
+        // Arrange
+        var sourceRepository = CreateRepository("owner", "repo-a");
+        var targetRepository = CreateRepository("owner", "repo-b");
+        var applyTaskSource = new TaskCompletionSource<MigrationResultDto>();
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([sourceRepository, targetRepository]);
+
+        _migrationServiceMock
+            .Setup(service => service.PreviewMigrationAsync(
+                "owner/repo-a",
+                It.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })),
+                It.IsAny<MigrationScopeDto>(),
+                MigrationConflictStrategy.Skip,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MigrationPreviewDto(
+                MigrationConflictStrategy.Skip,
+                [new LabelSyncRepositoryPreviewDto(
+                    "owner/repo-b",
+                    [new LabelDto("priority/high", "d93f0b", "High priority", "owner/repo-b")],
+                    [],
+                    [],
+                    [])],
+                [new MilestoneSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [])]));
+
+        _migrationServiceMock
+            .Setup(service => service.ApplyMigrationAsync(
+                "owner/repo-a",
+                It.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })),
+                It.IsAny<MigrationScopeDto>(),
+                MigrationConflictStrategy.Skip,
+                It.IsAny<CancellationToken>()))
+            .Returns(applyTaskSource.Task);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Migration>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='migration-repository-autocomplete']"));
+        await SelectRepositoriesAsync(cut, sourceRepository, targetRepository);
+
+        var targetCheckboxes = cut.FindAll("[data-testid='migration-target-checkbox']");
+        Assert.Equal(2, targetCheckboxes.Count);
+        targetCheckboxes[1].Change(true);
+
+        cut.Find("[data-testid='migration-preview-button']").Click();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='migration-apply-button']"));
+
+        var applyButton = cut.Find("[data-testid='migration-apply-button']");
+        applyButton.Click();
+        applyButton.Click();
+
+        await cut.InvokeAsync(() => applyTaskSource.SetResult(new MigrationResultDto(
+            MigrationConflictStrategy.Skip,
+            [new LabelSyncRepositoryResultDto("owner/repo-b", 1, 0, 0, 0, null)],
+            [])));
+
+        // Assert
+        cut.WaitForAssertion(() => Assert.Contains("Migration completed successfully", cut.Markup));
+        _migrationServiceMock.Verify(service => service.ApplyMigrationAsync(
+            "owner/repo-a",
+            It.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })),
+            It.IsAny<MigrationScopeDto>(),
+            MigrationConflictStrategy.Skip,
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Migration_ApplyReturnsPartialFailure_RendersSummaryAndErrorDetails()
+    {
+        // Arrange
+        var sourceRepository = CreateRepository("owner", "repo-a");
+        var targetRepository = CreateRepository("owner", "repo-b");
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([sourceRepository, targetRepository]);
+
+        _migrationServiceMock
+            .Setup(service => service.PreviewMigrationAsync(
+                "owner/repo-a",
+                It.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })),
+                It.IsAny<MigrationScopeDto>(),
+                MigrationConflictStrategy.Merge,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MigrationPreviewDto(
+                MigrationConflictStrategy.Merge,
+                [new LabelSyncRepositoryPreviewDto(
+                    "owner/repo-b",
+                    [new LabelDto("priority/high", "d93f0b", "High priority", "owner/repo-b")],
+                    [],
+                    [],
+                    [])],
+                [new MilestoneSyncRepositoryPreviewDto(
+                    "owner/repo-b",
+                    [new MilestoneDto(1, 2, "Sprint 2", "Delivery", "open", null, 0, 0)],
+                    [],
+                    [],
+                    [])]));
+
+        _migrationServiceMock
+            .Setup(service => service.ApplyMigrationAsync(
+                "owner/repo-a",
+                It.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })),
+                It.IsAny<MigrationScopeDto>(),
+                MigrationConflictStrategy.Merge,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MigrationResultDto(
+                MigrationConflictStrategy.Merge,
+                [new LabelSyncRepositoryResultDto("owner/repo-b", 1, 0, 0, 0, "GitHub label API rate limit reached")],
+                [new MilestoneSyncRepositoryResultDto("owner/repo-b", 1, 0, 0, 0, null)]));
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Migration>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='migration-repository-autocomplete']"));
+        await SelectRepositoriesAsync(cut, sourceRepository, targetRepository);
+
+        var strategySelect = cut.FindComponents<MudSelect<MigrationConflictStrategy>>().Single();
+        await cut.InvokeAsync(() => strategySelect.Instance.ValueChanged.InvokeAsync(MigrationConflictStrategy.Merge));
+
+        var targetCheckboxes = cut.FindAll("[data-testid='migration-target-checkbox']");
+        targetCheckboxes[1].Change(true);
+
+        cut.Find("[data-testid='migration-preview-button']").Click();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='migration-apply-button']"));
+        cut.Find("[data-testid='migration-apply-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Migration summary (Merge)", cut.Markup);
+            Assert.Contains("Label migration failed.", cut.Markup);
+            Assert.Contains("GitHub label API rate limit reached", cut.Markup);
+        });
+    }
+
     private BunitContext CreateContext()
     {
         var ctx = new BunitContext();
