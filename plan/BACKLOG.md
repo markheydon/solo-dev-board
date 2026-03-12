@@ -190,6 +190,7 @@ Labels: `type/chore`, `area/infrastructure`
 - [x] As a solo developer, I want the application version to be declared in a single place so that all version references (user-agent, About page, build artefacts) remain consistent automatically. _(#57 — done, 2026-03-10)_
 - [x] As a solo developer, I want the GitHub API user-agent string to reflect the running application version so that it never drifts from the actual release. _(#58 — done, 2026-03-10)_
 - [x] As a solo developer, I want an About page showing the application version and .NET runtime version so that I always know which version I am running. _(#59 — done, 2026-03-10)_
+- [ ] As a solo developer, I want the shared Repository Selector to offer quick-select filters for all visible, non-archived, archived, and recently active repositories so that I can target useful repository groups without manually selecting them one by one. _(Post-MVP refinement; clarify whether "Select all" means all visible repositories or only non-archived repositories, and define "recently active" during discovery using the best available GitHub activity signal, for example activity within the last 60 days.)_
 - [ ] Set up Bicep infrastructure for Azure App Service, Key Vault, and managed identity.
 - [ ] Configure OIDC authentication for GitHub Actions to Azure (no long-lived credentials).
 - [ ] Implement response caching for GitHub API calls to respect rate limits.
