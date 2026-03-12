@@ -19,8 +19,6 @@
 | **Board Rules Visualiser** | Visualise automation rules configured on GitHub project boards. | Coming Soon |
 | **Triage UI** | Keyboard-friendly interface for triaging incoming issues quickly. | Coming Soon |
 | **Workflow Templates** | Browse, customise, and apply GitHub Actions workflow templates across repositories. | Coming Soon |
-| **Triage UI** | Keyboard-friendly interface for triaging incoming issues quickly. | Coming Soon |
-| **Workflow Templates** | Browse, customise, and apply GitHub Actions workflow templates across repositories. | Coming Soon |
 
 
 ## Tech Stack
