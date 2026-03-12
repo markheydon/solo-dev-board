@@ -11,6 +11,7 @@ nav_order: 1
 > ⚠️ **Early Development — Not Ready for Use**
 >
 > SoloDevBoard is in active early development. The application is incomplete and the features described below are not yet available. If you have stumbled across this page, please check back later — things are being built incrementally and a working release is on its way.
+> **Status Update — Feature Availability**
 
 ---
 
