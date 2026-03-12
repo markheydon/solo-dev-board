@@ -8,9 +8,9 @@ nav_order: 1
 
 ---
 
-> ⚠️ **Early Development — Not Ready for Use**
+> ⚠️ **Active Development — Early Access**
 >
-> SoloDevBoard is in active early development. The application is incomplete and the features described below are not yet available. If you have stumbled across this page, please check back later — things are being built incrementally and a working release is on its way.
+> SoloDevBoard is in active early development and is not yet feature complete. Some capabilities are available to use today, while others are still being built or refined. Please refer to the feature table below for the latest availability status before relying on SoloDevBoard in your workflow.
 
 ---
 
@@ -26,20 +26,20 @@ It is built with the solo developer in mind: opinionated defaults, minimal confi
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| **Audit Dashboard** | A consolidated view of issues, open PRs, label consistency, and workflow health across all your repositories. | Available |
-| **One-Click Migration** | Migrate labels, milestones, and project board configurations from one repository to another in a single action. | Coming soon |
+| **Audit Dashboard** | Consolidated view of issues, open PRs, label consistency, and workflow health across all repositories. | Available |
 | **Label Manager** | Create, edit, synchronise, and enforce label taxonomies across multiple repositories from a single interface. | Available |
-| **Board Rules Visualiser** | Visualise the automation rules configured on your GitHub project boards to understand how issues flow between columns. | Coming soon |
-| **Triage UI** | A focused, keyboard-friendly interface for triaging incoming issues — apply labels, assign milestones, and close duplicates quickly. | Coming soon |
-| **Workflow Templates** | Browse, apply, and customise GitHub Actions workflow templates across your repositories without leaving SoloDevBoard. | Coming soon |
-| **Cross-Repo PM Workflow** | A Daily Focus view, cross-repository Backlog Review, and Iteration Planning tool — the UI-based evolution of the [github-workflows](https://github.com/markheydon/github-workflows) PM operating system. | Coming soon |
+| **Repositories** | View and manage repositories accessible to your GitHub account. | Available |
+| **One-Click Migration** | Migrate labels and milestones from one repository to another in a single action. Project board migration is planned. | Partially Available |
+| **Board Rules Visualiser** | Visualise automation rules configured on GitHub project boards. | Coming Soon |
+| **Triage UI** | Keyboard-friendly interface for triaging incoming issues quickly. | Coming Soon |
+| **Workflow Templates** | Browse, customise, and apply GitHub Actions workflow templates across repositories. | Coming Soon |
 
 ---
 
 ## Quick Links
 
-- 📖 [Getting Started](getting-started.md) — prerequisites, local setup, and configuration
-- 👤 [User Guide](user-guide/) — detailed guides for each feature area
+- 📖 [Getting Started](getting-started.md) — prerequisites, local setup, and configuration.
+- 👤 [User Guide](user-guide/) — detailed guides for each feature area.
 - ℹ️ [About Guide](user-guide/about.md) — overview of the About page, version information, and repository link.
 
 ---
