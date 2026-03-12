@@ -15,6 +15,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddSingleton<IAppVersionService, AppVersionService>();
         services.AddScoped<IRepositoryService, RepositoryService>();
         services.AddScoped<ILabelManagerService, LabelService>();
+        services.AddScoped<IMigrationService, MigrationService>();
         services.AddScoped<IAuditDashboardService, AuditDashboardService>();
 
         return services;

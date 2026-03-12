@@ -68,11 +68,12 @@ Labels: `type/epic`, `area/migration`
 <!-- Stories: #90 Source/target selection, #91 Conflict resolution, #92 Preview, #93 Label migration, #94 Milestone migration, #95 Post-migration summary. -->
 <!-- Tests: #96 Migration orchestration unit tests, #97 GitHub milestone infrastructure tests, #98 Migration page bUnit tests. -->
 
-- [ ] As a solo developer, I want to select a source repository and a target repository for a migration so that I can copy configurations between them. _(Planned as #90 for v0.3.0; supports one source repository and one or more target repositories.)_
-- [ ] As a solo developer, I want to see a preview (diff) of the changes that will be made before applying a migration so that I can avoid unintended overwrites. _(Planned as #92 for v0.3.0.)_
-- [ ] As a solo developer, I want to migrate all labels from a source repository to a target repository so that both repositories share the same label taxonomy. _(Planned as #93 for v0.3.0.)_
-- [ ] As a solo developer, I want to migrate all milestones from a source repository to a target repository so that I can maintain consistent milestone structures. _(Planned as #94 for v0.3.0.)_
-- [ ] As a solo developer, I want to choose a conflict resolution strategy (skip, overwrite, or merge) so that I have control over how existing items in the target are handled. _(Planned as #91 for v0.3.0.)_
+- [x] As a solo developer, I want to select a source repository and a target repository for a migration so that I can copy configurations between them. _(Completed as #90 for v0.3.0. Source/target repository selection UI delivered; source cannot also be a target; preview blocked until valid selection is made.)_
+- [x] As a solo developer, I want to see a preview (diff) of the changes that will be made before applying a migration so that I can avoid unintended overwrites. _(Completed as #92 for v0.3.0. Preview grouped by target repository and artefact type; label and milestone detail tables shown; apply button hidden when no actionable changes.)_
+- [x] As a solo developer, I want to migrate all labels from a source repository to a target repository so that both repositories share the same label taxonomy. _(Completed as #93 for v0.3.0. Label migration create/update/skip/delete delivered per conflict strategy; partial failures reported per target.)_
+- [x] As a solo developer, I want to migrate all milestones from a source repository to a target repository so that I can maintain consistent milestone structures. _(Completed as #94 for v0.3.0. Milestone migration create/update/skip/delete delivered; title, description, state, and due date included; GitHub 422 due_on null bug fixed.)_
+- [x] As a solo developer, I want to choose a conflict resolution strategy (skip, overwrite, or merge) so that I have control over how existing items in the target are handled. _(Completed as #91 for v0.3.0. Conflict strategy selection delivered; includes explanatory text and overwrite warning.)_
+- [x] Enabler: Introduce migration contracts and milestone migration support. _(Completed as #89 for v0.3.0. Migration contracts and milestone migration support delivered.)_
 - [ ] As a solo developer, I want to see a post-migration summary so that I know exactly what was created, updated, or skipped. _(Planned as #95 for v0.3.0.)_
 - [ ] As a solo developer, I want to migrate project board column configurations so that new repositories start with the same board structure. _(Deferred follow-on slice; requires GitHub Projects v2 support and is captured in ADR-0013.)_
 

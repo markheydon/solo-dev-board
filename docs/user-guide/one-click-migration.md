@@ -5,7 +5,7 @@ parent: User Guide
 nav_order: 2
 ---
 
-> ⚠️ **Under Development** — This feature is planned for Phase 3. This page will be updated as the feature progresses.
+> ℹ️ **Phase 3 delivery** — The core One-Click Migration feature (labels and milestones) is complete. Project board configuration migration is planned for a later slice.
 
 ---
 
@@ -40,21 +40,60 @@ For the current planned Phase 3 delivery slice, One-Click Migration covers label
 
 ## How to Use
 
-*Coming soon — this section will describe the step-by-step migration process once the feature is complete.*
+### Step 1 — Select repositories
 
-Planned interactions include:
-- Selecting a source repository and a target repository.
-- Choosing which artefacts to migrate (labels, milestones, board columns).
-- Previewing a diff of changes (what will be added, updated, or removed).
-- Confirming and applying the migration.
-- Reviewing a post-migration summary.
+Choose one source repository and one or more target repositories. The source repository cannot also appear in the target list. The Preview and Apply buttons remain disabled until at least one source and one target are selected.
+
+### Step 2 — Choose migration scope
+
+Use the toggle switches to select which artefact types to include:
+
+- **Labels** — copies the full label taxonomy from the source repository.
+- **Milestones** — copies milestone titles, descriptions, states, and due dates.
+
+Both are enabled by default. At least one must remain on or the Preview button will be unavailable.
+
+### Step 3 — Choose a conflict resolution strategy
+
+Select how existing artefacts in each target repository are handled when a match is found:
+
+| Strategy | Behaviour |
+|---|---|
+| **Skip** | Conflicting items in the target are left unchanged. |
+| **Overwrite** | Conflicting items are replaced with those from the source. A warning is shown before you confirm. |
+| **Merge** | Conflicting items are replaced with source values; items that exist only in the target are preserved. |
+
+### Step 4 — Preview changes
+
+Click **Preview** to generate a read-only diff for each target repository. No changes are made at this stage.
+
+The preview card for each target shows:
+
+- **Labels** — tables listing labels to create, update, and delete, with colour, name, and description for each row.
+- **Milestones** — tables listing milestones to create, update, and delete, with title, state, due date, and description for each row.
+
+If the preview shows no actionable changes for a target repository, an information notice is displayed instead and the **Confirm and apply** button is not shown.
+
+### Step 5 — Apply the migration
+
+Once you are satisfied with the preview, click **Confirm and apply**. This button only appears when there is at least one actionable change across all target repositories.
+
+If you selected the **Overwrite** strategy, an on-page warning is shown before destructive changes are applied.
+
+Partial failures are reported per target repository — a failure for one target does not abort the remaining targets.
+
+### Step 6 — Review the summary
+
+*Post-migration summary view is planned for a future iteration.*
+
+*Project board configuration migration remains planned for a later slice and is not yet available.*
 
 ---
 
 ## Configuration
 
-*Coming soon — this section will describe any configuration options for One-Click Migration.*
+One-Click Migration is configured entirely through the UI workflow. There are no `appsettings.json` entries specific to this feature.
 
-Planned configuration options include:
-- Conflict resolution strategy (skip, overwrite, or merge conflicting items).
-- Whether to delete artefacts in the target that do not exist in the source.
+- Conflict resolution strategy (skip, overwrite, or merge) is selected per migration run.
+- Scope selection (labels and/or milestones) is toggled per migration run and defaults to both enabled.
+- Deletion of artefacts present in the target but absent from the source is available via the **Overwrite** strategy.
