@@ -8,10 +8,9 @@ nav_order: 1
 
 ---
 
-> ⚠️ **Early Development — Not Ready for Use**
+> ⚠️ **Active Development — Early Access**
 >
-> SoloDevBoard is in active early development. The application is incomplete and the features described below are not yet available. If you have stumbled across this page, please check back later — things are being built incrementally and a working release is on its way.
-> **Status Update — Feature Availability**
+> SoloDevBoard is in active early development and is not yet feature complete. Some capabilities are available to use today, while others are still being built or refined. Please refer to the feature table below for the latest availability status before relying on SoloDevBoard in your workflow.
 
 ---
 
