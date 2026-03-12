@@ -14,6 +14,7 @@ This runbook orchestrates the `.github/agents/` and `.github/prompts/` workflows
 | Plan the next feature                    | `.github/prompts/plan-next-issue.prompt.md`                | GitHub issues with full metadata + tech spec  |
 | Implement planned work                   | `.github/prompts/execute-feature.prompt.md`                | Code + tests + docs + ADR (if needed)         |
 | Review and create PR                     | `.github/prompts/review-and-close.prompt.md`               | PR + quality validation + issue closure       |
+| Address PR review comments               | `.github/prompts/address-pr-review-comments.prompt.md`     | PR fixes + thread replies + resolved comments |
 | Weekly health check                      | `.github/prompts/weekly-pm-review.prompt.md`               | Executive summary + priorities for next week  |
 | End-to-end feature delivery              | `.github/skills/pm-feature-workflow/SKILL.md`              | Full workflow from backlog to closure         |
 
@@ -209,6 +210,39 @@ Close issue #[number] after PR #[number] merged
 
 ---
 
+### PR Review Comment Loop (5-20 minutes per round)
+
+**Goal:** Keep an open pull request moving after coding review feedback arrives, without losing thread history.
+
+**Trigger:** A reviewer leaves coding review comments or requested changes on an open pull request.
+
+**Run:**
+```
+Address PR review comments on PR #[number]
+```
+
+**What it does:**
+- Invokes **Delivery Agent** on the existing pull request branch.
+- Fetches unresolved coding review comments and review conversations.
+- Implements the requested code changes.
+- Posts a reply on each addressed coding review comment.
+- Resolves each addressed conversation.
+- Posts one final summary comment on the pull request once all addressed comments are handled.
+
+**What you produce:**
+- Updated branch contents on the existing PR.
+- Thread-by-thread reviewer feedback responses.
+- A clean pull request with resolved conversations and a summary comment.
+
+**Gates before returning to review:**
+- ✅ Requested changes implemented.
+- ✅ Relevant tests rerun.
+- ✅ Each addressed review thread has a reply.
+- ✅ Each addressed review thread is resolved.
+- ✅ Final PR summary comment posted.
+
+---
+
 ### End-of-Day Ritual (5 minutes)
 
 **Goal:** Leave work in a clean state, capture notes for tomorrow.
@@ -286,6 +320,9 @@ START
   │
   ├─ Have implemented code ready for review?
   │   └─> Run review-and-close.prompt.md with issue number
+  │
+  ├─ Has an open PR received coding review comments?
+  │   └─> Run address-pr-review-comments.prompt.md with PR number
   │
   ├─ Have merged PR ready for closure?
   │   └─> Run "Close issue #X after PR #Y merged"

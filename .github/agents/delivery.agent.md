@@ -16,6 +16,7 @@ argument-hint: Specify issue number or feature name, e.g., "implement issue #15"
 Invoke this agent when you need to:
 - Implement a planned feature or bug fix
 - Write code for a specific GitHub issue
+- Implement requested changes from coding review comments on an existing pull request.
 - Execute the full implementation workflow (code + tests + docs)
 
 **Trigger phrases:**
@@ -23,6 +24,7 @@ Invoke this agent when you need to:
 - "Build feature X"
 - "Execute the delivery workflow for story Y"
 - "Code up issue #X following the standards"
+- "Review coding review comments on PR #X and implement"
 
 ---
 
@@ -42,9 +44,20 @@ Invoke this agent when you need to:
   - **Sibling date cascade (if first issue started in the Feature):** For each unstarted sibling in the same Feature (in dependency/issue-number order), set its Start Date = previous issue's Target Date + 1 day and its Target Date = Start Date + its own size estimate
   - **Cascade to parents (Lifecycle Event 2a):** For each parent Feature and Epic still "Todo" on the project board, move to "In Progress", set Start Date = today, set Target Date = latest sibling Target Date calculated above, and update labels from `status/todo` to `status/in-progress`
 
+### 1a. PR Review Comment Remediation
+- When invoked against an existing pull request, fetch all unresolved coding review comments and review conversations before making changes.
+- Continue on the existing pull request branch; do **not** create a fresh feature branch for review follow-up work.
+- Implement every accepted change requested by the review comments.
+- Post a reply on each coding review comment thread describing the fix that was applied.
+- Resolve each conversation after the fix is in place and the reply has been posted.
+- If a comment should not be implemented or needs clarification, reply with the reasoning and leave the conversation unresolved for user follow-up.
+- Post one final summary comment on the pull request once all addressed conversations have replies and are resolved.
+
 ### 2. Feature Branch Creation
 
-**MANDATORY — Always create a feature branch before writing any code.**
+**MANDATORY for new issue implementation — always create a feature branch before writing any code.**
+
+**Exception:** When addressing coding review comments on an existing pull request, continue on that pull request's existing branch.
 
 ```powershell
 git checkout main
@@ -177,6 +190,7 @@ Provide ONE of:
 - **Issue number**: "Implement issue #15"
 - **Feature name**: "Build Label Manager UI" (agent will locate corresponding issue)
 - **Story title**: "As a user, I can filter labels by type" (agent will match to issue)
+- **Pull request number**: "Review coding review comments on PR #86 and implement"
 
 ---
 
@@ -211,6 +225,13 @@ Deliver to user:
 5. **Next action**: "Ready for Review Agent — create PR and run review workflow"
 6. **Blockers**: Any scope questions or technical decisions that need resolution
 
+When invoked for PR review comments, deliver instead:
+1. **Summary**: "Implemented PR review feedback for PR #X."
+2. **Comments addressed**: Count and short summary of resolved review comments.
+3. **Conversations**: Confirmation that each addressed coding review conversation was replied to and resolved.
+4. **PR summary comment**: Confirmation that a final summary comment was posted on the PR.
+5. **Residual blockers**: Any comments left unresolved and why.
+
 ---
 
 ## Completion Criteria
@@ -226,6 +247,13 @@ Implementation is complete when:
 - ✅ UK English verified throughout
 - ✅ Layered architecture rules followed
 - ✅ Backlog synchronised
+
+When invoked for PR review comment remediation:
+- ✅ Requested code changes are implemented on the existing PR branch.
+- ✅ Each addressed coding review comment has a reply posted.
+- ✅ Each addressed coding review conversation is resolved.
+- ✅ A final summary comment is posted on the PR.
+- ✅ Tests and validation relevant to the changes have been rerun.
 
 **Status transition:** Issue remains `status/in-progress` until Review Agent validates and closes
 
@@ -289,6 +317,16 @@ Agent: [fetches issue #22, identifies Domain layer validation issue]
 Agent: [fixes validation logic in src/Domain/Entities/Issue.cs]
 Agent: [adds regression test in tests/Domain.Tests/IssueTests.cs]
 Output: "Fixed validation bug. 1 file changed, 1 regression test added. Ready for PR."
+```
+
+**Example 4: Address PR review comments**
+```
+User: "Review coding review comments on PR #86 and implement. Post comments and resolve the conversation on each coding review comment. Also, post a summary new comment on the PR once all done."
+Agent: [fetches unresolved review conversations on PR #86]
+Agent: [implements requested changes on the existing PR branch]
+Agent: [posts a reply on each review thread and resolves it]
+Agent: [posts a final summary comment on PR #86]
+Output: "Implemented review feedback for PR #86. 4 coding review conversations resolved and summary comment posted."
 ```
 
 ---

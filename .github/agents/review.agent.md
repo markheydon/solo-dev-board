@@ -24,6 +24,7 @@ Invoke this agent when you need to:
 - "Validate and close issue #X"
 - "Create PR for the Label Manager work"
 - "Run review workflow for issue #X"
+- "Hand PR review comments back to Delivery Agent"
 
 ---
 
@@ -87,6 +88,11 @@ Invoke this agent when you need to:
 ### 5. Handoff to Next Work
 - Suggest next item from backlog for PM Orchestrator
 - Flag any follow-up items or technical debt discovered during review
+
+### 6. PR Review Comment Handoff
+- If a pull request receives coding review comments that require code changes, hand the work back to the Delivery Agent.
+- Direct the workflow to the dedicated PR review comment prompt so the Delivery Agent replies on each comment thread, resolves the conversation, and posts a final PR summary comment after implementing the fixes.
+- Do not attempt to modify code inside the Review Agent workflow.
 
 ---
 

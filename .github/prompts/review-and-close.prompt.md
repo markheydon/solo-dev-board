@@ -178,6 +178,7 @@ This prompt invokes the **Review Agent**, which executes:
 
 After PR created:
 - **You approve and merge PR** → Agent automatically closes issue and updates backlog
+- **If coding review comments request changes** → Run `address-pr-review-comments.prompt.md` against the PR before approving and merging
 - **Then run:** `daily-start.prompt.md` to get next recommendation
 - **Or run:** `plan-next-issue.prompt.md` to immediately plan next work
 

@@ -243,6 +243,7 @@ Fix iterative testing fixes for issue #68 — colour picker binding, dialog sizi
 
 After implementation completes:
 - **To review and close:** Run `review-and-close.prompt.md` with the issue number
+- **To address coding review comments on an open PR:** Run `address-pr-review-comments.prompt.md` with the PR number
 - **To continue with next issue:** Run `plan-next-issue.prompt.md` to select next work
 - **To validate locally:** Run `dotnet build` and `dotnet test` in terminal
 

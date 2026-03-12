@@ -83,6 +83,14 @@ Milestones map to implementation phases and releases:
 
 SoloDevBoard uses a single **GitHub Projects (v2)** board called "SoloDevBoard". See [PROJECT_BOARD_DESIGN.md](PROJECT_BOARD_DESIGN.md) for the column structure and automation rules.
 
+### Workflow Ownership
+
+- The roadmap board is **issue-driven**. Issues are the primary planning and delivery records.
+- Copilot agents own deliberate board changes such as adding planned issues, setting `Phase` and `Priority`, moving items through `Todo` / `Up Next` / `In Progress` / `Done`, and maintaining dates.
+- GitHub project workflows are kept intentionally narrow and issue-centric so they act as safety nets rather than competing sources of truth.
+- Standalone pull request cards do not belong on the main roadmap board. A linked pull request should be visible through the board's **Linked pull requests** field on the issue item instead.
+- `Auto-add to project` should remain disabled for this board, because it adds raw issues and pull requests before the planned metadata is applied.
+
 ### Project-Only Execution Queue
 
 - **Up Next** is a project board status used to queue the next short-horizon batch of stories, enablers, and tests.
@@ -91,6 +99,7 @@ SoloDevBoard uses a single **GitHub Projects (v2)** board called "SoloDevBoard".
 - Apply **Focus Order** only to stories, enablers, and tests that are currently in **Up Next**.
 - Leave **Focus Order** blank for Features, Epics, and all non-queued items.
 - New issues still enter the board in **Todo** unless there is an explicit instruction to build an **Up Next** queue.
+- Linked pull requests should not be added to the roadmap board as separate items; they remain attached through the board's pull request field on the linked issue.
 
 ---
 
