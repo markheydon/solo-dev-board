@@ -12,7 +12,15 @@ SoloDevBoard is a **single pane of glass** for solo developers who maintain mult
 
 ## In Scope
 
-The following six features define the current scope of SoloDevBoard:
+The following features define the current scope of SoloDevBoard:
+### Production-Readiness Infrastructure and Authentication (v1.0.0)
+Public-release hardening is in scope for v1.0.0, including:
+- GitHub App authentication and installation token flow.
+- GitHub OAuth sign-in and per-request user context.
+- Secure production authentication handling (per-user token storage, Azure Key Vault integration).
+- Azure infrastructure baseline via Bicep (App Service, Key Vault, managed identity).
+- OIDC authentication for GitHub Actions to Azure.
+- Operational hardening: response caching, health checks, structured logging, Application Insights telemetry, Dependabot configuration.
 
 ### 1. Audit Dashboard
 A consolidated view of repository health: open issues, stale PRs, label consistency warnings, and GitHub Actions workflow statuses across all configured repositories.
@@ -39,16 +47,16 @@ A UI-based implementation of the two-mode PM operating system from [markheydon/g
 
 ## Out of Scope
 
-The following are explicitly **not** in scope for the current version of SoloDevBoard:
+ The following are explicitly **not** in scope for the current version of SoloDevBoard:
 
-- **Multi-user / team features** — SoloDevBoard is currently designed for a single developer. No multi-user authentication, authorisation, or user management is in scope for Phases 1–5. Multi-tenancy (allowing any developer to sign in with their own GitHub account) is a deferred goal, targeted for Phase 6 (v1.0.0) — see [ADR-0007](../adr/0007-multi-tenancy-authentication-phased-approach.md).
-- **Non-GitHub providers** — GitLab, Bitbucket, Azure DevOps, and other platforms are not supported. GitHub.com is the only supported provider initially.
-- **Mobile application** — SoloDevBoard is a web application. No native iOS or Android app is planned.
-- **Real-time collaboration** — No shared sessions, shared boards, or live collaboration features.
-- **Issue content editing** — SoloDevBoard manages metadata (labels, milestones, assignments) but does not provide a full issue editor.
-- **Billing / GitHub marketplace features** — No integration with GitHub Marketplace or billing APIs.
 
----
+- Collaboration and team features — SoloDevBoard is designed for a single developer. No shared sessions, team boards, or collaborative user management are in scope.
+- Non-GitHub providers — GitLab, Bitbucket, Azure DevOps, and other platforms are not supported. GitHub.com is the only supported provider initially.
+- Mobile application — SoloDevBoard is a web application. No native iOS or Android app is planned.
+- Real-time collaboration — No shared sessions, shared boards, or live collaboration features.
+- Issue content editing — SoloDevBoard manages metadata (labels, milestones, assignments) but does not provide a full issue editor.
+- Billing / GitHub marketplace features — No integration with GitHub Marketplace or billing APIs.
+
 
 ## Assumptions
 
@@ -102,3 +110,4 @@ The following are explicitly **not** in scope for the current version of SoloDev
 | 2026-03-06 | Multi-user / team features updated from permanently out of scope to deferred (Phase 5). `ICurrentUserContext` interface preparation added to Phase 2. See ADR-0007. | Solo developer |
 | 2026-03-07 | Added Epic 7 (Cross-Repo PM Workflow) to In Scope. Updated Project Vision to document the motivating context from markheydon/github-workflows. Phase 5 added to IMPLEMENTATION_PLAN.md for this epic. | Solo developer |
 | 2026-03-09 | Added constraint: MudBlazor is the sole UI component library (ADR-0012). Fluent UI Blazor library removed. Existing UI features (Repositories page, Label Manager) to be refactored. | Solo developer |
+| 2026-03-12 | Public-release hardening and public authentication planning brought into scope for v1.0.0. Production authentication, Azure infrastructure, operational hardening, and dependency hygiene are now in scope for the upcoming public release milestone. | Solo developer |

@@ -177,10 +177,28 @@ Labels: `type/chore`, `area/infrastructure`
 - [x] As a solo developer, I want the application version to be declared in a single place so that all version references (user-agent, About page, build artefacts) remain consistent automatically. _(#57 — done, 2026-03-10)_
 - [x] As a solo developer, I want the GitHub API user-agent string to reflect the running application version so that it never drifts from the actual release. _(#58 — done, 2026-03-10)_
 - [x] As a solo developer, I want an About page showing the application version and .NET runtime version so that I always know which version I am running. _(#59 — done, 2026-03-10)_
-- [ ] As a solo developer, I want the shared Repository Selector to offer quick-select filters for all visible, non-archived, archived, and recently active repositories so that I can target useful repository groups without manually selecting them one by one. _(Post-MVP refinement; clarify whether "Select all" means all visible repositories or only non-archived repositories, and define "recently active" during discovery using the best available GitHub activity signal, for example activity within the last 60 days.)_
-- [ ] Set up Bicep infrastructure for Azure App Service, Key Vault, and managed identity.
-- [ ] Configure OIDC authentication for GitHub Actions to Azure (no long-lived credentials).
-- [ ] Implement response caching for GitHub API calls to respect rate limits.
-- [ ] Add health check endpoints for Azure App Service monitoring.
-- [ ] Configure logging with structured output (Azure Application Insights integration).
-- [ ] Set up Dependabot for automated dependency updates.
+
+
+<!-- Production-Readiness Batch: Planned 2026-03-12 for v1.0.0 (Epic #101: Public Release Infrastructure and Authentication) -->
+<!-- Feature #102: Operational hardening for public release -->
+<!-- Feature #103: GitHub App and OAuth authentication for public release -->
+<!-- Enabler #104: Complete Azure infrastructure baseline for public release -->
+<!-- Enabler #105: Configure GitHub Actions OIDC deployment to Azure -->
+<!-- Story #106: Add App Service health checks and monitoring endpoints -->
+<!-- Enabler #107: Add structured logging and Application Insights telemetry -->
+<!-- Story #108: Implement GitHub API response caching -->
+<!-- Chore #109: Configure Dependabot for automated dependency updates -->
+<!-- Test #110: Add operational hardening coverage -->
+<!-- Enabler #111: Implement GitHub App authentication and installation token flow -->
+<!-- Story #112: Add GitHub OAuth sign-in and per-request user context -->
+<!-- Enabler #113: Persist per-user authentication secrets and token references securely -->
+<!-- Test #114: Add authentication coverage for GitHub App and OAuth flow -->
+
+- [ ] Set up Bicep infrastructure for Azure App Service, Key Vault, and managed identity. _(#104)_
+- [ ] Configure OIDC authentication for GitHub Actions to Azure (no long-lived credentials). _(#105)_
+- [ ] Implement response caching for GitHub API calls to respect rate limits. _(#108)_
+- [ ] Add health check endpoints for Azure App Service monitoring. _(#106)_
+- [ ] Configure logging with structured output (Azure Application Insights integration). _(#107)_
+- [ ] Set up Dependabot for automated dependency updates. _(#109)_
+
+- [ ] As a solo developer, I want to sign in using GitHub OAuth and install the SoloDevBoard GitHub App so that SoloDevBoard can be made publicly available with secure, production-ready authentication. _(#112; supporting enablers #111 and #113.)_

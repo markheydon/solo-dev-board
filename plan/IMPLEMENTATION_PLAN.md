@@ -179,27 +179,34 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 ## Phase 6 — Polish, Testing, and Azure Deployment
 
-**Goal:** Achieve production quality: comprehensive test coverage, performance profiling, accessibility review, and a stable Azure deployment pipeline.
+
+**Goal:** Achieve production quality for public release: comprehensive test coverage, operational hardening, secure authentication, observability, and a stable Azure deployment pipeline.
 
 **Milestone:** v1.0.0
 
 ### Key Tasks
 
-- [ ] Achieve ≥80% unit test coverage across `Application` and `Domain` projects
-- [ ] Perform accessibility audit of all Blazor components (WCAG 2.1 AA)
-- [ ] Conduct performance review: identify and address slow GitHub API calls (caching, pagination)
-- [ ] Implement GitHub App authentication and GitHub OAuth login flow for multi-user support (see ADR-0005, ADR-0007)
-- [ ] Replace single-user `ICurrentUserContext` adapter with a per-request, per-user implementation backed by the OAuth session
-- [ ] Implement per-user token storage in Azure Key Vault
-- [ ] Complete Bicep infrastructure: Key Vault integration, managed identity, slot deployments
-- [ ] Enable CD pipeline with production environment gate (`.github/workflows/cd.yml`)
-- [ ] Write end-to-end tests for critical user journeys
-- [ ] Write comprehensive `docs/` content for all features
-- [ ] Tag v1.0.0 release on GitHub with release notes
+- [ ] Achieve ≥80% unit test coverage across `Application` and `Domain` projects.
+- [ ] Perform accessibility audit of all Blazor components (WCAG 2.1 AA).
+- [ ] Conduct performance review: identify and address slow GitHub API calls (caching, pagination).
+- [ ] Complete Azure infrastructure baseline via Bicep (App Service, Key Vault, managed identity). _(#104)_
+- [ ] Configure OIDC authentication for GitHub Actions deployment to Azure (no long-lived credentials). _(#105)_
+- [ ] Add health check endpoints for Azure App Service monitoring. _(#106)_
+- [ ] Implement response caching for GitHub API calls to respect rate limits. _(#108)_
+- [ ] Configure structured logging and Application Insights telemetry. _(#107)_
+- [ ] Set up Dependabot for automated dependency updates. _(#109)_
+- [ ] Implement GitHub App authentication and installation token flow for public release. _(#103, #111)_
+- [ ] Add GitHub OAuth sign-in and per-request user context for public authentication. _(#103, #112)_
+- [ ] Persist per-user authentication secrets and token references securely in Azure Key Vault. _(#113)_
+- [ ] Replace single-user `ICurrentUserContext` adapter with a per-request, per-user implementation backed by the OAuth session.
+- [ ] Enable CD pipeline with production environment gate (`.github/workflows/cd.yml`).
+- [ ] Write end-to-end tests for critical user journeys.
+- [ ] Write comprehensive `docs/` content for all features.
+- [ ] Tag v1.0.0 release on GitHub with release notes.
 
 ### Dependencies
 
-- Phases 1–5 complete
+- Phases 1–5 complete.
 
 ---
 
