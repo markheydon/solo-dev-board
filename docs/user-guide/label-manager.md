@@ -16,6 +16,24 @@ Key goals of the Label Manager:
 - Delete labels from selected repositories safely.
 - Identify gaps where labels are missing.
 
+## How This Differs from One-Click Migration
+
+Label Manager is the day-to-day tool for governing labels across repositories. It is not intended to replace One-Click Migration.
+
+- Use Label Manager when labels are the thing you want to manage.
+- Use Label Manager when you need repeated operational work such as bulk CRUD, taxonomy rollout, or label re-synchronisation.
+- Use One-Click Migration when the goal is to copy repository configuration from a source repository to one or more target repositories.
+- Use One-Click Migration when you want labels to move together with other artefacts such as milestones.
+
+The current plan is that One-Click Migration will provide a broader preview-first migration workflow, while Label Manager remains the specialised tool for ongoing label maintenance.
+
+## Example Use Cases
+
+- You want to add a new `priority-high` label to several repositories at once. Use Label Manager.
+- You want to change an existing label's name, colour, or description across repositories. Use Label Manager.
+- You want to apply a recommended label taxonomy to selected repositories. Use Label Manager.
+- You want a new repository to inherit the labels and milestones from an existing repository in a single guided workflow. Use One-Click Migration.
+
 
 ## How to Use
 

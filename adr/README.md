@@ -34,6 +34,7 @@ Each ADR follows this format:
 | [ADR-0010](0010-bunit-component-testing.md) | Use bUnit for Blazor Component Testing | Accepted |
 | [ADR-0011](0011-boundary-data-shapes.md) | Boundary Data Shapes — DTOs at the Application→App Boundary | Accepted |
 | [ADR-0012](0012-switch-to-mudblazor-component-library.md) | Switch UI Component Library from Fluent UI Blazor to MudBlazor | Accepted — supersedes ADR-0009 |
+| [ADR-0013](0013-one-click-migration-scope-and-preview-strategy.md) | One-Click Migration Scope and Preview/Conflict Strategy | Accepted |
 
 ## Adding a New ADR
 

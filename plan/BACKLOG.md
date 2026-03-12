@@ -62,36 +62,19 @@ Labels: `type/epic`, `area/dashboard`
 
 Labels: `type/epic`, `area/migration`
 
-- [ ] As a solo developer, I want to select a source repository and a target repository for a migration so that I can copy configurations between them.
-- [ ] As a solo developer, I want to see a preview (diff) of the changes that will be made before applying a migration so that I can avoid unintended overwrites.
-- [ ] As a solo developer, I want to migrate all labels from a source repository to a target repository so that both repositories share the same label taxonomy.
-- [ ] As a solo developer, I want to migrate all milestones from a source repository to a target repository so that I can maintain consistent milestone structures.
-- [ ] As a solo developer, I want to choose a conflict resolution strategy (skip, overwrite, or merge) so that I have control over how existing items in the target are handled.
-- [ ] As a solo developer, I want to see a post-migration summary so that I know exactly what was created, updated, or skipped.
-- [ ] As a solo developer, I want to migrate project board column configurations so that new repositories start with the same board structure.
+<!-- Parent Epic #87: Phase 3 — One-Click Migration + Triage UI (planned 2026-03-12, milestone v0.3.0). -->
+<!-- Feature #88: One-Click Migration (planned 2026-03-12, milestone v0.3.0; first delivery slice covers labels + milestones only). -->
+<!-- Enabler: #89 Introduce migration contracts and milestone migration support. -->
+<!-- Stories: #90 Source/target selection, #91 Conflict resolution, #92 Preview, #93 Label migration, #94 Milestone migration, #95 Post-migration summary. -->
+<!-- Tests: #96 Migration orchestration unit tests, #97 GitHub milestone infrastructure tests, #98 Migration page bUnit tests. -->
 
----
-
-## Epic 3: Label Manager
-
-Labels: `type/epic`, `area/labels`
-
-<!-- Feature #27: Label Manager — DONE 2026-03-10 (closed via PR #81 merge) -->
-<!-- Enablers: #28 Label domain + ILabelRepository (done — PR #39, 2026-03-08), #29 GitHubLabelRepository (done — 2026-03-08), #31 LabelService (done — 2026-03-08), #49 ADR-0011 retrospective — LabelDto + ILabelManagerService update (done — 2026-03-08) -->
-<!-- Stories: #35 View labels (done), #33 CRUD labels (done), #32 Synchronise labels (done), #34 Apply taxonomy (done) -->
-<!-- Tests: #38 LabelService unit tests (done), #37 GitHubLabelRepository unit tests (done), #36 bUnit UI tests (done) -->
-- [x] Test: Unit tests for LabelService (#38) — completed.
-  - All CRUD, synchronisation (diff/empty diff), validation, and partial failure scenarios covered.
-  - Local build and test suite passing.
-- [x] As a solo developer, I want to see all labels across my selected repositories in a single list so that I can identify inconsistencies. _(#35 done — 2026-03-08)_
-- [x] As a solo developer, I want to create a new label and push it to multiple repositories at once so that I can maintain a consistent taxonomy efficiently. _(#33 done — 2026-03-08)_
-- [x] As a solo developer, I want to rename a label across multiple repositories simultaneously so that I can refactor my taxonomy without visiting each repo. _(#33 done — 2026-03-08)_
-- [x] As a solo developer, I want to change a label's colour across multiple repositories so that visual consistency is maintained. _(#33 done — 2026-03-08)_
-- [x] As a solo developer, I want to delete a label from multiple repositories at once so that I can clean up obsolete labels. _(#33 done — 2026-03-08)_
-- [x] As a solo developer, I want to apply recommended label taxonomy strategies to any repository so that I can start with a sensible default set of labels. _(#34 done — 2026-03-10; includes SoloDevBoard + GitHub default strategy options, preview, confirm/cancel, and per-repository summary)_
-- [x] As a solo developer, I want to see which repositories do not have a specific label so that I can identify gaps. _(#35 done — 2026-03-08)_
-- [x] As a solo developer, I want to synchronise a target repository's labels to exactly match a source repository's labels so that they stay in lockstep. _(#32 done — 2026-03-10; supports preview-first flow, multi-target selection, per-target summary, partial failure reporting, and duplicate submission prevention)_
-  - [x] Test: bUnit component tests for Label Manager UI completed. _(#36 done — 2026-03-10)_
+- [ ] As a solo developer, I want to select a source repository and a target repository for a migration so that I can copy configurations between them. _(Planned as #90 for v0.3.0; supports one source repository and one or more target repositories.)_
+- [ ] As a solo developer, I want to see a preview (diff) of the changes that will be made before applying a migration so that I can avoid unintended overwrites. _(Planned as #92 for v0.3.0.)_
+- [ ] As a solo developer, I want to migrate all labels from a source repository to a target repository so that both repositories share the same label taxonomy. _(Planned as #93 for v0.3.0.)_
+- [ ] As a solo developer, I want to migrate all milestones from a source repository to a target repository so that I can maintain consistent milestone structures. _(Planned as #94 for v0.3.0.)_
+- [ ] As a solo developer, I want to choose a conflict resolution strategy (skip, overwrite, or merge) so that I have control over how existing items in the target are handled. _(Planned as #91 for v0.3.0.)_
+- [ ] As a solo developer, I want to see a post-migration summary so that I know exactly what was created, updated, or skipped. _(Planned as #95 for v0.3.0.)_
+- [ ] As a solo developer, I want to migrate project board column configurations so that new repositories start with the same board structure. _(Deferred follow-on slice; requires GitHub Projects v2 support and is captured in ADR-0013.)_
 
 ---
 
