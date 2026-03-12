@@ -1,0 +1,22 @@
+@using SoloDevBoard.Application.Services
+
+@if (Milestones.Count > 0)
+{
+    <MudStack Spacing="1">
+        <MudText Typo="Typo.subtitle2">@Heading</MudText>
+        <MudTable T="MilestoneDto" Items="Milestones" Dense="true" Hover="true">
+            <HeaderContent>
+                <MudTh>Title</MudTh>
+                <MudTh>State</MudTh>
+                <MudTh>Due date</MudTh>
+                <MudTh>Description</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Title">@context.Title</MudTd>
+                <MudTd DataLabel="State">@context.State</MudTd>
+                <MudTd DataLabel="Due date">@FormatDueDate(context.DueOn)</MudTd>
+                <MudTd DataLabel="Description">@FormatDescription(context.Description)</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudStack>
+}

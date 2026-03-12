@@ -37,6 +37,7 @@ public static class InfrastructureServiceExtensions
 
         services.AddScoped<IGitHubService, GitHubService>();
         services.AddScoped<ILabelRepository, GitHubLabelRepository>();
+        services.AddScoped<IMilestoneRepository, GitHubMilestoneRepository>();
 
         return services;
     }
