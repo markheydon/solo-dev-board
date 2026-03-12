@@ -21,6 +21,13 @@
 | **Board Rules Visualiser** | Interactive diagram of GitHub project board automation rules | 🔨 Planned — Phase 4 |
 | **Triage UI** | Keyboard-friendly interface for triaging incoming issues quickly | 🔨 Planned — Phase 3 |
 | **Workflow Templates** | Browse, customise, and apply GitHub Actions workflow templates across repositories | 🔨 Planned — Phase 4 |
+| **Audit Dashboard** | Consolidated view of issues, open PRs, label consistency, and workflow health across all repositories. | Available |
+| **Label Manager** | Create, edit, synchronise, and enforce label taxonomies across multiple repositories from a single interface. | Available |
+| **Repositories** | View and manage repositories accessible to your GitHub account. | Available |
+| **One-Click Migration** | Migrate labels and milestones from one repository to another in a single action. Project board migration is planned. | Partially Available |
+| **Board Rules Visualiser** | Visualise automation rules configured on GitHub project boards. | Coming Soon |
+| **Triage UI** | Keyboard-friendly interface for triaging incoming issues quickly. | Coming Soon |
+| **Workflow Templates** | Browse, customise, and apply GitHub Actions workflow templates across repositories. | Coming Soon |
 
 
 ## Tech Stack
@@ -34,28 +41,9 @@
 
 ### Run Locally
 
-```bash
-# Clone the repository
-git clone https://github.com/markheydon/solo-dev-board.git
-cd solo-dev-board
+## Getting Started
 
-# Restore dependencies
-dotnet restore SoloDevBoard.slnx
-
-# Set your GitHub token using .NET User Secrets
-dotnet user-secrets set "GitHub:Token" "<your-pat>" --project src/App/SoloDevBoard.App
-
-# Run the application
-dotnet run --project src/App/SoloDevBoard.App
-```
-
-Then open `https://localhost:5001` in your browser.
-
-See the full [Getting Started guide](docs/getting-started.md) for configuration options and Azure deployment instructions.
-
-
-## Project Structure
-
+See the full [Getting Started guide](docs/getting-started.md) for prerequisites, local setup, configuration, and Azure deployment instructions.
 ```
 solo-dev-board/
 ├── src/
