@@ -74,7 +74,10 @@ Labels: `type/epic`, `area/migration`
 - [x] As a solo developer, I want to migrate all milestones from a source repository to a target repository so that I can maintain consistent milestone structures. _(Completed as #94 for v0.3.0. Milestone migration create/update/skip/delete delivered; title, description, state, and due date included; GitHub 422 due_on null bug fixed.)_
 - [x] As a solo developer, I want to choose a conflict resolution strategy (skip, overwrite, or merge) so that I have control over how existing items in the target are handled. _(Completed as #91 for v0.3.0. Conflict strategy selection delivered; includes explanatory text and overwrite warning.)_
 - [x] Enabler: Introduce migration contracts and milestone migration support. _(Completed as #89 for v0.3.0. Migration contracts and milestone migration support delivered.)_
-- [ ] As a solo developer, I want to see a post-migration summary so that I know exactly what was created, updated, or skipped. _(Planned as #95 for v0.3.0.)_
+- [x] As a solo developer, I want to see a post-migration summary so that I know exactly what was created, updated, or skipped. _(Completed as #95 for v0.3.0. Per-target summary view delivered: created/updated/deleted/skipped counts shown for labels and milestones; partial failures reported per target.)_
+- [x] Test: Unit tests for migration orchestration and milestone services. _(Completed as #96 for v0.3.0. Coverage added for guard clauses, multi-target aggregation, conflict handling, and partial failure behaviour.)_
+- [x] Test: Infrastructure tests for GitHub milestone migration support. _(Completed as #97 for v0.3.0. Coverage added for response mapping, create/update request behaviour, non-success responses, and guard clauses.)_
+- [x] Test: bUnit tests for the Migration page workflow. _(Completed as #98 for v0.3.0. Coverage added for empty state, selection and preview gating, duplicate apply prevention, and post-migration summary error rendering.)_
 - [ ] As a solo developer, I want to migrate project board column configurations so that new repositories start with the same board structure. _(Deferred follow-on slice; requires GitHub Projects v2 support and is captured in ADR-0013.)_
 
 ---

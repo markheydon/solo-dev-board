@@ -84,9 +84,15 @@ Partial failures are reported per target repository — a failure for one target
 
 ### Step 6 — Review the summary
 
-*Post-migration summary view is planned for a future iteration.*
 
-*Project board configuration migration remains planned for a later slice and is not yet available.*
+
+After migration completes, a summary view is shown for each target repository.
+
+- **Labels** and **Milestones** rows display the number of items created, updated, deleted, and skipped for each artefact type.
+- Partial failures are reported per target repository, with error messages shown inline for any unsuccessful operations.
+- If a target has no operations for an enabled artefact type, the summary still displays that artefact row with zero counts.
+
+Project board configuration migration remains planned for a later slice and is not yet available.
 
 ---
 

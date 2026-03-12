@@ -218,3 +218,9 @@ dialog[open].components-resume-failed .components-resume-failed-visible {
         padding: 16px;
     }
 }
+
+/* Override MudBlazor's default hover colour for the reconnect button
+   to ensure it remains visible against the backdrop. */
+#components-reconnect-modal {
+    --mud-palette-action-default-hover: var(--mud-palette-primary-darken, var(--mud-palette-primary));
+}

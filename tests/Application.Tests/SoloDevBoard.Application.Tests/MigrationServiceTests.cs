@@ -228,6 +228,129 @@ public sealed class MigrationServiceTests
         _labelRepositoryMock.Verify(repository => repository.DeleteLabelAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    [Fact]
+    public async Task PreviewMigrationAsync_NoScopeSelected_ThrowsArgumentException()
+    {
+        // Arrange
+        SetupSourceAndTargetData();
+        var sut = CreateSubject();
+
+        // Act
+        var action = async () => await sut.PreviewMigrationAsync(
+            "owner/source",
+            ["owner/target"],
+            new MigrationScopeDto(false, false),
+            MigrationConflictStrategy.Skip);
+
+        // Assert
+        await Assert.ThrowsAsync<ArgumentException>(action);
+    }
+
+    [Fact]
+    public async Task ApplyMigrationAsync_TargetRepositoriesContainOnlySource_ThrowsArgumentException()
+    {
+        // Arrange
+        SetupSourceAndTargetData();
+        var sut = CreateSubject();
+
+        // Act
+        var action = async () => await sut.ApplyMigrationAsync(
+            "owner/source",
+            ["owner/source"],
+            new MigrationScopeDto(true, true),
+            MigrationConflictStrategy.Skip);
+
+        // Assert
+        await Assert.ThrowsAsync<ArgumentException>(action);
+    }
+
+    [Fact]
+    public async Task ApplyMigrationAsync_MultipleTargetsOneLabelOperationFails_ReturnsPartialFailureAndContinues()
+    {
+        // Arrange
+        SetupSourceAndTargetData();
+
+        _labelRepositoryMock
+            .Setup(repository => repository.GetLabelsAsync("owner", "failing", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("label operation failed"));
+
+        _milestoneRepositoryMock
+            .Setup(repository => repository.GetMilestonesAsync("owner", "failing", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        _labelRepositoryMock
+            .Setup(repository => repository.CreateLabelAsync("owner", "target", It.IsAny<Label>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string _, string repo, Label label, CancellationToken _) => label with { RepositoryName = repo });
+
+        _milestoneRepositoryMock
+            .Setup(repository => repository.CreateMilestoneAsync("owner", "target", It.IsAny<Milestone>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string _, string _, Milestone milestone, CancellationToken _) => milestone);
+
+        _milestoneRepositoryMock
+            .Setup(repository => repository.CreateMilestoneAsync("owner", "failing", It.IsAny<Milestone>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string _, string _, Milestone milestone, CancellationToken _) => milestone);
+
+        var sut = CreateSubject();
+
+        // Act
+        var result = await sut.ApplyMigrationAsync(
+            "owner/source",
+            ["owner/target", "owner/failing"],
+            new MigrationScopeDto(true, true),
+            MigrationConflictStrategy.Skip);
+
+        // Assert
+        Assert.Equal(2, result.LabelResults.Count);
+        Assert.Equal(2, result.MilestoneResults.Count);
+
+        var targetLabelResult = Assert.Single(result.LabelResults, item => item.RepositoryFullName == "owner/target");
+        Assert.False(targetLabelResult.HasError);
+        Assert.Equal(1, targetLabelResult.CreatedCount);
+
+        var failingLabelResult = Assert.Single(result.LabelResults, item => item.RepositoryFullName == "owner/failing");
+        Assert.True(failingLabelResult.HasError);
+        Assert.Contains("label operation failed", failingLabelResult.ErrorMessage, StringComparison.Ordinal);
+
+        var targetMilestoneResult = Assert.Single(result.MilestoneResults, item => item.RepositoryFullName == "owner/target");
+        Assert.False(targetMilestoneResult.HasError);
+        Assert.Equal(1, targetMilestoneResult.CreatedCount);
+
+        var failingMilestoneResult = Assert.Single(result.MilestoneResults, item => item.RepositoryFullName == "owner/failing");
+        Assert.False(failingMilestoneResult.HasError);
+        Assert.Equal(2, failingMilestoneResult.CreatedCount);
+    }
+
+    [Fact]
+    public async Task ApplyMigrationAsync_UpdateFailsAfterCreate_ReturnsErrorWithPartialProgressCounts()
+    {
+        // Arrange
+        SetupSourceAndTargetData();
+
+        _labelRepositoryMock
+            .Setup(repository => repository.CreateLabelAsync("owner", "target", It.IsAny<Label>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string _, string repo, Label label, CancellationToken _) => label with { RepositoryName = repo });
+
+        _labelRepositoryMock
+            .Setup(repository => repository.UpdateLabelAsync("owner", "target", "type/story", It.IsAny<Label>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("update failed"));
+
+        var sut = CreateSubject();
+
+        // Act
+        var result = await sut.ApplyMigrationAsync(
+            "owner/source",
+            ["owner/target"],
+            new MigrationScopeDto(true, false),
+            MigrationConflictStrategy.Overwrite);
+
+        // Assert
+        var labelResult = Assert.Single(result.LabelResults);
+        Assert.True(labelResult.HasError);
+        Assert.Equal(1, labelResult.CreatedCount);
+        Assert.Equal(0, labelResult.UpdatedCount);
+        Assert.Contains("update failed", labelResult.ErrorMessage, StringComparison.Ordinal);
+    }
+
     private void SetupSourceAndTargetData()
     {
         _labelRepositoryMock
