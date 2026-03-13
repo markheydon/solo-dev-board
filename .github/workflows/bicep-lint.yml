@@ -1,0 +1,75 @@
+name: Bicep Lint
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - infra/**
+  pull_request:
+    branches:
+      - main
+    paths:
+      - infra/**
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: bicep-lint-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-bicep:
+    name: Validate Bicep Templates
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install Azure CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+      - name: Validate and lint Bicep files
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mapfile -d '' bicep_files < <(find infra -type f -name '*.bicep' -print0)
+
+          if [ ${#bicep_files[@]} -eq 0 ]; then
+            echo "No Bicep files found to lint."
+            exit 0
+          fi
+
+          failed=0
+
+          for file in "${bicep_files[@]}"; do
+            echo "Validating ${file}"
+
+            # az bicep build validates syntax and linter diagnostics.
+            output="$(az bicep build --file "${file}" --stdout 2>&1)" || {
+              echo "${output}"
+              failed=1
+              continue
+            }
+
+            if echo "${output}" | grep -Eiq "(^|[[:space:]])warning([[:space:]]|:|$)"; then
+              echo "Linter warnings detected in ${file}:"
+              echo "${output}"
+              failed=1
+            fi
+          done
+
+          if [ ${failed} -ne 0 ]; then
+            echo "Bicep validation or linting failed."
+            exit 1
+          fi
+
+          echo "Bicep validation and linting passed."
