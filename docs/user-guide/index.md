@@ -14,11 +14,13 @@ The SoloDevBoard user guide provides detailed documentation for available featur
 - [Home Page](dashboard-shell.md) — Overview of the main dashboard and navigation structure.
 
 ## Available Features
+
 - [Audit Dashboard](audit-dashboard.md) — View issues, pull requests, and repository health across all your repositories.
 - [Label Manager](label-manager.md) — Create, edit, synchronise, and enforce label taxonomies across multiple repositories.
 - [Repositories](repositories.md) — View and manage repositories accessible to your GitHub account.
 - [One-Click Migration](one-click-migration.md) — Migrate labels and milestones from one repository to another in a single action.
 - [About](about.md) — Application version, runtime environment, and repository link.
+- [Azure Deployment Costs](azure-costs.md) — Understand Azure resource charges, SKUs, and cost optimisation for SoloDevBoard deployments.
 
 ## Coming Soon
 
