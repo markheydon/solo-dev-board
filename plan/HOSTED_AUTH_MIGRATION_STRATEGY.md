@@ -24,14 +24,14 @@ The superseded hybrid implementation path is frozen and treated as reference-onl
 
 1. New hosted-auth implementation work proceeds only on issue-scoped feature branches from current main.
 2. No direct merge from the old hybrid branch is permitted.
-3. Cherry-picking from superseded work is allowed only when all checks pass:
+3. Cherry-picking from superseded work is allowed only when all checks pass.
    - The commit is implementation-agnostic and does not enforce hybrid auth behaviour.
    - The commit preserves ADR-0015 direction (GitHub App-first, OAuth fallback-only).
    - The commit preserves PAT-only local trusted mode.
    - The commit is reviewed and referenced in the destination issue or pull request notes.
 4. If a commit fails any check, reimplement it directly on the new branch path rather than importing it.
 
-For this issue, work is locked to branch feature/issue-118-lock-branch-and-migration-strategy.
+Work for this migration gate was carried out on the issue branch for #118 and delivered via PR #120.
 
 ## Hosted Configuration and Secret Migration Expectations
 
@@ -39,7 +39,7 @@ For this issue, work is locked to branch feature/issue-118-lock-branch-and-migra
 2. Hosted baseline for Feature #103 prioritises GitHub App authentication material and admission control configuration.
 3. Existing Key Vault-backed PAT reference remains only for local trusted mode compatibility and operational continuity until the hosted cutover completes.
 4. OAuth App secret material is not required for the default hosted path; introduce it only if explicit fallback criteria are met.
-5. Any new hosted auth settings introduced during implementation must be documented in:
+5. Any new hosted auth settings introduced during implementation must be documented in the following files.
    - docs/getting-started.md.
    - infra/README.md.
 
@@ -52,7 +52,7 @@ For this issue, work is locked to branch feature/issue-118-lock-branch-and-migra
 
 ## Rollout and Fallback Expectations
 
-1. Rollout order for Feature #103 remains:
+1. Rollout order for Feature #103 remains as follows.
    - #111 installation and token lifecycle.
    - #112 user sign-in and per-request user context.
    - #117 hosted admission mapping.
@@ -61,7 +61,7 @@ For this issue, work is locked to branch feature/issue-118-lock-branch-and-migra
    - #119 documentation updates.
 2. Hosted rollout is App-first by default and deny-by-default for admission control.
 3. Fallback to OAuth App is permitted only when a validated hosted requirement cannot be met by GitHub App user authentication.
-4. Any fallback activation must include:
+4. Any fallback activation must include the following.
    - Explicit issue-level rationale.
    - Updated scope and implementation-plan notes.
    - Updated operator documentation.
@@ -71,6 +71,6 @@ For this issue, work is locked to branch feature/issue-118-lock-branch-and-migra
 Issue #118 is complete when:
 
 1. This migration strategy is committed and linked from planning artefacts.
-2. Issue #118 and roadmap status are in-progress with actual start date recorded.
-3. Parent feature and epic status are aligned to in-progress for active delivery.
+2. Issue #118 and roadmap item status are marked done with the actual completion date recorded.
+3. Parent feature and epic status are aligned for active delivery and are in-progress unless already done.
 4. Feature #103 implementation proceeds only under this locked strategy.
