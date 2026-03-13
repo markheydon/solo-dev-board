@@ -19,7 +19,7 @@ The templates in this directory are configured for a public-release-ready baseli
 
 - App Service uses a system-assigned managed identity and does not store GitHub credentials directly.
 - Key Vault uses RBAC authorisation, soft delete retention, and purge protection by default.
-- The GitHub token is referenced through a Key Vault secret at runtime. The default secret name is `GitHub--Token`, and you can override it with the `gitHubTokenSecretName` parameter.
+- The GitHub token is referenced through a Key Vault secret at runtime. The default secret name is `GitHubAuth--PersonalAccessToken`, and you can override it with the `gitHubTokenSecretName` parameter.
 - The App Service managed identity is granted `Key Vault Secrets User` at Key Vault scope during deployment.
 - Deployment authentication from GitHub Actions uses OIDC and repository environment protections.
 
@@ -46,10 +46,38 @@ az login
 For a guided deployment that also prints post-deployment next steps (local run configuration and GitHub Actions secrets), run:
 
 ```powershell
+pwsh ./infra/Deploy-SoloDevBoardInfra.ps1
+```
+
+Default behaviour:
+
+- `EnvironmentName`: `prod`.
+- `ResourceGroupName`: `rg-solodevboard-<environmentName>` (sanitised lowercase).
+- `Location`: `uksouth`.
+- `AppServicePlanSku`: `F1` (cost-saving default for development and validation).
+
+For production-like hosting, override `AppServicePlanSku` to a paid tier such as `B1` or `P1v3`.
+
+By default, if you do not pass `-AppServiceAllowedCidrs`, the script auto-detects your current public IPv4 and applies it as a `/32` allow-list entry when the plan supports access restrictions.
+
+The default `F1` plan does not support this restriction path. On `F1`, the script keeps inbound access public and prints guidance to use `-AppServicePlanSku B1` (or higher) if you need CIDR restrictions.
+
+To intentionally keep the app publicly reachable, pass `-AllowPublicAppAccess`.
+
+To restrict inbound app access to specific ranges, provide an allow list of CIDR ranges using `-AppServiceAllowedCidrs`.
+
+Optional overrides:
+
+```powershell
 pwsh ./infra/Deploy-SoloDevBoardInfra.ps1 \
-  -ResourceGroupName rg-solodevboard-prod \
+  -EnvironmentName dev \
+  -ResourceGroupName rg-solodevboard-dev \
   -Location uksouth \
-  -EnvironmentName prod
+  -AppServicePlanSku B1 \
+  -AppServiceAllowedCidrs "203.0.113.10/32"
+
+# Keep app access public (explicit opt-out from the secure default).
+pwsh ./infra/Deploy-SoloDevBoardInfra.ps1 -AllowPublicAppAccess
 ```
 
 The script deploys the Bicep template, prints deployment outputs, and then provides copy/paste commands for:
@@ -93,9 +121,37 @@ Then store your GitHub Personal Access Token (or GitHub App private key):
 ```bash
 az keyvault secret set \
   --vault-name <keyVaultName> \
-  --name "GitHub--Token" \
+  --name "GitHubAuth--PersonalAccessToken" \
   --value "<your-github-pat>"
 ```
+
+If this command returns `Forbidden`, your user account does not have Key Vault data-plane permissions for secret write operations. You need one of these roles on the Key Vault scope:
+
+- `Key Vault Secrets Officer`.
+- `Key Vault Administrator`.
+
+If you cannot assign roles yourself, ask a subscription or resource-group owner to grant one of the roles above and then retry.
+
+If you can self-assign roles, you can grant temporary access and then remove it after writing the secret:
+
+```bash
+az role assignment create \
+  --assignee-object-id "$(az ad signed-in-user show --query id -o tsv)" \
+  --assignee-principal-type User \
+  --role "Key Vault Secrets Officer" \
+  --scope "$(az keyvault show --name <keyVaultName> --query id -o tsv)"
+
+# Set the secret.
+az keyvault secret set --vault-name <keyVaultName> --name "GitHubAuth--PersonalAccessToken" --value "<your-github-pat>"
+
+# Remove temporary access.
+az role assignment delete \
+  --assignee-object-id "$(az ad signed-in-user show --query id -o tsv)" \
+  --role "Key Vault Secrets Officer" \
+  --scope "$(az keyvault show --name <keyVaultName> --query id -o tsv)"
+```
+
+Incremental Bicep deployments usually do not remove extra user role assignments automatically, so remove temporary access explicitly when finished.
 
 ### 4. Verify managed identity role assignment
 
@@ -152,11 +208,14 @@ After configuring federated credentials, grant the deployment identity least-pri
 | `environmentName` | `dev` | The environment name (e.g. dev, staging, prod). Used to name resources. |
 | `location` | Resource group location | The Azure region for deployment. |
 | `appServicePlanSku` | `B1` | The App Service Plan SKU. Use `B1` for development, `P1v3` for production. |
-| `gitHubTokenSecretName` | `GitHub--Token` | The Key Vault secret name used for `GitHub__Token`. |
+| `gitHubTokenSecretName` | `GitHubAuth--PersonalAccessToken` | The Key Vault secret name used by App Service setting `GitHubAuth__PersonalAccessToken`. |
 | `healthCheckPath` | `/` | The path used by App Service platform health checks. |
 | `keyVaultSoftDeleteRetentionInDays` | `90` | Key Vault soft-delete retention window in days. |
 | `keyVaultEnablePurgeProtection` | `true` | Whether purge protection is enabled for Key Vault. |
 | `keyVaultPublicNetworkAccess` | `Enabled` | Controls whether public network access is enabled for Key Vault. |
+| `appServiceAllowedCidrs` | `[]` | Optional CIDR allow list for App Service inbound access. When set, unmatched traffic is denied. |
+
+When running `infra/Deploy-SoloDevBoardInfra.ps1`, omitting `-AppServiceAllowedCidrs` now defaults to your current public IPv4 as `/32`. Use `-AllowPublicAppAccess` if you need deliberate public access.
 
 ## App Configuration
 
@@ -164,7 +223,7 @@ The following environment variables are set on the App Service and read from Key
 
 | Variable | Source | Description |
 |----------|--------|-------------|
-| `GitHubAuth__PersonalAccessToken` | Key Vault secret `GitHub--Token` | GitHub Personal Access Token used by the current single-user runtime path |
+| `GitHubAuth__PersonalAccessToken` | Key Vault secret `GitHubAuth--PersonalAccessToken` | GitHub Personal Access Token used by the current single-user runtime path |
 | `ASPNETCORE_ENVIRONMENT` | App settings | ASP.NET Core hosting environment (`Production` for `prod`, otherwise `Development`) |
 
 ## Module Structure

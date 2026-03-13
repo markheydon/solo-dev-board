@@ -14,14 +14,26 @@ param appServicePlanSku string = 'B1'
 param keyVaultName string
 
 @description('The Key Vault secret name that stores the GitHub token for the application.')
-param gitHubTokenSecretName string = 'GitHub--Token'
+param gitHubTokenSecretName string = 'GitHubAuth--PersonalAccessToken'
 
 @description('The App Service health check path. Use "/" until a dedicated health endpoint is introduced.')
 param healthCheckPath string = '/'
 
+@description('Optional list of CIDR ranges allowed to access the App Service. When empty, inbound access remains open.')
+param appServiceAllowedCidrs array = []
+
 var resourceSuffix = toLower(environmentName)
 var appServicePlanName = 'asp-solodevboard-${resourceSuffix}'
 var appServiceName = 'app-solodevboard-${resourceSuffix}'
+var supportsAccessRestrictions = toUpper(appServicePlanSku) != 'F1'
+var hasAccessRestrictions = supportsAccessRestrictions && length(appServiceAllowedCidrs) > 0
+var accessRestrictionRules = [for (cidr, i) in appServiceAllowedCidrs: {
+  action: 'Allow'
+  name: 'allow-${i + 1}'
+  ipAddress: cidr
+  priority: 100 + i
+  description: 'Configured by appServiceAllowedCidrs parameter.'
+}]
 
 // App Service Plan — Linux, .NET 10 runtime
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
@@ -47,7 +59,7 @@ resource appService 'Microsoft.Web/sites@2023-12-01' = {
   properties: {
     serverFarmId: appServicePlan.id
     httpsOnly: true // Enforce HTTPS; redirect HTTP to HTTPS
-    siteConfig: {
+    siteConfig: union({
       // .NET 10 on Linux
       linuxFxVersion: 'DOTNETCORE|10.0'
       // Always On keeps the app warm and prevents SignalR connection drops (not available on Free tier)
@@ -73,7 +85,14 @@ resource appService 'Microsoft.Web/sites@2023-12-01' = {
           value: environmentName == 'prod' ? 'Production' : 'Development'
         }
       ]
-    }
+    }, hasAccessRestrictions ? {
+      // Optional inbound access restrictions for quick hardening.
+      ipSecurityRestrictionsDefaultAction: 'Deny'
+      ipSecurityRestrictions: accessRestrictionRules
+      // Keep Kudu/SCM endpoint locked to the same allowed CIDRs.
+      scmIpSecurityRestrictionsDefaultAction: 'Deny'
+      scmIpSecurityRestrictions: accessRestrictionRules
+    } : {})
   }
 }
 

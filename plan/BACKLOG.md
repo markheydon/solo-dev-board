@@ -194,7 +194,7 @@ Labels: `type/chore`, `area/infrastructure`
 <!-- Enabler #113: Persist per-user authentication secrets and token references securely -->
 <!-- Test #114: Add authentication coverage for GitHub App and OAuth flow -->
 
-- [x] Set up Bicep infrastructure for Azure App Service, Key Vault, and managed identity. _(done — Bicep baseline complete with managed identity RBAC, configurable Key Vault secret name, purge protection, and health-check path; see issue #104.)_
+- [x] Set up Bicep infrastructure for Azure App Service, Key Vault, and managed identity. _(done — Bicep baseline complete with managed identity RBAC, configurable Key Vault secret name, purge protection, health-check path, and optional CIDR inbound access restrictions (SKU-gated; unsupported on F1); guided PowerShell deployment script `infra/Deploy-SoloDevBoardInfra.ps1` added with auto-detected caller IP defaulting, F1 compatibility guard, and post-deployment next-step guidance; see issue #104.)_
 - [x] Configure OIDC authentication for GitHub Actions to Azure (no long-lived credentials). _(done — `cd.yml` already uses OIDC with least-privilege permissions; OIDC trust prerequisites and protected-environment documentation added to `infra/README.md`; see issue #105.)_
 - [ ] Implement response caching for GitHub API calls to respect rate limits. _(#108)_
 - [ ] Add health check endpoints for Azure App Service monitoring. _(#106)_

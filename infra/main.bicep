@@ -12,7 +12,7 @@ param location string = resourceGroup().location
 param appServicePlanSku string = 'B1'
 
 @description('The Key Vault secret name that stores the GitHub token used by the application.')
-param gitHubTokenSecretName string = 'GitHub--Token'
+param gitHubTokenSecretName string = 'GitHubAuth--PersonalAccessToken'
 
 @description('The App Service health check path. Keep this as "/" until a dedicated endpoint is available.')
 param healthCheckPath string = '/'
@@ -32,6 +32,9 @@ param keyVaultEnablePurgeProtection bool = true
 ])
 param keyVaultPublicNetworkAccess string = 'Enabled'
 
+@description('Optional list of CIDR ranges allowed to access the App Service. When empty, inbound access remains open.')
+param appServiceAllowedCidrs array = []
+
 // Derive a short, consistent suffix for resource naming
 var resourceSuffix = toLower(environmentName)
 
@@ -50,6 +53,7 @@ module appServiceModule 'modules/appservice.bicep' = {
     keyVaultName: keyVaultName
     gitHubTokenSecretName: gitHubTokenSecretName
     healthCheckPath: healthCheckPath
+    appServiceAllowedCidrs: appServiceAllowedCidrs
   }
 }
 
