@@ -219,7 +219,7 @@ When running `infra/Deploy-SoloDevBoardInfra.ps1`, omitting `-AppServiceAllowedC
 
 ## App Configuration
 
-The following environment variables are set on the App Service and read from Key Vault at runtime:
+The following environment variables are configured on the App Service; the Source column indicates whether each value comes from a Key Vault reference or directly from app settings:
 
 | Variable | Source | Description |
 |----------|--------|-------------|

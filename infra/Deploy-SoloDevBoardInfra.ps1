@@ -52,6 +52,14 @@ param (
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+    throw (
+        'This deployment script requires PowerShell 7 or later.' +
+        [Environment]::NewLine +
+        'Run it with pwsh (PowerShell 7+), for example: pwsh infra/Deploy-SoloDevBoardInfra.ps1'
+    )
+}
+
 $scriptDirectory = Split-Path -Parent $PSCommandPath
 $templateFilePath = Join-Path -Path $scriptDirectory -ChildPath 'main.bicep'
 
@@ -266,7 +274,7 @@ if ([string]::IsNullOrWhiteSpace($tenantId)) {
 az group create --name $ResourceGroupName --location $Location | Out-Null
 
 # If an existing site is being moved to F1, Always On must be disabled first.
-if ($AppServicePlanSku -eq 'F1') {
+if ($isFreeTierPlan) {
     $appServiceName = Get-DefaultAppServiceName -Environment $EnvironmentName
     $existingSiteName = & az webapp show --resource-group $ResourceGroupName --name $appServiceName --query name --output tsv 2>$null
 

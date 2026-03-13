@@ -16,7 +16,6 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
 
 concurrency:
   group: validate-powershell-${{ github.workflow }}-${{ github.ref }}
