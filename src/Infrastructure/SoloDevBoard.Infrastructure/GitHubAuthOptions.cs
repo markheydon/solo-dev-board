@@ -1,3 +1,5 @@
+using SoloDevBoard.Infrastructure.Identity;
+
 namespace SoloDevBoard.Infrastructure;
 
 /// <summary>Configuration options for GitHub authentication.</summary>
@@ -17,6 +19,36 @@ public sealed class GitHubAuthOptions
     /// <summary>GitHub App private key in PEM format.</summary>
     public string GitHubAppPrivateKey { get; set; } = string.Empty;
 
-    /// <summary>When true, uses GitHub App authentication instead of a personal access token.</summary>
-    public bool UseGitHubApp { get; set; }
+    /// <summary>
+    /// Gets or sets a value that indicates whether hosted sign-in mode is enabled.
+    /// </summary>
+    /// <value>
+    /// <see langword="true" /> to resolve the current user from per-request hosted authentication claims; otherwise, <see langword="false" />.
+    /// The default is <see langword="false" />.
+    /// </value>
+    public bool HostedSignInEnabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets the claim type used to read the authenticated GitHub owner login in hosted mode.
+    /// </summary>
+    /// <value>The hosted authentication claim type for owner login.</value>
+    public string HostedOwnerLoginClaimType { get; set; } = HostedAuthClaimTypes.OwnerLogin;
+
+    /// <summary>
+    /// Gets or sets the claim type used to read the hosted GitHub access token.
+    /// </summary>
+    /// <value>The hosted authentication claim type for the access token.</value>
+    public string HostedAccessTokenClaimType { get; set; } = HostedAuthClaimTypes.AccessToken;
+
+    /// <summary>
+    /// Gets or sets the claim type used to read the hosted GitHub installation identifier.
+    /// </summary>
+    /// <value>The hosted authentication claim type for the installation identifier.</value>
+    public string HostedInstallationIdClaimType { get; set; } = HostedAuthClaimTypes.InstallationId;
+
+    /// <summary>
+    /// Gets or sets the claim type used to read the hosted GitHub token expiry timestamp.
+    /// </summary>
+    /// <value>The hosted authentication claim type for token expiry in UTC.</value>
+    public string HostedTokenExpiresAtClaimType { get; set; } = HostedAuthClaimTypes.TokenExpiresAt;
 }

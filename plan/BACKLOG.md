@@ -41,6 +41,9 @@ Labels: `type/epic`, `area/infrastructure`, `priority/high`
 <!-- Chore #118: Define migration path from superseded hybrid auth plan -->
 <!-- Docs #119: Update documentation for GitHub App-first hosted auth -->
 
+
+- [x] Enabler: Installation and token lifecycle handling implemented for hosted authentication. _(Issue #111 — implemented on 2026-03-13; see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_
+- [x] Story: GitHub App user sign-in and per-request user context delivered for hosted mode. _(Issue #112 — implemented on 2026-03-13; see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_
 - [ ] As a solo developer, I want hosted SoloDevBoard sign-in to use GitHub App-first user authentication, ideally GitHub App-only where feasible, so that public deployments stay secure, auditable, and operator-controlled.
 - [ ] As a hosted SoloDevBoard operator, I want authenticated GitHub identities mapped to operator-managed user and organisation allow-lists so that hosted access is deny-by-default.
 - [ ] As a SoloDevBoard maintainer, I want the separate OAuth App dependency removed or demoted to a fallback path where GitHub App user authentication satisfies hosted sign-in requirements so that the production architecture stays simpler and safer.
