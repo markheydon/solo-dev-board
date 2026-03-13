@@ -185,7 +185,6 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 **Milestone:** v1.0.0
 
 ### Key Tasks
-
 - [ ] Achieve ≥80% unit test coverage across `Application` and `Domain` projects.
 - [ ] Perform accessibility audit of all Blazor components (WCAG 2.1 AA).
 - [ ] Conduct performance review: identify and address slow GitHub API calls (caching, pagination).
@@ -195,21 +194,23 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [ ] Implement response caching for GitHub API calls to respect rate limits. _(#108)_
 - [ ] Configure structured logging and Application Insights telemetry. _(#107)_
 - [ ] Set up Dependabot for automated dependency updates. _(#109)_
-- [ ] Implement GitHub App authentication and installation token flow for public release. _(#103, #111)_
-- [ ] Add GitHub OAuth sign-in and per-request user context for public authentication. _(#103, #112)_
-- [ ] Restrict hosted sign-in to authorised users or organisations (deny-by-default admission control; see issue #117 and ADR-0014).
-- [ ] Persist per-user authentication secrets and token references securely in Azure Key Vault. _(#113)_
-- [ ] Replace single-user `ICurrentUserContext` adapter with a per-request, per-user implementation backed by the OAuth session.
+- [ ] Preserve PAT-only local trusted mode for development and trusted self-hosted use.
+- [ ] Implement GitHub App-first hosted sign-in and per-request user context for public release. _(#103, #112)_
+- [ ] Handle GitHub App installation resolution, token issuance, refresh, and expiry for hosted requests. _(#103, #111)_
+- [ ] Restrict hosted access to operator-managed user and organisation allow-lists, with deny-by-default admission control. _(#103, #117; see ADR-0014 and ADR-0015)._
+- [ ] Remove or demote the separate OAuth App dependency where GitHub App user authentication satisfies hosted sign-in requirements. _(#103, #113)_
+- [ ] Define and execute the migration and compatibility path away from the superseded hybrid hosted-authentication plan. _(#103, #118)_
+- [ ] Persist hosted authentication material securely using Azure Key Vault-backed patterns where required.
+- [ ] Replace the single-user `ICurrentUserContext` adapter with a per-request, per-user implementation backed by the hosted authentication session.
 - [ ] Enable CD pipeline with production environment gate (`.github/workflows/cd.yml`).
 - [ ] Write end-to-end tests for critical user journeys.
-- [ ] Write comprehensive `docs/` content for all features.
+- [ ] Write comprehensive `docs/` content for all features. _(#119)_
 - [ ] Tag v1.0.0 release on GitHub with release notes.
 
 ### Dependencies
 
 - Phases 1–5 complete.
 
----
 
 ## AI Collaborator Instructions
 

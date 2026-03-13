@@ -22,9 +22,11 @@ The key risks without a deliberate strategy are:
 
 Adopt a phased approach to authentication and multi-tenancy:
 
+> **Note:** The earlier hybrid hosted authentication plan (GitHub App + OAuth App) is superseded by ADR-0015. SoloDevBoard now targets GitHub App-first hosted authentication, with OAuth App registration retained only as a fallback where GitHub App user authentication is insufficient.
+
 ### Phase 1 (v0.1.0) — Current
-- PAT authentication via `GitHubAuthHandler` reading `IOptions<GitHubAuthOptions>`.
-- Single-user; no user identity abstraction required yet.
+
+> **Phase 5 hosted authentication implementation details are refined by ADR-0015.**
 
 ### Phase 2 (v0.2.0) — Interface Preparation
 - **Do not implement multi-tenancy**, but introduce an `ICurrentUserContext` interface in `SoloDevBoard.Application` that represents the authenticated user's identity and API token.

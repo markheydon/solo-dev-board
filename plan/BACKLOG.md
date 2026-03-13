@@ -32,18 +32,19 @@ Labels: `type/epic`, `area/infrastructure`
 
 Labels: `type/epic`, `area/infrastructure`, `priority/high`
 
-<!-- Feature #103: OAuth and GitHub App authentication for hosted deployments -->
-<!-- Story #117: Restrict hosted sign-in to authorised users -->
-<!-- Child issues: #111, #112, #113, #114 -->
+<!-- Feature #103: GitHub App-first hosted authentication and admission control -->
+<!-- Enabler #111: Installation and token lifecycle handling -->
+<!-- Story #112: GitHub App user sign-in and per-request user context -->
+<!-- Enabler #113: Remove separate OAuth App dependency where feasible -->
+<!-- Test #114: Authentication coverage for GitHub App-first hosted auth -->
+<!-- Story #117: Map authenticated GitHub identity to hosted admission control -->
+<!-- Chore #118: Define migration path from superseded hybrid auth plan -->
+<!-- Docs #119: Update documentation for GitHub App-first hosted auth -->
 
-- [x] As a solo developer, I want to sign in to the hosted application using GitHub OAuth or a GitHub App so that authentication is secure and aligns with GitHub best practices. _(Feature #103)_
-- [ ] As a solo developer, I want hosted deployments to restrict sign-in to only authorised GitHub users or organisations so that random users cannot access repository data. _(Story #117)_
-
----
-
----
-
-## Epic 1: Audit Dashboard
+- [ ] As a solo developer, I want hosted SoloDevBoard sign-in to use GitHub App-first user authentication, ideally GitHub App-only where feasible, so that public deployments stay secure, auditable, and operator-controlled.
+- [ ] As a hosted SoloDevBoard operator, I want authenticated GitHub identities mapped to operator-managed user and organisation allow-lists so that hosted access is deny-by-default.
+- [ ] As a SoloDevBoard maintainer, I want the separate OAuth App dependency removed or demoted to a fallback path where GitHub App user authentication satisfies hosted sign-in requirements so that the production architecture stays simpler and safer.
+- [ ] As a solo developer, I want PAT-only local trusted mode preserved so that local development and trusted self-hosted use do not depend on hosted sign-in infrastructure.
 
 Labels: `type/epic`, `area/dashboard`
 

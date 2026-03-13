@@ -17,13 +17,15 @@ The following features define the current scope of SoloDevBoard:
 ### Production-Readiness Infrastructure and Authentication (v1.0.0)
 
 Public-release hardening is in scope for v1.0.0, including:
-- GitHub App authentication and installation token flow.
-- GitHub OAuth sign-in and per-request user context.
+- GitHub App-first hosted authentication and installation token flow for user-to-server authentication.
 - Hosted access control and explicit authorised-user admission for public deployments. Only users or organisations explicitly authorised by the operator may access the hosted UI.
-- Secure production authentication handling (per-user token storage, Azure Key Vault integration).
+- Secure production authentication handling for hosted deployments, including any required token or session material stored through Azure Key Vault-backed patterns.
 - Azure infrastructure baseline via Bicep (App Service, Key Vault, managed identity).
 - OIDC authentication for GitHub Actions to Azure.
 - Operational hardening: response caching, health checks, structured logging, Application Insights telemetry, Dependabot configuration.
+- PAT-only local trusted mode for development and trusted self-hosted use.
+- Separate OAuth App registration is not the intended default end state; it is only a fallback if GitHub App user authentication proves insufficient for hosted sign-in requirements.
+- Hosted authentication is secure-by-default, with deny-by-default admission control.
 
 ### 1. Audit Dashboard
 
@@ -101,7 +103,6 @@ The following are explicitly **not** in scope for the current version of SoloDev
 ---
 
 ## Scope Changelog
-
 | Date | Change | Author |
 |------|--------|--------|
 | 2025-01-01 | Initial scope defined | Solo developer |
@@ -110,4 +111,5 @@ The following are explicitly **not** in scope for the current version of SoloDev
 | 2026-03-09 | Added constraint: MudBlazor is the sole UI component library (ADR-0012). Fluent UI Blazor library removed. Existing UI features (Repositories page, Label Manager) to be refactored. | Solo developer |
 | 2026-03-12 | Public-release hardening and public authentication planning brought into scope for v1.0.0. Production authentication, Azure infrastructure, operational hardening, and dependency hygiene are now in scope for the upcoming public release milestone. | Solo developer |
 | 2026-03-13 | Clarified hosted access control for public deployments. Admission control for hosted environments is now explicitly in scope for v1.0.0. GitHub Sponsors, billing-backed entitlement automation, and marketplace monetisation remain out of scope for this release. | Solo developer |
+| 2026-03-13 | Refined hosted authentication direction to GitHub App-first, ideally GitHub App-only, with OAuth App dependency demoted to fallback status. PAT-only local trusted mode and secure-by-default hosted admission control preserved. (ADR-0015) | Solo developer |
 
