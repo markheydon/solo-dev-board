@@ -197,6 +197,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [ ] Set up Dependabot for automated dependency updates. _(#109)_
 - [ ] Implement GitHub App authentication and installation token flow for public release. _(#103, #111)_
 - [ ] Add GitHub OAuth sign-in and per-request user context for public authentication. _(#103, #112)_
+- [ ] Restrict hosted sign-in to authorised users or organisations (deny-by-default admission control; see issue #117 and ADR-0014).
 - [ ] Persist per-user authentication secrets and token references securely in Azure Key Vault. _(#113)_
 - [ ] Replace single-user `ICurrentUserContext` adapter with a per-request, per-user implementation backed by the OAuth session.
 - [ ] Enable CD pipeline with production environment gate (`.github/workflows/cd.yml`).

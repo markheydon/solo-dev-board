@@ -13,50 +13,58 @@ SoloDevBoard is a **single pane of glass** for solo developers who maintain mult
 ## In Scope
 
 The following features define the current scope of SoloDevBoard:
+
 ### Production-Readiness Infrastructure and Authentication (v1.0.0)
+
 Public-release hardening is in scope for v1.0.0, including:
 - GitHub App authentication and installation token flow.
 - GitHub OAuth sign-in and per-request user context.
+- Hosted access control and explicit authorised-user admission for public deployments. Only users or organisations explicitly authorised by the operator may access the hosted UI.
 - Secure production authentication handling (per-user token storage, Azure Key Vault integration).
 - Azure infrastructure baseline via Bicep (App Service, Key Vault, managed identity).
 - OIDC authentication for GitHub Actions to Azure.
 - Operational hardening: response caching, health checks, structured logging, Application Insights telemetry, Dependabot configuration.
 
 ### 1. Audit Dashboard
+
 A consolidated view of repository health: open issues, stale PRs, label consistency warnings, and GitHub Actions workflow statuses across all configured repositories.
 
 ### 2. One-Click Migration
+
 Copy labels, milestones, and project board configurations from a source repository to one or more target repositories in a single, preview-first action.
 
 ### 3. Label Manager
+
 Create, edit, recolour, delete, and synchronise GitHub labels across multiple repositories from a single interface, using a canonical label taxonomy as the source of truth.
 
 ### 4. Board Rules Visualiser
+
 An interactive diagram showing the automation rules configured on GitHub project boards, making it easy to understand how issues flow between columns.
 
 ### 5. Triage UI
+
 A focused, keyboard-friendly interface for triaging incoming GitHub issues one at a time, supporting quick labelling, milestone assignment, and duplicate closure.
 
 ### 6. Workflow Templates
+
 Browse, customise, and apply GitHub Actions workflow templates across repositories, with tracking of which repositories have which templates applied.
 
 ### 7. Cross-Repo PM Workflow
+
 A UI-based implementation of the two-mode PM operating system from [markheydon/github-workflows](https://github.com/markheydon/github-workflows): a Daily Focus view (board state, stalled items, top priorities), a cross-repository Backlog Review (prioritised work across all repos, neglected repo detection), and an Iteration Planning tool (capacity management, Up Next curation, milestone assignment). This epic represents the ultimate destination of SoloDevBoard.
 
 ---
 
 ## Out of Scope
 
- The following are explicitly **not** in scope for the current version of SoloDevBoard:
-
+The following are explicitly **not** in scope for the current version of SoloDevBoard:
 
 - Collaboration and team features — SoloDevBoard is designed for a single developer. No shared sessions, team boards, or collaborative user management are in scope.
 - Non-GitHub providers — GitLab, Bitbucket, Azure DevOps, and other platforms are not supported. GitHub.com is the only supported provider initially.
 - Mobile application — SoloDevBoard is a web application. No native iOS or Android app is planned.
 - Real-time collaboration — No shared sessions, shared boards, or live collaboration features.
 - Issue content editing — SoloDevBoard manages metadata (labels, milestones, assignments) but does not provide a full issue editor.
-- Billing / GitHub marketplace features — No integration with GitHub Marketplace or billing APIs.
-
+- GitHub Sponsors, billing-backed entitlement automation, and marketplace monetisation are not in scope for v1.0.0. No integration with GitHub Marketplace, billing APIs, or paid access flows is planned for this release.
 
 ## Assumptions
 
@@ -65,11 +73,6 @@ A UI-based implementation of the two-mode PM operating system from [markheydon/g
 - **.NET 10:** The application is built on .NET 10 and Blazor Server. No legacy .NET Framework support is required.
 - **Modern browser:** Users are assumed to be using a current version of Chrome, Firefox, Edge, or Safari.
 - **Internet connection:** The application requires a live connection to the GitHub API.
- **Single-user / solo developer:** The application is used by one person who is the owner or an admin of all managed repositories.
- **GitHub.com initially:** The application targets GitHub.com. GitHub Enterprise Server support may be considered in a future release.
- **.NET 10:** The application is built on .NET 10 and Blazor Server. No legacy .NET Framework support is required.
- **Modern browser:** Users are assumed to be using a current version of Chrome, Firefox, Edge, or Safari.
- **Internet connection:** The application requires a live connection to the GitHub API.
 
 ---
 
@@ -80,11 +83,6 @@ A UI-based implementation of the two-mode PM operating system from [markheydon/g
 - **AI-driven development:** The project is developed with GitHub Copilot as an active collaborator. All planning documents are written to be machine-readable and actionable by AI agents.
 - **Minimal dependencies:** Prefer the .NET ecosystem and well-established open source libraries. Avoid adding dependencies without an ADR.
 - **UI component library:** MudBlazor is the sole UI component library for the Blazor front-end (see [ADR-0012](../adr/0012-switch-to-mudblazor-component-library.md)). Raw HTML form elements are not used where a MudBlazor equivalent exists.
- **UK English:** All user-facing text, code comments, documentation, and commit messages must be written in UK English.
- **Open source:** The project is intended to be open source under the MIT Licence.
- **AI-driven development:** The project is developed with GitHub Copilot as an active collaborator. All planning documents are written to be machine-readable and actionable by AI agents.
- **Minimal dependencies:** Prefer the .NET ecosystem and well-established open source libraries. Avoid adding dependencies without an ADR.
- **UI component library:** MudBlazor is the sole UI component library for the Blazor front-end (see [ADR-0012](../adr/0012-switch-to-mudblazor-component-library.md)). Raw HTML form elements are not used where a MudBlazor equivalent exists.
 
 ---
 
@@ -111,3 +109,5 @@ A UI-based implementation of the two-mode PM operating system from [markheydon/g
 | 2026-03-07 | Added Epic 7 (Cross-Repo PM Workflow) to In Scope. Updated Project Vision to document the motivating context from markheydon/github-workflows. Phase 5 added to IMPLEMENTATION_PLAN.md for this epic. | Solo developer |
 | 2026-03-09 | Added constraint: MudBlazor is the sole UI component library (ADR-0012). Fluent UI Blazor library removed. Existing UI features (Repositories page, Label Manager) to be refactored. | Solo developer |
 | 2026-03-12 | Public-release hardening and public authentication planning brought into scope for v1.0.0. Production authentication, Azure infrastructure, operational hardening, and dependency hygiene are now in scope for the upcoming public release milestone. | Solo developer |
+| 2026-03-13 | Clarified hosted access control for public deployments. Admission control for hosted environments is now explicitly in scope for v1.0.0. GitHub Sponsors, billing-backed entitlement automation, and marketplace monetisation remain out of scope for this release. | Solo developer |
+

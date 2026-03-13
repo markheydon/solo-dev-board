@@ -1,5 +1,4 @@
 # SoloDevBoard — Feature Backlog
-
 <!-- AI Collaborator Instructions: When adding items to this backlog, follow the label strategy in LABEL_STRATEGY.md. Each user story should be formatted as "As a solo developer, I want [goal] so that [benefit]." New items should be added to the relevant epic. When an item is implemented, move it to the Done section of the relevant epic or tick it off. -->
 
 This backlog is organised by the six core features (epics) of SoloDevBoard. For the phased implementation plan, see [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
@@ -7,6 +6,9 @@ This backlog is organised by the six core features (epics) of SoloDevBoard. For 
 ---
 
 ## Foundation (Cross-Cutting)
+
+<!-- Production-Readiness Authentication and Admission Control -->
+<!-- Story #117: Restrict hosted sign-in to authorised users -->
 
 Labels: `type/epic`, `area/infrastructure`
 
@@ -23,12 +25,21 @@ Labels: `type/epic`, `area/infrastructure`
 <!-- Tests: #69 bUnit test updates -->
 
 - [x] As a solo developer, I want the application switched from Fluent UI Blazor to MudBlazor so that UI delivery by AI agents is more reliable and requires fewer workarounds. _(ADR-0012, Epic #63 — done, 2026-03-09)_
-  - [x] Enabler: Remove Fluent UI NuGet packages; add MudBlazor; wire up services in `Program.cs` and providers in `MainLayout.razor`. _(#64 — done, merged PR #71, 2026-03-09)_
-  - [x] Enabler: Verify/complete `.github/skills/mudblazor/` skill and `.github/instructions/blazor.instructions.md` replacement. _(#65 — done, merged PR #71, 2026-03-09)_
-  - [x] Story: Refactor the Dashboard shell page (Fluent UI layout and navigation → MudBlazor equivalents). _(#66 — done, merged PR #72, 2026-03-09)_
-  - [x] Story: Refactor the Repositories page (Fluent UI → MudBlazor components). _(#67 — done, merged PR #72, 2026-03-09)_
-  - [x] Story: Refactor the Label Manager page and Label Operation dialog (Fluent UI → MudBlazor; replace hand-rolled colour picker with `MudColorPicker`). _(#68 — done, merged PR #73, 2026-03-09)_
-  - [x] Test: Update bUnit test projects — replace `AddFluentUIComponents()` with MudBlazor service registration. _(#69 — done, merged PR #74, 2026-03-09)_
+
+---
+
+## Epic 101: Public-Release Authentication and Admission Control
+
+Labels: `type/epic`, `area/infrastructure`, `priority/high`
+
+<!-- Feature #103: OAuth and GitHub App authentication for hosted deployments -->
+<!-- Story #117: Restrict hosted sign-in to authorised users -->
+<!-- Child issues: #111, #112, #113, #114 -->
+
+- [x] As a solo developer, I want to sign in to the hosted application using GitHub OAuth or a GitHub App so that authentication is secure and aligns with GitHub best practices. _(Feature #103)_
+- [ ] As a solo developer, I want hosted deployments to restrict sign-in to only authorised GitHub users or organisations so that random users cannot access repository data. _(Story #117)_
+
+---
 
 ---
 
@@ -193,6 +204,7 @@ Labels: `type/chore`, `area/infrastructure`
 <!-- Story #112: Add GitHub OAuth sign-in and per-request user context -->
 <!-- Enabler #113: Persist per-user authentication secrets and token references securely -->
 <!-- Test #114: Add authentication coverage for GitHub App and OAuth flow -->
+<!-- Story #117: Restrict hosted sign-in to authorised users -->
 
 - [x] Set up Bicep infrastructure for Azure App Service, Key Vault, and managed identity. _(done — Bicep baseline complete with managed identity RBAC, configurable Key Vault secret name, purge protection, health-check path, and optional CIDR inbound access restrictions (SKU-gated; unsupported on F1); guided PowerShell deployment script `infra/Deploy-SoloDevBoardInfra.ps1` added with auto-detected caller IP defaulting, F1 compatibility guard, and post-deployment next-step guidance; see issue #104.)_
 - [x] Configure OIDC authentication for GitHub Actions to Azure (no long-lived credentials). _(done — `cd.yml` already uses OIDC with least-privilege permissions; OIDC trust prerequisites and protected-environment documentation added to `infra/README.md`; see issue #105.)_
@@ -202,3 +214,4 @@ Labels: `type/chore`, `area/infrastructure`
 - [x] Set up Dependabot for automated dependency updates. _(done — `dependabot.yml` and auto-merge workflow added previously; see issue #109.)_
 
 - [ ] As a solo developer, I want to sign in using GitHub OAuth and install the SoloDevBoard GitHub App so that SoloDevBoard can be made publicly available with secure, production-ready authentication. _(#112; supporting enablers #111 and #113.)_
+- [ ] As a hosted SoloDevBoard operator, I want only authorised GitHub users or organisations to access the hosted UI so that a public deployment cannot be used by unknown users who can authenticate successfully. _(#117; complements #112 and preserves a future entitlement extension point without bringing billing into scope.)_

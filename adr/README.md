@@ -20,6 +20,7 @@ Each ADR follows this format:
 
 ## Index
 
+
 | ADR | Title | Status |
 |-----|-------|--------|
 | [ADR-0001](0001-blazor-server.md) | Use Blazor Server for the Front-End | Accepted |
@@ -35,6 +36,7 @@ Each ADR follows this format:
 | [ADR-0011](0011-boundary-data-shapes.md) | Boundary Data Shapes — DTOs at the Application→App Boundary | Accepted |
 | [ADR-0012](0012-switch-to-mudblazor-component-library.md) | Switch UI Component Library from Fluent UI Blazor to MudBlazor | Accepted — supersedes ADR-0009 |
 | [ADR-0013](0013-one-click-migration-scope-and-preview-strategy.md) | One-Click Migration Scope and Preview/Conflict Strategy | Accepted |
+| [ADR-0014](0014-hosted-access-control-for-public-deployments.md) | Hosted Access Control for Public Deployments | Accepted |
 
 ## Adding a New ADR
 
