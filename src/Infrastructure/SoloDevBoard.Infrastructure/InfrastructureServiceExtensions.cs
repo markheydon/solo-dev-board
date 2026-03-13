@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services;
 using SoloDevBoard.Infrastructure.Identity;
@@ -22,8 +23,17 @@ public static class InfrastructureServiceExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.Configure<GitHubAuthOptions>(configuration.GetSection(GitHubAuthOptions.SectionName));
-        // Application-wide current user context for the single-user scenario.
-        services.AddSingleton<ICurrentUserContext, SingleUserCurrentUserContext>();
+        services.AddHttpContextAccessor();
+        services.AddScoped<SingleUserCurrentUserContext>();
+        services.AddScoped<HostedUserCurrentUserContext>();
+        services.AddScoped<ICurrentUserContext>(static serviceProvider =>
+        {
+            var authOptions = serviceProvider.GetRequiredService<IOptions<GitHubAuthOptions>>().Value;
+
+            return authOptions.HostedSignInEnabled
+                ? serviceProvider.GetRequiredService<HostedUserCurrentUserContext>()
+                : serviceProvider.GetRequiredService<SingleUserCurrentUserContext>();
+        });
         services.AddTransient<GitHubAuthHandler>();
 
         services
