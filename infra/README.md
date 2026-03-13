@@ -19,7 +19,7 @@ The templates in this directory are configured for a public-release-ready baseli
 
 - App Service uses a system-assigned managed identity and does not store GitHub credentials directly.
 - Key Vault uses RBAC authorisation, soft delete retention, and purge protection by default.
-- The GitHub token is referenced through a Key Vault secret (`GitHub--Token`) at runtime.
+- The GitHub token is referenced through a Key Vault secret at runtime. The default secret name is `GitHub--Token`, and you can override it with the `gitHubTokenSecretName` parameter.
 - The App Service managed identity is granted `Key Vault Secrets User` at Key Vault scope during deployment.
 - Deployment authentication from GitHub Actions uses OIDC and repository environment protections.
 
@@ -136,6 +136,8 @@ Configure federated credentials on the Azure AD application used by the workflow
 - Issuer: `https://token.actions.githubusercontent.com`.
 - Subject: `repo:markheydon/solo-dev-board:environment:production`.
 - Audience: `api://AzureADTokenExchange`.
+
+Update the subject value to match your actual `<owner>/<repo>` and environment name if they differ from this repository and environment.
 
 After configuring federated credentials, grant the deployment identity least-privilege RBAC roles required for deployment. As a baseline, this usually means:
 

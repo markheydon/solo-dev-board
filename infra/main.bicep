@@ -70,7 +70,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
     softDeleteRetentionInDays: keyVaultSoftDeleteRetentionInDays
     // Purge protection should remain enabled for production-grade recoverability.
     enablePurgeProtection: keyVaultEnablePurgeProtection
-    // Allow the App Service managed identity to read secrets (grant via RBAC after deployment)
+    // Allow the App Service managed identity to read secrets via the role assignment in this template.
     publicNetworkAccess: keyVaultPublicNetworkAccess
   }
 }
