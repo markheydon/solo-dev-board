@@ -15,7 +15,11 @@ builder.Services.AddMudServices();
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-builder.Services.AddCascadingAuthenticationState();
+
+if (hostedSignInEnabled)
+{
+    builder.Services.AddCascadingAuthenticationState();
+}
 
 if (hostedSignInEnabled)
 {
@@ -25,7 +29,6 @@ if (hostedSignInEnabled)
         {
             options.LoginPath = "/auth/sign-in";
             options.LogoutPath = "/auth/sign-out";
-            options.AccessDeniedPath = "/auth/access-denied";
         });
 
     builder.Services.AddAuthorization();
@@ -69,7 +72,7 @@ if (hostedSignInEnabled)
             detail: "GitHub App user sign-in must be completed by the configured hosted authentication gateway before requests reach the Blazor application.",
             statusCode: StatusCodes.Status501NotImplemented));
 
-    app.MapGet("/auth/sign-out", static async (HttpContext context) =>
+    app.MapPost("/auth/sign-out", static async (HttpContext context) =>
     {
         await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
