@@ -122,7 +122,7 @@ function Assert-AzureLogin {
     }
 }
 
-function Assert-BicepLintPasses {
+function Assert-BicepLintPass {
     param (
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrWhiteSpace()]
@@ -207,14 +207,14 @@ try {
     Assert-CommandAvailable -CommandName 'az'
     Assert-AzBicepAvailable
     Assert-AzureLogin
-    Assert-BicepLintPasses -TemplateFilePath $templateFilePath
+    Assert-BicepLintPass -TemplateFilePath $templateFilePath
 }
 catch {
-    Write-Host ''
-    Write-Host 'Unable to start deployment because a prerequisite check failed.' -ForegroundColor Red
-    Write-Host $_.Exception.Message -ForegroundColor Yellow
-    Write-Host ''
-    Write-Host 'Fix the requirement above and rerun this script.' -ForegroundColor Yellow
+    Write-Output ''
+    Write-Output 'Unable to start deployment because a prerequisite check failed.'
+    Write-Output $_.Exception.Message
+    Write-Output ''
+    Write-Output 'Fix the requirement above and rerun this script.'
     exit 1
 }
 
@@ -237,14 +237,14 @@ if ($isFreeTierPlan -and $explicitAppServiceAllowedCidrs.Count -gt 0) {
 if ($effectiveAppServiceAllowedCidrs.Count -eq 0 -and -not $AllowPublicAppAccess -and -not $isFreeTierPlan) {
     $detectedCallerCidr = Get-CurrentPublicIpv4Cidr
     $effectiveAppServiceAllowedCidrs = @($detectedCallerCidr)
-    Write-Host "No -AppServiceAllowedCidrs values were provided; defaulting to your current public IPv4: $detectedCallerCidr" -ForegroundColor Yellow
+    Write-Output "No -AppServiceAllowedCidrs values were provided; defaulting to your current public IPv4: $detectedCallerCidr"
 }
 elseif ($effectiveAppServiceAllowedCidrs.Count -eq 0 -and -not $AllowPublicAppAccess -and $isFreeTierPlan) {
-    Write-Host 'F1 plan detected; keeping app publicly reachable because inbound access restrictions are not available on this plan.' -ForegroundColor Yellow
-    Write-Host 'Use -AppServicePlanSku B1 (or higher) to enable CIDR restrictions, including auto-detected /32 defaulting.' -ForegroundColor Yellow
+    Write-Output 'F1 plan detected; keeping app publicly reachable because inbound access restrictions are not available on this plan.'
+    Write-Output 'Use -AppServicePlanSku B1 (or higher) to enable CIDR restrictions, including auto-detected /32 defaulting.'
 }
 
-Write-Host "Starting SoloDevBoard infrastructure deployment..." -ForegroundColor Cyan
+Write-Output "Starting SoloDevBoard infrastructure deployment..."
 
 if ([string]::IsNullOrWhiteSpace($SubscriptionId)) {
     $currentSubscriptionId = az account show --query id --output tsv
@@ -274,7 +274,7 @@ if ($AppServicePlanSku -eq 'F1') {
         $alwaysOnValue = & az webapp config show --resource-group $ResourceGroupName --name $appServiceName --query alwaysOn --output tsv 2>$null
 
         if ($LASTEXITCODE -eq 0 -and $alwaysOnValue -eq 'true') {
-            Write-Host "Existing app '$appServiceName' has Always On enabled; disabling it for F1 compatibility..." -ForegroundColor Yellow
+            Write-Output "Existing app '$appServiceName' has Always On enabled; disabling it for F1 compatibility..."
             & az webapp config set --resource-group $ResourceGroupName --name $appServiceName --always-on false --output none 2>&1 | Out-Null
 
             if ($LASTEXITCODE -ne 0) {
@@ -316,15 +316,15 @@ $deploymentArguments += @('--output', 'json')
 $deploymentResultJson = & az @deploymentArguments 2>&1
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Host ''
-    Write-Host 'Azure deployment failed.' -ForegroundColor Red
-    Write-Host 'The CLI reported:' -ForegroundColor Yellow
-    Write-Host ($deploymentResultJson -join [Environment]::NewLine)
-    Write-Host ''
-    Write-Host 'Failed deployment operations (if available):' -ForegroundColor Yellow
+    Write-Output ''
+    Write-Output 'Azure deployment failed.'
+    Write-Output 'The CLI reported:'
+    Write-Output ($deploymentResultJson -join [Environment]::NewLine)
+    Write-Output ''
+    Write-Output 'Failed deployment operations (if available):'
     & az deployment group operation list --resource-group $ResourceGroupName --name $deploymentName --query "[?properties.provisioningState=='Failed'].{resource:properties.targetResource.resourceName,status:properties.provisioningState,message:properties.statusMessage.error.message}" --output table 2>$null
-    Write-Host ''
-    Write-Host 'Tip: If you are using F1, existing apps must not have Always On enabled.' -ForegroundColor Yellow
+    Write-Output ''
+    Write-Output 'Tip: If you are using F1, existing apps must not have Always On enabled.'
     exit 1
 }
 
@@ -337,82 +337,82 @@ $keyVaultName = $outputs.keyVaultName.value
 $appServicePrincipalId = $outputs.appServicePrincipalId.value
 $roleAssignmentId = $outputs.keyVaultSecretsUserRoleAssignmentId.value
 
-Write-Host ''
-Write-Host 'Deployment completed successfully.' -ForegroundColor Green
-Write-Host "Resource group: $ResourceGroupName"
-Write-Host "Environment: $EnvironmentName"
-Write-Host "App Service name: $appServiceName"
-Write-Host "App Service URL: $appServiceUrl"
-Write-Host "Key Vault name: $keyVaultName"
-Write-Host "Managed identity principal ID: $appServicePrincipalId"
-Write-Host "Key Vault role assignment ID: $roleAssignmentId"
+Write-Output ''
+Write-Output 'Deployment completed successfully.'
+Write-Output "Resource group: $ResourceGroupName"
+Write-Output "Environment: $EnvironmentName"
+Write-Output "App Service name: $appServiceName"
+Write-Output "App Service URL: $appServiceUrl"
+Write-Output "Key Vault name: $keyVaultName"
+Write-Output "Managed identity principal ID: $appServicePrincipalId"
+Write-Output "Key Vault role assignment ID: $roleAssignmentId"
 if ($effectiveAppServiceAllowedCidrs.Count -gt 0) {
-    Write-Host "App Service inbound restriction mode: Allow list"
-    Write-Host ("Allowed CIDRs: {0}" -f ($effectiveAppServiceAllowedCidrs -join ', '))
+    Write-Output "App Service inbound restriction mode: Allow list"
+    Write-Output ("Allowed CIDRs: {0}" -f ($effectiveAppServiceAllowedCidrs -join ', '))
 }
 else {
-    Write-Host 'App Service inbound restriction mode: Open to public internet'
+    Write-Output 'App Service inbound restriction mode: Open to public internet'
 }
 
-Write-Host ''
-Write-Host 'These are your next steps.' -ForegroundColor Yellow
-Write-Host ''
-Write-Host '1. Store the GitHub token in Key Vault:' -ForegroundColor Cyan
-Write-Host ('   az keyvault secret set --vault-name {0} --name "{1}" --value "<your-github-pat>"' -f $keyVaultName, $GitHubTokenSecretName)
-Write-Host '   (This is used by the deployed App Service at runtime.)'
-Write-Host '   (Secret name is independent of app setting key; this template defaults to GitHubAuth--PersonalAccessToken.)'
+Write-Output ''
+Write-Output 'These are your next steps.'
+Write-Output ''
+Write-Output '1. Store the GitHub token in Key Vault:'
+Write-Output ('   az keyvault secret set --vault-name {0} --name "{1}" --value "<your-github-pat>"' -f $keyVaultName, $GitHubTokenSecretName)
+Write-Output '   (This is used by the deployed App Service at runtime.)'
+Write-Output '   (Secret name is independent of app setting key; this template defaults to GitHubAuth--PersonalAccessToken.)'
 
-Write-Host ''
-Write-Host '1a. If secret set returns Forbidden, your account needs Key Vault data-plane permissions:' -ForegroundColor Cyan
-Write-Host ('   az role assignment list --scope "$(az keyvault show --name {0} --query id -o tsv)" --assignee "$(az ad signed-in-user show --query id -o tsv)" --output table' -f $keyVaultName)
-Write-Host '   Required role: Key Vault Secrets Officer (or Key Vault Administrator) on the vault scope.'
-Write-Host '   If you cannot assign roles yourself, ask a subscription/resource-group owner to grant that role, then retry step 1.'
+Write-Output ''
+Write-Output '1a. If secret set returns Forbidden, your account needs Key Vault data-plane permissions:'
+Write-Output ('   az role assignment list --scope "$(az keyvault show --name {0} --query id -o tsv)" --assignee "$(az ad signed-in-user show --query id -o tsv)" --output table' -f $keyVaultName)
+Write-Output '   Required role: Key Vault Secrets Officer (or Key Vault Administrator) on the vault scope.'
+Write-Output '   If you cannot assign roles yourself, ask a subscription/resource-group owner to grant that role, then retry step 1.'
 
-Write-Host ''
-Write-Host '1b. If you can self-assign roles, grant yourself temporary secret-write access:' -ForegroundColor Cyan
-Write-Host ('   az role assignment create --assignee-object-id "$(az ad signed-in-user show --query id -o tsv)" --assignee-principal-type User --role "Key Vault Secrets Officer" --scope "$(az keyvault show --name {0} --query id -o tsv)"' -f $keyVaultName)
-Write-Host '   Then rerun step 1 to set the secret.'
-Write-Host '   Note: incremental Bicep deployments usually do not remove this extra user role assignment automatically.'
-Write-Host '   After setting the secret, remove the temporary assignment to return to least-privilege:'
-Write-Host ('   az role assignment delete --assignee-object-id "$(az ad signed-in-user show --query id -o tsv)" --role "Key Vault Secrets Officer" --scope "$(az keyvault show --name {0} --query id -o tsv)"' -f $keyVaultName)
+Write-Output ''
+Write-Output '1b. If you can self-assign roles, grant yourself temporary secret-write access:'
+Write-Output ('   az role assignment create --assignee-object-id "$(az ad signed-in-user show --query id -o tsv)" --assignee-principal-type User --role "Key Vault Secrets Officer" --scope "$(az keyvault show --name {0} --query id -o tsv)"' -f $keyVaultName)
+Write-Output '   Then rerun step 1 to set the secret.'
+Write-Output '   Note: incremental Bicep deployments usually do not remove this extra user role assignment automatically.'
+Write-Output '   After setting the secret, remove the temporary assignment to return to least-privilege:'
+Write-Output ('   az role assignment delete --assignee-object-id "$(az ad signed-in-user show --query id -o tsv)" --role "Key Vault Secrets Officer" --scope "$(az keyvault show --name {0} --query id -o tsv)"' -f $keyVaultName)
 
-Write-Host ''
-Write-Host '2. Verify the Key Vault role assignment exists:' -ForegroundColor Cyan
-Write-Host ('   az role assignment list --scope "$(az keyvault show --name {0} --query id -o tsv)" --query "[?roleDefinitionName==''Key Vault Secrets User'']"' -f $keyVaultName)
+Write-Output ''
+Write-Output '2. Verify the Key Vault role assignment exists:'
+Write-Output ('   az role assignment list --scope "$(az keyvault show --name {0} --query id -o tsv)" --query "[?roleDefinitionName==''Key Vault Secrets User'']"' -f $keyVaultName)
 
-Write-Host ''
-Write-Host '2a. Optional hardening: restrict app access to known IP ranges:' -ForegroundColor Cyan
-Write-Host '   Rerun this script with: -AppServiceAllowedCidrs "<your-public-ip>/32"'
-Write-Host '   You can provide multiple values, e.g. -AppServiceAllowedCidrs "1.2.3.4/32","5.6.7.0/24"'
-Write-Host '   If omitted, this script now auto-detects your current public IPv4 and applies it as /32.'
-Write-Host '   To intentionally keep public access, rerun with: -AllowPublicAppAccess'
+Write-Output ''
+Write-Output '2a. Optional hardening: restrict app access to known IP ranges:'
+Write-Output '   Rerun this script with: -AppServiceAllowedCidrs "<your-public-ip>/32"'
+Write-Output '   You can provide multiple values, e.g. -AppServiceAllowedCidrs "1.2.3.4/32","5.6.7.0/24"'
+Write-Output '   If omitted, this script now auto-detects your current public IPv4 and applies it as /32.'
+Write-Output '   To intentionally keep public access, rerun with: -AllowPublicAppAccess'
 
-Write-Host ''
-Write-Host '3. Optional (local development only): configure .NET user secrets:' -ForegroundColor Cyan
-Write-Host '   dotnet user-secrets set "GitHubAuth:OwnerLogin" "<your-github-owner>" --project src/App/SoloDevBoard.App'
-Write-Host '   dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-github-pat>" --project src/App/SoloDevBoard.App'
-Write-Host '   (The deployed App Service does not use .NET user secrets.)'
+Write-Output ''
+Write-Output '3. Optional (local development only): configure .NET user secrets:'
+Write-Output '   dotnet user-secrets set "GitHubAuth:OwnerLogin" "<your-github-owner>" --project src/App/SoloDevBoard.App'
+Write-Output '   dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-github-pat>" --project src/App/SoloDevBoard.App'
+Write-Output '   (The deployed App Service does not use .NET user secrets.)'
 
-Write-Host ''
-Write-Host '4. Configure GitHub Actions secrets for the CD workflow:' -ForegroundColor Cyan
-Write-Host ('   gh secret set AZURE_CLIENT_ID --repo {0} --body "<azure-client-id>"' -f $GitHubRepository)
-Write-Host ('   gh secret set AZURE_TENANT_ID --repo {0} --body "{1}"' -f $GitHubRepository, $tenantId)
-Write-Host ('   gh secret set AZURE_SUBSCRIPTION_ID --repo {0} --body "{1}"' -f $GitHubRepository, $SubscriptionId)
-Write-Host ('   gh secret set AZURE_WEBAPP_NAME --repo {0} --body "{1}"' -f $GitHubRepository, $appServiceName)
+Write-Output ''
+Write-Output '4. Configure GitHub Actions secrets for the CD workflow:'
+Write-Output ('   gh secret set AZURE_CLIENT_ID --repo {0} --body "<azure-client-id>"' -f $GitHubRepository)
+Write-Output ('   gh secret set AZURE_TENANT_ID --repo {0} --body "{1}"' -f $GitHubRepository, $tenantId)
+Write-Output ('   gh secret set AZURE_SUBSCRIPTION_ID --repo {0} --body "{1}"' -f $GitHubRepository, $SubscriptionId)
+Write-Output ('   gh secret set AZURE_WEBAPP_NAME --repo {0} --body "{1}"' -f $GitHubRepository, $appServiceName)
 
-Write-Host ''
-Write-Host '5. Configure GitHub environment protection for production:' -ForegroundColor Cyan
-Write-Host "   - Create or update the 'production' environment in repository settings."
-Write-Host '   - Require reviewer approval for deployments.'
-Write-Host "   - Restrict deployment branches to 'main'."
+Write-Output ''
+Write-Output '5. Configure GitHub environment protection for production:'
+Write-Output "   - Create or update the 'production' environment in repository settings."
+Write-Output '   - Require reviewer approval for deployments.'
+Write-Output "   - Restrict deployment branches to 'main'."
 
-Write-Host ''
-Write-Host '6. Configure Azure federated credentials for OIDC:' -ForegroundColor Cyan
-Write-Host "   - Issuer: https://token.actions.githubusercontent.com"
-Write-Host "   - Subject: repo:${GitHubRepository}:environment:production"
-Write-Host "   - Audience: api://AzureADTokenExchange"
+Write-Output ''
+Write-Output '6. Configure Azure federated credentials for OIDC:'
+Write-Output "   - Issuer: https://token.actions.githubusercontent.com"
+Write-Output "   - Subject: repo:${GitHubRepository}:environment:production"
+Write-Output "   - Audience: api://AzureADTokenExchange"
 
-Write-Host ''
-Write-Host '7. Trigger deployment using GitHub Actions:' -ForegroundColor Cyan
-Write-Host "   - Workflow: .github/workflows/cd.yml"
-Write-Host "   - Deployment URL: $appServiceUrl"
+Write-Output ''
+Write-Output '7. Trigger deployment using GitHub Actions:'
+Write-Output "   - Workflow: .github/workflows/cd.yml"
+Write-Output "   - Deployment URL: $appServiceUrl"
