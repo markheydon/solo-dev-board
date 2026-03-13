@@ -194,11 +194,11 @@ Labels: `type/chore`, `area/infrastructure`
 <!-- Enabler #113: Persist per-user authentication secrets and token references securely -->
 <!-- Test #114: Add authentication coverage for GitHub App and OAuth flow -->
 
-- [ ] Set up Bicep infrastructure for Azure App Service, Key Vault, and managed identity. _(#104)_
-- [ ] Configure OIDC authentication for GitHub Actions to Azure (no long-lived credentials). _(#105)_
+- [x] Set up Bicep infrastructure for Azure App Service, Key Vault, and managed identity. _(done — Bicep baseline complete with managed identity RBAC, configurable Key Vault secret name, purge protection, and health-check path; see issue #104.)_
+- [x] Configure OIDC authentication for GitHub Actions to Azure (no long-lived credentials). _(done — `cd.yml` already uses OIDC with least-privilege permissions; OIDC trust prerequisites and protected-environment documentation added to `infra/README.md`; see issue #105.)_
 - [ ] Implement response caching for GitHub API calls to respect rate limits. _(#108)_
 - [ ] Add health check endpoints for Azure App Service monitoring. _(#106)_
 - [ ] Configure logging with structured output (Azure Application Insights integration). _(#107)_
-- [ ] Set up Dependabot for automated dependency updates. _(#109)_
+- [x] Set up Dependabot for automated dependency updates. _(done — `dependabot.yml` and auto-merge workflow added previously; see issue #109.)_
 
 - [ ] As a solo developer, I want to sign in using GitHub OAuth and install the SoloDevBoard GitHub App so that SoloDevBoard can be made publicly available with secure, production-ready authentication. _(#112; supporting enablers #111 and #113.)_

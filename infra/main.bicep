@@ -11,20 +11,45 @@ param location string = resourceGroup().location
 @description('The SKU for the App Service Plan. Use B1 for development, P1v3 for production.')
 param appServicePlanSku string = 'B1'
 
+@description('The Key Vault secret name that stores the GitHub token used by the application.')
+param gitHubTokenSecretName string = 'GitHub--Token'
+
+@description('The App Service health check path. Keep this as "/" until a dedicated endpoint is available.')
+param healthCheckPath string = '/'
+
+@description('The retention period for soft-deleted Key Vault objects, in days.')
+@minValue(7)
+@maxValue(90)
+param keyVaultSoftDeleteRetentionInDays int = 90
+
+@description('Controls whether Key Vault purge protection is enabled. Keep enabled for production workloads.')
+param keyVaultEnablePurgeProtection bool = true
+
+@description('Controls whether Key Vault public network access is enabled.')
+@allowed([
+  'Enabled'
+  'Disabled'
+])
+param keyVaultPublicNetworkAccess string = 'Enabled'
+
 // Derive a short, consistent suffix for resource naming
 var resourceSuffix = toLower(environmentName)
 
 // Key Vault name must be globally unique and 3–24 characters
 var keyVaultName = 'kv-solodevboard-${resourceSuffix}'
 
+// Built-in role definition for Key Vault Secrets User.
+var keyVaultSecretsUserRoleDefinitionId = '4633458b-17de-408a-b874-0445c86b69e6'
+
 // Deploy the App Service resources via a module for separation of concerns
 module appServiceModule 'modules/appservice.bicep' = {
-  name: 'appservice-deployment'
   params: {
     location: location
     environmentName: environmentName
     appServicePlanSku: appServicePlanSku
     keyVaultName: keyVaultName
+    gitHubTokenSecretName: gitHubTokenSecretName
+    healthCheckPath: healthCheckPath
   }
 }
 
@@ -42,12 +67,27 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
     enableRbacAuthorization: true
     // Protect against accidental deletion
     enableSoftDelete: true
-    softDeleteRetentionInDays: 7
+    softDeleteRetentionInDays: keyVaultSoftDeleteRetentionInDays
+    // Purge protection should remain enabled for production-grade recoverability.
+    enablePurgeProtection: keyVaultEnablePurgeProtection
     // Allow the App Service managed identity to read secrets (grant via RBAC after deployment)
-    publicNetworkAccess: 'Enabled'
+    publicNetworkAccess: keyVaultPublicNetworkAccess
+  }
+}
+
+// Grants the App Service managed identity read access to Key Vault secrets.
+resource keyVaultSecretsUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(keyVault.id, keyVaultSecretsUserRoleDefinitionId, 'appservice-secrets-user')
+  scope: keyVault
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', keyVaultSecretsUserRoleDefinitionId)
+    principalId: appServiceModule.outputs.appServicePrincipalId
+    principalType: 'ServicePrincipal'
   }
 }
 
 // Outputs — used by the CD pipeline and post-deployment configuration scripts
 output appServiceUrl string = appServiceModule.outputs.appServiceUrl
 output keyVaultName string = keyVault.name
+output appServicePrincipalId string = appServiceModule.outputs.appServicePrincipalId
+output keyVaultSecretsUserRoleAssignmentId string = keyVaultSecretsUserRoleAssignment.id

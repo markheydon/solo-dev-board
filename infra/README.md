@@ -11,6 +11,17 @@ The infrastructure deploys the following Azure resources:
 | **App Service Plan** | Hosts the Blazor Server application (Linux, .NET 10) |
 | **App Service** | The SoloDevBoard web application |
 | **Key Vault** | Stores the GitHub token and other secrets securely |
+| **Key Vault RBAC assignment** | Grants the App Service managed identity permission to read Key Vault secrets |
+
+## Baseline Assumptions
+
+The templates in this directory are configured for a public-release-ready baseline:
+
+- App Service uses a system-assigned managed identity and does not store GitHub credentials directly.
+- Key Vault uses RBAC authorisation, soft delete retention, and purge protection by default.
+- The GitHub token is referenced through a Key Vault secret (`GitHub--Token`) at runtime.
+- The App Service managed identity is granted `Key Vault Secrets User` at Key Vault scope during deployment.
+- Deployment authentication from GitHub Actions uses OIDC and repository environment protections.
 
 ## Prerequisites
 
@@ -68,16 +79,51 @@ az keyvault secret set \
   --value "<your-github-pat>"
 ```
 
-### 4. Configure the CD pipeline
+### 4. Verify managed identity role assignment
 
-Update the following GitHub repository secrets for the CD workflow (`.github/workflows/cd.yml`):
+The deployment creates an RBAC assignment that grants the App Service managed identity the `Key Vault Secrets User` role on the deployed Key Vault.
+
+To verify after deployment:
+
+```bash
+az role assignment list \
+  --scope "$(az keyvault show --name <keyVaultName> --query id -o tsv)" \
+  --query "[?roleDefinitionName=='Key Vault Secrets User']"
+```
+
+### 5. Configure the CD pipeline (OIDC)
+
+Configure the following GitHub repository secrets for the CD workflow (`.github/workflows/cd.yml`):
 
 | Secret | Value |
 |--------|-------|
-| `AZURE_CLIENT_ID` | Service principal or managed identity client ID |
+| `AZURE_CLIENT_ID` | Azure AD application (service principal or user-assigned managed identity) client ID used by OIDC |
 | `AZURE_TENANT_ID` | Azure AD tenant ID |
 | `AZURE_SUBSCRIPTION_ID` | Azure subscription ID |
 | `AZURE_WEBAPP_NAME` | The App Service name (from deployment outputs) |
+
+### 6. Configure protected environment expectations
+
+Create or update the `production` GitHub environment and apply the following protections:
+
+- Required reviewers must be enabled for deployment approval.
+- Deployment branch rules should allow only `main`.
+- Environment secrets required by deployment should be defined at repository or environment scope.
+- No long-lived Azure client secrets should be configured for deployment.
+
+### 7. Configure Azure OIDC trust prerequisites
+
+Configure federated credentials on the Azure AD application used by the workflow with these recommended claims:
+
+- Issuer: `https://token.actions.githubusercontent.com`.
+- Subject: `repo:markheydon/solo-dev-board:environment:production`.
+- Audience: `api://AzureADTokenExchange`.
+
+After configuring federated credentials, grant the deployment identity least-privilege RBAC roles required for deployment. As a baseline, this usually means:
+
+- `Contributor` on the resource group that hosts SoloDevBoard infrastructure.
+- `Web Plan Contributor` or equivalent if App Service plan operations are split to another scope.
+- No subscription-wide `Owner` role assignment for CI/CD identities.
 
 ## Parameters
 
@@ -86,6 +132,11 @@ Update the following GitHub repository secrets for the CD workflow (`.github/wor
 | `environmentName` | `dev` | The environment name (e.g. dev, staging, prod). Used to name resources. |
 | `location` | Resource group location | The Azure region for deployment. |
 | `appServicePlanSku` | `B1` | The App Service Plan SKU. Use `B1` for development, `P1v3` for production. |
+| `gitHubTokenSecretName` | `GitHub--Token` | The Key Vault secret name used for `GitHub__Token`. |
+| `healthCheckPath` | `/` | The path used by App Service platform health checks. |
+| `keyVaultSoftDeleteRetentionInDays` | `90` | Key Vault soft-delete retention window in days. |
+| `keyVaultEnablePurgeProtection` | `true` | Whether purge protection is enabled for Key Vault. |
+| `keyVaultPublicNetworkAccess` | `Enabled` | Controls whether public network access is enabled for Key Vault. |
 
 ## App Configuration
 

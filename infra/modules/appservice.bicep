@@ -13,6 +13,12 @@ param appServicePlanSku string = 'B1'
 @description('The name of the Key Vault used to store secrets. The App Service will be granted access via managed identity.')
 param keyVaultName string
 
+@description('The Key Vault secret name that stores the GitHub token for the application.')
+param gitHubTokenSecretName string = 'GitHub--Token'
+
+@description('The App Service health check path. Use "/" until a dedicated health endpoint is introduced.')
+param healthCheckPath string = '/'
+
 var resourceSuffix = toLower(environmentName)
 var appServicePlanName = 'asp-solodevboard-${resourceSuffix}'
 var appServiceName = 'app-solodevboard-${resourceSuffix}'
@@ -48,12 +54,14 @@ resource appService 'Microsoft.Web/sites@2023-12-01' = {
       alwaysOn: appServicePlanSku != 'F1'
       // Minimum TLS 1.2
       minTlsVersion: '1.2'
+      // Route platform health checks to an endpoint that returns 200.
+      healthCheckPath: healthCheckPath
       appSettings: [
         {
           // Configure the app to read GitHub token from Key Vault
           // The Key Vault reference syntax: @Microsoft.KeyVault(VaultName=<name>;SecretName=<secret>)
           name: 'GitHub__Token'
-          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=GitHub--Token)'
+          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${gitHubTokenSecretName})'
         }
         {
           name: 'GitHub__BaseUrl'
