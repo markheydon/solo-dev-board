@@ -88,6 +88,7 @@ resource keyVaultSecretsUserRoleAssignment 'Microsoft.Authorization/roleAssignme
 
 // Outputs — used by the CD pipeline and post-deployment configuration scripts
 output appServiceUrl string = appServiceModule.outputs.appServiceUrl
+output appServiceName string = appServiceModule.outputs.appServiceName
 output keyVaultName string = keyVault.name
 output appServicePrincipalId string = appServiceModule.outputs.appServicePrincipalId
 output keyVaultSecretsUserRoleAssignmentId string = keyVaultSecretsUserRoleAssignment.id

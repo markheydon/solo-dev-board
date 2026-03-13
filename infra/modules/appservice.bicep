@@ -60,7 +60,7 @@ resource appService 'Microsoft.Web/sites@2023-12-01' = {
         {
           // Configure the app to read GitHub token from Key Vault
           // The Key Vault reference syntax: @Microsoft.KeyVault(VaultName=<name>;SecretName=<secret>)
-          name: 'GitHub__Token'
+          name: 'GitHubAuth__PersonalAccessToken'
           value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${gitHubTokenSecretName})'
         }
         {
@@ -79,5 +79,7 @@ resource appService 'Microsoft.Web/sites@2023-12-01' = {
 
 // Output the App Service URL for use in the main template and CD pipeline
 output appServiceUrl string = 'https://${appService.properties.defaultHostName}'
+// Output the App Service name for workflow secret configuration.
+output appServiceName string = appService.name
 // Output the managed identity principal ID so RBAC can be assigned after deployment
 output appServicePrincipalId string = appService.identity.principalId

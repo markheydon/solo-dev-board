@@ -41,6 +41,24 @@ az login
 
 ## Deploying
 
+### Automated deployment script (PowerShell)
+
+For a guided deployment that also prints post-deployment next steps (local run configuration and GitHub Actions secrets), run:
+
+```powershell
+pwsh ./infra/Deploy-SoloDevBoardInfra.ps1 \
+  -ResourceGroupName rg-solodevboard-prod \
+  -Location uksouth \
+  -EnvironmentName prod
+```
+
+The script deploys the Bicep template, prints deployment outputs, and then provides copy/paste commands for:
+
+- Setting the GitHub token secret in Key Vault.
+- Configuring local .NET user-secrets values.
+- Configuring the `cd.yml` GitHub Actions repository secrets.
+- Configuring OIDC federation and production environment protections.
+
 ### 1. Create a resource group
 
 ```bash
@@ -144,8 +162,8 @@ The following environment variables are set on the App Service and read from Key
 
 | Variable | Source | Description |
 |----------|--------|-------------|
-| `GitHub__Token` | Key Vault secret `GitHub--Token` | GitHub Personal Access Token or GitHub App token |
-| `GitHub__BaseUrl` | App settings | GitHub API base URL (default: `https://api.github.com`) |
+| `GitHubAuth__PersonalAccessToken` | Key Vault secret `GitHub--Token` | GitHub Personal Access Token used by the current single-user runtime path |
+| `ASPNETCORE_ENVIRONMENT` | App settings | ASP.NET Core hosting environment (`Production` for `prod`, otherwise `Development`) |
 
 ## Module Structure
 
