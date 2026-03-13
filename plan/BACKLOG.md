@@ -45,6 +45,7 @@ Labels: `type/epic`, `area/infrastructure`, `priority/high`
 - [ ] As a hosted SoloDevBoard operator, I want authenticated GitHub identities mapped to operator-managed user and organisation allow-lists so that hosted access is deny-by-default.
 - [ ] As a SoloDevBoard maintainer, I want the separate OAuth App dependency removed or demoted to a fallback path where GitHub App user authentication satisfies hosted sign-in requirements so that the production architecture stays simpler and safer.
 - [ ] As a solo developer, I want PAT-only local trusted mode preserved so that local development and trusted self-hosted use do not depend on hosted sign-in infrastructure.
+- [x] Chore: As a SoloDevBoard maintainer, I want the hosted-auth branch and migration strategy locked before Feature #103 coding continues so that superseded hybrid work cannot drift into the GitHub App-first delivery path. _(Issue #118 — done, 2026-03-13; see plan/HOSTED_AUTH_MIGRATION_STRATEGY.md.)_
 
 Labels: `type/epic`, `area/dashboard`
 
