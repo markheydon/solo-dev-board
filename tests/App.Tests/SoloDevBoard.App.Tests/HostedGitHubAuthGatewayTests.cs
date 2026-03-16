@@ -93,6 +93,104 @@ public sealed class HostedGitHubAuthGatewayTests
     }
 
     [Fact]
+    public async Task ExchangeCodeForSessionAsync_TokenPayloadContainsError_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var responses = new Queue<HttpResponseMessage>(
+        [
+            CreateJsonResponse(new { error = "bad_verification_code" }),
+        ]);
+        var gateway = CreateSubject(responses);
+
+        // Act
+        var act = async () => await gateway.ExchangeCodeForSessionAsync("code-123", CancellationToken.None);
+
+        // Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(act);
+    }
+
+    [Fact]
+    public async Task ExchangeCodeForSessionAsync_UserResponseMissingLogin_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var responses = new Queue<HttpResponseMessage>(
+        [
+            CreateJsonResponse(new { access_token = "token-123" }),
+            CreateJsonResponse(new { login = "" }),
+        ]);
+        var gateway = CreateSubject(responses);
+
+        // Act
+        var act = async () => await gateway.ExchangeCodeForSessionAsync("code-123", CancellationToken.None);
+
+        // Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(act);
+    }
+
+    [Fact]
+    public async Task ExchangeCodeForSessionAsync_NoOwnerInstallationMatch_FallsBackToFirstInstallation()
+    {
+        // Arrange
+        var responses = new Queue<HttpResponseMessage>(
+        [
+            CreateJsonResponse(new { access_token = "token-123" }),
+            CreateJsonResponse(new { login = "markheydon" }),
+            CreateJsonResponse(new
+            {
+                installations = new[]
+                {
+                    new
+                    {
+                        id = 111111111,
+                        account = new { login = "other-user" },
+                    },
+                    new
+                    {
+                        id = 222222222,
+                        account = new { login = "another-user" },
+                    },
+                },
+            }),
+            CreateJsonResponse(Array.Empty<object>()),
+        ]);
+        var gateway = CreateSubject(responses);
+
+        // Act
+        var session = await gateway.ExchangeCodeForSessionAsync("code-123", CancellationToken.None);
+
+        // Assert
+        Assert.Equal(111111111, session.InstallationId);
+    }
+
+    [Fact]
+    public async Task ExchangeCodeForSessionAsync_OrganisationResponseContainsDuplicates_ReturnsDistinctOrganisationLogins()
+    {
+        // Arrange
+        var responses = new Queue<HttpResponseMessage>(
+        [
+            CreateJsonResponse(new { access_token = "token-123" }),
+            CreateJsonResponse(new { login = "markheydon" }),
+            CreateJsonResponse(new { installations = Array.Empty<object>() }),
+            CreateJsonResponse(new[]
+            {
+                new { login = "org-one" },
+                new { login = "org-one" },
+                new { login = "" },
+                new { login = "org-two" },
+            }),
+        ]);
+        var gateway = CreateSubject(responses);
+
+        // Act
+        var session = await gateway.ExchangeCodeForSessionAsync("code-123", CancellationToken.None);
+
+        // Assert
+        Assert.Equal(2, session.OrganisationLogins.Count);
+        Assert.Contains("org-one", session.OrganisationLogins);
+        Assert.Contains("org-two", session.OrganisationLogins);
+    }
+
+    [Fact]
     public void CreatePrincipal_ValidSession_MapsRequiredHostedClaims()
     {
         // Arrange

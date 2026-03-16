@@ -40,8 +40,9 @@ It is built with the solo developer in mind: opinionated defaults, minimal confi
 
 - 📖 [Getting Started](getting-started.md) — prerequisites, local setup, and configuration.
 - 👤 [User Guide](user-guide/) — detailed guides for each feature area.
+- 👤 [Hosted Authentication Guide](user-guide/hosted-authentication.md) — hosted sign-in, operator allow-lists, and fallback modes for production deployments.
 - ℹ️ [About Guide](user-guide/about.md) — overview of the About page, version information, and repository link.
-- 💰 [Azure Deployment Costs](user-guide/azure-costs.md) — Guide to resource charges, SKUs, and cost optimisation for self-hosted Azure deployments.
+- 💰 [Azure Deployment Costs](user-guide/azure-costs.md) — guide to resource charges, SKUs, and cost optimisation for self-hosted Azure deployments.
 
 ---
 

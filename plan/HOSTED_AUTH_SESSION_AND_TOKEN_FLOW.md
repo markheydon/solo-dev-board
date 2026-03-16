@@ -57,6 +57,18 @@ This document defines the hosted authentication and admission-control boundaries
 - OAuth App fallback is only used if enabled and the primary GitHub App authentication path is unavailable.
 - PAT-only local trusted mode is preserved and unaffected by hosted fallback settings.
 
+## Test Coverage Expectations (Issue #114)
+
+This section documents the test coverage requirements for GitHub App-first hosted authentication, as delivered in ADR-0015 and related issues.
+
+- Hosted sign-in and per-request user context must be covered by unit tests for session establishment, claim mapping, and context resolution.
+- Installation discovery, token issuance, expiry, and failure handling are covered by unit tests and integration tests. Expiry and invalid token scenarios must be tested for explicit failure and no silent fallback.
+- Admission control and allow-list enforcement are covered by unit tests for edge cases (deny-by-default, allow-list misconfiguration, organisation claims mapping). Operator-managed allow-lists must be tested for both user and organisation paths.
+- Unit-test and mocked seams cover session creation, claim mapping, and admission control logic. Environment-dependent tests cover real GitHub App installation, token issuance, and expiry scenarios.
+- Documentation-sensitive regressions are covered by tests ensuring OAuth App fallback remains available but disabled by default, and PAT-only local trusted mode is preserved.
+
+See ADR-0015 and plan/BACKLOG.md for references to completed coverage and test boundaries.
+
 ## Rollout Notes
 
 - The delivered implementation adds hosted-mode DI switching, hosted sign-in handshake and callback routes, hosted claim mapping configuration, per-request token validation with optional installation context, and hosted admission control.

@@ -150,6 +150,56 @@ public sealed class AllowListHostedAdmissionEvaluatorTests
         Assert.False(result.IsAllowed);
     }
 
+    [Fact]
+    public void Evaluate_OrganisationClaimUsesMixedSeparators_ReturnsAllowedDecision()
+    {
+        // Arrange
+        var evaluator = CreateEvaluator(
+            new HostedAdmissionControlOptions
+            {
+                AllowedOrganisationLogins = ["my-org"],
+                HostedOrganisationLoginsClaimType = HostedAuthClaimTypes.OrganisationLogins,
+            },
+            new GitHubAuthOptions
+            {
+                HostedOwnerLoginClaimType = HostedAuthClaimTypes.OwnerLogin,
+            });
+        var principal = CreatePrincipal(
+            isAuthenticated: true,
+            new Claim(HostedAuthClaimTypes.OwnerLogin, "markheydon"),
+            new Claim(HostedAuthClaimTypes.OrganisationLogins, "other-org;my-org another-org"));
+
+        // Act
+        var result = evaluator.Evaluate(principal);
+
+        // Assert
+        Assert.True(result.IsAllowed);
+    }
+
+    [Fact]
+    public void Evaluate_AllowListValuesUseDifferentCasing_ReturnsAllowedDecision()
+    {
+        // Arrange
+        var evaluator = CreateEvaluator(
+            new HostedAdmissionControlOptions
+            {
+                AllowedUserLogins = ["MarkHeydon"],
+            },
+            new GitHubAuthOptions
+            {
+                HostedOwnerLoginClaimType = HostedAuthClaimTypes.OwnerLogin,
+            });
+        var principal = CreatePrincipal(
+            isAuthenticated: true,
+            new Claim(HostedAuthClaimTypes.OwnerLogin, "markheydon"));
+
+        // Act
+        var result = evaluator.Evaluate(principal);
+
+        // Assert
+        Assert.True(result.IsAllowed);
+    }
+
     private static AllowListHostedAdmissionEvaluator CreateEvaluator(
         HostedAdmissionControlOptions admissionOptions,
         GitHubAuthOptions authOptions)

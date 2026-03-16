@@ -23,6 +23,16 @@ The templates in this directory are configured for a public-release-ready baseli
 - The App Service managed identity is granted `Key Vault Secrets User` at Key Vault scope during deployment.
 - Deployment authentication from GitHub Actions uses OIDC and repository environment protections.
 
+## Hosted Sign-In and Admission Control
+
+For production deployments using GitHub App-first hosted authentication:
+
+- Hosted sign-in should be enabled with `GitHubAuth__HostedSignInEnabled=true`.
+- Operators should configure `HostedAdmissionControl__Enabled=true` and maintain explicit user and organisation allow-lists.
+- Hosted access is deny-by-default when admission control is enabled; only configured allow-list identities are admitted.
+- PAT-only local trusted mode remains available for local development and trusted self-hosted use.
+- OAuth App fallback remains optional compatibility behaviour and is disabled by default.
+
 ## Prerequisites
 
 Before deploying, ensure you have the following installed and configured:
