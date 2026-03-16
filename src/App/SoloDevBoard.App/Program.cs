@@ -133,15 +133,11 @@ if (hostedSignInEnabled)
         var returnedState = context.Request.Query["state"].ToString();
         if (!string.Equals(state, returnedState, StringComparison.Ordinal))
         {
-            DeleteHostedSignInStateCookie(context);
-
             return Results.Problem(
                 title: "Hosted sign-in failed",
                 detail: "Hosted sign-in session state did not match. Start the sign-in flow again.",
                 statusCode: StatusCodes.Status401Unauthorized);
         }
-
-        DeleteHostedSignInStateCookie(context);
 
         var signInError = context.Request.Query["error"].ToString();
         if (!string.IsNullOrWhiteSpace(signInError))
@@ -278,6 +274,8 @@ static bool TryReadAndClearStateCookie(HttpContext context, out string state, ou
     {
         return false;
     }
+
+    DeleteHostedSignInStateCookie(context);
 
     string decoded;
     try

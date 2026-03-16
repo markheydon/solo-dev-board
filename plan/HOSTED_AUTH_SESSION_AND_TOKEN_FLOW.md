@@ -59,7 +59,7 @@ This document defines the hosted authentication and admission-control boundaries
 
 ## Rollout Notes
 
-- The delivered implementation adds hosted-mode DI switching, hosted sign-in handshake and callback routes, hosted claim mapping configuration, per-request token and installation validation, and hosted admission control.
+- The delivered implementation adds hosted-mode DI switching, hosted sign-in handshake and callback routes, hosted claim mapping configuration, per-request token validation with optional installation context, and hosted admission control.
 - Hosted admission control is deny-by-default and operator-managed.
 - The delivered implementation keeps PAT-only local trusted mode unchanged.
 - The hosted sign-in handshake now validates anti-forgery state, surfaces callback failure responses explicitly, and only creates a session when claim mapping succeeds.

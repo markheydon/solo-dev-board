@@ -116,7 +116,7 @@ internal sealed class HostedGitHubAuthGateway(
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
         using var response = await client.SendAsync(request, cancellationToken).ConfigureAwait(false);
-        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
+        EnsureSuccessStatusCode(response);
 
         var payload = await response.Content.ReadFromJsonAsync<AccessTokenResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException("Hosted sign-in failed because the GitHub access-token response was empty.");
@@ -133,7 +133,7 @@ internal sealed class HostedGitHubAuthGateway(
     {
         using var request = CreateGitHubApiRequest(HttpMethod.Get, "/user", accessToken);
         using var response = await client.SendAsync(request, cancellationToken).ConfigureAwait(false);
-        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
+        EnsureSuccessStatusCode(response);
 
         var user = await response.Content.ReadFromJsonAsync<AuthenticatedUserDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException("Hosted sign-in failed because the GitHub user response was empty.");
@@ -150,7 +150,7 @@ internal sealed class HostedGitHubAuthGateway(
     {
         using var request = CreateGitHubApiRequest(HttpMethod.Get, "/user/installations", accessToken);
         using var response = await client.SendAsync(request, cancellationToken).ConfigureAwait(false);
-        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
+        EnsureSuccessStatusCode(response);
 
         var installations = await response.Content.ReadFromJsonAsync<UserInstallationsResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException("Hosted sign-in failed because the GitHub installations response was empty.");
@@ -170,7 +170,7 @@ internal sealed class HostedGitHubAuthGateway(
     {
         using var request = CreateGitHubApiRequest(HttpMethod.Get, "/user/orgs", accessToken);
         using var response = await client.SendAsync(request, cancellationToken).ConfigureAwait(false);
-        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
+        EnsureSuccessStatusCode(response);
 
         var organisations = await response.Content.ReadFromJsonAsync<List<UserOrganisationDto>>(JsonOptions, cancellationToken).ConfigureAwait(false)
             ?? [];
@@ -200,16 +200,15 @@ internal sealed class HostedGitHubAuthGateway(
         }
     }
 
-    private static async Task EnsureSuccessStatusCodeAsync(HttpResponseMessage response, CancellationToken cancellationToken)
+    private static void EnsureSuccessStatusCode(HttpResponseMessage response)
     {
         if (response.IsSuccessStatusCode)
         {
             return;
         }
 
-        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
         throw new HttpRequestException(
-            $"GitHub hosted sign-in request failed with status code {(int)response.StatusCode} ({response.StatusCode}). Response body: {responseBody}",
+            $"GitHub hosted sign-in request failed with status code {(int)response.StatusCode} ({response.StatusCode}).",
             null,
             response.StatusCode);
     }

@@ -23,7 +23,7 @@ Before you begin, ensure you have the following installed:
 
 SoloDevBoard supports two authentication modes:
 
-- **Personal Access Token (PAT):** Simplest option for local development. Create a PAT at [GitHub → Settings → Developer settings → Personal access tokens](https://github.com/settings/tokens). The token requires the following scopes:
+- **Personal Access Token (PAT):** Simplest option for local development. Create a PAT at [GitHub → Settings → Developer settings → Personal access tokens](https://github.com/settings/tokens). The token requires the following scopes.
   - `repo` (full control of private repositories)
   - `read:org` (read-only access to organisation data, if applicable)
   - `workflow` (to manage GitHub Actions workflows)
