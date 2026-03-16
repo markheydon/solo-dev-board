@@ -48,11 +48,7 @@ public sealed class HostedAdmissionControlMiddleware(
             return;
         }
 
-        _logger.LogWarning(
-            "Hosted admission denied for user '{User}' on path '{Path}'. Reason: {Reason}",
-            context.User.Identity?.Name ?? "unknown",
-            SanitizeForLogging(context.Request.Path),
-            decision.Reason);
+        _logger.LogWarning("Hosted admission denied. Reason: {Reason}", decision.Reason);
 
         context.Response.StatusCode = StatusCodes.Status403Forbidden;
         context.Response.ContentType = "application/problem+json";
@@ -86,18 +82,4 @@ public sealed class HostedAdmissionControlMiddleware(
         return value.Contains('.', StringComparison.Ordinal);
     }
 
-    private static string? SanitizeForLogging(PathString path)
-    {
-        var value = path.ToString();
-        if (string.IsNullOrEmpty(value))
-        {
-            return value;
-        }
-
-        // Remove newline characters to prevent log forging.
-        value = value.Replace("\r", string.Empty, StringComparison.Ordinal)
-                     .Replace("\n", string.Empty, StringComparison.Ordinal);
-
-        return value;
-    }
 }
