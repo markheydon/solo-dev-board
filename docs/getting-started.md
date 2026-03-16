@@ -30,7 +30,25 @@ SoloDevBoard supports two authentication modes:
 
 - **GitHub App:** Recommended for production deployments. Provides fine-grained permissions and does not expire. See the [GitHub Apps documentation](https://docs.github.com/en/apps) for setup instructions.
 
----
+
+#### Hosted Sign-In Prerequisites (Production)
+
+For production deployments, SoloDevBoard uses a GitHub App-first hosted authentication model:
+
+- Operators must configure the GitHub App and enable hosted sign-in in application settings (`GitHubAuth__HostedSignInEnabled=true`).
+- Admission control is enforced via operator-managed allow-lists for user and organisation logins. Only users and organisations explicitly listed are granted access; all others are denied by default.
+- Hosted sign-in is available at `/auth/sign-in` and establishes a session with mapped claims for your GitHub login, access token, installation ID, and organisation memberships.
+- Operators should regularly review denied admission attempts in application logs (for example, App Service logs).
+
+#### PAT-Only Local Trusted Mode
+
+For local development and trusted self-hosted use, PAT-only mode remains available and separate. It does not require hosted sign-in infrastructure or allow-list configuration.
+
+#### OAuth App Fallback
+
+OAuth App fallback is supported but disabled by default. It is only used if enabled and the primary GitHub App authentication path is unavailable.
+
+See [Hosted Authentication Guide](user-guide/hosted-authentication.md) for further details.
 
 ## Running Locally
 

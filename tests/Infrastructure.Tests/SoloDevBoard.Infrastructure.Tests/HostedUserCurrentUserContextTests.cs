@@ -128,6 +128,47 @@ public sealed class HostedUserCurrentUserContextTests
         Assert.Throws<InvalidOperationException>(act);
     }
 
+    [Fact]
+    public void GetAccessToken_ExpiryClaimTypeConfigurationMissing_ReturnsAccessToken()
+    {
+        // Arrange
+        var httpContextAccessor = CreateHttpContextAccessor(new[]
+        {
+            new Claim(HostedAuthClaimTypes.OwnerLogin, "markheydon"),
+            new Claim(HostedAuthClaimTypes.AccessToken, "token"),
+            new Claim(HostedAuthClaimTypes.InstallationId, "123"),
+        });
+        var options = CreateOptions();
+        options.Value.HostedTokenExpiresAtClaimType = string.Empty;
+        var sut = new HostedUserCurrentUserContext(httpContextAccessor, options);
+
+        // Act
+        var result = sut.GetAccessToken();
+
+        // Assert
+        Assert.Equal("token", result);
+    }
+
+    [Fact]
+    public void OwnerLogin_ClaimTypeConfigurationMissing_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var httpContextAccessor = CreateHttpContextAccessor(new[]
+        {
+            new Claim(HostedAuthClaimTypes.OwnerLogin, "markheydon"),
+            new Claim(HostedAuthClaimTypes.AccessToken, "token"),
+        });
+        var options = CreateOptions();
+        options.Value.HostedOwnerLoginClaimType = string.Empty;
+        var sut = new HostedUserCurrentUserContext(httpContextAccessor, options);
+
+        // Act
+        var act = () => sut.OwnerLogin;
+
+        // Assert
+        Assert.Throws<InvalidOperationException>(act);
+    }
+
     private static IHttpContextAccessor CreateHttpContextAccessor(IEnumerable<Claim> claims)
     {
         var identity = new ClaimsIdentity(claims, authenticationType: "Hosted");

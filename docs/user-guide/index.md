@@ -21,6 +21,7 @@ The SoloDevBoard user guide provides detailed documentation for available featur
 - [One-Click Migration](one-click-migration.md) — Migrate labels and milestones from one repository to another in a single action.
 - [About](about.md) — Application version, runtime environment, and repository link.
 - [Azure Deployment Costs](azure-costs.md) — Understand Azure resource charges, SKUs, and cost optimisation for SoloDevBoard deployments.
+- [Hosted Authentication](hosted-authentication.md) — Guide to hosted sign-in, operator allow-lists, and fallback modes for production deployments.
 
 ## Coming Soon
 
