@@ -20,10 +20,10 @@ SoloDevBoard supports a GitHub App-first hosted authentication model for product
 
 ## Operator Prerequisites
 
-- Operators must configure the GitHub App and enable hosted sign-in in application settings.
+- Operators must configure the GitHub App and enable hosted sign-in in application settings (`GitHubAuth__HostedSignInEnabled=true`).
 - Admission control is enforced via allow-lists for user and organisation logins.
 - Only users and organisations explicitly listed are granted access; all others are denied by default.
-- Operators should regularly review denied admission attempts in audit logs.
+- Operators should regularly review denied admission attempts in application logs (for example, App Service logs).
 
 ## Fallback and Local Trusted Modes
 
