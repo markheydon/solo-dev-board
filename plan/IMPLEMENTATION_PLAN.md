@@ -2,7 +2,11 @@
 
 <!-- AI Collaborator Instructions: See the "AI Collaborator Instructions" section at the bottom of this file before making changes to this plan. -->
 
+
 This document describes the phased implementation of SoloDevBoard. Each phase has a clear goal, a set of key tasks, and defined dependencies.
+
+**Note on sequencing:**
+Phases remain the primary sequence for feature delivery. Unfinished work from earlier phases remains open until completed, regardless of progress in later phases. However, certain public-release prerequisites from Phase 6 (such as hosted authentication and admission control) may be pulled forward out of sequence when required to enable safe hosted validation. This does not imply that earlier phases are complete or that the product has reached v1.0.0 readiness.
 
 For the full feature scope, see [SCOPE.md](SCOPE.md). For individual feature backlogs, see [BACKLOG.md](BACKLOG.md).
 
@@ -99,9 +103,12 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [ ] Write unit tests for `TriageService`
 - [ ] Update `docs/user-guide/triage-ui.md`
 
+
 ### Dependencies
 
 - Phase 2 complete (Label Manager, GitHub label/milestone API integration)
+
+**Note:** v0.3.0 remains incomplete until the Triage UI portion of issue #87 is properly planned and delivered. The milestone cannot be closed until this work is finished.
 
 ---
 
@@ -207,9 +214,12 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [ ] Write comprehensive `docs/` content for all features. _(#119)_
 - [ ] Tag v1.0.0 release on GitHub with release notes.
 
+
 ### Dependencies
 
 - Phases 1–5 complete.
+
+**Note:** Some Phase 6 public-release prerequisites (such as hosted authentication and admission control) may be advanced out of sequence to enable safe hosted validation. This does not imply that Phases 3–5 are complete or that the product is otherwise ready for v1.0.0 release.
 
 
 ## AI Collaborator Instructions
