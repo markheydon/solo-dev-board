@@ -68,7 +68,7 @@ public sealed class HostedUserCurrentUserContextTests
     }
 
     [Fact]
-    public void GetAccessToken_InstallationClaimMissing_ThrowsInvalidOperationException()
+    public void GetAccessToken_InstallationClaimMissing_ReturnsAccessToken()
     {
         // Arrange
         var httpContextAccessor = CreateHttpContextAccessor(new[]
@@ -80,10 +80,10 @@ public sealed class HostedUserCurrentUserContextTests
         var sut = new HostedUserCurrentUserContext(httpContextAccessor, options);
 
         // Act
-        var act = () => sut.GetAccessToken();
+        var result = sut.GetAccessToken();
 
         // Assert
-        Assert.Throws<InvalidOperationException>(act);
+        Assert.Equal("token", result);
     }
 
     [Fact]

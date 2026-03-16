@@ -27,9 +27,11 @@ public sealed class InfrastructureServiceExtensionsTests
         using var serviceProvider = services.BuildServiceProvider();
         using var scope = serviceProvider.CreateScope();
         var currentUserContext = scope.ServiceProvider.GetRequiredService<ICurrentUserContext>();
+        var admissionEvaluator = scope.ServiceProvider.GetRequiredService<IHostedAdmissionEvaluator>();
 
         // Assert
         Assert.IsType<HostedUserCurrentUserContext>(currentUserContext);
+        Assert.IsType<AllowListHostedAdmissionEvaluator>(admissionEvaluator);
     }
 
     [Fact]

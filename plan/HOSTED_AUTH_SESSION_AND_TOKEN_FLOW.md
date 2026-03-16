@@ -1,12 +1,13 @@
 # Hosted Authentication Session and Token Flow
 
-This document defines the hosted authentication boundaries delivered for issues #111 and #112.
+This document defines the hosted authentication and admission-control boundaries delivered for issues #111, #112, #113, #117, and #123.
 
 ## Hosted Sign-In Application Boundary (#112)
 
 - Hosted sign-in is enabled by configuration using `GitHubAuth:HostedSignInEnabled=true`.
 - When hosted sign-in is enabled, the application registers cookie authentication and exposes explicit sign-in and sign-out boundary routes (`/auth/sign-in`, `/auth/sign-out`).
-- The `/auth/sign-in` route intentionally returns a not-implemented response until a hosted gateway integration is connected, so the sign-in handshake responsibility remains explicit and isolated.
+- The `/auth/sign-in` and `/auth/callback` routes now implement the real hosted sign-in handshake, establishing a session with mapped claims for owner login, access token, installation ID, optional token expiry, and organisation logins.
+- State validation is enforced during the sign-in handshake, and callback failures result in explicit error responses and no session creation.
 
 ## Per-Request User Context Boundary (#112)
 
@@ -33,19 +34,32 @@ This document defines the hosted authentication boundaries delivered for issues 
 - Hosted token material is consumed from request claims only.
 - PAT-only local trusted mode continues to use local configuration and user secrets, with no hosted-token persistence.
 
-## Dependencies on Admission Control (#117)
+
+## Hosted Admission Control (Implemented in #117)
 
 - Hosted authentication is a prerequisite for admission control.
-- Admission control remains a separate enforcement layer, planned in issue #117, that evaluates authenticated GitHub identity against operator-managed allow-lists.
+- Admission control is now implemented as a separate enforcement layer that evaluates authenticated GitHub identity against operator-managed allow-lists.
+- Admission control is deny-by-default: only users and organisations explicitly listed in the allow-lists are granted access in hosted mode.
+- Operator-managed allow-lists are configured via `HostedAdmissionControl:AllowedUserLogins` and `HostedAdmissionControl:AllowedOrganisationLogins`.
+- The `HostedAdmissionControl:Enabled` flag controls whether admission control is active in hosted deployments.
+- Organisation claims for hosted admission are mapped using the `HostedAdmissionControl:HostedOrganisationLoginsClaimType` key.
 
-## OAuth App Fallback Boundary
+### Audit and Logging of Denied Admission Requests
 
-- A separate OAuth App fallback remains isolated and non-default.
-- No OAuth App fallback path is automatically enabled by this slice.
-- Any fallback enablement requires explicit configuration and justification in a follow-on change.
+- All denied hosted admission requests are logged with the attempted user login, organisation claims, and the reason for denial.
+- Operators are expected to review denied admission attempts regularly to detect unauthorised access attempts or misconfiguration.
+- Audit logs should be retained according to organisational policy and reviewed for suspicious activity.
+
+## OAuth App Fallback Boundary (#113)
+
+- A separate OAuth App fallback path is now explicitly supported but remains disabled by default.
+- The fallback is controlled by the `GitHubAuth:HostedOAuthAppFallbackEnabled` configuration key.
+- OAuth App fallback is only used if enabled and the primary GitHub App authentication path is unavailable.
+- PAT-only local trusted mode is preserved and unaffected by hosted fallback settings.
 
 ## Rollout Notes
 
-- The delivered implementation adds hosted-mode DI switching, hosted claim mapping configuration, and per-request token/installation validation.
+- The delivered implementation adds hosted-mode DI switching, hosted sign-in handshake and callback routes, hosted claim mapping configuration, per-request token validation with optional installation context, and hosted admission control.
+- Hosted admission control is deny-by-default and operator-managed.
 - The delivered implementation keeps PAT-only local trusted mode unchanged.
-- The delivered implementation defines, but does not yet integrate, the external hosted gateway handshake at `/auth/sign-in`.
+- The hosted sign-in handshake now validates anti-forgery state, surfaces callback failure responses explicitly, and only creates a session when claim mapping succeeds.

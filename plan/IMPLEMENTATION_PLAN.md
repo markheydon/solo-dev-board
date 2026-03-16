@@ -184,8 +184,8 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 ---
 
-## Phase 6 — Polish, Testing, and Azure Deployment
 
+## Phase 6 — Polish, Testing, and Azure Deployment
 
 **Goal:** Achieve production quality for public release: comprehensive test coverage, operational hardening, secure authentication, observability, and a stable Azure deployment pipeline.
 
@@ -203,9 +203,10 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [ ] Set up Dependabot for automated dependency updates. _(#109)_
 - [ ] Preserve PAT-only local trusted mode for development and trusted self-hosted use.
 - [x] Implement hosted authentication session boundaries and per-request user context for GitHub App-first hosted mode. _(#103, #112; implemented on 2026-03-13, see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_
-- [x] Handle hosted installation context validation and token lifecycle checks (expiry and failure handling) for hosted requests. _(#103, #111; implemented on 2026-03-13, see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_
-- [ ] Restrict hosted access to operator-managed user and organisation allow-lists, with deny-by-default admission control. _(#103, #117; see ADR-0014 and ADR-0015)._
-- [ ] Remove or demote the separate OAuth App dependency where GitHub App user authentication satisfies hosted sign-in requirements. _(#103, #113)_
+- [x] Integrate the real hosted sign-in gateway and session/callback handshake at `/auth/sign-in`, mapping required hosted claims before admission control and repository loading. _(#103, #123; implemented on 2026-03-16; see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md; closes the `/auth/sign-in` planning gap and unblocks #114 and #119.)_
+- [x] Handle hosted installation context validation and token lifecycle checks (expiry and failure handling) for hosted requests. _(#103, #111; implemented on 2026-03-13; see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_
+- [x] Restrict hosted access to operator-managed user and organisation allow-lists, with deny-by-default admission control. _(#103, #117; implemented on 2026-03-16; see ADR-0014, ADR-0015, and plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_
+- [x] Remove or demote the separate OAuth App dependency where GitHub App user authentication satisfies hosted sign-in requirements. _(#103, #113; implemented on 2026-03-16; see ADR-0015 and plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_
 - [x] Define and execute the migration and compatibility path away from the superseded hybrid hosted-authentication plan. _(#103, #118; strategy locked in plan/HOSTED_AUTH_MIGRATION_STRATEGY.md on 2026-03-13.)_
 - [ ] Persist hosted authentication material securely using Azure Key Vault-backed patterns where required.
 - [x] Replace the single-user `ICurrentUserContext` adapter with a per-request, per-user implementation backed by the hosted authentication session when hosted mode is enabled. _(Implemented on 2026-03-13; PAT-only local trusted mode preserved.)_
