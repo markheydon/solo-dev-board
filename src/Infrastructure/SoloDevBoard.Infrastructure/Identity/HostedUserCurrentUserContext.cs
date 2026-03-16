@@ -29,12 +29,10 @@ public sealed class HostedUserCurrentUserContext(
 
     /// <inheritdoc/>
     /// <exception cref="InvalidOperationException">
-    /// The hosted request does not contain installation or access-token claims, or the hosted token is expired.
+    /// The hosted request does not contain an access-token claim, or the hosted token is expired.
     /// </exception>
     public string GetAccessToken()
     {
-        _ = GetRequiredClaimValue(_authOptions.HostedInstallationIdClaimType, "GitHub installation identifier");
-
         var accessToken = GetRequiredClaimValue(_authOptions.HostedAccessTokenClaimType, "GitHub access token");
 
         EnsureTokenNotExpired();

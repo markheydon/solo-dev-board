@@ -16,4 +16,7 @@ public static class HostedAuthClaimTypes
 
     /// <summary>Gets the claim type carrying the hosted GitHub access token expiry timestamp (UTC).</summary>
     public const string TokenExpiresAt = "solo-dev-board.github.token-expires-at";
+
+    /// <summary>Gets the claim type carrying hosted GitHub organisation logins for admission evaluation.</summary>
+    public const string OrganisationLogins = "solo-dev-board.github.organisation-logins";
 }

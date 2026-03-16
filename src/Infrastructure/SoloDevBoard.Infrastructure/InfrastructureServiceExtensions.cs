@@ -23,9 +23,11 @@ public static class InfrastructureServiceExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.Configure<GitHubAuthOptions>(configuration.GetSection(GitHubAuthOptions.SectionName));
+        services.Configure<HostedAdmissionControlOptions>(configuration.GetSection(HostedAdmissionControlOptions.SectionName));
         services.AddHttpContextAccessor();
         services.AddScoped<SingleUserCurrentUserContext>();
         services.AddScoped<HostedUserCurrentUserContext>();
+        services.AddScoped<IHostedAdmissionEvaluator, AllowListHostedAdmissionEvaluator>();
         services.AddScoped<ICurrentUserContext>(static serviceProvider =>
         {
             var authOptions = serviceProvider.GetRequiredService<IOptions<GitHubAuthOptions>>().Value;

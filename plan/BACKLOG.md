@@ -35,6 +35,7 @@ Labels: `type/epic`, `area/infrastructure`, `priority/high`
 <!-- Feature #103: GitHub App-first hosted authentication and admission control -->
 <!-- Enabler #111: Installation and token lifecycle handling -->
 <!-- Story #112: GitHub App user sign-in and per-request user context -->
+<!-- Story #123: Integrate hosted sign-in gateway with /auth/sign-in -->
 <!-- Enabler #113: Remove separate OAuth App dependency where feasible -->
 <!-- Test #114: Authentication coverage for GitHub App-first hosted auth -->
 <!-- Story #117: Map authenticated GitHub identity to hosted admission control -->
@@ -44,9 +45,9 @@ Labels: `type/epic`, `area/infrastructure`, `priority/high`
 
 - [x] Enabler: Installation and token lifecycle handling implemented for hosted authentication. _(Issue #111 — implemented on 2026-03-13; see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_
 - [x] Story: GitHub App user sign-in and per-request user context delivered for hosted mode. _(Issue #112 — implemented on 2026-03-13; see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_
-- [ ] As a solo developer, I want hosted SoloDevBoard sign-in to use GitHub App-first user authentication, ideally GitHub App-only where feasible, so that public deployments stay secure, auditable, and operator-controlled.
-- [ ] As a hosted SoloDevBoard operator, I want authenticated GitHub identities mapped to operator-managed user and organisation allow-lists so that hosted access is deny-by-default.
-- [ ] As a SoloDevBoard maintainer, I want the separate OAuth App dependency removed or demoted to a fallback path where GitHub App user authentication satisfies hosted sign-in requirements so that the production architecture stays simpler and safer.
+- [x] Story: Integrate the hosted sign-in handshake and session/callback boundary at `/auth/sign-in` so GitHub App-first hosted authentication can complete before admission control and data loading. _(Issue #123 — implemented on 2026-03-16; see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md; closes the `/auth/sign-in` planning gap and unblocks #114 and #119; see ADR-0015.)_
+- [x] Story: Authenticated GitHub identities are now mapped to operator-managed user and organisation allow-lists for hosted admission control. Hosted access is deny-by-default and only permitted for identities explicitly listed. _(Issue #117 — implemented on 2026-03-16; see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md; see ADR-0014, ADR-0015.)_
+- [x] Story: The separate OAuth App dependency is now demoted to an explicit fallback path, disabled by default, while preserving PAT-only local trusted mode and GitHub App-first hosted sign-in. _(Issue #113 — implemented on 2026-03-16; see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md; see ADR-0014, ADR-0015.)_
 - [ ] As a solo developer, I want PAT-only local trusted mode preserved so that local development and trusted self-hosted use do not depend on hosted sign-in infrastructure.
 - [x] Chore: As a SoloDevBoard maintainer, I want the hosted-auth branch and migration strategy locked before Feature #103 coding continues so that superseded hybrid work cannot drift into the GitHub App-first delivery path. _(Issue #118 — done, 2026-03-13; see plan/HOSTED_AUTH_MIGRATION_STRATEGY.md.)_
 
@@ -218,5 +219,4 @@ Labels: `type/chore`, `area/infrastructure`
 - [ ] Configure logging with structured output (Azure Application Insights integration). _(#107)_
 - [x] Set up Dependabot for automated dependency updates. _(done — `dependabot.yml` and auto-merge workflow added previously; see issue #109.)_
 
-- [ ] As a solo developer, I want to sign in using GitHub OAuth and install the SoloDevBoard GitHub App so that SoloDevBoard can be made publicly available with secure, production-ready authentication. _(#112; supporting enablers #111 and #113.)_
-- [ ] As a hosted SoloDevBoard operator, I want only authorised GitHub users or organisations to access the hosted UI so that a public deployment cannot be used by unknown users who can authenticate successfully. _(#117; complements #112 and preserves a future entitlement extension point without bringing billing into scope.)_
+ 
