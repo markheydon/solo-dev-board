@@ -22,7 +22,7 @@ public partial class Repositories : ComponentBase
     private IReadOnlyList<RepositoryDto> repositories = [];
     private bool isLoading = true;
     private string? errorMessage;
-    private string feedbackMessage = "Ready.";
+    private string feedbackMessage = "Loading repositories...";
     private Severity feedbackSeverity = Severity.Info;
     private string? repositorySearchTerm;
 
@@ -48,32 +48,27 @@ public partial class Repositories : ComponentBase
 
     private void AddRepository()
     {
-        SetFeedback("Add repository will be available in a future milestone.", Severity.Info);
-        Snackbar.Add("Add repository will be available in a future milestone.", Severity.Info);
+        ShowPlaceholderFeedback("Add repository will be available in a future milestone.");
     }
 
     private void RemoveSelectedRepositories()
     {
-        SetFeedback("Remove repositories will be available in a future milestone.", Severity.Info);
-        Snackbar.Add("Remove repositories will be available in a future milestone.", Severity.Info);
+        ShowPlaceholderFeedback("Remove repositories will be available in a future milestone.");
     }
 
     private void OpenBulkActions()
     {
-        SetFeedback("Bulk actions will be available in a future milestone.", Severity.Info);
-        Snackbar.Add("Bulk actions will be available in a future milestone.", Severity.Info);
+        ShowPlaceholderFeedback("Bulk actions will be available in a future milestone.");
     }
 
     private void EditRepository(RepositoryDto repository)
     {
-        SetFeedback($"Edit repository '{repository.Name}' will be available in a future milestone.", Severity.Info);
-        Snackbar.Add($"Edit repository '{repository.Name}' will be available in a future milestone.", Severity.Info);
+        ShowPlaceholderFeedback($"Edit repository '{repository.Name}' will be available in a future milestone.");
     }
 
     private void OpenRepositoryMoreActions(RepositoryDto repository)
     {
-        SetFeedback($"More actions for '{repository.Name}' will be available in a future milestone.", Severity.Info);
-        Snackbar.Add($"More actions for '{repository.Name}' will be available in a future milestone.", Severity.Info);
+        ShowPlaceholderFeedback($"More actions for '{repository.Name}' will be available in a future milestone.");
     }
 
     private static string GetRepositoryStatusText(RepositoryDto repository)
@@ -88,10 +83,17 @@ public partial class Repositories : ComponentBase
         feedbackSeverity = severity;
     }
 
+    private void ShowPlaceholderFeedback(string message)
+    {
+        SetFeedback(message, Severity.Info);
+        Snackbar.Add(message, Severity.Info);
+    }
+
     private async Task LoadRepositoriesAsync()
     {
         isLoading = true;
         errorMessage = null;
+        SetFeedback("Loading repositories...", Severity.Info);
 
         try
         {
@@ -100,7 +102,7 @@ public partial class Repositories : ComponentBase
                 repositories.Count == 0
                     ? "No repositories are connected yet."
                     : $"Loaded {repositories.Count} repositories.",
-                Severity.Success);
+                repositories.Count == 0 ? Severity.Info : Severity.Success);
         }
         catch (HttpRequestException ex)
         {
