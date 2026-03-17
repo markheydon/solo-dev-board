@@ -12,6 +12,7 @@ This directory contains planning-only wireframe references for key SoloDevBoard 
 - [label-manager-wireframe.md](label-manager-wireframe.md): Label Manager page wireframe, mode separation rationale, and tabbed IA.
 - [audit-dashboard-wireframe.md](audit-dashboard-wireframe.md): Audit Dashboard wireframe, KPI cards, health indicators, and filter surface.
 - [one-click-migration-wireframe.md](one-click-migration-wireframe.md): One-Click Migration page wireframe, workflow-first layout, preview-first review flow, and post-migration summary states.
+- [triage-ui-wireframe.md](triage-ui-wireframe.md): Triage UI wireframe, session flow, progress tracking, label/milestone/project-board actions, skip/return, and end-of-session summary.
 
 ## Wireframe-First Planning Pattern
 
@@ -22,3 +23,4 @@ Recent examples:
 - Label Manager refresh (#133) and tests (#134).
 - Audit Dashboard refresh (#135) and tests (#136).
 - One-Click Migration page refresh (#139) and paired bUnit coverage (#140).
+- Triage UI planning set (#142) and tests (#151–#153).

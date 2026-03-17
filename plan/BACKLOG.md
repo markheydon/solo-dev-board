@@ -150,15 +150,28 @@ Labels: `type/epic`, `area/triage`
 
 > **Next up:** Triage UI is the remaining Phase 3 delivery work and should be completed before Phase 4, Phase 5, or the rest of the Phase 6 release backlog becomes the main focus again.
 
-- [ ] As a solo developer, I want to start a triage session that presents unlabelled issues one at a time so that I can work through them efficiently.
-- [ ] As a solo developer, I want to apply labels to an issue with a single click or keyboard shortcut so that triage is fast.
-- [ ] As a solo developer, I want to assign a milestone to an issue without leaving the triage view so that I can organise my work in context.
-- [ ] As a solo developer, I want to add an issue to a GitHub project board column without leaving the triage view so that planning is seamless.
-- [ ] As a solo developer, I want to mark an issue as a duplicate and close it with a reference so that duplicate tracking is clean.
-- [ ] As a solo developer, I want to skip an issue and return to it later so that I am not blocked by difficult triage decisions.
-- [ ] As a solo developer, I want to see a progress indicator during a triage session so that I know how many issues remain.
-- [ ] As a solo developer, I want to see a summary at the end of a triage session showing all actions taken so that I have a record of what was done.
-- [ ] As a solo developer, I want to triage unlabelled pull requests alongside issues so that my entire GitHub workload, including open PRs, is managed in one place.
+<!-- Feature #142: Triage UI (planned 2026-03-17, milestone v0.3.0) -->
+<!-- Enablers: #143 Triage session orchestration, #144 Triage UI state management -->
+<!-- Stories: #145 Start triage session, progress, skip; #146 Apply labels quickly; #147 Assign milestone and project-board placement in-context; #148 Mark as duplicate and close with reference; #149 End-of-session summary and skip/return; #150 Triage unlabelled pull requests -->
+<!-- Tests: #151 Triage session orchestration unit tests; #152 Triage UI state management unit tests; #153 Triage UI bUnit tests -->
+
+> **Next up:** Triage UI work is now formally planned and remains the current delivery priority for Phase 3. All items below are tracked via the new issue hierarchy and are open/planned for milestone v0.3.0.
+
+- [ ] As a solo developer, I want to start a triage session that presents unlabelled issues one at a time, supports progress tracking, and allows skipping and returning later so that I can work through them efficiently. _(Issue #145)_
+- [ ] As a solo developer, I want to apply labels to an issue with a single click or keyboard shortcut so that triage is fast. _(Issue #146)_
+- [ ] As a solo developer, I want to assign a milestone to an issue and add it to a GitHub project board column without leaving the triage view so that I can organise my work and plan in context. _(Issue #147)_
+- [ ] As a solo developer, I want to mark an issue as a duplicate and close it with a reference so that duplicate tracking is clean. _(Issue #148)_
+- [ ] As a solo developer, I want to see a summary at the end of a triage session showing all actions taken, and have the option to skip and return to issues later, so that I have a record of what was done and am not blocked by difficult triage decisions. _(Issue #149)_
+- [ ] As a solo developer, I want to triage unlabelled pull requests alongside issues so that my entire GitHub workload, including open PRs, is managed in one place. _(Issue #150)_
+
+**Enablers:**
+- [ ] Triage session orchestration. _(Issue #143)_
+- [ ] Triage UI state management. _(Issue #144)_
+
+**Tests:**
+- [ ] Triage session orchestration unit tests. _(Issue #151)_
+- [ ] Triage UI state management unit tests. _(Issue #152)_
+- [ ] Triage UI bUnit tests. _(Issue #153)_
 
 ---
 
