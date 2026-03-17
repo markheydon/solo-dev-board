@@ -12,9 +12,9 @@
 ## Layout
 ```
 +-------------------------------------------------------------+
-| Tab Strip: [Labels] [Recommended Taxonomy] [Synchronise]    |
+| Repository Selector: [Repository dropdown]                  |
 +-------------------------------------------------------------+
-| Scope Selector: [Repository dropdown]                       |
+| Tab Strip: [Labels] [Recommended Taxonomy] [Synchronise]    |
 +-------------------------------------------------------------+
 | Action Strip: [Create] [Edit] [Delete] [Bulk Actions]       |
 +-------------------------------------------------------------+
@@ -33,7 +33,7 @@
 - Each tab presents relevant actions and feedback, minimising context switching.
 
 ## Interaction Notes
-- Scope selector filters results and actions by repository.
+- Repository selector sets page-level context and filters all tabs.
 - Action strip adapts to selected tab (e.g., synchronise actions only in Synchronise tab).
 - Feedback region provides real-time status and error messages.
 
@@ -43,10 +43,10 @@
 - Error state: Show error in feedback region.
 
 ## Accessibility Notes
-- Focus order: Tab strip → scope selector → action strip → results region → feedback region.
+- Focus order: Repository selector → tab strip → action strip → results region → feedback region.
 - ARIA: Tabs use `role="tablist"`, results region uses `aria-label`.
 - Live region: Feedback region uses `aria-live="polite"`.
 
 ## Responsive Behaviour
-- Desktop: Tabs and action strip remain visible, results region adapts to width.
-- Mobile: Tabs collapse into dropdown, action strip moves to bottom, results region stacks vertically.
+- Desktop: Repository selector remains above tabs, with tabs and action strip visible and results region adapting to width.
+- Mobile: Repository selector stays first, tabs collapse into dropdown, action strip moves to bottom, and results region stacks vertically.

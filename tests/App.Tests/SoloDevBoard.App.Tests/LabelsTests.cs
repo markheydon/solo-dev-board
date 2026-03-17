@@ -65,6 +65,60 @@ public sealed class LabelsTests
     }
 
     [Fact]
+    public async Task Labels_PageLayout_RendersRepositorySelectorBeforeTabStrip()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                CreateRepository("owner", "repo-a"),
+            ]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Labels>();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='repository-selector-region']"));
+            Assert.Single(cut.FindAll("[data-testid='label-manager-tab-strip']"));
+
+            var markup = cut.Markup;
+            var selectorPosition = markup.IndexOf("repository-selector-region", StringComparison.Ordinal);
+            var tabStripPosition = markup.IndexOf("label-manager-tab-strip", StringComparison.Ordinal);
+            Assert.True(selectorPosition >= 0);
+            Assert.True(tabStripPosition > selectorPosition);
+        });
+    }
+
+    [Fact]
+    public async Task Labels_WhenSwitchingToRecommendedTaxonomyTab_ShowsTaxonomyActionStrip()
+    {
+        // Arrange
+        var repoA = CreateRepository("owner", "repo-a");
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([repoA]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
+        await ActivateTabAsync(cut, "Recommended taxonomy");
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='taxonomy-action-strip']"));
+            Assert.Empty(cut.FindAll("[data-testid='sync-action-strip']"));
+        });
+    }
+
+    [Fact]
     public async Task Labels_RepositoriesLoaded_ArchivedRepositoriesAreHiddenByDefault()
     {
         // Arrange
@@ -266,6 +320,7 @@ public sealed class LabelsTests
         cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
 
         await SelectRepositoriesAsync(cut, repoA);
+        await ActivateTabAsync(cut, "Recommended taxonomy");
         cut.Find("[data-testid='preview-taxonomy-button']").Click();
 
         // Assert
@@ -316,6 +371,7 @@ public sealed class LabelsTests
         cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
 
         await SelectRepositoriesAsync(cut, repoA);
+        await ActivateTabAsync(cut, "Recommended taxonomy");
         cut.Find("[data-testid='preview-taxonomy-button']").Click();
         cut.WaitForAssertion(() => _ = cut.Find("[data-testid='confirm-apply-taxonomy-button']"));
 
@@ -356,6 +412,7 @@ public sealed class LabelsTests
         var cut = ctx.Render<Labels>();
         cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
         await SelectRepositoriesAsync(cut, repoA);
+        await ActivateTabAsync(cut, "Recommended taxonomy");
         cut.Find("[data-testid='preview-taxonomy-button']").Click();
 
         // Assert
@@ -385,6 +442,7 @@ public sealed class LabelsTests
         var cut = ctx.Render<Labels>();
         cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
         await SelectRepositoriesAsync(cut, repoA);
+        await ActivateTabAsync(cut, "Recommended taxonomy");
 
         var previewButton = cut.Find("[data-testid='preview-taxonomy-button']");
         previewButton.Click();
@@ -419,6 +477,7 @@ public sealed class LabelsTests
         var cut = ctx.Render<Labels>();
         cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
         await SelectRepositoriesAsync(cut, repoA, repoB);
+        await ActivateTabAsync(cut, "Synchronise");
 
         // Assert
         cut.WaitForAssertion(() =>
@@ -462,6 +521,7 @@ public sealed class LabelsTests
         var cut = ctx.Render<Labels>();
         cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
         await SelectRepositoriesAsync(cut, repoA, repoB);
+        await ActivateTabAsync(cut, "Synchronise");
         cut.Find("[data-testid='preview-sync-button']").Click();
         cut.WaitForAssertion(() => _ = cut.Find("[data-testid='confirm-sync-button']"));
         cut.Find("[data-testid='confirm-sync-button']").Click();
@@ -503,6 +563,7 @@ public sealed class LabelsTests
         var cut = ctx.Render<Labels>();
         cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
         await SelectRepositoriesAsync(cut, repoA, repoB);
+        await ActivateTabAsync(cut, "Synchronise");
 
         cut.Find("[data-testid='preview-sync-button']").Click();
 
@@ -546,6 +607,15 @@ public sealed class LabelsTests
         var selectedFullNames = repositories.Select(repository => repository.FullName).ToArray();
 
         await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(selectedFullNames));
+    }
+
+    private static async Task ActivateTabAsync(IRenderedComponent<Labels> cut, string tabText)
+    {
+        var tabButton = cut
+            .FindAll("[role='tab']")
+            .First(button => button.TextContent.Trim().Equals(tabText, StringComparison.OrdinalIgnoreCase));
+
+        await cut.InvokeAsync(() => tabButton.Click());
     }
 
     private static RepositoryDto CreateRepository(string owner, string name, bool isPrivate = false, bool isArchived = false)

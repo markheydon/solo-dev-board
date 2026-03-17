@@ -10,6 +10,8 @@ namespace SoloDevBoard.App.Components.Features.Labels.Pages;
 /// <summary>Displays a consolidated view of labels across selected repositories.</summary>
 public partial class Labels : ComponentBase
 {
+    private const int LabelsTabIndex = 0;
+
     /// <summary>Gets or sets the application service used to retrieve repositories.</summary>
     [Inject]
     public IRepositoryService RepositoryService { get; set; } = default!;
@@ -57,6 +59,7 @@ public partial class Labels : ComponentBase
     private bool isApplyingSync;
     private string? syncOperationMessage;
     private Severity syncOperationSeverity = Severity.Info;
+    private int activeTabIndex = LabelsTabIndex;
 
     protected override async Task OnInitializedAsync()
     {
@@ -90,6 +93,12 @@ public partial class Labels : ComponentBase
     private async Task ReloadRepositoriesAsync()
     {
         await LoadRepositoriesAsync();
+    }
+
+    private Task OnActiveTabIndexChanged(int tabIndex)
+    {
+        activeTabIndex = tabIndex;
+        return Task.CompletedTask;
     }
 
     private Task OnStrategySelectedAsync(string strategyId)
