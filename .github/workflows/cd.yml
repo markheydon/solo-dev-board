@@ -1,9 +1,10 @@
 name: CD - Deploy to Azure
 
 # This is a skeleton workflow. Before enabling, you must:
-#   1. Register an Azure service principal (or use Managed Identity with OIDC).
-#   2. Add the following secrets to this repository:
-#        AZURE_CLIENT_ID       — Service principal / managed identity client ID
+#   1. Deploy infra/main.bicep (or run infra/Deploy-SoloDevBoardInfra.ps1) to provision the GitHub OIDC identity and federated credential.
+#   2. Add the following secrets to the 'production' GitHub environment
+#      used by this job (or change the job environment and keep the scopes aligned):
+#        AZURE_CLIENT_ID       — Client ID of the GitHub OIDC deployment identity created for this environment
 #        AZURE_TENANT_ID       — Azure AD tenant ID
 #        AZURE_SUBSCRIPTION_ID — Azure subscription ID
 #        AZURE_WEBAPP_NAME     — The name of the Azure App Service to deploy to
@@ -25,7 +26,9 @@ jobs:
   deploy:
     name: Build, Publish, and Deploy
     runs-on: ubuntu-latest
-    environment: production
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.webapp-url }}
     timeout-minutes: 20
 
     steps:
@@ -50,12 +53,14 @@ jobs:
       - name: Log in to Azure
         uses: azure/login@v2
         with:
+          # Environment-scoped secrets are still accessed through the standard secrets context.
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       # Deploy the published artefacts to the configured Azure App Service
       - name: Deploy to Azure App Service
+        id: deploy
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
