@@ -115,6 +115,20 @@ Use page-level `MudContainer`, `MudPaper`, `MudStack`, and `MudGrid` composition
 
 See [references/COMPONENT-CHOOSER.md](references/COMPONENT-CHOOSER.md) for the full mapping.
 
+### Reference Map
+
+Use these references after the chooser points you to a component family:
+
+- [references/INPUTS.md](references/INPUTS.md) for text, selection, picker, and validation-oriented input components.
+- [references/BUTTONS.md](references/BUTTONS.md) for action components, grouped actions, and icon toggle actions.
+- [references/LAYOUT-NAVIGATION.md](references/LAYOUT-NAVIGATION.md) for shell structure, responsive layout, and navigation components.
+- [references/DATA-DISPLAY.md](references/DATA-DISPLAY.md) for tabular, list, timeline, tree, and media display components.
+- [references/FEEDBACK-OVERLAYS.md](references/FEEDBACK-OVERLAYS.md) for alerts, progress, dialogs, snackbars, overlays, and placeholders.
+- [references/DATAGRID.md](references/DATAGRID.md) for detailed `MudDataGrid<T>` usage patterns.
+- [references/KNOWN-PITFALLS.md](references/KNOWN-PITFALLS.md) for operational troubleshooting.
+- [references/THEMING.md](references/THEMING.md) for palette and typography customisation.
+- [references/BUNIT.md](references/BUNIT.md) for component testing patterns.
+
 ### Text Input
 
 ```razor

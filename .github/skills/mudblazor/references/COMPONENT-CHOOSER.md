@@ -68,3 +68,40 @@ Use button colour and variant to communicate intent consistently across pages.
 | Breakpoint visibility | `MudHidden` | Prefer over custom media-query CSS for show/hide behaviour. |
 | Avatar / icon circle | `MudAvatar` | |
 | Colour swatch display | `MudChip` with background colour style | |
+
+## Additional Official Components
+
+Use this section for components available in the official MudBlazor overview that are less common in current SoloDevBoard screens.
+
+| UI Pattern | MudBlazor Component | Notes |
+|------------|---------------------|-------|
+| Grouped adjacent actions | `MudButtonGroup` | See `BUTTONS.md` for grouping guidance. |
+| Icon toggle state control | `MudToggleIconButton` | Use for pinned, favourite, and similar icon-first booleans. |
+| Long-page return affordance | `MudScrollToTop` | Prefer over custom JavaScript scrolling controls. |
+| Section command strip | `MudToolBar` | Use for local command areas inside sections and cards. |
+| Custom field shell around bespoke content | `MudField` | Use for consistent labels and helper text around custom content. |
+| File selection and upload | `MudFileUpload<T>` | Validate file type and size constraints explicitly. |
+| Coordinated validation across fields | `MudForm` | Keep form-level validity and submit behaviour centralised. |
+| Focus-trapped interaction region | `MudFocusTrap` | Useful in constrained overlays and accessibility-sensitive flows. |
+| Text highlight of search matches | `MudHighlighter` | Pair with filtered search result rendering. |
+| Rating input or display | `MudRating` | Use for sentiment scoring interactions. |
+| Range and threshold tuning | `MudSlider<T>` | Prefer over free-form numeric text for bounded ranges. |
+| Segmented mode toggles | `MudToggleGroup<T>` | Good for compact option groups. |
+| Rich contextual menu | `MudMenu` | Use for overflow and contextual actions. |
+| Hierarchical breadcrumb path | `MudBreadcrumbs` | Use for deep navigation context. |
+| Themed inline navigation link | `MudLink` | Prefer over raw styled anchors where appropriate. |
+| Structured non-tabular lists | `MudList<T>` + `MudListItem<T>` | Use when table columns are unnecessary. |
+| Lightweight paging controls | `MudPagination` | Pair with server or in-memory paging. |
+| Anchored contextual surface | `MudPopover` | Ensure dismiss and focus behaviour are clear. |
+| Lightweight static table | `MudSimpleTable` | Use for simple read-only tabular summaries. |
+| Chronological event feed | `MudTimeline` | Useful for audit and history visualisation. |
+| Hierarchical data explorer | `MudTreeView<T>` | Use for nested repository and rule structures. |
+| Drag-and-drop target and reorder region | `MudDropZone<T>` | Useful for visual ordering workflows. |
+| Rotating visual panels | `MudCarousel` | Use sparingly and avoid critical information in carousels. |
+| Conversational message thread view | `MudChat` | Suitable for chat-like audit or assistant interactions. |
+| Themed responsive image display | `MudImage` | Prefer over raw image tags when component features are needed. |
+| Standard confirmation prompt | `MudMessageBox` | Use for straightforward confirm and acknowledge flows. |
+| Loading-state placeholders | `MudSkeleton` | Improves perceived loading quality on content-heavy views. |
+| Backdrop and blocking layer | `MudOverlay` | Use for blocking busy states and modal emphasis. |
+
+For complete grouped guidance, see `INPUTS.md`, `BUTTONS.md`, `LAYOUT-NAVIGATION.md`, `DATA-DISPLAY.md`, and `FEEDBACK-OVERLAYS.md`.

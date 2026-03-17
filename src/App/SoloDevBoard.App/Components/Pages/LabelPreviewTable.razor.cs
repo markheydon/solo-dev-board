@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Components;
-using SoloDevBoard.Application.Services;
+using SoloDevBoard.Application.Services.Labels;
 
 namespace SoloDevBoard.App.Components.Pages;
 

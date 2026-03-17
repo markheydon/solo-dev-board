@@ -1,4 +1,5 @@
-using SoloDevBoard.Domain.Entities;
+using SoloDevBoard.Domain.Entities.Labels;
+using SoloDevBoard.Domain.Entities.Triage;
 
 namespace SoloDevBoard.Domain.Tests;
 

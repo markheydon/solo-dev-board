@@ -1,12 +1,11 @@
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
-using SoloDevBoard.Infrastructure;
+using SoloDevBoard.Infrastructure.GitHub;
 using SoloDevBoard.Infrastructure.Identity;
 
 namespace SoloDevBoard.App.Authentication;

@@ -1,5 +1,6 @@
 using Moq;
-using SoloDevBoard.Domain.Entities;
+using SoloDevBoard.Domain.Entities.Labels;
+using SoloDevBoard.Infrastructure.GitHub;
 using System.Net;
 using System.Text;
 using System.Text.Json;

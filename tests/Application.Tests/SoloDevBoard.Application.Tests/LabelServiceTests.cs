@@ -1,6 +1,6 @@
 using Moq;
-using SoloDevBoard.Application.Services;
-using SoloDevBoard.Domain.Entities;
+using SoloDevBoard.Application.Services.Labels;
+using SoloDevBoard.Domain.Entities.Labels;
 
 namespace SoloDevBoard.Application.Tests;
 

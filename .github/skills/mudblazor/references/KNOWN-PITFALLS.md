@@ -126,3 +126,83 @@ private async Task<IEnumerable<string>> SearchRepos(string value, CancellationTo
                  .Select(r => r.Name);
 }
 ```
+
+---
+
+## Pitfall 9: MudMenu and MudPopover clipped or hidden
+
+**Symptom:** Menu or popover content appears cut off, hidden behind other surfaces, or not visible near container edges.
+
+**Cause:** Missing provider setup, restrictive parent overflow styling, or assumptions about local z-index stacking.
+
+**Fix:**
+
+- Confirm `MudPopoverProvider` is present in `MainLayout.razor`.
+- Avoid custom container styles such as `overflow: hidden` around menu and popover triggers unless clipping is intentional.
+- Prefer MudBlazor layout primitives and defaults over custom z-index adjustments.
+
+---
+
+## Pitfall 10: MudForm validation state not updating as expected
+
+**Symptom:** Submit actions proceed while invalid fields are present, or validation messages do not appear until too late.
+
+**Cause:** Form-level validation is bypassed and controls are validated ad hoc.
+
+**Fix:** Keep validation coordinated through `MudForm`.
+
+```razor
+<MudForm @ref="_form">
+    <MudTextField @bind-Value="_name" Label="Name" Required="true" />
+    <MudButton OnClick="@SubmitAsync">Save</MudButton>
+</MudForm>
+
+@code {
+    private MudForm? _form;
+    private string _name = string.Empty;
+
+    private async Task SubmitAsync()
+    {
+        await _form!.Validate();
+        if (!_form.IsValid)
+            return;
+
+        // Continue with save.
+    }
+}
+```
+
+---
+
+## Pitfall 11: File upload accepted with no guardrails
+
+**Symptom:** Unexpected file types or oversized files are processed.
+
+**Cause:** File selection is treated as trusted input.
+
+**Fix:** Validate uploaded files explicitly before processing.
+
+- Validate file count, file extension, and content type.
+- Enforce maximum file size in code.
+- Provide clear snackbar or inline validation feedback.
+
+---
+
+## Pitfall 12: Tabs lose intended active panel after rerender
+
+**Symptom:** Active tab jumps back unexpectedly after state changes.
+
+**Cause:** Active tab selection is not controlled when tab collection or conditional visibility changes.
+
+**Fix:** Bind and manage active panel explicitly when tabs are dynamic.
+
+```razor
+<MudTabs @bind-ActivePanelIndex="_activeTab">
+    <MudTabPanel Text="Overview" />
+    <MudTabPanel Text="Details" />
+</MudTabs>
+
+@code {
+    private int _activeTab;
+}
+```

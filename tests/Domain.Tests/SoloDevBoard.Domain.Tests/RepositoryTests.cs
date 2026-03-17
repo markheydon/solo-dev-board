@@ -1,4 +1,4 @@
-using SoloDevBoard.Domain.Entities;
+using SoloDevBoard.Domain.Entities.Repositories;
 
 namespace SoloDevBoard.Domain.Tests;
 

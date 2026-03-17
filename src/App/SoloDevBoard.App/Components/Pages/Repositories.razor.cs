@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Logging;
-using SoloDevBoard.Application.Services;
+using SoloDevBoard.Application.Services.Repositories;
 
 namespace SoloDevBoard.App.Components.Pages;
 

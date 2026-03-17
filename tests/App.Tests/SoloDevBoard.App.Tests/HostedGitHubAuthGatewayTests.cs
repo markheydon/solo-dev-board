@@ -4,7 +4,7 @@ using System.Security.Claims;
 using Microsoft.Extensions.Options;
 using Moq;
 using SoloDevBoard.App.Authentication;
-using SoloDevBoard.Infrastructure;
+using SoloDevBoard.Infrastructure.GitHub;
 using SoloDevBoard.Infrastructure.Identity;
 
 namespace SoloDevBoard.App.Tests;

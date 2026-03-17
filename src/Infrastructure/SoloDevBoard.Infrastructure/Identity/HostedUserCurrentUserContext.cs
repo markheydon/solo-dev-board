@@ -2,6 +2,7 @@ using System.Globalization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using SoloDevBoard.Application.Identity;
+using SoloDevBoard.Infrastructure.GitHub;
 
 namespace SoloDevBoard.Infrastructure.Identity;
 

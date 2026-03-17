@@ -1,6 +1,8 @@
 using Moq;
 using SoloDevBoard.Application.Identity;
-using SoloDevBoard.Domain.Entities;
+using SoloDevBoard.Domain.Entities.Labels;
+using SoloDevBoard.Infrastructure.GitHub;
+using SoloDevBoard.Infrastructure.Labels;
 using System.Net;
 using System.Text;
 using System.Text.Json;

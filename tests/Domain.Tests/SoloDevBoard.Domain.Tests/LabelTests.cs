@@ -1,4 +1,4 @@
-using SoloDevBoard.Domain.Entities;
+using SoloDevBoard.Domain.Entities.Labels;
 
 namespace SoloDevBoard.Domain.Tests;
 

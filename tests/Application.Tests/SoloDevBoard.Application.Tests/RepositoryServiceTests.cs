@@ -1,6 +1,7 @@
 using Moq;
-using SoloDevBoard.Application.Services;
-using SoloDevBoard.Domain.Entities;
+using SoloDevBoard.Application.Services.GitHub;
+using SoloDevBoard.Application.Services.Repositories;
+using SoloDevBoard.Domain.Entities.Repositories;
 
 namespace SoloDevBoard.Application.Tests;
 
