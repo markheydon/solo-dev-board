@@ -3,74 +3,159 @@
 <PageTitle>Repositories</PageTitle>
 
 <MudStack Spacing="3">
-    <MudText Typo="Typo.h4">Repositories</MudText>
-    <MudText Typo="Typo.body1">Browse repositories available to your authenticated GitHub account.</MudText>
+    <MudStack Spacing="1">
+        <MudText Typo="Typo.h4">Repositories</MudText>
+        <MudText Typo="Typo.body1">Manage repositories available to your authenticated GitHub account.</MudText>
+    </MudStack>
+
+    <MudPaper Class="pa-3" Elevation="1">
+        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center" aria-label="Repository command strip">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Refresh"
+                       OnClick="ReloadAsync"
+                       Disabled="isLoading">
+                Refresh
+            </MudButton>
+
+            <MudHidden Breakpoint="Breakpoint.SmAndDown">
+                <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Add"
+                               OnClick="AddRepository">
+                        Add
+                    </MudButton>
+
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Error"
+                               StartIcon="@Icons.Material.Filled.Delete"
+                               OnClick="RemoveSelectedRepositories">
+                        Remove
+                    </MudButton>
+
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Secondary"
+                               StartIcon="@Icons.Material.Filled.Checklist"
+                               OnClick="OpenBulkActions">
+                        Bulk actions
+                    </MudButton>
+                </MudStack>
+            </MudHidden>
+
+            <MudHidden Breakpoint="Breakpoint.MdAndUp">
+                <MudMenu Label="Actions"
+                         Variant="Variant.Outlined"
+                         Color="Color.Primary"
+                         StartIcon="@Icons.Material.Filled.MoreVert">
+                    <MudMenuItem OnClick="AddRepository">Add</MudMenuItem>
+                    <MudMenuItem OnClick="RemoveSelectedRepositories">Remove</MudMenuItem>
+                    <MudMenuItem OnClick="OpenBulkActions">Bulk actions</MudMenuItem>
+                </MudMenu>
+            </MudHidden>
+
+            <MudSpacer />
+
+            <MudTextField @bind-Value="repositorySearchTerm"
+                          Label="Search repositories"
+                          Variant="Variant.Outlined"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Immediate="true"
+                          Clearable="true"
+                          Disabled="isLoading" />
+        </MudStack>
+    </MudPaper>
+
+    <MudPaper Class="pa-3" Elevation="0" Outlined="true" aria-live="polite" role="status">
+        <MudAlert Severity="@feedbackSeverity" Dense="true" Variant="Variant.Text">
+            @feedbackMessage
+        </MudAlert>
+    </MudPaper>
 
     @if (isLoading)
     {
-        <MudPaper Class="repositories-state pa-4" Elevation="1" aria-live="polite" role="status">
+        <MudPaper Class="pa-6" Elevation="1" aria-live="polite" role="status">
             <MudStack AlignItems="AlignItems.Center" Spacing="2">
-                <MudProgressCircular Indeterminate="true" Color="Color.Primary" aria-label="Loading repositories" />
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" aria-label="Loading repositories" />
                 <MudText Typo="Typo.body1">Loading repositories...</MudText>
             </MudStack>
         </MudPaper>
     }
     else if (!string.IsNullOrWhiteSpace(errorMessage))
     {
-        <MudPaper Class="repositories-state pa-4" Elevation="1" aria-live="assertive" role="alert">
-            <MudStack Spacing="2">
-                <MudText Typo="Typo.h6">Unable to load repositories</MudText>
-                <MudText Typo="Typo.body2">@errorMessage</MudText>
-                <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ReloadAsync">Try again</MudButton>
-            </MudStack>
+        <MudPaper Class="pa-4" Elevation="1" aria-live="assertive" role="alert">
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.h6">Unable to load repositories</MudText>
+                    <MudText Typo="Typo.body2">@errorMessage</MudText>
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ReloadAsync">Try again</MudButton>
+                </MudStack>
+            </MudAlert>
         </MudPaper>
     }
     else if (repositories.Count == 0)
     {
-        <MudPaper Class="repositories-state pa-4" Elevation="1" aria-live="polite">
-            <MudStack Spacing="1">
-                <MudText Typo="Typo.h6">No repositories found</MudText>
-                <MudText Typo="Typo.body2">No repositories were returned for your account.</MudText>
-            </MudStack>
+        <MudPaper Class="pa-4" Elevation="1" aria-live="polite">
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                <MudStack Spacing="1">
+                    <MudText Typo="Typo.h6">No repositories found</MudText>
+                    <MudText Typo="Typo.body2">No repositories were returned for your account.</MudText>
+                </MudStack>
+            </MudAlert>
         </MudPaper>
     }
     else
     {
-        <MudPaper Class="pa-4" Elevation="1">
-            <MudStack Spacing="3">
-                <MudTextField @bind-Value="repositorySearchTerm"
-                              Label="Search repositories"
-                              Variant="Variant.Outlined"
-                              Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Filled.Search"
-                              Immediate="true"
-                              Clearable="true"
-                              Class="repository-search" />
-
-                <MudDataGrid T="RepositoryDto"
-                             Items="FilteredRepositories"
-                             Hover="true"
-                             Dense="true"
-                             SortMode="SortMode.Multiple">
-                    <Columns>
-                        <PropertyColumn Property="repository => repository.Name" Title="Name" Sortable="true" />
-                        <TemplateColumn Title="Visibility">
-                            <CellTemplate>
-                                <MudChip Color="@(context.Item.IsPrivate ? Color.Warning : Color.Success)"
-                                         Variant="Variant.Outlined"
-                                         Size="Size.Small">
-                                    @(context.Item.IsPrivate ? "Private" : "Public")
-                                </MudChip>
-                            </CellTemplate>
-                        </TemplateColumn>
-                        <TemplateColumn Title="Last Updated (UTC)">
-                            <CellTemplate>
-                                @context.Item.UpdatedAt.UtcDateTime.ToString("dd MMM yyyy", System.Globalization.CultureInfo.InvariantCulture)
-                            </CellTemplate>
-                        </TemplateColumn>
-                    </Columns>
-                </MudDataGrid>
-            </MudStack>
+        <MudPaper Class="pa-2" Elevation="1">
+            <MudDataGrid T="RepositoryDto"
+                         Items="FilteredRepositories"
+                         Hover="true"
+                         Dense="true"
+                         SortMode="SortMode.Multiple"
+                         Striped="true">
+                <Columns>
+                    <PropertyColumn Property="repository => repository.Name" Title="Repository name" Sortable="true" />
+                    <TemplateColumn Title="Status">
+                        <CellTemplate>
+                            <MudChip Color="@GetRepositoryStatusColour(context.Item)"
+                                     Variant="Variant.Outlined"
+                                     Size="Size.Small">
+                                @GetRepositoryStatusText(context.Item)
+                            </MudChip>
+                        </CellTemplate>
+                    </TemplateColumn>
+                    <TemplateColumn Title="Type">
+                        <CellTemplate>
+                            <MudChip Color="@(context.Item.IsPrivate ? Color.Warning : Color.Success)"
+                                     Variant="Variant.Outlined"
+                                     Size="Size.Small">
+                                @(context.Item.IsPrivate ? "Private" : "Public")
+                            </MudChip>
+                        </CellTemplate>
+                    </TemplateColumn>
+                    <TemplateColumn Title="Actions">
+                        <CellTemplate>
+                            <MudStack Row="true" Justify="Justify.FlexEnd" AlignItems="AlignItems.Center" Spacing="0">
+                                <MudTooltip Text="Edit repository">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                                   Color="Color.Primary"
+                                                   Size="Size.Small"
+                                                   OnClick="() => EditRepository(context.Item)"
+                                                   aria-label="Edit repository" />
+                                </MudTooltip>
+                                <MudTooltip Text="More actions">
+                                    <MudIconButton Icon="@Icons.Material.Filled.MoreHoriz"
+                                                   Color="Color.Default"
+                                                   Size="Size.Small"
+                                                   OnClick="() => OpenRepositoryMoreActions(context.Item)"
+                                                   aria-label="Repository more actions" />
+                                </MudTooltip>
+                            </MudStack>
+                        </CellTemplate>
+                    </TemplateColumn>
+                </Columns>
+            </MudDataGrid>
         </MudPaper>
     }
 </MudStack>

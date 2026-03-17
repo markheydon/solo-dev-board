@@ -3,7 +3,12 @@
 
 This backlog is organised by the six core features (epics) of SoloDevBoard. For the phased implementation plan, see [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
 
----
+## Future Considerations
+
+This section captures ideas and potential enhancements for later consideration. Items listed here do not alter the current scope or delivery sequencing.
+
+- As a solo developer, I want the Repositories page command-strip actions (Refresh, Add, Remove, Bulk) to be fully wired up so that these actions become functional rather than placeholder-only.
+- As a solo developer, I want richer repository filters on the Repositories page, such as active, archived, recent, and similar repository-state filters, so that I can more easily organise and locate repositories.
 
 ## Foundation (Cross-Cutting)
 
@@ -35,7 +40,8 @@ Labels: `type/epic`, `area/infrastructure`
 <!-- Retroactive wireframe-alignment follow-ons planned 2026-03-17: #131 Repositories refresh, #132 Repositories tests, #133 Label Manager refresh, #134 Label Manager tests, #135 Audit Dashboard refresh, #136 Audit Dashboard tests -->
 
 - [x] As a solo developer, I want the application switched from Fluent UI Blazor to MudBlazor so that UI delivery by AI agents is more reliable and requires fewer workarounds. _(ADR-0012, Epic #63 — done, 2026-03-09)_
-- [ ] As a solo developer, I want the Repositories page refreshed to use a clearer command-strip, data-grid, and feedback layout so that repository management scales cleanly as SoloDevBoard grows. _(Issue #131 planned for v0.2.0; paired test issue #132; wireframe-aligned follow-on to #67.)_
+- [x] As a solo developer, I want the Repositories page refreshed to use a clearer command-strip, data-grid, and feedback layout so that repository management scales cleanly as SoloDevBoard grows. _(Issue #131 implemented on 2026-03-17; paired bUnit coverage issue #132 also complete; wireframe-aligned follow-on to #67.)_
+  - Implementation note: Completed 2026-03-17. The new Repositories page layout, command strip, responsive actions, search, data grid, and feedback region are now live. Paired bUnit test coverage (#132) is also complete.
 - [ ] As a solo developer, I want the Label Manager page refreshed into tabbed workflows for Labels, Recommended Taxonomy, and Synchronise so that label-management modes have a clearer mental model. _(Issue #133 planned for v0.2.0; paired test issue #134; wireframe-aligned follow-on to #68.)_
 - [ ] As a solo developer, I want the Audit Dashboard refreshed with a clearer command surface, KPI summary cards, and grouped health indicators so that repository health is easier to scan and act on. _(Issue #135 planned for v0.2.0; paired test issue #136; wireframe-aligned follow-on to #40 and #48.)_
 
