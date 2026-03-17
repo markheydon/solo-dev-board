@@ -1,5 +1,3 @@
-using SoloDevBoard.Domain;
-
 namespace SoloDevBoard.Domain.Entities.Milestones;
 
 /// <summary>Represents a GitHub milestone.</summary>

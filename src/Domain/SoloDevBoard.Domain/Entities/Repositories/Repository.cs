@@ -1,5 +1,3 @@
-using SoloDevBoard.Domain;
-
 namespace SoloDevBoard.Domain.Entities.Repositories;
 
 /// <summary>Represents a GitHub repository.</summary>

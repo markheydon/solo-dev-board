@@ -1,5 +1,3 @@
-using SoloDevBoard.Domain;
-
 namespace SoloDevBoard.Domain.Entities.Workflows;
 
 /// <summary>Represents a GitHub Actions workflow run.</summary>

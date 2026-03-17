@@ -1,4 +1,3 @@
-using SoloDevBoard.Domain;
 using SoloDevBoard.Domain.Entities.Labels;
 using SoloDevBoard.Domain.Entities.Milestones;
 

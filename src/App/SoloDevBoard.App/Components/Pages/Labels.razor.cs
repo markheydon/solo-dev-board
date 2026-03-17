@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Logging;
 using MudBlazor;
 using SoloDevBoard.App.Components.Dialogs;
 using SoloDevBoard.Application.Services.Labels;
