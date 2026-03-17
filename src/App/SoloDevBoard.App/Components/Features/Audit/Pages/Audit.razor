@@ -9,9 +9,9 @@
 
     @if (isLoadingRepositories)
     {
-        <MudPaper Class="pa-3" Outlined="true" aria-live="polite" role="status" data-testid="audit-repository-filter-loading">
+        <MudPaper Class="pa-4" Outlined="true" aria-live="polite" role="status" data-testid="audit-feedback-region">
             <MudStack Spacing="2">
-                <MudText Typo="Typo.subtitle2">Repository filter</MudText>
+                <MudText Typo="Typo.h6">Repository selector</MudText>
                 <MudSkeleton Height="56px" Animation="Animation.Wave" />
                 <MudSkeleton Height="36px" Width="220px" Animation="Animation.Wave" />
                 <MudSkeleton Height="20px" Width="340px" Animation="Animation.Wave" />
@@ -29,7 +29,7 @@
     }
     else if (!string.IsNullOrWhiteSpace(repositoryLoadErrorMessage))
     {
-        <MudPaper Class="pa-4" Elevation="1" aria-live="assertive" role="alert" data-testid="audit-error-state">
+        <MudPaper Class="pa-4" Elevation="1" aria-live="assertive" role="alert" data-testid="audit-feedback-region">
             <MudStack Spacing="2">
                 <MudText Typo="Typo.h6">Unable to load repositories</MudText>
                 <MudText Typo="Typo.body2">@repositoryLoadErrorMessage</MudText>
@@ -38,7 +38,7 @@
     }
     else if (repositoryOptions.Count == 0)
     {
-        <MudPaper Class="pa-4" Elevation="1" aria-live="polite" data-testid="audit-empty-state">
+        <MudPaper Class="pa-4" Elevation="1" aria-live="polite" data-testid="audit-feedback-region">
             <MudStack Spacing="1">
                 <MudText Typo="Typo.h6">No repositories found</MudText>
                 <MudText Typo="Typo.body2">No active repositories were returned for this account.</MudText>
@@ -47,9 +47,10 @@
     }
     else
     {
-        <MudPaper Class="pa-3" Outlined="true" data-testid="audit-repository-filter">
+        <MudPaper Class="pa-4" Outlined="true" data-testid="audit-command-surface">
             <MudStack Spacing="2">
-                <MudText Typo="Typo.subtitle2">Repository filter</MudText>
+                <MudText Typo="Typo.h6">Repository selector</MudText>
+                <MudText Typo="Typo.body2">Select the repositories to include, then load the latest dashboard snapshot.</MudText>
                 <RepositorySelector
                     Title=""
                     Label="Repositories"
@@ -65,19 +66,21 @@
                     AutocompleteTestId="audit-repository-autocomplete"
                     SummaryTestId="audit-repository-summary" />
 
-                <MudButton Variant="Variant.Outlined"
-                           Color="Color.Secondary"
-                           Disabled="@(isLoadingRepositories || isLoadingAuditData || selectedRepositoryNames.Count == 0)"
-                           OnClick="LoadSelectedRepositoriesAsync"
-                           data-testid="audit-load-selected-button">
-                    Load selected repositories
-                </MudButton>
+                <MudStack Row="true" Justify="Justify.FlexEnd">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               Disabled="@(isLoadingRepositories || isLoadingAuditData || selectedRepositoryNames.Count == 0)"
+                               OnClick="LoadSelectedRepositoriesAsync"
+                               data-testid="audit-load-selected-button">
+                        Load selected repositories
+                    </MudButton>
+                </MudStack>
             </MudStack>
         </MudPaper>
 
         @if (isLoadingAuditData)
         {
-            <MudPaper Class="pa-4" Elevation="1" aria-live="polite" role="status" data-testid="audit-loading-state">
+            <MudPaper Class="pa-4" Elevation="1" aria-live="polite" role="status" data-testid="audit-feedback-region">
                 <MudStack Spacing="2">
                     <MudSkeleton Height="86px" Animation="Animation.Wave" />
                     <MudSkeleton Height="240px" Animation="Animation.Wave" />
@@ -87,7 +90,7 @@
         }
         else if (!string.IsNullOrWhiteSpace(auditLoadErrorMessage))
         {
-            <MudPaper Class="pa-4" Elevation="1" aria-live="assertive" role="alert" data-testid="audit-summary-error-state">
+            <MudPaper Class="pa-4" Elevation="1" aria-live="assertive" role="alert" data-testid="audit-feedback-region">
                 <MudStack Spacing="2">
                     <MudText Typo="Typo.h6">Unable to load audit summary</MudText>
                     <MudText Typo="Typo.body2">@auditLoadErrorMessage</MudText>
@@ -96,26 +99,43 @@
         }
         else if (!hasLoadedAuditSummary)
         {
-            <MudPaper Class="pa-4" Elevation="1" data-testid="audit-selection-prompt">
+            <MudPaper Class="pa-4" Elevation="1" data-testid="audit-feedback-region">
                 <MudText Typo="Typo.body2">Select one or more repositories, then load the audit summary.</MudText>
             </MudPaper>
         }
         else
         {
-            <MudGrid>
-                <MudItem xs="12" sm="6">
-                    <MudPaper Class="pa-3" Outlined="true" data-testid="audit-total-issues-card">
-                        <MudText Typo="Typo.caption">Total open issues</MudText>
-                        <MudText Typo="Typo.h5">@totalOpenIssues</MudText>
-                    </MudPaper>
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudPaper Class="pa-3" Outlined="true" data-testid="audit-total-prs-card">
-                        <MudText Typo="Typo.caption">Total open pull requests</MudText>
-                        <MudText Typo="Typo.h5">@totalOpenPullRequests</MudText>
-                    </MudPaper>
-                </MudItem>
-            </MudGrid>
+            <MudPaper Class="pa-4" Outlined="true" data-testid="audit-kpi-summary-cards">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.h6">KPI summary</MudText>
+                    <MudGrid>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudPaper Class="pa-3" Outlined="true" data-testid="audit-total-issues-card">
+                                <MudText Typo="Typo.caption">Total open issues</MudText>
+                                <MudText Typo="Typo.h5">@totalOpenIssues</MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudPaper Class="pa-3" Outlined="true" data-testid="audit-total-prs-card">
+                                <MudText Typo="Typo.caption">Total open pull requests</MudText>
+                                <MudText Typo="Typo.h5">@totalOpenPullRequests</MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudPaper Class="pa-3" Outlined="true" data-testid="audit-unlabelled-kpi-card">
+                                <MudText Typo="Typo.caption">Unlabelled issues</MudText>
+                                <MudText Typo="Typo.h5">@totalUnlabelledIssues</MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudPaper Class="pa-3" Outlined="true" data-testid="audit-failing-workflows-kpi-card">
+                                <MudText Typo="Typo.caption">Failing workflows</MudText>
+                                <MudText Typo="Typo.h5">@totalFailingWorkflows</MudText>
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
+                </MudStack>
+            </MudPaper>
 
             <MudPaper Class="pa-2" Elevation="1" data-testid="audit-summary-table">
                 <MudDataGrid T="RepositoryAuditSummaryDto"
@@ -143,117 +163,122 @@
                 </MudDataGrid>
             </MudPaper>
 
-            <MudExpansionPanels MultiExpansion="true" Class="mt-2" data-testid="audit-health-indicator-sections">
-            <MudExpansionPanel Expanded="true" data-testid="audit-unlabelled-issues-section">
-                <TitleContent>
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                        <MudText Typo="Typo.subtitle1">Unlabelled Issues</MudText>
-                        <MudBadge Color="Color.Warning" Content="@unlabelledIssues.Count" />
-                    </MudStack>
-                </TitleContent>
-                <ChildContent>
-                    @if (unlabelledIssues.Count == 0)
-                    {
-                        <MudText Typo="Typo.body2" data-testid="audit-unlabelled-empty">No unlabelled issues — great!</MudText>
-                    }
-                    else
-                    {
-                        <MudTable T="IssueDto" Items="unlabelledIssues" Dense="true" Hover="true" data-testid="audit-unlabelled-table">
-                            <HeaderContent>
-                                <MudTh>Repository</MudTh>
-                                <MudTh>Issue</MudTh>
-                                <MudTh>Title</MudTh>
-                                <MudTh>Age (days)</MudTh>
-                            </HeaderContent>
-                            <RowTemplate>
-                                <MudTd DataLabel="Repository">@context.RepositoryFullName</MudTd>
-                                <MudTd DataLabel="Issue">
-                                    <MudLink Href="@context.HtmlUrl" Target="_blank" rel="noopener noreferrer">
-                                        #@context.Number
-                                    </MudLink>
-                                </MudTd>
-                                <MudTd DataLabel="Title">@context.Title</MudTd>
-                                <MudTd DataLabel="Age (days)">@GetDaysBetween(context.CreatedAt)</MudTd>
-                            </RowTemplate>
-                        </MudTable>
-                    }
-                </ChildContent>
-            </MudExpansionPanel>
+            <MudPaper Class="pa-3" Outlined="true" data-testid="audit-health-indicators-group">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.h6">Health indicators</MudText>
+                    <MudExpansionPanels MultiExpansion="true" data-testid="audit-health-indicator-sections">
+                        <MudExpansionPanel Expanded="true" data-testid="audit-unlabelled-issues-section">
+                            <TitleContent>
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudText Typo="Typo.subtitle1">Unlabelled Issues</MudText>
+                                    <MudBadge Color="Color.Warning" Content="@unlabelledIssues.Count" />
+                                </MudStack>
+                            </TitleContent>
+                            <ChildContent>
+                                @if (unlabelledIssues.Count == 0)
+                                {
+                                    <MudText Typo="Typo.body2" data-testid="audit-unlabelled-empty">No unlabelled issues — great!</MudText>
+                                }
+                                else
+                                {
+                                    <MudTable T="IssueDto" Items="unlabelledIssues" Dense="true" Hover="true" data-testid="audit-unlabelled-table">
+                                        <HeaderContent>
+                                            <MudTh>Repository</MudTh>
+                                            <MudTh>Issue</MudTh>
+                                            <MudTh>Title</MudTh>
+                                            <MudTh>Age (days)</MudTh>
+                                        </HeaderContent>
+                                        <RowTemplate>
+                                            <MudTd DataLabel="Repository">@context.RepositoryFullName</MudTd>
+                                            <MudTd DataLabel="Issue">
+                                                <MudLink Href="@context.HtmlUrl" Target="_blank" rel="noopener noreferrer">
+                                                    #@context.Number
+                                                </MudLink>
+                                            </MudTd>
+                                            <MudTd DataLabel="Title">@context.Title</MudTd>
+                                            <MudTd DataLabel="Age (days)">@GetDaysBetween(context.CreatedAt)</MudTd>
+                                        </RowTemplate>
+                                    </MudTable>
+                                }
+                            </ChildContent>
+                        </MudExpansionPanel>
 
-            <MudExpansionPanel Expanded="true" data-testid="audit-stale-prs-section">
-                <TitleContent>
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                        <MudText Typo="Typo.subtitle1">Stale Pull Requests</MudText>
-                        <MudBadge Color="Color.Warning" Content="@stalePullRequests.Count" />
-                    </MudStack>
-                </TitleContent>
-                <ChildContent>
-                    @if (stalePullRequests.Count == 0)
-                    {
-                        <MudText Typo="Typo.body2" data-testid="audit-stale-empty">No stale pull requests — great!</MudText>
-                    }
-                    else
-                    {
-                        <MudTable T="PullRequestDto" Items="stalePullRequests" Dense="true" Hover="true" data-testid="audit-stale-table">
-                            <HeaderContent>
-                                <MudTh>Repository</MudTh>
-                                <MudTh>Pull request</MudTh>
-                                <MudTh>Title</MudTh>
-                                <MudTh>Author</MudTh>
-                                <MudTh>Days since update</MudTh>
-                            </HeaderContent>
-                            <RowTemplate>
-                                <MudTd DataLabel="Repository">@context.RepositoryFullName</MudTd>
-                                <MudTd DataLabel="Pull request">
-                                    <MudLink Href="@context.HtmlUrl" Target="_blank" rel="noopener noreferrer">
-                                        #@context.Number
-                                    </MudLink>
-                                </MudTd>
-                                <MudTd DataLabel="Title">@context.Title</MudTd>
-                                <MudTd DataLabel="Author">@context.AuthorLogin</MudTd>
-                                <MudTd DataLabel="Days since update">@GetDaysBetween(context.UpdatedAt)</MudTd>
-                            </RowTemplate>
-                        </MudTable>
-                    }
-                </ChildContent>
-            </MudExpansionPanel>
+                        <MudExpansionPanel Expanded="true" data-testid="audit-stale-prs-section">
+                            <TitleContent>
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudText Typo="Typo.subtitle1">Stale Pull Requests</MudText>
+                                    <MudBadge Color="Color.Warning" Content="@stalePullRequests.Count" />
+                                </MudStack>
+                            </TitleContent>
+                            <ChildContent>
+                                @if (stalePullRequests.Count == 0)
+                                {
+                                    <MudText Typo="Typo.body2" data-testid="audit-stale-empty">No stale pull requests — great!</MudText>
+                                }
+                                else
+                                {
+                                    <MudTable T="PullRequestDto" Items="stalePullRequests" Dense="true" Hover="true" data-testid="audit-stale-table">
+                                        <HeaderContent>
+                                            <MudTh>Repository</MudTh>
+                                            <MudTh>Pull request</MudTh>
+                                            <MudTh>Title</MudTh>
+                                            <MudTh>Author</MudTh>
+                                            <MudTh>Days since update</MudTh>
+                                        </HeaderContent>
+                                        <RowTemplate>
+                                            <MudTd DataLabel="Repository">@context.RepositoryFullName</MudTd>
+                                            <MudTd DataLabel="Pull request">
+                                                <MudLink Href="@context.HtmlUrl" Target="_blank" rel="noopener noreferrer">
+                                                    #@context.Number
+                                                </MudLink>
+                                            </MudTd>
+                                            <MudTd DataLabel="Title">@context.Title</MudTd>
+                                            <MudTd DataLabel="Author">@context.AuthorLogin</MudTd>
+                                            <MudTd DataLabel="Days since update">@GetDaysBetween(context.UpdatedAt)</MudTd>
+                                        </RowTemplate>
+                                    </MudTable>
+                                }
+                            </ChildContent>
+                        </MudExpansionPanel>
 
-            <MudExpansionPanel Expanded="true" data-testid="audit-failing-workflows-section">
-                <TitleContent>
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                        <MudText Typo="Typo.subtitle1">Failing Workflows</MudText>
-                        <MudBadge Color="Color.Error" Content="@failingWorkflowRuns.Count" />
-                    </MudStack>
-                </TitleContent>
-                <ChildContent>
-                    @if (failingWorkflowRuns.Count == 0)
-                    {
-                        <MudText Typo="Typo.body2" data-testid="audit-workflows-empty">No failing workflows — great!</MudText>
-                    }
-                    else
-                    {
-                        <MudTable T="WorkflowRunDto" Items="failingWorkflowRuns" Dense="true" Hover="true" data-testid="audit-workflows-table">
-                            <HeaderContent>
-                                <MudTh>Repository</MudTh>
-                                <MudTh>Workflow</MudTh>
-                                <MudTh>Branch</MudTh>
-                                <MudTh>Run</MudTh>
-                            </HeaderContent>
-                            <RowTemplate>
-                                <MudTd DataLabel="Repository">@context.RepositoryFullName</MudTd>
-                                <MudTd DataLabel="Workflow">@context.WorkflowName</MudTd>
-                                <MudTd DataLabel="Branch">@context.HeadBranch</MudTd>
-                                <MudTd DataLabel="Run">
-                                    <MudLink Href="@context.HtmlUrl" Target="_blank" rel="noopener noreferrer">
-                                        Open run
-                                    </MudLink>
-                                </MudTd>
-                            </RowTemplate>
-                        </MudTable>
-                    }
-                </ChildContent>
-            </MudExpansionPanel>
-            </MudExpansionPanels>
+                        <MudExpansionPanel Expanded="true" data-testid="audit-failing-workflows-section">
+                            <TitleContent>
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudText Typo="Typo.subtitle1">Failing Workflows</MudText>
+                                    <MudBadge Color="Color.Error" Content="@failingWorkflowRuns.Count" />
+                                </MudStack>
+                            </TitleContent>
+                            <ChildContent>
+                                @if (failingWorkflowRuns.Count == 0)
+                                {
+                                    <MudText Typo="Typo.body2" data-testid="audit-workflows-empty">No failing workflows — great!</MudText>
+                                }
+                                else
+                                {
+                                    <MudTable T="WorkflowRunDto" Items="failingWorkflowRuns" Dense="true" Hover="true" data-testid="audit-workflows-table">
+                                        <HeaderContent>
+                                            <MudTh>Repository</MudTh>
+                                            <MudTh>Workflow</MudTh>
+                                            <MudTh>Branch</MudTh>
+                                            <MudTh>Run</MudTh>
+                                        </HeaderContent>
+                                        <RowTemplate>
+                                            <MudTd DataLabel="Repository">@context.RepositoryFullName</MudTd>
+                                            <MudTd DataLabel="Workflow">@context.WorkflowName</MudTd>
+                                            <MudTd DataLabel="Branch">@context.HeadBranch</MudTd>
+                                            <MudTd DataLabel="Run">
+                                                <MudLink Href="@context.HtmlUrl" Target="_blank" rel="noopener noreferrer">
+                                                    Open run
+                                                </MudLink>
+                                            </MudTd>
+                                        </RowTemplate>
+                                    </MudTable>
+                                }
+                            </ChildContent>
+                        </MudExpansionPanel>
+                    </MudExpansionPanels>
+                </MudStack>
+            </MudPaper>
         }
     }
 </MudStack>

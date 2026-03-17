@@ -43,7 +43,8 @@ Labels: `type/epic`, `area/infrastructure`
 - [x] As a solo developer, I want the Repositories page refreshed to use a clearer command-strip, data-grid, and feedback layout so that repository management scales cleanly as SoloDevBoard grows. _(Issue #131 implemented on 2026-03-17; paired bUnit coverage issue #132 also complete; wireframe-aligned follow-on to #67.)_
   - Implementation note: Completed 2026-03-17. The new Repositories page layout, command strip, responsive actions, search, data grid, and feedback region are now live. Paired bUnit test coverage (#132) is also complete.
 - [x] As a solo developer, I want the Label Manager page refreshed into tabbed workflows for Labels, Recommended Taxonomy, and Synchronise so that label-management modes have a clearer mental model. _(Issue #133 implemented on 2026-03-17; paired test issue #134 also complete; wireframe-aligned follow-on to #68.)_
-- [ ] As a solo developer, I want the Audit Dashboard refreshed with a clearer command surface, KPI summary cards, and grouped health indicators so that repository health is easier to scan and act on. _(Issue #135 planned for v0.2.0; paired test issue #136; wireframe-aligned follow-on to #40 and #48.)_
+- [x] As a solo developer, I want the Audit Dashboard refreshed with a clearer command surface, KPI summary cards, grouped health indicators, and consistent feedback region so that repository health is easier to scan and act on. _(Issue #135 implemented on 2026-03-17; paired test issue #136 also complete; wireframe-aligned follow-on to #40 and #48.)_
+  - Implementation note: Completed 2026-03-17. The Audit Dashboard now features a wireframe-aligned command surface, KPI summary cards, grouped health indicators, and a consistent feedback region. Paired bUnit test coverage (#136) validates command surface, KPI summary, health indicator, and zero-state rendering paths.
 
 ---
 
@@ -250,4 +251,4 @@ Labels: `type/chore`, `area/infrastructure`
 - [ ] Configure logging with structured output (Azure Application Insights integration). _(#107)_
 - [x] Set up Dependabot for automated dependency updates. _(done — `dependabot.yml` and auto-merge workflow added previously; see issue #109.)_
 
- 
+
