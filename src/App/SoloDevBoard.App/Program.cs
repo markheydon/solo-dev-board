@@ -7,8 +7,9 @@ using Microsoft.Extensions.Options;
 using MudBlazor.Services;
 using SoloDevBoard.App.Authentication;
 using SoloDevBoard.App.Components;
-using SoloDevBoard.Application.Services;
-using SoloDevBoard.Infrastructure;
+using SoloDevBoard.Application.Services.Common;
+using SoloDevBoard.Infrastructure.Common;
+using SoloDevBoard.Infrastructure.GitHub;
 using SoloDevBoard.Infrastructure.Identity;
 
 const string HostedSignInStateCookieName = "solo-dev-board.hosted-sign-in-state";

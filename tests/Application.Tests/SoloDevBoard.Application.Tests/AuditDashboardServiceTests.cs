@@ -1,7 +1,13 @@
 using Moq;
 using SoloDevBoard.Application.Identity;
-using SoloDevBoard.Application.Services;
-using SoloDevBoard.Domain.Entities;
+using SoloDevBoard.Application.Services.Audit;
+using SoloDevBoard.Application.Services.GitHub;
+using SoloDevBoard.Domain.Entities.BoardRules;
+using SoloDevBoard.Domain.Entities.Labels;
+using SoloDevBoard.Domain.Entities.Milestones;
+using SoloDevBoard.Domain.Entities.Repositories;
+using SoloDevBoard.Domain.Entities.Triage;
+using SoloDevBoard.Domain.Entities.Workflows;
 
 namespace SoloDevBoard.Application.Tests;
 

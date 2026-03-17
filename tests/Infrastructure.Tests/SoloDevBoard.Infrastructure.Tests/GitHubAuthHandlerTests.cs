@@ -1,6 +1,7 @@
 using System.Net;
 using Moq;
 using SoloDevBoard.Application.Identity;
+using SoloDevBoard.Infrastructure.GitHub;
 
 namespace SoloDevBoard.Infrastructure.Tests;
 

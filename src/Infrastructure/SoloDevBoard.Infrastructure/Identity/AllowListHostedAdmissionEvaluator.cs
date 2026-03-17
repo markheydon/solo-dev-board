@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.Extensions.Options;
+using SoloDevBoard.Infrastructure.GitHub;
 
 namespace SoloDevBoard.Infrastructure.Identity;
 

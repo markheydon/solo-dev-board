@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SoloDevBoard.Application.Identity;
-using SoloDevBoard.Application.Services;
+using SoloDevBoard.Application.Services.Common;
+using SoloDevBoard.Infrastructure.Common;
+using SoloDevBoard.Infrastructure.GitHub;
 using SoloDevBoard.Infrastructure.Identity;
 
 namespace SoloDevBoard.Infrastructure.Tests;

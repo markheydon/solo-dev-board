@@ -16,6 +16,15 @@ Labels: `type/epic`, `area/infrastructure`
 <!-- Feature #5: GitHub API Integration with PAT Authentication -->
 
 
+### Feature-Folder Namespace Restructure (Technical Debt Chore)
+
+<!-- Completed 2026-03-17 — no issue raised; driven by developer dissatisfaction with the flat Services/ structure -->
+<!-- Reorganised Application, Infrastructure, and Domain layers into feature-aligned subfolders with matching namespaces -->
+
+- [x] Chore: Application, Infrastructure, and Domain layers have been reorganised into feature-folder subfolders with aligned namespaces so that the codebase is easier to navigate and provides a scalable foundation for future feature delivery. _(No issue — done, 2026-03-17; branch `mini-restructure`.)_
+
+---
+
 ### MudBlazor Migration (Infrastructure Chore)
 
 <!-- Planned 2026-03-09 per ADR-0012 — replaces Fluent UI Blazor with MudBlazor across the full application -->

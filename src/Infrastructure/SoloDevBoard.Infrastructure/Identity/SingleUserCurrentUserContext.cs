@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using SoloDevBoard.Application.Identity;
+using SoloDevBoard.Infrastructure.GitHub;
 
 namespace SoloDevBoard.Infrastructure.Identity;
 

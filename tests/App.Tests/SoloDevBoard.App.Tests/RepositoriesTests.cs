@@ -4,7 +4,7 @@ using Moq;
 using MudBlazor;
 using MudBlazor.Services;
 using SoloDevBoard.App.Components.Pages;
-using SoloDevBoard.Application.Services;
+using SoloDevBoard.Application.Services.Repositories;
 
 namespace SoloDevBoard.App.Tests;
 
