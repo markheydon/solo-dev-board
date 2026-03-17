@@ -94,12 +94,13 @@ When Copilot Chat is asked to add a feature, it **must** perform the following s
 
 1. **Update `plan/BACKLOG.md`** — add the feature to the relevant epic, formatted as a user story.
 2. **Update `plan/SCOPE.md`** — if the feature changes scope, update the in-scope or out-of-scope sections.
-3. **Create or update an ADR** in `adr/` if the feature requires an architectural decision.
-4. **Create a stub in `docs/user-guide/`** if the feature is user-facing.
-5. **Update `docs/index.md`** quick links if a new doc page is added.
-6. **Open a GitHub Issue** (or instruct the developer to do so) following the label strategy in `plan/LABEL_STRATEGY.md`.
-7. **Implement the feature** following the architecture and conventions above.
-8. **Add or update tests** in the appropriate test project.
+3. **Create a wireframe in `plan/wireframes/`** and update `plan/wireframes/README.md` if the feature will result in a new page, a new major page region, or a substantive page refresh.
+4. **Create or update an ADR** in `adr/` if the feature requires an architectural decision.
+5. **Create a stub in `docs/user-guide/`** if the feature is user-facing.
+6. **Update `docs/index.md`** quick links if a new doc page is added.
+7. **Open a GitHub Issue** (or instruct the developer to do so) following the label strategy in `plan/LABEL_STRATEGY.md`.
+8. **Implement the feature** following the architecture and conventions above.
+9. **Add or update tests** in the appropriate test project.
 
 ---
 
@@ -214,8 +215,9 @@ Default workflow order for feature delivery:
 Execution gates:
 
 1. Do not start coding before planning and issue creation are complete.
-2. Do not close feature work before tests and documentation updates are complete.
-3. Scope-impacting changes must update `plan/SCOPE.md` and `plan/BACKLOG.md` (via Tech Writer agent).
+2. For page-producing UI work, do not start implementation before the planning wireframe exists in `plan/wireframes/` and is referenced by the relevant planning artefacts or issues.
+3. Do not close feature work before tests and documentation updates are complete.
+4. Scope-impacting changes must update `plan/SCOPE.md` and `plan/BACKLOG.md` (via Tech Writer agent).
 
 ---
 

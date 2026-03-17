@@ -15,6 +15,7 @@ argument-hint: Specify document type and outline, e.g., "update BACKLOG.md with 
 
 Invoke this agent when you need to:
 - Create or update entries in `plan/BACKLOG.md`, `plan/SCOPE.md`, or other planning documents.
+- Create or update planning wireframes in `plan/wireframes/` for page-producing features.
 - Write or refactor Architectural Decision Records (ADRs).
 - Create or update user guide pages in `docs/user-guide/`.
 - Update `docs/index.md` quick links.
@@ -52,6 +53,13 @@ Invoke this agent when you need to:
 - Document milestone criteria.
 - Clarify dependencies between phases.
 - Use consistent architectural vocabulary.
+
+#### Planning Wireframes
+- Create wireframe documents in `plan/wireframes/` for features that introduce a new page, a new major page region, or a substantive page refresh.
+- Follow the established structure: Purpose, User Goals, Layout, Interaction Notes, State Variants, Accessibility Notes, and Responsive Behaviour.
+- Keep wireframes scoped to the currently planned delivery slice and avoid implying unapproved feature expansion.
+- Update `plan/wireframes/README.md` so new wireframes are indexed and discoverable.
+- Reference the related GitHub issues or planning items where that context is known.
 
 ### 2. Architectural Decision Records (ADRs)
 
@@ -179,6 +187,7 @@ When complete, this agent produces:
 
 ### Artefacts Created/Modified
 - **Planning files** (`plan/*.md`) with user stories, scope statements, or implementation notes.
+- **Wireframe documents** (`plan/wireframes/*.md`) for planned page-producing features.
 - **ADRs** (`adr/*.md`) with full decision rationale and consequences.
 - **User guides** (`docs/user-guide/*.md`) following Diátaxis principles.
 - **Index** (`docs/index.md`) with updated quick links when new pages added.
@@ -228,6 +237,7 @@ Return to calling agent (PM Orchestrator or Delivery Agent):
 
 **Writes to:**
 - `plan/BACKLOG.md`, `plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md`.
+- `plan/wireframes/*.md`, `plan/wireframes/README.md`.
 - `adr/*.md` (new ADRs or updates to existing ones).
 - `docs/user-guide/*.md` (new guides or updates).
 - `docs/index.md` (quick links section).

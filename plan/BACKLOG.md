@@ -121,6 +121,13 @@ Labels: `type/epic`, `area/migration`
 - [x] Test: Unit tests for migration orchestration and milestone services. _(Completed as #96 for v0.3.0. Coverage added for guard clauses, multi-target aggregation, conflict handling, and partial failure behaviour.)_
 - [x] Test: Infrastructure tests for GitHub milestone migration support. _(Completed as #97 for v0.3.0. Coverage added for response mapping, create/update request behaviour, non-success responses, and guard clauses.)_
 - [x] Test: bUnit tests for the Migration page workflow. _(Completed as #98 for v0.3.0. Coverage added for empty state, selection and preview gating, duplicate apply prevention, and post-migration summary error rendering.)_
+
+### Wireframe-First Refresh Planning (Retroactive)
+
+- [x] As a solo developer, I want an approved wireframe artefact for the One-Click Migration page refresh so that implementation and test work can align on workflow-first layout, MudBlazor-first planning, and accessibility requirements. _(Wireframe created on 2026-03-17: plan/wireframes/one-click-migration-wireframe.md.)_
+- [ ] As a solo developer, I want the One-Click Migration page refreshed against the approved wireframe so that repository selection, migration scope, conflict strategy, preview review, apply action, post-migration summary, and feedback states are clearer to scan and operate. _(Issue #139; wireframe reference: plan/wireframes/one-click-migration-wireframe.md.)_
+- [ ] Test: bUnit coverage for the One-Click Migration page refresh should reference the approved wireframe so that the planned layout, state variants, and workflow gating are protected against regression. _(Issue #140; wireframe reference: plan/wireframes/one-click-migration-wireframe.md.)_
+
 - [ ] As a solo developer, I want to migrate project board column configurations so that new repositories start with the same board structure. _(Deferred follow-on slice; requires GitHub Projects v2 support and is captured in ADR-0013.)_
 
 ---

@@ -44,6 +44,7 @@ This prompt invokes the **Delivery Agent**, which executes:
   - Labels applied (`type/`, `priority/`, `area/`, `size/`)
   - `status/todo` or `status/in-progress` label
   - Technical plan or breakdown in description
+- For page-producing Blazor UI work, verify that an approved wireframe already exists in `plan/wireframes/` and is referenced by the relevant issue or planning artefact
 - **If issue not ready:** Escalate to PM Orchestrator for re-planning
 - **Project board update:** Remove `status/todo` label, add `status/in-progress`; use `github-project` skill (Lifecycle Event 2) to set project Status → "In Progress" and **overwrite Start Date with today's actual start date** (not the original planned date — this is a required step, not optional)
 
@@ -70,6 +71,7 @@ All source code, tests, and documentation changes are committed to this branch. 
 - Apply .NET 10 / C# 14 conventions per `.github/instructions/dotnet-framework.instructions.md`
 - Use MudBlazor components per `.github/skills/mudblazor/SKILL.md` for UI work
 - For Blazor UI work, prefer MudBlazor layout primitives and utility classes before introducing `.razor.css`; raw HTML and custom CSS need a clear justification
+- For page-producing UI work, implement against the approved planning wireframe rather than creating a new wireframe during delivery
 - **UK English only:** All comments, strings, user-facing text in UK English
 
 ### 4. Test Creation

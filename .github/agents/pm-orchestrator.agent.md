@@ -47,6 +47,8 @@ Invoke this agent when you need to:
 - Generate acceptance criteria, dependencies, estimates
 - Identify ADR requirements if architectural decisions involved
 - For any Blazor UI work, specify the expected MudBlazor components or layout primitives and note that utility classes should be preferred over bespoke CSS unless a genuine gap is known in advance
+- For any feature that will result in a new page, a new major page region, or a substantive page refresh, require a wireframe artefact in `plan/wireframes/` before planning is considered complete
+- Ensure the resulting feature, story, and test issues reference the approved wireframe so Delivery Agent work starts from a planning baseline rather than creating the wireframe during implementation
 
 ### 4. Issue Creation
 - Use `github-issues` skill to create GitHub issues
@@ -79,6 +81,8 @@ Invoke this agent when you need to:
 - **Delegate to Tech Writer agent** for all planning artefact updates:
   - `plan/BACKLOG.md` — mark item as planned/in-progress with epic/feature structure
   - `plan/SCOPE.md` — update if scope clarification was required during planning
+  - `plan/wireframes/*.md` — create a wireframe for page-producing features or substantive page refreshes
+  - `plan/wireframes/README.md` — add the new wireframe to the index
   - `adr/*.md` — create new ADR if architectural decision was made during breakdown
 - **Provide structured input** to Tech Writer:
   - Purpose: what changed and why (e.g., "feature planned", "architecture decision made")
@@ -116,12 +120,14 @@ When complete, this agent produces:
 ### Artefacts Created
 - GitHub issues with full metadata (labels, milestones, acceptance criteria)
 - Technical plan (Epic/Feature/Story breakdown) in issue descriptions
+- Wireframe artefact in `plan/wireframes/` for any page-producing feature or page refresh
 - Test issues linked to feature issues
 - Dependency relationships established
 
 ### Artefacts Updated
 - `plan/BACKLOG.md` — item marked as planned/in-progress (via Tech Writer agent)
 - `plan/SCOPE.md` — updated if scope clarification needed (via Tech Writer agent)
+- `plan/wireframes/README.md` — updated when a new wireframe is created (via Tech Writer agent)
 - `adr/*.md` — new ADR created if architectural decision required (via Tech Writer agent)
 
 ### Handoff Package
@@ -150,6 +156,7 @@ Deliver to user:
 Planning is complete when:
 - ✅ Backlog item selected and scope validated
 - ✅ Technical plan produced via `breakdown-plan`
+- ✅ Wireframe created and referenced for any page-producing feature or page refresh
 - ✅ GitHub issues created with correct labels/milestones
 - ✅ Test strategy defined via `breakdown-test`
 - ✅ Dependencies and acceptance criteria documented

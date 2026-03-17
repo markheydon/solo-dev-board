@@ -16,8 +16,9 @@ Execute the full planning workflow:
 1. Select next item from backlog (or plan a specific item you specify)
 2. Validate scope alignment
 3. Create technical plan using `breakdown-plan` skill (Epic/Feature/Story decomposition)
-4. Set up GitHub issues with correct labels, milestones, acceptance criteria
-5. Define test strategy using `breakdown-test` skill
+4. Create a planning wireframe for any feature that will result in a new page or a substantive page refresh
+5. Set up GitHub issues with correct labels, milestones, acceptance criteria
+6. Define test strategy using `breakdown-test` skill
 
 **Result:** Work is planned, issues created, and ready for the Delivery Agent to implement.
 
@@ -57,6 +58,13 @@ This prompt invokes the **PM Orchestrator Agent**, which executes:
 - Estimate size (xs/s/m/l/xl)
 - For Blazor UI work, capture the intended MudBlazor components or layout primitives in the plan and assume utility classes before bespoke CSS unless a real MudBlazor gap is already known
 
+### 3a. Wireframe Creation for Page-Producing Features
+- If the planned work will introduce a new page, a new major page region, or a substantive page refresh, create a wireframe artefact during planning.
+- Place the wireframe in `plan/wireframes/` using the established naming pattern.
+- Update `plan/wireframes/README.md` so the artefact is discoverable.
+- Reference the approved wireframe in the relevant feature, story, and test issues so Delivery Agent work starts from an explicit layout baseline.
+- Treat the wireframe as a planning prerequisite for page-producing UI work, not as an implementation-time task.
+
 ### 4. ADR Check
 - Determine if architectural decision required
 - If yes, invoke `create-architectural-decision-record` skill
@@ -93,6 +101,7 @@ This prompt invokes the **PM Orchestrator Agent**, which executes:
 ### Artefacts Created
 - **GitHub issues** with full metadata (title, description, labels, milestones, acceptance criteria)
 - **Technical plan** embedded in epic/feature issue descriptions
+- **Wireframe artefact** in `plan/wireframes/` for page-producing features
 - **Test issues** linked to feature work
 - **ADR** if architectural decision required
 - **Project board items** — all issues added to SoloDevBoard Roadmap with Phase/Priority/Status/dates
@@ -100,6 +109,7 @@ This prompt invokes the **PM Orchestrator Agent**, which executes:
 ### Artefacts Updated
 - **`plan/BACKLOG.md`** — item marked as planned/in-progress
 - **`plan/SCOPE.md`** — updated if scope clarification needed
+- **`plan/wireframes/README.md`** — updated if a new wireframe was created
 - **`adr/README.md`** — updated if new ADR created
 
 ### Planning Summary Delivered
@@ -117,6 +127,7 @@ This prompt invokes the **PM Orchestrator Agent**, which executes:
 
 ## Technical Plan Summary
 - **Architecture:** Blazor Server page composed from MudBlazor components, layout primitives, and utility classes; no bespoke CSS expected by default
+- **Wireframe:** `plan/wireframes/label-manager-wireframe.md` created during planning and referenced by the feature and test issues
 - **Layers affected:** App (UI), Application (service), Infrastructure (GitHub API client)
 - **Dependencies:** Requires GitHubService enhancement to support label CRUD
 - **ADR alignment:** ADR-0012 (MudBlazor component library)
@@ -255,6 +266,7 @@ Proceed with planning? (yes/no)
 Planning is NOT complete until:
 - ✅ Scope validated in `plan/SCOPE.md`
 - ✅ Technical plan created via `breakdown-plan`
+- ✅ Wireframe created and referenced for any page-producing feature or page refresh
 - ✅ GitHub issues created with correct labels/milestones
 - ✅ Test strategy defined via `breakdown-test`
 - ✅ ADR created if architectural decision made
