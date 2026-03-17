@@ -37,15 +37,13 @@ The current plan is that One-Click Migration will provide a broader preview-firs
 
 ## How to Use
 
-The consolidated label view and bulk CRUD operations are available on the `Labels` page.
+The Label Manager page now uses a tabbed layout to organise label management workflows. The repository selector is positioned above the tabs, allowing you to choose one or more repositories before switching between workflows.
 
-Current interactions:
+The three available tabs are:
 
-1. Select one or more active repositories in the repository selector.
-2. Select `Load selected repositories` to build a consolidated label view.
-3. Use the `Filter` input to narrow results by label name.
-4. Use `New label` to create labels for selected repositories.
-5. Use row-level `Edit` and `Delete` actions to modify existing labels.
+1. **Labels** — View, create, edit, and delete labels across the selected repositories. Use the consolidated label view and bulk CRUD operations here. Filter by label name, and use the `New label` button to add labels. Row-level actions allow editing and deleting existing labels.
+2. **Recommended taxonomy** — Apply a recommended label taxonomy to the selected repositories. Preview proposed changes, confirm before applying, and review a per-repository summary after completion.
+3. **Synchronise** — Synchronise labels from a source repository to one or more target repositories. Preview all changes before applying, and receive a summary of the synchronisation outcome for each target repository.
 
 The create and edit dialogs include:
 
