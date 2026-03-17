@@ -14,6 +14,29 @@ public sealed class RepositoriesTests
     private readonly Mock<IRepositoryService> _repositoryServiceMock = new();
 
     [Fact]
+    public async Task Repositories_InitialRender_ShowsPrimaryCommandSurface()
+    {
+        // Arrange
+        var tcs = new TaskCompletionSource<IReadOnlyList<RepositoryDto>>();
+        _repositoryServiceMock
+            .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .Returns(tcs.Task);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Repositories>();
+
+        // Assert
+        Assert.Contains("Repository command strip", cut.Markup);
+        Assert.Contains("Refresh", cut.Markup);
+        Assert.True(
+            cut.Markup.Contains("Bulk actions", StringComparison.Ordinal) ||
+            cut.Markup.Contains("Actions", StringComparison.Ordinal));
+        Assert.Contains("Search repositories", cut.Markup);
+    }
+
+    [Fact]
     public async Task Repositories_WhileServiceIsLoading_ShowsLoadingIndicator()
     {
         // Arrange
@@ -90,6 +113,7 @@ public sealed class RepositoriesTests
         cut.WaitForAssertion(() =>
         {
             Assert.Contains("No repositories found", cut.Markup);
+            Assert.Contains("No repositories are connected yet", cut.Markup);
             Assert.DoesNotContain("Loading repositories", cut.Markup);
         });
     }
@@ -118,6 +142,12 @@ public sealed class RepositoriesTests
         {
             Assert.Contains("my-first-repo", cut.Markup);
             Assert.Contains("my-private-repo", cut.Markup);
+            Assert.Contains("Repository name", cut.Markup);
+            Assert.Contains("Status", cut.Markup);
+            Assert.Contains("Actions", cut.Markup);
+            Assert.Contains("Connected", cut.Markup);
+            Assert.Contains("Private", cut.Markup);
+            Assert.Contains("Loaded 2 repositories", cut.Markup);
             Assert.DoesNotContain("Loading repositories", cut.Markup);
         });
     }
