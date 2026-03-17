@@ -1,4 +1,4 @@
-namespace SoloDevBoard.App.Components.Pages;
+namespace SoloDevBoard.App.Components.Features.Labels.Components;
 
 /// <summary>
 /// Provides shared colour style helpers for label presentation components.

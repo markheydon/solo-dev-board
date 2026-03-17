@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using SoloDevBoard.Application.Services.Common;
 
-namespace SoloDevBoard.App.Components.Pages;
+namespace SoloDevBoard.App.Components.Features.About.Pages;
 
 /// <summary>Displays application and runtime version information.</summary>
 public partial class About : ComponentBase

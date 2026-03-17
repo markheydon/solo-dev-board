@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Components;
 using SoloDevBoard.Application.Services.Audit;
 using SoloDevBoard.Application.Services.Repositories;
 
-namespace SoloDevBoard.App.Components.Pages;
+namespace SoloDevBoard.App.Components.Features.Audit.Pages;
 
 /// <summary>Displays open issue, pull request, and health indicator summaries across repositories.</summary>
 public partial class Audit : ComponentBase

@@ -4,7 +4,7 @@ using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Migration;
 using SoloDevBoard.Application.Services.Repositories;
 
-namespace SoloDevBoard.App.Components.Pages;
+namespace SoloDevBoard.App.Components.Features.Migration.Pages;
 
 /// <summary>Provides the One-Click Migration workflow for labels and milestones.</summary>
 public partial class Migration : ComponentBase

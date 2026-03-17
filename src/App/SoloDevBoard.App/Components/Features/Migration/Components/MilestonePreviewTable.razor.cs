@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using SoloDevBoard.Application.Services.Migration;
 
-namespace SoloDevBoard.App.Components.Pages;
+namespace SoloDevBoard.App.Components.Features.Migration.Components;
 
 /// <summary>
 /// Code-behind for the MilestonePreviewTable component.

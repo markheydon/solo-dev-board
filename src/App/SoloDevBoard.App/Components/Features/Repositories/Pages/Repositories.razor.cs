@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using SoloDevBoard.Application.Services.Repositories;
 
-namespace SoloDevBoard.App.Components.Pages;
+namespace SoloDevBoard.App.Components.Features.Repositories.Pages;
 
 /// <summary>Displays repositories available to the authenticated GitHub account.</summary>
 public partial class Repositories : ComponentBase

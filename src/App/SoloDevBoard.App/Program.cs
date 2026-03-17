@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using MudBlazor.Services;
 using SoloDevBoard.App.Authentication;
-using SoloDevBoard.App.Components;
+using SoloDevBoard.App.Components.Shell;
 using SoloDevBoard.Application.Services.Common;
 using SoloDevBoard.Infrastructure.Common;
 using SoloDevBoard.Infrastructure.GitHub;

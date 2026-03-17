@@ -1,6 +1,6 @@
 using Bunit;
 using MudBlazor.Services;
-using SoloDevBoard.App.Components.Pages;
+using SoloDevBoard.App.Components.Features.Dashboard.Pages;
 
 namespace SoloDevBoard.App.Tests;
 

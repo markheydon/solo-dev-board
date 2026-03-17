@@ -1,4 +1,4 @@
-namespace SoloDevBoard.App.Components.Dialogs;
+namespace SoloDevBoard.App.Components.Features.Labels.Dialogs;
 
 /// <summary>Defines the available label management operation modes.</summary>
 public enum LabelOperationMode

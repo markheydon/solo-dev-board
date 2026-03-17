@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components;
 
-namespace SoloDevBoard.App.Components.Shared;
+namespace SoloDevBoard.App.Components.Shared.Components;
 
 /// <summary>Provides a reusable repository selection control with search and multi-select behaviour.</summary>
 public partial class RepositorySelector : ComponentBase

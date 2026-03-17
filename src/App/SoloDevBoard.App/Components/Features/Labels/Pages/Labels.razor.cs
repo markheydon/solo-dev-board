@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
-using SoloDevBoard.App.Components.Dialogs;
+using SoloDevBoard.App.Components.Features.Labels.Components;
+using SoloDevBoard.App.Components.Features.Labels.Dialogs;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Repositories;
 
-namespace SoloDevBoard.App.Components.Pages;
+namespace SoloDevBoard.App.Components.Features.Labels.Pages;
 
 /// <summary>Displays a consolidated view of labels across selected repositories.</summary>
 public partial class Labels : ComponentBase
