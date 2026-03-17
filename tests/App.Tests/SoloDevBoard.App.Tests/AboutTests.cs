@@ -2,7 +2,7 @@ using Bunit;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using MudBlazor.Services;
-using SoloDevBoard.App.Components.Pages;
+using SoloDevBoard.App.Components.Features.About.Pages;
 using SoloDevBoard.Application.Services.Common;
 
 namespace SoloDevBoard.App.Tests;

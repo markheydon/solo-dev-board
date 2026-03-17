@@ -3,8 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using MudBlazor;
 using MudBlazor.Services;
-using SoloDevBoard.App.Components.Shared;
-using SoloDevBoard.App.Components.Pages;
+using SoloDevBoard.App.Components.Features.Audit.Pages;
+using SoloDevBoard.App.Components.Shared.Components;
 using SoloDevBoard.Application.Services.Audit;
 using SoloDevBoard.Application.Services.Repositories;
 

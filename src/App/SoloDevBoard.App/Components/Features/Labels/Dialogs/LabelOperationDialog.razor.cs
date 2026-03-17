@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using MudBlazor;
 
-namespace SoloDevBoard.App.Components.Dialogs;
+namespace SoloDevBoard.App.Components.Features.Labels.Dialogs;
 
 /// <summary>Provides the code-behind for the label operation dialog component.</summary>
 public partial class LabelOperationDialog

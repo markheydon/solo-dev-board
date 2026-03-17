@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using MudBlazor;
 using MudBlazor.Services;
-using SoloDevBoard.App.Components.Pages;
+using SoloDevBoard.App.Components.Features.Repositories.Pages;
 using SoloDevBoard.Application.Services.Repositories;
 
 namespace SoloDevBoard.App.Tests;
