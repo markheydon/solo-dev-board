@@ -39,14 +39,26 @@ param (
     [string[]]$AppServiceAllowedCidrs = @(),
 
     [Parameter()]
+    [switch]$EnableAppServiceIpHardening,
+
+    [Parameter()]
     [switch]$AllowPublicAppAccess,
 
     [Parameter()]
     [string]$SubscriptionId,
 
     [Parameter()]
+    [string]$ResourceNameSuffix,
+
+    [Parameter()]
+    [string]$GitHubRepository,
+
+    [Parameter()]
     [ValidateNotNullOrWhiteSpace()]
-    [string]$GitHubRepository = '<owner>/<repo>'
+    [string]$GitHubEnvironmentName = 'production',
+
+    [Parameter()]
+    [switch]$IncludeNextSteps
 )
 
 Set-StrictMode -Version Latest
@@ -170,7 +182,10 @@ function Get-DefaultResourceGroupName {
 function Get-DefaultAppServiceName {
     param (
         [Parameter(Mandatory = $true)]
-        [string]$Environment
+        [string]$Environment,
+
+        [Parameter()]
+        [string]$ResourceNameSuffix
     )
 
     $sanitisedEnvironment = $Environment.ToLowerInvariant() -replace '[^a-z0-9-]', '-'
@@ -180,7 +195,70 @@ function Get-DefaultAppServiceName {
         $sanitisedEnvironment = 'prod'
     }
 
-    return "app-solodevboard-$sanitisedEnvironment"
+    $sanitisedSuffix = ''
+    if (-not [string]::IsNullOrWhiteSpace($ResourceNameSuffix)) {
+        $suffixValue = $ResourceNameSuffix.ToLowerInvariant() -replace '[^a-z0-9-]', '-'
+        $suffixValue = $suffixValue.Trim('-')
+
+        if (-not [string]::IsNullOrWhiteSpace($suffixValue)) {
+            $sanitisedSuffix = "-$suffixValue"
+        }
+    }
+
+    return "app-solodevboard-$sanitisedEnvironment$sanitisedSuffix"
+}
+
+function Get-GitHubRepositoryFromGitRemote {
+    $originUrl = $null
+
+    try {
+        $originUrl = (& git config --get remote.origin.url 2>$null | Select-Object -First 1)
+    }
+    catch {
+        return $null
+    }
+
+    if ([string]::IsNullOrWhiteSpace($originUrl)) {
+        return $null
+    }
+
+    $trimmedOriginUrl = $originUrl.Trim()
+
+    if ($trimmedOriginUrl -match '^https://github\.com/(?<owner>[^/]+)/(?<repo>[^/]+?)(?:\.git)?$') {
+        return "{0}/{1}" -f $Matches.owner, $Matches.repo
+    }
+
+    if ($trimmedOriginUrl -match '^git@github\.com:(?<owner>[^/]+)/(?<repo>[^/]+?)(?:\.git)?$') {
+        return "{0}/{1}" -f $Matches.owner, $Matches.repo
+    }
+
+    return $null
+}
+
+function Resolve-GitHubRepositoryInput {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$RepositoryInput
+    )
+
+    $normalisedRepository = $RepositoryInput.Trim()
+
+    if ($normalisedRepository -match '(?i)\.git$') {
+        $normalisedRepository = $normalisedRepository.Substring(0, $normalisedRepository.Length - 4)
+    }
+
+    if ($normalisedRepository -match '^https://github\.com/(?<owner>[^/]+)/(?<repo>[^/]+)$') {
+        $normalisedRepository = "{0}/{1}" -f $Matches.owner, $Matches.repo
+    }
+    elseif ($normalisedRepository -match '^git@github\.com:(?<owner>[^/]+)/(?<repo>[^/]+)$') {
+        $normalisedRepository = "{0}/{1}" -f $Matches.owner, $Matches.repo
+    }
+
+    if ($normalisedRepository -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') {
+        throw 'GitHub repository must be provided in <owner>/<repo> format.'
+    }
+
+    return $normalisedRepository
 }
 
 function Get-CurrentPublicIpv4Cidr {
@@ -230,9 +308,37 @@ if ([string]::IsNullOrWhiteSpace($ResourceGroupName)) {
     $ResourceGroupName = Get-DefaultResourceGroupName -Environment $EnvironmentName
 }
 
+if ([string]::IsNullOrWhiteSpace($GitHubRepository)) {
+    $detectedGitHubRepository = Get-GitHubRepositoryFromGitRemote
+
+    if ([string]::IsNullOrWhiteSpace($detectedGitHubRepository)) {
+        throw (
+            'Unable to detect GitHub repository from git remote origin.' +
+            [Environment]::NewLine +
+            'Specify -GitHubRepository in <owner>/<repo> format and rerun the script.'
+        )
+    }
+
+    $GitHubRepository = $detectedGitHubRepository
+    Write-Output "Detected GitHub repository from git remote origin: $GitHubRepository"
+}
+
+$GitHubRepository = Resolve-GitHubRepositoryInput -RepositoryInput $GitHubRepository
+
+if (-not [string]::IsNullOrWhiteSpace($ResourceNameSuffix)) {
+    if ($ResourceNameSuffix.Length -gt 4) {
+        throw 'ResourceNameSuffix must be 4 characters or fewer to satisfy Azure naming constraints.'
+    }
+
+    if ($ResourceNameSuffix -notmatch '^[A-Za-z0-9-]+$') {
+        throw 'ResourceNameSuffix can only contain letters, numbers, or hyphens.'
+    }
+}
+
 $isFreeTierPlan = $AppServicePlanSku.Equals('F1', [System.StringComparison]::OrdinalIgnoreCase)
 $explicitAppServiceAllowedCidrs = @($AppServiceAllowedCidrs | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
 $effectiveAppServiceAllowedCidrs = @($explicitAppServiceAllowedCidrs)
+$ipHardeningEnabled = $EnableAppServiceIpHardening.IsPresent -or $explicitAppServiceAllowedCidrs.Count -gt 0
 
 if ($isFreeTierPlan -and $explicitAppServiceAllowedCidrs.Count -gt 0) {
     throw (
@@ -242,14 +348,18 @@ if ($isFreeTierPlan -and $explicitAppServiceAllowedCidrs.Count -gt 0) {
     )
 }
 
-if ($effectiveAppServiceAllowedCidrs.Count -eq 0 -and -not $AllowPublicAppAccess -and -not $isFreeTierPlan) {
+if ($ipHardeningEnabled -and $effectiveAppServiceAllowedCidrs.Count -eq 0 -and -not $AllowPublicAppAccess -and -not $isFreeTierPlan) {
     $detectedCallerCidr = Get-CurrentPublicIpv4Cidr
     $effectiveAppServiceAllowedCidrs = @($detectedCallerCidr)
     Write-Output "No -AppServiceAllowedCidrs values were provided; defaulting to your current public IPv4: $detectedCallerCidr"
 }
-elseif ($effectiveAppServiceAllowedCidrs.Count -eq 0 -and -not $AllowPublicAppAccess -and $isFreeTierPlan) {
+elseif ($ipHardeningEnabled -and $effectiveAppServiceAllowedCidrs.Count -eq 0 -and -not $AllowPublicAppAccess -and $isFreeTierPlan) {
     Write-Output 'F1 plan detected; keeping app publicly reachable because inbound access restrictions are not available on this plan.'
     Write-Output 'Use -AppServicePlanSku B1 (or higher) to enable CIDR restrictions, including auto-detected /32 defaulting.'
+}
+elseif (-not $ipHardeningEnabled) {
+    Write-Output 'App Service IP hardening is disabled by default.'
+    Write-Output 'Pass -EnableAppServiceIpHardening to auto-allow your current public IPv4, or set -AppServiceAllowedCidrs explicitly.'
 }
 
 Write-Output "Starting SoloDevBoard infrastructure deployment..."
@@ -275,7 +385,7 @@ az group create --name $ResourceGroupName --location $Location | Out-Null
 
 # If an existing site is being moved to F1, Always On must be disabled first.
 if ($isFreeTierPlan) {
-    $appServiceName = Get-DefaultAppServiceName -Environment $EnvironmentName
+    $appServiceName = Get-DefaultAppServiceName -Environment $EnvironmentName -ResourceNameSuffix $ResourceNameSuffix
     $existingSiteName = & az webapp show --resource-group $ResourceGroupName --name $appServiceName --query name --output tsv 2>$null
 
     if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($existingSiteName)) {
@@ -311,8 +421,14 @@ $deploymentArguments = @(
     "healthCheckPath=$HealthCheckPath",
     "keyVaultSoftDeleteRetentionInDays=$KeyVaultSoftDeleteRetentionInDays",
     "keyVaultEnablePurgeProtection=$KeyVaultEnablePurgeProtection",
-    "keyVaultPublicNetworkAccess=$KeyVaultPublicNetworkAccess"
+    "keyVaultPublicNetworkAccess=$KeyVaultPublicNetworkAccess",
+    "gitHubRepository=$GitHubRepository",
+    "gitHubEnvironmentName=$GitHubEnvironmentName"
 )
+
+if (-not [string]::IsNullOrWhiteSpace($ResourceNameSuffix)) {
+    $deploymentArguments += "resourceNameSuffix=$ResourceNameSuffix"
+}
 
 if ($effectiveAppServiceAllowedCidrs.Count -gt 0) {
     $allowedCidrsJson = ConvertTo-Json -InputObject $effectiveAppServiceAllowedCidrs -Compress -AsArray
@@ -344,6 +460,12 @@ $appServiceName = $outputs.appServiceName.value
 $keyVaultName = $outputs.keyVaultName.value
 $appServicePrincipalId = $outputs.appServicePrincipalId.value
 $roleAssignmentId = $outputs.keyVaultSecretsUserRoleAssignmentId.value
+$gitHubOidcClientId = $outputs.gitHubOidcClientId.value
+$gitHubOidcPrincipalId = $outputs.gitHubOidcPrincipalId.value
+$gitHubOidcIdentityName = $outputs.gitHubOidcIdentityName.value
+$gitHubOidcFederatedCredentialName = $outputs.gitHubOidcFederatedCredentialName.value
+$gitHubOidcFederatedSubject = $outputs.gitHubOidcFederatedSubject.value
+$gitHubOidcContributorRoleAssignmentId = $outputs.gitHubOidcContributorRoleAssignmentId.value
 
 Write-Output ''
 Write-Output 'Deployment completed successfully.'
@@ -352,8 +474,14 @@ Write-Output "Environment: $EnvironmentName"
 Write-Output "App Service name: $appServiceName"
 Write-Output "App Service URL: $appServiceUrl"
 Write-Output "Key Vault name: $keyVaultName"
-Write-Output "Managed identity principal ID: $appServicePrincipalId"
+Write-Output "App Service managed identity principal ID: $appServicePrincipalId"
 Write-Output "Key Vault role assignment ID: $roleAssignmentId"
+Write-Output "GitHub OIDC identity name: $gitHubOidcIdentityName"
+Write-Output "GitHub OIDC client ID: $gitHubOidcClientId"
+Write-Output "GitHub OIDC principal ID: $gitHubOidcPrincipalId"
+Write-Output "GitHub OIDC federated credential: $gitHubOidcFederatedCredentialName"
+Write-Output "GitHub OIDC subject: $gitHubOidcFederatedSubject"
+Write-Output "GitHub OIDC role assignment ID: $gitHubOidcContributorRoleAssignmentId"
 if ($effectiveAppServiceAllowedCidrs.Count -gt 0) {
     Write-Output "App Service inbound restriction mode: Allow list"
     Write-Output ("Allowed CIDRs: {0}" -f ($effectiveAppServiceAllowedCidrs -join ', '))
@@ -362,65 +490,39 @@ else {
     Write-Output 'App Service inbound restriction mode: Open to public internet'
 }
 
-Write-Output ''
-Write-Output 'These are your next steps.'
-Write-Output ''
-Write-Output '1. Store the GitHub token in Key Vault:'
-Write-Output ('   az keyvault secret set --vault-name {0} --name "{1}" --value "<your-github-pat>"' -f $keyVaultName, $GitHubTokenSecretName)
-Write-Output '   (This is used by the deployed App Service at runtime.)'
-Write-Output '   (Secret name is independent of app setting key; this template defaults to GitHubAuth--PersonalAccessToken.)'
+if ($IncludeNextSteps) {
+    Write-Output ''
+    Write-Output 'These are your next steps.'
+    Write-Output ''
+    Write-Output '1. Configure GitHub Actions environment secrets (required for CD):'
+    Write-Output ('   gh secret set AZURE_CLIENT_ID --repo {0} --env {1} --body "{2}"' -f $GitHubRepository, $GitHubEnvironmentName, $gitHubOidcClientId)
+    Write-Output ('   gh secret set AZURE_TENANT_ID --repo {0} --env {1} --body "{2}"' -f $GitHubRepository, $GitHubEnvironmentName, $tenantId)
+    Write-Output ('   gh secret set AZURE_SUBSCRIPTION_ID --repo {0} --env {1} --body "{2}"' -f $GitHubRepository, $GitHubEnvironmentName, $SubscriptionId)
+    Write-Output ('   gh secret set AZURE_WEBAPP_NAME --repo {0} --env {1} --body "{2}"' -f $GitHubRepository, $GitHubEnvironmentName, $appServiceName)
 
-Write-Output ''
-Write-Output '1a. If secret set returns Forbidden, your account needs Key Vault data-plane permissions:'
-Write-Output ('   az role assignment list --scope "$(az keyvault show --name {0} --query id -o tsv)" --assignee "$(az ad signed-in-user show --query id -o tsv)" --output table' -f $keyVaultName)
-Write-Output '   Required role: Key Vault Secrets Officer (or Key Vault Administrator) on the vault scope.'
-Write-Output '   If you cannot assign roles yourself, ask a subscription/resource-group owner to grant that role, then retry step 1.'
+    Write-Output ''
+    Write-Output "2. Configure GitHub environment protection for ${GitHubEnvironmentName}:"
+    Write-Output ("   - Create or update the '{0}' environment in repository settings." -f $GitHubEnvironmentName)
+    Write-Output '   - Require reviewer approval for deployments.'
+    Write-Output "   - Restrict deployment branches to 'main'."
 
-Write-Output ''
-Write-Output '1b. If you can self-assign roles, grant yourself temporary secret-write access:'
-Write-Output ('   az role assignment create --assignee-object-id "$(az ad signed-in-user show --query id -o tsv)" --assignee-principal-type User --role "Key Vault Secrets Officer" --scope "$(az keyvault show --name {0} --query id -o tsv)"' -f $keyVaultName)
-Write-Output '   Then rerun step 1 to set the secret.'
-Write-Output '   Note: incremental Bicep deployments usually do not remove this extra user role assignment automatically.'
-Write-Output '   After setting the secret, remove the temporary assignment to return to least-privilege:'
-Write-Output ('   az role assignment delete --assignee-object-id "$(az ad signed-in-user show --query id -o tsv)" --role "Key Vault Secrets Officer" --scope "$(az keyvault show --name {0} --query id -o tsv)"' -f $keyVaultName)
+    Write-Output ''
+    Write-Output '3. Verify Azure OIDC configuration created by this deployment:'
+    Write-Output '   - Issuer: https://token.actions.githubusercontent.com'
+    Write-Output "   - Subject: $gitHubOidcFederatedSubject"
+    Write-Output '   - Audience: api://AzureADTokenExchange'
+    Write-Output ('   az identity federated-credential list --resource-group {0} --identity-name {1} --output table' -f $ResourceGroupName, $gitHubOidcIdentityName)
 
-Write-Output ''
-Write-Output '2. Verify the Key Vault role assignment exists:'
-Write-Output ('   az role assignment list --scope "$(az keyvault show --name {0} --query id -o tsv)" --query "[?roleDefinitionName==''Key Vault Secrets User'']"' -f $keyVaultName)
+    Write-Output ''
+    Write-Output '4. Optional: store a GitHub PAT in Key Vault for PAT-based app auth:'
+    Write-Output ('   az keyvault secret set --vault-name {0} --name "{1}" --value "<your-github-pat>"' -f $keyVaultName, $GitHubTokenSecretName)
 
-Write-Output ''
-Write-Output '2a. Optional hardening: restrict app access to known IP ranges:'
-Write-Output '   Rerun this script with: -AppServiceAllowedCidrs "<your-public-ip>/32"'
-Write-Output '   You can provide multiple values, e.g. -AppServiceAllowedCidrs "1.2.3.4/32","5.6.7.0/24"'
-Write-Output '   If omitted, this script now auto-detects your current public IPv4 and applies it as /32.'
-Write-Output '   To intentionally keep public access, rerun with: -AllowPublicAppAccess'
-
-Write-Output ''
-Write-Output '3. Optional (local development only): configure .NET user secrets:'
-Write-Output '   dotnet user-secrets set "GitHubAuth:OwnerLogin" "<your-github-owner>" --project src/App/SoloDevBoard.App'
-Write-Output '   dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-github-pat>" --project src/App/SoloDevBoard.App'
-Write-Output '   (The deployed App Service does not use .NET user secrets.)'
-
-Write-Output ''
-Write-Output '4. Configure GitHub Actions secrets for the CD workflow:'
-Write-Output ('   gh secret set AZURE_CLIENT_ID --repo {0} --body "<azure-client-id>"' -f $GitHubRepository)
-Write-Output ('   gh secret set AZURE_TENANT_ID --repo {0} --body "{1}"' -f $GitHubRepository, $tenantId)
-Write-Output ('   gh secret set AZURE_SUBSCRIPTION_ID --repo {0} --body "{1}"' -f $GitHubRepository, $SubscriptionId)
-Write-Output ('   gh secret set AZURE_WEBAPP_NAME --repo {0} --body "{1}"' -f $GitHubRepository, $appServiceName)
-
-Write-Output ''
-Write-Output '5. Configure GitHub environment protection for production:'
-Write-Output "   - Create or update the 'production' environment in repository settings."
-Write-Output '   - Require reviewer approval for deployments.'
-Write-Output "   - Restrict deployment branches to 'main'."
-
-Write-Output ''
-Write-Output '6. Configure Azure federated credentials for OIDC:'
-Write-Output "   - Issuer: https://token.actions.githubusercontent.com"
-Write-Output "   - Subject: repo:${GitHubRepository}:environment:production"
-Write-Output "   - Audience: api://AzureADTokenExchange"
-
-Write-Output ''
-Write-Output '7. Trigger deployment using GitHub Actions:'
-Write-Output "   - Workflow: .github/workflows/cd.yml"
-Write-Output "   - Deployment URL: $appServiceUrl"
+    Write-Output ''
+    Write-Output '5. Trigger deployment using GitHub Actions:'
+    Write-Output '   - Workflow: .github/workflows/cd.yml'
+    Write-Output "   - Deployment URL: $appServiceUrl"
+}
+else {
+    Write-Output ''
+    Write-Output 'Next steps are hidden by default. Use -IncludeNextSteps to print setup guidance.'
+}

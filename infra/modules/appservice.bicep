@@ -22,9 +22,13 @@ param healthCheckPath string = '/'
 @description('Optional list of CIDR ranges allowed to access the App Service. When empty, inbound access remains open.')
 param appServiceAllowedCidrs array = []
 
+@description('Optional short suffix appended to globally constrained resource names to avoid naming collisions across subscriptions.')
+param resourceNameSuffix string = ''
+
 var resourceSuffix = toLower(environmentName)
-var appServicePlanName = 'asp-solodevboard-${resourceSuffix}'
-var appServiceName = 'app-solodevboard-${resourceSuffix}'
+var nameSuffix = empty(resourceNameSuffix) ? '' : '-${toLower(resourceNameSuffix)}'
+var appServicePlanName = 'asp-solodevboard-${resourceSuffix}${nameSuffix}'
+var appServiceName = 'app-solodevboard-${resourceSuffix}${nameSuffix}'
 var supportsAccessRestrictions = toUpper(appServicePlanSku) != 'F1'
 var hasAccessRestrictions = supportsAccessRestrictions && length(appServiceAllowedCidrs) > 0
 var accessRestrictionRules = [for (cidr, i) in appServiceAllowedCidrs: {

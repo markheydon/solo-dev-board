@@ -35,14 +35,29 @@ param keyVaultPublicNetworkAccess string = 'Enabled'
 @description('Optional list of CIDR ranges allowed to access the App Service. When empty, inbound access remains open.')
 param appServiceAllowedCidrs array = []
 
+@description('GitHub repository in <owner>/<repo> format used for OIDC federation subject matching.')
+param gitHubRepository string
+
+@description('GitHub environment name used by the CD workflow for OIDC federation subject matching.')
+param gitHubEnvironmentName string = 'production'
+
+@description('Optional short suffix appended to globally constrained resource names (for example app and Key Vault) to avoid naming collisions across subscriptions.')
+@maxLength(4)
+param resourceNameSuffix string = ''
+
 // Derive a short, consistent suffix for resource naming
 var resourceSuffix = toLower(environmentName)
+var nameSuffix = empty(resourceNameSuffix) ? '' : '-${toLower(resourceNameSuffix)}'
 
 // Key Vault name must be globally unique and 3–24 characters
-var keyVaultName = 'kv-solodevboard-${resourceSuffix}'
+var keyVaultName = 'kv-solodevboard-${resourceSuffix}${nameSuffix}'
+var gitHubOidcIdentityName = 'id-solodevboard-cd-${resourceSuffix}${nameSuffix}'
+var gitHubOidcFederatedCredentialName = 'github-${resourceSuffix}${nameSuffix}'
 
 // Built-in role definition for Key Vault Secrets User.
 var keyVaultSecretsUserRoleDefinitionId = '4633458b-17de-408a-b874-0445c86b69e6'
+// Built-in role definition for Contributor.
+var contributorRoleDefinitionId = 'b24988ac-6180-42a0-ab88-20f7382dd24c'
 
 // Deploy the App Service resources via a module for separation of concerns
 module appServiceModule 'modules/appservice.bicep' = {
@@ -54,6 +69,7 @@ module appServiceModule 'modules/appservice.bicep' = {
     gitHubTokenSecretName: gitHubTokenSecretName
     healthCheckPath: healthCheckPath
     appServiceAllowedCidrs: appServiceAllowedCidrs
+    resourceNameSuffix: resourceNameSuffix
   }
 }
 
@@ -90,9 +106,45 @@ resource keyVaultSecretsUserRoleAssignment 'Microsoft.Authorization/roleAssignme
   }
 }
 
+// User-assigned identity used by GitHub Actions OIDC for deployment.
+resource gitHubOidcIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
+  name: gitHubOidcIdentityName
+  location: location
+}
+
+// Federated credential that trusts tokens from the configured GitHub repository environment.
+resource gitHubOidcFederatedCredential 'Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials@2023-01-31' = {
+  parent: gitHubOidcIdentity
+  name: gitHubOidcFederatedCredentialName
+  properties: {
+    issuer: 'https://token.actions.githubusercontent.com'
+    subject: 'repo:${gitHubRepository}:environment:${gitHubEnvironmentName}'
+    audiences: [
+      'api://AzureADTokenExchange'
+    ]
+  }
+}
+
+// Grant deployment rights to the GitHub OIDC identity at resource group scope.
+resource gitHubOidcContributorRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroup().id, contributorRoleDefinitionId, gitHubOidcIdentity.id, 'github-oidc-contributor')
+  scope: resourceGroup()
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', contributorRoleDefinitionId)
+    principalId: gitHubOidcIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
 // Outputs — used by the CD pipeline and post-deployment configuration scripts
 output appServiceUrl string = appServiceModule.outputs.appServiceUrl
 output appServiceName string = appServiceModule.outputs.appServiceName
 output keyVaultName string = keyVault.name
 output appServicePrincipalId string = appServiceModule.outputs.appServicePrincipalId
 output keyVaultSecretsUserRoleAssignmentId string = keyVaultSecretsUserRoleAssignment.id
+output gitHubOidcClientId string = gitHubOidcIdentity.properties.clientId
+output gitHubOidcPrincipalId string = gitHubOidcIdentity.properties.principalId
+output gitHubOidcIdentityName string = gitHubOidcIdentity.name
+output gitHubOidcFederatedCredentialName string = gitHubOidcFederatedCredential.name
+output gitHubOidcFederatedSubject string = gitHubOidcFederatedCredential.properties.subject
+output gitHubOidcContributorRoleAssignmentId string = gitHubOidcContributorRoleAssignment.id

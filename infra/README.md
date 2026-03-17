@@ -12,12 +12,16 @@ The infrastructure deploys the following Azure resources:
 | **App Service** | The SoloDevBoard web application |
 | **Key Vault** | Stores the GitHub token and other secrets securely |
 | **Key Vault RBAC assignment** | Grants the App Service managed identity permission to read Key Vault secrets |
+| **GitHub OIDC user-assigned identity** | User-assigned managed identity used by GitHub Actions for OIDC deployment authentication |
+| **Federated credential** | Trusts GitHub Actions tokens for the configured repository environment |
+| **Contributor role assignment** | Grants the OIDC identity deployment rights on the resource group |
 
 ## Baseline Assumptions
 
 The templates in this directory are configured for a public-release-ready baseline:
 
 - App Service uses a system-assigned managed identity and does not store GitHub credentials directly.
+- The deployment creates a user-assigned managed identity for GitHub Actions OIDC, including federated credential trust for the configured repository environment.
 - Key Vault uses RBAC authorisation, soft delete retention, and purge protection by default.
 - The GitHub token is referenced through a Key Vault secret at runtime. The default secret name is `GitHubAuth--PersonalAccessToken`, and you can override it with the `gitHubTokenSecretName` parameter.
 - The App Service managed identity is granted `Key Vault Secrets User` at Key Vault scope during deployment.
@@ -68,13 +72,27 @@ Default behaviour:
 
 For production-like hosting, override `AppServicePlanSku` to a paid tier such as `B1` or `P1v3`.
 
-By default, if you do not pass `-AppServiceAllowedCidrs`, the script auto-detects your current public IPv4 and applies it as a `/32` allow-list entry when the plan supports access restrictions.
+App Service inbound IP hardening is **disabled by default** — the app is publicly reachable unless you opt in to restrictions.
 
-The default `F1` plan does not support this restriction path. On `F1`, the script keeps inbound access public and prints guidance to use `-AppServicePlanSku B1` (or higher) if you need CIDR restrictions.
+To enable IP hardening with your current public IPv4 auto-detected as a `/32` allow-list entry:
 
-To intentionally keep the app publicly reachable, pass `-AllowPublicAppAccess`.
+```powershell
+pwsh ./infra/Deploy-SoloDevBoardInfra.ps1 -EnableAppServiceIpHardening
+```
 
-To restrict inbound app access to specific ranges, provide an allow list of CIDR ranges using `-AppServiceAllowedCidrs`.
+To supply an explicit CIDR allow list (which also activates hardening automatically):
+
+```powershell
+pwsh ./infra/Deploy-SoloDevBoardInfra.ps1 -AppServiceAllowedCidrs "203.0.113.10/32"
+```
+
+The `F1` plan does not support access restrictions; passing `-EnableAppServiceIpHardening` on `F1` keeps the app public and prints a notice, while passing explicit `-AppServiceAllowedCidrs` on `F1` fails fast with guidance to use `B1` (or higher).
+
+The GitHub repository for the OIDC federated credential subject is auto-detected from `git config remote.origin.url`. Override with `-GitHubRepository <owner>/<repo>` if the script is run outside the repository or if auto-detection fails.
+
+A `-ResourceNameSuffix` parameter is available to append a short suffix to globally constrained resource names (App Service, Key Vault, OIDC identity) to avoid naming collisions if multiple independent deployments use the same subscription.
+
+A `-IncludeNextSteps` switch prints post-deployment setup guidance (GitHub secrets, OIDC verification, environment protection steps). Omit it on repeat deployments when setup is already complete.
 
 Optional overrides:
 
@@ -84,18 +102,23 @@ pwsh ./infra/Deploy-SoloDevBoardInfra.ps1 \
   -ResourceGroupName rg-solodevboard-dev \
   -Location uksouth \
   -AppServicePlanSku B1 \
-  -AppServiceAllowedCidrs "203.0.113.10/32"
+  -EnableAppServiceIpHardening
 
-# Keep app access public (explicit opt-out from the secure default).
-pwsh ./infra/Deploy-SoloDevBoardInfra.ps1 -AllowPublicAppAccess
+# Supply explicit CIDRs instead of auto-detected IP.
+pwsh ./infra/Deploy-SoloDevBoardInfra.ps1 -AppServiceAllowedCidrs "203.0.113.10/32","198.51.100.0/24"
+
+# Add a suffix to avoid name collisions in shared subscriptions.
+pwsh ./infra/Deploy-SoloDevBoardInfra.ps1 -ResourceNameSuffix mh01
+
+# Print first-time setup guidance.
+pwsh ./infra/Deploy-SoloDevBoardInfra.ps1 -IncludeNextSteps
 ```
 
-The script deploys the Bicep template, prints deployment outputs, and then provides copy/paste commands for:
+The script deploys the Bicep template, prints deployment outputs, and (when `-IncludeNextSteps` is passed) provides copy/paste commands for:
 
-- Setting the GitHub token secret in Key Vault.
-- Configuring local .NET user-secrets values.
-- Configuring the `cd.yml` GitHub Actions repository secrets.
-- Configuring OIDC federation and production environment protections.
+- Configuring the `cd.yml` GitHub Actions environment secrets for `production`.
+- Verifying OIDC federation and configuring environment protections.
+- Optionally storing a GitHub PAT in Key Vault for PAT-based app auth.
 
 ### 1. Create a resource group
 
@@ -111,7 +134,10 @@ az group create \
 az deployment group create \
   --resource-group rg-solodevboard-prod \
   --template-file infra/main.bicep \
-  --parameters environmentName=prod
+  --parameters \
+    environmentName=prod \
+    gitHubRepository=<owner>/<repo> \
+    gitHubEnvironmentName=production
 ```
 
 ### 3. Store the GitHub token in Key Vault
@@ -177,14 +203,16 @@ az role assignment list \
 
 ### 5. Configure the CD pipeline (OIDC)
 
-Configure the following GitHub repository secrets for the CD workflow (`.github/workflows/cd.yml`):
+Configure the following GitHub environment secrets on the `production` environment for the CD workflow (`.github/workflows/cd.yml`):
 
 | Secret | Value |
 |--------|-------|
-| `AZURE_CLIENT_ID` | Azure AD application (service principal or user-assigned managed identity) client ID used by OIDC |
+| `AZURE_CLIENT_ID` | Client ID of the GitHub OIDC deployment identity created by the Bicep deployment |
 | `AZURE_TENANT_ID` | Azure AD tenant ID |
 | `AZURE_SUBSCRIPTION_ID` | Azure subscription ID |
 | `AZURE_WEBAPP_NAME` | The App Service name (from deployment outputs) |
+
+The deployment script now prints `gh secret set --env production ...` commands for these values, including the exact `AZURE_CLIENT_ID` from deployment outputs.
 
 ### 6. Configure protected environment expectations
 
@@ -192,18 +220,18 @@ Create or update the `production` GitHub environment and apply the following pro
 
 - Required reviewers must be enabled for deployment approval.
 - Deployment branch rules should allow only `main`.
-- Environment secrets required by deployment should be defined at repository or environment scope.
+- Environment secrets required by deployment should be defined on the `production` environment unless you intentionally change the workflow scope.
 - No long-lived Azure client secrets should be configured for deployment.
 
-### 7. Configure Azure OIDC trust prerequisites
+### 7. Verify Azure OIDC trust prerequisites
 
-Configure federated credentials on the Azure AD application used by the workflow with these recommended claims:
+The Bicep deployment creates federated credentials on the deployment identity with these claims:
 
 - Issuer: `https://token.actions.githubusercontent.com`.
-- Subject: `repo:markheydon/solo-dev-board:environment:production`.
+- Subject: `repo:<owner>/<repo>:environment:<environmentName>`.
 - Audience: `api://AzureADTokenExchange`.
 
-Update the subject value to match your actual `<owner>/<repo>` and environment name if they differ from this repository and environment.
+When using the deployment script, `<owner>/<repo>` comes from `-GitHubRepository` and `<environmentName>` comes from `-GitHubEnvironmentName`.
 
 After configuring federated credentials, grant the deployment identity least-privilege RBAC roles required for deployment. As a baseline, this usually means:
 
@@ -224,8 +252,11 @@ After configuring federated credentials, grant the deployment identity least-pri
 | `keyVaultEnablePurgeProtection` | `true` | Whether purge protection is enabled for Key Vault. |
 | `keyVaultPublicNetworkAccess` | `Enabled` | Controls whether public network access is enabled for Key Vault. |
 | `appServiceAllowedCidrs` | `[]` | Optional CIDR allow list for App Service inbound access. When set, unmatched traffic is denied. |
+| `gitHubRepository` | _(required — no default)_ | GitHub repository in `<owner>/<repo>` format used for OIDC federation subject matching. Auto-detected from git remote by the deployment script. |
+| `gitHubEnvironmentName` | `production` | GitHub environment name used in OIDC federated subject and secret scoping guidance. |
+| `resourceNameSuffix` | _(empty)_ | Optional short suffix (max 4 characters) appended to globally constrained resource names (App Service, Key Vault, OIDC identity) to avoid naming collisions across subscriptions. |
 
-When running `infra/Deploy-SoloDevBoardInfra.ps1`, omitting `-AppServiceAllowedCidrs` now defaults to your current public IPv4 as `/32`. Use `-AllowPublicAppAccess` if you need deliberate public access.
+When running `infra/Deploy-SoloDevBoardInfra.ps1`, the GitHub repository is auto-detected from `git config remote.origin.url`; override with `-GitHubRepository` if needed. IP hardening is opt-in; use `-EnableAppServiceIpHardening` to auto-allow your current public IPv4, or pass `-AppServiceAllowedCidrs` to specify explicit ranges.
 
 ## App Configuration
 
