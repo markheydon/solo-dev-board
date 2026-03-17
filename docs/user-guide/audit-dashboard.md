@@ -7,7 +7,7 @@ nav_order: 2
 
 # Audit Dashboard
 
-The Audit Dashboard provides a summary of open issues, open pull requests, and repository health indicators across all your GitHub repositories in SoloDevBoard.
+The Audit Dashboard provides a summary of open issues, open pull requests, repository health indicators, and now features a wireframe-aligned repository selector, KPI summary cards, grouped health indicators, and a consistent feedback region across all your GitHub repositories in SoloDevBoard.
 
 ## Accessing the Audit Dashboard
 
@@ -19,9 +19,11 @@ The Audit Dashboard provides a summary of open issues, open pull requests, and r
 - A repository selector lets you choose one or more of your active GitHub repositories before loading any data.
 - Each repository is shown as a row in a sortable MudBlazor grid.
 - Columns include repository full name (linked to GitHub), open issue count, and open pull request count.
-- Total summary cards display aggregate open issues and open pull requests across all repositories.
-- A loading skeleton is shown while repository options are loading, and again while audit data is being fetched.
-- An empty state is displayed if no repositories are returned.
+- The repository selector at the top of the page provides clear access to repository selection and audit actions.
+- KPI summary cards display total open issues, total open pull requests, unlabelled issues, and failing workflows across all selected repositories.
+- Health indicator sections are grouped in a dedicated container below the KPI summary, making it easier to scan repository health at a glance.
+- Feedback states (loading, empty, error, and prompt) are surfaced through a consistent feedback region, ensuring users always understand the current state of the dashboard.
+- All UI elements follow the wireframe-aligned layout for improved clarity and usability.
 - The browser page title is set to 'Audit Dashboard — SoloDevBoard'.
 - The Unlabelled Issues section shows issues without any labels, including repository, issue number, title, and age.
 - The Stale Pull Requests section lists pull requests with no activity in the last 14 days, including repository, pull request number, title, author, and days since update.
@@ -38,9 +40,11 @@ The Audit Dashboard provides a summary of open issues, open pull requests, and r
 5. Review the summary grid to see open issues and pull requests per repository.
 6. Click a repository name to open it directly in GitHub.
 7. Use the summary cards to view total open issues and pull requests.
-8. Expand the health indicator panels to review unlabelled issues, stale pull requests, and failing workflows.
-9. Click links in health sections to open items in GitHub (in a new tab).
-10. To change the repository set, adjust the selector and click **Load selected repositories** again.
+8. Review the KPI summary cards for a quick overview of repository health.
+9. Expand grouped health indicator sections to see details about unlabelled issues, stale pull requests, and failing workflows.
+10. Observe feedback states in the feedback region for loading, empty, error, or prompt messages.
+11. Click links in health sections to open items in GitHub (in a new tab).
+12. To change the repository set, adjust the selector and click **Load selected repositories** again.
 
 ## Notes
 
@@ -48,5 +52,6 @@ Zero-state messages are shown when no items are found in a health indicator sect
 - "No unlabelled issues — great."
 - "No stale pull requests — great."
 - "No failing workflows — great."
+Feedback region also displays loading, error, and prompt messages to guide the user through dashboard states.
 
 For more information about upcoming features, see the [BACKLOG](../../plan/BACKLOG.md).

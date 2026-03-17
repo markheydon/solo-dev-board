@@ -17,7 +17,7 @@ public sealed class AuditTests
     private readonly Mock<IRepositoryService> _repositoryServiceMock = new();
 
     [Fact]
-    public async Task Audit_WhileServiceIsLoading_ShowsLoadingSkeleton()
+    public async Task Audit_WhileServiceIsLoading_ShowsCommandSurfaceLoadingSkeleton()
     {
         // Arrange
         var tcs = new TaskCompletionSource<IReadOnlyList<RepositoryDto>>();
@@ -34,13 +34,13 @@ public sealed class AuditTests
         var cut = ctx.Render<Audit>();
 
         // Assert
-        Assert.Single(cut.FindAll("[data-testid='audit-repository-filter-loading']"));
+        Assert.Single(cut.FindAll("[data-testid='audit-command-surface-loading']"));
         Assert.Empty(cut.FindAll("[data-testid='audit-summary-table']"));
-        Assert.Empty(cut.FindAll("[data-testid='audit-empty-state']"));
+        Assert.DoesNotContain("No repositories found", cut.Markup);
     }
 
     [Fact]
-    public async Task Audit_WhenServiceReturnsNoRepositories_ShowsEmptyState()
+    public async Task Audit_WhenServiceReturnsNoRepositories_ShowsEmptyStateInFeedbackRegion()
     {
         // Arrange
         _repositoryServiceMock
@@ -55,7 +55,7 @@ public sealed class AuditTests
         // Assert
         cut.WaitForAssertion(() =>
         {
-            Assert.Single(cut.FindAll("[data-testid='audit-empty-state']"));
+            Assert.Single(cut.FindAll("[data-testid='audit-feedback-region']"));
             Assert.Contains("No repositories found", cut.Markup);
             Assert.Empty(cut.FindAll("[data-testid='audit-summary-table']"));
         });
@@ -87,7 +87,7 @@ public sealed class AuditTests
 
         // Act
         var cut = ctx.Render<Audit>();
-        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-repository-filter']")));
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-command-surface']")));
         var selector = cut.FindComponent<RepositorySelector>();
         await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo-a", "owner/repo-b" }));
         cut.Find("[data-testid='audit-load-selected-button']").Click();
@@ -96,10 +96,15 @@ public sealed class AuditTests
         cut.WaitForAssertion(() =>
         {
             Assert.Single(cut.FindAll("[data-testid='audit-summary-table']"));
+            Assert.Single(cut.FindAll("[data-testid='audit-kpi-summary-cards']"));
+            Assert.Single(cut.FindAll("[data-testid='audit-unlabelled-kpi-card']"));
+            Assert.Single(cut.FindAll("[data-testid='audit-failing-workflows-kpi-card']"));
             Assert.Contains("owner/repo-a", cut.Markup);
             Assert.Contains("owner/repo-b", cut.Markup);
             Assert.Contains("Total open issues", cut.Markup);
             Assert.Contains("Total open pull requests", cut.Markup);
+            Assert.Contains("Unlabelled issues", cut.Markup);
+            Assert.Contains("Failing workflows", cut.Markup);
             Assert.Contains(">5<", cut.Markup);
             Assert.Contains(">5<", cut.Markup);
 
@@ -131,7 +136,7 @@ public sealed class AuditTests
 
         // Act
         var cut = ctx.Render<Audit>();
-        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-repository-filter']")));
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-command-surface']")));
         var selector = cut.FindComponent<RepositorySelector>();
         await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo-a" }));
 
@@ -152,7 +157,7 @@ public sealed class AuditTests
 
         cut.WaitForAssertion(() =>
         {
-            Assert.Single(cut.FindAll("[data-testid='audit-loading-state']"));
+            Assert.Single(cut.FindAll("[data-testid='audit-feedback-region']"));
         });
 
         await cut.InvokeAsync(() => summaryCompletionSource.SetResult([new RepositoryAuditSummaryDto("owner/repo-a", 1, 1, 0, 0, 0)]));
@@ -205,7 +210,7 @@ public sealed class AuditTests
 
         // Act
         var cut = ctx.Render<Audit>();
-        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-repository-filter']")));
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-command-surface']")));
         var selector = cut.FindComponent<RepositorySelector>();
         await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo-a" }));
         cut.Find("[data-testid='audit-load-selected-button']").Click();
@@ -214,6 +219,7 @@ public sealed class AuditTests
         cut.WaitForAssertion(() =>
         {
             Assert.Single(cut.FindAll("[data-testid='audit-health-indicator-sections']"));
+            Assert.Single(cut.FindAll("[data-testid='audit-health-indicators-group']"));
             Assert.Contains("Unlabelled Issues", cut.Markup);
             Assert.Contains("Stale Pull Requests", cut.Markup);
             Assert.Contains("Failing Workflows", cut.Markup);
@@ -253,7 +259,7 @@ public sealed class AuditTests
 
         // Act
         var cut = ctx.Render<Audit>();
-        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-repository-filter']")));
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-command-surface']")));
         var selector = cut.FindComponent<RepositorySelector>();
         await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo-a" }));
         cut.Find("[data-testid='audit-load-selected-button']").Click();
@@ -296,7 +302,7 @@ public sealed class AuditTests
 
         // Act
         var cut = ctx.Render<Audit>();
-        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-repository-filter']")));
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-command-surface']")));
         var selector = cut.FindComponent<RepositorySelector>();
         await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo-a" }));
         cut.Find("[data-testid='audit-load-selected-button']").Click();
