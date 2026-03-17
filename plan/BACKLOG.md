@@ -60,6 +60,8 @@ Labels: `type/epic`, `area/infrastructure`, `priority/high`
 - [x] Test: Authentication coverage has been expanded for GitHub App-first hosted authentication, including sign-in/session claims, installation/token lifecycle checks, and admission-control edge cases. _(Issue #114 — implemented on 2026-03-16; see tests/App.Tests/SoloDevBoard.App.Tests/HostedGitHubAuthGatewayTests.cs, tests/Infrastructure.Tests/SoloDevBoard.Infrastructure.Tests/HostedUserCurrentUserContextTests.cs, tests/Infrastructure.Tests/SoloDevBoard.Infrastructure.Tests/AllowListHostedAdmissionEvaluatorTests.cs, and plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_
 - [x] Docs: Hosted authentication documentation now reflects GitHub App-first architecture, operator allow-lists, and PAT-only local trusted mode, with OAuth App guidance retained as fallback-only. _(Issue #119 — implemented on 2026-03-16; see docs/getting-started.md, infra/README.md, docs/user-guide/hosted-authentication.md, docs/user-guide/index.md, and docs/index.md.)_
 - [ ] As a solo developer, I want PAT-only local trusted mode preserved so that local development and trusted self-hosted use do not depend on hosted sign-in infrastructure.
+- [ ] As a solo developer, I want a clear self-hoster deployment path for running SoloDevBoard with a PAT on my own Azure subscription so that I can get a personal hosted instance working without deep Azure knowledge.
+- [ ] As a solo developer, I want hosted deployments to present a dedicated sign-in entry state and sign-out flow, and to avoid showing the normal home experience when hosted authentication prerequisites are missing or I am not signed in, so that the public app state is explicit and not misleading.
 - [x] Chore: As a SoloDevBoard maintainer, I want the hosted-auth branch and migration strategy locked before Feature #103 coding continues so that superseded hybrid work cannot drift into the GitHub App-first delivery path. _(Issue #118 — done, 2026-03-13; see plan/HOSTED_AUTH_MIGRATION_STRATEGY.md.)_
 
 Labels: `type/epic`, `area/dashboard`
@@ -89,6 +91,8 @@ Labels: `type/epic`, `area/dashboard`
 ## Epic 2: One-Click Migration
 
 Labels: `type/epic`, `area/migration`
+
+> **Current Phase 3 status:** The labels-and-milestones One-Click Migration slice is complete. Phase 3 remains open because Triage UI is still outstanding and is the next planned delivery priority before Phase 4, Phase 5, or broader Phase 6 work resumes.
 
 <!-- Parent Epic #87: Phase 3 — One-Click Migration + Triage UI (planned 2026-03-12, milestone v0.3.0). -->
 <!-- Feature #88: One-Click Migration (planned 2026-03-12, milestone v0.3.0; first delivery slice covers labels + milestones only). -->
@@ -125,6 +129,8 @@ Labels: `type/epic`, `area/board-rules`
 ## Epic 5: Triage UI
 
 Labels: `type/epic`, `area/triage`
+
+> **Next up:** Triage UI is the remaining Phase 3 delivery work and should be completed before Phase 4, Phase 5, or the rest of the Phase 6 release backlog becomes the main focus again.
 
 - [ ] As a solo developer, I want to start a triage session that presents unlabelled issues one at a time so that I can work through them efficiently.
 - [ ] As a solo developer, I want to apply labels to an issue with a single click or keyboard shortcut so that triage is fast.
@@ -222,6 +228,8 @@ Labels: `type/chore`, `area/infrastructure`
 <!-- Enabler #113: Persist per-user authentication secrets and token references securely -->
 <!-- Test #114: Add authentication coverage for GitHub App and OAuth flow -->
 <!-- Story #117: Restrict hosted sign-in to authorised users -->
+
+> **Sequencing note:** Some of the public-release work below was pulled forward to support hosted validation. That side-step does not replace the main roadmap order: finish Phase 3 first, then Phase 4, then Phase 5, before completing the remaining Phase 6 release work.
 
 - [x] Set up Bicep infrastructure for Azure App Service, Key Vault, and managed identity. _(done — Bicep baseline complete with managed identity RBAC, configurable Key Vault secret name, purge protection, health-check path, and optional CIDR inbound access restrictions (SKU-gated; unsupported on F1); guided PowerShell deployment script `infra/Deploy-SoloDevBoardInfra.ps1` added with auto-detected caller IP defaulting, F1 compatibility guard, and post-deployment next-step guidance; see issue #104.)_
 - [x] Configure OIDC authentication for GitHub Actions to Azure (no long-lived credentials). _(done — `cd.yml` already uses OIDC with least-privilege permissions; OIDC trust prerequisites and protected-environment documentation added to `infra/README.md`; see issue #105.)_

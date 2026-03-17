@@ -68,7 +68,8 @@ Milestones map to implementation phases and releases:
 | Phase 2 — Core Features | Phase 2 | v0.2.0 |
 | Phase 3 — Migration and Triage | Phase 3 | v0.3.0 |
 | Phase 4 — Visualisation and Templates | Phase 4 | v0.4.0 |
-| Phase 5 — Polish and v1.0 | Phase 5 | v1.0.0 |
+| Phase 5 — Cross-Repo PM Workflow | Phase 5 | v0.5.0 |
+| Phase 6 — Polish and v1.0 | Phase 6 | v1.0.0 |
 
 ### Milestone Workflow
 

@@ -27,6 +27,10 @@ Centralised reference and command patterns for maintaining the **SoloDevBoard Ro
 | **Owner** | `markheydon` |
 | **URL** | https://github.com/users/markheydon/projects/8 |
 
+### Phase Model Note
+
+As of 2026-03-17, the live GitHub Project board and the repository planning artefacts are aligned on a six-phase roadmap. `v0.5.0` maps to **Phase 5 — Cross-Repo PM Workflow** and `v1.0.0` maps to **Phase 6 — Polish and v1.0**.
+
 ---
 
 ## Field IDs
@@ -67,7 +71,8 @@ Centralised reference and command patterns for maintaining the **SoloDevBoard Ro
 | Phase 2 — Label Manager + Audit | `0f90ba94` | v0.2.0 |
 | Phase 3 — Migration + Triage | `f3de38ba` | v0.3.0 |
 | Phase 4 — Board Rules + Workflows | `f5bc6726` | v0.4.0 |
-| Phase 5 — Polish + Release | `dfa36cee` | v1.0.0 |
+| Phase 5 — Cross-Repo PM Workflow | `495afaf1` | v0.5.0 |
+| Phase 6 — Polish and v1.0 | `dfa36cee` | v1.0.0 |
 
 ### Priority Options
 
@@ -90,7 +95,8 @@ Determine the correct **Phase** option from the issue's milestone or area label:
 | `v0.2.0` | `area/labels`, `area/dashboard` | Phase 2 — Label Manager + Audit |
 | `v0.3.0` | `area/migration`, `area/triage` | Phase 3 — Migration + Triage |
 | `v0.4.0` | `area/board-rules`, `area/workflows` | Phase 4 — Board Rules + Workflows |
-| `v1.0.0` | any | Phase 5 — Polish + Release |
+| `v0.5.0` | `area/dashboard` | Phase 5 — Cross-Repo PM Workflow |
+| `v1.0.0` | any | Phase 6 — Polish and v1.0 |
 
 **Precedence:** Milestone > area label. When a milestone is assigned, use the milestone to determine the phase.
 

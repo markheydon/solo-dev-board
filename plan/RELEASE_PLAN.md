@@ -77,7 +77,9 @@ During the pre-1.0 development phase (`0.x.y`), minor version bumps may include 
 - Complete user-facing documentation
 - Full Azure deployment pipeline with environment gates
 
-**Target:** End of Phase 5
+**Sequencing note:** Selected hosted-authentication and Azure-delivery items were pulled forward to support safe hosted validation. This did not change the main roadmap order, which still returns to the unfinished Phase 3 work first, then Phase 4, then Phase 5, before the remaining v1.0.0 work is completed.
+
+**Target:** End of Phase 6
 
 ---
 

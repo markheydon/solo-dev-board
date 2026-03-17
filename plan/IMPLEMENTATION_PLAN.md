@@ -8,6 +8,12 @@ This document describes the phased implementation of SoloDevBoard. Each phase ha
 **Note on sequencing:**
 Phases remain the primary sequence for feature delivery. Unfinished work from earlier phases remains open until completed, regardless of progress in later phases. However, certain public-release prerequisites from Phase 6 (such as hosted authentication and admission control) may be pulled forward out of sequence when required to enable safe hosted validation. This does not imply that earlier phases are complete or that the product has reached v1.0.0 readiness.
 
+**Current roadmap status (2026-03-17):**
+- Phase 3 remains in progress. The One-Click Migration delivery slice for labels and milestones is complete, but Triage UI is still outstanding and is the next delivery priority.
+- Phase 4 has not started.
+- Phase 5 has not started.
+- Selected Phase 6 public-release work was pulled forward as a hosted-validation side-step only. The intended delivery order remains: finish Phase 3, then Phase 4, then Phase 5, then complete the remaining Phase 6 release work.
+
 For the full feature scope, see [SCOPE.md](SCOPE.md). For individual feature backlogs, see [BACKLOG.md](BACKLOG.md).
 
 All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI component library.
@@ -85,15 +91,18 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Milestone:** v0.3.0
 
+**Status:** In progress. One-Click Migration is complete for the current labels-and-milestones slice. Triage UI is still outstanding and is the next priority before later phases begin.
+
 ### Key Tasks
 
 #### One-Click Migration
-- [ ] Design `MigrationPlan` and `MigrationResult` domain records
-- [ ] Implement `MigrationService` in `Application` (diff, preview, apply)
-- [ ] Build MudBlazor UI: source/target repository selection, diff preview, confirmation, summary
-- [ ] Support migration of: labels, milestones (phase 1); project board columns (phase 2 of this feature)
-- [ ] Write unit tests for `MigrationService`
-- [ ] Update `docs/user-guide/one-click-migration.md`
+- [x] Design `MigrationPlan` and `MigrationResult` domain records.
+- [x] Implement `MigrationService` in `Application` (diff, preview, apply).
+- [x] Build MudBlazor UI: source/target repository selection, diff preview, confirmation, summary.
+- [x] Support migration of labels and milestones for the current delivery slice.
+- [ ] Support migration of project board columns as a later slice of this feature.
+- [x] Write unit tests for `MigrationService`.
+- [x] Update `docs/user-guide/one-click-migration.md`.
 
 #### Triage UI
 - [ ] Design `TriageSession` and `TriageAction` domain records
@@ -108,7 +117,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 - Phase 2 complete (Label Manager, GitHub label/milestone API integration)
 
-**Note:** v0.3.0 remains incomplete until the Triage UI portion of issue #87 is properly planned and delivered. The milestone cannot be closed until this work is finished.
+**Note:** v0.3.0 remains incomplete until the Triage UI portion of issue #87 is properly planned and delivered. This is the current next focus, and the milestone cannot be closed until this work is finished.
 
 ---
 
@@ -117,6 +126,8 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 **Goal:** Deliver the remaining two features: a visual representation of project board automation rules, and a template library for GitHub Actions workflows.
 
 **Milestone:** v0.4.0
+
+**Status:** Not started. Work on this phase begins after Phase 3 is complete.
 
 ### Key Tasks
 
@@ -150,6 +161,8 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Milestone:** v0.5.0
 
+**Status:** Not started. Work on this phase begins after Phase 4 is complete.
+
 ### Key Tasks
 
 #### Daily Focus
@@ -180,7 +193,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 ### Dependencies
 
-- Phases 1–4 complete (repository selection, label management, board API integration, GitHub Projects v2 GraphQL client)
+- Intended sequence: begin after Phases 1–4 are complete (repository selection, label management, board API integration, GitHub Projects v2 GraphQL client).
 
 ---
 
@@ -191,16 +204,18 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Milestone:** v1.0.0
 
+**Status:** Not the current execution focus. Selected hosted-authentication and Azure-delivery items have been pulled forward for validation, but the main roadmap still returns to the unfinished Phase 3, then Phase 4, then Phase 5, before the remaining Phase 6 work is completed.
+
 ### Key Tasks
 - [ ] Achieve ≥80% unit test coverage across `Application` and `Domain` projects.
 - [ ] Perform accessibility audit of all Blazor components (WCAG 2.1 AA).
 - [ ] Conduct performance review: identify and address slow GitHub API calls (caching, pagination).
-- [ ] Complete Azure infrastructure baseline via Bicep (App Service, Key Vault, managed identity). _(#104)_
-- [ ] Configure OIDC authentication for GitHub Actions deployment to Azure (no long-lived credentials). _(#105)_
+- [x] Complete Azure infrastructure baseline via Bicep (App Service, Key Vault, managed identity). _(#104)_
+- [x] Configure OIDC authentication for GitHub Actions deployment to Azure (no long-lived credentials). _(#105)_
 - [ ] Add health check endpoints for Azure App Service monitoring. _(#106)_
 - [ ] Implement response caching for GitHub API calls to respect rate limits. _(#108)_
 - [ ] Configure structured logging and Application Insights telemetry. _(#107)_
-- [ ] Set up Dependabot for automated dependency updates. _(#109)_
+- [x] Set up Dependabot for automated dependency updates. _(#109)_
 - [ ] Preserve PAT-only local trusted mode for development and trusted self-hosted use.
 - [x] Implement hosted authentication session boundaries and per-request user context for GitHub App-first hosted mode. _(#103, #112; implemented on 2026-03-13, see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_
 - [x] Integrate the real hosted sign-in gateway and session/callback handshake at `/auth/sign-in`, mapping required hosted claims before admission control and repository loading. _(#103, #123; implemented on 2026-03-16; see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md; closes the `/auth/sign-in` planning gap and unblocks #114 and #119.)_
@@ -219,7 +234,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 ### Dependencies
 
-- Phases 1–5 complete.
+- Intended release sequence: complete the remaining Phase 3 work first, then Phase 4, then Phase 5, before closing out the remaining Phase 6 release work.
 
 **Note:** Some Phase 6 public-release prerequisites (such as hosted authentication and admission control) may be advanced out of sequence to enable safe hosted validation. This does not imply that Phases 3–5 are complete or that the product is otherwise ready for v1.0.0 release.
 
