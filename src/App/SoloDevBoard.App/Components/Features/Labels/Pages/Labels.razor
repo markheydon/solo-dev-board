@@ -401,21 +401,29 @@
                     </MudStack>
                 }
             }
-            else if (!string.IsNullOrWhiteSpace(taxonomyOperationMessage))
-            {
-                <MudAlert Severity="@taxonomyOperationSeverity" Dense="true" Variant="Variant.Outlined" data-testid="taxonomy-operation-message">
-                    @taxonomyOperationMessage
-                </MudAlert>
-            }
-            else if (!string.IsNullOrWhiteSpace(syncOperationMessage))
-            {
-                <MudAlert Severity="@syncOperationSeverity" Dense="true" Variant="Variant.Outlined" data-testid="sync-operation-message">
-                    @syncOperationMessage
-                </MudAlert>
-            }
             else
             {
-                <MudText Typo="Typo.body2">No active status messages.</MudText>
+                var hasTaxonomyMessage = !string.IsNullOrWhiteSpace(taxonomyOperationMessage);
+                var hasSyncMessage = !string.IsNullOrWhiteSpace(syncOperationMessage);
+
+                if (hasTaxonomyMessage)
+                {
+                    <MudAlert Severity="@taxonomyOperationSeverity" Dense="true" Variant="Variant.Outlined" data-testid="taxonomy-operation-message">
+                        @taxonomyOperationMessage
+                    </MudAlert>
+                }
+
+                if (hasSyncMessage)
+                {
+                    <MudAlert Severity="@syncOperationSeverity" Dense="true" Variant="Variant.Outlined" data-testid="sync-operation-message">
+                        @syncOperationMessage
+                    </MudAlert>
+                }
+
+                if (!hasTaxonomyMessage && !hasSyncMessage)
+                {
+                    <MudText Typo="Typo.body2">No active status messages.</MudText>
+                }
             }
         </MudStack>
     </MudPaper>
