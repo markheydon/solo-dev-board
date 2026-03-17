@@ -30,7 +30,7 @@ public partial class Audit : ComponentBase
     private int totalOpenIssues;
     private int totalOpenPullRequests;
     private int totalUnlabelledIssues;
-    private int totalFailingWorkflowRuns;
+    private int totalFailingWorkflows;
     private bool isLoadingRepositories = true;
     private bool isLoadingAuditData;
     private bool hasLoadedAuditSummary;
@@ -185,7 +185,7 @@ public partial class Audit : ComponentBase
         totalOpenIssues = repositorySummaries.Sum(result => result.OpenIssueCount);
         totalOpenPullRequests = repositorySummaries.Sum(result => result.OpenPullRequestCount);
         totalUnlabelledIssues = repositorySummaries.Sum(result => result.UnlabelledIssueCount);
-        totalFailingWorkflowRuns = repositorySummaries.Sum(result => result.FailingWorkflowCount);
+        totalFailingWorkflows = repositorySummaries.Sum(result => result.FailingWorkflowCount);
     }
 
     private void ResetDashboardData()
@@ -197,7 +197,7 @@ public partial class Audit : ComponentBase
         totalOpenIssues = 0;
         totalOpenPullRequests = 0;
         totalUnlabelledIssues = 0;
-        totalFailingWorkflowRuns = 0;
+        totalFailingWorkflows = 0;
     }
 
     private static int GetDaysBetween(DateTimeOffset value)

@@ -17,7 +17,7 @@ public sealed class AuditTests
     private readonly Mock<IRepositoryService> _repositoryServiceMock = new();
 
     [Fact]
-    public async Task Audit_WhileServiceIsLoading_ShowsCommandSurfaceLoadingSkeleton()
+    public async Task Audit_WhileServiceIsLoading_ShowsFeedbackRegionSkeleton()
     {
         // Arrange
         var tcs = new TaskCompletionSource<IReadOnlyList<RepositoryDto>>();
@@ -34,7 +34,7 @@ public sealed class AuditTests
         var cut = ctx.Render<Audit>();
 
         // Assert
-        Assert.Single(cut.FindAll("[data-testid='audit-command-surface-loading']"));
+        Assert.Single(cut.FindAll("[data-testid='audit-feedback-region']"));
         Assert.Empty(cut.FindAll("[data-testid='audit-summary-table']"));
         Assert.DoesNotContain("No repositories found", cut.Markup);
     }
