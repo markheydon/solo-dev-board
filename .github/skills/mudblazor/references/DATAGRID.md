@@ -4,6 +4,18 @@ Reference for `MudDataGrid<T>` usage in SoloDevBoard.
 
 ---
 
+## Table Selection Guidance
+
+Choose the lightest table component that satisfies the scenario.
+
+- Use `MudSimpleTable` for static read-only tabular summaries with no interaction.
+- Use `MudTable<T>` for moderate tabular interaction and straightforward templating.
+- Use `MudDataGrid<T>` when richer interactions are needed, such as multi-sort, filtering, selectable rows, and template-heavy columns.
+
+If uncertain, start with `MudTable<T>` and move to `MudDataGrid<T>` only when a concrete feature requires advanced grid capabilities.
+
+---
+
 ## Basic Setup
 
 ```razor
