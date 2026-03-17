@@ -1,4 +1,4 @@
-using SoloDevBoard.Application.Services;
+using SoloDevBoard.Application.Services.Common;
 
 namespace SoloDevBoard.Application.Tests;
 

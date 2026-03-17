@@ -1,4 +1,9 @@
-using SoloDevBoard.Domain.Entities;
+using SoloDevBoard.Domain.Entities.BoardRules;
+using SoloDevBoard.Domain.Entities.Labels;
+using SoloDevBoard.Domain.Entities.Milestones;
+using SoloDevBoard.Domain.Entities.Repositories;
+using SoloDevBoard.Domain.Entities.Triage;
+using SoloDevBoard.Domain.Entities.Workflows;
 
 namespace SoloDevBoard.Domain.Tests;
 

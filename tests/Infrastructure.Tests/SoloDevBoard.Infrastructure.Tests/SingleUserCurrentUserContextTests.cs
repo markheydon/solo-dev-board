@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using SoloDevBoard.Infrastructure.GitHub;
 using SoloDevBoard.Infrastructure.Identity;
 
 namespace SoloDevBoard.Infrastructure.Tests;
