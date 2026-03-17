@@ -32,8 +32,12 @@ Labels: `type/epic`, `area/infrastructure`
 <!-- Enablers: #64 NuGet swap + service wiring, #65 GitHub AI assets -->
 <!-- Stories: #66 Dashboard refactor, #67 Repositories refactor, #68 Label Manager refactor -->
 <!-- Tests: #69 bUnit test updates -->
+<!-- Retroactive wireframe-alignment follow-ons planned 2026-03-17: #131 Repositories refresh, #132 Repositories tests, #133 Label Manager refresh, #134 Label Manager tests, #135 Audit Dashboard refresh, #136 Audit Dashboard tests -->
 
 - [x] As a solo developer, I want the application switched from Fluent UI Blazor to MudBlazor so that UI delivery by AI agents is more reliable and requires fewer workarounds. _(ADR-0012, Epic #63 — done, 2026-03-09)_
+- [ ] As a solo developer, I want the Repositories page refreshed to use a clearer command-strip, data-grid, and feedback layout so that repository management scales cleanly as SoloDevBoard grows. _(Issue #131 planned for v0.2.0; paired test issue #132; wireframe-aligned follow-on to #67.)_
+- [ ] As a solo developer, I want the Label Manager page refreshed into tabbed workflows for Labels, Recommended Taxonomy, and Synchronise so that label-management modes have a clearer mental model. _(Issue #133 planned for v0.2.0; paired test issue #134; wireframe-aligned follow-on to #68.)_
+- [ ] As a solo developer, I want the Audit Dashboard refreshed with a clearer command surface, KPI summary cards, and grouped health indicators so that repository health is easier to scan and act on. _(Issue #135 planned for v0.2.0; paired test issue #136; wireframe-aligned follow-on to #40 and #48.)_
 
 ---
 
