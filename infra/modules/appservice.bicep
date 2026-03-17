@@ -27,7 +27,7 @@ param resourceNameSuffix string = ''
 
 var resourceSuffix = toLower(environmentName)
 var nameSuffix = empty(resourceNameSuffix) ? '' : '-${toLower(resourceNameSuffix)}'
-var appServicePlanName = 'asp-solodevboard-${resourceSuffix}'
+var appServicePlanName = 'asp-solodevboard-${resourceSuffix}${nameSuffix}'
 var appServiceName = 'app-solodevboard-${resourceSuffix}${nameSuffix}'
 var supportsAccessRestrictions = toUpper(appServicePlanSku) != 'F1'
 var hasAccessRestrictions = supportsAccessRestrictions && length(appServiceAllowedCidrs) > 0

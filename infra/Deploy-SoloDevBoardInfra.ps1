@@ -182,7 +182,10 @@ function Get-DefaultResourceGroupName {
 function Get-DefaultAppServiceName {
     param (
         [Parameter(Mandatory = $true)]
-        [string]$Environment
+        [string]$Environment,
+
+        [Parameter()]
+        [string]$ResourceNameSuffix
     )
 
     $sanitisedEnvironment = $Environment.ToLowerInvariant() -replace '[^a-z0-9-]', '-'
@@ -192,7 +195,17 @@ function Get-DefaultAppServiceName {
         $sanitisedEnvironment = 'prod'
     }
 
-    return "app-solodevboard-$sanitisedEnvironment"
+    $sanitisedSuffix = ''
+    if (-not [string]::IsNullOrWhiteSpace($ResourceNameSuffix)) {
+        $suffixValue = $ResourceNameSuffix.ToLowerInvariant() -replace '[^a-z0-9-]', '-'
+        $suffixValue = $suffixValue.Trim('-')
+
+        if (-not [string]::IsNullOrWhiteSpace($suffixValue)) {
+            $sanitisedSuffix = "-$suffixValue"
+        }
+    }
+
+    return "app-solodevboard-$sanitisedEnvironment$sanitisedSuffix"
 }
 
 function Get-GitHubRepositoryFromGitRemote {
@@ -220,6 +233,32 @@ function Get-GitHubRepositoryFromGitRemote {
     }
 
     return $null
+}
+
+function Resolve-GitHubRepositoryInput {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$RepositoryInput
+    )
+
+    $normalisedRepository = $RepositoryInput.Trim()
+
+    if ($normalisedRepository -match '(?i)\.git$') {
+        $normalisedRepository = $normalisedRepository.Substring(0, $normalisedRepository.Length - 4)
+    }
+
+    if ($normalisedRepository -match '^https://github\.com/(?<owner>[^/]+)/(?<repo>[^/]+)$') {
+        $normalisedRepository = "{0}/{1}" -f $Matches.owner, $Matches.repo
+    }
+    elseif ($normalisedRepository -match '^git@github\.com:(?<owner>[^/]+)/(?<repo>[^/]+)$') {
+        $normalisedRepository = "{0}/{1}" -f $Matches.owner, $Matches.repo
+    }
+
+    if ($normalisedRepository -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') {
+        throw 'GitHub repository must be provided in <owner>/<repo> format.'
+    }
+
+    return $normalisedRepository
 }
 
 function Get-CurrentPublicIpv4Cidr {
@@ -284,6 +323,18 @@ if ([string]::IsNullOrWhiteSpace($GitHubRepository)) {
     Write-Output "Detected GitHub repository from git remote origin: $GitHubRepository"
 }
 
+$GitHubRepository = Resolve-GitHubRepositoryInput -RepositoryInput $GitHubRepository
+
+if (-not [string]::IsNullOrWhiteSpace($ResourceNameSuffix)) {
+    if ($ResourceNameSuffix.Length -gt 4) {
+        throw 'ResourceNameSuffix must be 4 characters or fewer to satisfy Azure naming constraints.'
+    }
+
+    if ($ResourceNameSuffix -notmatch '^[A-Za-z0-9-]+$') {
+        throw 'ResourceNameSuffix can only contain letters, numbers, or hyphens.'
+    }
+}
+
 $isFreeTierPlan = $AppServicePlanSku.Equals('F1', [System.StringComparison]::OrdinalIgnoreCase)
 $explicitAppServiceAllowedCidrs = @($AppServiceAllowedCidrs | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
 $effectiveAppServiceAllowedCidrs = @($explicitAppServiceAllowedCidrs)
@@ -334,7 +385,7 @@ az group create --name $ResourceGroupName --location $Location | Out-Null
 
 # If an existing site is being moved to F1, Always On must be disabled first.
 if ($isFreeTierPlan) {
-    $appServiceName = Get-DefaultAppServiceName -Environment $EnvironmentName
+    $appServiceName = Get-DefaultAppServiceName -Environment $EnvironmentName -ResourceNameSuffix $ResourceNameSuffix
     $existingSiteName = & az webapp show --resource-group $ResourceGroupName --name $appServiceName --query name --output tsv 2>$null
 
     if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($existingSiteName)) {

@@ -42,6 +42,7 @@ param gitHubRepository string
 param gitHubEnvironmentName string = 'production'
 
 @description('Optional short suffix appended to globally constrained resource names (for example app and Key Vault) to avoid naming collisions across subscriptions.')
+@maxLength(4)
 param resourceNameSuffix string = ''
 
 // Derive a short, consistent suffix for resource naming

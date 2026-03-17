@@ -86,7 +86,7 @@ To supply an explicit CIDR allow list (which also activates hardening automatica
 pwsh ./infra/Deploy-SoloDevBoardInfra.ps1 -AppServiceAllowedCidrs "203.0.113.10/32"
 ```
 
-The `F1` plan does not support access restrictions; passing `-EnableAppServiceIpHardening` or `-AppServiceAllowedCidrs` on `F1` has no effect and the script will print a notice.
+The `F1` plan does not support access restrictions; passing `-EnableAppServiceIpHardening` on `F1` keeps the app public and prints a notice, while passing explicit `-AppServiceAllowedCidrs` on `F1` fails fast with guidance to use `B1` (or higher).
 
 The GitHub repository for the OIDC federated credential subject is auto-detected from `git config remote.origin.url`. Override with `-GitHubRepository <owner>/<repo>` if the script is run outside the repository or if auto-detection fails.
 
@@ -134,7 +134,10 @@ az group create \
 az deployment group create \
   --resource-group rg-solodevboard-prod \
   --template-file infra/main.bicep \
-  --parameters environmentName=prod
+  --parameters \
+    environmentName=prod \
+    gitHubRepository=<owner>/<repo> \
+    gitHubEnvironmentName=production
 ```
 
 ### 3. Store the GitHub token in Key Vault
@@ -251,7 +254,7 @@ After configuring federated credentials, grant the deployment identity least-pri
 | `appServiceAllowedCidrs` | `[]` | Optional CIDR allow list for App Service inbound access. When set, unmatched traffic is denied. |
 | `gitHubRepository` | _(required — no default)_ | GitHub repository in `<owner>/<repo>` format used for OIDC federation subject matching. Auto-detected from git remote by the deployment script. |
 | `gitHubEnvironmentName` | `production` | GitHub environment name used in OIDC federated subject and secret scoping guidance. |
-| `resourceNameSuffix` | _(empty)_ | Optional short suffix appended to globally constrained resource names (App Service, Key Vault, OIDC identity) to avoid naming collisions across subscriptions. |
+| `resourceNameSuffix` | _(empty)_ | Optional short suffix (max 4 characters) appended to globally constrained resource names (App Service, Key Vault, OIDC identity) to avoid naming collisions across subscriptions. |
 
 When running `infra/Deploy-SoloDevBoardInfra.ps1`, the GitHub repository is auto-detected from `git config remote.origin.url`; override with `-GitHubRepository` if needed. IP hardening is opt-in; use `-EnableAppServiceIpHardening` to auto-allow your current public IPv4, or pass `-AppServiceAllowedCidrs` to specify explicit ranges.
 
