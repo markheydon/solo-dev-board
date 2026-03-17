@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Logging;
 using SoloDevBoard.Application.Services.Audit;
 using SoloDevBoard.Application.Services.Repositories;
 

@@ -1,5 +1,3 @@
-using SoloDevBoard.Domain;
-
 namespace SoloDevBoard.Domain.Entities.Triage;
 
 /// <summary>Represents a GitHub pull request.</summary>

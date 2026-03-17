@@ -7,7 +7,6 @@ using SoloDevBoard.App.Components.Shared;
 using SoloDevBoard.App.Components.Pages;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Repositories;
-using System.Net.Http;
 
 namespace SoloDevBoard.App.Tests;
 
