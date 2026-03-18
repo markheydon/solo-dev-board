@@ -64,7 +64,7 @@ Select how existing artefacts in each target repository are handled when a match
 | **Merge** | Conflicting items are replaced with source values; items that exist only in the target are preserved. |
 
 
-### Step 4 — Review the preview and feedback region
+### Step 4 — Review the preview and status guidance
 
 Click **Preview** to generate a read-only diff for each target repository. No changes are made at this stage.
 
@@ -75,7 +75,7 @@ The preview card for each target shows:
 
 If the preview shows no actionable changes for a target repository, an information notice is displayed instead and the **Apply** button is not shown.
 
-The feedback region provides immediate status updates, error messages, and post-migration summaries, so you are always informed about the outcome of your actions.
+The status and guidance region provides immediate status updates, warnings, and error messages while you work through preview and apply actions.
 
 ### Step 5 — Apply the migration
 
@@ -87,7 +87,7 @@ Partial failures are reported per target repository — a failure for one target
 
 ### Step 6 — Review the post-migration summary
 
-After migration completes, a summary view is shown for each target repository in the feedback region.
+After migration completes, a summary view is shown for each target repository in the post-migration summary region.
 
 - **Labels** and **Milestones** rows display the number of items created, updated, deleted, and skipped for each artefact type.
 - Partial failures are reported per target repository, with error messages shown inline for any unsuccessful operations.

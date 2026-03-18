@@ -456,7 +456,7 @@ public sealed class MigrationTests
         // Assert
         cut.WaitForAssertion(() =>
         {
-            Assert.Contains("Migration summary (Merge)", cut.Markup);
+            Assert.Contains("Conflict strategy used: Merge", cut.Markup);
             Assert.Contains("Label migration failed.", cut.Markup);
             Assert.Contains("GitHub label API rate limit reached", cut.Markup);
         });

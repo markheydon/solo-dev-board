@@ -155,7 +155,7 @@
                                        Disabled="@(!CanApply)"
                                        OnClick="ApplyMigrationAsync"
                                        data-testid="migration-apply-button">
-                                Confirm apply migration
+                                Apply migration
                             </MudButton>
                         }
                         <MudButton Variant="Variant.Text"
@@ -256,7 +256,7 @@
         <MudPaper Class="pa-4" Elevation="1" data-testid="migration-summary-card">
             <MudStack Spacing="2">
                 <MudText Typo="Typo.h6">Post-migration summary</MudText>
-                <MudText Typo="Typo.h6">Migration summary (@applyResult.ConflictStrategy)</MudText>
+                <MudText Typo="Typo.body2">Conflict strategy used: @applyResult.ConflictStrategy</MudText>
                 @foreach (var repository in orderedApplyRepositories)
                 {
                     var labelResult = GetLabelResult(repository);
