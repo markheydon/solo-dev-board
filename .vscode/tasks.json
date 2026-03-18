@@ -74,6 +74,45 @@
       }
     },
     {
+      "label": "watch (wsl)",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "watch",
+        "--project",
+        "${workspaceFolder}/src/App/SoloDevBoard.App/SoloDevBoard.App.csproj",
+        "run"
+      ],
+      "options": {
+        "env": {
+          "DOTNET_WATCH_SUPPRESS_LAUNCH_BROWSER": "1"
+        }
+      },
+      "problemMatcher": [
+        {
+          "pattern": [
+            {
+              "regexp": ".",
+              "file": 1,
+              "location": 2,
+              "message": 3
+            }
+          ],
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "^.*Build started.*",
+            "endsPattern": "^.*Now listening on:\\s+(https?://\\S+)"
+          }
+        }
+      ],
+      "isBackground": true,
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
       "label": "clean",
       "command": "dotnet",
       "type": "process",

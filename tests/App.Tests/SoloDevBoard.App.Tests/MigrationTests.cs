@@ -44,6 +44,32 @@ public sealed class MigrationTests
     }
 
     [Fact]
+    public async Task Migration_PageLoaded_RendersWorkflowAndFeedbackRegions()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                CreateRepository("owner", "repo-a"),
+                CreateRepository("owner", "repo-b"),
+            ]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Migration>();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.NotNull(cut.Find("[data-testid='migration-workflow-controls-card']"));
+            Assert.NotNull(cut.Find("[data-testid='migration-preview-empty-state']"));
+            Assert.NotNull(cut.Find("[data-testid='migration-feedback-region']"));
+            Assert.NotNull(cut.Find("[data-testid='migration-requirements-info']"));
+        });
+    }
+
+    [Fact]
     public async Task Migration_PreviewClicked_UsesSelectedConflictStrategy()
     {
         // Arrange
@@ -137,8 +163,63 @@ public sealed class MigrationTests
         cut.Find("[data-testid='migration-preview-button']").Click();
 
         // Assert
-        cut.WaitForAssertion(() => Assert.Contains("Migration preview (Skip)", cut.Markup));
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Migration preview (Skip)", cut.Markup);
+            Assert.NotNull(cut.Find("[data-testid='migration-no-action-warning']"));
+        });
+
         Assert.Empty(cut.FindAll("[data-testid='migration-apply-button']"));
+    }
+
+    [Fact]
+    public async Task Migration_ActionablePreviewGenerated_ShowsReadyToApplyFeedbackMessage()
+    {
+        // Arrange
+        var sourceRepository = CreateRepository("owner", "repo-a");
+        var targetRepository = CreateRepository("owner", "repo-b");
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([sourceRepository, targetRepository]);
+
+        _migrationServiceMock
+            .Setup(service => service.PreviewMigrationAsync(
+                "owner/repo-a",
+                It.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })),
+                It.IsAny<MigrationScopeDto>(),
+                MigrationConflictStrategy.Skip,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MigrationPreviewDto(
+                MigrationConflictStrategy.Skip,
+                [new LabelSyncRepositoryPreviewDto(
+                    "owner/repo-b",
+                    [new LabelDto("priority/high", "d93f0b", "High priority", "owner/repo-b")],
+                    [],
+                    [],
+                    [])],
+                [new MilestoneSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [])]));
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Migration>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='migration-repository-autocomplete']"));
+
+        await SelectRepositoriesAsync(cut, sourceRepository, targetRepository);
+
+        var targetCheckboxes = cut.FindAll("[data-testid='migration-target-checkbox']");
+        Assert.Equal(2, targetCheckboxes.Count);
+        targetCheckboxes[1].Change(true);
+
+        cut.Find("[data-testid='migration-preview-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.NotNull(cut.Find("[data-testid='migration-apply-button']"));
+            Assert.NotNull(cut.Find("[data-testid='migration-ready-to-apply-info']"));
+        });
     }
 
     [Fact]
@@ -375,7 +456,7 @@ public sealed class MigrationTests
         // Assert
         cut.WaitForAssertion(() =>
         {
-            Assert.Contains("Migration summary (Merge)", cut.Markup);
+            Assert.Contains("Conflict strategy used: Merge", cut.Markup);
             Assert.Contains("Label migration failed.", cut.Markup);
             Assert.Contains("GitHub label API rate limit reached", cut.Markup);
         });

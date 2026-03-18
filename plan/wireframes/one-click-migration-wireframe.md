@@ -17,12 +17,12 @@
 | Page Header: One-Click Migration                                      |
 | Intro copy: labels and milestones only for the current delivery slice |
 +-----------------------------------------------------------------------+
-| Workflow Controls                                                     |
+| Migration Setup                                                       |
 | [Source Repository Select] [Target Repository Multi-Select]           |
 | [Scope: Labels] [Scope: Milestones] [Conflict Strategy Select]        |
 | [Preview Changes]                                    [Apply Migration]|
 +-----------------------------------------------------------------------+
-| Preview Region                                                        |
+| Preview                                                               |
 | +-------------------------------------------------------------------+ |
 | | Target Repository A                                                | |
 | |  - Labels: create 2, update 1, skip 3                             | |
@@ -37,7 +37,7 @@
 | [Success / partial failure / error alert]                            |
 | [Created | Updated | Deleted | Skipped counts by target]             |
 +-----------------------------------------------------------------------+
-| Feedback Region                                                       |
+| Status and Guidance                                                   |
 | [Status messages, warnings, validation, and next-step guidance]       |
 +-----------------------------------------------------------------------+
 ```
@@ -52,12 +52,12 @@
 
 ## State Variants
 - Empty state: Explain that a source repository, one or more target repositories, and at least one migration scope are required before preview can run.
-- Loading state: Keep the workflow controls visible while preview or apply work is in progress, with the active region showing a busy state.
+- Loading state: Keep the migration setup controls visible while preview or apply work is in progress, with the active region showing a busy state.
 - Warning state: Surface conflicts, validation issues, or partial failures in a clear feedback region without hiding previously generated preview data.
 - Success state: Show a concise result summary with created, updated, deleted, and skipped counts for each target repository.
 
 ## Accessibility Notes
-- Focus order should move from workflow controls to preview, then to the post-migration summary and feedback region.
+- Focus order should move from migration setup to preview, then to the post-migration summary and status and guidance.
 - All selectors, buttons, and alerts should expose accessible labels and descriptive helper text where needed.
 - Status and validation messaging should use an `aria-live` polite region so workflow feedback is announced without being disruptive.
 - Preview tables and summary counts should remain understandable when read linearly by assistive technologies.
