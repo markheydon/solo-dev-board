@@ -39,7 +39,7 @@
                     SingleSelectionOnly="true"
                     Disabled="isStartingSession"
                     AutocompleteTestId="triage-repository-autocomplete"
-                    SummaryTestId="triage-scope-summary" />
+                    SummaryTestId="triage-repository-scope-summary" />
 
                 <MudSwitch T="bool"
                            Value="includePullRequests"
@@ -133,9 +133,13 @@
                         <div class="mud-typography mud-typography-body2 triage-markdown" data-testid="triage-item-body">@CurrentItemBodyMarkup</div>
                     }
 
-                    <MudLink Href="@CurrentItem.HtmlUrl" Target="_blank" Typo="Typo.body2" data-testid="triage-item-link">
+                    <a href="@CurrentItem.HtmlUrl"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="mud-link mud-typography mud-typography-body2"
+                       data-testid="triage-item-link">
                         Open item #@CurrentItem.Number on GitHub
-                    </MudLink>
+                    </a>
                 </MudStack>
             </MudPaper>
 

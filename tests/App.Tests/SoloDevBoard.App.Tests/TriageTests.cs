@@ -114,7 +114,7 @@ public sealed class TriageTests
         {
             Assert.Contains("Issue 102", cut.Markup);
             Assert.Contains("Item 2 of 2", cut.Markup);
-            Assert.Contains("Remaining: 1 items", cut.Markup);
+            Assert.Contains("Remaining: 1 item", cut.Markup);
         });
     }
 
@@ -178,7 +178,7 @@ public sealed class TriageTests
         cut.WaitForAssertion(() =>
         {
             Assert.Contains("Session complete", cut.Markup);
-            Assert.Contains("Skipped: 1 items", cut.Markup);
+            Assert.Contains("Skipped: 1 item", cut.Markup);
             Assert.NotNull(cut.Find("[data-testid='triage-revisit-skipped-button']"));
         });
 
@@ -237,6 +237,55 @@ public sealed class TriageTests
             Assert.Contains("<h1", body.InnerHtml, StringComparison.OrdinalIgnoreCase);
             Assert.Contains("<li", body.InnerHtml, StringComparison.OrdinalIgnoreCase);
             Assert.Contains("href=\"https://example.com\"", body.InnerHtml, StringComparison.OrdinalIgnoreCase);
+        });
+    }
+
+    [Fact]
+    public async Task Triage_CurrentItemBodyContainsRelativeAndUnsafeLinks_PreservesRelativeAndNeutralisesUnsafeHref()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreateRepository("owner", "repo")]);
+
+        var markdownItem = new TriageItemDto(
+            TriageItemTypeDto.Issue,
+            202,
+            202,
+            "owner/repo",
+            "Link safety issue",
+            "https://github.com/owner/repo/issues/202",
+            "[Relative](./docs/page.md) [Query](?view=compact) [Unsafe](javascript:alert('x'))",
+            "open",
+            "markheydon",
+            [],
+            null,
+            string.Empty,
+            DateTimeOffset.UtcNow.AddDays(-2),
+            DateTimeOffset.UtcNow.AddDays(-1));
+
+        _triageServiceMock
+            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateSession("owner", "repo", [markdownItem], 0, []));
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Triage>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-repository-autocomplete']"));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo" }));
+        cut.Find("[data-testid='triage-start-session-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            var body = cut.Find("[data-testid='triage-item-body']");
+            Assert.Contains("href=\"./docs/page.md\"", body.InnerHtml, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("href=\"?view=compact\"", body.InnerHtml, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("href=\"#\"", body.InnerHtml, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("href=\"javascript:alert", body.InnerHtml, StringComparison.OrdinalIgnoreCase);
         });
     }
 

@@ -3,6 +3,7 @@ using Markdig;
 using MudBlazor;
 using SoloDevBoard.Application.Services.Repositories;
 using SoloDevBoard.Application.Services.Triage;
+using System.Text.Encodings.Web;
 using System.Text.RegularExpressions;
 
 namespace SoloDevBoard.App.Components.Features.Triage.Pages;
@@ -105,12 +106,12 @@ public partial class Triage : ComponentBase
     private string RemainingCountText
         => currentSession is null
             ? "Remaining: 0 items"
-            : $"Remaining: {currentSession.Progress.RemainingItems} items";
+            : $"Remaining: {currentSession.Progress.RemainingItems} {GetItemCountLabel(currentSession.Progress.RemainingItems)}";
 
     private string SkippedCountText
         => currentSession is null
             ? "Skipped: 0 items"
-            : $"Skipped: {currentSession.Progress.SkippedItems} items";
+            : $"Skipped: {currentSession.Progress.SkippedItems} {GetItemCountLabel(currentSession.Progress.SkippedItems)}";
 
     private string CurrentItemTypeText
         => CurrentItem?.ItemType == TriageItemTypeDto.PullRequest
@@ -357,18 +358,27 @@ public partial class Triage : ComponentBase
         ArgumentNullException.ThrowIfNull(body);
 
         var html = Markdown.ToHtml(body, markdownPipeline);
-        html = imageRegex.Replace(html, string.Empty);
 
-        // Keep rendered links clickable while preventing unsafe protocols.
-        html = hrefRegex.Replace(
-            html,
-            static match =>
-            {
-                var url = match.Groups["url"].Value;
-                return IsAllowedLink(url)
-                    ? match.Value
-                    : "href=\"#\"";
-            });
+        try
+        {
+            html = imageRegex.Replace(html, string.Empty);
+
+            // Keep rendered links clickable while preventing unsafe protocols.
+            html = hrefRegex.Replace(
+                html,
+                static match =>
+                {
+                    var url = match.Groups["url"].Value;
+                    return IsAllowedLink(url)
+                        ? match.Value
+                        : "href=\"#\"";
+                });
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            // Fall back to escaped plain text if regex replacement times out.
+            return $"<p>{HtmlEncoder.Default.Encode(body)}</p>";
+        }
 
         return html;
     }
@@ -380,17 +390,31 @@ public partial class Triage : ComponentBase
             return false;
         }
 
-        if (url.StartsWith("#", StringComparison.Ordinal) || url.StartsWith("/", StringComparison.Ordinal))
+        if (url.StartsWith("#", StringComparison.Ordinal))
         {
             return true;
         }
 
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        if (url.StartsWith("/", StringComparison.Ordinal))
+        {
+            return !url.StartsWith("//", StringComparison.Ordinal);
+        }
+
+        if (Uri.TryCreate(url, UriKind.Absolute, out var absoluteUri))
+        {
+            return absoluteUri.Scheme is "http" or "https" or "mailto";
+        }
+
+        if (!Uri.TryCreate(url, UriKind.Relative, out _))
         {
             return false;
         }
 
-        return uri.Scheme is "http" or "https" or "mailto";
+        // Block scheme-like values masquerading as relative URLs.
+        var schemeSeparatorIndex = url.IndexOf(':', StringComparison.Ordinal);
+        return schemeSeparatorIndex <= 0;
     }
+
+    private static string GetItemCountLabel(int count) => count == 1 ? "item" : "items";
 
 }
