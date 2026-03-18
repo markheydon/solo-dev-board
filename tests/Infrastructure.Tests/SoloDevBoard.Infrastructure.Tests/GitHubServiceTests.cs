@@ -1,4 +1,5 @@
 using Moq;
+using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Domain.Entities.Labels;
 using SoloDevBoard.Infrastructure.GitHub;
 using System.Net;
@@ -651,6 +652,158 @@ public sealed class GitHubServiceTests
 
         Assert.Equal(HttpStatusCode.BadRequest, exception.StatusCode);
         Assert.Contains("GitHub API request failed", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ApplyLabelsToTriageItemAsync_ValidLabels_PutsLabelsPayload()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler([
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("[]", Encoding.UTF8, "application/json"),
+            },
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        await sut.ApplyLabelsToTriageItemAsync("owner", "repo", 42, ["type/story", "priority/high"]);
+
+        // Assert
+        Assert.Single(handler.Requests);
+        Assert.Equal(HttpMethod.Put, handler.Requests[0].Method);
+        Assert.Equal("https://api.github.com/repos/owner/repo/issues/42/labels", handler.Requests[0].RequestUri!.ToString());
+
+        var payload = await handler.Requests[0].Content!.ReadAsStringAsync();
+        using var document = JsonDocument.Parse(payload);
+        var labels = document.RootElement.GetProperty("labels");
+        Assert.Equal(2, labels.GetArrayLength());
+        Assert.Equal("type/story", labels[0].GetString());
+        Assert.Equal("priority/high", labels[1].GetString());
+    }
+
+    [Fact]
+    public async Task AssignMilestoneToTriageItemAsync_NullMilestone_SendsPatchWithNullMilestone()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler([
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("{}", Encoding.UTF8, "application/json"),
+            },
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        await sut.AssignMilestoneToTriageItemAsync("owner", "repo", 77, null);
+
+        // Assert
+        Assert.Single(handler.Requests);
+        Assert.Equal(HttpMethod.Patch, handler.Requests[0].Method);
+        Assert.Equal("https://api.github.com/repos/owner/repo/issues/77", handler.Requests[0].RequestUri!.ToString());
+
+        var payload = await handler.Requests[0].Content!.ReadAsStringAsync();
+        using var document = JsonDocument.Parse(payload);
+        Assert.Equal(JsonValueKind.Null, document.RootElement.GetProperty("milestone").ValueKind);
+    }
+
+    [Fact]
+    public async Task AddTriageItemToProjectBoardAsync_ValidResponses_ReturnsCreatedProjectItemId()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+              "node_id": "I_kwDOABCDE123"
+            }
+            """),
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+              "data": {
+              "addProjectV2ItemById": {
+                "item": {
+                "id": "PVTI_lAHOAJefG84BQ6bhzgnrX1A"
+                }
+              }
+              },
+              "errors": []
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var result = await sut.AddTriageItemToProjectBoardAsync("owner", "repo", 55, "PVT_kwHOAJefG84BQ6bh");
+
+        // Assert
+        Assert.Equal("PVTI_lAHOAJefG84BQ6bhzgnrX1A", result);
+        Assert.Equal(2, handler.Requests.Count);
+        Assert.Equal(HttpMethod.Get, handler.Requests[0].Method);
+        Assert.Equal("https://api.github.com/repos/owner/repo/issues/55", handler.Requests[0].RequestUri!.ToString());
+        Assert.Equal(HttpMethod.Post, handler.Requests[1].Method);
+        Assert.Equal("https://api.github.com/graphql", handler.Requests[1].RequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task CloseTriageItemAsDuplicateAsync_Issue_PostsCommentAndClosesIssue()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            new HttpResponseMessage(HttpStatusCode.Created)
+            {
+                Content = new StringContent("{}", Encoding.UTF8, "application/json"),
+            },
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("{}", Encoding.UTF8, "application/json"),
+            },
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        await sut.CloseTriageItemAsDuplicateAsync("owner", "repo", GitHubTriageItemType.Issue, 99, "#12");
+
+        // Assert
+        Assert.Equal(2, handler.Requests.Count);
+        Assert.Equal(HttpMethod.Post, handler.Requests[0].Method);
+        Assert.Equal("https://api.github.com/repos/owner/repo/issues/99/comments", handler.Requests[0].RequestUri!.ToString());
+        Assert.Equal(HttpMethod.Patch, handler.Requests[1].Method);
+        Assert.Equal("https://api.github.com/repos/owner/repo/issues/99", handler.Requests[1].RequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task CloseTriageItemAsDuplicateAsync_PullRequest_PostsCommentAndClosesPullRequest()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            new HttpResponseMessage(HttpStatusCode.Created)
+            {
+                Content = new StringContent("{}", Encoding.UTF8, "application/json"),
+            },
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("{}", Encoding.UTF8, "application/json"),
+            },
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        await sut.CloseTriageItemAsDuplicateAsync("owner", "repo", GitHubTriageItemType.PullRequest, 100, "#22");
+
+        // Assert
+        Assert.Equal(2, handler.Requests.Count);
+        Assert.Equal(HttpMethod.Post, handler.Requests[0].Method);
+        Assert.Equal("https://api.github.com/repos/owner/repo/issues/100/comments", handler.Requests[0].RequestUri!.ToString());
+        Assert.Equal(HttpMethod.Patch, handler.Requests[1].Method);
+        Assert.Equal("https://api.github.com/repos/owner/repo/pulls/100", handler.Requests[1].RequestUri!.ToString());
     }
 
     private static GitHubService CreateSubject(HttpMessageHandler handler)

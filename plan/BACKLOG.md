@@ -166,23 +166,14 @@ Labels: `type/epic`, `area/triage`
 - [ ] As a solo developer, I want to triage unlabelled pull requests alongside issues so that my entire GitHub workload, including open PRs, is managed in one place. _(Issue #150)_
 
 **Enablers:**
-- [ ] Triage session orchestration. _(Issue #143)_
-- [ ] Triage UI state management. _(Issue #144)_
+- [x] Triage session orchestration implemented on branch feature/issue-143-144-triage-session-and-github-actions. _(Issue #143; domain model and Application DTO/service orchestration complete; tests passing.)_
+- [x] Triage UI state management implemented on branch feature/issue-143-144-triage-session-and-github-actions. _(Issue #144; GitHub triage write operations and project-board assignment GraphQL support in IGitHubService and GitHubService complete; tests passing.)_
 
 **Tests:**
 - [ ] Triage session orchestration unit tests. _(Issue #151)_
 - [ ] Triage UI state management unit tests. _(Issue #152)_
 - [ ] Triage UI bUnit tests. _(Issue #153)_
 
----
-
-## Epic 6: Workflow Templates
-
-Labels: `type/epic`, `area/workflows`
-
-- [ ] As a solo developer, I want to browse a library of GitHub Actions workflow templates so that I can find one suitable for my project.
-- [ ] As a solo developer, I want to customise a template's parameters before applying it so that it is configured correctly for my repository.
-- [ ] As a solo developer, I want to apply a workflow template to one or more repositories at once so that I can roll out CI/CD configurations efficiently.
 - [ ] As a solo developer, I want to see which repositories already have a particular workflow template applied so that I have a clear overview of my CI/CD coverage.
 - [ ] As a solo developer, I want to be alerted when a repository's workflow file differs from the canonical template so that I can update it.
 - [ ] As a solo developer, I want built-in templates for .NET CI, Azure CD, and Dependabot so that I have useful starting points out of the box.

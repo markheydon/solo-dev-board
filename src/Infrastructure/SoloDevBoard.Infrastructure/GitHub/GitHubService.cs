@@ -231,6 +231,174 @@ public sealed class GitHubService : IGitHubService
         await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <inheritdoc/>
+    public async Task ApplyLabelsToTriageItemAsync(string owner, string repo, int itemNumber, IReadOnlyList<string> labelNames, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+
+        if (itemNumber <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(itemNumber), "Item number must be greater than zero.");
+        }
+
+        ArgumentNullException.ThrowIfNull(labelNames);
+
+        var normalisedLabelNames = labelNames
+            .Where(label => !string.IsNullOrWhiteSpace(label))
+            .Select(label => label.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var client = CreateAuthenticatedClient();
+        var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/issues/{itemNumber}/labels";
+
+        using var response = await client.PutAsJsonAsync(
+                endpoint,
+                new TriageLabelsRequestDto(normalisedLabelNames),
+                JsonOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async Task AssignMilestoneToTriageItemAsync(string owner, string repo, int itemNumber, int? milestoneNumber, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+
+        if (itemNumber <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(itemNumber), "Item number must be greater than zero.");
+        }
+
+        if (milestoneNumber is <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(milestoneNumber), "Milestone number must be greater than zero when provided.");
+        }
+
+        var client = CreateAuthenticatedClient();
+        var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/issues/{itemNumber}";
+
+        using var request = new HttpRequestMessage(HttpMethod.Patch, endpoint)
+        {
+            Content = JsonContent.Create(new TriageMilestoneRequestDto(milestoneNumber), options: JsonOptions),
+        };
+
+        using var response = await client.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async Task<string> AddTriageItemToProjectBoardAsync(string owner, string repo, int itemNumber, string projectId, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectId);
+
+        if (itemNumber <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(itemNumber), "Item number must be greater than zero.");
+        }
+
+        var client = CreateAuthenticatedClient();
+        var itemEndpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/issues/{itemNumber}";
+
+        using var itemResponse = await client.GetAsync(itemEndpoint, cancellationToken).ConfigureAwait(false);
+        await EnsureSuccessStatusCodeAsync(itemResponse, cancellationToken).ConfigureAwait(false);
+
+        var itemNode = await itemResponse.Content.ReadFromJsonAsync<TriageItemNodeResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
+            ?? throw CreateInvalidResponseException("Triage item response was empty.", itemEndpoint);
+
+        if (string.IsNullOrWhiteSpace(itemNode.NodeId))
+        {
+            throw CreateInvalidResponseException("Triage item did not include a node identifier.", itemEndpoint);
+        }
+
+        const string mutation = "mutation AddProjectV2Item($projectId: ID!, $contentId: ID!) { addProjectV2ItemById(input: { projectId: $projectId, contentId: $contentId }) { item { id } } }";
+        var requestBody = new GraphQlRequestDto(
+            mutation,
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["projectId"] = projectId,
+                ["contentId"] = itemNode.NodeId,
+            });
+
+        using var graphQlResponse = await client.PostAsJsonAsync("/graphql", requestBody, JsonOptions, cancellationToken).ConfigureAwait(false);
+        await EnsureSuccessStatusCodeAsync(graphQlResponse, cancellationToken).ConfigureAwait(false);
+
+        var graphQlPayload = await graphQlResponse.Content.ReadFromJsonAsync<AddProjectV2ItemResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
+            ?? throw CreateInvalidResponseException("GraphQL response body was empty.", "/graphql");
+
+        if (graphQlPayload.Errors.Count > 0)
+        {
+            var combinedErrors = string.Join("; ", graphQlPayload.Errors.Select(static error => error.Message));
+            throw new HttpRequestException($"GitHub GraphQL request failed. Errors: {combinedErrors}");
+        }
+
+        var addedItemId = graphQlPayload.Data?.AddProjectV2ItemById?.Item?.Id;
+        if (string.IsNullOrWhiteSpace(addedItemId))
+        {
+            throw CreateInvalidResponseException("GraphQL response did not contain the created project item identifier.", "/graphql");
+        }
+
+        return addedItemId;
+    }
+
+    /// <inheritdoc/>
+    public async Task CloseTriageItemAsDuplicateAsync(string owner, string repo, GitHubTriageItemType itemType, int itemNumber, string duplicateReference, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+        ArgumentException.ThrowIfNullOrWhiteSpace(duplicateReference);
+
+        if (itemNumber <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(itemNumber), "Item number must be greater than zero.");
+        }
+
+        var trimmedReference = duplicateReference.Trim();
+        var client = CreateAuthenticatedClient();
+
+        var commentEndpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/issues/{itemNumber}/comments";
+        var comment = new DuplicateCommentRequestDto($"Duplicate of {trimmedReference}");
+
+        using var commentResponse = await client.PostAsJsonAsync(commentEndpoint, comment, JsonOptions, cancellationToken).ConfigureAwait(false);
+        await EnsureSuccessStatusCodeAsync(commentResponse, cancellationToken).ConfigureAwait(false);
+
+        switch (itemType)
+        {
+            case GitHubTriageItemType.Issue:
+            {
+                var issueEndpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/issues/{itemNumber}";
+                using var issueRequest = new HttpRequestMessage(HttpMethod.Patch, issueEndpoint)
+                {
+                    Content = JsonContent.Create(new IssueStateRequestDto("closed"), options: JsonOptions),
+                };
+
+                using var issueResponse = await client.SendAsync(issueRequest, cancellationToken).ConfigureAwait(false);
+                await EnsureSuccessStatusCodeAsync(issueResponse, cancellationToken).ConfigureAwait(false);
+                break;
+            }
+            case GitHubTriageItemType.PullRequest:
+            {
+                var pullRequestEndpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/pulls/{itemNumber}";
+                using var pullRequestRequest = new HttpRequestMessage(HttpMethod.Patch, pullRequestEndpoint)
+                {
+                    Content = JsonContent.Create(new PullRequestStateRequestDto("closed"), options: JsonOptions),
+                };
+
+                using var pullRequestResponse = await client.SendAsync(pullRequestRequest, cancellationToken).ConfigureAwait(false);
+                await EnsureSuccessStatusCodeAsync(pullRequestResponse, cancellationToken).ConfigureAwait(false);
+                break;
+            }
+            default:
+                throw new ArgumentOutOfRangeException(nameof(itemType), itemType, "Unsupported triage item type.");
+        }
+    }
+
     private HttpClient CreateAuthenticatedClient()
     {
         // Authentication is handled by the configured GitHubAuthHandler on the named HttpClient.
@@ -735,5 +903,75 @@ public sealed class GitHubService : IGitHubService
             Colour = label.Colour,
             Description = label.Description,
         };
+    }
+
+    /// <summary>Request body DTO for setting labels on a triage item.</summary>
+    private sealed record TriageLabelsRequestDto(
+        [property: JsonPropertyName("labels")] IReadOnlyList<string> Labels);
+
+    /// <summary>Request body DTO for assigning or clearing a milestone on a triage item.</summary>
+    private sealed record TriageMilestoneRequestDto(
+        [property: JsonPropertyName("milestone")] int? Milestone);
+
+    /// <summary>Request body DTO for posting duplicate-reference comments.</summary>
+    private sealed record DuplicateCommentRequestDto(
+        [property: JsonPropertyName("body")] string Body);
+
+    /// <summary>Request body DTO for issue state updates.</summary>
+    private sealed record IssueStateRequestDto(
+        [property: JsonPropertyName("state")] string State);
+
+    /// <summary>Request body DTO for pull request state updates.</summary>
+    private sealed record PullRequestStateRequestDto(
+        [property: JsonPropertyName("state")] string State);
+
+    /// <summary>Request body DTO for GitHub GraphQL requests.</summary>
+    private sealed record GraphQlRequestDto(
+        [property: JsonPropertyName("query")] string Query,
+        [property: JsonPropertyName("variables")] IReadOnlyDictionary<string, string> Variables);
+
+    /// <summary>DTO for resolving a triage item GraphQL node identifier from the issues REST endpoint.</summary>
+    private sealed record TriageItemNodeResponseDto
+    {
+        [JsonPropertyName("node_id")]
+        public string NodeId { get; init; } = string.Empty;
+    }
+
+    /// <summary>DTO wrapper for GraphQL add-project-item responses.</summary>
+    private sealed record AddProjectV2ItemResponseDto
+    {
+        [JsonPropertyName("data")]
+        public AddProjectV2ItemDataDto? Data { get; init; }
+
+        [JsonPropertyName("errors")]
+        public IReadOnlyList<GraphQlErrorDto> Errors { get; init; } = [];
+    }
+
+    /// <summary>DTO for GraphQL response data payload.</summary>
+    private sealed record AddProjectV2ItemDataDto
+    {
+        [JsonPropertyName("addProjectV2ItemById")]
+        public AddProjectV2ItemPayloadDto? AddProjectV2ItemById { get; init; }
+    }
+
+    /// <summary>DTO for GraphQL mutation payload.</summary>
+    private sealed record AddProjectV2ItemPayloadDto
+    {
+        [JsonPropertyName("item")]
+        public AddProjectV2ItemPayloadItemDto? Item { get; init; }
+    }
+
+    /// <summary>DTO for GraphQL mutation item payload.</summary>
+    private sealed record AddProjectV2ItemPayloadItemDto
+    {
+        [JsonPropertyName("id")]
+        public string Id { get; init; } = string.Empty;
+    }
+
+    /// <summary>DTO for GraphQL error payloads.</summary>
+    private sealed record GraphQlErrorDto
+    {
+        [JsonPropertyName("message")]
+        public string Message { get; init; } = string.Empty;
     }
 }

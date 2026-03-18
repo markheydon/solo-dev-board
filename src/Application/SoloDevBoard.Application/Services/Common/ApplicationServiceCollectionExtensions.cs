@@ -3,6 +3,7 @@ using SoloDevBoard.Application.Services.Audit;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Migration;
 using SoloDevBoard.Application.Services.Repositories;
+using SoloDevBoard.Application.Services.Triage;
 
 namespace SoloDevBoard.Application.Services.Common;
 
@@ -21,6 +22,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<ILabelManagerService, LabelService>();
         services.AddScoped<IMigrationService, MigrationService>();
         services.AddScoped<IAuditDashboardService, AuditDashboardService>();
+        services.AddScoped<ITriageService, TriageService>();
 
         return services;
     }
