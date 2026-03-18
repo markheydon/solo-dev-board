@@ -1,23 +1,37 @@
-using SoloDevBoard.Domain.Entities.Triage;
-
 namespace SoloDevBoard.Application.Services.Triage;
 
-/// <summary>Provides issue triage operations.</summary>
+/// <summary>Provides one-at-a-time triage session orchestration operations.</summary>
 public interface ITriageService
 {
-    /// <summary>Retrieves issues that still require triage in the specified repository.</summary>
+    /// <summary>Starts a triage session for a repository.</summary>
     /// <param name="owner">The GitHub account owner login.</param>
     /// <param name="repo">The repository name.</param>
+    /// <param name="includePullRequests"><see langword="true"/> to include pull requests in the triage queue; otherwise, <see langword="false"/>.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
-    /// <returns>A read-only list of issues that require triage.</returns>
-    Task<IReadOnlyList<Issue>> GetUntriagedIssuesAsync(string owner, string repo, CancellationToken cancellationToken = default);
+    /// <returns>The initialised triage session DTO.</returns>
+    Task<TriageSessionDto> StartSessionAsync(string owner, string repo, bool includePullRequests = false, CancellationToken cancellationToken = default);
 
-    /// <summary>Applies a triage label to an issue.</summary>
-    /// <param name="owner">The GitHub account owner login.</param>
-    /// <param name="repo">The repository name.</param>
-    /// <param name="issueNumber">The repository-scoped issue number.</param>
-    /// <param name="labelName">The label name to apply.</param>
+    /// <summary>Advances the session to the next queue item.</summary>
+    /// <param name="session">The current session state.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
-    /// <returns>A task that represents the asynchronous label application operation.</returns>
-    Task ApplyTriageLabelAsync(string owner, string repo, int issueNumber, string labelName, CancellationToken cancellationToken = default);
+    /// <returns>The updated triage session DTO.</returns>
+    Task<TriageSessionDto> AdvanceSessionAsync(TriageSessionDto session, CancellationToken cancellationToken = default);
+
+    /// <summary>Skips the currently active item and records a skip action.</summary>
+    /// <param name="session">The current session state.</param>
+    /// <param name="reason">An optional user-provided skip reason.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>The updated triage session DTO.</returns>
+    Task<TriageSessionDto> SkipCurrentItemAsync(TriageSessionDto session, string reason, CancellationToken cancellationToken = default);
+
+    /// <summary>Appends skipped items to the end of the queue for revisit.</summary>
+    /// <param name="session">The current session state.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>The updated triage session DTO.</returns>
+    Task<TriageSessionDto> RevisitSkippedItemsAsync(TriageSessionDto session, CancellationToken cancellationToken = default);
+
+    /// <summary>Builds the latest triage session summary from current session state.</summary>
+    /// <param name="session">The current session state.</param>
+    /// <returns>The computed triage session summary DTO.</returns>
+    TriageSessionSummaryDto BuildSessionSummary(TriageSessionDto session);
 }
