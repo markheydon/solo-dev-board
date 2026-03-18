@@ -6,19 +6,20 @@ agent: Delivery Agent
 
 # Execute Feature Workflow
 
-**When to use:** After planning completes (via `plan-next-issue` prompt), use this to implement the feature, write tests, and update documentation.
+**When to use:** After planning completes (via `plan-next-issue` prompt), use this to implement the feature, write tests, and update documentation. This prompt is optimised for already-planned issues and should get to implementation quickly.
 
 ---
 
 ## Purpose
 
-Execute the full implementation workflow for a planned issue:
-1. Verify issue has clear acceptance criteria
-2. Implement code following layered architecture
-3. Create xUnit tests with proper coverage
-4. Update user-facing documentation
-5. Create ADR if architectural decision made
-6. Synchronise backlog status
+Execute the full implementation workflow for one planned issue, or a small batch of related planned issues:
+1. Perform a quick readiness check
+2. Create or switch to the feature branch
+3. Implement code following layered architecture
+4. Create xUnit tests with proper coverage
+5. Update user-facing documentation
+6. Create ADR if an implementation-time architectural decision is required
+7. Synchronise backlog status
 
 **Result:** Code, tests, and docs complete; ready for Review Agent to create PR and close issue.
 
@@ -28,6 +29,7 @@ Execute the full implementation workflow for a planned issue:
 
 Provide **ONE** of:
 - **Issue number:** "Implement issue #31"
+- **Issue list:** "Implement issues #31, #32, and #33"
 - **Feature name:** "Build Label Manager UI" (agent locates corresponding issue)
 - **Story title:** "As a user, I can filter labels by type" (agent matches to issue)
 
@@ -39,18 +41,18 @@ This prompt invokes the **Delivery Agent**, which executes:
 
 ### 1. Issue Context Verification
 - Fetch issue details from GitHub
-- Verify issue has:
-  - Acceptance criteria defined
-  - Labels applied (`type/`, `priority/`, `area/`, `size/`)
-  - `status/todo` or `status/in-progress` label
-  - Technical plan or breakdown in description
-- For page-producing Blazor UI work, verify that an approved wireframe already exists in `plan/wireframes/` and is referenced by the relevant issue or planning artefact
-- **If issue not ready:** Escalate to PM Orchestrator for re-planning
-- **Project board update:** Remove `status/todo` label, add `status/in-progress`; use `github-project` skill (Lifecycle Event 2) to set project Status → "In Progress" and **overwrite Start Date with today's actual start date** (not the original planned date — this is a required step, not optional)
+- Perform a quick readiness check only:
+  - The issue is open
+  - The issue has acceptance criteria or an equivalent implementation description
+  - The issue has core labels (`type/`, `priority/`, `area/`)
+  - For page-producing Blazor UI work, an approved wireframe already exists when one is required
+- Treat issues created through `plan-next-issue` as implementation-ready by default; do not repeat full planning validation unless a clearly missing prerequisite is discovered
+- **If a critical prerequisite is missing:** Escalate to PM Orchestrator for re-planning
+- **Lifecycle sync:** Update issue labels and project board state at the start of work when practical, but do not let GitHub project administration block implementation. If project-board updates fail, continue coding and report the follow-up needed in the handoff.
 
 ### 2. Feature Branch Creation
 
-Before any code is written, the Delivery Agent must create a dedicated feature branch from `main`:
+Before any code is written, the Delivery Agent must create or switch to a dedicated feature branch from `main`:
 
 ```bash
 git checkout main
@@ -58,7 +60,7 @@ git pull origin main
 git checkout -b feature/issue-$issueNumber-brief-description
 ```
 
-**Branch naming:** `feature/issue-N-kebab-case-description` (e.g. `feature/issue-31-label-manager-ui`).
+**Branch naming:** `feature/issue-N-kebab-case-description` (e.g. `feature/issue-31-label-manager-ui`). When implementing a small batch of related issues together, one shared branch is preferred over separate branches per issue.
 
 All source code, tests, and documentation changes are committed to this branch. The branch reaches `main` only via a pull request created by the Review Agent — **never commit implementation code directly to `main`**.
 
@@ -84,6 +86,7 @@ All source code, tests, and documentation changes are committed to this branch. 
 ### 5. Documentation Updates
 - Update `docs/user-guide/*.md` if feature is user-facing
 - Update `docs/index.md` quick links if new doc page added
+- Prefer implementation first, then documentation sync before handoff unless documentation is itself the feature being implemented
 - Add XML doc comments (`///`) to all public members
 
 ### 6. ADR Creation (if needed)
@@ -272,6 +275,24 @@ Implement issue #31
 ```
 Implemented Label Manager UI (issue #31). 4 source files, 3 test files, 2 doc files changed.
 26 tests added, all passing. ADR-0007 created. Ready for review.
+```
+
+### Example 1a: Implement a related batch
+**You say:**
+```
+Implement issues #143 and #144
+```
+
+**Agent executes:**
+- Fetches both issues and confirms they are part of the same planned feature batch
+- Creates one shared feature branch
+- Implements the shared domain, Application, and Infrastructure changes together
+- Adds tests across the affected layers
+- Updates backlog status once the batch is complete
+
+**Output:**
+```
+Implemented issues #143 and #144 on a single feature branch. Shared contracts, service logic, and integration points delivered together with tests. Ready for review.
 ```
 
 ---

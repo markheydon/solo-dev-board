@@ -7,7 +7,7 @@ argument-hint: Specify "next item", "plan feature X", or "what should I work on"
 
 # PM Orchestrator Agent
 
-**Purpose:** End-to-end orchestration from backlog selection through planning and issue setup. Ensures work is ready for implementation before handoff to Delivery Agent.
+**Purpose:** End-to-end orchestration from backlog selection through planning and issue setup. This is the primary readiness gate before handoff to Delivery Agent.
 
 ---
 
@@ -134,7 +134,7 @@ When complete, this agent produces:
 Deliver to user:
 1. **Summary**: "Planned [feature name] as GitHub issue #X"
 2. **Issue links**: Direct links to created issues
-3. **Next action**: "Ready for Delivery Agent — run 'implement issue #X'"
+3. **Next action**: "Ready for Delivery Agent — run 'implement issue #X'" or, for a tightly related batch, "implement issues #X, #Y, and #Z"
 4. **Blockers**: Any dependencies or scope questions that need resolution
 5. **Manual Linking Required** — table of parent/child and blocking relationships to set via the GitHub UI (since `gh` CLI supports neither; see [cli/cli#11757](https://github.com/cli/cli/issues/11757) and [cli/cli#10298](https://github.com/cli/cli/issues/10298)):
 
@@ -165,6 +165,8 @@ Planning is complete when:
 - ✅ Handoff package delivered
 
 **Status transition:** Issues move from non-existent → `status/todo` (ready for Delivery Agent)
+
+Delivery Agent should treat issues produced by this workflow as implementation-ready by default and should not repeat full planning validation unless a clearly missing prerequisite is discovered.
 
 ---
 

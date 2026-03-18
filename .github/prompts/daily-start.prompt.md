@@ -12,7 +12,7 @@ agent: PM Orchestrator
 
 ## Purpose
 
-Get a concise status update and clear recommendation for what to work on next. This prompt reads your planning artefacts, checks active GitHub issues, and identifies any blockers or scope drift. It may also identify the next batch of stories, enablers, or tests that should be placed in the board's **Up Next** queue, but it does not change the board unless the user explicitly asks for that follow-up step.
+Get a concise status update and clear recommendation for what to work on next. This prompt is an orientation step, not a planning or implementation gate. It reads your planning artefacts, checks active GitHub issues, and identifies blockers or scope drift so you can decide whether to review active work, implement already-planned issues, or plan something new. It may also identify the next batch of stories, enablers, or tests that should be placed in the board's **Up Next** queue, but it does not change the board unless the user explicitly asks for that follow-up step.
 
 ---
 
@@ -89,7 +89,8 @@ Total: 23 items | Phase 1 progress: 40% (4/10 complete)
 ```
 ✅ Recommended Next Action:
 1. Approve and merge PR #25 (Review Agent can close issue #12)
-2. Then: Plan next high-priority item "One-Click Migration UI" (use plan-next-issue prompt)
+2. If implementation-ready issues already exist: run `execute-feature` with those issue numbers.
+3. Otherwise: plan the next high-priority item "One-Click Migration UI" (use `plan-next-issue` prompt)
 ```
 
 ### Optional Up Next Queue
@@ -114,7 +115,8 @@ Total: 23 items | Phase 1 progress: 40% (4/10 complete)
 
 Based on the recommended action, use:
 - **If work in review:** Run `review-and-close.prompt.md` to finish pending PRs
-- **If backlog ready:** Run `plan-next-issue.prompt.md` to select and plan next item
+- **If implementation-ready issues already exist:** Run `execute-feature.prompt.md` with one or more issue numbers
+- **If backlog ready but no implementation-ready issues exist:** Run `plan-next-issue.prompt.md` to select and plan next item
 - **If you want a visible daily queue:** Ask the agent to move the recommended stories, enablers, or tests into **Up Next** and set **Focus Order**.
 - **If blockers present:** Resolve blockers manually, then re-run `daily-start.prompt.md`
 

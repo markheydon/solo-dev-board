@@ -87,7 +87,7 @@ This prompt invokes the **PM Orchestrator Agent**, which executes:
 - Set Phase matching the issue's milestone (see Phase Assignment Rules in `github-project` skill)
 - Set Priority matching the `priority/` label applied to each issue
 - Set Status to "Todo" for all new issues
-- Set Start Date and Target Date from the Roadmap Date Guidelines in `github-project` skill
+- Do **not** set Start Date or Target Date during planning; those dates are recorded only when delivery actually begins
 
 ### 7. Test Strategy
 - Invoke `breakdown-test` skill
@@ -104,7 +104,7 @@ This prompt invokes the **PM Orchestrator Agent**, which executes:
 - **Wireframe artefact** in `plan/wireframes/` for page-producing features
 - **Test issues** linked to feature work
 - **ADR** if architectural decision required
-- **Project board items** — all issues added to SoloDevBoard Roadmap with Phase/Priority/Status/dates
+- **Project board items** — all issues added to SoloDevBoard Roadmap with Phase/Priority/Status
 
 ### Artefacts Updated
 - **`plan/BACKLOG.md`** — item marked as planned/in-progress
@@ -154,7 +154,7 @@ Set these relationships via the GitHub UI — `gh` CLI supports neither sub-issu
 | _(none for this feature)_ | — | — |
 
 ## Next Action
-✅ Ready for implementation — Use `execute-feature` prompt with issue #31
+✅ Ready for implementation — Use `execute-feature` prompt with issue #31 (or a small batch of related already-planned issues)
 ```
 
 ---
@@ -172,7 +172,7 @@ Set these relationships via the GitHub UI — `gh` CLI supports neither sub-issu
 ## Follow-Up Prompts
 
 After planning completes:
-- **To implement:** Run `execute-feature.prompt.md` with the primary feature issue number
+- **To implement:** Run `execute-feature.prompt.md` with the primary feature issue number, or a small batch of related already-planned issue numbers
 - **To review plan:** Ask "Show me the technical plan for issue #X"
 - **To adjust scope:** Manually update `plan/SCOPE.md`, then re-run this prompt
 
@@ -272,6 +272,8 @@ Planning is NOT complete until:
 - ✅ ADR created if architectural decision made
 - ✅ Dependencies and acceptance criteria documented
 - ✅ Backlog updated to reflect planning status
+
+Planning should be the primary readiness gate for delivery. Once this workflow completes, `execute-feature` should treat the resulting issues as implementation-ready unless a clearly missing prerequisite is discovered.
 
 ---
 
