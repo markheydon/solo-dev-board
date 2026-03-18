@@ -11,7 +11,7 @@ nav_order: 2
 
 ## Overview
 
-One-Click Migration allows you to copy label taxonomies, milestones, and project board configurations from one GitHub repository to another in a single action. This is particularly useful when bootstrapping a new repository to match the conventions of an existing project.
+One-Click Migration allows you to copy label taxonomies and milestones from one GitHub repository to another in a single action. This is particularly useful when bootstrapping a new repository to match the conventions of an existing project.
 
 Key goals of One-Click Migration:
 - Eliminate the repetitive manual work of recreating labels and milestones in new repositories.
@@ -63,7 +63,8 @@ Select how existing artefacts in each target repository are handled when a match
 | **Overwrite** | Conflicting items are replaced with those from the source. A warning is shown before you confirm. |
 | **Merge** | Conflicting items are replaced with source values; items that exist only in the target are preserved. |
 
-### Step 4 — Preview changes
+
+### Step 4 — Review the preview and feedback region
 
 Click **Preview** to generate a read-only diff for each target repository. No changes are made at this stage.
 
@@ -72,27 +73,27 @@ The preview card for each target shows:
 - **Labels** — tables listing labels to create, update, and delete, with colour, name, and description for each row.
 - **Milestones** — tables listing milestones to create, update, and delete, with title, state, due date, and description for each row.
 
-If the preview shows no actionable changes for a target repository, an information notice is displayed instead and the **Confirm and apply** button is not shown.
+If the preview shows no actionable changes for a target repository, an information notice is displayed instead and the **Apply** button is not shown.
+
+The feedback region provides immediate status updates, error messages, and post-migration summaries, so you are always informed about the outcome of your actions.
 
 ### Step 5 — Apply the migration
 
-Once you are satisfied with the preview, click **Confirm and apply**. This button only appears when there is at least one actionable change across all target repositories.
+Once you are satisfied with the preview, click **Apply**. This button only appears when there is at least one actionable change across all target repositories.
 
 If you selected the **Overwrite** strategy, an on-page warning is shown before destructive changes are applied.
 
 Partial failures are reported per target repository — a failure for one target does not abort the remaining targets.
 
-### Step 6 — Review the summary
+### Step 6 — Review the post-migration summary
 
-
-
-After migration completes, a summary view is shown for each target repository.
+After migration completes, a summary view is shown for each target repository in the feedback region.
 
 - **Labels** and **Milestones** rows display the number of items created, updated, deleted, and skipped for each artefact type.
 - Partial failures are reported per target repository, with error messages shown inline for any unsuccessful operations.
 - If a target has no operations for an enabled artefact type, the summary still displays that artefact row with zero counts.
 
-Project board configuration migration remains planned for a later slice and is not yet available.
+**Note:** Project board configuration migration is not included in the current delivery. Only labels and milestones are supported at this time.
 
 ---
 

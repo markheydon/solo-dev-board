@@ -49,6 +49,11 @@
         "${workspaceFolder}/src/App/SoloDevBoard.App/SoloDevBoard.App.csproj",
         "run"
       ],
+      "options": {
+        "env": {
+          "DOTNET_WATCH_SUPPRESS_LAUNCH_BROWSER": "1"
+        }
+      },
       "problemMatcher": [
         {
           "pattern": [

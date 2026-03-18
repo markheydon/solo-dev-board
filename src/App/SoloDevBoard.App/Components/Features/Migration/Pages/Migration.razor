@@ -4,10 +4,13 @@
 
 <MudStack Spacing="3">
     <MudText Typo="Typo.h4">One-Click Migration</MudText>
-    <MudText Typo="Typo.body1">Preview and apply label and milestone migration from one source repository to multiple target repositories.</MudText>
+    <MudText Typo="Typo.body1">Run labels and milestones migration from one source repository to one or more target repositories.</MudText>
+    <MudText Typo="Typo.body2">This workflow covers the current delivery slice for labels and milestones only.</MudText>
 
-    <MudPaper Class="pa-4" Elevation="1">
+    <MudPaper Class="pa-4" Elevation="1" data-testid="migration-workflow-controls-card">
         <MudStack Spacing="2">
+            <MudText Typo="Typo.h6" data-testid="migration-workflow-controls-heading">Migration setup</MudText>
+
             @if (isLoadingRepositories)
             {
                 <MudStack AlignItems="AlignItems.Center" Spacing="1" aria-live="polite" role="status">
@@ -17,99 +20,124 @@
             }
             else
             {
-                <RepositorySelector
-                    Title="Repositories"
-                    Label="Repositories"
-                    Placeholder="Search repositories and select"
-                    EmptyStateText="No active repositories are available for migration."
-                    AvailableRepositories="availableRepositoryFullNames"
-                    SelectedRepositories="selectedRepositoryFullNames"
-                    SelectedRepositoriesChanged="OnSelectedRepositoriesChangedAsync"
-                    SummaryText="@RepositorySelectorSummary"
-                    ShowSelectedChips="true"
-                    ShowSelectionActions="true"
-                    Disabled="IsBusy"
-                    AutocompleteTestId="migration-repository-autocomplete"
-                    SummaryTestId="migration-repository-selector-summary" />
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" md="6">
+                        <RepositorySelector
+                            Title="Repositories"
+                            Label="Repositories"
+                            Placeholder="Search repositories and select"
+                            EmptyStateText="No active repositories are available for migration."
+                            AvailableRepositories="availableRepositoryFullNames"
+                            SelectedRepositories="selectedRepositoryFullNames"
+                            SelectedRepositoriesChanged="OnSelectedRepositoriesChangedAsync"
+                            SummaryText="@RepositorySelectorSummary"
+                            ShowSelectedChips="true"
+                            ShowSelectionActions="true"
+                            Disabled="IsBusy"
+                            AutocompleteTestId="migration-repository-autocomplete"
+                            SummaryTestId="migration-repository-selector-summary" />
+                    </MudItem>
 
-                <MudSelect T="string"
-                           Label="Source repository"
-                           Value="sourceRepositoryFullName"
-                           ValueChanged="OnSourceRepositoryChangedAsync"
-                           Variant="Variant.Outlined"
-                           Disabled="@(IsBusy || selectedRepositories.Count < 2)"
-                           data-testid="migration-source-select">
-                    @foreach (var repository in selectedRepositories.OrderBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase))
-                    {
-                        <MudSelectItem T="string" Value="@repository.FullName">@repository.FullName</MudSelectItem>
-                    }
-                </MudSelect>
+                    <MudItem xs="12" md="6">
+                        <MudPaper Class="pa-3" Outlined="true">
+                            <MudStack Spacing="1">
+                                <MudText Typo="Typo.subtitle2">Source repository</MudText>
+                                <MudText Typo="Typo.body2">Choose the source repository used to generate preview and apply actions.</MudText>
 
-                <MudText Typo="Typo.subtitle2">Target repositories</MudText>
-                <MudStack Spacing="1" data-testid="migration-target-list">
-                    @foreach (var repository in selectedRepositories.OrderBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase))
-                    {
-                        var isSourceRepository = repository.FullName.Equals(sourceRepositoryFullName, StringComparison.OrdinalIgnoreCase);
-                        <MudCheckBox T="bool"
-                                     Value="targetRepositoryFullNames.Contains(repository.FullName)"
-                                     ValueChanged="isChecked => OnTargetRepositoryChangedAsync(repository.FullName, isChecked)"
-                                     Disabled="@(IsBusy || isSourceRepository)"
-                                     Label="@repository.FullName"
-                                     data-testid="migration-target-checkbox" />
-                    }
-                </MudStack>
+                                <MudSelect T="string"
+                                           Label="Source repository"
+                                           Value="sourceRepositoryFullName"
+                                           ValueChanged="OnSourceRepositoryChangedAsync"
+                                           Variant="Variant.Outlined"
+                                           Disabled="@(IsBusy || selectedRepositories.Count < 2)"
+                                           data-testid="migration-source-select">
+                                    @foreach (var repository in selectedRepositories.OrderBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase))
+                                    {
+                                        <MudSelectItem T="string" Value="@repository.FullName">@repository.FullName</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
 
-                <MudSelect T="MigrationConflictStrategy"
-                           Label="Conflict strategy"
-                           Value="conflictStrategy"
-                           ValueChanged="OnConflictStrategyChangedAsync"
-                           Variant="Variant.Outlined"
-                           Disabled="IsBusy"
-                           data-testid="migration-conflict-strategy-select">
-                    @foreach (var option in conflictOptions)
-                    {
-                        <MudSelectItem T="MigrationConflictStrategy" Value="@option.Value">@option.Label</MudSelectItem>
-                    }
-                </MudSelect>
+                    <MudItem xs="12" md="6">
+                        <MudPaper Class="pa-3" Outlined="true">
+                            <MudStack Spacing="1">
+                                <MudText Typo="Typo.subtitle2">Target repositories</MudText>
+                                <MudText Typo="Typo.body2">Select one or more targets. The source repository cannot be selected as a target.</MudText>
 
-                <MudPaper Class="pa-3" Outlined="true" data-testid="migration-conflict-strategy-help">
-                    <MudStack Spacing="1">
-                        <MudText Typo="Typo.subtitle2">Conflict behaviour</MudText>
-                        @foreach (var option in conflictOptions)
-                        {
-                            <MudText Typo="Typo.body2"><strong>@option.Label:</strong> @option.Description</MudText>
-                        }
-                    </MudStack>
-                </MudPaper>
+                                <MudStack Spacing="1" data-testid="migration-target-list">
+                                    @foreach (var repository in selectedRepositories.OrderBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase))
+                                    {
+                                        var isSourceRepository = repository.FullName.Equals(sourceRepositoryFullName, StringComparison.OrdinalIgnoreCase);
+                                        <MudCheckBox T="bool"
+                                                     Value="targetRepositoryFullNames.Contains(repository.FullName)"
+                                                     ValueChanged="isChecked => OnTargetRepositoryChangedAsync(repository.FullName, isChecked)"
+                                                     Disabled="@(IsBusy || isSourceRepository)"
+                                                     Label="@repository.FullName"
+                                                     data-testid="migration-target-checkbox" />
+                                    }
+                                </MudStack>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
 
-                <MudPaper Class="pa-3" Outlined="true" data-testid="migration-scope-card">
-                    <MudStack Spacing="1">
-                        <MudText Typo="Typo.subtitle2">Items to migrate</MudText>
-                        <MudSwitch T="bool"
-                                   Value="migrateLabels"
-                                   ValueChanged="OnMigrateLabelsChangedAsync"
-                                   Label="Labels"
-                                   Disabled="IsBusy"
-                                   Color="Color.Primary"
-                                   data-testid="migration-scope-labels-switch" />
-                        <MudSwitch T="bool"
-                                   Value="migrateMilestones"
-                                   ValueChanged="OnMigrateMilestonesChangedAsync"
-                                   Label="Milestones"
-                                   Disabled="IsBusy"
-                                   Color="Color.Primary"
-                                   data-testid="migration-scope-milestones-switch" />
-                    </MudStack>
-                </MudPaper>
+                    <MudItem xs="12" md="6">
+                        <MudStack Spacing="2">
+                            <MudSelect T="MigrationConflictStrategy"
+                                       Label="Conflict strategy"
+                                       Value="conflictStrategy"
+                                       ValueChanged="OnConflictStrategyChangedAsync"
+                                       Variant="Variant.Outlined"
+                                       Disabled="IsBusy"
+                                       data-testid="migration-conflict-strategy-select">
+                                @foreach (var option in conflictOptions)
+                                {
+                                    <MudSelectItem T="MigrationConflictStrategy" Value="@option.Value">@option.Label</MudSelectItem>
+                                }
+                            </MudSelect>
 
-                @if (conflictStrategy == MigrationConflictStrategy.Overwrite)
-                {
-                    <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined" data-testid="migration-overwrite-warning">
-                        Overwrite can remove target labels and milestones that do not exist in the source repository.
-                    </MudAlert>
-                }
+                            <MudPaper Class="pa-3" Outlined="true" data-testid="migration-conflict-strategy-help">
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.subtitle2">Conflict behaviour</MudText>
+                                    @foreach (var option in conflictOptions)
+                                    {
+                                        <MudText Typo="Typo.body2"><strong>@option.Label:</strong> @option.Description</MudText>
+                                    }
+                                </MudStack>
+                            </MudPaper>
 
-                <MudStack Row="true" Spacing="1">
+                            <MudPaper Class="pa-3" Outlined="true" data-testid="migration-scope-card">
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.subtitle2">Migration scope</MudText>
+                                    <MudSwitch T="bool"
+                                               Value="migrateLabels"
+                                               ValueChanged="OnMigrateLabelsChangedAsync"
+                                               Label="Labels"
+                                               Disabled="IsBusy"
+                                               Color="Color.Primary"
+                                               data-testid="migration-scope-labels-switch" />
+                                    <MudSwitch T="bool"
+                                               Value="migrateMilestones"
+                                               ValueChanged="OnMigrateMilestonesChangedAsync"
+                                               Label="Milestones"
+                                               Disabled="IsBusy"
+                                               Color="Color.Primary"
+                                               data-testid="migration-scope-milestones-switch" />
+                                </MudStack>
+                            </MudPaper>
+
+                            @if (conflictStrategy == MigrationConflictStrategy.Overwrite)
+                            {
+                                <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined" data-testid="migration-overwrite-warning">
+                                    Overwrite can remove target labels and milestones that do not exist in the source repository.
+                                </MudAlert>
+                            }
+                        </MudStack>
+                    </MudItem>
+                </MudGrid>
+
+                <MudStack Row="true" Spacing="1" Class="justify-end" data-testid="migration-workflow-actions">
                     <MudButton Variant="Variant.Outlined"
                                Color="Color.Secondary"
                                Disabled="@(!CanPreview)"
@@ -130,7 +158,6 @@
                                 Confirm apply migration
                             </MudButton>
                         }
-
                         <MudButton Variant="Variant.Text"
                                    Color="Color.Default"
                                    OnClick="CancelPreview"
@@ -145,13 +172,6 @@
                 {
                     <MudProgressLinear Indeterminate="true" Color="Color.Primary" data-testid="migration-progress-indicator" />
                 }
-
-                @if (!string.IsNullOrWhiteSpace(operationMessage))
-                {
-                    <MudAlert Severity="@operationSeverity" Dense="true" Variant="Variant.Outlined" data-testid="migration-operation-message">
-                        @operationMessage
-                    </MudAlert>
-                }
             }
         </MudStack>
     </MudPaper>
@@ -160,13 +180,15 @@
     {
         <MudPaper Class="pa-4" Elevation="1" data-testid="migration-preview-card">
             <MudStack Spacing="2">
-                <MudText Typo="Typo.h6">Migration preview (@previewResult.ConflictStrategy)</MudText>
+                <MudText Typo="Typo.h6">Preview</MudText>
+                <MudText Typo="Typo.body2">Review create, update, delete, and skip actions by target repository before applying migration.</MudText>
+                <MudText Typo="Typo.subtitle1">Migration preview (@previewResult.ConflictStrategy)</MudText>
                 @foreach (var repository in orderedPreviewRepositories)
                 {
                     var labelPreview = GetLabelPreview(repository);
                     var milestonePreview = GetMilestonePreview(repository);
 
-                    <MudPaper Class="pa-3" Outlined="true">
+                    <MudPaper Class="pa-3" Outlined="true" data-testid="migration-preview-repository-card">
                         <MudText Typo="Typo.subtitle1">@repository</MudText>
 
                         @if (migrateLabels)
@@ -220,11 +242,20 @@
             </MudStack>
         </MudPaper>
     }
+    else
+    {
+        <MudPaper Class="pa-4" Elevation="1" data-testid="migration-preview-empty-state">
+            <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined">
+                Select one source repository, one or more target repositories, and at least one migration scope to generate a preview.
+            </MudAlert>
+        </MudPaper>
+    }
 
     @if (applyResult.LabelResults.Count > 0 || applyResult.MilestoneResults.Count > 0)
     {
         <MudPaper Class="pa-4" Elevation="1" data-testid="migration-summary-card">
             <MudStack Spacing="2">
+                <MudText Typo="Typo.h6">Post-migration summary</MudText>
                 <MudText Typo="Typo.h6">Migration summary (@applyResult.ConflictStrategy)</MudText>
                 @foreach (var repository in orderedApplyRepositories)
                 {
@@ -265,4 +296,35 @@
             </MudStack>
         </MudPaper>
     }
+
+    <MudPaper Class="pa-4" Elevation="1" data-testid="migration-feedback-region" aria-live="polite">
+        <MudStack Spacing="1">
+            <MudText Typo="Typo.h6">Status and guidance</MudText>
+
+            @if (!string.IsNullOrWhiteSpace(operationMessage))
+            {
+                <MudAlert Severity="@operationSeverity" Dense="true" Variant="Variant.Outlined" data-testid="migration-operation-message">
+                    @operationMessage
+                </MudAlert>
+            }
+            else if (!CanPreview)
+            {
+                <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" data-testid="migration-requirements-info">
+                    Select repositories and migration scope to unlock preview.
+                </MudAlert>
+            }
+            else if (showPreview && !HasActionablePreviewChanges)
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined" data-testid="migration-no-action-warning">
+                    The current preview has no actionable create, update, or delete changes.
+                </MudAlert>
+            }
+            else if (showPreview && HasActionablePreviewChanges)
+            {
+                <MudAlert Severity="Severity.Success" Dense="true" Variant="Variant.Outlined" data-testid="migration-ready-to-apply-info">
+                    Review the preview and apply migration when you are ready.
+                </MudAlert>
+            }
+        </MudStack>
+    </MudPaper>
 </MudStack>
