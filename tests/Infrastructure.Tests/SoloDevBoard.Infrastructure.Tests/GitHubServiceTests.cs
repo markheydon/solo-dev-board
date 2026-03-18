@@ -654,15 +654,15 @@ public sealed class GitHubServiceTests
         Assert.Contains("GitHub API request failed", exception.Message, StringComparison.Ordinal);
     }
 
-      [Fact]
-      public async Task ApplyLabelsToTriageItemAsync_ValidLabels_PutsLabelsPayload()
-      {
+    [Fact]
+    public async Task ApplyLabelsToTriageItemAsync_ValidLabels_PutsLabelsPayload()
+    {
         // Arrange
         var handler = new QueueMessageHandler([
-          new HttpResponseMessage(HttpStatusCode.OK)
-          {
-            Content = new StringContent("[]", Encoding.UTF8, "application/json"),
-          },
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("[]", Encoding.UTF8, "application/json"),
+            },
         ]);
 
         var sut = CreateSubject(handler);
@@ -681,17 +681,17 @@ public sealed class GitHubServiceTests
         Assert.Equal(2, labels.GetArrayLength());
         Assert.Equal("type/story", labels[0].GetString());
         Assert.Equal("priority/high", labels[1].GetString());
-      }
+    }
 
-      [Fact]
-      public async Task AssignMilestoneToTriageItemAsync_NullMilestone_SendsPatchWithNullMilestone()
-      {
+    [Fact]
+    public async Task AssignMilestoneToTriageItemAsync_NullMilestone_SendsPatchWithNullMilestone()
+    {
         // Arrange
         var handler = new QueueMessageHandler([
-          new HttpResponseMessage(HttpStatusCode.OK)
-          {
-            Content = new StringContent("{}", Encoding.UTF8, "application/json"),
-          },
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("{}", Encoding.UTF8, "application/json"),
+            },
         ]);
 
         var sut = CreateSubject(handler);
@@ -707,20 +707,20 @@ public sealed class GitHubServiceTests
         var payload = await handler.Requests[0].Content!.ReadAsStringAsync();
         using var document = JsonDocument.Parse(payload);
         Assert.Equal(JsonValueKind.Null, document.RootElement.GetProperty("milestone").ValueKind);
-      }
+    }
 
-      [Fact]
-      public async Task AddTriageItemToProjectBoardAsync_ValidResponses_ReturnsCreatedProjectItemId()
-      {
+    [Fact]
+    public async Task AddTriageItemToProjectBoardAsync_ValidResponses_ReturnsCreatedProjectItemId()
+    {
         // Arrange
         var handler = new QueueMessageHandler(
         [
-          CreateJsonResponse(HttpStatusCode.OK, """
+            CreateJsonResponse(HttpStatusCode.OK, """
             {
               "node_id": "I_kwDOABCDE123"
             }
             """),
-          CreateJsonResponse(HttpStatusCode.OK, """
+            CreateJsonResponse(HttpStatusCode.OK, """
             {
               "data": {
               "addProjectV2ItemById": {
@@ -746,22 +746,22 @@ public sealed class GitHubServiceTests
         Assert.Equal("https://api.github.com/repos/owner/repo/issues/55", handler.Requests[0].RequestUri!.ToString());
         Assert.Equal(HttpMethod.Post, handler.Requests[1].Method);
         Assert.Equal("https://api.github.com/graphql", handler.Requests[1].RequestUri!.ToString());
-      }
+    }
 
-      [Fact]
-      public async Task CloseTriageItemAsDuplicateAsync_Issue_PostsCommentAndClosesIssue()
-      {
+    [Fact]
+    public async Task CloseTriageItemAsDuplicateAsync_Issue_PostsCommentAndClosesIssue()
+    {
         // Arrange
         var handler = new QueueMessageHandler(
         [
-          new HttpResponseMessage(HttpStatusCode.Created)
-          {
-            Content = new StringContent("{}", Encoding.UTF8, "application/json"),
-          },
-          new HttpResponseMessage(HttpStatusCode.OK)
-          {
-            Content = new StringContent("{}", Encoding.UTF8, "application/json"),
-          },
+            new HttpResponseMessage(HttpStatusCode.Created)
+            {
+                Content = new StringContent("{}", Encoding.UTF8, "application/json"),
+            },
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("{}", Encoding.UTF8, "application/json"),
+            },
         ]);
 
         var sut = CreateSubject(handler);
@@ -775,22 +775,22 @@ public sealed class GitHubServiceTests
         Assert.Equal("https://api.github.com/repos/owner/repo/issues/99/comments", handler.Requests[0].RequestUri!.ToString());
         Assert.Equal(HttpMethod.Patch, handler.Requests[1].Method);
         Assert.Equal("https://api.github.com/repos/owner/repo/issues/99", handler.Requests[1].RequestUri!.ToString());
-      }
+    }
 
-      [Fact]
-      public async Task CloseTriageItemAsDuplicateAsync_PullRequest_PostsCommentAndClosesPullRequest()
-      {
+    [Fact]
+    public async Task CloseTriageItemAsDuplicateAsync_PullRequest_PostsCommentAndClosesPullRequest()
+    {
         // Arrange
         var handler = new QueueMessageHandler(
         [
-          new HttpResponseMessage(HttpStatusCode.Created)
-          {
-            Content = new StringContent("{}", Encoding.UTF8, "application/json"),
-          },
-          new HttpResponseMessage(HttpStatusCode.OK)
-          {
-            Content = new StringContent("{}", Encoding.UTF8, "application/json"),
-          },
+            new HttpResponseMessage(HttpStatusCode.Created)
+            {
+                Content = new StringContent("{}", Encoding.UTF8, "application/json"),
+            },
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("{}", Encoding.UTF8, "application/json"),
+            },
         ]);
 
         var sut = CreateSubject(handler);
@@ -804,7 +804,7 @@ public sealed class GitHubServiceTests
         Assert.Equal("https://api.github.com/repos/owner/repo/issues/100/comments", handler.Requests[0].RequestUri!.ToString());
         Assert.Equal(HttpMethod.Patch, handler.Requests[1].Method);
         Assert.Equal("https://api.github.com/repos/owner/repo/pulls/100", handler.Requests[1].RequestUri!.ToString());
-      }
+    }
 
     private static GitHubService CreateSubject(HttpMessageHandler handler)
     {

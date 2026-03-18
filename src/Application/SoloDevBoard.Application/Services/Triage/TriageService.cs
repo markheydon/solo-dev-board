@@ -101,10 +101,16 @@ public sealed class TriageService : ITriageService
             .Concat([action])
             .ToArray();
 
-        var nextIndex = Math.Min(domainSession.CurrentIndex + 1, domainSession.Queue.Count);
+        // Remove the skipped item from the active queue so revisit can append it at the end.
+        var updatedQueue = domainSession.Queue
+            .Where((_, index) => index != domainSession.CurrentIndex)
+            .ToArray();
+
+        var nextIndex = Math.Min(domainSession.CurrentIndex, updatedQueue.Length);
 
         return Task.FromResult(UpdateSessionState(domainSession with
         {
+            Queue = updatedQueue,
             CurrentIndex = nextIndex,
             SkippedItems = updatedSkippedItems,
             ActionHistory = updatedActionHistory,
@@ -123,16 +129,17 @@ public sealed class TriageService : ITriageService
             return Task.FromResult(ToDto(domainSession));
         }
 
-        var existingKeys = domainSession.Queue
+        var skippedKeys = domainSession.SkippedItems
             .Select(item => (item.ItemType, item.Number, item.RepositoryFullName))
             .ToHashSet();
 
-        var appendItems = domainSession.SkippedItems
-            .Where(item => !existingKeys.Contains((item.ItemType, item.Number, item.RepositoryFullName)))
+        // Ensure skipped items are moved to the end even if they still exist in the queue.
+        var retainedQueue = domainSession.Queue
+            .Where(item => !skippedKeys.Contains((item.ItemType, item.Number, item.RepositoryFullName)))
             .ToArray();
 
-        var updatedQueue = domainSession.Queue
-            .Concat(appendItems)
+        var updatedQueue = retainedQueue
+            .Concat(domainSession.SkippedItems)
             .ToArray();
 
         return Task.FromResult(UpdateSessionState(domainSession with

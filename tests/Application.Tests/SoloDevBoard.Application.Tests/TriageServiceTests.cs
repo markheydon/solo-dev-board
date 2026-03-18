@@ -108,7 +108,9 @@ public sealed class TriageServiceTests
         var result = await sut.SkipCurrentItemAsync(session, "Needs follow-up");
 
         // Assert
-        Assert.Equal(1, result.CurrentIndex);
+        Assert.Equal(0, result.CurrentIndex);
+        Assert.Single(result.Queue);
+        Assert.Equal(2, result.Queue[0].Number);
         Assert.Single(result.SkippedItems);
         Assert.Single(result.ActionHistory);
         Assert.Equal(TriageActionTypeDto.Skipped, result.ActionHistory[0].ActionType);
@@ -149,6 +151,37 @@ public sealed class TriageServiceTests
         // Assert
         Assert.Empty(result.SkippedItems);
         Assert.Equal(0, result.Progress.SkippedItems);
+    }
+
+    [Fact]
+    public async Task RevisitSkippedItemsAsync_SkippedItemStillPresentInQueue_MovesItemToQueueEnd()
+    {
+        // Arrange
+        var sut = new TriageService(_gitHubServiceMock.Object);
+        var itemOne = new TriageItemDto(TriageItemTypeDto.Issue, 1, 11, "owner/repo", "Item 1", string.Empty, string.Empty, "open", "mark", [], null, string.Empty, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
+        var itemTwo = new TriageItemDto(TriageItemTypeDto.Issue, 2, 12, "owner/repo", "Item 2", string.Empty, string.Empty, "open", "mark", [], null, string.Empty, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
+
+        var session = new TriageSessionDto(
+            Guid.NewGuid(),
+            "owner",
+            "repo",
+            false,
+            [itemOne, itemTwo],
+            1,
+            [itemOne],
+            [],
+            new TriageSessionProgressDto(2, 1, 1, 1),
+            new TriageSessionSummaryDto(2, 1, 1, 1, 0, 0, 0, 0),
+            DateTimeOffset.UtcNow);
+
+        // Act
+        var result = await sut.RevisitSkippedItemsAsync(session);
+
+        // Assert
+        Assert.Equal(2, result.Queue.Count);
+        Assert.Equal(12, result.Queue[0].Number);
+        Assert.Equal(11, result.Queue[1].Number);
+        Assert.Empty(result.SkippedItems);
     }
 
     [Fact]
