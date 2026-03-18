@@ -21,10 +21,17 @@
                          MinCharacters="0"
                          Clearable="true"
                          Immediate="true"
-                         Disabled="Disabled"
+                         Disabled="@(Disabled || (SingleSelectionOnly && SelectedRepositories.Count > 0))"
                          Adornment="Adornment.Start"
                          AdornmentIcon="@Icons.Material.Filled.Search"
                          data-testid="@AutocompleteTestId" />
+
+        @if (SingleSelectionOnly && SelectedRepositories.Count > 0)
+        {
+            <MudText Typo="Typo.caption" data-testid="repository-selector-single-selection-lock-message">
+                One repository can be selected at a time. Remove the current selection to choose another repository.
+            </MudText>
+        }
 
         @if (ShowSelectedChips && SelectedRepositories.Count > 0)
         {
@@ -41,7 +48,7 @@
             </MudStack>
         }
 
-        @if (ShowSelectionActions)
+        @if (ShowSelectionActions && !SingleSelectionOnly)
         {
             <MudStack Row="true" Spacing="1">
                 <MudButton Variant="Variant.Text"

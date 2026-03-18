@@ -1,6 +1,7 @@
 using Moq;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Application.Services.Triage;
+using SoloDevBoard.Domain.Entities.Labels;
 using SoloDevBoard.Domain.Entities.Triage;
 
 namespace SoloDevBoard.Application.Tests;
@@ -79,6 +80,27 @@ public sealed class TriageServiceTests
         Assert.Equal(2, result.Queue.Count);
         Assert.Contains(result.Queue, item => item.ItemType == TriageItemTypeDto.Issue);
         Assert.Contains(result.Queue, item => item.ItemType == TriageItemTypeDto.PullRequest);
+    }
+
+    [Fact]
+    public async Task StartSessionAsync_LabelledIssuePresent_ExcludesLabelledIssueFromQueue()
+    {
+        // Arrange
+        _gitHubServiceMock
+            .Setup(service => service.GetIssuesAsync("owner", "repo", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new Issue { Id = 1, Number = 11, Title = "Unlabelled", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-2), Labels = [] },
+                new Issue { Id = 2, Number = 12, Title = "Labelled", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-1), Labels = [new Label { Name = "priority/high" }] },
+            ]);
+
+        var sut = new TriageService(_gitHubServiceMock.Object);
+
+        // Act
+        var result = await sut.StartSessionAsync("owner", "repo", includePullRequests: false);
+
+        // Assert
+        Assert.Single(result.Queue);
+        Assert.Equal(11, result.Queue[0].Number);
     }
 
     [Fact]
