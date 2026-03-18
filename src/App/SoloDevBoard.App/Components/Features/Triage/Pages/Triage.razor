@@ -2,9 +2,193 @@
 
 <PageTitle>Triage UI</PageTitle>
 
-<MudStack Spacing="2">
+<MudStack Spacing="3">
     <MudText Typo="Typo.h4">Triage UI</MudText>
-    <MudPaper Class="pa-4" Elevation="1">
-        <MudText Typo="Typo.body1">This feature is coming soon.</MudText>
+    <MudText Typo="Typo.body1">Start a focused triage session and work through one untriaged item at a time with clear queue context.</MudText>
+
+    <MudPaper Class="pa-4" Elevation="1" data-testid="triage-session-start-region">
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h6">Session scope</MudText>
+
+            @if (isLoadingRepositories)
+            {
+                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" role="status" aria-live="polite" data-testid="triage-loading-repositories">
+                    <MudProgressCircular Indeterminate="true" Color="Color.Primary" aria-label="Loading repositories" />
+                    <MudText Typo="Typo.body2">Loading repositories...</MudText>
+                </MudStack>
+            }
+            else if (availableRepositories.Count == 0)
+            {
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true" data-testid="triage-no-repositories-alert">
+                    No active repositories are available for triage.
+                </MudAlert>
+            }
+            else
+            {
+                <RepositorySelector
+                    Title=""
+                    Label="Repository"
+                    Placeholder="Search repositories and select"
+                    EmptyStateText="No active repositories are available for triage."
+                    AvailableRepositories="availableRepositories.Select(repository => repository.FullName).ToArray()"
+                    SelectedRepositories="SelectedRepositoryFullNames"
+                    SelectedRepositoriesChanged="OnSelectedRepositoryChangedAsync"
+                    SummaryText="@ScopeSummaryText"
+                    ShowSelectedChips="true"
+                    ShowSelectionActions="true"
+                    SingleSelectionOnly="true"
+                    Disabled="isStartingSession"
+                    AutocompleteTestId="triage-repository-autocomplete"
+                    SummaryTestId="triage-scope-summary" />
+
+                <MudSwitch T="bool"
+                           Value="includePullRequests"
+                           ValueChanged="OnIncludePullRequestsChangedAsync"
+                           Label="Include pull requests"
+                           Disabled="isStartingSession"
+                           Color="Color.Primary"
+                           data-testid="triage-include-pull-requests-switch" />
+
+                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" data-testid="triage-session-controls">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               Disabled="!CanStartSession"
+                               OnClick="StartSessionAsync"
+                               data-testid="triage-start-session-button">
+                        Start triage session
+                    </MudButton>
+
+                    <MudText Typo="Typo.body2" data-testid="triage-scope-summary">@ScopeSummaryText</MudText>
+                </MudStack>
+            }
+        </MudStack>
     </MudPaper>
+
+    @if (!string.IsNullOrWhiteSpace(operationMessage))
+    {
+        <MudAlert Severity="operationSeverity" Dense="true" Variant="Variant.Outlined" data-testid="triage-operation-alert">
+            @operationMessage
+        </MudAlert>
+    }
+
+    @if (currentSession is null)
+    {
+        <MudPaper Class="pa-4" Elevation="1" data-testid="triage-not-started-region">
+            <MudText Typo="Typo.body1">Select a repository scope and start a session to begin triage.</MudText>
+        </MudPaper>
+    }
+    else
+    {
+        <MudPaper Class="pa-4" Elevation="1" data-testid="triage-session-header-region">
+            <MudStack Spacing="1">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <MudText Typo="Typo.h6">Session progress</MudText>
+                    <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small" data-testid="triage-current-position-chip">@CurrentPositionText</MudChip>
+                </MudStack>
+
+                <MudProgressLinear Value="SessionProgressPercent"
+                                   Color="Color.Primary"
+                                   Rounded="true"
+                                   Striped="true"
+                                   data-testid="triage-progress-indicator" />
+
+                <MudText Typo="Typo.body2" data-testid="triage-remaining-count">@RemainingCountText</MudText>
+                <MudText Typo="Typo.body2" data-testid="triage-skipped-count">@SkippedCountText</MudText>
+            </MudStack>
+        </MudPaper>
+
+        @if (CurrentItem is not null)
+        {
+            <MudPaper Class="pa-4" Elevation="1" data-testid="triage-item-detail-region">
+                <MudStack Spacing="2">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.h6">Item details</MudText>
+                        <MudChip T="string" Variant="Variant.Outlined" Size="Size.Small" Color="Color.Info" data-testid="triage-item-type-chip">@CurrentItemTypeText</MudChip>
+                    </MudStack>
+
+                    <MudText Typo="Typo.h5" data-testid="triage-item-title">@CurrentItem.Title</MudText>
+
+                    <MudStack Row="true" Spacing="2" data-testid="triage-item-metadata-row">
+                        <MudText Typo="Typo.body2">Repository: @CurrentItem.RepositoryFullName</MudText>
+                        <MudText Typo="Typo.body2">Author: @CurrentItem.AuthorLogin</MudText>
+                        <MudText Typo="Typo.body2">Updated: @CurrentItem.UpdatedAt.ToString("u")</MudText>
+                    </MudStack>
+
+                    @if (CurrentItem.Labels.Count == 0)
+                    {
+                        <MudText Typo="Typo.body2" data-testid="triage-item-labels-empty">No labels assigned.</MudText>
+                    }
+                    else
+                    {
+                        <MudStack Row="true" Spacing="1" data-testid="triage-item-labels-list">
+                            @foreach (var label in CurrentItem.Labels)
+                            {
+                                <MudChip T="string" Variant="Variant.Outlined" Size="Size.Small">@label</MudChip>
+                            }
+                        </MudStack>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(CurrentItem.Body))
+                    {
+                        <div class="mud-typography mud-typography-body2 triage-markdown" data-testid="triage-item-body">@CurrentItemBodyMarkup</div>
+                    }
+
+                    <MudLink Href="@CurrentItem.HtmlUrl" Target="_blank" Typo="Typo.body2" data-testid="triage-item-link">
+                        Open item #@CurrentItem.Number on GitHub
+                    </MudLink>
+                </MudStack>
+            </MudPaper>
+
+            <MudPaper Class="pa-4" Elevation="1" data-testid="triage-action-surface-region">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.h6">Actions</MudText>
+
+                    <MudStack Row="true" Spacing="1" data-testid="triage-action-buttons-row">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   Disabled="isApplyingSessionAction"
+                                   OnClick="AdvanceSessionAsync"
+                                   data-testid="triage-next-item-button">
+                            Next item
+                        </MudButton>
+
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Secondary"
+                                   Disabled="isApplyingSessionAction"
+                                   OnClick="SkipCurrentItemAsync"
+                                   data-testid="triage-skip-item-button">
+                            Skip for later
+                        </MudButton>
+                    </MudStack>
+
+                    <MudTextField @bind-Value="skipReason"
+                                  Label="Skip reason (optional)"
+                                  Variant="Variant.Outlined"
+                                  Immediate="true"
+                                  Disabled="isApplyingSessionAction"
+                                  data-testid="triage-skip-reason-input" />
+                </MudStack>
+            </MudPaper>
+        }
+        else
+        {
+            <MudPaper Class="pa-4" Elevation="1" data-testid="triage-session-complete-region">
+                <MudStack Spacing="1">
+                    <MudText Typo="Typo.h6">Session complete</MudText>
+                    <MudText Typo="Typo.body2">@SessionCompleteSummaryText</MudText>
+
+                    @if (currentSession.SkippedItems.Count > 0)
+                    {
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Secondary"
+                                   Disabled="isApplyingSessionAction"
+                                   OnClick="RevisitSkippedItemsAsync"
+                                   data-testid="triage-revisit-skipped-button">
+                            Revisit skipped items
+                        </MudButton>
+                    }
+                </MudStack>
+            </MudPaper>
+        }
+    }
 </MudStack>

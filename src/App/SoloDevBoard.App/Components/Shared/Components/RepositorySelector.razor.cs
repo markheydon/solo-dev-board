@@ -43,6 +43,10 @@ public partial class RepositorySelector : ComponentBase
     [Parameter]
     public bool ShowSelectedChips { get; set; } = true;
 
+    /// <summary>Gets or sets a value indicating whether the selector should allow only one selected repository.</summary>
+    [Parameter]
+    public bool SingleSelectionOnly { get; set; }
+
     /// <summary>Gets or sets a value indicating whether select-all and clear actions are shown.</summary>
     [Parameter]
     public bool ShowSelectionActions { get; set; } = true;
@@ -69,11 +73,14 @@ public partial class RepositorySelector : ComponentBase
             matches = matches.Where(repository => repository.Contains(filter, StringComparison.OrdinalIgnoreCase));
         }
 
-        var selectedNames = SelectedRepositories
-            .Where(repository => !string.IsNullOrWhiteSpace(repository))
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (!SingleSelectionOnly)
+        {
+            var selectedNames = SelectedRepositories
+                .Where(repository => !string.IsNullOrWhiteSpace(repository))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        matches = matches.Where(repository => !selectedNames.Contains(repository));
+            matches = matches.Where(repository => !selectedNames.Contains(repository));
+        }
 
         return Task.FromResult(matches);
     }
@@ -90,13 +97,19 @@ public partial class RepositorySelector : ComponentBase
             return;
         }
 
+        repositoryAutocompleteValue = null;
+
+        if (SingleSelectionOnly)
+        {
+            await SelectedRepositoriesChanged.InvokeAsync([repository]);
+            return;
+        }
+
         var selected = SelectedRepositories
             .Where(item => !string.IsNullOrWhiteSpace(item))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         _ = selected.Add(repository);
-
-        repositoryAutocompleteValue = null;
 
         await SelectedRepositoriesChanged.InvokeAsync(
             selected

@@ -158,7 +158,7 @@ Labels: `type/epic`, `area/triage`
 
 > **Next up:** Triage UI work is now formally planned and remains the current delivery priority for Phase 3. All items below are tracked via the new issue hierarchy and are open/planned for milestone v0.3.0.
 
-- [ ] As a solo developer, I want to start a triage session that presents unlabelled issues one at a time, supports progress tracking, and allows skipping and returning later so that I can work through them efficiently. _(Issue #145)_
+- [x] As a solo developer, I want to start a triage session that presents unlabelled issues one at a time, supports progress tracking, and allows skipping and returning later so that I can work through them efficiently. _(Issue #145 — implemented 2026-03-18)_
 - [ ] As a solo developer, I want to apply labels to an issue with a single click or keyboard shortcut so that triage is fast. _(Issue #146)_
 - [ ] As a solo developer, I want to assign a milestone to an issue and add it to a GitHub project board column without leaving the triage view so that I can organise my work and plan in context. _(Issue #147)_
 - [ ] As a solo developer, I want to mark an issue as a duplicate and close it with a reference so that duplicate tracking is clean. _(Issue #148)_

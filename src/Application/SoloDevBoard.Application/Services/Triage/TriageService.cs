@@ -21,7 +21,9 @@ public sealed class TriageService : ITriageService
 
         var issues = await _gitHubService.GetIssuesAsync(owner, repo, cancellationToken).ConfigureAwait(false);
         var queue = new List<TriageItem>(issues.Count + 16);
-        queue.AddRange(issues.Select(issue => ToDomainIssueItem(owner, repo, issue)));
+        queue.AddRange(issues
+            .Where(issue => issue.Labels.Count == 0)
+            .Select(issue => ToDomainIssueItem(owner, repo, issue)));
 
         if (includePullRequests)
         {
