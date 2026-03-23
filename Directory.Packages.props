@@ -5,7 +5,7 @@
 
   <!-- UI -->
   <ItemGroup>
-    <PackageVersion Include="Markdig" Version="0.37.0" />
+    <PackageVersion Include="Markdig" Version="1.1.1" />
     <PackageVersion Include="MudBlazor" Version="9.1.0" />
   </ItemGroup>
 
