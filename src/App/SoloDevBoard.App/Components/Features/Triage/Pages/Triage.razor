@@ -79,26 +79,26 @@
     }
     else
     {
-        <MudPaper Class="pa-4" Elevation="1" data-testid="triage-session-header-region">
-            <MudStack Spacing="1">
-                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                    <MudText Typo="Typo.h6">Session progress</MudText>
-                    <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small" data-testid="triage-current-position-chip">@CurrentPositionText</MudChip>
-                </MudStack>
-
-                <MudProgressLinear Value="SessionProgressPercent"
-                                   Color="Color.Primary"
-                                   Rounded="true"
-                                   Striped="true"
-                                   data-testid="triage-progress-indicator" />
-
-                <MudText Typo="Typo.body2" data-testid="triage-remaining-count">@RemainingCountText</MudText>
-                <MudText Typo="Typo.body2" data-testid="triage-skipped-count">@SkippedCountText</MudText>
-            </MudStack>
-        </MudPaper>
-
         @if (CurrentItem is not null)
         {
+            <MudPaper Class="pa-4" Elevation="1" data-testid="triage-session-header-region">
+                <MudStack Spacing="1">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.h6">Session progress</MudText>
+                        <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small" data-testid="triage-current-position-chip">@CurrentPositionText</MudChip>
+                    </MudStack>
+
+                    <MudProgressLinear Value="SessionProgressPercent"
+                                       Color="Color.Primary"
+                                       Rounded="true"
+                                       Striped="true"
+                                       data-testid="triage-progress-indicator" />
+
+                    <MudText Typo="Typo.body2" data-testid="triage-remaining-count">@RemainingCountText</MudText>
+                    <MudText Typo="Typo.body2" data-testid="triage-skipped-count">@SkippedCountText</MudText>
+                </MudStack>
+            </MudPaper>
+
             <MudPaper Class="pa-4" Elevation="1" data-testid="triage-item-detail-region">
                 <MudStack Spacing="2">
                     <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
@@ -143,34 +143,64 @@
                 </MudStack>
             </MudPaper>
 
-            <MudPaper Class="pa-4" Elevation="1" data-testid="triage-action-surface-region">
+            <MudPaper Class="pa-4"
+                      Elevation="1"
+                      data-testid="triage-action-surface-region">
                 <MudStack Spacing="2">
                     <MudText Typo="Typo.h6">Actions</MudText>
 
-                    <MudStack Row="true" Spacing="1" data-testid="triage-action-buttons-row">
-                        <MudButton Variant="Variant.Filled"
-                                   Color="Color.Primary"
-                                   Disabled="isApplyingSessionAction"
-                                   OnClick="AdvanceSessionAsync"
-                                   data-testid="triage-next-item-button">
-                            Next item
-                        </MudButton>
+                    <MudText Typo="Typo.body2" data-testid="triage-action-semantics-help">
+                        Apply + next saves the selected label and advances. Next advances without making any change to the current item.
+                    </MudText>
 
-                        <MudButton Variant="Variant.Outlined"
-                                   Color="Color.Secondary"
-                                   Disabled="isApplyingSessionAction"
-                                   OnClick="SkipCurrentItemAsync"
-                                   data-testid="triage-skip-item-button">
-                            Skip for later
-                        </MudButton>
+                    <MudStack Spacing="1" data-testid="triage-label-quick-action-row">
+                        <MudAutocomplete T="string"
+                                         Value="selectedQuickActionLabelName"
+                                         ValueChanged="OnSelectedQuickActionLabelChangedAsync"
+                                         SearchFunc="SearchQuickActionLabelsAsync"
+                                         ToStringFunc="labelName => labelName ?? string.Empty"
+                                         Label="Quick label"
+                                         Placeholder="Search labels and select"
+                                         Variant="Variant.Outlined"
+                                         MinCharacters="0"
+                                         Clearable="true"
+                                         Immediate="true"
+                                         Strict="false"
+                                         ResetValueOnEmptyText="true"
+                                         Disabled="isApplyingSessionAction || availableLabelNames.Count == 0"
+                                         Adornment="Adornment.Start"
+                                         AdornmentIcon="@Icons.Material.Filled.Search"
+                                         Class="flex-grow-1"
+                                         data-testid="triage-quick-label-autocomplete" />
+
+                        <MudStack Row="true"
+                                  Spacing="1"
+                                  tabindex="0"
+                                  @onkeydown="HandleActionSurfaceKeyDownAsync"
+                                  data-testid="triage-action-buttons-row">
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       Disabled="!CanApplySelectedLabel"
+                                       OnClick="ApplySelectedLabelAsync"
+                                       Class="triage-action-button"
+                                       data-testid="triage-apply-label-button">
+                                Apply + next
+                            </MudButton>
+
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Secondary"
+                                       Disabled="isApplyingSessionAction"
+                                       OnClick="CompleteWithoutChangesAsync"
+                                       Class="triage-action-button"
+                                       data-testid="triage-next-item-button">
+                                Next
+                            </MudButton>
+                        </MudStack>
                     </MudStack>
 
-                    <MudTextField @bind-Value="skipReason"
-                                  Label="Skip reason (optional)"
-                                  Variant="Variant.Outlined"
-                                  Immediate="true"
-                                  Disabled="isApplyingSessionAction"
-                                  data-testid="triage-skip-reason-input" />
+                    <MudText Typo="Typo.caption" data-testid="triage-keyboard-shortcuts-legend">
+                        Keyboard shortcuts (when the action buttons are focused): L applies selected label and advances, and N moves to the next item without changes.
+                    </MudText>
                 </MudStack>
             </MudPaper>
         }

@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using Markdig;
 using MudBlazor;
+using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Repositories;
 using SoloDevBoard.Application.Services.Triage;
 using System.Text.Encodings.Web;
@@ -27,6 +29,10 @@ public partial class Triage : ComponentBase
     [Inject]
     public ITriageService TriageService { get; set; } = default!;
 
+    /// <summary>Gets or sets the label service used to retrieve repository label options.</summary>
+    [Inject]
+    public ILabelManagerService LabelManagerService { get; set; } = default!;
+
     /// <summary>Gets or sets the logger for triage diagnostics.</summary>
     [Inject]
     public ILogger<Triage> Logger { get; set; } = default!;
@@ -41,8 +47,9 @@ public partial class Triage : ComponentBase
     private bool isLoadingRepositories = true;
     private bool isStartingSession;
     private bool isApplyingSessionAction;
-    private string skipReason = string.Empty;
     private TriageSessionDto? currentSession;
+    private IReadOnlyList<string> availableLabelNames = [];
+    private string selectedQuickActionLabelName = string.Empty;
     private string? operationMessage;
     private Severity operationSeverity = Severity.Info;
 
@@ -57,6 +64,11 @@ public partial class Triage : ComponentBase
             : [selectedRepositoryFullName];
 
     private TriageItemDto? CurrentItem => currentSession?.CurrentItem;
+
+    private bool CanApplySelectedLabel
+        => !isApplyingSessionAction
+            && CurrentItem is not null
+            && !string.IsNullOrWhiteSpace(selectedQuickActionLabelName);
 
     private MarkupString CurrentItemBodyMarkup
         => string.IsNullOrWhiteSpace(CurrentItem?.Body)
@@ -178,7 +190,8 @@ public partial class Triage : ComponentBase
         if (!string.Equals(previousRepositoryFullName, selectedRepositoryFullName, StringComparison.OrdinalIgnoreCase))
         {
             currentSession = null;
-            skipReason = string.Empty;
+            availableLabelNames = [];
+            selectedQuickActionLabelName = string.Empty;
             operationSeverity = Severity.Info;
             operationMessage = string.IsNullOrWhiteSpace(selectedRepositoryFullName)
                 ? null
@@ -215,7 +228,7 @@ public partial class Triage : ComponentBase
         try
         {
             currentSession = await TriageService.StartSessionAsync(owner, repo, includePullRequests);
-            skipReason = string.Empty;
+            await LoadQuickActionLabelsAsync(owner, repo);
 
             operationSeverity = Severity.Success;
             operationMessage = currentSession.Progress.TotalItems == 0
@@ -242,9 +255,76 @@ public partial class Triage : ComponentBase
         }
     }
 
-    private async Task AdvanceSessionAsync()
+    private async Task LoadQuickActionLabelsAsync(string owner, string repo)
     {
-        if (currentSession is null || currentSession.CurrentItem is null || isApplyingSessionAction)
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+
+        try
+        {
+            var labelNames = await LabelManagerService.GetLabelsAsync(owner, repo);
+
+            availableLabelNames = labelNames
+                .Select(label => label.Name)
+                .Where(static name => !string.IsNullOrWhiteSpace(name))
+                .OrderBy(static name => name, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            if (availableLabelNames.Count > 0)
+            {
+                selectedQuickActionLabelName = availableLabelNames[0];
+            }
+            else
+            {
+                selectedQuickActionLabelName = string.Empty;
+                operationSeverity = Severity.Warning;
+                operationMessage = "No repository labels are available to apply as quick actions.";
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            Logger.LogError(ex, "GitHub API request failed while loading quick-action labels for {RepositoryScope}.", $"{owner}/{repo}");
+            availableLabelNames = [];
+            selectedQuickActionLabelName = string.Empty;
+            operationSeverity = Severity.Error;
+            operationMessage = $"GitHub API request failed while loading labels. {ex.Message}";
+            Snackbar.Add("Failed to load quick-action labels for triage.", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load quick-action labels for {RepositoryScope}.", $"{owner}/{repo}");
+            availableLabelNames = [];
+            selectedQuickActionLabelName = string.Empty;
+            operationSeverity = Severity.Error;
+            operationMessage = "An unexpected error occurred while loading labels for quick actions.";
+            Snackbar.Add("An unexpected error occurred while loading quick-action labels.", Severity.Error);
+        }
+    }
+
+    private Task OnSelectedQuickActionLabelChangedAsync(string labelName)
+    {
+        selectedQuickActionLabelName = labelName ?? string.Empty;
+        return Task.CompletedTask;
+    }
+
+    private Task<IEnumerable<string>> SearchQuickActionLabelsAsync(string? value, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        IEnumerable<string> matches = availableLabelNames;
+
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            var filter = value.Trim();
+            matches = matches.Where(labelName => labelName.Contains(filter, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return Task.FromResult(matches);
+    }
+
+    private async Task ApplySelectedLabelAsync()
+    {
+        if (currentSession is null || CurrentItem is null || !CanApplySelectedLabel)
         {
             return;
         }
@@ -253,18 +333,30 @@ public partial class Triage : ComponentBase
 
         try
         {
-            currentSession = await TriageService.AdvanceSessionAsync(currentSession);
-            operationSeverity = Severity.Info;
+            var appliedItemNumber = CurrentItem.Number;
+            var labelName = selectedQuickActionLabelName.Trim();
+
+            var labelledSession = await TriageService.ApplyLabelToCurrentItemAsync(currentSession, labelName);
+            currentSession = await TriageService.AdvanceSessionAsync(labelledSession);
+
+            operationSeverity = Severity.Success;
             operationMessage = currentSession.CurrentItem is null
-                ? "Reached the end of the current queue."
-                : $"Moved to {CurrentPositionText}.";
+                ? $"Applied label '{labelName}' to item #{appliedItemNumber}. Reached the end of the current queue."
+                : $"Applied label '{labelName}' to item #{appliedItemNumber} and moved to {CurrentPositionText}.";
+        }
+        catch (HttpRequestException ex)
+        {
+            Logger.LogError(ex, "GitHub API request failed while applying label to triage item.");
+            operationSeverity = Severity.Error;
+            operationMessage = $"GitHub API request failed while applying the label. {ex.Message}";
+            Snackbar.Add("Could not apply the selected label due to a GitHub API error.", Severity.Error);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to move to the next triage item.");
+            Logger.LogError(ex, "Failed to apply label to the current triage item.");
             operationSeverity = Severity.Error;
-            operationMessage = "An unexpected error occurred while moving to the next item.";
-            Snackbar.Add("Could not move to the next triage item.", Severity.Error);
+            operationMessage = "An unexpected error occurred while applying the selected label.";
+            Snackbar.Add("Could not apply the selected label.", Severity.Error);
         }
         finally
         {
@@ -272,7 +364,7 @@ public partial class Triage : ComponentBase
         }
     }
 
-    private async Task SkipCurrentItemAsync()
+    private async Task CompleteWithoutChangesAsync()
     {
         if (currentSession is null || currentSession.CurrentItem is null || isApplyingSessionAction)
         {
@@ -283,17 +375,19 @@ public partial class Triage : ComponentBase
 
         try
         {
-            currentSession = await TriageService.SkipCurrentItemAsync(currentSession, skipReason);
-            skipReason = string.Empty;
+            var completedItemNumber = currentSession.CurrentItem.Number;
+            currentSession = await TriageService.AdvanceSessionAsync(currentSession);
             operationSeverity = Severity.Info;
-            operationMessage = "Skipped current item and deferred it for later review.";
+            operationMessage = currentSession.CurrentItem is null
+                ? $"Moved past item #{completedItemNumber} without changes. Reached the end of the current queue."
+                : $"Moved past item #{completedItemNumber} without changes and moved to {CurrentPositionText}.";
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to skip the current triage item.");
+            Logger.LogError(ex, "Failed to move to the next triage item without changes.");
             operationSeverity = Severity.Error;
-            operationMessage = "An unexpected error occurred while skipping the item.";
-            Snackbar.Add("Could not skip the current triage item.", Severity.Error);
+            operationMessage = "An unexpected error occurred while moving to the next item without changes.";
+            Snackbar.Add("Could not move to the next item without changes.", Severity.Error);
         }
         finally
         {
@@ -326,6 +420,30 @@ public partial class Triage : ComponentBase
         finally
         {
             isApplyingSessionAction = false;
+        }
+    }
+
+    private async Task HandleActionSurfaceKeyDownAsync(KeyboardEventArgs args)
+    {
+        ArgumentNullException.ThrowIfNull(args);
+
+        if (isApplyingSessionAction)
+        {
+            return;
+        }
+
+        switch (args.Key)
+        {
+            case "l":
+            case "L":
+                await ApplySelectedLabelAsync();
+                break;
+            case "n":
+            case "N":
+                await CompleteWithoutChangesAsync();
+                break;
+            default:
+                break;
         }
     }
 

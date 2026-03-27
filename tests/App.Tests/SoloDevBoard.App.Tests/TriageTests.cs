@@ -5,6 +5,7 @@ using MudBlazor;
 using MudBlazor.Services;
 using SoloDevBoard.App.Components.Features.Triage.Pages;
 using SoloDevBoard.App.Components.Shared.Components;
+using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Repositories;
 using SoloDevBoard.Application.Services.Triage;
 
@@ -15,6 +16,7 @@ public sealed class TriageTests
 {
     private readonly Mock<IRepositoryService> _repositoryServiceMock = new();
     private readonly Mock<ITriageService> _triageServiceMock = new();
+    private readonly Mock<ILabelManagerService> _labelManagerServiceMock = new();
 
     [Fact]
     public async Task Triage_StartSessionClicked_LoadsFirstItemAndShowsRemainingCount()
@@ -119,34 +121,31 @@ public sealed class TriageTests
     }
 
     [Fact]
-    public async Task Triage_SkipThenRevisitClicked_DefersItemAndRequeuesItForLater()
+    public async Task Triage_NextClicked_MovesToNextItemWithoutApplyingChanges()
     {
         // Arrange
         _repositoryServiceMock
             .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync([CreateRepository("owner", "repo")]);
 
-        var activeItem = CreateItem(101, "Issue 101", "owner/repo");
-
         var startedSession = CreateSession(
             "owner",
             "repo",
-            [activeItem],
+            [
+                CreateItem(101, "Issue 101", "owner/repo"),
+                CreateItem(102, "Issue 102", "owner/repo"),
+            ],
             currentIndex: 0,
             skippedItems: []);
 
-        var skippedSession = CreateSession(
+        var advancedSession = CreateSession(
             "owner",
             "repo",
-            [],
-            currentIndex: 0,
-            skippedItems: [activeItem]);
-
-        var revisitedSession = CreateSession(
-            "owner",
-            "repo",
-            [activeItem],
-            currentIndex: 0,
+            [
+                CreateItem(101, "Issue 101", "owner/repo"),
+                CreateItem(102, "Issue 102", "owner/repo"),
+            ],
+            currentIndex: 1,
             skippedItems: []);
 
         _triageServiceMock
@@ -154,12 +153,8 @@ public sealed class TriageTests
             .ReturnsAsync(startedSession);
 
         _triageServiceMock
-            .Setup(service => service.SkipCurrentItemAsync(It.IsAny<TriageSessionDto>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(skippedSession);
-
-        _triageServiceMock
-            .Setup(service => service.RevisitSkippedItemsAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(revisitedSession);
+            .Setup(service => service.AdvanceSessionAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(advancedSession);
 
         await using var ctx = CreateContext();
 
@@ -173,22 +168,70 @@ public sealed class TriageTests
         cut.Find("[data-testid='triage-start-session-button']").Click();
         cut.WaitForAssertion(() => Assert.Contains("Issue 101", cut.Markup));
 
-        cut.Find("[data-testid='triage-skip-item-button']").Click();
-
-        cut.WaitForAssertion(() =>
-        {
-            Assert.Contains("Session complete", cut.Markup);
-            Assert.Contains("Skipped: 1 item", cut.Markup);
-            Assert.NotNull(cut.Find("[data-testid='triage-revisit-skipped-button']"));
-        });
-
-        cut.Find("[data-testid='triage-revisit-skipped-button']").Click();
+        cut.Find("[data-testid='triage-next-item-button']").Click();
 
         // Assert
         cut.WaitForAssertion(() =>
         {
-            Assert.Contains("Issue 101", cut.Markup);
+            Assert.Contains("Issue 102", cut.Markup);
             Assert.Contains("Skipped: 0 items", cut.Markup);
+        });
+
+        _triageServiceMock.Verify(
+            service => service.AdvanceSessionAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task Triage_NextClickedOnFinalItem_ShowsSessionCompleteWithoutProgressHeader()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreateRepository("owner", "repo")]);
+
+        var startedSession = CreateSession(
+            "owner",
+            "repo",
+            [CreateItem(103, "Issue 103", "owner/repo")],
+            currentIndex: 0,
+            skippedItems: []);
+
+        var completedSession = CreateSession(
+            "owner",
+            "repo",
+            [CreateItem(103, "Issue 103", "owner/repo")],
+            currentIndex: 1,
+            skippedItems: []);
+
+        _triageServiceMock
+            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(startedSession);
+
+        _triageServiceMock
+            .Setup(service => service.AdvanceSessionAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(completedSession);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Triage>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-repository-autocomplete']"));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo" }));
+
+        cut.Find("[data-testid='triage-start-session-button']").Click();
+        cut.WaitForAssertion(() => Assert.Contains("Issue 103", cut.Markup));
+
+        cut.Find("[data-testid='triage-next-item-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.NotEmpty(cut.FindAll("[data-testid='triage-session-complete-region']"));
+            Assert.Empty(cut.FindAll("[data-testid='triage-session-header-region']"));
+            Assert.Empty(cut.FindAll("[data-testid='triage-progress-indicator']"));
         });
     }
 
@@ -290,6 +333,196 @@ public sealed class TriageTests
     }
 
     [Fact]
+    public async Task Triage_ApplyLabelClicked_InvokesTriageServiceAndShowsUpdatedLabels()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreateRepository("owner", "repo")]);
+
+        _labelManagerServiceMock
+            .Setup(service => service.GetLabelsAsync("owner", "repo", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new LabelDto("type/bug", "d73a4a", "A bug or unexpected behaviour", "repo"),
+            ]);
+
+        var startedSession = CreateSession(
+            "owner",
+            "repo",
+            [
+                CreateItem(401, "Issue 401", "owner/repo"),
+                CreateItem(402, "Issue 402", "owner/repo"),
+            ],
+            currentIndex: 0,
+            skippedItems: []);
+
+        var labelledSession = startedSession with
+        {
+            Queue =
+            [
+                startedSession.Queue[0] with
+                {
+                    Labels = ["type/bug"],
+                },
+                startedSession.Queue[1],
+            ],
+            ActionHistory =
+            [
+                new TriageActionDto(TriageActionTypeDto.LabelApplied, TriageItemTypeDto.Issue, 401, "owner/repo", "Applied label 'type/bug'.", DateTimeOffset.UtcNow),
+            ],
+            Summary = new TriageSessionSummaryDto(2, 0, 2, 0, 1, 0, 0, 0),
+        };
+
+        var advancedSession = labelledSession with
+        {
+            CurrentIndex = 1,
+            Progress = new TriageSessionProgressDto(2, 1, 1, 0),
+            Summary = new TriageSessionSummaryDto(2, 1, 1, 0, 1, 0, 0, 0),
+        };
+
+        _triageServiceMock
+            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(startedSession);
+
+        _triageServiceMock
+            .Setup(service => service.ApplyLabelToCurrentItemAsync(It.IsAny<TriageSessionDto>(), "type/bug", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(labelledSession);
+
+        _triageServiceMock
+            .Setup(service => service.AdvanceSessionAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(advancedSession);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Triage>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-repository-autocomplete']"));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo" }));
+
+        cut.Find("[data-testid='triage-start-session-button']").Click();
+        cut.WaitForAssertion(() => Assert.Contains("Issue 401", cut.Markup));
+
+        cut.Find("[data-testid='triage-apply-label-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Issue 402", cut.Markup);
+            Assert.Contains("Applied label 'type/bug' to item #401 and moved to Item 2 of 2", cut.Markup, StringComparison.Ordinal);
+        });
+
+        _triageServiceMock.Verify(
+            service => service.ApplyLabelToCurrentItemAsync(It.IsAny<TriageSessionDto>(), "type/bug", It.IsAny<CancellationToken>()),
+            Times.Once);
+        _triageServiceMock.Verify(
+            service => service.AdvanceSessionAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task Triage_ActionSurfaceShortcutL_PressedAppliesSelectedLabel()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreateRepository("owner", "repo")]);
+
+        _labelManagerServiceMock
+            .Setup(service => service.GetLabelsAsync("owner", "repo", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new LabelDto("priority/high", "d93f0b", "Should be addressed in the current sprint or release", "repo"),
+            ]);
+
+        var startedSession = CreateSession(
+            "owner",
+            "repo",
+            [CreateItem(402, "Issue 402", "owner/repo")],
+            currentIndex: 0,
+            skippedItems: []);
+
+        _triageServiceMock
+            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(startedSession);
+
+        _triageServiceMock
+            .Setup(service => service.ApplyLabelToCurrentItemAsync(It.IsAny<TriageSessionDto>(), "priority/high", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(startedSession);
+
+        _triageServiceMock
+            .Setup(service => service.AdvanceSessionAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(startedSession);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Triage>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-repository-autocomplete']"));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo" }));
+
+        cut.Find("[data-testid='triage-start-session-button']").Click();
+        cut.WaitForAssertion(() => Assert.NotEmpty(cut.FindAll("[data-testid='triage-action-surface-region']")));
+
+        cut.Find("[data-testid='triage-action-buttons-row']").KeyDown("l");
+
+        // Assert
+        _triageServiceMock.Verify(
+            service => service.ApplyLabelToCurrentItemAsync(It.IsAny<TriageSessionDto>(), "priority/high", It.IsAny<CancellationToken>()),
+            Times.Once);
+        _triageServiceMock.Verify(
+            service => service.AdvanceSessionAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task Triage_QuickLabelInputShortcutL_Pressed_DoesNotApplySelectedLabel()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreateRepository("owner", "repo")]);
+
+        _labelManagerServiceMock
+            .Setup(service => service.GetLabelsAsync("owner", "repo", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new LabelDto("priority/high", "d93f0b", "Should be addressed in the current sprint or release", "repo"),
+            ]);
+
+        var startedSession = CreateSession(
+            "owner",
+            "repo",
+            [CreateItem(403, "Issue 403", "owner/repo")],
+            currentIndex: 0,
+            skippedItems: []);
+
+        _triageServiceMock
+            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(startedSession);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Triage>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-repository-autocomplete']"));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo" }));
+
+        cut.Find("[data-testid='triage-start-session-button']").Click();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-quick-label-autocomplete']"));
+
+        cut.Find("[data-testid='triage-quick-label-autocomplete']").KeyDown("l");
+
+        // Assert
+        _triageServiceMock.Verify(
+            service => service.ApplyLabelToCurrentItemAsync(It.IsAny<TriageSessionDto>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
     public async Task Triage_RepositorySelectionClearedAfterSessionStarted_HidesActiveSessionDetails()
     {
         // Arrange
@@ -386,11 +619,18 @@ public sealed class TriageTests
 
     private BunitContext CreateContext()
     {
+        _labelManagerServiceMock
+            .SetReturnsDefault(Task.FromResult<IReadOnlyList<LabelDto>>(
+            [
+                new LabelDto("type/story", "1d76db", "A user-facing Story delivering a discrete piece of value", "repo"),
+            ]));
+
         var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddMudServices();
         ctx.Services.AddScoped(_ => _repositoryServiceMock.Object);
         ctx.Services.AddScoped(_ => _triageServiceMock.Object);
+        ctx.Services.AddScoped(_ => _labelManagerServiceMock.Object);
 
         ctx.Render<MudPopoverProvider>();
         ctx.Render<MudDialogProvider>();
