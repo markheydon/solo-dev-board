@@ -30,6 +30,13 @@ public interface ITriageService
     /// <returns>The updated triage session DTO.</returns>
     Task<TriageSessionDto> RevisitSkippedItemsAsync(TriageSessionDto session, CancellationToken cancellationToken = default);
 
+    /// <summary>Applies a label to the currently active session item.</summary>
+    /// <param name="session">The current session state.</param>
+    /// <param name="labelName">The label name to apply.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>The updated triage session DTO.</returns>
+    Task<TriageSessionDto> ApplyLabelToCurrentItemAsync(TriageSessionDto session, string labelName, CancellationToken cancellationToken = default);
+
     /// <summary>Builds the latest triage session summary from current session state.</summary>
     /// <param name="session">The current session state.</param>
     /// <returns>The computed triage session summary DTO.</returns>

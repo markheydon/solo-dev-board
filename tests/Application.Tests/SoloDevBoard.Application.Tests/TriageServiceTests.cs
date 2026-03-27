@@ -207,6 +207,75 @@ public sealed class TriageServiceTests
     }
 
     [Fact]
+    public async Task ApplyLabelToCurrentItemAsync_ActiveItemExists_AppliesLabelAndRecordsAction()
+    {
+        // Arrange
+        var sut = new TriageService(_gitHubServiceMock.Object);
+        var session = CreateSession(queueCount: 1, currentIndex: 0);
+
+        // Act
+        var result = await sut.ApplyLabelToCurrentItemAsync(session, "type/story");
+
+        // Assert
+        Assert.Single(result.Queue[0].Labels);
+        Assert.Equal("type/story", result.Queue[0].Labels[0]);
+        Assert.Single(result.ActionHistory);
+        Assert.Equal(TriageActionTypeDto.LabelApplied, result.ActionHistory[0].ActionType);
+        Assert.Contains("type/story", result.ActionHistory[0].Detail, StringComparison.Ordinal);
+        Assert.Equal(1, result.Summary.LabelsAppliedCount);
+
+        _gitHubServiceMock.Verify(
+            service => service.ApplyLabelsToTriageItemAsync("owner", "repo", 1, It.Is<IReadOnlyList<string>>(labels => labels.Count == 1 && labels[0] == "type/story"), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task ApplyLabelToCurrentItemAsync_LabelAlreadyAssigned_DoesNotDuplicateAssignedLabel()
+    {
+        // Arrange
+        var sut = new TriageService(_gitHubServiceMock.Object);
+        var existingLabelItem = new TriageItemDto(
+            TriageItemTypeDto.Issue,
+            1,
+            99,
+            "owner/repo",
+            "Item 99",
+            string.Empty,
+            string.Empty,
+            "open",
+            "mark",
+            ["priority/high"],
+            null,
+            string.Empty,
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow);
+
+        var session = new TriageSessionDto(
+            Guid.NewGuid(),
+            "owner",
+            "repo",
+            false,
+            [existingLabelItem],
+            0,
+            [],
+            [],
+            new TriageSessionProgressDto(1, 0, 1, 0),
+            new TriageSessionSummaryDto(1, 0, 1, 0, 0, 0, 0, 0),
+            DateTimeOffset.UtcNow);
+
+        // Act
+        var result = await sut.ApplyLabelToCurrentItemAsync(session, "priority/high");
+
+        // Assert
+        Assert.Single(result.Queue[0].Labels);
+        Assert.Equal("priority/high", result.Queue[0].Labels[0]);
+
+        _gitHubServiceMock.Verify(
+            service => service.ApplyLabelsToTriageItemAsync("owner", "repo", 99, It.Is<IReadOnlyList<string>>(labels => labels.Count == 1 && labels[0] == "priority/high"), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
     public void BuildSessionSummary_ActionHistoryIncludesAllActionTypes_ReturnsComputedCounts()
     {
         // Arrange

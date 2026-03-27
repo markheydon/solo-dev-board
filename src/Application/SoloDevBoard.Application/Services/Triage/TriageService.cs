@@ -8,6 +8,8 @@ public sealed class TriageService : ITriageService
 {
     private readonly IGitHubService _gitHubService;
 
+    /// <summary>Initialises a new instance of the <see cref="TriageService"/> class.</summary>
+    /// <param name="gitHubService">The GitHub service used to retrieve and apply triage actions.</param>
     public TriageService(IGitHubService gitHubService)
     {
         _gitHubService = gitHubService ?? throw new ArgumentNullException(nameof(gitHubService));
@@ -152,10 +154,95 @@ public sealed class TriageService : ITriageService
     }
 
     /// <inheritdoc/>
+    public async Task<TriageSessionDto> ApplyLabelToCurrentItemAsync(TriageSessionDto session, string labelName, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(session);
+        ArgumentException.ThrowIfNullOrWhiteSpace(labelName);
+
+        var domainSession = ToDomain(session);
+        if (domainSession.CurrentIndex >= domainSession.Queue.Count)
+        {
+            return ToDto(domainSession);
+        }
+
+        var currentItem = domainSession.Queue[domainSession.CurrentIndex];
+        if (!TryParseRepositoryScope(currentItem.RepositoryFullName, out var owner, out var repo))
+        {
+            throw new ArgumentException(
+                $"Repository scope '{currentItem.RepositoryFullName}' must be in owner/repository format.",
+                nameof(session));
+        }
+
+        var trimmedLabelName = labelName.Trim();
+        var updatedLabels = currentItem.Labels
+            .Select(label => label.Name)
+            .Concat([trimmedLabelName])
+            .Where(static name => !string.IsNullOrWhiteSpace(name))
+            .Select(static name => name.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        await _gitHubService
+            .ApplyLabelsToTriageItemAsync(owner, repo, currentItem.Number, updatedLabels, cancellationToken)
+            .ConfigureAwait(false);
+
+        var updatedCurrentItem = currentItem with
+        {
+            Labels = updatedLabels.Select(name => new SoloDevBoard.Domain.Entities.Labels.Label { Name = name }).ToArray(),
+        };
+
+        var updatedQueue = domainSession.Queue
+            .Select((item, index) => index == domainSession.CurrentIndex ? updatedCurrentItem : item)
+            .ToArray();
+
+        var action = new TriageAction
+        {
+            ActionType = TriageActionType.LabelApplied,
+            ItemType = currentItem.ItemType,
+            ItemNumber = currentItem.Number,
+            RepositoryFullName = currentItem.RepositoryFullName,
+            Detail = $"Applied label '{trimmedLabelName}'.",
+            OccurredAt = DateTimeOffset.UtcNow,
+        };
+
+        var updatedActionHistory = domainSession.ActionHistory
+            .Concat([action])
+            .ToArray();
+
+        return UpdateSessionState(domainSession with
+        {
+            Queue = updatedQueue,
+            ActionHistory = updatedActionHistory,
+        });
+    }
+
+    /// <inheritdoc/>
     public TriageSessionSummaryDto BuildSessionSummary(TriageSessionDto session)
     {
         ArgumentNullException.ThrowIfNull(session);
         return UpdateSessionState(ToDomain(session)).Summary;
+    }
+
+    private static bool TryParseRepositoryScope(string repositoryFullName, out string owner, out string repo)
+    {
+        owner = string.Empty;
+        repo = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(repositoryFullName))
+        {
+            return false;
+        }
+
+        var segments = repositoryFullName.Split('/', 2, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Length != 2)
+        {
+            return false;
+        }
+
+        owner = segments[0];
+        repo = segments[1];
+        return true;
     }
 
     private static TriageSessionDto UpdateSessionState(TriageSession session)
