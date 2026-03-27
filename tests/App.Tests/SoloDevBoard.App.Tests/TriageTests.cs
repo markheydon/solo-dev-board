@@ -404,6 +404,8 @@ public sealed class TriageTests
         cut.Find("[data-testid='triage-start-session-button']").Click();
         cut.WaitForAssertion(() => Assert.Contains("Issue 401", cut.Markup));
 
+        await SelectQuickLabelAsync(cut, "type/bug");
+
         cut.Find("[data-testid='triage-apply-label-button']").Click();
 
         // Assert
@@ -466,6 +468,8 @@ public sealed class TriageTests
         cut.Find("[data-testid='triage-start-session-button']").Click();
         cut.WaitForAssertion(() => Assert.NotEmpty(cut.FindAll("[data-testid='triage-action-surface-region']")));
 
+        await SelectQuickLabelAsync(cut, "priority/high");
+
         cut.Find("[data-testid='triage-action-buttons-row']").KeyDown("l");
 
         // Assert
@@ -475,6 +479,67 @@ public sealed class TriageTests
         _triageServiceMock.Verify(
             service => service.AdvanceSessionAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    [Fact]
+    public async Task Triage_SessionStartsWithAvailableLabels_QuickLabelDefaultsToEmptyAndApplyDisabled()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreateRepository("owner", "repo")]);
+
+        _labelManagerServiceMock
+            .Setup(service => service.GetLabelsAsync("owner", "repo", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new LabelDto("priority/high", "d93f0b", "Should be addressed in the current sprint or release", "repo"),
+                new LabelDto("type/bug", "d73a4a", "A bug or unexpected behaviour", "repo"),
+            ]);
+
+        var startedSession = CreateSession(
+            "owner",
+            "repo",
+            [CreateItem(450, "Issue 450", "owner/repo")],
+            currentIndex: 0,
+            skippedItems: []);
+
+        _triageServiceMock
+            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(startedSession);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Triage>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-repository-autocomplete']"));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo" }));
+
+        cut.Find("[data-testid='triage-start-session-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.True(string.IsNullOrEmpty(cut.Find("[data-testid='triage-quick-label-autocomplete']").GetAttribute("value")));
+            Assert.True(cut.Find("[data-testid='triage-apply-label-button']").HasAttribute("disabled"));
+        });
+
+        _triageServiceMock.Verify(
+            service => service.ApplyLabelToCurrentItemAsync(It.IsAny<TriageSessionDto>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    private static async Task SelectQuickLabelAsync(IRenderedComponent<Triage> cut, string labelName)
+    {
+        ArgumentNullException.ThrowIfNull(cut);
+        ArgumentException.ThrowIfNullOrWhiteSpace(labelName);
+
+        var quickLabelAutocomplete = cut
+            .FindComponents<MudAutocomplete<string>>()
+            .Single(component => string.Equals(component.Instance.Label, "Quick label", StringComparison.Ordinal));
+
+        await cut.InvokeAsync(() => quickLabelAutocomplete.Instance.ValueChanged.InvokeAsync(labelName));
     }
 
     [Fact]

@@ -68,7 +68,7 @@ public partial class Triage : ComponentBase
     private bool CanApplySelectedLabel
         => !isApplyingSessionAction
             && CurrentItem is not null
-            && !string.IsNullOrWhiteSpace(selectedQuickActionLabelName);
+            && LabelExists(selectedQuickActionLabelName);
 
     private MarkupString CurrentItemBodyMarkup
         => string.IsNullOrWhiteSpace(CurrentItem?.Body)
@@ -270,13 +270,10 @@ public partial class Triage : ComponentBase
                 .OrderBy(static name => name, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
 
-            if (availableLabelNames.Count > 0)
+            selectedQuickActionLabelName = string.Empty;
+
+            if (availableLabelNames.Count == 0)
             {
-                selectedQuickActionLabelName = availableLabelNames[0];
-            }
-            else
-            {
-                selectedQuickActionLabelName = string.Empty;
                 operationSeverity = Severity.Warning;
                 operationMessage = "No repository labels are available to apply as quick actions.";
             }
@@ -320,6 +317,26 @@ public partial class Triage : ComponentBase
         }
 
         return Task.FromResult(matches);
+    }
+
+    private bool LabelExists(string? labelName)
+    {
+        if (string.IsNullOrWhiteSpace(labelName))
+        {
+            return false;
+        }
+
+        var candidate = labelName.Trim();
+
+        foreach (var availableLabelName in availableLabelNames)
+        {
+            if (string.Equals(availableLabelName, candidate, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private async Task ApplySelectedLabelAsync()
