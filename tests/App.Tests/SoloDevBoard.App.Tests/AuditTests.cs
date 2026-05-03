@@ -122,11 +122,11 @@ public sealed class AuditTests
     public async Task Audit_WhenLoadingSelectedRepositories_ShowsAuditLoadingState()
     {
         // Arrange
-        var summaryCompletionSource = new TaskCompletionSource<IReadOnlyList<RepositoryAuditSummaryDto>>(TaskCreationOptions.RunContinuationsAsynchronously);
-
         _repositoryServiceMock
             .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync([CreateRepository("owner", "repo-a")]);
+
+        var summaryCompletionSource = new TaskCompletionSource<IReadOnlyList<RepositoryAuditSummaryDto>>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         _auditDashboardServiceMock
             .Setup(service => service.GetAuditSummaryAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
@@ -157,7 +157,8 @@ public sealed class AuditTests
 
         cut.WaitForAssertion(() =>
         {
-            Assert.Single(cut.FindAll("[data-testid='audit-feedback-region']"));
+            var button = cut.Find("[data-testid='audit-load-selected-button']");
+            Assert.True(button.HasAttribute("disabled"));
         });
 
         await cut.InvokeAsync(() => summaryCompletionSource.SetResult([new RepositoryAuditSummaryDto("owner/repo-a", 1, 1, 0, 0, 0)]));
