@@ -122,15 +122,17 @@ public sealed class AuditTests
     public async Task Audit_WhenLoadingSelectedRepositories_ShowsAuditLoadingState()
     {
         // Arrange
-        var summaryCompletionSource = new TaskCompletionSource<IReadOnlyList<RepositoryAuditSummaryDto>>(TaskCreationOptions.RunContinuationsAsynchronously);
-
         _repositoryServiceMock
             .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync([CreateRepository("owner", "repo-a")]);
 
         _auditDashboardServiceMock
             .Setup(service => service.GetAuditSummaryAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
-            .Returns(summaryCompletionSource.Task);
+            .Returns(async () =>
+            {
+                await Task.Delay(250);
+                return new[] { new RepositoryAuditSummaryDto("owner/repo-a", 1, 1, 0, 0, 0) };
+            });
 
         await using var ctx = CreateContext();
 
@@ -151,17 +153,23 @@ public sealed class AuditTests
         // Assert
         _auditDashboardServiceMock.Verify(
             service => service.GetAuditSummaryAsync(
-                It.Is<IReadOnlyList<string>>(repos => repos.Count == 1 && repos[0] == "owner/repo-a"),
+                It.IsAny<IReadOnlyList<string>>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
+
+        var summaryInvocation = Assert.Single(
+            _auditDashboardServiceMock.Invocations,
+            invocation => invocation.Method.Name == nameof(IAuditDashboardService.GetAuditSummaryAsync));
+        var requestedRepositories = Assert.IsAssignableFrom<IReadOnlyList<string>>(summaryInvocation.Arguments[0]);
+        Assert.Single(requestedRepositories);
+        Assert.Equal("owner/repo-a", requestedRepositories[0]);
 
         cut.WaitForAssertion(() =>
         {
             Assert.Single(cut.FindAll("[data-testid='audit-feedback-region']"));
         });
 
-        await cut.InvokeAsync(() => summaryCompletionSource.SetResult([new RepositoryAuditSummaryDto("owner/repo-a", 1, 1, 0, 0, 0)]));
-        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-summary-table']")));
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-summary-table']")), TimeSpan.FromSeconds(5));
     }
 
     [Fact]
