@@ -18,6 +18,7 @@ This registry defines active and companion skills for SoloDevBoard.
 
 - `csharp-xunit`: xUnit patterns and fixtures
 - `csharp-docs`: XML documentation depth guidance
+- `playwright-cli`: Browser automation and Playwright test authoring for AI-driven UI validation
 
 ## Deactivated Policy
 
