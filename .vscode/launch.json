@@ -2,11 +2,10 @@
   "version": "0.2.0",
   "configurations": [
     {
-      // Requires C# Dev Kit extension (ms-dotnettools.csdevkit)
-      "name": "Launch SoloDevBoard (Development)",
-      "type": "dotnet",
+      "type": "aspire",
       "request": "launch",
-      "projectPath": "${workspaceFolder}/src/App/SoloDevBoard.App/SoloDevBoard.App.csproj"
+      "name": "Aspire: Launch default AppHost",
+      "program": "${workspaceFolder}"
     }
   ]
 }

@@ -1,0 +1,47 @@
+{
+	"name": "Aspire",
+	"image": "mcr.microsoft.com/dotnet/sdk:10.0",
+	"features": {
+		"ghcr.io/microsoft/aspire-devcontainer-feature/aspire:2": {},
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
+		"ghcr.io/devcontainers/features/powershell:2.0.2": {}
+	},
+
+	"hostRequirements": {
+		"cpus": 2,
+		"memory": "8gb",
+		"storage": "32gb"
+	},
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [5000, 5001],
+	// "portsAttributes": {
+	//		"5001": {
+	//			"protocol": "https"
+	//		}
+	// }
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	// "postCreateCommand": "dotnet restore",
+	"postStartCommand": "bash -lc 'export SSL_CERT_DIR=\"$HOME/.aspnet/dev-certs/trust:${SSL_CERT_DIR:-/etc/ssl/certs}\"; dotnet dev-certs https --trust || { echo \"Warning: HTTPS development certificate trust could not be fully applied in this environment; continuing startup.\"; dotnet dev-certs https >/dev/null; }'",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-dotnettools.csdevkit",
+				"ms-dotnettools.csharp",
+				"ms-dotnettools.vscode-dotnet-runtime",
+				"github.vscode-pull-request-github",
+				"github.copilot",
+				"github.copilot-chat",
+				"ms-azuretools.vscode-bicep",
+				"editorconfig.editorconfig",
+				"microsoft-aspire.aspire-vscode"
+			]
+		}
+	}
+	// Configure tool-specific properties.
+	// "customizations": {},
+
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "root"
+}

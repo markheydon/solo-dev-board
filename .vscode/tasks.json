@@ -2,6 +2,65 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "aspire start",
+      "command": "aspire",
+      "type": "process",
+      "args": [
+        "start",
+        "--apphost",
+        "${workspaceFolder}/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj"
+      ],
+      "isBackground": true,
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "aspire start (isolated)",
+      "command": "aspire",
+      "type": "process",
+      "args": [
+        "start",
+        "--isolated",
+        "--apphost",
+        "${workspaceFolder}/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj"
+      ],
+      "isBackground": true,
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "aspire describe",
+      "command": "aspire",
+      "type": "process",
+      "args": [
+        "describe"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "close": true
+      }
+    },
+    {
+      "label": "aspire stop",
+      "command": "aspire",
+      "type": "process",
+      "args": [
+        "stop"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "close": true
+      }
+    },
+    {
       "label": "build",
       "command": "dotnet",
       "type": "process",

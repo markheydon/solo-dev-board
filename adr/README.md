@@ -38,7 +38,7 @@ Each ADR follows this format:
 | [ADR-0013](0013-one-click-migration-scope-and-preview-strategy.md) | One-Click Migration Scope and Preview/Conflict Strategy | Accepted |
 | [ADR-0014](0014-hosted-access-control-for-public-deployments.md) | Hosted Access Control for Public Deployments | Accepted |
 | [ADR-0015](0015-github-app-first-hosted-authentication.md) | GitHub App-First Hosted Authentication | Accepted |
-| [ADR-0016](0016-consider-aspire-for-local-orchestration-and-future-hosting.md) | Consider .NET Aspire for Local Orchestration and Future Hosting Evolution | Proposed |
+| [ADR-0016](0016-consider-aspire-for-local-orchestration-and-future-hosting.md) | Consider .NET Aspire for Local Orchestration and Future Hosting Evolution | Accepted |
 ## Adding a New ADR
 
 1. Create a new file: `adr/XXXX-<kebab-case-title>.md` (increment the number).

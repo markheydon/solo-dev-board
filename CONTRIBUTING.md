@@ -34,7 +34,8 @@ We are committed to providing a welcoming and inclusive environment for all cont
    For local development, use .NET User Secrets to manage the GitHub Personal Access Token:
    ```bash
    dotnet user-secrets init --project src/App/SoloDevBoard.App
-   dotnet user-secrets set "GitHub:Token" "<your-github-pat>" --project src/App/SoloDevBoard.App
+   dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-github-pat>" --project src/App/SoloDevBoard.App
+   dotnet user-secrets set "GitHubAuth:OwnerLogin" "<your-github-login>" --project src/App/SoloDevBoard.App
    ```
    See [docs/getting-started.md](docs/getting-started.md) for detailed setup instructions.
 

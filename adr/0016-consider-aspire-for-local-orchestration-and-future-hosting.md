@@ -1,45 +1,43 @@
 # ADR-0016: Consider .NET Aspire for Local Orchestration and Future Hosting Evolution
 
 **Date:** 2026-05-03
-**Status:** Proposed
+**Status:** Accepted
 
 ## Context
 
 .NET Aspire provides orchestration, service discovery, telemetry integration, and a development-first AppHost model for .NET applications. It is particularly attractive for containerised and Codespaces/dev-container workflows, and becomes more valuable as an application grows beyond a single process.
 
-SoloDevBoard currently uses .NET 10 Blazor Server, Azure App Service, Bicep for infrastructure as code, Azure Key Vault for secrets, and GitHub Actions OIDC for CI/CD. The application is still a single web app, is not yet deployed to Azure, and is not currently structured in a way that benefits materially from Aspire.
+SoloDevBoard currently uses .NET 10 Blazor Server, Azure App Service, Bicep for infrastructure as code, Azure Key Vault for secrets, and GitHub Actions OIDC for CI/CD. The application remains a single web app, but local development now requires stronger cross-device consistency for dev container and Codespaces workflows.
 
 Issue #171 tracks a future spike to revisit this decision when the trigger conditions below are met.
 
 ## Decision
 
-- Aspire is being considered for future adoption, but is not adopted at this time.
-- The immediate recommendation is to defer Aspire adoption until the application is deployed and/or distributed.
-- Any future Aspire trial should begin as a small spike focused on local orchestration and AppHost, not as a production deployment rewrite.
+- Aspire is adopted for local orchestration through the AppHost in development environments.
+- Existing app code remains intact, with onboarding focused on wiring the current web app into Aspire rather than restructuring the solution.
 - Existing Azure Bicep/App Service deployment remains the accepted and supported path for production.
-- Codespaces and dev-container compatibility is a motivating factor for future Aspire evaluation.
+- Direct `dotnet run` remains an optional local compatibility path for contributors who are not using Aspire.
+- Issue #171 remains open to evaluate broader Aspire adoption separately from this local development onboarding decision.
 - This ADR will be revisited if:
-  - The application is deployed to Azure.
+  - The production hosting model changes.
   - A second runtime or process is added (e.g., background worker, API, or service).
-  - There is a need for local orchestration, telemetry, or service discovery.
-  - Repeated developer environment friction is observed.
+  - Additional Aspire resources are required beyond the current web app orchestration.
 
 ## Rationale
 
-- SoloDevBoard is currently a single Blazor Server application, so Aspire would add orchestration overhead before the project clearly needs it.
-- The current Azure deployment path is already defined through Bicep, App Service, Key Vault, and GitHub Actions OIDC, and should remain stable until the application is live.
-- Aspire's Codespaces and dev-container compatibility makes it a worthwhile future option for improving local developer experience.
-- A limited future spike would allow the project to assess AppHost, local orchestration, telemetry, and service discovery without prematurely rewriting production deployment.
-- Recording the decision now avoids premature platform churn while preserving the option to adopt Aspire later on a deliberate, low-risk basis.
+- Existing development already pre-dates Aspire, so onboarding is deliberately incremental and low risk.
+- Aspire provides a consistent local orchestration entry point for local machines, dev containers, and Codespaces.
+- The Azure production path remains stable and unchanged, avoiding accidental coupling of local tooling changes to deployment decisions.
+- Adding Aspire now allows gradual extension to future multi-process scenarios without requiring a disruptive migration later.
 
 ## Consequences
 
-- No immediate changes to deployment or local development workflows.
-- Maintainers and contributors should continue to use the current Azure Bicep/App Service approach.
-- Aspire will be tracked as a future consideration and re-evaluated when trigger conditions are met.
-- Related tracking issue: #171, "[Chore] Evaluate .NET Aspire as a deferred local orchestration spike".
+- Local development workflows now support Aspire-first startup through the AppHost.
+- Contributors can still run the web app directly when needed.
+- Production deployment remains on the current Azure Bicep/App Service approach.
+- Related tracking issue: #171 remains open for future evaluation of multi-process or broader Aspire adoption.
 
 ## Alternatives Considered
 
-- Adopt Aspire immediately: Rejected as premature given current project maturity and deployment status.
-- Remain on current path: Accepted for now, with Aspire as a deferred evaluation.
+- Defer Aspire indefinitely: Rejected because recurring cross-device local setup friction now justifies local orchestration adoption.
+- Adopt Aspire for both local and production immediately: Rejected because production hosting decisions should remain decoupled from local onboarding.

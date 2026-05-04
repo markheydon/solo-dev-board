@@ -7,14 +7,14 @@ This backlog is organised by the six core features (epics) of SoloDevBoard. For 
 
 This section captures ideas and potential enhancements for later consideration. Items listed here do not alter the current scope or delivery sequencing.
 
-- As a solo developer, I want to evaluate .NET Aspire for local orchestration and future hosting so that I can improve Codespaces/dev-container workflows and prepare for distributed app scenarios when the project matures.
-  _(ADR-0016; tracked by issue #171.)_
+- [x] As a solo developer, I want .NET Aspire onboarded for local orchestration so that local, dev-container, and Codespaces startup behaviour is consistent across devices. _(ADR-0016; tracked by issue #171.)_
 
   - Acceptance criteria:
-    - Aspire evaluation is deferred until the app is deployed, distributed, or local orchestration needs arise.
-    - Any future Aspire trial starts as a small spike focused on local orchestration/AppHost, not a production rewrite.
-    - Existing Azure Bicep/App Service deployment remains the current path until a decision is made to adopt Aspire.
-    - Trigger conditions for revisiting: Azure deployment, second process added, need for orchestration/telemetry, or repeated dev-environment friction.
+    - Aspire AppHost orchestrates the existing web app for local development.
+    - Existing Azure Bicep/App Service deployment remains the current production path.
+    - Existing direct app startup (`dotnet run`) remains available as a compatibility path.
+    - Local onboarding guidance documents Aspire-first startup and resource endpoint discovery.
+    - Issue #171 remains open for future evaluation of broader Aspire adoption beyond local orchestration.
 
 ## Foundation (Cross-Cutting)
 

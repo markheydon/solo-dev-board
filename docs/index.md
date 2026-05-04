@@ -38,7 +38,7 @@ It is built with the solo developer in mind: opinionated defaults, minimal confi
 
 ## Quick Links
 
-- 📖 [Getting Started](getting-started.md) — prerequisites, local setup, and configuration.
+- 📖 [Getting Started](getting-started.md) — prerequisites, Aspire-first local setup, and configuration.
 - 👤 [User Guide](user-guide/) — detailed guides for each feature area.
 - 👤 [Hosted Authentication Guide](user-guide/hosted-authentication.md) — hosted sign-in, operator allow-lists, and fallback modes for production deployments.
 - ℹ️ [About Guide](user-guide/about.md) — overview of the About page, version information, and repository link.

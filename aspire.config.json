@@ -1,0 +1,6 @@
+{
+    "appHost": {
+        "language": "csharp",
+        "path": "SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj"
+    }
+}
