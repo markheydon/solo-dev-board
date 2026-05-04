@@ -15,6 +15,8 @@ using SoloDevBoard.Infrastructure.Identity;
 const string HostedSignInStateCookieName = "solo-dev-board.hosted-sign-in-state";
 
 var builder = WebApplication.CreateBuilder(args);
+builder.AddServiceDefaults();
+
 var hostedSignInEnabled = builder.Configuration.GetSection(GitHubAuthOptions.SectionName)
     .GetValue<bool>(nameof(GitHubAuthOptions.HostedSignInEnabled));
 var hostedOAuthFallbackEnabled = builder.Configuration.GetSection(GitHubAuthOptions.SectionName)
@@ -69,6 +71,7 @@ builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
 var app = builder.Build();
+app.MapDefaultEndpoints();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

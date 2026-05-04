@@ -201,6 +201,7 @@ Optional companion skills:
 
 - `csharp-xunit`
 - `csharp-docs`
+- `playwright-cli`
 
 Default workflow order for feature delivery:
 

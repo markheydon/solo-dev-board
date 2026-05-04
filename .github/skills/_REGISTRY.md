@@ -13,11 +13,13 @@ This registry defines active and companion skills for SoloDevBoard.
 - `dotnet-best-practices`: implementation quality baseline
 - `mudblazor`: MudBlazor Blazor component library implementation guidance
 - `pm-feature-workflow`: end-to-end orchestration for high-level PM prompts
+- `aspire`: Aspire CLI orchestration and distributed application operations
 
 ## Optional Companion Skills
 
 - `csharp-xunit`: xUnit patterns and fixtures
 - `csharp-docs`: XML documentation depth guidance
+- `playwright-cli`: Browser automation and Playwright test authoring for AI-driven UI validation
 
 ## Deactivated Policy
 

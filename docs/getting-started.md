@@ -16,6 +16,7 @@ Before you begin, ensure you have the following installed:
 |---|---|---|
 | [.NET SDK](https://dotnet.microsoft.com/download/dotnet/10.0) | 10.0 or later | Required to build and run the application |
 | Git | Any recent version | Required to clone the repository |
+| Aspire CLI | Latest | Required for local orchestration via AppHost |
 | A GitHub account | — | Required for GitHub API access |
 | A GitHub Personal Access Token (PAT) **or** GitHub App | — | Required for API authentication (see below) |
 
@@ -67,13 +68,33 @@ See [Hosted Authentication Guide](user-guide/hosted-authentication.md) for furth
 
 3. **Configure your GitHub token** (see [Configuration](#configuration) below).
 
-4. **Run the application:**
+4. **Start the application with Aspire (recommended):**
+
+   ```bash
+   aspire start --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
+   ```
+
+5. **Get the allocated endpoint from Aspire:**
+
+   ```bash
+   aspire describe
+   ```
+
+6. Open the `app` resource URL shown by `aspire describe`.
+
+7. **Optional legacy run path (without Aspire orchestration):**
 
    ```bash
    dotnet run --project src/App/SoloDevBoard.App
    ```
 
-5. Open your browser and navigate to `https://localhost:5001`.
+8. For a worktree or Codespaces session, use isolation to avoid port and state clashes:
+
+   ```bash
+   aspire start --isolated --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
+   ```
+
+This Aspire setup currently exists to standardise local development across local machines, dev containers, and Codespaces. It does not change the production hosting path, and issue #171 remains open for future evaluation of broader Aspire adoption such as additional worker or service processes.
 
 ---
 
@@ -158,10 +179,11 @@ Leave `PersonalAccessToken` empty in `appsettings.json` and supply it via an env
 | `HostedAdmissionControl__AllowedOrganisationLogins` | Comma-separated list of allowed GitHub organisation logins |
 | `HostedAdmissionControl__HostedOrganisationLoginsClaimType` | Claim type for organisation logins (string) |
 
-To set the token for local development using .NET User Secrets:
+To set the PAT-only local development values using .NET User Secrets:
 
 ```bash
 dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-token>" --project src/App/SoloDevBoard.App
+dotnet user-secrets set "GitHubAuth:OwnerLogin" "<your-github-login>" --project src/App/SoloDevBoard.App
 ```
 
 

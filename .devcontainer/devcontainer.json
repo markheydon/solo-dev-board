@@ -1,0 +1,40 @@
+{
+	"name": "Solo Hub Board Dev Container",
+	"image": "mcr.microsoft.com/devcontainers/dotnet:dev-10.0-noble",
+	
+	"features": {
+		"ghcr.io/microsoft/aspire-devcontainer-feature/aspire:2": {},
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
+		"ghcr.io/devcontainers/features/github-cli:1": {
+			"version": "2"
+		},
+		"ghcr.io/devcontainers/features/powershell:2": {
+			"version": "latest"
+		}
+	},
+
+	"hostRequirements": {
+		"cpus": 2,
+		"memory": "8gb",
+		"storage": "32gb"
+	},
+
+	"postStartCommand": "bash -lc 'export SSL_CERT_DIR=\"$HOME/.aspnet/dev-certs/trust:${SSL_CERT_DIR:-/etc/ssl/certs}\"; dotnet dev-certs https --trust || { echo \"Warning: HTTPS development certificate trust could not be fully applied in this environment; continuing startup.\"; dotnet dev-certs https >/dev/null; }'",
+
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-dotnettools.csdevkit",
+				"ms-dotnettools.csharp",
+				"ms-dotnettools.vscode-dotnet-runtime",
+				"github.vscode-pull-request-github",
+				"github.vscode-github-actions",
+				"github.copilot",
+				"github.copilot-chat",
+				"ms-azuretools.vscode-bicep",
+				"editorconfig.editorconfig",
+				"microsoft-aspire.aspire-vscode"
+			]
+		}
+	}
+}

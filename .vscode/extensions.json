@@ -14,6 +14,8 @@
     "github.copilot-chat",
     // Bicep — Azure infrastructure templates in infra/
     "ms-azuretools.vscode-bicep",
+    // Aspire — AppHost launch/debug support and dashboard tooling
+    "microsoft-aspire.aspire-vscode",
     // EditorConfig — consistent formatting via .editorconfig
     "editorconfig.editorconfig"
   ]

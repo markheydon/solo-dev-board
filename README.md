@@ -37,6 +37,7 @@ Ensure you have the following installed:
 - Git.
 - A GitHub account.
 - A GitHub Personal Access Token (PAT) or GitHub App for API authentication.
+- The Aspire CLI (`aspire`) for local orchestration.
 
 ### Run Locally
 
@@ -49,14 +50,19 @@ cd solo-dev-board
 dotnet restore SoloDevBoard.slnx
 
 # Set your GitHub token using .NET User Secrets
-dotnet user-secrets set "GitHub:PersonalAccessToken" "<your-pat>" --project src/App/SoloDevBoard.App
-dotnet user-secrets set "GitHub:OwnerLogin" "<your-account-name>" --project src/App/SoloDevBoard.App
+dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-pat>" --project src/App/SoloDevBoard.App
+dotnet user-secrets set "GitHubAuth:OwnerLogin" "<your-account-name>" --project src/App/SoloDevBoard.App
 
-# Run the application
+# Start with Aspire (recommended)
+aspire start --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
+
+# Optional legacy path (without Aspire orchestration)
 dotnet run --project src/App/SoloDevBoard.App
 ```
 
-Then open `https://localhost:5001` in your browser.
+Then run `aspire describe` to view allocated endpoints and open the `app` resource URL in your browser.
+
+Aspire is currently used to make local, dev-container, and Codespaces startup behaviour consistent. Issue #171 remains open for future evaluation of broader Aspire adoption, such as introducing additional worker or service processes.
 
 See the full [Getting Started guide](docs/getting-started.md) for configuration options and Azure deployment instructions.
 
