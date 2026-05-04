@@ -66,12 +66,12 @@ playwright-cli run-code "async page => {
 ## Media Emulation
 
 ```bash
-# Emulate dark color scheme
+# Emulate dark colour scheme
 playwright-cli run-code "async page => {
   await page.emulateMedia({ colorScheme: 'dark' });
 }"
 
-# Emulate light color scheme
+# Emulate light colour scheme
 playwright-cli run-code "async page => {
   await page.emulateMedia({ colorScheme: 'light' });
 }"
@@ -89,10 +89,12 @@ playwright-cli run-code "async page => {
 
 ## Wait Strategies
 
+Use deterministic waits and avoid `networkidle` in this repository.
+
 ```bash
-# Wait for network idle
+# Wait for a stable load state (avoid networkidle)
 playwright-cli run-code "async page => {
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
 }"
 
 # Wait for specific element

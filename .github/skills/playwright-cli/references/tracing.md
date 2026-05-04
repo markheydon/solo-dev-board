@@ -74,7 +74,7 @@ playwright-cli tracing-stop
 # Open trace to see DOM state when click was attempted
 ```
 
-### Analyzing Performance
+### Analysing Performance
 
 ```bash
 playwright-cli tracing-start
@@ -134,6 +134,6 @@ find .playwright-cli/traces -mtime +7 -delete
 
 ## Limitations
 
-- Traces add overhead to automation
-- Large traces can consume significant disk space
-- Some dynamic content may not replay perfectly
+- Traces add overhead to automation.
+- Large traces can consume significant disk space.
+- Some dynamic content may not replay perfectly.
