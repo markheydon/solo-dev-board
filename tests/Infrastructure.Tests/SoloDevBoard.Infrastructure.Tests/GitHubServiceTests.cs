@@ -748,96 +748,96 @@ public sealed class GitHubServiceTests
         Assert.Equal("https://api.github.com/graphql", handler.Requests[1].RequestUri!.ToString());
     }
 
-        [Fact]
-        public async Task GetProjectBoardsForRepositoryAsync_StatusFieldPresent_ReturnsProjectBoardOptions()
-        {
-                // Arrange
-                var handler = new QueueMessageHandler(
-                [
-                        CreateJsonResponse(HttpStatusCode.OK, """
-                        {
-                            "data": {
-                                "repository": {
-                                    "projectsV2": {
+    [Fact]
+    public async Task GetProjectBoardsForRepositoryAsync_StatusFieldPresent_ReturnsProjectBoardOptions()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "repository": {
+                        "projectsV2": {
+                            "nodes": [
+                                {
+                                    "id": "PVT_kwHOAJefG84BQ6bh",
+                                    "title": "Roadmap",
+                                    "owner": { "login": "owner" },
+                                    "fields": {
                                         "nodes": [
                                             {
-                                                "id": "PVT_kwHOAJefG84BQ6bh",
-                                                "title": "Roadmap",
-                                                "owner": { "login": "owner" },
-                                                "fields": {
-                                                    "nodes": [
-                                                        {
-                                                            "id": "PVTF_status",
-                                                            "name": "Status",
-                                                            "options": [
-                                                                { "id": "option-one", "name": "In Progress" },
-                                                                { "id": "option-two", "name": "Done" }
-                                                            ]
-                                                        }
-                                                    ]
-                                                }
+                                                "id": "PVTF_status",
+                                                "name": "Status",
+                                                "options": [
+                                                    { "id": "option-one", "name": "In Progress" },
+                                                    { "id": "option-two", "name": "Done" }
+                                                ]
                                             }
                                         ]
                                     }
                                 }
-                            },
-                            "errors": []
+                            ]
                         }
-                        """),
-                ]);
+                    }
+                },
+                "errors": []
+            }
+            """),
+        ]);
 
-                var sut = CreateSubject(handler);
+        var sut = CreateSubject(handler);
 
-                // Act
-                var result = await sut.GetProjectBoardsForRepositoryAsync("owner", "repo");
+        // Act
+        var result = await sut.GetProjectBoardsForRepositoryAsync("owner", "repo");
 
-                // Assert
-                Assert.Single(result);
-                Assert.Equal("Roadmap", result[0].Title);
-                Assert.Equal("PVTF_status", result[0].StatusFieldId);
-                Assert.Equal(2, result[0].StatusOptions.Count);
-                Assert.Equal(HttpMethod.Post, handler.Requests[0].Method);
-                Assert.Equal("https://api.github.com/graphql", handler.Requests[0].RequestUri!.ToString());
-        }
+        // Assert
+        Assert.Single(result);
+        Assert.Equal("Roadmap", result[0].Title);
+        Assert.Equal("PVTF_status", result[0].StatusFieldId);
+        Assert.Equal(2, result[0].StatusOptions.Count);
+        Assert.Equal(HttpMethod.Post, handler.Requests[0].Method);
+        Assert.Equal("https://api.github.com/graphql", handler.Requests[0].RequestUri!.ToString());
+    }
 
-        [Fact]
-        public async Task UpdateProjectBoardItemStatusAsync_ValidResponse_PostsGraphQlMutation()
-        {
-                // Arrange
-                var handler = new QueueMessageHandler(
-                [
-                        CreateJsonResponse(HttpStatusCode.OK, """
-                        {
-                            "data": {
-                                "updateProjectV2ItemFieldValue": {
-                                    "projectV2Item": {
-                                        "id": "PVTI_lAHOAJefG84BQ6bhzgnrX1A"
-                                    }
-                                }
-                            },
-                            "errors": []
+    [Fact]
+    public async Task UpdateProjectBoardItemStatusAsync_ValidResponse_PostsGraphQlMutation()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "updateProjectV2ItemFieldValue": {
+                        "projectV2Item": {
+                            "id": "PVTI_lAHOAJefG84BQ6bhzgnrX1A"
                         }
-                        """),
-                ]);
+                    }
+                },
+                "errors": []
+            }
+            """),
+        ]);
 
-                var sut = CreateSubject(handler);
+        var sut = CreateSubject(handler);
 
-                // Act
-                await sut.UpdateProjectBoardItemStatusAsync("project-id", "project-item-id", "status-field-id", "in-progress");
+        // Act
+        await sut.UpdateProjectBoardItemStatusAsync("project-id", "project-item-id", "status-field-id", "in-progress");
 
-                // Assert
-                Assert.Single(handler.Requests);
-                Assert.Equal(HttpMethod.Post, handler.Requests[0].Method);
-                Assert.Equal("https://api.github.com/graphql", handler.Requests[0].RequestUri!.ToString());
+        // Assert
+        Assert.Single(handler.Requests);
+        Assert.Equal(HttpMethod.Post, handler.Requests[0].Method);
+        Assert.Equal("https://api.github.com/graphql", handler.Requests[0].RequestUri!.ToString());
 
-                var payload = await handler.Requests[0].Content!.ReadAsStringAsync();
-                using var document = JsonDocument.Parse(payload);
-                var variables = document.RootElement.GetProperty("variables");
-                Assert.Equal("project-id", variables.GetProperty("projectId").GetString());
-                Assert.Equal("project-item-id", variables.GetProperty("itemId").GetString());
-                Assert.Equal("status-field-id", variables.GetProperty("fieldId").GetString());
-                Assert.Equal("in-progress", variables.GetProperty("statusOptionId").GetString());
-        }
+        var payload = await handler.Requests[0].Content!.ReadAsStringAsync();
+        using var document = JsonDocument.Parse(payload);
+        var variables = document.RootElement.GetProperty("variables");
+        Assert.Equal("project-id", variables.GetProperty("projectId").GetString());
+        Assert.Equal("project-item-id", variables.GetProperty("itemId").GetString());
+        Assert.Equal("status-field-id", variables.GetProperty("fieldId").GetString());
+        Assert.Equal("in-progress", variables.GetProperty("statusOptionId").GetString());
+    }
 
     [Fact]
     public async Task CloseTriageItemAsDuplicateAsync_Issue_PostsCommentAndClosesIssue()
