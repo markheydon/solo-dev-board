@@ -530,6 +530,173 @@ public sealed class TriageTests
             Times.Never);
     }
 
+    [Fact]
+    public async Task Triage_AssignMilestoneClicked_AssignsMilestoneAndShowsSuccessMessage()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreateRepository("owner", "repo")]);
+
+        var startedSession = CreateSession(
+            "owner",
+            "repo",
+            [CreateItem(501, "Issue 501", "owner/repo")],
+            currentIndex: 0,
+            skippedItems: []);
+
+        var milestoneAssignedSession = startedSession with
+        {
+            Queue =
+            [
+                startedSession.Queue[0] with
+                {
+                    MilestoneNumber = 7,
+                    MilestoneTitle = "v0.7.0",
+                },
+            ],
+            ActionHistory =
+            [
+                new TriageActionDto(TriageActionTypeDto.MilestoneAssigned, TriageItemTypeDto.Issue, 501, "owner/repo", "Assigned milestone 'v0.7.0'.", DateTimeOffset.UtcNow),
+            ],
+            Summary = new TriageSessionSummaryDto(1, 0, 1, 0, 0, 1, 0, 0),
+        };
+
+        _triageServiceMock
+            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(startedSession);
+
+        _triageServiceMock
+            .Setup(service => service.GetMilestoneOptionsAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([new TriageMilestoneOptionDto(7, "v0.7.0")]);
+
+        _triageServiceMock
+            .Setup(service => service.GetProjectBoardOptionsAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        _triageServiceMock
+            .Setup(service => service.AssignMilestoneToCurrentItemAsync(It.IsAny<TriageSessionDto>(), 7, "v0.7.0", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(milestoneAssignedSession);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Triage>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-repository-autocomplete']"));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo" }));
+
+        cut.Find("[data-testid='triage-start-session-button']").Click();
+        cut.WaitForAssertion(() => Assert.Contains("Issue 501", cut.Markup));
+
+        var milestoneSelect = cut
+            .FindComponents<MudSelect<int?>>()
+            .Single(component => string.Equals(component.Instance.Label, "Milestone", StringComparison.Ordinal));
+
+        await cut.InvokeAsync(() => milestoneSelect.Instance.ValueChanged.InvokeAsync(7));
+        cut.Find("[data-testid='triage-assign-milestone-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Assigned milestone 'v0.7.0' to item #501", cut.Markup, StringComparison.Ordinal);
+        });
+
+        _triageServiceMock.Verify(
+            service => service.AssignMilestoneToCurrentItemAsync(It.IsAny<TriageSessionDto>(), 7, "v0.7.0", It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task Triage_AddToProjectBoardClicked_AddsItemAndShowsSuccessMessage()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreateRepository("owner", "repo")]);
+
+        var startedSession = CreateSession(
+            "owner",
+            "repo",
+            [CreateItem(601, "Issue 601", "owner/repo")],
+            currentIndex: 0,
+            skippedItems: []);
+
+        var updatedSession = startedSession with
+        {
+            ActionHistory =
+            [
+                new TriageActionDto(TriageActionTypeDto.ProjectBoardAssigned, TriageItemTypeDto.Issue, 601, "owner/repo", "Added to project board 'Roadmap' with status 'In Progress'.", DateTimeOffset.UtcNow),
+            ],
+            Summary = new TriageSessionSummaryDto(1, 0, 1, 0, 0, 0, 1, 0),
+        };
+
+        _triageServiceMock
+            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(startedSession);
+
+        _triageServiceMock
+            .Setup(service => service.GetMilestoneOptionsAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        _triageServiceMock
+            .Setup(service => service.GetProjectBoardOptionsAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new TriageProjectBoardOptionDto(
+                    "project-id",
+                    "Roadmap",
+                    "owner",
+                    "status-field-id",
+                    [
+                        new TriageProjectBoardStatusOptionDto("in-progress", "In Progress"),
+                        new TriageProjectBoardStatusOptionDto("done", "Done"),
+                    ]),
+            ]);
+
+        _triageServiceMock
+            .Setup(service => service.AddCurrentItemToProjectBoardAsync(
+                It.IsAny<TriageSessionDto>(),
+                "project-id",
+                "Roadmap",
+                "status-field-id",
+                "in-progress",
+                "In Progress",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(updatedSession);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Triage>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-repository-autocomplete']"));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo" }));
+
+        cut.Find("[data-testid='triage-start-session-button']").Click();
+        cut.WaitForAssertion(() => Assert.Contains("Issue 601", cut.Markup));
+
+        cut.Find("[data-testid='triage-add-to-project-board-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Added item #601 to 'Roadmap' with status 'In Progress'", cut.Markup, StringComparison.Ordinal);
+        });
+
+        _triageServiceMock.Verify(
+            service => service.AddCurrentItemToProjectBoardAsync(
+                It.IsAny<TriageSessionDto>(),
+                "project-id",
+                "Roadmap",
+                "status-field-id",
+                "in-progress",
+                "In Progress",
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
     private static async Task SelectQuickLabelAsync(IRenderedComponent<Triage> cut, string labelName)
     {
         ArgumentNullException.ThrowIfNull(cut);
@@ -692,6 +859,12 @@ public sealed class TriageTests
 
         var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+        _triageServiceMock
+            .SetReturnsDefault(Task.FromResult<IReadOnlyList<TriageMilestoneOptionDto>>(Array.Empty<TriageMilestoneOptionDto>()));
+        _triageServiceMock
+            .SetReturnsDefault(Task.FromResult<IReadOnlyList<TriageProjectBoardOptionDto>>(Array.Empty<TriageProjectBoardOptionDto>()));
+
         ctx.Services.AddMudServices();
         ctx.Services.AddScoped(_ => _repositoryServiceMock.Object);
         ctx.Services.AddScoped(_ => _triageServiceMock.Object);

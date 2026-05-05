@@ -28,6 +28,7 @@ SoloDevBoard supports two authentication modes:
   - `repo` (full control of private repositories)
   - `read:org` (read-only access to organisation data, if applicable)
   - `workflow` (to manage GitHub Actions workflows)
+  - `read:project` (read-only access to GitHub Projects; required for the Triage UI project board feature)
 
 - **GitHub App:** Recommended for production deployments. Provides fine-grained permissions and does not expire. See the [GitHub Apps documentation](https://docs.github.com/en/apps) for setup instructions.
 

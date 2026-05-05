@@ -37,6 +37,44 @@ public interface ITriageService
     /// <returns>The updated triage session DTO.</returns>
     Task<TriageSessionDto> ApplyLabelToCurrentItemAsync(TriageSessionDto session, string labelName, CancellationToken cancellationToken = default);
 
+    /// <summary>Retrieves milestone options for the repository in the active triage session.</summary>
+    /// <param name="session">The current session state.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A read-only list of milestone options sorted by title.</returns>
+    Task<IReadOnlyList<TriageMilestoneOptionDto>> GetMilestoneOptionsAsync(TriageSessionDto session, CancellationToken cancellationToken = default);
+
+    /// <summary>Retrieves project-board options for the repository in the active triage session.</summary>
+    /// <param name="session">The current session state.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A read-only list of project-board options sorted by title.</returns>
+    Task<IReadOnlyList<TriageProjectBoardOptionDto>> GetProjectBoardOptionsAsync(TriageSessionDto session, CancellationToken cancellationToken = default);
+
+    /// <summary>Assigns or clears a milestone on the current session item.</summary>
+    /// <param name="session">The current session state.</param>
+    /// <param name="milestoneNumber">The milestone number to assign, or <see langword="null"/> to clear.</param>
+    /// <param name="milestoneTitle">The milestone title associated with <paramref name="milestoneNumber"/>.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>The updated triage session DTO.</returns>
+    Task<TriageSessionDto> AssignMilestoneToCurrentItemAsync(TriageSessionDto session, int? milestoneNumber, string? milestoneTitle, CancellationToken cancellationToken = default);
+
+    /// <summary>Adds the current session item to a project board and sets its status.</summary>
+    /// <param name="session">The current session state.</param>
+    /// <param name="projectId">The project-board node identifier.</param>
+    /// <param name="projectTitle">The project-board display title.</param>
+    /// <param name="statusFieldId">The project status-field node identifier.</param>
+    /// <param name="statusOptionId">The selected project status-option node identifier.</param>
+    /// <param name="statusOptionName">The selected project status-option display name.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>The updated triage session DTO.</returns>
+    Task<TriageSessionDto> AddCurrentItemToProjectBoardAsync(
+        TriageSessionDto session,
+        string projectId,
+        string projectTitle,
+        string statusFieldId,
+        string statusOptionId,
+        string statusOptionName,
+        CancellationToken cancellationToken = default);
+
     /// <summary>Builds the latest triage session summary from current session state.</summary>
     /// <param name="session">The current session state.</param>
     /// <returns>The computed triage session summary DTO.</returns>

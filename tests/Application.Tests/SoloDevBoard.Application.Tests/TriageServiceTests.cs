@@ -276,6 +276,133 @@ public sealed class TriageServiceTests
     }
 
     [Fact]
+    public async Task GetMilestoneOptionsAsync_MilestonesReturned_ReturnsSortedOptions()
+    {
+        // Arrange
+        _gitHubServiceMock
+            .Setup(service => service.GetMilestonesAsync("owner", "repo", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new SoloDevBoard.Domain.Entities.Milestones.Milestone { Number = 3, Title = "v0.3.0" },
+                new SoloDevBoard.Domain.Entities.Milestones.Milestone { Number = 1, Title = "v0.1.0" },
+            ]);
+
+        var sut = new TriageService(_gitHubServiceMock.Object);
+        var session = CreateSession(queueCount: 1, currentIndex: 0);
+
+        // Act
+        var result = await sut.GetMilestoneOptionsAsync(session);
+
+        // Assert
+        Assert.Equal(2, result.Count);
+        Assert.Equal(1, result[0].Number);
+        Assert.Equal("v0.1.0", result[0].Title);
+        Assert.Equal(3, result[1].Number);
+    }
+
+    [Fact]
+    public async Task GetProjectBoardOptionsAsync_ProjectBoardsReturned_ReturnsSortedOptions()
+    {
+        // Arrange
+        _gitHubServiceMock
+            .Setup(service => service.GetProjectBoardsForRepositoryAsync("owner", "repo", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new TriageProjectBoard
+                {
+                    Id = "project-two",
+                    Title = "Roadmap",
+                    OwnerLogin = "owner",
+                    StatusFieldId = "status-two",
+                    StatusOptions =
+                    [
+                        new TriageProjectBoardStatusOption { Id = "done", Name = "Done" },
+                        new TriageProjectBoardStatusOption { Id = "in-progress", Name = "In Progress" },
+                    ],
+                },
+                new TriageProjectBoard
+                {
+                    Id = "project-one",
+                    Title = "Backlog",
+                    OwnerLogin = "owner",
+                    StatusFieldId = "status-one",
+                    StatusOptions =
+                    [
+                        new TriageProjectBoardStatusOption { Id = "todo", Name = "Todo" },
+                    ],
+                },
+            ]);
+
+        var sut = new TriageService(_gitHubServiceMock.Object);
+        var session = CreateSession(queueCount: 1, currentIndex: 0);
+
+        // Act
+        var result = await sut.GetProjectBoardOptionsAsync(session);
+
+        // Assert
+        Assert.Equal(2, result.Count);
+        Assert.Equal("Backlog", result[0].Title);
+        Assert.Equal("Roadmap", result[1].Title);
+        Assert.Equal("Done", result[1].StatusOptions[0].Name);
+        Assert.Equal("In Progress", result[1].StatusOptions[1].Name);
+    }
+
+    [Fact]
+    public async Task AssignMilestoneToCurrentItemAsync_ValidMilestone_AssignsMilestoneAndRecordsAction()
+    {
+        // Arrange
+        var sut = new TriageService(_gitHubServiceMock.Object);
+        var session = CreateSession(queueCount: 1, currentIndex: 0);
+
+        // Act
+        var result = await sut.AssignMilestoneToCurrentItemAsync(session, 12, "v1.2.0");
+
+        // Assert
+        Assert.Equal(12, result.Queue[0].MilestoneNumber);
+        Assert.Equal("v1.2.0", result.Queue[0].MilestoneTitle);
+        Assert.Single(result.ActionHistory);
+        Assert.Equal(TriageActionTypeDto.MilestoneAssigned, result.ActionHistory[0].ActionType);
+        Assert.Equal(1, result.Summary.MilestonesAssignedCount);
+
+        _gitHubServiceMock.Verify(
+            service => service.AssignMilestoneToTriageItemAsync("owner", "repo", 1, 12, It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task AddCurrentItemToProjectBoardAsync_ValidInput_AddsItemAndUpdatesStatusAndRecordsAction()
+    {
+        // Arrange
+        _gitHubServiceMock
+            .Setup(service => service.AddTriageItemToProjectBoardAsync("owner", "repo", 1, "project-id", It.IsAny<CancellationToken>()))
+            .ReturnsAsync("project-item-id");
+
+        var sut = new TriageService(_gitHubServiceMock.Object);
+        var session = CreateSession(queueCount: 1, currentIndex: 0);
+
+        // Act
+        var result = await sut.AddCurrentItemToProjectBoardAsync(
+            session,
+            "project-id",
+            "Roadmap",
+            "status-field-id",
+            "in-progress",
+            "In Progress");
+
+        // Assert
+        Assert.Single(result.ActionHistory);
+        Assert.Equal(TriageActionTypeDto.ProjectBoardAssigned, result.ActionHistory[0].ActionType);
+        Assert.Contains("Roadmap", result.ActionHistory[0].Detail, StringComparison.Ordinal);
+        Assert.Contains("In Progress", result.ActionHistory[0].Detail, StringComparison.Ordinal);
+        Assert.Equal(1, result.Summary.ProjectAssignmentsCount);
+
+        _gitHubServiceMock.Verify(
+            service => service.AddTriageItemToProjectBoardAsync("owner", "repo", 1, "project-id", It.IsAny<CancellationToken>()),
+            Times.Once);
+        _gitHubServiceMock.Verify(
+            service => service.UpdateProjectBoardItemStatusAsync("project-id", "project-item-id", "status-field-id", "in-progress", It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
     public void BuildSessionSummary_ActionHistoryIncludesAllActionTypes_ReturnsComputedCounts()
     {
         // Arrange

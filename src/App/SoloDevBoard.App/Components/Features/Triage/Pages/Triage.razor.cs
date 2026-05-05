@@ -49,9 +49,15 @@ public partial class Triage : ComponentBase
     private bool isApplyingSessionAction;
     private TriageSessionDto? currentSession;
     private IReadOnlyList<string> availableLabelNames = [];
+    private IReadOnlyList<TriageMilestoneOptionDto> availableMilestoneOptions = [];
+    private IReadOnlyList<TriageProjectBoardOptionDto> availableProjectBoardOptions = [];
     private string selectedQuickActionLabelName = string.Empty;
+    private int? selectedMilestoneNumber;
+    private string selectedProjectBoardId = string.Empty;
+    private string selectedProjectBoardStatusOptionId = string.Empty;
     private string? operationMessage;
     private Severity operationSeverity = Severity.Info;
+    private bool isLoadingPlanningOptions;
 
     private bool CanStartSession
         => !isLoadingRepositories
@@ -69,6 +75,27 @@ public partial class Triage : ComponentBase
         => !isApplyingSessionAction
             && CurrentItem is not null
             && LabelExists(selectedQuickActionLabelName);
+
+    private bool CanAssignMilestone
+        => !isApplyingSessionAction
+            && CurrentItem is not null
+            && !isLoadingPlanningOptions
+            && (selectedMilestoneNumber.HasValue || CurrentItem.MilestoneNumber.HasValue);
+
+    private bool CanAddToProjectBoard
+        => !isApplyingSessionAction
+            && CurrentItem is not null
+            && !isLoadingPlanningOptions
+            && !string.IsNullOrWhiteSpace(selectedProjectBoardId)
+            && !string.IsNullOrWhiteSpace(selectedProjectBoardStatusOptionId)
+            && ActiveProjectBoard is not null;
+
+    private TriageProjectBoardOptionDto? ActiveProjectBoard
+        => availableProjectBoardOptions.FirstOrDefault(option =>
+            option.Id.Equals(selectedProjectBoardId, StringComparison.Ordinal));
+
+    private IReadOnlyList<TriageProjectBoardStatusOptionDto> ActiveProjectBoardStatusOptions
+        => ActiveProjectBoard?.StatusOptions ?? [];
 
     private MarkupString CurrentItemBodyMarkup
         => string.IsNullOrWhiteSpace(CurrentItem?.Body)
@@ -191,7 +218,12 @@ public partial class Triage : ComponentBase
         {
             currentSession = null;
             availableLabelNames = [];
+            availableMilestoneOptions = [];
+            availableProjectBoardOptions = [];
             selectedQuickActionLabelName = string.Empty;
+            selectedMilestoneNumber = null;
+            selectedProjectBoardId = string.Empty;
+            selectedProjectBoardStatusOptionId = string.Empty;
             operationSeverity = Severity.Info;
             operationMessage = string.IsNullOrWhiteSpace(selectedRepositoryFullName)
                 ? null
@@ -229,6 +261,8 @@ public partial class Triage : ComponentBase
         {
             currentSession = await TriageService.StartSessionAsync(owner, repo, includePullRequests);
             await LoadQuickActionLabelsAsync(owner, repo);
+            await LoadPlanningOptionsAsync(currentSession);
+            SyncPlanningSelectionFromCurrentItem();
 
             operationSeverity = Severity.Success;
             operationMessage = currentSession.Progress.TotalItems == 0
@@ -355,6 +389,7 @@ public partial class Triage : ComponentBase
 
             var labelledSession = await TriageService.ApplyLabelToCurrentItemAsync(currentSession, labelName);
             currentSession = await TriageService.AdvanceSessionAsync(labelledSession);
+            SyncPlanningSelectionFromCurrentItem();
 
             operationSeverity = Severity.Success;
             operationMessage = currentSession.CurrentItem is null
@@ -394,6 +429,7 @@ public partial class Triage : ComponentBase
         {
             var completedItemNumber = currentSession.CurrentItem.Number;
             currentSession = await TriageService.AdvanceSessionAsync(currentSession);
+            SyncPlanningSelectionFromCurrentItem();
             operationSeverity = Severity.Info;
             operationMessage = currentSession.CurrentItem is null
                 ? $"Moved past item #{completedItemNumber} without changes. Reached the end of the current queue."
@@ -405,6 +441,134 @@ public partial class Triage : ComponentBase
             operationSeverity = Severity.Error;
             operationMessage = "An unexpected error occurred while moving to the next item without changes.";
             Snackbar.Add("Could not move to the next item without changes.", Severity.Error);
+        }
+        finally
+        {
+            isApplyingSessionAction = false;
+        }
+    }
+
+    private Task OnSelectedMilestoneChangedAsync(int? milestoneNumber)
+    {
+        selectedMilestoneNumber = milestoneNumber;
+        return Task.CompletedTask;
+    }
+
+    private Task OnSelectedProjectBoardChangedAsync(string projectBoardId)
+    {
+        selectedProjectBoardId = projectBoardId ?? string.Empty;
+
+        if (ActiveProjectBoardStatusOptions.Count == 0)
+        {
+            selectedProjectBoardStatusOptionId = string.Empty;
+            return Task.CompletedTask;
+        }
+
+        if (!ActiveProjectBoardStatusOptions.Any(option => option.Id.Equals(selectedProjectBoardStatusOptionId, StringComparison.Ordinal)))
+        {
+            selectedProjectBoardStatusOptionId = ActiveProjectBoardStatusOptions[0].Id;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task OnSelectedProjectBoardStatusOptionChangedAsync(string statusOptionId)
+    {
+        selectedProjectBoardStatusOptionId = statusOptionId ?? string.Empty;
+        return Task.CompletedTask;
+    }
+
+    private async Task AssignSelectedMilestoneAsync()
+    {
+        if (currentSession is null || CurrentItem is null || !CanAssignMilestone)
+        {
+            return;
+        }
+
+        isApplyingSessionAction = true;
+
+        try
+        {
+            var selectedMilestoneTitle = availableMilestoneOptions
+                .FirstOrDefault(option => option.Number == selectedMilestoneNumber)
+                ?.Title;
+
+            currentSession = await TriageService.AssignMilestoneToCurrentItemAsync(
+                currentSession,
+                selectedMilestoneNumber,
+                selectedMilestoneTitle);
+
+            SyncPlanningSelectionFromCurrentItem();
+
+            operationSeverity = Severity.Success;
+            operationMessage = selectedMilestoneNumber is null
+                ? $"Cleared milestone assignment for item #{CurrentItem.Number}."
+                : $"Assigned milestone '{selectedMilestoneTitle}' to item #{CurrentItem.Number}.";
+        }
+        catch (HttpRequestException ex)
+        {
+            Logger.LogError(ex, "GitHub API request failed while assigning milestone to triage item.");
+            operationSeverity = Severity.Error;
+            operationMessage = $"GitHub API request failed while assigning milestone. {ex.Message}";
+            Snackbar.Add("Could not assign the selected milestone due to a GitHub API error.", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to assign milestone to the current triage item.");
+            operationSeverity = Severity.Error;
+            operationMessage = "An unexpected error occurred while assigning the selected milestone.";
+            Snackbar.Add("Could not assign the selected milestone.", Severity.Error);
+        }
+        finally
+        {
+            isApplyingSessionAction = false;
+        }
+    }
+
+    private async Task AddCurrentItemToProjectBoardAsync()
+    {
+        if (currentSession is null || CurrentItem is null || !CanAddToProjectBoard || ActiveProjectBoard is null)
+        {
+            return;
+        }
+
+        var selectedStatusOption = ActiveProjectBoardStatusOptions
+            .FirstOrDefault(option => option.Id.Equals(selectedProjectBoardStatusOptionId, StringComparison.Ordinal));
+
+        if (selectedStatusOption is null)
+        {
+            return;
+        }
+
+        isApplyingSessionAction = true;
+
+        try
+        {
+            var currentItemNumber = CurrentItem.Number;
+            currentSession = await TriageService.AddCurrentItemToProjectBoardAsync(
+                currentSession,
+                ActiveProjectBoard.Id,
+                ActiveProjectBoard.Title,
+                ActiveProjectBoard.StatusFieldId,
+                selectedStatusOption.Id,
+                selectedStatusOption.Name);
+
+            operationSeverity = Severity.Success;
+            operationMessage = $"Added item #{currentItemNumber} to '{ActiveProjectBoard.Title}' with status '{selectedStatusOption.Name}'.";
+        }
+        catch (HttpRequestException ex)
+        {
+            Logger.LogError(ex, "GitHub API request failed while adding triage item to project board.");
+            operationSeverity = Severity.Error;
+            operationMessage = $"GitHub API request failed while adding to project board. {ex.Message}";
+            Snackbar.Add("Could not add the item to the selected project board due to a GitHub API error.", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to add the current triage item to a project board.");
+            operationSeverity = Severity.Error;
+            operationMessage = "An unexpected error occurred while adding this item to a project board.";
+            Snackbar.Add("Could not add the item to the selected project board.", Severity.Error);
         }
         finally
         {
@@ -424,6 +588,7 @@ public partial class Triage : ComponentBase
         try
         {
             currentSession = await TriageService.RevisitSkippedItemsAsync(currentSession);
+            SyncPlanningSelectionFromCurrentItem();
             operationSeverity = Severity.Info;
             operationMessage = "Skipped items were appended to the queue for review.";
         }
@@ -437,6 +602,111 @@ public partial class Triage : ComponentBase
         finally
         {
             isApplyingSessionAction = false;
+        }
+    }
+
+    private async Task LoadPlanningOptionsAsync(TriageSessionDto session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        isLoadingPlanningOptions = true;
+
+        var milestoneLoadFailed = false;
+
+        try
+        {
+            availableMilestoneOptions = await TriageService.GetMilestoneOptionsAsync(session);
+        }
+        catch (HttpRequestException ex)
+        {
+            Logger.LogError(ex, "GitHub API request failed while loading milestone options for triage.");
+            availableMilestoneOptions = [];
+            milestoneLoadFailed = true;
+            operationSeverity = Severity.Error;
+            operationMessage = $"GitHub API request failed while loading milestone options. {ex.Message}";
+            Snackbar.Add("Failed to load milestone options for triage.", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load milestone options for triage.");
+            availableMilestoneOptions = [];
+            milestoneLoadFailed = true;
+            operationSeverity = Severity.Error;
+            operationMessage = "An unexpected error occurred while loading milestone options.";
+            Snackbar.Add("An unexpected error occurred while loading milestone options.", Severity.Error);
+        }
+
+        try
+        {
+            availableProjectBoardOptions = await TriageService.GetProjectBoardOptionsAsync(session);
+
+            if (!availableProjectBoardOptions.Any(option => option.Id.Equals(selectedProjectBoardId, StringComparison.Ordinal)))
+            {
+                selectedProjectBoardId = availableProjectBoardOptions.FirstOrDefault()?.Id ?? string.Empty;
+            }
+
+            if (ActiveProjectBoardStatusOptions.Count == 0)
+            {
+                selectedProjectBoardStatusOptionId = string.Empty;
+                return;
+            }
+
+            if (!ActiveProjectBoardStatusOptions.Any(option => option.Id.Equals(selectedProjectBoardStatusOptionId, StringComparison.Ordinal)))
+            {
+                selectedProjectBoardStatusOptionId = ActiveProjectBoardStatusOptions[0].Id;
+            }
+
+            if (milestoneLoadFailed)
+            {
+                return;
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            Logger.LogError(ex, "GitHub API request failed while loading project-board options for triage.");
+            availableProjectBoardOptions = [];
+            selectedProjectBoardId = string.Empty;
+            selectedProjectBoardStatusOptionId = string.Empty;
+
+            if (!milestoneLoadFailed)
+            {
+                operationSeverity = Severity.Warning;
+                operationMessage = $"Milestones loaded, but project-board options could not be loaded. {ex.Message}";
+                Snackbar.Add("Failed to load project-board options for triage.", Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load project-board options for triage.");
+            availableProjectBoardOptions = [];
+            selectedProjectBoardId = string.Empty;
+            selectedProjectBoardStatusOptionId = string.Empty;
+
+            if (!milestoneLoadFailed)
+            {
+                operationSeverity = Severity.Warning;
+                operationMessage = "Milestones loaded, but an unexpected error occurred while loading project-board options.";
+                Snackbar.Add("An unexpected error occurred while loading project-board options.", Severity.Warning);
+            }
+        }
+        finally
+        {
+            isLoadingPlanningOptions = false;
+        }
+    }
+
+    private void SyncPlanningSelectionFromCurrentItem()
+    {
+        selectedMilestoneNumber = CurrentItem?.MilestoneNumber;
+
+        if (!availableProjectBoardOptions.Any(option => option.Id.Equals(selectedProjectBoardId, StringComparison.Ordinal)))
+        {
+            selectedProjectBoardId = availableProjectBoardOptions.FirstOrDefault()?.Id ?? string.Empty;
+        }
+
+        if (!ActiveProjectBoardStatusOptions.Any(option => option.Id.Equals(selectedProjectBoardStatusOptionId, StringComparison.Ordinal)))
+        {
+            selectedProjectBoardStatusOptionId = ActiveProjectBoardStatusOptions.FirstOrDefault()?.Id ?? string.Empty;
         }
     }
 

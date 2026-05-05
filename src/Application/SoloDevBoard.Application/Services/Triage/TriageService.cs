@@ -218,6 +218,180 @@ public sealed class TriageService : ITriageService
     }
 
     /// <inheritdoc/>
+    public async Task<IReadOnlyList<TriageMilestoneOptionDto>> GetMilestoneOptionsAsync(TriageSessionDto session, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(session);
+
+        var milestones = await _gitHubService
+            .GetMilestonesAsync(session.OwnerLogin, session.RepositoryName, cancellationToken)
+            .ConfigureAwait(false);
+
+        return milestones
+            .Where(milestone => milestone.Number > 0)
+            .Select(milestone => new TriageMilestoneOptionDto(milestone.Number, milestone.Title))
+            .OrderBy(option => option.Title, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<TriageProjectBoardOptionDto>> GetProjectBoardOptionsAsync(TriageSessionDto session, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(session);
+
+        var projectBoards = await _gitHubService
+            .GetProjectBoardsForRepositoryAsync(session.OwnerLogin, session.RepositoryName, cancellationToken)
+            .ConfigureAwait(false);
+
+        return projectBoards
+            .Select(projectBoard => new TriageProjectBoardOptionDto(
+                projectBoard.Id,
+                projectBoard.Title,
+                projectBoard.OwnerLogin,
+                projectBoard.StatusFieldId,
+                projectBoard.StatusOptions
+                    .Select(status => new TriageProjectBoardStatusOptionDto(status.Id, status.Name))
+                    .OrderBy(option => option.Name, StringComparer.OrdinalIgnoreCase)
+                    .ToArray()))
+            .OrderBy(projectBoard => projectBoard.Title, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    /// <inheritdoc/>
+    public async Task<TriageSessionDto> AssignMilestoneToCurrentItemAsync(TriageSessionDto session, int? milestoneNumber, string? milestoneTitle, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(session);
+
+        if (milestoneNumber is <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(milestoneNumber), "Milestone number must be greater than zero when provided.");
+        }
+
+        var domainSession = ToDomain(session);
+        if (domainSession.CurrentIndex >= domainSession.Queue.Count)
+        {
+            return ToDto(domainSession);
+        }
+
+        var currentItem = domainSession.Queue[domainSession.CurrentIndex];
+        if (!TryParseRepositoryScope(currentItem.RepositoryFullName, out var owner, out var repo))
+        {
+            throw new ArgumentException(
+                $"Repository scope '{currentItem.RepositoryFullName}' must be in owner/repository format.",
+                nameof(session));
+        }
+
+        await _gitHubService
+            .AssignMilestoneToTriageItemAsync(owner, repo, currentItem.Number, milestoneNumber, cancellationToken)
+            .ConfigureAwait(false);
+
+        var normalisedMilestoneTitle = milestoneNumber is null
+            ? string.Empty
+            : milestoneTitle?.Trim() ?? string.Empty;
+
+        var updatedCurrentItem = currentItem with
+        {
+            Milestone = milestoneNumber is null
+                ? null
+                : new SoloDevBoard.Domain.Entities.Milestones.Milestone
+                {
+                    Number = milestoneNumber.Value,
+                    Title = normalisedMilestoneTitle,
+                },
+        };
+
+        var updatedQueue = domainSession.Queue
+            .Select((item, index) => index == domainSession.CurrentIndex ? updatedCurrentItem : item)
+            .ToArray();
+
+        var detail = milestoneNumber is null
+            ? "Cleared milestone assignment."
+            : $"Assigned milestone '{normalisedMilestoneTitle}'.";
+
+        var action = new TriageAction
+        {
+            ActionType = TriageActionType.MilestoneAssigned,
+            ItemType = currentItem.ItemType,
+            ItemNumber = currentItem.Number,
+            RepositoryFullName = currentItem.RepositoryFullName,
+            Detail = detail,
+            OccurredAt = DateTimeOffset.UtcNow,
+        };
+
+        var updatedActionHistory = domainSession.ActionHistory
+            .Concat([action])
+            .ToArray();
+
+        return UpdateSessionState(domainSession with
+        {
+            Queue = updatedQueue,
+            ActionHistory = updatedActionHistory,
+        });
+    }
+
+    /// <inheritdoc/>
+    public async Task<TriageSessionDto> AddCurrentItemToProjectBoardAsync(
+        TriageSessionDto session,
+        string projectId,
+        string projectTitle,
+        string statusFieldId,
+        string statusOptionId,
+        string statusOptionName,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(session);
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectTitle);
+        ArgumentException.ThrowIfNullOrWhiteSpace(statusFieldId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(statusOptionId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(statusOptionName);
+
+        var domainSession = ToDomain(session);
+        if (domainSession.CurrentIndex >= domainSession.Queue.Count)
+        {
+            return ToDto(domainSession);
+        }
+
+        var currentItem = domainSession.Queue[domainSession.CurrentIndex];
+        if (!TryParseRepositoryScope(currentItem.RepositoryFullName, out var owner, out var repo))
+        {
+            throw new ArgumentException(
+                $"Repository scope '{currentItem.RepositoryFullName}' must be in owner/repository format.",
+                nameof(session));
+        }
+
+        var projectItemId = await _gitHubService
+            .AddTriageItemToProjectBoardAsync(owner, repo, currentItem.Number, projectId, cancellationToken)
+            .ConfigureAwait(false);
+
+        await _gitHubService
+            .UpdateProjectBoardItemStatusAsync(projectId, projectItemId, statusFieldId, statusOptionId, cancellationToken)
+            .ConfigureAwait(false);
+
+        var action = new TriageAction
+        {
+            ActionType = TriageActionType.ProjectBoardAssigned,
+            ItemType = currentItem.ItemType,
+            ItemNumber = currentItem.Number,
+            RepositoryFullName = currentItem.RepositoryFullName,
+            Detail = $"Added to project board '{projectTitle.Trim()}' with status '{statusOptionName.Trim()}'.",
+            OccurredAt = DateTimeOffset.UtcNow,
+        };
+
+        var updatedActionHistory = domainSession.ActionHistory
+            .Concat([action])
+            .ToArray();
+
+        return UpdateSessionState(domainSession with
+        {
+            ActionHistory = updatedActionHistory,
+        });
+    }
+
+    /// <inheritdoc/>
     public TriageSessionSummaryDto BuildSessionSummary(TriageSessionDto session)
     {
         ArgumentNullException.ThrowIfNull(session);

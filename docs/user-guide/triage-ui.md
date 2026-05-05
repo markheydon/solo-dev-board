@@ -40,3 +40,27 @@ You can apply labels to issues directly from the Triage UI without leaving the t
 - Primary success and failure feedback appears inline in the triage view via the operation alert, with additional snackbar notifications used for selected error conditions.
 
 The two-action model keeps the triage rhythm straightforward: every item is either labelled and advanced, or advanced without changes.
+
+## Assigning Milestones from the Triage UI
+
+You can assign a milestone to an issue directly within the Triage UI, without leaving your triage session.
+
+- In the **Planning Actions** section, use the milestone dropdown to select the desired milestone for the current issue.
+- Click the **Assign milestone** button to apply your selection.
+- A feedback message will confirm whether the milestone was assigned successfully or if an error occurred.
+- You can continue triaging without interruption after assigning a milestone.
+
+Milestone assignment is available for all issues where you have permission to edit milestones. If the operation fails, an error message will be shown with guidance to retry or check your permissions.
+
+## Adding Issues to Project Boards from the Triage UI
+
+The Triage UI allows you to add issues to a GitHub project board and set their status column in context.
+
+- In the **Planning Actions** section, select a project board from the available list.
+- Choose the desired project status (column) for the issue.
+- Click the **Add to project board** button to place the issue in the selected board and status.
+- Success or failure feedback will appear in the user feedback region, confirming the result of the operation.
+
+If the issue is already on the selected board, you can update its status column directly. Any errors encountered during project board placement will be surfaced with actionable feedback.
+
+All planning actions use MudBlazor controls for a consistent and accessible experience, and the workflow aligns with the [triage wireframe](../../plan/wireframes/triage-ui-wireframe.md).
