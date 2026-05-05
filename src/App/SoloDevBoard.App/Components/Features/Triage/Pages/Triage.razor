@@ -199,6 +199,85 @@
                     <MudText Typo="Typo.caption" data-testid="triage-keyboard-shortcuts-legend">
                         Keyboard shortcuts (when the action buttons are focused): L applies selected label and advances, and N moves to the next item without changes.
                     </MudText>
+
+                    <MudDivider />
+
+                    <MudText Typo="Typo.subtitle2">Planning actions</MudText>
+                    <MudText Typo="Typo.body2" data-testid="triage-planning-help">
+                        Assign a milestone or place this item on a project board without leaving the current triage context.
+                    </MudText>
+
+                    <MudGrid Spacing="2" data-testid="triage-planning-actions-region">
+                        <MudItem xs="12" md="6">
+                            <MudStack Spacing="1" data-testid="triage-milestone-action-region">
+                                <MudSelect T="int?"
+                                           Value="selectedMilestoneNumber"
+                                           ValueChanged="OnSelectedMilestoneChangedAsync"
+                                           Label="Milestone"
+                                           Variant="Variant.Outlined"
+                                           Disabled="isApplyingSessionAction || isLoadingPlanningOptions"
+                                           data-testid="triage-milestone-select">
+                                    <MudSelectItem T="int?" Value="@((int?)null)">No milestone</MudSelectItem>
+
+                                    @if (availableMilestoneOptions.Count == 0)
+                                    {
+                                        <MudSelectItem T="int?" Value="@((int?)null)" Disabled="true">No milestones found in this repository</MudSelectItem>
+                                    }
+
+                                    @foreach (var milestoneOption in availableMilestoneOptions)
+                                    {
+                                        <MudSelectItem T="int?" Value="@((int?)milestoneOption.Number)">@milestoneOption.Title</MudSelectItem>
+                                    }
+                                </MudSelect>
+
+                                <MudButton Variant="Variant.Outlined"
+                                           Color="Color.Primary"
+                                           Disabled="!CanAssignMilestone"
+                                           OnClick="AssignSelectedMilestoneAsync"
+                                           data-testid="triage-assign-milestone-button">
+                                    Assign milestone
+                                </MudButton>
+                            </MudStack>
+                        </MudItem>
+
+                        <MudItem xs="12" md="6">
+                            <MudStack Spacing="1" data-testid="triage-project-board-action-region">
+                                <MudSelect T="string"
+                                           Value="selectedProjectBoardId"
+                                           ValueChanged="OnSelectedProjectBoardChangedAsync"
+                                           Label="Project board"
+                                           Variant="Variant.Outlined"
+                                           Disabled="isApplyingSessionAction || isLoadingPlanningOptions || availableProjectBoardOptions.Count == 0"
+                                           data-testid="triage-project-board-select">
+                                    @foreach (var projectBoardOption in availableProjectBoardOptions)
+                                    {
+                                        <MudSelectItem T="string" Value="@projectBoardOption.Id">@projectBoardOption.Title</MudSelectItem>
+                                    }
+                                </MudSelect>
+
+                                <MudSelect T="string"
+                                           Value="selectedProjectBoardStatusOptionId"
+                                           ValueChanged="OnSelectedProjectBoardStatusOptionChangedAsync"
+                                           Label="Project status"
+                                           Variant="Variant.Outlined"
+                                           Disabled="isApplyingSessionAction || isLoadingPlanningOptions || ActiveProjectBoardStatusOptions.Count == 0"
+                                           data-testid="triage-project-status-select">
+                                    @foreach (var statusOption in ActiveProjectBoardStatusOptions)
+                                    {
+                                        <MudSelectItem T="string" Value="@statusOption.Id">@statusOption.Name</MudSelectItem>
+                                    }
+                                </MudSelect>
+
+                                <MudButton Variant="Variant.Outlined"
+                                           Color="Color.Secondary"
+                                           Disabled="!CanAddToProjectBoard"
+                                           OnClick="AddCurrentItemToProjectBoardAsync"
+                                           data-testid="triage-add-to-project-board-button">
+                                    Add to project board
+                                </MudButton>
+                            </MudStack>
+                        </MudItem>
+                    </MudGrid>
                 </MudStack>
             </MudPaper>
         }

@@ -348,6 +348,90 @@ public sealed class GitHubService : IGitHubService
     }
 
     /// <inheritdoc/>
+    public async Task<IReadOnlyList<TriageProjectBoard>> GetProjectBoardsForRepositoryAsync(string owner, string repo, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+
+        const string query = "query TriageProjectBoards($owner: String!, $repo: String!) { repository(owner: $owner, name: $repo) { projectsV2(first: 50) { nodes { id title owner { ... on User { login } ... on Organization { login } } fields(first: 50) { nodes { ... on ProjectV2SingleSelectField { id name options { id name } } } } } } } }";
+
+        var client = CreateAuthenticatedClient();
+        var requestBody = new GraphQlRequestDto(
+            query,
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["owner"] = owner,
+                ["repo"] = repo,
+            });
+
+        using var response = await client.PostAsJsonAsync("/graphql", requestBody, JsonOptions, cancellationToken).ConfigureAwait(false);
+        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
+
+        var payload = await response.Content.ReadFromJsonAsync<GetProjectBoardsResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
+            ?? throw CreateInvalidResponseException("GraphQL response body was empty.", "/graphql");
+
+        if (payload.Errors.Count > 0)
+        {
+            var combinedErrors = string.Join("; ", payload.Errors.Select(static error => error.Message));
+            throw new HttpRequestException($"GitHub GraphQL request failed. Errors: {combinedErrors}");
+        }
+
+        var nodes = payload.Data?.Repository?.ProjectsV2?.Nodes ?? [];
+
+        return nodes
+            .Select(ToProjectBoardDomain)
+            .Where(static projectBoard => projectBoard is not null)
+            .Select(static projectBoard => projectBoard!)
+            .OrderBy(projectBoard => projectBoard.Title, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    /// <inheritdoc/>
+    public async Task UpdateProjectBoardItemStatusAsync(
+        string projectId,
+        string projectItemId,
+        string statusFieldId,
+        string statusOptionId,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectItemId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(statusFieldId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(statusOptionId);
+
+        const string mutation = "mutation SetProjectV2Status($projectId: ID!, $itemId: ID!, $fieldId: ID!, $statusOptionId: String!) { updateProjectV2ItemFieldValue(input: { projectId: $projectId, itemId: $itemId, fieldId: $fieldId, value: { singleSelectOptionId: $statusOptionId } }) { projectV2Item { id } } }";
+
+        var client = CreateAuthenticatedClient();
+        var requestBody = new GraphQlRequestDto(
+            mutation,
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["projectId"] = projectId,
+                ["itemId"] = projectItemId,
+                ["fieldId"] = statusFieldId,
+                ["statusOptionId"] = statusOptionId,
+            });
+
+        using var response = await client.PostAsJsonAsync("/graphql", requestBody, JsonOptions, cancellationToken).ConfigureAwait(false);
+        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
+
+        var payload = await response.Content.ReadFromJsonAsync<UpdateProjectBoardItemStatusResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
+            ?? throw CreateInvalidResponseException("GraphQL response body was empty.", "/graphql");
+
+        if (payload.Errors.Count > 0)
+        {
+            var combinedErrors = string.Join("; ", payload.Errors.Select(static error => error.Message));
+            throw new HttpRequestException($"GitHub GraphQL request failed. Errors: {combinedErrors}");
+        }
+
+        var updatedItemId = payload.Data?.UpdateProjectV2ItemFieldValue?.ProjectV2Item?.Id;
+        if (string.IsNullOrWhiteSpace(updatedItemId))
+        {
+            throw CreateInvalidResponseException("GraphQL response did not contain the updated project item identifier.", "/graphql");
+        }
+    }
+
+    /// <inheritdoc/>
     public async Task CloseTriageItemAsDuplicateAsync(string owner, string repo, GitHubTriageItemType itemType, int itemNumber, string duplicateReference, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
@@ -428,6 +512,47 @@ public sealed class GitHubService : IGitHubService
             $"GitHub API request failed with status code {(int)response.StatusCode} ({response.StatusCode}). Response body: {responseBody}",
             null,
             response.StatusCode);
+    }
+
+    private static TriageProjectBoard? ToProjectBoardDomain(ProjectBoardNodeDto node)
+    {
+        if (string.IsNullOrWhiteSpace(node.Id) || string.IsNullOrWhiteSpace(node.Title))
+        {
+            return null;
+        }
+
+        var statusField = node.Fields?.Nodes
+            .FirstOrDefault(field =>
+                !string.IsNullOrWhiteSpace(field.Id)
+                && field.Name.Equals("Status", StringComparison.OrdinalIgnoreCase));
+
+        if (statusField is null || string.IsNullOrWhiteSpace(statusField.Id))
+        {
+            return null;
+        }
+
+        var statusOptions = statusField.Options
+            .Where(option => !string.IsNullOrWhiteSpace(option.Id) && !string.IsNullOrWhiteSpace(option.Name))
+            .Select(option => new TriageProjectBoardStatusOption
+            {
+                Id = option.Id,
+                Name = option.Name,
+            })
+            .ToArray();
+
+        if (statusOptions.Length == 0)
+        {
+            return null;
+        }
+
+        return new TriageProjectBoard
+        {
+            Id = node.Id,
+            Title = node.Title,
+            OwnerLogin = node.Owner?.Login ?? string.Empty,
+            StatusFieldId = statusField.Id,
+            StatusOptions = statusOptions,
+        };
     }
 
     /// <summary>Creates an <see cref="HttpRequestException"/> describing an unexpected or empty API response body.</summary>
@@ -963,6 +1088,121 @@ public sealed class GitHubService : IGitHubService
 
     /// <summary>DTO for GraphQL mutation item payload.</summary>
     private sealed record AddProjectV2ItemPayloadItemDto
+    {
+        [JsonPropertyName("id")]
+        public string Id { get; init; } = string.Empty;
+    }
+
+    /// <summary>DTO wrapper for GraphQL get-project-board responses.</summary>
+    private sealed record GetProjectBoardsResponseDto
+    {
+        [JsonPropertyName("data")]
+        public GetProjectBoardsDataDto? Data { get; init; }
+
+        [JsonPropertyName("errors")]
+        public IReadOnlyList<GraphQlErrorDto> Errors { get; init; } = [];
+    }
+
+    /// <summary>DTO for GraphQL project-board data payload.</summary>
+    private sealed record GetProjectBoardsDataDto
+    {
+        [JsonPropertyName("repository")]
+        public RepositoryProjectBoardsDto? Repository { get; init; }
+    }
+
+    /// <summary>DTO for repository project-board data.</summary>
+    private sealed record RepositoryProjectBoardsDto
+    {
+        [JsonPropertyName("projectsV2")]
+        public ProjectBoardConnectionDto? ProjectsV2 { get; init; }
+    }
+
+    /// <summary>DTO for project-board GraphQL connections.</summary>
+    private sealed record ProjectBoardConnectionDto
+    {
+        [JsonPropertyName("nodes")]
+        public IReadOnlyList<ProjectBoardNodeDto> Nodes { get; init; } = [];
+    }
+
+    /// <summary>DTO for project-board nodes.</summary>
+    private sealed record ProjectBoardNodeDto
+    {
+        [JsonPropertyName("id")]
+        public string Id { get; init; } = string.Empty;
+
+        [JsonPropertyName("title")]
+        public string Title { get; init; } = string.Empty;
+
+        [JsonPropertyName("owner")]
+        public GraphQlOwnerDto? Owner { get; init; }
+
+        [JsonPropertyName("fields")]
+        public ProjectBoardFieldConnectionDto? Fields { get; init; }
+    }
+
+    /// <summary>DTO for GraphQL owner payloads.</summary>
+    private sealed record GraphQlOwnerDto
+    {
+        [JsonPropertyName("login")]
+        public string Login { get; init; } = string.Empty;
+    }
+
+    /// <summary>DTO for project-board field connections.</summary>
+    private sealed record ProjectBoardFieldConnectionDto
+    {
+        [JsonPropertyName("nodes")]
+        public IReadOnlyList<ProjectBoardSingleSelectFieldDto> Nodes { get; init; } = [];
+    }
+
+    /// <summary>DTO for project-board single-select status fields.</summary>
+    private sealed record ProjectBoardSingleSelectFieldDto
+    {
+        [JsonPropertyName("id")]
+        public string Id { get; init; } = string.Empty;
+
+        [JsonPropertyName("name")]
+        public string Name { get; init; } = string.Empty;
+
+        [JsonPropertyName("options")]
+        public IReadOnlyList<ProjectBoardSingleSelectOptionDto> Options { get; init; } = [];
+    }
+
+    /// <summary>DTO for project-board single-select status options.</summary>
+    private sealed record ProjectBoardSingleSelectOptionDto
+    {
+        [JsonPropertyName("id")]
+        public string Id { get; init; } = string.Empty;
+
+        [JsonPropertyName("name")]
+        public string Name { get; init; } = string.Empty;
+    }
+
+    /// <summary>DTO wrapper for GraphQL update-project-item-status responses.</summary>
+    private sealed record UpdateProjectBoardItemStatusResponseDto
+    {
+        [JsonPropertyName("data")]
+        public UpdateProjectBoardItemStatusDataDto? Data { get; init; }
+
+        [JsonPropertyName("errors")]
+        public IReadOnlyList<GraphQlErrorDto> Errors { get; init; } = [];
+    }
+
+    /// <summary>DTO for update-project-item-status GraphQL data payload.</summary>
+    private sealed record UpdateProjectBoardItemStatusDataDto
+    {
+        [JsonPropertyName("updateProjectV2ItemFieldValue")]
+        public UpdateProjectBoardItemStatusPayloadDto? UpdateProjectV2ItemFieldValue { get; init; }
+    }
+
+    /// <summary>DTO for update-project-item-status GraphQL payload.</summary>
+    private sealed record UpdateProjectBoardItemStatusPayloadDto
+    {
+        [JsonPropertyName("projectV2Item")]
+        public UpdateProjectBoardItemStatusItemDto? ProjectV2Item { get; init; }
+    }
+
+    /// <summary>DTO for update-project-item-status GraphQL item payload.</summary>
+    private sealed record UpdateProjectBoardItemStatusItemDto
     {
         [JsonPropertyName("id")]
         public string Id { get; init; } = string.Empty;

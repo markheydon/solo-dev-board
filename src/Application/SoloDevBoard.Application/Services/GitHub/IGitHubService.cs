@@ -118,6 +118,27 @@ public interface IGitHubService
     /// <returns>The created project-item node identifier.</returns>
     Task<string> AddTriageItemToProjectBoardAsync(string owner, string repo, int itemNumber, string projectId, CancellationToken cancellationToken = default);
 
+    /// <summary>Retrieves GitHub Project v2 boards available for a repository with status options.</summary>
+    /// <param name="owner">The GitHub account owner login.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A read-only list of project boards that expose a status field.</returns>
+    Task<IReadOnlyList<TriageProjectBoard>> GetProjectBoardsForRepositoryAsync(string owner, string repo, CancellationToken cancellationToken = default);
+
+    /// <summary>Updates the status field for a project board item.</summary>
+    /// <param name="projectId">The project-board node identifier.</param>
+    /// <param name="projectItemId">The project-item node identifier.</param>
+    /// <param name="statusFieldId">The project status-field node identifier.</param>
+    /// <param name="statusOptionId">The selected status-option node identifier.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous status update operation.</returns>
+    Task UpdateProjectBoardItemStatusAsync(
+        string projectId,
+        string projectItemId,
+        string statusFieldId,
+        string statusOptionId,
+        CancellationToken cancellationToken = default);
+
     /// <summary>Closes a triage item as duplicate and records a duplicate reference comment.</summary>
     /// <param name="owner">The GitHub account owner login.</param>
     /// <param name="repo">The repository name.</param>
