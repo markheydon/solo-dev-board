@@ -29,17 +29,20 @@ Key features:
 5. Use the progress indicator and session context to track your position and the number of remaining items.
 
 
-## Quick Label Actions and Keyboard Shortcuts
 
-You can apply labels to issues directly from the Triage UI without leaving the triage view.
+## Quick Label and Duplicate Actions with Keyboard Shortcuts
+
+You can apply labels or close issues as duplicates directly from the Triage UI without leaving the triage view.
 
 - Use the **Quick Label** search field to find and select a repository label. The field accepts free-text search so you can type any part of a label name.
 - Click **Apply + next** (or press **L**) to apply the selected label and immediately advance to the next item.
 - Click **Next** (or press **N**) to move to the next item without applying a label.
-- Keyboard shortcuts work when the action button row is focused. Typing in the Quick Label field does not trigger shortcuts.
+- To close an issue as a duplicate, use the **Duplicate reference** input to enter the reference number of the original issue, then click **Close as duplicate** (or press **D**) to close the current issue and advance.
+- The **Duplicate reference** input is shown inline when the duplicate action is selected, allowing you to specify the related issue number before confirming the closure.
+- Keyboard shortcuts work when the action button row is focused. Typing in the Quick Label or Duplicate reference fields does not trigger shortcuts.
 - Primary success and failure feedback appears inline in the triage view via the operation alert, with additional snackbar notifications used for selected error conditions.
 
-The two-action model keeps the triage rhythm straightforward: every item is either labelled and advanced, or advanced without changes.
+The action model now supports three flows: label and advance, close as duplicate and advance, or advance without changes. This keeps the triage rhythm straightforward and efficient.
 
 ## Assigning Milestones from the Triage UI
 

@@ -392,6 +392,57 @@ public sealed class TriageService : ITriageService
     }
 
     /// <inheritdoc/>
+    public async Task<TriageSessionDto> CloseCurrentItemAsDuplicateAsync(
+        TriageSessionDto session,
+        string duplicateReference,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(session);
+        ArgumentException.ThrowIfNullOrWhiteSpace(duplicateReference);
+
+        var domainSession = ToDomain(session);
+        if (domainSession.CurrentIndex >= domainSession.Queue.Count)
+        {
+            return ToDto(domainSession);
+        }
+
+        var currentItem = domainSession.Queue[domainSession.CurrentIndex];
+        if (!TryParseRepositoryScope(currentItem.RepositoryFullName, out var owner, out var repo))
+        {
+            throw new ArgumentException(
+                $"Repository scope '{currentItem.RepositoryFullName}' must be in owner/repository format.",
+                nameof(session));
+        }
+
+        var trimmedDuplicateReference = duplicateReference.Trim();
+        var gitHubItemType = ToGitHubTriageItemType(currentItem.ItemType);
+
+        await _gitHubService
+            .CloseTriageItemAsDuplicateAsync(owner, repo, gitHubItemType, currentItem.Number, trimmedDuplicateReference, cancellationToken)
+            .ConfigureAwait(false);
+
+        var action = new TriageAction
+        {
+            ActionType = TriageActionType.ClosedAsDuplicate,
+            ItemType = currentItem.ItemType,
+            ItemNumber = currentItem.Number,
+            RepositoryFullName = currentItem.RepositoryFullName,
+            Detail = $"Closed as duplicate of '{trimmedDuplicateReference}'.",
+            OccurredAt = DateTimeOffset.UtcNow,
+        };
+
+        var updatedActionHistory = domainSession.ActionHistory
+            .Concat([action])
+            .ToArray();
+
+        return UpdateSessionState(domainSession with
+        {
+            ActionHistory = updatedActionHistory,
+        });
+    }
+
+    /// <inheritdoc/>
     public TriageSessionSummaryDto BuildSessionSummary(TriageSessionDto session)
     {
         ArgumentNullException.ThrowIfNull(session);
@@ -418,6 +469,14 @@ public sealed class TriageService : ITriageService
         repo = segments[1];
         return true;
     }
+
+    private static GitHubTriageItemType ToGitHubTriageItemType(TriageItemType itemType)
+        => itemType switch
+        {
+            TriageItemType.Issue => GitHubTriageItemType.Issue,
+            TriageItemType.PullRequest => GitHubTriageItemType.PullRequest,
+            _ => throw new ArgumentOutOfRangeException(nameof(itemType), itemType, "Unsupported triage item type."),
+        };
 
     private static TriageSessionDto UpdateSessionState(TriageSession session)
     {
