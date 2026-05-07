@@ -484,6 +484,7 @@ public sealed class TriageServiceTests
             new TriageActionDto(TriageActionTypeDto.MilestoneAssigned, TriageItemTypeDto.Issue, 3, "owner/repo", string.Empty, DateTimeOffset.UtcNow),
             new TriageActionDto(TriageActionTypeDto.ProjectBoardAssigned, TriageItemTypeDto.Issue, 4, "owner/repo", string.Empty, DateTimeOffset.UtcNow),
             new TriageActionDto(TriageActionTypeDto.ClosedAsDuplicate, TriageItemTypeDto.Issue, 5, "owner/repo", string.Empty, DateTimeOffset.UtcNow),
+            new TriageActionDto(TriageActionTypeDto.Skipped, TriageItemTypeDto.Issue, 99, "owner/repo", "Skipped for later review. Reason: Needs wider context", DateTimeOffset.UtcNow),
         };
 
         var session = new TriageSessionDto(
@@ -530,8 +531,10 @@ public sealed class TriageServiceTests
         Assert.Single(result.MilestoneActionDetails);
         Assert.Single(result.ProjectActionDetails);
         Assert.Single(result.DuplicateActionDetails);
+        Assert.Single(result.SkippedActionDetails);
         Assert.Single(result.SkippedItemDetails);
         Assert.Contains("Issue #1", result.LabelActionDetails[0], StringComparison.Ordinal);
+        Assert.Contains("Reason: Needs wider context", result.SkippedActionDetails[0], StringComparison.Ordinal);
         Assert.Contains("Skipped item", result.SkippedItemDetails[0], StringComparison.Ordinal);
     }
 

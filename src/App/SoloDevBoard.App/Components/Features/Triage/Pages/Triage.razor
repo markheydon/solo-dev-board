@@ -464,6 +464,26 @@
                             </MudPaper>
                         </MudItem>
 
+                        <MudItem xs="12" md="6">
+                            <MudPaper Class="pa-3" Outlined="true" data-testid="triage-summary-skip-action-details">
+                                <MudText Typo="Typo.subtitle2">Skip actions</MudText>
+
+                                @if (currentSession.Summary.SkippedActionDetails.Count == 0)
+                                {
+                                    <MudText Typo="Typo.body2">No skip actions were recorded.</MudText>
+                                }
+                                else
+                                {
+                                    <MudList T="string" Dense="true">
+                                        @foreach (var detail in currentSession.Summary.SkippedActionDetails)
+                                        {
+                                            <MudListItem T="string" Text="@detail" />
+                                        }
+                                    </MudList>
+                                }
+                            </MudPaper>
+                        </MudItem>
+
                         <MudItem xs="12">
                             <MudPaper Class="pa-3" Outlined="true" data-testid="triage-summary-skipped-details">
                                 <MudText Typo="Typo.subtitle2">Skipped items</MudText>

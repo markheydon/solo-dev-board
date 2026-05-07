@@ -934,6 +934,7 @@ public sealed class TriageTests
                 MilestoneActionDetails = ["Issue #901 (owner/repo): Assigned milestone 'v0.3.0'."],
                 ProjectActionDetails = ["Issue #901 (owner/repo): Added to project board 'Roadmap' with status 'In Progress'."],
                 DuplicateActionDetails = ["Issue #902 (owner/repo): Closed as duplicate of '#321'."],
+                SkippedActionDetails = ["Issue #902 (owner/repo): Skipped for later review. Reason: Waiting for product clarification"],
                 SkippedItemDetails = ["Issue #902 (owner/repo): Issue 902"],
             },
             DateTimeOffset.UtcNow);
@@ -962,6 +963,7 @@ public sealed class TriageTests
             Assert.Contains("Issue #901 (owner/repo): Assigned milestone 'v0.3.0'.", cut.Markup, StringComparison.Ordinal);
             Assert.Contains("Issue #901 (owner/repo): Added to project board 'Roadmap' with status 'In Progress'.", cut.Markup, StringComparison.Ordinal);
             Assert.Contains("Issue #902 (owner/repo): Closed as duplicate of '#321'.", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("Issue #902 (owner/repo): Skipped for later review. Reason: Waiting for product clarification", cut.Markup, StringComparison.Ordinal);
             Assert.Contains("Issue #902 (owner/repo): Issue 902", cut.Markup, StringComparison.Ordinal);
             Assert.NotEmpty(cut.FindAll("[data-testid='triage-revisit-skipped-button']"));
         });

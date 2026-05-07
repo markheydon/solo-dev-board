@@ -76,14 +76,15 @@ When you complete a triage session, a grouped summary is shown with details for 
 - Milestones assigned.
 - Project board actions performed.
 - Items closed as duplicates (with references).
-- Items skipped (with optional reasons).
+- Skip actions (including optional reasons).
+- Items currently skipped for revisit.
 
-You can now skip the current item at any point during triage by clicking **Skip** or pressing **S** on your keyboard. When skipping, you may optionally provide a reason for skipping the item.
+You can now skip the current item at any point during triage by clicking **Skip** or pressing **S** on your keyboard when the action button row is focused. When skipping, you may optionally provide a reason for skipping the item.
 
-After all items are processed, the session-complete summary allows you to revisit any skipped items. Skipped items are listed in a dedicated grouped section, and skip reasons (if provided) appear in the recorded action details.
+After all items are processed, the session-complete summary allows you to revisit any skipped items. Skipped items are listed in a dedicated grouped section, and skip reasons (if provided) appear in the **Skip actions** detail section.
 
 The triage UI layout uses MudBlazor components and a responsive grid stack, ensuring readability and usability on both desktop and mobile devices.
 
 ### Keyboard Shortcuts
 
-- Press **S** to skip the current item.
+- Press **S** to skip the current item when the action button row is focused.

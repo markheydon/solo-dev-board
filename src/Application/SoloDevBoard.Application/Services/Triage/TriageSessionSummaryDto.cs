@@ -31,6 +31,9 @@ public sealed record TriageSessionSummaryDto(
     /// <summary>Gets grouped detail lines for duplicate closure actions.</summary>
     public IReadOnlyList<string> DuplicateActionDetails { get; init; } = [];
 
+    /// <summary>Gets grouped detail lines for skip actions, including optional reasons.</summary>
+    public IReadOnlyList<string> SkippedActionDetails { get; init; } = [];
+
     /// <summary>Gets grouped detail lines for items currently skipped for revisit.</summary>
     public IReadOnlyList<string> SkippedItemDetails { get; init; } = [];
 }

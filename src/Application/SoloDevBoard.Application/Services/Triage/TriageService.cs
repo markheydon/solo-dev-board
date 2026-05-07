@@ -529,6 +529,7 @@ public sealed class TriageService : ITriageService
             MilestoneActionDetails = BuildActionDetails(actionHistory, TriageActionType.MilestoneAssigned),
             ProjectActionDetails = BuildActionDetails(actionHistory, TriageActionType.ProjectBoardAssigned),
             DuplicateActionDetails = BuildActionDetails(actionHistory, TriageActionType.ClosedAsDuplicate),
+            SkippedActionDetails = BuildActionDetails(actionHistory, TriageActionType.Skipped),
             SkippedItemDetails = skippedItems.Select(FormatSkippedItemDetail).ToArray(),
         };
     }
@@ -720,6 +721,7 @@ public sealed class TriageService : ITriageService
             MilestoneActionDetails = summary.MilestoneActionDetails,
             ProjectActionDetails = summary.ProjectActionDetails,
             DuplicateActionDetails = summary.DuplicateActionDetails,
+            SkippedActionDetails = summary.SkippedActionDetails,
             SkippedItemDetails = summary.SkippedItemDetails,
         };
 
@@ -750,6 +752,7 @@ public sealed class TriageService : ITriageService
             MilestoneActionDetails = summary.MilestoneActionDetails,
             ProjectActionDetails = summary.ProjectActionDetails,
             DuplicateActionDetails = summary.DuplicateActionDetails,
+            SkippedActionDetails = summary.SkippedActionDetails,
             SkippedItemDetails = summary.SkippedItemDetails,
         };
     }
