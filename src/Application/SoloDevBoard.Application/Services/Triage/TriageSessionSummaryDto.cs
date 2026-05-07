@@ -17,4 +17,20 @@ public sealed record TriageSessionSummaryDto(
     int LabelsAppliedCount,
     int MilestonesAssignedCount,
     int ProjectAssignmentsCount,
-    int DuplicateClosuresCount);
+    int DuplicateClosuresCount)
+{
+    /// <summary>Gets grouped detail lines for label actions.</summary>
+    public IReadOnlyList<string> LabelActionDetails { get; init; } = [];
+
+    /// <summary>Gets grouped detail lines for milestone assignment actions.</summary>
+    public IReadOnlyList<string> MilestoneActionDetails { get; init; } = [];
+
+    /// <summary>Gets grouped detail lines for project-board actions.</summary>
+    public IReadOnlyList<string> ProjectActionDetails { get; init; } = [];
+
+    /// <summary>Gets grouped detail lines for duplicate closure actions.</summary>
+    public IReadOnlyList<string> DuplicateActionDetails { get; init; } = [];
+
+    /// <summary>Gets grouped detail lines for items currently skipped for revisit.</summary>
+    public IReadOnlyList<string> SkippedItemDetails { get; init; } = [];
+}

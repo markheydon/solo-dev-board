@@ -48,7 +48,7 @@ public sealed class TriageService : ITriageService
             SkippedItems = [],
             ActionHistory = [],
             Progress = BuildProgress(orderedQueue.Length, 0, 0),
-            Summary = BuildSummary(orderedQueue.Length, 0, 0, []),
+            Summary = BuildSummary(orderedQueue.Length, 0, [], []),
             StartedAt = DateTimeOffset.UtcNow,
         };
 
@@ -481,7 +481,7 @@ public sealed class TriageService : ITriageService
     private static TriageSessionDto UpdateSessionState(TriageSession session)
     {
         var progress = BuildProgress(session.Queue.Count, session.CurrentIndex, session.SkippedItems.Count);
-        var summary = BuildSummary(session.Queue.Count, session.CurrentIndex, session.SkippedItems.Count, session.ActionHistory);
+        var summary = BuildSummary(session.Queue.Count, session.CurrentIndex, session.SkippedItems, session.ActionHistory);
 
         var updated = session with
         {
@@ -506,7 +506,11 @@ public sealed class TriageService : ITriageService
         };
     }
 
-    private static TriageSessionSummary BuildSummary(int totalItems, int currentIndex, int skippedItems, IReadOnlyList<TriageAction> actionHistory)
+    private static TriageSessionSummary BuildSummary(
+        int totalItems,
+        int currentIndex,
+        IReadOnlyList<TriageItem> skippedItems,
+        IReadOnlyList<TriageAction> actionHistory)
     {
         var processed = Math.Min(Math.Max(currentIndex, 0), totalItems);
         var remaining = Math.Max(totalItems - processed, 0);
@@ -516,12 +520,43 @@ public sealed class TriageService : ITriageService
             TotalItems = totalItems,
             ProcessedItems = processed,
             RemainingItems = remaining,
-            SkippedItems = skippedItems,
+            SkippedItems = skippedItems.Count,
             LabelsAppliedCount = actionHistory.Count(action => action.ActionType == TriageActionType.LabelApplied),
             MilestonesAssignedCount = actionHistory.Count(action => action.ActionType == TriageActionType.MilestoneAssigned),
             ProjectAssignmentsCount = actionHistory.Count(action => action.ActionType == TriageActionType.ProjectBoardAssigned),
             DuplicateClosuresCount = actionHistory.Count(action => action.ActionType == TriageActionType.ClosedAsDuplicate),
+            LabelActionDetails = BuildActionDetails(actionHistory, TriageActionType.LabelApplied),
+            MilestoneActionDetails = BuildActionDetails(actionHistory, TriageActionType.MilestoneAssigned),
+            ProjectActionDetails = BuildActionDetails(actionHistory, TriageActionType.ProjectBoardAssigned),
+            DuplicateActionDetails = BuildActionDetails(actionHistory, TriageActionType.ClosedAsDuplicate),
+            SkippedItemDetails = skippedItems.Select(FormatSkippedItemDetail).ToArray(),
         };
+    }
+
+    private static IReadOnlyList<string> BuildActionDetails(IReadOnlyList<TriageAction> actionHistory, TriageActionType actionType)
+    {
+        return actionHistory
+            .Where(action => action.ActionType == actionType)
+            .Select(FormatActionDetail)
+            .ToArray();
+    }
+
+    private static string FormatActionDetail(TriageAction action)
+    {
+        var itemTypeText = action.ItemType == TriageItemType.PullRequest
+            ? "Pull request"
+            : "Issue";
+
+        return $"{itemTypeText} #{action.ItemNumber} ({action.RepositoryFullName}): {action.Detail}";
+    }
+
+    private static string FormatSkippedItemDetail(TriageItem item)
+    {
+        var itemTypeText = item.ItemType == TriageItemType.PullRequest
+            ? "Pull request"
+            : "Issue";
+
+        return $"{itemTypeText} #{item.Number} ({item.RepositoryFullName}): {item.Title}";
     }
 
     private static TriageItem ToDomainIssueItem(string owner, string repo, Issue issue)
@@ -679,7 +714,14 @@ public sealed class TriageService : ITriageService
             summary.LabelsAppliedCount,
             summary.MilestonesAssignedCount,
             summary.ProjectAssignmentsCount,
-            summary.DuplicateClosuresCount);
+            summary.DuplicateClosuresCount)
+        {
+            LabelActionDetails = summary.LabelActionDetails,
+            MilestoneActionDetails = summary.MilestoneActionDetails,
+            ProjectActionDetails = summary.ProjectActionDetails,
+            DuplicateActionDetails = summary.DuplicateActionDetails,
+            SkippedItemDetails = summary.SkippedItemDetails,
+        };
 
     private static TriageSessionProgress ToDomain(TriageSessionProgressDto progress)
     {
@@ -704,6 +746,11 @@ public sealed class TriageService : ITriageService
             MilestonesAssignedCount = summary.MilestonesAssignedCount,
             ProjectAssignmentsCount = summary.ProjectAssignmentsCount,
             DuplicateClosuresCount = summary.DuplicateClosuresCount,
+            LabelActionDetails = summary.LabelActionDetails,
+            MilestoneActionDetails = summary.MilestoneActionDetails,
+            ProjectActionDetails = summary.ProjectActionDetails,
+            DuplicateActionDetails = summary.DuplicateActionDetails,
+            SkippedItemDetails = summary.SkippedItemDetails,
         };
     }
 

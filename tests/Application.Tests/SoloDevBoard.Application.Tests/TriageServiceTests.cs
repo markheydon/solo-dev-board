@@ -493,9 +493,25 @@ public sealed class TriageServiceTests
             false,
             CreateQueue(3),
             2,
-            [],
+            [
+                new TriageItemDto(
+                    TriageItemTypeDto.Issue,
+                    99,
+                    99,
+                    "owner/repo",
+                    "Skipped item",
+                    string.Empty,
+                    string.Empty,
+                    "open",
+                    "mark",
+                    [],
+                    null,
+                    string.Empty,
+                    DateTimeOffset.UtcNow,
+                    DateTimeOffset.UtcNow),
+            ],
             actions,
-            new TriageSessionProgressDto(3, 2, 1, 0),
+            new TriageSessionProgressDto(3, 2, 1, 1),
             new TriageSessionSummaryDto(3, 2, 1, 0, 0, 0, 0, 0),
             DateTimeOffset.UtcNow);
 
@@ -510,6 +526,13 @@ public sealed class TriageServiceTests
         Assert.Equal(1, result.MilestonesAssignedCount);
         Assert.Equal(1, result.ProjectAssignmentsCount);
         Assert.Equal(1, result.DuplicateClosuresCount);
+        Assert.Equal(2, result.LabelActionDetails.Count);
+        Assert.Single(result.MilestoneActionDetails);
+        Assert.Single(result.ProjectActionDetails);
+        Assert.Single(result.DuplicateActionDetails);
+        Assert.Single(result.SkippedItemDetails);
+        Assert.Contains("Issue #1", result.LabelActionDetails[0], StringComparison.Ordinal);
+        Assert.Contains("Skipped item", result.SkippedItemDetails[0], StringComparison.Ordinal);
     }
 
     private static TriageSessionDto CreateSession(int queueCount, int currentIndex)
