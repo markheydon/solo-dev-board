@@ -834,6 +834,212 @@ public sealed class TriageTests
             Times.Once);
     }
 
+    [Fact]
+    public async Task Triage_SkipItemClicked_RecordsSkipAndMovesToNextItem()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreateRepository("owner", "repo")]);
+
+        var startedSession = CreateSession(
+            "owner",
+            "repo",
+            [
+                CreateItem(801, "Issue 801", "owner/repo"),
+                CreateItem(802, "Issue 802", "owner/repo"),
+            ],
+            currentIndex: 0,
+            skippedItems: []);
+
+        var skippedSession = new TriageSessionDto(
+            startedSession.SessionId,
+            "owner",
+            "repo",
+            false,
+            [CreateItem(802, "Issue 802", "owner/repo")],
+            0,
+            [CreateItem(801, "Issue 801", "owner/repo")],
+            [
+                new TriageActionDto(TriageActionTypeDto.Skipped, TriageItemTypeDto.Issue, 801, "owner/repo", "Skipped for later review. Reason: Requires broader context", DateTimeOffset.UtcNow),
+            ],
+            new TriageSessionProgressDto(1, 0, 1, 1),
+            new TriageSessionSummaryDto(1, 0, 1, 1, 0, 0, 0, 0)
+            {
+                SkippedItemDetails = ["Issue #801 (owner/repo): Issue 801"],
+            },
+            DateTimeOffset.UtcNow);
+
+        _triageServiceMock
+            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(startedSession);
+
+        _triageServiceMock
+            .Setup(service => service.SkipCurrentItemAsync(It.IsAny<TriageSessionDto>(), "Requires broader context", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(skippedSession);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Triage>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-repository-autocomplete']"));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo" }));
+
+        cut.Find("[data-testid='triage-start-session-button']").Click();
+        cut.WaitForAssertion(() => Assert.Contains("Issue 801", cut.Markup));
+
+        var skipReasonInput = cut
+            .FindComponents<MudTextField<string>>()
+            .Single(component => string.Equals(component.Instance.Label, "Skip reason (optional)", StringComparison.Ordinal));
+
+        await cut.InvokeAsync(() => skipReasonInput.Instance.ValueChanged.InvokeAsync("Requires broader context"));
+        cut.Find("[data-testid='triage-skip-item-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Issue 802", cut.Markup);
+            Assert.Contains("Skipped: 1 item", cut.Markup);
+            Assert.Contains("Skipped item #801 for later review and moved to Item 1 of 1", cut.Markup, StringComparison.Ordinal);
+        });
+
+        _triageServiceMock.Verify(
+            service => service.SkipCurrentItemAsync(It.IsAny<TriageSessionDto>(), "Requires broader context", It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task Triage_SessionCompleted_ShowsGroupedSummaryDetailsAndSkippedRevisitButton()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreateRepository("owner", "repo")]);
+
+        var completedSession = new TriageSessionDto(
+            Guid.NewGuid(),
+            "owner",
+            "repo",
+            false,
+            [CreateItem(901, "Issue 901", "owner/repo")],
+            1,
+            [CreateItem(902, "Issue 902", "owner/repo")],
+            [],
+            new TriageSessionProgressDto(1, 1, 0, 1),
+            new TriageSessionSummaryDto(1, 1, 0, 1, 2, 1, 1, 1)
+            {
+                LabelActionDetails = ["Issue #901 (owner/repo): Applied label 'type/story'.", "Issue #902 (owner/repo): Applied label 'priority/high'."],
+                MilestoneActionDetails = ["Issue #901 (owner/repo): Assigned milestone 'v0.3.0'."],
+                ProjectActionDetails = ["Issue #901 (owner/repo): Added to project board 'Roadmap' with status 'In Progress'."],
+                DuplicateActionDetails = ["Issue #902 (owner/repo): Closed as duplicate of '#321'."],
+                SkippedActionDetails = ["Issue #902 (owner/repo): Skipped for later review. Reason: Waiting for product clarification"],
+                SkippedItemDetails = ["Issue #902 (owner/repo): Issue 902"],
+            },
+            DateTimeOffset.UtcNow);
+
+        _triageServiceMock
+            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(completedSession);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Triage>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-repository-autocomplete']"));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo" }));
+
+        cut.Find("[data-testid='triage-start-session-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.NotEmpty(cut.FindAll("[data-testid='triage-session-complete-region']"));
+            Assert.Contains("Processed 1 of 1 items. 1 skipped item(s) are available to revisit.", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("Issue #901 (owner/repo): Applied label 'type/story'.", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("Issue #901 (owner/repo): Assigned milestone 'v0.3.0'.", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("Issue #901 (owner/repo): Added to project board 'Roadmap' with status 'In Progress'.", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("Issue #902 (owner/repo): Closed as duplicate of '#321'.", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("Issue #902 (owner/repo): Skipped for later review. Reason: Waiting for product clarification", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("Issue #902 (owner/repo): Issue 902", cut.Markup, StringComparison.Ordinal);
+            Assert.NotEmpty(cut.FindAll("[data-testid='triage-revisit-skipped-button']"));
+        });
+    }
+
+    [Fact]
+    public async Task Triage_RevisitSkippedItemsClicked_ResumesSessionFromSkippedQueue()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreateRepository("owner", "repo")]);
+
+        var completedSession = new TriageSessionDto(
+            Guid.NewGuid(),
+            "owner",
+            "repo",
+            false,
+            [CreateItem(950, "Issue 950", "owner/repo")],
+            1,
+            [CreateItem(951, "Issue 951", "owner/repo")],
+            [],
+            new TriageSessionProgressDto(1, 1, 0, 1),
+            new TriageSessionSummaryDto(1, 1, 0, 1, 0, 0, 0, 0)
+            {
+                SkippedItemDetails = ["Issue #951 (owner/repo): Issue 951"],
+            },
+            DateTimeOffset.UtcNow);
+
+        var resumedSession = new TriageSessionDto(
+            completedSession.SessionId,
+            "owner",
+            "repo",
+            false,
+            [CreateItem(951, "Issue 951", "owner/repo")],
+            0,
+            [],
+            [],
+            new TriageSessionProgressDto(1, 0, 1, 0),
+            new TriageSessionSummaryDto(1, 0, 1, 0, 0, 0, 0, 0),
+            DateTimeOffset.UtcNow);
+
+        _triageServiceMock
+            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(completedSession);
+
+        _triageServiceMock
+            .Setup(service => service.RevisitSkippedItemsAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(resumedSession);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Triage>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-repository-autocomplete']"));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo" }));
+
+        cut.Find("[data-testid='triage-start-session-button']").Click();
+        cut.WaitForAssertion(() => Assert.NotEmpty(cut.FindAll("[data-testid='triage-revisit-skipped-button']")));
+
+        cut.Find("[data-testid='triage-revisit-skipped-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Issue 951", cut.Markup);
+            Assert.Contains("Skipped items were appended to the queue for review.", cut.Markup, StringComparison.Ordinal);
+        });
+
+        _triageServiceMock.Verify(
+            service => service.RevisitSkippedItemsAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
     private static async Task SelectQuickLabelAsync(IRenderedComponent<Triage> cut, string labelName)
     {
         ArgumentNullException.ThrowIfNull(cut);

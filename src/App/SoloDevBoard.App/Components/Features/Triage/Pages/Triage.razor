@@ -197,7 +197,7 @@
                     </MudStack>
 
                     <MudText Typo="Typo.caption" data-testid="triage-keyboard-shortcuts-legend">
-                        Keyboard shortcuts (when the action buttons are focused): L applies selected label and advances, N moves to the next item without changes, and D closes the current item as a duplicate.
+                        Keyboard shortcuts (when the action buttons are focused): L applies selected label and advances, N moves to the next item without changes, D closes the current item as a duplicate, and S skips the current item for later review.
                     </MudText>
 
                     <MudStack Spacing="1" data-testid="triage-duplicate-action-region">
@@ -225,6 +225,35 @@
                                        OnClick="CloseCurrentItemAsDuplicateAsync"
                                        data-testid="triage-close-duplicate-button">
                                 Close as duplicate
+                            </MudButton>
+                        </MudStack>
+                    </MudStack>
+
+                    <MudStack Spacing="1" data-testid="triage-skip-action-region">
+                        <MudText Typo="Typo.subtitle2">Skip and return later</MudText>
+                        <MudText Typo="Typo.body2" data-testid="triage-skip-help">
+                            Skip this item for now and return to it later from the session summary.
+                        </MudText>
+
+                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                            <MudTextField T="string"
+                                          Value="skipReason"
+                                          ValueChanged="OnSkipReasonChangedAsync"
+                                          Label="Skip reason (optional)"
+                                          Placeholder="Add context for when you revisit this item"
+                                          Variant="Variant.Outlined"
+                                          Disabled="isApplyingSessionAction"
+                                          Immediate="true"
+                                          Clearable="true"
+                                          Class="flex-grow-1"
+                                          data-testid="triage-skip-reason-input" />
+
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Tertiary"
+                                       Disabled="!CanSkipCurrentItem"
+                                       OnClick="SkipCurrentItemAsync"
+                                       data-testid="triage-skip-item-button">
+                                Skip item
                             </MudButton>
                         </MudStack>
                     </MudStack>
@@ -313,9 +342,168 @@
         else
         {
             <MudPaper Class="pa-4" Elevation="1" data-testid="triage-session-complete-region">
-                <MudStack Spacing="1">
+                <MudStack Spacing="2">
                     <MudText Typo="Typo.h6">Session complete</MudText>
-                    <MudText Typo="Typo.body2">@SessionCompleteSummaryText</MudText>
+                    <MudText Typo="Typo.body2" data-testid="triage-session-summary-text">@SessionCompleteSummaryText</MudText>
+
+                    <MudGrid Spacing="2" data-testid="triage-session-summary-counts">
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <MudPaper Class="pa-3" Outlined="true" data-testid="triage-summary-label-count">
+                                <MudText Typo="Typo.subtitle2">Labels applied</MudText>
+                                <MudText Typo="Typo.h6">@currentSession.Summary.LabelsAppliedCount</MudText>
+                            </MudPaper>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <MudPaper Class="pa-3" Outlined="true" data-testid="triage-summary-milestone-count">
+                                <MudText Typo="Typo.subtitle2">Milestones assigned</MudText>
+                                <MudText Typo="Typo.h6">@currentSession.Summary.MilestonesAssignedCount</MudText>
+                            </MudPaper>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <MudPaper Class="pa-3" Outlined="true" data-testid="triage-summary-project-count">
+                                <MudText Typo="Typo.subtitle2">Project actions</MudText>
+                                <MudText Typo="Typo.h6">@currentSession.Summary.ProjectAssignmentsCount</MudText>
+                            </MudPaper>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <MudPaper Class="pa-3" Outlined="true" data-testid="triage-summary-duplicate-count">
+                                <MudText Typo="Typo.subtitle2">Duplicate closures</MudText>
+                                <MudText Typo="Typo.h6">@currentSession.Summary.DuplicateClosuresCount</MudText>
+                            </MudPaper>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <MudPaper Class="pa-3" Outlined="true" data-testid="triage-summary-skipped-count">
+                                <MudText Typo="Typo.subtitle2">Skipped items</MudText>
+                                <MudText Typo="Typo.h6">@currentSession.Summary.SkippedItems</MudText>
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudGrid Spacing="2" data-testid="triage-session-summary-details">
+                        <MudItem xs="12" md="6">
+                            <MudPaper Class="pa-3" Outlined="true" data-testid="triage-summary-label-details">
+                                <MudText Typo="Typo.subtitle2">Label actions</MudText>
+
+                                @if (currentSession.Summary.LabelActionDetails.Count == 0)
+                                {
+                                    <MudText Typo="Typo.body2">No label actions were recorded.</MudText>
+                                }
+                                else
+                                {
+                                    <MudList T="string" Dense="true">
+                                        @foreach (var detail in currentSession.Summary.LabelActionDetails)
+                                        {
+                                            <MudListItem T="string" Text="@detail" />
+                                        }
+                                    </MudList>
+                                }
+                            </MudPaper>
+                        </MudItem>
+
+                        <MudItem xs="12" md="6">
+                            <MudPaper Class="pa-3" Outlined="true" data-testid="triage-summary-milestone-details">
+                                <MudText Typo="Typo.subtitle2">Milestone actions</MudText>
+
+                                @if (currentSession.Summary.MilestoneActionDetails.Count == 0)
+                                {
+                                    <MudText Typo="Typo.body2">No milestone actions were recorded.</MudText>
+                                }
+                                else
+                                {
+                                    <MudList T="string" Dense="true">
+                                        @foreach (var detail in currentSession.Summary.MilestoneActionDetails)
+                                        {
+                                            <MudListItem T="string" Text="@detail" />
+                                        }
+                                    </MudList>
+                                }
+                            </MudPaper>
+                        </MudItem>
+
+                        <MudItem xs="12" md="6">
+                            <MudPaper Class="pa-3" Outlined="true" data-testid="triage-summary-project-details">
+                                <MudText Typo="Typo.subtitle2">Project actions</MudText>
+
+                                @if (currentSession.Summary.ProjectActionDetails.Count == 0)
+                                {
+                                    <MudText Typo="Typo.body2">No project actions were recorded.</MudText>
+                                }
+                                else
+                                {
+                                    <MudList T="string" Dense="true">
+                                        @foreach (var detail in currentSession.Summary.ProjectActionDetails)
+                                        {
+                                            <MudListItem T="string" Text="@detail" />
+                                        }
+                                    </MudList>
+                                }
+                            </MudPaper>
+                        </MudItem>
+
+                        <MudItem xs="12" md="6">
+                            <MudPaper Class="pa-3" Outlined="true" data-testid="triage-summary-duplicate-details">
+                                <MudText Typo="Typo.subtitle2">Duplicate closures</MudText>
+
+                                @if (currentSession.Summary.DuplicateActionDetails.Count == 0)
+                                {
+                                    <MudText Typo="Typo.body2">No duplicate closures were recorded.</MudText>
+                                }
+                                else
+                                {
+                                    <MudList T="string" Dense="true">
+                                        @foreach (var detail in currentSession.Summary.DuplicateActionDetails)
+                                        {
+                                            <MudListItem T="string" Text="@detail" />
+                                        }
+                                    </MudList>
+                                }
+                            </MudPaper>
+                        </MudItem>
+
+                        <MudItem xs="12" md="6">
+                            <MudPaper Class="pa-3" Outlined="true" data-testid="triage-summary-skip-action-details">
+                                <MudText Typo="Typo.subtitle2">Skip actions</MudText>
+
+                                @if (currentSession.Summary.SkippedActionDetails.Count == 0)
+                                {
+                                    <MudText Typo="Typo.body2">No skip actions were recorded.</MudText>
+                                }
+                                else
+                                {
+                                    <MudList T="string" Dense="true">
+                                        @foreach (var detail in currentSession.Summary.SkippedActionDetails)
+                                        {
+                                            <MudListItem T="string" Text="@detail" />
+                                        }
+                                    </MudList>
+                                }
+                            </MudPaper>
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudPaper Class="pa-3" Outlined="true" data-testid="triage-summary-skipped-details">
+                                <MudText Typo="Typo.subtitle2">Skipped items</MudText>
+
+                                @if (currentSession.Summary.SkippedItemDetails.Count == 0)
+                                {
+                                    <MudText Typo="Typo.body2">No items are currently skipped.</MudText>
+                                }
+                                else
+                                {
+                                    <MudList T="string" Dense="true">
+                                        @foreach (var detail in currentSession.Summary.SkippedItemDetails)
+                                        {
+                                            <MudListItem T="string" Text="@detail" />
+                                        }
+                                    </MudList>
+                                }
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
 
                     @if (currentSession.SkippedItems.Count > 0)
                     {

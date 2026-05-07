@@ -53,6 +53,7 @@ public partial class Triage : ComponentBase
     private IReadOnlyList<TriageProjectBoardOptionDto> availableProjectBoardOptions = [];
     private string selectedQuickActionLabelName = string.Empty;
     private string duplicateReference = string.Empty;
+    private string skipReason = string.Empty;
     private int? selectedMilestoneNumber;
     private string selectedProjectBoardId = string.Empty;
     private string selectedProjectBoardStatusOptionId = string.Empty;
@@ -81,6 +82,10 @@ public partial class Triage : ComponentBase
         => !isApplyingSessionAction
             && CurrentItem is not null
             && !string.IsNullOrWhiteSpace(duplicateReference);
+
+    private bool CanSkipCurrentItem
+        => !isApplyingSessionAction
+            && CurrentItem is not null;
 
     private bool CanAssignMilestone
         => !isApplyingSessionAction
@@ -228,6 +233,7 @@ public partial class Triage : ComponentBase
             availableProjectBoardOptions = [];
             selectedQuickActionLabelName = string.Empty;
             duplicateReference = string.Empty;
+            skipReason = string.Empty;
             selectedMilestoneNumber = null;
             selectedProjectBoardId = string.Empty;
             selectedProjectBoardStatusOptionId = string.Empty;
@@ -348,6 +354,12 @@ public partial class Triage : ComponentBase
     private Task OnDuplicateReferenceChangedAsync(string value)
     {
         duplicateReference = value ?? string.Empty;
+        return Task.CompletedTask;
+    }
+
+    private Task OnSkipReasonChangedAsync(string value)
+    {
+        skipReason = value ?? string.Empty;
         return Task.CompletedTask;
     }
 
@@ -500,6 +512,39 @@ public partial class Triage : ComponentBase
             operationSeverity = Severity.Error;
             operationMessage = "An unexpected error occurred while closing this item as a duplicate.";
             Snackbar.Add("Could not close the item as a duplicate.", Severity.Error);
+        }
+        finally
+        {
+            isApplyingSessionAction = false;
+        }
+    }
+
+    private async Task SkipCurrentItemAsync()
+    {
+        if (currentSession is null || CurrentItem is null || !CanSkipCurrentItem)
+        {
+            return;
+        }
+
+        isApplyingSessionAction = true;
+
+        try
+        {
+            var skippedItemNumber = CurrentItem.Number;
+            currentSession = await TriageService.SkipCurrentItemAsync(currentSession, skipReason);
+            SyncPlanningSelectionFromCurrentItem();
+
+            operationSeverity = Severity.Info;
+            operationMessage = currentSession.CurrentItem is null
+                ? $"Skipped item #{skippedItemNumber} for later review. Reached the end of the current queue."
+                : $"Skipped item #{skippedItemNumber} for later review and moved to {CurrentPositionText}.";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to skip the current triage item.");
+            operationSeverity = Severity.Error;
+            operationMessage = "An unexpected error occurred while skipping this item.";
+            Snackbar.Add("Could not skip the current item.", Severity.Error);
         }
         finally
         {
@@ -758,6 +803,7 @@ public partial class Triage : ComponentBase
     {
         selectedMilestoneNumber = CurrentItem?.MilestoneNumber;
         duplicateReference = string.Empty;
+        skipReason = string.Empty;
 
         if (!availableProjectBoardOptions.Any(option => option.Id.Equals(selectedProjectBoardId, StringComparison.Ordinal)))
         {
@@ -792,6 +838,10 @@ public partial class Triage : ComponentBase
             case "d":
             case "D":
                 await CloseCurrentItemAsDuplicateAsync();
+                break;
+            case "s":
+            case "S":
+                await SkipCurrentItemAsync();
                 break;
             default:
                 break;

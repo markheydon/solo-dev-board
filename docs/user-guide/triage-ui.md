@@ -62,8 +62,29 @@ The Triage UI allows you to add issues to a GitHub project board and set their s
 - In the **Planning Actions** section, select a project board from the available list.
 - Choose the desired project status (column) for the issue.
 - Click the **Add to project board** button to place the issue in the selected board and status.
-- Success or failure feedback will appear in the user feedback region, confirming the result of the operation.
+- Success or failure feedback appears in the user feedback region, confirming the result of the operation.
 
 If the issue is already on the selected board, you can update its status column directly. Any errors encountered during project board placement will be surfaced with actionable feedback.
 
 All planning actions use MudBlazor controls for a consistent and accessible experience, and the workflow aligns with the [triage wireframe](../../plan/wireframes/triage-ui-wireframe.md).
+
+## Session Completion Summary and Skip/Revisit Workflow
+
+When you complete a triage session, a grouped summary is shown with details for all actions taken during the session. The summary includes:
+
+- Labels applied to issues and pull requests.
+- Milestones assigned.
+- Project board actions performed.
+- Items closed as duplicates (with references).
+- Skip actions (including optional reasons).
+- Items currently skipped for revisit.
+
+You can now skip the current item at any point during triage by clicking **Skip** or pressing **S** on your keyboard when the action button row is focused. When skipping, you may optionally provide a reason for skipping the item.
+
+After all items are processed, the session-complete summary allows you to revisit any skipped items. Skipped items are listed in a dedicated grouped section, and skip reasons (if provided) appear in the **Skip actions** detail section.
+
+The triage UI layout uses MudBlazor components and a responsive grid stack, ensuring readability and usability on both desktop and mobile devices.
+
+### Keyboard Shortcuts
+
+- Press **S** to skip the current item when the action button row is focused.
