@@ -13,6 +13,7 @@ This directory contains planning-only wireframe references for key SoloDevBoard 
 - [audit-dashboard-wireframe.md](audit-dashboard-wireframe.md): Audit Dashboard wireframe, KPI cards, health indicators, and filter surface.
 - [one-click-migration-wireframe.md](one-click-migration-wireframe.md): One-Click Migration page wireframe, workflow-first layout, preview-first review flow, and post-migration summary states.
 - [triage-ui-wireframe.md](triage-ui-wireframe.md): Triage UI wireframe, session flow, progress tracking, label/milestone/project-board actions, skip/return, and end-of-session summary.
+- [board-rules-visualiser-wireframe.md](board-rules-visualiser-wireframe.md): Board Rules Visualiser wireframe, repository/project selection, interactive diagram, rule detail and conflict panels, compare mode, and responsive layout.
 
 ## Wireframe-First Planning Pattern
 
