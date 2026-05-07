@@ -177,10 +177,11 @@ Labels: `type/epic`, `area/triage`
 - [x] Triage session orchestration implemented on branch feature/issue-143-144-triage-session-and-github-actions. _(Issue #143; domain model and Application DTO/service orchestration complete; tests passing.)_
 - [x] Triage UI state management implemented on branch feature/issue-143-144-triage-session-and-github-actions. _(Issue #144; GitHub triage write operations and project-board assignment GraphQL support in IGitHubService and GitHubService complete; tests passing.)_
 
+
 **Tests:**
-- [ ] Triage session orchestration unit tests. _(Issue #151)_
-- [ ] Triage UI state management unit tests. _(Issue #152)_
-- [ ] Triage UI bUnit tests. _(Issue #153)_
+- [x] Triage session orchestration unit tests. _(Issue #151 — implemented 2026-05-07.)_
+- [x] Triage UI state management unit tests. _(Issue #152 — implemented 2026-05-07.)_
+- [x] Triage UI bUnit tests. _(Issue #153 — implemented 2026-05-07.)_
 
 - [ ] As a solo developer, I want to see which repositories already have a particular workflow template applied so that I have a clear overview of my CI/CD coverage.
 - [ ] As a solo developer, I want to be alerted when a repository's workflow file differs from the canonical template so that I can update it.

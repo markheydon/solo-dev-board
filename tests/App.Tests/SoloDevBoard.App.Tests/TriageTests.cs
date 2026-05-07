@@ -8,6 +8,7 @@ using SoloDevBoard.App.Components.Shared.Components;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Repositories;
 using SoloDevBoard.Application.Services.Triage;
+using System.Net;
 
 namespace SoloDevBoard.App.Tests;
 
@@ -17,6 +18,174 @@ public sealed class TriageTests
     private readonly Mock<IRepositoryService> _repositoryServiceMock = new();
     private readonly Mock<ITriageService> _triageServiceMock = new();
     private readonly Mock<ILabelManagerService> _labelManagerServiceMock = new();
+
+    [Fact]
+    public async Task Triage_RepositoriesAreLoading_ShowsLoadingStateUntilRepositoryDataArrives()
+    {
+        // Arrange
+        var repositoryTaskSource = new TaskCompletionSource<IReadOnlyList<RepositoryDto>>();
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .Returns(repositoryTaskSource.Task);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Triage>();
+
+        // Assert
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-loading-repositories']"));
+
+        repositoryTaskSource.SetResult([CreateRepository("owner", "repo")]);
+
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-repository-autocomplete']"));
+    }
+
+    [Fact]
+    public async Task Triage_NoRepositoriesReturned_ShowsNoRepositoriesWarningState()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<RepositoryDto>());
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Triage>();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.NotEmpty(cut.FindAll("[data-testid='triage-no-repositories-alert']"));
+            Assert.Contains("No active repositories are available for triage.", cut.Markup, StringComparison.Ordinal);
+        });
+    }
+
+    [Fact]
+    public async Task Triage_StartSessionFailure_ShowsErrorFeedbackRegion()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreateRepository("owner", "repo")]);
+
+        _triageServiceMock
+            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Bad gateway", null, HttpStatusCode.BadGateway));
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Triage>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-repository-autocomplete']"));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo" }));
+
+        cut.Find("[data-testid='triage-start-session-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.NotEmpty(cut.FindAll("[data-testid='triage-operation-alert']"));
+            Assert.Contains("GitHub API request failed while starting triage session.", cut.Markup, StringComparison.Ordinal);
+        });
+    }
+
+    [Fact]
+    public async Task Triage_StartSessionWithEmptyQueue_ShowsSummaryStateAndEmptyQueueMessage()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreateRepository("owner", "repo")]);
+
+        var emptySession = CreateSession(
+            "owner",
+            "repo",
+            [],
+            currentIndex: 0,
+            skippedItems: []);
+
+        _triageServiceMock
+            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(emptySession);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Triage>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-repository-autocomplete']"));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo" }));
+
+        cut.Find("[data-testid='triage-start-session-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.NotEmpty(cut.FindAll("[data-testid='triage-session-complete-region']"));
+            Assert.Contains("No untriaged items were found in owner/repo.", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("Processed 0 of 0 items. 0 skipped item(s) are available to revisit.", cut.Markup, StringComparison.Ordinal);
+        });
+    }
+
+    [Fact]
+    public async Task Triage_StartedSessionWithPullRequestCurrentItem_ShowsPullRequestVariantAndKeyboardLegend()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreateRepository("owner", "repo")]);
+
+        var pullRequestItem = new TriageItemDto(
+            TriageItemTypeDto.PullRequest,
+            2201,
+            2201,
+            "owner/repo",
+            "PR 2201",
+            "https://github.com/owner/repo/pull/2201",
+            "Body for PR 2201",
+            "open",
+            "markheydon",
+            [],
+            null,
+            string.Empty,
+            DateTimeOffset.UtcNow.AddDays(-4),
+            DateTimeOffset.UtcNow.AddDays(-1));
+
+        var startedSession = CreateSession(
+            "owner",
+            "repo",
+            [pullRequestItem],
+            currentIndex: 0,
+            skippedItems: []);
+
+        _triageServiceMock
+            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(startedSession);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Triage>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-repository-autocomplete']"));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo" }));
+
+        cut.Find("[data-testid='triage-start-session-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Pull request", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("Open item #2201 on GitHub", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("Keyboard shortcuts (when the action buttons are focused)", cut.Markup, StringComparison.Ordinal);
+        });
+    }
 
     [Fact]
     public async Task Triage_StartSessionClicked_LoadsFirstItemAndShowsRemainingCount()

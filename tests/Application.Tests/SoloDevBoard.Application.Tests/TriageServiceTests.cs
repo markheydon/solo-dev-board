@@ -25,6 +25,32 @@ public sealed class TriageServiceTests
     }
 
     [Fact]
+    public async Task StartSessionAsync_OwnerIsWhitespace_ThrowsArgumentException()
+    {
+        // Arrange
+        var sut = new TriageService(_gitHubServiceMock.Object);
+
+        // Act
+        var action = async () => _ = await sut.StartSessionAsync(" ", "repo");
+
+        // Assert
+        await Assert.ThrowsAsync<ArgumentException>(action);
+    }
+
+    [Fact]
+    public async Task StartSessionAsync_RepositoryIsWhitespace_ThrowsArgumentException()
+    {
+        // Arrange
+        var sut = new TriageService(_gitHubServiceMock.Object);
+
+        // Act
+        var action = async () => _ = await sut.StartSessionAsync("owner", " ");
+
+        // Assert
+        await Assert.ThrowsAsync<ArgumentException>(action);
+    }
+
+    [Fact]
     public async Task StartSessionAsync_IssuesOnly_BuildsIssueQueueAndInitialProgress()
     {
         // Arrange
@@ -276,6 +302,47 @@ public sealed class TriageServiceTests
     }
 
     [Fact]
+    public async Task ApplyLabelToCurrentItemAsync_InvalidRepositoryScope_ThrowsArgumentException()
+    {
+        // Arrange
+        var sut = new TriageService(_gitHubServiceMock.Object);
+        var invalidScopeItem = new TriageItemDto(
+            TriageItemTypeDto.Issue,
+            1,
+            1,
+            "invalid-scope",
+            "Item 1",
+            string.Empty,
+            string.Empty,
+            "open",
+            "mark",
+            [],
+            null,
+            string.Empty,
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow);
+
+        var session = new TriageSessionDto(
+            Guid.NewGuid(),
+            "owner",
+            "repo",
+            false,
+            [invalidScopeItem],
+            0,
+            [],
+            [],
+            new TriageSessionProgressDto(1, 0, 1, 0),
+            new TriageSessionSummaryDto(1, 0, 1, 0, 0, 0, 0, 0),
+            DateTimeOffset.UtcNow);
+
+        // Act
+        var action = async () => _ = await sut.ApplyLabelToCurrentItemAsync(session, "type/story");
+
+        // Assert
+        await Assert.ThrowsAsync<ArgumentException>(action);
+    }
+
+    [Fact]
     public async Task GetMilestoneOptionsAsync_MilestonesReturned_ReturnsSortedOptions()
     {
         // Arrange
@@ -400,6 +467,53 @@ public sealed class TriageServiceTests
         _gitHubServiceMock.Verify(
             service => service.UpdateProjectBoardItemStatusAsync("project-id", "project-item-id", "status-field-id", "in-progress", It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    [Fact]
+    public async Task AddCurrentItemToProjectBoardAsync_InvalidRepositoryScope_ThrowsArgumentException()
+    {
+        // Arrange
+        var sut = new TriageService(_gitHubServiceMock.Object);
+        var invalidScopeItem = new TriageItemDto(
+            TriageItemTypeDto.Issue,
+            1,
+            1,
+            "invalid-scope",
+            "Item 1",
+            string.Empty,
+            string.Empty,
+            "open",
+            "mark",
+            [],
+            null,
+            string.Empty,
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow);
+
+        var session = new TriageSessionDto(
+            Guid.NewGuid(),
+            "owner",
+            "repo",
+            false,
+            [invalidScopeItem],
+            0,
+            [],
+            [],
+            new TriageSessionProgressDto(1, 0, 1, 0),
+            new TriageSessionSummaryDto(1, 0, 1, 0, 0, 0, 0, 0),
+            DateTimeOffset.UtcNow);
+
+        // Act
+        var action = async () => _ = await sut.AddCurrentItemToProjectBoardAsync(
+            session,
+            "project-id",
+            "Roadmap",
+            "status-field-id",
+            "in-progress",
+            "In Progress");
+
+        // Assert
+        await Assert.ThrowsAsync<ArgumentException>(action);
     }
 
     [Fact]
