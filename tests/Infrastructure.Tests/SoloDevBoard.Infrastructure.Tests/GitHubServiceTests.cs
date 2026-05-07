@@ -684,6 +684,45 @@ public sealed class GitHubServiceTests
     }
 
     [Fact]
+    public async Task ApplyLabelsToTriageItemAsync_DuplicateAndWhitespaceLabels_NormalisesPayload()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler([
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("[]", Encoding.UTF8, "application/json"),
+            },
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        await sut.ApplyLabelsToTriageItemAsync("owner", "repo", 42, [" priority/high ", "", "type/story", "priority/high"]);
+
+        // Assert
+        Assert.Single(handler.Requests);
+        var payload = await handler.Requests[0].Content!.ReadAsStringAsync();
+        using var document = JsonDocument.Parse(payload);
+        var labels = document.RootElement.GetProperty("labels");
+        Assert.Equal(2, labels.GetArrayLength());
+        Assert.Equal("priority/high", labels[0].GetString());
+        Assert.Equal("type/story", labels[1].GetString());
+    }
+
+    [Fact]
+    public async Task ApplyLabelsToTriageItemAsync_ItemNumberIsNotPositive_ThrowsArgumentOutOfRangeException()
+    {
+        // Arrange
+        var sut = CreateSubject(new QueueMessageHandler([]));
+
+        // Act
+        var action = async () => await sut.ApplyLabelsToTriageItemAsync("owner", "repo", 0, ["type/story"]);
+
+        // Assert
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(action);
+    }
+
+    [Fact]
     public async Task AssignMilestoneToTriageItemAsync_NullMilestone_SendsPatchWithNullMilestone()
     {
         // Arrange
@@ -748,6 +787,45 @@ public sealed class GitHubServiceTests
         Assert.Equal("https://api.github.com/graphql", handler.Requests[1].RequestUri!.ToString());
     }
 
+        [Fact]
+        public async Task AddTriageItemToProjectBoardAsync_GraphQlErrorsPresent_ThrowsHttpRequestException()
+        {
+                // Arrange
+                var handler = new QueueMessageHandler(
+                [
+                        CreateJsonResponse(HttpStatusCode.OK, """
+                        {
+                            "node_id": "I_kwDOABCDE123"
+                        }
+                        """),
+                        CreateJsonResponse(HttpStatusCode.OK, """
+                        {
+                            "data": {
+                                "addProjectV2ItemById": {
+                                    "item": {
+                                        "id": null
+                                    }
+                                }
+                            },
+                            "errors": [
+                                {
+                                    "message": "Project item could not be created"
+                                }
+                            ]
+                        }
+                        """),
+                ]);
+
+                var sut = CreateSubject(handler);
+
+                // Act
+                var action = async () => _ = await sut.AddTriageItemToProjectBoardAsync("owner", "repo", 55, "project-id");
+
+                // Assert
+                var exception = await Assert.ThrowsAsync<HttpRequestException>(action);
+                Assert.Contains("GitHub GraphQL request failed", exception.Message, StringComparison.Ordinal);
+        }
+
     [Fact]
     public async Task GetProjectBoardsForRepositoryAsync_StatusFieldPresent_ReturnsProjectBoardOptions()
     {
@@ -801,6 +879,36 @@ public sealed class GitHubServiceTests
     }
 
     [Fact]
+    public async Task GetProjectBoardsForRepositoryAsync_GraphQlErrorsPresent_ThrowsHttpRequestException()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "repository": null
+                },
+                "errors": [
+                    {
+                        "message": "Repository not found"
+                    }
+                ]
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var action = async () => _ = await sut.GetProjectBoardsForRepositoryAsync("owner", "repo");
+
+        // Assert
+        var exception = await Assert.ThrowsAsync<HttpRequestException>(action);
+        Assert.Contains("GitHub GraphQL request failed", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task UpdateProjectBoardItemStatusAsync_ValidResponse_PostsGraphQlMutation()
     {
         // Arrange
@@ -837,6 +945,36 @@ public sealed class GitHubServiceTests
         Assert.Equal("project-item-id", variables.GetProperty("itemId").GetString());
         Assert.Equal("status-field-id", variables.GetProperty("fieldId").GetString());
         Assert.Equal("in-progress", variables.GetProperty("statusOptionId").GetString());
+    }
+
+    [Fact]
+    public async Task UpdateProjectBoardItemStatusAsync_GraphQlErrorsPresent_ThrowsHttpRequestException()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "updateProjectV2ItemFieldValue": null
+                },
+                "errors": [
+                    {
+                        "message": "Field value could not be updated"
+                    }
+                ]
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var action = async () => await sut.UpdateProjectBoardItemStatusAsync("project-id", "project-item-id", "status-field-id", "in-progress");
+
+        // Assert
+        var exception = await Assert.ThrowsAsync<HttpRequestException>(action);
+        Assert.Contains("GitHub GraphQL request failed", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -895,6 +1033,29 @@ public sealed class GitHubServiceTests
         Assert.Equal("https://api.github.com/repos/owner/repo/issues/100/comments", handler.Requests[0].RequestUri!.ToString());
         Assert.Equal(HttpMethod.Patch, handler.Requests[1].Method);
         Assert.Equal("https://api.github.com/repos/owner/repo/pulls/100", handler.Requests[1].RequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task CloseTriageItemAsDuplicateAsync_CommentRequestFails_ThrowsAndDoesNotAttemptCloseRequest()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            new HttpResponseMessage(HttpStatusCode.BadRequest)
+            {
+                Content = new StringContent("{\"message\":\"Validation failed\"}", Encoding.UTF8, "application/json"),
+            },
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var action = async () => await sut.CloseTriageItemAsDuplicateAsync("owner", "repo", GitHubTriageItemType.Issue, 99, "#12");
+
+        // Assert
+        await Assert.ThrowsAsync<HttpRequestException>(action);
+        Assert.Single(handler.Requests);
+        Assert.Equal("https://api.github.com/repos/owner/repo/issues/99/comments", handler.Requests[0].RequestUri!.ToString());
     }
 
     private static GitHubService CreateSubject(HttpMessageHandler handler)
