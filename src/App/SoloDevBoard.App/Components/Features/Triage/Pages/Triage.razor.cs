@@ -52,6 +52,7 @@ public partial class Triage : ComponentBase
     private IReadOnlyList<TriageMilestoneOptionDto> availableMilestoneOptions = [];
     private IReadOnlyList<TriageProjectBoardOptionDto> availableProjectBoardOptions = [];
     private string selectedQuickActionLabelName = string.Empty;
+    private string duplicateReference = string.Empty;
     private int? selectedMilestoneNumber;
     private string selectedProjectBoardId = string.Empty;
     private string selectedProjectBoardStatusOptionId = string.Empty;
@@ -75,6 +76,11 @@ public partial class Triage : ComponentBase
         => !isApplyingSessionAction
             && CurrentItem is not null
             && LabelExists(selectedQuickActionLabelName);
+
+    private bool CanCloseAsDuplicate
+        => !isApplyingSessionAction
+            && CurrentItem is not null
+            && !string.IsNullOrWhiteSpace(duplicateReference);
 
     private bool CanAssignMilestone
         => !isApplyingSessionAction
@@ -221,6 +227,7 @@ public partial class Triage : ComponentBase
             availableMilestoneOptions = [];
             availableProjectBoardOptions = [];
             selectedQuickActionLabelName = string.Empty;
+            duplicateReference = string.Empty;
             selectedMilestoneNumber = null;
             selectedProjectBoardId = string.Empty;
             selectedProjectBoardStatusOptionId = string.Empty;
@@ -338,6 +345,12 @@ public partial class Triage : ComponentBase
         return Task.CompletedTask;
     }
 
+    private Task OnDuplicateReferenceChangedAsync(string value)
+    {
+        duplicateReference = value ?? string.Empty;
+        return Task.CompletedTask;
+    }
+
     private Task<IEnumerable<string>> SearchQuickActionLabelsAsync(string? value, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -441,6 +454,52 @@ public partial class Triage : ComponentBase
             operationSeverity = Severity.Error;
             operationMessage = "An unexpected error occurred while moving to the next item without changes.";
             Snackbar.Add("Could not move to the next item without changes.", Severity.Error);
+        }
+        finally
+        {
+            isApplyingSessionAction = false;
+        }
+    }
+
+    private async Task CloseCurrentItemAsDuplicateAsync()
+    {
+        if (currentSession is null || CurrentItem is null || !CanCloseAsDuplicate)
+        {
+            return;
+        }
+
+        isApplyingSessionAction = true;
+
+        try
+        {
+            var closedItemNumber = CurrentItem.Number;
+            var trimmedDuplicateReference = duplicateReference.Trim();
+
+            var duplicateClosedSession = await TriageService.CloseCurrentItemAsDuplicateAsync(
+                currentSession,
+                trimmedDuplicateReference);
+
+            currentSession = await TriageService.AdvanceSessionAsync(duplicateClosedSession);
+            SyncPlanningSelectionFromCurrentItem();
+
+            operationSeverity = Severity.Success;
+            operationMessage = currentSession.CurrentItem is null
+                ? $"Closed item #{closedItemNumber} as a duplicate of '{trimmedDuplicateReference}'. Reached the end of the current queue."
+                : $"Closed item #{closedItemNumber} as a duplicate of '{trimmedDuplicateReference}' and moved to {CurrentPositionText}.";
+        }
+        catch (HttpRequestException ex)
+        {
+            Logger.LogError(ex, "GitHub API request failed while closing triage item as duplicate.");
+            operationSeverity = Severity.Error;
+            operationMessage = $"GitHub API request failed while closing as duplicate. {ex.Message}";
+            Snackbar.Add("Could not close the item as a duplicate due to a GitHub API error.", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to close the current triage item as duplicate.");
+            operationSeverity = Severity.Error;
+            operationMessage = "An unexpected error occurred while closing this item as a duplicate.";
+            Snackbar.Add("Could not close the item as a duplicate.", Severity.Error);
         }
         finally
         {
@@ -698,6 +757,7 @@ public partial class Triage : ComponentBase
     private void SyncPlanningSelectionFromCurrentItem()
     {
         selectedMilestoneNumber = CurrentItem?.MilestoneNumber;
+        duplicateReference = string.Empty;
 
         if (!availableProjectBoardOptions.Any(option => option.Id.Equals(selectedProjectBoardId, StringComparison.Ordinal)))
         {
@@ -728,6 +788,10 @@ public partial class Triage : ComponentBase
             case "n":
             case "N":
                 await CompleteWithoutChangesAsync();
+                break;
+            case "d":
+            case "D":
+                await CloseCurrentItemAsDuplicateAsync();
                 break;
             default:
                 break;

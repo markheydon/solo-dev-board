@@ -197,8 +197,37 @@
                     </MudStack>
 
                     <MudText Typo="Typo.caption" data-testid="triage-keyboard-shortcuts-legend">
-                        Keyboard shortcuts (when the action buttons are focused): L applies selected label and advances, and N moves to the next item without changes.
+                        Keyboard shortcuts (when the action buttons are focused): L applies selected label and advances, N moves to the next item without changes, and D closes the current item as a duplicate.
                     </MudText>
+
+                    <MudStack Spacing="1" data-testid="triage-duplicate-action-region">
+                        <MudText Typo="Typo.subtitle2">Duplicate closure</MudText>
+                        <MudText Typo="Typo.body2" data-testid="triage-duplicate-help">
+                            Close the current item as a duplicate and include the canonical issue or pull request reference.
+                        </MudText>
+
+                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                            <MudTextField T="string"
+                                          Value="duplicateReference"
+                                          ValueChanged="OnDuplicateReferenceChangedAsync"
+                                          Label="Duplicate reference"
+                                          Placeholder="#123 or https://github.com/owner/repo/issues/123"
+                                          Variant="Variant.Outlined"
+                                          Disabled="isApplyingSessionAction"
+                                          Immediate="true"
+                                          Clearable="true"
+                                          Class="flex-grow-1"
+                                          data-testid="triage-duplicate-reference-input" />
+
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Warning"
+                                       Disabled="!CanCloseAsDuplicate"
+                                       OnClick="CloseCurrentItemAsDuplicateAsync"
+                                       data-testid="triage-close-duplicate-button">
+                                Close as duplicate
+                            </MudButton>
+                        </MudStack>
+                    </MudStack>
 
                     <MudDivider />
 

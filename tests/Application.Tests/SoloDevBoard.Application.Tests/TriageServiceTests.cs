@@ -403,6 +403,76 @@ public sealed class TriageServiceTests
     }
 
     [Fact]
+    public async Task CloseCurrentItemAsDuplicateAsync_ActiveIssueExists_ClosesDuplicateAndRecordsAction()
+    {
+        // Arrange
+        var sut = new TriageService(_gitHubServiceMock.Object);
+        var session = CreateSession(queueCount: 1, currentIndex: 0);
+
+        // Act
+        var result = await sut.CloseCurrentItemAsDuplicateAsync(session, "#123");
+
+        // Assert
+        Assert.Single(result.ActionHistory);
+        Assert.Equal(TriageActionTypeDto.ClosedAsDuplicate, result.ActionHistory[0].ActionType);
+        Assert.Contains("#123", result.ActionHistory[0].Detail, StringComparison.Ordinal);
+        Assert.Equal(1, result.Summary.DuplicateClosuresCount);
+
+        _gitHubServiceMock.Verify(
+            service => service.CloseTriageItemAsDuplicateAsync("owner", "repo", GitHubTriageItemType.Issue, 1, "#123", It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CloseCurrentItemAsDuplicateAsync_ActivePullRequestExists_ClosesPullRequestDuplicate()
+    {
+        // Arrange
+        var sut = new TriageService(_gitHubServiceMock.Object);
+        var pullRequestItem = new TriageItemDto(
+            TriageItemTypeDto.PullRequest,
+            21,
+            21,
+            "owner/repo",
+            "Pull request 21",
+            "https://github.com/owner/repo/pull/21",
+            string.Empty,
+            "open",
+            "mark",
+            [],
+            null,
+            string.Empty,
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow);
+
+        var session = new TriageSessionDto(
+            Guid.NewGuid(),
+            "owner",
+            "repo",
+            false,
+            [pullRequestItem],
+            0,
+            [],
+            [],
+            new TriageSessionProgressDto(1, 0, 1, 0),
+            new TriageSessionSummaryDto(1, 0, 1, 0, 0, 0, 0, 0),
+            DateTimeOffset.UtcNow);
+
+        // Act
+        _ = await sut.CloseCurrentItemAsDuplicateAsync(session, "https://github.com/owner/repo/pull/20");
+
+        // Assert
+        _gitHubServiceMock.Verify(
+            service => service.CloseTriageItemAsDuplicateAsync(
+                "owner",
+                "repo",
+                GitHubTriageItemType.PullRequest,
+                21,
+                "https://github.com/owner/repo/pull/20",
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
     public void BuildSessionSummary_ActionHistoryIncludesAllActionTypes_ReturnsComputedCounts()
     {
         // Arrange

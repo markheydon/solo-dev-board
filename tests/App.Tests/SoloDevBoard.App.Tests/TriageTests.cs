@@ -697,6 +697,143 @@ public sealed class TriageTests
             Times.Once);
     }
 
+    [Fact]
+    public async Task Triage_CloseAsDuplicateClicked_ClosesCurrentItemAndAdvancesSession()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreateRepository("owner", "repo")]);
+
+        var startedSession = CreateSession(
+            "owner",
+            "repo",
+            [
+                CreateItem(701, "Issue 701", "owner/repo"),
+                CreateItem(702, "Issue 702", "owner/repo"),
+            ],
+            currentIndex: 0,
+            skippedItems: []);
+
+        var duplicateClosedSession = startedSession with
+        {
+            ActionHistory =
+            [
+                new TriageActionDto(TriageActionTypeDto.ClosedAsDuplicate, TriageItemTypeDto.Issue, 701, "owner/repo", "Closed as duplicate of '#555'.", DateTimeOffset.UtcNow),
+            ],
+            Summary = new TriageSessionSummaryDto(2, 0, 2, 0, 0, 0, 0, 1),
+        };
+
+        var advancedSession = duplicateClosedSession with
+        {
+            CurrentIndex = 1,
+            Progress = new TriageSessionProgressDto(2, 1, 1, 0),
+            Summary = new TriageSessionSummaryDto(2, 1, 1, 0, 0, 0, 0, 1),
+        };
+
+        _triageServiceMock
+            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(startedSession);
+
+        _triageServiceMock
+            .Setup(service => service.CloseCurrentItemAsDuplicateAsync(It.IsAny<TriageSessionDto>(), "#555", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(duplicateClosedSession);
+
+        _triageServiceMock
+            .Setup(service => service.AdvanceSessionAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(advancedSession);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Triage>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-repository-autocomplete']"));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo" }));
+
+        cut.Find("[data-testid='triage-start-session-button']").Click();
+        cut.WaitForAssertion(() => Assert.Contains("Issue 701", cut.Markup));
+
+        var duplicateReferenceInput = cut
+            .FindComponents<MudTextField<string>>()
+            .Single(component => string.Equals(component.Instance.Label, "Duplicate reference", StringComparison.Ordinal));
+
+        await cut.InvokeAsync(() => duplicateReferenceInput.Instance.ValueChanged.InvokeAsync("#555"));
+
+        cut.Find("[data-testid='triage-close-duplicate-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Issue 702", cut.Markup);
+            Assert.Contains("Closed item #701 as a duplicate of '#555' and moved to Item 2 of 2", cut.Markup, StringComparison.Ordinal);
+        });
+
+        _triageServiceMock.Verify(
+            service => service.CloseCurrentItemAsDuplicateAsync(It.IsAny<TriageSessionDto>(), "#555", It.IsAny<CancellationToken>()),
+            Times.Once);
+        _triageServiceMock.Verify(
+            service => service.AdvanceSessionAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task Triage_ActionSurfaceShortcutD_PressedClosesCurrentItemAsDuplicate()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreateRepository("owner", "repo")]);
+
+        var startedSession = CreateSession(
+            "owner",
+            "repo",
+            [CreateItem(703, "Issue 703", "owner/repo")],
+            currentIndex: 0,
+            skippedItems: []);
+
+        _triageServiceMock
+            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(startedSession);
+
+        _triageServiceMock
+            .Setup(service => service.CloseCurrentItemAsDuplicateAsync(It.IsAny<TriageSessionDto>(), "#556", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(startedSession);
+
+        _triageServiceMock
+            .Setup(service => service.AdvanceSessionAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(startedSession);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Triage>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-repository-autocomplete']"));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo" }));
+
+        cut.Find("[data-testid='triage-start-session-button']").Click();
+        cut.WaitForAssertion(() => Assert.NotEmpty(cut.FindAll("[data-testid='triage-action-surface-region']")));
+
+        var duplicateReferenceInput = cut
+            .FindComponents<MudTextField<string>>()
+            .Single(component => string.Equals(component.Instance.Label, "Duplicate reference", StringComparison.Ordinal));
+
+        await cut.InvokeAsync(() => duplicateReferenceInput.Instance.ValueChanged.InvokeAsync("#556"));
+
+        cut.Find("[data-testid='triage-action-buttons-row']").KeyDown("d");
+
+        // Assert
+        _triageServiceMock.Verify(
+            service => service.CloseCurrentItemAsDuplicateAsync(It.IsAny<TriageSessionDto>(), "#556", It.IsAny<CancellationToken>()),
+            Times.Once);
+        _triageServiceMock.Verify(
+            service => service.AdvanceSessionAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
     private static async Task SelectQuickLabelAsync(IRenderedComponent<Triage> cut, string labelName)
     {
         ArgumentNullException.ThrowIfNull(cut);
