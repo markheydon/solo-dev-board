@@ -10,7 +10,8 @@
 		},
 		"ghcr.io/devcontainers/features/powershell:2": {
 			"version": "latest"
-		}
+		},
+		"ghcr.io/markheydon/devcontainer-features/copilot-likes:1": {}
 	},
 
 	"hostRequirements": {
