@@ -214,7 +214,7 @@ async function fetchRepositoryIssuesAsync() {
 async function syncIssueAsync(issue, issueItemsByContentId, timelineCache) {
     let projectItem = issueItemsByContentId.get(issue.node_id) ?? null;
 
-    if (isDuplicateClosedIssue(issue)) {
+    if (isClosedAsDuplicate(issue)) {
         if (projectItem) {
             await deleteProjectItemAsync(projectItem.id, `duplicate issue #${issue.number}`);
         }
@@ -350,7 +350,7 @@ function determineRoadmapStatus(issue, currentStatusName) {
     return 'Todo';
 }
 
-function isDuplicateClosedIssue(issue) {
+function isClosedAsDuplicate(issue) {
     return issue.state === 'closed' && issue.state_reason === 'duplicate';
 }
 
@@ -388,7 +388,7 @@ async function determineStartDateAsync(issue, desiredStatusName, currentStartDat
     const closedDate = issue.closed_at?.slice(0, 10) ?? null;
 
     if (currentStartDate) {
-        if (desiredStatusName !== 'Done' || isDateBeforeOrEqualClosure(currentStartDate, closedDate)) {
+        if (desiredStatusName !== 'Done' || isDateBeforeOrEqualClosureDate(currentStartDate, closedDate)) {
             return currentStartDate;
         }
     }
@@ -400,7 +400,7 @@ async function determineStartDateAsync(issue, desiredStatusName, currentStartDat
     const firstInProgressDate = await findFirstInProgressDateAsync(issue.number, timelineCache);
 
     if (firstInProgressDate) {
-        if (isDateBeforeOrEqualClosure(firstInProgressDate, closedDate)) {
+        if (isDateBeforeOrEqualClosureDate(firstInProgressDate, closedDate)) {
             return firstInProgressDate;
         }
     }
@@ -688,6 +688,8 @@ function createRepositoryIssueFromProjectItem(issue) {
     return {
         number: issue.number,
         state: issue.state?.toLowerCase() === 'closed' ? 'closed' : 'open',
+        // Project-item fallback data does not expose GitHub's closure reason, so duplicate-closure
+        // detection must use the repository issue payload when that distinction matters.
         state_reason: null,
         closed_at: issue.closedAt ?? null,
         milestone: issue.milestone ?? null,
@@ -695,7 +697,7 @@ function createRepositoryIssueFromProjectItem(issue) {
     };
 }
 
-function isDateBeforeOrEqualClosure(date, closedDate) {
+function isDateBeforeOrEqualClosureDate(date, closedDate) {
     return !closedDate || date <= closedDate;
 }
 
