@@ -14,6 +14,7 @@ Centralised reference and command patterns for maintaining the **SoloDevBoard Ro
 - Prefer `gh project item-edit` over raw GraphQL mutations when the CLI supports the field update directly.
 - Default to bash-safe command patterns in WSL or Linux terminals.
 - Do not use PowerShell backtick escaping, `Get-Date`, `Out-Null`, or `ConvertFrom-Json` in bash sessions.
+- If direct project authentication is unavailable to the agent, rely on the `roadmap-sync.yml` GitHub Actions bridge by updating the underlying issue or pull request state and then letting the workflow reconcile the user-owned roadmap board.
 
 ---
 
@@ -380,6 +381,18 @@ View the roadmap in the browser:
 ```bash
 gh project view 8 --owner markheydon --web
 ```
+
+### GitHub Actions bridge
+
+This repository also carries `.github/workflows/roadmap-sync.yml`, which exists specifically because user-owned Projects v2 boards cannot always be updated directly from every agent runtime. The bridge workflow runs on issue lifecycle changes, selected pull request events, scheduled audits, and manual dispatch, then reconciles:
+
+- missing roadmap items,
+- Status / Phase / Priority field drift,
+- Start Date / Target Date drift,
+- parent Feature / Epic roll-up dates, and
+- stray standalone pull request cards.
+
+Prefer direct project updates when you have working credentials. Use the bridge as the reliability layer and fallback path.
 
 ---
 

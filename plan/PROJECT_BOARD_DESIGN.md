@@ -45,6 +45,8 @@ Rules for **Focus Order**:
 
 The following automation rules are configured on the board. These are documented here so that the **Board Rules Visualiser** feature can use them as a reference implementation.
 
+**Operational note:** The board uses a repository-owned GitHub Actions bridge workflow (`.github/workflows/roadmap-sync.yml`) to apply and repair the roadmap metadata on the user-owned Project. This keeps the roadmap manageable even when a local agent runtime cannot mutate the Project directly.
+
 ### Issue Created
 - **Trigger:** A new planned issue is created or explicitly added by an agent.
 - **Action:** Add to **Todo** and set the required board metadata (`Phase`, `Priority`, and assignee).

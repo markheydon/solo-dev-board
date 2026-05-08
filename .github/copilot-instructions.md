@@ -132,7 +132,8 @@ This repository is **open source and public**. The following guidelines ensure s
 ### Secrets Management
 
 - **Golden Rule:** Never commit secrets, credentials, API keys, or personal data to this repository.
-- **GitHub Tokens:** Must be stored exclusively in **Azure Key Vault** (production/Azure deployment) or .NET User Secrets (local development).
+- **GitHub Tokens for app runtime:** Must be stored exclusively in **Azure Key Vault** (production/Azure deployment) or .NET User Secrets (local development).
+- **GitHub Tokens for repository automation:** Repository-scoped GitHub Actions bridge tokens may be stored in GitHub Secrets when they are used only for repository/project automation workflows (for example, the SoloDevBoard roadmap bridge) and cannot be replaced by `GITHUB_TOKEN`.
 - **Local Development:** Use `dotnet user-secrets` to manage sensitive configuration. See `docs/getting-started.md` for setup instructions.
 - **App Settings Files:** `appsettings.json` and related files leave sensitive fields empty and instantiate with environment variables or secrets at runtime.
 - **CI/CD:** GitHub Actions workflows use OIDC authentication with Azure (no long-lived secrets) and GitHub Secrets context for sensitive data.

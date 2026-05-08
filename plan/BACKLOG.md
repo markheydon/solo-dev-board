@@ -294,5 +294,5 @@ Labels: `type/chore`, `area/infrastructure`
 - [ ] Add health check endpoints for Azure App Service monitoring. _(#106)_
 - [ ] Configure logging with structured output (Azure Application Insights integration). _(#107)_
 - [x] Set up Dependabot for automated dependency updates. _(done — `dependabot.yml` and auto-merge workflow added previously; see issue #109.)_
-
+- [x] Chore: Add a GitHub Actions roadmap bridge that reconciles the user-owned SoloDevBoard Roadmap project from issue and pull request lifecycle events so project-board automation remains reliable even when direct Projects v2 credentials are unavailable to the current agent runtime. _(Implemented 2026-05-08 via PR #191 and follow-on bridge work on the same branch; see ADR-0017.)_
 

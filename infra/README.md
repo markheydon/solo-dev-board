@@ -223,6 +223,16 @@ Create or update the `production` GitHub environment and apply the following pro
 - Environment secrets required by deployment should be defined on the `production` environment unless you intentionally change the workflow scope.
 - No long-lived Azure client secrets should be configured for deployment.
 
+### 6a. Configure the roadmap bridge token
+
+The roadmap automation bridge (`.github/workflows/roadmap-sync.yml`) manages the **user-owned** SoloDevBoard Roadmap project from GitHub Actions. It requires a separate repository secret:
+
+| Secret | Value |
+|--------|-------|
+| `ROADMAP_PROJECT_TOKEN` | A classic GitHub Personal Access Token owned by `markheydon`, with at least the `project` scope and `public_repo` access (`repo` if the repository becomes private). |
+
+This token is intentionally separate from the Azure deployment secrets because it is used to mutate a user-owned GitHub Project rather than Azure infrastructure.
+
 ### 7. Verify Azure OIDC trust prerequisites
 
 The Bicep deployment creates federated credentials on the deployment identity with these claims:
