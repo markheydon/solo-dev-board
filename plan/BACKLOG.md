@@ -193,7 +193,7 @@ Labels: `type/epic`, `area/triage`
 - [ ] **Future follow-on improvement:** When a triage item is closed as a duplicate, if the repository's canonical label scheme includes a `duplicate` label, SoloDevBoard should also apply that label. _(Planned as a future improvement; see issue #176: [Story] Apply the canonical duplicate label during Triage duplicate closure.)_
 - [x] As a solo developer, I want to see a summary at the end of a triage session showing all actions taken, and have the option to skip and return to issues later, so that I have a record of what was done and am not blocked by difficult triage decisions. _(Issue #149 — implemented 2026-05-07.)_
   - Implementation note: Session completion now shows grouped summary details from the Application layer for labels, milestones, project actions, duplicate closures, and skipped items. Users can skip the current item (with optional reason) and revisit skipped items from the session-complete state. Keyboard shortcut S is available to skip. Layout uses MudBlazor and is responsive for desktop/mobile.
-- [ ] As a solo developer, I want to triage unlabelled pull requests alongside issues so that my entire GitHub workload, including open PRs, is managed in one place. _(Issue #150)_
+- [x] As a solo developer, I want to triage unlabelled pull requests alongside issues so that my entire GitHub workload, including open PRs, is managed in one place. _(Issue #150 — completed 2026-05-08.)_
 
 **Enablers:**
 - [x] Triage session orchestration implemented on branch feature/issue-143-144-triage-session-and-github-actions. _(Issue #143; domain model and Application DTO/service orchestration complete; tests passing.)_

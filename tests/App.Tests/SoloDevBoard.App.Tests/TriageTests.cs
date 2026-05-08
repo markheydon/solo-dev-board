@@ -778,6 +778,91 @@ public sealed class TriageTests
     }
 
     [Fact]
+    public async Task Triage_StartSessionWithPullRequestMilestone_PreselectsMilestoneInDropdown()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreateRepository("owner", "repo")]);
+
+        var startedSession = CreateSession(
+            "owner",
+            "repo",
+            [
+                new TriageItemDto(
+                    TriageItemTypeDto.PullRequest,
+                    2202,
+                    2202,
+                    "owner/repo",
+                    "PR 2202",
+                    "https://github.com/owner/repo/pull/2202",
+                    "Body for PR 2202",
+                    "open",
+                    "markheydon",
+                    [],
+                    7,
+                    "v0.7.0",
+                    DateTimeOffset.UtcNow.AddDays(-3),
+                    DateTimeOffset.UtcNow.AddDays(-1)),
+            ],
+            currentIndex: 0,
+            skippedItems: []);
+
+        var milestoneAssignedSession = startedSession with
+        {
+            ActionHistory =
+            [
+                new TriageActionDto(TriageActionTypeDto.MilestoneAssigned, TriageItemTypeDto.PullRequest, 2202, "owner/repo", "Assigned milestone 'v0.7.0'.", DateTimeOffset.UtcNow),
+            ],
+            Summary = new TriageSessionSummaryDto(1, 0, 1, 0, 0, 1, 0, 0),
+        };
+
+        _triageServiceMock
+            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(startedSession);
+
+        _triageServiceMock
+            .Setup(service => service.GetMilestoneOptionsAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new TriageMilestoneOptionDto(7, "v0.7.0"),
+                new TriageMilestoneOptionDto(8, "v0.8.0"),
+            ]);
+
+        _triageServiceMock
+            .Setup(service => service.GetProjectBoardOptionsAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        _triageServiceMock
+            .Setup(service => service.AssignMilestoneToCurrentItemAsync(It.IsAny<TriageSessionDto>(), 7, "v0.7.0", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(milestoneAssignedSession);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Triage>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-repository-autocomplete']"));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo" }));
+
+        cut.Find("[data-testid='triage-start-session-button']").Click();
+
+        cut.WaitForAssertion(() => Assert.Contains("PR 2202", cut.Markup, StringComparison.Ordinal));
+
+        cut.Find("[data-testid='triage-assign-milestone-button']").Click();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Assigned milestone 'v0.7.0' to item #2202", cut.Markup, StringComparison.Ordinal);
+        });
+
+        // Assert
+        _triageServiceMock.Verify(
+            service => service.AssignMilestoneToCurrentItemAsync(It.IsAny<TriageSessionDto>(), 7, "v0.7.0", It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
     public async Task Triage_AddToProjectBoardClicked_AddsItemAndShowsSuccessMessage()
     {
         // Arrange
@@ -1128,13 +1213,83 @@ public sealed class TriageTests
         {
             Assert.NotEmpty(cut.FindAll("[data-testid='triage-session-complete-region']"));
             Assert.Contains("Processed 1 of 1 items. 1 skipped item(s) are available to revisit.", cut.Markup, StringComparison.Ordinal);
-            Assert.Contains("Issue #901 (owner/repo): Applied label 'type/story'.", cut.Markup, StringComparison.Ordinal);
-            Assert.Contains("Issue #901 (owner/repo): Assigned milestone 'v0.3.0'.", cut.Markup, StringComparison.Ordinal);
-            Assert.Contains("Issue #901 (owner/repo): Added to project board 'Roadmap' with status 'In Progress'.", cut.Markup, StringComparison.Ordinal);
-            Assert.Contains("Issue #902 (owner/repo): Closed as duplicate of '#321'.", cut.Markup, StringComparison.Ordinal);
-            Assert.Contains("Issue #902 (owner/repo): Skipped for later review. Reason: Waiting for product clarification", cut.Markup, StringComparison.Ordinal);
-            Assert.Contains("Issue #902 (owner/repo): Issue 902", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("Issue #901", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("(owner/repo): Applied label 'type/story'.", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("(owner/repo): Assigned milestone 'v0.3.0'.", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("(owner/repo): Added to project board 'Roadmap' with status 'In Progress'.", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("Issue #902", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("(owner/repo): Closed as duplicate of '#321'.", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("(owner/repo): Skipped for later review. Reason: Waiting for product clarification", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("(owner/repo): Issue 902", cut.Markup, StringComparison.Ordinal);
             Assert.NotEmpty(cut.FindAll("[data-testid='triage-revisit-skipped-button']"));
+        });
+    }
+
+    [Fact]
+    public async Task Triage_SessionCompleted_MixedIssueAndPullRequestSummaryEntries_RenderTypeSpecificGitHubLinks()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([CreateRepository("owner", "repo")]);
+
+        var completedSession = new TriageSessionDto(
+            Guid.NewGuid(),
+            "owner",
+            "repo",
+            false,
+            [CreateItem(1001, "Issue 1001", "owner/repo")],
+            1,
+            [
+                new TriageItemDto(
+                    TriageItemTypeDto.PullRequest,
+                    1002,
+                    1002,
+                    "owner/repo",
+                    "Pull request 1002",
+                    "https://github.com/owner/repo/pull/1002",
+                    "Body for pull request 1002",
+                    "open",
+                    "markheydon",
+                    [],
+                    null,
+                    string.Empty,
+                    DateTimeOffset.UtcNow.AddDays(-3),
+                    DateTimeOffset.UtcNow.AddDays(-1)),
+            ],
+            [],
+            new TriageSessionProgressDto(1, 1, 0, 1),
+            new TriageSessionSummaryDto(1, 1, 0, 1, 1, 1, 1, 1)
+            {
+                LabelActionDetails = ["Issue #1001 (owner/repo): Applied label 'type/story'."],
+                MilestoneActionDetails = ["Pull request #1002 (owner/repo): Assigned milestone 'v0.3.0'."],
+                ProjectActionDetails = ["Pull request #1002 (owner/repo): Added to project board 'Roadmap' with status 'In Progress'."],
+                DuplicateActionDetails = ["Issue #1001 (owner/repo): Closed as duplicate of '#999'."],
+                SkippedActionDetails = ["Pull request #1002 (owner/repo): Skipped for later review. Reason: Waiting for product clarification"],
+                SkippedItemDetails = ["Pull request #1002 (owner/repo): Pull request 1002"],
+            },
+            DateTimeOffset.UtcNow);
+
+        _triageServiceMock
+            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(completedSession);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Triage>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-repository-autocomplete']"));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo" }));
+
+        cut.Find("[data-testid='triage-start-session-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("href=\"https://github.com/owner/repo/issues/1001\"", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("href=\"https://github.com/owner/repo/pull/1002\"", cut.Markup, StringComparison.Ordinal);
         });
     }
 

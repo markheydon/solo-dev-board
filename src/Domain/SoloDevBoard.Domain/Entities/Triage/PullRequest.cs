@@ -1,3 +1,6 @@
+using SoloDevBoard.Domain.Entities.Labels;
+using SoloDevBoard.Domain.Entities.Milestones;
+
 namespace SoloDevBoard.Domain.Entities.Triage;
 
 /// <summary>Represents a GitHub pull request.</summary>
@@ -32,6 +35,12 @@ public sealed record PullRequest : IAggregate
 
     /// <summary>Gets a value indicating whether the pull request is a draft.</summary>
     public bool IsDraft { get; init; }
+
+    /// <summary>Gets the labels currently assigned to the pull request.</summary>
+    public IReadOnlyList<Label> Labels { get; init; } = [];
+
+    /// <summary>Gets the milestone currently assigned to the pull request, if present.</summary>
+    public Milestone? Milestone { get; init; }
 
     /// <summary>Gets the date and time when the pull request was created.</summary>
     public DateTimeOffset CreatedAt { get; init; }

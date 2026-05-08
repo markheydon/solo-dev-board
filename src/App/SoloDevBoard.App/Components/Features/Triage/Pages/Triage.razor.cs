@@ -20,6 +20,14 @@ public partial class Triage : ComponentBase
 
     private static readonly Regex hrefRegex = new("href=\"(?<url>[^\"]+)\"", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(100));
     private static readonly Regex imageRegex = new("<img[^>]*>", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(100));
+    private static readonly Regex summaryItemDetailRegex = new(
+        "^(?<itemType>Issue|Pull request) #(?<itemNumber>\\d+) [(](?<repository>[^)]+)[)]: (?<description>.+)$",
+        RegexOptions.CultureInvariant,
+        TimeSpan.FromMilliseconds(100));
+    private static readonly Dictionary<string, object> externalLinkUserAttributes = new()
+    {
+        ["rel"] = "noopener noreferrer",
+    };
 
     /// <summary>Gets or sets the repository service used to load available repository scope options.</summary>
     [Inject]
@@ -935,5 +943,60 @@ public partial class Triage : ComponentBase
     }
 
     private static string GetItemCountLabel(int count) => count == 1 ? "item" : "items";
+
+    private static bool TryCreateSummaryDetailLink(
+        string detail,
+        out string linkText,
+        out string linkUrl,
+        out string remainingDetail)
+    {
+        linkText = string.Empty;
+        linkUrl = string.Empty;
+        remainingDetail = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(detail))
+        {
+            return false;
+        }
+
+        Match match;
+
+        try
+        {
+            match = summaryItemDetailRegex.Match(detail);
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            return false;
+        }
+
+        if (!match.Success)
+        {
+            return false;
+        }
+
+        var itemType = match.Groups["itemType"].Value;
+        var itemNumber = match.Groups["itemNumber"].Value;
+        var repository = match.Groups["repository"].Value;
+        var description = match.Groups["description"].Value;
+
+        if (string.IsNullOrWhiteSpace(itemType)
+            || string.IsNullOrWhiteSpace(itemNumber)
+            || string.IsNullOrWhiteSpace(repository)
+            || string.IsNullOrWhiteSpace(description))
+        {
+            return false;
+        }
+
+        var itemPathSegment = string.Equals(itemType, "Pull request", StringComparison.Ordinal)
+            ? "pull"
+            : "issues";
+
+        linkText = $"{itemType} #{itemNumber}";
+        linkUrl = $"https://github.com/{repository}/{itemPathSegment}/{itemNumber}";
+        remainingDetail = $" ({repository}): {description}";
+
+        return true;
+    }
 
 }

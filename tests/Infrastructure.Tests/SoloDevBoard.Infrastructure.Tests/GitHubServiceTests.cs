@@ -299,6 +299,19 @@ public sealed class GitHubServiceTests
                     "body": "Description",
                     "state": "open",
                     "user": { "login": "mark" },
+                                        "labels": [
+                                            { "name": "type/story", "color": "1d76db", "description": "Story" }
+                                        ],
+                                        "milestone": {
+                                            "id": 400,
+                                            "number": 7,
+                                            "title": "v0.7.0",
+                                            "description": "Phase 3",
+                                            "state": "open",
+                                            "due_on": "2026-06-01T00:00:00Z",
+                                            "open_issues": 3,
+                                            "closed_issues": 5
+                                        },
                     "head": { "ref": "feature-branch" },
                     "base": { "ref": "main" },
                     "draft": true,
@@ -319,6 +332,11 @@ public sealed class GitHubServiceTests
         Assert.Equal("feature-branch", result[0].HeadBranch);
         Assert.Equal("main", result[0].BaseBranch);
         Assert.True(result[0].IsDraft);
+        Assert.Single(result[0].Labels);
+        Assert.Equal("type/story", result[0].Labels[0].Name);
+        var milestone = Assert.IsType<SoloDevBoard.Domain.Entities.Milestones.Milestone>(result[0].Milestone);
+        Assert.Equal(7, milestone.Number);
+        Assert.Equal("v0.7.0", milestone.Title);
         Assert.Equal("https://api.github.com/repos/owner/repo/pulls?state=all&per_page=100", handler.Requests[0].RequestUri!.ToString());
     }
 
