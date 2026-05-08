@@ -745,10 +745,6 @@ public sealed class TriageTests
 
         _triageServiceMock
             .Setup(service => service.AssignMilestoneToCurrentItemAsync(It.IsAny<TriageSessionDto>(), 7, "v0.7.0", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(startedSession);
-
-        _triageServiceMock
-            .Setup(service => service.AssignMilestoneToCurrentItemAsync(It.IsAny<TriageSessionDto>(), 7, "v0.7.0", It.IsAny<CancellationToken>()))
             .ReturnsAsync(milestoneAssignedSession);
 
         await using var ctx = CreateContext();
@@ -812,6 +808,15 @@ public sealed class TriageTests
             currentIndex: 0,
             skippedItems: []);
 
+        var milestoneAssignedSession = startedSession with
+        {
+            ActionHistory =
+            [
+                new TriageActionDto(TriageActionTypeDto.MilestoneAssigned, TriageItemTypeDto.PullRequest, 2202, "owner/repo", "Assigned milestone 'v0.7.0'.", DateTimeOffset.UtcNow),
+            ],
+            Summary = new TriageSessionSummaryDto(1, 0, 1, 0, 0, 1, 0, 0),
+        };
+
         _triageServiceMock
             .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
             .ReturnsAsync(startedSession);
@@ -827,6 +832,10 @@ public sealed class TriageTests
             .Setup(service => service.GetProjectBoardOptionsAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
+        _triageServiceMock
+            .Setup(service => service.AssignMilestoneToCurrentItemAsync(It.IsAny<TriageSessionDto>(), 7, "v0.7.0", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(milestoneAssignedSession);
+
         await using var ctx = CreateContext();
 
         // Act
@@ -841,6 +850,11 @@ public sealed class TriageTests
         cut.WaitForAssertion(() => Assert.Contains("PR 2202", cut.Markup, StringComparison.Ordinal));
 
         cut.Find("[data-testid='triage-assign-milestone-button']").Click();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Assigned milestone 'v0.7.0' to item #2202", cut.Markup, StringComparison.Ordinal);
+        });
 
         // Assert
         _triageServiceMock.Verify(
