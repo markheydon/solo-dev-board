@@ -388,7 +388,7 @@ async function determineStartDateAsync(issue, desiredStatusName, currentStartDat
     const closedDate = issue.closed_at?.slice(0, 10) ?? null;
 
     if (currentStartDate) {
-        if (desiredStatusName !== 'Done' || !closedDate || currentStartDate <= closedDate) {
+        if (desiredStatusName !== 'Done' || isDateBeforeOrEqualClosure(currentStartDate, closedDate)) {
             return currentStartDate;
         }
     }
@@ -400,7 +400,7 @@ async function determineStartDateAsync(issue, desiredStatusName, currentStartDat
     const firstInProgressDate = await findFirstInProgressDateAsync(issue.number, timelineCache);
 
     if (firstInProgressDate) {
-        if (!closedDate || firstInProgressDate <= closedDate) {
+        if (isDateBeforeOrEqualClosure(firstInProgressDate, closedDate)) {
             return firstInProgressDate;
         }
     }
@@ -693,6 +693,10 @@ function createRepositoryIssueFromProjectItem(issue) {
         milestone: issue.milestone ?? null,
         labels: issue.labels?.nodes ?? [],
     };
+}
+
+function isDateBeforeOrEqualClosure(date, closedDate) {
+    return !closedDate || date <= closedDate;
 }
 
 function addCalendarDays(startDate, calendarDays) {
