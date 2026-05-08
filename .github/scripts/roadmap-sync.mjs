@@ -58,17 +58,17 @@ async function main() {
     const projectItems = await fetchProjectItemsAsync();
     await removeStrayPullRequestCardsAsync(projectItems.pullRequestItems);
 
-    const issues = await fetchRepositoryIssuesAsync();
+    const repositoryIssues = await fetchRepositoryIssuesAsync();
     const timelineCache = new Map();
 
-    for (const issue of issues) {
+    for (const issue of repositoryIssues.issues) {
         await syncIssueAsync(issue, projectItems.issueItemsByContentId, timelineCache);
     }
 
     const refreshedProjectItems = await fetchProjectItemsAsync();
-    await syncParentIssuesAsync(refreshedProjectItems.issueItemsByContentId, timelineCache);
+    await syncParentIssuesAsync(refreshedProjectItems.issueItemsByContentId, repositoryIssues.issueByNumber, timelineCache);
 
-    console.log(`Roadmap sync complete for ${issues.length} issue(s).`);
+    console.log(`Roadmap sync complete for ${repositoryIssues.issues.length} issue(s).`);
 }
 
 async function fetchProjectItemsAsync() {
@@ -189,6 +189,7 @@ async function fetchProjectItemsAsync() {
 
 async function fetchRepositoryIssuesAsync() {
     const issues = [];
+    const issueByNumber = new Map();
     let page = 1;
 
     while (true) {
@@ -196,6 +197,9 @@ async function fetchRepositoryIssuesAsync() {
         const issuesOnly = pageIssues.filter(issue => !issue.pull_request);
 
         issues.push(...issuesOnly);
+        for (const issue of issuesOnly) {
+            issueByNumber.set(issue.number, issue);
+        }
 
         if (pageIssues.length < 100) {
             break;
@@ -204,11 +208,19 @@ async function fetchRepositoryIssuesAsync() {
         page += 1;
     }
 
-    return issues;
+    return { issues, issueByNumber };
 }
 
 async function syncIssueAsync(issue, issueItemsByContentId, timelineCache) {
     let projectItem = issueItemsByContentId.get(issue.node_id) ?? null;
+
+    if (isDuplicateClosedIssue(issue)) {
+        if (projectItem) {
+            await deleteProjectItemAsync(projectItem.id, `duplicate issue #${issue.number}`);
+        }
+
+        return;
+    }
 
     if (!projectItem) {
         const projectItemId = await addIssueToProjectAsync(issue.node_id);
@@ -260,7 +272,7 @@ async function syncIssueAsync(issue, issueItemsByContentId, timelineCache) {
     await clearFieldAsync(projectItem.id, fieldIds.focusOrder, projectItem.focusOrder?.number ?? null, `issue #${issue.number} focus order`);
 }
 
-async function syncParentIssuesAsync(issueItemsByContentId, timelineCache) {
+async function syncParentIssuesAsync(issueItemsByContentId, issueByNumber, timelineCache) {
     for (const projectItem of issueItemsByContentId.values()) {
         const issue = projectItem.content;
 
@@ -287,11 +299,11 @@ async function syncParentIssuesAsync(issueItemsByContentId, timelineCache) {
         const anyChildStarted = childStates.some(state => state === 'In Progress' || state === 'Done');
         const desiredStatusName = allChildrenDone ? 'Done' : anyChildStarted ? 'In Progress' : 'Todo';
 
-        const parentIssue = await fetchIssueByNumberAsync(issue.number);
+        const parentIssue = issueByNumber.get(issue.number) ?? createRepositoryIssueFromProjectItem(issue);
         const desiredPhaseOptionId = determinePhaseOptionId(parentIssue);
         const desiredPriorityOptionId = determinePriorityOptionId(parentIssue);
         const childStartDates = await Promise.all(
-            childItems.map(childItem => determineProjectItemStartDateAsync(childItem, timelineCache))
+            childItems.map(childItem => determineProjectItemStartDateAsync(childItem, issueByNumber, timelineCache))
         );
         const effectiveChildStartDates = childStartDates.filter(Boolean).sort();
         const effectiveChildTargetDates = childItems
@@ -338,6 +350,10 @@ function determineRoadmapStatus(issue, currentStatusName) {
     return 'Todo';
 }
 
+function isDuplicateClosedIssue(issue) {
+    return issue.state === 'closed' && issue.state_reason === 'duplicate';
+}
+
 function determinePhaseOptionId(issue) {
     const milestoneTitle = issue.milestone?.title ?? null;
 
@@ -369,8 +385,12 @@ function determinePriorityOptionId(issue) {
 }
 
 async function determineStartDateAsync(issue, desiredStatusName, currentStartDate, timelineCache) {
+    const closedDate = issue.closed_at?.slice(0, 10) ?? null;
+
     if (currentStartDate) {
-        return currentStartDate;
+        if (desiredStatusName !== 'Done' || !closedDate || currentStartDate <= closedDate) {
+            return currentStartDate;
+        }
     }
 
     if (desiredStatusName === 'Todo' || desiredStatusName === 'Up Next') {
@@ -380,22 +400,24 @@ async function determineStartDateAsync(issue, desiredStatusName, currentStartDat
     const firstInProgressDate = await findFirstInProgressDateAsync(issue.number, timelineCache);
 
     if (firstInProgressDate) {
-        return firstInProgressDate;
+        if (!closedDate || firstInProgressDate <= closedDate) {
+            return firstInProgressDate;
+        }
     }
 
-    if (desiredStatusName === 'Done' && issue.closed_at) {
-        return issue.closed_at.slice(0, 10);
+    if (desiredStatusName === 'Done' && closedDate) {
+        return closedDate;
     }
 
     return getRunDate();
 }
 
-async function determineProjectItemStartDateAsync(projectItem, timelineCache) {
+async function determineProjectItemStartDateAsync(projectItem, issueByNumber, timelineCache) {
     if (projectItem.startDate?.date) {
         return projectItem.startDate.date;
     }
 
-    const issue = await fetchIssueByNumberAsync(projectItem.content.number);
+    const issue = issueByNumber.get(projectItem.content.number) ?? createRepositoryIssueFromProjectItem(projectItem.content);
     return determineStartDateAsync(issue, determineRoadmapStatus(issue, projectItem.status?.name ?? null), null, timelineCache);
 }
 
@@ -465,18 +487,22 @@ async function addIssueToProjectAsync(contentId) {
     return response.addProjectV2ItemById.item.id;
 }
 
+async function deleteProjectItemAsync(itemId, label) {
+    await graphqlAsync(
+        `
+        mutation DeleteProjectItem($projectId: ID!, $itemId: ID!) {
+          deleteProjectV2Item(input: { projectId: $projectId, itemId: $itemId }) {
+            deletedItemId
+          }
+        }`,
+        { projectId, itemId });
+
+    console.log(`Removed ${label} from the roadmap project.`);
+}
+
 async function removeStrayPullRequestCardsAsync(pullRequestItems) {
     for (const projectItem of pullRequestItems) {
-        await graphqlAsync(
-            `
-            mutation DeleteProjectItem($projectId: ID!, $itemId: ID!) {
-              deleteProjectV2Item(input: { projectId: $projectId, itemId: $itemId }) {
-                deletedItemId
-              }
-            }`,
-            { projectId, itemId: projectItem.id });
-
-        console.log(`Removed stray pull request card for #${projectItem.content.number}.`);
+        await deleteProjectItemAsync(projectItem.id, `stray pull request card for #${projectItem.content.number}`);
     }
 }
 
@@ -565,10 +591,6 @@ async function clearFieldAsync(itemId, fieldId, currentValue, label) {
         { projectId, itemId, fieldId });
 
     console.log(`Cleared ${label}.`);
-}
-
-async function fetchIssueByNumberAsync(issueNumber) {
-    return restAsync(`/repos/${owner}/${repo}/issues/${issueNumber}`);
 }
 
 async function findFirstInProgressDateAsync(issueNumber, timelineCache) {
@@ -660,6 +682,17 @@ function getLabelNames(issue) {
     }
 
     return new Set((issue.labels.nodes ?? []).map(label => label.name));
+}
+
+function createRepositoryIssueFromProjectItem(issue) {
+    return {
+        number: issue.number,
+        state: issue.state?.toLowerCase() === 'closed' ? 'closed' : 'open',
+        state_reason: null,
+        closed_at: issue.closedAt ?? null,
+        milestone: issue.milestone ?? null,
+        labels: issue.labels?.nodes ?? [],
+    };
 }
 
 function addCalendarDays(startDate, calendarDays) {

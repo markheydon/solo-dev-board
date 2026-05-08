@@ -28,7 +28,6 @@ The bridge consists of:
 The workflow:
 
 - runs on issue lifecycle events relevant to roadmap state,
-- runs on selected pull request events to remove stray pull request cards,
 - runs on a daily schedule as a hygiene backstop, and
 - supports manual dispatch for operator-initiated repair runs.
 
@@ -44,7 +43,7 @@ The bridge is responsible for:
 
 ## Rationale
 
-Running the bridge in GitHub Actions keeps the automation close to the authoritative issue and pull request events, rather than depending on whichever credentials happen to exist in a local agent session.
+Running the bridge in GitHub Actions keeps the automation close to the authoritative issue events, rather than depending on whichever credentials happen to exist in a local agent session.
 
 Using a separate bridge also improves reliability:
 

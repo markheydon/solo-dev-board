@@ -236,4 +236,4 @@ To enable it:
    - `public_repo` for public-repository issue and pull request reads. Use `repo` instead if the repository is ever made private.
 3. Save the token as the repository secret `ROADMAP_PROJECT_TOKEN`.
 
-Once configured, the bridge workflow keeps the roadmap board aligned from issue and pull request lifecycle events, scheduled hygiene runs, and manual dispatch.
+Once configured, the bridge workflow keeps the roadmap board aligned from issue lifecycle events, scheduled hygiene runs, and manual dispatch.

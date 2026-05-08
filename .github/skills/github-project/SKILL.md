@@ -384,7 +384,7 @@ gh project view 8 --owner markheydon --web
 
 ### GitHub Actions bridge
 
-This repository also carries `.github/workflows/roadmap-sync.yml`, which exists specifically because user-owned Projects v2 boards cannot always be updated directly from every agent runtime. The bridge workflow runs on issue lifecycle changes, selected pull request events, scheduled audits, and manual dispatch, then reconciles:
+This repository also carries `.github/workflows/roadmap-sync.yml`, which exists specifically because user-owned Projects v2 boards cannot always be updated directly from every agent runtime. The bridge workflow runs on issue lifecycle changes, scheduled audits, and manual dispatch, then reconciles:
 
 - missing roadmap items,
 - Status / Phase / Priority field drift,
