@@ -51,4 +51,4 @@ jobs:
           node-version: "24"
 
       - name: Run ESLint for GitHub scripts
-        run: npx --yes eslint@9.0.0 --config .github/eslint.config.mjs .github/scripts/**/*.mjs
+        run: npx --yes eslint@9.0.0 --config .github/eslint.config.mjs '.github/scripts/**/*.mjs'
