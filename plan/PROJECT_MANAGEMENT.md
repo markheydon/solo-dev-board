@@ -43,6 +43,13 @@ Created → [status/todo] → [status/in-progress] → [status/in-review] → [s
 
 The issue lifecycle labels remain the source of truth for GitHub Issues. The project board may show an additional planning state, **Up Next**, but that state is board-only and does not have a matching GitHub issue label.
 
+Roadmap date handling follows the same lifecycle:
+
+- **Todo** items stay blank until work actually starts.
+- **In Progress** items must have a **Start Date** and a size-based **Target Date** forecast.
+- **Done** items keep their **Start Date** and replace **Target Date** with the actual completion date.
+- Parent Features and Epics inherit their first **Start Date** when the first child starts; untouched sibling issues remain blank until they begin.
+
 ### Linking Issues to PRs
 
 Reference the issue in your PR description using `Closes #<issue-number>` so GitHub automatically closes the issue when the PR is merged.
@@ -88,6 +95,8 @@ SoloDevBoard uses a single **GitHub Projects (v2)** board called "SoloDevBoard".
 
 - The roadmap board is **issue-driven**. Issues are the primary planning and delivery records.
 - Copilot agents own deliberate board changes such as adding planned issues, setting `Phase` and `Priority`, moving items through `Todo` / `Up Next` / `In Progress` / `Done`, and maintaining dates.
+- `.github/workflows/roadmap-sync.yml` is the operational bridge for the user-owned roadmap board. It reconciles board metadata from issue lifecycle events plus scheduled and manual hygiene runs when direct project-board credentials are unavailable to the current agent runtime.
+- Weekly governance must also audit board hygiene: missing dates on active or done items, invalid date pairs, roadmap issues missing from the board, and stray pull request cards.
 - GitHub project workflows are kept intentionally narrow and issue-centric so they act as safety nets rather than competing sources of truth.
 - Standalone pull request cards do not belong on the main roadmap board. A linked pull request should be visible through the board's **Linked pull requests** field on the issue item instead.
 - `Auto-add to project` should remain disabled for this board, because it adds raw issues and pull requests before the planned metadata is applied.

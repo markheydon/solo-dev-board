@@ -1,0 +1,55 @@
+name: Roadmap Sync
+
+on:
+  issues:
+    types:
+      - opened
+      - reopened
+      - edited
+      - closed
+      - labeled
+      - unlabeled
+      - milestoned
+      - demilestoned
+  workflow_dispatch:
+  schedule:
+    - cron: "17 5 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: roadmap-sync
+  cancel-in-progress: true
+
+jobs:
+  sync-roadmap:
+    name: Sync SoloDevBoard Roadmap
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Validate roadmap automation token
+        shell: bash
+        env:
+          ROADMAP_PROJECT_TOKEN: ${{ secrets.ROADMAP_PROJECT_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${ROADMAP_PROJECT_TOKEN}" ]; then
+            echo "::error::ROADMAP_PROJECT_TOKEN is not configured. Add a classic PAT with at least the 'project' scope so the roadmap bridge can manage the user-owned project."
+            exit 1
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Sync roadmap board
+        env:
+          ROADMAP_PROJECT_TOKEN: ${{ secrets.ROADMAP_PROJECT_TOKEN }}
+        run: node .github/scripts/roadmap-sync.mjs

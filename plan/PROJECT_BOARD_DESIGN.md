@@ -31,7 +31,7 @@ This document defines the design of the SoloDevBoard GitHub Projects (v2) board,
 | **Phase** | Maps issues to the implementation phase via milestone. |
 | **Priority** | Mirrors the issue's delivery priority. |
 | **Focus Order** | Numeric sequence for the current **Up Next** batch on the Story Board only. |
-| **Start Date / Target Date** | Actual start and completion tracking plus size-based estimates once work begins. |
+| **Start Date / Target Date** | Blank while an item is still untouched in **Todo**; record the actual start plus the active forecast once work begins, then overwrite Target Date with the actual completion date when the item is done. |
 
 Rules for **Focus Order**:
 - Apply it only to stories, enablers, and tests.
@@ -44,6 +44,8 @@ Rules for **Focus Order**:
 ## Automation Rules
 
 The following automation rules are configured on the board. These are documented here so that the **Board Rules Visualiser** feature can use them as a reference implementation.
+
+**Operational note:** The board uses a repository-owned GitHub Actions bridge workflow (`.github/workflows/roadmap-sync.yml`) to apply and repair the roadmap metadata on the user-owned Project. This keeps the roadmap manageable even when a local agent runtime cannot mutate the Project directly.
 
 ### Issue Created
 - **Trigger:** A new planned issue is created or explicitly added by an agent.
@@ -58,9 +60,14 @@ The following automation rules are configured on the board. These are documented
 - **Action:** Keep the linked issue in its current execution state on the board; apply `status/in-review` label and rely on the linked pull request field for review visibility.
 - **Board rule:** Do not add the pull request itself to the roadmap board as a standalone card.
 
+### Issue Started
+- **Trigger:** Delivery starts on a story, enabler, test, feature, or bug.
+- **Action:** Move the issue to **In Progress**, set **Start Date** to the actual start date, and set **Target Date** using the size calibration in `.github/skills/github-project/SKILL.md`.
+- **Board rule:** Leave untouched sibling items blank until they start; do not auto-forecast their dates during normal delivery.
+
 ### Pull Request Merged
 - **Trigger:** A pull request is merged to `main`.
-- **Action:** Move the linked issue to **Done**; close the issue; apply `status/done` label.
+- **Action:** Move the linked issue to **Done**; close the issue; apply `status/done` label; overwrite **Target Date** with the actual completion date.
 - **Board rule:** The merged pull request remains attached through the linked pull request field only; it is not kept as a separate roadmap item.
 
 ### Current Default Workflow Settings
@@ -78,11 +85,15 @@ The following automation rules are configured on the board. These are documented
 
 ### Issue Closed (Not as Duplicate)
 - **Trigger:** An issue is closed without being marked as a duplicate.
-- **Action:** Move the issue to **Done**; apply `status/done` label if not already present.
+- **Action:** Move the issue to **Done**; apply `status/done` label if not already present; ensure **Target Date** reflects the actual close date.
 
 ### Issue Closed as Duplicate
 - **Trigger:** An issue is closed as a duplicate (via the Triage UI or manually).
 - **Action:** Remove from the board (do not add to Done).
+
+### Weekly Board Hygiene Audit
+- **Trigger:** Weekly PM review, or any time the roadmap view appears inconsistent.
+- **Action:** Backfill missing Start Date / Target Date values for active or done items, correct invalid date pairs, remove stray pull request cards, and add missing planned issues back to the roadmap board.
 
 ---
 
@@ -92,6 +103,7 @@ The following automation rules are configured on the board. These are documented
 - **Pull Requests** linked to issues (via `Closes #N` in the PR body) update the linked issue's column automatically via the rules above and appear through the **Linked pull requests** field, not as standalone roadmap cards.
 - **Unlinked PRs** (no linked issue) are tracked separately and should not appear on the main board. Use a separate view or filter.
 - If a pull request card appears on the roadmap board because of an accidentally enabled workflow or manual add, remove it unless you are intentionally using a separate PR review view.
+- **Todo issues** may legitimately have blank Start Date and Target Date values until work begins. **In Progress** and **Done** items should not.
 
 ---
 

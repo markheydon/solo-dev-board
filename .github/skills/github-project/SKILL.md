@@ -14,6 +14,7 @@ Centralised reference and command patterns for maintaining the **SoloDevBoard Ro
 - Prefer `gh project item-edit` over raw GraphQL mutations when the CLI supports the field update directly.
 - Default to bash-safe command patterns in WSL or Linux terminals.
 - Do not use PowerShell backtick escaping, `Get-Date`, `Out-Null`, or `ConvertFrom-Json` in bash sessions.
+- If direct project authentication is unavailable to the agent, rely on the `roadmap-sync.yml` GitHub Actions bridge by updating the underlying issue or pull request state and then letting the workflow reconcile the user-owned roadmap board.
 
 ---
 
@@ -109,8 +110,8 @@ Determine the correct **Phase** option from the issue's milestone or area label:
 | Lifecycle Event | Start Date | Target Date |
 |-----------------|------------|-------------|
 | Event 1: Issue Created | **Not set** | **Not set** |
-| Event 2: Work Started (first story in hierarchy) | Today (actual) | Today + size estimate (see table below) |
-| Event 2 cascade: Parent Feature/Epic (first start) | Today (inherited) | Latest sibling Target Date (recalculated from today) |
+| Event 2: Work Started (issue being delivered now) | Today (actual) | Today + size estimate (see table below) |
+| Event 2a: Parent Feature/Epic first child started | Today (inherited) | Latest dated child Target Date currently known |
 | Event 3: Issue Closed | Unchanged | Today (actual completion) |
 | Event 3a: Cascade closure of Feature/Epic | Unchanged | Today (actual completion) |
 
@@ -128,18 +129,16 @@ Determine the correct **Phase** option from the issue's milestone or area label:
 
 **Target Date rule:** `Target Date = Start Date + calendar days` from the table above. For an `xs` or `s` item starting on a Monday, Target Date = Tuesday. For an `m` item starting Monday, Target Date = Thursday.
 
-### Date Cascade on First Start
+### Date Discipline
 
-When the **first story/enabler/test** within a Feature is started, apply the full date cascade:
+Roadmap dates are intentionally conservative and should be easy to keep correct:
 
-1. **Started issue** — Start Date = today; Target Date = today + size_estimate
-2. **Each unstarted sibling** (in blocking/dependency order, ascending issue number as tiebreak):
-   - Start Date = previous issue's Target Date + 1 day
-   - Target Date = Start Date + size_estimate
-3. **Parent Feature** — Start Date = today (if not already set); Target Date = latest sibling Target Date
-4. **Parent Epic** — Start Date = today (if not already set); Target Date = latest Feature Target Date
+1. **Started issue** — Set Start Date = today and Target Date = today + size estimate.
+2. **Parent Feature / Epic** — When the first child starts, set parent Start Date = today if blank and set Target Date = the latest dated child Target Date currently known.
+3. **Unstarted siblings** — Leave Start Date and Target Date blank until that sibling actually starts. Do not auto-forecast untouched siblings as part of normal delivery.
+4. **Done items** — Preserve Start Date and replace Target Date with the actual completion date when the issue closes.
 
-Skip any sibling already "In Progress" or "Done" — do not alter its dates. If a second story in the same Feature starts independently (parallel work), apply Event 2 to that story only; the Feature already has dates set.
+This keeps the roadmap aligned with actual delivery signals and avoids speculative sibling forecasts drifting out of date.
 
 ---
 
@@ -264,19 +263,19 @@ gh project item-edit \
 
 Also update the issue label:
 
-```powershell
-gh issue edit $issueNumber --repo markheydon/solo-dev-board --remove-label "status/todo" --add-label "status/in-progress"
+```bash
+gh issue edit "$issueNumber" --repo markheydon/solo-dev-board --remove-label "status/todo" --add-label "status/in-progress"
 ```
 
-**If this is the first story started within its Feature**, also apply the sibling and parent date cascade (see "Date Cascade on First Start" above). For each unstarted sibling, calculate its Start Date as the previous issue's Target Date + 1 day, then its Target Date from its own size label. Then apply Event 2a to set the parent Feature and Epic Start Date = today and Target Date = latest sibling Target Date.
+**If this is the first story started within its Feature**, also apply Event 2a to set the parent Feature and Epic Start Date = today and Target Date = the latest dated child Target Date currently known. Leave unstarted siblings blank until they actually begin work.
 
 ---
 
 ### Event 2a: Cascade "In Progress" to Parent Feature and Epic (Delivery Agent responsibility)
 
 When starting work on a Story, Enabler, or Test, check whether the parent Feature and Epic are still "Todo" on the project board. If so:
-1. Move them to "In Progress" and set their Start Date = today
-2. Set their Target Date = the latest Target Date among all child issues (after applying Event 2 size estimates to unstarted siblings)
+1. Move them to "In Progress" and set their Start Date = today.
+2. Set their Target Date = the latest Target Date among child issues that already have dates.
 
 This is a **one-time transition** — once a parent is "In Progress" it remains so until all children are done and it is closed. This rule exists because Features and Epics have no direct implementation start — they transition when the **first child issue** begins work.
 
@@ -349,6 +348,26 @@ gh project item-edit --id "$feature_item_id" --project-id "PVT_kwHOAJefG84BQ6bh"
 
 ---
 
+### Event 4: Weekly Board Hygiene Audit (PM Orchestrator responsibility)
+
+Run this during the weekly review, after unusual manual board edits, or whenever the roadmap view looks wrong.
+
+Audit for:
+
+1. **In Progress / Done items missing Start Date** — backfill Start Date from the earliest verifiable implementation signal:
+   - issue timeline status change, or
+   - linked PR open date, or
+   - first implementation commit date, or
+   - issue close date as a conservative fallback.
+2. **Done items missing Target Date** — set Target Date = actual issue close date.
+3. **Impossible date pairs** — if `Start Date > Target Date`, correct Target Date to the actual close date for done items or recalculate from the issue's current size label for active items.
+4. **Standalone PR cards** — remove pull requests accidentally added as roadmap items.
+5. **Planned issues missing from the board** — add the issue, then apply the appropriate lifecycle state and dates.
+
+Historical backfills should prefer accurate actuals, but a conservative same-day Start/Target pair is acceptable when the close date is the only reliable evidence left.
+
+---
+
 ## Checking Project State
 
 List all items and their current state:
@@ -362,6 +381,18 @@ View the roadmap in the browser:
 ```bash
 gh project view 8 --owner markheydon --web
 ```
+
+### GitHub Actions bridge
+
+This repository also carries `.github/workflows/roadmap-sync.yml`, which exists specifically because user-owned Projects v2 boards cannot always be updated directly from every agent runtime. The bridge workflow runs on issue lifecycle changes, scheduled audits, and manual dispatch, then reconciles:
+
+- missing roadmap items,
+- Status / Phase / Priority field drift,
+- Start Date / Target Date drift,
+- parent Feature / Epic roll-up dates, and
+- stray standalone pull request cards.
+
+Prefer direct project updates when you have working credentials. Use the bridge as the reliability layer and fallback path.
 
 ---
 
@@ -381,6 +412,7 @@ Map `priority/` labels to project Priority option IDs:
 ## Important Notes
 
 - **Always** add new issues to the project board immediately after creation — never leave issues untracked.
+- **Always** treat date hygiene as part of workflow completion. Do not consider delivery or review complete while the linked roadmap item still has missing or invalid dates that should already be populated.
 - Use **Up Next** only when the user explicitly wants a visible short-horizon execution queue.
 - Use **Focus Order** only on Story Board items in **Up Next**.
 - In WSL or Linux terminals, prefer the bash patterns in this file over PowerShell syntax.
@@ -390,3 +422,4 @@ Map `priority/` labels to project Priority option IDs:
 - The **Milestone** and **Labels** fields sync automatically from the issue — no manual action needed.
 - If an issue is split into sub-issues, add all sub-issues to the project as well.
 - The **Sub-issues progress** field updates automatically from GitHub's sub-issue tracking.
+- Leave untouched **Todo** siblings blank unless the user explicitly asks for a forecasting exercise; the normal workflow records actual starts, active forecasts, and actual finishes only.
