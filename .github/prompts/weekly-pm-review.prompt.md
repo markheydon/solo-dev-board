@@ -247,6 +247,7 @@ Also provide the **manual values for the dialog**:
 At the start of the **first review of a new phase** (or when the project description/README are stale), produce the following `gh` commands for the user to run once:
 
 ```bash
+# Run these once when the project description or README genuinely needs refreshing.
 # Update short description
 gh project edit 8 --owner markheydon --description "[concise one-liner]"
 

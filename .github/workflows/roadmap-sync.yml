@@ -24,8 +24,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: roadmap-sync-${{ github.workflow }}-${{ github.event.issue.number || github.event.pull_request.number || github.ref || github.run_id }}
-  cancel-in-progress: true
+  group: roadmap-sync
+  cancel-in-progress: false
 
 jobs:
   sync-roadmap:

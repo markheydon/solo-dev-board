@@ -46,7 +46,6 @@ const priorityOptionsByLabel = new Map([
 ]);
 
 const roadmapStates = new Set(['Todo', 'Up Next', 'In Progress', 'Done']);
-const runDate = new Date().toISOString().slice(0, 10);
 const token = process.env.ROADMAP_PROJECT_TOKEN;
 
 if (!token) {
@@ -388,7 +387,7 @@ async function determineStartDateAsync(issue, desiredStatusName, currentStartDat
         return issue.closed_at.slice(0, 10);
     }
 
-    return runDate;
+    return getRunDate();
 }
 
 async function determineProjectItemStartDateAsync(projectItem, timelineCache) {
@@ -406,7 +405,7 @@ function determineTargetDate(issue, desiredStatusName, startDate) {
     }
 
     if (desiredStatusName === 'Done') {
-        return issue.closed_at?.slice(0, 10) ?? startDate ?? runDate;
+        return issue.closed_at?.slice(0, 10) ?? startDate ?? getRunDate();
     }
 
     if (!startDate) {
@@ -578,9 +577,17 @@ async function findFirstInProgressDateAsync(issueNumber, timelineCache) {
     }
 
     const timeline = await fetchIssueTimelineAsync(issueNumber);
-    const inProgressLabelEvent = timeline
-        .filter(event => event.event === 'labeled' && event.label?.name === 'status/in-progress')
-        .sort((left, right) => left.created_at.localeCompare(right.created_at))[0];
+    const inProgressLabelEvent = timeline.reduce((earliest, event) => {
+        if (event.event !== 'labeled' || event.label?.name !== 'status/in-progress') {
+            return earliest;
+        }
+
+        if (!earliest || event.created_at < earliest.created_at) {
+            return event;
+        }
+
+        return earliest;
+    }, null);
 
     const firstInProgressDate = inProgressLabelEvent?.created_at?.slice(0, 10) ?? null;
     timelineCache.set(issueNumber, firstInProgressDate);
@@ -619,7 +626,7 @@ async function graphqlAsync(query, variables) {
 
     const payload = await response.json();
 
-    if (!response.ok || payload.errors?.length) {
+    if (!response.ok || (payload.errors && payload.errors.length > 0)) {
         throw new Error(`GraphQL request failed: ${JSON.stringify(payload.errors ?? payload, null, 2)}`);
     }
 
@@ -659,4 +666,8 @@ function addCalendarDays(startDate, calendarDays) {
     const date = new Date(`${startDate}T00:00:00.000Z`);
     date.setUTCDate(date.getUTCDate() + calendarDays);
     return date.toISOString().slice(0, 10);
+}
+
+function getRunDate() {
+    return new Date().toISOString().slice(0, 10);
 }
