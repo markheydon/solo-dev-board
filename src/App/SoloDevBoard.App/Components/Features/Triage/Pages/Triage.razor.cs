@@ -24,6 +24,10 @@ public partial class Triage : ComponentBase
         "^(?<itemType>Issue|Pull request) #(?<itemNumber>\\d+) [(](?<repository>[^)]+)[)]: (?<description>.+)$",
         RegexOptions.CultureInvariant,
         TimeSpan.FromMilliseconds(100));
+    private static readonly Dictionary<string, object> externalLinkUserAttributes = new()
+    {
+        ["rel"] = "noopener noreferrer",
+    };
 
     /// <summary>Gets or sets the repository service used to load available repository scope options.</summary>
     [Inject]
