@@ -223,19 +223,3 @@ A high-level summary:
    ```
 4. Configure the GitHub token in Key Vault (see `infra/README.md`).
 5. The CD pipeline (`.github/workflows/cd.yml`) handles subsequent deployments on push to `main`.
-
-## Roadmap Automation Bridge (repository maintainers only)
-
-You do **not** need a roadmap automation token to run or deploy the SoloDevBoard application.
-
-SoloDevBoard's roadmap board is a **user-owned** GitHub Projects v2 board. Because that board cannot always be updated directly from every agent runtime, the repository includes `.github/workflows/roadmap-sync.yml` as a GitHub Actions bridge for repository maintainers and for developers who fork the repository and want to keep a similar AI-managed project workflow.
-
-Only enable this bridge if you are maintaining the repository's roadmap automation:
-
-1. Create a **classic** Personal Access Token for the repository owner.
-2. Grant at least:
-    - `project` so the workflow can query and mutate the user-owned roadmap project.
-    - `public_repo` for public-repository issue and pull request reads. Use `repo` instead if the repository is ever made private.
-3. Save the token as the repository secret `ROADMAP_PROJECT_TOKEN`.
-
-Once configured, the bridge workflow keeps the maintainer-owned roadmap board aligned from issue lifecycle events, scheduled hygiene runs, and manual dispatch.
