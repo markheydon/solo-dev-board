@@ -30,7 +30,9 @@ public sealed class TriageService : ITriageService
         if (includePullRequests)
         {
             var pullRequests = await _gitHubService.GetPullRequestsAsync(owner, repo, cancellationToken).ConfigureAwait(false);
-            queue.AddRange(pullRequests.Select(pullRequest => ToDomainPullRequestItem(owner, repo, pullRequest)));
+            queue.AddRange(pullRequests
+                .Where(pullRequest => pullRequest.Labels.Count == 0)
+                .Select(pullRequest => ToDomainPullRequestItem(owner, repo, pullRequest)));
         }
 
         var orderedQueue = queue
@@ -597,8 +599,8 @@ public sealed class TriageService : ITriageService
             Body = pullRequest.Body,
             State = pullRequest.State,
             AuthorLogin = pullRequest.AuthorLogin,
-            Labels = [],
-            Milestone = null,
+            Labels = pullRequest.Labels,
+            Milestone = pullRequest.Milestone,
             CreatedAt = pullRequest.CreatedAt,
             UpdatedAt = pullRequest.UpdatedAt,
         };

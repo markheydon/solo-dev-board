@@ -397,7 +397,18 @@
                                     <MudList T="string" Dense="true">
                                         @foreach (var detail in currentSession.Summary.LabelActionDetails)
                                         {
-                                            <MudListItem T="string" Text="@detail" />
+                                            @if (TryCreateSummaryDetailLink(detail, out var linkText, out var linkUrl, out var remainingDetail))
+                                            {
+                                                <MudListItem T="string">
+                                                    <MudText Typo="Typo.body2">
+                                                        <MudLink Href="@linkUrl" Target="_blank">@linkText</MudLink>@remainingDetail
+                                                    </MudText>
+                                                </MudListItem>
+                                            }
+                                            else
+                                            {
+                                                <MudListItem T="string" Text="@detail" />
+                                            }
                                         }
                                     </MudList>
                                 }
@@ -417,7 +428,18 @@
                                     <MudList T="string" Dense="true">
                                         @foreach (var detail in currentSession.Summary.MilestoneActionDetails)
                                         {
-                                            <MudListItem T="string" Text="@detail" />
+                                            @if (TryCreateSummaryDetailLink(detail, out var linkText, out var linkUrl, out var remainingDetail))
+                                            {
+                                                <MudListItem T="string">
+                                                    <MudText Typo="Typo.body2">
+                                                        <MudLink Href="@linkUrl" Target="_blank">@linkText</MudLink>@remainingDetail
+                                                    </MudText>
+                                                </MudListItem>
+                                            }
+                                            else
+                                            {
+                                                <MudListItem T="string" Text="@detail" />
+                                            }
                                         }
                                     </MudList>
                                 }
@@ -437,7 +459,18 @@
                                     <MudList T="string" Dense="true">
                                         @foreach (var detail in currentSession.Summary.ProjectActionDetails)
                                         {
-                                            <MudListItem T="string" Text="@detail" />
+                                            @if (TryCreateSummaryDetailLink(detail, out var linkText, out var linkUrl, out var remainingDetail))
+                                            {
+                                                <MudListItem T="string">
+                                                    <MudText Typo="Typo.body2">
+                                                        <MudLink Href="@linkUrl" Target="_blank">@linkText</MudLink>@remainingDetail
+                                                    </MudText>
+                                                </MudListItem>
+                                            }
+                                            else
+                                            {
+                                                <MudListItem T="string" Text="@detail" />
+                                            }
                                         }
                                     </MudList>
                                 }
@@ -457,7 +490,18 @@
                                     <MudList T="string" Dense="true">
                                         @foreach (var detail in currentSession.Summary.DuplicateActionDetails)
                                         {
-                                            <MudListItem T="string" Text="@detail" />
+                                            @if (TryCreateSummaryDetailLink(detail, out var linkText, out var linkUrl, out var remainingDetail))
+                                            {
+                                                <MudListItem T="string">
+                                                    <MudText Typo="Typo.body2">
+                                                        <MudLink Href="@linkUrl" Target="_blank">@linkText</MudLink>@remainingDetail
+                                                    </MudText>
+                                                </MudListItem>
+                                            }
+                                            else
+                                            {
+                                                <MudListItem T="string" Text="@detail" />
+                                            }
                                         }
                                     </MudList>
                                 }
@@ -477,7 +521,18 @@
                                     <MudList T="string" Dense="true">
                                         @foreach (var detail in currentSession.Summary.SkippedActionDetails)
                                         {
-                                            <MudListItem T="string" Text="@detail" />
+                                            @if (TryCreateSummaryDetailLink(detail, out var linkText, out var linkUrl, out var remainingDetail))
+                                            {
+                                                <MudListItem T="string">
+                                                    <MudText Typo="Typo.body2">
+                                                        <MudLink Href="@linkUrl" Target="_blank">@linkText</MudLink>@remainingDetail
+                                                    </MudText>
+                                                </MudListItem>
+                                            }
+                                            else
+                                            {
+                                                <MudListItem T="string" Text="@detail" />
+                                            }
                                         }
                                     </MudList>
                                 }
@@ -497,7 +552,18 @@
                                     <MudList T="string" Dense="true">
                                         @foreach (var detail in currentSession.Summary.SkippedItemDetails)
                                         {
-                                            <MudListItem T="string" Text="@detail" />
+                                            @if (TryCreateSummaryDetailLink(detail, out var linkText, out var linkUrl, out var remainingDetail))
+                                            {
+                                                <MudListItem T="string">
+                                                    <MudText Typo="Typo.body2">
+                                                        <MudLink Href="@linkUrl" Target="_blank">@linkText</MudLink>@remainingDetail
+                                                    </MudText>
+                                                </MudListItem>
+                                            }
+                                            else
+                                            {
+                                                <MudListItem T="string" Text="@detail" />
+                                            }
                                         }
                                     </MudList>
                                 }

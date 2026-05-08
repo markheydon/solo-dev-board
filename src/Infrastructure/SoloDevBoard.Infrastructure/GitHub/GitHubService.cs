@@ -833,6 +833,12 @@ public sealed class GitHubService : IGitHubService
         [JsonPropertyName("draft")]
         public bool IsDraft { get; init; }
 
+        [JsonPropertyName("labels")]
+        public List<LabelResponseDto> Labels { get; init; } = [];
+
+        [JsonPropertyName("milestone")]
+        public MilestoneResponseDto? Milestone { get; init; }
+
         [JsonPropertyName("created_at")]
         public DateTimeOffset CreatedAt { get; init; }
 
@@ -851,6 +857,8 @@ public sealed class GitHubService : IGitHubService
             HeadBranch = Head?.ReferenceName ?? string.Empty,
             BaseBranch = Base?.ReferenceName ?? string.Empty,
             IsDraft = IsDraft,
+            Labels = Labels.ConvertAll(static label => label.ToDomain()),
+            Milestone = Milestone?.ToDomain(),
             CreatedAt = CreatedAt,
             UpdatedAt = UpdatedAt,
         };

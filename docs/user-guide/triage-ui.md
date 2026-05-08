@@ -8,11 +8,12 @@ nav_order: 5
 
 ## Overview
 
-The Triage UI enables you to work through untriaged GitHub items for a single selected repository in a focused, step-by-step session. Unlabelled issues are always included, and you can optionally include pull requests in the same queue.
+The Triage UI enables you to work through untriaged GitHub items for a single selected repository in a focused, step-by-step session. Unlabelled issues are always included, and you can optionally include unlabelled pull requests in the same queue.
 
 Key features:
 - You can start a triage session for one repository at a time.
-- The queue includes unlabelled issues, with an option to include pull requests.
+- The queue includes unlabelled issues, with an option to include unlabelled pull requests. When enabled, both types appear in the same queue.
+- Each item in the queue displays a clear item-type indicator: **Issue** or **Pull request**.
 - The interface shows your current position (e.g., Item 3 of 10), a remaining count, and a progress indicator.
 - Use the **Quick Label** field to search and select a label, then click **Apply + next** to apply it and move on.
 - Click **Next** to advance without making any change to the current item.
@@ -21,12 +22,14 @@ Key features:
 ## How to Use
 
 1. Select a repository to start a triage session.
-2. The Triage UI queues all unlabelled issues for that repository.
+2. The Triage UI queues all unlabelled issues for that repository. If pull request inclusion is enabled, unlabelled pull requests are also included in the queue.
 3. Review each item in turn, then either:
-   - Search for a label in the **Quick Label** field and click **Apply + next** to label the issue and advance, or
+   - Search for a label in the **Quick Label** field and click **Apply + next** to label the item and advance, or
    - Click **Next** to advance to the next item without applying a label.
 4. The session completes once all queued items have been processed.
 5. Use the progress indicator and session context to track your position and the number of remaining items.
+
+When both issues and pull requests are present, the queue operates in a mixed mode, but you still triage one item at a time using the same action surface. Where supported by GitHub, all actions are available for both item types.
 
 
 

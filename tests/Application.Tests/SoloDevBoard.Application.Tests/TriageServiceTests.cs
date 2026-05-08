@@ -109,6 +109,119 @@ public sealed class TriageServiceTests
     }
 
     [Fact]
+    public async Task StartSessionAsync_IncludePullRequestsWithLabelledPullRequest_ExcludesLabelledPullRequestFromQueue()
+    {
+        // Arrange
+        _gitHubServiceMock
+            .Setup(service => service.GetIssuesAsync("owner", "repo", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new Issue { Id = 1, Number = 11, Title = "Issue", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-2), Labels = [] },
+            ]);
+
+        _gitHubServiceMock
+            .Setup(service => service.GetPullRequestsAsync("owner", "repo", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new PullRequest
+                {
+                    Id = 2,
+                    Number = 21,
+                    Title = "Unlabelled pull request",
+                    UpdatedAt = DateTimeOffset.UtcNow.AddDays(-1),
+                    Labels = [],
+                },
+                new PullRequest
+                {
+                    Id = 3,
+                    Number = 22,
+                    Title = "Labelled pull request",
+                    UpdatedAt = DateTimeOffset.UtcNow,
+                    Labels = [new Label { Name = "type/story" }],
+                },
+            ]);
+
+        var sut = new TriageService(_gitHubServiceMock.Object);
+
+        // Act
+        var result = await sut.StartSessionAsync("owner", "repo", includePullRequests: true);
+
+        // Assert
+        Assert.Equal(2, result.Queue.Count);
+        Assert.Contains(result.Queue, item => item.ItemType == TriageItemTypeDto.Issue && item.Number == 11);
+        Assert.Contains(result.Queue, item => item.ItemType == TriageItemTypeDto.PullRequest && item.Number == 21);
+        Assert.DoesNotContain(result.Queue, item => item.ItemType == TriageItemTypeDto.PullRequest && item.Number == 22);
+    }
+
+    [Fact]
+    public async Task StartSessionAsync_IncludePullRequestsWithMixedItems_OrdersQueueByUpdatedAtAcrossItemTypes()
+    {
+        // Arrange
+        _gitHubServiceMock
+            .Setup(service => service.GetIssuesAsync("owner", "repo", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new Issue { Id = 1, Number = 11, Title = "Older issue", UpdatedAt = DateTimeOffset.Parse("2026-03-01T10:00:00Z"), Labels = [] },
+                new Issue { Id = 2, Number = 12, Title = "Newer issue", UpdatedAt = DateTimeOffset.Parse("2026-03-03T10:00:00Z"), Labels = [] },
+            ]);
+
+        _gitHubServiceMock
+            .Setup(service => service.GetPullRequestsAsync("owner", "repo", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new PullRequest { Id = 3, Number = 21, Title = "Middle pull request", UpdatedAt = DateTimeOffset.Parse("2026-03-02T10:00:00Z"), Labels = [] },
+            ]);
+
+        var sut = new TriageService(_gitHubServiceMock.Object);
+
+        // Act
+        var result = await sut.StartSessionAsync("owner", "repo", includePullRequests: true);
+
+        // Assert
+        Assert.Equal(3, result.Queue.Count);
+        Assert.Equal(11, result.Queue[0].Number);
+        Assert.Equal(TriageItemTypeDto.Issue, result.Queue[0].ItemType);
+        Assert.Equal(21, result.Queue[1].Number);
+        Assert.Equal(TriageItemTypeDto.PullRequest, result.Queue[1].ItemType);
+        Assert.Equal(12, result.Queue[2].Number);
+        Assert.Equal(TriageItemTypeDto.Issue, result.Queue[2].ItemType);
+    }
+
+    [Fact]
+    public async Task StartSessionAsync_IncludePullRequestsWithMilestoneOnPullRequest_PreservesMilestoneDetails()
+    {
+        // Arrange
+        _gitHubServiceMock
+            .Setup(service => service.GetIssuesAsync("owner", "repo", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        _gitHubServiceMock
+            .Setup(service => service.GetPullRequestsAsync("owner", "repo", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new PullRequest
+                {
+                    Id = 3,
+                    Number = 21,
+                    Title = "Pull request with milestone",
+                    UpdatedAt = DateTimeOffset.Parse("2026-03-02T10:00:00Z"),
+                    Labels = [],
+                    Milestone = new SoloDevBoard.Domain.Entities.Milestones.Milestone
+                    {
+                        Number = 7,
+                        Title = "v0.7.0",
+                    },
+                },
+            ]);
+
+        var sut = new TriageService(_gitHubServiceMock.Object);
+
+        // Act
+        var result = await sut.StartSessionAsync("owner", "repo", includePullRequests: true);
+
+        // Assert
+        var pullRequest = Assert.Single(result.Queue);
+        Assert.Equal(TriageItemTypeDto.PullRequest, pullRequest.ItemType);
+        Assert.Equal(7, pullRequest.MilestoneNumber);
+        Assert.Equal("v0.7.0", pullRequest.MilestoneTitle);
+    }
+
+    [Fact]
     public async Task StartSessionAsync_LabelledIssuePresent_ExcludesLabelledIssueFromQueue()
     {
         // Arrange
