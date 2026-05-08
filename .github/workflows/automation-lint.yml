@@ -1,0 +1,54 @@
+name: Automation Lint
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/**
+      - .github/scripts/**
+      - .github/eslint.config.mjs
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/**
+      - .github/scripts/**
+      - .github/eslint.config.mjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-workflows:
+    name: Lint GitHub Actions workflows
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Run actionlint
+        uses: rhysd/actionlint@v1.7.12
+
+  lint-github-scripts:
+    name: Lint GitHub automation scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Run ESLint for GitHub scripts
+        run: npx --yes eslint@9.0.0 --config .github/eslint.config.mjs '.github/scripts/**/*.mjs'
