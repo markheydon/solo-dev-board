@@ -48,7 +48,7 @@ This prompt invokes the **Delivery Agent**, which executes:
   - For page-producing Blazor UI work, an approved wireframe already exists when one is required
 - Treat issues created through `plan-next-issue` as implementation-ready by default; do not repeat full planning validation unless a clearly missing prerequisite is discovered
 - **If a critical prerequisite is missing:** Escalate to PM Orchestrator for re-planning
-- **Lifecycle sync:** Update issue labels and project board state at the start of work when practical, but do not let GitHub project administration block implementation. If project-board updates fail, continue coding and report the follow-up needed in the handoff.
+- **Lifecycle sync:** Attempt the issue-label and project-board transition before coding starts. If project-board updates fail, capture the exact remediation immediately, retry before handoff, and do not mark implementation complete while the roadmap item still lacks the required in-progress status or dates.
 
 ### 2. Feature Branch Creation
 

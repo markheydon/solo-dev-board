@@ -133,6 +133,8 @@ Implement issue #[number]
 **Board expectation before coding starts:**
 - The issue may already be in **Up Next** if it was selected during the morning ritual.
 - Starting work moves the issue from **Up Next** or **Todo** into **In Progress**.
+- Starting work also stamps **Start Date** and the current size-based **Target Date** forecast on the roadmap item.
+- Untouched sibling items stay blank until they actually start.
 
 **What you produce:**
 - Source code in `src/` (compiles, follows conventions)
@@ -177,6 +179,7 @@ Review issue #[number]
 - ✅ No compile errors, tests pass
 - ✅ Documentation complete
 - ✅ Backlog synchronised
+- ✅ Roadmap item still has a valid Start Date before merge
 
 **Next action:** **You** approve and merge PR (manual step).
 
@@ -193,6 +196,7 @@ Close issue #[number] after PR #[number] merged
 **What it does:**
 - Review Agent updates issue labels to `status/done`
 - Closes issue with comment linking PR
+- Updates the roadmap item to **Done** and overwrites **Target Date** with the actual completion date
 - Updates `plan/BACKLOG.md` marking complete
 - Suggests next backlog item
 
@@ -204,6 +208,7 @@ Close issue #[number] after PR #[number] merged
 **Gates before repeating cycle:**
 - ✅ Issue closed with `status/done`
 - ✅ Backlog updated
+- ✅ Roadmap item dates and status aligned with the merged outcome
 - ✅ No follow-up items (or new issues created if needed)
 
 **Next action:** Return to Stage 1 (Planning) for next feature.
@@ -259,6 +264,7 @@ Run the daily start workflow
 - Any work still `status/in-progress`? (Leave note on what's next)
 - Any new blockers? (Document in issue comments)
 - Any stale **Up Next** items? (Either keep them queued for tomorrow or clear their **Focus Order** if they no longer belong in the active batch.)
+- Any roadmap drift? (Active or done items missing dates, stray PR cards, or planned issues missing from the board.)
 
 #### Step 2: Update Planning Artefacts (if needed)
 - **Scope changed?** Update `plan/SCOPE.md`
@@ -467,11 +473,13 @@ These gates are defined in `.github/copilot-instructions.md` and enforced by age
 - ✅ Documentation updated (if user-facing)
 - ✅ ADR created (if architectural decision)
 - ✅ UK English verified
+- ✅ Roadmap item moved to **In Progress** with Start Date and Target Date recorded
 
 ### Before Issue Closure (Review Agent enforces)
 - ✅ PR created and approved
 - ✅ All quality gates passed
 - ✅ Backlog synchronised
+- ✅ Roadmap item moved to **Done** with Start Date present and Target Date overwritten to the actual completion date
 - ✅ No follow-up blockers
 
 **If any gate fails:** Agent escalates to you for resolution, workflow pauses.

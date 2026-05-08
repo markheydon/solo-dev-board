@@ -30,6 +30,7 @@ The agent will execute the following sequence:
 - Check GitHub for open issues with `status/in-progress` or `status/in-review`
 - List active pull requests awaiting review or merge
 - Flag stale work (in-progress >3 days with no updates)
+- Flag active roadmap items missing Start Date or expected Target Date updates
 
 ### 2. Check Backlog Health
 - Read `plan/BACKLOG.md` and count items by priority:
@@ -54,6 +55,7 @@ The agent will execute the following sequence:
 - List issues with `status/blocked` label
 - List issues with unresolved dependencies
 - Flag any PRs awaiting your approval
+- Flag any roadmap drift that will confuse the current execution view (for example stray PR cards or items missing from the board)
 
 ---
 

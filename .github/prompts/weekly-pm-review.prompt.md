@@ -61,6 +61,12 @@ None — this is a comprehensive read-only assessment across all planning artefa
   - Milestones
   - Size estimates
 - Identify stale items (in-progress >5 days with no updates)
+- Audit roadmap-board hygiene:
+  - In-progress or done items missing Start Date
+  - Done items missing Target Date or still showing forecast dates after closure
+  - Invalid date pairs (`Start Date > Target Date`)
+  - Standalone pull request cards on the roadmap board
+  - Planned issues missing from the roadmap board entirely
 
 ### 4. Release Confidence Check
 - Read `plan/RELEASE_PLAN.md`
@@ -240,7 +246,7 @@ Also provide the **manual values for the dialog**:
 
 At the start of the **first review of a new phase** (or when the project description/README are stale), produce the following `gh` commands for the user to run once:
 
-```powershell
+```bash
 # Update short description
 gh project edit 8 --owner markheydon --description "[concise one-liner]"
 
@@ -273,6 +279,7 @@ The file must contain, in order:
 Based on review results:
 - **If blockers present:** Resolve blockers manually, then re-run weekly review
 - **If backlog hygiene issues:** Run grooming session (update metadata, close stale items)
+- **If roadmap hygiene issues:** Backfill missing dates, remove stray PR cards, and add missing planned issues before the next delivery cycle
 - **If milestone at risk:** Re-prioritise backlog, adjust scope or timeline
 - **If release confidence low:** Run gap analysis, add missing features/docs to backlog
 - **For next week planning:** Use top 3 priorities as input to `plan-next-issue` prompt
@@ -332,6 +339,7 @@ The weekly review validates compliance with:
 - **`.github/copilot-instructions.md`** — mandatory gates enforced
 - **`plan/LABEL_STRATEGY.md`** — label taxonomy applied
 - **`plan/PROJECT_MANAGEMENT.md`** — issue workflow rules followed
+- **`.github/skills/github-project/SKILL.md`** — roadmap lifecycle and date hygiene followed
 - **`plan/DOCS_STRATEGY.md`** — documentation completeness
 - **`plan/RELEASE_PLAN.md`** — release criteria met
 

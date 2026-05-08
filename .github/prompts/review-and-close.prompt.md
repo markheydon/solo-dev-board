@@ -84,6 +84,7 @@ This prompt invokes the **Review Agent**, which executes:
   - Remove `status/in-progress`
   - Add `status/in-review`
 - Add PR link in issue comments
+- Verify the linked roadmap item still has a valid Start Date before handoff to merge
 - Notify user of review completion
 
 ### 5. Post-Merge Closure
@@ -92,7 +93,8 @@ This prompt invokes the **Review Agent**, which executes:
   - Remove `status/in-review`
   - Add `status/done`
 - Close issue with comment linking PR
-- **Project board update:** Use `github-project` skill (Lifecycle Event 3) to set project Status → "Done" and **overwrite Target Date with today's actual completion date** (not the original planned date)
+- **Project board update:** Use `github-project` skill (Lifecycle Event 3) to set project Status → "Done", **overwrite Target Date with today's actual completion date**, and confirm Start Date is present before the workflow is considered closed
+- Remove any standalone pull request card accidentally added to the roadmap board for the merged PR
 - Suggest next backlog item for PM Orchestrator
 
 ---
@@ -109,7 +111,7 @@ This prompt invokes the **Review Agent**, which executes:
 
 ### Artefacts Updated (Post-Merge)
 - **Issue status** — `status/in-review` → `status/done`, issue closed
-- **Project board** — Status set to "Done", Target Date overwritten with actual completion date via `github-project` skill
+- **Project board** — Status set to "Done", Start Date verified, Target Date overwritten with actual completion date via `github-project` skill
 - **`plan/RELEASE_PLAN.md`** — updated if release impact (flagged for user)
 
 ### Review Summary Delivered
