@@ -30,7 +30,7 @@ Each panel includes:
 - Navigation link to the feature route
 
 
-In Phase 1, some feature pages (Board Rules Visualiser and Workflow Templates) are placeholders and display a "coming soon" message while implementation continues. The Triage UI is now fully implemented and available to use.
+At present, some feature pages (Board Rules Visualiser and Workflow Templates) are placeholders and display a "coming soon" message while implementation continues. The Triage UI is now fully implemented and available to use.
 
 ## Navigation
 
