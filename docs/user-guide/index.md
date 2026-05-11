@@ -19,6 +19,7 @@ The SoloDevBoard user guide provides detailed documentation for available featur
 - [Label Manager](label-manager.md) — Create, edit, synchronise, and enforce label taxonomies across multiple repositories.
 - [Repositories](repositories.md) — View and manage repositories accessible to your GitHub account.
 - [One-Click Migration](one-click-migration.md) — Migrate labels and milestones from one repository to another in a single action.
+- [Triage UI](triage-ui.md) — Keyboard-friendly interface for triaging incoming issues quickly.
 - [About](about.md) — Application version, runtime environment, and repository link.
 - [Azure Deployment Costs](azure-costs.md) — Understand Azure resource charges, SKUs, and cost optimisation for SoloDevBoard deployments.
 - [Hosted Authentication](hosted-authentication.md) — Guide to hosted sign-in, operator allow-lists, and fallback modes for production deployments.
@@ -26,7 +27,6 @@ The SoloDevBoard user guide provides detailed documentation for available featur
 ## Coming Soon
 
 - [Board Rules Visualiser](board-rules-visualiser.md) — Visualise automation rules configured on GitHub project boards.
-- [Triage UI](triage-ui.md) — Keyboard-friendly interface for triaging incoming issues quickly.
 - [Workflow Templates](workflow-templates.md) — Browse, customise, and apply GitHub Actions workflow templates across repositories.
 
 ## Coming Later

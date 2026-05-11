@@ -31,7 +31,7 @@ It is built with the solo developer in mind: opinionated defaults, minimal confi
 | **Repositories** | View and manage repositories accessible to your GitHub account. | Available |
 | **One-Click Migration** | Migrate labels and milestones from one repository to another in a single action. Project board migration is planned. | Partially Available |
 | **Board Rules Visualiser** | Visualise automation rules configured on GitHub project boards. | Coming Soon |
-| **Triage UI** | Keyboard-friendly interface for triaging incoming issues quickly. | Coming Soon |
+| **Triage UI** | Keyboard-friendly interface for triaging incoming issues quickly. | Available |
 | **Workflow Templates** | Browse, customise, and apply GitHub Actions workflow templates across repositories. | Coming Soon |
 
 ---
