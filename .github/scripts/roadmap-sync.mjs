@@ -29,15 +29,6 @@ const phaseOptionsByMilestone = new Map([
     ['v1.0.0', 'dfa36cee'],
 ]);
 
-const phaseOptionsByAreaLabel = new Map([
-    ['area/infrastructure', '1fbac877'],
-    ['area/labels', '0f90ba94'],
-    ['area/migration', 'f3de38ba'],
-    ['area/triage', 'f3de38ba'],
-    ['area/board-rules', 'f5bc6726'],
-    ['area/workflows', 'f5bc6726'],
-]);
-
 const priorityOptionsByLabel = new Map([
     ['priority/critical', '8d63dbb3'],
     ['priority/high', 'e89555ab'],
@@ -359,14 +350,6 @@ function determinePhaseOptionId(issue) {
 
     if (milestoneTitle && phaseOptionsByMilestone.has(milestoneTitle)) {
         return phaseOptionsByMilestone.get(milestoneTitle);
-    }
-
-    const labels = getLabelNames(issue);
-
-    for (const [label, optionId] of phaseOptionsByAreaLabel.entries()) {
-        if (labels.has(label)) {
-            return optionId;
-        }
     }
 
     return null;
