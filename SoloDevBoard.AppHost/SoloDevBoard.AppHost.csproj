@@ -1,6 +1,7 @@
 <Project Sdk="Aspire.AppHost.Sdk/13.2.4">
 
   <ItemGroup>
+    <PackageReference Include="MessagePack" />
     <ProjectReference Include="..\src\App\SoloDevBoard.App\SoloDevBoard.App.csproj" />
   </ItemGroup>
 
