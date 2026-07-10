@@ -8,12 +8,29 @@ updates:
       time: "04:00"
       timezone: "Europe/London"
     open-pull-requests-limit: 5
-    allow:
-      - dependency-type: "all"
+    labels:
+      - "dependencies"
+    assignees:
+      - "markheydon"
     groups:
       microsoft-extensions:
         patterns:
           - "Microsoft.Extensions.*"
+        update-types:
+          - "minor"
+          - "patch"
+      azure:
+        patterns:
+          - "Azure.*"
+        update-types:
+          - "minor"
+          - "patch"
+      opentelemetry:
+        patterns:
+          - "OpenTelemetry.*"
+        update-types:
+          - "minor"
+          - "patch"
       test-packages:
         patterns:
           - "bunit"
@@ -22,15 +39,32 @@ updates:
           - "Moq"
           - "xunit"
           - "xunit.*"
-      ui-packages:
+        update-types:
+          - "minor"
+          - "patch"
+      analyzers:
         patterns:
-          - "MudBlazor"
-    commit-message:
-      prefix: "[dependabot]"
+          - ".*analyzers.*"
+          - "Microsoft.CodeAnalysis.*"
+        update-types:
+          - "minor"
+          - "patch"
+      other:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "github-actions"
+    directory: "/.github/workflows"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/London"
+    open-pull-requests-limit: 5
     labels:
-      - "type/chore"
-      - "priority/low"
-      - "status/in-review"
-      - "area/infrastructure"
+      - "dependencies"
     assignees:
       - "markheydon"
