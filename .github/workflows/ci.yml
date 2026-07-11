@@ -25,10 +25,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Set up .NET 10
+      - name: Set up .NET SDK from global.json
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: "10.x"
+          global-json-file: global.json
 
       - name: Restore dependencies
         run: dotnet restore SoloDevBoard.slnx
