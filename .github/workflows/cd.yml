@@ -51,7 +51,7 @@ jobs:
 
       # Authenticate with Azure using OIDC (no long-lived secrets required)
       - name: Log in to Azure
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           # Environment-scoped secrets are still accessed through the standard secrets context.
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
