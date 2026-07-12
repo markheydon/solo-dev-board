@@ -67,7 +67,7 @@ See [Hosted Authentication Guide](user-guide/hosted-authentication.md) for furth
    dotnet restore SoloDevBoard.slnx
    ```
 
-3. **Configure your GitHub token** (see [Configuration](#configuration) below).
+3. **Configure GitHub authentication** (see [Configuration](#configuration) below).
 
 4. **Start the application with Aspire (recommended):**
 
@@ -102,6 +102,43 @@ This Aspire setup currently exists to standardise local development across local
 ## Configuration
 
 SoloDevBoard is configured via `appsettings.json` and environment variables. **Never commit secrets to source control.**
+
+When running via Aspire (`aspire start`), GitHub auth and admission settings are modelled as **AppHost parameters** and injected into the `app` resource as environment variables. Configure parameter values via the Aspire dashboard on first run, `aspire secret set`, or the AppHost `Parameters` section in user secrets.
+
+### AppHost parameters (Aspire)
+
+| AppHost parameter | Secret | App config key | Auth mode |
+|---|---|---|---|
+| `hosted-sign-in-enabled` | no | `GitHubAuth:HostedSignInEnabled` | Both (default: `false`) |
+| `github-owner-login` | no | `GitHubAuth:OwnerLogin` | PAT |
+| `github-pat` | yes | `GitHubAuth:PersonalAccessToken` | PAT |
+| `github-app-client-id` | no | `GitHubAuth:HostedGitHubAppClientId` | Hosted sign-in |
+| `github-app-client-secret` | yes | `GitHubAuth:HostedGitHubAppClientSecret` | Hosted sign-in |
+| `hosted-admission-enabled` | no | `HostedAdmissionControl:Enabled` | Hosted sign-in (default: `true`) |
+| `allowed-user-logins` | no | `HostedAdmissionControl:AllowedUserLogins` | Hosted sign-in | default `-` (placeholder when hosted sign-in is off) |
+| `allowed-org-logins` | no | `HostedAdmissionControl:AllowedOrganisationLogins` | Hosted sign-in | default `-` (placeholder when hosted sign-in is off) |
+
+The hosted sign-in callback base URI is derived automatically from the app's Aspire HTTPS endpoint (`GitHubAuth:HostedSignInCallbackBaseUri`).
+
+**PAT mode (default local development):**
+
+```bash
+aspire secret set Parameters:github-pat "<your-token>"
+aspire secret set Parameters:github-owner-login "<your-github-login>"
+```
+
+**Hosted sign-in mode:**
+
+```bash
+aspire secret set Parameters:hosted-sign-in-enabled "true"
+aspire secret set Parameters:github-app-client-id "<client-id>"
+aspire secret set Parameters:github-app-client-secret "<client-secret>"
+aspire secret set Parameters:allowed-user-logins "<login1>,<login2>"
+# and/or
+aspire secret set Parameters:allowed-org-logins "<org1>,<org2>"
+```
+
+Non-secret defaults (`hosted-sign-in-enabled`, `hosted-admission-enabled`) are in `SoloDevBoard.AppHost/appsettings.json`. Secret values are stored in the AppHost user secrets store (`UserSecretsId` on `SoloDevBoard.AppHost.csproj`).
 
 ### `appsettings.json`
 
@@ -180,7 +217,7 @@ Leave `PersonalAccessToken` empty in `appsettings.json` and supply it via an env
 | `HostedAdmissionControl__AllowedOrganisationLogins` | Comma-separated list of allowed GitHub organisation logins |
 | `HostedAdmissionControl__HostedOrganisationLoginsClaimType` | Claim type for organisation logins (string) |
 
-To set the PAT-only local development values using .NET User Secrets:
+To set PAT-only values for the **legacy `dotnet run` path** (without Aspire), use .NET User Secrets on the app project:
 
 ```bash
 dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-token>" --project src/App/SoloDevBoard.App

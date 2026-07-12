@@ -49,15 +49,18 @@ cd solo-dev-board
 # Restore dependencies
 dotnet restore SoloDevBoard.slnx
 
-# Set your GitHub token using .NET User Secrets
-dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-pat>" --project src/App/SoloDevBoard.App
-dotnet user-secrets set "GitHubAuth:OwnerLogin" "<your-account-name>" --project src/App/SoloDevBoard.App
+# Configure GitHub auth via AppHost parameters (recommended with aspire start)
+aspire secret set Parameters:github-pat "<your-pat>"
+aspire secret set Parameters:github-owner-login "<your-account-name>"
 
 # Start with Aspire (recommended)
 aspire start --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 
 # Optional legacy path (without Aspire orchestration)
-dotnet run --project src/App/SoloDevBoard.App
+# Set secrets on the app project directly, then run without AppHost:
+# dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-pat>" --project src/App/SoloDevBoard.App
+# dotnet user-secrets set "GitHubAuth:OwnerLogin" "<your-account-name>" --project src/App/SoloDevBoard.App
+# dotnet run --project src/App/SoloDevBoard.App
 ```
 
 Then run `aspire describe` to view allocated endpoints and open the `app` resource URL in your browser.
