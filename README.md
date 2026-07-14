@@ -4,6 +4,7 @@
 
 > **A single pane of glass for solo developers managing GitHub workloads across multiple repositories.**
 
+**IMPORTANT** SoloDevBoard is currently in **early development**. The project is under active development (or as active as my schedule will allow at least!). Please refer to the [project plan](plan/IMPLEMENTATION_PLAN.md) for the current roadmap and feature status.
 
 ## What Is SoloDevBoard?
 
