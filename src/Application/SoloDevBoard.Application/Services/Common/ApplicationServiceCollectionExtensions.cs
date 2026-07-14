@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using SoloDevBoard.Application.Services.Audit;
+using SoloDevBoard.Application.Services.BoardRules;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Migration;
 using SoloDevBoard.Application.Services.Repositories;
@@ -22,6 +23,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<ILabelManagerService, LabelService>();
         services.AddScoped<IMigrationService, MigrationService>();
         services.AddScoped<IAuditDashboardService, AuditDashboardService>();
+        services.AddScoped<IBoardRulesService, BoardRulesService>();
         services.AddScoped<ITriageService, TriageService>();
 
         return services;

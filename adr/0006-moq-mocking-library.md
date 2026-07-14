@@ -7,7 +7,7 @@
 
 ## Context
 
-[ADR-0002](0002-testing-framework.md) selected **NSubstitute** as the mocking library for SoloDevBoard unit tests. Following a review of the project's tooling conventions (see `.github/skills/dotnet-best-practices/SKILL.md`) and the guidance in `.github/copilot-instructions.md`, a conflict was identified:
+[ADR-0002](0002-testing-framework.md) selected **NSubstitute** as the mocking library for SoloDevBoard unit tests. Following a review of the project's tooling conventions (see `.agents/skills/dotnet-best-practices/SKILL.md`) and the guidance in `.github/copilot-instructions.md`, a conflict was identified:
 
 - The `dotnet-best-practices` skill and `copilot-instructions.md` both reference **Moq** as the project's mocking framework.
 - The test projects were created using NSubstitute, creating an inconsistency that would confuse AI collaborators and lead to mixed mocking patterns in future tests.
@@ -51,5 +51,5 @@ NSubstitute remains a capable library, but switching to Moq eliminates the incon
 - Verification is expressed as: `mock.Verify(s => s.Method(...), Times.Once())`.
 - All existing tests using NSubstitute have been rewritten using the Moq API.
 - ADR-0002 is marked as **Superseded** by this ADR.
-- `copilot-instructions.md` and `.github/skills/dotnet-best-practices/SKILL.md` already reference Moq; no further documentation changes are required.
+- `copilot-instructions.md` and `.agents/skills/dotnet-best-practices/SKILL.md` already reference Moq; no further documentation changes are required.
 - FluentAssertions: see [ADR-0008](0008-remove-fluentassertions.md) for the decision to remove it.

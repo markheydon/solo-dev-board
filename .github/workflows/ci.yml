@@ -33,6 +33,9 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore SoloDevBoard.slnx
 
+      - name: Verify formatting
+        run: dotnet format SoloDevBoard.slnx --no-restore --verify-no-changes --verbosity minimal
+
       - name: Build solution
         run: dotnet build SoloDevBoard.slnx --no-restore
 

@@ -39,6 +39,7 @@ It is built with the solo developer in mind: opinionated defaults, minimal confi
 ## Quick Links
 
 - 📖 [Getting Started](getting-started.md) — prerequisites, Aspire-first local setup, and configuration.
+- 🤖 [AI Collaboration](ai-collaboration.md) — using GitHub Copilot and Cursor with this repository.
 - 👤 [User Guide](user-guide/) — detailed guides for each feature area.
 - 👤 [Hosted Authentication Guide](user-guide/hosted-authentication.md) — hosted sign-in, operator allow-lists, and fallback modes for production deployments.
 - ℹ️ [About Guide](user-guide/about.md) — overview of the About page, version information, and repository link.

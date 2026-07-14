@@ -24,7 +24,7 @@ Closes #
 <!-- Complete all applicable items before requesting a review. -->
 
 - [ ] I have performed a self-review of my own code
-- [ ] My changes follow the coding conventions in `.github/copilot-instructions.md`
+- [ ] My changes follow the coding conventions in `AGENTS.md`
 - [ ] All new and existing tests pass (`dotnet test`)
 - [ ] I have added or updated tests to cover my changes
 - [ ] I have updated relevant documentation in `docs/` or `plan/`
