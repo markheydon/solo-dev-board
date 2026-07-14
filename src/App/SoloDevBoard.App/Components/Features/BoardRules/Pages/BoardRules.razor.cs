@@ -1,0 +1,222 @@
+using Microsoft.AspNetCore.Components;
+using SoloDevBoard.Application.Services.BoardRules;
+using SoloDevBoard.Application.Services.Repositories;
+
+namespace SoloDevBoard.App.Components.Features.BoardRules.Pages;
+
+/// <summary>Provides the entry workflow for selecting a repository and project board to visualise.</summary>
+public partial class BoardRules : ComponentBase
+{
+    /// <summary>Gets or sets the application service used to retrieve repositories.</summary>
+    [Inject]
+    public IRepositoryService RepositoryService { get; set; } = default!;
+
+    /// <summary>Gets or sets the application service used to retrieve board rules metadata.</summary>
+    [Inject]
+    public IBoardRulesService BoardRulesService { get; set; } = default!;
+
+    /// <summary>Gets or sets the logger for board rules page diagnostics.</summary>
+    [Inject]
+    public ILogger<BoardRules> Logger { get; set; } = default!;
+
+    private IReadOnlyList<RepositoryDto> availableRepositories = [];
+    private RepositoryDto? selectedRepository;
+    private IReadOnlyList<BoardRulesProjectBoardOptionDto> availableProjectBoardOptions = [];
+    private string selectedProjectBoardId = string.Empty;
+    private bool isLoadingRepositories = true;
+    private bool isLoadingProjectBoards;
+    private bool hasRepositoryLoadFailure;
+    private bool hasProjectBoardLoadFailure;
+    private string? errorMessage;
+
+    /// <inheritdoc/>
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRepositoriesAsync();
+    }
+
+    private async Task ReloadRepositoriesAsync()
+    {
+        await LoadRepositoriesAsync();
+    }
+
+    private async Task ReloadProjectBoardsAsync()
+    {
+        if (selectedRepository is null)
+        {
+            return;
+        }
+
+        await LoadProjectBoardOptionsAsync(selectedRepository);
+    }
+
+    private async Task LoadRepositoriesAsync()
+    {
+        isLoadingRepositories = true;
+        hasRepositoryLoadFailure = false;
+        errorMessage = null;
+        selectedRepository = null;
+        availableProjectBoardOptions = [];
+        selectedProjectBoardId = string.Empty;
+
+        try
+        {
+            availableRepositories = (await RepositoryService.GetActiveRepositoriesAsync())
+                .OrderBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+        catch (HttpRequestException ex)
+        {
+            hasRepositoryLoadFailure = true;
+            errorMessage = $"GitHub API request failed. {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            hasRepositoryLoadFailure = true;
+            Logger.LogError(ex, "Failed to load repositories for the Board Rules Visualiser.");
+            errorMessage = "An unexpected error occurred while loading repositories.";
+        }
+        finally
+        {
+            isLoadingRepositories = false;
+        }
+    }
+
+    private async Task OnSelectedRepositoriesChangedAsync(IReadOnlyList<string> repositoryFullNames)
+    {
+        ArgumentNullException.ThrowIfNull(repositoryFullNames);
+
+        var selectedFullName = repositoryFullNames
+            .FirstOrDefault(fullName => !string.IsNullOrWhiteSpace(fullName));
+
+        if (string.IsNullOrWhiteSpace(selectedFullName))
+        {
+            selectedRepository = null;
+            availableProjectBoardOptions = [];
+            selectedProjectBoardId = string.Empty;
+            hasProjectBoardLoadFailure = false;
+            return;
+        }
+
+        selectedRepository = availableRepositories
+            .FirstOrDefault(repository => repository.FullName.Equals(selectedFullName, StringComparison.OrdinalIgnoreCase));
+
+        if (selectedRepository is null)
+        {
+            availableProjectBoardOptions = [];
+            selectedProjectBoardId = string.Empty;
+            return;
+        }
+
+        await LoadProjectBoardOptionsAsync(selectedRepository);
+    }
+
+    private async Task LoadProjectBoardOptionsAsync(RepositoryDto repository)
+    {
+        ArgumentNullException.ThrowIfNull(repository);
+
+        var owner = ResolveOwner(repository.FullName);
+        var repo = ResolveRepositoryName(repository.FullName);
+
+        if (string.IsNullOrWhiteSpace(owner) || string.IsNullOrWhiteSpace(repo))
+        {
+            availableProjectBoardOptions = [];
+            selectedProjectBoardId = string.Empty;
+            hasProjectBoardLoadFailure = true;
+            errorMessage = "The selected repository name is not in owner/name form.";
+            return;
+        }
+
+        isLoadingProjectBoards = true;
+        hasProjectBoardLoadFailure = false;
+        errorMessage = null;
+        availableProjectBoardOptions = [];
+        selectedProjectBoardId = string.Empty;
+
+        try
+        {
+            availableProjectBoardOptions = await BoardRulesService.GetProjectBoardOptionsAsync(owner, repo);
+            selectedProjectBoardId = availableProjectBoardOptions.FirstOrDefault()?.Id ?? string.Empty;
+        }
+        catch (HttpRequestException ex)
+        {
+            hasProjectBoardLoadFailure = true;
+            errorMessage = $"GitHub API request failed while loading project boards. {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            hasProjectBoardLoadFailure = true;
+            Logger.LogError(ex, "Failed to load project boards for repository {RepositoryFullName}.", repository.FullName);
+            errorMessage = "An unexpected error occurred while loading project boards.";
+        }
+        finally
+        {
+            isLoadingProjectBoards = false;
+        }
+    }
+
+    private Task OnSelectedProjectBoardChangedAsync(string projectBoardId)
+    {
+        selectedProjectBoardId = projectBoardId ?? string.Empty;
+        return Task.CompletedTask;
+    }
+
+    private static string ResolveOwner(string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+        {
+            return string.Empty;
+        }
+
+        var parts = fullName.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return parts.Length > 0 ? parts[0] : string.Empty;
+    }
+
+    private static string ResolveRepositoryName(string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+        {
+            return string.Empty;
+        }
+
+        var parts = fullName.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return parts.Length > 1 ? parts[1] : string.Empty;
+    }
+
+    private bool ShowLoadingState => isLoadingRepositories || isLoadingProjectBoards;
+
+    private bool HasSelectedRepository => selectedRepository is not null;
+
+    private bool HasSelectedProjectBoard
+        => !string.IsNullOrWhiteSpace(selectedProjectBoardId)
+            && availableProjectBoardOptions.Any(option => option.Id.Equals(selectedProjectBoardId, StringComparison.Ordinal));
+
+    private BoardRulesProjectBoardOptionDto? ActiveProjectBoard
+        => availableProjectBoardOptions.FirstOrDefault(option => option.Id.Equals(selectedProjectBoardId, StringComparison.Ordinal));
+
+    private string RepositorySelectorSummary
+    {
+        get
+        {
+            var repositoryCount = availableRepositories.Count;
+            var repositoryNoun = repositoryCount == 1 ? "repository" : "repositories";
+
+            return $"Showing {repositoryCount} active {repositoryNoun}. {(selectedRepository is null ? 0 : 1)} selected. Archived repositories are hidden by default.";
+        }
+    }
+
+    private IReadOnlyList<string> availableRepositoryFullNames
+        => availableRepositories
+            .Select(repository => repository.FullName)
+            .OrderBy(fullName => fullName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+    private IReadOnlyList<string> selectedRepositoryFullNames
+        => selectedRepository is null
+            ? []
+            : [selectedRepository.FullName];
+
+    private string ErrorTitle => hasRepositoryLoadFailure
+        ? "Unable to load repositories"
+        : "Unable to load project boards";
+}
