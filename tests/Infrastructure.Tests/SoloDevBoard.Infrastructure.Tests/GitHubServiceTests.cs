@@ -805,13 +805,13 @@ public sealed class GitHubServiceTests
         Assert.Equal("https://api.github.com/graphql", handler.Requests[1].RequestUri!.ToString());
     }
 
-        [Fact]
-        public async Task AddTriageItemToProjectBoardAsync_GraphQlErrorsPresent_ThrowsHttpRequestException()
-        {
-                // Arrange
-                var handler = new QueueMessageHandler(
-                [
-                        CreateJsonResponse(HttpStatusCode.OK, """
+    [Fact]
+    public async Task AddTriageItemToProjectBoardAsync_GraphQlErrorsPresent_ThrowsHttpRequestException()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+                CreateJsonResponse(HttpStatusCode.OK, """
                         {
                             "node_id": "I_kwDOABCDE123"
                         }
@@ -834,15 +834,15 @@ public sealed class GitHubServiceTests
                         """),
                 ]);
 
-                var sut = CreateSubject(handler);
+        var sut = CreateSubject(handler);
 
-                // Act
-                var action = async () => _ = await sut.AddTriageItemToProjectBoardAsync("owner", "repo", 55, "project-id");
+        // Act
+        var action = async () => _ = await sut.AddTriageItemToProjectBoardAsync("owner", "repo", 55, "project-id");
 
-                // Assert
-                var exception = await Assert.ThrowsAsync<HttpRequestException>(action);
-                Assert.Contains("GitHub GraphQL request failed", exception.Message, StringComparison.Ordinal);
-        }
+        // Assert
+        var exception = await Assert.ThrowsAsync<HttpRequestException>(action);
+        Assert.Contains("GitHub GraphQL request failed", exception.Message, StringComparison.Ordinal);
+    }
 
     [Fact]
     public async Task GetProjectBoardsForRepositoryAsync_StatusFieldPresent_ReturnsProjectBoardOptions()
@@ -1130,7 +1130,7 @@ public sealed class GitHubServiceTests
 
             if (request.Content is not null)
             {
-              var content = await request.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                var content = await request.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
                 var mediaType = request.Content.Headers.ContentType?.MediaType ?? "application/json";
                 clone.Content = new StringContent(content, Encoding.UTF8, mediaType);
             }

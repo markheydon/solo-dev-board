@@ -29,7 +29,7 @@ SoloDevBoard supports two **mutually exclusive** authentication modes. Choose on
 | **PAT mode** (default) | Solo local development and trusted self-hosted use | `github-pat` only (your GitHub login is resolved automatically) |
 | **Hosted sign-in** | Production deployments and local multi-tenant testing | `hosted-sign-in-enabled`, GitHub App OAuth credentials, and allow-lists |
 
-Parameters for the mode you are **not** using keep their default placeholder (`__disabled__`) and can be ignored.
+Parameters for the mode you are **not** using can be left unset.
 
 #### PAT mode
 
@@ -103,33 +103,93 @@ When running via Aspire (`aspire start`), GitHub auth and admission settings are
 
 ### Choose your authentication mode
 
-**PAT mode (default local development)** — leave `hosted-sign-in-enabled` as `false`. Set only `github-pat`. Your GitHub login is resolved automatically from the token at startup. Leave all other auth parameters at `__disabled__`.
+**PAT mode (default local development)** — leave `hosted-sign-in-enabled` as `false`. Set `github-pat` to your token. Set all hosted-sign-in parameters to `-`.
 
-**Hosted sign-in mode** — set `hosted-sign-in-enabled` to `true`, configure GitHub App OAuth credentials, and replace the allow-list placeholders with real logins. Leave `github-pat` at `__disabled__`.
+**Hosted sign-in mode** — set `hosted-sign-in-enabled` to `true`, configure GitHub App OAuth credentials and allow-lists, and set `github-pat` to `-`.
 
-### Aspire dashboard (first run)
+Values saved from the Aspire dashboard **Parameters** tab are stored in AppHost user secrets and persist across restarts.
+
+Use `-` on inactive parameters. Shipped defaults are in `SoloDevBoard.AppHost/appsettings.json`; values saved from the Aspire dashboard override those defaults via user secrets.
+
+### Switching between PAT and hosted sign-in
+
+Use the Aspire dashboard **Parameters** tab (or `aspire secret set` for secrets). Restart Aspire after changing mode.
+
+**Switch to PAT mode**
+
+| Parameter | Action |
+|---|---|
+| `hosted-sign-in-enabled` | `false` |
+| `github-pat` | your PAT |
+| `github-app-client-id` | `-` |
+| `github-app-client-secret` | `-` (set in dashboard) |
+| `allowed-user-logins` | `-` |
+| `allowed-org-logins` | `-` |
+
+**Switch to hosted sign-in**
+
+| Parameter | Action |
+|---|---|
+| `hosted-sign-in-enabled` | `true` |
+| `github-pat` | `-` |
+| `github-app-client-id` | your Client ID |
+| `github-app-client-secret` | your client secret |
+| `allowed-user-logins` | your login(s), or `-` if using org list only |
+| `allowed-org-logins` | org login(s), or `-` if using user list only |
+
+Also update your GitHub App callback URL to `{app-https-url}/auth/callback` after restarting Aspire.
+
+### Startup validation
+
+On startup, SoloDevBoard validates configuration for the **active mode** and fails fast if required settings are missing or inactive-mode parameters are still set to real values. Check the `app` resource logs in the Aspire dashboard or your IDE output.
+
+| Active mode | Must be set | Must be `-` |
+|---|---|---|
+| PAT | `github-pat` | `github-app-client-id`, `allowed-user-logins`, `allowed-org-logins`; set `github-app-client-secret` to `-` in the dashboard |
+| Hosted | `github-app-client-id`, `github-app-client-secret`, and at least one allow-list with real logins when admission control is enabled | `github-pat` (dashboard), `-` on the unused allow-list |
+
+Example log on success:
+
+- `GitHub auth: PAT mode is active. Owner login will be resolved from the personal access token when needed.`
+- `GitHub auth: hosted sign-in mode is active. Admission control is enabled.`
 
 On first `aspire start`, open the Aspire dashboard and go to **Resources → Parameters**. With the default PAT mode, you only need to set:
 
 1. `github-pat` — your GitHub personal access token (secret)
 
-Your GitHub login is resolved automatically from the PAT when the app starts. All other parameters can remain at `__disabled__`.
+Your GitHub login is resolved automatically from the PAT when the app starts. Parameters you do not need for your chosen mode can be left unset.
 
 ### AppHost parameters (Aspire)
 
-| AppHost parameter | Secret | Default | App config key | Set in PAT mode | Set in hosted sign-in |
+| AppHost parameter | Secret | Default | App config key | PAT mode | Hosted sign-in |
 |---|---|---|---|---|---|
 | `hosted-sign-in-enabled` | no | `false` | `GitHubAuth:HostedSignInEnabled` | leave `false` | set `true` |
-| `github-pat` | yes | `__disabled__` | `GitHubAuth:PersonalAccessToken` | **your PAT** | leave default |
-| `github-app-client-id` | no | `__disabled__` | `GitHubAuth:HostedGitHubAppClientId` | leave default | **client ID** |
-| `github-app-client-secret` | yes | `__disabled__` | `GitHubAuth:HostedGitHubAppClientSecret` | leave default | **client secret** |
+| `github-pat` | yes | *(none)* | `GitHubAuth:PersonalAccessToken` | **your PAT** | `-` (set in dashboard) |
+| `github-app-client-id` | no | `-` in appsettings | `GitHubAuth:HostedGitHubAppClientId` | `-` | **client ID** |
+| `github-app-client-secret` | yes | *(none)* | `GitHubAuth:HostedGitHubAppClientSecret` | `-` (set in dashboard) | **client secret** |
 | `hosted-admission-enabled` | no | `true` | `HostedAdmissionControl:Enabled` | ignored | `true` (recommended) |
-| `allowed-user-logins` | no | `__disabled__` | `HostedAdmissionControl:AllowedUserLogins` | ignored | **allow-list** |
-| `allowed-org-logins` | no | `__disabled__` | `HostedAdmissionControl:AllowedOrganisationLogins` | ignored | optional |
+| `allowed-user-logins` | no | `-` | `HostedAdmissionControl:AllowedUserLogins` | ignored | **logins or `-`** |
+| `allowed-org-logins` | no | `-` | `HostedAdmissionControl:AllowedOrganisationLogins` | ignored | **logins or `-`** |
 
-`GitHubAuth:OwnerLogin` can still be set explicitly to override the login resolved from a PAT (for example on the legacy `dotnet run` path). When omitted, it is derived automatically from the token.
+#### What each parameter does
 
-The hosted sign-in callback base URI is derived automatically from the app's Aspire HTTPS endpoint (`GitHubAuth:HostedSignInCallbackBaseUri`).
+**`hosted-sign-in-enabled`** — Selects the authentication mode. When `false` (the default), SoloDevBoard runs in PAT mode: a single configured token is used for all GitHub API calls and your login is resolved automatically from that token. When `true`, SoloDevBoard uses GitHub App OAuth sign-in at `/auth/sign-in`; each user authenticates with their own GitHub identity and session.
+
+**`github-pat`** — Your GitHub personal access token for PAT mode. Set to `-` for hosted sign-in. SoloDevBoard uses this for every GitHub API request on your behalf in PAT mode. Required scopes: `repo`, `read:org`, `workflow`, and `read:project`. Your login is resolved automatically from the token.
+
+**`github-app-client-id`** — The OAuth Client ID from your GitHub App settings. Set to `-` for PAT mode. Required for hosted sign-in.
+
+**`github-app-client-secret`** — The OAuth Client secret from your GitHub App settings. Set to `-` for PAT mode. Required for hosted sign-in.
+
+**`hosted-admission-enabled`** — Controls whether hosted sign-in enforces an allow-list. When `true` (the default), only GitHub users or organisations listed in the allow-list parameters can use the app after signing in; everyone else receives a 403. Only applies when hosted sign-in is enabled. Ignored in PAT mode.
+
+**`allowed-user-logins`** — Comma-separated GitHub user logins permitted after hosted sign-in (for example, `markheydon`). When admission control is enabled, set this **or** `allowed-org-logins` with real logins. Use `-` on the parameter you are not using — Aspire requires a value for every parameter, and `-` means "this list is not in use". Unset or `-` on both lists means nobody is admitted. Ignored in PAT mode.
+
+**`allowed-org-logins`** — Comma-separated GitHub organisation logins whose members are permitted after hosted sign-in (for example, `my-org`). Use `-` when you are only using `allowed-user-logins`. A user is admitted if their login or any organisation membership matches an active entry on either list. Ignored in PAT mode.
+
+**Auto-derived (not an AppHost parameter):** `GitHubAuth:HostedSignInCallbackBaseUri` — Set automatically from the app's Aspire HTTPS endpoint. Your GitHub App callback URL must be `{this-url}/auth/callback`. Run `aspire describe` to find the current value after each start if the port changes.
+
+`GitHubAuth:OwnerLogin` can still be set explicitly on the legacy `dotnet run` path to override the login resolved from a PAT. When omitted in PAT mode, it is derived automatically from the token.
 
 Non-secret defaults are in `SoloDevBoard.AppHost/appsettings.json`. Secret values are stored via `aspire secret set` or the AppHost user secrets store (`UserSecretsId` on `SoloDevBoard.AppHost.csproj`).
 
@@ -195,8 +255,8 @@ Located at `src/App/SoloDevBoard.App/appsettings.json`. The relevant sections ar
    },
    "HostedAdmissionControl": {
       "Enabled": true,
-      "AllowedUserLogins": [],
-      "AllowedOrganisationLogins": [],
+      "AllowedUserLogins": "",
+      "AllowedOrganisationLogins": "",
       "HostedOrganisationLoginsClaimType": "solo-dev-board.github.organisation-logins"
    }
 }
@@ -216,8 +276,8 @@ Located at `src/App/SoloDevBoard.App/appsettings.json`. The relevant sections ar
 - `HostedGitHubAccessTokenEndpoint`: Access-token endpoint used for hosted callback exchange.
 - `HostedSignInScopes`: Space-separated scopes requested during hosted sign-in.
 - `HostedAdmissionControl:Enabled`: Enables hosted admission control (deny-by-default; only allow users and organisations in allow-lists).
-- `HostedAdmissionControl:AllowedUserLogins`: List of permitted GitHub user logins for hosted access.
-- `HostedAdmissionControl:AllowedOrganisationLogins`: List of permitted GitHub organisation logins for hosted access.
+- `HostedAdmissionControl:AllowedUserLogins`: Comma-separated permitted GitHub user logins for hosted access.
+- `HostedAdmissionControl:AllowedOrganisationLogins`: Comma-separated permitted GitHub organisation logins for hosted access.
 - `HostedAdmissionControl:HostedOrganisationLoginsClaimType`: Claim type used to extract organisation logins from authentication claims.
 
 Leave `PersonalAccessToken` empty in `appsettings.json` and supply it via an environment variable or user secrets instead.

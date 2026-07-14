@@ -32,6 +32,7 @@ public static class InfrastructureServiceExtensions
         services.Configure<HostedAdmissionControlOptions>(configuration.GetSection(HostedAdmissionControlOptions.SectionName));
         services.AddSingleton<ResolvedPatOwnerLogin>();
         services.AddSingleton<GitHubPatOwnerLoginResolver>();
+        services.AddHostedService<GitHubAuthConfigurationValidator>();
         services.AddHostedService<GitHubPatStartupInitializer>();
         services.AddHttpClient(GitHubPatOwnerLoginResolver.HttpClientName, static (serviceProvider, client) =>
         {

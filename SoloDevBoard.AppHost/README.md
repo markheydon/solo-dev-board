@@ -2,59 +2,53 @@
 
 Aspire orchestrates the SoloDevBoard web app for local development, dev containers, and Codespaces. GitHub authentication is configured through **AppHost parameters**, which are injected into the `app` resource as environment variables.
 
-## Choose your authentication mode
+Use `-` on inactive parameters. Shipped defaults are in `SoloDevBoard.AppHost/appsettings.json`; values saved from the Aspire dashboard are stored in user secrets and **override** those defaults. Do not rely on AppHost code defaults for parameters you change in the dashboard.
 
-SoloDevBoard supports two mutually exclusive modes. Configure only the parameters for the mode you are using; the other parameters keep their default placeholder (`__disabled__`).
+## Choose your authentication mode
 
 ### PAT mode (default — solo local development)
 
-Leave `hosted-sign-in-enabled` as `false`. Set your GitHub personal access token:
+Set `github-pat` to your token. Set all hosted-sign-in parameters to `-`:
 
-```bash
-aspire secret set Parameters:github-pat "<your-pat>"
-aspire start --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
-```
+| Parameter | Value |
+|---|---|
+| `hosted-sign-in-enabled` | `false` |
+| `github-pat` | your PAT |
+| `github-app-client-id` | `-` |
+| `github-app-client-secret` | `-` |
+| `allowed-user-logins` | `-` |
+| `allowed-org-logins` | `-` |
 
-Your GitHub login is resolved automatically from the PAT at startup. You do not need to configure `github-owner-login`.
+### Hosted sign-in mode (GitHub App)
 
-### Hosted sign-in mode (GitHub App — multi-tenant / production-like)
+Set `github-pat` to `-`. Configure GitHub App credentials and allow-lists:
 
-Set `hosted-sign-in-enabled` to `true` and configure the GitHub App OAuth credentials:
+| Parameter | Value |
+|---|---|
+| `hosted-sign-in-enabled` | `true` |
+| `github-pat` | `-` |
+| `github-app-client-id` | your Client ID |
+| `github-app-client-secret` | your client secret |
+| `allowed-user-logins` | your login(s), or `-` |
+| `allowed-org-logins` | org login(s), or `-` |
 
-```bash
-aspire secret set Parameters:github-app-client-secret "<client-secret>"
-```
+Register `{https-endpoint}/auth/callback` on your GitHub App. Run `aspire describe` for the current HTTPS URL.
 
-Set non-secret values via the dashboard, `appsettings.json`, or user secrets:
-
-```json
-"Parameters": {
-  "hosted-sign-in-enabled": "true",
-  "github-app-client-id": "<client-id>",
-  "allowed-user-logins": "<login1>,<login2>",
-  "allowed-org-logins": "<org1>,<org2>"
-}
-```
-
-Leave `github-pat` at `__disabled__`.
-
-The callback base URI (`GitHubAuth__HostedSignInCallbackBaseUri`) is derived automatically from the app's Aspire HTTPS endpoint. Register `{https-endpoint}/auth/callback` as the callback URL on your GitHub App.
-
-See [docs/getting-started.md](../docs/getting-started.md) and [docs/user-guide/hosted-authentication.md](../docs/user-guide/hosted-authentication.md) for full setup instructions.
+See [docs/getting-started.md](../docs/getting-started.md) for full setup and [Switching between modes](../docs/getting-started.md#switching-between-pat-and-hosted-sign-in).
 
 ## Parameter reference
 
 | Parameter | Secret | Default | PAT mode | Hosted sign-in |
 |---|---|---|---|---|
 | `hosted-sign-in-enabled` | no | `false` | `false` | `true` |
-| `github-pat` | yes | `__disabled__` | **Set your PAT** | leave default |
-| `github-app-client-id` | no | `__disabled__` | leave default | **Set client ID** |
-| `github-app-client-secret` | yes | `__disabled__` | leave default | **Set client secret** |
+| `github-pat` | yes | *(none)* | **your PAT** | `-` (dashboard) |
+| `github-app-client-id` | no | `-` | `-` | **client ID** |
+| `github-app-client-secret` | yes | *(none)* | `-` (dashboard) | **client secret** |
 | `hosted-admission-enabled` | no | `true` | ignored | `true` (recommended) |
-| `allowed-user-logins` | no | `__disabled__` | ignored | **Set allow-list** |
-| `allowed-org-logins` | no | `__disabled__` | ignored | optional |
+| `allowed-user-logins` | no | `-` | `-` | logins or `-` |
+| `allowed-org-logins` | no | `-` | `-` | logins or `-` |
 
-Non-secret defaults live in [`appsettings.json`](appsettings.json). Secret values are stored via `aspire secret set` or the AppHost user secrets store (`UserSecretsId` in `SoloDevBoard.AppHost.csproj`).
+Startup validation fails fast if required values are missing or inactive-mode parameters are not `-`.
 
 ## Start the app
 

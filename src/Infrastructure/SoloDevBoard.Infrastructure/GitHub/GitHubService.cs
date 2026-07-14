@@ -455,29 +455,29 @@ public sealed class GitHubService : IGitHubService
         switch (itemType)
         {
             case GitHubTriageItemType.Issue:
-            {
-                var issueEndpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/issues/{itemNumber}";
-                using var issueRequest = new HttpRequestMessage(HttpMethod.Patch, issueEndpoint)
                 {
-                    Content = JsonContent.Create(new IssueStateRequestDto("closed"), options: JsonOptions),
-                };
+                    var issueEndpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/issues/{itemNumber}";
+                    using var issueRequest = new HttpRequestMessage(HttpMethod.Patch, issueEndpoint)
+                    {
+                        Content = JsonContent.Create(new IssueStateRequestDto("closed"), options: JsonOptions),
+                    };
 
-                using var issueResponse = await client.SendAsync(issueRequest, cancellationToken).ConfigureAwait(false);
-                await EnsureSuccessStatusCodeAsync(issueResponse, cancellationToken).ConfigureAwait(false);
-                break;
-            }
+                    using var issueResponse = await client.SendAsync(issueRequest, cancellationToken).ConfigureAwait(false);
+                    await EnsureSuccessStatusCodeAsync(issueResponse, cancellationToken).ConfigureAwait(false);
+                    break;
+                }
             case GitHubTriageItemType.PullRequest:
-            {
-                var pullRequestEndpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/pulls/{itemNumber}";
-                using var pullRequestRequest = new HttpRequestMessage(HttpMethod.Patch, pullRequestEndpoint)
                 {
-                    Content = JsonContent.Create(new PullRequestStateRequestDto("closed"), options: JsonOptions),
-                };
+                    var pullRequestEndpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/pulls/{itemNumber}";
+                    using var pullRequestRequest = new HttpRequestMessage(HttpMethod.Patch, pullRequestEndpoint)
+                    {
+                        Content = JsonContent.Create(new PullRequestStateRequestDto("closed"), options: JsonOptions),
+                    };
 
-                using var pullRequestResponse = await client.SendAsync(pullRequestRequest, cancellationToken).ConfigureAwait(false);
-                await EnsureSuccessStatusCodeAsync(pullRequestResponse, cancellationToken).ConfigureAwait(false);
-                break;
-            }
+                    using var pullRequestResponse = await client.SendAsync(pullRequestRequest, cancellationToken).ConfigureAwait(false);
+                    await EnsureSuccessStatusCodeAsync(pullRequestResponse, cancellationToken).ConfigureAwait(false);
+                    break;
+                }
             default:
                 throw new ArgumentOutOfRangeException(nameof(itemType), itemType, "Unsupported triage item type.");
         }
