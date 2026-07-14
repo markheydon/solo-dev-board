@@ -1,11 +1,11 @@
+using System.Net;
+using System.Text;
+using System.Text.Json;
 using Moq;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Domain.Entities.Milestones;
 using SoloDevBoard.Infrastructure.GitHub;
 using SoloDevBoard.Infrastructure.Milestones;
-using System.Net;
-using System.Text;
-using System.Text.Json;
 
 namespace SoloDevBoard.Infrastructure.Tests;
 

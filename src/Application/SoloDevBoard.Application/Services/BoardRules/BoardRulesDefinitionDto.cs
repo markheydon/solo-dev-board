@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace SoloDevBoard.Application.Services.BoardRules;
 
 /// <summary>Represents the board rules metadata returned by the Application layer.</summary>

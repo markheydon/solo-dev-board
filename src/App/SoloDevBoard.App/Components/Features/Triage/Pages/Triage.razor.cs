@@ -1,12 +1,12 @@
+using System.Text.Encodings.Web;
+using System.Text.RegularExpressions;
+using Markdig;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
-using Markdig;
 using MudBlazor;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Repositories;
 using SoloDevBoard.Application.Services.Triage;
-using System.Text.Encodings.Web;
-using System.Text.RegularExpressions;
 
 namespace SoloDevBoard.App.Components.Features.Triage.Pages;
 

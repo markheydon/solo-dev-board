@@ -1,5 +1,3 @@
-using SoloDevBoard.Application.Services.BoardRules;
-
 namespace SoloDevBoard.Application.Services.BoardRules;
 
 /// <summary>Provides board-rules metadata for the Board Rules Visualiser.</summary>

@@ -1,0 +1,40 @@
+# Auto-detect text files; normalise to LF on check-in
+* text=auto eol=lf
+
+# C# source
+*.cs    text diff=csharp
+*.razor text diff=csharp
+
+# MSBuild / Visual Studio project files
+*.csproj  text diff=xml
+*.props   text diff=xml
+*.targets text diff=xml
+*.slnx    text
+*.sln     text
+
+# Web / config
+*.json text
+*.yml  text
+*.yaml text
+*.xml  text
+*.html text
+*.css  text
+
+# Docs
+*.md  text
+*.txt text
+
+# Windows scripts must keep CRLF
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Binaries — never diff or modify line endings
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.zip  binary
+*.dll  binary
+*.pdb  binary
+*.pfx  binary

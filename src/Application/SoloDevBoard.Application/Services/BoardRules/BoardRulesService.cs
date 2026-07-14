@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using SoloDevBoard.Application.Services.GitHub;
 
 namespace SoloDevBoard.Application.Services.BoardRules;

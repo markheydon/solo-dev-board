@@ -6,8 +6,8 @@ using SoloDevBoard.Application.Services.Common;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Migration;
-using SoloDevBoard.Infrastructure.Identity;
 using SoloDevBoard.Infrastructure.GitHub;
+using SoloDevBoard.Infrastructure.Identity;
 using SoloDevBoard.Infrastructure.Labels;
 using SoloDevBoard.Infrastructure.Milestones;
 

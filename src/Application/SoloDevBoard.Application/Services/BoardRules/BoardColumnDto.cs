@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace SoloDevBoard.Application.Services.BoardRules;
 
 /// <summary>Represents a board column in the Application layer.</summary>

@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace SoloDevBoard.Domain.Entities.BoardRules;
 
 /// <summary>Represents the supported board rules metadata for a GitHub Project v2 board.</summary>

@@ -1,9 +1,9 @@
-using SoloDevBoard.Application.Services.Labels;
-using SoloDevBoard.Domain.Entities.Labels;
-using SoloDevBoard.Infrastructure.GitHub;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SoloDevBoard.Application.Services.Labels;
+using SoloDevBoard.Domain.Entities.Labels;
+using SoloDevBoard.Infrastructure.GitHub;
 
 namespace SoloDevBoard.Infrastructure.Labels;
 

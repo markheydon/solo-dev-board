@@ -1,14 +1,13 @@
+using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using SoloDevBoard.Application.Services.BoardRules;
 using SoloDevBoard.Application.Services.GitHub;
-using SoloDevBoard.Domain.Entities.BoardRules;
 using SoloDevBoard.Domain.Entities.Labels;
 using SoloDevBoard.Domain.Entities.Milestones;
 using SoloDevBoard.Domain.Entities.Repositories;
 using SoloDevBoard.Domain.Entities.Triage;
 using SoloDevBoard.Domain.Entities.Workflows;
-using System.Net.Http.Json;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace SoloDevBoard.Infrastructure.GitHub;
 
@@ -695,6 +694,7 @@ public sealed class GitHubService : IGitHubService
     /// A function mapping a DTO to a domain entity. Return <see langword="null"/> to exclude an item
     /// from the results (e.g. to filter pull requests out of an issues response).
     /// </param>
+    /// <param name="jsonOptions"></param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>A read-only list of all mapped domain entities across all pages.</returns>
     internal static async Task<IReadOnlyList<TDomain>> GetPagedAsync<TDto, TDomain>(
