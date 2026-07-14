@@ -1,3 +1,4 @@
+using SoloDevBoard.Application.Services.BoardRules;
 using SoloDevBoard.Domain.Entities.Labels;
 using SoloDevBoard.Domain.Entities.Milestones;
 using SoloDevBoard.Domain.Entities.Repositories;
@@ -124,6 +125,14 @@ public interface IGitHubService
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>A read-only list of project boards that expose a status field.</returns>
     Task<IReadOnlyList<TriageProjectBoard>> GetProjectBoardsForRepositoryAsync(string owner, string repo, CancellationToken cancellationToken = default);
+
+    /// <summary>Retrieves supported board rules metadata for the specified GitHub Project v2 board.</summary>
+    /// <param name="owner">The GitHub account owner login.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="projectId">The GitHub Project v2 node identifier.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>The board rules definition metadata.</returns>
+    Task<BoardRulesDefinitionDto> GetBoardRulesDefinitionAsync(string owner, string repo, string projectId, CancellationToken cancellationToken = default);
 
     /// <summary>Updates the status field for a project board item.</summary>
     /// <param name="projectId">The project-board node identifier.</param>
