@@ -5,7 +5,7 @@ parent: User Guide
 nav_order: 4
 ---
 
-> ⚠️ **Under Development** — This feature is planned for Phase 4. This page will be updated as the feature progresses.
+> ⚠️ **Under Development** — Repository and project board selection is available. The interactive diagram and rule inspection views are delivered in later slices.
 
 ---
 
@@ -24,13 +24,20 @@ Key goals of the Board Rules Visualiser:
 
 ## How to Use
 
-*Coming soon — this section will describe the Board Rules Visualiser interface once the feature is complete.*
+### Select a repository and project board
 
-Planned interactions include:
-- Selecting a repository and project board to visualise.
-- Viewing an interactive flow diagram of board columns and transition rules.
-- Clicking on a rule to see its full configuration.
-- Highlighting rules that may conflict or produce unexpected behaviour.
+1. Open **Board Rules Visualiser** from the navigation menu or dashboard.
+2. Use the repository search box to choose one active repository. SoloDevBoard reuses the same repository selector pattern as Label Manager and Migration.
+3. After a repository is selected, SoloDevBoard loads GitHub Project v2 boards linked to that repository.
+4. Choose a supported project board from the **Project board** dropdown. Supported boards must expose a **Status** field.
+5. When a board is selected, the visualisation area confirms the board context is ready. The interactive diagram arrives in a later delivery slice.
+
+### Empty and unsupported states
+
+- **No repository selected:** The visualisation area prompts you to choose a repository and project board.
+- **No supported boards:** If the repository has no GitHub Project v2 board with a Status field, SoloDevBoard explains why the visualiser cannot continue and does not show the diagram state.
+- **Loading:** Progress indicators appear while repositories or project boards are loading.
+- **Errors:** If GitHub cannot be reached, an error message appears with a retry action.
 
 ---
 
