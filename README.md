@@ -41,6 +41,10 @@ Ensure you have the following installed:
 
 ### Run Locally
 
+SoloDevBoard supports two authentication modes: **PAT mode** (default, for solo local development) and **hosted sign-in** (GitHub App, for production and multi-tenant use). See [Getting Started](docs/getting-started.md#choose-your-authentication-mode) for the full mode guide.
+
+**PAT mode (quickest start):**
+
 ```bash
 # Clone the repository
 git clone https://github.com/markheydon/solo-dev-board.git
@@ -49,21 +53,20 @@ cd solo-dev-board
 # Restore dependencies
 dotnet restore SoloDevBoard.slnx
 
-# Configure GitHub auth via AppHost parameters (recommended with aspire start)
+# Configure GitHub auth — one secret for PAT mode
 aspire secret set Parameters:github-pat "<your-pat>"
-aspire secret set Parameters:github-owner-login "<your-account-name>"
 
 # Start with Aspire (recommended)
 aspire start --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 
 # Optional legacy path (without Aspire orchestration)
-# Set secrets on the app project directly, then run without AppHost:
 # dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-pat>" --project src/App/SoloDevBoard.App
-# dotnet user-secrets set "GitHubAuth:OwnerLogin" "<your-account-name>" --project src/App/SoloDevBoard.App
 # dotnet run --project src/App/SoloDevBoard.App
 ```
 
 Then run `aspire describe` to view allocated endpoints and open the `app` resource URL in your browser.
+
+For **hosted sign-in mode** (GitHub App), see [docs/getting-started.md](docs/getting-started.md#hosted-sign-in-mode-setup) or [`SoloDevBoard.AppHost/README.md`](SoloDevBoard.AppHost/README.md).
 
 Aspire is currently used to make local, dev-container, and Codespaces startup behaviour consistent. Issue #171 remains open for future evaluation of broader Aspire adoption, such as introducing additional worker or service processes.
 
@@ -73,6 +76,7 @@ See the full [Getting Started guide](docs/getting-started.md) for configuration 
 
 ```
 solo-dev-board/
+├── SoloDevBoard.AppHost/     # Aspire AppHost (local orchestration and parameter config)
 ├── src/
 │   ├── App/                    # Blazor Server UI (presentation layer)
 │   ├── Application/            # Use cases and service interfaces

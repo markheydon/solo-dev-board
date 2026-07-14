@@ -7,7 +7,7 @@ public sealed class GitHubAuthOptions
 {
     public const string SectionName = "GitHubAuth";
 
-    /// <summary>GitHub owner login used for owner-scoped repository operations.</summary>
+    /// <summary>GitHub owner login used for owner-scoped repository operations. When empty, resolved from the PAT at startup in PAT mode.</summary>
     public string OwnerLogin { get; set; } = string.Empty;
 
     /// <summary>Personal access token for GitHub API authentication.</summary>

@@ -22,35 +22,31 @@ Before you begin, ensure you have the following installed:
 
 ### GitHub Authentication
 
-SoloDevBoard supports two authentication modes:
+SoloDevBoard supports two **mutually exclusive** authentication modes. Choose one before configuring AppHost parameters:
 
-- **Personal Access Token (PAT):** Simplest option for local development. Create a PAT at [GitHub → Settings → Developer settings → Personal access tokens](https://github.com/settings/tokens). The token requires the following scopes.
-  - `repo` (full control of private repositories)
-  - `read:org` (read-only access to organisation data, if applicable)
-  - `workflow` (to manage GitHub Actions workflows)
-  - `read:project` (read-only access to GitHub Projects; required for the Triage UI project board feature)
+| Mode | When to use | What you configure |
+|---|---|---|
+| **PAT mode** (default) | Solo local development and trusted self-hosted use | `github-pat` only (your GitHub login is resolved automatically) |
+| **Hosted sign-in** | Production deployments and local multi-tenant testing | `hosted-sign-in-enabled`, GitHub App OAuth credentials, and allow-lists |
 
-- **GitHub App:** Recommended for production deployments. Provides fine-grained permissions and does not expire. See the [GitHub Apps documentation](https://docs.github.com/en/apps) for setup instructions.
+Parameters for the mode you are **not** using keep their default placeholder (`__disabled__`) and can be ignored.
 
+#### PAT mode
 
-#### Hosted Sign-In Prerequisites (Production)
+Create a PAT at [GitHub → Settings → Developer settings → Personal access tokens](https://github.com/settings/tokens) with these scopes:
 
-For production deployments, SoloDevBoard uses a GitHub App-first hosted authentication model:
+- `repo` (full control of private repositories)
+- `read:org` (read-only access to organisation data, if applicable)
+- `workflow` (to manage GitHub Actions workflows)
+- `read:project` (read-only access to GitHub Projects; required for the Triage UI project board feature)
 
-- Operators must configure the GitHub App and enable hosted sign-in in application settings (`GitHubAuth__HostedSignInEnabled=true`).
-- Admission control is enforced via operator-managed allow-lists for user and organisation logins. Only users and organisations explicitly listed are granted access; all others are denied by default.
-- Hosted sign-in is available at `/auth/sign-in` and establishes a session with mapped claims for your GitHub login, access token, installation ID, and organisation memberships.
-- Operators should regularly review denied admission attempts in application logs (for example, App Service logs).
+#### Hosted sign-in mode
 
-#### PAT-Only Local Trusted Mode
+Uses a GitHub App for OAuth sign-in at `/auth/sign-in`, with operator-managed allow-lists for users and organisations. Recommended for production and multi-tenant deployments. See [Hosted Authentication Guide](user-guide/hosted-authentication.md) for the full operator and local testing walkthrough.
 
-For local development and trusted self-hosted use, PAT-only mode remains available and separate. It does not require hosted sign-in infrastructure or allow-list configuration.
-
-#### OAuth App Fallback
+#### OAuth App fallback
 
 OAuth App fallback is supported but disabled by default. It is only used if enabled and the primary GitHub App authentication path is unavailable.
-
-See [Hosted Authentication Guide](user-guide/hosted-authentication.md) for further details.
 
 ## Running Locally
 
@@ -67,7 +63,7 @@ See [Hosted Authentication Guide](user-guide/hosted-authentication.md) for furth
    dotnet restore SoloDevBoard.slnx
    ```
 
-3. **Configure GitHub authentication** (see [Configuration](#configuration) below).
+3. **Configure GitHub authentication** for your chosen mode (see [Configuration](#configuration) below). You can set values **before** starting Aspire with `aspire secret set` and `appsettings.json`, or via the **Parameters** tab in the Aspire dashboard on first run.
 
 4. **Start the application with Aspire (recommended):**
 
@@ -103,42 +99,75 @@ This Aspire setup currently exists to standardise local development across local
 
 SoloDevBoard is configured via `appsettings.json` and environment variables. **Never commit secrets to source control.**
 
-When running via Aspire (`aspire start`), GitHub auth and admission settings are modelled as **AppHost parameters** and injected into the `app` resource as environment variables. Configure parameter values via the Aspire dashboard on first run, `aspire secret set`, or the AppHost `Parameters` section in user secrets.
+When running via Aspire (`aspire start`), GitHub auth and admission settings are modelled as **AppHost parameters** and injected into the `app` resource as environment variables. See also [`SoloDevBoard.AppHost/README.md`](../SoloDevBoard.AppHost/README.md) for a concise parameter cheat sheet.
+
+### Choose your authentication mode
+
+**PAT mode (default local development)** — leave `hosted-sign-in-enabled` as `false`. Set only `github-pat`. Your GitHub login is resolved automatically from the token at startup. Leave all other auth parameters at `__disabled__`.
+
+**Hosted sign-in mode** — set `hosted-sign-in-enabled` to `true`, configure GitHub App OAuth credentials, and replace the allow-list placeholders with real logins. Leave `github-pat` at `__disabled__`.
+
+### Aspire dashboard (first run)
+
+On first `aspire start`, open the Aspire dashboard and go to **Resources → Parameters**. With the default PAT mode, you only need to set:
+
+1. `github-pat` — your GitHub personal access token (secret)
+
+Your GitHub login is resolved automatically from the PAT when the app starts. All other parameters can remain at `__disabled__`.
 
 ### AppHost parameters (Aspire)
 
-| AppHost parameter | Secret | App config key | Auth mode |
-|---|---|---|---|
-| `hosted-sign-in-enabled` | no | `GitHubAuth:HostedSignInEnabled` | Both (default: `false`) |
-| `github-owner-login` | no | `GitHubAuth:OwnerLogin` | PAT |
-| `github-pat` | yes | `GitHubAuth:PersonalAccessToken` | PAT |
-| `github-app-client-id` | no | `GitHubAuth:HostedGitHubAppClientId` | Hosted sign-in |
-| `github-app-client-secret` | yes | `GitHubAuth:HostedGitHubAppClientSecret` | Hosted sign-in |
-| `hosted-admission-enabled` | no | `HostedAdmissionControl:Enabled` | Hosted sign-in (default: `true`) |
-| `allowed-user-logins` | no | `HostedAdmissionControl:AllowedUserLogins` | Hosted sign-in | default `-` (placeholder when hosted sign-in is off) |
-| `allowed-org-logins` | no | `HostedAdmissionControl:AllowedOrganisationLogins` | Hosted sign-in | default `-` (placeholder when hosted sign-in is off) |
+| AppHost parameter | Secret | Default | App config key | Set in PAT mode | Set in hosted sign-in |
+|---|---|---|---|---|---|
+| `hosted-sign-in-enabled` | no | `false` | `GitHubAuth:HostedSignInEnabled` | leave `false` | set `true` |
+| `github-pat` | yes | `__disabled__` | `GitHubAuth:PersonalAccessToken` | **your PAT** | leave default |
+| `github-app-client-id` | no | `__disabled__` | `GitHubAuth:HostedGitHubAppClientId` | leave default | **client ID** |
+| `github-app-client-secret` | yes | `__disabled__` | `GitHubAuth:HostedGitHubAppClientSecret` | leave default | **client secret** |
+| `hosted-admission-enabled` | no | `true` | `HostedAdmissionControl:Enabled` | ignored | `true` (recommended) |
+| `allowed-user-logins` | no | `__disabled__` | `HostedAdmissionControl:AllowedUserLogins` | ignored | **allow-list** |
+| `allowed-org-logins` | no | `__disabled__` | `HostedAdmissionControl:AllowedOrganisationLogins` | ignored | optional |
+
+`GitHubAuth:OwnerLogin` can still be set explicitly to override the login resolved from a PAT (for example on the legacy `dotnet run` path). When omitted, it is derived automatically from the token.
 
 The hosted sign-in callback base URI is derived automatically from the app's Aspire HTTPS endpoint (`GitHubAuth:HostedSignInCallbackBaseUri`).
 
-**PAT mode (default local development):**
+Non-secret defaults are in `SoloDevBoard.AppHost/appsettings.json`. Secret values are stored via `aspire secret set` or the AppHost user secrets store (`UserSecretsId` on `SoloDevBoard.AppHost.csproj`).
+
+#### PAT mode setup
 
 ```bash
 aspire secret set Parameters:github-pat "<your-token>"
-aspire secret set Parameters:github-owner-login "<your-github-login>"
+aspire start --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 ```
 
-**Hosted sign-in mode:**
+Your GitHub login is resolved automatically from the PAT at startup. You can also set the token via the Aspire dashboard **Parameters** tab on first run.
+
+#### Hosted sign-in mode setup
+
+1. **Create or reuse a GitHub App** at [GitHub → Settings → Developer settings → GitHub Apps](https://github.com/settings/apps). Note the **Client ID** and generate a **Client secret**.
+2. **Start Aspire once** to allocate an HTTPS endpoint, then run `aspire describe` and note the `app` resource HTTPS URL.
+3. **Register the callback URL** on your GitHub App: `{https-endpoint}/auth/callback` (for example, `https://localhost:17123/auth/callback`). SoloDevBoard sets `GitHubAuth:HostedSignInCallbackBaseUri` from the Aspire endpoint automatically.
+4. **Install the GitHub App** on the users or organisations you want to test with.
+5. **Configure AppHost parameters:**
 
 ```bash
-aspire secret set Parameters:hosted-sign-in-enabled "true"
-aspire secret set Parameters:github-app-client-id "<client-id>"
 aspire secret set Parameters:github-app-client-secret "<client-secret>"
-aspire secret set Parameters:allowed-user-logins "<login1>,<login2>"
-# and/or
-aspire secret set Parameters:allowed-org-logins "<org1>,<org2>"
 ```
 
-Non-secret defaults (`hosted-sign-in-enabled`, `hosted-admission-enabled`) are in `SoloDevBoard.AppHost/appsettings.json`. Secret values are stored in the AppHost user secrets store (`UserSecretsId` on `SoloDevBoard.AppHost.csproj`).
+Set non-secret values via the dashboard, `appsettings.json`, or user secrets:
+
+```json
+"Parameters": {
+  "hosted-sign-in-enabled": "true",
+  "github-app-client-id": "<client-id>",
+  "allowed-user-logins": "<login1>,<login2>",
+  "allowed-org-logins": "<org1>,<org2>"
+}
+```
+
+6. **Restart Aspire** and open `/auth/sign-in` on the `app` URL.
+
+See [Hosted Authentication Guide](user-guide/hosted-authentication.md) for operator expectations, admission control, and production deployment notes.
 
 ### `appsettings.json`
 
@@ -217,11 +246,10 @@ Leave `PersonalAccessToken` empty in `appsettings.json` and supply it via an env
 | `HostedAdmissionControl__AllowedOrganisationLogins` | Comma-separated list of allowed GitHub organisation logins |
 | `HostedAdmissionControl__HostedOrganisationLoginsClaimType` | Claim type for organisation logins (string) |
 
-To set PAT-only values for the **legacy `dotnet run` path** (without Aspire), use .NET User Secrets on the app project:
+To set PAT-only values for the **legacy `dotnet run` path** (without Aspire), use .NET User Secrets on the app project. Only the PAT is required; owner login is resolved automatically:
 
 ```bash
 dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-token>" --project src/App/SoloDevBoard.App
-dotnet user-secrets set "GitHubAuth:OwnerLogin" "<your-github-login>" --project src/App/SoloDevBoard.App
 ```
 
 
