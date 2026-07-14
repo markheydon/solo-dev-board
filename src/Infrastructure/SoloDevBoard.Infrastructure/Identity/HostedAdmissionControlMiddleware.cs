@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
+using Microsoft.Net.Http.Headers;
 
 namespace SoloDevBoard.Infrastructure.Identity;
 
@@ -50,6 +52,12 @@ public sealed class HostedAdmissionControlMiddleware(
 
         _logger.LogWarning("Hosted admission denied. Reason: {Reason}", decision.Reason);
 
+        if (PrefersHtmlResponse(context.Request))
+        {
+            context.Response.Redirect(HostedAuthErrorRoutes.BuildErrorUrl(HostedAuthErrorRoutes.AccessDenied));
+            return;
+        }
+
         context.Response.StatusCode = StatusCodes.Status403Forbidden;
         context.Response.ContentType = "application/problem+json";
 
@@ -59,6 +67,44 @@ public sealed class HostedAdmissionControlMiddleware(
             Title = "Hosted access denied",
             Detail = "Your hosted identity is not authorised for this deployment.",
         }).ConfigureAwait(false);
+    }
+
+    private static bool PrefersHtmlResponse(HttpRequest request)
+    {
+        if (!HttpMethods.IsGet(request.Method) && !HttpMethods.IsHead(request.Method))
+        {
+            return false;
+        }
+
+        if (!request.Headers.TryGetValue(HeaderNames.Accept, out var acceptValues) || StringValues.IsNullOrEmpty(acceptValues))
+        {
+            return true;
+        }
+
+        var acceptsJson = false;
+
+        foreach (var acceptValue in acceptValues)
+        {
+            if (string.IsNullOrWhiteSpace(acceptValue))
+            {
+                continue;
+            }
+
+            if (acceptValue.Contains("application/json", StringComparison.OrdinalIgnoreCase)
+                || acceptValue.Contains("application/problem+json", StringComparison.OrdinalIgnoreCase))
+            {
+                acceptsJson = true;
+            }
+
+            if (acceptValue.Contains("text/html", StringComparison.OrdinalIgnoreCase)
+                || acceptValue.Contains("*/*", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(acceptValue, "*", StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return !acceptsJson;
     }
 
     private static bool IsBypassedPath(PathString path)

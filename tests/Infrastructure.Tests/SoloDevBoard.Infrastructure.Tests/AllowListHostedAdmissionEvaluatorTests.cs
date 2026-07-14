@@ -14,7 +14,7 @@ public sealed class AllowListHostedAdmissionEvaluatorTests
         var evaluator = CreateEvaluator(
             new HostedAdmissionControlOptions
             {
-                AllowedUserLogins = ["markheydon"],
+                AllowedUserLogins = "markheydon",
             },
             new GitHubAuthOptions
             {
@@ -38,7 +38,7 @@ public sealed class AllowListHostedAdmissionEvaluatorTests
         var evaluator = CreateEvaluator(
             new HostedAdmissionControlOptions
             {
-                AllowedOrganisationLogins = ["my-org"],
+                AllowedOrganisationLogins = "my-org",
                 HostedOrganisationLoginsClaimType = HostedAuthClaimTypes.OrganisationLogins,
             },
             new GitHubAuthOptions
@@ -64,8 +64,8 @@ public sealed class AllowListHostedAdmissionEvaluatorTests
         var evaluator = CreateEvaluator(
             new HostedAdmissionControlOptions
             {
-                AllowedUserLogins = ["someone-else"],
-                AllowedOrganisationLogins = ["other-org"],
+                AllowedUserLogins = "someone-else",
+                AllowedOrganisationLogins = "other-org",
                 HostedOrganisationLoginsClaimType = HostedAuthClaimTypes.OrganisationLogins,
             },
             new GitHubAuthOptions
@@ -112,7 +112,7 @@ public sealed class AllowListHostedAdmissionEvaluatorTests
         var evaluator = CreateEvaluator(
             new HostedAdmissionControlOptions
             {
-                AllowedUserLogins = ["markheydon"],
+                AllowedUserLogins = "markheydon",
             },
             new GitHubAuthOptions
             {
@@ -134,7 +134,7 @@ public sealed class AllowListHostedAdmissionEvaluatorTests
         var evaluator = CreateEvaluator(
             new HostedAdmissionControlOptions
             {
-                AllowedUserLogins = ["markheydon"],
+                AllowedUserLogins = "markheydon",
             },
             new GitHubAuthOptions
             {
@@ -158,7 +158,7 @@ public sealed class AllowListHostedAdmissionEvaluatorTests
         var evaluator = CreateEvaluator(
             new HostedAdmissionControlOptions
             {
-                AllowedOrganisationLogins = ["my-org"],
+                AllowedOrganisationLogins = "my-org",
                 HostedOrganisationLoginsClaimType = HostedAuthClaimTypes.OrganisationLogins,
             },
             new GitHubAuthOptions
@@ -178,13 +178,38 @@ public sealed class AllowListHostedAdmissionEvaluatorTests
     }
 
     [Fact]
+    public void Evaluate_UserAllowListWithOrganisationSentinel_ReturnsAllowedDecision()
+    {
+        // Arrange
+        var evaluator = CreateEvaluator(
+            new HostedAdmissionControlOptions
+            {
+                AllowedUserLogins = "markheydon",
+                AllowedOrganisationLogins = AuthConfigurationPlaceholders.NotUsed,
+            },
+            new GitHubAuthOptions
+            {
+                HostedOwnerLoginClaimType = HostedAuthClaimTypes.OwnerLogin,
+            });
+        var principal = CreatePrincipal(
+            isAuthenticated: true,
+            new Claim(HostedAuthClaimTypes.OwnerLogin, "markheydon"));
+
+        // Act
+        var result = evaluator.Evaluate(principal);
+
+        // Assert
+        Assert.True(result.IsAllowed);
+    }
+
+    [Fact]
     public void Evaluate_AllowListValuesUseDifferentCasing_ReturnsAllowedDecision()
     {
         // Arrange
         var evaluator = CreateEvaluator(
             new HostedAdmissionControlOptions
             {
-                AllowedUserLogins = ["MarkHeydon"],
+                AllowedUserLogins = "MarkHeydon",
             },
             new GitHubAuthOptions
             {

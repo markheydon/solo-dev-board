@@ -4,6 +4,7 @@
 
 > **A single pane of glass for solo developers managing GitHub workloads across multiple repositories.**
 
+**IMPORTANT** SoloDevBoard is currently in **early development**. The project is under active development (or as active as my schedule will allow at least!). Please refer to the [project plan](plan/IMPLEMENTATION_PLAN.md) for the current roadmap and feature status.
 
 ## What Is SoloDevBoard?
 
@@ -41,6 +42,10 @@ Ensure you have the following installed:
 
 ### Run Locally
 
+SoloDevBoard supports two authentication modes: **PAT mode** (default, for solo local development) and **hosted sign-in** (GitHub App, for production and multi-tenant use). See [Getting Started](docs/getting-started.md#choose-your-authentication-mode) for the full mode guide.
+
+**PAT mode (quickest start):**
+
 ```bash
 # Clone the repository
 git clone https://github.com/markheydon/solo-dev-board.git
@@ -49,18 +54,20 @@ cd solo-dev-board
 # Restore dependencies
 dotnet restore SoloDevBoard.slnx
 
-# Set your GitHub token using .NET User Secrets
-dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-pat>" --project src/App/SoloDevBoard.App
-dotnet user-secrets set "GitHubAuth:OwnerLogin" "<your-account-name>" --project src/App/SoloDevBoard.App
+# Configure GitHub auth — one secret for PAT mode
+aspire secret set Parameters:github-pat "<your-pat>"
 
 # Start with Aspire (recommended)
 aspire start --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 
 # Optional legacy path (without Aspire orchestration)
-dotnet run --project src/App/SoloDevBoard.App
+# dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-pat>" --project src/App/SoloDevBoard.App
+# dotnet run --project src/App/SoloDevBoard.App
 ```
 
 Then run `aspire describe` to view allocated endpoints and open the `app` resource URL in your browser.
+
+For **hosted sign-in mode** (GitHub App), see [docs/getting-started.md](docs/getting-started.md#hosted-sign-in-mode-setup) or [`SoloDevBoard.AppHost/README.md`](SoloDevBoard.AppHost/README.md).
 
 Aspire is currently used to make local, dev-container, and Codespaces startup behaviour consistent. Issue #171 remains open for future evaluation of broader Aspire adoption, such as introducing additional worker or service processes.
 
@@ -70,6 +77,7 @@ See the full [Getting Started guide](docs/getting-started.md) for configuration 
 
 ```
 solo-dev-board/
+├── SoloDevBoard.AppHost/     # Aspire AppHost (local orchestration and parameter config)
 ├── src/
 │   ├── App/                    # Blazor Server UI (presentation layer)
 │   ├── Application/            # Use cases and service interfaces

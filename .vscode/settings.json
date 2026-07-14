@@ -1,0 +1,33 @@
+{
+    "explorer.excludeGitIgnore": true,
+    "explorer.compactFolders": false,
+    "explorer.fileNesting.enabled": true,
+    "explorer.fileNesting.expand": false,
+    "explorer.fileNesting.patterns": {
+        "appsettings.json": "appsettings.*.json",
+        "*.cs": "${capture}.Designer.cs, ${capture}.g.cs, ${capture}.generated.cs",
+        "Directory.Build.props": "Directory.Build.targets, Directory.Packages.props"
+    },
+    "files.exclude": {
+        "**/bin": true,
+        "**/obj": true,
+        "**/.vs": true
+    },
+    "search.exclude": {
+        "**/bin": true,
+        "**/obj": true,
+        "**/.vs": true,
+        "**/CodeCoverage": true
+    },
+    "files.watcherExclude": {
+        "**/bin/**": true,
+        "**/obj/**": true,
+        "**/.vs/**": true
+    },
+    "dotnet.defaultSolution": "SoloDevBoard.slnx",
+    "dotnet.formatting.organizeImportsOnFormat": true,
+    "editor.formatOnSave": true,
+    "[csharp]": {
+        "editor.defaultFormatter": "ms-dotnettools.csharp"
+    }
+}

@@ -19,14 +19,14 @@ public sealed class HostedAdmissionControlOptions
     /// <summary>
     /// Gets or sets the explicitly allowed GitHub user logins for hosted admission.
     /// </summary>
-    /// <value>The operator-managed user allow-list.</value>
-    public string[] AllowedUserLogins { get; set; } = [];
+    /// <value>Comma-separated operator-managed user allow-list.</value>
+    public string? AllowedUserLogins { get; set; }
 
     /// <summary>
     /// Gets or sets the explicitly allowed GitHub organisation logins for hosted admission.
     /// </summary>
-    /// <value>The operator-managed organisation allow-list.</value>
-    public string[] AllowedOrganisationLogins { get; set; } = [];
+    /// <value>Comma-separated operator-managed organisation allow-list.</value>
+    public string? AllowedOrganisationLogins { get; set; }
 
     /// <summary>
     /// Gets or sets the claim type used to read hosted GitHub organisation logins.

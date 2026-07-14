@@ -11,8 +11,6 @@ public sealed class AllowListHostedAdmissionEvaluator(
     IOptions<HostedAdmissionControlOptions> admissionOptions,
     IOptions<GitHubAuthOptions> authOptions) : IHostedAdmissionEvaluator
 {
-    private static readonly char[] ClaimValueSeparators = [',', ';', ' '];
-
     private readonly HostedAdmissionControlOptions _admissionOptions = admissionOptions?.Value ?? throw new ArgumentNullException(nameof(admissionOptions));
     private readonly GitHubAuthOptions _authOptions = authOptions?.Value ?? throw new ArgumentNullException(nameof(authOptions));
 
@@ -37,8 +35,8 @@ public sealed class AllowListHostedAdmissionEvaluator(
             return new HostedAdmissionDecision(false, "Hosted owner-login claim is missing.");
         }
 
-        var allowedUsers = BuildNormalisedSet(_admissionOptions.AllowedUserLogins);
-        var allowedOrganisations = BuildNormalisedSet(_admissionOptions.AllowedOrganisationLogins);
+        var allowedUsers = HostedAdmissionAllowList.BuildNormalisedSet(_admissionOptions.AllowedUserLogins);
+        var allowedOrganisations = HostedAdmissionAllowList.BuildNormalisedSet(_admissionOptions.AllowedOrganisationLogins);
         if (allowedUsers.Count == 0 && allowedOrganisations.Count == 0)
         {
             return new HostedAdmissionDecision(false, "Hosted admission allow-lists are empty.");
@@ -60,21 +58,6 @@ public sealed class AllowListHostedAdmissionEvaluator(
         return new HostedAdmissionDecision(false, "Hosted identity is not present in user or organisation allow-lists.");
     }
 
-    private static HashSet<string> BuildNormalisedSet(IEnumerable<string> values)
-    {
-        var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var value in values)
-        {
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                result.Add(value.Trim());
-            }
-        }
-
-        return result;
-    }
-
     private IEnumerable<string> GetOrganisationLogins(ClaimsPrincipal principal)
     {
         var claimType = _admissionOptions.HostedOrganisationLoginsClaimType;
@@ -91,7 +74,7 @@ public sealed class AllowListHostedAdmissionEvaluator(
                 continue;
             }
 
-            foreach (var login in claimValue.Split(ClaimValueSeparators, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            foreach (var login in claimValue.Split([',', ';', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
             {
                 yield return login;
             }
