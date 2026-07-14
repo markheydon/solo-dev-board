@@ -15,6 +15,7 @@ We are committed to providing a welcoming and inclusive environment for all cont
 ### Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
+- [Aspire CLI](https://aspire.dev/) (`aspire`) for local orchestration
 - A GitHub account
 
 ### Development Setup
@@ -30,16 +31,33 @@ We are committed to providing a welcoming and inclusive environment for all cont
    dotnet build
    ```
 
-3. **Set up local secrets:**
-   For local development, use .NET User Secrets to manage the GitHub Personal Access Token:
-   ```bash
-   dotnet user-secrets init --project src/App/SoloDevBoard.App
-   dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-github-pat>" --project src/App/SoloDevBoard.App
-   dotnet user-secrets set "GitHubAuth:OwnerLogin" "<your-github-login>" --project src/App/SoloDevBoard.App
-   ```
-   See [docs/getting-started.md](docs/getting-started.md) for detailed setup instructions.
+3. **Configure GitHub authentication (Aspire, recommended):**
 
-4. **Run tests:**
+   For solo local development, use **PAT mode** (the default). Set your token via AppHost parameters:
+
+   ```bash
+   aspire secret set Parameters:github-pat "<your-github-pat>"
+   aspire start --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
+   ```
+
+   Your GitHub login is resolved automatically from the PAT. See [`SoloDevBoard.AppHost/README.md`](SoloDevBoard.AppHost/README.md) for hosted sign-in parameters.
+
+4. **Open the app:**
+   ```bash
+   aspire describe
+   ```
+
+   Open the `app` resource URL from `aspire describe`.
+
+   **Legacy path (without Aspire):**
+   ```bash
+   dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-github-pat>" --project src/App/SoloDevBoard.App
+   dotnet run --project src/App/SoloDevBoard.App
+   ```
+
+   See [docs/getting-started.md](docs/getting-started.md) for hosted sign-in mode and Azure deployment.
+
+5. **Run tests:**
    ```bash
    dotnet test
    ```
@@ -130,7 +148,7 @@ When submitting a pull request that changes code, ensure related documentation i
 | New feature | `docs/user-guide/<feature>.md`, `docs/index.md`, `plan/BACKLOG.md` |
 | New ADR | `adr/README.md` (if architectural decision required) |
 | Scope change | `plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md` |
-| New env variable | `docs/getting-started.md`, `infra/README.md` |
+| New env variable | `docs/getting-started.md`, `SoloDevBoard.AppHost/README.md`, `infra/README.md` |
 
 ---
 

@@ -14,7 +14,7 @@ public sealed class SingleUserCurrentUserContextTests
         {
             OwnerLogin = "owner",
         });
-        var sut = new SingleUserCurrentUserContext(options);
+        var sut = new SingleUserCurrentUserContext(options, new ResolvedPatOwnerLogin());
 
         // Act
         var result = sut.OwnerLogin;
@@ -24,14 +24,47 @@ public sealed class SingleUserCurrentUserContextTests
     }
 
     [Fact]
-    public void OwnerLogin_OptionsContainEmptyOwnerLogin_ThrowsInvalidOperationException()
+    public void OwnerLogin_ConfiguredOwnerLoginTakesPrecedenceOverResolvedLogin()
     {
         // Arrange
         var options = Options.Create(new GitHubAuthOptions
         {
-            OwnerLogin = string.Empty,
+            OwnerLogin = "configured-owner",
         });
-        var sut = new SingleUserCurrentUserContext(options);
+        var resolved = new ResolvedPatOwnerLogin { Value = "resolved-owner" };
+        var sut = new SingleUserCurrentUserContext(options, resolved);
+
+        // Act
+        var result = sut.OwnerLogin;
+
+        // Assert
+        Assert.Equal("configured-owner", result);
+    }
+
+    [Fact]
+    public void OwnerLogin_OwnerLoginNotConfigured_UsesResolvedLogin()
+    {
+        // Arrange
+        var options = Options.Create(new GitHubAuthOptions());
+        var resolved = new ResolvedPatOwnerLogin { Value = "resolved-owner" };
+        var sut = new SingleUserCurrentUserContext(options, resolved);
+
+        // Act
+        var result = sut.OwnerLogin;
+
+        // Assert
+        Assert.Equal("resolved-owner", result);
+    }
+
+    [Fact]
+    public void OwnerLogin_OwnerLoginAndResolvedLoginMissing_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var options = Options.Create(new GitHubAuthOptions
+        {
+            OwnerLogin = AuthConfigurationPlaceholders.Disabled,
+        });
+        var sut = new SingleUserCurrentUserContext(options, new ResolvedPatOwnerLogin());
 
         // Act
         var act = () => sut.OwnerLogin;
@@ -48,7 +81,7 @@ public sealed class SingleUserCurrentUserContextTests
         {
             PersonalAccessToken = "test-token",
         });
-        var sut = new SingleUserCurrentUserContext(options);
+        var sut = new SingleUserCurrentUserContext(options, new ResolvedPatOwnerLogin());
 
         // Act
         var result = sut.GetAccessToken();
@@ -58,14 +91,14 @@ public sealed class SingleUserCurrentUserContextTests
     }
 
     [Fact]
-    public void GetAccessToken_OptionsContainEmptyToken_ThrowsInvalidOperationException()
+    public void GetAccessToken_OptionsContainDisabledPlaceholder_ThrowsInvalidOperationException()
     {
         // Arrange
         var options = Options.Create(new GitHubAuthOptions
         {
-            PersonalAccessToken = string.Empty,
+            PersonalAccessToken = AuthConfigurationPlaceholders.Disabled,
         });
-        var sut = new SingleUserCurrentUserContext(options);
+        var sut = new SingleUserCurrentUserContext(options, new ResolvedPatOwnerLogin());
 
         // Act
         var act = () => sut.GetAccessToken();

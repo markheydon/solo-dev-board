@@ -30,6 +30,16 @@ public static class InfrastructureServiceExtensions
 
         services.Configure<GitHubAuthOptions>(configuration.GetSection(GitHubAuthOptions.SectionName));
         services.Configure<HostedAdmissionControlOptions>(configuration.GetSection(HostedAdmissionControlOptions.SectionName));
+        services.AddSingleton<ResolvedPatOwnerLogin>();
+        services.AddSingleton<GitHubPatOwnerLoginResolver>();
+        services.AddHostedService<GitHubAuthConfigurationValidator>();
+        services.AddHostedService<GitHubPatStartupInitializer>();
+        services.AddHttpClient(GitHubPatOwnerLoginResolver.HttpClientName, static (serviceProvider, client) =>
+        {
+            var appVersionService = serviceProvider.GetRequiredService<IAppVersionService>();
+            client.BaseAddress = new Uri("https://api.github.com");
+            client.DefaultRequestHeaders.UserAgent.ParseAdd(appVersionService.UserAgent);
+        });
         services.AddHttpContextAccessor();
         services.AddScoped<SingleUserCurrentUserContext>();
         services.AddScoped<HostedUserCurrentUserContext>();

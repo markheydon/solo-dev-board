@@ -192,7 +192,8 @@ internal sealed class HostedGitHubAuthGateway(
 
     private void EnsureHostedSignInConfiguration()
     {
-        if (string.IsNullOrWhiteSpace(_authOptions.HostedGitHubAppClientId) || string.IsNullOrWhiteSpace(_authOptions.HostedGitHubAppClientSecret))
+        if (!AuthConfigurationPlaceholders.IsConfigured(_authOptions.HostedGitHubAppClientId)
+            || !AuthConfigurationPlaceholders.IsConfigured(_authOptions.HostedGitHubAppClientSecret))
         {
             throw new InvalidOperationException(
                 "Hosted sign-in is enabled but GitHub App client credentials are missing. Configure HostedGitHubAppClientId and HostedGitHubAppClientSecret.");

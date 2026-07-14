@@ -94,11 +94,16 @@ if (hostedSignInEnabled)
 app.UseAntiforgery();
 
 app.MapStaticAssets();
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
 
 if (hostedSignInEnabled)
 {
+    app.MapGet("/auth/error", static (HttpContext context, IOptions<GitHubAuthOptions> authOptionsAccessor) =>
+    {
+        var reason = context.Request.Query["reason"].ToString();
+        var html = HostedAuthErrorPageRenderer.Render(context, reason, authOptionsAccessor.Value);
+        return Results.Content(html, "text/html; charset=utf-8");
+    });
+
     app.MapGet("/auth/sign-in", static (HttpContext context, HostedGitHubAuthGateway authGateway, IOptions<GitHubAuthOptions> optionsAccessor) =>
     {
         var returnUrl = GetSafeReturnUrl(context.Request.Query["returnUrl"]);
@@ -124,41 +129,32 @@ if (hostedSignInEnabled)
         return Results.Redirect(authoriseUrl);
     });
 
-    app.MapGet("/auth/callback", static async (HttpContext context, HostedGitHubAuthGateway authGateway) =>
+    app.MapGet("/auth/callback", static async (
+        HttpContext context,
+        HostedGitHubAuthGateway authGateway,
+        ILogger<Program> logger) =>
     {
         if (!TryReadAndClearStateCookie(context, out var state, out var returnUrl))
         {
-            return Results.Problem(
-                title: "Hosted sign-in failed",
-                detail: "Hosted sign-in session state is missing or invalid. Start the sign-in flow again.",
-                statusCode: StatusCodes.Status401Unauthorized);
+            return Results.Redirect(HostedAuthErrorRoutes.BuildErrorUrl(HostedAuthErrorRoutes.SignInStateInvalid));
         }
 
         var returnedState = context.Request.Query["state"].ToString();
         if (!string.Equals(state, returnedState, StringComparison.Ordinal))
         {
-            return Results.Problem(
-                title: "Hosted sign-in failed",
-                detail: "Hosted sign-in session state did not match. Start the sign-in flow again.",
-                statusCode: StatusCodes.Status401Unauthorized);
+            return Results.Redirect(HostedAuthErrorRoutes.BuildErrorUrl(HostedAuthErrorRoutes.SignInStateInvalid));
         }
 
         var signInError = context.Request.Query["error"].ToString();
         if (!string.IsNullOrWhiteSpace(signInError))
         {
-            return Results.Problem(
-                title: "Hosted sign-in failed",
-                detail: "GitHub sign-in was denied or could not be completed.",
-                statusCode: StatusCodes.Status401Unauthorized);
+            return Results.Redirect(HostedAuthErrorRoutes.BuildErrorUrl(HostedAuthErrorRoutes.SignInDenied));
         }
 
         var code = context.Request.Query["code"].ToString();
         if (string.IsNullOrWhiteSpace(code))
         {
-            return Results.Problem(
-                title: "Hosted sign-in failed",
-                detail: "GitHub sign-in callback did not include an authorisation code.",
-                statusCode: StatusCodes.Status400BadRequest);
+            return Results.Redirect(HostedAuthErrorRoutes.BuildErrorUrl(HostedAuthErrorRoutes.SignInIncomplete));
         }
 
         HostedGitHubAuthSession session;
@@ -168,17 +164,13 @@ if (hostedSignInEnabled)
         }
         catch (InvalidOperationException ex)
         {
-            return Results.Problem(
-                title: "Hosted sign-in failed",
-                detail: $"GitHub sign-in could not establish a valid hosted session: {ex.Message}",
-                statusCode: StatusCodes.Status401Unauthorized);
+            logger.LogWarning(ex, "Hosted sign-in failed while establishing a session.");
+            return Results.Redirect(HostedAuthErrorRoutes.BuildErrorUrl(HostedAuthErrorRoutes.SignInFailed));
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException ex)
         {
-            return Results.Problem(
-                title: "Hosted sign-in failed",
-                detail: "GitHub sign-in could not complete because GitHub returned an unexpected HTTP response.",
-                statusCode: StatusCodes.Status502BadGateway);
+            logger.LogWarning(ex, "Hosted sign-in failed because GitHub returned an unexpected HTTP response.");
+            return Results.Redirect(HostedAuthErrorRoutes.BuildErrorUrl(HostedAuthErrorRoutes.SignInUnavailable));
         }
 
         var principal = authGateway.CreatePrincipal(session);
@@ -205,10 +197,7 @@ if (hostedSignInEnabled)
     if (hostedOAuthFallbackEnabled)
     {
         app.MapGet("/auth/sign-in/oauth-fallback", static () =>
-            Results.Problem(
-                title: "OAuth fallback endpoint not configured",
-                detail: "The OAuth App compatibility boundary is enabled but has not been implemented for this deployment.",
-                statusCode: StatusCodes.Status501NotImplemented));
+            Results.Redirect(HostedAuthErrorRoutes.BuildErrorUrl(HostedAuthErrorRoutes.SignInMisconfigured)));
     }
 
     app.MapPost("/auth/sign-out", static async (HttpContext context) =>
@@ -216,8 +205,11 @@ if (hostedSignInEnabled)
         await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme).ConfigureAwait(false);
 
         return Results.Redirect("/");
-    });
+    }).DisableAntiforgery();
 }
+
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
 
 app.Run();
 
