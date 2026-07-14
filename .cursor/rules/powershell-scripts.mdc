@@ -1,0 +1,9 @@
+---
+description: PowerShell script conventions
+globs: **/*.ps1
+alwaysApply: false
+---
+
+# PowerShell
+
+When editing matching files, read and apply [`.github/instructions/powershell.instructions.md`](../../.github/instructions/powershell.instructions.md) in full.

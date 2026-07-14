@@ -58,7 +58,7 @@ The project's MIT licence and public repository status require all dependencies 
 - The following instruction and skill files are updated to remove references to FluentAssertions and explicitly prohibit its future addition:
   - `.github/copilot-instructions.md`
   - `.github/instructions/dotnet-framework.instructions.md`
-  - `.github/skills/dotnet-best-practices/SKILL.md`
-  - `.github/skills/csharp-xunit/SKILL.md`
+  - `.agents/skills/dotnet-best-practices/SKILL.md`
+  - `.agents/skills/csharp-xunit/SKILL.md`
 - [ADR-0002](0002-testing-framework.md) and [ADR-0006](0006-moq-mocking-library.md) are updated to reference this ADR on the assertion library aspect.
 - AI collaborators (delivery agents) must not add FluentAssertions when writing or extending tests.
