@@ -1,6 +1,5 @@
 using System.Net;
 using System.Text;
-using Microsoft.AspNetCore.Http;
 using SoloDevBoard.Infrastructure.GitHub;
 using SoloDevBoard.Infrastructure.Identity;
 
