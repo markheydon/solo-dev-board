@@ -1,12 +1,13 @@
+using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using SoloDevBoard.Application.Services.BoardRules;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Domain.Entities.Labels;
 using SoloDevBoard.Domain.Entities.Milestones;
 using SoloDevBoard.Domain.Entities.Repositories;
 using SoloDevBoard.Domain.Entities.Triage;
 using SoloDevBoard.Domain.Entities.Workflows;
-using System.Net.Http.Json;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace SoloDevBoard.Infrastructure.GitHub;
 
@@ -387,6 +388,81 @@ public sealed class GitHubService : IGitHubService
     }
 
     /// <inheritdoc/>
+    public async Task<BoardRulesDefinitionDto> GetBoardRulesDefinitionAsync(string owner, string repo, string projectId, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectId);
+
+        const string query = "query GetBoardRulesDefinition($projectId: ID!) { node(id: $projectId) { ... on ProjectV2 { id title owner { ... on User { login } ... on Organization { login } } fields(first: 50) { nodes { ... on ProjectV2SingleSelectField { id name options { id name } } } } } } }";
+
+        var client = CreateAuthenticatedClient();
+        var requestBody = new GraphQlRequestDto(
+            query,
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["projectId"] = projectId,
+            });
+
+        using var response = await client.PostAsJsonAsync("/graphql", requestBody, JsonOptions, cancellationToken).ConfigureAwait(false);
+        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
+
+        var payload = await response.Content.ReadFromJsonAsync<GetBoardRulesResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
+            ?? throw CreateInvalidResponseException("GraphQL response body was empty.", "/graphql");
+
+        if (payload.Errors.Count > 0)
+        {
+            var combinedErrors = string.Join("; ", payload.Errors.Select(static error => error.Message));
+            throw new HttpRequestException($"GitHub GraphQL request failed. Errors: {combinedErrors}");
+        }
+
+        return ToBoardRulesDefinitionDto(payload.Data?.Node) ?? new BoardRulesDefinitionDto(
+            projectId,
+            string.Empty,
+            string.Empty,
+            Array.Empty<BoardColumnDto>(),
+            Array.Empty<BoardRuleDto>(),
+            new[] { "The requested project board was not found or is unavailable." });
+    }
+
+    private static BoardRulesDefinitionDto? ToBoardRulesDefinitionDto(ProjectBoardNodeDto? node)
+    {
+        if (node is null || string.IsNullOrWhiteSpace(node.Id) || string.IsNullOrWhiteSpace(node.Title))
+        {
+            return null;
+        }
+
+        var statusField = node.Fields?.Nodes
+            .FirstOrDefault(field =>
+                !string.IsNullOrWhiteSpace(field.Id)
+                && field.Name.Equals("Status", StringComparison.OrdinalIgnoreCase));
+
+        if (statusField is null || string.IsNullOrWhiteSpace(statusField.Id))
+        {
+            return new BoardRulesDefinitionDto(
+                node.Id,
+                node.Title,
+                node.Owner?.Login ?? string.Empty,
+                Array.Empty<BoardColumnDto>(),
+                Array.Empty<BoardRuleDto>(),
+                new[] { "Project board does not expose a supported status field." });
+        }
+
+        var columns = statusField.Options
+            .Where(option => !string.IsNullOrWhiteSpace(option.Id) && !string.IsNullOrWhiteSpace(option.Name))
+            .Select((option, index) => new BoardColumnDto(index, option.Name, index, new[] { option.Name }))
+            .ToArray();
+
+        return new BoardRulesDefinitionDto(
+            node.Id,
+            node.Title,
+            node.Owner?.Login ?? string.Empty,
+            columns,
+            Array.Empty<BoardRuleDto>(),
+            new[] { "Board automation rules are not yet available through the current GitHub query model." });
+    }
+
+    /// <inheritdoc/>
     public async Task UpdateProjectBoardItemStatusAsync(
         string projectId,
         string projectItemId,
@@ -455,29 +531,29 @@ public sealed class GitHubService : IGitHubService
         switch (itemType)
         {
             case GitHubTriageItemType.Issue:
-            {
-                var issueEndpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/issues/{itemNumber}";
-                using var issueRequest = new HttpRequestMessage(HttpMethod.Patch, issueEndpoint)
                 {
-                    Content = JsonContent.Create(new IssueStateRequestDto("closed"), options: JsonOptions),
-                };
+                    var issueEndpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/issues/{itemNumber}";
+                    using var issueRequest = new HttpRequestMessage(HttpMethod.Patch, issueEndpoint)
+                    {
+                        Content = JsonContent.Create(new IssueStateRequestDto("closed"), options: JsonOptions),
+                    };
 
-                using var issueResponse = await client.SendAsync(issueRequest, cancellationToken).ConfigureAwait(false);
-                await EnsureSuccessStatusCodeAsync(issueResponse, cancellationToken).ConfigureAwait(false);
-                break;
-            }
+                    using var issueResponse = await client.SendAsync(issueRequest, cancellationToken).ConfigureAwait(false);
+                    await EnsureSuccessStatusCodeAsync(issueResponse, cancellationToken).ConfigureAwait(false);
+                    break;
+                }
             case GitHubTriageItemType.PullRequest:
-            {
-                var pullRequestEndpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/pulls/{itemNumber}";
-                using var pullRequestRequest = new HttpRequestMessage(HttpMethod.Patch, pullRequestEndpoint)
                 {
-                    Content = JsonContent.Create(new PullRequestStateRequestDto("closed"), options: JsonOptions),
-                };
+                    var pullRequestEndpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/pulls/{itemNumber}";
+                    using var pullRequestRequest = new HttpRequestMessage(HttpMethod.Patch, pullRequestEndpoint)
+                    {
+                        Content = JsonContent.Create(new PullRequestStateRequestDto("closed"), options: JsonOptions),
+                    };
 
-                using var pullRequestResponse = await client.SendAsync(pullRequestRequest, cancellationToken).ConfigureAwait(false);
-                await EnsureSuccessStatusCodeAsync(pullRequestResponse, cancellationToken).ConfigureAwait(false);
-                break;
-            }
+                    using var pullRequestResponse = await client.SendAsync(pullRequestRequest, cancellationToken).ConfigureAwait(false);
+                    await EnsureSuccessStatusCodeAsync(pullRequestResponse, cancellationToken).ConfigureAwait(false);
+                    break;
+                }
             default:
                 throw new ArgumentOutOfRangeException(nameof(itemType), itemType, "Unsupported triage item type.");
         }
@@ -618,6 +694,7 @@ public sealed class GitHubService : IGitHubService
     /// A function mapping a DTO to a domain entity. Return <see langword="null"/> to exclude an item
     /// from the results (e.g. to filter pull requests out of an issues response).
     /// </param>
+    /// <param name="jsonOptions"></param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>A read-only list of all mapped domain entities across all pages.</returns>
     internal static async Task<IReadOnlyList<TDomain>> GetPagedAsync<TDto, TDomain>(
@@ -1062,6 +1139,23 @@ public sealed class GitHubService : IGitHubService
     private sealed record GraphQlRequestDto(
         [property: JsonPropertyName("query")] string Query,
         [property: JsonPropertyName("variables")] IReadOnlyDictionary<string, string> Variables);
+
+    /// <summary>DTO wrapper for GraphQL get-board-rules responses.</summary>
+    private sealed record GetBoardRulesResponseDto
+    {
+        [JsonPropertyName("data")]
+        public GetBoardRulesDataDto? Data { get; init; }
+
+        [JsonPropertyName("errors")]
+        public IReadOnlyList<GraphQlErrorDto> Errors { get; init; } = [];
+    }
+
+    /// <summary>DTO for GraphQL board-rules data payload.</summary>
+    private sealed record GetBoardRulesDataDto
+    {
+        [JsonPropertyName("node")]
+        public ProjectBoardNodeDto? Node { get; init; }
+    }
 
     /// <summary>DTO for resolving a triage item GraphQL node identifier from the issues REST endpoint.</summary>
     private sealed record TriageItemNodeResponseDto

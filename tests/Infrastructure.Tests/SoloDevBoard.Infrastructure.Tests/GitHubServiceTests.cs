@@ -1,10 +1,10 @@
+using System.Net;
+using System.Text;
+using System.Text.Json;
 using Moq;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Domain.Entities.Labels;
 using SoloDevBoard.Infrastructure.GitHub;
-using System.Net;
-using System.Text;
-using System.Text.Json;
 
 namespace SoloDevBoard.Infrastructure.Tests;
 
@@ -805,13 +805,13 @@ public sealed class GitHubServiceTests
         Assert.Equal("https://api.github.com/graphql", handler.Requests[1].RequestUri!.ToString());
     }
 
-        [Fact]
-        public async Task AddTriageItemToProjectBoardAsync_GraphQlErrorsPresent_ThrowsHttpRequestException()
-        {
-                // Arrange
-                var handler = new QueueMessageHandler(
-                [
-                        CreateJsonResponse(HttpStatusCode.OK, """
+    [Fact]
+    public async Task AddTriageItemToProjectBoardAsync_GraphQlErrorsPresent_ThrowsHttpRequestException()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+                CreateJsonResponse(HttpStatusCode.OK, """
                         {
                             "node_id": "I_kwDOABCDE123"
                         }
@@ -834,15 +834,15 @@ public sealed class GitHubServiceTests
                         """),
                 ]);
 
-                var sut = CreateSubject(handler);
+        var sut = CreateSubject(handler);
 
-                // Act
-                var action = async () => _ = await sut.AddTriageItemToProjectBoardAsync("owner", "repo", 55, "project-id");
+        // Act
+        var action = async () => _ = await sut.AddTriageItemToProjectBoardAsync("owner", "repo", 55, "project-id");
 
-                // Assert
-                var exception = await Assert.ThrowsAsync<HttpRequestException>(action);
-                Assert.Contains("GitHub GraphQL request failed", exception.Message, StringComparison.Ordinal);
-        }
+        // Assert
+        var exception = await Assert.ThrowsAsync<HttpRequestException>(action);
+        Assert.Contains("GitHub GraphQL request failed", exception.Message, StringComparison.Ordinal);
+    }
 
     [Fact]
     public async Task GetProjectBoardsForRepositoryAsync_StatusFieldPresent_ReturnsProjectBoardOptions()
@@ -924,6 +924,112 @@ public sealed class GitHubServiceTests
         // Assert
         var exception = await Assert.ThrowsAsync<HttpRequestException>(action);
         Assert.Contains("GitHub GraphQL request failed", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetBoardRulesDefinitionAsync_ProjectBoardFound_ReturnsBoardRulesDefinitionDto()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "node": {
+                        "id": "PVT_kwHOAJefG84BQ6bh",
+                        "title": "Roadmap",
+                        "owner": { "login": "owner" },
+                        "fields": {
+                            "nodes": [
+                                {
+                                    "id": "PVTF_status",
+                                    "name": "Status",
+                                    "options": [
+                                        { "id": "option-one", "name": "In Progress" },
+                                        { "id": "option-two", "name": "Done" }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                },
+                "errors": []
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var result = await sut.GetBoardRulesDefinitionAsync("owner", "repo", "PVT_kwHOAJefG84BQ6bh");
+
+        // Assert
+        Assert.Equal("PVT_kwHOAJefG84BQ6bh", result.ProjectId);
+        Assert.Equal("Roadmap", result.ProjectTitle);
+        Assert.Equal("owner", result.OwnerLogin);
+        Assert.Equal(2, result.Columns.Count);
+        Assert.Contains(result.UnsupportedDetails, detail => detail.Contains("not yet available", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task GetBoardRulesDefinitionAsync_ProjectBoardNotFound_ReturnsUnavailableDetail()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "node": null
+                },
+                "errors": []
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var result = await sut.GetBoardRulesDefinitionAsync("owner", "repo", "PVT_kwHOAJefG84BQ6bh");
+
+        // Assert
+        Assert.Equal("PVT_kwHOAJefG84BQ6bh", result.ProjectId);
+        Assert.Empty(result.Columns);
+        Assert.Contains(result.UnsupportedDetails, detail => detail.Contains("unavailable", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task GetBoardRulesDefinitionAsync_StatusFieldMissing_ReturnsStatusFieldUnsupportedDetail()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "node": {
+                        "id": "PVT_kwHOAJefG84BQ6bh",
+                        "title": "Roadmap",
+                        "owner": { "login": "owner" },
+                        "fields": {
+                            "nodes": []
+                        }
+                    }
+                },
+                "errors": []
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var result = await sut.GetBoardRulesDefinitionAsync("owner", "repo", "PVT_kwHOAJefG84BQ6bh");
+
+        // Assert
+        Assert.Equal("PVT_kwHOAJefG84BQ6bh", result.ProjectId);
+        Assert.Empty(result.Columns);
+        Assert.Contains(result.UnsupportedDetails, detail => detail.Contains("supported status field", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -1130,7 +1236,7 @@ public sealed class GitHubServiceTests
 
             if (request.Content is not null)
             {
-              var content = await request.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                var content = await request.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
                 var mediaType = request.Content.Headers.ContentType?.MediaType ?? "application/json";
                 clone.Content = new StringContent(content, Encoding.UTF8, mediaType);
             }

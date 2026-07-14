@@ -1,3 +1,4 @@
+using System.Net;
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -8,7 +9,6 @@ using SoloDevBoard.App.Components.Shared.Components;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Repositories;
 using SoloDevBoard.Application.Services.Triage;
-using System.Net;
 
 namespace SoloDevBoard.App.Tests;
 

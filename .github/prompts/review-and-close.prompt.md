@@ -2,6 +2,7 @@
 name: Review and Close
 description: Creates PR, validates quality gates, verifies documentation sync, runs tests, and closes issues after approval. Invokes Review Agent.
 agent: Review Agent
+argument-hint: Specify 'review issue #X' or 'create PR and close issue #Y'.
 ---
 
 # Review and Close Workflow
