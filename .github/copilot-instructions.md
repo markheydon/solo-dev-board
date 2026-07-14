@@ -14,8 +14,6 @@ Copilot loads additional rules from `.github/instructions/` when matching files 
 |------|-------|
 | `blazor.instructions.md` | `**/*.razor`, `**/*.razor.cs`, `**/*.razor.css` |
 | `dotnet-framework.instructions.md` | `**/*.cs`, `**/*.csproj` |
-| `bicep.instructions.md` | `infra/**/*.bicep` |
-| `powershell.instructions.md` | `**/*.ps1` |
 | `github-actions-ci-cd-best-practices.instructions.md` | `.github/workflows/**` |
 
 ---

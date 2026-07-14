@@ -32,7 +32,6 @@
 				"github.vscode-github-actions",
 				"github.copilot",
 				"github.copilot-chat",
-				"ms-azuretools.vscode-bicep",
 				"editorconfig.editorconfig",
 				"microsoft-aspire.aspire-vscode"
 			]

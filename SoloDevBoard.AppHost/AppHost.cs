@@ -1,5 +1,7 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
+builder.AddAzureContainerAppEnvironment("aca");
+
 var hostedSignInEnabled = builder.AddParameter("hosted-sign-in-enabled")
     .WithDescription("Enable GitHub App hosted sign-in at /auth/sign-in. When false, PAT mode is used (default).");
 
@@ -29,7 +31,12 @@ var app = builder.AddProject<Projects.SoloDevBoard_App>("app")
     .WithEnvironment("GitHubAuth__HostedGitHubAppClientSecret", githubAppClientSecret)
     .WithEnvironment("HostedAdmissionControl__Enabled", hostedAdmissionEnabled)
     .WithEnvironment("HostedAdmissionControl__AllowedUserLogins", allowedUserLogins)
-    .WithEnvironment("HostedAdmissionControl__AllowedOrganisationLogins", allowedOrgLogins);
+    .WithEnvironment("HostedAdmissionControl__AllowedOrganisationLogins", allowedOrgLogins)
+    .PublishAsAzureContainerApp((_, containerApp) =>
+    {
+        containerApp.Template.Scale.MinReplicas = 0;
+        containerApp.Template.Scale.MaxReplicas = 1;
+    });
 
 app.WithEnvironment("GitHubAuth__HostedSignInCallbackBaseUri", app.GetEndpoint("https"));
 

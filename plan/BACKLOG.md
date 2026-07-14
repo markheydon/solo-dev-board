@@ -11,10 +11,10 @@ This section captures ideas and potential enhancements for later consideration. 
 
   - Acceptance criteria:
     - Aspire AppHost orchestrates the existing web app for local development.
-    - Existing Azure Bicep/App Service deployment remains the current production path.
+    - Production deployment uses Aspire Azure Container Apps with scale-to-zero (ADR-0018).
     - Existing direct app startup (`dotnet run`) remains available as a compatibility path.
     - Local onboarding guidance documents Aspire-first startup and resource endpoint discovery.
-    - Issue #171 remains open for future evaluation of broader Aspire adoption beyond local orchestration.
+- [x] As a solo developer, I want production deployment migrated from hand-maintained Bicep App Service infrastructure to Aspire Azure Container Apps so that local and hosted environments share one deployment model and idle hosting costs are minimised. _(ADR-0018; implemented 2026-07-14.)_
 
 ## Foundation (Cross-Cutting)
 

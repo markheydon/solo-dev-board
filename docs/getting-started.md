@@ -91,7 +91,7 @@ OAuth App fallback is supported but disabled by default. It is only used if enab
    aspire start --isolated --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
    ```
 
-This Aspire setup currently exists to standardise local development across local machines, dev containers, and Codespaces. It does not change the production hosting path, and issue #171 remains open for future evaluation of broader Aspire adoption such as additional worker or service processes.
+This Aspire setup standardises local development across local machines, dev containers, and Codespaces. Production deployment also uses the same AppHost via `aspire deploy` to Azure Container Apps (see [Deployment](deployment.md) and ADR-0018).
 
 ---
 
@@ -322,29 +322,20 @@ dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-token>" --projec
 - OAuth App fallback is only used if `HostedOAuthAppFallbackEnabled` is true and the primary GitHub App authentication path is unavailable. This fallback is disabled by default for security.
 - PAT-only local trusted mode is always available for local development and trusted self-hosted use, independent of hosted admission control or fallback settings.
 
-### Azure Key Vault (Production)
+### Production secrets (GitHub Actions)
 
-In production, secrets are stored in Azure Key Vault. The application is configured to read secrets from Key Vault automatically when deployed to Azure App Service. See the [infrastructure README](../infra/README.md) for details.
+In production, secret AppHost parameters are supplied from the GitHub `production` environment during `aspire deploy`. See [Deployment](deployment.md) for the full secret and variable mapping.
 
 ---
 
 ## Deploying to Azure
 
-SoloDevBoard includes Bicep templates for deploying to Azure App Service. See the [infra/ README](../infra/README.md) for full deployment instructions.
+SoloDevBoard deploys to Azure Container Apps via Aspire. See the [Deployment guide](deployment.md) for prerequisites, one-time OIDC bootstrap, GitHub Environment configuration, and first deploy steps.
 
-A high-level summary:
+Summary:
 
-1. Ensure you have the [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) installed and are logged in (`az login`).
-2. Create a resource group:
-   ```bash
-   az group create --name rg-solodevboard-prod --location uksouth
-   ```
-3. Deploy the Bicep template:
-   ```bash
-   az deployment group create \
-     --resource-group rg-solodevboard-prod \
-     --template-file infra/main.bicep \
-     --parameters environmentName=prod
-   ```
-4. Configure the GitHub token in Key Vault (see `infra/README.md`).
-5. The CD pipeline (`.github/workflows/cd.yml`) handles subsequent deployments on push to `main`.
+1. Install the [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) and log in (`az login`).
+2. Create a resource group and GitHub Actions OIDC identity (Azure CLI commands in [deployment.md](deployment.md)).
+3. Configure the GitHub `production` environment secrets and variables.
+4. Run the CD workflow manually via **Actions → CD - Deploy to Azure → Run workflow**.
+5. After the first successful deploy, update your GitHub App callback URL to the deployed Container App FQDN.

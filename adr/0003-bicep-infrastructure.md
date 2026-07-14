@@ -1,7 +1,7 @@
 # ADR-0003: Use Bicep for Azure Infrastructure as Code
 
 **Date:** 2025-01-01
-**Status:** Accepted
+**Status:** Superseded by ADR-0018
 
 ---
 

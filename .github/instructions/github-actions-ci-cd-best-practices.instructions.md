@@ -45,6 +45,8 @@ Use this instruction for authoring and reviewing workflows in this repository.
 - Require successful CI before deployment.
 - Keep production deploys explicit and auditable.
 - Include rollback-aware operational guidance in deployment comments or documentation.
+- Production CD uses `aspire deploy` from `SoloDevBoard.AppHost` with OIDC Azure login and `Parameters__*` environment variables for AppHost secrets.
+- Use `aspire deploy --list-steps --non-interactive` in validation workflows to prove the deployment model without provisioning Azure resources.
 
 ## Dependabot Pull Requests
 

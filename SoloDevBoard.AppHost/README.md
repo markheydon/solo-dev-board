@@ -1,8 +1,10 @@
 # SoloDevBoard AppHost
 
-Aspire orchestrates the SoloDevBoard web app for local development, dev containers, and Codespaces. GitHub authentication is configured through **AppHost parameters**, which are injected into the `app` resource as environment variables.
+Aspire orchestrates the SoloDevBoard web app for local development, dev containers, Codespaces, and **production deployment to Azure Container Apps** (ADR-0018).
 
-Use `-` on inactive parameters. Shipped defaults are in `SoloDevBoard.AppHost/appsettings.json`; values saved from the Aspire dashboard are stored in user secrets and **override** those defaults. Do not rely on AppHost code defaults for parameters you change in the dashboard.
+GitHub authentication is configured through **AppHost parameters**, which are injected into the `app` resource as environment variables.
+
+Use `-` on inactive parameters. Shipped defaults are in `SoloDevBoard.AppHost/appsettings.json`; production non-secret defaults are in `appsettings.Production.json`. Values saved from the Aspire dashboard are stored in user secrets and **override** those defaults.
 
 ## Choose your authentication mode
 
@@ -50,7 +52,7 @@ See [docs/getting-started.md](../docs/getting-started.md) for full setup and [Sw
 
 Startup validation fails fast if required values are missing or inactive-mode parameters are not `-`.
 
-## Start the app
+## Local development
 
 ```bash
 aspire start --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
@@ -58,3 +60,38 @@ aspire describe
 ```
 
 Open the `app` resource URL shown by `aspire describe`.
+
+## Production deployment
+
+Deployment uses `aspire deploy` to Azure Container Apps with scale-to-zero. See [docs/deployment.md](../docs/deployment.md) for the full operator guide.
+
+Preview deployment steps:
+
+```bash
+aspire deploy --list-steps \
+  --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj \
+  --environment Production \
+  --non-interactive
+```
+
+### GitHub Actions parameter mapping
+
+AppHost parameters map to workflow environment variables with underscores instead of dashes:
+
+| AppHost parameter | CD environment variable |
+|---|---|
+| `hosted-sign-in-enabled` | `Parameters__hosted_sign_in_enabled` |
+| `github-pat` | `Parameters__github_pat` |
+| `github-app-client-id` | `Parameters__github_app_client_id` |
+| `github-app-client-secret` | `Parameters__github_app_client_secret` |
+| `hosted-admission-enabled` | `Parameters__hosted_admission_enabled` |
+| `allowed-user-logins` | `Parameters__allowed_user_logins` |
+| `allowed-org-logins` | `Parameters__allowed_org_logins` |
+
+Azure deployment settings:
+
+| Setting | Environment variable |
+|---|---|
+| Subscription | `Azure__SubscriptionId` |
+| Region | `Azure__Location` |
+| Resource group | `Azure__ResourceGroup` |

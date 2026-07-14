@@ -19,8 +19,8 @@ The following features define the current scope of SoloDevBoard:
 Public-release hardening is in scope for v1.0.0, including:
 - GitHub App-first hosted authentication and installation token flow for user-to-server authentication.
 - Hosted access control and explicit authorised-user admission for public deployments. Only users or organisations explicitly authorised by the operator may access the hosted UI.
-- Secure production authentication handling for hosted deployments, including any required token or session material stored through Azure Key Vault-backed patterns.
-- Azure infrastructure baseline via Bicep (App Service, Key Vault, managed identity).
+- Secure production authentication handling for hosted deployments via Aspire AppHost parameters supplied at deploy time (GitHub Environment secrets).
+- Azure deployment via Aspire to Azure Container Apps with scale-to-zero (ADR-0018).
 - OIDC authentication for GitHub Actions to Azure.
 - Operational hardening: response caching, health checks, structured logging, Application Insights telemetry, Dependabot configuration.
 - PAT-only local trusted mode for development and trusted self-hosted use.

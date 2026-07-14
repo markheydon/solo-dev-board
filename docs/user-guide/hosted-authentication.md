@@ -23,7 +23,7 @@ SoloDevBoard supports a GitHub App-first hosted authentication model for product
 - Operators must configure the GitHub App and enable hosted sign-in in application settings (`GitHubAuth__HostedSignInEnabled=true`), or set the AppHost parameter `hosted-sign-in-enabled` to `true` when running via Aspire.
 - Admission control is enforced via allow-lists for user and organisation logins.
 - Only users and organisations explicitly listed are granted access; all others are denied by default.
-- Operators should regularly review denied admission attempts in application logs (for example, App Service logs).
+- Operators should regularly review denied admission attempts in application logs (for example, Container Apps logs via Log Analytics).
 
 ## Local testing with Aspire
 

@@ -98,7 +98,7 @@ When Copilot or another AI agent is asked to write or update documentation:
 > | Code Change | Documentation Action |
 > |-------------|---------------------|
 > | New feature implemented | Update `docs/user-guide/<feature>.md` to full content; remove "Under Development" notice |
-> | New environment variable | Update `docs/getting-started.md` configuration table and `infra/README.md` |
+> | New environment variable | Update `docs/getting-started.md` configuration table and `docs/deployment.md` |
 > | New architectural decision | Create `adr/XXXX-<title>.md`; add entry to `adr/README.md` |
 > | Scope change | Update `plan/SCOPE.md`; update `docs/index.md` if feature list changes |
 > | New release | Update `plan/RELEASE_PLAN.md`; draft CHANGELOG entry |

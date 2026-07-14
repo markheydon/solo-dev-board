@@ -1,9 +1,0 @@
----
-description: Bicep infrastructure conventions
-globs: infra/**/*.bicep
-alwaysApply: false
----
-
-# Bicep
-
-When editing matching files, read and apply [`.github/instructions/bicep.instructions.md`](../../.github/instructions/bicep.instructions.md) in full.

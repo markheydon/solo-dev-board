@@ -1,22 +1,23 @@
 name: CD - Deploy to Azure
 
-# This is a skeleton workflow. Before enabling, you must:
-#   1. Deploy infra/main.bicep (or run infra/Deploy-SoloDevBoardInfra.ps1) to provision the GitHub OIDC identity and federated credential.
-#   2. Add the following secrets to the 'production' GitHub environment
-#      used by this job (or change the job environment and keep the scopes aligned):
-#        AZURE_CLIENT_ID       — Client ID of the GitHub OIDC deployment identity created for this environment
-#        AZURE_TENANT_ID       — Azure AD tenant ID
-#        AZURE_SUBSCRIPTION_ID — Azure subscription ID
-#        AZURE_WEBAPP_NAME     — The name of the Azure App Service to deploy to
-#   3. Configure the 'production' environment in GitHub repository settings.
+# Deploys SoloDevBoard to Azure Container Apps via Aspire.
+#
+# Before the first deploy:
+#   1. Follow docs/deployment.md to create the resource group and OIDC identity.
+#   2. Configure the GitHub 'production' environment secrets and variables listed below.
+#   3. Run this workflow manually via workflow_dispatch.
+#
+# After the first successful deploy, enable push to main by adding:
+#   push:
+#     branches: [main]
 
 on:
   workflow_dispatch:
-    # Keep this manual until Azure infrastructure, secrets, and environment protections are in place.
 
 permissions:
-  id-token: write   # Required for OIDC authentication with Azure
-  contents: read    # Required to check out the repository
+  id-token: write
+  contents: read
+  packages: write
 
 concurrency:
   group: cd-${{ github.workflow }}-${{ github.ref }}
@@ -24,12 +25,15 @@ concurrency:
 
 jobs:
   deploy:
-    name: Build, Publish, and Deploy
+    name: Deploy with Aspire
     runs-on: ubuntu-latest
     environment:
-      name: production
-      url: ${{ steps.deploy.outputs.webapp-url }}
-    timeout-minutes: 20
+      name: staging
+    timeout-minutes: 45
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+      DOTNET_NOLOGO: true
 
     steps:
       - name: Checkout repository
@@ -40,28 +44,36 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: Restore dependencies
-        run: dotnet restore src/App/SoloDevBoard.App/SoloDevBoard.App.csproj
+      - name: Restore and build solution
+        run: |
+          dotnet restore
+          dotnet build --no-restore --configuration Release
 
-      - name: Build in Release configuration
-        run: dotnet build src/App/SoloDevBoard.App/SoloDevBoard.App.csproj --configuration Release --no-restore
+      - name: Install Aspire CLI
+        run: |
+          curl -sSL https://aspire.dev/install.sh | bash
+          echo "$HOME/.aspire/bin" >> "$GITHUB_PATH"
 
-      - name: Publish application
-        run: dotnet publish src/App/SoloDevBoard.App/SoloDevBoard.App.csproj --configuration Release --no-build --output ./publish
+      - name: List Aspire deployment steps
+        run: aspire deploy --list-steps --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --environment Staging --non-interactive
 
-      # Authenticate with Azure using OIDC (no long-lived secrets required)
-      - name: Log in to Azure
+      - name: Azure login (OIDC)
         uses: azure/login@v3
         with:
-          # Environment-scoped secrets are still accessed through the standard secrets context.
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      # Deploy the published artefacts to the configured Azure App Service
-      - name: Deploy to Azure App Service
-        id: deploy
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
-          package: ./publish
+      - name: Deploy with Aspire
+        run: aspire deploy --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --environment Staging --non-interactive
+        env:
+          Azure__SubscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          Azure__Location: ${{ vars.AZURE_LOCATION }}
+          Azure__ResourceGroup: ${{ vars.AZURE_RESOURCE_GROUP }}
+          Parameters__hosted_sign_in_enabled: ${{ vars.HOSTED_SIGN_IN_ENABLED || 'true' }}
+          Parameters__hosted_admission_enabled: ${{ vars.HOSTED_ADMISSION_ENABLED || 'true' }}
+          Parameters__github_app_client_id: ${{ vars.GITHUB_APP_CLIENT_ID }}
+          Parameters__allowed_user_logins: ${{ vars.ALLOWED_USER_LOGINS }}
+          Parameters__allowed_org_logins: ${{ vars.ALLOWED_ORG_LOGINS }}
+          Parameters__github_pat: ${{ secrets.GITHUB_PAT }}
+          Parameters__github_app_client_secret: ${{ secrets.GITHUB_APP_CLIENT_SECRET }}
