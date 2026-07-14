@@ -1,0 +1,9 @@
+---
+description: GitHub Actions CI/CD best practices
+globs: .github/workflows/**
+alwaysApply: false
+---
+
+# GitHub Actions
+
+When editing matching files, read and apply [`.github/instructions/github-actions-ci-cd-best-practices.instructions.md`](../../.github/instructions/github-actions-ci-cd-best-practices.instructions.md) in full.

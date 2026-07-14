@@ -1,0 +1,11 @@
+---
+description: Blazor and MudBlazor patterns for SoloDevBoard
+globs: **/*.razor,**/*.razor.cs,**/*.razor.css
+alwaysApply: false
+---
+
+# Blazor / MudBlazor
+
+When editing matching files, read and apply [`.github/instructions/blazor.instructions.md`](../../.github/instructions/blazor.instructions.md) in full.
+
+For component patterns, also use the [`mudblazor` skill](../../.agents/skills/mudblazor/SKILL.md).

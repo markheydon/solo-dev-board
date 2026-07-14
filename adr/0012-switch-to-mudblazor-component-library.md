@@ -92,7 +92,7 @@ MudBlazor is the de-facto standard Blazor component library in the community. Co
 
 - **Material Design aesthetic:** MudBlazor implements Material Design rather than the Fluent Design System. SoloDevBoard will no longer have a Microsoft-native visual appearance. For a solo developer productivity tool this is acceptable.
 - **Migration cost:** Two UI features must be refactored (Repositories page, Label Manager + dialog). The logic layer is unchanged; only the Razor component markup changes.
-- **Skill artefact disposal:** The `.github/skills/fluentui-blazor/` skill directory, built during Phases 1–2, will be removed and replaced with a new MudBlazor skill. This is sunk cost and does not affect the application.
+- **Skill artefact disposal:** The `.agents/skills/fluentui-blazor/` skill directory, built during Phases 1–2, will be removed and replaced with a new MudBlazor skill. This is sunk cost and does not affect the application.
 - **bUnit test adjustments:** Existing bUnit tests register `AddFluentUIComponents()`. These must be updated to register MudBlazor services and remove Fluent UI-specific `JSRuntimeMode.Loose` workarounds.
 
 ---
@@ -110,12 +110,12 @@ MudBlazor is the de-facto standard Blazor component library in the community. Co
 7. **Refactor `Repositories.razor`** — replace Fluent UI components with MudBlazor equivalents.
 8. **Refactor `Labels.razor` and `LabelOperationDialog.razor`** — replace all Fluent UI components, including replacing the hand-rolled colour picker with `MudColorPicker`.
 9. **Update bUnit test projects** — replace `AddFluentUIComponents()` with MudBlazor service registration; remove `JSRuntimeMode.Loose` workarounds specific to Fluent UI.
-10. **Remove** `.github/skills/fluentui-blazor/` skill directory.
-11. **Create** `.github/skills/mudblazor/` skill with MudBlazor-specific guidance.
+10. **Remove** `.agents/skills/fluentui-blazor/` skill directory.
+11. **Create** `.agents/skills/mudblazor/` skill with MudBlazor-specific guidance.
 12. **Replace** `.github/instructions/blazor.instructions.md` with a MudBlazor-aware version.
 
 ### Ongoing
 
 - All future Razor component development uses MudBlazor components exclusively.
-- The `.github/skills/mudblazor/` skill is the authoritative source of MudBlazor usage patterns for the Delivery Agent.
+- The `.agents/skills/mudblazor/` skill is the authoritative source of MudBlazor usage patterns for the Delivery Agent.
 - ADR-0009 is superseded by this record.

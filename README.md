@@ -102,12 +102,22 @@ solo-dev-board/
 │   ├── 0004-layered-architecture.md
 │   └── 0005-github-api-strategy.md
 └── .github/
-    ├── copilot-instructions.md  # GitHub Copilot custom instructions
+    ├── copilot-instructions.md  # Copilot adapter → AGENTS.md
+    ├── agents/                  # Copilot agent adapters
+    ├── prompts/                 # Copilot prompt adapters
     ├── ISSUE_TEMPLATE/          # Issue templates (feature, bug, chore)
     ├── pull_request_template.md
     └── workflows/
         ├── ci.yml               # CI: build and test on every PR
         └── cd.yml               # CD: deploy to Azure on push to main
+├── .agents/
+│   ├── skills/                  # Shared skills (Copilot + Cursor)
+│   ├── agents/                  # Canonical agent definitions
+│   └── prompts/                 # Canonical workflow prompts
+├── .cursor/
+│   ├── rules/                   # Cursor path-scoped rules
+│   └── commands/                # Cursor slash commands (/daily-start, etc.)
+├── AGENTS.md                    # Platform-neutral AI collaborator standards
 ```
 
 ---
@@ -121,7 +131,7 @@ To contribute:
 1. Fork the repository and create a new branch for your changes.
 2. Review the project structure and existing documentation to understand the architecture and conventions.
 3. Ensure all code comments, string literals, and documentation use UK English spelling.
-4. Follow the coding conventions outlined in `.github/copilot-instructions.md`.
+4. Follow the coding conventions outlined in [`AGENTS.md`](AGENTS.md) (and [`.github/copilot-instructions.md`](.github/copilot-instructions.md) for Copilot-specific entry points).
 5. Use the issue templates in `.github/ISSUE_TEMPLATE/` to report bugs or request features.
 6. When implementing a feature or fix, reference the relevant issue in your commit message.
 7. Add or update tests in the appropriate test project under `tests/`.
@@ -136,7 +146,7 @@ For help with setup, see `docs/getting-started.md`.
 
 ## AI-Driven Development
 
-SoloDevBoard is developed by a solo developer with **GitHub Copilot** as an active AI collaborator. The `.github/copilot-instructions.md` file contains custom instructions that guide Copilot on architecture, conventions, UK English requirements, and documentation responsibilities. When using Copilot Chat to add features or make changes, these instructions ensure consistent, well-structured output.
+SoloDevBoard is developed by a solo developer with **GitHub Copilot** and **Cursor** as active AI collaborators. [`AGENTS.md`](AGENTS.md) contains platform-neutral standards for architecture, conventions, UK English, and documentation responsibilities. [`.github/copilot-instructions.md`](.github/copilot-instructions.md) and [`.cursor/rules/`](.cursor/rules/) are thin adapters for each platform. See [`docs/ai-collaboration.md`](docs/ai-collaboration.md) for invocation details.
 
 ---
 

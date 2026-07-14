@@ -1,0 +1,9 @@
+---
+description: .NET 10 and C# conventions for SoloDevBoard
+globs: **/*.cs,**/*.csproj
+alwaysApply: false
+---
+
+# .NET / C#
+
+When editing matching files, read and apply [`.github/instructions/dotnet-framework.instructions.md`](../../.github/instructions/dotnet-framework.instructions.md) in full.
