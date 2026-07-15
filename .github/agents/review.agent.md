@@ -110,7 +110,9 @@ Requirements:
 - Do NOT assign to Copilot either as a reviewer or assignee either manually or via a tool
 
 
-Use `.github/pull_request_template.md` if available.
+Use `.github/pull_request_template.md` which is available in the repo.
+- Ensure the PR body is generated from the repository template and not bypassed by supplying a custom `--body` value.
+- When using GitHub CLI, prefer `gh pr create --fill --base main --head <branch>` or the web flow so the repo template can be applied.
 
 ---
 
