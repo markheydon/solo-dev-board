@@ -26,6 +26,7 @@ public partial class BoardRules : ComponentBase
     private string selectedProjectBoardId = string.Empty;
     private BoardRulesDefinitionDto? selectedBoardRules;
     private BoardColumnTransition? selectedTransition;
+    private BoardRuleDto? selectedRule;
     private bool isLoadingRepositories = true;
     private bool isLoadingProjectBoards;
     private bool isLoadingBoardRules;
@@ -65,6 +66,7 @@ public partial class BoardRules : ComponentBase
         selectedProjectBoardId = string.Empty;
         selectedBoardRules = null;
         selectedTransition = null;
+        selectedRule = null;
 
         try
         {
@@ -103,6 +105,7 @@ public partial class BoardRules : ComponentBase
             selectedProjectBoardId = string.Empty;
             selectedBoardRules = null;
             selectedTransition = null;
+            selectedRule = null;
             errorMessage = null;
             hasProjectBoardLoadFailure = false;
             hasBoardRulesLoadFailure = false;
@@ -118,6 +121,7 @@ public partial class BoardRules : ComponentBase
             selectedProjectBoardId = string.Empty;
             selectedBoardRules = null;
             selectedTransition = null;
+            selectedRule = null;
             errorMessage = null;
             hasProjectBoardLoadFailure = false;
             hasBoardRulesLoadFailure = false;
@@ -126,6 +130,7 @@ public partial class BoardRules : ComponentBase
 
         selectedBoardRules = null;
         selectedTransition = null;
+        selectedRule = null;
         errorMessage = null;
         hasProjectBoardLoadFailure = false;
         hasBoardRulesLoadFailure = false;
@@ -154,6 +159,7 @@ public partial class BoardRules : ComponentBase
         errorMessage = null;
         availableProjectBoardOptions = [];
         selectedProjectBoardId = string.Empty;
+        selectedRule = null;
 
         try
         {
@@ -190,6 +196,7 @@ public partial class BoardRules : ComponentBase
         isLoadingBoardRules = true;
         selectedBoardRules = null;
         selectedTransition = null;
+        selectedRule = null;
         hasBoardRulesLoadFailure = false;
         errorMessage = null;
 
@@ -230,10 +237,58 @@ public partial class BoardRules : ComponentBase
     private void SelectTransition(BoardColumnTransition transition)
     {
         selectedTransition = transition;
+        selectedRule = null;
+    }
+
+    private void SelectRule(BoardRuleDto rule)
+    {
+        ArgumentNullException.ThrowIfNull(rule);
+        selectedRule = rule;
     }
 
     private Variant GetTransitionButtonVariant(BoardColumnTransition transition)
         => selectedTransition?.Id == transition.Id ? Variant.Filled : Variant.Outlined;
+
+    private Variant GetRuleChipVariant(BoardRuleDto rule)
+        => selectedRule?.Id == rule.Id ? Variant.Filled : Variant.Outlined;
+
+    private Color GetRuleChipColor(BoardRuleDto rule)
+        => selectedRule?.Id == rule.Id ? Color.Primary
+            : IsRuleWarning(rule) ? Color.Warning
+            : rule.IsEnabled ? Color.Secondary
+            : Color.Default;
+
+    private bool IsRuleWarning(BoardRuleDto rule)
+        => BoardRuleWarnings.Any(warning => warning.Contains($"'{rule.Name}'", StringComparison.OrdinalIgnoreCase));
+
+    private IReadOnlyList<string> BoardRuleWarnings
+    {
+        get
+        {
+            if (selectedBoardRules?.Rules is not { Count: > 0 } rules)
+            {
+                return [];
+            }
+
+            var duplicateTriggerWarnings = rules
+                .GroupBy(rule => string.IsNullOrWhiteSpace(rule.Trigger) ? string.Empty : rule.Trigger.Trim(), StringComparer.OrdinalIgnoreCase)
+                .Where(group => !string.IsNullOrWhiteSpace(group.Key) && group.Count() > 1)
+                .Select(group => $"Rules with the same trigger '{group.Key}' may conflict: {string.Join(", ", group.Select(rule => rule.Name))}.")
+                .ToArray();
+
+            var incompleteConfigurationWarnings = rules
+                .Where(rule => string.IsNullOrWhiteSpace(rule.Trigger) || string.IsNullOrWhiteSpace(rule.Action))
+                .Select(rule => $"Rule '{rule.Name}' has incomplete configuration and may behave unexpectedly.")
+                .ToArray();
+
+            return duplicateTriggerWarnings.Concat(incompleteConfigurationWarnings).ToArray();
+        }
+    }
+
+    private bool HasRuleWarnings => BoardRuleWarnings.Count > 0;
+
+    private string DetailPanelTitle
+        => selectedRule is not null ? "Selected rule" : "Transition detail";
 
     private string GetTransitionButtonAriaLabel(BoardColumnTransition transition)
         => $"Inspect transition from {transition.FromColumnName} to {transition.ToColumnName}";
@@ -245,6 +300,7 @@ public partial class BoardRules : ComponentBase
         selectedProjectBoardId = projectBoardId ?? string.Empty;
         selectedBoardRules = null;
         selectedTransition = null;
+        selectedRule = null;
         hasBoardRulesLoadFailure = false;
         errorMessage = null;
 
