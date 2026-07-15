@@ -1,5 +1,5 @@
 ---
-name: Review and Close
+name: Review and Create PR
 description: Run lightweight review and create a pull request.
 agent: Review Agent
 argument-hint: Specify "review issue #X".
