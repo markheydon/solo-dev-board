@@ -103,6 +103,19 @@ public sealed class BoardRulesTests
                 new BoardRulesProjectBoardOptionDto("PVT_beta", "Beta Board", "owner"),
             ]);
 
+        _boardRulesServiceMock
+            .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesDefinitionDto(
+                "PVT_alpha",
+                "Alpha Board",
+                "owner",
+                [
+                    new BoardColumnDto(0, "To Do", 0, ["To Do"]),
+                    new BoardColumnDto(1, "In Progress", 1, ["In Progress"]),
+                ],
+                Array.Empty<BoardRuleDto>(),
+                ["Board automation rules are not yet available through the current GitHub query model."]));
+
         await using var ctx = CreateContext();
 
         // Act
@@ -120,6 +133,9 @@ public sealed class BoardRulesTests
 
         _boardRulesServiceMock.Verify(
             service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()),
+            Times.Once);
+        _boardRulesServiceMock.Verify(
+            service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -150,6 +166,54 @@ public sealed class BoardRulesTests
             Assert.Single(cut.FindAll("[data-testid='board-rules-unsupported-boards-message']"));
             Assert.Single(cut.FindAll("[data-testid='board-rules-no-supported-board-state']"));
             Assert.DoesNotContain("Board context ready", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task BoardRules_SelectedBoard_RendersTransitionsAndDetailPanel()
+    {
+        // Arrange
+        var repository = CreateRepository("owner", "repo-a");
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([repository]);
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
+            ]);
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesDefinitionDto(
+                "PVT_alpha",
+                "Alpha Board",
+                "owner",
+                [
+                    new BoardColumnDto(0, "To Do", 0, ["To Do"]),
+                    new BoardColumnDto(1, "In Progress", 1, ["In Progress"]),
+                    new BoardColumnDto(2, "Done", 2, ["Done"]),
+                ],
+                Array.Empty<BoardRuleDto>(),
+                ["Board automation rules are not yet available through the current GitHub query model."]));
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<BoardRules>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='board-rules-repository-autocomplete']"));
+        await SelectRepositoryAsync(cut, repository);
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("To Do → In Progress", cut.Markup);
+            Assert.Contains("In Progress → Done", cut.Markup);
+            Assert.Contains("Transition detail", cut.Markup);
+            Assert.Contains("From:", cut.Markup);
+            Assert.Contains("To:", cut.Markup);
         });
     }
 

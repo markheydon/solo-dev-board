@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using MudBlazor;
 using SoloDevBoard.Application.Services.BoardRules;
 using SoloDevBoard.Application.Services.Repositories;
 
@@ -23,10 +24,14 @@ public partial class BoardRules : ComponentBase
     private RepositoryDto? selectedRepository;
     private IReadOnlyList<BoardRulesProjectBoardOptionDto> availableProjectBoardOptions = [];
     private string selectedProjectBoardId = string.Empty;
+    private BoardRulesDefinitionDto? selectedBoardRules;
+    private BoardColumnTransition? selectedTransition;
     private bool isLoadingRepositories = true;
     private bool isLoadingProjectBoards;
+    private bool isLoadingBoardRules;
     private bool hasRepositoryLoadFailure;
     private bool hasProjectBoardLoadFailure;
+    private bool hasBoardRulesLoadFailure;
     private string? errorMessage;
 
     /// <inheritdoc/>
@@ -58,6 +63,8 @@ public partial class BoardRules : ComponentBase
         selectedRepository = null;
         availableProjectBoardOptions = [];
         selectedProjectBoardId = string.Empty;
+        selectedBoardRules = null;
+        selectedTransition = null;
 
         try
         {
@@ -94,7 +101,11 @@ public partial class BoardRules : ComponentBase
             selectedRepository = null;
             availableProjectBoardOptions = [];
             selectedProjectBoardId = string.Empty;
+            selectedBoardRules = null;
+            selectedTransition = null;
+            errorMessage = null;
             hasProjectBoardLoadFailure = false;
+            hasBoardRulesLoadFailure = false;
             return;
         }
 
@@ -105,8 +116,19 @@ public partial class BoardRules : ComponentBase
         {
             availableProjectBoardOptions = [];
             selectedProjectBoardId = string.Empty;
+            selectedBoardRules = null;
+            selectedTransition = null;
+            errorMessage = null;
+            hasProjectBoardLoadFailure = false;
+            hasBoardRulesLoadFailure = false;
             return;
         }
+
+        selectedBoardRules = null;
+        selectedTransition = null;
+        errorMessage = null;
+        hasProjectBoardLoadFailure = false;
+        hasBoardRulesLoadFailure = false;
 
         await LoadProjectBoardOptionsAsync(selectedRepository);
     }
@@ -137,6 +159,10 @@ public partial class BoardRules : ComponentBase
         {
             availableProjectBoardOptions = await BoardRulesService.GetProjectBoardOptionsAsync(owner, repo);
             selectedProjectBoardId = availableProjectBoardOptions.FirstOrDefault()?.Id ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(selectedProjectBoardId))
+            {
+                await LoadBoardRulesDefinitionAsync(owner, repo, selectedProjectBoardId);
+            }
         }
         catch (HttpRequestException ex)
         {
@@ -155,10 +181,82 @@ public partial class BoardRules : ComponentBase
         }
     }
 
-    private Task OnSelectedProjectBoardChangedAsync(string projectBoardId)
+    private async Task LoadBoardRulesDefinitionAsync(string owner, string repo, string projectBoardId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectBoardId);
+
+        isLoadingBoardRules = true;
+        selectedBoardRules = null;
+        selectedTransition = null;
+        hasBoardRulesLoadFailure = false;
+        errorMessage = null;
+
+        try
+        {
+            selectedBoardRules = await BoardRulesService.GetBoardRulesAsync(owner, repo, projectBoardId).ConfigureAwait(false);
+            selectedTransition = BoardTransitions.FirstOrDefault();
+        }
+        catch (HttpRequestException ex)
+        {
+            hasBoardRulesLoadFailure = true;
+            errorMessage = $"GitHub API request failed while loading board rules. {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            hasBoardRulesLoadFailure = true;
+            Logger.LogError(ex, "Failed to load board rules for project board {ProjectBoardId} in repository {Owner}/{Repo}.", projectBoardId, owner, repo);
+            errorMessage = "An unexpected error occurred while loading board rules.";
+        }
+        finally
+        {
+            isLoadingBoardRules = false;
+        }
+    }
+
+    private IReadOnlyList<BoardColumnTransition> BoardTransitions
+        => selectedBoardRules is null
+            ? []
+            : selectedBoardRules.Columns
+                .Select((column, index) => (column, index))
+                .Where(pair => pair.index < selectedBoardRules.Columns.Count - 1)
+                .Select(pair => new BoardColumnTransition(
+                    pair.index,
+                    pair.column.Name,
+                    selectedBoardRules.Columns[pair.index + 1].Name))
+                .ToArray();
+
+    private void SelectTransition(BoardColumnTransition transition)
+    {
+        selectedTransition = transition;
+    }
+
+    private Variant GetTransitionButtonVariant(BoardColumnTransition transition)
+        => selectedTransition?.Id == transition.Id ? Variant.Filled : Variant.Outlined;
+
+    private string GetTransitionButtonAriaLabel(BoardColumnTransition transition)
+        => $"Inspect transition from {transition.FromColumnName} to {transition.ToColumnName}";
+
+    private sealed record BoardColumnTransition(int Id, string FromColumnName, string ToColumnName);
+
+    private async Task OnSelectedProjectBoardChangedAsync(string projectBoardId)
     {
         selectedProjectBoardId = projectBoardId ?? string.Empty;
-        return Task.CompletedTask;
+        selectedBoardRules = null;
+        selectedTransition = null;
+        hasBoardRulesLoadFailure = false;
+        errorMessage = null;
+
+        if (!HasSelectedRepository || string.IsNullOrWhiteSpace(selectedProjectBoardId))
+        {
+            return;
+        }
+
+        var owner = ResolveOwner(selectedRepository!.FullName);
+        var repo = ResolveRepositoryName(selectedRepository.FullName);
+
+        await LoadBoardRulesDefinitionAsync(owner, repo, selectedProjectBoardId);
     }
 
     private static string ResolveOwner(string fullName)
@@ -183,7 +281,7 @@ public partial class BoardRules : ComponentBase
         return parts.Length > 1 ? parts[1] : string.Empty;
     }
 
-    private bool ShowLoadingState => isLoadingRepositories || isLoadingProjectBoards;
+    private bool ShowLoadingState => isLoadingRepositories || isLoadingProjectBoards || isLoadingBoardRules;
 
     private bool HasSelectedRepository => selectedRepository is not null;
 
@@ -216,7 +314,12 @@ public partial class BoardRules : ComponentBase
             ? []
             : [selectedRepository.FullName];
 
-    private string ErrorTitle => hasRepositoryLoadFailure
-        ? "Unable to load repositories"
-        : "Unable to load project boards";
+    private string ErrorTitle
+        => hasRepositoryLoadFailure
+            ? "Unable to load repositories"
+            : hasProjectBoardLoadFailure
+                ? "Unable to load project boards"
+                : hasBoardRulesLoadFailure
+                    ? "Unable to load board rules"
+                    : "Unable to load project boards";
 }
