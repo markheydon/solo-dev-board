@@ -62,7 +62,7 @@ The following automation rules are configured on the board. These are documented
 
 ### Issue Started
 - **Trigger:** Delivery starts on a story, enabler, test, feature, or bug.
-- **Action:** Move the issue to **In Progress**, set **Start Date** to the actual start date, and set **Target Date** using the size calibration in `.agents/skills/github-project/SKILL.md`.
+- **Action:** Move the issue to **In Progress**, set **Start Date** to the actual start date, and set **Target Date** using the size calibration in `.github/skills/github-project/SKILL.md`.
 - **Board rule:** Leave untouched sibling items blank until they start; do not auto-forecast their dates during normal delivery.
 
 ### Pull Request Merged

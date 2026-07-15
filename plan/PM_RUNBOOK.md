@@ -2,23 +2,21 @@
 
 **Purpose:** Your single source of truth for managing SoloDevBoard development using AI agents and prompts.
 
-This runbook orchestrates AI agents and prompts (canonical content in `.agents/agents/` and `.agents/prompts/`) to ensure consistent, high-quality delivery from backlog to release.
-
-**Platform entry points:** Copilot → `.github/prompts/` and `.github/agents/`; Cursor → `.cursor/commands/` (type `/daily-start`, etc.). See [`docs/ai-collaboration.md`](../docs/ai-collaboration.md).
+This runbook orchestrates the `.github/agents/` and `.github/prompts/` workflows to ensure consistent, high-quality delivery from backlog to release.
 
 ---
 
 ## Quick Reference Card
 
-| **When you want to...**                  | **Copilot**                                                | **Cursor**                    | **What it produces**                          |
-|------------------------------------------|------------------------------------------------------------|-------------------------------|-----------------------------------------------|
-| Start your day                           | `daily-start` prompt                                       | `/daily-start`                | Status summary + next action recommendation   |
-| Plan the next feature                    | `plan-next-issue` prompt                                   | `/plan-next-issue`            | GitHub issues with full metadata + tech spec  |
-| Implement planned work                   | `execute-feature` prompt                                   | `/execute-feature`            | Code + tests + docs + ADR (if needed)         |
-| Review and create PR                     | `review-and-close` prompt                                  | `/review-and-close`           | PR + quality validation + issue closure       |
-| Address PR review comments               | `address-pr-review-comments` prompt                        | `/address-pr-review-comments` | PR fixes + thread replies + resolved comments |
-| Weekly health check                      | `weekly-pm-review` prompt                                  | `/weekly-pm-review`           | Executive summary + priorities for next week  |
-| End-to-end feature delivery              | `pm-feature-workflow` skill                                | `pm-feature-workflow` skill   | Full workflow from backlog to closure         |
+| **When you want to...**                  | **Run this prompt/agent**                                  | **What it produces**                          |
+|------------------------------------------|------------------------------------------------------------|-----------------------------------------------|
+| Start your day                           | `.github/prompts/daily-start.prompt.md`                    | Status summary + next action recommendation   |
+| Plan the next feature                    | `.github/prompts/plan-next-issue.prompt.md`                | GitHub issues with full metadata + tech spec  |
+| Implement planned work                   | `.github/prompts/execute-feature.prompt.md`                | Code + tests + docs + ADR (if needed)         |
+| Review and create PR                     | `.github/prompts/review-and-close.prompt.md`               | PR + quality validation + issue closure       |
+| Address PR review comments               | `.github/prompts/address-pr-review-comments.prompt.md`     | PR fixes + thread replies + resolved comments |
+| Weekly health check                      | `.github/prompts/weekly-pm-review.prompt.md`               | Executive summary + priorities for next week  |
+| End-to-end feature delivery              | `.github/skills/pm-feature-workflow/SKILL.md`              | Full workflow from backlog to closure         |
 
 ---
 
@@ -460,7 +458,7 @@ START
 
 ## Mandatory Completion Gates (Enforced by Agents)
 
-These gates are defined in `AGENTS.md` and enforced by agents:
+These gates are defined in `.github/copilot-instructions.md` and enforced by agents:
 
 ### Before Coding (PM Orchestrator enforces)
 - ✅ Backlog item selected and scope validated
@@ -552,7 +550,7 @@ This runbook orchestrates (does NOT duplicate) existing policy:
 
 | **Policy Source**                        | **What It Defines**                     | **How Runbook Uses It**                        |
 |------------------------------------------|-----------------------------------------|------------------------------------------------|
-| `AGENTS.md`                              | Mandatory workflow gates, skill matrix  | Agents enforce gates; runbook references them  |
+| `.github/copilot-instructions.md`        | Mandatory workflow gates, skill matrix  | Agents enforce gates; runbook references them  |
 | `plan/LABEL_STRATEGY.md`                 | Label taxonomy                          | PM Orchestrator applies labels per taxonomy    |
 | `plan/PROJECT_MANAGEMENT.md`             | Issue workflow rules                    | Agents follow issue state transitions          |
 | `plan/SCOPE.md`                          | In-scope vs. out-of-scope features      | PM Orchestrator validates before planning      |
@@ -560,7 +558,7 @@ This runbook orchestrates (does NOT duplicate) existing policy:
 | `plan/IMPLEMENTATION_PLAN.md`            | Phase/milestone definitions             | Agents align work to current phase             |
 | `plan/RELEASE_PLAN.md`                   | Release criteria and dates              | Review Agent checks release impact             |
 | `.github/instructions/*.md`              | .NET, Blazor, GitHub Actions standards  | Delivery Agent follows coding standards        |
-| `.agents/skills/*.md`                    | Workflow procedures (breakdown, test)   | Agents invoke skills at correct stages         |
+| `.github/skills/*.md`                    | Workflow procedures (breakdown, test)   | Agents invoke skills at correct stages         |
 
 **Design principle:** Runbook is a **lightweight orchestration layer** — it tells you what to run and when, but delegates policy enforcement to existing governance files and AI agents.
 
@@ -704,7 +702,7 @@ Take the next backlog item and run the full PM feature workflow
 **This runbook is one part of your PM operating system:**
 
 1. **Planning artefacts** (`plan/BACKLOG.md`, `plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md`) — define what to build
-2. **Governance** (`AGENTS.md`, `plan/LABEL_STRATEGY.md`, `plan/PROJECT_MANAGEMENT.md`) — define how to build it
+2. **Governance** (`.github/copilot-instructions.md`, `plan/LABEL_STRATEGY.md`, `plan/PROJECT_MANAGEMENT.md`) — define how to build it
 3. **Agents** (`.github/agents/*.agent.md`) — execution contracts (who does what)
 4. **Prompts** (`.github/prompts/*.prompt.md`) — reusable workflows (when to do it)
 5. **This runbook** — orchestration guide (daily/weekly rhythm)
