@@ -72,8 +72,8 @@ jobs:
           Azure__ResourceGroup: ${{ vars.AZURE_RESOURCE_GROUP }}
           Parameters__hosted_sign_in_enabled: ${{ vars.HOSTED_SIGN_IN_ENABLED || 'true' }}
           Parameters__hosted_admission_enabled: ${{ vars.HOSTED_ADMISSION_ENABLED || 'true' }}
-          Parameters__github_app_client_id: ${{ vars.GITHUB_APP_CLIENT_ID }}
+          Parameters__gh_app_client_id: ${{ vars.GH_APP_CLIENT_ID }}
           Parameters__allowed_user_logins: ${{ vars.ALLOWED_USER_LOGINS }}
           Parameters__allowed_org_logins: ${{ vars.ALLOWED_ORG_LOGINS }}
-          Parameters__github_pat: ${{ secrets.GITHUB_PAT }}
-          Parameters__github_app_client_secret: ${{ secrets.GITHUB_APP_CLIENT_SECRET }}
+          Parameters__gh_pat: ${{ secrets.GH_PAT }}
+          Parameters__gh_app_client_secret: ${{ secrets.GH_APP_CLIENT_SECRET }}

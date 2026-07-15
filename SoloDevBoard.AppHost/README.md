@@ -10,27 +10,27 @@ Use `-` on inactive parameters. Shipped defaults are in `SoloDevBoard.AppHost/ap
 
 ### PAT mode (default — solo local development)
 
-Set `github-pat` to your token. Set all hosted-sign-in parameters to `-`:
+Set `gh-pat` to your token. Set all hosted-sign-in parameters to `-`:
 
 | Parameter | Value |
 |---|---|
 | `hosted-sign-in-enabled` | `false` |
-| `github-pat` | your PAT |
-| `github-app-client-id` | `-` |
-| `github-app-client-secret` | `-` |
+| `gh-pat` | your PAT |
+| `gh-app-client-id` | `-` |
+| `gh-app-client-secret` | `-` |
 | `allowed-user-logins` | `-` |
 | `allowed-org-logins` | `-` |
 
 ### Hosted sign-in mode (GitHub App)
 
-Set `github-pat` to `-`. Configure GitHub App credentials and allow-lists:
+Set `gh-pat` to `-`. Configure GitHub App credentials and allow-lists:
 
 | Parameter | Value |
 |---|---|
 | `hosted-sign-in-enabled` | `true` |
-| `github-pat` | `-` |
-| `github-app-client-id` | your Client ID |
-| `github-app-client-secret` | your client secret |
+| `gh-pat` | `-` |
+| `gh-app-client-id` | your Client ID |
+| `gh-app-client-secret` | your client secret |
 | `allowed-user-logins` | your login(s), or `-` |
 | `allowed-org-logins` | org login(s), or `-` |
 
@@ -43,9 +43,9 @@ See [docs/getting-started.md](../docs/getting-started.md) for full setup and [Sw
 | Parameter | Secret | Default | PAT mode | Hosted sign-in |
 |---|---|---|---|---|
 | `hosted-sign-in-enabled` | no | `false` | `false` | `true` |
-| `github-pat` | yes | *(none)* | **your PAT** | `-` (dashboard) |
-| `github-app-client-id` | no | `-` | `-` | **client ID** |
-| `github-app-client-secret` | yes | *(none)* | `-` (dashboard) | **client secret** |
+| `gh-pat` | yes | *(none)* | **your PAT** | `-` (dashboard) |
+| `gh-app-client-id` | no | `-` | `-` | **client ID** |
+| `gh-app-client-secret` | yes | *(none)* | `-` (dashboard) | **client secret** |
 | `hosted-admission-enabled` | no | `true` | ignored | `true` (recommended) |
 | `allowed-user-logins` | no | `-` | `-` | logins or `-` |
 | `allowed-org-logins` | no | `-` | `-` | logins or `-` |
@@ -81,9 +81,9 @@ AppHost parameters map to workflow environment variables with underscores instea
 | AppHost parameter | CD environment variable |
 |---|---|
 | `hosted-sign-in-enabled` | `Parameters__hosted_sign_in_enabled` |
-| `github-pat` | `Parameters__github_pat` |
-| `github-app-client-id` | `Parameters__github_app_client_id` |
-| `github-app-client-secret` | `Parameters__github_app_client_secret` |
+| `gh-pat` | `Parameters__gh_pat` |
+| `gh-app-client-id` | `Parameters__gh_app_client_id` |
+| `gh-app-client-secret` | `Parameters__gh_app_client_secret` |
 | `hosted-admission-enabled` | `Parameters__hosted_admission_enabled` |
 | `allowed-user-logins` | `Parameters__allowed_user_logins` |
 | `allowed-org-logins` | `Parameters__allowed_org_logins` |

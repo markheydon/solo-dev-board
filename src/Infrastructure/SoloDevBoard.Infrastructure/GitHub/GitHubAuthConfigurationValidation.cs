@@ -60,15 +60,15 @@ public static class GitHubAuthConfigurationValidation
 
                 "PAT mode is active because GitHubAuth:HostedSignInEnabled is false, but no personal access token is configured. " +
 
-                "Set the AppHost parameter 'github-pat' in the Aspire dashboard (or GitHubAuth:PersonalAccessToken for the legacy dotnet run path).");
+                "Set the AppHost parameter 'gh-pat' in the Aspire dashboard (or GitHubAuth:PersonalAccessToken for the legacy dotnet run path).");
 
         }
 
 
 
-        EnsureInactiveForPatMode(authOptions.HostedGitHubAppClientId, "github-app-client-id");
+        EnsureInactiveForPatMode(authOptions.HostedGitHubAppClientId, "gh-app-client-id");
 
-        EnsureInactiveForPatMode(authOptions.HostedGitHubAppClientSecret, "github-app-client-secret");
+        EnsureInactiveForPatMode(authOptions.HostedGitHubAppClientSecret, "gh-app-client-secret");
 
     }
 
@@ -82,7 +82,7 @@ public static class GitHubAuthConfigurationValidation
 
     {
 
-        EnsureInactiveForHostedMode(authOptions.PersonalAccessToken, "github-pat");
+        EnsureInactiveForHostedMode(authOptions.PersonalAccessToken, "gh-pat");
 
 
 
@@ -94,7 +94,7 @@ public static class GitHubAuthConfigurationValidation
 
         {
 
-            missingParameters.Add("github-app-client-id");
+            missingParameters.Add("gh-app-client-id");
 
         }
 
@@ -104,7 +104,7 @@ public static class GitHubAuthConfigurationValidation
 
         {
 
-            missingParameters.Add("github-app-client-secret");
+            missingParameters.Add("gh-app-client-secret");
 
         }
 

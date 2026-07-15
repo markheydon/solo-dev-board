@@ -26,7 +26,7 @@ SoloDevBoard supports two **mutually exclusive** authentication modes. Choose on
 
 | Mode | When to use | What you configure |
 |---|---|---|
-| **PAT mode** (default) | Solo local development and trusted self-hosted use | `github-pat` only (your GitHub login is resolved automatically) |
+| **PAT mode** (default) | Solo local development and trusted self-hosted use | `gh-pat` only (your GitHub login is resolved automatically) |
 | **Hosted sign-in** | Production deployments and local multi-tenant testing | `hosted-sign-in-enabled`, GitHub App OAuth credentials, and allow-lists |
 
 Parameters for the mode you are **not** using can be left unset.
@@ -103,9 +103,9 @@ When running via Aspire (`aspire start`), GitHub auth and admission settings are
 
 ### Choose your authentication mode
 
-**PAT mode (default local development)** — leave `hosted-sign-in-enabled` as `false`. Set `github-pat` to your token. Set all hosted-sign-in parameters to `-`.
+**PAT mode (default local development)** — leave `hosted-sign-in-enabled` as `false`. Set `gh-pat` to your token. Set all hosted-sign-in parameters to `-`.
 
-**Hosted sign-in mode** — set `hosted-sign-in-enabled` to `true`, configure GitHub App OAuth credentials and allow-lists, and set `github-pat` to `-`.
+**Hosted sign-in mode** — set `hosted-sign-in-enabled` to `true`, configure GitHub App OAuth credentials and allow-lists, and set `gh-pat` to `-`.
 
 Values saved from the Aspire dashboard **Parameters** tab are stored in AppHost user secrets and persist across restarts.
 
@@ -120,9 +120,9 @@ Use the Aspire dashboard **Parameters** tab (or `aspire secret set` for secrets)
 | Parameter | Action |
 |---|---|
 | `hosted-sign-in-enabled` | `false` |
-| `github-pat` | your PAT |
-| `github-app-client-id` | `-` |
-| `github-app-client-secret` | `-` (set in dashboard) |
+| `gh-pat` | your PAT |
+| `gh-app-client-id` | `-` |
+| `gh-app-client-secret` | `-` (set in dashboard) |
 | `allowed-user-logins` | `-` |
 | `allowed-org-logins` | `-` |
 
@@ -131,9 +131,9 @@ Use the Aspire dashboard **Parameters** tab (or `aspire secret set` for secrets)
 | Parameter | Action |
 |---|---|
 | `hosted-sign-in-enabled` | `true` |
-| `github-pat` | `-` |
-| `github-app-client-id` | your Client ID |
-| `github-app-client-secret` | your client secret |
+| `gh-pat` | `-` |
+| `gh-app-client-id` | your Client ID |
+| `gh-app-client-secret` | your client secret |
 | `allowed-user-logins` | your login(s), or `-` if using org list only |
 | `allowed-org-logins` | org login(s), or `-` if using user list only |
 
@@ -145,8 +145,8 @@ On startup, SoloDevBoard validates configuration for the **active mode** and fai
 
 | Active mode | Must be set | Must be `-` |
 |---|---|---|
-| PAT | `github-pat` | `github-app-client-id`, `allowed-user-logins`, `allowed-org-logins`; set `github-app-client-secret` to `-` in the dashboard |
-| Hosted | `github-app-client-id`, `github-app-client-secret`, and at least one allow-list with real logins when admission control is enabled | `github-pat` (dashboard), `-` on the unused allow-list |
+| PAT | `gh-pat` | `gh-app-client-id`, `allowed-user-logins`, `allowed-org-logins`; set `gh-app-client-secret` to `-` in the dashboard |
+| Hosted | `gh-app-client-id`, `gh-app-client-secret`, and at least one allow-list with real logins when admission control is enabled | `gh-pat` (dashboard), `-` on the unused allow-list |
 
 Example log on success:
 
@@ -155,7 +155,7 @@ Example log on success:
 
 On first `aspire start`, open the Aspire dashboard and go to **Resources → Parameters**. With the default PAT mode, you only need to set:
 
-1. `github-pat` — your GitHub personal access token (secret)
+1. `gh-pat` — your GitHub personal access token (secret)
 
 Your GitHub login is resolved automatically from the PAT when the app starts. Parameters you do not need for your chosen mode can be left unset.
 
@@ -164,9 +164,9 @@ Your GitHub login is resolved automatically from the PAT when the app starts. Pa
 | AppHost parameter | Secret | Default | App config key | PAT mode | Hosted sign-in |
 |---|---|---|---|---|---|
 | `hosted-sign-in-enabled` | no | `false` | `GitHubAuth:HostedSignInEnabled` | leave `false` | set `true` |
-| `github-pat` | yes | *(none)* | `GitHubAuth:PersonalAccessToken` | **your PAT** | `-` (set in dashboard) |
-| `github-app-client-id` | no | `-` in appsettings | `GitHubAuth:HostedGitHubAppClientId` | `-` | **client ID** |
-| `github-app-client-secret` | yes | *(none)* | `GitHubAuth:HostedGitHubAppClientSecret` | `-` (set in dashboard) | **client secret** |
+| `gh-pat` | yes | *(none)* | `GitHubAuth:PersonalAccessToken` | **your PAT** | `-` (set in dashboard) |
+| `gh-app-client-id` | no | `-` in appsettings | `GitHubAuth:HostedGitHubAppClientId` | `-` | **client ID** |
+| `gh-app-client-secret` | yes | *(none)* | `GitHubAuth:HostedGitHubAppClientSecret` | `-` (set in dashboard) | **client secret** |
 | `hosted-admission-enabled` | no | `true` | `HostedAdmissionControl:Enabled` | ignored | `true` (recommended) |
 | `allowed-user-logins` | no | `-` | `HostedAdmissionControl:AllowedUserLogins` | ignored | **logins or `-`** |
 | `allowed-org-logins` | no | `-` | `HostedAdmissionControl:AllowedOrganisationLogins` | ignored | **logins or `-`** |
@@ -175,11 +175,11 @@ Your GitHub login is resolved automatically from the PAT when the app starts. Pa
 
 **`hosted-sign-in-enabled`** — Selects the authentication mode. When `false` (the default), SoloDevBoard runs in PAT mode: a single configured token is used for all GitHub API calls and your login is resolved automatically from that token. When `true`, SoloDevBoard uses GitHub App OAuth sign-in at `/auth/sign-in`; each user authenticates with their own GitHub identity and session.
 
-**`github-pat`** — Your GitHub personal access token for PAT mode. Set to `-` for hosted sign-in. SoloDevBoard uses this for every GitHub API request on your behalf in PAT mode. Required scopes: `repo`, `read:org`, `workflow`, and `read:project`. Your login is resolved automatically from the token.
+**`gh-pat`** — Your GitHub personal access token for PAT mode. Set to `-` for hosted sign-in. SoloDevBoard uses this for every GitHub API request on your behalf in PAT mode. Required scopes: `repo`, `read:org`, `workflow`, and `read:project`. Your login is resolved automatically from the token.
 
-**`github-app-client-id`** — The OAuth Client ID from your GitHub App settings. Set to `-` for PAT mode. Required for hosted sign-in.
+**`gh-app-client-id`** — The OAuth Client ID from your GitHub App settings. Set to `-` for PAT mode. Required for hosted sign-in.
 
-**`github-app-client-secret`** — The OAuth Client secret from your GitHub App settings. Set to `-` for PAT mode. Required for hosted sign-in.
+**`gh-app-client-secret`** — The OAuth Client secret from your GitHub App settings. Set to `-` for PAT mode. Required for hosted sign-in.
 
 **`hosted-admission-enabled`** — Controls whether hosted sign-in enforces an allow-list. When `true` (the default), only GitHub users or organisations listed in the allow-list parameters can use the app after signing in; everyone else receives a 403. Only applies when hosted sign-in is enabled. Ignored in PAT mode.
 
@@ -196,7 +196,7 @@ Non-secret defaults are in `SoloDevBoard.AppHost/appsettings.json`. Secret value
 #### PAT mode setup
 
 ```bash
-aspire secret set Parameters:github-pat "<your-token>"
+aspire secret set Parameters:gh-pat "<your-token>"
 aspire start --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 ```
 
@@ -211,7 +211,7 @@ Your GitHub login is resolved automatically from the PAT at startup. You can als
 5. **Configure AppHost parameters:**
 
 ```bash
-aspire secret set Parameters:github-app-client-secret "<client-secret>"
+aspire secret set Parameters:gh-app-client-secret "<client-secret>"
 ```
 
 Set non-secret values via the dashboard, `appsettings.json`, or user secrets:
@@ -219,7 +219,7 @@ Set non-secret values via the dashboard, `appsettings.json`, or user secrets:
 ```json
 "Parameters": {
   "hosted-sign-in-enabled": "true",
-  "github-app-client-id": "<client-id>",
+  "gh-app-client-id": "<client-id>",
   "allowed-user-logins": "<login1>,<login2>",
   "allowed-org-logins": "<org1>,<org2>"
 }

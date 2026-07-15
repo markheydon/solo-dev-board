@@ -36,7 +36,7 @@ We are committed to providing a welcoming and inclusive environment for all cont
    For solo local development, use **PAT mode** (the default). Set your token via AppHost parameters:
 
    ```bash
-   aspire secret set Parameters:github-pat "<your-github-pat>"
+   aspire secret set Parameters:gh-pat "<your-github-pat>"
    aspire start --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
    ```
 

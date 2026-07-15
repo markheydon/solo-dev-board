@@ -98,8 +98,8 @@ In **Settings → Environments → production**, add:
 | `AZURE_CLIENT_ID` | Managed identity `clientId` from step 2 |
 | `AZURE_TENANT_ID` | `az account show --query tenantId -o tsv` |
 | `AZURE_SUBSCRIPTION_ID` | `az account show --query id -o tsv` |
-| `GITHUB_PAT` | `-` for hosted sign-in, or a PAT for trusted self-hosted PAT mode |
-| `GITHUB_APP_CLIENT_SECRET` | GitHub App client secret for hosted sign-in |
+| `GH_PAT` | `-` for hosted sign-in, or a PAT for trusted self-hosted PAT mode |
+| `GH_APP_CLIENT_SECRET` | GitHub App client secret for hosted sign-in |
 
 **Variables**
 
@@ -109,7 +109,7 @@ In **Settings → Environments → production**, add:
 | `AZURE_RESOURCE_GROUP` | `rg-solodevboard-prod` | Target resource group |
 | `HOSTED_SIGN_IN_ENABLED` | `true` | Enable hosted sign-in in production |
 | `HOSTED_ADMISSION_ENABLED` | `true` | Deny-by-default admission control |
-| `GITHUB_APP_CLIENT_ID` | your client ID | GitHub App OAuth client ID |
+| `GH_APP_CLIENT_ID` | your client ID | GitHub App OAuth client ID |
 | `ALLOWED_USER_LOGINS` | `your-login` | Comma-separated user allow-list |
 | `ALLOWED_ORG_LOGINS` | `-` | Comma-separated org allow-list, or `-` |
 
@@ -141,7 +141,7 @@ export Azure__SubscriptionId="<subscription-id>"
 export Azure__Location="uksouth"
 export Azure__ResourceGroup="rg-solodevboard-prod"
 export Parameters__hosted_sign_in_enabled="true"
-export Parameters__github_app_client_id="<client-id>"
+export Parameters__gh_app_client_id="<client-id>"
 export Parameters__allowed_user_logins="<your-login>"
 # Set secret parameters via environment variables or aspire secret set — do not commit values.
 

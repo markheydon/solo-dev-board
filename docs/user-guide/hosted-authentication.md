@@ -39,10 +39,10 @@ To exercise hosted sign-in locally (production-like, multi-tenant behaviour):
 4. **Install the GitHub App** on the test users or organisations.
 5. **Configure AppHost parameters** (dashboard, `SoloDevBoard.AppHost/appsettings.json`, or `aspire secret set`):
    - `hosted-sign-in-enabled` → `true`
-   - `github-app-client-id` → your client ID
-   - `github-app-client-secret` → your client secret (via `aspire secret set`)
+   - `gh-app-client-id` → your client ID
+   - `gh-app-client-secret` → your client secret (via `aspire secret set`)
    - `allowed-user-logins` and/or `allowed-org-logins` → comma-separated logins
-   - Leave `github-pat` unset
+   - Leave `gh-pat` unset
 6. **Restart Aspire** and navigate to `/auth/sign-in` on the `app` URL.
 
 See [`SoloDevBoard.AppHost/README.md`](../../SoloDevBoard.AppHost/README.md) and [Getting Started — hosted sign-in setup](../getting-started.md#hosted-sign-in-mode-setup) for parameter details.

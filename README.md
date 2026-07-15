@@ -55,7 +55,7 @@ cd solo-dev-board
 dotnet restore SoloDevBoard.slnx
 
 # Configure GitHub auth — one secret for PAT mode
-aspire secret set Parameters:github-pat "<your-pat>"
+aspire secret set Parameters:gh-pat "<your-pat>"
 
 # Start with Aspire (recommended)
 aspire start --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
