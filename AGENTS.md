@@ -118,10 +118,10 @@ When referencing or suggesting labels for GitHub Issues and PRs, follow the taxo
 
 ## Infrastructure
 
-- Azure infrastructure is defined using **Bicep** in the `infra/` directory.
-- All Bicep parameters must have `@description` decorators.
-- Modules are organised under `infra/modules/`.
-- Secrets (e.g. GitHub tokens) must be stored in **Azure Key Vault**, never in app settings files.
+- Production deployment uses **Aspire** (`aspire deploy`) from `SoloDevBoard.AppHost` to **Azure Container Apps** (ADR-0018).
+- Aspire generates and applies deployment Bicep at deploy time; do not maintain hand-authored `infra/*.bicep` for production hosting.
+- Secrets for hosted deployments are supplied via AppHost parameters from GitHub Environment secrets at deploy time.
+- See `docs/deployment.md` for operator deployment instructions.
 
 ---
 
@@ -132,12 +132,11 @@ This repository is **open source and public**. The following guidelines ensure s
 ### Secrets Management
 
 - **Golden Rule:** Never commit secrets, credentials, API keys, or personal data to this repository.
-- **GitHub Tokens for app runtime:** Must be stored exclusively in **Azure Key Vault** (production/Azure deployment) or .NET User Secrets (local development).
+- **GitHub Tokens for app runtime:** Must be stored in **GitHub Environment secrets** (production Aspire deploy parameters), **Aspire user secrets** (local AppHost), or .NET User Secrets (legacy `dotnet run` path). Never commit tokens to source control.
 - **GitHub Tokens for repository automation:** Repository-scoped GitHub Actions bridge tokens may be stored in GitHub Secrets when they are used only for repository/project automation workflows (for example, the SoloDevBoard roadmap bridge) and cannot be replaced by `GITHUB_TOKEN`.
 - **Local Development:** Use `dotnet user-secrets` to manage sensitive configuration. See `docs/getting-started.md` for setup instructions.
 - **App Settings Files:** `appsettings.json` and related files leave sensitive fields empty and instantiate with environment variables or secrets at runtime.
-- **CI/CD:** GitHub Actions workflows use OIDC authentication with Azure (no long-lived secrets) and GitHub Secrets context for sensitive data.
-- **Bicep Deployments:** Infrastructure as Code uses Key Vault references (`@Microsoft.KeyVault(...)`) with RBAC-based access control.
+- **CI/CD:** GitHub Actions workflows use OIDC authentication with Azure (no long-lived credentials) and GitHub Environment secrets for AppHost parameters.
 
 ### Contributing & Pull Requests
 
@@ -164,7 +163,7 @@ When code changes are made, ensure the following are kept in sync:
 | New feature | `docs/user-guide/<feature>.md`, `docs/index.md`, `plan/BACKLOG.md` |
 | New ADR | `adr/README.md` |
 | Scope change | `plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md` |
-| New env variable | `docs/getting-started.md`, `infra/README.md` |
+| New env variable | `docs/getting-started.md`, `docs/deployment.md`, `src/SoloDevBoard.AppHost/README.md` |
 | New release | `plan/RELEASE_PLAN.md` |
 
 ---
@@ -178,7 +177,6 @@ When code changes are made, ensure the following are kept in sync:
 - Treat raw HTML and custom CSS as exceptional escape hatches only. If no MudBlazor component, parameter, or utility class can satisfy the requirement, keep the fallback minimal and explain the reason in the implementation summary or PR notes.
 - When asked to "add a feature", follow the full checklist above before writing any code.
 - When reviewing a PR diff, flag any non-UK English spelling in comments or strings.
-- When generating Bicep, always add `@description` decorators and use symbolic resource names.
 - Do not generate any secrets or credentials in generated files.
 
 ---

@@ -39,7 +39,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [ ] Configure `appsettings.json` and user secrets for local development
 - [ ] Set up xUnit test projects; write smoke tests for `GitHubRestClient`
 - [ ] Set up CI workflow (`.github/workflows/ci.yml`) — build and test on every PR
-- [ ] Deploy to Azure App Service using Bicep (`infra/main.bicep`) — confirm the app runs in the cloud
+- [ ] Deploy to Azure Container Apps using Aspire (`aspire deploy` from `SoloDevBoard.AppHost`) — confirm the app runs in the cloud
 
 ### Dependencies
 
@@ -144,7 +144,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [ ] Design `WorkflowTemplate` domain record
 - [ ] Implement `WorkflowTemplateService` in `Application`
 - [ ] Build MudBlazor UI: template browser, parameter editor, apply to repositories, staleness tracker
-- [ ] Include built-in templates: CI (dotnet), CD (Azure App Service), Dependabot
+- [ ] Include built-in templates: CI (dotnet), CD (Aspire deploy to Azure Container Apps), Dependabot
 - [ ] Write unit tests for `WorkflowTemplateService`
 - [ ] Update `docs/user-guide/workflow-templates.md`
 
@@ -210,9 +210,10 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [ ] Achieve ≥80% unit test coverage across `Application` and `Domain` projects.
 - [ ] Perform accessibility audit of all Blazor components (WCAG 2.1 AA).
 - [ ] Conduct performance review: identify and address slow GitHub API calls (caching, pagination).
-- [x] Complete Azure infrastructure baseline via Bicep (App Service, Key Vault, managed identity). _(#104)_
+- [x] Complete Azure infrastructure baseline via Bicep (App Service, Key Vault, managed identity). _(#104 — superseded by ADR-0018 Aspire ACA migration.)_
+- [x] Migrate production deployment to Aspire Azure Container Apps with scale-to-zero. _(ADR-0018.)_
 - [x] Configure OIDC authentication for GitHub Actions deployment to Azure (no long-lived credentials). _(#105)_
-- [ ] Add health check endpoints for Azure App Service monitoring. _(#106)_
+- [ ] Add health check endpoints for Azure Container Apps monitoring. _(#106)_
 - [ ] Implement response caching for GitHub API calls to respect rate limits. _(#108)_
 - [ ] Configure structured logging and Application Insights telemetry. _(#107)_
 - [x] Set up Dependabot for automated dependency updates. _(#109)_
@@ -225,7 +226,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Define and execute the migration and compatibility path away from the superseded hybrid hosted-authentication plan. _(#103, #118; strategy locked in plan/HOSTED_AUTH_MIGRATION_STRATEGY.md on 2026-03-13.)_
 - [ ] Persist hosted authentication material securely using Azure Key Vault-backed patterns where required.
 - [x] Replace the single-user `ICurrentUserContext` adapter with a per-request, per-user implementation backed by the hosted authentication session when hosted mode is enabled. _(Implemented on 2026-03-13; PAT-only local trusted mode preserved.)_
-- [ ] Enable CD pipeline with production environment gate (`.github/workflows/cd.yml`).
+- [ ] Enable CD pipeline with production environment gate (`.github/workflows/cd.yml` via `aspire deploy`).
 - [ ] Write end-to-end tests for critical user journeys.
 - [x] Update hosted-authentication documentation for GitHub App-first hosted sign-in, admission-control allow-lists, PAT-only local trusted mode, and fallback boundaries. _(#119; completed on 2026-03-16; see docs/getting-started.md, infra/README.md, docs/user-guide/hosted-authentication.md, and docs/index.md.)_
 - [ ] Write comprehensive `docs/` content for all features.
@@ -255,4 +256,4 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - When a phase task is completed, tick it off in this document.
 - When a feature's user-facing doc is written, update the stub notice in `docs/user-guide/<feature>.md`.
 - When a new ADR is created, add it to `adr/README.md`.
-- When a new environment variable is introduced, update `docs/getting-started.md` and `infra/README.md`.
+- When a new environment variable is introduced, update `docs/getting-started.md` and `docs/deployment.md`.

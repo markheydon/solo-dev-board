@@ -23,7 +23,7 @@ SoloDevBoard supports a GitHub App-first hosted authentication model for product
 - Operators must configure the GitHub App and enable hosted sign-in in application settings (`GitHubAuth__HostedSignInEnabled=true`), or set the AppHost parameter `hosted-sign-in-enabled` to `true` when running via Aspire.
 - Admission control is enforced via allow-lists for user and organisation logins.
 - Only users and organisations explicitly listed are granted access; all others are denied by default.
-- Operators should regularly review denied admission attempts in application logs (for example, App Service logs).
+- Operators should regularly review denied admission attempts in application logs (for example, Container Apps logs via Log Analytics).
 
 ## Local testing with Aspire
 
@@ -32,20 +32,20 @@ To exercise hosted sign-in locally (production-like, multi-tenant behaviour):
 1. **Create a GitHub App** at [GitHub → Settings → Developer settings → GitHub Apps](https://github.com/settings/apps). Note the **Client ID** and generate a **Client secret**.
 2. **Start Aspire** to allocate an endpoint:
    ```bash
-   aspire start --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
+   aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
    aspire describe
    ```
 3. **Register the callback URL** on your GitHub App: `{app-https-url}/auth/callback`. Aspire sets `GitHubAuth:HostedSignInCallbackBaseUri` from the allocated HTTPS endpoint automatically.
 4. **Install the GitHub App** on the test users or organisations.
-5. **Configure AppHost parameters** (dashboard, `SoloDevBoard.AppHost/appsettings.json`, or `aspire secret set`):
+5. **Configure AppHost parameters** (dashboard, `src/SoloDevBoard.AppHost/appsettings.json`, or `aspire secret set`):
    - `hosted-sign-in-enabled` → `true`
-   - `github-app-client-id` → your client ID
-   - `github-app-client-secret` → your client secret (via `aspire secret set`)
+   - `gh-app-client-id` → your client ID
+   - `gh-app-client-secret` → your client secret (via `aspire secret set`)
    - `allowed-user-logins` and/or `allowed-org-logins` → comma-separated logins
-   - Leave `github-pat` unset
+   - Leave `gh-pat` unset
 6. **Restart Aspire** and navigate to `/auth/sign-in` on the `app` URL.
 
-See [`SoloDevBoard.AppHost/README.md`](../../SoloDevBoard.AppHost/README.md) and [Getting Started — hosted sign-in setup](../getting-started.md#hosted-sign-in-mode-setup) for parameter details.
+See [`src/SoloDevBoard.AppHost/README.md`](../../src/SoloDevBoard.AppHost/README.md) and [Getting Started — hosted sign-in setup](../getting-started.md#hosted-sign-in-mode-setup) for parameter details.
 
 ## Fallback and Local Trusted Modes
 

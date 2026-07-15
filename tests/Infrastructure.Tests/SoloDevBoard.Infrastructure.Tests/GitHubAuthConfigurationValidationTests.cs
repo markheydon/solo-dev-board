@@ -14,7 +14,7 @@ public sealed class GitHubAuthConfigurationValidationTests
         var act = () => GitHubAuthConfigurationValidation.Validate(authOptions, admissionOptions);
 
         var exception = Assert.Throws<InvalidOperationException>(act);
-        Assert.Contains("github-pat", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("gh-pat", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -43,8 +43,8 @@ public sealed class GitHubAuthConfigurationValidationTests
         var act = () => GitHubAuthConfigurationValidation.Validate(authOptions, admissionOptions);
 
         var exception = Assert.Throws<InvalidOperationException>(act);
-        Assert.Contains("github-app-client-id", exception.Message, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("github-app-client-secret", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("gh-app-client-id", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("gh-app-client-secret", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public sealed class GitHubAuthConfigurationValidationTests
         var act = () => GitHubAuthConfigurationValidation.Validate(authOptions, admissionOptions);
 
         var exception = Assert.Throws<InvalidOperationException>(act);
-        Assert.Contains("github-app-client-id", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("gh-app-client-id", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -122,7 +122,7 @@ public sealed class GitHubAuthConfigurationValidationTests
         var act = () => GitHubAuthConfigurationValidation.Validate(authOptions, admissionOptions);
 
         var exception = Assert.Throws<InvalidOperationException>(act);
-        Assert.Contains("github-pat", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("gh-pat", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

@@ -55,10 +55,10 @@ cd solo-dev-board
 dotnet restore SoloDevBoard.slnx
 
 # Configure GitHub auth — one secret for PAT mode
-aspire secret set Parameters:github-pat "<your-pat>"
+aspire secret set Parameters:gh-pat "<your-pat>"
 
 # Start with Aspire (recommended)
-aspire start --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
+aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 
 # Optional legacy path (without Aspire orchestration)
 # dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-pat>" --project src/App/SoloDevBoard.App
@@ -67,17 +67,16 @@ aspire start --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 
 Then run `aspire describe` to view allocated endpoints and open the `app` resource URL in your browser.
 
-For **hosted sign-in mode** (GitHub App), see [docs/getting-started.md](docs/getting-started.md#hosted-sign-in-mode-setup) or [`SoloDevBoard.AppHost/README.md`](SoloDevBoard.AppHost/README.md).
+For **hosted sign-in mode** (GitHub App), see [docs/getting-started.md](docs/getting-started.md#hosted-sign-in-mode-setup) or [`src/SoloDevBoard.AppHost/README.md`](src/SoloDevBoard.AppHost/README.md).
 
-Aspire is currently used to make local, dev-container, and Codespaces startup behaviour consistent. Issue #171 remains open for future evaluation of broader Aspire adoption, such as introducing additional worker or service processes.
-
-See the full [Getting Started guide](docs/getting-started.md) for configuration options and Azure deployment instructions.
+Aspire is used for local orchestration and production deployment to Azure Container Apps. See [docs/deployment.md](docs/deployment.md) for Azure deployment instructions.
 
 ## Project Structure
 
 ```
 solo-dev-board/
-├── SoloDevBoard.AppHost/     # Aspire AppHost (local orchestration and parameter config)
+├── src/SoloDevBoard.AppHost/     # Aspire AppHost (local orchestration and Azure deployment)
+├── src/SoloDevBoard.ServiceDefaults/  # Aspire service defaults (telemetry, health checks)
 ├── src/
 │   ├── App/                    # Blazor Server UI (presentation layer)
 │   ├── Application/            # Use cases and service interfaces
@@ -85,13 +84,10 @@ solo-dev-board/
 │   └── Infrastructure/         # GitHub API clients, external integrations
 ├── tests/
 │   └── App.Tests/              # xUnit test projects
-├── infra/
-│   ├── main.bicep              # Azure infrastructure entry point
-│   └── modules/
-│       └── appservice.bicep    # App Service Plan + App Service module
 ├── docs/
 │   ├── index.md                # Project overview (GitHub Pages)
 │   ├── getting-started.md      # Setup and configuration guide
+│   ├── deployment.md           # Azure Container Apps deployment guide
 │   └── user-guide/             # Per-feature user guides
 ├── plan/
 │   ├── SCOPE.md                # Project scope and constraints
@@ -117,7 +113,8 @@ solo-dev-board/
     ├── pull_request_template.md
     └── workflows/
         ├── ci.yml               # CI: build and test on every PR
-        └── cd.yml               # CD: deploy to Azure on push to main
+        ├── cd.yml               # CD: Aspire deploy to Azure (manual until first success)
+        └── aspire-deploy-validate.yml  # Validates AppHost deployment model on PR
 ├── .agents/
 │   ├── skills/                  # Shared skills (Copilot + Cursor)
 │   ├── agents/                  # Canonical agent definitions

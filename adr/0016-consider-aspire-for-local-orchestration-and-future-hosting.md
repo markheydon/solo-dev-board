@@ -13,9 +13,9 @@ Issue #171 tracks a future spike to revisit this decision when the trigger condi
 
 ## Decision
 
-- Aspire is adopted for local orchestration through the AppHost in development environments.
+- Aspire is adopted for local orchestration and production deployment through the AppHost.
 - Existing app code remains intact, with onboarding focused on wiring the current web app into Aspire rather than restructuring the solution.
-- Existing Azure Bicep/App Service deployment remains the accepted and supported path for production.
+- Production deployment uses Aspire `aspire deploy` to Azure Container Apps with scale-to-zero (see ADR-0018).
 - Direct `dotnet run` remains an optional local compatibility path for contributors who are not using Aspire.
 - Issue #171 remains open to evaluate broader Aspire adoption separately from this local development onboarding decision.
 - This ADR will be revisited if:
@@ -27,15 +27,15 @@ Issue #171 tracks a future spike to revisit this decision when the trigger condi
 
 - Existing development already pre-dates Aspire, so onboarding is deliberately incremental and low risk.
 - Aspire provides a consistent local orchestration entry point for local machines, dev containers, and Codespaces.
-- The Azure production path remains stable and unchanged, avoiding accidental coupling of local tooling changes to deployment decisions.
+- Aspire now provides a single orchestration model for local development and Azure Container Apps deployment, reducing environment drift.
 - Adding Aspire now allows gradual extension to future multi-process scenarios without requiring a disruptive migration later.
 
 ## Consequences
 
 - Local development workflows now support Aspire-first startup through the AppHost.
 - Contributors can still run the web app directly when needed.
-- Production deployment remains on the current Azure Bicep/App Service approach.
-- Related tracking issue: #171 remains open for future evaluation of multi-process or broader Aspire adoption.
+- Production deployment uses Aspire Azure Container Apps deployment (ADR-0018); hand-maintained Bicep App Service templates are removed.
+- Related tracking issue: #171 can be closed once broader multi-process Aspire adoption is no longer required.
 
 ## Alternatives Considered
 

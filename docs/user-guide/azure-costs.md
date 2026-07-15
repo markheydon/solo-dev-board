@@ -1,64 +1,46 @@
----
-layout: default
-title: Azure Deployment Costs
-nav_order: 10
----
-
 # Azure Deployment Costs for SoloDevBoard
 
-Self-hosting SoloDevBoard on Azure incurs real charges for the resources provisioned. The Free tier (F1) is a zero-cost starting point for evaluation, but it has significant limitations. For production workloads, you will need to select a paid App Service Plan SKU and understand the associated costs before deploying.
+Self-hosting SoloDevBoard on Azure incurs charges for the resources Aspire provisions at deploy time. With scale-to-zero enabled, compute charges apply mainly when the app is handling requests.
 
 ## Resources Deployed
 
-The Bicep template provisions the following Azure resources:
+Aspire deploys the following Azure resources (see [Deployment guide](../deployment.md)):
 
-| Resource              | Purpose                                                      | Pricing Model           |
-|-----------------------|--------------------------------------------------------------|-------------------------|
-| App Service Plan      | Hosts the Blazor Server application (Linux, .NET 10)         | Fixed monthly (SKU-based) |
-| App Service           | The SoloDevBoard web application                             | Included in App Service Plan |
-| Key Vault             | Stores GitHub token and other secrets securely               | Consumption (per secret op) |
-| Key Vault RBAC        | Grants managed identity permission to read Key Vault secrets | No direct charge        |
+| Resource | Purpose | Pricing model |
+|---|---|---|
+| Azure Container Apps environment | Hosts containerised workloads on the Consumption profile | Environment + per-use compute |
+| Container App (`app`) | SoloDevBoard Blazor Server application | Consumption (vCPU-seconds, memory, requests) |
+| Azure Container Registry (Basic) | Stores built container images | Fixed monthly (Basic tier) |
+| Log Analytics workspace | Container and environment logs | Per GB ingested |
+| Managed identities | Image pull and runtime auth | No direct charge |
 
-## App Service Plan SKU Options and Estimated Costs
+## Cost profile with scale-to-zero
 
-The App Service Plan is the main cost driver. Below are common SKUs and their approximate monthly costs for the UK South region (as of early 2026):
+| Scenario | Approximate monthly cost (UK South, early 2026) |
+|---|---|
+| Idle / no traffic | Low — mainly ACR Basic (~£4–5) and minimal Log Analytics |
+| Light personal use | Typically lower than an always-on App Service B1 (~£11–13) |
+| Sustained daily use | Consumption compute adds up; monitor in Azure Cost Management |
 
-| SKU     | Features                          | Approx. Monthly Cost (GBP) |
-|---------|------------------------------------|---------------------------|
-| F1      | Free tier, 60 CPU-min/day, no Always On, no custom domains, no access restrictions | £0                      |
-| B1      | Basic, Always On, custom domains, access restrictions, TLS | £11–13                 |
-| B2      | More CPU/RAM, Always On, custom domains, access restrictions, TLS | £40–45                 |
-| P0v3    | Premium, enhanced scaling, Always On, custom domains, access restrictions, TLS | £60–65                 |
-| P1v3    | Premium, more resources, enhanced scaling, Always On, custom domains, access restrictions, TLS | £120–130               |
+> **Note:** Figures are estimates. Use the [Azure Pricing Calculator](https://azure.microsoft.com/en-gb/pricing/calculator/) for up-to-date costs.
 
-> **Note:** These figures are estimates. Actual prices may vary by region and over time. Use the [Azure Pricing Calculator](https://azure.microsoft.com/en-gb/pricing/calculator/) for up-to-date costs.
+### Scale-to-zero trade-offs
 
-### Key Vault Costs
+- **Savings:** No always-on App Service Plan charge when idle.
+- **Cold starts:** First request after idle may be slow while the container starts.
+- **Blazor Server:** SignalR circuits may disconnect after scale-down; users may need to refresh or reconnect.
 
-Key Vault incurs negligible charges at this scale. Secret operations are fractions of a penny, and most users will not notice any cost unless performing thousands of operations per month.
+## Cost optimisation tips
 
-## Free Tier Limitations
-
-- The F1 tier does not support Always On, so the application may experience cold starts and slow response times.
-- Custom domains and TLS certificates are not available on F1; you must use the default Azure-provided domain.
-- Access restrictions (CIDR/IP allow lists) are not supported on F1. The application is open to the public internet.
-- The F1 tier is capped at 60 CPU-minutes per day, which is insufficient for sustained workloads.
-
-## Recommended Starting Point
-
-For production use, the minimum recommended tier is B1, which costs approximately £11–13 per month in UK South. B1 provides Always On, custom domains with TLS, and access restrictions for improved security.
-
-## Cost Optimisation Tips
-
-- Stop or deallocate the App Service when not in use to avoid unnecessary charges.
-- Use dev/test pricing if eligible (see Azure portal for details).
-- Consider running development environments on F1 and production on B1 or higher.
-- Monitor usage and scale up or down as needed to match workload requirements.
+- Scale-to-zero is enabled by default (`MinReplicas = 0`) in the AppHost.
+- Delete unused deployments with `aspire destroy` when you no longer need a hosted instance.
+- Review Log Analytics ingestion if log volume grows.
+- Use dev/test pricing offers if eligible.
 
 ## Azure Pricing Calculator
 
-For exact, up-to-date pricing, use the [Azure Pricing Calculator](https://azure.microsoft.com/en-gb/pricing/calculator/). Select the UK South region and the relevant SKUs to see current costs.
+For exact, up-to-date pricing, use the [Azure Pricing Calculator](https://azure.microsoft.com/en-gb/pricing/calculator/). Select UK South and add Container Apps, Container Registry (Basic), and Log Analytics.
 
 ## Disclaimer
 
-Prices shown are approximate and may change. Charges vary by region, SKU, and usage. Always check the Azure portal or pricing calculator for the latest figures before deploying SoloDevBoard.
+Prices shown are approximate and may change. Charges vary by region, usage, and SKU. Always check the Azure portal or pricing calculator before deploying SoloDevBoard.

@@ -23,7 +23,7 @@ During the pre-1.0 development phase (`0.x.y`), minor version bumps may include 
 - Repository listing
 - Empty dashboard shell (placeholder panels for all 6 features)
 - CI pipeline
-- Azure App Service deployment via Bicep
+- Azure Container Apps deployment via Aspire
 
 **Target:** End of Phase 1 (see [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md))
 
@@ -92,7 +92,7 @@ Feature branch → Pull Request → CI passes → Code review → Merge to main 
 ### Step-by-Step
 
 1. **Merge to `main`:** All features for the release are merged via PRs with the CI pipeline passing.
-2. **Final smoke test:** Verify the deployment to the production Azure App Service is healthy.
+2. **Final smoke test:** Verify the deployment to the production Azure Container Apps environment is healthy.
 3. **Update documentation:** Ensure all user-facing docs reflect the released features.
 4. **Tag the release:**
    ```bash

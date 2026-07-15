@@ -62,7 +62,7 @@ body:
         - **.NET version:** (e.g. 10.0.x)
         - **Browser (if applicable):** (e.g. Chrome 125)
         - **SoloDevBoard version / commit:** (e.g. v0.1.0 or commit SHA)
-        - **Deployment:** (e.g. local, Azure App Service)
+        - **Deployment:** (e.g. local, Azure Container Apps)
     validations:
       required: false
 

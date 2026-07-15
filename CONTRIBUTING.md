@@ -36,12 +36,11 @@ We are committed to providing a welcoming and inclusive environment for all cont
    For solo local development, use **PAT mode** (the default). Set your token via AppHost parameters:
 
    ```bash
-   aspire secret set Parameters:github-pat "<your-github-pat>"
-   aspire start --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
-   ```
+   aspire secret set Parameters:gh-pat "<your-github-pat>"
+   aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
+```
 
-   Your GitHub login is resolved automatically from the PAT. See [`SoloDevBoard.AppHost/README.md`](SoloDevBoard.AppHost/README.md) for hosted sign-in parameters.
-
+   Your GitHub login is resolved automatically from the PAT. See [`src/SoloDevBoard.AppHost/README.md`](src/SoloDevBoard.AppHost/README.md) for hosted sign-in parameters.
 4. **Open the app:**
    ```bash
    aspire describe
@@ -134,7 +133,7 @@ This is an **open source public repository**. To maintain security:
 
 - **Never commit secrets, credentials, API keys, or personal information**
 - Use `.gitignore` to exclude local configuration files (`.env`, `*.user`, `secrets.json`)
-- GitHub Tokens must be stored in Azure Key Vault (production) or .NET User Secrets (local)
+- GitHub Tokens must be stored in GitHub Environment secrets (production Aspire deploy), Aspire user secrets (local AppHost), or .NET User Secrets (legacy `dotnet run` path)
 - See [AGENTS.md#open-source--security](AGENTS.md#open-source--security) for detailed security guidelines
 
 ---
@@ -148,7 +147,7 @@ When submitting a pull request that changes code, ensure related documentation i
 | New feature | `docs/user-guide/<feature>.md`, `docs/index.md`, `plan/BACKLOG.md` |
 | New ADR | `adr/README.md` (if architectural decision required) |
 | Scope change | `plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md` |
-| New env variable | `docs/getting-started.md`, `SoloDevBoard.AppHost/README.md`, `infra/README.md` |
+| New env variable | `docs/getting-started.md`, `SoloDevBoard.AppHost/README.md`, `docs/deployment.md` |
 
 ---
 
