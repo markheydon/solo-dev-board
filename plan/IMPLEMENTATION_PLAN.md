@@ -8,11 +8,11 @@ This document describes the phased implementation of SoloDevBoard. Each phase ha
 **Note on sequencing:**
 Phases remain the primary sequence for feature delivery. Unfinished work from earlier phases remains open until completed, regardless of progress in later phases. However, certain public-release prerequisites from Phase 6 (such as hosted authentication and admission control) may be pulled forward out of sequence when required to enable safe hosted validation. This does not imply that earlier phases are complete or that the product has reached v1.0.0 readiness.
 
-**Current roadmap status (2026-03-17):**
-- Phase 3 remains in progress. The One-Click Migration delivery slice for labels and milestones is complete, but Triage UI is still outstanding and is the next delivery priority.
-- Phase 4 has not started.
+**Current roadmap status (2026-07-15):**
+- Phase 3 is complete. One-Click Migration and Triage UI are delivered, and the v0.3.0 milestone is ready for closure.
+- Phase 4 is next and ready to start.
 - Phase 5 has not started.
-- Selected Phase 6 public-release work was pulled forward as a hosted-validation side-step only. The intended delivery order remains: finish Phase 3, then Phase 4, then Phase 5, then complete the remaining Phase 6 release work.
+- Selected Phase 6 public-release work was pulled forward as a hosted-validation side-step only. The intended delivery order remains: complete Phase 3, then Phase 4, then Phase 5, then complete the remaining Phase 6 release work.
 
 For the full feature scope, see [SCOPE.md](SCOPE.md). For individual feature backlogs, see [BACKLOG.md](BACKLOG.md).
 
@@ -91,7 +91,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Milestone:** v0.3.0
 
-**Status:** In progress. One-Click Migration is complete for the current labels-and-milestones slice. Triage UI is still outstanding and is the next priority before later phases begin.
+**Status:** Complete. One-Click Migration and Triage UI are delivered, and v0.3.0 is ready for closure.
 
 ### Key Tasks
 
@@ -117,7 +117,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 - Phase 2 complete (Label Manager, GitHub label/milestone API integration)
 
-**Note:** v0.3.0 remains incomplete until the Triage UI portion of issue #87 is properly planned and delivered. This is the current next focus, and the milestone cannot be closed until this work is finished.
+**Note:** v0.3.0 is effectively complete and ready to transition to Phase 4. Confirm milestone closure on GitHub once roadmap board hygiene is verified.
 
 ---
 

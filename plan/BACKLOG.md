@@ -109,7 +109,7 @@ Labels: `type/epic`, `area/dashboard`
 
 Labels: `type/epic`, `area/migration`
 
-> **Current Phase 3 status:** The labels-and-milestones One-Click Migration slice is complete. Phase 3 remains open because Triage UI is still outstanding and is the next planned delivery priority before Phase 4, Phase 5, or broader Phase 6 work resumes.
+> **Current Phase 3 status:** Phase 3 is complete. One-Click Migration and Triage UI are delivered, and the product is ready to transition to Phase 4.
 
 <!-- Parent Epic #87: Phase 3 — One-Click Migration + Triage UI (planned 2026-03-12, milestone v0.3.0). -->
 <!-- Feature #88: One-Click Migration (planned 2026-03-12, milestone v0.3.0; first delivery slice covers labels + milestones only). -->
@@ -177,14 +177,14 @@ Labels: `type/epic`, `area/board-rules`
 
 Labels: `type/epic`, `area/triage`
 
-> **Next up:** Triage UI is the remaining Phase 3 delivery work and should be completed before Phase 4, Phase 5, or the rest of the Phase 6 release backlog becomes the main focus again.
+> **Phase 3 completion:** Triage UI was the final Phase 3 delivery work. With all Phase 3 issues closed, Phase 4 is now the next active focus.
 
 <!-- Feature #142: Triage UI (planned 2026-03-17, milestone v0.3.0) -->
 <!-- Enablers: #143 Triage session orchestration, #144 Triage UI state management -->
 <!-- Stories: #145 Start triage session, progress, skip; #146 Apply labels quickly; #147 Assign milestone and project-board placement in-context; #148 Mark as duplicate and close with reference; #149 End-of-session summary and skip/return; #150 Triage unlabelled pull requests -->
 <!-- Tests: #151 Triage session orchestration unit tests; #152 Triage UI state management unit tests; #153 Triage UI bUnit tests -->
 
-> **Next up:** Triage UI work is now formally planned and remains the current delivery priority for Phase 3. All items below are tracked via the new issue hierarchy and are open/planned for milestone v0.3.0.
+> **Phase 3 summary:** Triage UI stories and tests are complete, and the v0.3.0 milestone is ready to close once roadmap board hygiene is verified.
 
 - [x] As a solo developer, I want to start a triage session that presents unlabelled issues one at a time, supports progress tracking, and allows skipping and returning later so that I can work through them efficiently. _(Issue #145 — implemented 2026-03-18.)_
 - [x] As a solo developer, I want to apply labels to an issue with a single click or keyboard shortcut so that triage is fast. _(Issue #146 — implemented 2026-03-26.)_
