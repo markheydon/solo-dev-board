@@ -24,6 +24,7 @@ var allowedOrgLogins = builder.AddParameter("allowed-org-logins")
     .WithDescription("Comma-separated GitHub organisation logins for hosted admission. Use '-' when using allowed-user-logins instead, or in PAT mode.");
 
 var app = builder.AddProject<Projects.SoloDevBoard_App>("app")
+    .WithHttpHealthCheck("/health")
     .WithExternalHttpEndpoints()
     .WithEnvironment("GitHubAuth__HostedSignInEnabled", hostedSignInEnabled)
     .WithEnvironment("GitHubAuth__PersonalAccessToken", githubPat)
