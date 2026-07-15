@@ -1,7 +1,7 @@
 ---
 name: Review Agent
 description: Validates completed work, performs core quality checks, and creates a pull request.
-model: Claude Haiku 4.5 (copilot)
+model: Raptor mini (copilot)
 argument-hint: Specify "review issue #X"
 ---
 

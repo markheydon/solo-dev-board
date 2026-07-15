@@ -188,6 +188,7 @@ When code changes are made, ensure the following are kept in sync:
 - When reviewing a PR diff, flag any non-UK English spelling in comments or strings.
 - When generating Bicep, always add `@description` decorators and use symbolic resource names.
 - Do not generate any secrets or credentials in generated files.
+- Do not generate temporary or disposable files in the repository. If a temporary file is required for any reason including (but not limited to) temporary output from tools or testing, it must be created in a temp style directory and cleaned up after use.
 
 ---
 
