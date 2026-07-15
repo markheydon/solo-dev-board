@@ -499,13 +499,30 @@ public partial class Triage : ComponentBase
                 currentSession,
                 trimmedDuplicateReference);
 
+            var duplicateActionDetail = duplicateClosedSession.ActionHistory.LastOrDefault()?.Detail ?? string.Empty;
             currentSession = await TriageService.AdvanceSessionAsync(duplicateClosedSession);
             SyncPlanningSelectionFromCurrentItem();
 
             operationSeverity = Severity.Success;
-            operationMessage = currentSession.CurrentItem is null
+            var baseMessage = currentSession.CurrentItem is null
                 ? $"Closed item #{closedItemNumber} as a duplicate of '{trimmedDuplicateReference}'. Reached the end of the current queue."
                 : $"Closed item #{closedItemNumber} as a duplicate of '{trimmedDuplicateReference}' and moved to {CurrentPositionText}.";
+
+            var duplicateLabelSuffix = string.Empty;
+            const string duplicatePrefix = "Closed as duplicate of '";
+            if (duplicateActionDetail.StartsWith(duplicatePrefix, StringComparison.Ordinal))
+            {
+                var separator = ". ";
+                var separatorIndex = duplicateActionDetail.IndexOf(separator, StringComparison.Ordinal);
+                if (separatorIndex >= 0 && separatorIndex + separator.Length < duplicateActionDetail.Length)
+                {
+                    duplicateLabelSuffix = duplicateActionDetail[(separatorIndex + separator.Length)..].Trim();
+                }
+            }
+
+            operationMessage = string.IsNullOrWhiteSpace(duplicateLabelSuffix)
+                ? baseMessage
+                : $"{baseMessage} {duplicateLabelSuffix}";
         }
         catch (HttpRequestException ex)
         {

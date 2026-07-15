@@ -651,6 +651,76 @@ public sealed class TriageServiceTests
     }
 
     [Fact]
+    public async Task CloseCurrentItemAsDuplicateAsync_DuplicateLabelExists_AppliesCanonicalDuplicateLabel()
+    {
+        // Arrange
+        var sut = new TriageService(_gitHubServiceMock.Object);
+        var session = CreateSession(queueCount: 1, currentIndex: 0);
+
+        _gitHubServiceMock
+            .Setup(service => service.CloseTriageItemAsDuplicateAsync("owner", "repo", GitHubTriageItemType.Issue, 1, "#123", It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _gitHubServiceMock
+            .Setup(service => service.GetLabelsAsync("owner", "repo", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new[] { new Label { Name = "duplicate" } });
+
+        _gitHubServiceMock
+            .Setup(service => service.ApplyLabelsToTriageItemAsync(
+                "owner",
+                "repo",
+                1,
+                It.Is<IReadOnlyList<string>>(labels => labels.SequenceEqual(new[] { "duplicate" })),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await sut.CloseCurrentItemAsDuplicateAsync(session, "#123");
+
+        // Assert
+        Assert.Single(result.ActionHistory);
+        Assert.Equal(TriageActionTypeDto.ClosedAsDuplicate, result.ActionHistory[0].ActionType);
+        Assert.Contains("Applied label 'duplicate'", result.ActionHistory[0].Detail, StringComparison.Ordinal);
+        Assert.Equal(1, result.Summary.DuplicateClosuresCount);
+
+        _gitHubServiceMock.Verify(service => service.GetLabelsAsync("owner", "repo", It.IsAny<CancellationToken>()), Times.Once);
+        _gitHubServiceMock.Verify(service => service.ApplyLabelsToTriageItemAsync(
+            "owner",
+            "repo",
+            1,
+            It.Is<IReadOnlyList<string>>(labels => labels.SequenceEqual(new[] { "duplicate" })),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CloseCurrentItemAsDuplicateAsync_DuplicateLabelMissing_DoesNotApplyLabel()
+    {
+        // Arrange
+        var sut = new TriageService(_gitHubServiceMock.Object);
+        var session = CreateSession(queueCount: 1, currentIndex: 0);
+
+        _gitHubServiceMock
+            .Setup(service => service.CloseTriageItemAsDuplicateAsync("owner", "repo", GitHubTriageItemType.Issue, 1, "#123", It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _gitHubServiceMock
+            .Setup(service => service.GetLabelsAsync("owner", "repo", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<Label>());
+
+        // Act
+        var result = await sut.CloseCurrentItemAsDuplicateAsync(session, "#123");
+
+        // Assert
+        Assert.Single(result.ActionHistory);
+        Assert.Equal(TriageActionTypeDto.ClosedAsDuplicate, result.ActionHistory[0].ActionType);
+        Assert.Contains("No canonical duplicate label was available", result.ActionHistory[0].Detail, StringComparison.Ordinal);
+        Assert.Equal(1, result.Summary.DuplicateClosuresCount);
+
+        _gitHubServiceMock.Verify(service => service.GetLabelsAsync("owner", "repo", It.IsAny<CancellationToken>()), Times.Once);
+        _gitHubServiceMock.Verify(service => service.ApplyLabelsToTriageItemAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
     public async Task CloseCurrentItemAsDuplicateAsync_ActivePullRequestExists_ClosesPullRequestDuplicate()
     {
         // Arrange

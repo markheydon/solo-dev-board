@@ -394,6 +394,8 @@ public sealed class TriageService : ITriageService
     }
 
     /// <inheritdoc/>
+    private static readonly string CanonicalDuplicateLabelName = "duplicate";
+
     public async Task<TriageSessionDto> CloseCurrentItemAsDuplicateAsync(
         TriageSessionDto session,
         string duplicateReference,
@@ -424,13 +426,36 @@ public sealed class TriageService : ITriageService
             .CloseTriageItemAsDuplicateAsync(owner, repo, gitHubItemType, currentItem.Number, trimmedDuplicateReference, cancellationToken)
             .ConfigureAwait(false);
 
+        var detail = $"Closed as duplicate of '{trimmedDuplicateReference}'.";
+        var duplicateLabelName = await GetCanonicalDuplicateLabelNameAsync(owner, repo, cancellationToken).ConfigureAwait(false);
+
+        if (!string.IsNullOrWhiteSpace(duplicateLabelName))
+        {
+            try
+            {
+                await _gitHubService
+                    .ApplyLabelsToTriageItemAsync(owner, repo, currentItem.Number, new[] { duplicateLabelName! }, cancellationToken)
+                    .ConfigureAwait(false);
+
+                detail += $" Applied label '{duplicateLabelName}'.";
+            }
+            catch (Exception)
+            {
+                detail += $" Failed to apply duplicate label '{duplicateLabelName}'.";
+            }
+        }
+        else
+        {
+            detail += " No canonical duplicate label was available in the repository.";
+        }
+
         var action = new TriageAction
         {
             ActionType = TriageActionType.ClosedAsDuplicate,
             ItemType = currentItem.ItemType,
             ItemNumber = currentItem.Number,
             RepositoryFullName = currentItem.RepositoryFullName,
-            Detail = $"Closed as duplicate of '{trimmedDuplicateReference}'.",
+            Detail = detail,
             OccurredAt = DateTimeOffset.UtcNow,
         };
 
@@ -442,6 +467,26 @@ public sealed class TriageService : ITriageService
         {
             ActionHistory = updatedActionHistory,
         });
+    }
+
+    private async Task<string?> GetCanonicalDuplicateLabelNameAsync(string owner, string repo, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(owner) || string.IsNullOrWhiteSpace(repo))
+        {
+            return null;
+        }
+
+        try
+        {
+            var labels = await _gitHubService.GetLabelsAsync(owner, repo, cancellationToken).ConfigureAwait(false);
+            return labels
+                .Select(label => label.Name)
+                .FirstOrDefault(name => string.Equals(name, CanonicalDuplicateLabelName, StringComparison.OrdinalIgnoreCase));
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
 
     /// <inheritdoc/>

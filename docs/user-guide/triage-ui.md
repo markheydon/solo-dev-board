@@ -41,6 +41,7 @@ You can apply labels or close items (issues and pull requests) as duplicates dir
 - Click **Apply + next** (or press **L**) to apply the selected label and immediately advance to the next item.
 - Click **Next** (or press **N**) to move to the next item without applying a label.
 - To close the current item as a duplicate, use the **Duplicate reference** input to enter the reference number of the original issue, then click **Close as duplicate** (or press **D**) to close the current item and advance.
+- When the repository exposes a canonical `duplicate` label, SoloDevBoard will also apply that label as part of the duplicate closure workflow.
 - The **Duplicate reference** input is shown inline in the duplicate closure section, allowing you to specify the related issue number before confirming the closure.
 - Keyboard shortcuts work when the action button row is focused. Typing in the Quick Label or Duplicate reference fields does not trigger shortcuts.
 - Primary success and failure feedback appears inline in the triage view via the operation alert, with additional snackbar notifications used for selected error conditions.
