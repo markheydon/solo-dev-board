@@ -1,5 +1,5 @@
 ---
-name: Execute Feature
+name: Implement Issue
 description: Implements a planned GitHub issue following coding standards, creates tests, updates documentation, and ensures all mandatory gates are met. Invokes Delivery Agent.
 agent: Delivery Agent
 argument-hint: Specify issue number or feature name, e.g., 'implement issue #15' or 'build Label Manager UI'.
