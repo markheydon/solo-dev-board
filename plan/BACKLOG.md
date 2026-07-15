@@ -162,8 +162,8 @@ Labels: `type/epic`, `area/board-rules`
 **Stories:**
 - [x] As a solo developer, I want to see all GitHub project boards for a selected repository so that I can choose which one to visualise. _(Issue #183; implemented 2026-07-14.)_
 - [x] As a solo developer, I want to see an interactive diagram of a project board's columns and automation rules so that I can understand how issues flow. _(Issue #184; implemented 2026-07-15.)_
-- [ ] As a solo developer, I want to click on a rule in the diagram to see its full configuration so that I can understand what triggers it. _(Issue #185; planned 2026-05-07.)_
-- [ ] As a solo developer, I want to see highlighted rules that may conflict or produce unexpected behaviour so that I can diagnose automation issues. _(Issue #186; planned 2026-05-07.)_
+- [x] As a solo developer, I want to click on a rule in the diagram to see its full configuration so that I can understand what triggers it. _(Issue #185; planned 2026-05-07.)_
+- [x] As a solo developer, I want to see highlighted rules that may conflict or produce unexpected behaviour so that I can diagnose automation issues. _(Issue #186; planned 2026-05-07.)_
 - [ ] As a solo developer, I want to compare the board rules of two repositories so that I can identify differences before a migration. _(Issue #187; planned 2026-05-07.)_
 
 **Tests:**

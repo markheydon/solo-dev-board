@@ -37,6 +37,8 @@ Key goals of the Board Rules Visualiser:
 - View board states derived from the selected Project v2 board's Status field.
 - Inspect the supported adjacent transitions between board columns.
 - See a warning when the board metadata is only partially visible.
+- Click rule nodes to inspect the full rule name, trigger and action configuration.
+- See potential rule conflicts highlighted when duplicate triggers or incomplete rule details are present.
 - Reload repositories or project boards if GitHub API requests fail.
 
 ### What is coming later
