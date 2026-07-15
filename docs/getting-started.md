@@ -50,6 +50,8 @@ OAuth App fallback is supported but disabled by default. It is only used if enab
 
 ## Running Locally
 
+SoloDevBoard uses **Aspire for local orchestration**, which provides standardised behaviour across local machines, dev containers, and Codespaces. Aspire is the **recommended path** for all new development.
+
 1. **Clone the repository:**
 
    ```bash
@@ -63,7 +65,7 @@ OAuth App fallback is supported but disabled by default. It is only used if enab
    dotnet restore SoloDevBoard.slnx
    ```
 
-3. **Configure GitHub authentication** for your chosen mode (see [Configuration](#configuration) below). You can set values **before** starting Aspire with `aspire secret set` and `appsettings.json`, or via the **Parameters** tab in the Aspire dashboard on first run.
+3. **Configure GitHub authentication** for your chosen mode (see [Authentication](#github-authentication) above). You can set values **before** starting Aspire with `aspire secret set` and `appsettings.json`, or via the **Parameters** tab in the Aspire dashboard on first run.
 
 4. **Start the application with Aspire (recommended):**
 
@@ -79,19 +81,25 @@ OAuth App fallback is supported but disabled by default. It is only used if enab
 
 6. Open the `app` resource URL shown by `aspire describe`.
 
-7. **Optional legacy run path (without Aspire orchestration):**
-
-   ```bash
-   dotnet run --project src/App/SoloDevBoard.App
-   ```
-
-8. For a worktree or Codespaces session, use isolation to avoid port and state clashes:
+7. **For a worktree or Codespaces session, use isolation to avoid port and state clashes:**
 
    ```bash
    aspire start --isolated --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
    ```
 
-This Aspire setup standardises local development across local machines, dev containers, and Codespaces. Production deployment also uses the same AppHost via `aspire deploy` to Azure Container Apps (see [Deployment](deployment.md) and ADR-0018).
+### Legacy run path (without Aspire orchestration)
+
+If you prefer to run directly without Aspire:
+
+```bash
+# PAT mode
+dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-pat>" --project src/App/SoloDevBoard.App
+dotnet run --project src/App/SoloDevBoard.App
+
+# Or hosted sign-in mode (requires GitHub App configuration)
+```
+
+> **Recommendation:** Aspire is the standardised path for local development. It ensures consistent behaviour across all environments and prepares you for production deployment to Azure Container Apps.
 
 ---
 

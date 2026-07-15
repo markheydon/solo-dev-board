@@ -42,9 +42,9 @@ Ensure you have the following installed:
 
 ### Run Locally
 
-SoloDevBoard supports two authentication modes: **PAT mode** (default, for solo local development) and **hosted sign-in** (GitHub App, for production and multi-tenant use). See [Getting Started](docs/getting-started.md#choose-your-authentication-mode) for the full mode guide.
+SoloDevBoard uses **Aspire for local orchestration and production deployment** to Azure Container Apps. Two authentication modes are available: **PAT mode** (default, for solo local development) and **hosted sign-in** (GitHub App, for production). See [Getting Started](docs/getting-started.md#choose-your-authentication-mode) for the full mode guide.
 
-**PAT mode (quickest start):**
+**Quick start with Aspire (recommended):**
 
 ```bash
 # Clone the repository
@@ -57,19 +57,24 @@ dotnet restore SoloDevBoard.slnx
 # Configure GitHub auth — one secret for PAT mode
 aspire secret set Parameters:gh-pat "<your-pat>"
 
-# Start with Aspire (recommended)
+# Start with Aspire
 aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 
-# Optional legacy path (without Aspire orchestration)
-# dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-pat>" --project src/App/SoloDevBoard.App
-# dotnet run --project src/App/SoloDevBoard.App
+# Get the allocated endpoint
+aspire describe
 ```
 
-Then run `aspire describe` to view allocated endpoints and open the `app` resource URL in your browser.
+Open the `app` resource URL shown by `aspire describe` in your browser.
+
+**Optional legacy path (without Aspire):**
+```bash
+dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-pat>" --project src/App/SoloDevBoard.App
+dotnet run --project src/App/SoloDevBoard.App
+```
 
 For **hosted sign-in mode** (GitHub App), see [docs/getting-started.md](docs/getting-started.md#hosted-sign-in-mode-setup) or [`src/SoloDevBoard.AppHost/README.md`](src/SoloDevBoard.AppHost/README.md).
 
-Aspire is used for local orchestration and production deployment to Azure Container Apps. See [docs/deployment.md](docs/deployment.md) for Azure deployment instructions.
+Aspire is used for both local orchestration and production deployment to Azure Container Apps. See [docs/deployment.md](docs/deployment.md) for Azure deployment instructions.
 
 ## Project Structure
 
