@@ -3,6 +3,7 @@ name: Review Agent
 description: Validates completed work, performs core quality checks, and creates a pull request.
 model: Raptor mini (copilot)
 argument-hint: Specify "review issue #X"
+tools: [read, search, execute, agent]
 ---
 
 # Review Agent
@@ -106,6 +107,8 @@ Requirements:
 - Add `status/in-review`
 - Assign `markheydon`
 - Apply issue milestone if present
+- Do NOT assign to Copilot either as a reviewer or assignee either manually or via a tool
+
 
 Use `.github/pull_request_template.md` if available.
 
