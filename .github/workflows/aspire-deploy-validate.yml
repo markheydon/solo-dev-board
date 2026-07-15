@@ -43,4 +43,4 @@ jobs:
           echo "$HOME/.aspire/bin" >> "$GITHUB_PATH"
 
       - name: Validate Aspire deployment steps
-        run: aspire deploy --list-steps --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --environment Staging --non-interactive
+        run: aspire deploy --list-steps --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --environment Staging --non-interactive

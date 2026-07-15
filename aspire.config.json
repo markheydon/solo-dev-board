@@ -1,7 +1,7 @@
 {
   "appHost": {
     "language": "csharp",
-    "path": "SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj"
+    "path": "src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj"
   },
   "channel": "stable"
 }

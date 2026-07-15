@@ -68,7 +68,7 @@ OAuth App fallback is supported but disabled by default. It is only used if enab
 4. **Start the application with Aspire (recommended):**
 
    ```bash
-   aspire start --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
+   aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
    ```
 
 5. **Get the allocated endpoint from Aspire:**
@@ -88,7 +88,7 @@ OAuth App fallback is supported but disabled by default. It is only used if enab
 8. For a worktree or Codespaces session, use isolation to avoid port and state clashes:
 
    ```bash
-   aspire start --isolated --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
+   aspire start --isolated --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
    ```
 
 This Aspire setup standardises local development across local machines, dev containers, and Codespaces. Production deployment also uses the same AppHost via `aspire deploy` to Azure Container Apps (see [Deployment](deployment.md) and ADR-0018).
@@ -99,7 +99,7 @@ This Aspire setup standardises local development across local machines, dev cont
 
 SoloDevBoard is configured via `appsettings.json` and environment variables. **Never commit secrets to source control.**
 
-When running via Aspire (`aspire start`), GitHub auth and admission settings are modelled as **AppHost parameters** and injected into the `app` resource as environment variables. See also [`SoloDevBoard.AppHost/README.md`](../SoloDevBoard.AppHost/README.md) for a concise parameter cheat sheet.
+When running via Aspire (`aspire start`), GitHub auth and admission settings are modelled as **AppHost parameters** and injected into the `app` resource as environment variables. See also [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md) for a concise parameter cheat sheet.
 
 ### Choose your authentication mode
 
@@ -109,7 +109,7 @@ When running via Aspire (`aspire start`), GitHub auth and admission settings are
 
 Values saved from the Aspire dashboard **Parameters** tab are stored in AppHost user secrets and persist across restarts.
 
-Use `-` on inactive parameters. Shipped defaults are in `SoloDevBoard.AppHost/appsettings.json`; values saved from the Aspire dashboard override those defaults via user secrets.
+Use `-` on inactive parameters. Shipped defaults are in `src/SoloDevBoard.AppHost/appsettings.json`; values saved from the Aspire dashboard override those defaults via user secrets.
 
 ### Switching between PAT and hosted sign-in
 
@@ -191,13 +191,13 @@ Your GitHub login is resolved automatically from the PAT when the app starts. Pa
 
 `GitHubAuth:OwnerLogin` can still be set explicitly on the legacy `dotnet run` path to override the login resolved from a PAT. When omitted in PAT mode, it is derived automatically from the token.
 
-Non-secret defaults are in `SoloDevBoard.AppHost/appsettings.json`. Secret values are stored via `aspire secret set` or the AppHost user secrets store (`UserSecretsId` on `SoloDevBoard.AppHost.csproj`).
+Non-secret defaults are in `src/SoloDevBoard.AppHost/appsettings.json`. Secret values are stored via `aspire secret set` or the AppHost user secrets store (`UserSecretsId` on `src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj`).
 
 #### PAT mode setup
 
 ```bash
 aspire secret set Parameters:gh-pat "<your-token>"
-aspire start --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
+aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 ```
 
 Your GitHub login is resolved automatically from the PAT at startup. You can also set the token via the Aspire dashboard **Parameters** tab on first run.

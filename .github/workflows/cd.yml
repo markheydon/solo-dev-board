@@ -55,7 +55,7 @@ jobs:
           echo "$HOME/.aspire/bin" >> "$GITHUB_PATH"
 
       - name: List Aspire deployment steps
-        run: aspire deploy --list-steps --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --environment Staging --non-interactive
+        run: aspire deploy --list-steps --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --environment Staging --non-interactive
 
       - name: Azure login (OIDC)
         uses: azure/login@v3
@@ -65,7 +65,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Deploy with Aspire
-        run: aspire deploy --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --environment Staging --non-interactive
+        run: aspire deploy --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --environment Staging --non-interactive
         env:
           Azure__SubscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           Azure__Location: ${{ vars.AZURE_LOCATION }}

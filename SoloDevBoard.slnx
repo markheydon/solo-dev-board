@@ -4,6 +4,8 @@
     <Project Path="src/Application/SoloDevBoard.Application/SoloDevBoard.Application.csproj" />
     <Project Path="src/Domain/SoloDevBoard.Domain/SoloDevBoard.Domain.csproj" />
     <Project Path="src/Infrastructure/SoloDevBoard.Infrastructure/SoloDevBoard.Infrastructure.csproj" />
+    <Project Path="src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj" />
+    <Project Path="src/SoloDevBoard.ServiceDefaults/SoloDevBoard.ServiceDefaults.csproj" />
     <Project Path="tests/Infrastructure.Tests/SoloDevBoard.Infrastructure.Tests/SoloDevBoard.Infrastructure.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/">
@@ -11,6 +13,4 @@
     <Project Path="tests/Application.Tests/SoloDevBoard.Application.Tests/SoloDevBoard.Application.Tests.csproj" />
     <Project Path="tests/Domain.Tests/SoloDevBoard.Domain.Tests/SoloDevBoard.Domain.Tests.csproj" />
   </Folder>
-  <Project Path="SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj" />
-  <Project Path="SoloDevBoard.ServiceDefaults/SoloDevBoard.ServiceDefaults.csproj" />
 </Solution>

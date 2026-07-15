@@ -4,7 +4,7 @@ Aspire orchestrates the SoloDevBoard web app for local development, dev containe
 
 GitHub authentication is configured through **AppHost parameters**, which are injected into the `app` resource as environment variables.
 
-Use `-` on inactive parameters. Shipped defaults are in `SoloDevBoard.AppHost/appsettings.json`; production non-secret defaults are in `appsettings.Production.json`. Values saved from the Aspire dashboard are stored in user secrets and **override** those defaults.
+Use `-` on inactive parameters. Shipped defaults are in `src/SoloDevBoard.AppHost/appsettings.json`; production non-secret defaults are in `src/SoloDevBoard.AppHost/appsettings.Production.json`. Values saved from the Aspire dashboard are stored in user secrets and **override** those defaults.
 
 ## Choose your authentication mode
 
@@ -55,7 +55,7 @@ Startup validation fails fast if required values are missing or inactive-mode pa
 ## Local development
 
 ```bash
-aspire start --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
+aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 aspire describe
 ```
 
@@ -69,7 +69,7 @@ Preview deployment steps:
 
 ```bash
 aspire deploy --list-steps \
-  --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj \
+  --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj \
   --environment Production \
   --non-interactive
 ```

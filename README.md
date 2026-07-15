@@ -58,7 +58,7 @@ dotnet restore SoloDevBoard.slnx
 aspire secret set Parameters:gh-pat "<your-pat>"
 
 # Start with Aspire (recommended)
-aspire start --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
+aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 
 # Optional legacy path (without Aspire orchestration)
 # dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-pat>" --project src/App/SoloDevBoard.App
@@ -67,7 +67,7 @@ aspire start --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 
 Then run `aspire describe` to view allocated endpoints and open the `app` resource URL in your browser.
 
-For **hosted sign-in mode** (GitHub App), see [docs/getting-started.md](docs/getting-started.md#hosted-sign-in-mode-setup) or [`SoloDevBoard.AppHost/README.md`](SoloDevBoard.AppHost/README.md).
+For **hosted sign-in mode** (GitHub App), see [docs/getting-started.md](docs/getting-started.md#hosted-sign-in-mode-setup) or [`src/SoloDevBoard.AppHost/README.md`](src/SoloDevBoard.AppHost/README.md).
 
 Aspire is used for local orchestration and production deployment to Azure Container Apps. See [docs/deployment.md](docs/deployment.md) for Azure deployment instructions.
 
@@ -75,8 +75,8 @@ Aspire is used for local orchestration and production deployment to Azure Contai
 
 ```
 solo-dev-board/
-├── SoloDevBoard.AppHost/     # Aspire AppHost (local orchestration and Azure deployment)
-├── SoloDevBoard.ServiceDefaults/  # Aspire service defaults (telemetry, health checks)
+├── src/SoloDevBoard.AppHost/     # Aspire AppHost (local orchestration and Azure deployment)
+├── src/SoloDevBoard.ServiceDefaults/  # Aspire service defaults (telemetry, health checks)
 ├── src/
 │   ├── App/                    # Blazor Server UI (presentation layer)
 │   ├── Application/            # Use cases and service interfaces

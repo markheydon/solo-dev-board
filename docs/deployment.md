@@ -6,7 +6,7 @@ nav_order: 3
 
 # Deploying SoloDevBoard to Azure
 
-SoloDevBoard deploys to **Azure Container Apps** via **Aspire** (`aspire deploy` from `SoloDevBoard.AppHost`). The AppHost is the single source of truth for local orchestration and production deployment (see ADR-0018).
+SoloDevBoard deploys to **Azure Container Apps** via **Aspire** (`aspire deploy` from `src/SoloDevBoard.AppHost`). The AppHost is the single source of truth for local orchestration and production deployment (see ADR-0018).
 
 Scale-to-zero is enabled (`MinReplicas = 0`) to minimise idle hosting costs. Expect cold starts and Blazor Server SignalR reconnects after idle periods.
 
@@ -147,7 +147,7 @@ export Parameters__allowed_user_logins="<your-login>"
 
 dotnet build SoloDevBoard.slnx --configuration Release
 aspire deploy \
-  --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj \
+  --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj \
   --environment Production \
   --non-interactive
 ```
@@ -156,7 +156,7 @@ Preview deployment steps without applying:
 
 ```bash
 aspire deploy --list-steps \
-  --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj \
+  --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj \
   --environment Production \
   --non-interactive
 ```
@@ -186,7 +186,7 @@ To remove Aspire-managed resources:
 
 ```bash
 aspire destroy \
-  --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj \
+  --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj \
   --environment Production \
   --yes \
   --non-interactive

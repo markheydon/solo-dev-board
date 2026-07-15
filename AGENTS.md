@@ -163,7 +163,7 @@ When code changes are made, ensure the following are kept in sync:
 | New feature | `docs/user-guide/<feature>.md`, `docs/index.md`, `plan/BACKLOG.md` |
 | New ADR | `adr/README.md` |
 | Scope change | `plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md` |
-| New env variable | `docs/getting-started.md`, `docs/deployment.md`, `SoloDevBoard.AppHost/README.md` |
+| New env variable | `docs/getting-started.md`, `docs/deployment.md`, `src/SoloDevBoard.AppHost/README.md` |
 | New release | `plan/RELEASE_PLAN.md` |
 
 ---

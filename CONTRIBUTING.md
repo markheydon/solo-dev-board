@@ -37,11 +37,10 @@ We are committed to providing a welcoming and inclusive environment for all cont
 
    ```bash
    aspire secret set Parameters:gh-pat "<your-github-pat>"
-   aspire start --apphost SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
-   ```
+   aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
+```
 
-   Your GitHub login is resolved automatically from the PAT. See [`SoloDevBoard.AppHost/README.md`](SoloDevBoard.AppHost/README.md) for hosted sign-in parameters.
-
+   Your GitHub login is resolved automatically from the PAT. See [`src/SoloDevBoard.AppHost/README.md`](src/SoloDevBoard.AppHost/README.md) for hosted sign-in parameters.
 4. **Open the app:**
    ```bash
    aspire describe
