@@ -8,6 +8,7 @@ using SoloDevBoard.Domain.Entities.Milestones;
 using SoloDevBoard.Domain.Entities.Repositories;
 using SoloDevBoard.Domain.Entities.Triage;
 using SoloDevBoard.Domain.Entities.Workflows;
+using SoloDevBoard.Infrastructure.Diagnostics;
 
 namespace SoloDevBoard.Infrastructure.GitHub;
 
@@ -354,7 +355,15 @@ public sealed class GitHubService : IGitHubService
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
         ArgumentException.ThrowIfNullOrWhiteSpace(repo);
 
-        const string query = "query TriageProjectBoards($owner: String!, $repo: String!) { repository(owner: $owner, name: $repo) { projectsV2(first: 50) { nodes { id title owner { ... on User { login } ... on Organization { login } } fields(first: 50) { nodes { ... on ProjectV2SingleSelectField { id name options { id name } } } } } } } }";
+        // #region agent log
+        AgentDebugLog.Write(
+            "GitHubService.cs:GetProjectBoardsForRepositoryAsync",
+            "Loading project boards for repository",
+            new { owner, repo },
+            "C");
+        // #endregion
+
+        const string query = "query TriageProjectBoards($owner: String!, $repo: String!) { repository(owner: $owner, name: $repo) { projectsV2(first: 50) { nodes { id title owner { ... on User { login } ... on Organization { login } } fields(first: 50) { nodes { ... on ProjectV2SingleSelectField { id name options { id name } } } } } } } } }";
 
         var client = CreateAuthenticatedClient();
         var requestBody = new GraphQlRequestDto(
@@ -366,10 +375,63 @@ public sealed class GitHubService : IGitHubService
             });
 
         using var response = await client.PostAsJsonAsync("/graphql", requestBody, JsonOptions, cancellationToken).ConfigureAwait(false);
-        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
 
-        var payload = await response.Content.ReadFromJsonAsync<GetProjectBoardsResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
+        // #region agent log
+        var responseBodyPreview = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        AgentDebugLog.Write(
+            "GitHubService.cs:GetProjectBoardsForRepositoryAsync",
+            "GraphQL raw response received",
+            new
+            {
+                owner,
+                repo,
+                statusCode = (int)response.StatusCode,
+                responseLength = responseBodyPreview.Length,
+                responsePreview = responseBodyPreview.Length > 500 ? responseBodyPreview[..500] : responseBodyPreview,
+            },
+            "E");
+        // #endregion
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new HttpRequestException(
+                $"GitHub API request failed with status code {(int)response.StatusCode} ({response.StatusCode}). Response body: {responseBodyPreview}",
+                null,
+                response.StatusCode);
+        }
+
+        var payload = JsonSerializer.Deserialize<GetProjectBoardsResponseDto>(responseBodyPreview, JsonOptions)
             ?? throw CreateInvalidResponseException("GraphQL response body was empty.", "/graphql");
+
+        // #region agent log
+        var rawNodes = payload.Data?.Repository?.ProjectsV2?.Nodes ?? [];
+        AgentDebugLog.Write(
+            "GitHubService.cs:GetProjectBoardsForRepositoryAsync",
+            "GraphQL payload parsed",
+            new
+            {
+                owner,
+                repo,
+                repositoryIsNull = payload.Data?.Repository is null,
+                graphqlErrorCount = payload.Errors.Count,
+                graphqlErrors = payload.Errors.Select(static error => error.Message).ToArray(),
+                rawNodeCount = rawNodes.Count,
+                rawNodeSummaries = rawNodes
+                    .Select(node => new
+                    {
+                        node.Id,
+                        node.Title,
+                        ownerLogin = node.Owner?.Login,
+                        fieldCount = node.Fields?.Nodes.Count ?? 0,
+                        statusFieldNames = node.Fields?.Nodes
+                            .Select(static field => field.Name)
+                            .Where(static name => !string.IsNullOrWhiteSpace(name))
+                            .ToArray() ?? [],
+                    })
+                    .ToArray(),
+            },
+            "C");
+        // #endregion
 
         if (payload.Errors.Count > 0)
         {
@@ -377,14 +439,31 @@ public sealed class GitHubService : IGitHubService
             throw new HttpRequestException($"GitHub GraphQL request failed. Errors: {combinedErrors}");
         }
 
-        var nodes = payload.Data?.Repository?.ProjectsV2?.Nodes ?? [];
+        var nodes = rawNodes;
 
-        return nodes
+        var mappedBoards = nodes
             .Select(ToProjectBoardDomain)
             .Where(static projectBoard => projectBoard is not null)
             .Select(static projectBoard => projectBoard!)
             .OrderBy(projectBoard => projectBoard.Title, StringComparer.OrdinalIgnoreCase)
             .ToArray();
+
+        // #region agent log
+        AgentDebugLog.Write(
+            "GitHubService.cs:GetProjectBoardsForRepositoryAsync",
+            "Project boards after Status field filter",
+            new
+            {
+                owner,
+                repo,
+                rawNodeCount = nodes.Count,
+                supportedBoardCount = mappedBoards.Length,
+                supportedBoardTitles = mappedBoards.Select(static board => board.Title).ToArray(),
+            },
+            "C");
+        // #endregion
+
+        return mappedBoards;
     }
 
     /// <inheritdoc/>

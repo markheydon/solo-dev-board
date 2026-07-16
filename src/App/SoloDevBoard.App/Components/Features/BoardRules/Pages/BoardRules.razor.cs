@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using SoloDevBoard.App.Authentication;
+using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.BoardRules;
 using SoloDevBoard.Application.Services.Repositories;
 
@@ -19,6 +21,10 @@ public partial class BoardRules : ComponentBase
     /// <summary>Gets or sets the logger for board rules page diagnostics.</summary>
     [Inject]
     public ILogger<BoardRules> Logger { get; set; } = default!;
+
+    /// <summary>Gets or sets the hosted authentication recovery service.</summary>
+    [Inject]
+    public IHostedAuthenticationRecoveryService HostedAuthRecovery { get; set; } = default!;
 
     private IReadOnlyList<RepositoryDto> availableRepositories = [];
     private RepositoryDto? selectedRepository;
@@ -73,6 +79,13 @@ public partial class BoardRules : ComponentBase
             availableRepositories = (await RepositoryService.GetActiveRepositoriesAsync())
                 .OrderBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
+        }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
         }
         catch (HttpRequestException ex)
         {
@@ -170,6 +183,13 @@ public partial class BoardRules : ComponentBase
                 await LoadBoardRulesDefinitionAsync(owner, repo, selectedProjectBoardId);
             }
         }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
         catch (HttpRequestException ex)
         {
             hasProjectBoardLoadFailure = true;
@@ -204,6 +224,13 @@ public partial class BoardRules : ComponentBase
         {
             selectedBoardRules = await BoardRulesService.GetBoardRulesAsync(owner, repo, projectBoardId).ConfigureAwait(false);
             selectedTransition = BoardTransitions.FirstOrDefault();
+        }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
         }
         catch (HttpRequestException ex)
         {

@@ -4,6 +4,8 @@ using Markdig;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
+using SoloDevBoard.App.Authentication;
+using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Repositories;
 using SoloDevBoard.Application.Services.Triage;
@@ -48,6 +50,10 @@ public partial class Triage : ComponentBase
     /// <summary>Gets or sets the snackbar service used for non-blocking notifications.</summary>
     [Inject]
     public ISnackbar Snackbar { get; set; } = default!;
+
+    /// <summary>Gets or sets the hosted authentication recovery service.</summary>
+    [Inject]
+    public IHostedAuthenticationRecoveryService HostedAuthRecovery { get; set; } = default!;
 
     private IReadOnlyList<RepositoryDto> availableRepositories = [];
     private string selectedRepositoryFullName = string.Empty;
@@ -203,6 +209,13 @@ public partial class Triage : ComponentBase
                 selectedRepositoryFullName = string.Empty;
             }
         }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while loading triage repositories.");
@@ -290,6 +303,13 @@ public partial class Triage : ComponentBase
                 ? $"No untriaged items were found in {selectedRepositoryFullName}."
                 : $"Started triage session for {selectedRepositoryFullName}.";
         }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while starting triage session for {RepositoryScope}.", selectedRepositoryFullName);
@@ -331,6 +351,13 @@ public partial class Triage : ComponentBase
             {
                 operationSeverity = Severity.Warning;
                 operationMessage = "No repository labels are available to apply as quick actions.";
+            }
+        }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
             }
         }
         catch (HttpRequestException ex)
@@ -429,6 +456,13 @@ public partial class Triage : ComponentBase
                 ? $"Applied label '{labelName}' to item #{appliedItemNumber}. Reached the end of the current queue."
                 : $"Applied label '{labelName}' to item #{appliedItemNumber} and moved to {CurrentPositionText}.";
         }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while applying label to triage item.");
@@ -523,6 +557,13 @@ public partial class Triage : ComponentBase
             operationMessage = string.IsNullOrWhiteSpace(duplicateLabelSuffix)
                 ? baseMessage
                 : $"{baseMessage} {duplicateLabelSuffix}";
+        }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
         }
         catch (HttpRequestException ex)
         {
@@ -634,6 +675,13 @@ public partial class Triage : ComponentBase
                 ? $"Cleared milestone assignment for item #{CurrentItem.Number}."
                 : $"Assigned milestone '{selectedMilestoneTitle}' to item #{CurrentItem.Number}.";
         }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while assigning milestone to triage item.");
@@ -684,6 +732,13 @@ public partial class Triage : ComponentBase
 
             operationSeverity = Severity.Success;
             operationMessage = $"Added item #{currentItemNumber} to '{ActiveProjectBoard.Title}' with status '{selectedStatusOption.Name}'.";
+        }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
         }
         catch (HttpRequestException ex)
         {
@@ -746,6 +801,13 @@ public partial class Triage : ComponentBase
         {
             availableMilestoneOptions = await TriageService.GetMilestoneOptionsAsync(session);
         }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while loading milestone options for triage.");
@@ -786,6 +848,13 @@ public partial class Triage : ComponentBase
             }
 
             if (milestoneLoadFailed)
+            {
+                return;
+            }
+        }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
             {
                 return;
             }

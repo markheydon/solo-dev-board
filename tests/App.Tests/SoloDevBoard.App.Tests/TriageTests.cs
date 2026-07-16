@@ -1533,6 +1533,7 @@ public sealed class TriageTests
             .SetReturnsDefault(Task.FromResult<IReadOnlyList<TriageProjectBoardOptionDto>>(Array.Empty<TriageProjectBoardOptionDto>()));
 
         ctx.Services.AddMudServices();
+        ctx.Services.AddTestHostedAuthenticationRecovery();
         ctx.Services.AddScoped(_ => _repositoryServiceMock.Object);
         ctx.Services.AddScoped(_ => _triageServiceMock.Object);
         ctx.Services.AddScoped(_ => _labelManagerServiceMock.Object);

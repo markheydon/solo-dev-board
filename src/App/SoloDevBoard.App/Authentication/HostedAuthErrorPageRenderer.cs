@@ -19,6 +19,7 @@ internal static class HostedAuthErrorPageRenderer
         ArgumentNullException.ThrowIfNull(authOptions);
 
         var presentation = HostedAuthErrorPresentationMapper.Resolve(reason);
+        var returnUrl = GetSafeReturnUrl(context.Request.Query["returnUrl"].FirstOrDefault());
         var isAuthenticated = context.User.Identity?.IsAuthenticated == true;
         var ownerLogin = isAuthenticated
             ? context.User.FindFirst(authOptions.HostedOwnerLoginClaimType)?.Value ?? context.User.Identity?.Name
@@ -61,7 +62,7 @@ internal static class HostedAuthErrorPageRenderer
         }
 
         builder.AppendLine("    <div class=\"actions\">");
-        builder.AppendLine("      <a class=\"button button-primary\" href=\"/auth/sign-in\" data-testid=\"auth-error-try-again\">Try again</a>");
+        builder.AppendLine($"      <a class=\"button button-primary\" href=\"{Encode(BuildSignInUrl(reason, returnUrl))}\" data-testid=\"auth-error-try-again\">{Encode(GetPrimaryActionLabel(reason))}</a>");
 
         if (isAuthenticated)
         {
@@ -79,4 +80,34 @@ internal static class HostedAuthErrorPageRenderer
     }
 
     private static string Encode(string? value) => WebUtility.HtmlEncode(value ?? string.Empty);
+
+    private static string BuildSignInUrl(string? reason, string returnUrl)
+    {
+        if (string.Equals(reason, HostedAuthErrorRoutes.SessionExpired, StringComparison.Ordinal))
+        {
+            return Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString("/auth/sign-in", "returnUrl", returnUrl);
+        }
+
+        return "/auth/sign-in";
+    }
+
+    private static string GetPrimaryActionLabel(string? reason) =>
+        string.Equals(reason, HostedAuthErrorRoutes.SessionExpired, StringComparison.Ordinal)
+            ? "Sign in again"
+            : "Try again";
+
+    private static string GetSafeReturnUrl(string? returnUrl)
+    {
+        if (string.IsNullOrWhiteSpace(returnUrl))
+        {
+            return "/";
+        }
+
+        if (!returnUrl.StartsWith("/", StringComparison.Ordinal) || returnUrl.StartsWith("//", StringComparison.Ordinal))
+        {
+            return "/";
+        }
+
+        return returnUrl;
+    }
 }

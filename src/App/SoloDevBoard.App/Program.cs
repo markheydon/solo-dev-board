@@ -53,13 +53,18 @@ if (hostedSignInEnabled)
         client.DefaultRequestHeaders.UserAgent.ParseAdd(appVersionService.UserAgent);
     });
     builder.Services.AddScoped<HostedGitHubAuthGateway>();
+    builder.Services.AddScoped<IHostedAuthenticationRecoveryService, HostedAuthenticationRecoveryService>();
+
+    var hostedAuthOptions = builder.Configuration.GetSection(GitHubAuthOptions.SectionName).Get<GitHubAuthOptions>()
+        ?? new GitHubAuthOptions();
 
     builder.Services
         .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-        .AddCookie(static options =>
+        .AddCookie(options =>
         {
             options.LoginPath = "/auth/sign-in";
             options.LogoutPath = "/auth/sign-out";
+            options.Events = HostedCookieAuthenticationEvents.Create(hostedAuthOptions);
         });
 
     builder.Services.AddAuthorization();
@@ -106,7 +111,7 @@ if (hostedSignInEnabled)
 
     app.MapGet("/auth/sign-in", static (HttpContext context, HostedGitHubAuthGateway authGateway, IOptions<GitHubAuthOptions> optionsAccessor) =>
     {
-        var returnUrl = GetSafeReturnUrl(context.Request.Query["returnUrl"]);
+        var returnUrl = GetReturnUrlFromQuery(context.Request.Query);
         var state = WebEncoders.Base64UrlEncode(RandomNumberGenerator.GetBytes(24));
 
         var options = optionsAccessor.Value;
@@ -200,18 +205,30 @@ if (hostedSignInEnabled)
             Results.Redirect(HostedAuthErrorRoutes.BuildErrorUrl(HostedAuthErrorRoutes.SignInMisconfigured)));
     }
 
-    app.MapPost("/auth/sign-out", static async (HttpContext context) =>
+    app.MapGet("/auth/sign-out", (Delegate)SignOutHostedSession);
+    app.MapPost("/auth/sign-out", (Delegate)SignOutHostedSession).DisableAntiforgery();
+
+    app.MapGet("/auth/session-expired", static async (HttpContext context) =>
     {
+        var returnUrl = GetSafeReturnUrl(GetReturnUrlFromQuery(context.Request.Query));
+
         await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme).ConfigureAwait(false);
 
-        return Results.Redirect("/");
-    }).DisableAntiforgery();
+        return Results.Redirect(HostedAuthErrorRoutes.BuildErrorUrl(HostedAuthErrorRoutes.SessionExpired, returnUrl));
+    });
 }
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 app.Run();
+
+static async Task<IResult> SignOutHostedSession(HttpContext context)
+{
+    await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme).ConfigureAwait(false);
+
+    return Results.Redirect("/");
+}
 
 static string BuildCallbackUri(HttpContext context, GitHubAuthOptions options)
 {
@@ -254,6 +271,17 @@ static string GetSafeReturnUrl(string? returnUrl)
     }
 
     return returnUrl;
+}
+
+static string GetReturnUrlFromQuery(IQueryCollection query)
+{
+    var returnUrl = query["returnUrl"].FirstOrDefault();
+    if (!string.IsNullOrWhiteSpace(returnUrl))
+    {
+        return GetSafeReturnUrl(returnUrl);
+    }
+
+    return GetSafeReturnUrl(query["ReturnUrl"].FirstOrDefault());
 }
 
 static string BuildStatePayload(string state, string returnUrl)

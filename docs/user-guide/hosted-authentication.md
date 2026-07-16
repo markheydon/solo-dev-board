@@ -56,6 +56,8 @@ See [`src/SoloDevBoard.AppHost/README.md`](../../src/SoloDevBoard.AppHost/README
 
 - Hosted sign-in establishes a session with per-request user context and access token claims.
 - Token expiry and failure handling are enforced; expired or invalid tokens require a fresh sign-in.
+- When GitHub rejects the access token (for example after revocation) or the token expiry claim is in the past, the application signs you out automatically and shows a **Session expired** page with a **Sign in again** action.
+- You can also sign out manually from the app menu at any time when hosted sign-in is enabled.
 - Admission control is applied after authentication, based on allow-list configuration.
 
 ## Documentation References

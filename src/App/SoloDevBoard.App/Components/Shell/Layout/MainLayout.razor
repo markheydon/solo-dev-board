@@ -1,5 +1,5 @@
 ﻿@inherits LayoutComponentBase
-@using SoloDevBoard.Themes
+@namespace SoloDevBoard.App.Components.Shell.Layout
 
 <MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
 <MudPopoverProvider />
@@ -14,6 +14,10 @@
         <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
         <MudMenu Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" AriaLabel="More options">
             <MudMenuItem Href="/about" Icon="@Icons.Material.Filled.Info">About</MudMenuItem>
+            @if (_showSignOut)
+            {
+                <MudMenuItem Href="/auth/sign-out" Icon="@Icons.Material.Filled.Logout" data-testid="shell-sign-out">Sign out</MudMenuItem>
+            }
         </MudMenu>
     </MudAppBar>
     <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
@@ -30,27 +34,3 @@
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
-
-@code {
-    private bool _drawerOpen = true;
-    private bool _isDarkMode = false;
-    private readonly MudTheme _theme = SoloDevBoardTheme.MudTheme;
-
-    private void DrawerToggle()
-    {
-        _drawerOpen = !_drawerOpen;
-    }
-
-    private void DarkModeToggle()
-    {
-        _isDarkMode = !_isDarkMode;
-    }
-
-    public string DarkLightModeButtonIcon => _isDarkMode switch
-    {
-        true => Icons.Material.Rounded.AutoMode,
-        false => Icons.Material.Outlined.DarkMode,
-    };
-}
-
-

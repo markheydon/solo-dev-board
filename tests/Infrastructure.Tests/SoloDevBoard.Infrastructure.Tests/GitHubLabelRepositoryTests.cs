@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Options;
 using Moq;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Domain.Entities.Labels;
@@ -175,7 +176,9 @@ public sealed class GitHubLabelRepositoryTests
             .Setup(context => context.GetAccessToken())
             .Throws(new InvalidOperationException("Token missing."));
 
-        var authHandler = new GitHubAuthHandler(currentUserContextMock.Object)
+        var authHandler = new GitHubAuthHandler(
+            currentUserContextMock.Object,
+            Options.Create(new GitHubAuthOptions()))
         {
             InnerHandler = new QueueMessageHandler([new HttpResponseMessage(HttpStatusCode.OK)]),
         };
@@ -204,7 +207,9 @@ public sealed class GitHubLabelRepositoryTests
             .Setup(context => context.GetAccessToken())
             .Returns("test-token");
 
-        var authHandler = new GitHubAuthHandler(currentUserContextMock.Object)
+        var authHandler = new GitHubAuthHandler(
+            currentUserContextMock.Object,
+            Options.Create(new GitHubAuthOptions()))
         {
             InnerHandler = handler,
         };

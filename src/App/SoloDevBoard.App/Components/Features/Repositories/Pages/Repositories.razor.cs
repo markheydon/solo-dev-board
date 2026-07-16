@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using SoloDevBoard.App.Authentication;
+using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.Repositories;
 
 namespace SoloDevBoard.App.Components.Features.Repositories.Pages;
@@ -18,6 +20,10 @@ public partial class Repositories : ComponentBase
     /// <summary>Gets or sets the snackbar service used for transient page notifications.</summary>
     [Inject]
     public ISnackbar Snackbar { get; set; } = default!;
+
+    /// <summary>Gets or sets the hosted authentication recovery service.</summary>
+    [Inject]
+    public IHostedAuthenticationRecoveryService HostedAuthRecovery { get; set; } = default!;
 
     private IReadOnlyList<RepositoryDto> repositories = [];
     private bool isLoading = true;
@@ -103,6 +109,13 @@ public partial class Repositories : ComponentBase
                     ? "No repositories are connected yet."
                     : $"Loaded {repositories.Count} repositories.",
                 repositories.Count == 0 ? Severity.Info : Severity.Success);
+        }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
         }
         catch (HttpRequestException ex)
         {

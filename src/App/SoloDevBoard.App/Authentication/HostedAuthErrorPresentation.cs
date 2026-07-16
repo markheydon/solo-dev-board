@@ -46,6 +46,10 @@ public static class HostedAuthErrorPresentationMapper
                 "Sign-in failed",
                 "Hosted sign-in could not be completed. Try again, or contact the operator if the problem continues.",
                 StatusCodes.Status401Unauthorized),
+            [HostedAuthErrorRoutes.SessionExpired] = new(
+                "Session expired",
+                "Your GitHub sign-in is no longer valid. This can happen when your token expires or access is revoked. Sign in again to continue.",
+                StatusCodes.Status401Unauthorized),
         };
 
     /// <summary>Resolves user-facing presentation for a hosted authentication failure reason.</summary>

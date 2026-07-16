@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
+using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Infrastructure.GitHub;
 using SoloDevBoard.Infrastructure.Identity;
 
@@ -109,7 +110,7 @@ public sealed class HostedUserCurrentUserContextTests
     }
 
     [Fact]
-    public void GetAccessToken_ExpiryClaimInPast_ThrowsInvalidOperationException()
+    public void GetAccessToken_ExpiryClaimInPast_ThrowsHostedAuthenticationRequiredException()
     {
         // Arrange
         var httpContextAccessor = CreateHttpContextAccessor(new[]
@@ -126,7 +127,7 @@ public sealed class HostedUserCurrentUserContextTests
         var act = () => sut.GetAccessToken();
 
         // Assert
-        Assert.Throws<InvalidOperationException>(act);
+        Assert.Throws<HostedAuthenticationRequiredException>(act);
     }
 
     [Fact]

@@ -28,6 +28,13 @@ This document defines the hosted authentication and admission-control boundaries
 - Expired tokens are rejected and require a fresh hosted sign-in.
 - Invalid or missing hosted token claims fail fast with explicit exceptions to prevent silent downgrade to insecure behaviour.
 
+## Runtime Session Recovery
+
+- When GitHub returns `401 Unauthorized` for a hosted API request, the application throws `HostedAuthenticationRequiredException` and feature pages initiate recovery through `/auth/session-expired`.
+- The `/auth/session-expired` route signs out the stale auth cookie and redirects to `/auth/error?reason=session-expired` with user-facing copy and a **Sign in again** action that preserves the original page where possible.
+- Cookie authentication validates the token expiry claim on each request; principals with expired claims are rejected so full page loads are challenged to `/auth/sign-in`.
+- The main application shell exposes a **Sign out** action when hosted sign-in is enabled and the user is authenticated.
+
 ## Secure Storage and Cache Boundaries (#111)
 
 - This slice does not persist hosted access tokens to application storage.

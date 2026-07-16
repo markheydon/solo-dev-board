@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using SoloDevBoard.App.Authentication;
+using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Migration;
 using SoloDevBoard.Application.Services.Repositories;
@@ -24,6 +26,10 @@ public partial class Migration : ComponentBase
     /// <summary>Gets or sets the snackbar service for user notifications.</summary>
     [Inject]
     public ISnackbar Snackbar { get; set; } = default!;
+
+    /// <summary>Gets or sets the hosted authentication recovery service.</summary>
+    [Inject]
+    public IHostedAuthenticationRecoveryService HostedAuthRecovery { get; set; } = default!;
 
     private IReadOnlyList<RepositoryDto> availableRepositories = [];
     private IReadOnlyList<RepositoryDto> selectedRepositories = [];
@@ -66,6 +72,13 @@ public partial class Migration : ComponentBase
 
             selectedRepositories = [];
             ResetWorkflow();
+        }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
         }
         catch (HttpRequestException ex)
         {
@@ -177,6 +190,13 @@ public partial class Migration : ComponentBase
 
             showPreview = true;
             applyResult = new MigrationResultDto(conflictStrategy, [], []);
+        }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
         }
         catch (HttpRequestException ex)
         {

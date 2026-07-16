@@ -15,6 +15,7 @@ public sealed class HostedAuthErrorPresentationTests
     [InlineData(HostedAuthErrorRoutes.SignInUnavailable, "GitHub unavailable")]
     [InlineData(HostedAuthErrorRoutes.SignInMisconfigured, "Sign-in unavailable")]
     [InlineData(HostedAuthErrorRoutes.SignInUnknown, "Sign-in failed")]
+    [InlineData(HostedAuthErrorRoutes.SessionExpired, "Session expired")]
     public void Resolve_KnownReason_ReturnsExpectedTitle(string reason, string expectedTitle)
     {
         // Act

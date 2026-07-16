@@ -30,7 +30,10 @@ public sealed class HostedUserCurrentUserContext(
 
     /// <inheritdoc/>
     /// <exception cref="InvalidOperationException">
-    /// The hosted request does not contain an access-token claim, or the hosted token is expired.
+    /// The hosted request does not contain an access-token claim.
+    /// </exception>
+    /// <exception cref="HostedAuthenticationRequiredException">
+    /// The hosted GitHub access token has expired and must be refreshed by signing in again.
     /// </exception>
     public string GetAccessToken()
     {
@@ -80,7 +83,8 @@ public sealed class HostedUserCurrentUserContext(
 
         if (expiresAtUtc <= DateTimeOffset.UtcNow)
         {
-            throw new InvalidOperationException("Hosted GitHub access token has expired and must be refreshed by signing in again.");
+            throw new HostedAuthenticationRequiredException(
+                "Hosted GitHub access token has expired and must be refreshed by signing in again.");
         }
     }
 }

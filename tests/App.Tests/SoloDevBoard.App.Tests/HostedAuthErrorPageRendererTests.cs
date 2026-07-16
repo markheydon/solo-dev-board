@@ -52,6 +52,26 @@ public sealed class HostedAuthErrorPageRendererTests
     }
 
     [Fact]
+    public void Render_SessionExpiredReason_IncludesSignInAgainLinkWithReturnUrl()
+    {
+        // Arrange
+        var context = new DefaultHttpContext();
+        context.Request.QueryString = new QueryString("?returnUrl=%2Frepositories");
+
+        // Act
+        var html = HostedAuthErrorPageRenderer.Render(
+            context,
+            HostedAuthErrorRoutes.SessionExpired,
+            new GitHubAuthOptions());
+
+        // Assert
+        Assert.Contains("Session expired", html);
+        Assert.Contains("no longer valid", html);
+        Assert.Contains("Sign in again", html);
+        Assert.Contains("/auth/sign-in?returnUrl=%2Frepositories", html);
+    }
+
+    [Fact]
     public void Render_UnknownReason_UsesFallbackCopy()
     {
         // Arrange
