@@ -15,6 +15,6 @@ public interface IBoardRulesService
     /// <param name="owner">The GitHub account owner login.</param>
     /// <param name="repo">The repository name.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
-    /// <returns>A read-only list of supported project board options for the repository.</returns>
-    Task<IReadOnlyList<BoardRulesProjectBoardOptionDto>> GetProjectBoardOptionsAsync(string owner, string repo, CancellationToken cancellationToken = default);
+    /// <returns>Supported project board options and visibility metadata for the repository.</returns>
+    Task<BoardRulesProjectBoardDiscoveryDto> GetProjectBoardOptionsAsync(string owner, string repo, CancellationToken cancellationToken = default);
 }

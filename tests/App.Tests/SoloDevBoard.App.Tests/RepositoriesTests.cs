@@ -157,6 +157,7 @@ public sealed class RepositoriesTests
         var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddMudServices();
+        ctx.Services.AddTestHostedAuthenticationRecovery();
         ctx.Services.AddScoped(_ => _repositoryServiceMock.Object);
 
         ctx.Render<MudPopoverProvider>();

@@ -349,7 +349,7 @@ public sealed class GitHubService : IGitHubService
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<TriageProjectBoard>> GetProjectBoardsForRepositoryAsync(string owner, string repo, CancellationToken cancellationToken = default)
+    public async Task<RepositoryProjectBoardDiscoveryResult> GetProjectBoardsForRepositoryAsync(string owner, string repo, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
         ArgumentException.ThrowIfNullOrWhiteSpace(repo);
@@ -371,20 +371,30 @@ public sealed class GitHubService : IGitHubService
         var payload = await response.Content.ReadFromJsonAsync<GetProjectBoardsResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
             ?? throw CreateInvalidResponseException("GraphQL response body was empty.", "/graphql");
 
-        if (payload.Errors.Count > 0)
+        var rawNodes = payload.Data?.Repository?.ProjectsV2?.Nodes ?? [];
+        var accessibleNodes = rawNodes
+            .Where(static node => node is not null)
+            .Select(static node => node!)
+            .ToArray();
+        var inaccessibleLinkedProjectCount = rawNodes.Count - accessibleNodes.Length;
+
+        if (payload.Errors.Count > 0 && accessibleNodes.Length == 0)
         {
             var combinedErrors = string.Join("; ", payload.Errors.Select(static error => error.Message));
             throw new HttpRequestException($"GitHub GraphQL request failed. Errors: {combinedErrors}");
         }
 
-        var nodes = payload.Data?.Repository?.ProjectsV2?.Nodes ?? [];
-
-        return nodes
+        var supportedProjectBoards = accessibleNodes
             .Select(ToProjectBoardDomain)
             .Where(static projectBoard => projectBoard is not null)
             .Select(static projectBoard => projectBoard!)
             .OrderBy(projectBoard => projectBoard.Title, StringComparer.OrdinalIgnoreCase)
             .ToArray();
+
+        return new RepositoryProjectBoardDiscoveryResult(
+            supportedProjectBoards,
+            rawNodes.Count,
+            inaccessibleLinkedProjectCount);
     }
 
     /// <inheritdoc/>
@@ -590,9 +600,9 @@ public sealed class GitHubService : IGitHubService
             response.StatusCode);
     }
 
-    private static TriageProjectBoard? ToProjectBoardDomain(ProjectBoardNodeDto node)
+    private static TriageProjectBoard? ToProjectBoardDomain(ProjectBoardNodeDto? node)
     {
-        if (string.IsNullOrWhiteSpace(node.Id) || string.IsNullOrWhiteSpace(node.Title))
+        if (node is null || string.IsNullOrWhiteSpace(node.Id) || string.IsNullOrWhiteSpace(node.Title))
         {
             return null;
         }

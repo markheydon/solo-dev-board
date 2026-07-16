@@ -50,7 +50,7 @@ See [docs/getting-started.md](../docs/getting-started.md) for full setup and [Sw
 | `allowed-user-logins` | no | `-` | `-` | logins or `-` |
 | `allowed-org-logins` | no | `-` | `-` | logins or `-` |
 
-Startup validation fails fast if required values are missing or inactive-mode parameters are not `-`.
+Startup validation fails fast if required values for the active authentication mode are missing. Setting inactive-mode parameters to `-` is recommended when switching modes but is not enforced at startup.
 
 ## Local development
 

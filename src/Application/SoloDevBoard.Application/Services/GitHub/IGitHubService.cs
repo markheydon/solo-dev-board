@@ -123,8 +123,8 @@ public interface IGitHubService
     /// <param name="owner">The GitHub account owner login.</param>
     /// <param name="repo">The repository name.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
-    /// <returns>A read-only list of project boards that expose a status field.</returns>
-    Task<IReadOnlyList<TriageProjectBoard>> GetProjectBoardsForRepositoryAsync(string owner, string repo, CancellationToken cancellationToken = default);
+    /// <returns>Supported project boards plus visibility metadata for linked boards that could not be read.</returns>
+    Task<RepositoryProjectBoardDiscoveryResult> GetProjectBoardsForRepositoryAsync(string owner, string repo, CancellationToken cancellationToken = default);
 
     /// <summary>Retrieves supported board rules metadata for the specified GitHub Project v2 board.</summary>
     /// <param name="owner">The GitHub account owner login.</param>

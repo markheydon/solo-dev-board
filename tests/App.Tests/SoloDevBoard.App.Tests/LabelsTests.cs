@@ -583,6 +583,7 @@ public sealed class LabelsTests
         var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddMudServices();
+        ctx.Services.AddTestHostedAuthenticationRecovery();
 
         _labelManagerServiceMock
             .Setup(service => service.GetRecommendedLabelStrategiesAsync(It.IsAny<CancellationToken>()))

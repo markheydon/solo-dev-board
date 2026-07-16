@@ -888,10 +888,12 @@ public sealed class GitHubServiceTests
         var result = await sut.GetProjectBoardsForRepositoryAsync("owner", "repo");
 
         // Assert
-        Assert.Single(result);
-        Assert.Equal("Roadmap", result[0].Title);
-        Assert.Equal("PVTF_status", result[0].StatusFieldId);
-        Assert.Equal(2, result[0].StatusOptions.Count);
+        Assert.Single(result.SupportedProjectBoards);
+        Assert.Equal(1, result.TotalLinkedProjectCount);
+        Assert.Equal(0, result.InaccessibleLinkedProjectCount);
+        Assert.Equal("Roadmap", result.SupportedProjectBoards[0].Title);
+        Assert.Equal("PVTF_status", result.SupportedProjectBoards[0].StatusFieldId);
+        Assert.Equal(2, result.SupportedProjectBoards[0].StatusOptions.Count);
         Assert.Equal(HttpMethod.Post, handler.Requests[0].Method);
         Assert.Equal("https://api.github.com/graphql", handler.Requests[0].RequestUri!.ToString());
     }
@@ -924,6 +926,60 @@ public sealed class GitHubServiceTests
         // Assert
         var exception = await Assert.ThrowsAsync<HttpRequestException>(action);
         Assert.Contains("GitHub GraphQL request failed", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetProjectBoardsForRepositoryAsync_InaccessibleNodeWithAccessibleProject_ReturnsAccessibleProjectBoards()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "repository": {
+                        "projectsV2": {
+                            "nodes": [
+                                null,
+                                {
+                                    "id": "PVT_kwHOAJefG84BGXfu",
+                                    "title": "Mark's Workboard",
+                                    "owner": { "login": "owner" },
+                                    "fields": {
+                                        "nodes": [
+                                            {
+                                                "id": "PVTF_status",
+                                                "name": "Status",
+                                                "options": [
+                                                    { "id": "option-one", "name": "In Progress" }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                },
+                "errors": [
+                    {
+                        "message": "Resource not accessible by integration"
+                    }
+                ]
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var result = await sut.GetProjectBoardsForRepositoryAsync("owner", "repo");
+
+        // Assert
+        Assert.Single(result.SupportedProjectBoards);
+        Assert.Equal(2, result.TotalLinkedProjectCount);
+        Assert.Equal(1, result.InaccessibleLinkedProjectCount);
+        Assert.Equal("Mark's Workboard", result.SupportedProjectBoards[0].Title);
     }
 
     [Fact]

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Options;
 using Moq;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Domain.Entities.Milestones;
@@ -264,7 +265,9 @@ public sealed class GitHubMilestoneRepositoryTests
             .Setup(context => context.GetAccessToken())
             .Returns("test-token");
 
-        var authHandler = new GitHubAuthHandler(currentUserContextMock.Object)
+        var authHandler = new GitHubAuthHandler(
+            currentUserContextMock.Object,
+            Options.Create(new GitHubAuthOptions()))
         {
             InnerHandler = handler,
         };

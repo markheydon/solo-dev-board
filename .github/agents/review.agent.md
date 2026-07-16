@@ -1,8 +1,9 @@
 ---
 name: Review Agent
 description: Validates completed work, performs core quality checks, and creates a pull request.
-model: Claude Haiku 4.5 (copilot)
+model: Raptor mini (copilot)
 argument-hint: Specify "review issue #X"
+tools: [read, search, execute, agent]
 ---
 
 # Review Agent
@@ -106,8 +107,12 @@ Requirements:
 - Add `status/in-review`
 - Assign `markheydon`
 - Apply issue milestone if present
+- Do NOT assign to Copilot either as a reviewer or assignee either manually or via a tool
 
-Use `.github/pull_request_template.md` if available.
+
+Use `.github/pull_request_template.md` which is available in the repo.
+- Ensure the PR body is generated from the repository template and not bypassed by supplying a custom `--body` value.
+- When using GitHub CLI, prefer `gh pr create --fill --base main --head <branch>` or the web flow so the repo template can be applied.
 
 ---
 

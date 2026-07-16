@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Components;
+using SoloDevBoard.App.Authentication;
+using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.Audit;
 using SoloDevBoard.Application.Services.Repositories;
 
@@ -20,6 +22,10 @@ public partial class Audit : ComponentBase
     /// <summary>Gets or sets the logger for audit page diagnostics.</summary>
     [Inject]
     public ILogger<Audit> Logger { get; set; } = default!;
+
+    /// <summary>Gets or sets the hosted authentication recovery service.</summary>
+    [Inject]
+    public IHostedAuthenticationRecoveryService HostedAuthRecovery { get; set; } = default!;
 
     private IReadOnlyList<RepositoryAuditSummaryDto> repositorySummaries = [];
     private IReadOnlyList<IssueDto> unlabelledIssues = [];
@@ -60,6 +66,13 @@ public partial class Audit : ComponentBase
             selectedRepositories.Clear();
             hasLoadedAuditSummary = false;
             ResetDashboardData();
+        }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
         }
         catch (HttpRequestException ex)
         {
@@ -122,6 +135,13 @@ public partial class Audit : ComponentBase
         {
             await LoadFilteredAuditDataAsync();
             hasLoadedAuditSummary = true;
+        }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
         }
         catch (HttpRequestException ex)
         {

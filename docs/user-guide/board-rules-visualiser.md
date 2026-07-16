@@ -37,6 +37,8 @@ Key goals of the Board Rules Visualiser:
 - View board states derived from the selected Project v2 board's Status field.
 - Inspect the supported adjacent transitions between board columns.
 - See a warning when the board metadata is only partially visible.
+- Click rule nodes to inspect the full rule name, trigger and action configuration.
+- See potential rule conflicts highlighted when duplicate triggers or incomplete rule details are present.
 - Reload repositories or project boards if GitHub API requests fail.
 
 ### What is coming later
@@ -49,6 +51,7 @@ Key goals of the Board Rules Visualiser:
 
 - **No repository selected:** The visualisation area prompts you to choose a repository and project board.
 - **No supported boards:** If the repository has no GitHub Project v2 board with a Status field, SoloDevBoard explains why the visualiser cannot continue and does not show the diagram state.
+- **Some linked boards inaccessible:** If GitHub reports more linked project boards than SoloDevBoard can load, a warning explains how many could not be read. This commonly happens for **private user-owned** projects under GitHub App sign-in. Use PAT mode with the `read:project` scope, or make the project public. See [Hosted Authentication — Projects v2 access](hosted-authentication.md#projects-v2-access-under-hosted-sign-in).
 - **Loading:** Progress indicators appear while repositories or project boards are loading.
 - **Errors:** If GitHub cannot be reached, an error message appears with a retry action.
 

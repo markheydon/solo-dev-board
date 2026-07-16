@@ -14,5 +14,6 @@ public interface ICurrentUserContext
     /// <summary>Gets the GitHub access token for the current user context.</summary>
     /// <returns>A non-empty GitHub access token for the current user context.</returns>
     /// <exception cref="InvalidOperationException">Thrown when no access token is available for the current user context.</exception>
+    /// <exception cref="HostedAuthenticationRequiredException">Thrown when hosted sign-in credentials are expired and require a fresh sign-in.</exception>
     string GetAccessToken();
 }

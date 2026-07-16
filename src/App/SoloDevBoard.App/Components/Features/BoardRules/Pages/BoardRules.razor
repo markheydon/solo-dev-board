@@ -61,16 +61,34 @@
                                                 <MudText Typo="Typo.body2">Loading project boards...</MudText>
                                             </MudStack>
                                         }
-                                        else if (availableProjectBoardOptions.Count == 0)
+                                        else if (availableProjectBoardOptions.Count == 0 && !hasProjectBoardLoadFailure)
                                         {
-                                            <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined"
-                                                      data-testid="board-rules-unsupported-boards-message">
-                                                No supported GitHub Project v2 boards were found for this repository. SoloDevBoard can
-                                                only visualise boards that expose a Status field.
-                                            </MudAlert>
+                                            @if (HasInaccessibleProjectBoardsWarning)
+                                            {
+                                                <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined"
+                                                          data-testid="board-rules-inaccessible-project-boards-warning">
+                                                    @inaccessibleProjectBoardsWarning
+                                                </MudAlert>
+                                            }
+                                            else
+                                            {
+                                                <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined"
+                                                          data-testid="board-rules-unsupported-boards-message">
+                                                    No supported GitHub Project v2 boards were found for this repository. SoloDevBoard can
+                                                    only visualise boards that expose a Status field.
+                                                </MudAlert>
+                                            }
                                         }
                                         else
                                         {
+                                            @if (HasInaccessibleProjectBoardsWarning)
+                                            {
+                                                <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined"
+                                                          data-testid="board-rules-inaccessible-project-boards-warning">
+                                                    @inaccessibleProjectBoardsWarning
+                                                </MudAlert>
+                                            }
+
                                             <MudSelect T="string" Value="selectedProjectBoardId"
                                                        ValueChanged="OnSelectedProjectBoardChangedAsync" Label="Project board"
                                                        Variant="Variant.Outlined" Disabled="ShowLoadingState">
@@ -107,12 +125,22 @@
                             <MudText Typo="Typo.body2">Preparing board context...</MudText>
                         </MudStack>
                     }
-                    else if (availableProjectBoardOptions.Count == 0)
+                    else if (availableProjectBoardOptions.Count == 0 && !hasProjectBoardLoadFailure)
                     {
                         <MudStack Spacing="1" aria-live="polite" data-testid="board-rules-no-supported-board-state">
-                            <MudText Typo="Typo.h6">No supported board available</MudText>
-                            <MudText Typo="Typo.body2">This repository does not expose a GitHub Project v2 board with a Status field, so
-                                the visualiser cannot continue to the diagram state.</MudText>
+                            @if (HasInaccessibleProjectBoardsWarning)
+                            {
+                                <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined"
+                                          data-testid="board-rules-inaccessible-project-boards-warning-detail">
+                                    @inaccessibleProjectBoardsWarning
+                                </MudAlert>
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.h6">No supported board available</MudText>
+                                <MudText Typo="Typo.body2">This repository does not expose a GitHub Project v2 board with a Status field, so
+                                    the visualiser cannot continue to the diagram state.</MudText>
+                            }
                             </MudStack>
                         }
         else if (!HasSelectedProjectBoard)
@@ -131,6 +159,14 @@
                         }
                         else
                         {
+                            @if (HasInaccessibleProjectBoardsWarning)
+                            {
+                                <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined"
+                                          Class="mb-2" data-testid="board-rules-inaccessible-project-boards-warning-detail">
+                                    @inaccessibleProjectBoardsWarning
+                                </MudAlert>
+                            }
+
                             <MudStack Spacing="2" data-testid="board-rules-board-context-ready-state">
                                 <MudText Typo="Typo.h6">Board context ready</MudText>
                                 <MudText Typo="Typo.body2">
@@ -163,6 +199,37 @@
                                                     }
                                                 </MudStack>
 
+                                                <MudText Typo="Typo.subtitle1">Board automation rules</MudText>
+                                                @if (selectedBoardRules.Rules.Count == 0)
+                                                {
+                                                    <MudText Typo="Typo.body2">No board automation rule configuration is currently available for this project board.</MudText>
+                                                }
+                                                else
+                                                {
+                                                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" data-testid="board-rules-rule-chips">
+                                                        @foreach (var rule in selectedBoardRules.Rules)
+                                                        {
+                                                            <MudChip T="string" OnClick="() => SelectRule(rule)"
+                                                                     Color="@GetRuleChipColor(rule)" Variant="@GetRuleChipVariant(rule)"
+                                                                     Size="Size.Medium" Class="ma-0" data-testid="@($"board-rules-rule-chip-{rule.Id}")">
+                                                            @rule.Name
+                                                        </MudChip>
+                                                        }
+                                                    </MudStack>
+                                                }
+
+                                                @if (HasRuleWarnings)
+                                                {
+                                                    <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined"
+                                                              data-testid="board-rules-conflict-warning-alert">
+                                                        <MudText Typo="Typo.subtitle2">Potential rule conflicts detected</MudText>
+                                                        @foreach (var warning in BoardRuleWarnings)
+                                                        {
+                                                            <MudText Typo="Typo.body2">@warning</MudText>
+                                                        }
+                                                    </MudAlert>
+                                                }
+
                                                 @if (!selectedBoardRules.HasFullVisibility)
                                                 {
                                                     <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined">
@@ -178,23 +245,34 @@
                                         <MudPaper Class="pa-4" Outlined="true" aria-label="Rule detail panel"
                                                   data-testid="board-rules-detail-panel">
                                             <MudStack Spacing="2">
-                                                <MudText Typo="Typo.subtitle1">Transition detail</MudText>
+                                                <MudText Typo="Typo.subtitle1">@DetailPanelTitle</MudText>
 
-                                                @if (selectedTransition is null)
+                                                @if (selectedRule is not null)
                                                 {
-                                                    <MudText Typo="Typo.body2">Select a transition to inspect the available board flow.
-                                                    </MudText>
+                                                    <MudText Typo="Typo.body2"><strong>Name:</strong> @selectedRule.Name</MudText>
+                                                    <MudText Typo="Typo.body2"><strong>Enabled:</strong> @(selectedRule.IsEnabled ? "Yes" : "No")</MudText>
+                                                    <MudText Typo="Typo.body2"><strong>Trigger:</strong> @selectedRule.Trigger</MudText>
+                                                    <MudText Typo="Typo.body2"><strong>Action:</strong> @selectedRule.Action</MudText>
+
+                                                    @if (IsRuleWarning(selectedRule))
+                                                    {
+                                                        <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined">
+                                                            This rule may behave unexpectedly or conflict with another rule.
+                                                        </MudAlert>
+                                                    }
+                                                }
+                                                else if (selectedTransition is not null)
+                                                {
+                                                    <MudText Typo="Typo.body2"><strong>From:</strong> @selectedTransition.FromColumnName</MudText>
+                                                    <MudText Typo="Typo.body2"><strong>To:</strong> @selectedTransition.ToColumnName</MudText>
+                                                    <MudText Typo="Typo.body2">This transition reflects the supported board flow between adjacent columns.</MudText>
                                                 }
                                                 else
                                                 {
-                                                    <MudText Typo="Typo.body2"><strong>From:</strong> @selectedTransition.FromColumnName
-                                                    </MudText>
-                                                    <MudText Typo="Typo.body2"><strong>To:</strong> @selectedTransition.ToColumnName</MudText>
-                                                    <MudText Typo="Typo.body2">This transition reflects the supported board flow between
-                                                        adjacent columns.</MudText>
-                                                    }
-                                                </MudStack>
-                                            </MudPaper>
+                                                    <MudText Typo="Typo.body2">Select a transition or a rule to inspect the board flow and configuration.</MudText>
+                                                }
+                                            </MudStack>
+                                        </MudPaper>
                                         </MudItem>
                                     </MudGrid>
                                 </MudStack>

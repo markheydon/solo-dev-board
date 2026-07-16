@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using SoloDevBoard.App.Authentication;
+using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.BoardRules;
+using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Application.Services.Repositories;
 
 namespace SoloDevBoard.App.Components.Features.BoardRules.Pages;
@@ -20,12 +23,17 @@ public partial class BoardRules : ComponentBase
     [Inject]
     public ILogger<BoardRules> Logger { get; set; } = default!;
 
+    /// <summary>Gets or sets the hosted authentication recovery service.</summary>
+    [Inject]
+    public IHostedAuthenticationRecoveryService HostedAuthRecovery { get; set; } = default!;
+
     private IReadOnlyList<RepositoryDto> availableRepositories = [];
     private RepositoryDto? selectedRepository;
     private IReadOnlyList<BoardRulesProjectBoardOptionDto> availableProjectBoardOptions = [];
     private string selectedProjectBoardId = string.Empty;
     private BoardRulesDefinitionDto? selectedBoardRules;
     private BoardColumnTransition? selectedTransition;
+    private BoardRuleDto? selectedRule;
     private bool isLoadingRepositories = true;
     private bool isLoadingProjectBoards;
     private bool isLoadingBoardRules;
@@ -33,6 +41,7 @@ public partial class BoardRules : ComponentBase
     private bool hasProjectBoardLoadFailure;
     private bool hasBoardRulesLoadFailure;
     private string? errorMessage;
+    private string? inaccessibleProjectBoardsWarning;
 
     /// <inheritdoc/>
     protected override async Task OnInitializedAsync()
@@ -65,12 +74,20 @@ public partial class BoardRules : ComponentBase
         selectedProjectBoardId = string.Empty;
         selectedBoardRules = null;
         selectedTransition = null;
+        selectedRule = null;
 
         try
         {
             availableRepositories = (await RepositoryService.GetActiveRepositoriesAsync())
                 .OrderBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
+        }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
         }
         catch (HttpRequestException ex)
         {
@@ -103,9 +120,11 @@ public partial class BoardRules : ComponentBase
             selectedProjectBoardId = string.Empty;
             selectedBoardRules = null;
             selectedTransition = null;
+            selectedRule = null;
             errorMessage = null;
             hasProjectBoardLoadFailure = false;
             hasBoardRulesLoadFailure = false;
+            inaccessibleProjectBoardsWarning = null;
             return;
         }
 
@@ -118,17 +137,21 @@ public partial class BoardRules : ComponentBase
             selectedProjectBoardId = string.Empty;
             selectedBoardRules = null;
             selectedTransition = null;
+            selectedRule = null;
             errorMessage = null;
             hasProjectBoardLoadFailure = false;
             hasBoardRulesLoadFailure = false;
+            inaccessibleProjectBoardsWarning = null;
             return;
         }
 
         selectedBoardRules = null;
         selectedTransition = null;
+        selectedRule = null;
         errorMessage = null;
         hasProjectBoardLoadFailure = false;
         hasBoardRulesLoadFailure = false;
+        inaccessibleProjectBoardsWarning = null;
 
         await LoadProjectBoardOptionsAsync(selectedRepository);
     }
@@ -152,16 +175,29 @@ public partial class BoardRules : ComponentBase
         isLoadingProjectBoards = true;
         hasProjectBoardLoadFailure = false;
         errorMessage = null;
+        inaccessibleProjectBoardsWarning = null;
         availableProjectBoardOptions = [];
         selectedProjectBoardId = string.Empty;
+        selectedRule = null;
 
         try
         {
-            availableProjectBoardOptions = await BoardRulesService.GetProjectBoardOptionsAsync(owner, repo);
+            var discovery = await BoardRulesService.GetProjectBoardOptionsAsync(owner, repo);
+            availableProjectBoardOptions = discovery.Options;
+            inaccessibleProjectBoardsWarning = LinkedProjectBoardVisibility.BuildInaccessibleProjectsWarning(
+                discovery.TotalLinkedProjectCount,
+                discovery.InaccessibleLinkedProjectCount);
             selectedProjectBoardId = availableProjectBoardOptions.FirstOrDefault()?.Id ?? string.Empty;
             if (!string.IsNullOrWhiteSpace(selectedProjectBoardId))
             {
                 await LoadBoardRulesDefinitionAsync(owner, repo, selectedProjectBoardId);
+            }
+        }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
             }
         }
         catch (HttpRequestException ex)
@@ -190,6 +226,7 @@ public partial class BoardRules : ComponentBase
         isLoadingBoardRules = true;
         selectedBoardRules = null;
         selectedTransition = null;
+        selectedRule = null;
         hasBoardRulesLoadFailure = false;
         errorMessage = null;
 
@@ -197,6 +234,13 @@ public partial class BoardRules : ComponentBase
         {
             selectedBoardRules = await BoardRulesService.GetBoardRulesAsync(owner, repo, projectBoardId).ConfigureAwait(false);
             selectedTransition = BoardTransitions.FirstOrDefault();
+        }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
         }
         catch (HttpRequestException ex)
         {
@@ -230,10 +274,58 @@ public partial class BoardRules : ComponentBase
     private void SelectTransition(BoardColumnTransition transition)
     {
         selectedTransition = transition;
+        selectedRule = null;
+    }
+
+    private void SelectRule(BoardRuleDto rule)
+    {
+        ArgumentNullException.ThrowIfNull(rule);
+        selectedRule = rule;
     }
 
     private Variant GetTransitionButtonVariant(BoardColumnTransition transition)
         => selectedTransition?.Id == transition.Id ? Variant.Filled : Variant.Outlined;
+
+    private Variant GetRuleChipVariant(BoardRuleDto rule)
+        => selectedRule?.Id == rule.Id ? Variant.Filled : Variant.Outlined;
+
+    private Color GetRuleChipColor(BoardRuleDto rule)
+        => selectedRule?.Id == rule.Id ? Color.Primary
+            : IsRuleWarning(rule) ? Color.Warning
+            : rule.IsEnabled ? Color.Secondary
+            : Color.Default;
+
+    private bool IsRuleWarning(BoardRuleDto rule)
+        => BoardRuleWarnings.Any(warning => warning.Contains($"'{rule.Name}'", StringComparison.OrdinalIgnoreCase));
+
+    private IReadOnlyList<string> BoardRuleWarnings
+    {
+        get
+        {
+            if (selectedBoardRules?.Rules is not { Count: > 0 } rules)
+            {
+                return [];
+            }
+
+            var duplicateTriggerWarnings = rules
+                .GroupBy(rule => string.IsNullOrWhiteSpace(rule.Trigger) ? string.Empty : rule.Trigger.Trim(), StringComparer.OrdinalIgnoreCase)
+                .Where(group => !string.IsNullOrWhiteSpace(group.Key) && group.Count() > 1)
+                .Select(group => $"Rules with the same trigger '{group.Key}' may conflict: {string.Join(", ", group.Select(rule => rule.Name))}.")
+                .ToArray();
+
+            var incompleteConfigurationWarnings = rules
+                .Where(rule => string.IsNullOrWhiteSpace(rule.Trigger) || string.IsNullOrWhiteSpace(rule.Action))
+                .Select(rule => $"Rule '{rule.Name}' has incomplete configuration and may behave unexpectedly.")
+                .ToArray();
+
+            return duplicateTriggerWarnings.Concat(incompleteConfigurationWarnings).ToArray();
+        }
+    }
+
+    private bool HasRuleWarnings => BoardRuleWarnings.Count > 0;
+
+    private string DetailPanelTitle
+        => selectedRule is not null ? "Selected rule" : "Transition detail";
 
     private string GetTransitionButtonAriaLabel(BoardColumnTransition transition)
         => $"Inspect transition from {transition.FromColumnName} to {transition.ToColumnName}";
@@ -245,6 +337,7 @@ public partial class BoardRules : ComponentBase
         selectedProjectBoardId = projectBoardId ?? string.Empty;
         selectedBoardRules = null;
         selectedTransition = null;
+        selectedRule = null;
         hasBoardRulesLoadFailure = false;
         errorMessage = null;
 
@@ -280,6 +373,9 @@ public partial class BoardRules : ComponentBase
         var parts = fullName.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         return parts.Length > 1 ? parts[1] : string.Empty;
     }
+
+    private bool HasInaccessibleProjectBoardsWarning
+        => !string.IsNullOrWhiteSpace(inaccessibleProjectBoardsWarning);
 
     private bool ShowLoadingState => isLoadingRepositories || isLoadingProjectBoards || isLoadingBoardRules;
 

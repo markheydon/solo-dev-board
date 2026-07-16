@@ -32,9 +32,22 @@ public static class HostedAuthErrorRoutes
     /// <summary>Gets the fallback reason code for unknown hosted authentication failures.</summary>
     public const string SignInUnknown = "sign-in-unknown";
 
+    /// <summary>Gets the reason code when a hosted session is no longer valid and requires re-sign-in.</summary>
+    public const string SessionExpired = "session-expired";
+
     /// <summary>Builds the hosted authentication error page URL for the supplied reason code.</summary>
     /// <param name="reason">The hosted authentication failure reason code.</param>
+    /// <param name="returnUrl">An optional return URL to preserve after re-sign-in.</param>
     /// <returns>The error page URL including the reason query parameter.</returns>
-    public static string BuildErrorUrl(string reason) =>
-        QueryHelpers.AddQueryString(ErrorPath, "reason", reason);
+    public static string BuildErrorUrl(string reason, string? returnUrl = null)
+    {
+        var url = QueryHelpers.AddQueryString(ErrorPath, "reason", reason);
+
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+        {
+            url = QueryHelpers.AddQueryString(url, "returnUrl", returnUrl);
+        }
+
+        return url;
+    }
 }

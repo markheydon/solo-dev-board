@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using SoloDevBoard.App.Authentication;
 using SoloDevBoard.App.Components.Features.Labels.Components;
 using SoloDevBoard.App.Components.Features.Labels.Dialogs;
+using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Repositories;
 
@@ -31,6 +33,10 @@ public partial class Labels : ComponentBase
     /// <summary>Gets or sets the MudBlazor snackbar service for user feedback.</summary>
     [Inject]
     public ISnackbar Snackbar { get; set; } = default!;
+
+    /// <summary>Gets or sets the hosted authentication recovery service.</summary>
+    [Inject]
+    public IHostedAuthenticationRecoveryService HostedAuthRecovery { get; set; } = default!;
 
     private IReadOnlyList<RepositoryDto> availableRepositories = [];
     private IReadOnlyList<RepositoryDto> selectedRepositories = [];
@@ -133,6 +139,13 @@ public partial class Labels : ComponentBase
             taxonomyOperationMessage = null;
             ResetSyncWorkflow();
         }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
         catch (HttpRequestException ex)
         {
             hasRepositoryLoadFailure = true;
@@ -231,6 +244,13 @@ public partial class Labels : ComponentBase
             recommendedApplyResults = [];
             recommendedPreview = await LabelManagerService.PreviewRecommendedTaxonomyAsync(selectedStrategyId, selectedFullNames);
             showRecommendedPreview = true;
+        }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
         }
         catch (HttpRequestException ex)
         {
@@ -365,6 +385,13 @@ public partial class Labels : ComponentBase
 
             BuildRows(consolidatedLabels, selectedRepositoryFullNames);
         }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
         catch (HttpRequestException ex)
         {
             errorMessage = $"GitHub API request failed. {ex.Message}";
@@ -415,6 +442,13 @@ public partial class Labels : ComponentBase
             syncApplyResults = [];
             syncPreviewResults = await LabelManagerService.PreviewLabelSynchronisationAsync(syncSourceRepositoryFullName, targets);
             showSyncPreview = true;
+        }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
         }
         catch (HttpRequestException ex)
         {
@@ -651,6 +685,13 @@ public partial class Labels : ComponentBase
 
             Snackbar.Add($"Created '{operation.LabelName}' in {changedRepositoryCount} repositories.", Severity.Success);
         }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while creating label {LabelName}.", operation.LabelName);
@@ -684,6 +725,13 @@ public partial class Labels : ComponentBase
 
             Snackbar.Add($"Updated '{operation.OriginalLabelName}' across {changedRepositoryCount} repositories.", Severity.Success);
         }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while updating label {LabelName}.", operation.OriginalLabelName);
@@ -715,6 +763,13 @@ public partial class Labels : ComponentBase
             }
 
             Snackbar.Add($"Deleted '{operation.OriginalLabelName}' from {changedRepositoryCount} repositories.", Severity.Success);
+        }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
         }
         catch (HttpRequestException ex)
         {

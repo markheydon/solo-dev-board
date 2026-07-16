@@ -4,6 +4,9 @@ using Markdig;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
+using SoloDevBoard.App.Authentication;
+using SoloDevBoard.Application.Identity;
+using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Repositories;
 using SoloDevBoard.Application.Services.Triage;
@@ -49,6 +52,10 @@ public partial class Triage : ComponentBase
     [Inject]
     public ISnackbar Snackbar { get; set; } = default!;
 
+    /// <summary>Gets or sets the hosted authentication recovery service.</summary>
+    [Inject]
+    public IHostedAuthenticationRecoveryService HostedAuthRecovery { get; set; } = default!;
+
     private IReadOnlyList<RepositoryDto> availableRepositories = [];
     private string selectedRepositoryFullName = string.Empty;
     private bool includePullRequests = true;
@@ -66,6 +73,7 @@ public partial class Triage : ComponentBase
     private string selectedProjectBoardId = string.Empty;
     private string selectedProjectBoardStatusOptionId = string.Empty;
     private string? operationMessage;
+    private string? inaccessibleProjectBoardsWarning;
     private Severity operationSeverity = Severity.Info;
     private bool isLoadingPlanningOptions;
 
@@ -112,6 +120,9 @@ public partial class Triage : ComponentBase
     private TriageProjectBoardOptionDto? ActiveProjectBoard
         => availableProjectBoardOptions.FirstOrDefault(option =>
             option.Id.Equals(selectedProjectBoardId, StringComparison.Ordinal));
+
+    private bool HasInaccessibleProjectBoardsWarning
+        => !string.IsNullOrWhiteSpace(inaccessibleProjectBoardsWarning);
 
     private IReadOnlyList<TriageProjectBoardStatusOptionDto> ActiveProjectBoardStatusOptions
         => ActiveProjectBoard?.StatusOptions ?? [];
@@ -203,6 +214,13 @@ public partial class Triage : ComponentBase
                 selectedRepositoryFullName = string.Empty;
             }
         }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while loading triage repositories.");
@@ -290,6 +308,13 @@ public partial class Triage : ComponentBase
                 ? $"No untriaged items were found in {selectedRepositoryFullName}."
                 : $"Started triage session for {selectedRepositoryFullName}.";
         }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while starting triage session for {RepositoryScope}.", selectedRepositoryFullName);
@@ -331,6 +356,13 @@ public partial class Triage : ComponentBase
             {
                 operationSeverity = Severity.Warning;
                 operationMessage = "No repository labels are available to apply as quick actions.";
+            }
+        }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
             }
         }
         catch (HttpRequestException ex)
@@ -429,6 +461,13 @@ public partial class Triage : ComponentBase
                 ? $"Applied label '{labelName}' to item #{appliedItemNumber}. Reached the end of the current queue."
                 : $"Applied label '{labelName}' to item #{appliedItemNumber} and moved to {CurrentPositionText}.";
         }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while applying label to triage item.");
@@ -523,6 +562,13 @@ public partial class Triage : ComponentBase
             operationMessage = string.IsNullOrWhiteSpace(duplicateLabelSuffix)
                 ? baseMessage
                 : $"{baseMessage} {duplicateLabelSuffix}";
+        }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
         }
         catch (HttpRequestException ex)
         {
@@ -634,6 +680,13 @@ public partial class Triage : ComponentBase
                 ? $"Cleared milestone assignment for item #{CurrentItem.Number}."
                 : $"Assigned milestone '{selectedMilestoneTitle}' to item #{CurrentItem.Number}.";
         }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while assigning milestone to triage item.");
@@ -684,6 +737,13 @@ public partial class Triage : ComponentBase
 
             operationSeverity = Severity.Success;
             operationMessage = $"Added item #{currentItemNumber} to '{ActiveProjectBoard.Title}' with status '{selectedStatusOption.Name}'.";
+        }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
         }
         catch (HttpRequestException ex)
         {
@@ -739,12 +799,20 @@ public partial class Triage : ComponentBase
         ArgumentNullException.ThrowIfNull(session);
 
         isLoadingPlanningOptions = true;
+        inaccessibleProjectBoardsWarning = null;
 
         var milestoneLoadFailed = false;
 
         try
         {
             availableMilestoneOptions = await TriageService.GetMilestoneOptionsAsync(session);
+        }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
         }
         catch (HttpRequestException ex)
         {
@@ -767,7 +835,11 @@ public partial class Triage : ComponentBase
 
         try
         {
-            availableProjectBoardOptions = await TriageService.GetProjectBoardOptionsAsync(session);
+            var discovery = await TriageService.GetProjectBoardOptionsAsync(session);
+            availableProjectBoardOptions = discovery.Options;
+            inaccessibleProjectBoardsWarning = LinkedProjectBoardVisibility.BuildInaccessibleProjectsWarning(
+                discovery.TotalLinkedProjectCount,
+                discovery.InaccessibleLinkedProjectCount);
 
             if (!availableProjectBoardOptions.Any(option => option.Id.Equals(selectedProjectBoardId, StringComparison.Ordinal)))
             {
@@ -790,10 +862,18 @@ public partial class Triage : ComponentBase
                 return;
             }
         }
+        catch (HostedAuthenticationRequiredException ex)
+        {
+            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while loading project-board options for triage.");
             availableProjectBoardOptions = [];
+            inaccessibleProjectBoardsWarning = null;
             selectedProjectBoardId = string.Empty;
             selectedProjectBoardStatusOptionId = string.Empty;
 
@@ -808,6 +888,7 @@ public partial class Triage : ComponentBase
         {
             Logger.LogError(ex, "Failed to load project-board options for triage.");
             availableProjectBoardOptions = [];
+            inaccessibleProjectBoardsWarning = null;
             selectedProjectBoardId = string.Empty;
             selectedProjectBoardStatusOptionId = string.Empty;
 

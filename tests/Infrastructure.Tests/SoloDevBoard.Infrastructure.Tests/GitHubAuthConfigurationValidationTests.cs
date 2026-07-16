@@ -88,7 +88,7 @@ public sealed class GitHubAuthConfigurationValidationTests
     }
 
     [Fact]
-    public void Validate_PatModeWithHostedCredentialsSet_ThrowsInvalidOperationException()
+    public void Validate_PatModeWithHostedCredentialsSet_DoesNotThrow()
     {
         var authOptions = new GitHubAuthOptions
         {
@@ -99,12 +99,11 @@ public sealed class GitHubAuthConfigurationValidationTests
 
         var act = () => GitHubAuthConfigurationValidation.Validate(authOptions, admissionOptions);
 
-        var exception = Assert.Throws<InvalidOperationException>(act);
-        Assert.Contains("gh-app-client-id", exception.Message, StringComparison.OrdinalIgnoreCase);
+        act();
     }
 
     [Fact]
-    public void Validate_HostedModeWithPatSet_ThrowsInvalidOperationException()
+    public void Validate_HostedModeWithPatSet_DoesNotThrow()
     {
         var authOptions = new GitHubAuthOptions
         {
@@ -121,8 +120,7 @@ public sealed class GitHubAuthConfigurationValidationTests
 
         var act = () => GitHubAuthConfigurationValidation.Validate(authOptions, admissionOptions);
 
-        var exception = Assert.Throws<InvalidOperationException>(act);
-        Assert.Contains("gh-pat", exception.Message, StringComparison.OrdinalIgnoreCase);
+        act();
     }
 
     [Fact]

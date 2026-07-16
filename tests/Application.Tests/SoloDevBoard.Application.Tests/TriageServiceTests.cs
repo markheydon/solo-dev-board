@@ -485,7 +485,8 @@ public sealed class TriageServiceTests
         // Arrange
         _gitHubServiceMock
             .Setup(service => service.GetProjectBoardsForRepositoryAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+            .ReturnsAsync(new RepositoryProjectBoardDiscoveryResult(
+            [
                 new TriageProjectBoard
                 {
                     Id = "project-two",
@@ -509,7 +510,9 @@ public sealed class TriageServiceTests
                         new TriageProjectBoardStatusOption { Id = "todo", Name = "Todo" },
                     ],
                 },
-            ]);
+            ],
+            2,
+            0));
 
         var sut = new TriageService(_gitHubServiceMock.Object);
         var session = CreateSession(queueCount: 1, currentIndex: 0);
@@ -518,11 +521,11 @@ public sealed class TriageServiceTests
         var result = await sut.GetProjectBoardOptionsAsync(session);
 
         // Assert
-        Assert.Equal(2, result.Count);
-        Assert.Equal("Backlog", result[0].Title);
-        Assert.Equal("Roadmap", result[1].Title);
-        Assert.Equal("Done", result[1].StatusOptions[0].Name);
-        Assert.Equal("In Progress", result[1].StatusOptions[1].Name);
+        Assert.Equal(2, result.Options.Count);
+        Assert.Equal("Backlog", result.Options[0].Title);
+        Assert.Equal("Roadmap", result.Options[1].Title);
+        Assert.Equal("Done", result.Options[1].StatusOptions[0].Name);
+        Assert.Equal("In Progress", result.Options[1].StatusOptions[1].Name);
     }
 
     [Fact]

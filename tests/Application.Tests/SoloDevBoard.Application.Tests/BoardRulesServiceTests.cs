@@ -55,7 +55,8 @@ public sealed class BoardRulesServiceTests
         // Arrange
         _gitHubServiceMock
             .Setup(service => service.GetProjectBoardsForRepositoryAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+            .ReturnsAsync(new RepositoryProjectBoardDiscoveryResult(
+            [
                 new TriageProjectBoard
                 {
                     Id = "PVT_beta",
@@ -72,7 +73,9 @@ public sealed class BoardRulesServiceTests
                     StatusFieldId = "status-field",
                     StatusOptions = [],
                 },
-            ]);
+            ],
+            2,
+            0));
 
         var sut = new BoardRulesService(_gitHubServiceMock.Object);
 
@@ -80,11 +83,13 @@ public sealed class BoardRulesServiceTests
         var result = await sut.GetProjectBoardOptionsAsync("owner", "repo");
 
         // Assert
-        Assert.Equal(2, result.Count);
-        Assert.Equal("PVT_alpha", result[0].Id);
-        Assert.Equal("Alpha Board", result[0].Title);
-        Assert.Equal("owner", result[0].OwnerLogin);
-        Assert.Equal("PVT_beta", result[1].Id);
+        Assert.Equal(2, result.Options.Count);
+        Assert.Equal(2, result.TotalLinkedProjectCount);
+        Assert.Equal(0, result.InaccessibleLinkedProjectCount);
+        Assert.Equal("PVT_alpha", result.Options[0].Id);
+        Assert.Equal("Alpha Board", result.Options[0].Title);
+        Assert.Equal("owner", result.Options[0].OwnerLogin);
+        Assert.Equal("PVT_beta", result.Options[1].Id);
         _gitHubServiceMock.Verify(service => service.GetProjectBoardsForRepositoryAsync("owner", "repo", It.IsAny<CancellationToken>()), Times.Once);
     }
 

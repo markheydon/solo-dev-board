@@ -300,6 +300,14 @@
 
                         <MudItem xs="12" md="6">
                             <MudStack Spacing="1" data-testid="triage-project-board-action-region">
+                                @if (HasInaccessibleProjectBoardsWarning)
+                                {
+                                    <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined"
+                                              data-testid="triage-inaccessible-project-boards-warning">
+                                        @inaccessibleProjectBoardsWarning
+                                    </MudAlert>
+                                }
+
                                 <MudSelect T="string"
                                            Value="selectedProjectBoardId"
                                            ValueChanged="OnSelectedProjectBoardChangedAsync"

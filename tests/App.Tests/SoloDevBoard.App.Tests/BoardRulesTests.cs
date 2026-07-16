@@ -98,10 +98,13 @@ public sealed class BoardRulesTests
 
         _boardRulesServiceMock
             .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+            [
                 new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
                 new BoardRulesProjectBoardOptionDto("PVT_beta", "Beta Board", "owner"),
-            ]);
+            ],
+            2,
+            0));
 
         _boardRulesServiceMock
             .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()))
@@ -151,7 +154,7 @@ public sealed class BoardRulesTests
 
         _boardRulesServiceMock
             .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
+            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto([], 0, 0));
 
         await using var ctx = CreateContext();
 
@@ -170,6 +173,55 @@ public sealed class BoardRulesTests
     }
 
     [Fact]
+    public async Task BoardRules_InaccessibleLinkedProjectBoards_ShowsWarningAndSupportedBoards()
+    {
+        // Arrange
+        var repository = CreateRepository("owner", "repo-a");
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([repository]);
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+            [
+                new BoardRulesProjectBoardOptionDto("PVT_public", "Public Board", "owner"),
+            ],
+            2,
+            1));
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_public", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesDefinitionDto(
+                "PVT_public",
+                "Public Board",
+                "owner",
+                [
+                    new BoardColumnDto(0, "To Do", 0, ["To Do"]),
+                    new BoardColumnDto(1, "Done", 1, ["Done"]),
+                ],
+                Array.Empty<BoardRuleDto>(),
+                []));
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<BoardRules>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='board-rules-repository-autocomplete']"));
+        await SelectRepositoryAsync(cut, repository);
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Public Board", cut.Markup);
+            Assert.Contains("2 linked project boards", cut.Markup, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("1 board could not be loaded", cut.Markup, StringComparison.OrdinalIgnoreCase);
+            Assert.Single(cut.FindAll("[data-testid='board-rules-inaccessible-project-boards-warning']"));
+        });
+    }
+
+    [Fact]
     public async Task BoardRules_SelectedBoard_RendersTransitionsAndDetailPanel()
     {
         // Arrange
@@ -181,9 +233,12 @@ public sealed class BoardRulesTests
 
         _boardRulesServiceMock
             .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+            [
                 new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
-            ]);
+            ],
+            1,
+            0));
 
         _boardRulesServiceMock
             .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()))
@@ -196,7 +251,10 @@ public sealed class BoardRulesTests
                     new BoardColumnDto(1, "In Progress", 1, ["In Progress"]),
                     new BoardColumnDto(2, "Done", 2, ["Done"]),
                 ],
-                Array.Empty<BoardRuleDto>(),
+                [
+                    new BoardRuleDto(1, "Auto-assign PRs", "When pull request opened", "Assign reviewer", true),
+                    new BoardRuleDto(2, "Auto-close stale", "When issue is stale", "Close issue", true),
+                ],
                 ["Board automation rules are not yet available through the current GitHub query model."]));
 
         await using var ctx = CreateContext();
@@ -209,11 +267,220 @@ public sealed class BoardRulesTests
         // Assert
         cut.WaitForAssertion(() =>
         {
-            Assert.Contains("To Do → In Progress", cut.Markup);
-            Assert.Contains("In Progress → Done", cut.Markup);
+            Assert.Contains("Auto-assign PRs", cut.Markup);
+            Assert.Contains("Auto-close stale", cut.Markup);
             Assert.Contains("Transition detail", cut.Markup);
             Assert.Contains("From:", cut.Markup);
             Assert.Contains("To:", cut.Markup);
+        });
+
+        var ruleChip = cut.Find("[data-testid='board-rules-rule-chip-1']");
+        ruleChip.Click();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Selected rule", cut.Markup);
+            Assert.Contains("Auto-assign PRs", cut.Markup);
+            Assert.Contains("When pull request opened", cut.Markup);
+            Assert.Contains("Assign reviewer", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task BoardRules_ChangingProjectBoard_ClearsSelectedRuleDetail()
+    {
+        var repository = CreateRepository("owner", "repo-a");
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([repository]);
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+            [
+                new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
+                new BoardRulesProjectBoardOptionDto("PVT_beta", "Beta Board", "owner"),
+            ],
+            2,
+            0));
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesDefinitionDto(
+                "PVT_alpha",
+                "Alpha Board",
+                "owner",
+                [
+                    new BoardColumnDto(0, "To Do", 0, ["To Do"]),
+                    new BoardColumnDto(1, "In Progress", 1, ["In Progress"]),
+                ],
+                [
+                    new BoardRuleDto(1, "Auto-assign", "When issue added", "Assign reviewer", true),
+                ],
+                []));
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_beta", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesDefinitionDto(
+                "PVT_beta",
+                "Beta Board",
+                "owner",
+                [
+                    new BoardColumnDto(0, "Backlog", 0, ["Backlog"]),
+                    new BoardColumnDto(1, "In Progress", 1, ["In Progress"]),
+                ],
+                [
+                    new BoardRuleDto(2, "Auto-close stale", "When issue is stale", "Close issue", true),
+                ],
+                []));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<BoardRules>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='board-rules-repository-autocomplete']"));
+        await SelectRepositoryAsync(cut, repository);
+
+        cut.WaitForAssertion(() => Assert.Contains("Auto-assign", cut.Markup));
+        var ruleChip = cut.Find("[data-testid='board-rules-rule-chip-1']");
+        ruleChip.Click();
+        cut.WaitForAssertion(() => Assert.Contains("Selected rule", cut.Markup));
+
+        var boardSelect = cut.FindComponents<MudSelect<string>>().Single();
+        await cut.InvokeAsync(() => boardSelect.Instance.ValueChanged.InvokeAsync("PVT_beta"));
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.DoesNotContain("Auto-assign", cut.Markup);
+            Assert.Contains("Auto-close stale", cut.Markup);
+            Assert.Contains("Transition detail", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task BoardRules_ChangingRepository_ClearsSelectedRuleDetail()
+    {
+        var repositoryA = CreateRepository("owner", "repo-a");
+        var repositoryB = CreateRepository("owner", "repo-b");
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([repositoryA, repositoryB]);
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+            [
+                new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
+            ],
+            1,
+            0));
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-b", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+            [
+                new BoardRulesProjectBoardOptionDto("PVT_beta", "Beta Board", "owner"),
+            ],
+            1,
+            0));
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesDefinitionDto(
+                "PVT_alpha",
+                "Alpha Board",
+                "owner",
+                [
+                    new BoardColumnDto(0, "To Do", 0, ["To Do"]),
+                    new BoardColumnDto(1, "In Progress", 1, ["In Progress"]),
+                ],
+                [
+                    new BoardRuleDto(1, "Auto-assign", "When issue added", "Assign reviewer", true),
+                ],
+                []));
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetBoardRulesAsync("owner", "repo-b", "PVT_beta", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesDefinitionDto(
+                "PVT_beta",
+                "Beta Board",
+                "owner",
+                [
+                    new BoardColumnDto(0, "Backlog", 0, ["Backlog"]),
+                    new BoardColumnDto(1, "In Progress", 1, ["In Progress"]),
+                ],
+                [
+                    new BoardRuleDto(2, "Auto-close stale", "When issue is stale", "Close issue", true),
+                ],
+                []));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<BoardRules>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='board-rules-repository-autocomplete']"));
+        await SelectRepositoryAsync(cut, repositoryA);
+
+        cut.WaitForAssertion(() => Assert.Contains("Auto-assign", cut.Markup));
+        var ruleChip = cut.Find("[data-testid='board-rules-rule-chip-1']");
+        ruleChip.Click();
+        cut.WaitForAssertion(() => Assert.Contains("Selected rule", cut.Markup));
+
+        await SelectRepositoryAsync(cut, repositoryB);
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.DoesNotContain("Auto-assign", cut.Markup);
+            Assert.Contains("Auto-close stale", cut.Markup);
+            Assert.Contains("Transition detail", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task BoardRules_RuleWarnings_DisplaysConflictWarningAndHighlightsRules()
+    {
+        var repository = CreateRepository("owner", "repo-a");
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([repository]);
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+            [
+                new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
+            ],
+            1,
+            0));
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesDefinitionDto(
+                "PVT_alpha",
+                "Alpha Board",
+                "owner",
+                [
+                    new BoardColumnDto(0, "To Do", 0, ["To Do"]),
+                    new BoardColumnDto(1, "In Progress", 1, ["In Progress"]),
+                ],
+                [
+                    new BoardRuleDto(1, "Auto-assign", "When item added", string.Empty, true),
+                    new BoardRuleDto(2, "Auto-assign duplicate", "When item added", "Assign reviewer", true),
+                ],
+                ["Board automation rules are not yet available through the current GitHub query model."]));
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<BoardRules>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='board-rules-repository-autocomplete']"));
+        await SelectRepositoryAsync(cut, repository);
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Potential rule conflicts detected", cut.Markup);
+            Assert.Contains("Rules with the same trigger 'When item added' may conflict", cut.Markup);
+            Assert.Contains("Rule 'Auto-assign' has incomplete configuration", cut.Markup);
         });
     }
 
@@ -243,6 +510,7 @@ public sealed class BoardRulesTests
         var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddMudServices();
+        ctx.Services.AddTestHostedAuthenticationRecovery();
         ctx.Services.AddScoped(_ => _repositoryServiceMock.Object);
         ctx.Services.AddScoped(_ => _boardRulesServiceMock.Object);
 
