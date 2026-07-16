@@ -39,6 +39,8 @@ builder.Services.AddMudServices();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+builder.Services.AddScoped<IHostedAuthenticationRecoveryService, HostedAuthenticationRecoveryService>();
+
 if (hostedSignInEnabled)
 {
     builder.Services.AddCascadingAuthenticationState();
@@ -53,7 +55,6 @@ if (hostedSignInEnabled)
         client.DefaultRequestHeaders.UserAgent.ParseAdd(appVersionService.UserAgent);
     });
     builder.Services.AddScoped<HostedGitHubAuthGateway>();
-    builder.Services.AddScoped<IHostedAuthenticationRecoveryService, HostedAuthenticationRecoveryService>();
 
     var hostedAuthOptions = builder.Configuration.GetSection(GitHubAuthOptions.SectionName).Get<GitHubAuthOptions>()
         ?? new GitHubAuthOptions();

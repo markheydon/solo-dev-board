@@ -149,12 +149,14 @@ Also update your GitHub App callback URL to `{app-https-url}/auth/callback` afte
 
 ### Startup validation
 
-On startup, SoloDevBoard validates configuration for the **active mode** and fails fast if required settings are missing or inactive-mode parameters are still set to real values. Check the `app` resource logs in the Aspire dashboard or your IDE output.
+On startup, SoloDevBoard validates configuration for the **active mode** and fails fast if required settings for that mode are missing. Check the `app` resource logs in the Aspire dashboard or your IDE output.
 
-| Active mode | Must be set | Must be `-` |
-|---|---|---|
-| PAT | `gh-pat` | `gh-app-client-id`, `allowed-user-logins`, `allowed-org-logins`; set `gh-app-client-secret` to `-` in the dashboard |
-| Hosted | `gh-app-client-id`, `gh-app-client-secret`, and at least one allow-list with real logins when admission control is enabled | `gh-pat` (dashboard), `-` on the unused allow-list |
+| Active mode | Required settings |
+|---|---|
+| PAT | `gh-pat` |
+| Hosted | `gh-app-client-id`, `gh-app-client-secret`, and at least one allow-list with real logins when admission control is enabled |
+
+Setting inactive-mode parameters to `-` is still recommended when switching modes, but startup validation does not enforce it.
 
 Example log on success:
 
