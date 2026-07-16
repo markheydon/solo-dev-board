@@ -741,7 +741,7 @@ public sealed class TriageTests
 
         _triageServiceMock
             .Setup(service => service.GetProjectBoardOptionsAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
+            .ReturnsAsync(new TriageProjectBoardDiscoveryDto([], 0, 0));
 
         _triageServiceMock
             .Setup(service => service.AssignMilestoneToCurrentItemAsync(It.IsAny<TriageSessionDto>(), 7, "v0.7.0", It.IsAny<CancellationToken>()))
@@ -830,7 +830,7 @@ public sealed class TriageTests
 
         _triageServiceMock
             .Setup(service => service.GetProjectBoardOptionsAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
+            .ReturnsAsync(new TriageProjectBoardDiscoveryDto([], 0, 0));
 
         _triageServiceMock
             .Setup(service => service.AssignMilestoneToCurrentItemAsync(It.IsAny<TriageSessionDto>(), 7, "v0.7.0", It.IsAny<CancellationToken>()))
@@ -896,7 +896,8 @@ public sealed class TriageTests
 
         _triageServiceMock
             .Setup(service => service.GetProjectBoardOptionsAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+            .ReturnsAsync(new TriageProjectBoardDiscoveryDto(
+            [
                 new TriageProjectBoardOptionDto(
                     "project-id",
                     "Roadmap",
@@ -906,7 +907,9 @@ public sealed class TriageTests
                         new TriageProjectBoardStatusOptionDto("in-progress", "In Progress"),
                         new TriageProjectBoardStatusOptionDto("done", "Done"),
                     ]),
-            ]);
+            ],
+            1,
+            0));
 
         _triageServiceMock
             .Setup(service => service.AddCurrentItemToProjectBoardAsync(

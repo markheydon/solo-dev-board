@@ -98,10 +98,13 @@ public sealed class BoardRulesTests
 
         _boardRulesServiceMock
             .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+            [
                 new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
                 new BoardRulesProjectBoardOptionDto("PVT_beta", "Beta Board", "owner"),
-            ]);
+            ],
+            2,
+            0));
 
         _boardRulesServiceMock
             .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()))
@@ -151,7 +154,7 @@ public sealed class BoardRulesTests
 
         _boardRulesServiceMock
             .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
+            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto([], 0, 0));
 
         await using var ctx = CreateContext();
 
@@ -170,6 +173,55 @@ public sealed class BoardRulesTests
     }
 
     [Fact]
+    public async Task BoardRules_InaccessibleLinkedProjectBoards_ShowsWarningAndSupportedBoards()
+    {
+        // Arrange
+        var repository = CreateRepository("owner", "repo-a");
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([repository]);
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+            [
+                new BoardRulesProjectBoardOptionDto("PVT_public", "Public Board", "owner"),
+            ],
+            2,
+            1));
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_public", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesDefinitionDto(
+                "PVT_public",
+                "Public Board",
+                "owner",
+                [
+                    new BoardColumnDto(0, "To Do", 0, ["To Do"]),
+                    new BoardColumnDto(1, "Done", 1, ["Done"]),
+                ],
+                Array.Empty<BoardRuleDto>(),
+                []));
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<BoardRules>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='board-rules-repository-autocomplete']"));
+        await SelectRepositoryAsync(cut, repository);
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Public Board", cut.Markup);
+            Assert.Contains("2 linked project boards", cut.Markup, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("1 board could not be loaded", cut.Markup, StringComparison.OrdinalIgnoreCase);
+            Assert.Single(cut.FindAll("[data-testid='board-rules-inaccessible-project-boards-warning']"));
+        });
+    }
+
+    [Fact]
     public async Task BoardRules_SelectedBoard_RendersTransitionsAndDetailPanel()
     {
         // Arrange
@@ -181,9 +233,12 @@ public sealed class BoardRulesTests
 
         _boardRulesServiceMock
             .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+            [
                 new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
-            ]);
+            ],
+            1,
+            0));
 
         _boardRulesServiceMock
             .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()))
@@ -242,10 +297,13 @@ public sealed class BoardRulesTests
 
         _boardRulesServiceMock
             .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+            [
                 new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
                 new BoardRulesProjectBoardOptionDto("PVT_beta", "Beta Board", "owner"),
-            ]);
+            ],
+            2,
+            0));
 
         _boardRulesServiceMock
             .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()))
@@ -310,15 +368,21 @@ public sealed class BoardRulesTests
 
         _boardRulesServiceMock
             .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+            [
                 new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
-            ]);
+            ],
+            1,
+            0));
 
         _boardRulesServiceMock
             .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-b", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+            [
                 new BoardRulesProjectBoardOptionDto("PVT_beta", "Beta Board", "owner"),
-            ]);
+            ],
+            1,
+            0));
 
         _boardRulesServiceMock
             .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()))
@@ -381,9 +445,12 @@ public sealed class BoardRulesTests
 
         _boardRulesServiceMock
             .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+            [
                 new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
-            ]);
+            ],
+            1,
+            0));
 
         _boardRulesServiceMock
             .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()))

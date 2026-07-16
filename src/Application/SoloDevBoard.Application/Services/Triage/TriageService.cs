@@ -237,16 +237,16 @@ public sealed class TriageService : ITriageService
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<TriageProjectBoardOptionDto>> GetProjectBoardOptionsAsync(TriageSessionDto session, CancellationToken cancellationToken = default)
+    public async Task<TriageProjectBoardDiscoveryDto> GetProjectBoardOptionsAsync(TriageSessionDto session, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentNullException.ThrowIfNull(session);
 
-        var projectBoards = await _gitHubService
+        var discovery = await _gitHubService
             .GetProjectBoardsForRepositoryAsync(session.OwnerLogin, session.RepositoryName, cancellationToken)
             .ConfigureAwait(false);
 
-        return projectBoards
+        var options = discovery.SupportedProjectBoards
             .Select(projectBoard => new TriageProjectBoardOptionDto(
                 projectBoard.Id,
                 projectBoard.Title,
@@ -258,6 +258,11 @@ public sealed class TriageService : ITriageService
                     .ToArray()))
             .OrderBy(projectBoard => projectBoard.Title, StringComparer.OrdinalIgnoreCase)
             .ToArray();
+
+        return new TriageProjectBoardDiscoveryDto(
+            options,
+            discovery.TotalLinkedProjectCount,
+            discovery.InaccessibleLinkedProjectCount);
     }
 
     /// <inheritdoc/>

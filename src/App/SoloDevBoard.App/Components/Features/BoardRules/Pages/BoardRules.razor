@@ -61,16 +61,34 @@
                                                 <MudText Typo="Typo.body2">Loading project boards...</MudText>
                                             </MudStack>
                                         }
-                                        else if (availableProjectBoardOptions.Count == 0)
+                                        else if (availableProjectBoardOptions.Count == 0 && !hasProjectBoardLoadFailure)
                                         {
-                                            <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined"
-                                                      data-testid="board-rules-unsupported-boards-message">
-                                                No supported GitHub Project v2 boards were found for this repository. SoloDevBoard can
-                                                only visualise boards that expose a Status field.
-                                            </MudAlert>
+                                            @if (HasInaccessibleProjectBoardsWarning)
+                                            {
+                                                <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined"
+                                                          data-testid="board-rules-inaccessible-project-boards-warning">
+                                                    @inaccessibleProjectBoardsWarning
+                                                </MudAlert>
+                                            }
+                                            else
+                                            {
+                                                <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined"
+                                                          data-testid="board-rules-unsupported-boards-message">
+                                                    No supported GitHub Project v2 boards were found for this repository. SoloDevBoard can
+                                                    only visualise boards that expose a Status field.
+                                                </MudAlert>
+                                            }
                                         }
                                         else
                                         {
+                                            @if (HasInaccessibleProjectBoardsWarning)
+                                            {
+                                                <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined"
+                                                          data-testid="board-rules-inaccessible-project-boards-warning">
+                                                    @inaccessibleProjectBoardsWarning
+                                                </MudAlert>
+                                            }
+
                                             <MudSelect T="string" Value="selectedProjectBoardId"
                                                        ValueChanged="OnSelectedProjectBoardChangedAsync" Label="Project board"
                                                        Variant="Variant.Outlined" Disabled="ShowLoadingState">
@@ -107,12 +125,22 @@
                             <MudText Typo="Typo.body2">Preparing board context...</MudText>
                         </MudStack>
                     }
-                    else if (availableProjectBoardOptions.Count == 0)
+                    else if (availableProjectBoardOptions.Count == 0 && !hasProjectBoardLoadFailure)
                     {
                         <MudStack Spacing="1" aria-live="polite" data-testid="board-rules-no-supported-board-state">
-                            <MudText Typo="Typo.h6">No supported board available</MudText>
-                            <MudText Typo="Typo.body2">This repository does not expose a GitHub Project v2 board with a Status field, so
-                                the visualiser cannot continue to the diagram state.</MudText>
+                            @if (HasInaccessibleProjectBoardsWarning)
+                            {
+                                <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined"
+                                          data-testid="board-rules-inaccessible-project-boards-warning-detail">
+                                    @inaccessibleProjectBoardsWarning
+                                </MudAlert>
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.h6">No supported board available</MudText>
+                                <MudText Typo="Typo.body2">This repository does not expose a GitHub Project v2 board with a Status field, so
+                                    the visualiser cannot continue to the diagram state.</MudText>
+                            }
                             </MudStack>
                         }
         else if (!HasSelectedProjectBoard)
@@ -131,6 +159,14 @@
                         }
                         else
                         {
+                            @if (HasInaccessibleProjectBoardsWarning)
+                            {
+                                <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined"
+                                          Class="mb-2" data-testid="board-rules-inaccessible-project-boards-warning-detail">
+                                    @inaccessibleProjectBoardsWarning
+                                </MudAlert>
+                            }
+
                             <MudStack Spacing="2" data-testid="board-rules-board-context-ready-state">
                                 <MudText Typo="Typo.h6">Board context ready</MudText>
                                 <MudText Typo="Typo.body2">

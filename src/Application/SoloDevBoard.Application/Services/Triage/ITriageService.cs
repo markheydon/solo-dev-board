@@ -46,8 +46,8 @@ public interface ITriageService
     /// <summary>Retrieves project-board options for the repository in the active triage session.</summary>
     /// <param name="session">The current session state.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
-    /// <returns>A read-only list of project-board options sorted by title.</returns>
-    Task<IReadOnlyList<TriageProjectBoardOptionDto>> GetProjectBoardOptionsAsync(TriageSessionDto session, CancellationToken cancellationToken = default);
+    /// <returns>Supported project-board options and visibility metadata sorted by title.</returns>
+    Task<TriageProjectBoardDiscoveryDto> GetProjectBoardOptionsAsync(TriageSessionDto session, CancellationToken cancellationToken = default);
 
     /// <summary>Assigns or clears a milestone on the current session item.</summary>
     /// <param name="session">The current session state.</param>

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 using SoloDevBoard.App.Authentication;
 using SoloDevBoard.Application.Identity;
+using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Repositories;
 using SoloDevBoard.Application.Services.Triage;
@@ -72,6 +73,7 @@ public partial class Triage : ComponentBase
     private string selectedProjectBoardId = string.Empty;
     private string selectedProjectBoardStatusOptionId = string.Empty;
     private string? operationMessage;
+    private string? inaccessibleProjectBoardsWarning;
     private Severity operationSeverity = Severity.Info;
     private bool isLoadingPlanningOptions;
 
@@ -118,6 +120,9 @@ public partial class Triage : ComponentBase
     private TriageProjectBoardOptionDto? ActiveProjectBoard
         => availableProjectBoardOptions.FirstOrDefault(option =>
             option.Id.Equals(selectedProjectBoardId, StringComparison.Ordinal));
+
+    private bool HasInaccessibleProjectBoardsWarning
+        => !string.IsNullOrWhiteSpace(inaccessibleProjectBoardsWarning);
 
     private IReadOnlyList<TriageProjectBoardStatusOptionDto> ActiveProjectBoardStatusOptions
         => ActiveProjectBoard?.StatusOptions ?? [];
@@ -794,6 +799,7 @@ public partial class Triage : ComponentBase
         ArgumentNullException.ThrowIfNull(session);
 
         isLoadingPlanningOptions = true;
+        inaccessibleProjectBoardsWarning = null;
 
         var milestoneLoadFailed = false;
 
@@ -829,7 +835,11 @@ public partial class Triage : ComponentBase
 
         try
         {
-            availableProjectBoardOptions = await TriageService.GetProjectBoardOptionsAsync(session);
+            var discovery = await TriageService.GetProjectBoardOptionsAsync(session);
+            availableProjectBoardOptions = discovery.Options;
+            inaccessibleProjectBoardsWarning = LinkedProjectBoardVisibility.BuildInaccessibleProjectsWarning(
+                discovery.TotalLinkedProjectCount,
+                discovery.InaccessibleLinkedProjectCount);
 
             if (!availableProjectBoardOptions.Any(option => option.Id.Equals(selectedProjectBoardId, StringComparison.Ordinal)))
             {
@@ -863,6 +873,7 @@ public partial class Triage : ComponentBase
         {
             Logger.LogError(ex, "GitHub API request failed while loading project-board options for triage.");
             availableProjectBoardOptions = [];
+            inaccessibleProjectBoardsWarning = null;
             selectedProjectBoardId = string.Empty;
             selectedProjectBoardStatusOptionId = string.Empty;
 
@@ -877,6 +888,7 @@ public partial class Triage : ComponentBase
         {
             Logger.LogError(ex, "Failed to load project-board options for triage.");
             availableProjectBoardOptions = [];
+            inaccessibleProjectBoardsWarning = null;
             selectedProjectBoardId = string.Empty;
             selectedProjectBoardStatusOptionId = string.Empty;
 

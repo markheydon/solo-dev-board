@@ -3,6 +3,7 @@ using MudBlazor;
 using SoloDevBoard.App.Authentication;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.BoardRules;
+using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Application.Services.Repositories;
 
 namespace SoloDevBoard.App.Components.Features.BoardRules.Pages;
@@ -40,6 +41,7 @@ public partial class BoardRules : ComponentBase
     private bool hasProjectBoardLoadFailure;
     private bool hasBoardRulesLoadFailure;
     private string? errorMessage;
+    private string? inaccessibleProjectBoardsWarning;
 
     /// <inheritdoc/>
     protected override async Task OnInitializedAsync()
@@ -122,6 +124,7 @@ public partial class BoardRules : ComponentBase
             errorMessage = null;
             hasProjectBoardLoadFailure = false;
             hasBoardRulesLoadFailure = false;
+            inaccessibleProjectBoardsWarning = null;
             return;
         }
 
@@ -138,6 +141,7 @@ public partial class BoardRules : ComponentBase
             errorMessage = null;
             hasProjectBoardLoadFailure = false;
             hasBoardRulesLoadFailure = false;
+            inaccessibleProjectBoardsWarning = null;
             return;
         }
 
@@ -147,6 +151,7 @@ public partial class BoardRules : ComponentBase
         errorMessage = null;
         hasProjectBoardLoadFailure = false;
         hasBoardRulesLoadFailure = false;
+        inaccessibleProjectBoardsWarning = null;
 
         await LoadProjectBoardOptionsAsync(selectedRepository);
     }
@@ -170,13 +175,18 @@ public partial class BoardRules : ComponentBase
         isLoadingProjectBoards = true;
         hasProjectBoardLoadFailure = false;
         errorMessage = null;
+        inaccessibleProjectBoardsWarning = null;
         availableProjectBoardOptions = [];
         selectedProjectBoardId = string.Empty;
         selectedRule = null;
 
         try
         {
-            availableProjectBoardOptions = await BoardRulesService.GetProjectBoardOptionsAsync(owner, repo);
+            var discovery = await BoardRulesService.GetProjectBoardOptionsAsync(owner, repo);
+            availableProjectBoardOptions = discovery.Options;
+            inaccessibleProjectBoardsWarning = LinkedProjectBoardVisibility.BuildInaccessibleProjectsWarning(
+                discovery.TotalLinkedProjectCount,
+                discovery.InaccessibleLinkedProjectCount);
             selectedProjectBoardId = availableProjectBoardOptions.FirstOrDefault()?.Id ?? string.Empty;
             if (!string.IsNullOrWhiteSpace(selectedProjectBoardId))
             {
@@ -363,6 +373,9 @@ public partial class BoardRules : ComponentBase
         var parts = fullName.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         return parts.Length > 1 ? parts[1] : string.Empty;
     }
+
+    private bool HasInaccessibleProjectBoardsWarning
+        => !string.IsNullOrWhiteSpace(inaccessibleProjectBoardsWarning);
 
     private bool ShowLoadingState => isLoadingRepositories || isLoadingProjectBoards || isLoadingBoardRules;
 

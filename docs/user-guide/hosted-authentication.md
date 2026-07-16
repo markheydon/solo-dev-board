@@ -60,6 +60,19 @@ See [`src/SoloDevBoard.AppHost/README.md`](../../src/SoloDevBoard.AppHost/README
 - You can also sign out manually from the app menu at any time when hosted sign-in is enabled.
 - Admission control is applied after authentication, based on allow-list configuration.
 
+## Projects v2 access under hosted sign-in
+
+GitHub App sign-in can load **public** Projects v2 boards linked to a repository, but **private user-owned** Projects v2 are often inaccessible to the app token even when you are project admin. GitHub may report linked boards that SoloDevBoard cannot read.
+
+When this happens, Board Rules and Triage show a warning naming how many linked boards could not be loaded. Supported boards that are accessible are still available.
+
+**Workarounds:**
+
+- Use **PAT mode** with the `read:project` scope for full user-level Projects v2 access.
+- Make the linked project **public** if GitHub App sign-in must remain the only auth path.
+
+This is a known GitHub platform limitation for GitHub Apps, not a SoloDevBoard configuration defect. See [plan/GITHUB_PROJECTS_V2_ACCESS.md](../../plan/GITHUB_PROJECTS_V2_ACCESS.md) and [Unlocking GitHub Apps: Why Bots Need Access to Private Projects v2](https://devactivity.com/posts/apps-tools/unlocking-github-apps-why-bots-need-access-to-private-projects-v2-for-enhanced-productivity/).
+
 ## Documentation References
 
 - See [Getting Started](../getting-started.md) for prerequisites and setup.

@@ -28,22 +28,27 @@ public sealed class BoardRulesService : IBoardRulesService
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<BoardRulesProjectBoardOptionDto>> GetProjectBoardOptionsAsync(string owner, string repo, CancellationToken cancellationToken = default)
+    public async Task<BoardRulesProjectBoardDiscoveryDto> GetProjectBoardOptionsAsync(string owner, string repo, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
         ArgumentException.ThrowIfNullOrWhiteSpace(repo);
 
-        var projectBoards = await _gitHubService
+        var discovery = await _gitHubService
             .GetProjectBoardsForRepositoryAsync(owner, repo, cancellationToken)
             .ConfigureAwait(false);
 
-        return projectBoards
+        var options = discovery.SupportedProjectBoards
             .Select(projectBoard => new BoardRulesProjectBoardOptionDto(
                 projectBoard.Id,
                 projectBoard.Title,
                 projectBoard.OwnerLogin))
             .OrderBy(projectBoard => projectBoard.Title, StringComparer.OrdinalIgnoreCase)
             .ToArray();
+
+        return new BoardRulesProjectBoardDiscoveryDto(
+            options,
+            discovery.TotalLinkedProjectCount,
+            discovery.InaccessibleLinkedProjectCount);
     }
 }
