@@ -217,3 +217,32 @@ Default workflow order for feature delivery:
 - **Prompts:** `.github/prompts/*.prompt.md` (Copilot)
 - **Cursor commands:** [`.cursor/commands/implement-issue.md`](.cursor/commands/implement-issue.md) — type `/implement-issue` in Agent chat after planning (Copilot handles PM prompts)
 - **Copilot stack baseline:** `.github/copilot-instructions.md` and `.github/instructions/*.md`
+
+---
+
+## Cursor Cloud specific instructions
+
+Durable, non-obvious notes for running SoloDevBoard in the Cursor Cloud VM. Standard commands live in `docs/getting-started.md`; this section only captures what is easy to get wrong here.
+
+### Toolchain
+
+- The .NET SDK pinned by `global.json` (`10.0.300`) is installed at `~/.dotnet` and added to `PATH` via `~/.bashrc`. Non-login shells (for example `bash -c`) do not source `~/.bashrc`, so invoke the SDK with the absolute path `~/.dotnet/dotnet` when `dotnet` is not already on `PATH`.
+- The startup update script only runs `dotnet restore SoloDevBoard.slnx`. Building, testing, linting, and running are left to you.
+- The **Aspire CLI is not installed**. Use the direct `dotnet run` path documented below rather than `aspire start`; it is the reliable path in this environment. Everything (build, test, lint, run) works with the plain .NET SDK because the app has no database or other backing services.
+
+### Build, test, lint
+
+- Build: `dotnet build SoloDevBoard.slnx`.
+- Test (xUnit, fully offline — GitHub is mocked): `dotnet test SoloDevBoard.slnx`.
+- Lint is `dotnet format SoloDevBoard.slnx --verify-no-changes` (same check CI runs in `.github/workflows/ci.yml`). `EnforceCodeStyleInBuild` is on, so style violations also surface during build.
+
+### Running the app
+
+- Run directly: `dotnet run --project src/App/SoloDevBoard.App`. By default `dotnet run` applies `launchSettings.json` and listens on `https://localhost:5074`. To force a plain-HTTP URL (simpler for in-VM browser testing), pass `--no-launch-profile` and set `ASPNETCORE_URLS`, for example `ASPNETCORE_URLS=http://0.0.0.0:5080 dotnet run --project src/App/SoloDevBoard.App --no-launch-profile`.
+- Health endpoint: `GET /health` returns `Healthy`. The Home page (`/`) is static navigation and renders without any GitHub call.
+
+### GitHub authentication caveat (important)
+
+- In the default PAT mode the app **fails fast at startup** unless a token is configured. Supply it via the environment variable `GitHubAuth__PersonalAccessToken` (and optionally `GitHubAuth__OwnerLogin` to skip the `/user` login-resolution call).
+- All data-driven pages (Audit Dashboard, Repositories, Label Manager, Migration) list repositories through the authenticated `/user/repos` endpoint. This needs a **GitHub user PAT** with `repo`, `read:org`, `workflow`, and `read:project` scopes.
+- The ambient `gh` CLI token in this VM is a GitHub App **installation** token: it can reach repo-scoped endpoints (`/repos/{owner}/{repo}/...`) but returns `403 "Resource not accessible by integration"` on `/user` and `/user/repos`. It is enough to boot the app but **not** enough to exercise the repo-list flows — use a real user PAT for end-to-end feature testing.
