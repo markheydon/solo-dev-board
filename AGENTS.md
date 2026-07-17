@@ -183,7 +183,25 @@ When code changes are made, ensure the following are kept in sync:
 
 ## Skills and Workflow
 
-Canonical skills live in **`.agents/skills/`** (discovered by both GitHub Copilot and Cursor). See `.agents/skills/_REGISTRY.md` for the active skill set and workflow order.
+The **`.agents/`** directory holds agent-agnostic AI collaboration artefacts — shared by GitHub Copilot, Cursor, and other tools without tying them to a single vendor layout.
+
+### Skills
+
+Canonical skills live in **`.agents/skills/`**. See **`.agents/skills/_REGISTRY.md`** for the active skill set, optional companions, and workflow order.
+
+- Skills prefixed with **`repo-`** are SoloDevBoard-specific (GitHub project board, issue lifecycle, PM workflow, and related repository operations).
+- Unprefixed skills are reusable implementation guidance (for example `dotnet-best-practices`, `mudblazor`, `aspire`).
+- Skills formerly lived in **`.github/skills/`**; that path is no longer used.
+
+Default workflow order for feature delivery:
+
+1. Orchestration: `repo-pm-feature-workflow`
+2. Planning: `breakdown-plan`
+3. Issue lifecycle: `repo-github-issues` (and `repo-github-gh-cli` for bulk operations), then `repo-github-project` to sync the project board
+4. Test planning: `breakdown-test`
+5. Implementation: `dotnet-best-practices` and `mudblazor` as needed
+6. Architecture decision capture: `create-architectural-decision-record` when required
+7. Documentation updates: **Tech Writer agent** (uses `documentation-writer` skill internally)
 
 ### Execution gates
 
@@ -195,8 +213,7 @@ Canonical skills live in **`.agents/skills/`** (discovered by both GitHub Copilo
 ### PM operating system
 
 - **Runbook:** `plan/PM_RUNBOOK.md`
-- **Agents (canonical):** `.agents/agents/`
-- **Prompts (canonical):** `.agents/prompts/`
-- **Platform entry points:** `.github/agents/` + `.github/prompts/` (Copilot), `.cursor/commands/` (Cursor)
-
-See `docs/ai-collaboration.md` for platform-specific invocation.
+- **Agents:** `.github/agents/*.agent.md` (Copilot)
+- **Prompts:** `.github/prompts/*.prompt.md` (Copilot)
+- **Cursor commands:** `.cursor/commands/` (when defined)
+- **Copilot stack baseline:** `.github/copilot-instructions.md` and `.github/instructions/*.md`

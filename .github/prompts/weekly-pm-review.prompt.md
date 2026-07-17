@@ -202,7 +202,7 @@ None — this is a comprehensive read-only assessment across all planning artefa
 ## Agents/Skills Invoked
 
 - **Direct file reads:** `plan/BACKLOG.md`, `plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md`, `plan/RELEASE_PLAN.md`, `adr/README.md`
-- **GitHub queries:** Milestone progress, issue states, PR status (via `github-issues` skill if available)
+- **GitHub queries:** Milestone progress, issue states, PR status (via `repo-github-issues` skill if available)
 - **Quality checks:** `get_errors` for compile status
 - **File save:** Creates `plan/weekly-updates/YYYY-MM-DD.md` with the full review artefact
 - **No other modifications:** The review is otherwise read-only
@@ -340,7 +340,7 @@ The weekly review validates compliance with:
 - **`.github/copilot-instructions.md`** — mandatory gates enforced
 - **`plan/LABEL_STRATEGY.md`** — label taxonomy applied
 - **`plan/PROJECT_MANAGEMENT.md`** — issue workflow rules followed
-- **`.github/skills/github-project/SKILL.md`** — roadmap lifecycle and date hygiene followed
+- **`.agents/skills/repo-github-project/SKILL.md`** — roadmap lifecycle and date hygiene followed
 - **`plan/DOCS_STRATEGY.md`** — documentation completeness
 - **`plan/RELEASE_PLAN.md`** — release criteria met
 

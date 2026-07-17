@@ -108,7 +108,7 @@ Total: 23 items | Phase 1 progress: 40% (4/10 complete)
 ## Agents/Skills Invoked
 
 - **Direct file reads:** `plan/BACKLOG.md`, `plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md`
-- **GitHub queries:** Active issues, open PRs (via `github-issues` skill if available)
+- **GitHub queries:** Active issues, open PRs (via `repo-github-issues` skill if available)
 - **No modifications by default:** This is a read-only status check unless the user explicitly asks the agent to populate **Up Next** after reviewing the recommendation.
 
 ---

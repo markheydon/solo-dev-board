@@ -16,7 +16,7 @@ This runbook orchestrates the `.github/agents/` and `.github/prompts/` workflows
 | Review and create PR                     | `.github/prompts/review-and-close.prompt.md`               | PR + quality validation + issue closure       |
 | Address PR review comments               | `.github/prompts/address-pr-review-comments.prompt.md`     | PR fixes + thread replies + resolved comments |
 | Weekly health check                      | `.github/prompts/weekly-pm-review.prompt.md`               | Executive summary + priorities for next week  |
-| End-to-end feature delivery              | `.github/skills/pm-feature-workflow/SKILL.md`              | Full workflow from backlog to closure         |
+| End-to-end feature delivery              | `.agents/skills/repo-pm-feature-workflow/SKILL.md`         | Full workflow from backlog to closure         |
 
 ---
 
@@ -343,7 +343,7 @@ START
   │   └─> Run daily-start.prompt.md → Get recommendation
   │
   └─ Want end-to-end automation?
-      └─> Use pm-feature-workflow skill (plans + implements + reviews)
+      └─> Use repo-pm-feature-workflow skill (plans + implements + reviews)
 ```
 
 ---
@@ -440,7 +440,7 @@ START
 **Input:** Issue number OR feature name  
 **Output:** PR + quality validation + issue closure (post-merge)  
 **Duration:** 5-15 minutes  
-**Invokes:** Review Agent, get_errors, github-issues
+**Invokes:** Review Agent, get_errors, repo-github-issues
 
 **Two-part execution:**
 1. **Pre-merge:** Creates PR, validates gates, updates labels to `status/in-review`
@@ -558,7 +558,7 @@ This runbook orchestrates (does NOT duplicate) existing policy:
 | `plan/IMPLEMENTATION_PLAN.md`            | Phase/milestone definitions             | Agents align work to current phase             |
 | `plan/RELEASE_PLAN.md`                   | Release criteria and dates              | Review Agent checks release impact             |
 | `.github/instructions/*.md`              | .NET, Blazor, GitHub Actions standards  | Delivery Agent follows coding standards        |
-| `.github/skills/*.md`                    | Workflow procedures (breakdown, test)   | Agents invoke skills at correct stages         |
+| `.agents/skills/*/SKILL.md`              | Workflow procedures (breakdown, test)   | Agents invoke skills at correct stages         |
 
 **Design principle:** Runbook is a **lightweight orchestration layer** — it tells you what to run and when, but delegates policy enforcement to existing governance files and AI agents.
 
@@ -574,7 +574,7 @@ This runbook orchestrates (does NOT duplicate) existing policy:
 Take the next backlog item and run the full PM feature workflow
 ```
 
-**What happens:** Invokes `pm-feature-workflow` skill, which:
+**What happens:** Invokes `repo-pm-feature-workflow` skill, which:
 1. Plans (PM Orchestrator)
 2. Implements (Delivery Agent)
 3. Reviews (Review Agent)

@@ -14,7 +14,7 @@ This project uses **MudBlazor** as its sole UI component library (see ADR-0012).
 - **Never use `<style>` blocks** inside `.razor` files.
 - **Treat `.razor.css` as a last resort.** Only add or extend an isolated stylesheet when the requirement cannot be met with MudBlazor components, component parameters, theming, or utility classes.
 - For any pattern where you cannot find a MudBlazor component or utility-class-based solution, add a brief comment explaining the gap and keep the scoped `.razor.css` fallback minimal.
-- Consult the **mudblazor skill** (`.github/skills/mudblazor/SKILL.md`) for component usage patterns, layout structure, and known pitfalls before implementing any new Razor component.
+- Consult the **mudblazor skill** (`.agents/skills/mudblazor/SKILL.md`) for component usage patterns, layout structure, and known pitfalls before implementing any new Razor component.
 
 ## Blazor Code Style
 

@@ -72,7 +72,7 @@ This prompt invokes the **PM Orchestrator Agent**, which executes:
 - Update `adr/README.md` index
 
 ### 5. GitHub Issue Creation
-- Use `github-issues` skill to create issues
+- Use `repo-github-issues` skill to create issues
 - Apply labels per `plan/LABEL_STRATEGY.md`:
   - `type/` — feature, bug, chore, documentation, epic
   - `priority/` — critical, high, medium, low
@@ -83,8 +83,8 @@ This prompt invokes the **PM Orchestrator Agent**, which executes:
 - Note parent/child hierarchy and blocking relationships — GitHub CLI supports neither; list both in the **Manual Linking Required** section of the handoff for the user to set via the GitHub UI
 
 ### 6. Project Board Sync
-- Use `github-project` skill (Lifecycle Event 1) to add each created issue to the **SoloDevBoard Roadmap** project (#8)
-- Set Phase matching the issue's milestone (see Phase Assignment Rules in `github-project` skill)
+- Use `repo-github-project` skill (Lifecycle Event 1) to add each created issue to the **SoloDevBoard Roadmap** project (#8)
+- Set Phase matching the issue's milestone (see Phase Assignment Rules in `repo-github-project` skill)
 - Set Priority matching the `priority/` label applied to each issue
 - Set Status to "Todo" for all new issues
 - Do **not** set Start Date or Target Date during planning; those dates are recorded only when delivery actually begins
@@ -165,7 +165,7 @@ Set these relationships via the GitHub UI — `gh` CLI supports neither sub-issu
 - **`breakdown-plan` skill** — technical decomposition
 - **`breakdown-test` skill** — quality planning
 - **`create-architectural-decision-record` skill** — ADR creation (if needed)
-- **`github-issues` skill** — issue creation and metadata
+- **`repo-github-issues` skill** — issue creation and metadata
 
 ---
 
