@@ -56,6 +56,31 @@ public sealed class WorkflowsTests
     }
 
     [Fact]
+    public async Task Workflows_SelectTemplateButton_UsesSemanticControlAndShowsSelectedState()
+    {
+        // Arrange
+        _workflowTemplateServiceMock
+            .Setup(service => service.GetTemplatesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateTemplates());
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Workflows>();
+
+        cut.WaitForAssertion(() => Assert.Equal(3, cut.FindAll("[data-testid^='workflow-template-select-']").Count));
+
+        // Act
+        var selectButton = cut.Find("[data-testid='workflow-template-select-1']");
+        await cut.InvokeAsync(() => selectButton.Click());
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Equal("true", selectButton.GetAttribute("aria-pressed"));
+            Assert.Contains("Selected", selectButton.TextContent);
+        });
+    }
+
+    [Fact]
     public async Task Workflows_SearchByTag_FiltersTemplateCards()
     {
         // Arrange

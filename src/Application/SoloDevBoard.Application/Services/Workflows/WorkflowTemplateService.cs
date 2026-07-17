@@ -28,10 +28,8 @@ public sealed class WorkflowTemplateService : IWorkflowTemplateService
         ArgumentException.ThrowIfNullOrWhiteSpace(repo);
         cancellationToken.ThrowIfCancellationRequested();
 
-        var template = BuiltInTemplates.FirstOrDefault(candidate => candidate.Id == templateId)
-            ?? throw new InvalidOperationException($"Workflow template '{templateId}' was not found.");
-
-        return Task.FromResult(MapToDto(template));
+        throw new NotSupportedException(
+            "Applying workflow templates to repositories is not yet implemented. Use the template browser to review built-in templates.");
     }
 
     private static WorkflowTemplateDto MapToDto(WorkflowTemplate template)

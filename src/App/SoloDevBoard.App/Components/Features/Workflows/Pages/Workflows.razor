@@ -66,12 +66,10 @@
                     <MudItem xs="12" md="6" xl="4">
                         <MudCard Outlined="@(selectedTemplateId == template.Id)"
                                  Elevation="@(selectedTemplateId == template.Id ? 4 : 1)"
-                                 aria-label="@($"{template.Name} template card")"
-                                 data-testid="@($"workflow-template-card-{template.Id}")"
-                                 @onclick="() => SelectTemplate(template)">
+                                 data-testid="@($"workflow-template-card-{template.Id}")">
                             <MudCardContent>
                                 <MudStack Spacing="1">
-                                    <MudText Typo="Typo.h6">@template.Name</MudText>
+                                    <MudText Typo="Typo.h6" id="@GetTemplateHeadingId(template)">@template.Name</MudText>
                                     <MudText Typo="Typo.body2">@template.Description</MudText>
 
                                     <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center">
@@ -90,6 +88,16 @@
                                     </MudText>
                                 </MudStack>
                             </MudCardContent>
+                            <MudCardActions>
+                                <MudButton Variant="@(selectedTemplateId == template.Id ? Variant.Filled : Variant.Outlined)"
+                                           Color="Color.Primary"
+                                           aria-pressed="@(selectedTemplateId == template.Id ? "true" : "false")"
+                                           aria-labelledby="@GetTemplateHeadingId(template)"
+                                           data-testid="@($"workflow-template-select-{template.Id}")"
+                                           OnClick="() => SelectTemplate(template)">
+                                    @(selectedTemplateId == template.Id ? "Selected" : "Select template")
+                                </MudButton>
+                            </MudCardActions>
                         </MudCard>
                     </MudItem>
                 }

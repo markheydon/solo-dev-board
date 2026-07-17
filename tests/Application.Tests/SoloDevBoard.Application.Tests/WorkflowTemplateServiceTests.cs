@@ -39,30 +39,17 @@ public sealed class WorkflowTemplateServiceTests
     }
 
     [Fact]
-    public async Task ApplyTemplateAsync_KnownTemplateId_ReturnsMatchingTemplate()
+    public async Task ApplyTemplateAsync_ThrowsNotSupportedException()
     {
         // Arrange
         var sut = new WorkflowTemplateService();
 
         // Act
-        var result = await sut.ApplyTemplateAsync("owner", "repo", 2);
+        var action = () => sut.ApplyTemplateAsync("owner", "repo", 2);
 
         // Assert
-        Assert.Equal(2, result.Id);
-        Assert.Equal("Azure CD (Aspire)", result.Name);
-    }
-
-    [Fact]
-    public async Task ApplyTemplateAsync_UnknownTemplateId_ThrowsInvalidOperationException()
-    {
-        // Arrange
-        var sut = new WorkflowTemplateService();
-
-        // Act
-        var action = () => sut.ApplyTemplateAsync("owner", "repo", 999);
-
-        // Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(action);
+        var exception = await Assert.ThrowsAsync<NotSupportedException>(action);
+        Assert.Contains("not yet implemented", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Theory]

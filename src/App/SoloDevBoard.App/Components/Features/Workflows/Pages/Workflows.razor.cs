@@ -101,4 +101,7 @@ public partial class Workflows : ComponentBase
     {
         selectedTemplateId = template.Id;
     }
+
+    private static string GetTemplateHeadingId(WorkflowTemplateDto template)
+        => $"workflow-template-heading-{template.Id}";
 }
