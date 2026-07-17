@@ -226,9 +226,8 @@ Durable, non-obvious notes for running SoloDevBoard in the Cursor Cloud VM. Stan
 
 ### Toolchain
 
-- The .NET SDK pinned by `global.json` (`10.0.300`) is installed at `~/.dotnet` and added to `PATH` via `~/.bashrc`. Non-login shells (for example `bash -c`) do not source `~/.bashrc`, so invoke the SDK with the absolute path `~/.dotnet/dotnet` when `dotnet` is not already on `PATH`.
-- The startup update script only runs `dotnet restore SoloDevBoard.slnx`. Building, testing, linting, and running are left to you.
-- The **Aspire CLI is not installed**. Use the direct `dotnet run` path documented below rather than `aspire start`; it is the reliable path in this environment. Everything (build, test, lint, run) works with the plain .NET SDK because the app has no database or other backing services.
+- The .NET SDK pinned by `global.json` (`10.0.300`) is installed at `~/.dotnet`; the Aspire CLI (`13.4.6`, matching `Aspire.AppHost.Sdk`) is installed as a global tool at `~/.dotnet/tools`. Both are on `PATH` via `~/.bashrc`. Non-login shells (for example `bash -c`) do not source `~/.bashrc`, so invoke the SDK with the absolute path `~/.dotnet/dotnet` when `dotnet`/`aspire` are not already on `PATH`.
+- The startup update script only runs `dotnet restore SoloDevBoard.slnx` (this also restores the AppHost). Building, testing, linting, and running are left to you.
 
 ### Build, test, lint
 
@@ -236,13 +235,26 @@ Durable, non-obvious notes for running SoloDevBoard in the Cursor Cloud VM. Stan
 - Test (xUnit, fully offline — GitHub is mocked): `dotnet test SoloDevBoard.slnx`.
 - Lint is `dotnet format SoloDevBoard.slnx --verify-no-changes` (same check CI runs in `.github/workflows/ci.yml`). `EnforceCodeStyleInBuild` is on, so style violations also surface during build.
 
-### Running the app
+### Running the app (Aspire — the standard path)
 
-- Run directly: `dotnet run --project src/App/SoloDevBoard.App`. By default `dotnet run` applies `launchSettings.json` and listens on `https://localhost:5074`. To force a plain-HTTP URL (simpler for in-VM browser testing), pass `--no-launch-profile` and set `ASPNETCORE_URLS`, for example `ASPNETCORE_URLS=http://0.0.0.0:5080 dotnet run --project src/App/SoloDevBoard.App --no-launch-profile`.
+- Start: `aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --non-interactive` (runs in the background). Then `aspire ps` for the dashboard URL/token, `aspire describe` for the `app` resource URL (proxied at `https://localhost:5074`), and `aspire stop` to release file locks before rebuilding.
+- If a build fails with `MSB3491`/`CS2012` (file locks), run `aspire stop` first — Aspire holds locks on `bin/`/`obj/` while running. See the `aspire-orchestration` skill.
+- Query logs/traces without the dashboard via `aspire logs app`, `aspire otel`, or the Aspire MCP server (see below).
 - Health endpoint: `GET /health` returns `Healthy`. The Home page (`/`) is static navigation and renders without any GitHub call.
+- A direct `dotnet run --project src/App/SoloDevBoard.App --no-launch-profile` (with `ASPNETCORE_URLS`) still works as a fallback, but Aspire is the preferred path and matches how the app is developed.
+
+### Aspire MCP server
+
+- `.cursor/mcp.json` (and `.vscode/mcp.json` for Copilot) registers an `aspire` MCP server via `aspire agent mcp`. It connects to the running AppHost and exposes tools such as `list_console_logs`, `list_structured_logs`, `list_traces`, `list_resources`, and `execute_resource_command` for debugging the live app. It only returns data while an AppHost is running (`aspire start`). Cursor loads `.cursor/mcp.json` at client start, so a reload is needed after first adding it.
+
+### AppHost parameters and secrets
+
+- The AppHost defines these parameters (see `src/SoloDevBoard.AppHost/AppHost.cs`): `hosted-sign-in-enabled`, `gh-pat` (secret), `gh-app-client-id`, `gh-app-client-secret` (secret), `hosted-admission-enabled`, `allowed-user-logins`, `allowed-org-logins`. Non-secret defaults live in `src/SoloDevBoard.AppHost/appsettings.json` (PAT mode by default).
+- Provide values in priority order: **environment variable `Parameters__<name>` (highest, e.g. `Parameters__gh-pat`)** > AppHost user secrets (`aspire secret set Parameters:<name> "…"` or `dotnet user-secrets … --project src/SoloDevBoard.AppHost`) > `appsettings.json`. Cloud Secrets-panel entries are injected as env vars, so naming a secret `Parameters__gh-pat` feeds it straight into the AppHost parameter (verified working) and overrides the persisted placeholder.
+- The persisted AppHost user secrets in this VM hold placeholder values (`gh-pat` = the ambient `gh` installation token, `gh-app-client-secret` = `-`) so `aspire start` boots without extra setup. Real functionality needs a genuine token (below).
 
 ### GitHub authentication caveat (important)
 
-- In the default PAT mode the app **fails fast at startup** unless a token is configured. Supply it via the environment variable `GitHubAuth__PersonalAccessToken` (and optionally `GitHubAuth__OwnerLogin` to skip the `/user` login-resolution call).
+- In the default PAT mode the app **fails fast at startup** unless a token is configured, and it resolves your login from the token via `/user` unless `GitHubAuth:OwnerLogin` is set.
 - All data-driven pages (Audit Dashboard, Repositories, Label Manager, Migration) list repositories through the authenticated `/user/repos` endpoint. This needs a **GitHub user PAT** with `repo`, `read:org`, `workflow`, and `read:project` scopes.
-- The ambient `gh` CLI token in this VM is a GitHub App **installation** token: it can reach repo-scoped endpoints (`/repos/{owner}/{repo}/...`) but returns `403 "Resource not accessible by integration"` on `/user` and `/user/repos`. It is enough to boot the app but **not** enough to exercise the repo-list flows — use a real user PAT for end-to-end feature testing.
+- The ambient `gh` CLI token in this VM is a GitHub App **installation** token: it can reach repo-scoped endpoints (`/repos/{owner}/{repo}/...`) but returns `403 "Resource not accessible by integration"` on `/user` and `/user/repos`. Because it cannot resolve `/user`, an app-level user secret `GitHubAuth:OwnerLogin=markheydon` (on `src/App/SoloDevBoard.App`) is set so the app boots for demos; it is harmless with a real owner PAT and can be removed once a genuine user PAT is supplied (the login then auto-resolves). The installation token boots the app but **cannot** exercise the repo-list flows — supply a real user PAT (via the `Parameters__gh-pat` secret) for end-to-end feature testing.
