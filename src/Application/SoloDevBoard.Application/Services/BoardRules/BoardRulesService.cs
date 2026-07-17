@@ -51,4 +51,8 @@ public sealed class BoardRulesService : IBoardRulesService
             discovery.TotalLinkedProjectCount,
             discovery.InaccessibleLinkedProjectCount);
     }
+
+    /// <inheritdoc/>
+    public BoardRulesComparisonResultDto CompareBoardRules(BoardRulesDefinitionDto left, BoardRulesDefinitionDto right)
+        => BoardRulesComparer.Compare(left, right);
 }

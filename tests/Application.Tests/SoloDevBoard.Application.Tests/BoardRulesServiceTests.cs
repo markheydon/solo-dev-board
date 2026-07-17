@@ -105,4 +105,97 @@ public sealed class BoardRulesServiceTests
         // Assert
         await Assert.ThrowsAsync<ArgumentException>(action);
     }
+
+    [Fact]
+    public async Task GetBoardRulesAsync_ProjectIdIsWhitespace_ThrowsArgumentException()
+    {
+        // Arrange
+        var sut = new BoardRulesService(_gitHubServiceMock.Object);
+
+        // Act
+        var action = () => sut.GetBoardRulesAsync("owner", "repo", " ");
+
+        // Assert
+        await Assert.ThrowsAsync<ArgumentException>(action);
+    }
+
+    [Fact]
+    public async Task GetProjectBoardOptionsAsync_NoSupportedBoards_ReturnsEmptyOptions()
+    {
+        // Arrange
+        _gitHubServiceMock
+            .Setup(service => service.GetProjectBoardsForRepositoryAsync("owner", "repo", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RepositoryProjectBoardDiscoveryResult([], 0, 0));
+
+        var sut = new BoardRulesService(_gitHubServiceMock.Object);
+
+        // Act
+        var result = await sut.GetProjectBoardOptionsAsync("owner", "repo");
+
+        // Assert
+        Assert.Empty(result.Options);
+        Assert.Equal(0, result.TotalLinkedProjectCount);
+        Assert.Equal(0, result.InaccessibleLinkedProjectCount);
+    }
+
+    [Fact]
+    public async Task GetProjectBoardOptionsAsync_PartiallyAccessibleBoards_PropagatesVisibilityCounts()
+    {
+        // Arrange
+        _gitHubServiceMock
+            .Setup(service => service.GetProjectBoardsForRepositoryAsync("owner", "repo", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RepositoryProjectBoardDiscoveryResult(
+            [
+                new TriageProjectBoard
+                {
+                    Id = "PVT_alpha",
+                    Title = "Alpha Board",
+                    OwnerLogin = "owner",
+                    StatusFieldId = "status-field",
+                    StatusOptions = [],
+                },
+            ],
+            3,
+            2));
+
+        var sut = new BoardRulesService(_gitHubServiceMock.Object);
+
+        // Act
+        var result = await sut.GetProjectBoardOptionsAsync("owner", "repo");
+
+        // Assert
+        Assert.Single(result.Options);
+        Assert.Equal(3, result.TotalLinkedProjectCount);
+        Assert.Equal(2, result.InaccessibleLinkedProjectCount);
+    }
+
+    [Fact]
+    public void CompareBoardRules_TwoDefinitions_ReturnsComparisonResult()
+    {
+        // Arrange
+        var left = new BoardRulesDefinitionDto(
+            "PVT_alpha",
+            "Alpha Board",
+            "owner",
+            [new BoardColumnDto(0, "To Do", 0, ["To Do"])],
+            [],
+            []);
+        var right = new BoardRulesDefinitionDto(
+            "PVT_beta",
+            "Beta Board",
+            "owner",
+            [new BoardColumnDto(0, "Backlog", 0, ["Backlog"])],
+            [],
+            []);
+
+        var sut = new BoardRulesService(_gitHubServiceMock.Object);
+
+        // Act
+        var result = sut.CompareBoardRules(left, right);
+
+        // Assert
+        Assert.True(result.HasDifferences);
+        Assert.Equal(left, result.LeftDefinition);
+        Assert.Equal(right, result.RightDefinition);
+    }
 }
