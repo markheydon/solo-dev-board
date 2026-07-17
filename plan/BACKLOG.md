@@ -173,6 +173,19 @@ Labels: `type/epic`, `area/board-rules`
 - [x] Test: Infrastructure coverage for GitHub Projects board queries. _(Issue #189; planned 2026-05-07.)_
 - [x] Test: bUnit coverage for Board Rules Visualiser workflows. _(Issue #190; planned 2026-05-07; references wireframes/board-rules-visualiser-wireframe.md.)_
 
+**Feature:**
+- [ ] As a solo developer, I want the Workflow Templates page and template library planned against an approved wireframe so that Phase 4 delivery is complete. _(see wireframes/workflow-templates-wireframe.md.)_
+
+**Stories:**
+- [ ] As a solo developer, I want to browse built-in GitHub Actions workflow templates so that I can choose a starting point without copying YAML manually.
+- [ ] As a solo developer, I want to customise workflow template parameters before applying a template so that each repository gets the right configuration.
+- [ ] As a solo developer, I want to apply a workflow template to one or more repositories from a central page so that template application is consistent.
+- [ ] As a solo developer, I want to see which repositories already have a workflow template applied so that I can avoid duplicate work.
+- [ ] As a solo developer, I want to be alerted when a repository’s workflow file differs from the canonical template so that I can keep templates current.
+
+**Tests:**
+- [ ] Test: Workflow Templates page and service coverage — template retrieval, parameter binding, apply flow, and status states.
+
 ---
 
 ## Epic 5: Triage UI
