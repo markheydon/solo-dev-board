@@ -177,7 +177,7 @@ Labels: `type/epic`, `area/board-rules`
 - [ ] As a solo developer, I want the Workflow Templates page and template library planned against an approved wireframe so that Phase 4 delivery is complete. _(see wireframes/workflow-templates-wireframe.md.)_
 
 **Stories:**
-- [ ] As a solo developer, I want to browse built-in GitHub Actions workflow templates so that I can choose a starting point without copying YAML manually.
+- [x] As a solo developer, I want to browse built-in GitHub Actions workflow templates so that I can choose a starting point without copying YAML manually. _(Issue #235 — implemented 2026-07-17.)_
 - [ ] As a solo developer, I want to customise workflow template parameters before applying a template so that each repository gets the right configuration.
 - [ ] As a solo developer, I want to apply a workflow template to one or more repositories from a central page so that template application is consistent.
 - [ ] As a solo developer, I want to see which repositories already have a workflow template applied so that I can avoid duplicate work.

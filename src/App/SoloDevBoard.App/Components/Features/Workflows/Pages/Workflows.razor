@@ -2,9 +2,98 @@
 
 <PageTitle>Workflow Templates</PageTitle>
 
-<MudStack Spacing="2">
+<MudStack Spacing="3">
     <MudText Typo="Typo.h4">Workflow Templates</MudText>
-    <MudPaper Class="pa-4" Elevation="1">
-        <MudText Typo="Typo.body1">This feature is coming soon.</MudText>
+    <MudText Typo="Typo.body1">Browse built-in GitHub Actions workflow templates and choose a starting point without copying YAML manually.</MudText>
+
+    <MudPaper Class="pa-4" Elevation="1" data-testid="workflow-template-browser-region">
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h6">Template browser</MudText>
+
+            <MudTextField @bind-Value="SearchText"
+                          Placeholder="Search templates by name, category, or tags"
+                          Variant="Variant.Outlined"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Immediate="true"
+                          InputType="InputType.Search"
+                          Disabled="ShowLoadingState"
+                          data-testid="workflow-template-search" />
+
+            <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" data-testid="workflow-template-category-filters">
+                @foreach (var category in AvailableCategories)
+                {
+                    <MudChip T="string"
+                             Color="@(IsCategorySelected(category) ? Color.Primary : Color.Default)"
+                             Variant="@(IsCategorySelected(category) ? Variant.Filled : Variant.Outlined)"
+                             OnClick="() => SelectCategory(category)"
+                             aria-pressed="@IsCategorySelected(category).ToString().ToLowerInvariant()"
+                             data-testid="@($"workflow-template-category-{category.ToLowerInvariant()}")">
+                        @category
+                    </MudChip>
+                }
+            </MudStack>
+        </MudStack>
+    </MudPaper>
+
+    <MudPaper Class="pa-4" Elevation="1" aria-label="Workflow template results" data-testid="workflow-template-results-region">
+        @if (ShowLoadingState)
+        {
+            <MudStack AlignItems="AlignItems.Center" Spacing="1" aria-live="polite" role="status" data-testid="workflow-templates-loading-state">
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" aria-label="Loading workflow templates" />
+                <MudText Typo="Typo.body2">Loading workflow templates...</MudText>
+            </MudStack>
+        }
+        else if (hasLoadFailure)
+        {
+            <MudStack Spacing="1" aria-live="polite" data-testid="workflow-templates-error-state">
+                <MudText Typo="Typo.h6">Unable to load workflow templates</MudText>
+                <MudText Typo="Typo.body2">Try refreshing the page. If the problem persists, check the application logs.</MudText>
+            </MudStack>
+        }
+        else if (FilteredTemplates.Count == 0)
+        {
+            <MudStack Spacing="1" aria-live="polite" data-testid="workflow-templates-empty-state">
+                <MudText Typo="Typo.h6">No templates found</MudText>
+                <MudText Typo="Typo.body2">Try a different search term or category filter.</MudText>
+            </MudStack>
+        }
+        else
+        {
+            <MudGrid Spacing="3" data-testid="workflow-template-grid">
+                @foreach (var template in FilteredTemplates)
+                {
+                    <MudItem xs="12" md="6" xl="4">
+                        <MudCard Outlined="@(selectedTemplateId == template.Id)"
+                                 Elevation="@(selectedTemplateId == template.Id ? 4 : 1)"
+                                 aria-label="@($"{template.Name} template card")"
+                                 data-testid="@($"workflow-template-card-{template.Id}")"
+                                 @onclick="() => SelectTemplate(template)">
+                            <MudCardContent>
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.h6">@template.Name</MudText>
+                                    <MudText Typo="Typo.body2">@template.Description</MudText>
+
+                                    <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center">
+                                        <MudChip T="string" Color="Color.Secondary" Variant="Variant.Outlined" Size="Size.Small">@template.Category</MudChip>
+                                        @foreach (var tag in template.Tags)
+                                        {
+                                            <MudChip T="string" Variant="Variant.Outlined" Size="Size.Small">@tag</MudChip>
+                                        }
+                                    </MudStack>
+
+                                    <MudText Typo="Typo.caption">
+                                        <strong>Workflow file:</strong> @template.WorkflowFilePath
+                                    </MudText>
+                                    <MudText Typo="Typo.caption">
+                                        <strong>Trigger:</strong> @template.TriggerDescription
+                                    </MudText>
+                                </MudStack>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
     </MudPaper>
 </MudStack>

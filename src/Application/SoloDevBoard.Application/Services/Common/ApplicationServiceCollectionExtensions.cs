@@ -5,6 +5,7 @@ using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Migration;
 using SoloDevBoard.Application.Services.Repositories;
 using SoloDevBoard.Application.Services.Triage;
+using SoloDevBoard.Application.Services.Workflows;
 
 namespace SoloDevBoard.Application.Services.Common;
 
@@ -25,6 +26,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IAuditDashboardService, AuditDashboardService>();
         services.AddScoped<IBoardRulesService, BoardRulesService>();
         services.AddScoped<ITriageService, TriageService>();
+        services.AddScoped<IWorkflowTemplateService, WorkflowTemplateService>();
 
         return services;
     }
