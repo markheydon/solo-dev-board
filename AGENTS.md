@@ -250,8 +250,20 @@ Durable, non-obvious notes for running SoloDevBoard in the Cursor Cloud VM. Stan
 ### AppHost parameters and secrets
 
 - The AppHost defines these parameters (see `src/SoloDevBoard.AppHost/AppHost.cs`): `hosted-sign-in-enabled`, `gh-pat` (secret), `gh-app-client-id`, `gh-app-client-secret` (secret), `hosted-admission-enabled`, `allowed-user-logins`, `allowed-org-logins`. Non-secret defaults live in `src/SoloDevBoard.AppHost/appsettings.json` (PAT mode by default).
-- Provide values in priority order: **environment variable `Parameters__<name>` (highest, e.g. `Parameters__gh-pat`)** > AppHost user secrets (`aspire secret set Parameters:<name> "…"` or `dotnet user-secrets … --project src/SoloDevBoard.AppHost`) > `appsettings.json`. Cloud Secrets-panel entries are injected as env vars, so naming a secret `Parameters__gh-pat` feeds it straight into the AppHost parameter (verified working) and overrides the persisted placeholder.
-- The persisted AppHost user secrets in this VM hold placeholder values (`gh-pat` = the ambient `gh` installation token, `gh-app-client-secret` = `-`) so `aspire start` boots without extra setup. Real functionality needs a genuine token (below).
+- **Cloud Secrets → Aspire parameters mapping.** The parameter names contain hyphens, and a direct `Parameters__<name>` env var is impossible because environment-variable names cannot contain hyphens (the Cursor Secrets panel rejects them with a sync `400`). Instead, add Cursor secrets with hyphen-free names and let the startup update script map them into AppHost user secrets:
+
+  | Cursor secret (hyphen-free) | AppHost parameter |
+  |---|---|
+  | `SDB_GH_PAT` | `gh-pat` |
+  | `SDB_GH_APP_CLIENT_ID` | `gh-app-client-id` |
+  | `SDB_GH_APP_CLIENT_SECRET` | `gh-app-client-secret` |
+  | `SDB_HOSTED_SIGN_IN_ENABLED` | `hosted-sign-in-enabled` |
+  | `SDB_HOSTED_ADMISSION_ENABLED` | `hosted-admission-enabled` |
+  | `SDB_ALLOWED_USER_LOGINS` | `allowed-user-logins` |
+  | `SDB_ALLOWED_ORG_LOGINS` | `allowed-org-logins` |
+
+  The update script runs `dotnet user-secrets set "Parameters:<name>" "$SDB_…"` for each variable that is set (guarded, idempotent), so provided secrets are picked up automatically on every session. Values persist in AppHost user secrets; removing a Cursor secret does not clear a previously-mapped value, so run `dotnet user-secrets remove "Parameters:<name>" --project src/SoloDevBoard.AppHost` if you need to clear one. You can also set values manually with `aspire secret set Parameters:<name> "…"`.
+- The persisted AppHost user secrets in this VM hold placeholder values (`gh-pat` = the ambient `gh` installation token, `gh-app-client-secret` = `-`) so `aspire start` boots without extra setup. Real functionality needs a genuine user PAT via `SDB_GH_PAT` (below).
 
 ### GitHub authentication caveat (important)
 
