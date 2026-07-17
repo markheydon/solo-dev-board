@@ -5,7 +5,7 @@ parent: User Guide
 nav_order: 4
 ---
 
-> ⚠️ **Partial delivery** — Repository and supported board selection is available, and the board columns plus supported transitions are now visualised. Full rule inspection, warnings, and compare mode are delivered in later slices.
+> ⚠️ **Partial delivery** — Repository and supported board selection is available, board columns and transitions are visualised, rule inspection and warnings are supported, and compare mode lets you contrast two repositories side by side. Full automation-rule retrieval from GitHub remains a later slice.
 
 ---
 
@@ -39,13 +39,21 @@ Key goals of the Board Rules Visualiser:
 - See a warning when the board metadata is only partially visible.
 - Click rule nodes to inspect the full rule name, trigger and action configuration.
 - See potential rule conflicts highlighted when duplicate triggers or incomplete rule details are present.
+- Enable **Compare mode** to select a second repository and project board, then review column, rule, and visibility differences side by side.
 - Reload repositories or project boards if GitHub API requests fail.
+
+### Compare two repositories
+
+1. Turn on **Compare mode** in the repository selector region.
+2. Select the primary repository and project board as usual.
+3. Choose a comparison repository and supported project board in the comparison selector region.
+4. Review the side-by-side summaries and the differences panel when both boards are loaded.
+5. Turn off compare mode to return to single-board inspection without losing your primary selection.
 
 ### What is coming later
 
-- Full rule inspection for board automation rules and trigger conditions.
-- Warning details for conflicting or unsupported rule patterns.
-- Compare mode for differences between repositories.
+- Full rule inspection for board automation rules and trigger conditions directly from GitHub.
+- Deeper warning details for conflicting or unsupported rule patterns beyond the current heuristic checks.
 
 ### Empty and unsupported states
 

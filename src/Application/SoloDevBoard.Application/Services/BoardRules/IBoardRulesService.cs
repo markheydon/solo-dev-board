@@ -17,4 +17,10 @@ public interface IBoardRulesService
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>Supported project board options and visibility metadata for the repository.</returns>
     Task<BoardRulesProjectBoardDiscoveryDto> GetProjectBoardOptionsAsync(string owner, string repo, CancellationToken cancellationToken = default);
+
+    /// <summary>Compares two board rules definitions and returns structured differences.</summary>
+    /// <param name="left">The primary board rules definition.</param>
+    /// <param name="right">The comparison board rules definition.</param>
+    /// <returns>A comparison result describing missing, extra, and changed board structure.</returns>
+    BoardRulesComparisonResultDto CompareBoardRules(BoardRulesDefinitionDto left, BoardRulesDefinitionDto right);
 }

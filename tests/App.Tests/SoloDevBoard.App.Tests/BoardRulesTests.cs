@@ -505,6 +505,399 @@ public sealed class BoardRulesTests
         });
     }
 
+    [Fact]
+    public async Task BoardRules_NoActiveRepositories_ShowsEmptyRepositoriesState()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<BoardRules>();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='board-rules-repositories-empty-state']"));
+            Assert.Contains("No active repositories are available", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task BoardRules_ProjectBoardLoadFailure_ShowsRetryAction()
+    {
+        // Arrange
+        var repository = CreateRepository("owner", "repo-a");
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([repository]);
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("GitHub unavailable"));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<BoardRules>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='board-rules-repository-autocomplete']"));
+        await SelectRepositoryAsync(cut, repository);
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Unable to load project boards", cut.Markup);
+            Assert.Single(cut.FindAll("[data-testid='board-rules-reload-boards-button']"));
+        });
+    }
+
+    [Fact]
+    public async Task BoardRules_BoardRulesLoadFailure_ShowsRetryAction()
+    {
+        // Arrange
+        var repository = CreateRepository("owner", "repo-a");
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([repository]);
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+            [
+                new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
+            ],
+            1,
+            0));
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("GitHub unavailable"));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<BoardRules>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='board-rules-repository-autocomplete']"));
+        await SelectRepositoryAsync(cut, repository);
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Unable to load board rules", cut.Markup);
+            Assert.Single(cut.FindAll("[data-testid='board-rules-reload-boards-button']"));
+        });
+    }
+
+    [Fact]
+    public async Task BoardRules_WhileProjectBoardsAreLoading_ShowsDiagramLoadingState()
+    {
+        // Arrange
+        var repository = CreateRepository("owner", "repo-a");
+        var projectBoardsTask = new TaskCompletionSource<BoardRulesProjectBoardDiscoveryDto>();
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([repository]);
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
+            .Returns(projectBoardsTask.Task);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<BoardRules>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='board-rules-repository-autocomplete']"));
+        var selectTask = SelectRepositoryAsync(cut, repository);
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.True(
+                cut.FindAll("[data-testid='board-rules-diagram-loading-state']").Count > 0
+                || cut.FindAll("[data-testid='board-rules-boards-loading-state']").Count > 0);
+        });
+
+        projectBoardsTask.SetResult(new BoardRulesProjectBoardDiscoveryDto([], 0, 0));
+        await selectTask;
+    }
+
+    [Fact]
+    public async Task BoardRules_SupportedBoardsWithoutSelection_ShowsBoardNotSelectedState()
+    {
+        // Arrange
+        var repository = CreateRepository("owner", "repo-a");
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([repository]);
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+            [
+                new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
+                new BoardRulesProjectBoardOptionDto("PVT_beta", "Beta Board", "owner"),
+            ],
+            2,
+            0));
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesDefinitionDto(
+                "PVT_alpha",
+                "Alpha Board",
+                "owner",
+                [new BoardColumnDto(0, "To Do", 0, ["To Do"])],
+                [],
+                []));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<BoardRules>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='board-rules-repository-autocomplete']"));
+        await SelectRepositoryAsync(cut, repository);
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='board-rules-board-context-ready-state']"));
+            Assert.Contains("Alpha Board", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task BoardRules_NoRuleWarnings_ShowsNeutralDiagramWithoutConflictAlert()
+    {
+        // Arrange
+        var repository = CreateRepository("owner", "repo-a");
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([repository]);
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+            [
+                new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
+            ],
+            1,
+            0));
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesDefinitionDto(
+                "PVT_alpha",
+                "Alpha Board",
+                "owner",
+                [
+                    new BoardColumnDto(0, "To Do", 0, ["To Do"]),
+                    new BoardColumnDto(1, "Done", 1, ["Done"]),
+                ],
+                [
+                    new BoardRuleDto(1, "Healthy rule", "When item added", "Assign reviewer", true),
+                ],
+                []));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<BoardRules>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='board-rules-repository-autocomplete']"));
+        await SelectRepositoryAsync(cut, repository);
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.DoesNotContain("Potential rule conflicts detected", cut.Markup);
+            Assert.Single(cut.FindAll("[data-testid='board-rules-board-context-ready-state']"));
+        });
+    }
+
+    [Fact]
+    public async Task BoardRules_CompareModeEnabled_ShowsComparisonSelector()
+    {
+        // Arrange
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                CreateRepository("owner", "repo-a"),
+                CreateRepository("owner", "repo-b"),
+            ]);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<BoardRules>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='board-rules-compare-mode-toggle']"));
+
+        // Act
+        var compareSwitch = cut.FindComponent<MudSwitch<bool>>();
+        await cut.InvokeAsync(() => compareSwitch.Instance.ValueChanged.InvokeAsync(true));
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='board-rules-comparison-selector-region']"));
+            Assert.Contains("Comparison repository and project board", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task BoardRules_CompareModeWithTwoBoards_RendersComparisonDifferences()
+    {
+        // Arrange
+        var repositoryA = CreateRepository("owner", "repo-a");
+        var repositoryB = CreateRepository("owner", "repo-b");
+        var primaryDefinition = new BoardRulesDefinitionDto(
+            "PVT_alpha",
+            "Alpha Board",
+            "owner",
+            [
+                new BoardColumnDto(0, "To Do", 0, ["To Do"]),
+                new BoardColumnDto(1, "Done", 1, ["Done"]),
+            ],
+            [
+                new BoardRuleDto(1, "Auto-assign", "When item added", "Assign reviewer", true),
+            ],
+            []);
+        var comparisonDefinition = new BoardRulesDefinitionDto(
+            "PVT_beta",
+            "Beta Board",
+            "owner",
+            [
+                new BoardColumnDto(0, "Backlog", 0, ["Backlog"]),
+                new BoardColumnDto(1, "Done", 1, ["Done"]),
+            ],
+            [],
+            []);
+        var comparisonResult = new BoardRulesComparisonResultDto(
+            primaryDefinition,
+            comparisonDefinition,
+            [
+                new BoardRulesComparisonDifferenceDto(
+                    "Column",
+                    "Missing in comparison board",
+                    "To Do",
+                    "Column 'To Do' exists on the primary board but not on the comparison board."),
+            ]);
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([repositoryA, repositoryB]);
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+            [
+                new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
+            ],
+            1,
+            0));
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-b", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+            [
+                new BoardRulesProjectBoardOptionDto("PVT_beta", "Beta Board", "owner"),
+            ],
+            1,
+            0));
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(primaryDefinition);
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetBoardRulesAsync("owner", "repo-b", "PVT_beta", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(comparisonDefinition);
+
+        _boardRulesServiceMock
+            .Setup(service => service.CompareBoardRules(primaryDefinition, comparisonDefinition))
+            .Returns(comparisonResult);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<BoardRules>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='board-rules-compare-mode-toggle']"));
+
+        var compareSwitch = cut.FindComponent<MudSwitch<bool>>();
+        await cut.InvokeAsync(() => compareSwitch.Instance.ValueChanged.InvokeAsync(true));
+
+        await SelectRepositoryAsync(cut, repositoryA);
+        cut.WaitForAssertion(() => Assert.Contains("Alpha Board", cut.Markup));
+
+        await SelectComparisonRepositoryAsync(cut, repositoryB);
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='board-rules-comparison-results']"));
+            Assert.Contains("Differences detected", cut.Markup);
+            Assert.Contains("Column 'To Do' exists on the primary board but not on the comparison board.", cut.Markup);
+            Assert.Single(cut.FindAll("[data-testid='board-rules-comparison-primary-summary']"));
+            Assert.Single(cut.FindAll("[data-testid='board-rules-comparison-secondary-summary']"));
+        });
+
+        _boardRulesServiceMock.Verify(
+            service => service.CompareBoardRules(primaryDefinition, comparisonDefinition),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task BoardRules_RapidRepositoryChange_IgnoresStaleProjectBoardResponse()
+    {
+        // Arrange
+        var repositoryA = CreateRepository("owner", "repo-a");
+        var repositoryB = CreateRepository("owner", "repo-b");
+        var repositoryADiscoveryTask = new TaskCompletionSource<BoardRulesProjectBoardDiscoveryDto>();
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([repositoryA, repositoryB]);
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
+            .Returns(repositoryADiscoveryTask.Task);
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-b", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+            [
+                new BoardRulesProjectBoardOptionDto("PVT_beta", "Beta Board", "owner"),
+            ],
+            1,
+            0));
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetBoardRulesAsync("owner", "repo-b", "PVT_beta", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesDefinitionDto(
+                "PVT_beta",
+                "Beta Board",
+                "owner",
+                [new BoardColumnDto(0, "Backlog", 0, ["Backlog"])],
+                [],
+                []));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<BoardRules>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='board-rules-repository-autocomplete']"));
+
+        var selectRepositoryATask = SelectRepositoryAsync(cut, repositoryA);
+        await SelectRepositoryAsync(cut, repositoryB);
+        cut.WaitForAssertion(() => Assert.Contains("Beta Board", cut.Markup));
+
+        repositoryADiscoveryTask.SetResult(new BoardRulesProjectBoardDiscoveryDto(
+        [
+            new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
+        ],
+        1,
+        0));
+
+        await selectRepositoryATask;
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Beta Board", cut.Markup);
+            Assert.DoesNotContain("Alpha Board", cut.Markup);
+        });
+    }
+
     private BunitContext CreateContext()
     {
         var ctx = new BunitContext();
@@ -525,6 +918,13 @@ public sealed class BoardRulesTests
     {
         var selector = cut.FindComponent<RepositorySelector>();
         await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync([repository.FullName]));
+    }
+
+    private static async Task SelectComparisonRepositoryAsync(IRenderedComponent<BoardRules> cut, RepositoryDto repository)
+    {
+        var selectors = cut.FindComponents<RepositorySelector>();
+        var comparisonSelector = selectors[^1];
+        await cut.InvokeAsync(() => comparisonSelector.Instance.SelectedRepositoriesChanged.InvokeAsync([repository.FullName]));
     }
 
     private static RepositoryDto CreateRepository(string owner, string name)
