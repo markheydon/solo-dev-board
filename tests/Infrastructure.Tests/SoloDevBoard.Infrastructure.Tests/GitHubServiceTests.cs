@@ -1089,6 +1089,152 @@ public sealed class GitHubServiceTests
     }
 
     [Fact]
+    public async Task GetBoardRulesDefinitionAsync_GraphQlErrorsPresent_ThrowsHttpRequestException()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "node": null
+                },
+                "errors": [
+                    {
+                        "message": "Resource not accessible by integration"
+                    }
+                ]
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var action = async () => _ = await sut.GetBoardRulesDefinitionAsync("owner", "repo", "PVT_kwHOAJefG84BQ6bh");
+
+        // Assert
+        var exception = await Assert.ThrowsAsync<HttpRequestException>(action);
+        Assert.Contains("GitHub GraphQL request failed", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetBoardRulesDefinitionAsync_OwnerIsWhitespace_ThrowsArgumentException()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler([]);
+        var sut = CreateSubject(handler);
+
+        // Act
+        var action = async () => _ = await sut.GetBoardRulesDefinitionAsync(" ", "repo", "PVT_kwHOAJefG84BQ6bh");
+
+        // Assert
+        await Assert.ThrowsAsync<ArgumentException>(action);
+    }
+
+    [Fact]
+    public async Task GetBoardRulesDefinitionAsync_StatusFieldWithEmptyOptions_ReturnsEmptyColumnsWithUnsupportedDetail()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "node": {
+                        "id": "PVT_kwHOAJefG84BQ6bh",
+                        "title": "Roadmap",
+                        "owner": { "login": "owner" },
+                        "fields": {
+                            "nodes": [
+                                {
+                                    "id": "PVTF_status",
+                                    "name": "Status",
+                                    "options": []
+                                }
+                            ]
+                        }
+                    }
+                },
+                "errors": []
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var result = await sut.GetBoardRulesDefinitionAsync("owner", "repo", "PVT_kwHOAJefG84BQ6bh");
+
+        // Assert
+        Assert.Empty(result.Columns);
+        Assert.Empty(result.Rules);
+        Assert.Contains(result.UnsupportedDetails, detail => detail.Contains("not yet available", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task GetProjectBoardsForRepositoryAsync_OwnerIsWhitespace_ThrowsArgumentException()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler([]);
+        var sut = CreateSubject(handler);
+
+        // Act
+        var action = async () => _ = await sut.GetProjectBoardsForRepositoryAsync(" ", "repo");
+
+        // Assert
+        await Assert.ThrowsAsync<ArgumentException>(action);
+    }
+
+    [Fact]
+    public async Task GetProjectBoardsForRepositoryAsync_BoardWithoutStatusField_IsExcludedFromSupportedBoards()
+    {
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "repository": {
+                        "projectsV2": {
+                            "nodes": [
+                                {
+                                    "id": "PVT_no_status",
+                                    "title": "Unsupported Board",
+                                    "owner": { "login": "owner" },
+                                    "fields": {
+                                        "nodes": [
+                                            {
+                                                "id": "PVTF_priority",
+                                                "name": "Priority",
+                                                "options": [
+                                                    { "id": "option-one", "name": "High" }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                },
+                "errors": []
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var result = await sut.GetProjectBoardsForRepositoryAsync("owner", "repo");
+
+        // Assert
+        Assert.Empty(result.SupportedProjectBoards);
+        Assert.Equal(1, result.TotalLinkedProjectCount);
+        Assert.Equal(0, result.InaccessibleLinkedProjectCount);
+    }
+
+    [Fact]
     public async Task UpdateProjectBoardItemStatusAsync_ValidResponse_PostsGraphQlMutation()
     {
         // Arrange

@@ -127,18 +127,18 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Milestone:** v0.4.0
 
-**Status:** Not started. Work on this phase begins after Phase 3 is complete.
+**Status:** In progress. Board Rules Visualiser compare mode implementation and testing are currently underway.
 
 ### Key Tasks
 
 #### Board Rules Visualiser
-- [ ] Investigate GitHub Projects v2 GraphQL API for automation rule access
-- [ ] Design `BoardRule` and `BoardDiagram` domain records
-- [ ] Implement `BoardRuleService` in `Application`
-- [ ] Implement GraphQL client in `Infrastructure` (see ADR-0005)
-- [ ] Build interactive MudBlazor-based diagram component (consider using a JS interop charting library where needed)
-- [ ] Write unit tests for `BoardRuleService`
-- [ ] Update `docs/user-guide/board-rules-visualiser.md`
+- [x] Investigate GitHub Projects v2 GraphQL API for automation rule access
+- [x] Design `BoardRule` and `BoardDiagram` domain records
+- [x] Implement `BoardRuleService` in `Application`
+- [x] Implement GraphQL client in `Infrastructure` (see ADR-0005)
+- [x] Build interactive MudBlazor-based diagram component (compare mode now available)
+- [x] Write unit tests for `BoardRuleService`, `BoardRulesComparer`, and compare mode functionality
+- [x] Update `docs/user-guide/board-rules-visualiser.md` _(compare mode documented as available)_
 
 #### Workflow Templates
 - [ ] Design `WorkflowTemplate` domain record

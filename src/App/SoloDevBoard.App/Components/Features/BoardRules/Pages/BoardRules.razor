@@ -9,7 +9,13 @@
 
         <MudPaper Class="pa-4" Elevation="1" data-testid="board-rules-selector-region">
             <MudStack Spacing="2">
-                <MudText Typo="Typo.h6">Repository and project board</MudText>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Wrap="Wrap.Wrap" Spacing="2">
+                    <MudText Typo="Typo.h6">Repository and project board</MudText>
+                    <MudSwitch T="bool" Value="isCompareModeEnabled" ValueChanged="OnCompareModeToggledAsync"
+                               Color="Color.Primary" Label="Compare mode"
+                               aria-label="Toggle compare mode to inspect two repositories side by side"
+                               data-testid="board-rules-compare-mode-toggle" />
+                </MudStack>
 
                 @if (isLoadingRepositories)
                 {
@@ -103,6 +109,86 @@
                                 </MudPaper>
                             </MudItem>
                         </MudGrid>
+
+                        @if (isCompareModeEnabled)
+                        {
+                            <MudDivider Class="my-2" />
+                            <MudText Typo="Typo.h6" data-testid="board-rules-comparison-selector-heading">Comparison repository and project board</MudText>
+                            <MudText Typo="Typo.body2">Select a second repository and supported project board to compare against the primary selection.</MudText>
+
+                            <MudGrid Spacing="2" data-testid="board-rules-comparison-selector-region">
+                                <MudItem xs="12" md="6">
+                                    <RepositorySelector Title="" Label="Comparison repository" Placeholder="Search repositories and select"
+                                                        EmptyStateText="No active repositories are available for board rules visualisation."
+                                                        AvailableRepositories="availableRepositoryFullNames"
+                                                        SelectedRepositories="comparisonRepositoryFullNames"
+                                                        SelectedRepositoriesChanged="OnComparisonRepositoriesChangedAsync"
+                                                        SummaryText="@ComparisonRepositorySelectorSummary" ShowSelectedChips="true" ShowSelectionActions="false"
+                                                        SingleSelectionOnly="true" Disabled="ShowLoadingState"
+                                                        AutocompleteTestId="board-rules-comparison-repository-autocomplete"
+                                                        SummaryTestId="board-rules-comparison-repository-selector-summary" />
+                                </MudItem>
+
+                                <MudItem xs="12" md="6">
+                                    <MudPaper Class="pa-3" Outlined="true" data-testid="board-rules-comparison-project-board-selector">
+                                        <MudStack Spacing="1">
+                                            <MudText Typo="Typo.subtitle2">Comparison project board</MudText>
+                                            <MudText Typo="Typo.body2">Select a GitHub Project v2 board with a Status field to compare.</MudText>
+
+                                            @if (!HasComparisonRepository)
+                                            {
+                                                <MudText Typo="Typo.body2" data-testid="board-rules-comparison-board-selector-prompt">Select a comparison repository to load supported project boards.</MudText>
+                                            }
+                                            else if (isLoadingComparisonProjectBoards)
+                                            {
+                                                <MudStack AlignItems="AlignItems.Center" Spacing="1" aria-live="polite" role="status"
+                                                          data-testid="board-rules-comparison-boards-loading-state">
+                                                    <MudProgressCircular Indeterminate="true" Color="Color.Primary"
+                                                                         aria-label="Loading comparison project boards" />
+                                                    <MudText Typo="Typo.body2">Loading comparison project boards...</MudText>
+                                                </MudStack>
+                                            }
+                                            else if (comparisonProjectBoardOptions.Count == 0 && !hasComparisonProjectBoardLoadFailure)
+                                            {
+                                                @if (HasComparisonInaccessibleProjectBoardsWarning)
+                                                {
+                                                    <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined"
+                                                              data-testid="board-rules-comparison-inaccessible-project-boards-warning">
+                                                        @comparisonInaccessibleProjectBoardsWarning
+                                                    </MudAlert>
+                                                }
+                                                else
+                                                {
+                                                    <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined"
+                                                              data-testid="board-rules-comparison-unsupported-boards-message">
+                                                        No supported GitHub Project v2 boards were found for the comparison repository.
+                                                    </MudAlert>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                @if (HasComparisonInaccessibleProjectBoardsWarning)
+                                                {
+                                                    <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined"
+                                                              data-testid="board-rules-comparison-inaccessible-project-boards-warning">
+                                                        @comparisonInaccessibleProjectBoardsWarning
+                                                    </MudAlert>
+                                                }
+
+                                                <MudSelect T="string" Value="comparisonProjectBoardId"
+                                                           ValueChanged="OnComparisonProjectBoardChangedAsync" Label="Comparison project board"
+                                                           Variant="Variant.Outlined" Disabled="ShowLoadingState">
+                                                    @foreach (var projectBoardOption in comparisonProjectBoardOptions)
+                                                    {
+                                                        <MudSelectItem T="string" Value="@projectBoardOption.Id">@projectBoardOption.Title</MudSelectItem>
+                                                    }
+                                                </MudSelect>
+                                            }
+                                        </MudStack>
+                                    </MudPaper>
+                                </MudItem>
+                            </MudGrid>
+                        }
                     }
                 </MudStack>
             </MudPaper>
@@ -173,6 +259,71 @@
                                     Visualising <strong>@selectedBoardRules.ProjectTitle</strong> for
                                     <strong>@selectedBoardRules.OwnerLogin</strong>.
                                 </MudText>
+
+                                @if (ShowComparisonResults && boardRulesComparison is not null)
+                                {
+                                    var comparison = boardRulesComparison;
+                                    <MudPaper Class="pa-4" Outlined="true" data-testid="board-rules-comparison-results">
+                                        <MudStack Spacing="2">
+                                            <MudText Typo="Typo.subtitle1">Board comparison</MudText>
+                                            <MudText Typo="Typo.body2">
+                                                Comparing <strong>@selectedBoardRules.ProjectTitle</strong> with
+                                                <strong>@comparison.RightDefinition.ProjectTitle</strong>.
+                                            </MudText>
+
+                                            <MudGrid Spacing="2">
+                                                <MudItem xs="12" lg="6">
+                                                    <MudPaper Class="pa-3" Outlined="true" data-testid="board-rules-comparison-primary-summary">
+                                                        <MudStack Spacing="1">
+                                                            <MudText Typo="Typo.subtitle2">Primary board</MudText>
+                                                            <MudText Typo="Typo.body2"><strong>@selectedBoardRules.ProjectTitle</strong></MudText>
+                                                            <MudText Typo="Typo.body2">Columns: @string.Join(", ", selectedBoardRules.Columns.Select(column => column.Name))</MudText>
+                                                            <MudText Typo="Typo.body2">Rules: @(selectedBoardRules.Rules.Count == 0 ? "None available" : string.Join(", ", selectedBoardRules.Rules.Select(rule => rule.Name)))</MudText>
+                                                        </MudStack>
+                                                    </MudPaper>
+                                                </MudItem>
+                                                <MudItem xs="12" lg="6">
+                                                    <MudPaper Class="pa-3" Outlined="true" data-testid="board-rules-comparison-secondary-summary">
+                                                        <MudStack Spacing="1">
+                                                            <MudText Typo="Typo.subtitle2">Comparison board</MudText>
+                                                            <MudText Typo="Typo.body2"><strong>@comparison.RightDefinition.ProjectTitle</strong></MudText>
+                                                            <MudText Typo="Typo.body2">Columns: @string.Join(", ", comparison.RightDefinition.Columns.Select(column => column.Name))</MudText>
+                                                            <MudText Typo="Typo.body2">Rules: @(comparison.RightDefinition.Rules.Count == 0 ? "None available" : string.Join(", ", comparison.RightDefinition.Rules.Select(rule => rule.Name)))</MudText>
+                                                        </MudStack>
+                                                    </MudPaper>
+                                                </MudItem>
+                                            </MudGrid>
+
+                                            @if (comparison.HasDifferences)
+                                            {
+                                                <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined"
+                                                          data-testid="board-rules-comparison-differences-alert">
+                                                    <MudText Typo="Typo.subtitle2">Differences detected</MudText>
+                                                    @foreach (var difference in comparison.Differences)
+                                                    {
+                                                        <MudText Typo="Typo.body2" data-testid="board-rules-comparison-difference">
+                                                            <strong>@difference.Category (@difference.DifferenceType):</strong> @difference.Details
+                                                        </MudText>
+                                                    }
+                                                </MudAlert>
+                                            }
+                                            else
+                                            {
+                                                <MudAlert Severity="Severity.Success" Dense="true" Variant="Variant.Outlined"
+                                                          data-testid="board-rules-comparison-no-differences-alert">
+                                                    No structural differences were detected between the selected boards.
+                                                </MudAlert>
+                                            }
+                                        </MudStack>
+                                    </MudPaper>
+                                }
+                                else if (isCompareModeEnabled && HasSelectedProjectBoard && comparisonBoardRules is null)
+                                {
+                                    <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined"
+                                              data-testid="board-rules-comparison-awaiting-selection">
+                                        Select a comparison repository and project board to view side-by-side differences.
+                                    </MudAlert>
+                                }
 
                                 <MudGrid Spacing="2">
                                     <MudItem xs="12" lg="7">
