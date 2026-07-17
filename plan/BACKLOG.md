@@ -110,7 +110,7 @@ Labels: `type/epic`, `area/dashboard`
 
 Labels: `type/epic`, `area/migration`
 
-> **Current Phase 3 status:** Phase 3 is complete. One-Click Migration and Triage UI are delivered, and the product is ready to transition to Phase 4.
+> **Current Phase 4 status:** Phase 4 is complete. Board Rules Visualiser and Workflow Templates are delivered, and the product is ready to transition to Phase 5.
 
 <!-- Parent Epic #87: Phase 3 — One-Click Migration + Triage UI (planned 2026-03-12, milestone v0.3.0). -->
 <!-- Feature #88: One-Click Migration (planned 2026-03-12, milestone v0.3.0; first delivery slice covers labels + milestones only). -->
@@ -155,7 +155,7 @@ Labels: `type/epic`, `area/board-rules`
 > The Board Rules Visualiser is now formally planned for Phase 4, with scope and design approved per [wireframes/board-rules-visualiser-wireframe.md](wireframes/board-rules-visualiser-wireframe.md). See milestone v0.4.0 and Epic #180 for tracking.
 
 **Feature:**
-- [ ] As a solo developer, I want the Board Rules Visualiser planned against an approved wireframe and issue hierarchy so that Phase 4 delivery starts from a clear baseline. _(Issue #181; planned 2026-05-07; see wireframes/board-rules-visualiser-wireframe.md.)_
+- [x] As a solo developer, I want the Board Rules Visualiser planned against an approved wireframe and issue hierarchy so that Phase 4 delivery starts from a clear baseline. _(Issue #181; planned 2026-05-07; see wireframes/board-rules-visualiser-wireframe.md.)_
 
 **Enablers:**
 - [x] Enabler: Add board rules contracts and GitHub Projects v2 query support so the Application and Infrastructure layers can retrieve and map supported board-rule data. _(Issue #182; implemented 2026-07-14.)_
@@ -174,17 +174,17 @@ Labels: `type/epic`, `area/board-rules`
 - [x] Test: bUnit coverage for Board Rules Visualiser workflows. _(Issue #190; planned 2026-05-07; references wireframes/board-rules-visualiser-wireframe.md.)_
 
 **Feature:**
-- [ ] As a solo developer, I want the Workflow Templates page and template library planned against an approved wireframe so that Phase 4 delivery is complete. _(see wireframes/workflow-templates-wireframe.md.)_
+- [x] As a solo developer, I want the Workflow Templates page and template library planned against an approved wireframe so that Phase 4 delivery is complete. _(see wireframes/workflow-templates-wireframe.md.)_
 
 **Stories:**
 - [x] As a solo developer, I want to browse built-in GitHub Actions workflow templates so that I can choose a starting point without copying YAML manually. _(Issue #235 — implemented 2026-07-17.)_
-- [ ] As a solo developer, I want to customise workflow template parameters before applying a template so that each repository gets the right configuration.
-- [ ] As a solo developer, I want to apply a workflow template to one or more repositories from a central page so that template application is consistent.
-- [ ] As a solo developer, I want to see which repositories already have a workflow template applied so that I can avoid duplicate work.
-- [ ] As a solo developer, I want to be alerted when a repository’s workflow file differs from the canonical template so that I can keep templates current.
+- [x] As a solo developer, I want to customise workflow template parameters before applying a template so that each repository gets the right configuration.
+- [x] As a solo developer, I want to apply a workflow template to one or more repositories from a central page so that template application is consistent.
+- [x] As a solo developer, I want to see which repositories already have a workflow template applied so that I can avoid duplicate work.
+- [x] As a solo developer, I want to be alerted when a repository’s workflow file differs from the canonical template so that I can keep templates current.
 
 **Tests:**
-- [ ] Test: Workflow Templates page and service coverage — template retrieval, parameter binding, apply flow, and status states.
+- [x] Test: Workflow Templates page and service coverage — template retrieval, parameter binding, apply flow, and status states.
 
 ---
 
@@ -192,7 +192,7 @@ Labels: `type/epic`, `area/board-rules`
 
 Labels: `type/epic`, `area/triage`
 
-> **Phase 3 completion:** Triage UI was the final Phase 3 delivery work. With all Phase 3 issues closed, Phase 4 is now the next active focus.
+> **Phase 4 completion:** Board Rules Visualiser and Workflow Templates are delivered, and Phase 5 is now the next active focus.
 
 <!-- Feature #142: Triage UI (planned 2026-03-17, milestone v0.3.0) -->
 <!-- Enablers: #143 Triage session orchestration, #144 Triage UI state management -->
