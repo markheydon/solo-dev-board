@@ -1,5 +1,5 @@
 ---
-name: pm-feature-workflow
+name: repo-pm-feature-workflow
 description: Orchestrates end-to-end feature delivery for SoloDevBoard: planning, GitHub issue management, implementation gating, testing, documentation, and closure.
 ---
 
@@ -17,7 +17,7 @@ Run a deterministic feature workflow so the user can act as product manager whil
 2. Confirm scope alignment in `plan/SCOPE.md`.
 3. Trigger planning with `breakdown-plan`.
 4. For any feature that will result in a new page, a new major page region, or a substantive page refresh, create a wireframe in `plan/wireframes/` and update `plan/wireframes/README.md` before implementation begins.
-5. Create or update GitHub issues with `github-issues` (use `gh-cli` for bulk changes), then sync each issue to the project board with `github-project` skill.
+5. Create or update GitHub issues with `repo-github-issues` (use `repo-github-gh-cli` for bulk changes), then sync each issue to the project board with `repo-github-project` skill.
 6. Trigger quality planning with `breakdown-test`.
 7. Implement using repository standards (`dotnet-best-practices`, and `mudblazor` for UI work), with MudBlazor components and utility classes preferred over custom CSS or raw HTML.
 8. Create or update ADRs when architectural decisions are introduced.

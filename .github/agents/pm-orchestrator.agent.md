@@ -52,26 +52,26 @@ Invoke this agent when you need to:
 - Ensure the resulting feature, story, and test issues reference the approved wireframe so Delivery Agent work starts from a planning baseline rather than creating the wireframe during implementation
 
 ### 4. Issue Creation
-- Use `github-issues` skill to create GitHub issues
+- Use `repo-github-issues` skill to create GitHub issues
 - Apply correct labels per `plan/LABEL_STRATEGY.md`:
   - `type/` (epic, feature, story, enabler, test, bug, chore, documentation)
   - `priority/` (critical, high, medium, low)
   - `area/` (dashboard, migration, labels, board-rules, triage, workflows, infrastructure, docs)
   - `size/` (xs, s, m, l, xl)
   - `status/todo` for new items
-- Use markdown templates from `.github/skills/github-issues/references/templates.md`
+- Use markdown templates from `.agents/skills/repo-github-issues/references/templates.md`
 - **Note:** Markdown templates mirror YAML issue forms (`.github/ISSUE_TEMPLATE/*.yml`) which define the canonical structure
 - Assign to current milestone if applicable
-- **Assign to `markheydon`** — all issues must be assigned at creation (see github-project skill Event 1)
+- **Assign to `markheydon`** — all issues must be assigned at creation (see repo-github-project skill Event 1)
 - Note parent/child sub-issue hierarchy (Epic→Feature→Story/Enabler/Test) and any blocking relationships — GitHub CLI cannot set either; produce a **Manual Linking Required** table in the handoff for the user to set via the GitHub UI
 
 ### 5. Project Board Sync
-- Use `github-project` skill to add each created issue to the **SoloDevBoard Roadmap** project (#8)
-- Set **Phase** based on the issue's milestone (see Phase Assignment Rules in `github-project` skill)
+- Use `repo-github-project` skill to add each created issue to the **SoloDevBoard Roadmap** project (#8)
+- Set **Phase** based on the issue's milestone (see Phase Assignment Rules in `repo-github-project` skill)
 - Set **Priority** matching the `priority/` label applied to the issue
 - Set **Status** to "Todo" for all newly created issues
-- **Do NOT set Start Date or Target Date** — dates are left blank at planning time and are only populated when work actually begins (see Lifecycle Event 2 in `github-project` skill)
-- Follow Lifecycle Event 1 command pattern from `.github/skills/github-project/SKILL.md`
+- **Do NOT set Start Date or Target Date** — dates are left blank at planning time and are only populated when work actually begins (see Lifecycle Event 2 in `repo-github-project` skill)
+- Follow Lifecycle Event 1 command pattern from `.agents/skills/repo-github-project/SKILL.md`
 
 ### 6. Quality Planning
 - Invoke `breakdown-test` skill for test strategy
@@ -183,8 +183,8 @@ Delivery Agent should treat issues produced by this workflow as implementation-r
 **Invokes:**
 - `breakdown-plan` skill — technical decomposition
 - `breakdown-test` skill — quality planning
-- `github-issues` skill — issue creation/updates
-- `github-project` skill — project board sync (Lifecycle Event 1: Issue Created)
+- `repo-github-issues` skill — issue creation/updates
+- `repo-github-project` skill — project board sync (Lifecycle Event 1: Issue Created)
 - **Tech Writer agent** — BACKLOG.md, SCOPE.md, and ADR updates (provides outline, Tech Writer produces prose)
 
 **Hands off to:**

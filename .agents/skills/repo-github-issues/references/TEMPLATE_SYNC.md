@@ -15,10 +15,10 @@ SoloDevBoard maintains templates in **two formats** for **different consumers**:
 - **Files:** `bug.yml`, `feature.yml`, `chore.yml`
 - **Advantage:** Rich UI, required field enforcement, dropdown menus for labels
 
-### Markdown Templates (`.github/skills/github-issues/references/templates.md`)
+### Markdown Templates (`.agents/skills/repo-github-issues/references/templates.md`)
 - **Consumer:** AI agents creating issues via MCP tools (`mcp__github__create_issue`)
 - **Format:** Markdown (API-compatible text format)
-- **Location:** `.github/skills/github-issues/references/templates.md`
+- **Location:** `.agents/skills/repo-github-issues/references/templates.md`
 - **Templates:** Bug Report, Feature/User Story, Chore/Technical Debt
 - **Advantage:** Programmatic creation via GitHub API
 
@@ -94,14 +94,14 @@ The following **must** stay synchronised across formats:
    - Label changed? → Update markdown meta notes
 
 2. **Update markdown template:**
-   - Edit `.github/skills/github-issues/references/templates.md`
+   - Edit `.agents/skills/repo-github-issues/references/templates.md`
    - Mirror YAML field structure in markdown sections
    - Update label application notes
    - Preserve UK English enforcement note
 
 3. **Update AI references:**
    - Check if `.github/agents/pm-orchestrator.agent.md` needs updates
-   - Check if `.github/skills/github-issues/SKILL.md` needs updates
+   - Check if `.agents/skills/repo-github-issues/SKILL.md` needs updates
 
 4. **Test synchronisation:**
    - Create issue manually via GitHub UI (uses YAML)
@@ -181,9 +181,9 @@ If you discover template drift or synchronisation issues:
 ## References
 
 - **YAML templates:** `.github/ISSUE_TEMPLATE/bug.yml`, `feature.yml`, `chore.yml`
-- **Markdown templates:** `.github/skills/github-issues/references/templates.md`
+- **Markdown templates:** `.agents/skills/repo-github-issues/references/templates.md`
 - **Label taxonomy:** `plan/LABEL_STRATEGY.md`
-- **AI issue creation:** `.github/skills/github-issues/SKILL.md`
+- **AI issue creation:** `.agents/skills/repo-github-issues/SKILL.md`
 - **PM planning workflow:** `.github/agents/pm-orchestrator.agent.md`
 
 ---

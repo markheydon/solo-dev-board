@@ -79,7 +79,7 @@ This prompt invokes the **Delivery Agent**, which executes:
 ## Follow-Up Prompts
 
 After PR review comments are addressed:
-- **To continue the normal approval flow:** Return to `review-and-close.prompt.md` if another review pass is needed.
+- **To continue the normal approval flow:** Return to `review-and-create-pr.prompt.md` if another review pass is needed.
 - **To finish the work after merge:** Run the close/merge workflow as normal.
 
 ---

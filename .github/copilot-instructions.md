@@ -194,13 +194,15 @@ When code changes are made, ensure the following are kept in sync:
 
 ## Skill Trigger Matrix
 
+Canonical skills live in **`.agents/skills/`** (see `.agents/skills/_REGISTRY.md`). Skills formerly in `.github/skills/` have been removed.
+
 Use the following active skill set for this repository:
 
-- `pm-feature-workflow`
+- `repo-pm-feature-workflow`
 - `breakdown-plan`
-- `github-issues`
-- `github-project`
-- `gh-cli`
+- `repo-github-issues`
+- `repo-github-project`
+- `repo-github-gh-cli`
 - `breakdown-test`
 - `create-architectural-decision-record`
 - `documentation-writer`
@@ -215,9 +217,9 @@ Optional companion skills:
 
 Default workflow order for feature delivery:
 
-1. Orchestration: `pm-feature-workflow`
+1. Orchestration: `repo-pm-feature-workflow`
 2. Planning: `breakdown-plan`
-3. Issue lifecycle: `github-issues` (and `gh-cli` for bulk operations), then `github-project` to sync the project board
+3. Issue lifecycle: `repo-github-issues` (and `repo-github-gh-cli` for bulk operations), then `repo-github-project` to sync the project board
 4. Test planning: `breakdown-test`
 5. Implementation: `dotnet-best-practices` and `mudblazor` as needed
 6. Architecture decision capture: `create-architectural-decision-record` when required
@@ -250,8 +252,8 @@ For daily product management operations, use the **PM operating system** defined
 
 - **`daily-start.prompt.md`** — morning status check + next action recommendation
 - **`plan-next-issue.prompt.md`** — select from backlog + create technical plan + setup GitHub issues
-- **`execute-feature.prompt.md`** — implement code + tests + docs
-- **`review-and-close.prompt.md`** — validate quality + create PR + close issue
+- **`implement-issue.prompt.md`** — implement code + tests + docs
+- **`review-and-create-pr.prompt.md`** — validate quality + create PR
 - **`weekly-pm-review.prompt.md`** — milestone health + release confidence + priority recommendations
 
 **Workflow reference:** See `plan/PM_RUNBOOK.md` for daily operating rhythm, decision tree, and command quick reference.

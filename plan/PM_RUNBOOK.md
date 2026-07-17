@@ -8,15 +8,15 @@ This runbook orchestrates the `.github/agents/` and `.github/prompts/` workflows
 
 ## Quick Reference Card
 
-| **When you want to...**                  | **Run this prompt/agent**                                  | **What it produces**                          |
-|------------------------------------------|------------------------------------------------------------|-----------------------------------------------|
-| Start your day                           | `.github/prompts/daily-start.prompt.md`                    | Status summary + next action recommendation   |
-| Plan the next feature                    | `.github/prompts/plan-next-issue.prompt.md`                | GitHub issues with full metadata + tech spec  |
-| Implement planned work                   | `.github/prompts/execute-feature.prompt.md`                | Code + tests + docs + ADR (if needed)         |
-| Review and create PR                     | `.github/prompts/review-and-close.prompt.md`               | PR + quality validation + issue closure       |
-| Address PR review comments               | `.github/prompts/address-pr-review-comments.prompt.md`     | PR fixes + thread replies + resolved comments |
-| Weekly health check                      | `.github/prompts/weekly-pm-review.prompt.md`               | Executive summary + priorities for next week  |
-| End-to-end feature delivery              | `.github/skills/pm-feature-workflow/SKILL.md`              | Full workflow from backlog to closure         |
+| **When you want to...**                  | **Copilot**                                                | **Cursor**                    | **What it produces**                          |
+|------------------------------------------|------------------------------------------------------------|-------------------------------|-----------------------------------------------|
+| Start your day                           | `.github/prompts/daily-start.prompt.md`                    | —                             | Status summary + next action recommendation   |
+| Plan the next feature                    | `.github/prompts/plan-next-issue.prompt.md`                | —                             | GitHub issues with full metadata + tech spec  |
+| Implement planned work                   | `.github/prompts/implement-issue.prompt.md`                | `/implement-issue`            | Code + tests + docs + ADR (if needed)         |
+| Review and create PR                     | `.github/prompts/review-and-create-pr.prompt.md`           | —                             | PR + quality validation + issue closure       |
+| Address PR review comments               | `.github/prompts/address-pr-review-comments.prompt.md`     | —                             | PR fixes + thread replies + resolved comments |
+| Weekly health check                      | `.github/prompts/weekly-pm-review.prompt.md`               | —                             | Executive summary + priorities for next week  |
+| End-to-end feature delivery              | `.agents/skills/repo-pm-feature-workflow/SKILL.md`         | —                             | Full workflow from backlog to closure         |
 
 ---
 
@@ -117,24 +117,31 @@ Plan the [feature name]
 #### Stage 2: Implementation (2-8 hours per feature, varies by size)
 **Trigger:** Planning complete, issues have `status/todo` label.
 
-**Run:**
+**Run (Copilot):**
 ```
 Implement issue #[number]
 ```
 
+**Run (Cursor):**
+```
+/implement-issue [number]
+```
+
 **What it does:**
-- Invokes **Delivery Agent**
+- Invokes **Delivery Agent** (Copilot prompt or Cursor command → [`.github/agents/delivery.agent.md`](../.github/agents/delivery.agent.md))
 - Writes code following layered architecture (Domain/Application/Infrastructure/App)
 - Creates xUnit tests (Moq, `Assert.*`, correct naming)
 - Updates user-facing docs in `docs/user-guide/` if needed
 - Creates ADR in `adr/` if architectural decision made
 - Ensures UK English throughout
 
-**Board expectation before coding starts:**
+**Board expectation before coding starts (Copilot PM):**
 - The issue may already be in **Up Next** if it was selected during the morning ritual.
 - Starting work moves the issue from **Up Next** or **Todo** into **In Progress**.
 - Starting work also stamps **Start Date** and the current size-based **Target Date** forecast on the roadmap item.
 - Untouched sibling items stay blank until they actually start.
+
+**Cursor note:** The Cursor implement workflow does not update the project board or issue labels. Handle board moves in Copilot before or after implementation.
 
 **What you produce:**
 - Source code in `src/` (compiles, follows conventions)
@@ -322,10 +329,10 @@ START
   │   └─> Run daily-start.prompt.md → Follow recommendation
   │
   ├─ Have planned issue ready for coding?
-  │   └─> Run execute-feature.prompt.md with issue number
+  │   └─> Copilot: implement-issue.prompt.md | Cursor: /implement-issue
   │
   ├─ Have implemented code ready for review?
-  │   └─> Run review-and-close.prompt.md with issue number
+  │   └─> Run review-and-create-pr.prompt.md with issue number
   │
   ├─ Has an open PR received coding review comments?
   │   └─> Run address-pr-review-comments.prompt.md with PR number
@@ -343,7 +350,7 @@ START
   │   └─> Run daily-start.prompt.md → Get recommendation
   │
   └─ Want end-to-end automation?
-      └─> Use pm-feature-workflow skill (plans + implements + reviews)
+      └─> Use repo-pm-feature-workflow skill (plans + implements + reviews)
 ```
 
 ---
@@ -426,21 +433,23 @@ START
 
 ---
 
-### 3. Execute Feature (`.github/prompts/execute-feature.prompt.md`)
+### 3. Implement Issue (`.github/prompts/implement-issue.prompt.md` / `.cursor/commands/implement-issue.md`)
 **When:** After planning, ready to code  
 **Input:** Issue number OR feature name  
 **Output:** Code + tests + docs + ADR (if needed)  
 **Duration:** 30 minutes to 8 hours (depends on size: xs → xl)  
 **Invokes:** Delivery Agent, dotnet-best-practices, mudblazor, csharp-xunit, csharp-docs, create-architectural-decision-record
 
+**Platform:** Copilot via `implement-issue` prompt; Cursor via `/implement-issue` command.
+
 ---
 
-### 4. Review and Close (`.github/prompts/review-and-close.prompt.md`)
+### 4. Review and Create PR (`.github/prompts/review-and-create-pr.prompt.md`)
 **When:** After implementation, ready for PR  
 **Input:** Issue number OR feature name  
 **Output:** PR + quality validation + issue closure (post-merge)  
 **Duration:** 5-15 minutes  
-**Invokes:** Review Agent, get_errors, github-issues
+**Invokes:** Review Agent, get_errors, repo-github-issues
 
 **Two-part execution:**
 1. **Pre-merge:** Creates PR, validates gates, updates labels to `status/in-review`
@@ -530,7 +539,7 @@ These gates are defined in `.github/copilot-instructions.md` and enforced by age
 **Action:**
 1. Review Agent flags failure
 2. Escalates to Delivery Agent for fixes
-3. After fixes, re-run `review-and-close.prompt.md`
+3. After fixes, re-run `review-and-create-pr.prompt.md`
 
 ---
 
@@ -558,7 +567,7 @@ This runbook orchestrates (does NOT duplicate) existing policy:
 | `plan/IMPLEMENTATION_PLAN.md`            | Phase/milestone definitions             | Agents align work to current phase             |
 | `plan/RELEASE_PLAN.md`                   | Release criteria and dates              | Review Agent checks release impact             |
 | `.github/instructions/*.md`              | .NET, Blazor, GitHub Actions standards  | Delivery Agent follows coding standards        |
-| `.github/skills/*.md`                    | Workflow procedures (breakdown, test)   | Agents invoke skills at correct stages         |
+| `.agents/skills/*/SKILL.md`              | Workflow procedures (breakdown, test)   | Agents invoke skills at correct stages         |
 
 **Design principle:** Runbook is a **lightweight orchestration layer** — it tells you what to run and when, but delegates policy enforcement to existing governance files and AI agents.
 
@@ -574,7 +583,7 @@ This runbook orchestrates (does NOT duplicate) existing policy:
 Take the next backlog item and run the full PM feature workflow
 ```
 
-**What happens:** Invokes `pm-feature-workflow` skill, which:
+**What happens:** Invokes `repo-pm-feature-workflow` skill, which:
 1. Plans (PM Orchestrator)
 2. Implements (Delivery Agent)
 3. Reviews (Review Agent)
@@ -603,8 +612,8 @@ Plan next item for Phase 1
 
 **Steps:**
 1. Create issue manually (type/bug, priority/critical)
-2. Run `execute-feature.prompt.md` with issue number (Delivery Agent implements)
-3. Run `review-and-close.prompt.md` (create PR)
+2. Run `implement-issue` (Copilot prompt or Cursor `/implement-issue`) with issue number (Delivery Agent implements)
+3. Run `review-and-create-pr.prompt.md` (create PR)
 4. Approve and merge immediately
 5. Run `Close issue #X after PR #Y merged`
 
@@ -622,7 +631,7 @@ Plan next item for Phase 1
 
 ### "Quality gate failed: documentation missing"
 **Cause:** User-facing feature without `docs/user-guide/*.md`.  
-**Fix:** Delivery Agent escalates; add docs manually or re-run `execute-feature.prompt.md` with explicit doc request.
+**Fix:** Delivery Agent escalates; add docs manually or re-run `implement-issue` with explicit doc request.
 
 ---
 
@@ -642,8 +651,8 @@ Plan next item for Phase 1
 
 - [ ] I run `daily-start` every morning to get oriented
 - [ ] I use `plan-next-issue` to create technical specs before coding
-- [ ] I use `execute-feature` only for planned issues with clear acceptance criteria
-- [ ] I use `review-and-close` to validate quality before PR merge
+- [ ] I use `implement-issue` (Copilot) or `/implement-issue` (Cursor) only for planned issues with clear acceptance criteria
+- [ ] I use `review-and-create-pr` to validate quality before PR merge
 - [ ] I run `weekly-pm-review` at least once per week
 - [ ] All my GitHub issues have labels per `plan/LABEL_STRATEGY.md`
 - [ ] All user-facing features have docs in `docs/user-guide/`

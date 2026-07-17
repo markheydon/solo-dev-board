@@ -72,7 +72,7 @@ This prompt invokes the **PM Orchestrator Agent**, which executes:
 - Update `adr/README.md` index
 
 ### 5. GitHub Issue Creation
-- Use `github-issues` skill to create issues
+- Use `repo-github-issues` skill to create issues
 - Apply labels per `plan/LABEL_STRATEGY.md`:
   - `type/` — feature, bug, chore, documentation, epic
   - `priority/` — critical, high, medium, low
@@ -83,8 +83,8 @@ This prompt invokes the **PM Orchestrator Agent**, which executes:
 - Note parent/child hierarchy and blocking relationships — GitHub CLI supports neither; list both in the **Manual Linking Required** section of the handoff for the user to set via the GitHub UI
 
 ### 6. Project Board Sync
-- Use `github-project` skill (Lifecycle Event 1) to add each created issue to the **SoloDevBoard Roadmap** project (#8)
-- Set Phase matching the issue's milestone (see Phase Assignment Rules in `github-project` skill)
+- Use `repo-github-project` skill (Lifecycle Event 1) to add each created issue to the **SoloDevBoard Roadmap** project (#8)
+- Set Phase matching the issue's milestone (see Phase Assignment Rules in `repo-github-project` skill)
 - Set Priority matching the `priority/` label applied to each issue
 - Set Status to "Todo" for all new issues
 - Do **not** set Start Date or Target Date during planning; those dates are recorded only when delivery actually begins
@@ -154,7 +154,7 @@ Set these relationships via the GitHub UI — `gh` CLI supports neither sub-issu
 | _(none for this feature)_ | — | — |
 
 ## Next Action
-✅ Ready for implementation — Use `execute-feature` prompt with issue #31 (or a small batch of related already-planned issues)
+✅ Ready for implementation — Use `implement-issue` prompt with issue #31 (or a small batch of related already-planned issues)
 ```
 
 ---
@@ -165,14 +165,14 @@ Set these relationships via the GitHub UI — `gh` CLI supports neither sub-issu
 - **`breakdown-plan` skill** — technical decomposition
 - **`breakdown-test` skill** — quality planning
 - **`create-architectural-decision-record` skill** — ADR creation (if needed)
-- **`github-issues` skill** — issue creation and metadata
+- **`repo-github-issues` skill** — issue creation and metadata
 
 ---
 
 ## Follow-Up Prompts
 
 After planning completes:
-- **To implement:** Run `execute-feature.prompt.md` with the primary feature issue number, or a small batch of related already-planned issue numbers
+- **To implement:** Run `implement-issue.prompt.md` with the primary feature issue number, or a small batch of related already-planned issue numbers
 - **To review plan:** Ask "Show me the technical plan for issue #X"
 - **To adjust scope:** Manually update `plan/SCOPE.md`, then re-run this prompt
 
@@ -195,7 +195,7 @@ Plan the next item
 **Output:**
 ```
 Planned "One-Click Migration UI" as epic #40. Created 9 issues (6 stories, 3 tests).
-Ready for implementation. Use execute-feature prompt with issue #40.
+Ready for implementation. Use implement-issue prompt with issue #40.
 ```
 
 ---
@@ -216,7 +216,7 @@ Plan the Label Manager UI
 **Output:**
 ```
 Planned "Label Manager UI" as epic #30. Aligned the plan with ADR-0012 for MudBlazor.
-5 issues created (3 stories, 2 tests). Ready for execute-feature prompt.
+5 issues created (3 stories, 2 tests). Ready for implement-issue prompt.
 ```
 
 ---
@@ -273,7 +273,7 @@ Planning is NOT complete until:
 - ✅ Dependencies and acceptance criteria documented
 - ✅ Backlog updated to reflect planning status
 
-Planning should be the primary readiness gate for delivery. Once this workflow completes, `execute-feature` should treat the resulting issues as implementation-ready unless a clearly missing prerequisite is discovered.
+Planning should be the primary readiness gate for delivery. Once this workflow completes, `implement-issue` should treat the resulting issues as implementation-ready unless a clearly missing prerequisite is discovered.
 
 ---
 

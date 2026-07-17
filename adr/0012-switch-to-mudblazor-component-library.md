@@ -111,11 +111,11 @@ MudBlazor is the de-facto standard Blazor component library in the community. Co
 8. **Refactor `Labels.razor` and `LabelOperationDialog.razor`** — replace all Fluent UI components, including replacing the hand-rolled colour picker with `MudColorPicker`.
 9. **Update bUnit test projects** — replace `AddFluentUIComponents()` with MudBlazor service registration; remove `JSRuntimeMode.Loose` workarounds specific to Fluent UI.
 10. **Remove** `.github/skills/fluentui-blazor/` skill directory.
-11. **Create** `.github/skills/mudblazor/` skill with MudBlazor-specific guidance.
+11. **Create** `.agents/skills/mudblazor/` skill with MudBlazor-specific guidance.
 12. **Replace** `.github/instructions/blazor.instructions.md` with a MudBlazor-aware version.
 
 ### Ongoing
 
 - All future Razor component development uses MudBlazor components exclusively.
-- The `.github/skills/mudblazor/` skill is the authoritative source of MudBlazor usage patterns for the Delivery Agent.
+- The `.agents/skills/mudblazor/` skill is the authoritative source of MudBlazor usage patterns for the Delivery Agent.
 - ADR-0009 is superseded by this record.

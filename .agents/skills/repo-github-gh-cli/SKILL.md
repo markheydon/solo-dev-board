@@ -1,5 +1,5 @@
 ---
-name: gh-cli
+name: repo-github-gh-cli
 description: 'GitHub CLI guidance for SoloDevBoard issue triage, label management, pull requests, workflows, and project operations.'
 ---
 
@@ -109,7 +109,7 @@ gh project item-edit \
 
 # NOTE: Prefer `gh project item-edit` for project field updates.
 # Use raw GraphQL only when `gh project` does not expose the required operation.
-# See `.github/skills/github-project/SKILL.md` for the SoloDevBoard-specific field IDs and queue workflow.
+# See `.agents/skills/repo-github-project/SKILL.md` for the SoloDevBoard-specific field IDs and queue workflow.
 ```
 
 ### Safety Rules

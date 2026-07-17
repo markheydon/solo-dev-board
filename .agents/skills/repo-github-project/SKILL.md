@@ -1,5 +1,5 @@
 ---
-name: github-project
+name: repo-github-project
 description: 'Manage the SoloDevBoard Roadmap GitHub Project (Project #8). Add issues to the board, set Phase/Priority/Status/Date fields, manage the Up Next queue, and keep the project in sync with the issue lifecycle. Use this skill whenever creating or updating GitHub issues for SoloDevBoard.'
 ---
 
