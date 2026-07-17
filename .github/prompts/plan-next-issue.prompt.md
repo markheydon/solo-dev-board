@@ -154,7 +154,7 @@ Set these relationships via the GitHub UI — `gh` CLI supports neither sub-issu
 | _(none for this feature)_ | — | — |
 
 ## Next Action
-✅ Ready for implementation — Use `execute-feature` prompt with issue #31 (or a small batch of related already-planned issues)
+✅ Ready for implementation — Use `implement-issue` prompt with issue #31 (or a small batch of related already-planned issues)
 ```
 
 ---
@@ -172,7 +172,7 @@ Set these relationships via the GitHub UI — `gh` CLI supports neither sub-issu
 ## Follow-Up Prompts
 
 After planning completes:
-- **To implement:** Run `execute-feature.prompt.md` with the primary feature issue number, or a small batch of related already-planned issue numbers
+- **To implement:** Run `implement-issue.prompt.md` with the primary feature issue number, or a small batch of related already-planned issue numbers
 - **To review plan:** Ask "Show me the technical plan for issue #X"
 - **To adjust scope:** Manually update `plan/SCOPE.md`, then re-run this prompt
 
@@ -195,7 +195,7 @@ Plan the next item
 **Output:**
 ```
 Planned "One-Click Migration UI" as epic #40. Created 9 issues (6 stories, 3 tests).
-Ready for implementation. Use execute-feature prompt with issue #40.
+Ready for implementation. Use implement-issue prompt with issue #40.
 ```
 
 ---
@@ -216,7 +216,7 @@ Plan the Label Manager UI
 **Output:**
 ```
 Planned "Label Manager UI" as epic #30. Aligned the plan with ADR-0012 for MudBlazor.
-5 issues created (3 stories, 2 tests). Ready for execute-feature prompt.
+5 issues created (3 stories, 2 tests). Ready for implement-issue prompt.
 ```
 
 ---
@@ -273,7 +273,7 @@ Planning is NOT complete until:
 - ✅ Dependencies and acceptance criteria documented
 - ✅ Backlog updated to reflect planning status
 
-Planning should be the primary readiness gate for delivery. Once this workflow completes, `execute-feature` should treat the resulting issues as implementation-ready unless a clearly missing prerequisite is discovered.
+Planning should be the primary readiness gate for delivery. Once this workflow completes, `implement-issue` should treat the resulting issues as implementation-ready unless a clearly missing prerequisite is discovered.
 
 ---
 

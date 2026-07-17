@@ -91,7 +91,7 @@ Total: 23 items | Phase 1 progress: 40% (4/10 complete)
 ```
 ✅ Recommended Next Action:
 1. Approve and merge PR #25 (Review Agent can close issue #12)
-2. If implementation-ready issues already exist: run `execute-feature` with those issue numbers.
+2. If implementation-ready issues already exist: run `implement-issue` with those issue numbers.
 3. Otherwise: plan the next high-priority item "One-Click Migration UI" (use `plan-next-issue` prompt)
 ```
 
@@ -116,8 +116,8 @@ Total: 23 items | Phase 1 progress: 40% (4/10 complete)
 ## Follow-Up Prompts
 
 Based on the recommended action, use:
-- **If work in review:** Run `review-and-close.prompt.md` to finish pending PRs
-- **If implementation-ready issues already exist:** Run `execute-feature.prompt.md` with one or more issue numbers
+- **If work in review:** Run `review-and-create-pr.prompt.md` to finish pending PRs
+- **If implementation-ready issues already exist:** Run `implement-issue.prompt.md` with one or more issue numbers
 - **If backlog ready but no implementation-ready issues exist:** Run `plan-next-issue.prompt.md` to select and plan next item
 - **If you want a visible daily queue:** Ask the agent to move the recommended stories, enablers, or tests into **Up Next** and set **Focus Order**.
 - **If blockers present:** Resolve blockers manually, then re-run `daily-start.prompt.md`

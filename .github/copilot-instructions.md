@@ -194,6 +194,8 @@ When code changes are made, ensure the following are kept in sync:
 
 ## Skill Trigger Matrix
 
+Canonical skills live in **`.agents/skills/`** (see `.agents/skills/_REGISTRY.md`). Skills formerly in `.github/skills/` have been removed.
+
 Use the following active skill set for this repository:
 
 - `repo-pm-feature-workflow`
@@ -250,8 +252,8 @@ For daily product management operations, use the **PM operating system** defined
 
 - **`daily-start.prompt.md`** — morning status check + next action recommendation
 - **`plan-next-issue.prompt.md`** — select from backlog + create technical plan + setup GitHub issues
-- **`execute-feature.prompt.md`** — implement code + tests + docs
-- **`review-and-close.prompt.md`** — validate quality + create PR + close issue
+- **`implement-issue.prompt.md`** — implement code + tests + docs
+- **`review-and-create-pr.prompt.md`** — validate quality + create PR
 - **`weekly-pm-review.prompt.md`** — milestone health + release confidence + priority recommendations
 
 **Workflow reference:** See `plan/PM_RUNBOOK.md` for daily operating rhythm, decision tree, and command quick reference.

@@ -357,7 +357,7 @@ The weekly review validates compliance with:
 **Not for:**
 - Daily decision-making (use `daily-start` prompt)
 - Tactical issue planning (use `plan-next-issue` prompt)
-- Code review (use `review-and-close` prompt)
+- Code review (use `review-and-create-pr` prompt)
 
 ---
 
