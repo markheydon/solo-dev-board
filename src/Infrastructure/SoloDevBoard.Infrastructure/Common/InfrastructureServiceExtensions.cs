@@ -6,10 +6,12 @@ using SoloDevBoard.Application.Services.Common;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Migration;
+using SoloDevBoard.Application.Services.Workflows;
 using SoloDevBoard.Infrastructure.GitHub;
 using SoloDevBoard.Infrastructure.Identity;
 using SoloDevBoard.Infrastructure.Labels;
 using SoloDevBoard.Infrastructure.Milestones;
+using SoloDevBoard.Infrastructure.Workflows;
 
 namespace SoloDevBoard.Infrastructure.Common;
 
@@ -66,6 +68,7 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IGitHubService, GitHubService>();
         services.AddScoped<ILabelRepository, GitHubLabelRepository>();
         services.AddScoped<IMilestoneRepository, GitHubMilestoneRepository>();
+        services.AddScoped<IWorkflowFileRepository, GitHubWorkflowFileRepository>();
 
         return services;
     }
