@@ -9,7 +9,7 @@ using SoloDevBoard.Application.Services.Repositories;
 namespace SoloDevBoard.App.Components.Features.BoardRules.Pages;
 
 /// <summary>Provides the entry workflow for selecting a repository and project board to visualise.</summary>
-public partial class BoardRules : ComponentBase
+public partial class BoardRules : ComponentBase, IAsyncDisposable
 {
     /// <summary>Gets or sets the application service used to retrieve repositories.</summary>
     [Inject]
@@ -52,8 +52,18 @@ public partial class BoardRules : ComponentBase
     private bool hasComparisonProjectBoardLoadFailure;
     private string? comparisonInaccessibleProjectBoardsWarning;
     private BoardRulesComparisonResultDto? boardRulesComparison;
+    private CancellationTokenSource? _primaryProjectBoardsLoadCts;
+    private CancellationTokenSource? _primaryBoardRulesLoadCts;
+    private CancellationTokenSource? _comparisonProjectBoardsLoadCts;
+    private CancellationTokenSource? _comparisonBoardRulesLoadCts;
 
     /// <inheritdoc/>
+    public async ValueTask DisposeAsync()
+    {
+        CancelPrimaryLoads();
+        CancelComparisonLoads();
+        await ValueTask.CompletedTask;
+    }
     protected override async Task OnInitializedAsync()
     {
         await LoadRepositoriesAsync();
@@ -86,6 +96,7 @@ public partial class BoardRules : ComponentBase
 
     private async Task LoadRepositoriesAsync()
     {
+        CancelPrimaryLoads();
         isLoadingRepositories = true;
         hasRepositoryLoadFailure = false;
         errorMessage = null;
@@ -136,6 +147,7 @@ public partial class BoardRules : ComponentBase
 
         if (string.IsNullOrWhiteSpace(selectedFullName))
         {
+            CancelPrimaryLoads();
             selectedRepository = null;
             availableProjectBoardOptions = [];
             selectedProjectBoardId = string.Empty;
@@ -188,6 +200,7 @@ public partial class BoardRules : ComponentBase
 
         if (string.IsNullOrWhiteSpace(selectedFullName))
         {
+            CancelComparisonLoads();
             comparisonRepository = null;
             comparisonProjectBoardOptions = [];
             comparisonProjectBoardId = string.Empty;
@@ -203,6 +216,7 @@ public partial class BoardRules : ComponentBase
 
         if (comparisonRepository is null)
         {
+            CancelComparisonLoads();
             comparisonProjectBoardOptions = [];
             comparisonProjectBoardId = string.Empty;
             comparisonBoardRules = null;
@@ -244,9 +258,20 @@ public partial class BoardRules : ComponentBase
         selectedProjectBoardId = string.Empty;
         selectedRule = null;
 
+        var loadCts = BeginPrimaryProjectBoardsLoad();
+        var cancellationToken = loadCts.Token;
+
         try
         {
-            var discovery = await BoardRulesService.GetProjectBoardOptionsAsync(owner, repo);
+            var discovery = await BoardRulesService
+                .GetProjectBoardOptionsAsync(owner, repo, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (IsStalePrimaryProjectBoardsLoad(loadCts, repository))
+            {
+                return;
+            }
+
             availableProjectBoardOptions = discovery.Options;
             inaccessibleProjectBoardsWarning = LinkedProjectBoardVisibility.BuildInaccessibleProjectsWarning(
                 discovery.TotalLinkedProjectCount,
@@ -262,6 +287,10 @@ public partial class BoardRules : ComponentBase
                 UpdateBoardRulesComparison();
             }
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
         catch (HostedAuthenticationRequiredException ex)
         {
             if (HostedAuthRecovery.TryInitiateRecovery(ex))
@@ -271,12 +300,22 @@ public partial class BoardRules : ComponentBase
         }
         catch (HttpRequestException ex)
         {
+            if (IsStalePrimaryProjectBoardsLoad(loadCts, repository))
+            {
+                return;
+            }
+
             hasProjectBoardLoadFailure = true;
             errorMessage = $"GitHub API request failed while loading project boards. {ex.Message}";
             UpdateBoardRulesComparison();
         }
         catch (Exception ex)
         {
+            if (IsStalePrimaryProjectBoardsLoad(loadCts, repository))
+            {
+                return;
+            }
+
             hasProjectBoardLoadFailure = true;
             Logger.LogError(ex, "Failed to load project boards for repository {RepositoryFullName}.", repository.FullName);
             errorMessage = "An unexpected error occurred while loading project boards.";
@@ -284,7 +323,10 @@ public partial class BoardRules : ComponentBase
         }
         finally
         {
-            isLoadingProjectBoards = false;
+            if (ReferenceEquals(_primaryProjectBoardsLoadCts, loadCts))
+            {
+                isLoadingProjectBoards = false;
+            }
         }
     }
 
@@ -310,9 +352,20 @@ public partial class BoardRules : ComponentBase
         comparisonProjectBoardOptions = [];
         comparisonProjectBoardId = string.Empty;
 
+        var loadCts = BeginComparisonProjectBoardsLoad();
+        var cancellationToken = loadCts.Token;
+
         try
         {
-            var discovery = await BoardRulesService.GetProjectBoardOptionsAsync(owner, repo);
+            var discovery = await BoardRulesService
+                .GetProjectBoardOptionsAsync(owner, repo, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (IsStaleComparisonProjectBoardsLoad(loadCts, repository))
+            {
+                return;
+            }
+
             comparisonProjectBoardOptions = discovery.Options;
             comparisonInaccessibleProjectBoardsWarning = LinkedProjectBoardVisibility.BuildInaccessibleProjectsWarning(
                 discovery.TotalLinkedProjectCount,
@@ -328,6 +381,10 @@ public partial class BoardRules : ComponentBase
                 UpdateBoardRulesComparison();
             }
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
         catch (HostedAuthenticationRequiredException ex)
         {
             if (HostedAuthRecovery.TryInitiateRecovery(ex))
@@ -337,18 +394,31 @@ public partial class BoardRules : ComponentBase
         }
         catch (HttpRequestException)
         {
+            if (IsStaleComparisonProjectBoardsLoad(loadCts, repository))
+            {
+                return;
+            }
+
             hasComparisonProjectBoardLoadFailure = true;
             UpdateBoardRulesComparison();
         }
         catch (Exception ex)
         {
+            if (IsStaleComparisonProjectBoardsLoad(loadCts, repository))
+            {
+                return;
+            }
+
             hasComparisonProjectBoardLoadFailure = true;
             Logger.LogError(ex, "Failed to load comparison project boards for repository {RepositoryFullName}.", repository.FullName);
             UpdateBoardRulesComparison();
         }
         finally
         {
-            isLoadingComparisonProjectBoards = false;
+            if (ReferenceEquals(_comparisonProjectBoardsLoadCts, loadCts))
+            {
+                isLoadingComparisonProjectBoards = false;
+            }
         }
     }
 
@@ -365,11 +435,27 @@ public partial class BoardRules : ComponentBase
         hasBoardRulesLoadFailure = false;
         errorMessage = null;
 
+        var loadCts = BeginPrimaryBoardRulesLoad();
+        var cancellationToken = loadCts.Token;
+
         try
         {
-            selectedBoardRules = await BoardRulesService.GetBoardRulesAsync(owner, repo, projectBoardId).ConfigureAwait(false);
+            var boardRules = await BoardRulesService
+                .GetBoardRulesAsync(owner, repo, projectBoardId, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (IsStalePrimaryBoardRulesLoad(loadCts, projectBoardId))
+            {
+                return;
+            }
+
+            selectedBoardRules = boardRules;
             selectedTransition = BoardTransitions.FirstOrDefault();
             UpdateBoardRulesComparison();
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return;
         }
         catch (HostedAuthenticationRequiredException ex)
         {
@@ -380,12 +466,22 @@ public partial class BoardRules : ComponentBase
         }
         catch (HttpRequestException ex)
         {
+            if (IsStalePrimaryBoardRulesLoad(loadCts, projectBoardId))
+            {
+                return;
+            }
+
             hasBoardRulesLoadFailure = true;
             errorMessage = $"GitHub API request failed while loading board rules. {ex.Message}";
             UpdateBoardRulesComparison();
         }
         catch (Exception ex)
         {
+            if (IsStalePrimaryBoardRulesLoad(loadCts, projectBoardId))
+            {
+                return;
+            }
+
             hasBoardRulesLoadFailure = true;
             Logger.LogError(ex, "Failed to load board rules for project board {ProjectBoardId} in repository {Owner}/{Repo}.", projectBoardId, owner, repo);
             errorMessage = "An unexpected error occurred while loading board rules.";
@@ -393,7 +489,10 @@ public partial class BoardRules : ComponentBase
         }
         finally
         {
-            isLoadingBoardRules = false;
+            if (ReferenceEquals(_primaryBoardRulesLoadCts, loadCts))
+            {
+                isLoadingBoardRules = false;
+            }
         }
     }
 
@@ -407,10 +506,26 @@ public partial class BoardRules : ComponentBase
         comparisonBoardRules = null;
         hasComparisonProjectBoardLoadFailure = false;
 
+        var loadCts = BeginComparisonBoardRulesLoad();
+        var cancellationToken = loadCts.Token;
+
         try
         {
-            comparisonBoardRules = await BoardRulesService.GetBoardRulesAsync(owner, repo, projectBoardId).ConfigureAwait(false);
+            var boardRules = await BoardRulesService
+                .GetBoardRulesAsync(owner, repo, projectBoardId, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (IsStaleComparisonBoardRulesLoad(loadCts, projectBoardId))
+            {
+                return;
+            }
+
+            comparisonBoardRules = boardRules;
             UpdateBoardRulesComparison();
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return;
         }
         catch (HostedAuthenticationRequiredException ex)
         {
@@ -421,18 +536,31 @@ public partial class BoardRules : ComponentBase
         }
         catch (HttpRequestException)
         {
+            if (IsStaleComparisonBoardRulesLoad(loadCts, projectBoardId))
+            {
+                return;
+            }
+
             hasComparisonProjectBoardLoadFailure = true;
             UpdateBoardRulesComparison();
         }
         catch (Exception ex)
         {
+            if (IsStaleComparisonBoardRulesLoad(loadCts, projectBoardId))
+            {
+                return;
+            }
+
             hasComparisonProjectBoardLoadFailure = true;
             Logger.LogError(ex, "Failed to load comparison board rules for project board {ProjectBoardId} in repository {Owner}/{Repo}.", projectBoardId, owner, repo);
             UpdateBoardRulesComparison();
         }
         finally
         {
-            isLoadingComparisonBoardRules = false;
+            if (ReferenceEquals(_comparisonBoardRulesLoadCts, loadCts))
+            {
+                isLoadingComparisonBoardRules = false;
+            }
         }
     }
 
@@ -463,6 +591,7 @@ public partial class BoardRules : ComponentBase
 
     private void ClearComparisonState()
     {
+        CancelComparisonLoads();
         comparisonRepository = null;
         comparisonProjectBoardOptions = [];
         comparisonProjectBoardId = string.Empty;
@@ -663,4 +792,74 @@ public partial class BoardRules : ComponentBase
                 : hasBoardRulesLoadFailure
                     ? "Unable to load board rules"
                     : "Unable to load project boards";
+
+    private CancellationTokenSource BeginPrimaryProjectBoardsLoad()
+    {
+        CancelPrimaryLoads();
+        _primaryProjectBoardsLoadCts = new CancellationTokenSource();
+        return _primaryProjectBoardsLoadCts;
+    }
+
+    private CancellationTokenSource BeginPrimaryBoardRulesLoad()
+    {
+        _primaryBoardRulesLoadCts?.Cancel();
+        _primaryBoardRulesLoadCts?.Dispose();
+        _primaryBoardRulesLoadCts = new CancellationTokenSource();
+        return _primaryBoardRulesLoadCts;
+    }
+
+    private CancellationTokenSource BeginComparisonProjectBoardsLoad()
+    {
+        CancelComparisonLoads();
+        _comparisonProjectBoardsLoadCts = new CancellationTokenSource();
+        return _comparisonProjectBoardsLoadCts;
+    }
+
+    private CancellationTokenSource BeginComparisonBoardRulesLoad()
+    {
+        _comparisonBoardRulesLoadCts?.Cancel();
+        _comparisonBoardRulesLoadCts?.Dispose();
+        _comparisonBoardRulesLoadCts = new CancellationTokenSource();
+        return _comparisonBoardRulesLoadCts;
+    }
+
+    private void CancelPrimaryLoads()
+    {
+        _primaryProjectBoardsLoadCts?.Cancel();
+        _primaryProjectBoardsLoadCts?.Dispose();
+        _primaryProjectBoardsLoadCts = null;
+        _primaryBoardRulesLoadCts?.Cancel();
+        _primaryBoardRulesLoadCts?.Dispose();
+        _primaryBoardRulesLoadCts = null;
+    }
+
+    private void CancelComparisonLoads()
+    {
+        _comparisonProjectBoardsLoadCts?.Cancel();
+        _comparisonProjectBoardsLoadCts?.Dispose();
+        _comparisonProjectBoardsLoadCts = null;
+        _comparisonBoardRulesLoadCts?.Cancel();
+        _comparisonBoardRulesLoadCts?.Dispose();
+        _comparisonBoardRulesLoadCts = null;
+    }
+
+    private bool IsStalePrimaryProjectBoardsLoad(CancellationTokenSource loadCts, RepositoryDto repository)
+        => loadCts.IsCancellationRequested
+            || !ReferenceEquals(_primaryProjectBoardsLoadCts, loadCts)
+            || !string.Equals(selectedRepository?.FullName, repository.FullName, StringComparison.OrdinalIgnoreCase);
+
+    private bool IsStalePrimaryBoardRulesLoad(CancellationTokenSource loadCts, string projectBoardId)
+        => loadCts.IsCancellationRequested
+            || !ReferenceEquals(_primaryBoardRulesLoadCts, loadCts)
+            || !string.Equals(selectedProjectBoardId, projectBoardId, StringComparison.Ordinal);
+
+    private bool IsStaleComparisonProjectBoardsLoad(CancellationTokenSource loadCts, RepositoryDto repository)
+        => loadCts.IsCancellationRequested
+            || !ReferenceEquals(_comparisonProjectBoardsLoadCts, loadCts)
+            || !string.Equals(comparisonRepository?.FullName, repository.FullName, StringComparison.OrdinalIgnoreCase);
+
+    private bool IsStaleComparisonBoardRulesLoad(CancellationTokenSource loadCts, string projectBoardId)
+        => loadCts.IsCancellationRequested
+            || !ReferenceEquals(_comparisonBoardRulesLoadCts, loadCts)
+            || !string.Equals(comparisonProjectBoardId, projectBoardId, StringComparison.Ordinal);
 }

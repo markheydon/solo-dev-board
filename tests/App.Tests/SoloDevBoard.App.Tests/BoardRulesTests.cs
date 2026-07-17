@@ -838,6 +838,66 @@ public sealed class BoardRulesTests
             Times.Once);
     }
 
+    [Fact]
+    public async Task BoardRules_RapidRepositoryChange_IgnoresStaleProjectBoardResponse()
+    {
+        // Arrange
+        var repositoryA = CreateRepository("owner", "repo-a");
+        var repositoryB = CreateRepository("owner", "repo-b");
+        var repositoryADiscoveryTask = new TaskCompletionSource<BoardRulesProjectBoardDiscoveryDto>();
+
+        _repositoryServiceMock
+            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([repositoryA, repositoryB]);
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
+            .Returns(repositoryADiscoveryTask.Task);
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-b", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+            [
+                new BoardRulesProjectBoardOptionDto("PVT_beta", "Beta Board", "owner"),
+            ],
+            1,
+            0));
+
+        _boardRulesServiceMock
+            .Setup(service => service.GetBoardRulesAsync("owner", "repo-b", "PVT_beta", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BoardRulesDefinitionDto(
+                "PVT_beta",
+                "Beta Board",
+                "owner",
+                [new BoardColumnDto(0, "Backlog", 0, ["Backlog"])],
+                [],
+                []));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<BoardRules>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='board-rules-repository-autocomplete']"));
+
+        var selectRepositoryATask = SelectRepositoryAsync(cut, repositoryA);
+        await SelectRepositoryAsync(cut, repositoryB);
+        cut.WaitForAssertion(() => Assert.Contains("Beta Board", cut.Markup));
+
+        repositoryADiscoveryTask.SetResult(new BoardRulesProjectBoardDiscoveryDto(
+        [
+            new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
+        ],
+        1,
+        0));
+
+        await selectRepositoryATask;
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Beta Board", cut.Markup);
+            Assert.DoesNotContain("Alpha Board", cut.Markup);
+        });
+    }
+
     private BunitContext CreateContext()
     {
         var ctx = new BunitContext();
