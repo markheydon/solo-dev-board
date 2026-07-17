@@ -32,7 +32,7 @@ It is built with the solo developer in mind: opinionated defaults, minimal confi
 | **One-Click Migration** | Migrate labels and milestones from one repository to another in a single action. Project board migration is planned. | Partially Available |
 | **Board Rules Visualiser** | Visualise supported board states and transitions for GitHub Project v2 boards. | Partially Available |
 | **Triage UI** | Keyboard-friendly interface for triaging incoming issues quickly. | Available |
-| **Workflow Templates** | Browse, customise, and apply GitHub Actions workflow templates across repositories. | Coming Soon |
+| **Workflow Templates** | Browse built-in GitHub Actions workflow templates. Customise, apply, and track template coverage across repositories. | Partially Available |
 
 ---
 

@@ -5,7 +5,7 @@ parent: User Guide
 nav_order: 6
 ---
 
-> ⚠️ **Under Development** — This feature is planned for Phase 4. This page will be updated as the feature progresses.
+> ⚠️ **Partially Available** — Template browsing is available. Customisation, apply, and staleness tracking are planned for later Phase 4 stories.
 
 ---
 
@@ -22,11 +22,25 @@ Key goals of Workflow Templates:
 
 ## How to Use
 
-*Coming soon — this section will describe the Workflow Templates interface once the feature is complete.*
+### Browse built-in templates
 
-Planned interactions include:
-- Browsing the built-in template library (e.g. CI, CD, release, dependabot).
-- Selecting a template and customising its parameters for a target repository.
+1. Open **Workflow Templates** from the navigation menu or the home dashboard.
+2. Review the built-in template cards for common .NET workflows such as CI, Azure CD (Aspire), and Dependabot auto-merge.
+3. Use the search field to filter templates by name, category, or tag.
+4. Select a category chip (for example **CI** or **CD**) to narrow the list.
+5. Select a template card to highlight it before customising or applying the template in a later workflow.
+
+Each template card shows:
+
+- Template name and description.
+- Category and tags.
+- Target workflow file path.
+- Trigger summary describing when the workflow runs.
+
+### Coming soon
+
+The following interactions are planned for later Phase 4 stories:
+- Customising template parameters before applying a template to a repository.
 - Applying a template to one or more repositories.
 - Viewing which repositories already have a template applied and whether it differs from the canonical version.
 - Updating an out-of-date workflow file across multiple repositories.
