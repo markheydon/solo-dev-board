@@ -215,5 +215,5 @@ Default workflow order for feature delivery:
 - **Runbook:** `plan/PM_RUNBOOK.md`
 - **Agents:** `.github/agents/*.agent.md` (Copilot)
 - **Prompts:** `.github/prompts/*.prompt.md` (Copilot)
-- **Cursor commands:** `.cursor/commands/` (when defined)
+- **Cursor commands:** [`.cursor/commands/implement-issue.md`](.cursor/commands/implement-issue.md) — type `/implement-issue` in Agent chat after planning (Copilot handles PM prompts)
 - **Copilot stack baseline:** `.github/copilot-instructions.md` and `.github/instructions/*.md`

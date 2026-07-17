@@ -48,12 +48,16 @@ Reusable workflow prompts for daily PM operations:
 
 - `daily-start`: Morning status check → backlog health → blocker identification → next action recommendation
 - `plan-next-issue`: Backlog selection → scope validation → breakdown-plan → GitHub issue creation (invokes PM Orchestrator)
-- `execute-feature`: Implementation → tests → docs → ADR (invokes Delivery Agent)
+- `implement-issue`: Implementation → tests → docs → ADR (invokes Delivery Agent)
 - `review-and-close`: Quality gates → PR creation → issue closure (invokes Review Agent)
 - `weekly-pm-review`: Milestone health → velocity trends → release confidence → top 3 priorities
 
 **Prompt definitions:** `.github/prompts/*.prompt.md`  
 **Prompt usage guide:** `plan/PM_RUNBOOK.md`
+
+## Cursor entry points
+
+- **Implementation:** `/implement-issue` in Agent chat → Delivery Agent contract in [`.github/agents/delivery.agent.md`](../../.github/agents/delivery.agent.md)
 
 ## Canonical Sources
 

@@ -110,22 +110,22 @@ solo-dev-board/
 │   ├── 0003-bicep-infrastructure.md
 │   ├── 0004-layered-architecture.md
 │   └── 0005-github-api-strategy.md
-└── .github/
-    ├── copilot-instructions.md  # GitHub Copilot custom instructions
-    ├── ISSUE_TEMPLATE/          # Issue templates (feature, bug, chore)
-    ├── pull_request_template.md
-    └── workflows/
-        ├── ci.yml               # CI: build and test on every PR
-        ├── cd.yml               # CD: Aspire deploy to Azure (manual until first success)
-        └── aspire-deploy-validate.yml  # Validates AppHost deployment model on PR
+├── .github/
+│   ├── copilot-instructions.md  # GitHub Copilot custom instructions
+│   ├── agents/                  # Copilot agent definitions
+│   ├── prompts/                 # Copilot workflow prompts
+│   ├── ISSUE_TEMPLATE/          # Issue templates (feature, bug, chore)
+│   ├── pull_request_template.md
+│   └── workflows/
+│       ├── ci.yml               # CI: build and test on every PR
+│       ├── cd.yml               # CD: Aspire deploy to Azure (manual until first success)
+│       └── aspire-deploy-validate.yml  # Validates AppHost deployment model on PR
 ├── .agents/
-│   ├── skills/                  # Shared skills (Copilot + Cursor)
-│   ├── agents/                  # Canonical agent definitions
-│   └── prompts/                 # Canonical workflow prompts
+│   └── skills/                  # Shared skills (Copilot + Cursor)
 ├── .cursor/
 │   ├── rules/                   # Cursor path-scoped rules
-│   └── commands/                # Cursor slash commands (/daily-start, etc.)
-├── AGENTS.md                    # Platform-neutral AI collaborator standards
+│   └── commands/                # Cursor slash commands (/implement-issue, etc.)
+└── AGENTS.md                    # Platform-neutral AI collaborator standards
 ```
 
 ---
