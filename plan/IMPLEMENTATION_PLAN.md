@@ -10,8 +10,8 @@ Phases remain the primary sequence for feature delivery. Unfinished work from ea
 
 **Current roadmap status (2026-07-15):**
 - Phase 3 is complete. One-Click Migration and Triage UI are delivered, and the v0.3.0 milestone is ready for closure.
-- Phase 4 is next and ready to start.
-- Phase 5 has not started.
+- Phase 4 is complete. Board Rules Visualiser and Workflow Templates are delivered.
+- Phase 5 is next and ready to start.
 - Selected Phase 6 public-release work was pulled forward as a hosted-validation side-step only. The intended delivery order remains: complete Phase 3, then Phase 4, then Phase 5, then complete the remaining Phase 6 release work.
 
 For the full feature scope, see [SCOPE.md](SCOPE.md). For individual feature backlogs, see [BACKLOG.md](BACKLOG.md).
@@ -127,7 +127,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Milestone:** v0.4.0
 
-**Status:** In progress. Board Rules Visualiser compare mode implementation and testing are currently underway.
+**Status:** Complete. Board Rules Visualiser and Workflow Templates are delivered.
 
 ### Key Tasks
 
@@ -161,7 +161,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Milestone:** v0.5.0
 
-**Status:** Not started. Work on this phase begins after Phase 4 is complete.
+**Status:** Not started. Work on this phase begins after Phase 4 is complete and the v0.4.0 milestone is closed.
 
 ### Key Tasks
 
