@@ -5,7 +5,7 @@ applyTo: '**/*.razor, **/*.razor.cs, **/*.razor.css'
 
 ## UI Library — MudBlazor
 
-This project uses **MudBlazor** as its sole UI component library (see ADR-0012).
+This project uses **MudBlazor** as its sole UI component library (see [DEC-009](../../plan/DECISIONS.md#dec-009-mudblazor-as-the-sole-ui-component-library)).
 
 - **Never use raw HTML form elements** where a MudBlazor component exists. Use `<MudTextField>`, `<MudSelect>`, `<MudAutocomplete>`, `<MudCheckBox>`, `<MudSwitch>`, `<MudColorPicker>`, etc.
 - **Never use raw `<input>`, `<select>`, `<textarea>`, `<button>`** in Razor components — always use the `<Mud*>` equivalent.
@@ -58,7 +58,7 @@ MudLayout
     Page content composed with MudBlazor components and utility classes
 ```
 
-Do not deviate from this structure without an ADR.
+Do not deviate from this structure without a decision log entry and constitution update.
 
 ## MudBlazor Dialog Pattern
 

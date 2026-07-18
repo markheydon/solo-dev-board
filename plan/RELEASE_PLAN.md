@@ -61,7 +61,25 @@ During the pre-1.0 development phase (`0.x.y`), minor version bumps may include 
 - Board Rules Visualiser: interactive diagram of project board automation rules
 - Workflow Templates: built-in template library, apply to repositories
 
+**Status:** Complete (2026-07-17).
+
 **Target:** End of Phase 4
+
+---
+
+### v0.5.0 — Cross-Repo PM Workflow
+
+**Goal:** Deliver the Cross-Repo PM Workflow epic — Daily Focus, Backlog Review, Iteration Planning, and Repo Management.
+
+**Scope:**
+- Daily Focus view: board state, stalled items, top-priority recommendations
+- Backlog Review: cross-repository priority grouping, neglected-repo detection
+- Iteration Planning: capacity management, Up Next curation, milestone assignment
+- Repo Management: excluded-repositories configuration
+
+**Status:** Not started. Next active phase.
+
+**Target:** End of Phase 5 (see [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md))
 
 ---
 
@@ -77,7 +95,9 @@ During the pre-1.0 development phase (`0.x.y`), minor version bumps may include 
 - Complete user-facing documentation
 - Full Azure deployment pipeline with environment gates
 
-**Sequencing note:** Selected hosted-authentication and Azure-delivery items were pulled forward to support safe hosted validation. This did not change the main roadmap order, which still returns to the unfinished Phase 3 work first, then Phase 4, then Phase 5, before the remaining v1.0.0 work is completed.
+**Status:** Partially complete. Hosted authentication and Aspire ACA deployment are delivered; operational hardening and release closure remain open.
+
+**Sequencing note:** Selected hosted-authentication and Azure-delivery items were pulled forward to support safe hosted validation. Phases 1–4 are complete. The remaining delivery order is Phase 5, then Phase 6 closure.
 
 **Target:** End of Phase 6
 

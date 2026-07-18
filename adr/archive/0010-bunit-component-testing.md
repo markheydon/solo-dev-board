@@ -7,7 +7,7 @@
 
 ## Context
 
-SoloDevBoard is developed and extended by AI coding agents (see `.github/agents/delivery.agent.md`). For AI-driven delivery to be reliable, every code change must be validated by automated tests before a human reviews the work. The application has Blazor Server UI components that contain meaningful conditional rendering logic — loading states, error states, empty states, and data states — all of which must be verified automatically.
+SoloDevBoard is developed and extended by AI coding agents (see `.agents/contracts/delivery.md`). For AI-driven delivery to be reliable, every code change must be validated by automated tests before a human reviews the work. The application has Blazor Server UI components that contain meaningful conditional rendering logic — loading states, error states, empty states, and data states — all of which must be verified automatically.
 
 The application already uses xUnit for unit testing service and infrastructure layers (see [ADR-0002](0002-testing-framework.md), [ADR-0006](0006-moq-mocking-library.md)). The question is how to extend that automated validation to cover Blazor component behaviour.
 

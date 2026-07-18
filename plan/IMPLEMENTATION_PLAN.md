@@ -8,11 +8,12 @@ This document describes the phased implementation of SoloDevBoard. Each phase ha
 **Note on sequencing:**
 Phases remain the primary sequence for feature delivery. Unfinished work from earlier phases remains open until completed, regardless of progress in later phases. However, certain public-release prerequisites from Phase 6 (such as hosted authentication and admission control) may be pulled forward out of sequence when required to enable safe hosted validation. This does not imply that earlier phases are complete or that the product has reached v1.0.0 readiness.
 
-**Current roadmap status (2026-07-15):**
-- Phase 3 is complete. One-Click Migration and Triage UI are delivered, and the v0.3.0 milestone is ready for closure.
-- Phase 4 is complete. Board Rules Visualiser and Workflow Templates are delivered.
-- Phase 5 is next and ready to start.
-- Selected Phase 6 public-release work was pulled forward as a hosted-validation side-step only. The intended delivery order remains: complete Phase 3, then Phase 4, then Phase 5, then complete the remaining Phase 6 release work.
+**Current roadmap status (2026-07-18):**
+- Phases 1–4 are complete. All six core feature areas are delivered (Label Manager, Audit Dashboard, One-Click Migration, Triage UI, Board Rules Visualiser, Workflow Templates).
+- Phase 5 (Cross-Repo PM Workflow, v0.5.0) is next and ready to start.
+- Phase 6 (Production Ready, v1.0.0) is partially complete. Hosted authentication, Aspire ACA deployment, and Dependabot are delivered; operational hardening, release closure, and remaining auth polish remain open.
+- Selected Phase 6 public-release work was pulled forward as a hosted-validation side-step. The remaining delivery order is: Phase 5, then complete Phase 6.
+- Deferred follow-on slices from Phases 1–4 (project board migration, custom workflow template repos, Audit Dashboard enhancements) are tracked in [BACKLOG.md](BACKLOG.md) under the relevant epics and the deferred-items summary.
 
 For the full feature scope, see [SCOPE.md](SCOPE.md). For individual feature backlogs, see [BACKLOG.md](BACKLOG.md).
 
@@ -26,20 +27,22 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Milestone:** v0.1.0
 
+**Status:** Complete.
+
 ### Key Tasks
 
-- [ ] Scaffold solution structure: `App`, `Application`, `Domain`, `Infrastructure` projects
-- [ ] Configure nullable reference types, implicit usings, and coding conventions across all projects
-- [ ] Implement GitHub Personal Access Token (PAT) authentication flow
-- [ ] Implement GitHub App authentication flow (optional in this phase, required before v1.0)
-- [ ] Implement `IGitHubService` interface in `Application` layer
-- [ ] Implement `GitHubRestClient` in `Infrastructure` layer (using `Octokit` or `HttpClient` + `System.Text.Json`)
+- [x] Scaffold solution structure: `App`, `Application`, `Domain`, `Infrastructure` projects
+- [x] Configure nullable reference types, implicit usings, and coding conventions across all projects
+- [x] Implement GitHub Personal Access Token (PAT) authentication flow
+- [x] Implement GitHub App authentication flow (optional in this phase, required before v1.0 — delivered in Phase 6 hosted-auth side-step)
+- [x] Implement `IGitHubService` interface in `Application` layer
+- [x] Implement `GitHubService` in `Infrastructure` layer (using `HttpClient` + `System.Text.Json`)
 - [x] Implement basic repository listing: fetch and display all repositories the authenticated user has access to _(issue #8 done — 2026-03-07)_
-- [ ] Create a basic MudBlazor dashboard shell page (empty panels for each of the 6 features)
-- [ ] Configure `appsettings.json` and user secrets for local development
-- [ ] Set up xUnit test projects; write smoke tests for `GitHubRestClient`
-- [ ] Set up CI workflow (`.github/workflows/ci.yml`) — build and test on every PR
-- [ ] Deploy to Azure Container Apps using Aspire (`aspire deploy` from `SoloDevBoard.AppHost`) — confirm the app runs in the cloud
+- [x] Create a MudBlazor home page with navigation to all feature areas _(evolved from the original empty dashboard shell)_
+- [x] Configure `appsettings.json` and user secrets for local development
+- [x] Set up xUnit test projects; write smoke tests for `GitHubService`
+- [x] Set up CI workflow (`.github/workflows/ci.yml`) — build and test on every PR
+- [x] Deploy to Azure Container Apps using Aspire (`aspire deploy` from `SoloDevBoard.AppHost`) — confirm the app runs in the cloud
 
 ### Dependencies
 
@@ -54,6 +57,8 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Milestone:** v0.2.0
 
+**Status:** Complete. Core Label Manager and Audit Dashboard features are delivered. Label consistency warnings and Audit Dashboard enhancements (auto-refresh, Markdown export) are deferred — see [BACKLOG.md](BACKLOG.md).
+
 ### Key Tasks
 
 #### Architecture Preparation (Multi-Tenancy Readiness)
@@ -62,22 +67,23 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Refactor `IGitHubService` and all Application-layer services to inject and use `ICurrentUserContext` — no service may access `IOptions<GitHubAuthOptions>` directly
 
 #### Label Manager
-- [ ] Design `Label` domain record and `ILabelRepository` interface
-- [ ] Implement `GitHubLabelRepository` in `Infrastructure`
-- [ ] Implement `LabelService` in `Application` (CRUD, sync operations)
-- [ ] Build MudBlazor UI components for the Label Manager
-- [ ] Implement label synchronisation logic (compare source and target, produce diff, apply changes)
-- [ ] Write unit tests for `LabelService` using Moq
-- [ ] Write integration tests for `GitHubLabelRepository` (against GitHub API test org or mocked HTTP)
-- [ ] Update `docs/user-guide/label-manager.md`
+- [x] Design `Label` domain record and `ILabelRepository` interface
+- [x] Implement `GitHubLabelRepository` in `Infrastructure`
+- [x] Implement `LabelService` in `Application` (CRUD, sync operations)
+- [x] Build MudBlazor UI components for the Label Manager
+- [x] Implement label synchronisation logic (compare source and target, produce diff, apply changes)
+- [x] Write unit tests for `LabelService` using Moq
+- [x] Write infrastructure tests for `GitHubLabelRepository` (mocked HTTP)
+- [x] Update `docs/user-guide/label-manager.md`
 
 #### Audit Dashboard
-- [ ] Design `AuditReport` domain record
-- [ ] Implement `AuditService` in `Application` (aggregate data from multiple repositories)
-- [ ] Build MudBlazor UI components for the Audit Dashboard
-- [ ] Implement health indicators: unlabelled issues, stale PRs, failing workflows, label inconsistencies
-- [ ] Write unit tests for `AuditService`
-- [ ] Update `docs/user-guide/audit-dashboard.md`
+- [x] Design `AuditReport` domain record
+- [x] Implement `AuditDashboardService` in `Application` (aggregate data from multiple repositories)
+- [x] Build MudBlazor UI components for the Audit Dashboard
+- [x] Implement health indicators: unlabelled issues, stale PRs, failing workflows
+- [ ] Implement label consistency warnings _(deferred — originally scoped in SCOPE.md but not yet built)_
+- [x] Write unit tests for `AuditDashboardService`
+- [x] Update `docs/user-guide/audit-dashboard.md`
 
 ### Dependencies
 
@@ -105,19 +111,19 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Update `docs/user-guide/one-click-migration.md`.
 
 #### Triage UI
-- [ ] Design `TriageSession` and `TriageAction` domain records
-- [ ] Implement `TriageService` in `Application`
-- [ ] Build focused MudBlazor triage view with keyboard shortcut support
-- [ ] Implement quick actions: label, assign milestone, add to project, close as duplicate
-- [ ] Write unit tests for `TriageService`
-- [ ] Update `docs/user-guide/triage-ui.md`
+- [x] Design `TriageSession` and `TriageAction` domain records
+- [x] Implement `TriageService` in `Application`
+- [x] Build focused MudBlazor triage view with keyboard shortcut support
+- [x] Implement quick actions: label, assign milestone, add to project, close as duplicate
+- [x] Write unit tests for `TriageService`
+- [x] Update `docs/user-guide/triage-ui.md`
 
 
 ### Dependencies
 
 - Phase 2 complete (Label Manager, GitHub label/milestone API integration)
 
-**Note:** v0.3.0 is effectively complete and ready to transition to Phase 4. Confirm milestone closure on GitHub once roadmap board hygiene is verified.
+**Note:** v0.3.0 is complete. Project board column migration remains a deferred follow-on slice (ADR-0013).
 
 ---
 
@@ -141,12 +147,13 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Update `docs/user-guide/board-rules-visualiser.md` _(compare mode documented as available)_
 
 #### Workflow Templates
-- [ ] Design `WorkflowTemplate` domain record
-- [ ] Implement `WorkflowTemplateService` in `Application`
-- [ ] Build MudBlazor UI: template browser, parameter editor, apply to repositories, staleness tracker
-- [ ] Include built-in templates: CI (dotnet), CD (Aspire deploy to Azure Container Apps), Dependabot
-- [ ] Write unit tests for `WorkflowTemplateService`
-- [ ] Update `docs/user-guide/workflow-templates.md`
+- [x] Design `WorkflowTemplate` domain record
+- [x] Implement `WorkflowTemplateService` in `Application`
+- [x] Build MudBlazor UI: template browser, parameter editor, apply to repositories, staleness tracker
+- [x] Include built-in templates: CI (dotnet), CD (Aspire deploy to Azure Container Apps), Dependabot
+- [x] Write unit tests for `WorkflowTemplateService`
+- [x] Update `docs/user-guide/workflow-templates.md`
+- [ ] Support custom template repositories _(deferred follow-on slice — only built-in templates are available today)_
 
 ### Dependencies
 
@@ -161,7 +168,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Milestone:** v0.5.0
 
-**Status:** Not started. Work on this phase begins after Phase 4 is complete and the v0.4.0 milestone is closed.
+**Status:** Not started. Phases 1–4 are complete; this is the next active phase.
 
 ### Key Tasks
 
@@ -204,7 +211,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Milestone:** v1.0.0
 
-**Status:** Not the current execution focus. Selected hosted-authentication and Azure-delivery items have been pulled forward for validation, but the main roadmap still returns to the unfinished Phase 3, then Phase 4, then Phase 5, before the remaining Phase 6 work is completed.
+**Status:** Partially complete. Hosted authentication, Aspire ACA deployment, and Dependabot are delivered. Operational hardening, release closure, and remaining auth polish are open. Begins in earnest after Phase 5.
 
 ### Key Tasks
 - [ ] Achieve ≥80% unit test coverage across `Application` and `Domain` projects.
@@ -217,7 +224,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [ ] Implement response caching for GitHub API calls to respect rate limits. _(#108)_
 - [ ] Configure structured logging and Application Insights telemetry. _(#107)_
 - [x] Set up Dependabot for automated dependency updates. _(#109)_
-- [ ] Preserve PAT-only local trusted mode for development and trusted self-hosted use.
+- [ ] Formalise and document PAT-only local trusted mode and self-hoster deployment path for development and trusted self-hosted use. _(PAT mode is implemented; self-hoster docs and dedicated landing page remain open — see BACKLOG.md Epic 101.)_
 - [x] Implement hosted authentication session boundaries and per-request user context for GitHub App-first hosted mode. _(#103, #112; implemented on 2026-03-13, see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_
 - [x] Integrate the real hosted sign-in gateway and session/callback handshake at `/auth/sign-in`, mapping required hosted claims before admission control and repository loading. _(#103, #123; implemented on 2026-03-16; see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md; closes the `/auth/sign-in` planning gap and unblocks #114 and #119.)_
 - [x] Handle hosted installation context validation and token lifecycle checks (expiry and failure handling) for hosted requests. _(#103, #111; implemented on 2026-03-13; see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_
@@ -235,9 +242,9 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 ### Dependencies
 
-- Intended release sequence: complete the remaining Phase 3 work first, then Phase 4, then Phase 5, before closing out the remaining Phase 6 release work.
+- Intended release sequence: complete Phase 5, then close out the remaining Phase 6 release work.
 
-**Note:** Some Phase 6 public-release prerequisites (such as hosted authentication and admission control) may be advanced out of sequence to enable safe hosted validation. This does not imply that Phases 3–5 are complete or that the product is otherwise ready for v1.0.0 release.
+**Note:** Hosted authentication and admission control were advanced out of sequence to enable safe hosted validation. Phases 1–4 are complete; v1.0.0 readiness depends on Phase 5 and the remaining Phase 6 tasks above.
 
 
 ## AI Collaborator Instructions
@@ -249,11 +256,11 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 3. Add the feature's epics and user stories to `plan/BACKLOG.md`.
 4. Create a stub page in `docs/user-guide/<feature>.md`.
 5. Open a GitHub Issue using the `feature.yml` template with the appropriate labels from `plan/LABEL_STRATEGY.md`.
-6. Only then begin implementing the feature, following the architecture rules in `.github/copilot-instructions.md`.
+6. Only then begin implementing the feature, following the architecture rules in `AGENTS.md`.
 
 ### Keeping Docs in Sync with Code
 
 - When a phase task is completed, tick it off in this document.
 - When a feature's user-facing doc is written, update the stub notice in `docs/user-guide/<feature>.md`.
-- When a new ADR is created, add it to `adr/README.md`.
+- When a new decision is recorded, add it to `plan/DECISIONS.md` per `repo-decision-log`.
 - When a new environment variable is introduced, update `docs/getting-started.md` and `docs/deployment.md`.

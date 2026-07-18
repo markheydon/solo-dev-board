@@ -298,7 +298,7 @@ fi
 
 ---
 
-### Event 3: Issue Closed (Review Agent responsibility, post-merge)
+### Event 3: Issue Closed (Verify Agent responsibility, post-merge)
 
 When a PR is merged and the issue is closed, update Status to "Done" and **overwrite Target Date with today's actual completion date**. This replaces the planned estimate set at Event 1, giving a true record of when the work finished.
 
@@ -324,7 +324,7 @@ gh project item-edit \
 
 ---
 
-### Event 3a: Cascade "Done" to Parent Feature and Epic (Review Agent responsibility, post-merge)
+### Event 3a: Cascade "Done" to Parent Feature and Epic (Verify Agent responsibility, post-merge)
 
 After closing a Story, Enabler, or Test via Event 3, check whether **all sibling issues** under the same parent Feature are now closed. If so, apply Event 3 to the Feature (close it, `status/done`, board Status→Done, Target Date→today). Then repeat: if all Features under the parent Epic are also closed, apply Event 3 to the Epic too.
 

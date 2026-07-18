@@ -50,7 +50,7 @@ Your task is to ensure .NET/C# code in `${selection}` meets the SoloDevBoard sta
 
 - Use `xUnit` for tests
 - Use `Moq` for mocking dependencies
-- Use xUnit's built-in `Assert.*` methods for all assertions. **Do not add FluentAssertions** — it requires a commercial licence and is prohibited in this open-source project (see ADR-0008)
+- Use xUnit's built-in `Assert.*` methods for all assertions. **Do not add FluentAssertions** — it requires a commercial licence and is prohibited in this open-source project (see [DEC-006](../../plan/DECISIONS.md#dec-006-no-fluentassertions--xunit-built-in-assertions-only))
 - Follow AAA pattern (Arrange, Act, Assert)
 - Use test naming convention: `MethodUnderTest_Scenario_ExpectedOutcome`
 - Test both success and failure scenarios

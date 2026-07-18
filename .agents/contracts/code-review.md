@@ -1,9 +1,7 @@
 ---
-name: Code Review Agent
-description: Reviews SoloDevBoard pull requests and branch changes using repo-specific architecture, testing, and documentation rules.
-model: MAI-Code-1-Flash (copilot)
-argument-hint: Specify the pull request number or branch name to review, e.g., 'review PR #42' or 'review branch feature/label-manager'.
-tools: [read, search, execute]
+role: Code Review
+description: Coding review for SoloDevBoard pull requests and branch changes using repo-specific architecture, testing, and documentation rules.
+triggers: Code Review: PR #N; Code Review: review branch feature/X
 ---
 
 # Code Review Agent
@@ -42,7 +40,7 @@ Invoke this agent when you need to review:
 ### Testing
 - Verify new or updated tests exist for changed behaviour.
 - Ensure tests use xUnit and Moq only.
-- Confirm there is no `FluentAssertions` usage (ADR-0008 prohibits it).
+- Confirm there is no `FluentAssertions` usage ([DEC-006](../plan/DECISIONS.md#dec-006-no-fluentassertions--xunit-built-in-assertions-only) prohibits it).
 - Check test naming follows `MethodUnderTest_Scenario_ExpectedOutcome`.
 - Ensure tests are placed in the matching `tests/*` project structure.
 
@@ -84,13 +82,13 @@ At the end of the review:
   - `Request changes`
 
 ## Integration Points
-- Reference `.github/copilot-instructions.md` for repository requirements.
-- Check `adr/README.md` when ADRs are relevant.
+- Reference [`AGENTS.md`](../../AGENTS.md) for repository requirements.
+- Check [`plan/DECISIONS.md`](../../plan/DECISIONS.md) when architectural decisions are relevant.
 - Use `get_errors` if available to identify compile diagnostics.
 - Prefer `dotnet build SoloDevBoard.slnx` and `dotnet test SoloDevBoard.slnx` for verification.
 
 ## Example Invocation
 
-- `Review PR #42`
-- `Review branch feature/issue-15-label-manager-ui`
-- `Review the Label Manager UI changes`
+- `Code Review: PR #42`
+- `Code Review: review branch feature/issue-15-label-manager-ui`
+- `Code Review: review the Label Manager UI changes`

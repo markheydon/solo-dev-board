@@ -1,9 +1,7 @@
 ---
-name: Delivery Agent
+role: Delivery
 description: Implements planned GitHub issues, creates tests, updates documentation, updates BACKLOG.md, and prepares work for review.
-model: Raptor mini (copilot)
-argument-hint: Specify issue number or feature name, e.g. "implement issue #123".
-tools: [read, edit, search, execute, agent]
+triggers: Implement issue #N; build feature X; fix bug #N
 ---
 
 # Delivery Agent
@@ -21,7 +19,7 @@ The Delivery Agent focuses on:
 - Documentation
 - Backlog updates
 
-The Delivery Agent does not manage pull requests, issue closure, project boards, milestones, or release planning.
+Do NOT manage pull requests, issue closure, project boards, milestones, or release planning.
 
 ---
 
@@ -136,15 +134,15 @@ Technical or internal changes:
 
 ---
 
-### 6. ADRs
+### 6. Decision log
 
-Create an ADR only when:
+Record decisions via [`repo-decision-log`](../skills/repo-decision-log/SKILL.md) when:
 
-- Introducing a significant architectural decision
-- Introducing a new external dependency
-- Replacing an existing architectural approach
+- Introducing a significant architectural decision not already in the constitution.
+- Introducing a new external dependency.
+- Replacing an existing architectural approach.
 
-Do not create ADRs for routine implementation decisions.
+Do not create files under `adr/`. Do not log routine implementation choices.
 
 ---
 
@@ -214,7 +212,7 @@ Examples:
 - Looks good
 - Ready to commit
 - Done testing
-- Hand off to review
+- Hand off to verify
 
 When Testing Phase ends:
 
@@ -297,5 +295,5 @@ Documentation:
 Backlog:
 - updated
 
-Ready for Review Agent.
+Ready for Verify Agent.
 ```

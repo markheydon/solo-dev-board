@@ -100,7 +100,7 @@ The following **must** stay synchronised across formats:
    - Preserve UK English enforcement note
 
 3. **Update AI references:**
-   - Check if `.github/agents/pm-orchestrator.agent.md` needs updates
+   - Check if `.agents/contracts/pm-orchestrator.md` needs updates
    - Check if `.agents/skills/repo-github-issues/SKILL.md` needs updates
 
 4. **Test synchronisation:**
@@ -184,7 +184,7 @@ If you discover template drift or synchronisation issues:
 - **Markdown templates:** `.agents/skills/repo-github-issues/references/templates.md`
 - **Label taxonomy:** `plan/LABEL_STRATEGY.md`
 - **AI issue creation:** `.agents/skills/repo-github-issues/SKILL.md`
-- **PM planning workflow:** `.github/agents/pm-orchestrator.agent.md`
+- **PM planning workflow:** `.agents/contracts/pm-orchestrator.md`
 
 ---
 

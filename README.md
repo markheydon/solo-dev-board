@@ -96,6 +96,7 @@ solo-dev-board/
 │   └── user-guide/             # Per-feature user guides
 ├── plan/
 │   ├── SCOPE.md                # Project scope and constraints
+│   ├── DECISIONS.md            # Active decision log (repo memory)
 │   ├── IMPLEMENTATION_PLAN.md  # Phased development plan
 │   ├── BACKLOG.md              # Feature backlog by epic
 │   ├── RELEASE_PLAN.md         # Versioning and release process
@@ -104,16 +105,11 @@ solo-dev-board/
 │   ├── PROJECT_BOARD_DESIGN.md # Project board column and automation design
 │   └── DOCS_STRATEGY.md        # Documentation conventions
 ├── adr/
-│   ├── README.md               # ADR index
-│   ├── 0001-blazor-server.md
-│   ├── 0002-testing-framework.md
-│   ├── 0003-bicep-infrastructure.md
-│   ├── 0004-layered-architecture.md
-│   └── 0005-github-api-strategy.md
+│   ├── README.md               # Redirect to plan/DECISIONS.md
+│   └── archive/                # Read-only legacy ADR files
 ├── .github/
-│   ├── copilot-instructions.md  # GitHub Copilot custom instructions
-│   ├── agents/                  # Copilot agent definitions
-│   ├── prompts/                 # Copilot workflow prompts
+│   ├── instructions/            # Path-scoped coding rules (canonical)
+│   ├── prompts/                 # Thin Copilot mirrors → .agents/workflows/
 │   ├── ISSUE_TEMPLATE/          # Issue templates (feature, bug, chore)
 │   ├── pull_request_template.md
 │   └── workflows/
@@ -121,11 +117,13 @@ solo-dev-board/
 │       ├── cd.yml               # CD: Aspire deploy to Azure (manual until first success)
 │       └── aspire-deploy-validate.yml  # Validates AppHost deployment model on PR
 ├── .agents/
-│   └── skills/                  # Shared skills (Copilot + Cursor)
+│   ├── contracts/               # Role boundary contracts (PM, delivery, verify, etc.)
+│   ├── workflows/               # Canonical workflow entry points
+│   └── skills/                  # Shared implementation and workflow skills
 ├── .cursor/
-│   ├── rules/                   # Cursor path-scoped rules
-│   └── commands/                # Cursor slash commands (/implement-issue, etc.)
-└── AGENTS.md                    # Platform-neutral AI collaborator standards
+│   ├── rules/                   # Thin Cursor mirrors → .github/instructions/
+│   └── commands/                # Thin Cursor mirrors → .agents/workflows/
+└── AGENTS.md                    # Canonical AI collaborator standards
 ```
 
 ---
@@ -139,7 +137,7 @@ To contribute:
 1. Fork the repository and create a new branch for your changes.
 2. Review the project structure and existing documentation to understand the architecture and conventions.
 3. Ensure all code comments, string literals, and documentation use UK English spelling.
-4. Follow the coding conventions outlined in `.github/copilot-instructions.md`.
+4. Follow the coding conventions outlined in [`AGENTS.md`](AGENTS.md).
 5. Use the issue templates in `.github/ISSUE_TEMPLATE/` to report bugs or request features.
 6. When implementing a feature or fix, reference the relevant issue in your commit message.
 7. Add or update tests in the appropriate test project under `tests/`.
@@ -154,7 +152,7 @@ For help with setup, see `docs/getting-started.md`.
 
 ## AI-Driven Development
 
-SoloDevBoard is developed by a solo developer with **GitHub Copilot** as an active AI collaborator. The `.github/copilot-instructions.md` file contains custom instructions that guide Copilot on architecture, conventions, UK English requirements, and documentation responsibilities. When using Copilot Chat to add features or make changes, these instructions ensure consistent, well-structured output.
+SoloDevBoard is developed with AI agents as active collaborators. [`AGENTS.md`](AGENTS.md) is the canonical source for architecture, conventions, UK English requirements, and workflow gates. Role contracts in [`.agents/contracts/`](.agents/contracts/), workflow entry points in [`.agents/workflows/`](.agents/workflows/), skills in [`.agents/skills/`](.agents/skills/), and the PM runbook in [`plan/PM_RUNBOOK.md`](plan/PM_RUNBOOK.md) provide structured workflows for planning, implementation, and review. For Cursor Cloud VM development, see [`plan/CURSOR_CLOUD.md`](plan/CURSOR_CLOUD.md).
 
 ---
 

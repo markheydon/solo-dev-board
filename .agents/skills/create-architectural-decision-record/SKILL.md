@@ -1,15 +1,10 @@
 ---
 name: create-architectural-decision-record
-description: 'Create an Architectural Decision Record (ADR) document for AI-optimised decision documentation.'
+description: 'DEPRECATED — use repo-decision-log instead.'
 ---
 
-# Create Architectural Decision Record Skill
+# Deprecated
 
-This skill helps you generate ADR documents that capture key architectural decisions, their context, and rationale, optimised for AI-driven documentation and review.
+This skill has been replaced by [`repo-decision-log`](../repo-decision-log/SKILL.md).
 
-## Usage
-- Create new ADRs for significant decisions
-- Document context, options, and consequences
-- Link ADRs to implementation plans and blueprints
-
-See [ADR guidance](https://adr.github.io/) for best practices.
+Do not create ADR files. Follow `repo-decision-log` for constitution and [`plan/DECISIONS.md`](../../../plan/DECISIONS.md) updates.

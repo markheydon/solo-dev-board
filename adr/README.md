@@ -1,57 +1,9 @@
-# Architecture Decision Records
+# Architecture Decision Records (Archived)
 
-This directory contains the Architecture Decision Records (ADRs) for SoloDevBoard. Each ADR documents a significant architectural decision, the context in which it was made, the decision itself, and its consequences.
+ADR files are **read-only historical records**. Do not add new ADR files to this directory.
 
-## Format
+- **Active decisions:** [`plan/DECISIONS.md`](../plan/DECISIONS.md)
+- **Always-on rules:** [`AGENTS.md`](../AGENTS.md) and [`.github/instructions/`](../.github/instructions/)
+- **Full ADR text:** [`adr/archive/`](archive/)
 
-Each ADR follows this format:
-
-```
-# ADR-XXXX: Title
-
-**Date:** YYYY-MM-DD
-**Status:** [Proposed | Accepted | Deprecated | Superseded by ADR-XXXX]
-
-## Context
-## Decision
-## Rationale
-## Consequences
-```
-
-## Index
-
-
-| ADR | Title | Status |
-|-----|-------|--------|
-| [ADR-0001](0001-blazor-server.md) | Use Blazor Server for the Front-End | Accepted |
-| [ADR-0002](0002-testing-framework.md) | Use xUnit and NSubstitute for Testing | Superseded by ADR-0006 |
-| [ADR-0003](0003-bicep-infrastructure.md) | Use Bicep for Azure Infrastructure as Code | Superseded by ADR-0018 |
-| [ADR-0004](0004-layered-architecture.md) | Use Layered / Clean Architecture | Accepted |
-| [ADR-0005](0005-github-api-strategy.md) | GitHub API Strategy — REST + GraphQL with PAT and GitHub App Authentication | Accepted |
-| [ADR-0006](0006-moq-mocking-library.md) | Switch Mocking Library from NSubstitute to Moq | Accepted (assertion library aspect superseded by ADR-0008) |
-| [ADR-0007](0007-multi-tenancy-authentication-phased-approach.md) | Multi-Tenancy Authentication — Phased Approach | Accepted |
-| [ADR-0008](0008-remove-fluentassertions.md) | Remove FluentAssertions — Use xUnit Built-in Assertions Only | Accepted |
-| [ADR-0009](0009-fluent-ui-blazor-component-library.md) | Use Microsoft Fluent UI Blazor Component Library | Superseded by ADR-0012 |
-| [ADR-0010](0010-bunit-component-testing.md) | Use bUnit for Blazor Component Testing | Accepted |
-| [ADR-0011](0011-boundary-data-shapes.md) | Boundary Data Shapes — DTOs at the Application→App Boundary | Accepted |
-| [ADR-0012](0012-switch-to-mudblazor-component-library.md) | Switch UI Component Library from Fluent UI Blazor to MudBlazor | Accepted — supersedes ADR-0009 |
-| [ADR-0013](0013-one-click-migration-scope-and-preview-strategy.md) | One-Click Migration Scope and Preview/Conflict Strategy | Accepted |
-| [ADR-0014](0014-hosted-access-control-for-public-deployments.md) | Hosted Access Control for Public Deployments | Accepted |
-| [ADR-0015](0015-github-app-first-hosted-authentication.md) | GitHub App-First Hosted Authentication | Accepted |
-| [ADR-0016](0016-consider-aspire-for-local-orchestration-and-future-hosting.md) | Consider .NET Aspire for Local Orchestration and Future Hosting Evolution | Accepted |
-| [ADR-0017](0017-github-actions-bridge-for-roadmap-project-sync.md) | Use a GitHub Actions Bridge for SoloDevBoard Roadmap Project Sync | Accepted |
-| [ADR-0018](0018-aspire-azure-container-apps-deployment.md) | Aspire Azure Container Apps Deployment | Accepted |
-## Adding a New ADR
-
-1. Create a new file: `adr/XXXX-<kebab-case-title>.md` (increment the number).
-2. Use the format above.
-3. Add an entry to the index table in this file.
-4. Reference the ADR from relevant documentation (e.g. `docs/user-guide/<feature>.md`).
-
-## AI Collaborator Instructions
-
-When an architectural decision is made during development:
-1. Create a new ADR file following the format above.
-2. Add it to the index table in this file.
-3. If the decision supersedes an existing ADR, update the existing ADR's **Status** field to `Superseded by ADR-XXXX`.
-4. Reference the new ADR from `plan/IMPLEMENTATION_PLAN.md` if it affects a phase's approach.
+Future architectural decisions follow the [`repo-decision-log`](../.agents/skills/repo-decision-log/SKILL.md) skill. A formal migration to GitHub Spec Kit is documented in [`plan/SPEC_KIT_MIGRATION.md`](../plan/SPEC_KIT_MIGRATION.md) (parked).

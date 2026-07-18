@@ -1,6 +1,6 @@
 # SoloDevBoard AppHost
 
-Aspire orchestrates the SoloDevBoard web app for local development, dev containers, Codespaces, and **production deployment to Azure Container Apps** (ADR-0018).
+Aspire orchestrates the SoloDevBoard web app for local development, dev containers, Codespaces, and **production deployment to Azure Container Apps** ([DEC-015](../../plan/DECISIONS.md#dec-015-aspire-azure-container-apps-deployment)).
 
 GitHub authentication is configured through **AppHost parameters**, which are injected into the `app` resource as environment variables.
 
