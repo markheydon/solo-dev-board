@@ -16,6 +16,8 @@ This backlog is organised by the six core features (epics) of SoloDevBoard. For 
 
 Deferred follow-on slices from Phases 1–4 are marked `[deferred]` in the relevant epic sections below.
 
+> **Planned migration:** GitHub Issues will become the single source of truth for open work. See [BACKLOG_TO_ISSUES_MIGRATION.md](BACKLOG_TO_ISSUES_MIGRATION.md) for the execution plan (parked until the agent/workflow review is complete).
+
 ## Future Considerations
 
 This section captures ideas and potential enhancements for later consideration. Items listed here do not alter the current scope or delivery sequencing.
