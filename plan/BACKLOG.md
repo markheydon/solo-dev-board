@@ -280,6 +280,7 @@ Labels: `type/chore`, `area/infrastructure`
 - [x] As a solo developer, I want the application version to be declared in a single place so that all version references (user-agent, About page, build artefacts) remain consistent automatically. _(#57 — done, 2026-03-10)_
 - [x] As a solo developer, I want the GitHub API user-agent string to reflect the running application version so that it never drifts from the actual release. _(#58 — done, 2026-03-10)_
 - [x] As a solo developer, I want an About page showing the application version and .NET runtime version so that I always know which version I am running. _(#59 — done, 2026-03-10)_
+- [x] Chore: The About page repository link uses `rel="noopener noreferrer"` for external links opened in a new tab so that link behaviour matches the Audit and Triage pages. _(Issue #194 — implemented 2026-07-18.)_
 
 
 <!-- Production-Readiness Batch: Planned 2026-03-12 for v1.0.0 (Epic #101: Public Release Infrastructure and Authentication) -->
