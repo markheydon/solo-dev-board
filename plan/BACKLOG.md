@@ -3,6 +3,19 @@
 
 This backlog is organised by the six core features (epics) of SoloDevBoard. For the phased implementation plan, see [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
 
+## Roadmap Status (2026-07-18)
+
+| Phase | Milestone | Status |
+|-------|-----------|--------|
+| Phase 1 — Foundation | v0.1.0 | Complete |
+| Phase 2 — Label Manager + Audit Dashboard | v0.2.0 | Complete (core features delivered; see deferred items below) |
+| Phase 3 — One-Click Migration + Triage UI | v0.3.0 | Complete (labels + milestones slice; project board migration deferred) |
+| Phase 4 — Board Rules Visualiser + Workflow Templates | v0.4.0 | Complete (built-in templates only; custom template repos deferred) |
+| Phase 5 — Cross-Repo PM Workflow | v0.5.0 | **Not started — next active phase** |
+| Phase 6 — Polish, Testing, and Azure Deployment | v1.0.0 | Partially complete (hosted auth and Aspire ACA delivered; operational hardening and release closure remain open) |
+
+Deferred follow-on slices from Phases 1–4 are marked `[deferred]` in the relevant epic sections below.
+
 ## Future Considerations
 
 This section captures ideas and potential enhancements for later consideration. Items listed here do not alter the current scope or delivery sequencing.
@@ -58,6 +71,8 @@ Labels: `type/epic`, `area/infrastructure`
 
 Labels: `type/epic`, `area/infrastructure`, `priority/high`
 
+> **Phase 6 (v1.0.0):** Core hosted authentication is delivered. Remaining items below are release-closure work.
+
 <!-- Feature #103: GitHub App-first hosted authentication and admission control -->
 <!-- Enabler #111: Installation and token lifecycle handling -->
 <!-- Story #112: GitHub App user sign-in and per-request user context -->
@@ -77,12 +92,14 @@ Labels: `type/epic`, `area/infrastructure`, `priority/high`
 - [x] Test: Authentication coverage has been expanded for GitHub App-first hosted authentication, including sign-in/session claims, installation/token lifecycle checks, and admission-control edge cases. _(Issue #114 — implemented on 2026-03-16; see tests/App.Tests/SoloDevBoard.App.Tests/HostedGitHubAuthGatewayTests.cs, tests/Infrastructure.Tests/SoloDevBoard.Infrastructure.Tests/HostedUserCurrentUserContextTests.cs, tests/Infrastructure.Tests/SoloDevBoard.Infrastructure.Tests/AllowListHostedAdmissionEvaluatorTests.cs, and plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_
 - [x] Docs: Hosted authentication documentation now reflects GitHub App-first architecture, operator allow-lists, and PAT-only local trusted mode, with OAuth App guidance retained as fallback-only. _(Issue #119 — implemented on 2026-03-16; see docs/getting-started.md, infra/README.md, docs/user-guide/hosted-authentication.md, docs/user-guide/index.md, and docs/index.md.)_
 - [x] As a solo developer using hosted sign-in, I want the application to detect expired or revoked GitHub tokens and guide me through re-authentication instead of showing generic API errors, so that I am never stuck in a broken session. _(Issue #229 — implemented 2026-07-16; see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md — runtime session recovery, `/auth/session-expired`, shell sign-out.)_
-- [ ] As a solo developer, I want PAT-only local trusted mode preserved so that local development and trusted self-hosted use do not depend on hosted sign-in infrastructure.
-- [ ] As a solo developer, I want a clear self-hoster deployment path for running SoloDevBoard with a PAT on my own Azure subscription so that I can get a personal hosted instance working without deep Azure knowledge.
-- [ ] As a solo developer, I want hosted deployments to present a dedicated sign-in entry state and sign-out flow, and to avoid showing the normal home experience when hosted authentication prerequisites are missing or I am not signed in, so that the public app state is explicit and not misleading. _(Partially addressed 2026-07-16: shell sign-out and session-expired recovery added; dedicated unauthenticated landing page remains open.)_
+- [ ] As a solo developer, I want PAT-only local trusted mode formally documented and preserved so that local development and trusted self-hosted use do not depend on hosted sign-in infrastructure. _(PAT mode is implemented; formal documentation and self-hoster guidance remain open — Phase 6.)_
+- [ ] As a solo developer, I want a clear self-hoster deployment path for running SoloDevBoard with a PAT on my own Azure subscription so that I can get a personal hosted instance working without deep Azure knowledge. _(Phase 6.)_
+- [ ] As a solo developer, I want hosted deployments to present a dedicated sign-in entry state and sign-out flow, and to avoid showing the normal home experience when hosted authentication prerequisites are missing or I am not signed in, so that the public app state is explicit and not misleading. _(Partially addressed 2026-07-16: shell sign-out and session-expired recovery added; dedicated unauthenticated landing page remains open — Phase 6.)_
 - [x] Chore: As a SoloDevBoard maintainer, I want the hosted-auth branch and migration strategy locked before Feature #103 coding continues so that superseded hybrid work cannot drift into the GitHub App-first delivery path. _(Issue #118 — done, 2026-03-13; see plan/HOSTED_AUTH_MIGRATION_STRATEGY.md.)_
 
 Labels: `type/epic`, `area/dashboard`
+
+> **Phase 2 (v0.2.0):** Core Audit Dashboard is complete. Enhancement and deferred items are listed after the delivered stories below.
 
 <!-- Feature #40: Audit Dashboard — DONE 2026-03-11 (closed via PR merge, all tests complete) -->
 <!-- Enablers: #41 WorkflowRun domain + IGitHubService workflow runs (done — 2026-03-10), #42 Full AuditDashboardService (done — 2026-03-10) -->
@@ -98,11 +115,14 @@ Labels: `type/epic`, `area/dashboard`
 - [x] Test: Unit tests for `AuditDashboardService` covering all public methods, empty-list paths, and stale/failing-workflow edge cases. _(#46 — done, 2026-03-11)_
 - [x] Test: Unit tests for `GitHubService.GetWorkflowRunsAsync` — field mapping, empty response, guard clauses, and non-success HTTP error handling. _(#47 — done, 2026-03-11)_
 - [x] Test: bUnit component tests for the Audit Dashboard page — loading state, empty state, summary table, health indicator sections, zero-state messages, and repository filter interaction. _(#48 — done, 2026-03-11)_
-- [ ] As a solo developer, I want the Audit Dashboard to refresh automatically so that I always see current data.
-- [ ] As a solo developer, I want to export an audit summary as a Markdown report so that I can paste it into a planning document.
-- [ ] As a solo developer, I want to see my project board state at a glance (item count per status column and current active load) so that I can assess capacity before committing to more work.
-- [ ] As a solo developer, I want to see which repositories have had no open issue or PR activity in the last 14 days so that neglected repos are surfaced rather than silently forgotten.
-- [ ] As a solo developer, I want to see open issues and pull requests flagged as `priority-high` across all repositories so that urgent work is never buried in per-repository noise.
+
+### Deferred / Enhancement (Phase 2 follow-on or Phase 6 polish)
+
+- [ ] `[deferred]` As a solo developer, I want to see label consistency warnings across repositories so that I can identify taxonomy drift. _(Originally scoped in SCOPE.md; not yet implemented.)_
+- [ ] `[deferred]` As a solo developer, I want the Audit Dashboard to refresh automatically so that I always see current data. _(Phase 6 polish.)_
+- [ ] `[deferred]` As a solo developer, I want to export an audit summary as a Markdown report so that I can paste it into a planning document. _(Phase 6 polish.)_
+
+> The following items were originally listed here but are now tracked under Epic 7 (Phase 5): project board state at a glance, neglected-repo detection, and `priority-high` surfacing across repositories.
 
 ---
 
@@ -110,7 +130,7 @@ Labels: `type/epic`, `area/dashboard`
 
 Labels: `type/epic`, `area/migration`
 
-> **Current Phase 4 status:** Phase 4 is complete. Board Rules Visualiser and Workflow Templates are delivered, and the product is ready to transition to Phase 5.
+> **Phase 3 (v0.3.0):** Labels and milestones migration slice is complete. Project board column migration is deferred.
 
 <!-- Parent Epic #87: Phase 3 — One-Click Migration + Triage UI (planned 2026-03-12, milestone v0.3.0). -->
 <!-- Feature #88: One-Click Migration (planned 2026-03-12, milestone v0.3.0; first delivery slice covers labels + milestones only). -->
@@ -136,7 +156,7 @@ Labels: `type/epic`, `area/migration`
 - [x] As a solo developer, I want the One-Click Migration page refreshed against the approved wireframe so that repository selection, migration scope, conflict strategy, preview review, apply action, post-migration summary, and feedback states are clearer to scan and operate. _(Issue #139 implemented 2026-03-18. The page now uses a workflow-first layout with a dedicated feedback region, fully aligned to the wireframe. No project-board migration scope was added.)_
 - [x] Test: bUnit coverage for the One-Click Migration page refresh should reference the approved wireframe so that the planned layout, state variants, and workflow gating are protected against regression. _(Issue #140 implemented 2026-03-18. Coverage expanded for workflow controls, preview region/empty state, post-migration summary, feedback region, and workflow gating.)_
 
-- [ ] As a solo developer, I want to migrate project board column configurations so that new repositories start with the same board structure. _(Deferred follow-on slice; requires GitHub Projects v2 support and is captured in ADR-0013.)_
+- [ ] `[deferred]` As a solo developer, I want to migrate project board column configurations so that new repositories start with the same board structure. _(Deferred follow-on slice; requires GitHub Projects v2 support and is captured in ADR-0013.)_
 
 ---
 
@@ -152,7 +172,7 @@ Labels: `type/epic`, `area/migration`
 
 Labels: `type/epic`, `area/board-rules`
 
-> The Board Rules Visualiser is now formally planned for Phase 4, with scope and design approved per [wireframes/board-rules-visualiser-wireframe.md](wireframes/board-rules-visualiser-wireframe.md). See milestone v0.4.0 and Epic #180 for tracking.
+> **Phase 4 (v0.4.0):** Board Rules Visualiser and Workflow Templates (built-in library) are complete.
 
 **Feature:**
 - [x] As a solo developer, I want the Board Rules Visualiser planned against an approved wireframe and issue hierarchy so that Phase 4 delivery starts from a clear baseline. _(Issue #181; planned 2026-05-07; see wireframes/board-rules-visualiser-wireframe.md.)_
@@ -162,7 +182,7 @@ Labels: `type/epic`, `area/board-rules`
 
 **Stories:**
 - [x] As a solo developer, I want to see all GitHub project boards for a selected repository so that I can choose which one to visualise. _(Issue #183; implemented 2026-07-14.)_
-- [ ] As a solo developer using hosted sign-in, I want to access private user-owned GitHub Projects v2 linked to my repositories so that Board Rules and Triage can use every linked board. _(Blocked by GitHub platform limits for GitHub Apps; see `plan/GITHUB_PROJECTS_V2_ACCESS.md`. Workaround: PAT mode with `read:project`, or make the project public.)_
+- [ ] `[deferred]` `[blocked]` As a solo developer using hosted sign-in, I want to access private user-owned GitHub Projects v2 linked to my repositories so that Board Rules and Triage can use every linked board. _(Blocked by GitHub platform limits for GitHub Apps; see `plan/GITHUB_PROJECTS_V2_ACCESS.md`. Workaround: PAT mode with `read:project`, or make the project public.)_
 - [x] As a solo developer, I want to see an interactive diagram of a project board's columns and automation rules so that I can understand how issues flow. _(Issue #184; implemented 2026-07-15.)_
 - [x] As a solo developer, I want to click on a rule in the diagram to see its full configuration so that I can understand what triggers it. _(Issue #185; planned 2026-05-07.)_
 - [x] As a solo developer, I want to see highlighted rules that may conflict or produce unexpected behaviour so that I can diagnose automation issues. _(Issue #186; planned 2026-05-07.)_
@@ -182,6 +202,10 @@ Labels: `type/epic`, `area/board-rules`
 - [x] As a solo developer, I want to apply a workflow template to one or more repositories from a central page so that template application is consistent.
 - [x] As a solo developer, I want to see which repositories already have a workflow template applied so that I can avoid duplicate work.
 - [x] As a solo developer, I want to be alerted when a repository’s workflow file differs from the canonical template so that I can keep templates current.
+- [x] As a solo developer, I want built-in templates for .NET CI, Azure CD, and Dependabot so that I have useful starting points out of the box. _(Delivered in `WorkflowTemplateService` built-in library — 2026-07-17.)_
+
+**Deferred:**
+- [ ] `[deferred]` As a solo developer, I want to define my own custom template repositories so that I can share templates across my own projects. _(Only built-in templates are available today.)_
 
 **Tests:**
 - [x] Test: Workflow Templates page and service coverage — template retrieval, parameter binding, apply flow, and status states.
@@ -192,14 +216,14 @@ Labels: `type/epic`, `area/board-rules`
 
 Labels: `type/epic`, `area/triage`
 
-> **Phase 4 completion:** Board Rules Visualiser and Workflow Templates are delivered, and Phase 5 is now the next active focus.
+> **Phase 3 (v0.3.0):** Triage UI is complete.
 
 <!-- Feature #142: Triage UI (planned 2026-03-17, milestone v0.3.0) -->
 <!-- Enablers: #143 Triage session orchestration, #144 Triage UI state management -->
 <!-- Stories: #145 Start triage session, progress, skip; #146 Apply labels quickly; #147 Assign milestone and project-board placement in-context; #148 Mark as duplicate and close with reference; #149 End-of-session summary and skip/return; #150 Triage unlabelled pull requests -->
 <!-- Tests: #151 Triage session orchestration unit tests; #152 Triage UI state management unit tests; #153 Triage UI bUnit tests -->
 
-> **Phase 3 summary:** Triage UI stories and tests are complete, and the v0.3.0 milestone is ready to close once roadmap board hygiene is verified.
+> **Phase 3 summary:** Triage UI is complete. v0.3.0 milestone is ready for closure.
 
 - [x] As a solo developer, I want to start a triage session that presents unlabelled issues one at a time, supports progress tracking, and allows skipping and returning later so that I can work through them efficiently. _(Issue #145 — implemented 2026-03-18.)_
 - [x] As a solo developer, I want to apply labels to an issue with a single click or keyboard shortcut so that triage is fast. _(Issue #146 — implemented 2026-03-26.)_
@@ -220,16 +244,13 @@ Labels: `type/epic`, `area/triage`
 - [x] Triage UI state management unit tests. _(Issue #152 — implemented 2026-05-07.)_
 - [x] Triage UI bUnit tests. _(Issue #153 — implemented 2026-05-07.)_
 
-- [ ] As a solo developer, I want to see which repositories already have a particular workflow template applied so that I have a clear overview of my CI/CD coverage.
-- [ ] As a solo developer, I want to be alerted when a repository's workflow file differs from the canonical template so that I can update it.
-- [ ] As a solo developer, I want built-in templates for .NET CI, Azure CD, and Dependabot so that I have useful starting points out of the box.
-- [ ] As a solo developer, I want to define my own custom template repositories so that I can share templates across my own projects.
-
 ---
 
 ## Epic 7: Cross-Repo PM Workflow
 
 Labels: `type/epic`, `area/dashboard`
+
+> **Phase 5 (v0.5.0):** Not started. This is the next active phase.
 
 > This epic represents the long-term destination of SoloDevBoard: a UI-based implementation of the two-mode PM operating system established in the companion [markheydon/github-workflows](https://github.com/markheydon/github-workflows) repository. That system uses AI agents and prompts to manage cross-repo workloads; SoloDevBoard replaces those text-based prompts with a proper visual interface, removing the dependency on VS Code and Copilot for day-to-day PM operations.
 
@@ -246,6 +267,8 @@ Labels: `type/epic`, `area/dashboard`
 - [ ] As a solo developer, I want to see open issues and pull requests with no core label flagged prominently so that items needing triage are never missed.
 - [ ] As a solo developer, I want to identify epics that are close to completion (all child stories closed) so that I can close them and keep my backlog clean.
 - [ ] As a solo developer, I want the backlog view to distinguish between issues and open pull requests so that I can see both work-to-do and work-awaiting-review at a glance.
+- [ ] As a solo developer, I want to see which repositories have had no open issue or PR activity in the last 14 days so that neglected repos are surfaced rather than silently forgotten.
+- [ ] As a solo developer, I want to see open issues and pull requests flagged as `priority-high` across all repositories so that urgent work is never buried in per-repository noise.
 
 ### Iteration Planning
 
@@ -264,6 +287,8 @@ Labels: `type/epic`, `area/dashboard`
 ## Infrastructure & Cross-Cutting
 
 Labels: `type/chore`, `area/infrastructure`
+
+> **Phase 6 (v1.0.0):** Operational hardening items below remain open.
 
 <!-- ADR-0011 IRepositoryService alignment (planned 2026-03-10, milestone v0.2.0) -->
 <!-- Enabler: #54 Introduce RepositoryDto; migrate IRepositoryService to DTO boundary (done — 2026-03-10) -->
@@ -299,15 +324,15 @@ Labels: `type/chore`, `area/infrastructure`
 <!-- Test #114: Add authentication coverage for GitHub App and OAuth flow -->
 <!-- Story #117: Restrict hosted sign-in to authorised users -->
 
-> **Sequencing note:** Some of the public-release work below was pulled forward to support hosted validation. That side-step does not replace the main roadmap order: finish Phase 3 first, then Phase 4, then Phase 5, before completing the remaining Phase 6 release work.
+> **Sequencing note:** Phases 1–4 are complete. The remaining delivery order is Phase 5, then Phase 6 release closure.
 
 - [x] Set up Bicep infrastructure for Azure App Service, Key Vault, and managed identity. _(done — Bicep baseline complete with managed identity RBAC, configurable Key Vault secret name, purge protection, health-check path, and optional CIDR inbound access restrictions (SKU-gated; unsupported on F1); guided PowerShell deployment script `infra/Deploy-SoloDevBoardInfra.ps1` added with auto-detected caller IP defaulting, F1 compatibility guard, and post-deployment next-step guidance; see issue #104.)_
 - [x] Configure OIDC authentication for GitHub Actions to Azure (no long-lived credentials). _(done — `cd.yml` already uses OIDC with least-privilege permissions; OIDC trust prerequisites and protected-environment documentation added to `infra/README.md`; see issue #105.)_
 - [x] Chore: Wire GitHub Actions CD pipeline end-to-end with Azure OIDC deployment identity (user-assigned managed identity, federated credential, Contributor role at resource-group scope), surface live deployment URL in GitHub Environments UI, and refactor `Deploy-SoloDevBoardInfra.ps1` with opt-in IP hardening, git-remote repo auto-detection, resource name suffix support for self-hosters, and opt-in verbose next-steps guidance. _(No issue — done, 2026-03-17; branch `get-deploying`.)_
 - [x] Chore: App UI components restructured from a flat `Pages/`, `Layout/`, `Dialogs/`, `Shared/` layout into a feature-folder hierarchy (`Shell/`, `Features/{FeatureName}/{Pages,Components,Dialogs}/`, `Shared/Components/`) with aligned namespaces, consistent with the back-end layer restructure, so that the App project is easier to navigate and scales for future feature delivery. _(Issue #129 — done, 2026-03-17.)_
 - [x] Chore: Make local and Codespaces development setup consistent — corrected `README.md` user-secrets key names (`GitHubAuth:PersonalAccessToken`, `GitHubAuth:OwnerLogin`), documented correct port (`5074`), and added `--no-launch-profile --urls http://0.0.0.0:5074` run command for Codespaces. _(Issue #173 — done, PR #174, 2026-05-04.)_
-- [ ] Implement response caching for GitHub API calls to respect rate limits. _(#108)_
-- [ ] Add health check endpoints for Azure App Service monitoring. _(#106)_
-- [ ] Configure logging with structured output (Azure Application Insights integration). _(#107)_
+- [ ] Implement response caching for GitHub API calls to respect rate limits. _(#108 — Phase 6.)_
+- [ ] Add health check endpoints for Azure Container Apps monitoring. _(#106 — Phase 6; supersedes original App Service wording.)_
+- [ ] Configure logging with structured output (Azure Application Insights integration). _(#107 — Phase 6.)_
 - [x] Set up Dependabot for automated dependency updates. _(done — `dependabot.yml` and auto-merge workflow added previously; see issue #109.)_
 - [x] Chore: Add a GitHub Actions roadmap bridge that reconciles the user-owned SoloDevBoard Roadmap project from issue lifecycle events plus scheduled and manual hygiene runs so project-board automation remains reliable even when direct Projects v2 credentials are unavailable to the current agent runtime. _(Implemented 2026-05-08 via PR #191 and follow-on bridge work on the same branch; see ADR-0017.)_
