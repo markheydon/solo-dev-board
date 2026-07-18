@@ -30,7 +30,7 @@ Before using this prompt, ensure you have:
 
 ### Core Feature Documents
 
-1. **Backlog and scope context**: `plan/BACKLOG.md` and `plan/SCOPE.md`
+1. **Scope and planning context**: `plan/SCOPE.md`, GitHub Issues, and parent feature issues
 2. **Implementation roadmap**: `plan/IMPLEMENTATION_PLAN.md`
 3. **Project Plan**: `plan/{epic-name}-{feature-name}-project-plan.md`
 4. **Issue checklist**: `plan/{epic-name}-{feature-name}-issues-checklist.md`

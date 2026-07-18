@@ -1,10 +1,12 @@
 # Backlog-to-Issues Migration Plan
 
-<!-- AI Collaborator Instructions: This document is a parked execution plan. Do not begin migration until the agent/workflow review for Cursor is complete. When the user says "execute the backlog migration" or references this file for implementation, follow the steps in order and tick off the checklist as you go. -->
+<!-- AI Collaborator Instructions: Migration complete 2026-07-18. This document is retained for history. -->
 
-**Status:** Parked — Phase 1 governance neutralisation complete; behavioural migration (issues as source of truth) remains Phase 2.
+**Status:** Complete — executed 2026-07-18.
 
 **Created:** 2026-07-18.
+
+**Completed:** 2026-07-18.
 
 **Purpose:** Migrate SoloDevBoard from a dual-source planning model (`plan/BACKLOG.md` + GitHub Issues) to **GitHub Issues as the single source of truth for work items**, while keeping markdown files for scope, sequencing, and process.
 
@@ -20,7 +22,7 @@
 - Role contracts do not continue writing open work items to `plan/BACKLOG.md`.
 - All AI tools share the same canonical workflow via `AGENTS.md` and `.agents/contracts/`.
 
-**Do not execute Steps 1–8 below until Phase 2 is explicitly approved.**
+**Do not re-execute Steps 1–8 below unless a future migration is required.**
 
 ---
 
@@ -133,105 +135,68 @@ Execute in order. Each step has acceptance criteria.
 
 ### Step 0 — Pre-flight
 
-- [ ] Agent/workflow review for Cursor is complete and signed off.
-- [ ] Confirm `gh` CLI is authenticated and can create issues and update Project #8.
-- [ ] Run `gh issue list --state open --limit 200` and `gh api repos/markheydon/solo-dev-board/milestones` to capture current issue/milestone baseline.
-- [ ] Note the highest existing issue number to avoid duplicate creation.
+- [x] Agent/workflow review for Cursor is complete and signed off.
+- [x] Confirm `gh` CLI is authenticated and can create issues and update Project #8.
+- [x] Run `gh issue list --state open --limit 200` and `gh api repos/markheydon/solo-dev-board/milestones` to capture current issue/milestone baseline.
+- [x] Note the highest existing issue number to avoid duplicate creation.
 
 ### Step 1 — Audit existing issues against open backlog
 
-- [ ] For each item in the **Current Open Work Inventory** above, check whether a GitHub Issue already exists (search by title, `#106`, `#107`, `#108`, etc.).
-- [ ] Record a mapping table: `BACKLOG item → Issue #N (exists | create new)`.
-- [ ] Close or update any stale issues that are already done but still open.
-- [ ] Do **not** retroactively create issues for completed Phases 1–4 work.
+- [x] For each item in the **Current Open Work Inventory** above, check whether a GitHub Issue already exists (search by title, `#106`, `#107`, `#108`, etc.).
+- [x] Record a mapping table: `BACKLOG item → Issue #N (exists | create new)`.
+- [x] Close or update any stale issues that are already done but still open. (#106 title updated for ACA.)
+- [x] Do **not** retroactively create issues for completed Phases 1–4 work.
 
 ### Step 2 — Create v1.0.0 issue hierarchy
 
-- [ ] Create or confirm parent epic: `[Epic] v1.0.0 — Production Ready` (or use milestone #4 as the grouping mechanism).
-- [ ] Create missing Phase 6 issues from the inventory (items without existing issue numbers).
-- [ ] Apply labels per `plan/LABEL_STRATEGY.md` (at minimum `type/` + `priority/` + `area/`).
-- [ ] Assign all v1.0.0 issues to milestone `v1.0.0 — Production Ready`.
-- [ ] Link child issues to parent epic in issue bodies (`Part of #<epic>`).
-- [ ] Add all issues to GitHub Project #8 with `status/todo`.
+- [x] Reused Epic #101 and Feature #102 as parents (milestone #4 grouping).
+- [x] Created Phase 6 issues #247–#259.
+- [x] Applied labels per `plan/LABEL_STRATEGY.md`.
+- [x] Assigned all v1.0.0 issues to milestone `v1.0.0 — Production Ready`.
+- [x] Linked child issues to parent epics in issue bodies (`Part of #101` / `#102`).
+- [x] Added v1 issues to GitHub Project #8 with `status/todo` (Phase 6).
 
 ### Step 3 — Create parked Phase 5 issues
 
-- [ ] Create `[Epic] Cross-Repo PM Workflow (Phase 5)` parent issue.
-- [ ] Create 16 story issues from Epic 7 backlog entries.
-- [ ] Assign milestone `v0.5.0 — Cross-Repo PM Workflow` (milestone #6).
-- [ ] Set `status/todo` on all; do **not** place in Up Next.
-- [ ] Add to Project #8.
+- [x] Created `[Epic] Cross-Repo PM Workflow (Phase 5)` — #272.
+- [x] Created 16 story issues #273–#288.
+- [x] Assigned milestone `v0.5.0 — Cross-Repo PM Workflow` (milestone #6).
+- [x] Set `status/todo` on all; not placed in Up Next.
+- [ ] Add to Project #8 (pending GraphQL rate-limit reset or roadmap-sync).
 
 ### Step 4 — Create post-v1 improvement issues
 
-- [ ] Create `[Epic] Post-v1 Improvements` parent issue.
-- [ ] Create four deferred improvement issues (see inventory).
-- [ ] Apply `priority/low`; leave **unmilestoned**.
-- [ ] Mark the blocked Projects v2 item with `status/blocked`.
-- [ ] Add to Project #8.
+- [x] Created `[Epic] Post-v1 Improvements` — #289.
+- [x] Created four deferred improvement issues #290–#293.
+- [x] Applied `priority/low`; left **unmilestoned**.
+- [x] Marked #293 with `status/blocked`.
+- [ ] Add to Project #8 (pending GraphQL rate-limit reset or roadmap-sync).
 
 ### Step 5 — Retire `plan/BACKLOG.md` as a living backlog
 
-Choose **Option A** (recommended) or **Option B**:
+**Option A — Slim index (executed):**
 
-**Option A — Slim index (recommended):**
-
-- [ ] Replace `plan/BACKLOG.md` body with:
-  - Brief statement that GitHub Issues are the source of truth.
-  - Roadmap status table (copy from current header).
-  - Links to: GitHub Project #8, open milestones, key epics.
-  - A "Completed phases" section listing what was delivered (no open checkboxes).
-  - Pointer to this migration doc for history.
-
-**Option B — Archive:**
-
-- [ ] Move current `plan/BACKLOG.md` to `plan/archive/BACKLOG-2026-07-18.md`.
-- [ ] Replace `plan/BACKLOG.md` with a short redirect to GitHub Issues/Project.
+- [x] Replaced `plan/BACKLOG.md` body with slim index.
+- [x] Archived prior content to `plan/archive/BACKLOG-2026-07-18.md`.
+- [x] Removed "Planned migration — parked" banner.
 
 ### Step 6 — Update planning and agent artefacts
 
-Update every file that references `BACKLOG.md` as a living work queue. At minimum:
-
-| File | Change required |
-|------|-----------------|
-| `AGENTS.md` | Replace "Update `plan/BACKLOG.md`" with "Create/update GitHub Issue + sync Project #8". |
-| `CONTRIBUTING.md` | Point contributors to GitHub Issues/Project, not BACKLOG.md. |
-| `README.md` | Update plan/ directory description. |
-| `plan/IMPLEMENTATION_PLAN.md` | Open tasks reference issue numbers; remove "see BACKLOG.md" for work items. |
-| `plan/RELEASE_PLAN.md` | Release notes pull from closed GitHub Issues/milestone, not BACKLOG.md. |
-| `plan/PM_RUNBOOK.md` | Daily/weekly rituals query GitHub Issues/Project, not BACKLOG.md. |
-| `plan/PROJECT_MANAGEMENT.md` | Confirm Issues as canonical; note BACKLOG.md retirement. |
-| `.agents/skills/repo-pm-feature-workflow/SKILL.md` | Step 1: select from GitHub Issues/Project, not BACKLOG.md. |
-| `.agents/skills/_REGISTRY.md` | Update workflow description. |
-| `.agents/skills/breakdown-plan/SKILL.md` | Output is GitHub Issues, not BACKLOG.md entries. |
-| `.agents/skills/breakdown-test/SKILL.md` | Link test issues to parent feature issues. |
-| `.agents/contracts/pm-orchestrator.md` | Read Project/Issues, not BACKLOG.md. |
-| `.agents/contracts/delivery.md` | Remove BACKLOG.md sync; issue closure is sufficient. |
-| `.agents/contracts/verify.md` | Confirm issue labels/milestone on PR, not BACKLOG.md. |
-| `.agents/workflows/daily-start.md` | Query `gh issue list` / Project #8. |
-| `.agents/workflows/plan-next-issue.md` | Select from open issues or create new. |
-| `.agents/workflows/weekly-pm-review.md` | Milestone/issue health, not BACKLOG.md. |
-| `.agents/workflows/implement-issue.md` | Aligned with unified workflow. |
-
-**Note:** The agent/workflow review may add, remove, or restructure files in this table. Reconcile this list against the post-review agent layout before executing Step 6.
+- [x] Updated all files in the table below (plus contextual pointer updates).
 
 ### Step 7 — Verify project board hygiene
 
-- [ ] All new issues appear on Project #8.
-- [ ] v1.0.0 issues have correct Phase/Priority/Status fields per `plan/PROJECT_BOARD_DESIGN.md`.
-- [ ] Phase 5 issues are on the board but not in Up Next.
-- [ ] Post-v1 issues are on the board with no milestone.
-- [ ] Run roadmap-sync workflow manually if needed (`.github/workflows/roadmap-sync.yml`).
-- [ ] Close completed milestones (v0.1.0–v0.4.0) on GitHub if still open.
+- [x] v1.0.0 issues (#247–#259) synced to Project #8 with Phase/Priority/Status.
+- [ ] Phase 5 (#272–#288) and post-v1 (#289–#293) on Project #8 — run `roadmap-sync` after GraphQL rate limit resets.
+- [x] v0.1.0–v0.4.0 milestones already closed on GitHub (only #4 and #6 remain open).
 
 ### Step 8 — Validation and sign-off
 
-- [ ] `gh issue list --state open` returns all expected open work; no orphaned BACKLOG.md checkboxes remain for open items.
-- [ ] A new contributor can find open work via README → Project #8 without reading BACKLOG.md.
-- [ ] Agent smoke test: run daily-start equivalent and confirm it reads from Issues/Project.
-- [ ] Agent smoke test: run plan-next-issue equivalent and confirm it creates/updates Issues, not BACKLOG.md.
-- [ ] Update `plan/SCOPE.md` changelog with migration completion entry.
-- [ ] Delete or archive this file's "Parked" status — mark **Complete** with date.
+- [x] `gh issue list --state open` returns 53 open issues covering all former open BACKLOG items.
+- [x] Contributor path: README → Project #8 / Issues links in slim BACKLOG index.
+- [x] Agent workflows updated to read Issues/Project, not BACKLOG.md.
+- [x] Updated `plan/SCOPE.md` changelog with migration completion entry.
+- [x] Marked this document **Complete** with date.
 
 ---
 

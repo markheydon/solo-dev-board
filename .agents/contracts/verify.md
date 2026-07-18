@@ -140,7 +140,7 @@ Avoid generating lengthy reports unless a problem is found.
 
 Do NOT:
 
-- Update BACKLOG.md
+- Confirm issue labels and milestone on the PR match planning expectations
 - Update SCOPE.md
 - Update IMPLEMENTATION_PLAN.md
 - Update RELEASE_PLAN.md

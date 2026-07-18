@@ -174,7 +174,7 @@ When code changes are made, ensure the following are kept in sync:
 
 | Change | Doc to update |
 |--------|--------------|
-| New feature | `docs/user-guide/<feature>.md`, `docs/index.md`, `plan/BACKLOG.md` |
+| New feature | `docs/user-guide/<feature>.md`, `docs/index.md`, GitHub Issue + Project #8 sync |
 | New decision | `plan/DECISIONS.md` (+ constitution if cross-cutting) |
 | Scope change | `plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md` |
 | New env variable | `docs/getting-started.md`, `docs/deployment.md`, `src/SoloDevBoard.AppHost/README.md` |
@@ -210,7 +210,7 @@ Canonical skills live in [`.agents/skills/`](.agents/skills/). See [`.agents/ski
 1. Do not start coding before planning and issue creation are complete.
 2. For page-producing UI work, do not start implementation before the planning wireframe exists in `plan/wireframes/` and is referenced by the relevant planning artefacts or issues.
 3. Do not close feature work before tests and documentation updates are complete.
-4. Scope-impacting changes must update `plan/SCOPE.md` and `plan/BACKLOG.md` (via Tech Writer agent).
+4. Scope-impacting changes must update `plan/SCOPE.md` and `plan/IMPLEMENTATION_PLAN.md` (via Tech Writer agent). New or changed work items must be created or updated as GitHub Issues and synced to Project #8.
 
 ### PM operating system
 

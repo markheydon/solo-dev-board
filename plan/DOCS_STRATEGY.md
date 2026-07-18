@@ -56,7 +56,7 @@ When a new feature is implemented or reaches a stable state:
 2. **Index Page:** Update `docs/index.md` to ensure the feature appears in the Key Features table and the Quick Links section.
 3. **Getting Started:** If the feature introduces new configuration (environment variables, appsettings keys), update `docs/getting-started.md`.
 4. **Decisions:** If an architectural decision was made, follow `repo-decision-log` — update `plan/DECISIONS.md` and/or constitution (`AGENTS.md`, instructions).
-5. **Backlog:** Tick off the corresponding user stories in `plan/BACKLOG.md`.
+5. **Issues:** Close or update the corresponding GitHub Issue and sync Project #8.
 
 ---
 

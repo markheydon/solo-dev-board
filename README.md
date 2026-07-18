@@ -98,7 +98,7 @@ solo-dev-board/
 │   ├── SCOPE.md                # Project scope and constraints
 │   ├── DECISIONS.md            # Active decision log (repo memory)
 │   ├── IMPLEMENTATION_PLAN.md  # Phased development plan
-│   ├── BACKLOG.md              # Feature backlog by epic
+│   ├── BACKLOG.md              # Roadmap index (Issues are source of truth)
 │   ├── RELEASE_PLAN.md         # Versioning and release process
 │   ├── LABEL_STRATEGY.md       # GitHub label taxonomy
 │   ├── PROJECT_MANAGEMENT.md   # Issues, milestones, and project board guide

@@ -10,12 +10,11 @@ Phases remain the primary sequence for feature delivery. Unfinished work from ea
 
 **Current roadmap status (2026-07-18):**
 - Phases 1–4 are complete. All six core feature areas are delivered (Label Manager, Audit Dashboard, One-Click Migration, Triage UI, Board Rules Visualiser, Workflow Templates).
-- Phase 5 (Cross-Repo PM Workflow, v0.5.0) is next and ready to start.
-- Phase 6 (Production Ready, v1.0.0) is partially complete. Hosted authentication, Aspire ACA deployment, and Dependabot are delivered; operational hardening, release closure, and remaining auth polish remain open.
-- Selected Phase 6 public-release work was pulled forward as a hosted-validation side-step. The remaining delivery order is: Phase 5, then complete Phase 6.
-- Deferred follow-on slices from Phases 1–4 (project board migration, custom workflow template repos, Audit Dashboard enhancements) are tracked in [BACKLOG.md](BACKLOG.md) under the relevant epics and the deferred-items summary.
+- Phase 5 (Cross-Repo PM Workflow, v0.5.0) is parked until after v1.0.0 ships — tracked in [#272](https://github.com/markheydon/solo-dev-board/issues/272).
+- Phase 6 (Production Ready, v1.0.0) is the active release-closure phase.
+- Deferred follow-on slices from Phases 1–4 are tracked in [#289](https://github.com/markheydon/solo-dev-board/issues/289) and child issues.
 
-For the full feature scope, see [SCOPE.md](SCOPE.md). For individual feature backlogs, see [BACKLOG.md](BACKLOG.md).
+For the full feature scope, see [SCOPE.md](SCOPE.md). For open work, see [GitHub Issues](https://github.com/markheydon/solo-dev-board/issues) and [Project #8](https://github.com/users/markheydon/projects/8). The backlog index is at [BACKLOG.md](BACKLOG.md).
 
 All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI component library.
 
@@ -57,7 +56,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Milestone:** v0.2.0
 
-**Status:** Complete. Core Label Manager and Audit Dashboard features are delivered. Label consistency warnings and Audit Dashboard enhancements (auto-refresh, Markdown export) are deferred — see [BACKLOG.md](BACKLOG.md).
+**Status:** Complete. Core Label Manager and Audit Dashboard features are delivered. Label consistency warnings and Audit Dashboard enhancements (auto-refresh, Markdown export) are deferred — see [#289](https://github.com/markheydon/solo-dev-board/issues/289) and child issues.
 
 ### Key Tasks
 
@@ -214,9 +213,9 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 **Status:** Partially complete. Hosted authentication, Aspire ACA deployment, and Dependabot are delivered. Operational hardening, release closure, and remaining auth polish are open. Begins in earnest after Phase 5.
 
 ### Key Tasks
-- [ ] Achieve ≥80% unit test coverage across `Application` and `Domain` projects.
-- [ ] Perform accessibility audit of all Blazor components (WCAG 2.1 AA).
-- [ ] Conduct performance review: identify and address slow GitHub API calls (caching, pagination).
+- [ ] Achieve ≥80% unit test coverage across `Application` and `Domain` projects. _(#252)_
+- [ ] Perform accessibility audit of all Blazor components (WCAG 2.1 AA). _(#253)_
+- [ ] Conduct performance review: identify and address slow GitHub API calls (caching, pagination). _(#254)_
 - [x] Complete Azure infrastructure baseline via Bicep (App Service, Key Vault, managed identity). _(#104 — superseded by ADR-0018 Aspire ACA migration.)_
 - [x] Migrate production deployment to Aspire Azure Container Apps with scale-to-zero. _(ADR-0018.)_
 - [x] Configure OIDC authentication for GitHub Actions deployment to Azure (no long-lived credentials). _(#105)_
@@ -224,20 +223,20 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [ ] Implement response caching for GitHub API calls to respect rate limits. _(#108)_
 - [ ] Configure structured logging and Application Insights telemetry. _(#107)_
 - [x] Set up Dependabot for automated dependency updates. _(#109)_
-- [ ] Formalise and document PAT-only local trusted mode and self-hoster deployment path for development and trusted self-hosted use. _(PAT mode is implemented; self-hoster docs and dedicated landing page remain open — see BACKLOG.md Epic 101.)_
+- [ ] Formalise and document PAT-only local trusted mode and self-hoster deployment path. _(#247, #248, #249)_
 - [x] Implement hosted authentication session boundaries and per-request user context for GitHub App-first hosted mode. _(#103, #112; implemented on 2026-03-13, see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_
 - [x] Integrate the real hosted sign-in gateway and session/callback handshake at `/auth/sign-in`, mapping required hosted claims before admission control and repository loading. _(#103, #123; implemented on 2026-03-16; see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md; closes the `/auth/sign-in` planning gap and unblocks #114 and #119.)_
 - [x] Handle hosted installation context validation and token lifecycle checks (expiry and failure handling) for hosted requests. _(#103, #111; implemented on 2026-03-13; see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_
 - [x] Restrict hosted access to operator-managed user and organisation allow-lists, with deny-by-default admission control. _(#103, #117; implemented on 2026-03-16; see ADR-0014, ADR-0015, and plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_
 - [x] Remove or demote the separate OAuth App dependency where GitHub App user authentication satisfies hosted sign-in requirements. _(#103, #113; implemented on 2026-03-16; see ADR-0015 and plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_
 - [x] Define and execute the migration and compatibility path away from the superseded hybrid hosted-authentication plan. _(#103, #118; strategy locked in plan/HOSTED_AUTH_MIGRATION_STRATEGY.md on 2026-03-13.)_
-- [ ] Persist hosted authentication material securely using Azure Key Vault-backed patterns where required.
+- [ ] Persist hosted authentication material securely using Azure Key Vault-backed patterns where required. _(#250)_
 - [x] Replace the single-user `ICurrentUserContext` adapter with a per-request, per-user implementation backed by the hosted authentication session when hosted mode is enabled. _(Implemented on 2026-03-13; PAT-only local trusted mode preserved.)_
-- [ ] Enable CD pipeline with production environment gate (`.github/workflows/cd.yml` via `aspire deploy`).
-- [ ] Write end-to-end tests for critical user journeys.
+- [ ] Enable CD pipeline with production environment gate (`.github/workflows/cd.yml` via `aspire deploy`). _(#251)_
+- [ ] Write end-to-end tests for critical user journeys. _(#255)_
 - [x] Update hosted-authentication documentation for GitHub App-first hosted sign-in, admission-control allow-lists, PAT-only local trusted mode, and fallback boundaries. _(#119; completed on 2026-03-16; see docs/getting-started.md, infra/README.md, docs/user-guide/hosted-authentication.md, and docs/index.md.)_
-- [ ] Write comprehensive `docs/` content for all features.
-- [ ] Tag v1.0.0 release on GitHub with release notes.
+- [ ] Write comprehensive `docs/` content for all features. _(#256)_
+- [ ] Tag v1.0.0 release on GitHub with release notes. _(#257)_
 
 
 ### Dependencies
@@ -253,10 +252,9 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 1. Check whether the feature is already in `plan/SCOPE.md`. If not, discuss with the developer whether it should be added to scope.
 2. Identify which phase the feature belongs to (or create a new phase if necessary) and add it to this file.
-3. Add the feature's epics and user stories to `plan/BACKLOG.md`.
+3. Create a GitHub Issue using the `feature.yml` template with labels from `plan/LABEL_STRATEGY.md` and sync Project #8.
 4. Create a stub page in `docs/user-guide/<feature>.md`.
-5. Open a GitHub Issue using the `feature.yml` template with the appropriate labels from `plan/LABEL_STRATEGY.md`.
-6. Only then begin implementing the feature, following the architecture rules in `AGENTS.md`.
+5. Only then begin implementing the feature, following the architecture rules in `AGENTS.md`.
 
 ### Keeping Docs in Sync with Code
 

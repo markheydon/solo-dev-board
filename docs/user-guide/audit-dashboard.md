@@ -54,4 +54,4 @@ Zero-state messages are shown when no items are found in a health indicator sect
 - "No failing workflows — great."
 Feedback region also displays loading, error, and prompt messages to guide the user through dashboard states.
 
-For more information about upcoming features, see the [BACKLOG](../../plan/BACKLOG.md).
+For deferred enhancements, see GitHub Issues [#258](https://github.com/markheydon/solo-dev-board/issues/258) and [#259](https://github.com/markheydon/solo-dev-board/issues/259).

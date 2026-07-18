@@ -74,7 +74,7 @@ This section documents the test coverage requirements for GitHub App-first hoste
 - Unit-test and mocked seams cover session creation, claim mapping, and admission control logic. Environment-dependent tests cover real GitHub App installation, token issuance, and expiry scenarios.
 - Documentation-sensitive regressions are covered by tests ensuring OAuth App fallback remains available but disabled by default, and PAT-only local trusted mode is preserved.
 
-See [DEC-012](DECISIONS.md#dec-012-github-app-first-hosted-authentication) and plan/BACKLOG.md for references to completed coverage and test boundaries.
+See [DEC-012](DECISIONS.md#dec-012-github-app-first-hosted-authentication) and GitHub Issues [#247](https://github.com/markheydon/solo-dev-board/issues/247)–[#250](https://github.com/markheydon/solo-dev-board/issues/250) for references to completed coverage and test boundaries.
 
 ## Rollout Notes
 

@@ -1,6 +1,6 @@
 ---
 role: Delivery
-description: Implements planned GitHub issues, creates tests, updates documentation, updates BACKLOG.md, and prepares work for review.
+description: Implements planned GitHub issues, creates tests, updates documentation, and prepares work for review.
 triggers: Implement issue #N; build feature X; fix bug #N
 ---
 
@@ -17,7 +17,6 @@ The Delivery Agent focuses on:
 - Code
 - Tests
 - Documentation
-- Backlog updates
 
 Do NOT manage pull requests, issue closure, project boards, milestones, or release planning.
 
@@ -146,20 +145,13 @@ Do not create files under `adr/`. Do not log routine implementation choices.
 
 ---
 
-### 7. Backlog Synchronisation
-
-Update:
-
-```text
-plan/BACKLOG.md
-```
-
-to reflect implementation progress or completion.
+### 7. Scope Changes
 
 If implementation reveals scope changes:
 
 - Flag them to the user
 - Do not update scope documentation without approval
+- Do not create or update GitHub Issues without user direction when scope changes
 
 ---
 
@@ -266,7 +258,6 @@ Implementation is complete when:
 - Build succeeds
 - Tests pass
 - Relevant documentation updated
-- BACKLOG.md updated
 - Work is committed to a feature branch
 - Ready for review
 
