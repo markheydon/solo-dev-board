@@ -94,7 +94,7 @@ The following are explicitly **not** in scope for the current version of SoloDev
 >
 > 1. Update the **In Scope** or **Out of Scope** sections of this file to reflect the change.
 > 2. Update `plan/IMPLEMENTATION_PLAN.md` if the phase breakdown is affected.
-> 3. Update `plan/BACKLOG.md` to add or remove the relevant epics and user stories.
+> 3. Create or update GitHub Issues for the scope change and sync Project #8.
 > 4. Create a GitHub Issue for the scope change using the `type/feature` or `type/chore` template.
 > 5. If the change affects the architecture, follow `repo-decision-log` — update [`plan/DECISIONS.md`](DECISIONS.md) and/or constitution.
 > 6. If the change affects the user-facing docs, update or create the relevant file in `docs/user-guide/`.
@@ -112,5 +112,6 @@ The following are explicitly **not** in scope for the current version of SoloDev
 | 2026-03-12 | Public-release hardening and public authentication planning brought into scope for v1.0.0. Production authentication, Azure infrastructure, operational hardening, and dependency hygiene are now in scope for the upcoming public release milestone. | Solo developer |
 | 2026-03-13 | Clarified hosted access control for public deployments. Admission control for hosted environments is now explicitly in scope for v1.0.0. GitHub Sponsors, billing-backed entitlement automation, and marketplace monetisation remain out of scope for this release. | Solo developer |
 | 2026-03-13 | Refined hosted authentication direction to GitHub App-first, ideally GitHub App-only, with OAuth App dependency demoted to fallback status. PAT-only local trusted mode and secure-by-default hosted admission control preserved. (ADR-0015) | Solo developer |
+| 2026-07-18 | Backlog-to-issues migration complete: GitHub Issues are the single source of truth for work items. `plan/BACKLOG.md` retired as a living queue (slim index only). Open work migrated to Issues #247–#259 (v1.0.0), #272–#288 (Phase 5), and #289–#293 (post-v1). | Solo developer |
 | 2026-07-18 | Planning sync: Phases 1–4 marked complete in BACKLOG.md and IMPLEMENTATION_PLAN.md. Deferred follow-on slices (label consistency warnings, project board migration, custom workflow template repos, Audit Dashboard enhancements) explicitly tracked. Phase 5 and Phase 6 remain the only active delivery phases. | Solo developer |
 

@@ -45,4 +45,4 @@ Reference discussion: [Unlocking GitHub Apps: Why Bots Need Access to Private Pr
 
 ## Future work
 
-See `plan/BACKLOG.md` — **Private user-owned Projects v2 under hosted sign-in**. A durable fix likely requires either a GitHub platform change (Apps as Projects v2 collaborators) or a dedicated Projects v2 credential path (for example a PAT used only for Projects GraphQL calls).
+See GitHub Issue [#293](https://github.com/markheydon/solo-dev-board/issues/293) — **Private user-owned Projects v2 under hosted sign-in**. A durable fix likely requires either a GitHub platform change (Apps as Projects v2 collaborators) or a dedicated Projects v2 credential path (for example a PAT used only for Projects GraphQL calls).

@@ -34,8 +34,8 @@ Skills not listed as active or optional companion should be removed from `.agent
 
 SoloDevBoard defines specialised role contracts for daily PM workflows. These orchestrate skills and enforce quality gates.
 
-- `pm-orchestrator`: Backlog selection → scope validation → technical planning (breakdown-plan) → GitHub issue setup
-- `delivery`: Implementation execution → tests → docs → decision log (if needed) → backlog sync
+- `pm-orchestrator`: GitHub Issues / Project #8 selection → scope validation → technical planning (breakdown-plan) → GitHub issue setup
+- `delivery`: Implementation execution → tests → docs → decision log (if needed)
 - `verify`: Quality validation → PR creation → issue closure → release impact assessment
 
 **Role contracts:** `.agents/contracts/*.md`  
@@ -47,8 +47,8 @@ SoloDevBoard defines specialised role contracts for daily PM workflows. These or
 
 Reusable workflows for daily PM operations (canonical definitions in `.agents/workflows/`):
 
-- `daily-start`: Morning status check → backlog health → blocker identification → next action recommendation
-- `plan-next-issue`: Backlog selection → scope validation → breakdown-plan → GitHub issue creation
+- `daily-start`: Morning status check → issue and project board health → blocker identification → next action recommendation
+- `plan-next-issue`: GitHub Issues / Project #8 selection → scope validation → breakdown-plan → GitHub issue creation
 - `implement-issue`: Implementation → tests → docs → decision log
 - `verify-and-create-pr`: Quality gates → PR creation → issue closure
 - `address-pr-review-comments`: PR review feedback → thread replies → resolved conversations

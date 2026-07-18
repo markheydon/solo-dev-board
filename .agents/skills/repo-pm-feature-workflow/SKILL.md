@@ -13,7 +13,7 @@ Run a deterministic feature workflow so the user can act as product manager whil
 
 ## Workflow
 
-1. Select the next candidate from `plan/BACKLOG.md`.
+1. Select the next candidate from GitHub Issues and [Project #8](https://github.com/users/markheydon/projects/8).
 2. Confirm scope alignment in `plan/SCOPE.md`.
 3. Trigger planning with `breakdown-plan`.
 4. For any feature that will result in a new page, a new major page region, or a substantive page refresh, create a wireframe in `plan/wireframes/` and update `plan/wireframes/README.md` before implementation begins.
@@ -29,12 +29,12 @@ Run a deterministic feature workflow so the user can act as product manager whil
 - Do not code before planning artefacts and issue records are complete.
 - Do not start page-producing UI implementation until the planning wireframe exists and is referenced by the relevant issue or artefact.
 - Do not close work before tests and documentation updates are complete.
-- Any scope change must update `plan/SCOPE.md` and `plan/BACKLOG.md`.
+- Any scope change must update `plan/SCOPE.md` and `plan/IMPLEMENTATION_PLAN.md`, and create or update the corresponding GitHub Issue.
 - Any architectural decision must follow `repo-decision-log` (constitution and/or `plan/DECISIONS.md`).
 
 ## Required Artefacts Per Feature
 
-- Backlog entry update: `plan/BACKLOG.md`
+- GitHub Issue create/update + Project #8 sync
 - Scope update when needed: `plan/SCOPE.md`
 - Wireframe: `plan/wireframes/*.md` and `plan/wireframes/README.md` for any page-producing feature or substantive page refresh
 - Decision log when needed: `plan/DECISIONS.md`

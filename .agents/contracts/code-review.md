@@ -48,7 +48,7 @@ Invoke this agent when you need to review:
 - Confirm user-facing features include doc updates in `docs/user-guide/`.
 - Check `docs/index.md` is updated if a new user guide page was added.
 - Verify architectural decisions are captured in `adr/` if needed.
-- Ensure `plan/BACKLOG.md` and `plan/SCOPE.md` are in sync when scope or completion status changes.
+- Ensure `plan/SCOPE.md` and related GitHub Issues are in sync when scope or completion status changes.
 
 ### Security and Secrets
 - Confirm no secrets, tokens, or user credentials are committed.

@@ -167,4 +167,4 @@ gh release create v0.2.0 \
 
 - When a phase is complete, update the **Target** section of the relevant release entry to reflect the actual completion date.
 - When a new GitHub Release is created, update the milestone status in `plan/PROJECT_MANAGEMENT.md`.
-- When drafting release notes, pull completed items from `plan/BACKLOG.md` for the relevant phase.
+- When drafting release notes, pull completed items from closed GitHub Issues on the relevant milestone.

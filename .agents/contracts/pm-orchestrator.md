@@ -28,8 +28,8 @@ Invoke this when you need to:
 
 ## Responsibilities
 
-### 1. Backlog Selection
-- Read `plan/BACKLOG.md` and identify next candidate based on:
+### 1. Work Selection
+- Query GitHub Issues and [Project #8](https://github.com/users/markheydon/projects/8) to identify the next candidate based on:
   - Priority (critical > high > medium > low)
   - Dependencies (unblocked items first)
   - Current milestone alignment
@@ -78,7 +78,6 @@ Invoke this when you need to:
 
 ### 7. Documentation Updates
 - **Delegate to Tech Writer agent** for all planning artefact updates:
-  - `plan/BACKLOG.md` — mark item as planned/in-progress with epic/feature structure
   - `plan/SCOPE.md` — update if scope clarification was required during planning
   - `plan/wireframes/*.md` — create a wireframe for page-producing features or substantive page refreshes
   - `plan/wireframes/README.md` — add the new wireframe to the index
@@ -87,7 +86,7 @@ Invoke this when you need to:
   - Purpose: what changed and why (e.g., "feature planned", "architecture decision made")
   - Key points: outline or bullet list of content to include (user stories, acceptance criteria, decision rationale)
   - Context: related decisions, issues, or planning items to reference
-  - Target file: exact path to update (e.g., `plan/BACKLOG.md`, `plan/DECISIONS.md`)
+  - Target file: exact path to update (e.g., `plan/SCOPE.md`, `plan/DECISIONS.md`)
 - **Do not write documentation prose** — orchestrate the update requirement; let Tech Writer produce the text
 
 ---
@@ -124,7 +123,6 @@ When complete, this agent produces:
 - Dependency relationships established
 
 ### Artefacts Updated
-- `plan/BACKLOG.md` — item marked as planned/in-progress (via Tech Writer agent)
 - `plan/SCOPE.md` — updated if scope clarification needed (via Tech Writer agent)
 - `plan/wireframes/README.md` — updated when a new wireframe is created (via Tech Writer agent)
 - `plan/DECISIONS.md` — new decision recorded if architectural choice required (via Tech Writer agent)
@@ -153,7 +151,7 @@ Deliver to user:
 ## Completion Criteria
 
 Planning is complete when:
-- ✅ Backlog item selected and scope validated
+- ✅ Work item selected from GitHub Issues / Project #8 and scope validated
 - ✅ Technical plan produced via `breakdown-plan`
 - ✅ Wireframe created and referenced for any page-producing feature or page refresh
 - ✅ GitHub issues created with correct labels/milestones
@@ -172,7 +170,7 @@ Delivery Agent should treat issues produced by this workflow as implementation-r
 ## Integration Points
 
 **Reads from:**
-- `plan/BACKLOG.md` — next item source
+- GitHub Issues and Project #8 — next item source
 - `plan/SCOPE.md` — scope boundaries
 - `plan/IMPLEMENTATION_PLAN.md` — phase context
 - `plan/LABEL_STRATEGY.md` — label taxonomy
@@ -183,7 +181,7 @@ Delivery Agent should treat issues produced by this workflow as implementation-r
 - `breakdown-test` skill — quality planning
 - `repo-github-issues` skill — issue creation/updates
 - `repo-github-project` skill — project board sync (Lifecycle Event 1: Issue Created)
-- **Tech Writer agent** — BACKLOG.md, SCOPE.md, and decision log updates (provides outline, Tech Writer produces prose)
+- **Tech Writer agent** — SCOPE.md and decision log updates (provides outline, Tech Writer produces prose)
 
 **Hands off to:**
 - **Delivery Agent** — for implementation execution (code, tests, docs)
@@ -196,7 +194,7 @@ Delivery Agent should treat issues produced by this workflow as implementation-r
 **Example 1: Next item selection**
 ```
 User: "What's next?"
-Agent: [reads BACKLOG.md, selects highest priority unblocked item]
+Agent: [queries GitHub Issues / Project #8, selects highest priority unblocked item]
 Agent: [validates scope, invokes breakdown-plan, creates issues]
 Output: "Planned 'Label Manager UI' as issue #15. Ready for implementation."
 ```
@@ -204,7 +202,7 @@ Output: "Planned 'Label Manager UI' as issue #15. Ready for implementation."
 **Example 2: Specific feature planning**
 ```
 User: "Plan the one-click migration feature"
-Agent: [locates in BACKLOG.md, validates scope]
+Agent: [locates in GitHub Issues, validates scope]
 Agent: [invokes breakdown-plan, creates epic/feature/story hierarchy]
 Agent: [creates 8 issues with dependencies and test coverage]
 Output: "Created epic #20 with 5 stories and 3 test issues. Ready for Delivery Agent."
@@ -213,7 +211,7 @@ Output: "Created epic #20 with 5 stories and 3 test issues. Ready for Delivery A
 **Example 3: Milestone-scoped planning**
 ```
 User: "Plan next item for Phase 1 milestone"
-Agent: [filters BACKLOG.md by Phase 1 items]
+Agent: [filters GitHub Issues by Phase 1 milestone]
 Agent: [selects highest priority, runs planning workflow]
 Output: "Planned 'Triage UI scaffolding' as issue #8. Fits Phase 1 scope."
 ```

@@ -113,13 +113,13 @@ SoloDevBoard uses a single **GitHub Projects (v2)** board called "SoloDevBoard".
 
 ---
 
-## Keeping Issues in Sync with BACKLOG.md
+## GitHub Issues as Source of Truth
 
-`plan/BACKLOG.md` is the **human-readable** planning document. GitHub Issues are the **trackable** implementation. Both should be kept in sync:
+GitHub Issues are the **canonical** store for all open, deferred, and in-progress work. [`plan/BACKLOG.md`](BACKLOG.md) is a slim roadmap index linking to Issues, milestones, and Project #8 — it is not a living work queue.
 
-- When a new user story is added to `BACKLOG.md`, create a corresponding GitHub Issue.
-- When an issue is closed, tick off the corresponding item in `BACKLOG.md`.
-- When a feature is descoped, remove it from `BACKLOG.md` and close the corresponding issue with a "wontfix" label.
+- When new work is identified, create or update a GitHub Issue and sync Project #8.
+- When an issue is closed, no markdown backlog tick-off is required.
+- When a feature is descoped, close the corresponding issue with a `wontfix` label and update `plan/SCOPE.md` if needed.
 
 ---
 
@@ -128,8 +128,8 @@ SoloDevBoard uses a single **GitHub Projects (v2)** board called "SoloDevBoard".
 When using Copilot Chat to manage issues:
 
 - **"Create an issue for [task]"** → Copilot should draft the issue body using the appropriate template fields, suggest labels from `LABEL_STRATEGY.md`, and suggest the appropriate milestone.
-- **"What issues are open in Phase 2?"** → Copilot should list items from `BACKLOG.md` in the Phase 2 section that are not yet ticked off.
-- **"Update the backlog for the Triage UI"** → Copilot should update `BACKLOG.md` and suggest creating corresponding GitHub Issues.
+- **"What issues are open in Phase 2?"** → Copilot should query GitHub Issues filtered by milestone or labels.
+- **"Plan the Triage UI follow-on"** → Copilot should create or update GitHub Issues and sync Project #8.
 - **"Populate Up Next for today"** → Copilot should move the selected stories, enablers, or tests to the board-only **Up Next** state and assign **Focus Order** values in the recommended sequence.
 
 ---
@@ -138,9 +138,8 @@ When using Copilot Chat to manage issues:
 
 > When asked to create, update, or close issues:
 >
-> 1. Check `BACKLOG.md` for the relevant epic and user story.
+> 1. Query GitHub Issues or Project #8 for the relevant work item.
 > 2. Apply labels from `LABEL_STRATEGY.md` — minimum: one `type/`, one `priority/`, one `area/`.
 > 3. Assign the issue to the appropriate milestone.
-> 4. If creating an issue from a backlog item, use the item's user story format as the issue body.
-> 5. After creating an issue, tick off the item in `BACKLOG.md` with a reference to the issue number.
-> 6. Keep `BACKLOG.md` and GitHub Issues in sync — they should tell the same story.
+> 4. Use the user story format in the issue body when creating from planning input.
+> 5. Sync the issue to Project #8 per the `repo-github-project` skill.

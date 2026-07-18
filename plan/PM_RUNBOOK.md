@@ -204,7 +204,7 @@ Close issue #[number] after PR #[number] merged
 - Verify Agent updates issue labels to `status/done`
 - Closes issue with comment linking PR
 - Updates the roadmap item to **Done** and overwrites **Target Date** with the actual completion date
-- Updates `plan/BACKLOG.md` marking complete
+- Updates the GitHub Issue and Project #8 when work is complete
 - Suggests next backlog item
 
 **What you produce:**
@@ -275,7 +275,7 @@ Run the daily start workflow
 
 #### Step 2: Update Planning Artefacts (if needed)
 - **Scope changed?** Update `plan/SCOPE.md`
-- **New items discovered?** Add to `plan/BACKLOG.md`
+- **New items discovered?** Create or update a GitHub Issue and sync Project #8
 - **Release impact?** Update `plan/RELEASE_PLAN.md`
 
 #### Step 3: Commit and Push
@@ -463,7 +463,7 @@ These gates are defined in [`AGENTS.md`](../AGENTS.md) and enforced by role cont
 
 | **Artefact**                          | **Updated by**           | **When**                              |
 |---------------------------------------|--------------------------|---------------------------------------|
-| `plan/BACKLOG.md`                     | PM Orchestrator, Review  | Planning (in-progress), Closure (done)|
+| GitHub Issues / Project #8          | PM Orchestrator, Review  | Planning (create/update), Closure (close issue) |
 | `plan/SCOPE.md`                       | PM Orchestrator, Delivery| Scope clarification needed            |
 | `plan/IMPLEMENTATION_PLAN.md`         | (Manual by you)          | Phase transitions, major milestones   |
 | `plan/RELEASE_PLAN.md`                | Verify Agent             | Breaking changes, release impact      |
@@ -483,7 +483,7 @@ These gates are defined in [`AGENTS.md`](../AGENTS.md) and enforced by role cont
 **Symptom:** Scope ambiguity, missing requirements, no clear acceptance criteria  
 **Action:**
 1. Pause workflow
-2. Update `plan/SCOPE.md` or `plan/BACKLOG.md` manually
+2. Update `plan/SCOPE.md` or create/update the corresponding GitHub Issue
 3. Re-run plan-next-issue workflow with clarified scope
 
 ---
@@ -527,7 +527,7 @@ This runbook orchestrates (does NOT duplicate) existing policy:
 | `plan/LABEL_STRATEGY.md`                 | Label taxonomy                          | PM Orchestrator applies labels per taxonomy    |
 | `plan/PROJECT_MANAGEMENT.md`             | Issue workflow rules                    | Agents follow issue state transitions          |
 | `plan/SCOPE.md`                          | In-scope vs. out-of-scope features      | PM Orchestrator validates before planning      |
-| `plan/BACKLOG.md`                        | Prioritised work items                  | PM Orchestrator selects from backlog           |
+| GitHub Issues / Project #8               | Prioritised work items                  | PM Orchestrator selects from Issues / Project #8 |
 | `plan/IMPLEMENTATION_PLAN.md`            | Phase/milestone definitions             | Agents align work to current phase             |
 | `plan/RELEASE_PLAN.md`                   | Release criteria and dates              | Verify Agent checks release impact             |
 | `.github/instructions/*.md`              | .NET, Blazor, GitHub Actions standards  | Delivery Agent follows coding standards        |
@@ -621,7 +621,7 @@ Plan next item for Phase 1
 - [ ] All my GitHub issues have labels per `plan/LABEL_STRATEGY.md`
 - [ ] All user-facing features have docs in `docs/user-guide/`
 - [ ] All architectural decisions have ADRs in `adr/`
-- [ ] I update `plan/BACKLOG.md` when new work discovered
+- [ ] I create or update GitHub Issues when new work is discovered
 - [ ] I update `plan/SCOPE.md` when scope changes
 - [ ] I approve and merge PRs manually (agents don't auto-merge)
 
@@ -674,7 +674,7 @@ Take the next backlog item and run the full PM feature workflow
 
 **This runbook is one part of your PM operating system:**
 
-1. **Planning artefacts** (`plan/BACKLOG.md`, `plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md`) — define what to build
+1. **Planning artefacts** (`plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md`, GitHub Issues) — define what to build
 2. **Governance** ([`AGENTS.md`](../AGENTS.md), `plan/LABEL_STRATEGY.md`, `plan/PROJECT_MANAGEMENT.md`) — define how to build it
 3. **Role contracts** ([`.agents/contracts/`](../.agents/contracts/)) — execution contracts (who does what)
 4. **Workflow entry points** ([`.agents/workflows/`](../.agents/workflows/)) — canonical workflow stubs (when to do it)
