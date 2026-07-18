@@ -155,7 +155,7 @@ For help with setup, see `docs/getting-started.md`.
 
 ## AI-Driven Development
 
-SoloDevBoard is developed with AI agents as active collaborators. [`AGENTS.md`](AGENTS.md) is the canonical source for architecture, conventions, UK English requirements, and workflow gates. Role contracts in [`.agents/contracts/`](.agents/contracts/), workflow entry points in [`.agents/workflows/`](.agents/workflows/), skills in [`.agents/skills/`](.agents/skills/), and the PM runbook in [`plan/PM_RUNBOOK.md`](plan/PM_RUNBOOK.md) provide structured workflows for planning, implementation, and review.
+SoloDevBoard is developed with AI agents as active collaborators. [`AGENTS.md`](AGENTS.md) is the canonical source for architecture, conventions, UK English requirements, and workflow gates. Role contracts in [`.agents/contracts/`](.agents/contracts/), workflow entry points in [`.agents/workflows/`](.agents/workflows/), skills in [`.agents/skills/`](.agents/skills/), and the PM runbook in [`plan/PM_RUNBOOK.md`](plan/PM_RUNBOOK.md) provide structured workflows for planning, implementation, and review. For Cursor Cloud VM development, see [`plan/CURSOR_CLOUD.md`](plan/CURSOR_CLOUD.md).
 
 ---
 

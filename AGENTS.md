@@ -98,29 +98,34 @@ DTOs are `sealed record` types named `<Entity>Dto`, co-located in `SoloDevBoard.
 
 ## When Adding a New Feature
 
-When asked to add a feature, **must** perform the following steps in order:
+Apply the tier that matches the request:
 
-1. **Update `plan/BACKLOG.md`** — add the feature to the relevant epic, formatted as a user story.
-2. **Update `plan/SCOPE.md`** — if the feature changes scope, update the in-scope or out-of-scope sections.
-3. **Create a wireframe in `plan/wireframes/`** and update `plan/wireframes/README.md` if the feature will result in a new page, a new major page region, or a substantive page refresh.
-4. **Create or update an ADR** in `adr/` if the feature requires an architectural decision.
-5. **Create a stub in `docs/user-guide/`** if the feature is user-facing.
-6. **Update `docs/index.md`** quick links if a new doc page is added.
-7. **Open a GitHub Issue** (or instruct the developer to do so) following the label strategy in `plan/LABEL_STRATEGY.md`.
-8. **Implement the feature** following the architecture and conventions above.
-9. **Add or update tests** in the appropriate test project.
+### Always (any code change)
+
+- Follow architecture, coding conventions, UK English, and testing rules in this file and path-scoped instructions.
+- Do not commit secrets or temporary files to the repository.
+
+### Planned feature work (issue exists or user requests full PM workflow)
+
+Follow [`.agents/workflows/plan-next-issue.md`](.agents/workflows/plan-next-issue.md) and [`.agents/contracts/delivery.md`](.agents/contracts/delivery.md). Gates:
+
+- Planning and GitHub issue with acceptance criteria before coding.
+- Wireframe in `plan/wireframes/` before page-producing UI implementation.
+- User guide, ADR, tests, and docs sync per the Documentation Sync table below.
+
+### Greenfield "add a feature" (no issue yet)
+
+Create or update planning artefacts and a GitHub issue before implementation — see `plan-next-issue` workflow. Do not implement directly without scope validation.
+
+### Ad-hoc fix or small change
+
+No backlog or issue ceremony required unless scope grows beyond the original request.
 
 ---
 
 ## Label Strategy
 
-When referencing or suggesting labels for GitHub Issues and PRs, follow the taxonomy defined in **`plan/LABEL_STRATEGY.md`**. Key label groups:
-
-- `type/` — epic, feature, story, enabler, test, bug, chore, documentation
-- `priority/` — critical, high, medium, low
-- `status/` — todo, in-progress, blocked, in-review, done
-- `area/` — dashboard, migration, labels, board-rules, triage, workflows, infrastructure, docs
-- `size/` — xs, s, m, l, xl
+Follow the taxonomy in [`plan/LABEL_STRATEGY.md`](plan/LABEL_STRATEGY.md). Apply at least one `type/` and one `priority/` label to new issues and PRs.
 
 ---
 
@@ -184,7 +189,7 @@ When code changes are made, ensure the following are kept in sync:
 - For Blazor UI work, use MudBlazor components and the official MudBlazor layout patterns first; do not reintroduce bespoke layout structures when the library already provides an equivalent.
 - Prefer MudBlazor layout primitives and utility classes in `Class` attributes for spacing, alignment, sizing, and visibility before creating or extending `.razor.css` files.
 - Treat raw HTML and custom CSS as exceptional escape hatches only. If no MudBlazor component, parameter, or utility class can satisfy the requirement, keep the fallback minimal and explain the reason in the implementation summary or PR notes.
-- When asked to "add a feature", follow the full checklist above before writing any code.
+- When asked to "add a feature", apply the matching tier in **When Adding a New Feature** above.
 - When reviewing a PR diff, flag any non-UK English spelling in comments or strings.
 - For infrastructure changes, edit the AppHost in `src/SoloDevBoard.AppHost` or add configuration to `src/SoloDevBoard.App`; do not create hand-authored Bicep files (Aspire generates deployment Bicep at deploy time).
 - Do not generate any secrets or credentials in generated files.
@@ -198,21 +203,7 @@ The **`.agents/`** directory holds agent-agnostic AI collaboration artefacts —
 
 ### Skills
 
-Canonical skills live in **`.agents/skills/`**. See **`.agents/skills/_REGISTRY.md`** for the active skill set, optional companions, and workflow order.
-
-- Skills prefixed with **`repo-`** are SoloDevBoard-specific (GitHub project board, issue lifecycle, PM workflow, and related repository operations).
-- Unprefixed skills are reusable implementation guidance (for example `dotnet-best-practices`, `mudblazor`, `aspire`).
-- Skills formerly lived in **`.github/skills/`**; that path is no longer used.
-
-Default workflow order for feature delivery:
-
-1. Orchestration: `repo-pm-feature-workflow`
-2. Planning: `breakdown-plan`
-3. Issue lifecycle: `repo-github-issues` (and `repo-github-gh-cli` for bulk operations), then `repo-github-project` to sync the project board
-4. Test planning: `breakdown-test`
-5. Implementation: `dotnet-best-practices` and `mudblazor` as needed
-6. Architecture decision capture: `create-architectural-decision-record` when required
-7. Documentation updates: **Tech Writer agent** (uses `documentation-writer` skill internally)
+Canonical skills live in [`.agents/skills/`](.agents/skills/). See [`.agents/skills/_REGISTRY.md`](.agents/skills/_REGISTRY.md) for the active set, optional companions, and default workflow order.
 
 ### Execution gates
 
@@ -223,91 +214,15 @@ Default workflow order for feature delivery:
 
 ### PM operating system
 
-For daily product management operations, use the PM operating system defined in:
+- **Runbook:** [`plan/PM_RUNBOOK.md`](plan/PM_RUNBOOK.md)
+- **Workflows:** [`.agents/workflows/README.md`](.agents/workflows/README.md) (canonical entry points)
+- **Contracts:** [`.agents/contracts/`](.agents/contracts/) (role boundaries)
+- **Tool mirrors:** [`.github/prompts/`](.github/prompts/) and [`.cursor/commands/`](.cursor/commands/) — thin pointers only; never duplicate workflow content
 
-- **Runbook:** [`plan/PM_RUNBOOK.md`](plan/PM_RUNBOOK.md) — daily and weekly workflow guide.
-- **Workflow entry points:** [`.agents/workflows/`](.agents/workflows/) — canonical workflow stubs (easy-to-miss specifics and contract pointers).
-- **Role contracts:** [`.agents/contracts/`](.agents/contracts/) — specialised execution modes with explicit boundaries.
-- **Tool mirrors:** [`.github/prompts/`](.github/prompts/) (Copilot) and [`.cursor/commands/`](.cursor/commands/) (Cursor) — thin pointers to `.agents/workflows/` only; never duplicate workflow content there.
-
-#### Role contracts
-
-- **PM Orchestrator** ([`.agents/contracts/pm-orchestrator.md`](.agents/contracts/pm-orchestrator.md)) — backlog selection, scope validation, technical planning, issue creation.
-- **Delivery** ([`.agents/contracts/delivery.md`](.agents/contracts/delivery.md)) — implementation, tests, in-code XML docs.
-- **Tech Writer** ([`.agents/contracts/tech-writer.md`](.agents/contracts/tech-writer.md)) — BACKLOG, SCOPE, ADR, and user guide documentation; UK English enforcement.
-- **Review** ([`.agents/contracts/review.md`](.agents/contracts/review.md)) — quality gates, PR creation, issue closure.
-- **Code Review** ([`.agents/contracts/code-review.md`](.agents/contracts/code-review.md)) — PR and branch review against repository conventions.
-
-#### Workflow entry points
-
-See [`.agents/workflows/README.md`](.agents/workflows/README.md) for the full index. Each workflow delegates to a role contract and the runbook:
-
-- [`daily-start.md`](.agents/workflows/daily-start.md) — morning status check and next action recommendation.
-- [`plan-next-issue.md`](.agents/workflows/plan-next-issue.md) — select from backlog, create technical plan, set up GitHub issues.
-- [`implement-issue.md`](.agents/workflows/implement-issue.md) — implement code, tests, and docs.
-- [`review-and-create-pr.md`](.agents/workflows/review-and-create-pr.md) — validate quality and create PR.
-- [`address-pr-review-comments.md`](.agents/workflows/address-pr-review-comments.md) — PR review feedback loop.
-- [`weekly-pm-review.md`](.agents/workflows/weekly-pm-review.md) — milestone health, release confidence, priority recommendations.
-- [`code-review.md`](.agents/workflows/code-review.md) — PR and branch review.
-- [`docs-update.md`](.agents/workflows/docs-update.md) — documentation refresh.
-
-**Workflow reference:** See [`plan/PM_RUNBOOK.md`](plan/PM_RUNBOOK.md) for daily operating rhythm, decision tree, and command quick reference.
+Consult the workflow or contract index when entering a PM or delivery mode. Do not load every skill up front.
 
 ---
 
-## Cursor Cloud specific instructions
+## Environment-specific guidance
 
-Durable, non-obvious notes for running SoloDevBoard in the Cursor Cloud VM. Standard commands live in `docs/getting-started.md`; this section only captures what is easy to get wrong here.
-
-### Toolchain
-
-- The .NET SDK pinned by `global.json` (`10.0.300`) is installed at `~/.dotnet`; the Aspire CLI (`13.4.6`, matching `Aspire.AppHost.Sdk`) is installed as a global tool at `~/.dotnet/tools`. Both are on `PATH` via `~/.bashrc`. Non-login shells (for example `bash -c`) do not source `~/.bashrc`, so invoke the SDK with the absolute path `~/.dotnet/dotnet` when `dotnet`/`aspire` are not already on `PATH`.
-- The startup update script only runs `dotnet restore SoloDevBoard.slnx` (this also restores the AppHost). Building, testing, linting, and running are left to you.
-
-### Build, test, lint
-
-- Build: `dotnet build SoloDevBoard.slnx`.
-- Test (xUnit, fully offline — GitHub is mocked): `dotnet test SoloDevBoard.slnx`.
-- Lint is `dotnet format SoloDevBoard.slnx --verify-no-changes` (same check CI runs in `.github/workflows/ci.yml`). `EnforceCodeStyleInBuild` is on, so style violations also surface during build.
-
-### Running the app (Aspire — the standard path)
-
-- Start: `aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --non-interactive` (runs in the background). Then `aspire ps` for the dashboard URL/token, `aspire describe` for the `app` resource URL (proxied at `https://localhost:5074`), and `aspire stop` to release file locks before rebuilding.
-- If a build fails with `MSB3491`/`CS2012` (file locks), run `aspire stop` first — Aspire holds locks on `bin/`/`obj/` while running. See the `aspire-orchestration` skill.
-- Query logs/traces without the dashboard via `aspire logs app`, `aspire otel`, or the Aspire MCP server (see below).
-- Health endpoint: `GET /health` returns `Healthy`. The Home page (`/`) is static navigation and renders without any GitHub call.
-- A direct `dotnet run --project src/App/SoloDevBoard.App --no-launch-profile` (with `ASPNETCORE_URLS`) still works as a fallback, but Aspire is the preferred path and matches how the app is developed.
-
-### HTTPS dev certificate (in-VM browser caveat)
-
-- On a normal dev machine, `aspire certs trust` (or `dotnet dev-certs https --trust`) trusts the cert and browsers stop warning. In this headless Linux VM that does **not** fully work for Chrome: even after installing `libnss3-tools` and importing the cert into `~/.pki/nssdb` as a trusted CA (`certutil ... -t "C,,"`), Chrome still reports `NET::ERR_CERT_INVALID` (a long-standing ASP.NET-dev-cert-on-Chromium-Linux issue). Do not rabbit-hole on it.
-- For in-VM browser testing either click **Advanced → Proceed to localhost (unsafe)** once, or run the app on plain HTTP (`ASPNETCORE_URLS=http://0.0.0.0:5080 dotnet run --project src/App/SoloDevBoard.App --no-launch-profile`). `curl -k` also bypasses the check for scripted checks.
-
-### Aspire MCP server
-
-- `.cursor/mcp.json` (and `.vscode/mcp.json` for Copilot) registers an `aspire` MCP server via `aspire agent mcp`. It connects to the running AppHost and exposes tools such as `list_console_logs`, `list_structured_logs`, `list_traces`, `list_resources`, and `execute_resource_command` for debugging the live app. It only returns data while an AppHost is running (`aspire start`). Cursor loads `.cursor/mcp.json` at client start, so a reload is needed after first adding it.
-
-### AppHost parameters and secrets
-
-- The AppHost defines these parameters (see `src/SoloDevBoard.AppHost/AppHost.cs`): `hosted-sign-in-enabled`, `gh-pat` (secret), `gh-app-client-id`, `gh-app-client-secret` (secret), `hosted-admission-enabled`, `allowed-user-logins`, `allowed-org-logins`. Non-secret defaults live in `src/SoloDevBoard.AppHost/appsettings.json` (PAT mode by default).
-- **Cloud Secrets → Aspire parameters mapping.** The parameter names contain hyphens, and a direct `Parameters__<name>` env var is impossible because environment-variable names cannot contain hyphens (the Cursor Secrets panel rejects them with a sync `400`). Instead, add Cursor secrets with hyphen-free names and let the startup update script map them into AppHost user secrets:
-
-  | Cursor secret (hyphen-free) | AppHost parameter |
-  |---|---|
-  | `SDB_GH_PAT` | `gh-pat` |
-  | `SDB_GH_APP_CLIENT_ID` | `gh-app-client-id` |
-  | `SDB_GH_APP_CLIENT_SECRET` | `gh-app-client-secret` |
-  | `SDB_HOSTED_SIGN_IN_ENABLED` | `hosted-sign-in-enabled` |
-  | `SDB_HOSTED_ADMISSION_ENABLED` | `hosted-admission-enabled` |
-  | `SDB_ALLOWED_USER_LOGINS` | `allowed-user-logins` |
-  | `SDB_ALLOWED_ORG_LOGINS` | `allowed-org-logins` |
-
-  The update script runs `dotnet user-secrets set "Parameters:<name>" "$SDB_…"` for each variable that is set (guarded, idempotent), so provided secrets are picked up automatically on every session. Values persist in AppHost user secrets; removing a Cursor secret does not clear a previously-mapped value, so run `dotnet user-secrets remove "Parameters:<name>" --project src/SoloDevBoard.AppHost` if you need to clear one. You can also set values manually with `aspire secret set Parameters:<name> "…"`.
-- When no `SDB_*` secrets are provided, the persisted AppHost user secrets fall back to placeholder values (`gh-pat` = the ambient `gh` installation token, `gh-app-client-secret` = `-`) so `aspire start` still boots. When `SDB_GH_PAT` is set (the current state), the update script maps it into `Parameters:gh-pat`, giving the app a genuine user PAT for full functionality.
-
-### GitHub authentication caveat (important)
-
-- In the default PAT mode the app **fails fast at startup** unless a token is configured, and it resolves your login from the token via `/user` unless `GitHubAuth:OwnerLogin` is set.
-- All data-driven pages (Audit Dashboard, Repositories, Label Manager, Migration) list repositories through the authenticated `/user/repos` endpoint. This needs a **GitHub user PAT** with `repo`, `read:org`, `workflow`, and `read:project` scopes.
-- The `SDB_GH_PAT` secret currently holds a **genuine user PAT** (it resolves `/user` to `markheydon` with scopes `repo`, `read:org`, `workflow`, and `project`). In PAT mode the login therefore auto-resolves from the token, no App-level `GitHubAuth:OwnerLogin` override is set or needed, and all data-driven pages (Audit Dashboard, Repositories, Label Manager, Migration) work end-to-end (the Repositories page loads ~80+ real repositories).
-- Fallback caveat: the ambient `gh` CLI token in this VM is a GitHub App **installation** token — it can reach repo-scoped endpoints (`/repos/{owner}/{repo}/...`) but returns `403 "Resource not accessible by integration"` on `/user` and `/user/repos`. If `SDB_GH_PAT` is ever removed and `gh-pat` falls back to that installation token, the app still boots but **cannot** exercise the repo-list flows; set `GitHubAuth:OwnerLogin` on `src/App/SoloDevBoard.App` (or restore a real user PAT via `SDB_GH_PAT`) to unblock demos.
+For Cursor Cloud VM development (Aspire lifecycle, secrets mapping, MCP, HTTPS caveats), see [`plan/CURSOR_CLOUD.md`](plan/CURSOR_CLOUD.md). Standard local setup remains in [`docs/getting-started.md`](docs/getting-started.md).
