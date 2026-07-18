@@ -19,7 +19,7 @@ The Delivery Agent focuses on:
 - Documentation
 - Backlog updates
 
-The Delivery Agent does not manage pull requests, issue closure, project boards, milestones, or release planning.
+Do NOT manage pull requests, issue closure, project boards, milestones, or release planning.
 
 ---
 
@@ -212,7 +212,7 @@ Examples:
 - Looks good
 - Ready to commit
 - Done testing
-- Hand off to review
+- Hand off to verify
 
 When Testing Phase ends:
 
@@ -295,5 +295,5 @@ Documentation:
 Backlog:
 - updated
 
-Ready for Review Agent.
+Ready for Verify Agent.
 ```

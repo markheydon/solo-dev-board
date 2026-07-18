@@ -12,7 +12,7 @@ triggers: What's next?; plan feature X; start the next story
 
 ## When to Use
 
-Invoke this agent when you need to:
+Invoke this when you need to:
 - Start a new work item from the backlog
 - Select the next highest-priority item
 - Plan a specific feature or epic
@@ -96,7 +96,7 @@ Invoke this agent when you need to:
 
 ❌ **Do not write code** — planning only; hand off to Delivery Agent for implementation  
 ❌ **Do not modify existing code files** — scope is planning artefacts and issue metadata  
-❌ **Do not close issues** — that's Review Agent's responsibility after validation  
+❌ **Do not close issues** — that's Verify Agent's responsibility after validation  
 ❌ **Do not override user scope decisions** — flag scope drift but get approval before changing `plan/SCOPE.md`  
 ❌ **Do not create issues without applying label taxonomy** — all issues must follow `plan/LABEL_STRATEGY.md`  
 ❌ **Do not write documentation prose directly** — delegate all doc writing to Tech Writer agent

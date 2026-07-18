@@ -50,7 +50,7 @@ Reusable workflows for daily PM operations (canonical definitions in `.agents/wo
 - `daily-start`: Morning status check → backlog health → blocker identification → next action recommendation
 - `plan-next-issue`: Backlog selection → scope validation → breakdown-plan → GitHub issue creation
 - `implement-issue`: Implementation → tests → docs → ADR
-- `review-and-create-pr`: Quality gates → PR creation → issue closure
+- `verify-and-create-pr`: Quality gates → PR creation → issue closure
 - `address-pr-review-comments`: PR review feedback → thread replies → resolved conversations
 - `weekly-pm-review`: Milestone health → velocity trends → release confidence → top 3 priorities
 - `code-review`: PR and branch review against repository conventions

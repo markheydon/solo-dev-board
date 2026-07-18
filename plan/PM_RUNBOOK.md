@@ -13,7 +13,7 @@ This runbook orchestrates [`.agents/contracts/`](../.agents/contracts/) and [`.a
 | Start your day                           | "Run the daily start workflow" or `/daily-start`           | Status summary + next action recommendation   |
 | Plan the next feature                    | "Plan the next item" or `/plan-next-issue`                 | GitHub issues with full metadata + tech spec  |
 | Implement planned work                   | "Implement issue #N" or `/implement-issue`                 | Code + tests + docs + ADR (if needed)         |
-| Review and create PR                     | "Review issue #N" or `/review-and-create-pr`               | PR + quality validation + issue closure       |
+| Verify and create PR                     | "Verify issue #N", "Create PR for issue #N", or `/verify-and-create-pr` | PR + quality validation + issue closure       |
 | Address PR review comments               | "Address PR review comments on PR #N" or `/address-pr-review-comments` | PR fixes + thread replies + resolved comments |
 | Weekly health check                      | "Run the weekly PM review" or `/weekly-pm-review`            | Executive summary + priorities for next week  |
 | End-to-end feature delivery              | `.agents/skills/repo-pm-feature-workflow/SKILL.md`         | Full workflow from backlog to closure         |
@@ -160,20 +160,20 @@ Implement issue #[number]
 
 ---
 
-#### Stage 3: Review & PR Creation (15-30 minutes per feature)
+#### Stage 3: Verify & PR Creation (15-30 minutes per feature)
 **Trigger:** Implementation complete, ready for quality check and PR.
 
 **Run:**
 ```
-Review issue #[number]
+Verify issue #[number]
 ```
 
 **What it does:**
-- Invokes **Review Agent**
+- Invokes **Verify Agent**
 - Validates all quality gates (code, tests, docs)
 - Creates pull request with proper metadata
 - Updates issue labels to `status/in-review`
-- Provides review summary
+- Provides verify summary
 
 **What you produce:**
 - Pull request linked to issue
@@ -201,7 +201,7 @@ Close issue #[number] after PR #[number] merged
 ```
 
 **What it does:**
-- Review Agent updates issue labels to `status/done`
+- Verify Agent updates issue labels to `status/done`
 - Closes issue with comment linking PR
 - Updates the roadmap item to **Done** and overwrites **Target Date** with the actual completion date
 - Updates `plan/BACKLOG.md` marking complete
@@ -332,7 +332,7 @@ START
   │   └─> `/implement-issue` or "Implement issue #N"
   │
   ├─ Have implemented code ready for review?
-  │   └─> `/review-and-create-pr` or "Review issue #N"
+  │   └─> `/verify-and-create-pr` or "Verify issue #N"
   │
   ├─ Has an open PR received coding review comments?
   │   └─> `/address-pr-review-comments` or "Address PR review comments on PR #N"
@@ -370,7 +370,7 @@ START
 
 **Boundaries:**
 - ❌ Does NOT write code (planning only)
-- ❌ Does NOT close issues (Review Agent's job)
+- ❌ Does NOT close issues (Verify Agent's job)
 - ❌ Does NOT override your scope decisions (flags and asks)
 
 ---
@@ -384,17 +384,17 @@ START
 - Updates user-facing docs
 - Creates ADRs for architectural decisions
 - Ensures UK English throughout
-- Hands off to Review Agent when complete
+- Hands off to Verify Agent when complete
 
 **Boundaries:**
 - ❌ Does NOT start without clear acceptance criteria (escalates to PM Orchestrator)
-- ❌ Does NOT close issues (Review Agent's job)
+- ❌ Does NOT close issues (Verify Agent's job)
 - ❌ Does NOT change scope without your approval
 
 ---
 
-### Review ([`.agents/contracts/review.md`](../.agents/contracts/review.md))
-**Trigger:** "Review issue #X", "Create PR for X"
+### Verify ([`.agents/contracts/verify.md`](../.agents/contracts/verify.md))
+**Trigger:** "Verify issue #X", "Create PR for issue #X"
 
 **Responsibilities:**
 - Validates quality gates (code, tests, docs, backlog sync)
@@ -419,7 +419,7 @@ Canonical workflow definitions live in [`.agents/workflows/`](../.agents/workflo
 | Daily start | [`daily-start.md`](../.agents/workflows/daily-start.md) | `/daily-start` |
 | Plan next issue | [`plan-next-issue.md`](../.agents/workflows/plan-next-issue.md) | `/plan-next-issue` |
 | Implement issue | [`implement-issue.md`](../.agents/workflows/implement-issue.md) | `/implement-issue` |
-| Review and create PR | [`review-and-create-pr.md`](../.agents/workflows/review-and-create-pr.md) | `/review-and-create-pr` |
+| Verify and create PR | [`verify-and-create-pr.md`](../.agents/workflows/verify-and-create-pr.md) | `/verify-and-create-pr` |
 | Address PR review comments | [`address-pr-review-comments.md`](../.agents/workflows/address-pr-review-comments.md) | `/address-pr-review-comments` |
 | Weekly PM review | [`weekly-pm-review.md`](../.agents/workflows/weekly-pm-review.md) | `/weekly-pm-review` |
 | Code review | [`code-review.md`](../.agents/workflows/code-review.md) | `/code-review` |
@@ -448,7 +448,7 @@ These gates are defined in [`AGENTS.md`](../AGENTS.md) and enforced by role cont
 - ✅ UK English verified
 - ✅ Roadmap item moved to **In Progress** with Start Date and Target Date recorded
 
-### Before Issue Closure (Review Agent enforces)
+### Before Issue Closure (Verify Agent enforces)
 - ✅ PR created and approved
 - ✅ All quality gates passed
 - ✅ Backlog synchronised
@@ -466,7 +466,7 @@ These gates are defined in [`AGENTS.md`](../AGENTS.md) and enforced by role cont
 | `plan/BACKLOG.md`                     | PM Orchestrator, Review  | Planning (in-progress), Closure (done)|
 | `plan/SCOPE.md`                       | PM Orchestrator, Delivery| Scope clarification needed            |
 | `plan/IMPLEMENTATION_PLAN.md`         | (Manual by you)          | Phase transitions, major milestones   |
-| `plan/RELEASE_PLAN.md`                | Review Agent             | Breaking changes, release impact      |
+| `plan/RELEASE_PLAN.md`                | Verify Agent             | Breaking changes, release impact      |
 | GitHub issues                         | PM Orchestrator, Review  | Planning (create), Review (close)     |
 | `src/` (source code)                  | Delivery Agent           | Implementation                        |
 | `tests/` (test code)                  | Delivery Agent           | Implementation                        |
@@ -501,9 +501,9 @@ These gates are defined in [`AGENTS.md`](../AGENTS.md) and enforced by role cont
 ### When Quality Gates Fail
 **Symptom:** Tests failing, docs missing, compile errors, UK English violations  
 **Action:**
-1. Review Agent flags failure
+1. Verify Agent flags failure
 2. Escalates to Delivery Agent for fixes
-3. After fixes, re-run review-and-create-pr workflow
+3. After fixes, re-run verify-and-create-pr workflow
 
 ---
 
@@ -529,7 +529,7 @@ This runbook orchestrates (does NOT duplicate) existing policy:
 | `plan/SCOPE.md`                          | In-scope vs. out-of-scope features      | PM Orchestrator validates before planning      |
 | `plan/BACKLOG.md`                        | Prioritised work items                  | PM Orchestrator selects from backlog           |
 | `plan/IMPLEMENTATION_PLAN.md`            | Phase/milestone definitions             | Agents align work to current phase             |
-| `plan/RELEASE_PLAN.md`                   | Release criteria and dates              | Review Agent checks release impact             |
+| `plan/RELEASE_PLAN.md`                   | Release criteria and dates              | Verify Agent checks release impact             |
 | `.github/instructions/*.md`              | .NET, Blazor, GitHub Actions standards  | Delivery Agent follows coding standards        |
 | [`.agents/skills/*/SKILL.md`](../.agents/skills/)              | Workflow procedures (breakdown, test)   | Contracts invoke skills at correct stages         |
 
@@ -550,7 +550,7 @@ Take the next backlog item and run the full PM feature workflow
 **What happens:** Invokes `repo-pm-feature-workflow` skill, which:
 1. Plans (PM Orchestrator)
 2. Implements (Delivery Agent)
-3. Reviews (Review Agent)
+3. Verifies (Verify Agent)
 4. Creates PR (you approve/merge manually)
 
 **Use when:** You have uninterrupted time and trust the workflow to handle complexity.
@@ -577,7 +577,7 @@ Plan next item for Phase 1
 **Steps:**
 1. Create issue manually (type/bug, priority/critical)
 2. Run `/implement-issue` or "Implement issue #N" (Delivery contract implements)
-3. Run `/review-and-create-pr` or "Review issue #N" (create PR)
+3. Run `/verify-and-create-pr` or "Verify issue #N" (create PR)
 4. Approve and merge immediately
 5. Run `Close issue #X after PR #Y merged`
 
@@ -601,7 +601,7 @@ Plan next item for Phase 1
 
 ### "Scope drift detected during review"
 **Cause:** Implementation added features not in `plan/SCOPE.md`.  
-**Fix:** Update `plan/SCOPE.md`, get approval, re-run review.
+**Fix:** Update `plan/SCOPE.md`, get approval, re-run verify.
 
 ---
 
@@ -616,7 +616,7 @@ Plan next item for Phase 1
 - [ ] I run `daily-start` every morning to get oriented
 - [ ] I use `plan-next-issue` to create technical specs before coding
 - [ ] I use `implement-issue` (workflow prompt or `/implement-issue`) only for planned issues with clear acceptance criteria
-- [ ] I use `review-and-create-pr` to validate quality before PR merge
+- [ ] I use `verify-and-create-pr` to validate quality before PR merge
 - [ ] I run `weekly-pm-review` at least once per week
 - [ ] All my GitHub issues have labels per `plan/LABEL_STRATEGY.md`
 - [ ] All user-facing features have docs in `docs/user-guide/`
@@ -647,9 +647,9 @@ Implement issue #[number]
 Build [feature name]
 ```
 
-**Review:**
+**Verify:**
 ```
-Review issue #[number]
+Verify issue #[number]
 Create PR for [feature name]
 ```
 

@@ -1,18 +1,18 @@
 ---
-role: Review
-description: Validates completed work, performs core quality checks, and creates a pull request.
-triggers: Review issue #N; create PR for feature X
+role: Verify
+description: Validates completed work (build, tests, docs) and creates a pull request.
+triggers: Verify issue #N; Create PR for issue #N
 ---
 
-# Review Agent
+# Verify Agent
 
 ## Purpose
 
-Perform a lightweight review of completed work before a pull request is raised.
+Verify implementation readiness before a pull request is raised.
 
-The goal is to verify that the implementation appears complete and safe to merge.
+The goal is to confirm that the implementation appears complete and safe to merge.
 
-This agent is intentionally review-focused and should avoid acting as a project manager.
+This agent is intentionally verification-focused and should avoid acting as a project manager.
 
 ---
 
@@ -22,9 +22,9 @@ Invoke after implementation work has completed.
 
 Examples:
 
-- Review issue #184
-- Review feature/issue-184-board-rules-diagram
-- Review Label Manager implementation
+- Verify issue #184
+- Create PR for issue #184
+- Verify feature/issue-184-board-rules-diagram
 
 ---
 
@@ -32,7 +32,7 @@ Examples:
 
 ### 1. Branch Validation
 
-Before reviewing:
+Before verifying:
 
 - Confirm work is on a feature branch
 - Flag if implementation was completed directly on `main`
@@ -114,9 +114,9 @@ Use `.github/pull_request_template.md` which is available in the repo.
 
 ---
 
-### 6. Review Summary
+### 6. Verify Summary
 
-Provide a concise review summary.
+Provide a concise verify summary.
 
 Preferred format:
 
@@ -132,7 +132,7 @@ Ready for merge.
 
 Keep summaries brief.
 
-Avoid generating lengthy review reports unless a problem is found.
+Avoid generating lengthy reports unless a problem is found.
 
 ---
 
@@ -169,7 +169,7 @@ Escalate to Delivery Agent if:
 
 ## Completion Criteria
 
-Review is complete when:
+Verify is complete when:
 
 - Build passes
 - Tests pass
@@ -181,7 +181,7 @@ Review is complete when:
 
 ## Output Contract
 
-Successful review:
+Successful verify:
 
 ```text
 ✅ Build passed
@@ -193,10 +193,10 @@ PR #123 created.
 Ready for merge.
 ```
 
-Failed review:
+Failed verify:
 
 ```text
-❌ Review failed
+❌ Verify failed
 
 Issue:
 - Missing user documentation
@@ -204,5 +204,5 @@ Issue:
 Required action:
 - Update docs/user-guide/...
 
-Re-run review after correction.
+Re-run verify after correction.
 ```

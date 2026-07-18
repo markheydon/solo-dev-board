@@ -1,7 +1,7 @@
 ---
 role: Code Review
-description: Reviews SoloDevBoard pull requests and branch changes using repo-specific architecture, testing, and documentation rules.
-triggers: Review PR #N; review branch feature/X
+description: Coding review for SoloDevBoard pull requests and branch changes using repo-specific architecture, testing, and documentation rules.
+triggers: Code Review: PR #N; Code Review: review branch feature/X
 ---
 
 # Code Review Agent
@@ -89,6 +89,6 @@ At the end of the review:
 
 ## Example Invocation
 
-- `Review PR #42`
-- `Review branch feature/issue-15-label-manager-ui`
-- `Review the Label Manager UI changes`
+- `Code Review: PR #42`
+- `Code Review: review branch feature/issue-15-label-manager-ui`
+- `Code Review: review the Label Manager UI changes`
