@@ -2,7 +2,7 @@
 
 **Purpose:** Your single source of truth for managing SoloDevBoard development using AI agents and prompts.
 
-This runbook orchestrates the `.agents/contracts/` and `.github/prompts/` workflows to ensure consistent, high-quality delivery from backlog to release.
+This runbook orchestrates [`.agents/contracts/`](../.agents/contracts/) and [`.agents/workflows/`](../.agents/workflows/) to ensure consistent, high-quality delivery from backlog to release.
 
 ---
 
@@ -10,12 +10,12 @@ This runbook orchestrates the `.agents/contracts/` and `.github/prompts/` workfl
 
 | **When you want to...**                  | **How to invoke**                                          | **What it produces**                          |
 |------------------------------------------|------------------------------------------------------------|-----------------------------------------------|
-| Start your day                           | Run daily start workflow or `.github/prompts/daily-start.prompt.md` | Status summary + next action recommendation   |
-| Plan the next feature                    | Plan the next item or `.github/prompts/plan-next-issue.prompt.md` | GitHub issues with full metadata + tech spec  |
-| Implement planned work                   | `/implement-issue` or `.github/prompts/implement-issue.prompt.md` | Code + tests + docs + ADR (if needed)         |
-| Review and create PR                     | Review issue #N or `.github/prompts/review-and-create-pr.prompt.md` | PR + quality validation + issue closure       |
-| Address PR review comments               | `.github/prompts/address-pr-review-comments.prompt.md`     | PR fixes + thread replies + resolved comments |
-| Weekly health check                      | `.github/prompts/weekly-pm-review.prompt.md`               | Executive summary + priorities for next week  |
+| Start your day                           | "Run the daily start workflow" or `/daily-start`           | Status summary + next action recommendation   |
+| Plan the next feature                    | "Plan the next item" or `/plan-next-issue`                 | GitHub issues with full metadata + tech spec  |
+| Implement planned work                   | "Implement issue #N" or `/implement-issue`                 | Code + tests + docs + ADR (if needed)         |
+| Review and create PR                     | "Review issue #N" or `/review-and-create-pr`               | PR + quality validation + issue closure       |
+| Address PR review comments               | "Address PR review comments on PR #N" or `/address-pr-review-comments` | PR fixes + thread replies + resolved comments |
+| Weekly health check                      | "Run the weekly PM review" or `/weekly-pm-review`            | Executive summary + priorities for next week  |
 | End-to-end feature delivery              | `.agents/skills/repo-pm-feature-workflow/SKILL.md`         | Full workflow from backlog to closure         |
 
 ---
@@ -326,28 +326,28 @@ Use this decision tree when you're unsure what to do next:
 START
   │
   ├─ Morning / Start of Session?
-  │   └─> Run daily-start.prompt.md → Follow recommendation
+  │   └─> Run daily start workflow → Follow recommendation
   │
   ├─ Have planned issue ready for coding?
-  │   └─> `/implement-issue` or implement-issue.prompt.md
+  │   └─> `/implement-issue` or "Implement issue #N"
   │
   ├─ Have implemented code ready for review?
-  │   └─> Run review-and-create-pr.prompt.md with issue number
+  │   └─> `/review-and-create-pr` or "Review issue #N"
   │
   ├─ Has an open PR received coding review comments?
-  │   └─> Run address-pr-review-comments.prompt.md with PR number
+  │   └─> `/address-pr-review-comments` or "Address PR review comments on PR #N"
   │
   ├─ Have merged PR ready for closure?
   │   └─> Run "Close issue #X after PR #Y merged"
   │
   ├─ Need to plan next feature?
-  │   └─> Run plan-next-issue.prompt.md (auto-select or specify)
+  │   └─> Run plan-next-issue workflow (auto-select or specify)
   │
   ├─ End of week?
-  │   └─> Run weekly-pm-review.prompt.md → Review and plan next week
+  │   └─> Run weekly PM review → Review and plan next week
   │
   ├─ Stuck / Blocked / Unsure?
-  │   └─> Run daily-start.prompt.md → Get recommendation
+  │   └─> Run daily start workflow → Get recommendation
   │
   └─ Want end-to-end automation?
       └─> Use repo-pm-feature-workflow skill (plans + implements + reviews)
@@ -410,58 +410,22 @@ START
 
 ---
 
-## Prompt Library Reference
+## Workflow Library Reference
 
-### 1. Daily Start (`.github/prompts/daily-start.prompt.md`)
-**When:** Morning / start of session  
-**Input:** None  
-**Output:** Status summary + next action recommendation  
-**Duration:** Auto (read-only, fast)
+Canonical workflow definitions live in [`.agents/workflows/`](../.agents/workflows/). Copilot prompts and Cursor commands are thin mirrors — edit the workflow file only.
 
----
+| Workflow | Canonical file | Cursor command |
+|----------|----------------|----------------|
+| Daily start | [`daily-start.md`](../.agents/workflows/daily-start.md) | `/daily-start` |
+| Plan next issue | [`plan-next-issue.md`](../.agents/workflows/plan-next-issue.md) | `/plan-next-issue` |
+| Implement issue | [`implement-issue.md`](../.agents/workflows/implement-issue.md) | `/implement-issue` |
+| Review and create PR | [`review-and-create-pr.md`](../.agents/workflows/review-and-create-pr.md) | `/review-and-create-pr` |
+| Address PR review comments | [`address-pr-review-comments.md`](../.agents/workflows/address-pr-review-comments.md) | `/address-pr-review-comments` |
+| Weekly PM review | [`weekly-pm-review.md`](../.agents/workflows/weekly-pm-review.md) | `/weekly-pm-review` |
+| Code review | [`code-review.md`](../.agents/workflows/code-review.md) | `/code-review` |
+| Docs update | [`docs-update.md`](../.agents/workflows/docs-update.md) | `/docs-update` |
 
-### 2. Plan Next Issue (`.github/prompts/plan-next-issue.prompt.md`)
-**When:** Ready to plan next feature  
-**Input:** None (auto-select) OR "feature name" (explicit)  
-**Output:** GitHub issues + technical spec + test strategy  
-**Duration:** 5-15 minutes (depends on feature complexity)  
-**Invokes:** PM Orchestrator Agent, breakdown-plan skill, breakdown-test skill
-
-**Two-level planning:** This prompt performs **both**:
-1. **PM Planning:** Selects item from backlog, validates scope
-2. **Technical Planning:** Invokes `breakdown-plan` to create Epic/Feature/Story spec
-
----
-
-### 3. Implement Issue (`.github/prompts/implement-issue.prompt.md` / `.cursor/commands/implement-issue.md`)
-**When:** After planning, ready to code  
-**Input:** Issue number OR feature name  
-**Output:** Code + tests + docs + ADR (if needed)  
-**Duration:** 30 minutes to 8 hours (depends on size: xs → xl)  
-**Invokes:** Delivery Agent, dotnet-best-practices, mudblazor, csharp-xunit, csharp-docs, create-architectural-decision-record
-
-**Platform:** Workflow prompt or `/implement-issue` Cursor command.
-
----
-
-### 4. Review and Create PR (`.github/prompts/review-and-create-pr.prompt.md`)
-**When:** After implementation, ready for PR  
-**Input:** Issue number OR feature name  
-**Output:** PR + quality validation + issue closure (post-merge)  
-**Duration:** 5-15 minutes  
-**Invokes:** Review Agent, get_errors, repo-github-issues
-
-**Two-part execution:**
-1. **Pre-merge:** Creates PR, validates gates, updates labels to `status/in-review`
-2. **Post-merge:** (After you approve/merge) Closes issue with `status/done`
-
----
-
-### 5. Weekly PM Review (`.github/prompts/weekly-pm-review.prompt.md`)
-**When:** End of week / start of new week  
-**Input:** None  
-**Output:** Executive summary + top 3 priorities + blocker analysis  
-**Duration:** Auto (read-only, comprehensive)
+See the daily and weekly sections above for orchestration rhythm and quality gates.
 
 ---
 
@@ -520,7 +484,7 @@ These gates are defined in [`AGENTS.md`](../AGENTS.md) and enforced by role cont
 **Action:**
 1. Pause workflow
 2. Update `plan/SCOPE.md` or `plan/BACKLOG.md` manually
-3. Re-run `plan-next-issue.prompt.md` with clarified scope
+3. Re-run plan-next-issue workflow with clarified scope
 
 ---
 
@@ -539,7 +503,7 @@ These gates are defined in [`AGENTS.md`](../AGENTS.md) and enforced by role cont
 **Action:**
 1. Review Agent flags failure
 2. Escalates to Delivery Agent for fixes
-3. After fixes, re-run `review-and-create-pr.prompt.md`
+3. After fixes, re-run review-and-create-pr workflow
 
 ---
 
@@ -612,8 +576,8 @@ Plan next item for Phase 1
 
 **Steps:**
 1. Create issue manually (type/bug, priority/critical)
-2. Run `implement-issue` (workflow prompt or Cursor `/implement-issue`) with issue number (Delivery contract implements)
-3. Run `review-and-create-pr.prompt.md` (create PR)
+2. Run `/implement-issue` or "Implement issue #N" (Delivery contract implements)
+3. Run `/review-and-create-pr` or "Review issue #N" (create PR)
 4. Approve and merge immediately
 5. Run `Close issue #X after PR #Y merged`
 
@@ -625,7 +589,7 @@ Plan next item for Phase 1
 
 ### "Agent says issue not ready for implementation"
 **Cause:** Missing acceptance criteria, labels, or scope validation.  
-**Fix:** Re-run `plan-next-issue.prompt.md` to complete planning.
+**Fix:** Re-run plan-next-issue workflow to complete planning.
 
 ---
 
@@ -713,10 +677,10 @@ Take the next backlog item and run the full PM feature workflow
 1. **Planning artefacts** (`plan/BACKLOG.md`, `plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md`) — define what to build
 2. **Governance** ([`AGENTS.md`](../AGENTS.md), `plan/LABEL_STRATEGY.md`, `plan/PROJECT_MANAGEMENT.md`) — define how to build it
 3. **Role contracts** ([`.agents/contracts/`](../.agents/contracts/)) — execution contracts (who does what)
-4. **Prompts** (`.github/prompts/*.prompt.md`) — reusable workflows (when to do it)
+4. **Workflow entry points** ([`.agents/workflows/`](../.agents/workflows/)) — canonical workflow stubs (when to do it)
 5. **This runbook** — orchestration guide (daily/weekly rhythm)
 
-**Use this runbook as your daily reference.** It tells you what prompt to run at each stage, what each prompt produces, and what gates must pass before moving forward.
+**Use this runbook as your daily reference.** It tells you which workflow to run at each stage, what each produces, and what gates must pass before moving forward.
 
 ---
 

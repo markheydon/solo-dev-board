@@ -39,25 +39,29 @@ SoloDevBoard defines specialised role contracts for daily PM workflows. These or
 - `review`: Quality validation → PR creation → issue closure → release impact assessment
 
 **Role contracts:** `.agents/contracts/*.md`  
-**Invocation:** Via prompts in `.github/prompts/`, Cursor commands in `.cursor/commands/`, or direct requests to follow a contract  
+**Workflow entry points:** `.agents/workflows/*.md` (canonical)  
+**Invocation:** Natural language, [`.github/prompts/`](../../.github/prompts/) (Copilot), [`.cursor/commands/`](../../.cursor/commands/) (Cursor) — all thin mirrors pointing to `.agents/workflows/`  
 **Orchestration:** `plan/PM_RUNBOOK.md` (daily/weekly workflow guide)
 
-## Prompt Library
+## Workflow Library
 
-Reusable workflow prompts for daily PM operations:
+Reusable workflows for daily PM operations (canonical definitions in `.agents/workflows/`):
 
 - `daily-start`: Morning status check → backlog health → blocker identification → next action recommendation
-- `plan-next-issue`: Backlog selection → scope validation → breakdown-plan → GitHub issue creation (invokes PM Orchestrator)
-- `implement-issue`: Implementation → tests → docs → ADR (invokes Delivery Agent)
-- `review-and-close`: Quality gates → PR creation → issue closure (invokes Review Agent)
+- `plan-next-issue`: Backlog selection → scope validation → breakdown-plan → GitHub issue creation
+- `implement-issue`: Implementation → tests → docs → ADR
+- `review-and-create-pr`: Quality gates → PR creation → issue closure
+- `address-pr-review-comments`: PR review feedback → thread replies → resolved conversations
 - `weekly-pm-review`: Milestone health → velocity trends → release confidence → top 3 priorities
+- `code-review`: PR and branch review against repository conventions
+- `docs-update`: Documentation refresh and ADR authoring
 
-**Prompt definitions:** `.github/prompts/*.prompt.md`  
-**Prompt usage guide:** `plan/PM_RUNBOOK.md`
+**Workflow definitions:** [`.agents/workflows/`](../../.agents/workflows/)  
+**Usage guide:** `plan/PM_RUNBOOK.md`
 
-## Cursor entry points
+## Tool entry points
 
-- **Implementation:** `/implement-issue` in Agent chat → Delivery contract in [`.agents/contracts/delivery.md`](../../.agents/contracts/delivery.md)
+Cursor slash commands and Copilot prompts are thin discovery layers only. Example: `/implement-issue` → [`.agents/workflows/implement-issue.md`](../../.agents/workflows/implement-issue.md) → [`.agents/contracts/delivery.md`](../../.agents/contracts/delivery.md)
 
 ## Canonical Sources
 

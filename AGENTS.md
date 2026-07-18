@@ -226,9 +226,9 @@ Default workflow order for feature delivery:
 For daily product management operations, use the PM operating system defined in:
 
 - **Runbook:** [`plan/PM_RUNBOOK.md`](plan/PM_RUNBOOK.md) — daily and weekly workflow guide.
+- **Workflow entry points:** [`.agents/workflows/`](.agents/workflows/) — canonical workflow stubs (easy-to-miss specifics and contract pointers).
 - **Role contracts:** [`.agents/contracts/`](.agents/contracts/) — specialised execution modes with explicit boundaries.
-- **Workflow prompts:** [`.github/prompts/`](.github/prompts/) — reusable workflow patterns (optional entry points).
-- **Cursor commands:** [`.cursor/commands/`](.cursor/commands/) — e.g. `/implement-issue` for implementation after planning.
+- **Tool mirrors:** [`.github/prompts/`](.github/prompts/) (Copilot) and [`.cursor/commands/`](.cursor/commands/) (Cursor) — thin pointers to `.agents/workflows/` only; never duplicate workflow content there.
 
 #### Role contracts
 
@@ -238,13 +238,18 @@ For daily product management operations, use the PM operating system defined in:
 - **Review** ([`.agents/contracts/review.md`](.agents/contracts/review.md)) — quality gates, PR creation, issue closure.
 - **Code Review** ([`.agents/contracts/code-review.md`](.agents/contracts/code-review.md)) — PR and branch review against repository conventions.
 
-#### Workflow prompts
+#### Workflow entry points
 
-- **`daily-start.prompt.md`** — morning status check and next action recommendation.
-- **`plan-next-issue.prompt.md`** — select from backlog, create technical plan, set up GitHub issues.
-- **`implement-issue.prompt.md`** — implement code, tests, and docs.
-- **`review-and-create-pr.prompt.md`** — validate quality and create PR.
-- **`weekly-pm-review.prompt.md`** — milestone health, release confidence, priority recommendations.
+See [`.agents/workflows/README.md`](.agents/workflows/README.md) for the full index. Each workflow delegates to a role contract and the runbook:
+
+- [`daily-start.md`](.agents/workflows/daily-start.md) — morning status check and next action recommendation.
+- [`plan-next-issue.md`](.agents/workflows/plan-next-issue.md) — select from backlog, create technical plan, set up GitHub issues.
+- [`implement-issue.md`](.agents/workflows/implement-issue.md) — implement code, tests, and docs.
+- [`review-and-create-pr.md`](.agents/workflows/review-and-create-pr.md) — validate quality and create PR.
+- [`address-pr-review-comments.md`](.agents/workflows/address-pr-review-comments.md) — PR review feedback loop.
+- [`weekly-pm-review.md`](.agents/workflows/weekly-pm-review.md) — milestone health, release confidence, priority recommendations.
+- [`code-review.md`](.agents/workflows/code-review.md) — PR and branch review.
+- [`docs-update.md`](.agents/workflows/docs-update.md) — documentation refresh.
 
 **Workflow reference:** See [`plan/PM_RUNBOOK.md`](plan/PM_RUNBOOK.md) for daily operating rhythm, decision tree, and command quick reference.
 

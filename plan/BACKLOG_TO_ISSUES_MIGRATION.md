@@ -208,10 +208,10 @@ Update every file that references `BACKLOG.md` as a living work queue. At minimu
 | `.agents/contracts/pm-orchestrator.md` | Read Project/Issues, not BACKLOG.md. |
 | `.agents/contracts/delivery.md` | Remove BACKLOG.md sync; issue closure is sufficient. |
 | `.agents/contracts/review.md` | Confirm issue labels/milestone on PR, not BACKLOG.md. |
-| `.github/prompts/daily-start.prompt.md` | Query `gh issue list` / Project #8. |
-| `.github/prompts/plan-next-issue.prompt.md` | Select from open issues or create new. |
-| `.github/prompts/weekly-pm-review.prompt.md` | Milestone/issue health, not BACKLOG.md. |
-| `.cursor/commands/implement-issue.md` | Aligned with unified workflow (Phase 1 complete). |
+| `.agents/workflows/daily-start.md` | Query `gh issue list` / Project #8. |
+| `.agents/workflows/plan-next-issue.md` | Select from open issues or create new. |
+| `.agents/workflows/weekly-pm-review.md` | Milestone/issue health, not BACKLOG.md. |
+| `.agents/workflows/implement-issue.md` | Aligned with unified workflow. |
 
 **Note:** The agent/workflow review may add, remove, or restructure files in this table. Reconcile this list against the post-review agent layout before executing Step 6.
 

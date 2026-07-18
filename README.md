@@ -111,8 +111,8 @@ solo-dev-board/
 │   ├── 0004-layered-architecture.md
 │   └── 0005-github-api-strategy.md
 ├── .github/
-│   ├── instructions/            # Path-scoped coding rules
-│   ├── prompts/                 # Workflow prompt entry points
+│   ├── instructions/            # Path-scoped coding rules (canonical)
+│   ├── prompts/                 # Thin Copilot mirrors → .agents/workflows/
 │   ├── ISSUE_TEMPLATE/          # Issue templates (feature, bug, chore)
 │   ├── pull_request_template.md
 │   └── workflows/
@@ -121,10 +121,11 @@ solo-dev-board/
 │       └── aspire-deploy-validate.yml  # Validates AppHost deployment model on PR
 ├── .agents/
 │   ├── contracts/               # Role boundary contracts (PM, delivery, review, etc.)
+│   ├── workflows/               # Canonical workflow entry points
 │   └── skills/                  # Shared implementation and workflow skills
 ├── .cursor/
-│   ├── rules/                   # Cursor path-scoped rules
-│   └── commands/                # Cursor slash commands (/implement-issue, etc.)
+│   ├── rules/                   # Thin Cursor mirrors → .github/instructions/
+│   └── commands/                # Thin Cursor mirrors → .agents/workflows/
 └── AGENTS.md                    # Canonical AI collaborator standards
 ```
 
@@ -154,7 +155,7 @@ For help with setup, see `docs/getting-started.md`.
 
 ## AI-Driven Development
 
-SoloDevBoard is developed with AI agents as active collaborators. [`AGENTS.md`](AGENTS.md) is the canonical source for architecture, conventions, UK English requirements, and workflow gates. Role contracts in [`.agents/contracts/`](.agents/contracts/), skills in [`.agents/skills/`](.agents/skills/), and the PM runbook in [`plan/PM_RUNBOOK.md`](plan/PM_RUNBOOK.md) provide structured workflows for planning, implementation, and review.
+SoloDevBoard is developed with AI agents as active collaborators. [`AGENTS.md`](AGENTS.md) is the canonical source for architecture, conventions, UK English requirements, and workflow gates. Role contracts in [`.agents/contracts/`](.agents/contracts/), workflow entry points in [`.agents/workflows/`](.agents/workflows/), skills in [`.agents/skills/`](.agents/skills/), and the PM runbook in [`plan/PM_RUNBOOK.md`](plan/PM_RUNBOOK.md) provide structured workflows for planning, implementation, and review.
 
 ---
 
