@@ -90,7 +90,7 @@ Validate:
 
 Do not inspect unrelated documentation.
 
-Do not open ADRs, release plans, scope documents, or implementation plans unless they were modified as part of the implementation.
+Do not open archived ADRs, release plans, scope documents, or implementation plans unless they were modified as part of the implementation.
 
 ---
 
@@ -144,7 +144,7 @@ Do NOT:
 - Update SCOPE.md
 - Update IMPLEMENTATION_PLAN.md
 - Update RELEASE_PLAN.md
-- Create ADRs
+- Create decision log entries or ADR archive files
 - Close issues
 - Update project boards
 - Perform roadmap management

@@ -20,7 +20,7 @@ Run a deterministic feature workflow so the user can act as product manager whil
 5. Create or update GitHub issues with `repo-github-issues` (use `repo-github-gh-cli` for bulk changes), then sync each issue to the project board with `repo-github-project` skill.
 6. Trigger quality planning with `breakdown-test`.
 7. Implement using repository standards (`dotnet-best-practices`, and `mudblazor` for UI work), with MudBlazor components and utility classes preferred over custom CSS or raw HTML.
-8. Create or update ADRs when architectural decisions are introduced.
+8. Record architectural decisions via `repo-decision-log` when introduced.
 9. Update user-facing documentation and index links.
 10. Verify completion gates and then close issue states.
 
@@ -30,14 +30,14 @@ Run a deterministic feature workflow so the user can act as product manager whil
 - Do not start page-producing UI implementation until the planning wireframe exists and is referenced by the relevant issue or artefact.
 - Do not close work before tests and documentation updates are complete.
 - Any scope change must update `plan/SCOPE.md` and `plan/BACKLOG.md`.
-- Any architectural decision must create or update an ADR in `adr/`.
+- Any architectural decision must follow `repo-decision-log` (constitution and/or `plan/DECISIONS.md`).
 
 ## Required Artefacts Per Feature
 
 - Backlog entry update: `plan/BACKLOG.md`
 - Scope update when needed: `plan/SCOPE.md`
 - Wireframe: `plan/wireframes/*.md` and `plan/wireframes/README.md` for any page-producing feature or substantive page refresh
-- ADR when needed: `adr/*.md`
+- Decision log when needed: `plan/DECISIONS.md`
 - User guide stub when user-facing: `docs/user-guide/*.md`
 - Docs index quick links when a new page is added: `docs/index.md`
 

@@ -2,7 +2,7 @@
 
 **Contract:** [`.agents/contracts/delivery.md`](../contracts/delivery.md)
 **Runbook:** [`plan/PM_RUNBOOK.md`](../../plan/PM_RUNBOOK.md) — Stage 2: Implementation
-**Skills (on demand):** `dotnet-best-practices`, `mudblazor`, `csharp-xunit`, `csharp-docs`, `create-architectural-decision-record`, `documentation-writer`
+**Skills (on demand):** `dotnet-best-practices`, `mudblazor`, `csharp-xunit`, `csharp-docs`, `repo-decision-log`, `documentation-writer`
 
 ## Easy-to-miss specifics
 

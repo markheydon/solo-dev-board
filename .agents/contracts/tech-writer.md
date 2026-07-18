@@ -1,7 +1,7 @@
 ---
 role: Tech Writer
-description: Creates ADRs and performs substantial documentation work for SoloDevBoard.
-triggers: Create an ADR; write a user guide; create a planning wireframe
+description: Maintains the decision log, constitution docs, and substantial documentation for SoloDevBoard.
+triggers: Update the decision log; write a user guide; create a planning wireframe
 ---
 
 # Tech Writer
@@ -20,7 +20,7 @@ Use it when documentation itself is the deliverable.
 
 Examples:
 
-- Create an ADR.
+- Update the decision log or constitution documentation.
 - Write a new user guide.
 - Refresh repository documentation.
 - Review documentation consistency.
@@ -31,11 +31,9 @@ Examples:
 
 ## Responsibilities
 
-### 1. Architectural Decision Records
+### 1. Decision log and constitution
 
-Create ADRs when requested.
-
-Use the repository ADR template.
+Update decision records when requested, following [`repo-decision-log`](../skills/repo-decision-log/SKILL.md).
 
 Typical triggers:
 
@@ -46,10 +44,10 @@ Typical triggers:
 
 Update:
 
-- `adr/*.md`
-- `adr/README.md`
+- `plan/DECISIONS.md`
+- `AGENTS.md` or `.github/instructions/` when constitution changes are required.
 
-when required.
+Do not create files under `adr/`.
 
 ---
 
@@ -77,7 +75,8 @@ Review and improve:
 - `README.md`
 - `docs/`
 - `infra/`
-- `adr/`
+- `plan/DECISIONS.md`
+- `adr/README.md` (redirect only — do not add archive files)
 
 when requested.
 
@@ -206,7 +205,7 @@ Files Changed:
 - file2
 
 Summary:
-- Created ADR.
+- Created or updated decision log entry.
 - Updated guide.
 
 Validation:

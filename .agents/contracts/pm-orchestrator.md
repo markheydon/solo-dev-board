@@ -44,7 +44,7 @@ Invoke this when you need to:
 - Invoke `breakdown-plan` skill to decompose the work
 - Produce Epic > Feature > Story/Enabler > Test hierarchy
 - Generate acceptance criteria, dependencies, estimates
-- Identify ADR requirements if architectural decisions involved
+- Identify decision log or constitution updates if architectural decisions are involved
 - For any Blazor UI work, specify the expected MudBlazor components or layout primitives and note that utility classes should be preferred over bespoke CSS unless a genuine gap is known in advance
 - For any feature that will result in a new page, a new major page region, or a substantive page refresh, require a wireframe artefact in `plan/wireframes/` before planning is considered complete
 - Ensure the resulting feature, story, and test issues reference the approved wireframe so Delivery Agent work starts from a planning baseline rather than creating the wireframe during implementation
@@ -82,12 +82,12 @@ Invoke this when you need to:
   - `plan/SCOPE.md` — update if scope clarification was required during planning
   - `plan/wireframes/*.md` — create a wireframe for page-producing features or substantive page refreshes
   - `plan/wireframes/README.md` — add the new wireframe to the index
-  - `adr/*.md` — create new ADR if architectural decision was made during breakdown
+  - `plan/DECISIONS.md` — record decision if architectural choice was made during breakdown
 - **Provide structured input** to Tech Writer:
   - Purpose: what changed and why (e.g., "feature planned", "architecture decision made")
   - Key points: outline or bullet list of content to include (user stories, acceptance criteria, decision rationale)
-  - Context: related ADRs, issues, or planning items to reference
-  - Target file: exact path to update (e.g., `plan/BACKLOG.md`, `adr/0013-new-decision.md`)
+  - Context: related decisions, issues, or planning items to reference
+  - Target file: exact path to update (e.g., `plan/BACKLOG.md`, `plan/DECISIONS.md`)
 - **Do not write documentation prose** — orchestrate the update requirement; let Tech Writer produce the text
 
 ---
@@ -127,7 +127,7 @@ When complete, this agent produces:
 - `plan/BACKLOG.md` — item marked as planned/in-progress (via Tech Writer agent)
 - `plan/SCOPE.md` — updated if scope clarification needed (via Tech Writer agent)
 - `plan/wireframes/README.md` — updated when a new wireframe is created (via Tech Writer agent)
-- `adr/*.md` — new ADR created if architectural decision required (via Tech Writer agent)
+- `plan/DECISIONS.md` — new decision recorded if architectural choice required (via Tech Writer agent)
 
 ### Handoff Package
 Deliver to user:
@@ -183,7 +183,7 @@ Delivery Agent should treat issues produced by this workflow as implementation-r
 - `breakdown-test` skill — quality planning
 - `repo-github-issues` skill — issue creation/updates
 - `repo-github-project` skill — project board sync (Lifecycle Event 1: Issue Created)
-- **Tech Writer agent** — BACKLOG.md, SCOPE.md, and ADR updates (provides outline, Tech Writer produces prose)
+- **Tech Writer agent** — BACKLOG.md, SCOPE.md, and decision log updates (provides outline, Tech Writer produces prose)
 
 **Hands off to:**
 - **Delivery Agent** — for implementation execution (code, tests, docs)

@@ -473,7 +473,7 @@ These gates are defined in [`AGENTS.md`](../AGENTS.md) and enforced by role cont
 | `docs/user-guide/` (user docs)        | Delivery Agent           | User-facing features                  |
 | `docs/index.md` (quick links)         | Delivery Agent           | New doc pages added                   |
 | `adr/` (architectural decisions)      | Delivery Agent           | Architectural decisions               |
-| `adr/README.md` (ADR index)           | Delivery Agent           | New ADR created                       |
+| `plan/DECISIONS.md`                   | Delivery Agent           | New decision recorded                 |
 
 ---
 

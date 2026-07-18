@@ -134,15 +134,15 @@ Technical or internal changes:
 
 ---
 
-### 6. ADRs
+### 6. Decision log
 
-Create an ADR only when:
+Record decisions via [`repo-decision-log`](../skills/repo-decision-log/SKILL.md) when:
 
-- Introducing a significant architectural decision
-- Introducing a new external dependency
-- Replacing an existing architectural approach
+- Introducing a significant architectural decision not already in the constitution.
+- Introducing a new external dependency.
+- Replacing an existing architectural approach.
 
-Do not create ADRs for routine implementation decisions.
+Do not create files under `adr/`. Do not log routine implementation choices.
 
 ---
 

@@ -262,5 +262,5 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 - When a phase task is completed, tick it off in this document.
 - When a feature's user-facing doc is written, update the stub notice in `docs/user-guide/<feature>.md`.
-- When a new ADR is created, add it to `adr/README.md`.
+- When a new decision is recorded, add it to `plan/DECISIONS.md` per `repo-decision-log`.
 - When a new environment variable is introduced, update `docs/getting-started.md` and `docs/deployment.md`.

@@ -13,7 +13,7 @@ Skills prefixed with `repo-` are SoloDevBoard-specific (GitHub project board, is
 - `repo-github-gh-cli`: bulk GitHub CLI operations (SoloDevBoard)
 - `repo-github-project`: SoloDevBoard Roadmap project board operations
 - `breakdown-test`: test planning and QA workflow
-- `create-architectural-decision-record`: architecture decision capture
+- `repo-decision-log`: architectural and technical decision routing (SoloDevBoard)
 - `documentation-writer`: user and technical documentation
 - `dotnet-best-practices`: implementation quality baseline
 - `mudblazor`: MudBlazor Blazor component library implementation guidance
@@ -35,8 +35,8 @@ Skills not listed as active or optional companion should be removed from `.agent
 SoloDevBoard defines specialised role contracts for daily PM workflows. These orchestrate skills and enforce quality gates.
 
 - `pm-orchestrator`: Backlog selection → scope validation → technical planning (breakdown-plan) → GitHub issue setup
-- `delivery`: Implementation execution → tests → docs → ADR creation (if needed) → backlog sync
-- `review`: Quality validation → PR creation → issue closure → release impact assessment
+- `delivery`: Implementation execution → tests → docs → decision log (if needed) → backlog sync
+- `verify`: Quality validation → PR creation → issue closure → release impact assessment
 
 **Role contracts:** `.agents/contracts/*.md`  
 **Workflow entry points:** `.agents/workflows/*.md` (canonical)  
@@ -49,12 +49,12 @@ Reusable workflows for daily PM operations (canonical definitions in `.agents/wo
 
 - `daily-start`: Morning status check → backlog health → blocker identification → next action recommendation
 - `plan-next-issue`: Backlog selection → scope validation → breakdown-plan → GitHub issue creation
-- `implement-issue`: Implementation → tests → docs → ADR
+- `implement-issue`: Implementation → tests → docs → decision log
 - `verify-and-create-pr`: Quality gates → PR creation → issue closure
 - `address-pr-review-comments`: PR review feedback → thread replies → resolved conversations
 - `weekly-pm-review`: Milestone health → velocity trends → release confidence → top 3 priorities
 - `code-review`: PR and branch review against repository conventions
-- `docs-update`: Documentation refresh and ADR authoring
+- `docs-update`: Documentation refresh and decision log updates
 
 **Workflow definitions:** [`.agents/workflows/`](../../.agents/workflows/)  
 **Usage guide:** `plan/PM_RUNBOOK.md`
@@ -66,6 +66,7 @@ Cursor slash commands and Copilot prompts are thin discovery layers only. Exampl
 ## Canonical Sources
 
 - Stack and testing baseline: [`AGENTS.md`](../../AGENTS.md)
+- Decision log: `plan/DECISIONS.md`
 - Issue labels: `plan/LABEL_STRATEGY.md`
 - Feature workflow gates: `.agents/skills/repo-pm-feature-workflow/SKILL.md`
 - Daily PM workflow: `plan/PM_RUNBOOK.md`

@@ -10,4 +10,4 @@
 
 ## Invocation
 
-Natural language: "Refresh documentation for [topic]" or "Create an ADR for [decision]"
+Natural language: "Refresh documentation for [topic]" or "Update the decision log for [decision]"

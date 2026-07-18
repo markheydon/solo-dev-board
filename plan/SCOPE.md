@@ -20,7 +20,7 @@ Public-release hardening is in scope for v1.0.0, including:
 - GitHub App-first hosted authentication and installation token flow for user-to-server authentication.
 - Hosted access control and explicit authorised-user admission for public deployments. Only users or organisations explicitly authorised by the operator may access the hosted UI.
 - Secure production authentication handling for hosted deployments via Aspire AppHost parameters supplied at deploy time (GitHub Environment secrets).
-- Azure deployment via Aspire to Azure Container Apps with scale-to-zero (ADR-0018).
+- Azure deployment via Aspire to Azure Container Apps with scale-to-zero ([DEC-015](DECISIONS.md#dec-015-aspire-azure-container-apps-deployment)).
 - OIDC authentication for GitHub Actions to Azure.
 - Operational hardening: response caching, health checks, structured logging, Application Insights telemetry, Dependabot configuration.
 - PAT-only local trusted mode for development and trusted self-hosted use.
@@ -83,8 +83,8 @@ The following are explicitly **not** in scope for the current version of SoloDev
 - **UK English:** All user-facing text, code comments, documentation, and commit messages must be written in UK English.
 - **Open source:** The project is intended to be open source under the MIT Licence.
 - **AI-driven development:** The project is developed with GitHub Copilot as an active collaborator. All planning documents are written to be machine-readable and actionable by AI agents.
-- **Minimal dependencies:** Prefer the .NET ecosystem and well-established open source libraries. Avoid adding dependencies without an ADR.
-- **UI component library:** MudBlazor is the sole UI component library for the Blazor front-end (see [ADR-0012](../adr/0012-switch-to-mudblazor-component-library.md)). Raw HTML form elements are not used where a MudBlazor equivalent exists.
+- **Minimal dependencies:** Prefer the .NET ecosystem and well-established open source libraries. Avoid adding dependencies without a decision log entry ([`plan/DECISIONS.md`](DECISIONS.md)).
+- **UI component library:** MudBlazor is the sole UI component library for the Blazor front-end (see [DEC-009](DECISIONS.md#dec-009-mudblazor-as-the-sole-ui-component-library)). Raw HTML form elements are not used where a MudBlazor equivalent exists.
 
 ---
 
@@ -96,7 +96,7 @@ The following are explicitly **not** in scope for the current version of SoloDev
 > 2. Update `plan/IMPLEMENTATION_PLAN.md` if the phase breakdown is affected.
 > 3. Update `plan/BACKLOG.md` to add or remove the relevant epics and user stories.
 > 4. Create a GitHub Issue for the scope change using the `type/feature` or `type/chore` template.
-> 5. If the change affects the architecture, create or update the relevant ADR in `adr/`.
+> 5. If the change affects the architecture, follow `repo-decision-log` — update [`plan/DECISIONS.md`](DECISIONS.md) and/or constitution.
 > 6. If the change affects the user-facing docs, update or create the relevant file in `docs/user-guide/`.
 > 7. Add a changelog entry at the bottom of this file.
 

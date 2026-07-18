@@ -96,6 +96,7 @@ solo-dev-board/
 │   └── user-guide/             # Per-feature user guides
 ├── plan/
 │   ├── SCOPE.md                # Project scope and constraints
+│   ├── DECISIONS.md            # Active decision log (repo memory)
 │   ├── IMPLEMENTATION_PLAN.md  # Phased development plan
 │   ├── BACKLOG.md              # Feature backlog by epic
 │   ├── RELEASE_PLAN.md         # Versioning and release process
@@ -104,12 +105,8 @@ solo-dev-board/
 │   ├── PROJECT_BOARD_DESIGN.md # Project board column and automation design
 │   └── DOCS_STRATEGY.md        # Documentation conventions
 ├── adr/
-│   ├── README.md               # ADR index
-│   ├── 0001-blazor-server.md
-│   ├── 0002-testing-framework.md
-│   ├── 0003-bicep-infrastructure.md
-│   ├── 0004-layered-architecture.md
-│   └── 0005-github-api-strategy.md
+│   ├── README.md               # Redirect to plan/DECISIONS.md
+│   └── archive/                # Read-only legacy ADR files
 ├── .github/
 │   ├── instructions/            # Path-scoped coding rules (canonical)
 │   ├── prompts/                 # Thin Copilot mirrors → .agents/workflows/
@@ -120,7 +117,7 @@ solo-dev-board/
 │       ├── cd.yml               # CD: Aspire deploy to Azure (manual until first success)
 │       └── aspire-deploy-validate.yml  # Validates AppHost deployment model on PR
 ├── .agents/
-│   ├── contracts/               # Role boundary contracts (PM, delivery, review, etc.)
+│   ├── contracts/               # Role boundary contracts (PM, delivery, verify, etc.)
 │   ├── workflows/               # Canonical workflow entry points
 │   └── skills/                  # Shared implementation and workflow skills
 ├── .cursor/

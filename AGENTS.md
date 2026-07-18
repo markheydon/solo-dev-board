@@ -28,7 +28,7 @@ Path-scoped rules live in `.github/instructions/` and are loaded by matching too
 
 > **All code comments, string literals, user-facing text, documentation, and commit messages MUST be written in UK English.**
 
-> **All bullet point list items that form complete sentences MUST end with a full stop (`.`).** This applies to all documentation: planning files, user guides, ADRs, agent definitions, prompt files, and inline code comments.
+> **All bullet point list items that form complete sentences MUST end with a full stop (`.`).** This applies to all documentation: planning files, user guides, decision log, agent definitions, prompt files, and inline code comments.
 
 Use the following spellings consistently:
 - `colour` (not color)
@@ -61,7 +61,7 @@ SoloDevBoard.Infrastructure  → GitHub API clients, persistence, external integ
 - **App** depends on Application (calls use cases via services/mediators).
 - Use constructor injection throughout; avoid service locator patterns.
 
-### Boundary Data Shapes (ADR-0011)
+### Boundary Data Shapes (DEC-008)
 
 Two explicit rules govern what types cross each boundary:
 
@@ -92,7 +92,7 @@ DTOs are `sealed record` types named `<Entity>Dto`, co-located in `SoloDevBoard.
 - **Naming convention:** `MethodUnderTest_Scenario_ExpectedOutcome`
 - Test projects mirror the structure of source projects.
 - Arrange / Act / Assert sections separated by blank lines (no comments required).
-- Use xUnit's built-in `Assert.*` methods for all assertions. **Do not add FluentAssertions** — it requires a commercial licence and is prohibited in this open-source project (see ADR-0008).
+- Use xUnit's built-in `Assert.*` methods for all assertions. **Do not add FluentAssertions** — it requires a commercial licence and is prohibited in this open-source project (see [DEC-006](plan/DECISIONS.md#dec-006-no-fluentassertions--xunit-built-in-assertions-only)).
 
 ---
 
@@ -111,7 +111,7 @@ Follow [`.agents/workflows/plan-next-issue.md`](.agents/workflows/plan-next-issu
 
 - Planning and GitHub issue with acceptance criteria before coding.
 - Wireframe in `plan/wireframes/` before page-producing UI implementation.
-- User guide, ADR, tests, and docs sync per the Documentation Sync table below.
+- User guide, decision log or constitution update, tests, and docs sync per the Documentation Sync table below.
 
 ### Greenfield "add a feature" (no issue yet)
 
@@ -131,7 +131,7 @@ Follow the taxonomy in [`plan/LABEL_STRATEGY.md`](plan/LABEL_STRATEGY.md). Apply
 
 ## Infrastructure
 
-- Production deployment uses **Aspire** (`aspire deploy`) from `SoloDevBoard.AppHost` to **Azure Container Apps** (ADR-0018).
+- Production deployment uses **Aspire** (`aspire deploy`) from `SoloDevBoard.AppHost` to **Azure Container Apps** ([DEC-015](plan/DECISIONS.md#dec-015-aspire-azure-container-apps-deployment)).
 - Aspire generates and applies deployment Bicep at deploy time; do not maintain hand-authored `infra/*.bicep` for production hosting.
 - Secrets for hosted deployments are supplied via AppHost parameters from GitHub Environment secrets at deploy time.
 - See `docs/deployment.md` for operator deployment instructions.
@@ -175,7 +175,7 @@ When code changes are made, ensure the following are kept in sync:
 | Change | Doc to update |
 |--------|--------------|
 | New feature | `docs/user-guide/<feature>.md`, `docs/index.md`, `plan/BACKLOG.md` |
-| New ADR | `adr/README.md` |
+| New decision | `plan/DECISIONS.md` (+ constitution if cross-cutting) |
 | Scope change | `plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md` |
 | New env variable | `docs/getting-started.md`, `docs/deployment.md`, `src/SoloDevBoard.AppHost/README.md` |
 | New release | `plan/RELEASE_PLAN.md` |

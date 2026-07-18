@@ -5,7 +5,7 @@ description: Guide for using the MudBlazor component library in Blazor Server ap
 
 # MudBlazor — Consumer Usage Guide
 
-**MudBlazor** is a Material Design component library for Blazor built entirely in pure C#/Razor — no web components, no shadow DOM. This is the sole UI component library for SoloDevBoard (see ADR-0012).
+**MudBlazor** is a Material Design component library for Blazor built entirely in pure C#/Razor — no web components, no shadow DOM. This is the sole UI component library for SoloDevBoard (see [DEC-009](../../plan/DECISIONS.md#dec-009-mudblazor-as-the-sole-ui-component-library)).
 
 **Official docs:** https://mudblazor.com/  
 **Component demos:** https://mudblazor.com/components/
