@@ -62,6 +62,8 @@ public sealed class AboutTests : BunitContext
         // Assert
         var link = cut.Find("[data-testid='about-repository-link']");
         Assert.Equal("https://github.com/markheydon/solo-dev-board", link.GetAttribute("href"));
+        Assert.Equal("_blank", link.GetAttribute("target"));
+        Assert.Equal("noopener noreferrer", link.GetAttribute("rel"));
     }
 
     [Fact]
