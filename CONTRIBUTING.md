@@ -95,7 +95,7 @@ When suggesting a feature:
    - For significant changes, open an issue first to discuss the approach
 
 2. **Code quality:**
-   - Follow the coding conventions in [.github/copilot-instructions.md](.github/copilot-instructions.md)
+   - Follow the coding conventions in [`AGENTS.md`](AGENTS.md)
    - All code must use **UK English spelling** for comments, strings, and documentation
    - Ensure all public members have XML doc comments (`///`)
    - Use nullable reference types (`#nullable enable`)
@@ -134,7 +134,7 @@ This is an **open source public repository**. To maintain security:
 - **Never commit secrets, credentials, API keys, or personal information**
 - Use `.gitignore` to exclude local configuration files (`.env`, `*.user`, `secrets.json`)
 - GitHub Tokens must be stored in GitHub Environment secrets (production Aspire deploy), Aspire user secrets (local AppHost), or .NET User Secrets (legacy `dotnet run` path)
-- See [.github/copilot-instructions.md#open-source--security](.github/copilot-instructions.md#open-source--security) for detailed security guidelines
+- See [`AGENTS.md#open-source--security`](AGENTS.md#open-source--security) for detailed security guidelines
 
 ---
 

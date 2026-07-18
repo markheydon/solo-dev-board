@@ -1,9 +1,7 @@
 ---
-name: Code Review Agent
+role: Code Review
 description: Reviews SoloDevBoard pull requests and branch changes using repo-specific architecture, testing, and documentation rules.
-model: MAI-Code-1-Flash (copilot)
-argument-hint: Specify the pull request number or branch name to review, e.g., 'review PR #42' or 'review branch feature/label-manager'.
-tools: [read, search, execute]
+triggers: Review PR #N; review branch feature/X
 ---
 
 # Code Review Agent
@@ -84,7 +82,7 @@ At the end of the review:
   - `Request changes`
 
 ## Integration Points
-- Reference `.github/copilot-instructions.md` for repository requirements.
+- Reference [`AGENTS.md`](../../AGENTS.md) for repository requirements.
 - Check `adr/README.md` when ADRs are relevant.
 - Use `get_errors` if available to identify compile diagnostics.
 - Prefer `dotnet build SoloDevBoard.slnx` and `dotnet test SoloDevBoard.slnx` for verification.

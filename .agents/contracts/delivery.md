@@ -1,9 +1,7 @@
 ---
-name: Delivery Agent
+role: Delivery
 description: Implements planned GitHub issues, creates tests, updates documentation, updates BACKLOG.md, and prepares work for review.
-model: Raptor mini (copilot)
-argument-hint: Specify issue number or feature name, e.g. "implement issue #123".
-tools: [read, edit, search, execute, agent]
+triggers: Implement issue #N; build feature X; fix bug #N
 ---
 
 # Delivery Agent

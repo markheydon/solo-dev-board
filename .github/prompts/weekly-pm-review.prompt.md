@@ -337,7 +337,7 @@ Run this workflow:
 ## Governance Validation
 
 The weekly review validates compliance with:
-- **`.github/copilot-instructions.md`** — mandatory gates enforced
+- **`AGENTS.md`** — mandatory gates enforced
 - **`plan/LABEL_STRATEGY.md`** — label taxonomy applied
 - **`plan/PROJECT_MANAGEMENT.md`** — issue workflow rules followed
 - **`.agents/skills/repo-github-project/SKILL.md`** — roadmap lifecycle and date hygiene followed

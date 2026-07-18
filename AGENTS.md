@@ -14,6 +14,14 @@ Platform-neutral standards for GitHub Copilot, Cursor, and other AI agents worki
 - **Framework:** .NET 10 / Blazor Server
 - **Target runtime:** `net10.0`
 
+Path-scoped rules live in `.github/instructions/` and are loaded by matching tools when relevant files are in context. Cursor mirrors each instruction file with a rule in `.cursor/rules/`:
+
+| Instruction file | Scope | Cursor rule |
+|------------------|-------|-------------|
+| `blazor.instructions.md` | `**/*.razor`, `**/*.razor.cs`, `**/*.razor.css` | `.cursor/rules/blazor-mudblazor.mdc` |
+| `dotnet-framework.instructions.md` | `**/*.cs`, `**/*.csproj` | `.cursor/rules/dotnet.mdc` |
+| `github-actions-ci-cd-best-practices.instructions.md` | `.github/workflows/**` | `.cursor/rules/github-actions-ci-cd-best-practices.mdc` |
+
 ---
 
 ## UK English Requirement
@@ -134,8 +142,9 @@ This repository is **open source and public**. The following guidelines ensure s
 - **Golden Rule:** Never commit secrets, credentials, API keys, or personal data to this repository.
 - **GitHub Tokens for app runtime:** Must be stored in **GitHub Environment secrets** (production Aspire deploy parameters), **Aspire user secrets** (local AppHost), or .NET User Secrets (legacy `dotnet run` path). Never commit tokens to source control.
 - **GitHub Tokens for repository automation:** Repository-scoped GitHub Actions bridge tokens may be stored in GitHub Secrets when they are used only for repository/project automation workflows (for example, the SoloDevBoard roadmap bridge) and cannot be replaced by `GITHUB_TOKEN`.
-- **Local Development:** Use `dotnet user-secrets` to manage sensitive configuration. See `docs/getting-started.md` for setup instructions.
+- **Local Development:** Use `dotnet user-secrets` for the legacy `dotnet run` path, or `aspire secret set` for Aspire AppHost. See `docs/getting-started.md` for setup instructions.
 - **App Settings Files:** `appsettings.json` and related files leave sensitive fields empty and instantiate with environment variables or secrets at runtime.
+- **Aspire Deployments:** Secrets are supplied as AppHost parameters from GitHub Environment secrets and injected into the `app` resource at deploy time. See `src/SoloDevBoard.AppHost/README.md` and `docs/deployment.md` for parameter mappings.
 - **CI/CD:** GitHub Actions workflows use OIDC authentication with Azure (no long-lived credentials) and GitHub Environment secrets for AppHost parameters.
 
 ### Contributing & Pull Requests
@@ -177,7 +186,9 @@ When code changes are made, ensure the following are kept in sync:
 - Treat raw HTML and custom CSS as exceptional escape hatches only. If no MudBlazor component, parameter, or utility class can satisfy the requirement, keep the fallback minimal and explain the reason in the implementation summary or PR notes.
 - When asked to "add a feature", follow the full checklist above before writing any code.
 - When reviewing a PR diff, flag any non-UK English spelling in comments or strings.
+- For infrastructure changes, edit the AppHost in `src/SoloDevBoard.AppHost` or add configuration to `src/SoloDevBoard.App`; do not create hand-authored Bicep files (Aspire generates deployment Bicep at deploy time).
 - Do not generate any secrets or credentials in generated files.
+- Do not generate temporary or disposable files in the repository. If a temporary file is required for any reason including (but not limited to) temporary output from tools or testing, it must be created in a temp-style directory away from the repo and cleaned up after use. The rationale is not to restrict an AI's ability to do its work, but to prevent accidental commits of temporary files to the repository.
 
 ---
 
@@ -212,11 +223,30 @@ Default workflow order for feature delivery:
 
 ### PM operating system
 
-- **Runbook:** `plan/PM_RUNBOOK.md`
-- **Agents:** `.github/agents/*.agent.md` (Copilot)
-- **Prompts:** `.github/prompts/*.prompt.md` (Copilot)
-- **Cursor commands:** [`.cursor/commands/implement-issue.md`](.cursor/commands/implement-issue.md) — type `/implement-issue` in Agent chat after planning (Copilot handles PM prompts)
-- **Copilot stack baseline:** `.github/copilot-instructions.md` and `.github/instructions/*.md`
+For daily product management operations, use the PM operating system defined in:
+
+- **Runbook:** [`plan/PM_RUNBOOK.md`](plan/PM_RUNBOOK.md) — daily and weekly workflow guide.
+- **Role contracts:** [`.agents/contracts/`](.agents/contracts/) — specialised execution modes with explicit boundaries.
+- **Workflow prompts:** [`.github/prompts/`](.github/prompts/) — reusable workflow patterns (optional entry points).
+- **Cursor commands:** [`.cursor/commands/`](.cursor/commands/) — e.g. `/implement-issue` for implementation after planning.
+
+#### Role contracts
+
+- **PM Orchestrator** ([`.agents/contracts/pm-orchestrator.md`](.agents/contracts/pm-orchestrator.md)) — backlog selection, scope validation, technical planning, issue creation.
+- **Delivery** ([`.agents/contracts/delivery.md`](.agents/contracts/delivery.md)) — implementation, tests, in-code XML docs.
+- **Tech Writer** ([`.agents/contracts/tech-writer.md`](.agents/contracts/tech-writer.md)) — BACKLOG, SCOPE, ADR, and user guide documentation; UK English enforcement.
+- **Review** ([`.agents/contracts/review.md`](.agents/contracts/review.md)) — quality gates, PR creation, issue closure.
+- **Code Review** ([`.agents/contracts/code-review.md`](.agents/contracts/code-review.md)) — PR and branch review against repository conventions.
+
+#### Workflow prompts
+
+- **`daily-start.prompt.md`** — morning status check and next action recommendation.
+- **`plan-next-issue.prompt.md`** — select from backlog, create technical plan, set up GitHub issues.
+- **`implement-issue.prompt.md`** — implement code, tests, and docs.
+- **`review-and-create-pr.prompt.md`** — validate quality and create PR.
+- **`weekly-pm-review.prompt.md`** — milestone health, release confidence, priority recommendations.
+
+**Workflow reference:** See [`plan/PM_RUNBOOK.md`](plan/PM_RUNBOOK.md) for daily operating rhythm, decision tree, and command quick reference.
 
 ---
 

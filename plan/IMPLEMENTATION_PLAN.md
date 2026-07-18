@@ -256,7 +256,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 3. Add the feature's epics and user stories to `plan/BACKLOG.md`.
 4. Create a stub page in `docs/user-guide/<feature>.md`.
 5. Open a GitHub Issue using the `feature.yml` template with the appropriate labels from `plan/LABEL_STRATEGY.md`.
-6. Only then begin implementing the feature, following the architecture rules in `.github/copilot-instructions.md`.
+6. Only then begin implementing the feature, following the architecture rules in `AGENTS.md`.
 
 ### Keeping Docs in Sync with Code
 

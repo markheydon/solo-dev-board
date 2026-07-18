@@ -1,9 +1,7 @@
 ---
-name: Review Agent
+role: Review
 description: Validates completed work, performs core quality checks, and creates a pull request.
-model: Raptor mini (copilot)
-argument-hint: Specify "review issue #X"
-tools: [read, search, execute, agent]
+triggers: Review issue #N; create PR for feature X
 ---
 
 # Review Agent

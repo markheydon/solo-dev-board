@@ -30,17 +30,17 @@ Skills prefixed with `repo-` are SoloDevBoard-specific (GitHub project board, is
 
 Skills not listed as active or optional companion should be removed from `.agents/skills/` to reduce context noise.
 
-## Custom Agents
+## Role contracts
 
-SoloDevBoard defines specialised agents for daily PM workflows. These orchestrate skills and enforce quality gates.
+SoloDevBoard defines specialised role contracts for daily PM workflows. These orchestrate skills and enforce quality gates.
 
 - `pm-orchestrator`: Backlog selection → scope validation → technical planning (breakdown-plan) → GitHub issue setup
 - `delivery`: Implementation execution → tests → docs → ADR creation (if needed) → backlog sync
 - `review`: Quality validation → PR creation → issue closure → release impact assessment
 
-**Agent definitions:** `.github/agents/*.agent.md`  
-**Agent invocation:** Via prompts in `.github/prompts/` or direct "Invoke [agent name]" requests  
-**Agent orchestration:** `plan/PM_RUNBOOK.md` (daily/weekly workflow guide)
+**Role contracts:** `.agents/contracts/*.md`  
+**Invocation:** Via prompts in `.github/prompts/`, Cursor commands in `.cursor/commands/`, or direct requests to follow a contract  
+**Orchestration:** `plan/PM_RUNBOOK.md` (daily/weekly workflow guide)
 
 ## Prompt Library
 
@@ -57,11 +57,11 @@ Reusable workflow prompts for daily PM operations:
 
 ## Cursor entry points
 
-- **Implementation:** `/implement-issue` in Agent chat → Delivery Agent contract in [`.github/agents/delivery.agent.md`](../../.github/agents/delivery.agent.md)
+- **Implementation:** `/implement-issue` in Agent chat → Delivery contract in [`.agents/contracts/delivery.md`](../../.agents/contracts/delivery.md)
 
 ## Canonical Sources
 
-- Stack and testing baseline: `.github/copilot-instructions.md`
+- Stack and testing baseline: [`AGENTS.md`](../../AGENTS.md)
 - Issue labels: `plan/LABEL_STRATEGY.md`
 - Feature workflow gates: `.agents/skills/repo-pm-feature-workflow/SKILL.md`
 - Daily PM workflow: `plan/PM_RUNBOOK.md`

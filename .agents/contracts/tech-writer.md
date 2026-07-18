@@ -1,9 +1,7 @@
 ---
-name: Tech Writer
+role: Tech Writer
 description: Creates ADRs and performs substantial documentation work for SoloDevBoard.
-model: Claude Haiku 4.5 (copilot)
-argument-hint: Specify the document to create or update.
-tools: [read, edit, search, web]
+triggers: Create an ADR; write a user guide; create a planning wireframe
 ---
 
 # Tech Writer

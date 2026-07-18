@@ -44,7 +44,7 @@ For each issue found:
 
 At the end of the review provide a brief explanation and only report issues you would expect a senior engineer to raise during a real pull request review. If no significant issues are found, explicitly say so.
 
-Use repository-specific guidance from `.github/agents/code-review.agent.md` to verify SoloDevBoard-specific architecture, MudBlazor, testing, UK English, documentation, and planning conventions.
+Use repository-specific guidance from `.agents/contracts/code-review.md` to verify SoloDevBoard-specific architecture, MudBlazor, testing, UK English, documentation, and planning conventions.
 
 ## Inputs Required
 

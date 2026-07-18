@@ -2,7 +2,7 @@
 
 <!-- AI Collaborator Instructions: This document is a parked execution plan. Do not begin migration until the agent/workflow review for Cursor is complete. When the user says "execute the backlog migration" or references this file for implementation, follow the steps in order and tick off the checklist as you go. -->
 
-**Status:** Parked — awaiting agent/workflow review (Cursor vs GitHub Copilot).
+**Status:** Parked — Phase 1 governance neutralisation complete; behavioural migration (issues as source of truth) remains Phase 2.
 
 **Created:** 2026-07-18.
 
@@ -12,15 +12,15 @@
 
 ## Prerequisite
 
-Complete the **agent and workflow review** before executing this plan. The current PM toolchain was designed for GitHub Copilot (`.github/agents/`, `.github/prompts/`, PM Orchestrator). Cursor entry points exist (`.cursor/commands/implement-issue.md`) but planning, board sync, and review workflows still assume Copilot.
+**Phase 1 (complete):** Governance consolidated into `AGENTS.md`, role contracts relocated to `.agents/contracts/`, and cross-references updated for tool-agnostic AI collaboration.
 
-This migration must align with the updated agent model so that:
+**Phase 2 (this plan):** Execute the behavioural migration so that:
 
 - "Add to backlog" means **create or update a GitHub Issue** and sync the project board.
-- Agents do not continue writing open work items to `plan/BACKLOG.md`.
-- Cursor and Copilot (if retained) share the same canonical workflow.
+- Role contracts do not continue writing open work items to `plan/BACKLOG.md`.
+- All AI tools share the same canonical workflow via `AGENTS.md` and `.agents/contracts/`.
 
-**Do not execute Steps 1–8 below until the agent review is signed off.**
+**Do not execute Steps 1–8 below until Phase 2 is explicitly approved.**
 
 ---
 
@@ -195,7 +195,6 @@ Update every file that references `BACKLOG.md` as a living work queue. At minimu
 | File | Change required |
 |------|-----------------|
 | `AGENTS.md` | Replace "Update `plan/BACKLOG.md`" with "Create/update GitHub Issue + sync Project #8". |
-| `.github/copilot-instructions.md` | Same as AGENTS.md. |
 | `CONTRIBUTING.md` | Point contributors to GitHub Issues/Project, not BACKLOG.md. |
 | `README.md` | Update plan/ directory description. |
 | `plan/IMPLEMENTATION_PLAN.md` | Open tasks reference issue numbers; remove "see BACKLOG.md" for work items. |
@@ -206,13 +205,13 @@ Update every file that references `BACKLOG.md` as a living work queue. At minimu
 | `.agents/skills/_REGISTRY.md` | Update workflow description. |
 | `.agents/skills/breakdown-plan/SKILL.md` | Output is GitHub Issues, not BACKLOG.md entries. |
 | `.agents/skills/breakdown-test/SKILL.md` | Link test issues to parent feature issues. |
-| `.github/agents/pm-orchestrator.agent.md` | Read Project/Issues, not BACKLOG.md. |
-| `.github/agents/delivery.agent.md` | Remove BACKLOG.md sync; issue closure is sufficient. |
-| `.github/agents/review.agent.md` | Confirm issue labels/milestone on PR, not BACKLOG.md. |
+| `.agents/contracts/pm-orchestrator.md` | Read Project/Issues, not BACKLOG.md. |
+| `.agents/contracts/delivery.md` | Remove BACKLOG.md sync; issue closure is sufficient. |
+| `.agents/contracts/review.md` | Confirm issue labels/milestone on PR, not BACKLOG.md. |
 | `.github/prompts/daily-start.prompt.md` | Query `gh issue list` / Project #8. |
 | `.github/prompts/plan-next-issue.prompt.md` | Select from open issues or create new. |
 | `.github/prompts/weekly-pm-review.prompt.md` | Milestone/issue health, not BACKLOG.md. |
-| `.cursor/commands/implement-issue.md` | Remove "PM planning remains in Copilot" split; align with unified workflow. |
+| `.cursor/commands/implement-issue.md` | Aligned with unified workflow (Phase 1 complete). |
 
 **Note:** The agent/workflow review may add, remove, or restructure files in this table. Reconcile this list against the post-review agent layout before executing Step 6.
 

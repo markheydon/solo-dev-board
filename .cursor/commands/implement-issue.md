@@ -2,13 +2,13 @@
 
 Implement a planned GitHub issue after PM planning is complete.
 
-Use this command in Cursor Agent chat after GitHub issues exist with acceptance criteria. PM planning, board updates, and review/PR workflows remain in Copilot.
+Use this command in Cursor Agent chat after GitHub issues exist with acceptance criteria. Planning, board updates, and review/PR workflows can be run separately via workflow prompts or natural language.
 
 ---
 
 ## Authoritative contract
 
-Read and follow [`.github/agents/delivery.agent.md`](.github/agents/delivery.agent.md) in full for all implementation steps, boundaries, escalation rules, and completion criteria.
+Read and follow [`.agents/contracts/delivery.md`](.agents/contracts/delivery.md) in full for all implementation steps, boundaries, escalation rules, and completion criteria.
 
 This command adds Cursor-specific issue loading, skill loading, and platform split notes only.
 
@@ -86,7 +86,7 @@ Do **not**:
 - Update `plan/SCOPE.md` without user approval.
 - Implement unplanned scope.
 
-**Platform split:** PM and board operations are handled in Copilot. Cursor owns code, tests, documentation, and `plan/BACKLOG.md` synchronisation only.
+**Platform split:** Planning and board operations are separate workflow steps. Cursor owns code, tests, documentation, and `plan/BACKLOG.md` synchronisation for this command.
 
 ---
 
@@ -174,10 +174,10 @@ Ready for Review Agent.
 
 ## Next step
 
-After implementation and testing are complete, hand off to Copilot:
+After implementation and testing are complete, hand off to review:
 
 ```text
 Review issue #<N>
 ```
 
-Use the [`.github/prompts/review-and-create-pr.prompt.md`](.github/prompts/review-and-create-pr.prompt.md) workflow (Review Agent) to validate the work and create a pull request.
+Use the [`.github/prompts/review-and-create-pr.prompt.md`](.github/prompts/review-and-create-pr.prompt.md) workflow (Review contract) to validate the work and create a pull request.

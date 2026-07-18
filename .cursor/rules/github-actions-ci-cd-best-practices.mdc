@@ -1,0 +1,7 @@
+---
+description: GitHub Actions CI/CD conventions for SoloDevBoard
+globs: ".github/workflows/**"
+alwaysApply: false
+---
+
+Follow [`.github/instructions/github-actions-ci-cd-best-practices.instructions.md`](.github/instructions/github-actions-ci-cd-best-practices.instructions.md).
