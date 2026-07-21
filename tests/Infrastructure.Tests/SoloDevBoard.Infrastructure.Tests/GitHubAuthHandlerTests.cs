@@ -11,6 +11,7 @@ public sealed class GitHubAuthHandlerTests
     [Fact]
     public async Task SendAsync_ValidAccessToken_AddsBearerAuthorisationHeader()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var currentUserContext = Substitute.For<ICurrentUserContext>();
         currentUserContext.GetAccessToken().Returns("test-token");
@@ -23,7 +24,7 @@ public sealed class GitHubAuthHandlerTests
         using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/user");
 
         // Act
-        _ = await invoker.SendAsync(request, CancellationToken.None);
+        _ = await invoker.SendAsync(request, cancellationToken);
 
         // Assert
         Assert.NotNull(terminalHandler.LastRequest);
@@ -36,6 +37,7 @@ public sealed class GitHubAuthHandlerTests
     [Fact]
     public async Task SendAsync_EmptyAccessToken_ThrowsInvalidOperationException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var currentUserContext = Substitute.For<ICurrentUserContext>();
         currentUserContext.GetAccessToken().Returns(string.Empty);
@@ -48,7 +50,7 @@ public sealed class GitHubAuthHandlerTests
         using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/user");
 
         // Act
-        var act = async () => _ = await invoker.SendAsync(request, CancellationToken.None);
+        var act = async () => _ = await invoker.SendAsync(request, cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<InvalidOperationException>(act);
@@ -57,6 +59,7 @@ public sealed class GitHubAuthHandlerTests
     [Fact]
     public async Task SendAsync_WhitespaceAccessToken_ThrowsInvalidOperationException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var currentUserContext = Substitute.For<ICurrentUserContext>();
         currentUserContext.GetAccessToken().Returns("   ");
@@ -69,7 +72,7 @@ public sealed class GitHubAuthHandlerTests
         using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/user");
 
         // Act
-        var act = async () => _ = await invoker.SendAsync(request, CancellationToken.None);
+        var act = async () => _ = await invoker.SendAsync(request, cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<InvalidOperationException>(act);
@@ -78,6 +81,7 @@ public sealed class GitHubAuthHandlerTests
     [Fact]
     public async Task SendAsync_NullAccessToken_ThrowsInvalidOperationException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var currentUserContext = Substitute.For<ICurrentUserContext>();
         currentUserContext.GetAccessToken().Returns((string)null!);
@@ -90,7 +94,7 @@ public sealed class GitHubAuthHandlerTests
         using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/user");
 
         // Act
-        var act = async () => _ = await invoker.SendAsync(request, CancellationToken.None);
+        var act = async () => _ = await invoker.SendAsync(request, cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<InvalidOperationException>(act);
@@ -99,6 +103,7 @@ public sealed class GitHubAuthHandlerTests
     [Fact]
     public async Task SendAsync_HostedModeUnauthorizedResponse_ThrowsHostedAuthenticationRequiredException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var currentUserContext = Substitute.For<ICurrentUserContext>();
         currentUserContext.GetAccessToken().Returns("revoked-token");
@@ -111,7 +116,7 @@ public sealed class GitHubAuthHandlerTests
         using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/user");
 
         // Act
-        var act = async () => _ = await invoker.SendAsync(request, CancellationToken.None);
+        var act = async () => _ = await invoker.SendAsync(request, cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<HostedAuthenticationRequiredException>(act);
@@ -120,6 +125,7 @@ public sealed class GitHubAuthHandlerTests
     [Fact]
     public async Task SendAsync_PatModeUnauthorizedResponse_ReturnsUnauthorizedResponse()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var currentUserContext = Substitute.For<ICurrentUserContext>();
         currentUserContext.GetAccessToken().Returns("pat-token");
@@ -132,7 +138,7 @@ public sealed class GitHubAuthHandlerTests
         using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/user");
 
         // Act
-        using var response = await invoker.SendAsync(request, CancellationToken.None);
+        using var response = await invoker.SendAsync(request, cancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);

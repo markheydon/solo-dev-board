@@ -9,6 +9,7 @@ public sealed class GitHubPatOwnerLoginResolverTests
     [Fact]
     public async Task ResolveAsync_ValidPat_ReturnsAuthenticatedLogin()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new StubHttpMessageHandler(static (_, _) =>
             Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
@@ -25,7 +26,7 @@ public sealed class GitHubPatOwnerLoginResolverTests
         var sut = new GitHubPatOwnerLoginResolver(factory, new TestAppVersionService(), NullLogger<GitHubPatOwnerLoginResolver>.Instance);
 
         // Act
-        var result = await sut.ResolveAsync("ghp_test-token");
+        var result = await sut.ResolveAsync("ghp_test-token", cancellationToken);
 
         // Assert
         Assert.Equal("markheydon", result);
@@ -39,6 +40,7 @@ public sealed class GitHubPatOwnerLoginResolverTests
     [Fact]
     public async Task ResolveAsync_InvalidPat_ThrowsInvalidOperationException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new StubHttpMessageHandler(static (_, _) =>
             Task.FromResult(new HttpResponseMessage(HttpStatusCode.Unauthorized)
@@ -55,7 +57,7 @@ public sealed class GitHubPatOwnerLoginResolverTests
         var sut = new GitHubPatOwnerLoginResolver(factory, new TestAppVersionService(), NullLogger<GitHubPatOwnerLoginResolver>.Instance);
 
         // Act
-        var act = () => sut.ResolveAsync("invalid-token");
+        var act = () => sut.ResolveAsync("invalid-token", cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<InvalidOperationException>(act);

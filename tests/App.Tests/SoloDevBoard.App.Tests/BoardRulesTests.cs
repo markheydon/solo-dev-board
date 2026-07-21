@@ -1,8 +1,8 @@
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
-using NSubstitute;
 using MudBlazor;
 using MudBlazor.Services;
+using NSubstitute;
 using SoloDevBoard.App.Components.Features.BoardRules.Pages;
 using SoloDevBoard.App.Components.Shared.Components;
 using SoloDevBoard.Application.Services.BoardRules;
@@ -122,8 +122,8 @@ public sealed class BoardRulesTests
             Assert.Single(cut.FindAll("[data-testid='board-rules-board-context-ready-state']"));
         });
 
-        _boardRulesService.Received(1).GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>());
-        _boardRulesService.Received(1).GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", Arg.Any<CancellationToken>());
+        await _boardRulesService.Received(1).GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>());
+        await _boardRulesService.Received(1).GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", Arg.Any<CancellationToken>());
     }
 
     [Fact]

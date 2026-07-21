@@ -1,8 +1,8 @@
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
-using NSubstitute;
 using MudBlazor;
 using MudBlazor.Services;
+using NSubstitute;
 using SoloDevBoard.App.Components.Features.Audit.Pages;
 using SoloDevBoard.App.Components.Shared.Components;
 using SoloDevBoard.Application.Services.Audit;
@@ -134,7 +134,7 @@ public sealed class AuditTests
         cut.Find("[data-testid='audit-load-selected-button']").Click();
 
         // Assert
-        _auditDashboardService.Received(1).GetAuditSummaryAsync( Arg.Is<IReadOnlyList<string>>(repos => repos.Count == 1 && repos[0] == "owner/repo-a"), Arg.Any<CancellationToken>());
+        await _auditDashboardService.Received(1).GetAuditSummaryAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 1 && repos[0] == "owner/repo-a"), Arg.Any<CancellationToken>());
 
         cut.WaitForAssertion(() =>
         {
@@ -256,8 +256,8 @@ public sealed class AuditTests
                 CreateRepository("owner", "repo-b"),
             ]);
 
-        _auditDashboardService.GetAuditSummaryAsync(Arg.Is<IReadOnlyList<string>>(repos => repos.Count == 2), Arg.Any<CancellationToken>()).Returns(summary);
-        _auditDashboardService.GetAuditSummaryAsync(Arg.Is<IReadOnlyList<string>>(repos => repos.Count == 1 && repos[0] == "owner/repo-a"), Arg.Any<CancellationToken>()).Returns([new RepositoryAuditSummaryDto("owner/repo-a", 4, 2, 1, 1, 0)]);
+        _auditDashboardService.GetAuditSummaryAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 2), Arg.Any<CancellationToken>()).Returns(summary);
+        _auditDashboardService.GetAuditSummaryAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 1 && repos[0] == "owner/repo-a"), Arg.Any<CancellationToken>()).Returns([new RepositoryAuditSummaryDto("owner/repo-a", 4, 2, 1, 1, 0)]);
 
         await using var ctx = CreateContext();
 
@@ -269,10 +269,10 @@ public sealed class AuditTests
         cut.Find("[data-testid='audit-load-selected-button']").Click();
 
         // Assert
-        _auditDashboardService.Received(1).GetAuditSummaryAsync( Arg.Is<IReadOnlyList<string>>(repos => repos.Count == 1 && repos[0] == "owner/repo-a"), Arg.Any<CancellationToken>());
-        _auditDashboardService.Received(1).GetUnlabelledIssuesAsync( Arg.Is<IReadOnlyList<string>>(repos => repos.Count == 1 && repos[0] == "owner/repo-a"), Arg.Any<CancellationToken>());
-        _auditDashboardService.Received(1).GetStalePullRequestsAsync( Arg.Is<IReadOnlyList<string>>(repos => repos.Count == 1 && repos[0] == "owner/repo-a"), 14, Arg.Any<CancellationToken>());
-        _auditDashboardService.Received(1).GetFailingWorkflowRunsAsync( Arg.Is<IReadOnlyList<string>>(repos => repos.Count == 1 && repos[0] == "owner/repo-a"), Arg.Any<CancellationToken>());
+        await _auditDashboardService.Received(1).GetAuditSummaryAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 1 && repos[0] == "owner/repo-a"), Arg.Any<CancellationToken>());
+        await _auditDashboardService.Received(1).GetUnlabelledIssuesAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 1 && repos[0] == "owner/repo-a"), Arg.Any<CancellationToken>());
+        await _auditDashboardService.Received(1).GetStalePullRequestsAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 1 && repos[0] == "owner/repo-a"), 14, Arg.Any<CancellationToken>());
+        await _auditDashboardService.Received(1).GetFailingWorkflowRunsAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 1 && repos[0] == "owner/repo-a"), Arg.Any<CancellationToken>());
     }
 
     private BunitContext CreateContext()

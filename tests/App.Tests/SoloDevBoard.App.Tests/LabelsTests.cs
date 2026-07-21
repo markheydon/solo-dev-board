@@ -1,8 +1,8 @@
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
-using NSubstitute;
 using MudBlazor;
 using MudBlazor.Services;
+using NSubstitute;
 using SoloDevBoard.App.Components.Features.Labels.Pages;
 using SoloDevBoard.App.Components.Shared.Components;
 using SoloDevBoard.Application.Services.Labels;
@@ -55,7 +55,7 @@ public sealed class LabelsTests
             Assert.Empty(cut.FindAll("[data-testid='labels-grid']"));
         });
 
-        _labelManagerService.DidNotReceive().GetLabelsForRepositoriesAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
+        await _labelManagerService.DidNotReceive().GetLabelsForRepositoriesAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -165,12 +165,12 @@ public sealed class LabelsTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA, repoB]);
 
-        _labelManagerService.GetLabelsForRepositoriesAsync("owner-a", Arg.Is<IReadOnlyList<string>>(repositories => repositories.SequenceEqual(new[] { "repo-a" })), Arg.Any<CancellationToken>()).Returns([
+        _labelManagerService.GetLabelsForRepositoriesAsync("owner-a", Arg.Is<IReadOnlyList<string>>(repositories => repositories!.SequenceEqual(new[] { "repo-a" })), Arg.Any<CancellationToken>()).Returns([
                 new LabelDto("type/story", "1d76db", "Story label", "repo-a"),
                 new LabelDto("priority/high", "d93f0b", "High priority", "repo-a"),
             ]);
 
-        _labelManagerService.GetLabelsForRepositoriesAsync("owner-b", Arg.Is<IReadOnlyList<string>>(repositories => repositories.SequenceEqual(new[] { "repo-b" })), Arg.Any<CancellationToken>()).Returns([
+        _labelManagerService.GetLabelsForRepositoriesAsync("owner-b", Arg.Is<IReadOnlyList<string>>(repositories => repositories!.SequenceEqual(new[] { "repo-b" })), Arg.Any<CancellationToken>()).Returns([
                 new LabelDto("priority/high", "d93f0b", "High priority", "repo-b"),
             ]);
 
@@ -192,9 +192,9 @@ public sealed class LabelsTests
             Assert.Contains("owner-b/repo-b", cut.Markup);
         });
 
-        _labelManagerService.Received(1).GetLabelsForRepositoriesAsync("owner-a", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
+        await _labelManagerService.Received(1).GetLabelsForRepositoriesAsync("owner-a", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
 
-        _labelManagerService.Received(1).GetLabelsForRepositoriesAsync("owner-b", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
+        await _labelManagerService.Received(1).GetLabelsForRepositoriesAsync("owner-b", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -342,7 +342,7 @@ public sealed class LabelsTests
             Assert.Contains("Applied taxonomy successfully", cut.Markup);
         });
 
-        _labelManagerService.Received(1).ApplyRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
+        await _labelManagerService.Received(1).ApplyRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -367,7 +367,7 @@ public sealed class LabelsTests
         cut.Find("[data-testid='preview-taxonomy-button']").Click();
 
         // Assert
-        _labelManagerService.Received(1).PreviewRecommendedTaxonomyAsync("solodevboard", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
+        await _labelManagerService.Received(1).PreviewRecommendedTaxonomyAsync("solodevboard", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -400,7 +400,7 @@ public sealed class LabelsTests
         cut.WaitForAssertion(() => Assert.Contains("Taxonomy preview", cut.Markup));
 
         // Assert
-        _labelManagerService.Received(1).PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
+        await _labelManagerService.Received(1).PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]

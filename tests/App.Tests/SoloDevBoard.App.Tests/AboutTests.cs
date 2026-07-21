@@ -1,7 +1,7 @@
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
-using NSubstitute;
 using MudBlazor.Services;
+using NSubstitute;
 using SoloDevBoard.App.Components.Features.About.Pages;
 using SoloDevBoard.Application.Services.Common;
 

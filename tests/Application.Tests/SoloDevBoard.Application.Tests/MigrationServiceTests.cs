@@ -15,6 +15,7 @@ public sealed class MigrationServiceTests
     [Fact]
     public async Task PreviewMigrationAsync_SkipStrategy_ReturnsCreateAndSkipOnly()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         SetupSourceAndTargetData();
         var sut = CreateSubject();
@@ -24,7 +25,7 @@ public sealed class MigrationServiceTests
             "owner/source",
             ["owner/target"],
             new MigrationScopeDto(true, true),
-            MigrationConflictStrategy.Skip);
+            MigrationConflictStrategy.Skip, cancellationToken);
 
         // Assert
         Assert.Equal(MigrationConflictStrategy.Skip, result.ConflictStrategy);
@@ -51,6 +52,7 @@ public sealed class MigrationServiceTests
     [Fact]
     public async Task PreviewMigrationAsync_OverwriteStrategy_ReturnsCreateUpdateAndDelete()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         SetupSourceAndTargetData();
         var sut = CreateSubject();
@@ -60,7 +62,7 @@ public sealed class MigrationServiceTests
             "owner/source",
             ["owner/target"],
             new MigrationScopeDto(true, true),
-            MigrationConflictStrategy.Overwrite);
+            MigrationConflictStrategy.Overwrite, cancellationToken);
 
         // Assert
         Assert.Equal(MigrationConflictStrategy.Overwrite, result.ConflictStrategy);
@@ -80,11 +82,12 @@ public sealed class MigrationServiceTests
     [Fact]
     public async Task ApplyMigrationAsync_OverwriteStrategy_AppliesLabelAndMilestoneOperations()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         SetupSourceAndTargetData();
 
         _labelRepository
-            .CreateLabelAsync("owner", "target", Arg.Any<Label>(), Arg.Any<CancellationToken>())
+            .CreateLabelAsync("owner", "target", Arg.Any<Label>(), cancellationToken)
             .Returns(callInfo =>
             {
                 var repo = callInfo.ArgAt<string>(1);
@@ -93,7 +96,7 @@ public sealed class MigrationServiceTests
             });
 
         _labelRepository
-            .UpdateLabelAsync("owner", "target", "type/story", Arg.Any<Label>(), Arg.Any<CancellationToken>())
+            .UpdateLabelAsync("owner", "target", "type/story", Arg.Any<Label>(), cancellationToken)
             .Returns(callInfo =>
             {
                 var repo = callInfo.ArgAt<string>(1);
@@ -102,15 +105,15 @@ public sealed class MigrationServiceTests
             });
 
         _labelRepository
-            .DeleteLabelAsync("owner", "target", "legacy", Arg.Any<CancellationToken>())
+            .DeleteLabelAsync("owner", "target", "legacy", cancellationToken)
             .Returns(Task.CompletedTask);
 
         _milestoneRepository
-            .CreateMilestoneAsync("owner", "target", Arg.Any<Milestone>(), Arg.Any<CancellationToken>())
+            .CreateMilestoneAsync("owner", "target", Arg.Any<Milestone>(), cancellationToken)
             .Returns(callInfo => callInfo.ArgAt<Milestone>(2));
 
         _milestoneRepository
-            .UpdateMilestoneAsync("owner", "target", 9, Arg.Any<Milestone>(), Arg.Any<CancellationToken>())
+            .UpdateMilestoneAsync("owner", "target", 9, Arg.Any<Milestone>(), cancellationToken)
             .Returns(callInfo =>
             {
                 var number = callInfo.ArgAt<int>(2);
@@ -119,7 +122,7 @@ public sealed class MigrationServiceTests
             });
 
         _milestoneRepository
-            .DeleteMilestoneAsync("owner", "target", 10, Arg.Any<CancellationToken>())
+            .DeleteMilestoneAsync("owner", "target", 10, cancellationToken)
             .Returns(Task.CompletedTask);
 
         var sut = CreateSubject();
@@ -129,7 +132,7 @@ public sealed class MigrationServiceTests
             "owner/source",
             ["owner/target"],
             new MigrationScopeDto(true, true),
-            MigrationConflictStrategy.Overwrite);
+            MigrationConflictStrategy.Overwrite, cancellationToken);
 
         // Assert
         Assert.Equal(MigrationConflictStrategy.Overwrite, result.ConflictStrategy);
@@ -144,23 +147,24 @@ public sealed class MigrationServiceTests
         Assert.Equal(1, result.MilestoneResults[0].UpdatedCount);
         Assert.Equal(1, result.MilestoneResults[0].DeletedCount);
 
-        await _labelRepository.Received(1).CreateLabelAsync("owner", "target", Arg.Any<Label>(), Arg.Any<CancellationToken>());
-        await _labelRepository.Received(1).UpdateLabelAsync("owner", "target", "type/story", Arg.Any<Label>(), Arg.Any<CancellationToken>());
-        await _labelRepository.Received(1).DeleteLabelAsync("owner", "target", "legacy", Arg.Any<CancellationToken>());
+        await _labelRepository.Received(1).CreateLabelAsync("owner", "target", Arg.Any<Label>(), cancellationToken);
+        await _labelRepository.Received(1).UpdateLabelAsync("owner", "target", "type/story", Arg.Any<Label>(), cancellationToken);
+        await _labelRepository.Received(1).DeleteLabelAsync("owner", "target", "legacy", cancellationToken);
 
-        await _milestoneRepository.Received(1).CreateMilestoneAsync("owner", "target", Arg.Any<Milestone>(), Arg.Any<CancellationToken>());
-        await _milestoneRepository.Received(1).UpdateMilestoneAsync("owner", "target", 9, Arg.Any<Milestone>(), Arg.Any<CancellationToken>());
-        await _milestoneRepository.Received(1).DeleteMilestoneAsync("owner", "target", 10, Arg.Any<CancellationToken>());
+        await _milestoneRepository.Received(1).CreateMilestoneAsync("owner", "target", Arg.Any<Milestone>(), cancellationToken);
+        await _milestoneRepository.Received(1).UpdateMilestoneAsync("owner", "target", 9, Arg.Any<Milestone>(), cancellationToken);
+        await _milestoneRepository.Received(1).DeleteMilestoneAsync("owner", "target", 10, cancellationToken);
     }
 
     [Fact]
     public async Task ApplyMigrationAsync_SkipStrategy_DoesNotUpdateOrDeleteConflicts()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         SetupSourceAndTargetData();
 
         _labelRepository
-            .CreateLabelAsync("owner", "target", Arg.Any<Label>(), Arg.Any<CancellationToken>())
+            .CreateLabelAsync("owner", "target", Arg.Any<Label>(), cancellationToken)
             .Returns(callInfo =>
             {
                 var repo = callInfo.ArgAt<string>(1);
@@ -169,7 +173,7 @@ public sealed class MigrationServiceTests
             });
 
         _milestoneRepository
-            .CreateMilestoneAsync("owner", "target", Arg.Any<Milestone>(), Arg.Any<CancellationToken>())
+            .CreateMilestoneAsync("owner", "target", Arg.Any<Milestone>(), cancellationToken)
             .Returns(callInfo => callInfo.ArgAt<Milestone>(2));
 
         var sut = CreateSubject();
@@ -179,7 +183,7 @@ public sealed class MigrationServiceTests
             "owner/source",
             ["owner/target"],
             new MigrationScopeDto(true, true),
-            MigrationConflictStrategy.Skip);
+            MigrationConflictStrategy.Skip, cancellationToken);
 
         // Assert
         Assert.Single(result.LabelResults);
@@ -194,10 +198,10 @@ public sealed class MigrationServiceTests
         Assert.Equal(0, result.MilestoneResults[0].DeletedCount);
         Assert.Equal(1, result.MilestoneResults[0].SkippedCount);
 
-        await _labelRepository.DidNotReceive().UpdateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), Arg.Any<CancellationToken>());
-        await _labelRepository.DidNotReceive().DeleteLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
-        await _milestoneRepository.DidNotReceive().UpdateMilestoneAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<Milestone>(), Arg.Any<CancellationToken>());
-        await _milestoneRepository.DidNotReceive().DeleteMilestoneAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+        await _labelRepository.DidNotReceive().UpdateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), cancellationToken);
+        await _labelRepository.DidNotReceive().DeleteLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), cancellationToken);
+        await _milestoneRepository.DidNotReceive().UpdateMilestoneAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<Milestone>(), cancellationToken);
+        await _milestoneRepository.DidNotReceive().DeleteMilestoneAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), cancellationToken);
     }
 
     private MigrationService CreateSubject()
@@ -206,6 +210,7 @@ public sealed class MigrationServiceTests
     [Fact]
     public async Task PreviewMigrationAsync_LabelsOnly_DoesNotReturnMilestonePreviews()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         SetupSourceAndTargetData();
         var sut = CreateSubject();
@@ -215,7 +220,7 @@ public sealed class MigrationServiceTests
             "owner/source",
             ["owner/target"],
             new MigrationScopeDto(true, false),
-            MigrationConflictStrategy.Merge);
+            MigrationConflictStrategy.Merge, cancellationToken);
 
         // Assert
         Assert.Single(result.LabelPreviews);
@@ -225,11 +230,12 @@ public sealed class MigrationServiceTests
     [Fact]
     public async Task ApplyMigrationAsync_MilestonesOnly_DoesNotRunLabelOperations()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         SetupSourceAndTargetData();
 
         _milestoneRepository
-            .CreateMilestoneAsync("owner", "target", Arg.Any<Milestone>(), Arg.Any<CancellationToken>())
+            .CreateMilestoneAsync("owner", "target", Arg.Any<Milestone>(), cancellationToken)
             .Returns(callInfo => callInfo.ArgAt<Milestone>(2));
 
         var sut = CreateSubject();
@@ -239,20 +245,21 @@ public sealed class MigrationServiceTests
             "owner/source",
             ["owner/target"],
             new MigrationScopeDto(false, true),
-            MigrationConflictStrategy.Skip);
+            MigrationConflictStrategy.Skip, cancellationToken);
 
         // Assert
         Assert.Empty(result.LabelResults);
         Assert.Single(result.MilestoneResults);
 
-        await _labelRepository.DidNotReceive().CreateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), Arg.Any<CancellationToken>());
-        await _labelRepository.DidNotReceive().UpdateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), Arg.Any<CancellationToken>());
-        await _labelRepository.DidNotReceive().DeleteLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _labelRepository.DidNotReceive().CreateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), cancellationToken);
+        await _labelRepository.DidNotReceive().UpdateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), cancellationToken);
+        await _labelRepository.DidNotReceive().DeleteLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), cancellationToken);
     }
 
     [Fact]
     public async Task PreviewMigrationAsync_NoScopeSelected_ThrowsArgumentException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         SetupSourceAndTargetData();
         var sut = CreateSubject();
@@ -262,7 +269,7 @@ public sealed class MigrationServiceTests
             "owner/source",
             ["owner/target"],
             new MigrationScopeDto(false, false),
-            MigrationConflictStrategy.Skip);
+            MigrationConflictStrategy.Skip, cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<ArgumentException>(action);
@@ -271,6 +278,7 @@ public sealed class MigrationServiceTests
     [Fact]
     public async Task ApplyMigrationAsync_TargetRepositoriesContainOnlySource_ThrowsArgumentException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         SetupSourceAndTargetData();
         var sut = CreateSubject();
@@ -280,7 +288,7 @@ public sealed class MigrationServiceTests
             "owner/source",
             ["owner/source"],
             new MigrationScopeDto(true, true),
-            MigrationConflictStrategy.Skip);
+            MigrationConflictStrategy.Skip, cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<ArgumentException>(action);
@@ -289,19 +297,20 @@ public sealed class MigrationServiceTests
     [Fact]
     public async Task ApplyMigrationAsync_MultipleTargetsOneLabelOperationFails_ReturnsPartialFailureAndContinues()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         SetupSourceAndTargetData();
 
         _labelRepository
-            .GetLabelsAsync("owner", "failing", Arg.Any<CancellationToken>())
+            .GetLabelsAsync("owner", "failing", cancellationToken)
             .Returns(Task.FromException<IReadOnlyList<Label>>(new HttpRequestException("label operation failed")));
 
         _milestoneRepository
-            .GetMilestonesAsync("owner", "failing", Arg.Any<CancellationToken>())
+            .GetMilestonesAsync("owner", "failing", cancellationToken)
             .Returns([]);
 
         _labelRepository
-            .CreateLabelAsync("owner", "target", Arg.Any<Label>(), Arg.Any<CancellationToken>())
+            .CreateLabelAsync("owner", "target", Arg.Any<Label>(), cancellationToken)
             .Returns(callInfo =>
             {
                 var repo = callInfo.ArgAt<string>(1);
@@ -310,11 +319,11 @@ public sealed class MigrationServiceTests
             });
 
         _milestoneRepository
-            .CreateMilestoneAsync("owner", "target", Arg.Any<Milestone>(), Arg.Any<CancellationToken>())
+            .CreateMilestoneAsync("owner", "target", Arg.Any<Milestone>(), cancellationToken)
             .Returns(callInfo => callInfo.ArgAt<Milestone>(2));
 
         _milestoneRepository
-            .CreateMilestoneAsync("owner", "failing", Arg.Any<Milestone>(), Arg.Any<CancellationToken>())
+            .CreateMilestoneAsync("owner", "failing", Arg.Any<Milestone>(), cancellationToken)
             .Returns(callInfo => callInfo.ArgAt<Milestone>(2));
 
         var sut = CreateSubject();
@@ -324,7 +333,7 @@ public sealed class MigrationServiceTests
             "owner/source",
             ["owner/target", "owner/failing"],
             new MigrationScopeDto(true, true),
-            MigrationConflictStrategy.Skip);
+            MigrationConflictStrategy.Skip, cancellationToken);
 
         // Assert
         Assert.Equal(2, result.LabelResults.Count);
@@ -350,11 +359,12 @@ public sealed class MigrationServiceTests
     [Fact]
     public async Task ApplyMigrationAsync_UpdateFailsAfterCreate_ReturnsErrorWithPartialProgressCounts()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         SetupSourceAndTargetData();
 
         _labelRepository
-            .CreateLabelAsync("owner", "target", Arg.Any<Label>(), Arg.Any<CancellationToken>())
+            .CreateLabelAsync("owner", "target", Arg.Any<Label>(), cancellationToken)
             .Returns(callInfo =>
             {
                 var repo = callInfo.ArgAt<string>(1);
@@ -363,7 +373,7 @@ public sealed class MigrationServiceTests
             });
 
         _labelRepository
-            .UpdateLabelAsync("owner", "target", "type/story", Arg.Any<Label>(), Arg.Any<CancellationToken>())
+            .UpdateLabelAsync("owner", "target", "type/story", Arg.Any<Label>(), cancellationToken)
             .Returns(Task.FromException<Label>(new HttpRequestException("update failed")));
 
         var sut = CreateSubject();
@@ -373,7 +383,7 @@ public sealed class MigrationServiceTests
             "owner/source",
             ["owner/target"],
             new MigrationScopeDto(true, false),
-            MigrationConflictStrategy.Overwrite);
+            MigrationConflictStrategy.Overwrite, cancellationToken);
 
         // Assert
         var labelResult = Assert.Single(result.LabelResults);

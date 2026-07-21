@@ -87,9 +87,13 @@ jobs:
             dotnet run --project src/App/SoloDevBoard.App --no-launch-profile --no-build &
           APP_PID=$!
 
-          for i in $(seq 1 60); do
-            if curl -sf http://localhost:5080/health > /dev/null; then
-              break
+          ATTEMPTS=0
+          until curl -sf http://localhost:5080/health > /dev/null; do
+            ATTEMPTS=$((ATTEMPTS + 1))
+            if [ "$ATTEMPTS" -ge 60 ]; then
+              echo "Application failed to become healthy within 120 seconds."
+              kill "$APP_PID" || true
+              exit 1
             fi
             sleep 2
           done

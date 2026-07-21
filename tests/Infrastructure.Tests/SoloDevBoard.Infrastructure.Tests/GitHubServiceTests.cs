@@ -13,6 +13,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetRepositoriesAsync_AuthenticatedUser_UsesUserReposEndpoint()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -38,7 +39,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var result = await sut.GetRepositoriesAsync();
+        var result = await sut.GetRepositoriesAsync(cancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -51,6 +52,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetRepositoriesAsync_EmptyResponse_ReturnsEmptyList()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -60,7 +62,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var result = await sut.GetRepositoriesAsync();
+        var result = await sut.GetRepositoriesAsync(cancellationToken);
 
         // Assert
         Assert.Empty(result);
@@ -71,6 +73,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetRepositoriesAsync_MultiplePages_ReturnsMappedRepositories()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -114,7 +117,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var result = await sut.GetRepositoriesAsync("owner");
+        var result = await sut.GetRepositoriesAsync("owner", cancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -129,6 +132,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetActiveRepositoriesAsync_MultiplePages_ExcludesArchivedRepositories()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -172,7 +176,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var result = await sut.GetActiveRepositoriesAsync("owner");
+        var result = await sut.GetActiveRepositoriesAsync("owner", cancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -187,6 +191,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetIssuesAsync_ResponseContainsPullRequests_FiltersPullRequests()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -234,7 +239,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var result = await sut.GetIssuesAsync("owner", "repo");
+        var result = await sut.GetIssuesAsync("owner", "repo", cancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -248,6 +253,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetIssuesAsync_ResponseContainsLargeId_MapsWithoutJsonOverflow()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -273,7 +279,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var result = await sut.GetIssuesAsync("owner", "repo");
+        var result = await sut.GetIssuesAsync("owner", "repo", cancellationToken);
 
         // Assert
         var issue = Assert.Single(result);
@@ -285,6 +291,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetPullRequestsAsync_ValidResponse_ReturnsMappedPullRequests()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -325,7 +332,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var result = await sut.GetPullRequestsAsync("owner", "repo");
+        var result = await sut.GetPullRequestsAsync("owner", "repo", cancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -343,6 +350,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetWorkflowRunsAsync_ValidResponse_ReturnsMappedWorkflowRuns()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -370,7 +378,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var result = await sut.GetWorkflowRunsAsync("owner", "repo");
+        var result = await sut.GetWorkflowRunsAsync("owner", "repo", cancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -388,6 +396,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetWorkflowRunsAsync_EmptyWrapper_ReturnsEmptyList()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -401,7 +410,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var result = await sut.GetWorkflowRunsAsync("owner", "repo");
+        var result = await sut.GetWorkflowRunsAsync("owner", "repo", cancellationToken);
 
         // Assert
         Assert.Empty(result);
@@ -412,6 +421,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetWorkflowRunsAsync_NonSuccessStatusCode_ThrowsHttpRequestException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -421,7 +431,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var act = async () => _ = await sut.GetWorkflowRunsAsync("owner", "repo");
+        var act = async () => _ = await sut.GetWorkflowRunsAsync("owner", "repo", cancellationToken);
 
         // Assert
         var exception = await Assert.ThrowsAsync<HttpRequestException>(act);
@@ -431,28 +441,31 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetWorkflowRunsAsync_OwnerIsWhitespace_ThrowsArgumentException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var sut = CreateSubject(new QueueMessageHandler([]));
 
         // Act / Assert
         await Assert.ThrowsAsync<ArgumentException>(
-            async () => _ = await sut.GetWorkflowRunsAsync(" ", "repo"));
+            async () => _ = await sut.GetWorkflowRunsAsync(" ", "repo", cancellationToken));
     }
 
     [Fact]
     public async Task GetWorkflowRunsAsync_RepoIsWhitespace_ThrowsArgumentException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var sut = CreateSubject(new QueueMessageHandler([]));
 
         // Act / Assert
         await Assert.ThrowsAsync<ArgumentException>(
-            async () => _ = await sut.GetWorkflowRunsAsync("owner", " "));
+            async () => _ = await sut.GetWorkflowRunsAsync("owner", " ", cancellationToken));
     }
 
     [Fact]
     public async Task GetMilestonesAsync_ValidResponse_ReturnsMappedMilestones()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -477,7 +490,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var result = await sut.GetMilestonesAsync("owner", "repo");
+        var result = await sut.GetMilestonesAsync("owner", "repo", cancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -490,6 +503,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetLabelsAsync_ValidResponse_ReturnsMappedLabels()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -509,7 +523,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var result = await sut.GetLabelsAsync("owner", "repo");
+        var result = await sut.GetLabelsAsync("owner", "repo", cancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -520,6 +534,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetLabelsAsync_MojibakeDescription_RepairsDescription()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -539,7 +554,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var result = await sut.GetLabelsAsync("owner", "repo");
+        var result = await sut.GetLabelsAsync("owner", "repo", cancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -549,6 +564,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task CreateLabelAsync_ValidLabel_PostsCorrectPayload()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -565,7 +581,7 @@ public sealed class GitHubServiceTests
         var label = new Label { Name = "bug", Colour = "d73a4a", Description = "Something is not working" };
 
         // Act
-        var result = await sut.CreateLabelAsync("owner", "repo", label);
+        var result = await sut.CreateLabelAsync("owner", "repo", label, cancellationToken);
 
         // Assert
         Assert.Equal(label, result);
@@ -573,7 +589,7 @@ public sealed class GitHubServiceTests
         Assert.Equal(HttpMethod.Post, handler.Requests[0].Method);
         Assert.Equal("https://api.github.com/repos/owner/repo/labels", handler.Requests[0].RequestUri!.ToString());
 
-        var payload = await handler.Requests[0].Content!.ReadAsStringAsync();
+        var payload = await handler.Requests[0].Content!.ReadAsStringAsync(cancellationToken);
         using var document = JsonDocument.Parse(payload);
         Assert.Equal("bug", document.RootElement.GetProperty("name").GetString());
         Assert.Equal("d73a4a", document.RootElement.GetProperty("color").GetString());
@@ -583,6 +599,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task UpdateLabelAsync_ValidLabel_SendsPatchPayloadWithNewName()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -599,7 +616,7 @@ public sealed class GitHubServiceTests
         var updatedLabel = new Label { Name = "enhancement", Colour = "a2eeef", Description = "Feature request" };
 
         // Act
-        var result = await sut.UpdateLabelAsync("owner", "repo", "feature", updatedLabel);
+        var result = await sut.UpdateLabelAsync("owner", "repo", "feature", updatedLabel, cancellationToken);
 
         // Assert
         Assert.Equal(updatedLabel, result);
@@ -607,7 +624,7 @@ public sealed class GitHubServiceTests
         Assert.Equal(HttpMethod.Patch, handler.Requests[0].Method);
         Assert.Equal("https://api.github.com/repos/owner/repo/labels/feature", handler.Requests[0].RequestUri!.ToString());
 
-        var payload = await handler.Requests[0].Content!.ReadAsStringAsync();
+        var payload = await handler.Requests[0].Content!.ReadAsStringAsync(cancellationToken);
         using var document = JsonDocument.Parse(payload);
         Assert.Equal("enhancement", document.RootElement.GetProperty("new_name").GetString());
         Assert.Equal("a2eeef", document.RootElement.GetProperty("color").GetString());
@@ -617,6 +634,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task DeleteLabelAsync_ValidLabelName_SendsDeleteRequest()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler([
             new HttpResponseMessage(HttpStatusCode.NoContent),
@@ -624,7 +642,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        await sut.DeleteLabelAsync("owner", "repo", "bug");
+        await sut.DeleteLabelAsync("owner", "repo", "bug", cancellationToken);
 
         // Assert
         Assert.Single(handler.Requests);
@@ -635,6 +653,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetRepositoriesAsync_ApiReturnsUnauthorised_ThrowsHttpRequestException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler([
             new HttpResponseMessage(HttpStatusCode.Unauthorized)
@@ -646,7 +665,7 @@ public sealed class GitHubServiceTests
 
         // Act / Assert
         var exception = await Assert.ThrowsAsync<HttpRequestException>(
-          async () => _ = await sut.GetRepositoriesAsync("owner"));
+          async () => _ = await sut.GetRepositoriesAsync("owner", cancellationToken));
 
         Assert.Equal(HttpStatusCode.Unauthorized, exception.StatusCode);
     }
@@ -654,6 +673,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task CreateLabelAsync_ApiReturnsBadRequest_ThrowsHttpRequestException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler([
             new HttpResponseMessage(HttpStatusCode.BadRequest)
@@ -666,7 +686,7 @@ public sealed class GitHubServiceTests
 
         // Act / Assert
         var exception = await Assert.ThrowsAsync<HttpRequestException>(
-            async () => _ = await sut.CreateLabelAsync("owner", "repo", label));
+            async () => _ = await sut.CreateLabelAsync("owner", "repo", label, cancellationToken));
 
         Assert.Equal(HttpStatusCode.BadRequest, exception.StatusCode);
         Assert.Contains("GitHub API request failed", exception.Message, StringComparison.Ordinal);
@@ -675,6 +695,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task ApplyLabelsToTriageItemAsync_ValidLabels_PutsLabelsPayload()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler([
             new HttpResponseMessage(HttpStatusCode.OK)
@@ -686,14 +707,14 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        await sut.ApplyLabelsToTriageItemAsync("owner", "repo", 42, ["type/story", "priority/high"]);
+        await sut.ApplyLabelsToTriageItemAsync("owner", "repo", 42, ["type/story", "priority/high"], cancellationToken);
 
         // Assert
         Assert.Single(handler.Requests);
         Assert.Equal(HttpMethod.Put, handler.Requests[0].Method);
         Assert.Equal("https://api.github.com/repos/owner/repo/issues/42/labels", handler.Requests[0].RequestUri!.ToString());
 
-        var payload = await handler.Requests[0].Content!.ReadAsStringAsync();
+        var payload = await handler.Requests[0].Content!.ReadAsStringAsync(cancellationToken);
         using var document = JsonDocument.Parse(payload);
         var labels = document.RootElement.GetProperty("labels");
         Assert.Equal(2, labels.GetArrayLength());
@@ -704,6 +725,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task ApplyLabelsToTriageItemAsync_DuplicateAndWhitespaceLabels_NormalisesPayload()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler([
             new HttpResponseMessage(HttpStatusCode.OK)
@@ -715,11 +737,11 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        await sut.ApplyLabelsToTriageItemAsync("owner", "repo", 42, [" priority/high ", "", "type/story", "priority/high"]);
+        await sut.ApplyLabelsToTriageItemAsync("owner", "repo", 42, [" priority/high ", "", "type/story", "priority/high"], cancellationToken);
 
         // Assert
         Assert.Single(handler.Requests);
-        var payload = await handler.Requests[0].Content!.ReadAsStringAsync();
+        var payload = await handler.Requests[0].Content!.ReadAsStringAsync(cancellationToken);
         using var document = JsonDocument.Parse(payload);
         var labels = document.RootElement.GetProperty("labels");
         Assert.Equal(2, labels.GetArrayLength());
@@ -730,11 +752,12 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task ApplyLabelsToTriageItemAsync_ItemNumberIsNotPositive_ThrowsArgumentOutOfRangeException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var sut = CreateSubject(new QueueMessageHandler([]));
 
         // Act
-        var action = async () => await sut.ApplyLabelsToTriageItemAsync("owner", "repo", 0, ["type/story"]);
+        var action = async () => await sut.ApplyLabelsToTriageItemAsync("owner", "repo", 0, ["type/story"], cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(action);
@@ -743,6 +766,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task AssignMilestoneToTriageItemAsync_NullMilestone_SendsPatchWithNullMilestone()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler([
             new HttpResponseMessage(HttpStatusCode.OK)
@@ -754,14 +778,14 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        await sut.AssignMilestoneToTriageItemAsync("owner", "repo", 77, null);
+        await sut.AssignMilestoneToTriageItemAsync("owner", "repo", 77, null, cancellationToken);
 
         // Assert
         Assert.Single(handler.Requests);
         Assert.Equal(HttpMethod.Patch, handler.Requests[0].Method);
         Assert.Equal("https://api.github.com/repos/owner/repo/issues/77", handler.Requests[0].RequestUri!.ToString());
 
-        var payload = await handler.Requests[0].Content!.ReadAsStringAsync();
+        var payload = await handler.Requests[0].Content!.ReadAsStringAsync(cancellationToken);
         using var document = JsonDocument.Parse(payload);
         Assert.Equal(JsonValueKind.Null, document.RootElement.GetProperty("milestone").ValueKind);
     }
@@ -769,6 +793,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task AddTriageItemToProjectBoardAsync_ValidResponses_ReturnsCreatedProjectItemId()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -794,7 +819,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var result = await sut.AddTriageItemToProjectBoardAsync("owner", "repo", 55, "PVT_kwHOAJefG84BQ6bh");
+        var result = await sut.AddTriageItemToProjectBoardAsync("owner", "repo", 55, "PVT_kwHOAJefG84BQ6bh", cancellationToken);
 
         // Assert
         Assert.Equal("PVTI_lAHOAJefG84BQ6bhzgnrX1A", result);
@@ -808,6 +833,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task AddTriageItemToProjectBoardAsync_GraphQlErrorsPresent_ThrowsHttpRequestException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -837,7 +863,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var action = async () => _ = await sut.AddTriageItemToProjectBoardAsync("owner", "repo", 55, "project-id");
+        var action = async () => _ = await sut.AddTriageItemToProjectBoardAsync("owner", "repo", 55, "project-id", cancellationToken);
 
         // Assert
         var exception = await Assert.ThrowsAsync<HttpRequestException>(action);
@@ -847,6 +873,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetProjectBoardsForRepositoryAsync_StatusFieldPresent_ReturnsProjectBoardOptions()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -885,7 +912,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var result = await sut.GetProjectBoardsForRepositoryAsync("owner", "repo");
+        var result = await sut.GetProjectBoardsForRepositoryAsync("owner", "repo", cancellationToken);
 
         // Assert
         Assert.Single(result.SupportedProjectBoards);
@@ -901,6 +928,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetProjectBoardsForRepositoryAsync_GraphQlErrorsPresent_ThrowsHttpRequestException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -921,7 +949,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var action = async () => _ = await sut.GetProjectBoardsForRepositoryAsync("owner", "repo");
+        var action = async () => _ = await sut.GetProjectBoardsForRepositoryAsync("owner", "repo", cancellationToken);
 
         // Assert
         var exception = await Assert.ThrowsAsync<HttpRequestException>(action);
@@ -931,6 +959,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetProjectBoardsForRepositoryAsync_InaccessibleNodeWithAccessibleProject_ReturnsAccessibleProjectBoards()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -973,7 +1002,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var result = await sut.GetProjectBoardsForRepositoryAsync("owner", "repo");
+        var result = await sut.GetProjectBoardsForRepositoryAsync("owner", "repo", cancellationToken);
 
         // Assert
         Assert.Single(result.SupportedProjectBoards);
@@ -985,6 +1014,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetBoardRulesDefinitionAsync_ProjectBoardFound_ReturnsBoardRulesDefinitionDto()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -1017,7 +1047,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var result = await sut.GetBoardRulesDefinitionAsync("owner", "repo", "PVT_kwHOAJefG84BQ6bh");
+        var result = await sut.GetBoardRulesDefinitionAsync("owner", "repo", "PVT_kwHOAJefG84BQ6bh", cancellationToken);
 
         // Assert
         Assert.Equal("PVT_kwHOAJefG84BQ6bh", result.ProjectId);
@@ -1030,6 +1060,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetBoardRulesDefinitionAsync_ProjectBoardNotFound_ReturnsUnavailableDetail()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -1046,7 +1077,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var result = await sut.GetBoardRulesDefinitionAsync("owner", "repo", "PVT_kwHOAJefG84BQ6bh");
+        var result = await sut.GetBoardRulesDefinitionAsync("owner", "repo", "PVT_kwHOAJefG84BQ6bh", cancellationToken);
 
         // Assert
         Assert.Equal("PVT_kwHOAJefG84BQ6bh", result.ProjectId);
@@ -1057,6 +1088,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetBoardRulesDefinitionAsync_StatusFieldMissing_ReturnsStatusFieldUnsupportedDetail()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -1080,7 +1112,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var result = await sut.GetBoardRulesDefinitionAsync("owner", "repo", "PVT_kwHOAJefG84BQ6bh");
+        var result = await sut.GetBoardRulesDefinitionAsync("owner", "repo", "PVT_kwHOAJefG84BQ6bh", cancellationToken);
 
         // Assert
         Assert.Equal("PVT_kwHOAJefG84BQ6bh", result.ProjectId);
@@ -1091,6 +1123,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetBoardRulesDefinitionAsync_GraphQlErrorsPresent_ThrowsHttpRequestException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -1111,7 +1144,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var action = async () => _ = await sut.GetBoardRulesDefinitionAsync("owner", "repo", "PVT_kwHOAJefG84BQ6bh");
+        var action = async () => _ = await sut.GetBoardRulesDefinitionAsync("owner", "repo", "PVT_kwHOAJefG84BQ6bh", cancellationToken);
 
         // Assert
         var exception = await Assert.ThrowsAsync<HttpRequestException>(action);
@@ -1121,12 +1154,13 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetBoardRulesDefinitionAsync_OwnerIsWhitespace_ThrowsArgumentException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler([]);
         var sut = CreateSubject(handler);
 
         // Act
-        var action = async () => _ = await sut.GetBoardRulesDefinitionAsync(" ", "repo", "PVT_kwHOAJefG84BQ6bh");
+        var action = async () => _ = await sut.GetBoardRulesDefinitionAsync(" ", "repo", "PVT_kwHOAJefG84BQ6bh", cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<ArgumentException>(action);
@@ -1135,6 +1169,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetBoardRulesDefinitionAsync_StatusFieldWithEmptyOptions_ReturnsEmptyColumnsWithUnsupportedDetail()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -1164,7 +1199,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var result = await sut.GetBoardRulesDefinitionAsync("owner", "repo", "PVT_kwHOAJefG84BQ6bh");
+        var result = await sut.GetBoardRulesDefinitionAsync("owner", "repo", "PVT_kwHOAJefG84BQ6bh", cancellationToken);
 
         // Assert
         Assert.Empty(result.Columns);
@@ -1175,12 +1210,13 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetProjectBoardsForRepositoryAsync_OwnerIsWhitespace_ThrowsArgumentException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler([]);
         var sut = CreateSubject(handler);
 
         // Act
-        var action = async () => _ = await sut.GetProjectBoardsForRepositoryAsync(" ", "repo");
+        var action = async () => _ = await sut.GetProjectBoardsForRepositoryAsync(" ", "repo", cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<ArgumentException>(action);
@@ -1189,6 +1225,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task GetProjectBoardsForRepositoryAsync_BoardWithoutStatusField_IsExcludedFromSupportedBoards()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -1226,7 +1263,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var result = await sut.GetProjectBoardsForRepositoryAsync("owner", "repo");
+        var result = await sut.GetProjectBoardsForRepositoryAsync("owner", "repo", cancellationToken);
 
         // Assert
         Assert.Empty(result.SupportedProjectBoards);
@@ -1237,6 +1274,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task UpdateProjectBoardItemStatusAsync_ValidResponse_PostsGraphQlMutation()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -1257,14 +1295,14 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        await sut.UpdateProjectBoardItemStatusAsync("project-id", "project-item-id", "status-field-id", "in-progress");
+        await sut.UpdateProjectBoardItemStatusAsync("project-id", "project-item-id", "status-field-id", "in-progress", cancellationToken);
 
         // Assert
         Assert.Single(handler.Requests);
         Assert.Equal(HttpMethod.Post, handler.Requests[0].Method);
         Assert.Equal("https://api.github.com/graphql", handler.Requests[0].RequestUri!.ToString());
 
-        var payload = await handler.Requests[0].Content!.ReadAsStringAsync();
+        var payload = await handler.Requests[0].Content!.ReadAsStringAsync(cancellationToken);
         using var document = JsonDocument.Parse(payload);
         var variables = document.RootElement.GetProperty("variables");
         Assert.Equal("project-id", variables.GetProperty("projectId").GetString());
@@ -1276,6 +1314,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task UpdateProjectBoardItemStatusAsync_GraphQlErrorsPresent_ThrowsHttpRequestException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -1296,7 +1335,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var action = async () => await sut.UpdateProjectBoardItemStatusAsync("project-id", "project-item-id", "status-field-id", "in-progress");
+        var action = async () => await sut.UpdateProjectBoardItemStatusAsync("project-id", "project-item-id", "status-field-id", "in-progress", cancellationToken);
 
         // Assert
         var exception = await Assert.ThrowsAsync<HttpRequestException>(action);
@@ -1306,6 +1345,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task CloseTriageItemAsDuplicateAsync_Issue_PostsCommentAndClosesIssue()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -1322,7 +1362,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        await sut.CloseTriageItemAsDuplicateAsync("owner", "repo", GitHubTriageItemType.Issue, 99, "#12");
+        await sut.CloseTriageItemAsDuplicateAsync("owner", "repo", GitHubTriageItemType.Issue, 99, "#12", cancellationToken);
 
         // Assert
         Assert.Equal(2, handler.Requests.Count);
@@ -1335,6 +1375,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task CloseTriageItemAsDuplicateAsync_PullRequest_PostsCommentAndClosesPullRequest()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -1351,7 +1392,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        await sut.CloseTriageItemAsDuplicateAsync("owner", "repo", GitHubTriageItemType.PullRequest, 100, "#22");
+        await sut.CloseTriageItemAsDuplicateAsync("owner", "repo", GitHubTriageItemType.PullRequest, 100, "#22", cancellationToken);
 
         // Assert
         Assert.Equal(2, handler.Requests.Count);
@@ -1364,6 +1405,7 @@ public sealed class GitHubServiceTests
     [Fact]
     public async Task CloseTriageItemAsDuplicateAsync_CommentRequestFails_ThrowsAndDoesNotAttemptCloseRequest()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -1376,7 +1418,7 @@ public sealed class GitHubServiceTests
         var sut = CreateSubject(handler);
 
         // Act
-        var action = async () => await sut.CloseTriageItemAsDuplicateAsync("owner", "repo", GitHubTriageItemType.Issue, 99, "#12");
+        var action = async () => await sut.CloseTriageItemAsDuplicateAsync("owner", "repo", GitHubTriageItemType.Issue, 99, "#12", cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<HttpRequestException>(action);

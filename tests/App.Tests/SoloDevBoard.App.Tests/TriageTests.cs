@@ -1,9 +1,9 @@
 using System.Net;
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
-using NSubstitute;
 using MudBlazor;
 using MudBlazor.Services;
+using NSubstitute;
 using SoloDevBoard.App.Components.Features.Triage.Pages;
 using SoloDevBoard.App.Components.Shared.Components;
 using SoloDevBoard.Application.Services.Labels;
@@ -223,7 +223,7 @@ public sealed class TriageTests
             Assert.Contains("Remaining: 2 items", cut.Markup);
         });
 
-        _triageService.Received(1).StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>());
+        await _triageService.Received(1).StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -327,7 +327,7 @@ public sealed class TriageTests
             Assert.Contains("Skipped: 0 items", cut.Markup);
         });
 
-        _triageService.Received(1).AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>());
+        await _triageService.Received(1).AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -539,8 +539,8 @@ public sealed class TriageTests
             Assert.Contains("Applied label 'type/bug' to item #401 and moved to Item 2 of 2", cut.Markup, StringComparison.Ordinal);
         });
 
-        _triageService.Received(1).ApplyLabelToCurrentItemAsync(Arg.Any<TriageSessionDto>(), "type/bug", Arg.Any<CancellationToken>());
-        _triageService.Received(1).AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>());
+        await _triageService.Received(1).ApplyLabelToCurrentItemAsync(Arg.Any<TriageSessionDto>(), "type/bug", Arg.Any<CancellationToken>());
+        await _triageService.Received(1).AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -583,8 +583,8 @@ public sealed class TriageTests
         cut.Find("[data-testid='triage-action-buttons-row']").KeyDown("l");
 
         // Assert
-        _triageService.Received(1).ApplyLabelToCurrentItemAsync(Arg.Any<TriageSessionDto>(), "priority/high", Arg.Any<CancellationToken>());
-        _triageService.Received(1).AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>());
+        await _triageService.Received(1).ApplyLabelToCurrentItemAsync(Arg.Any<TriageSessionDto>(), "priority/high", Arg.Any<CancellationToken>());
+        await _triageService.Received(1).AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -625,7 +625,7 @@ public sealed class TriageTests
             Assert.True(cut.Find("[data-testid='triage-apply-label-button']").HasAttribute("disabled"));
         });
 
-        _triageService.DidNotReceive().ApplyLabelToCurrentItemAsync(Arg.Any<TriageSessionDto>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _triageService.DidNotReceive().ApplyLabelToCurrentItemAsync(Arg.Any<TriageSessionDto>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -691,7 +691,7 @@ public sealed class TriageTests
             Assert.Contains("Assigned milestone 'v0.7.0' to item #501", cut.Markup, StringComparison.Ordinal);
         });
 
-        _triageService.Received(1).AssignMilestoneToCurrentItemAsync(Arg.Any<TriageSessionDto>(), 7, "v0.7.0", Arg.Any<CancellationToken>());
+        await _triageService.Received(1).AssignMilestoneToCurrentItemAsync(Arg.Any<TriageSessionDto>(), 7, "v0.7.0", Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -764,7 +764,7 @@ public sealed class TriageTests
         });
 
         // Assert
-        _triageService.Received(1).AssignMilestoneToCurrentItemAsync(Arg.Any<TriageSessionDto>(), 7, "v0.7.0", Arg.Any<CancellationToken>());
+        await _triageService.Received(1).AssignMilestoneToCurrentItemAsync(Arg.Any<TriageSessionDto>(), 7, "v0.7.0", Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -808,7 +808,7 @@ public sealed class TriageTests
             1,
             0));
 
-        _triageService.AddCurrentItemToProjectBoardAsync( Arg.Any<TriageSessionDto>(), "project-id", "Roadmap", "status-field-id", "in-progress", "In Progress", Arg.Any<CancellationToken>()).Returns(updatedSession);
+        _triageService.AddCurrentItemToProjectBoardAsync(Arg.Any<TriageSessionDto>(), "project-id", "Roadmap", "status-field-id", "in-progress", "In Progress", Arg.Any<CancellationToken>()).Returns(updatedSession);
 
         await using var ctx = CreateContext();
 
@@ -830,7 +830,7 @@ public sealed class TriageTests
             Assert.Contains("Added item #601 to 'Roadmap' with status 'In Progress'", cut.Markup, StringComparison.Ordinal);
         });
 
-        _triageService.Received(1).AddCurrentItemToProjectBoardAsync( Arg.Any<TriageSessionDto>(), "project-id", "Roadmap", "status-field-id", "in-progress", "In Progress", Arg.Any<CancellationToken>());
+        await _triageService.Received(1).AddCurrentItemToProjectBoardAsync(Arg.Any<TriageSessionDto>(), "project-id", "Roadmap", "status-field-id", "in-progress", "In Progress", Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -898,8 +898,8 @@ public sealed class TriageTests
             Assert.Contains("Closed item #701 as a duplicate of '#555' and moved to Item 2 of 2", cut.Markup, StringComparison.Ordinal);
         });
 
-        _triageService.Received(1).CloseCurrentItemAsDuplicateAsync(Arg.Any<TriageSessionDto>(), "#555", Arg.Any<CancellationToken>());
-        _triageService.Received(1).AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>());
+        await _triageService.Received(1).CloseCurrentItemAsDuplicateAsync(Arg.Any<TriageSessionDto>(), "#555", Arg.Any<CancellationToken>());
+        await _triageService.Received(1).AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -942,8 +942,8 @@ public sealed class TriageTests
         cut.Find("[data-testid='triage-action-buttons-row']").KeyDown("d");
 
         // Assert
-        _triageService.Received(1).CloseCurrentItemAsDuplicateAsync(Arg.Any<TriageSessionDto>(), "#556", Arg.Any<CancellationToken>());
-        _triageService.Received(1).AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>());
+        await _triageService.Received(1).CloseCurrentItemAsDuplicateAsync(Arg.Any<TriageSessionDto>(), "#556", Arg.Any<CancellationToken>());
+        await _triageService.Received(1).AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -1011,7 +1011,7 @@ public sealed class TriageTests
             Assert.Contains("Skipped item #801 for later review and moved to Item 1 of 1", cut.Markup, StringComparison.Ordinal);
         });
 
-        _triageService.Received(1).SkipCurrentItemAsync(Arg.Any<TriageSessionDto>(), "Requires broader context", Arg.Any<CancellationToken>());
+        await _triageService.Received(1).SkipCurrentItemAsync(Arg.Any<TriageSessionDto>(), "Requires broader context", Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -1195,7 +1195,7 @@ public sealed class TriageTests
             Assert.Contains("Skipped items were appended to the queue for review.", cut.Markup, StringComparison.Ordinal);
         });
 
-        _triageService.Received(1).RevisitSkippedItemsAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>());
+        await _triageService.Received(1).RevisitSkippedItemsAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>());
     }
 
     private static async Task SelectQuickLabelAsync(IRenderedComponent<Triage> cut, string labelName)
@@ -1244,7 +1244,7 @@ public sealed class TriageTests
         cut.Find("[data-testid='triage-quick-label-autocomplete']").KeyDown("l");
 
         // Assert
-        _triageService.DidNotReceive().ApplyLabelToCurrentItemAsync(Arg.Any<TriageSessionDto>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _triageService.DidNotReceive().ApplyLabelToCurrentItemAsync(Arg.Any<TriageSessionDto>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]

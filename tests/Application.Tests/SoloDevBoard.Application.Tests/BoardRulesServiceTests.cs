@@ -26,6 +26,7 @@ public sealed class BoardRulesServiceTests
     [Fact]
     public async Task GetBoardRulesAsync_ValidRequest_ReturnsDefinitionFromGitHubService()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var expected = new BoardRulesDefinitionDto(
             "PVT_kwHOAJefG84BQ6bh",
@@ -36,25 +37,26 @@ public sealed class BoardRulesServiceTests
             new[] { "Board automation rules are not yet available through the current GitHub query model." });
 
         _gitHubService
-            .GetBoardRulesDefinitionAsync("owner", "repo", "PVT_kwHOAJefG84BQ6bh", Arg.Any<CancellationToken>())
+            .GetBoardRulesDefinitionAsync("owner", "repo", "PVT_kwHOAJefG84BQ6bh", cancellationToken)
             .Returns(expected);
 
         var sut = new BoardRulesService(_gitHubService);
 
         // Act
-        var result = await sut.GetBoardRulesAsync("owner", "repo", "PVT_kwHOAJefG84BQ6bh");
+        var result = await sut.GetBoardRulesAsync("owner", "repo", "PVT_kwHOAJefG84BQ6bh", cancellationToken);
 
         // Assert
         Assert.Same(expected, result);
-        await _gitHubService.Received(1).GetBoardRulesDefinitionAsync("owner", "repo", "PVT_kwHOAJefG84BQ6bh", Arg.Any<CancellationToken>());
+        await _gitHubService.Received(1).GetBoardRulesDefinitionAsync("owner", "repo", "PVT_kwHOAJefG84BQ6bh", cancellationToken);
     }
 
     [Fact]
     public async Task GetProjectBoardOptionsAsync_ProjectBoardsReturned_ReturnsSortedOptions()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         _gitHubService
-            .GetProjectBoardsForRepositoryAsync("owner", "repo", Arg.Any<CancellationToken>())
+            .GetProjectBoardsForRepositoryAsync("owner", "repo", cancellationToken)
             .Returns(new RepositoryProjectBoardDiscoveryResult(
             [
                 new TriageProjectBoard
@@ -80,7 +82,7 @@ public sealed class BoardRulesServiceTests
         var sut = new BoardRulesService(_gitHubService);
 
         // Act
-        var result = await sut.GetProjectBoardOptionsAsync("owner", "repo");
+        var result = await sut.GetProjectBoardOptionsAsync("owner", "repo", cancellationToken);
 
         // Assert
         Assert.Equal(2, result.Options.Count);
@@ -90,17 +92,18 @@ public sealed class BoardRulesServiceTests
         Assert.Equal("Alpha Board", result.Options[0].Title);
         Assert.Equal("owner", result.Options[0].OwnerLogin);
         Assert.Equal("PVT_beta", result.Options[1].Id);
-        await _gitHubService.Received(1).GetProjectBoardsForRepositoryAsync("owner", "repo", Arg.Any<CancellationToken>());
+        await _gitHubService.Received(1).GetProjectBoardsForRepositoryAsync("owner", "repo", cancellationToken);
     }
 
     [Fact]
     public async Task GetProjectBoardOptionsAsync_OwnerIsWhitespace_ThrowsArgumentException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var sut = new BoardRulesService(_gitHubService);
 
         // Act
-        var action = () => sut.GetProjectBoardOptionsAsync(" ", "repo");
+        var action = () => sut.GetProjectBoardOptionsAsync(" ", "repo", cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<ArgumentException>(action);
@@ -109,11 +112,12 @@ public sealed class BoardRulesServiceTests
     [Fact]
     public async Task GetBoardRulesAsync_ProjectIdIsWhitespace_ThrowsArgumentException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var sut = new BoardRulesService(_gitHubService);
 
         // Act
-        var action = () => sut.GetBoardRulesAsync("owner", "repo", " ");
+        var action = () => sut.GetBoardRulesAsync("owner", "repo", " ", cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<ArgumentException>(action);
@@ -122,15 +126,16 @@ public sealed class BoardRulesServiceTests
     [Fact]
     public async Task GetProjectBoardOptionsAsync_NoSupportedBoards_ReturnsEmptyOptions()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         _gitHubService
-            .GetProjectBoardsForRepositoryAsync("owner", "repo", Arg.Any<CancellationToken>())
+            .GetProjectBoardsForRepositoryAsync("owner", "repo", cancellationToken)
             .Returns(new RepositoryProjectBoardDiscoveryResult([], 0, 0));
 
         var sut = new BoardRulesService(_gitHubService);
 
         // Act
-        var result = await sut.GetProjectBoardOptionsAsync("owner", "repo");
+        var result = await sut.GetProjectBoardOptionsAsync("owner", "repo", cancellationToken);
 
         // Assert
         Assert.Empty(result.Options);
@@ -141,9 +146,10 @@ public sealed class BoardRulesServiceTests
     [Fact]
     public async Task GetProjectBoardOptionsAsync_PartiallyAccessibleBoards_PropagatesVisibilityCounts()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         _gitHubService
-            .GetProjectBoardsForRepositoryAsync("owner", "repo", Arg.Any<CancellationToken>())
+            .GetProjectBoardsForRepositoryAsync("owner", "repo", cancellationToken)
             .Returns(new RepositoryProjectBoardDiscoveryResult(
             [
                 new TriageProjectBoard
@@ -161,7 +167,7 @@ public sealed class BoardRulesServiceTests
         var sut = new BoardRulesService(_gitHubService);
 
         // Act
-        var result = await sut.GetProjectBoardOptionsAsync("owner", "repo");
+        var result = await sut.GetProjectBoardOptionsAsync("owner", "repo", cancellationToken);
 
         // Assert
         Assert.Single(result.Options);

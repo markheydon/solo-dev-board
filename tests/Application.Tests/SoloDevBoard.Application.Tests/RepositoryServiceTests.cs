@@ -13,6 +13,7 @@ public sealed class RepositoryServiceTests
     [Fact]
     public async Task GetRepositoriesAsync_GitHubServiceReturnsRepositories_ReturnsRepositories()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var expectedRepositories = new List<Repository>
         {
@@ -21,29 +22,30 @@ public sealed class RepositoryServiceTests
         };
 
         _gitHubService
-            .GetRepositoriesAsync(Arg.Any<CancellationToken>())
+            .GetRepositoriesAsync(cancellationToken)
             .Returns(expectedRepositories);
 
         var sut = new RepositoryService(_gitHubService);
 
         // Act
-        var result = await sut.GetRepositoriesAsync();
+        var result = await sut.GetRepositoriesAsync(cancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
         Assert.Equal("repo-one", result[0].Name);
-        await _gitHubService.Received(1).GetRepositoriesAsync(Arg.Any<CancellationToken>());
+        await _gitHubService.Received(1).GetRepositoriesAsync(cancellationToken);
     }
 
     [Fact]
     public async Task GetRepositoriesAsync_GitHubServiceReturnsRepository_MapsAllFieldsToRepositoryDto()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var createdAt = new DateTimeOffset(2025, 1, 2, 3, 4, 5, TimeSpan.Zero);
         var updatedAt = new DateTimeOffset(2026, 2, 3, 4, 5, 6, TimeSpan.Zero);
 
         _gitHubService
-            .GetRepositoriesAsync(Arg.Any<CancellationToken>())
+            .GetRepositoriesAsync(cancellationToken)
             .Returns([
                 new Repository
                 {
@@ -62,7 +64,7 @@ public sealed class RepositoryServiceTests
         var sut = new RepositoryService(_gitHubService);
 
         // Act
-        var result = await sut.GetRepositoriesAsync();
+        var result = await sut.GetRepositoriesAsync(cancellationToken);
 
         // Assert
         var dto = Assert.Single(result);
@@ -80,6 +82,7 @@ public sealed class RepositoryServiceTests
     [Fact]
     public async Task GetRepositoriesAsync_WhenCalled_PassesCancellationTokenToGitHubService()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var cancellationTokenSource = new CancellationTokenSource();
         _gitHubService
@@ -98,6 +101,7 @@ public sealed class RepositoryServiceTests
     [Fact]
     public async Task GetActiveRepositoriesAsync_GitHubServiceReturnsRepositories_ReturnsRepositories()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var expectedRepositories = new List<Repository>
         {
@@ -105,23 +109,24 @@ public sealed class RepositoryServiceTests
         };
 
         _gitHubService
-            .GetActiveRepositoriesAsync(Arg.Any<CancellationToken>())
+            .GetActiveRepositoriesAsync(cancellationToken)
             .Returns(expectedRepositories);
 
         var sut = new RepositoryService(_gitHubService);
 
         // Act
-        var result = await sut.GetActiveRepositoriesAsync();
+        var result = await sut.GetActiveRepositoriesAsync(cancellationToken);
 
         // Assert
         Assert.Single(result);
         Assert.Equal("repo-one", result[0].Name);
-        await _gitHubService.Received(1).GetActiveRepositoriesAsync(Arg.Any<CancellationToken>());
+        await _gitHubService.Received(1).GetActiveRepositoriesAsync(cancellationToken);
     }
 
     [Fact]
     public async Task GetActiveRepositoriesAsync_WhenCalled_PassesCancellationTokenToGitHubService()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var cancellationTokenSource = new CancellationTokenSource();
         _gitHubService
