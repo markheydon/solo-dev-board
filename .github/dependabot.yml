@@ -1,70 +1,110 @@
 version: 2
 updates:
-  - package-ecosystem: "nuget"
-    directory: "/"
+  - package-ecosystem: nuget
+    directory: /
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: weekly
+      day: monday
       time: "04:00"
-      timezone: "Europe/London"
+      timezone: Europe/London
     open-pull-requests-limit: 5
     labels:
-      - "dependencies"
+      - dependencies
     assignees:
-      - "markheydon"
+      - markheydon
     groups:
-      microsoft-extensions:
-        patterns:
-          - "Microsoft.Extensions.*"
-        update-types:
-          - "minor"
-          - "patch"
-      azure:
-        patterns:
-          - "Azure.*"
-        update-types:
-          - "minor"
-          - "patch"
-      opentelemetry:
-        patterns:
-          - "OpenTelemetry.*"
-        update-types:
-          - "minor"
-          - "patch"
       test-packages:
         patterns:
-          - "bunit"
-          - "coverlet.collector"
-          - "Microsoft.NET.Test.Sdk"
-          - "NSubstitute"
-          - "xunit.v3"
-          - "xunit.*"
+          - bunit
+          - coverlet.*
+          - Microsoft.NET.Test.Sdk
+          - Moq
+          - NSubstitute
+          - xunit.*
         update-types:
-          - "minor"
-          - "patch"
+          - minor
+          - patch
+      microsoft-extensions:
+        patterns:
+          - Microsoft.Extensions.*
+        update-types:
+          - minor
+          - patch
+      azure:
+        patterns:
+          - Azure.*
+        update-types:
+          - minor
+          - patch
+      opentelemetry:
+        patterns:
+          - OpenTelemetry.*
+        update-types:
+          - minor
+          - patch
       analyzers:
         patterns:
-          - ".*analyzers.*"
-          - "Microsoft.CodeAnalysis.*"
+          - "*[Aa]nalyzers*"
+          - Microsoft.CodeAnalysis.*
         update-types:
-          - "minor"
-          - "patch"
+          - minor
+          - patch
       other:
         patterns:
           - "*"
         update-types:
-          - "minor"
-          - "patch"
+          - minor
+          - patch
 
-  - package-ecosystem: "github-actions"
-    directory: "/.github/workflows"
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: weekly
+      day: monday
       time: "04:00"
-      timezone: "Europe/London"
+      timezone: Europe/London
     open-pull-requests-limit: 5
     labels:
-      - "dependencies"
+      - dependencies
     assignees:
-      - "markheydon"
+      - markheydon
+
+  - package-ecosystem: devcontainers
+    directory: /.devcontainer
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+      timezone: Europe/London
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    assignees:
+      - markheydon
+    groups:
+      devcontainers:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: npm
+    directory: /tests/E2E
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+      timezone: Europe/London
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    assignees:
+      - markheydon
+    groups:
+      npm-dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
