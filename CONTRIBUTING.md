@@ -102,10 +102,12 @@ When suggesting a feature:
    - Apply file-scoped namespaces
 
 3. **Testing:**
-   - Include unit tests for new functionality (xUnit + Moq)
+   - Include unit tests for new functionality (xUnit v3 + NSubstitute)
    - Use the naming convention: `MethodUnderTest_Scenario_ExpectedOutcome`
    - All tests must pass: `dotnet test`
    - Aim for meaningful test coverage, not just coverage percentage
+   - Use Playwright for end-to-end user journeys where unit tests cannot validate the full workflow.
+   - Do not test .NET Aspire AppHost modelling or orchestration.
 
 4. **Architecture:**
    - Follow the clean/layered architecture (Domain → Application → Infrastructure → App)

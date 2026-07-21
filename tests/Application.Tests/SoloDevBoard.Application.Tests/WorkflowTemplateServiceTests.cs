@@ -1,4 +1,4 @@
-using Moq;
+using NSubstitute;
 using SoloDevBoard.Application.Services.Workflows;
 using SoloDevBoard.Domain.Entities.Workflows;
 
@@ -7,7 +7,7 @@ namespace SoloDevBoard.Application.Tests;
 /// <summary>Tests for <see cref="WorkflowTemplateService"/>.</summary>
 public sealed class WorkflowTemplateServiceTests
 {
-    private readonly Mock<IWorkflowFileRepository> _workflowFileRepositoryMock = new();
+    private readonly IWorkflowFileRepository _workflowFileRepository = Substitute.For<IWorkflowFileRepository>();
 
     [Fact]
     public void Constructor_WorkflowFileRepositoryIsNull_ThrowsArgumentNullException()
@@ -25,11 +25,12 @@ public sealed class WorkflowTemplateServiceTests
     [Fact]
     public async Task GetTemplatesAsync_ReturnsBuiltInTemplates()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var sut = CreateSut();
 
         // Act
-        var result = await sut.GetTemplatesAsync();
+        var result = await sut.GetTemplatesAsync(cancellationToken);
 
         // Assert
         Assert.Equal(3, result.Count);
@@ -41,11 +42,12 @@ public sealed class WorkflowTemplateServiceTests
     [Fact]
     public async Task GetTemplatesAsync_ReturnsTemplateMetadata()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var sut = CreateSut();
 
         // Act
-        var result = await sut.GetTemplatesAsync();
+        var result = await sut.GetTemplatesAsync(cancellationToken);
         var ciTemplate = result.Single(template => template.Name == ".NET CI");
 
         // Assert
@@ -58,11 +60,12 @@ public sealed class WorkflowTemplateServiceTests
     [Fact]
     public async Task GetTemplateDetailAsync_ReturnsParametersAndYamlPreview()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var sut = CreateSut();
 
         // Act
-        var result = await sut.GetTemplateDetailAsync(1);
+        var result = await sut.GetTemplateDetailAsync(1, cancellationToken);
 
         // Assert
         Assert.Equal(".NET CI", result.Name);
@@ -74,11 +77,12 @@ public sealed class WorkflowTemplateServiceTests
     [Fact]
     public async Task GetTemplateDetailAsync_UnknownTemplate_ThrowsKeyNotFoundException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var sut = CreateSut();
 
         // Act
-        var action = () => sut.GetTemplateDetailAsync(999);
+        var action = () => sut.GetTemplateDetailAsync(999, cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<KeyNotFoundException>(action);
@@ -87,15 +91,16 @@ public sealed class WorkflowTemplateServiceTests
     [Fact]
     public async Task GetRepositoryStatusesAsync_MissingWorkflowFile_ReturnsNotAppliedStatus()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        _workflowFileRepositoryMock
-            .Setup(repository => repository.GetWorkflowFileAsync("owner", "repo-a", ".github/workflows/ci.yml", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((WorkflowFile?)null);
+        _workflowFileRepository
+            .GetWorkflowFileAsync("owner", "repo-a", ".github/workflows/ci.yml", cancellationToken)
+            .Returns((WorkflowFile?)null);
 
         var sut = CreateSut();
 
         // Act
-        var result = await sut.GetRepositoryStatusesAsync(1, ["owner/repo-a"], new Dictionary<string, string>());
+        var result = await sut.GetRepositoryStatusesAsync(1, ["owner/repo-a"], new Dictionary<string, string>(), cancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -105,12 +110,13 @@ public sealed class WorkflowTemplateServiceTests
     [Fact]
     public async Task GetRepositoryStatusesAsync_MatchingWorkflowFile_ReturnsAppliedStatus()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var canonicalYaml = await GetRenderedCiYamlAsync();
 
-        _workflowFileRepositoryMock
-            .Setup(repository => repository.GetWorkflowFileAsync("owner", "repo-a", ".github/workflows/ci.yml", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new WorkflowFile
+        _workflowFileRepository
+            .GetWorkflowFileAsync("owner", "repo-a", ".github/workflows/ci.yml", cancellationToken)
+            .Returns(new WorkflowFile
             {
                 Path = ".github/workflows/ci.yml",
                 Content = canonicalYaml,
@@ -120,7 +126,7 @@ public sealed class WorkflowTemplateServiceTests
         var sut = CreateSut();
 
         // Act
-        var result = await sut.GetRepositoryStatusesAsync(1, ["owner/repo-a"], new Dictionary<string, string>());
+        var result = await sut.GetRepositoryStatusesAsync(1, ["owner/repo-a"], new Dictionary<string, string>(), cancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -130,10 +136,11 @@ public sealed class WorkflowTemplateServiceTests
     [Fact]
     public async Task GetRepositoryStatusesAsync_DifferentWorkflowFile_ReturnsDriftedStatus()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        _workflowFileRepositoryMock
-            .Setup(repository => repository.GetWorkflowFileAsync("owner", "repo-a", ".github/workflows/ci.yml", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new WorkflowFile
+        _workflowFileRepository
+            .GetWorkflowFileAsync("owner", "repo-a", ".github/workflows/ci.yml", cancellationToken)
+            .Returns(new WorkflowFile
             {
                 Path = ".github/workflows/ci.yml",
                 Content = "name: Custom CI",
@@ -143,7 +150,7 @@ public sealed class WorkflowTemplateServiceTests
         var sut = CreateSut();
 
         // Act
-        var result = await sut.GetRepositoryStatusesAsync(1, ["owner/repo-a"], new Dictionary<string, string>());
+        var result = await sut.GetRepositoryStatusesAsync(1, ["owner/repo-a"], new Dictionary<string, string>(), cancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -153,11 +160,12 @@ public sealed class WorkflowTemplateServiceTests
     [Fact]
     public async Task GetRepositoryStatusesAsync_RequiredParameterMissing_ThrowsArgumentException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var sut = CreateSut();
 
         // Act
-        var action = () => sut.GetRepositoryStatusesAsync(1, ["owner/repo-a"], new Dictionary<string, string> { ["mainBranch"] = "   " });
+        var action = () => sut.GetRepositoryStatusesAsync(1, ["owner/repo-a"], new Dictionary<string, string> { ["mainBranch"] = "   " }, cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<ArgumentException>(action);
@@ -166,41 +174,41 @@ public sealed class WorkflowTemplateServiceTests
     [Fact]
     public async Task ApplyTemplateAsync_MissingWorkflowFile_CreatesWorkflowFile()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        _workflowFileRepositoryMock
-            .Setup(repository => repository.GetWorkflowFileAsync("owner", "repo-a", ".github/workflows/ci.yml", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((WorkflowFile?)null);
+        _workflowFileRepository
+            .GetWorkflowFileAsync("owner", "repo-a", ".github/workflows/ci.yml", cancellationToken)
+            .Returns((WorkflowFile?)null);
 
         var sut = CreateSut();
 
         // Act
-        var result = await sut.ApplyTemplateAsync(1, ["owner/repo-a"], new Dictionary<string, string>());
+        var result = await sut.ApplyTemplateAsync(1, ["owner/repo-a"], new Dictionary<string, string>(), cancellationToken);
 
         // Assert
         Assert.Single(result);
         Assert.Equal("Created", result[0].Action);
         Assert.False(result[0].HasError);
-        _workflowFileRepositoryMock.Verify(
-            repository => repository.CreateOrUpdateWorkflowFileAsync(
-                "owner",
-                "repo-a",
-                ".github/workflows/ci.yml",
-                It.Is<string>(content => content.Contains("name: CI", StringComparison.Ordinal)),
-                null,
-                It.IsAny<string>(),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
+        await _workflowFileRepository.Received(1).CreateOrUpdateWorkflowFileAsync(
+            Arg.Is("owner"),
+            Arg.Is("repo-a"),
+            Arg.Is(".github/workflows/ci.yml"),
+            Arg.Is<string>(content => content!.Contains("name: CI", StringComparison.Ordinal)),
+            Arg.Is<string?>(sha => sha == null),
+            Arg.Any<string>(),
+            cancellationToken);
     }
 
     [Fact]
     public async Task ApplyTemplateAsync_MatchingWorkflowFile_SkipsRepository()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var canonicalYaml = await GetRenderedCiYamlAsync();
 
-        _workflowFileRepositoryMock
-            .Setup(repository => repository.GetWorkflowFileAsync("owner", "repo-a", ".github/workflows/ci.yml", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new WorkflowFile
+        _workflowFileRepository
+            .GetWorkflowFileAsync("owner", "repo-a", ".github/workflows/ci.yml", cancellationToken)
+            .Returns(new WorkflowFile
             {
                 Path = ".github/workflows/ci.yml",
                 Content = canonicalYaml,
@@ -210,30 +218,29 @@ public sealed class WorkflowTemplateServiceTests
         var sut = CreateSut();
 
         // Act
-        var result = await sut.ApplyTemplateAsync(1, ["owner/repo-a"], new Dictionary<string, string>());
+        var result = await sut.ApplyTemplateAsync(1, ["owner/repo-a"], new Dictionary<string, string>(), cancellationToken);
 
         // Assert
         Assert.Single(result);
         Assert.Equal("Skipped", result[0].Action);
-        _workflowFileRepositoryMock.Verify(
-            repository => repository.CreateOrUpdateWorkflowFileAsync(
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<string?>(),
-                It.IsAny<string>(),
-                It.IsAny<CancellationToken>()),
-            Times.Never);
+        await _workflowFileRepository.DidNotReceive().CreateOrUpdateWorkflowFileAsync(
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<string?>(),
+            Arg.Any<string>(),
+            cancellationToken);
     }
 
     [Fact]
     public async Task ApplyTemplateAsync_CustomParameterValues_RenderInWorkflowContent()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        _workflowFileRepositoryMock
-            .Setup(repository => repository.GetWorkflowFileAsync("owner", "repo-a", ".github/workflows/ci.yml", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((WorkflowFile?)null);
+        _workflowFileRepository
+            .GetWorkflowFileAsync("owner", "repo-a", ".github/workflows/ci.yml", cancellationToken)
+            .Returns((WorkflowFile?)null);
 
         var sut = CreateSut();
 
@@ -245,37 +252,36 @@ public sealed class WorkflowTemplateServiceTests
             {
                 ["mainBranch"] = "develop",
                 ["dotnetVersion"] = "9.0.x",
-            });
+            }, cancellationToken);
 
         // Assert
-        _workflowFileRepositoryMock.Verify(
-            repository => repository.CreateOrUpdateWorkflowFileAsync(
-                "owner",
-                "repo-a",
-                ".github/workflows/ci.yml",
-                It.Is<string>(content => content.Contains("- develop", StringComparison.Ordinal) && content.Contains("9.0.x", StringComparison.Ordinal)),
-                null,
-                It.IsAny<string>(),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
+        await _workflowFileRepository.Received(1).CreateOrUpdateWorkflowFileAsync(
+            Arg.Is("owner"),
+            Arg.Is("repo-a"),
+            Arg.Is(".github/workflows/ci.yml"),
+            Arg.Is<string>(content => content!.Contains("- develop", StringComparison.Ordinal) && content.Contains("9.0.x", StringComparison.Ordinal)),
+            Arg.Is<string?>(sha => sha == null),
+            Arg.Any<string>(),
+            cancellationToken);
     }
 
     [Fact]
     public async Task ApplyTemplateAsync_OneRepositoryFails_ReturnsErrorAndContinues()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        _workflowFileRepositoryMock
-            .Setup(repository => repository.GetWorkflowFileAsync("owner", "repo-a", ".github/workflows/ci.yml", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((WorkflowFile?)null);
+        _workflowFileRepository
+            .GetWorkflowFileAsync("owner", "repo-a", ".github/workflows/ci.yml", cancellationToken)
+            .Returns((WorkflowFile?)null);
 
-        _workflowFileRepositoryMock
-            .Setup(repository => repository.GetWorkflowFileAsync("owner", "repo-b", ".github/workflows/ci.yml", It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new HttpRequestException("Rate limited"));
+        _workflowFileRepository
+            .GetWorkflowFileAsync("owner", "repo-b", ".github/workflows/ci.yml", cancellationToken)
+            .Returns(Task.FromException<WorkflowFile?>(new HttpRequestException("Rate limited")));
 
         var sut = CreateSut();
 
         // Act
-        var result = await sut.ApplyTemplateAsync(1, ["owner/repo-a", "owner/repo-b"], new Dictionary<string, string>());
+        var result = await sut.ApplyTemplateAsync(1, ["owner/repo-a", "owner/repo-b"], new Dictionary<string, string>(), cancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -288,11 +294,12 @@ public sealed class WorkflowTemplateServiceTests
     [InlineData("   ")]
     public async Task ApplyTemplateAsync_EmptyRepositoryList_ThrowsArgumentException(string repository)
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var sut = CreateSut();
 
         // Act
-        var action = () => sut.ApplyTemplateAsync(1, [repository], new Dictionary<string, string>());
+        var action = () => sut.ApplyTemplateAsync(1, [repository], new Dictionary<string, string>(), cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<ArgumentException>(action);
@@ -301,11 +308,12 @@ public sealed class WorkflowTemplateServiceTests
     [Fact]
     public async Task ApplyTemplateAsync_InvalidRepositoryFormat_ReturnsErrorResult()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var sut = CreateSut();
 
         // Act
-        var result = await sut.ApplyTemplateAsync(1, ["invalid-repo"], new Dictionary<string, string>());
+        var result = await sut.ApplyTemplateAsync(1, ["invalid-repo"], new Dictionary<string, string>(), cancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -314,12 +322,12 @@ public sealed class WorkflowTemplateServiceTests
     }
 
     private WorkflowTemplateService CreateSut()
-        => new(_workflowFileRepositoryMock.Object);
+        => new(_workflowFileRepository);
 
     private static async Task<string> GetRenderedCiYamlAsync()
     {
-        var sut = new WorkflowTemplateService(new Mock<IWorkflowFileRepository>().Object);
-        var detail = await sut.GetTemplateDetailAsync(1);
+        var sut = new WorkflowTemplateService(Substitute.For<IWorkflowFileRepository>());
+        var detail = await sut.GetTemplateDetailAsync(1, TestContext.Current.CancellationToken);
         return detail.YamlPreview;
     }
 }

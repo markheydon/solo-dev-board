@@ -1,4 +1,4 @@
-using Moq;
+using NSubstitute;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Migration;
 using SoloDevBoard.Domain.Entities.Labels;
@@ -9,12 +9,13 @@ namespace SoloDevBoard.Application.Tests;
 /// <summary>Tests for <see cref="MigrationService"/>.</summary>
 public sealed class MigrationServiceTests
 {
-    private readonly Mock<ILabelRepository> _labelRepositoryMock = new();
-    private readonly Mock<IMilestoneRepository> _milestoneRepositoryMock = new();
+    private readonly ILabelRepository _labelRepository = Substitute.For<ILabelRepository>();
+    private readonly IMilestoneRepository _milestoneRepository = Substitute.For<IMilestoneRepository>();
 
     [Fact]
     public async Task PreviewMigrationAsync_SkipStrategy_ReturnsCreateAndSkipOnly()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         SetupSourceAndTargetData();
         var sut = CreateSubject();
@@ -24,7 +25,7 @@ public sealed class MigrationServiceTests
             "owner/source",
             ["owner/target"],
             new MigrationScopeDto(true, true),
-            MigrationConflictStrategy.Skip);
+            MigrationConflictStrategy.Skip, cancellationToken);
 
         // Assert
         Assert.Equal(MigrationConflictStrategy.Skip, result.ConflictStrategy);
@@ -51,6 +52,7 @@ public sealed class MigrationServiceTests
     [Fact]
     public async Task PreviewMigrationAsync_OverwriteStrategy_ReturnsCreateUpdateAndDelete()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         SetupSourceAndTargetData();
         var sut = CreateSubject();
@@ -60,7 +62,7 @@ public sealed class MigrationServiceTests
             "owner/source",
             ["owner/target"],
             new MigrationScopeDto(true, true),
-            MigrationConflictStrategy.Overwrite);
+            MigrationConflictStrategy.Overwrite, cancellationToken);
 
         // Assert
         Assert.Equal(MigrationConflictStrategy.Overwrite, result.ConflictStrategy);
@@ -80,31 +82,47 @@ public sealed class MigrationServiceTests
     [Fact]
     public async Task ApplyMigrationAsync_OverwriteStrategy_AppliesLabelAndMilestoneOperations()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         SetupSourceAndTargetData();
 
-        _labelRepositoryMock
-            .Setup(repository => repository.CreateLabelAsync("owner", "target", It.IsAny<Label>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, string repo, Label label, CancellationToken _) => label with { RepositoryName = repo });
+        _labelRepository
+            .CreateLabelAsync("owner", "target", Arg.Any<Label>(), cancellationToken)
+            .Returns(callInfo =>
+            {
+                var repo = callInfo.ArgAt<string>(1);
+                var label = callInfo.ArgAt<Label>(2);
+                return label with { RepositoryName = repo };
+            });
 
-        _labelRepositoryMock
-            .Setup(repository => repository.UpdateLabelAsync("owner", "target", "type/story", It.IsAny<Label>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, string repo, string _, Label label, CancellationToken _) => label with { RepositoryName = repo });
+        _labelRepository
+            .UpdateLabelAsync("owner", "target", "type/story", Arg.Any<Label>(), cancellationToken)
+            .Returns(callInfo =>
+            {
+                var repo = callInfo.ArgAt<string>(1);
+                var label = callInfo.ArgAt<Label>(3);
+                return label with { RepositoryName = repo };
+            });
 
-        _labelRepositoryMock
-            .Setup(repository => repository.DeleteLabelAsync("owner", "target", "legacy", It.IsAny<CancellationToken>()))
+        _labelRepository
+            .DeleteLabelAsync("owner", "target", "legacy", cancellationToken)
             .Returns(Task.CompletedTask);
 
-        _milestoneRepositoryMock
-            .Setup(repository => repository.CreateMilestoneAsync("owner", "target", It.IsAny<Milestone>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, string _, Milestone milestone, CancellationToken _) => milestone);
+        _milestoneRepository
+            .CreateMilestoneAsync("owner", "target", Arg.Any<Milestone>(), cancellationToken)
+            .Returns(callInfo => callInfo.ArgAt<Milestone>(2));
 
-        _milestoneRepositoryMock
-            .Setup(repository => repository.UpdateMilestoneAsync("owner", "target", 9, It.IsAny<Milestone>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, string _, int number, Milestone milestone, CancellationToken _) => milestone with { Number = number });
+        _milestoneRepository
+            .UpdateMilestoneAsync("owner", "target", 9, Arg.Any<Milestone>(), cancellationToken)
+            .Returns(callInfo =>
+            {
+                var number = callInfo.ArgAt<int>(2);
+                var milestone = callInfo.ArgAt<Milestone>(3);
+                return milestone with { Number = number };
+            });
 
-        _milestoneRepositoryMock
-            .Setup(repository => repository.DeleteMilestoneAsync("owner", "target", 10, It.IsAny<CancellationToken>()))
+        _milestoneRepository
+            .DeleteMilestoneAsync("owner", "target", 10, cancellationToken)
             .Returns(Task.CompletedTask);
 
         var sut = CreateSubject();
@@ -114,7 +132,7 @@ public sealed class MigrationServiceTests
             "owner/source",
             ["owner/target"],
             new MigrationScopeDto(true, true),
-            MigrationConflictStrategy.Overwrite);
+            MigrationConflictStrategy.Overwrite, cancellationToken);
 
         // Assert
         Assert.Equal(MigrationConflictStrategy.Overwrite, result.ConflictStrategy);
@@ -129,28 +147,34 @@ public sealed class MigrationServiceTests
         Assert.Equal(1, result.MilestoneResults[0].UpdatedCount);
         Assert.Equal(1, result.MilestoneResults[0].DeletedCount);
 
-        _labelRepositoryMock.Verify(repository => repository.CreateLabelAsync("owner", "target", It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Once);
-        _labelRepositoryMock.Verify(repository => repository.UpdateLabelAsync("owner", "target", "type/story", It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Once);
-        _labelRepositoryMock.Verify(repository => repository.DeleteLabelAsync("owner", "target", "legacy", It.IsAny<CancellationToken>()), Times.Once);
+        await _labelRepository.Received(1).CreateLabelAsync("owner", "target", Arg.Any<Label>(), cancellationToken);
+        await _labelRepository.Received(1).UpdateLabelAsync("owner", "target", "type/story", Arg.Any<Label>(), cancellationToken);
+        await _labelRepository.Received(1).DeleteLabelAsync("owner", "target", "legacy", cancellationToken);
 
-        _milestoneRepositoryMock.Verify(repository => repository.CreateMilestoneAsync("owner", "target", It.IsAny<Milestone>(), It.IsAny<CancellationToken>()), Times.Once);
-        _milestoneRepositoryMock.Verify(repository => repository.UpdateMilestoneAsync("owner", "target", 9, It.IsAny<Milestone>(), It.IsAny<CancellationToken>()), Times.Once);
-        _milestoneRepositoryMock.Verify(repository => repository.DeleteMilestoneAsync("owner", "target", 10, It.IsAny<CancellationToken>()), Times.Once);
+        await _milestoneRepository.Received(1).CreateMilestoneAsync("owner", "target", Arg.Any<Milestone>(), cancellationToken);
+        await _milestoneRepository.Received(1).UpdateMilestoneAsync("owner", "target", 9, Arg.Any<Milestone>(), cancellationToken);
+        await _milestoneRepository.Received(1).DeleteMilestoneAsync("owner", "target", 10, cancellationToken);
     }
 
     [Fact]
     public async Task ApplyMigrationAsync_SkipStrategy_DoesNotUpdateOrDeleteConflicts()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         SetupSourceAndTargetData();
 
-        _labelRepositoryMock
-            .Setup(repository => repository.CreateLabelAsync("owner", "target", It.IsAny<Label>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, string repo, Label label, CancellationToken _) => label with { RepositoryName = repo });
+        _labelRepository
+            .CreateLabelAsync("owner", "target", Arg.Any<Label>(), cancellationToken)
+            .Returns(callInfo =>
+            {
+                var repo = callInfo.ArgAt<string>(1);
+                var label = callInfo.ArgAt<Label>(2);
+                return label with { RepositoryName = repo };
+            });
 
-        _milestoneRepositoryMock
-            .Setup(repository => repository.CreateMilestoneAsync("owner", "target", It.IsAny<Milestone>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, string _, Milestone milestone, CancellationToken _) => milestone);
+        _milestoneRepository
+            .CreateMilestoneAsync("owner", "target", Arg.Any<Milestone>(), cancellationToken)
+            .Returns(callInfo => callInfo.ArgAt<Milestone>(2));
 
         var sut = CreateSubject();
 
@@ -159,7 +183,7 @@ public sealed class MigrationServiceTests
             "owner/source",
             ["owner/target"],
             new MigrationScopeDto(true, true),
-            MigrationConflictStrategy.Skip);
+            MigrationConflictStrategy.Skip, cancellationToken);
 
         // Assert
         Assert.Single(result.LabelResults);
@@ -174,18 +198,19 @@ public sealed class MigrationServiceTests
         Assert.Equal(0, result.MilestoneResults[0].DeletedCount);
         Assert.Equal(1, result.MilestoneResults[0].SkippedCount);
 
-        _labelRepositoryMock.Verify(repository => repository.UpdateLabelAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Never);
-        _labelRepositoryMock.Verify(repository => repository.DeleteLabelAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
-        _milestoneRepositoryMock.Verify(repository => repository.UpdateMilestoneAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<Milestone>(), It.IsAny<CancellationToken>()), Times.Never);
-        _milestoneRepositoryMock.Verify(repository => repository.DeleteMilestoneAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        await _labelRepository.DidNotReceive().UpdateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), cancellationToken);
+        await _labelRepository.DidNotReceive().DeleteLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), cancellationToken);
+        await _milestoneRepository.DidNotReceive().UpdateMilestoneAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<Milestone>(), cancellationToken);
+        await _milestoneRepository.DidNotReceive().DeleteMilestoneAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), cancellationToken);
     }
 
     private MigrationService CreateSubject()
-        => new(_labelRepositoryMock.Object, _milestoneRepositoryMock.Object);
+        => new(_labelRepository, _milestoneRepository);
 
     [Fact]
     public async Task PreviewMigrationAsync_LabelsOnly_DoesNotReturnMilestonePreviews()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         SetupSourceAndTargetData();
         var sut = CreateSubject();
@@ -195,7 +220,7 @@ public sealed class MigrationServiceTests
             "owner/source",
             ["owner/target"],
             new MigrationScopeDto(true, false),
-            MigrationConflictStrategy.Merge);
+            MigrationConflictStrategy.Merge, cancellationToken);
 
         // Assert
         Assert.Single(result.LabelPreviews);
@@ -205,12 +230,13 @@ public sealed class MigrationServiceTests
     [Fact]
     public async Task ApplyMigrationAsync_MilestonesOnly_DoesNotRunLabelOperations()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         SetupSourceAndTargetData();
 
-        _milestoneRepositoryMock
-            .Setup(repository => repository.CreateMilestoneAsync("owner", "target", It.IsAny<Milestone>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, string _, Milestone milestone, CancellationToken _) => milestone);
+        _milestoneRepository
+            .CreateMilestoneAsync("owner", "target", Arg.Any<Milestone>(), cancellationToken)
+            .Returns(callInfo => callInfo.ArgAt<Milestone>(2));
 
         var sut = CreateSubject();
 
@@ -219,20 +245,21 @@ public sealed class MigrationServiceTests
             "owner/source",
             ["owner/target"],
             new MigrationScopeDto(false, true),
-            MigrationConflictStrategy.Skip);
+            MigrationConflictStrategy.Skip, cancellationToken);
 
         // Assert
         Assert.Empty(result.LabelResults);
         Assert.Single(result.MilestoneResults);
 
-        _labelRepositoryMock.Verify(repository => repository.CreateLabelAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Never);
-        _labelRepositoryMock.Verify(repository => repository.UpdateLabelAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Never);
-        _labelRepositoryMock.Verify(repository => repository.DeleteLabelAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        await _labelRepository.DidNotReceive().CreateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), cancellationToken);
+        await _labelRepository.DidNotReceive().UpdateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), cancellationToken);
+        await _labelRepository.DidNotReceive().DeleteLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), cancellationToken);
     }
 
     [Fact]
     public async Task PreviewMigrationAsync_NoScopeSelected_ThrowsArgumentException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         SetupSourceAndTargetData();
         var sut = CreateSubject();
@@ -242,7 +269,7 @@ public sealed class MigrationServiceTests
             "owner/source",
             ["owner/target"],
             new MigrationScopeDto(false, false),
-            MigrationConflictStrategy.Skip);
+            MigrationConflictStrategy.Skip, cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<ArgumentException>(action);
@@ -251,6 +278,7 @@ public sealed class MigrationServiceTests
     [Fact]
     public async Task ApplyMigrationAsync_TargetRepositoriesContainOnlySource_ThrowsArgumentException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         SetupSourceAndTargetData();
         var sut = CreateSubject();
@@ -260,7 +288,7 @@ public sealed class MigrationServiceTests
             "owner/source",
             ["owner/source"],
             new MigrationScopeDto(true, true),
-            MigrationConflictStrategy.Skip);
+            MigrationConflictStrategy.Skip, cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<ArgumentException>(action);
@@ -269,28 +297,34 @@ public sealed class MigrationServiceTests
     [Fact]
     public async Task ApplyMigrationAsync_MultipleTargetsOneLabelOperationFails_ReturnsPartialFailureAndContinues()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         SetupSourceAndTargetData();
 
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("owner", "failing", It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new HttpRequestException("label operation failed"));
+        _labelRepository
+            .GetLabelsAsync("owner", "failing", cancellationToken)
+            .Returns(Task.FromException<IReadOnlyList<Label>>(new HttpRequestException("label operation failed")));
 
-        _milestoneRepositoryMock
-            .Setup(repository => repository.GetMilestonesAsync("owner", "failing", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
+        _milestoneRepository
+            .GetMilestonesAsync("owner", "failing", cancellationToken)
+            .Returns([]);
 
-        _labelRepositoryMock
-            .Setup(repository => repository.CreateLabelAsync("owner", "target", It.IsAny<Label>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, string repo, Label label, CancellationToken _) => label with { RepositoryName = repo });
+        _labelRepository
+            .CreateLabelAsync("owner", "target", Arg.Any<Label>(), cancellationToken)
+            .Returns(callInfo =>
+            {
+                var repo = callInfo.ArgAt<string>(1);
+                var label = callInfo.ArgAt<Label>(2);
+                return label with { RepositoryName = repo };
+            });
 
-        _milestoneRepositoryMock
-            .Setup(repository => repository.CreateMilestoneAsync("owner", "target", It.IsAny<Milestone>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, string _, Milestone milestone, CancellationToken _) => milestone);
+        _milestoneRepository
+            .CreateMilestoneAsync("owner", "target", Arg.Any<Milestone>(), cancellationToken)
+            .Returns(callInfo => callInfo.ArgAt<Milestone>(2));
 
-        _milestoneRepositoryMock
-            .Setup(repository => repository.CreateMilestoneAsync("owner", "failing", It.IsAny<Milestone>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, string _, Milestone milestone, CancellationToken _) => milestone);
+        _milestoneRepository
+            .CreateMilestoneAsync("owner", "failing", Arg.Any<Milestone>(), cancellationToken)
+            .Returns(callInfo => callInfo.ArgAt<Milestone>(2));
 
         var sut = CreateSubject();
 
@@ -299,7 +333,7 @@ public sealed class MigrationServiceTests
             "owner/source",
             ["owner/target", "owner/failing"],
             new MigrationScopeDto(true, true),
-            MigrationConflictStrategy.Skip);
+            MigrationConflictStrategy.Skip, cancellationToken);
 
         // Assert
         Assert.Equal(2, result.LabelResults.Count);
@@ -325,16 +359,22 @@ public sealed class MigrationServiceTests
     [Fact]
     public async Task ApplyMigrationAsync_UpdateFailsAfterCreate_ReturnsErrorWithPartialProgressCounts()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         SetupSourceAndTargetData();
 
-        _labelRepositoryMock
-            .Setup(repository => repository.CreateLabelAsync("owner", "target", It.IsAny<Label>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, string repo, Label label, CancellationToken _) => label with { RepositoryName = repo });
+        _labelRepository
+            .CreateLabelAsync("owner", "target", Arg.Any<Label>(), cancellationToken)
+            .Returns(callInfo =>
+            {
+                var repo = callInfo.ArgAt<string>(1);
+                var label = callInfo.ArgAt<Label>(2);
+                return label with { RepositoryName = repo };
+            });
 
-        _labelRepositoryMock
-            .Setup(repository => repository.UpdateLabelAsync("owner", "target", "type/story", It.IsAny<Label>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new HttpRequestException("update failed"));
+        _labelRepository
+            .UpdateLabelAsync("owner", "target", "type/story", Arg.Any<Label>(), cancellationToken)
+            .Returns(Task.FromException<Label>(new HttpRequestException("update failed")));
 
         var sut = CreateSubject();
 
@@ -343,7 +383,7 @@ public sealed class MigrationServiceTests
             "owner/source",
             ["owner/target"],
             new MigrationScopeDto(true, false),
-            MigrationConflictStrategy.Overwrite);
+            MigrationConflictStrategy.Overwrite, cancellationToken);
 
         // Assert
         var labelResult = Assert.Single(result.LabelResults);
@@ -355,30 +395,30 @@ public sealed class MigrationServiceTests
 
     private void SetupSourceAndTargetData()
     {
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("owner", "source", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelRepository
+            .GetLabelsAsync("owner", "source", Arg.Any<CancellationToken>())
+            .Returns([
                 new Label { Name = "type/story", Colour = "1d76db", Description = "Source story", RepositoryName = "source" },
                 new Label { Name = "priority/high", Colour = "d93f0b", Description = "Source high", RepositoryName = "source" },
             ]);
 
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("owner", "target", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelRepository
+            .GetLabelsAsync("owner", "target", Arg.Any<CancellationToken>())
+            .Returns([
                 new Label { Name = "type/story", Colour = "ffffff", Description = "Target story", RepositoryName = "target" },
                 new Label { Name = "legacy", Colour = "cfd3d7", Description = "Legacy", RepositoryName = "target" },
             ]);
 
-        _milestoneRepositoryMock
-            .Setup(repository => repository.GetMilestonesAsync("owner", "source", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _milestoneRepository
+            .GetMilestonesAsync("owner", "source", Arg.Any<CancellationToken>())
+            .Returns([
                 new Milestone { Id = 1, Number = 1, Title = "Sprint 1", Description = "Source sprint 1", State = "open", DueOn = DateTimeOffset.Parse("2026-04-01T00:00:00Z") },
                 new Milestone { Id = 2, Number = 2, Title = "Sprint 2", Description = "Source sprint 2", State = "open", DueOn = null },
             ]);
 
-        _milestoneRepositoryMock
-            .Setup(repository => repository.GetMilestonesAsync("owner", "target", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _milestoneRepository
+            .GetMilestonesAsync("owner", "target", Arg.Any<CancellationToken>())
+            .Returns([
                 new Milestone { Id = 9, Number = 9, Title = "Sprint 1", Description = "Target sprint 1", State = "open", DueOn = DateTimeOffset.Parse("2026-03-20T00:00:00Z") },
                 new Milestone { Id = 10, Number = 10, Title = "Legacy", Description = "Legacy milestone", State = "open", DueOn = null },
             ]);

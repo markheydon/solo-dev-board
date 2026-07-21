@@ -2,7 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
-using Moq;
+using NSubstitute;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Domain.Entities.Milestones;
 using SoloDevBoard.Infrastructure.GitHub;
@@ -16,6 +16,7 @@ public sealed class GitHubMilestoneRepositoryTests
     [Fact]
     public async Task GetMilestonesAsync_ValidResponse_ReturnsMappedMilestones()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -40,7 +41,7 @@ public sealed class GitHubMilestoneRepositoryTests
         var sut = CreateSubject(handler);
 
         // Act
-        var result = await sut.GetMilestonesAsync("owner", "repo");
+        var result = await sut.GetMilestonesAsync("owner", "repo", cancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -60,6 +61,7 @@ public sealed class GitHubMilestoneRepositoryTests
     [Fact]
     public async Task CreateMilestoneAsync_ValidMilestone_PostsPayloadAndReturnsMilestone()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -91,7 +93,7 @@ public sealed class GitHubMilestoneRepositoryTests
         };
 
         // Act
-        var result = await sut.CreateMilestoneAsync("owner", "repo", milestone);
+        var result = await sut.CreateMilestoneAsync("owner", "repo", milestone, cancellationToken);
 
         // Assert
         Assert.Equal(321, result.Id);
@@ -101,7 +103,7 @@ public sealed class GitHubMilestoneRepositoryTests
         Assert.Equal(HttpMethod.Post, handler.Requests[0].Method);
         Assert.Equal("https://api.github.com/repos/owner/repo/milestones", handler.Requests[0].RequestUri!.ToString());
 
-        var payload = await handler.Requests[0].Content!.ReadAsStringAsync();
+        var payload = await handler.Requests[0].Content!.ReadAsStringAsync(cancellationToken);
         using var document = JsonDocument.Parse(payload);
         Assert.Equal("Sprint 8", document.RootElement.GetProperty("title").GetString());
         Assert.Equal("open", document.RootElement.GetProperty("state").GetString());
@@ -111,6 +113,7 @@ public sealed class GitHubMilestoneRepositoryTests
     [Fact]
     public async Task UpdateMilestoneAsync_ValidMilestone_SendsPatchPayload()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -141,7 +144,7 @@ public sealed class GitHubMilestoneRepositoryTests
         };
 
         // Act
-        var result = await sut.UpdateMilestoneAsync("owner", "repo", 8, milestone);
+        var result = await sut.UpdateMilestoneAsync("owner", "repo", 8, milestone, cancellationToken);
 
         // Assert
         Assert.Equal("Updated description", result.Description);
@@ -149,7 +152,7 @@ public sealed class GitHubMilestoneRepositoryTests
         Assert.Equal(HttpMethod.Patch, handler.Requests[0].Method);
         Assert.Equal("https://api.github.com/repos/owner/repo/milestones/8", handler.Requests[0].RequestUri!.ToString());
 
-        var payload = await handler.Requests[0].Content!.ReadAsStringAsync();
+        var payload = await handler.Requests[0].Content!.ReadAsStringAsync(cancellationToken);
         using var document = JsonDocument.Parse(payload);
         Assert.False(document.RootElement.TryGetProperty("due_on", out _));
     }
@@ -157,6 +160,7 @@ public sealed class GitHubMilestoneRepositoryTests
     [Fact]
     public async Task DeleteMilestoneAsync_ValidNumber_SendsDeleteRequest()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler([
             new HttpResponseMessage(HttpStatusCode.NoContent),
@@ -165,7 +169,7 @@ public sealed class GitHubMilestoneRepositoryTests
         var sut = CreateSubject(handler);
 
         // Act
-        await sut.DeleteMilestoneAsync("owner", "repo", 8);
+        await sut.DeleteMilestoneAsync("owner", "repo", 8, cancellationToken);
 
         // Assert
         Assert.Single(handler.Requests);
@@ -176,6 +180,7 @@ public sealed class GitHubMilestoneRepositoryTests
     [Fact]
     public async Task GetMilestonesAsync_NonSuccessResponse_ThrowsHttpRequestException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler([
             CreateJsonResponse(HttpStatusCode.Forbidden, "{ \"message\": \"Forbidden\" }"),
@@ -184,7 +189,7 @@ public sealed class GitHubMilestoneRepositoryTests
         var sut = CreateSubject(handler);
 
         // Act
-        var action = async () => await sut.GetMilestonesAsync("owner", "repo");
+        var action = async () => await sut.GetMilestonesAsync("owner", "repo", cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<HttpRequestException>(action);
@@ -193,6 +198,7 @@ public sealed class GitHubMilestoneRepositoryTests
     [Fact]
     public async Task CreateMilestoneAsync_NonSuccessResponse_ThrowsHttpRequestException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler([
             CreateJsonResponse(HttpStatusCode.UnprocessableEntity, "{ \"message\": \"Validation Failed\" }"),
@@ -207,7 +213,7 @@ public sealed class GitHubMilestoneRepositoryTests
         };
 
         // Act
-        var action = async () => await sut.CreateMilestoneAsync("owner", "repo", milestone);
+        var action = async () => await sut.CreateMilestoneAsync("owner", "repo", milestone, cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<HttpRequestException>(action);
@@ -216,6 +222,7 @@ public sealed class GitHubMilestoneRepositoryTests
     [Fact]
     public async Task UpdateMilestoneAsync_MilestoneNumberIsZero_ThrowsArgumentOutOfRangeException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var sut = CreateSubject(new QueueMessageHandler([]));
         var milestone = new Milestone
@@ -226,7 +233,7 @@ public sealed class GitHubMilestoneRepositoryTests
         };
 
         // Act
-        var action = async () => await sut.UpdateMilestoneAsync("owner", "repo", 0, milestone);
+        var action = async () => await sut.UpdateMilestoneAsync("owner", "repo", 0, milestone, cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(action);
@@ -235,11 +242,12 @@ public sealed class GitHubMilestoneRepositoryTests
     [Fact]
     public async Task DeleteMilestoneAsync_RepositoryIsWhitespace_ThrowsArgumentException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var sut = CreateSubject(new QueueMessageHandler([]));
 
         // Act
-        var action = async () => await sut.DeleteMilestoneAsync("owner", " ", 8);
+        var action = async () => await sut.DeleteMilestoneAsync("owner", " ", 8, cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<ArgumentException>(action);
@@ -248,11 +256,12 @@ public sealed class GitHubMilestoneRepositoryTests
     [Fact]
     public async Task CreateMilestoneAsync_MilestoneIsNull_ThrowsArgumentNullException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var sut = CreateSubject(new QueueMessageHandler([]));
 
         // Act
-        var action = async () => await sut.CreateMilestoneAsync("owner", "repo", null!);
+        var action = async () => await sut.CreateMilestoneAsync("owner", "repo", null!, cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<ArgumentNullException>(action);
@@ -260,13 +269,13 @@ public sealed class GitHubMilestoneRepositoryTests
 
     private static GitHubMilestoneRepository CreateSubject(HttpMessageHandler handler)
     {
-        var currentUserContextMock = new Mock<ICurrentUserContext>();
-        currentUserContextMock
-            .Setup(context => context.GetAccessToken())
+        var currentUserContext = Substitute.For<ICurrentUserContext>();
+        currentUserContext
+            .GetAccessToken()
             .Returns("test-token");
 
         var authHandler = new GitHubAuthHandler(
-            currentUserContextMock.Object,
+            currentUserContext,
             Options.Create(new GitHubAuthOptions()))
         {
             InnerHandler = handler,
@@ -277,12 +286,12 @@ public sealed class GitHubMilestoneRepositoryTests
             BaseAddress = new Uri("https://api.github.com"),
         };
 
-        var httpClientFactoryMock = new Mock<IHttpClientFactory>();
-        httpClientFactoryMock
-            .Setup(factory => factory.CreateClient(GitHubService.GitHubApiClientName))
+        var httpClientFactory = Substitute.For<IHttpClientFactory>();
+        httpClientFactory
+            .CreateClient(GitHubService.GitHubApiClientName)
             .Returns(client);
 
-        return new GitHubMilestoneRepository(httpClientFactoryMock.Object);
+        return new GitHubMilestoneRepository(httpClientFactory);
     }
 
     private static HttpResponseMessage CreateJsonResponse(HttpStatusCode statusCode, string json)

@@ -14,7 +14,8 @@ Maintainer notes for running SoloDevBoard in the Cursor Cloud VM. Standard local
 ## Build, test, lint
 
 - Build: `dotnet build SoloDevBoard.slnx`.
-- Test (xUnit, fully offline — GitHub is mocked): `dotnet test SoloDevBoard.slnx`.
+- Test (xUnit v3 + NSubstitute, fully offline — GitHub is mocked): `dotnet test SoloDevBoard.slnx`.
+- End-to-end (Playwright): see [`tests/E2E/README.md`](../tests/E2E/README.md).
 - Lint is `dotnet format SoloDevBoard.slnx --verify-no-changes` (same check CI runs in `.github/workflows/ci.yml`). `EnforceCodeStyleInBuild` is on, so style violations also surface during build.
 
 ---

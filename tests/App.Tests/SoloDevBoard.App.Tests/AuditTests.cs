@@ -1,8 +1,8 @@
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
 using MudBlazor;
 using MudBlazor.Services;
+using NSubstitute;
 using SoloDevBoard.App.Components.Features.Audit.Pages;
 using SoloDevBoard.App.Components.Shared.Components;
 using SoloDevBoard.Application.Services.Audit;
@@ -13,20 +13,16 @@ namespace SoloDevBoard.App.Tests;
 /// <summary>Component tests for the <see cref="Audit"/> page.</summary>
 public sealed class AuditTests
 {
-    private readonly Mock<IAuditDashboardService> _auditDashboardServiceMock = new();
-    private readonly Mock<IRepositoryService> _repositoryServiceMock = new();
+    private readonly IAuditDashboardService _auditDashboardService = Substitute.For<IAuditDashboardService>();
+    private readonly IRepositoryService _repositoryService = Substitute.For<IRepositoryService>();
 
     [Fact]
     public async Task Audit_WhileServiceIsLoading_ShowsFeedbackRegionSkeleton()
     {
         // Arrange
         var tcs = new TaskCompletionSource<IReadOnlyList<RepositoryDto>>();
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .Returns(tcs.Task);
-        _auditDashboardServiceMock
-            .Setup(service => service.GetAuditSummaryAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Array.Empty<RepositoryAuditSummaryDto>());
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(tcs.Task);
+        _auditDashboardService.GetAuditSummaryAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<RepositoryAuditSummaryDto>());
 
         await using var ctx = CreateContext();
 
@@ -43,9 +39,7 @@ public sealed class AuditTests
     public async Task Audit_WhenServiceReturnsNoRepositories_ShowsEmptyStateInFeedbackRegion()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Array.Empty<RepositoryDto>());
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(Array.Empty<RepositoryDto>());
 
         await using var ctx = CreateContext();
 
@@ -71,17 +65,12 @@ public sealed class AuditTests
             new("owner/repo-a", 4, 3, 1, 1, 0),
         };
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(
-            [
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
                 CreateRepository("owner", "repo-a"),
                 CreateRepository("owner", "repo-b"),
             ]);
 
-        _auditDashboardServiceMock
-            .Setup(service => service.GetAuditSummaryAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(summary);
+        _auditDashboardService.GetAuditSummaryAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(summary);
 
         await using var ctx = CreateContext();
 
@@ -122,15 +111,11 @@ public sealed class AuditTests
     public async Task Audit_WhenLoadingSelectedRepositories_ShowsAuditLoadingState()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo-a")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
 
         var summaryCompletionSource = new TaskCompletionSource<IReadOnlyList<RepositoryAuditSummaryDto>>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        _auditDashboardServiceMock
-            .Setup(service => service.GetAuditSummaryAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
-            .Returns(summaryCompletionSource.Task);
+        _auditDashboardService.GetAuditSummaryAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(summaryCompletionSource.Task);
 
         await using var ctx = CreateContext();
 
@@ -149,11 +134,7 @@ public sealed class AuditTests
         cut.Find("[data-testid='audit-load-selected-button']").Click();
 
         // Assert
-        _auditDashboardServiceMock.Verify(
-            service => service.GetAuditSummaryAsync(
-                It.Is<IReadOnlyList<string>>(repos => repos.Count == 1 && repos[0] == "owner/repo-a"),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
+        await _auditDashboardService.Received(1).GetAuditSummaryAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 1 && repos[0] == "owner/repo-a"), Arg.Any<CancellationToken>());
 
         cut.WaitForAssertion(() =>
         {
@@ -174,9 +155,7 @@ public sealed class AuditTests
             new("owner/repo-a", 4, 2, 1, 1, 1),
         };
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo-a")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
 
         var issues = new List<IssueDto>
         {
@@ -193,21 +172,13 @@ public sealed class AuditTests
             new("build", "completed", "failure", "https://github.com/owner/repo-a/actions/runs/123", "owner/repo-a", "main"),
         };
 
-        _auditDashboardServiceMock
-            .Setup(service => service.GetAuditSummaryAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(summary);
+        _auditDashboardService.GetAuditSummaryAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(summary);
 
         await using var ctx = CreateContext();
 
-        _auditDashboardServiceMock
-            .Setup(service => service.GetUnlabelledIssuesAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(issues);
-        _auditDashboardServiceMock
-            .Setup(service => service.GetStalePullRequestsAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(pullRequests);
-        _auditDashboardServiceMock
-            .Setup(service => service.GetFailingWorkflowRunsAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(workflows);
+        _auditDashboardService.GetUnlabelledIssuesAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(issues);
+        _auditDashboardService.GetStalePullRequestsAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(pullRequests);
+        _auditDashboardService.GetFailingWorkflowRunsAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(workflows);
 
         // Act
         var cut = ctx.Render<Audit>();
@@ -248,13 +219,9 @@ public sealed class AuditTests
             new("owner/repo-a", 1, 1, 0, 0, 0),
         };
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo-a")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
 
-        _auditDashboardServiceMock
-            .Setup(service => service.GetAuditSummaryAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(summary);
+        _auditDashboardService.GetAuditSummaryAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(summary);
 
         await using var ctx = CreateContext();
 
@@ -284,20 +251,13 @@ public sealed class AuditTests
             new("owner/repo-b", 3, 1, 0, 0, 0),
         };
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(
-            [
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
                 CreateRepository("owner", "repo-a"),
                 CreateRepository("owner", "repo-b"),
             ]);
 
-        _auditDashboardServiceMock
-            .Setup(service => service.GetAuditSummaryAsync(It.Is<IReadOnlyList<string>>(repos => repos.Count == 2), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(summary);
-        _auditDashboardServiceMock
-            .Setup(service => service.GetAuditSummaryAsync(It.Is<IReadOnlyList<string>>(repos => repos.Count == 1 && repos[0] == "owner/repo-a"), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([new RepositoryAuditSummaryDto("owner/repo-a", 4, 2, 1, 1, 0)]);
+        _auditDashboardService.GetAuditSummaryAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 2), Arg.Any<CancellationToken>()).Returns(summary);
+        _auditDashboardService.GetAuditSummaryAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 1 && repos[0] == "owner/repo-a"), Arg.Any<CancellationToken>()).Returns([new RepositoryAuditSummaryDto("owner/repo-a", 4, 2, 1, 1, 0)]);
 
         await using var ctx = CreateContext();
 
@@ -309,47 +269,24 @@ public sealed class AuditTests
         cut.Find("[data-testid='audit-load-selected-button']").Click();
 
         // Assert
-        _auditDashboardServiceMock.Verify(
-            service => service.GetAuditSummaryAsync(
-                It.Is<IReadOnlyList<string>>(repos => repos.Count == 1 && repos[0] == "owner/repo-a"),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
-        _auditDashboardServiceMock.Verify(
-            service => service.GetUnlabelledIssuesAsync(
-                It.Is<IReadOnlyList<string>>(repos => repos.Count == 1 && repos[0] == "owner/repo-a"),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
-        _auditDashboardServiceMock.Verify(
-            service => service.GetStalePullRequestsAsync(
-                It.Is<IReadOnlyList<string>>(repos => repos.Count == 1 && repos[0] == "owner/repo-a"),
-                14,
-                It.IsAny<CancellationToken>()),
-            Times.Once);
-        _auditDashboardServiceMock.Verify(
-            service => service.GetFailingWorkflowRunsAsync(
-                It.Is<IReadOnlyList<string>>(repos => repos.Count == 1 && repos[0] == "owner/repo-a"),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
+        await _auditDashboardService.Received(1).GetAuditSummaryAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 1 && repos[0] == "owner/repo-a"), Arg.Any<CancellationToken>());
+        await _auditDashboardService.Received(1).GetUnlabelledIssuesAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 1 && repos[0] == "owner/repo-a"), Arg.Any<CancellationToken>());
+        await _auditDashboardService.Received(1).GetStalePullRequestsAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 1 && repos[0] == "owner/repo-a"), 14, Arg.Any<CancellationToken>());
+        await _auditDashboardService.Received(1).GetFailingWorkflowRunsAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 1 && repos[0] == "owner/repo-a"), Arg.Any<CancellationToken>());
     }
 
     private BunitContext CreateContext()
     {
-        _auditDashboardServiceMock
-            .Setup(service => service.GetUnlabelledIssuesAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Array.Empty<IssueDto>());
-        _auditDashboardServiceMock
-            .Setup(service => service.GetStalePullRequestsAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Array.Empty<PullRequestDto>());
-        _auditDashboardServiceMock
-            .Setup(service => service.GetFailingWorkflowRunsAsync(It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Array.Empty<WorkflowRunDto>());
+        _auditDashboardService.GetUnlabelledIssuesAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<IssueDto>());
+        _auditDashboardService.GetStalePullRequestsAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<PullRequestDto>());
+        _auditDashboardService.GetFailingWorkflowRunsAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<WorkflowRunDto>());
 
         var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddMudServices();
         ctx.Services.AddTestHostedAuthenticationRecovery();
-        ctx.Services.AddScoped(_ => _repositoryServiceMock.Object);
-        ctx.Services.AddScoped(_ => _auditDashboardServiceMock.Object);
+        ctx.Services.AddScoped(_ => _repositoryService);
+        ctx.Services.AddScoped(_ => _auditDashboardService);
 
         ctx.Render<MudPopoverProvider>();
         ctx.Render<MudDialogProvider>();

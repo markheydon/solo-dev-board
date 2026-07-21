@@ -11,7 +11,7 @@ using Bunit;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
 using MudBlazor.Services;
-using Moq;
+using NSubstitute;
 using Xunit;
 
 public class LabelsPageTests : BunitContext

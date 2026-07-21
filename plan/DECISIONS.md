@@ -41,7 +41,7 @@ A formal migration to GitHub Spec Kit is planned — see [`plan/SPEC_KIT_MIGRATI
 
 ### DEC-004: Moq for test mocking
 
-**Status:** Active  
+**Status:** Superseded by DEC-016  
 **Date:** 2026-02-28  
 **Legacy:** [ADR-0006](../adr/archive/0006-moq-mocking-library.md)  
 **Constitution:** [AGENTS.md — Testing](../AGENTS.md#testing)  
@@ -70,10 +70,10 @@ A formal migration to GitHub Spec Kit is planned — see [`plan/SPEC_KIT_MIGRATI
 
 ### DEC-007: bUnit for Blazor component testing
 
-**Status:** Active  
+**Status:** Active (amended by DEC-016)  
 **Date:** 2026-03-06  
 **Legacy:** [ADR-0010](../adr/archive/0010-bunit-component-testing.md)  
-**Summary:** Use bUnit for Blazor component tests in the App test project. Reject Playwright-only coverage where a bUnit unit/component test suffices for logic and rendering contracts.
+**Summary:** Use bUnit for Blazor component tests in the App test project. Reject Playwright-only coverage where a bUnit unit/component test suffices for logic and rendering contracts. Playwright end-to-end tests complement bUnit for cross-page user journeys (see DEC-016).
 
 ---
 
@@ -152,10 +152,21 @@ A formal migration to GitHub Spec Kit is planned — see [`plan/SPEC_KIT_MIGRATI
 
 ---
 
+### DEC-016: Formalised testing standard — xUnit v3, NSubstitute, Playwright E2E
+
+**Status:** Active  
+**Date:** 2026-07-21  
+**Supersedes:** DEC-004  
+**Constitution:** [AGENTS.md — Testing](../AGENTS.md#testing)  
+**Summary:** Use xUnit v3 for all automated unit and component tests. Use NSubstitute for mocks, stubs, and test doubles. Use built-in xUnit `Assert.*` methods only. Use bUnit for Blazor component tests (DEC-007). Use Playwright for end-to-end tests covering key user journeys — not as a replacement for unit tests. Do not test .NET Aspire AppHost modelling or orchestration. Reject FluentAssertions, AwesomeAssertions, Shouldly, Moq, NUnit, and MSTest.
+
+---
+
 ## Superseded legacy (archive only)
 
 | Legacy ADR | Superseded by | Notes |
 |------------|---------------|-------|
-| [ADR-0002](../adr/archive/0002-testing-framework.md) | DEC-004, DEC-006 | NSubstitute and FluentAssertions removed from testing stack |
+| [ADR-0002](../adr/archive/0002-testing-framework.md) | DEC-016, DEC-006 | Testing stack standardised on xUnit v3 and NSubstitute |
+| DEC-004 | DEC-016 | Moq replaced by NSubstitute per formalised testing standard |
 | [ADR-0003](../adr/archive/0003-bicep-infrastructure.md) | DEC-015 | Hand-maintained Bicep replaced by Aspire-generated deployment |
 | [ADR-0009](../adr/archive/0009-fluent-ui-blazor-component-library.md) | DEC-009 | Fluent UI Blazor replaced by MudBlazor |

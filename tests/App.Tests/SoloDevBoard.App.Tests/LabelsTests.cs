@@ -1,8 +1,8 @@
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
 using MudBlazor;
 using MudBlazor.Services;
+using NSubstitute;
 using SoloDevBoard.App.Components.Features.Labels.Pages;
 using SoloDevBoard.App.Components.Shared.Components;
 using SoloDevBoard.Application.Services.Labels;
@@ -13,17 +13,15 @@ namespace SoloDevBoard.App.Tests;
 /// <summary>Component tests for the <see cref="Labels"/> page.</summary>
 public sealed class LabelsTests
 {
-    private readonly Mock<IRepositoryService> _repositoryServiceMock = new();
-    private readonly Mock<ILabelManagerService> _labelManagerServiceMock = new();
+    private readonly IRepositoryService _repositoryService = Substitute.For<IRepositoryService>();
+    private readonly ILabelManagerService _labelManagerService = Substitute.For<ILabelManagerService>();
 
     [Fact]
     public async Task Labels_WhileRepositoryServiceIsLoading_ShowsLoadingState()
     {
         // Arrange
         var repositoriesTask = new TaskCompletionSource<IReadOnlyList<RepositoryDto>>();
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .Returns(repositoriesTask.Task);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(repositoriesTask.Task);
 
         await using var ctx = CreateContext();
 
@@ -38,9 +36,7 @@ public sealed class LabelsTests
     public async Task Labels_InitialLoad_DoesNotFetchLabelsUntilRequested()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
                 CreateRepository("owner", "repo-a"),
             ]);
 
@@ -59,18 +55,14 @@ public sealed class LabelsTests
             Assert.Empty(cut.FindAll("[data-testid='labels-grid']"));
         });
 
-        _labelManagerServiceMock.Verify(
-            service => service.GetLabelsForRepositoriesAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()),
-            Times.Never);
+        await _labelManagerService.DidNotReceive().GetLabelsForRepositoriesAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Labels_PageLayout_RendersRepositorySelectorBeforeTabStrip()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
                 CreateRepository("owner", "repo-a"),
             ]);
 
@@ -99,9 +91,7 @@ public sealed class LabelsTests
         // Arrange
         var repoA = CreateRepository("owner", "repo-a");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repoA]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
 
         await using var ctx = CreateContext();
 
@@ -122,9 +112,7 @@ public sealed class LabelsTests
     public async Task Labels_RepositoriesLoaded_ArchivedRepositoriesAreHiddenByDefault()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
                 CreateRepository("owner", "repo-a", isArchived: false),
             ]);
 
@@ -147,13 +135,9 @@ public sealed class LabelsTests
         // Arrange
         var repoA = CreateRepository("owner", "repo-a");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repoA]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
 
-        _labelManagerServiceMock
-            .Setup(service => service.GetLabelsForRepositoriesAsync("owner", It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Array.Empty<LabelDto>());
+        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<LabelDto>());
 
         await using var ctx = CreateContext();
 
@@ -179,20 +163,14 @@ public sealed class LabelsTests
         var repoA = CreateRepository("owner-a", "repo-a");
         var repoB = CreateRepository("owner-b", "repo-b");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repoA, repoB]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA, repoB]);
 
-        _labelManagerServiceMock
-            .Setup(service => service.GetLabelsForRepositoriesAsync("owner-a", It.Is<IReadOnlyList<string>>(repositories => repositories.SequenceEqual(new[] { "repo-a" })), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelManagerService.GetLabelsForRepositoriesAsync("owner-a", Arg.Is<IReadOnlyList<string>>(repositories => repositories!.SequenceEqual(new[] { "repo-a" })), Arg.Any<CancellationToken>()).Returns([
                 new LabelDto("type/story", "1d76db", "Story label", "repo-a"),
                 new LabelDto("priority/high", "d93f0b", "High priority", "repo-a"),
             ]);
 
-        _labelManagerServiceMock
-            .Setup(service => service.GetLabelsForRepositoriesAsync("owner-b", It.Is<IReadOnlyList<string>>(repositories => repositories.SequenceEqual(new[] { "repo-b" })), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelManagerService.GetLabelsForRepositoriesAsync("owner-b", Arg.Is<IReadOnlyList<string>>(repositories => repositories!.SequenceEqual(new[] { "repo-b" })), Arg.Any<CancellationToken>()).Returns([
                 new LabelDto("priority/high", "d93f0b", "High priority", "repo-b"),
             ]);
 
@@ -214,13 +192,9 @@ public sealed class LabelsTests
             Assert.Contains("owner-b/repo-b", cut.Markup);
         });
 
-        _labelManagerServiceMock.Verify(
-            service => service.GetLabelsForRepositoriesAsync("owner-a", It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+        await _labelManagerService.Received(1).GetLabelsForRepositoriesAsync("owner-a", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
 
-        _labelManagerServiceMock.Verify(
-            service => service.GetLabelsForRepositoriesAsync("owner-b", It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+        await _labelManagerService.Received(1).GetLabelsForRepositoriesAsync("owner-b", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -229,13 +203,9 @@ public sealed class LabelsTests
         // Arrange
         var repoA = CreateRepository("owner", "repo-a");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repoA]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
 
-        _labelManagerServiceMock
-            .Setup(service => service.GetLabelsForRepositoriesAsync("owner", It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
                 new LabelDto("type/story", "1d76db", "Story label", "repo-a"),
                 new LabelDto("status/done", "cfd3d7", "Completed", "repo-a"),
             ]);
@@ -275,9 +245,8 @@ public sealed class LabelsTests
     public async Task Labels_RepositoryLoadFails_ShowsRepositorySpecificErrorAndAction()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new HttpRequestException("Service unavailable"));
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<IReadOnlyList<RepositoryDto>>(new HttpRequestException("Service unavailable")));
 
         await using var ctx = CreateContext();
 
@@ -299,13 +268,9 @@ public sealed class LabelsTests
         // Arrange
         var repoA = CreateRepository("owner", "repo-a");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repoA]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
 
-        _labelManagerServiceMock
-            .Setup(service => service.PreviewRecommendedTaxonomyAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelManagerService.PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
                 new RecommendedTaxonomyRepositoryPreviewDto(
                     "owner/repo-a",
                     [new LabelDto("type/story", "1d76db", "Story", "owner/repo-a")],
@@ -340,13 +305,9 @@ public sealed class LabelsTests
         // Arrange
         var repoA = CreateRepository("owner", "repo-a");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repoA]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
 
-        _labelManagerServiceMock
-            .Setup(service => service.PreviewRecommendedTaxonomyAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelManagerService.PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
                 new RecommendedTaxonomyRepositoryPreviewDto(
                     "owner/repo-a",
                     [new LabelDto("type/story", "1d76db", "Story", "owner/repo-a")],
@@ -354,15 +315,11 @@ public sealed class LabelsTests
                     []),
             ]);
 
-        _labelManagerServiceMock
-            .Setup(service => service.ApplyRecommendedTaxonomyAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelManagerService.ApplyRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
                 new RecommendedTaxonomyRepositoryResultDto("owner/repo-a", 1, 0, 0, null),
             ]);
 
-        _labelManagerServiceMock
-            .Setup(service => service.GetLabelsForRepositoriesAsync("owner", It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Array.Empty<LabelDto>());
+        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<LabelDto>());
 
         await using var ctx = CreateContext();
 
@@ -385,9 +342,7 @@ public sealed class LabelsTests
             Assert.Contains("Applied taxonomy successfully", cut.Markup);
         });
 
-        _labelManagerServiceMock.Verify(
-            service => service.ApplyRecommendedTaxonomyAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+        await _labelManagerService.Received(1).ApplyRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -396,13 +351,9 @@ public sealed class LabelsTests
         // Arrange
         var repoA = CreateRepository("owner", "repo-a");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repoA]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
 
-        _labelManagerServiceMock
-            .Setup(service => service.PreviewRecommendedTaxonomyAsync("solodevboard", It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelManagerService.PreviewRecommendedTaxonomyAsync("solodevboard", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
                 new RecommendedTaxonomyRepositoryPreviewDto("owner/repo-a", [], [], []),
             ]);
 
@@ -416,9 +367,7 @@ public sealed class LabelsTests
         cut.Find("[data-testid='preview-taxonomy-button']").Click();
 
         // Assert
-        _labelManagerServiceMock.Verify(
-            service => service.PreviewRecommendedTaxonomyAsync("solodevboard", It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+        await _labelManagerService.Received(1).PreviewRecommendedTaxonomyAsync("solodevboard", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -428,13 +377,9 @@ public sealed class LabelsTests
         var repoA = CreateRepository("owner", "repo-a");
         var previewTask = new TaskCompletionSource<IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto>>();
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repoA]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
 
-        _labelManagerServiceMock
-            .Setup(service => service.PreviewRecommendedTaxonomyAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
-            .Returns(previewTask.Task);
+        _labelManagerService.PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(previewTask.Task);
 
         await using var ctx = CreateContext();
 
@@ -455,9 +400,7 @@ public sealed class LabelsTests
         cut.WaitForAssertion(() => Assert.Contains("Taxonomy preview", cut.Markup));
 
         // Assert
-        _labelManagerServiceMock.Verify(
-            service => service.PreviewRecommendedTaxonomyAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+        await _labelManagerService.Received(1).PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -467,9 +410,7 @@ public sealed class LabelsTests
         var repoA = CreateRepository("owner", "repo-a");
         var repoB = CreateRepository("owner", "repo-b");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repoA, repoB]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA, repoB]);
 
         await using var ctx = CreateContext();
 
@@ -495,25 +436,17 @@ public sealed class LabelsTests
         var repoA = CreateRepository("owner", "repo-a");
         var repoB = CreateRepository("owner", "repo-b");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repoA, repoB]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA, repoB]);
 
-        _labelManagerServiceMock
-            .Setup(service => service.PreviewLabelSynchronisationAsync("owner/repo-a", It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelManagerService.PreviewLabelSynchronisationAsync("owner/repo-a", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
                 new LabelSyncRepositoryPreviewDto("owner/repo-b", [], [], [], []),
             ]);
 
-        _labelManagerServiceMock
-            .Setup(service => service.ApplyLabelSynchronisationAsync("owner/repo-a", It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelManagerService.ApplyLabelSynchronisationAsync("owner/repo-a", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
                 new LabelSyncRepositoryResultDto("owner/repo-b", 1, 2, 3, 4, "GitHub API failure"),
             ]);
 
-        _labelManagerServiceMock
-            .Setup(service => service.GetLabelsForRepositoriesAsync("owner", It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Array.Empty<LabelDto>());
+        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<LabelDto>());
 
         await using var ctx = CreateContext();
 
@@ -542,13 +475,9 @@ public sealed class LabelsTests
         var repoA = CreateRepository("owner", "repo-a");
         var repoB = CreateRepository("owner", "repo-b");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repoA, repoB]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA, repoB]);
 
-        _labelManagerServiceMock
-            .Setup(service => service.PreviewLabelSynchronisationAsync("owner/repo-a", It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelManagerService.PreviewLabelSynchronisationAsync("owner/repo-a", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
                 new LabelSyncRepositoryPreviewDto(
                     "owner/repo-b",
                     [new LabelDto("priority/high", "d93f0b", "High", "owner/repo-b")],
@@ -585,15 +514,13 @@ public sealed class LabelsTests
         ctx.Services.AddMudServices();
         ctx.Services.AddTestHostedAuthenticationRecovery();
 
-        _labelManagerServiceMock
-            .Setup(service => service.GetRecommendedLabelStrategiesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelManagerService.GetRecommendedLabelStrategiesAsync(Arg.Any<CancellationToken>()).Returns([
                 new RecommendedLabelStrategyDto("solodevboard", "SoloDevBoard", "SoloDevBoard canonical taxonomy"),
                 new RecommendedLabelStrategyDto("github-default", "GitHub default", "GitHub default labels"),
             ]);
 
-        ctx.Services.AddScoped(_ => _repositoryServiceMock.Object);
-        ctx.Services.AddScoped(_ => _labelManagerServiceMock.Object);
+        ctx.Services.AddScoped(_ => _repositoryService);
+        ctx.Services.AddScoped(_ => _labelManagerService);
 
         ctx.Render<MudPopoverProvider>();
         ctx.Render<MudDialogProvider>();

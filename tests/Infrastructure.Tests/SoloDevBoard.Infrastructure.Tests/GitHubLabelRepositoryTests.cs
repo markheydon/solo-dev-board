@@ -2,7 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
-using Moq;
+using NSubstitute;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Domain.Entities.Labels;
 using SoloDevBoard.Infrastructure.GitHub;
@@ -16,6 +16,7 @@ public sealed class GitHubLabelRepositoryTests
     [Fact]
     public async Task GetLabelsAsync_ValidResponse_ReturnsMappedLabels()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -35,7 +36,7 @@ public sealed class GitHubLabelRepositoryTests
         var sut = CreateSubject(handler);
 
         // Act
-        var result = await sut.GetLabelsAsync("owner", "repo");
+        var result = await sut.GetLabelsAsync("owner", "repo", cancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -53,6 +54,7 @@ public sealed class GitHubLabelRepositoryTests
     [Fact]
     public async Task CreateLabelAsync_ValidLabel_PostsPayloadAndReturnsLabel()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -71,7 +73,7 @@ public sealed class GitHubLabelRepositoryTests
         var label = new Label { Name = "bug", Colour = "d73a4a", Description = "Something is not working" };
 
         // Act
-        var result = await sut.CreateLabelAsync("owner", "repo", label);
+        var result = await sut.CreateLabelAsync("owner", "repo", label, cancellationToken);
 
         // Assert
         Assert.Equal("bug", result.Name);
@@ -82,7 +84,7 @@ public sealed class GitHubLabelRepositoryTests
         Assert.Equal(HttpMethod.Post, handler.Requests[0].Method);
         Assert.Equal("https://api.github.com/repos/owner/repo/labels", handler.Requests[0].RequestUri!.ToString());
 
-        var payload = await handler.Requests[0].Content!.ReadAsStringAsync();
+        var payload = await handler.Requests[0].Content!.ReadAsStringAsync(cancellationToken);
         using var document = JsonDocument.Parse(payload);
         Assert.Equal("bug", document.RootElement.GetProperty("name").GetString());
         Assert.Equal("d73a4a", document.RootElement.GetProperty("color").GetString());
@@ -92,6 +94,7 @@ public sealed class GitHubLabelRepositoryTests
     [Fact]
     public async Task UpdateLabelAsync_ValidLabel_SendsPatchPayloadWithNewName()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler(
         [
@@ -110,7 +113,7 @@ public sealed class GitHubLabelRepositoryTests
         var label = new Label { Name = "enhancement", Colour = "a2eeef", Description = "Feature request" };
 
         // Act
-        var result = await sut.UpdateLabelAsync("owner", "repo", "feature", label);
+        var result = await sut.UpdateLabelAsync("owner", "repo", "feature", label, cancellationToken);
 
         // Assert
         Assert.Equal("enhancement", result.Name);
@@ -120,7 +123,7 @@ public sealed class GitHubLabelRepositoryTests
         Assert.Equal(HttpMethod.Patch, handler.Requests[0].Method);
         Assert.Equal("https://api.github.com/repos/owner/repo/labels/feature", handler.Requests[0].RequestUri!.ToString());
 
-        var payload = await handler.Requests[0].Content!.ReadAsStringAsync();
+        var payload = await handler.Requests[0].Content!.ReadAsStringAsync(cancellationToken);
         using var document = JsonDocument.Parse(payload);
         Assert.Equal("enhancement", document.RootElement.GetProperty("new_name").GetString());
         Assert.Equal("a2eeef", document.RootElement.GetProperty("color").GetString());
@@ -130,6 +133,7 @@ public sealed class GitHubLabelRepositoryTests
     [Fact]
     public async Task DeleteLabelAsync_ValidLabelName_SendsDeleteRequest()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler([
             new HttpResponseMessage(HttpStatusCode.NoContent),
@@ -138,7 +142,7 @@ public sealed class GitHubLabelRepositoryTests
         var sut = CreateSubject(handler);
 
         // Act
-        await sut.DeleteLabelAsync("owner", "repo", "bug");
+        await sut.DeleteLabelAsync("owner", "repo", "bug", cancellationToken);
 
         // Assert
         Assert.Single(handler.Requests);
@@ -149,6 +153,7 @@ public sealed class GitHubLabelRepositoryTests
     [Fact]
     public async Task CreateLabelAsync_ApiReturnsBadRequest_ThrowsHttpRequestException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var handler = new QueueMessageHandler([
             new HttpResponseMessage(HttpStatusCode.BadRequest)
@@ -161,7 +166,7 @@ public sealed class GitHubLabelRepositoryTests
 
         // Act / Assert
         var exception = await Assert.ThrowsAsync<HttpRequestException>(
-            async () => _ = await sut.CreateLabelAsync("owner", "repo", new Label { Name = "bug", Colour = "d73a4a" }));
+            async () => _ = await sut.CreateLabelAsync("owner", "repo", new Label { Name = "bug", Colour = "d73a4a" }, cancellationToken));
 
         Assert.Equal(HttpStatusCode.BadRequest, exception.StatusCode);
         Assert.Contains("GitHub API request failed", exception.Message, StringComparison.Ordinal);
@@ -170,14 +175,15 @@ public sealed class GitHubLabelRepositoryTests
     [Fact]
     public async Task GetLabelsAsync_CurrentUserTokenMissing_ThrowsInvalidOperationException()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var currentUserContextMock = new Mock<ICurrentUserContext>();
-        currentUserContextMock
-            .Setup(context => context.GetAccessToken())
-            .Throws(new InvalidOperationException("Token missing."));
+        var currentUserContext = Substitute.For<ICurrentUserContext>();
+        currentUserContext
+            .When(x => x.GetAccessToken())
+            .Throw(new InvalidOperationException("Token missing."));
 
         var authHandler = new GitHubAuthHandler(
-            currentUserContextMock.Object,
+            currentUserContext,
             Options.Create(new GitHubAuthOptions()))
         {
             InnerHandler = new QueueMessageHandler([new HttpResponseMessage(HttpStatusCode.OK)]),
@@ -188,27 +194,27 @@ public sealed class GitHubLabelRepositoryTests
             BaseAddress = new Uri("https://api.github.com"),
         };
 
-        var httpClientFactoryMock = new Mock<IHttpClientFactory>();
-        httpClientFactoryMock
-            .Setup(factory => factory.CreateClient(GitHubService.GitHubApiClientName))
+        var httpClientFactory = Substitute.For<IHttpClientFactory>();
+        httpClientFactory
+            .CreateClient(GitHubService.GitHubApiClientName)
             .Returns(client);
 
-        var sut = new GitHubLabelRepository(httpClientFactoryMock.Object);
+        var sut = new GitHubLabelRepository(httpClientFactory);
 
         // Act / Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            async () => _ = await sut.GetLabelsAsync("owner", "repo"));
+            async () => _ = await sut.GetLabelsAsync("owner", "repo", cancellationToken));
     }
 
     private static GitHubLabelRepository CreateSubject(HttpMessageHandler handler)
     {
-        var currentUserContextMock = new Mock<ICurrentUserContext>();
-        currentUserContextMock
-            .Setup(context => context.GetAccessToken())
+        var currentUserContext = Substitute.For<ICurrentUserContext>();
+        currentUserContext
+            .GetAccessToken()
             .Returns("test-token");
 
         var authHandler = new GitHubAuthHandler(
-            currentUserContextMock.Object,
+            currentUserContext,
             Options.Create(new GitHubAuthOptions()))
         {
             InnerHandler = handler,
@@ -219,12 +225,12 @@ public sealed class GitHubLabelRepositoryTests
             BaseAddress = new Uri("https://api.github.com"),
         };
 
-        var httpClientFactoryMock = new Mock<IHttpClientFactory>();
-        httpClientFactoryMock
-            .Setup(factory => factory.CreateClient(GitHubService.GitHubApiClientName))
+        var httpClientFactory = Substitute.For<IHttpClientFactory>();
+        httpClientFactory
+            .CreateClient(GitHubService.GitHubApiClientName)
             .Returns(client);
 
-        return new GitHubLabelRepository(httpClientFactoryMock.Object);
+        return new GitHubLabelRepository(httpClientFactory);
     }
 
     private static HttpResponseMessage CreateJsonResponse(HttpStatusCode statusCode, string json)

@@ -10,7 +10,8 @@ Your goal is to help me write effective unit tests with XUnit, covering both sta
 ## Project Setup
 
 - Use a separate test project with naming convention `[ProjectName].Tests`
-- Reference Microsoft.NET.Test.Sdk, xunit, and xunit.runner.visualstudio packages
+- Reference Microsoft.NET.Test.Sdk, xunit.v3, and xunit.runner.visualstudio packages
+- Test projects must set `<OutputType>Exe</OutputType>` (xUnit v3 requirement)
 - Create test classes that match the classes being tested (e.g., `CalculatorTests` for `Calculator`)
 - Use .NET SDK test commands: `dotnet test` for running tests
 
@@ -50,11 +51,13 @@ Your goal is to help me write effective unit tests with XUnit, covering both sta
 - Use `Assert.Contains`/`Assert.DoesNotContain` for collections
 - Use `Assert.Matches`/`Assert.DoesNotMatch` for regex pattern matching
 - Use `Assert.Throws<T>` or `await Assert.ThrowsAsync<T>` to test exceptions
-- **Do not use FluentAssertions** — it requires a commercial licence under the Xceed Software licence and is prohibited in this open-source project (see [DEC-006](../../plan/DECISIONS.md#dec-006-no-fluentassertions--xunit-built-in-assertions-only)). Use xUnit's built-in `Assert.*` methods exclusively.
+- **Do not use FluentAssertions, AwesomeAssertions, Shouldly, Moq, NUnit, or MSTest** — see [DEC-006](../../plan/DECISIONS.md#dec-006-no-fluentassertions--xunit-built-in-assertions-only) and [DEC-016](../../plan/DECISIONS.md#dec-016-formalised-testing-standard--xunit-v3-nsubstitute-playwright-e2e). Use xUnit's built-in `Assert.*` methods exclusively.
 
 ## Mocking and Isolation
 
-- Use `Moq` alongside xUnit for mocking dependencies
+- Use `NSubstitute` alongside xUnit v3 for mocking dependencies
+- Create substitutes with `Substitute.For<TInterface>()`
+- Verify calls with `Received()` and `DidNotReceive()`
 - Mock dependencies to isolate units under test
 - Use interfaces to facilitate mocking
 - Consider using a DI container for complex test setups

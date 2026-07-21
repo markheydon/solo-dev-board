@@ -41,3 +41,66 @@ jobs:
 
       - name: Run tests
         run: dotnet test SoloDevBoard.slnx --no-build --verbosity normal
+
+  e2e:
+    name: End-to-End (Playwright)
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up .NET SDK from global.json
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: tests/E2E/package-lock.json
+
+      - name: Restore and build solution
+        run: |
+          dotnet restore SoloDevBoard.slnx
+          dotnet build src/App/SoloDevBoard.App/SoloDevBoard.App.csproj --no-restore
+
+      - name: Install Playwright dependencies
+        working-directory: tests/E2E
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run Playwright smoke tests
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:5080
+        run: |
+          ASPNETCORE_URLS=http://localhost:5080 \
+            ASPNETCORE_ENVIRONMENT=Development \
+            GitHubAuth__PersonalAccessToken=ci-e2e-placeholder \
+            GitHubAuth__OwnerLogin=ci-test-user \
+            HostedAdmissionControl__Enabled=false \
+            dotnet run --project src/App/SoloDevBoard.App --no-launch-profile --no-build &
+          APP_PID=$!
+
+          ATTEMPTS=0
+          until curl -sf http://localhost:5080/health > /dev/null; do
+            ATTEMPTS=$((ATTEMPTS + 1))
+            if [ "$ATTEMPTS" -ge 60 ]; then
+              echo "Application failed to become healthy within 120 seconds."
+              kill "$APP_PID" || true
+              exit 1
+            fi
+            sleep 2
+          done
+
+          cd tests/E2E
+          PLAYWRIGHT_HTML_OPEN=never npm test
+          TEST_EXIT=$?
+
+          kill $APP_PID || true
+          exit $TEST_EXIT

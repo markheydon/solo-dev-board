@@ -87,12 +87,15 @@ DTOs are `sealed record` types named `<Entity>Dto`, co-located in `SoloDevBoard.
 
 ## Testing
 
-- **Framework:** xUnit
-- **Mocking:** Moq
+- **Framework:** xUnit v3
+- **Mocking:** NSubstitute
+- **Component tests:** bUnit (App test project only; see [DEC-007](plan/DECISIONS.md#dec-007-bunit-for-blazor-component-testing))
+- **End-to-end tests:** Playwright for key user journeys (see [DEC-016](plan/DECISIONS.md#dec-016-formalised-testing-standard--xunit-v3-nsubstitute-playwright-e2e))
+- **AppHost:** Do not test .NET Aspire AppHost modelling or orchestration.
 - **Naming convention:** `MethodUnderTest_Scenario_ExpectedOutcome`
 - Test projects mirror the structure of source projects.
 - Arrange / Act / Assert sections separated by blank lines (no comments required).
-- Use xUnit's built-in `Assert.*` methods for all assertions. **Do not add FluentAssertions** — it requires a commercial licence and is prohibited in this open-source project (see [DEC-006](plan/DECISIONS.md#dec-006-no-fluentassertions--xunit-built-in-assertions-only)).
+- Use xUnit's built-in `Assert.*` methods for all assertions. **Do not add FluentAssertions, AwesomeAssertions, Shouldly, Moq, NUnit, or MSTest** (see [DEC-006](plan/DECISIONS.md#dec-006-no-fluentassertions--xunit-built-in-assertions-only) and [DEC-016](plan/DECISIONS.md#dec-016-formalised-testing-standard--xunit-v3-nsubstitute-playwright-e2e)).
 
 ---
 

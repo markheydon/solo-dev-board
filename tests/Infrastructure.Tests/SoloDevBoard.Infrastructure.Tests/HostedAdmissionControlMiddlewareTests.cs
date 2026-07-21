@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Moq;
+using NSubstitute;
 using SoloDevBoard.Infrastructure.Identity;
 
 namespace SoloDevBoard.Infrastructure.Tests;
@@ -16,6 +16,7 @@ public sealed class HostedAdmissionControlMiddlewareTests
     [Fact]
     public async Task InvokeAsync_DeniedHtmlRequest_RedirectsToAuthErrorPage()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var context = CreateHttpContext(isAuthenticated: true, acceptHeader: "text/html");
         var nextCalled = false;
@@ -40,6 +41,7 @@ public sealed class HostedAdmissionControlMiddlewareTests
     [Fact]
     public async Task InvokeAsync_DeniedJsonRequest_ReturnsProblemDetails()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var context = CreateHttpContext(isAuthenticated: true, acceptHeader: "application/json");
         var nextCalled = false;
@@ -61,7 +63,8 @@ public sealed class HostedAdmissionControlMiddlewareTests
         context.Response.Body.Position = 0;
         var problemDetails = await JsonSerializer.DeserializeAsync<ProblemDetails>(
             context.Response.Body,
-            new JsonSerializerOptions(JsonSerializerDefaults.Web));
+            new JsonSerializerOptions(JsonSerializerDefaults.Web),
+            cancellationToken);
 
         Assert.NotNull(problemDetails);
         Assert.Equal(StatusCodes.Status403Forbidden, problemDetails.Status);
@@ -72,6 +75,7 @@ public sealed class HostedAdmissionControlMiddlewareTests
     [Fact]
     public async Task InvokeAsync_AllowedUser_InvokesNextMiddleware()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var context = CreateHttpContext(isAuthenticated: true, acceptHeader: "text/html");
         var nextCalled = false;
@@ -93,6 +97,7 @@ public sealed class HostedAdmissionControlMiddlewareTests
     [Fact]
     public async Task InvokeAsync_UnauthenticatedUser_ChallengesSignIn()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var context = CreateHttpContext(isAuthenticated: false, acceptHeader: "text/html");
         ConfigureAuthentication(context);
@@ -116,6 +121,7 @@ public sealed class HostedAdmissionControlMiddlewareTests
     [Fact]
     public async Task InvokeAsync_DisabledAdmissionControl_InvokesNextMiddleware()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var context = CreateHttpContext(isAuthenticated: true, acceptHeader: "text/html");
         var nextCalled = false;
@@ -141,15 +147,14 @@ public sealed class HostedAdmissionControlMiddlewareTests
         new(
             next,
             Options.Create(admissionOptions ?? new HostedAdmissionControlOptions { Enabled = true }),
-            Mock.Of<ILogger<HostedAdmissionControlMiddleware>>());
+            Substitute.For<ILogger<HostedAdmissionControlMiddleware>>());
 
     private static IHostedAdmissionEvaluator CreateEvaluator(HostedAdmissionDecision decision)
     {
-        var evaluator = new Mock<IHostedAdmissionEvaluator>();
-        evaluator.Setup(static evaluator => evaluator.Evaluate(It.IsAny<ClaimsPrincipal>()))
-            .Returns(decision);
+        var evaluator = Substitute.For<IHostedAdmissionEvaluator>();
+        evaluator.Evaluate(Arg.Any<ClaimsPrincipal>()).Returns(decision);
 
-        return evaluator.Object;
+        return evaluator;
     }
 
     private static DefaultHttpContext CreateHttpContext(bool isAuthenticated, string? acceptHeader)
