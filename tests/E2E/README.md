@@ -2,6 +2,19 @@
 
 Playwright tests for key user journeys. These complement unit and bUnit component tests — they validate complete workflows in a real browser rather than replacing isolated unit coverage.
 
+## Test coverage
+
+| Spec | What it validates |
+|------|-------------------|
+| `smoke.spec.ts` | Health endpoint and home page render |
+| `navigation.spec.ts` | Home feature cards and drawer navigation to all primary routes |
+| `about.spec.ts` | About page metadata via the shell menu |
+| `labels.spec.ts` | Label Manager shell, tabs, and empty-repository state |
+| `workflows.spec.ts` | Built-in template browse/filter/select and repository error state |
+| `triage.spec.ts` | Triage shell and no-repositories alert without a live GitHub connection |
+
+Tests are designed to pass in CI with placeholder auth (`GitHubAuth__PersonalAccessToken=ci-e2e-placeholder`). Repository-dependent features assert empty or error states rather than live GitHub data.
+
 ## Prerequisites
 
 - Node.js 20 or later.
@@ -31,4 +44,4 @@ PLAYWRIGHT_BASE_URL=http://localhost:5080 npm test
 
 ## CI
 
-The `e2e` job in [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) starts the app with placeholder auth configuration and runs the smoke tests.
+The `e2e` job in [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) starts the app with placeholder auth configuration, captures application logs separately from Playwright output, and runs the full Playwright suite.
