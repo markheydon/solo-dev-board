@@ -58,7 +58,7 @@ jobs:
           global-json-file: global.json
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20'
           cache: npm
@@ -75,32 +75,47 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
 
-      - name: Run Playwright smoke tests
+      - name: Run Playwright E2E tests
         env:
           PLAYWRIGHT_BASE_URL: http://localhost:5080
         run: |
+          APP_LOG="$(mktemp)"
+          echo "Application logs are captured in: $APP_LOG"
+
           ASPNETCORE_URLS=http://localhost:5080 \
             ASPNETCORE_ENVIRONMENT=Development \
             GitHubAuth__PersonalAccessToken=ci-e2e-placeholder \
             GitHubAuth__OwnerLogin=ci-test-user \
             HostedAdmissionControl__Enabled=false \
-            dotnet run --project src/App/SoloDevBoard.App --no-launch-profile --no-build &
+            dotnet run --project src/App/SoloDevBoard.App --no-launch-profile --no-build \
+            >>"$APP_LOG" 2>&1 &
           APP_PID=$!
 
           ATTEMPTS=0
           until curl -sf http://localhost:5080/health > /dev/null; do
             ATTEMPTS=$((ATTEMPTS + 1))
             if [ "$ATTEMPTS" -ge 60 ]; then
-              echo "Application failed to become healthy within 120 seconds."
+              echo "::error::SoloDevBoard did not become healthy within 120 seconds."
+              echo "Application log:"
+              cat "$APP_LOG"
               kill "$APP_PID" || true
               exit 1
             fi
             sleep 2
           done
 
+          echo "Application is healthy. Running Playwright E2E suite..."
           cd tests/E2E
           PLAYWRIGHT_HTML_OPEN=never npm test
           TEST_EXIT=$?
 
-          kill $APP_PID || true
-          exit $TEST_EXIT
+          kill "$APP_PID" || true
+
+          if [ "$TEST_EXIT" -ne 0 ]; then
+            echo "::error::Playwright E2E suite failed with exit code $TEST_EXIT."
+            echo "Application log:"
+            cat "$APP_LOG"
+            exit "$TEST_EXIT"
+          fi
+
+          echo "Playwright E2E suite passed."

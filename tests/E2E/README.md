@@ -44,4 +44,4 @@ PLAYWRIGHT_BASE_URL=http://localhost:5080 npm test
 
 ## CI
 
-The `e2e` job in [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) starts the app with placeholder auth configuration and runs the full Playwright suite.
+The `e2e` job in [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) starts the app with placeholder auth configuration, captures application logs separately from Playwright output, and runs the full Playwright suite.
