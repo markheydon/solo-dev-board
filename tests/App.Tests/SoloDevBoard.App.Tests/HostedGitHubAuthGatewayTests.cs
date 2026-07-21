@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using Microsoft.Extensions.Options;
-using Moq;
+using NSubstitute;
 using SoloDevBoard.App.Authentication;
 using SoloDevBoard.Infrastructure.GitHub;
 using SoloDevBoard.Infrastructure.Identity;
@@ -246,10 +246,8 @@ public sealed class HostedGitHubAuthGatewayTests
             BaseAddress = new Uri("https://api.github.com"),
         };
 
-        var httpClientFactory = new Mock<IHttpClientFactory>();
-        httpClientFactory
-            .Setup(factory => factory.CreateClient(HostedGitHubAuthGateway.HostedGitHubAuthClientName))
-            .Returns(httpClient);
+        var httpClientFactory = Substitute.For<IHttpClientFactory>();
+        httpClientFactory.CreateClient(HostedGitHubAuthGateway.HostedGitHubAuthClientName).Returns(httpClient);
 
         var authOptions = Options.Create(new GitHubAuthOptions
         {
@@ -266,7 +264,7 @@ public sealed class HostedGitHubAuthGatewayTests
             HostedOrganisationLoginsClaimType = HostedAuthClaimTypes.OrganisationLogins,
         });
 
-        return new HostedGitHubAuthGateway(httpClientFactory.Object, authOptions, admissionOptions);
+        return new HostedGitHubAuthGateway(httpClientFactory, authOptions, admissionOptions);
     }
 
     private static HttpResponseMessage CreateJsonResponse<T>(T payload)

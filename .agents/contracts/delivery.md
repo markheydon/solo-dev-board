@@ -96,8 +96,8 @@ Add or update tests as appropriate.
 
 Requirements:
 
-- xUnit
-- Moq
+- xUnit v3
+- NSubstitute
 - xUnit Assert methods
 - Naming format:
 

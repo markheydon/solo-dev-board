@@ -1,4 +1,4 @@
-using Moq;
+using NSubstitute;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Domain.Entities.Labels;
 
@@ -7,7 +7,7 @@ namespace SoloDevBoard.Application.Tests;
 /// <summary>Tests for <see cref="LabelService"/>.</summary>
 public sealed class LabelServiceTests
 {
-    private readonly Mock<ILabelRepository> _labelRepositoryMock = new();
+    private readonly ILabelRepository _labelRepository = Substitute.For<ILabelRepository>();
 
     [Fact]
     public void Constructor_LabelRepositoryIsNull_ThrowsArgumentNullException()
@@ -26,14 +26,14 @@ public sealed class LabelServiceTests
     public async Task GetLabelsAsync_RepositoryReturnsLabels_ReturnsMappedLabelDtos()
     {
         // Arrange
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelRepository
+            .GetLabelsAsync("owner", "repo", Arg.Any<CancellationToken>())
+            .Returns([
                 new Label { Name = "type/story", Colour = "1d76db", Description = "A user-facing Story delivering a discrete piece of value", RepositoryName = "repo" },
                 new Label { Name = "priority/high", Colour = "d93f0b", Description = "Should be addressed in the current sprint or release", RepositoryName = "repo" },
             ]);
 
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var result = await sut.GetLabelsAsync("owner", "repo");
@@ -48,15 +48,15 @@ public sealed class LabelServiceTests
     public async Task GetLabelsForRepositoriesAsync_MultipleRepositories_ReturnsMergedLabels()
     {
         // Arrange
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([new Label { Name = "type/story", Colour = "1d76db", Description = "Story", RepositoryName = "repo-a" }]);
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-a", Arg.Any<CancellationToken>())
+            .Returns([new Label { Name = "type/story", Colour = "1d76db", Description = "Story", RepositoryName = "repo-a" }]);
 
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("owner", "repo-b", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([new Label { Name = "priority/high", Colour = "d93f0b", Description = "High", RepositoryName = "repo-b" }]);
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-b", Arg.Any<CancellationToken>())
+            .Returns([new Label { Name = "priority/high", Colour = "d93f0b", Description = "High", RepositoryName = "repo-b" }]);
 
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var result = await sut.GetLabelsForRepositoriesAsync("owner", ["repo-a", "repo-b"]);
@@ -71,25 +71,25 @@ public sealed class LabelServiceTests
     public async Task GetLabelsForRepositoriesAsync_DuplicateRepositoryNames_QueriesEachRepositoryOnce()
     {
         // Arrange
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([new Label { Name = "type/story", Colour = "1d76db", Description = "Story", RepositoryName = "repo-a" }]);
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-a", Arg.Any<CancellationToken>())
+            .Returns([new Label { Name = "type/story", Colour = "1d76db", Description = "Story", RepositoryName = "repo-a" }]);
 
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var result = await sut.GetLabelsForRepositoriesAsync("owner", ["repo-a", "repo-a", "repo-a"]);
 
         // Assert
         Assert.Single(result);
-        _labelRepositoryMock.Verify(repository => repository.GetLabelsAsync("owner", "repo-a", It.IsAny<CancellationToken>()), Times.Once);
+        await _labelRepository.Received(1).GetLabelsAsync("owner", "repo-a", Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task GetLabelsForRepositoriesAsync_OwnerIsWhitespace_ThrowsArgumentException()
     {
         // Arrange
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var action = async () => await sut.GetLabelsForRepositoriesAsync(" ", ["repo-a"]);
@@ -104,19 +104,24 @@ public sealed class LabelServiceTests
         // Arrange
         var label = new LabelDto("area/labels", "c5def5", "Label Manager feature", string.Empty);
 
-        _labelRepositoryMock
-            .Setup(repository => repository.CreateLabelAsync("owner", It.IsAny<string>(), It.IsAny<Label>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, string repo, Label value, CancellationToken _) => value with { RepositoryName = repo });
+        _labelRepository
+            .CreateLabelAsync("owner", Arg.Any<string>(), Arg.Any<Label>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var repo = callInfo.ArgAt<string>(1);
+                var value = callInfo.ArgAt<Label>(2);
+                return value with { RepositoryName = repo };
+            });
 
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var result = await sut.CreateLabelAsync("owner", ["repo-a", "repo-b"], label);
 
         // Assert
         Assert.Equal(2, result.Count);
-        _labelRepositoryMock.Verify(repository => repository.CreateLabelAsync("owner", "repo-a", It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Once);
-        _labelRepositoryMock.Verify(repository => repository.CreateLabelAsync("owner", "repo-b", It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Once);
+        await _labelRepository.Received(1).CreateLabelAsync("owner", "repo-a", Arg.Any<Label>(), Arg.Any<CancellationToken>());
+        await _labelRepository.Received(1).CreateLabelAsync("owner", "repo-b", Arg.Any<Label>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -125,31 +130,36 @@ public sealed class LabelServiceTests
         // Arrange
         var label = new LabelDto("area/labels", "c5def5", "Label Manager feature", string.Empty);
 
-        _labelRepositoryMock
-            .Setup(repository => repository.CreateLabelAsync("owner", "repo-a", It.IsAny<Label>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, string repo, Label value, CancellationToken _) => value with { RepositoryName = repo });
+        _labelRepository
+            .CreateLabelAsync("owner", "repo-a", Arg.Any<Label>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var repo = callInfo.ArgAt<string>(1);
+                var value = callInfo.ArgAt<Label>(2);
+                return value with { RepositoryName = repo };
+            });
 
-        _labelRepositoryMock
-            .Setup(repository => repository.CreateLabelAsync("owner", "repo-b", It.IsAny<Label>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new HttpRequestException("GitHub API failure"));
+        _labelRepository
+            .CreateLabelAsync("owner", "repo-b", Arg.Any<Label>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<Label>(new HttpRequestException("GitHub API failure")));
 
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var action = async () => await sut.CreateLabelAsync("owner", ["repo-a", "repo-b", "repo-c"], label);
 
         // Assert
         _ = await Assert.ThrowsAsync<HttpRequestException>(action);
-        _labelRepositoryMock.Verify(repository => repository.CreateLabelAsync("owner", "repo-a", It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Once);
-        _labelRepositoryMock.Verify(repository => repository.CreateLabelAsync("owner", "repo-b", It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Once);
-        _labelRepositoryMock.Verify(repository => repository.CreateLabelAsync("owner", "repo-c", It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Never);
+        await _labelRepository.Received(1).CreateLabelAsync("owner", "repo-a", Arg.Any<Label>(), Arg.Any<CancellationToken>());
+        await _labelRepository.Received(1).CreateLabelAsync("owner", "repo-b", Arg.Any<Label>(), Arg.Any<CancellationToken>());
+        await _labelRepository.DidNotReceive().CreateLabelAsync("owner", "repo-c", Arg.Any<Label>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task CreateLabelAsync_LabelIsNull_ThrowsArgumentNullException()
     {
         // Arrange
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var action = async () => await sut.CreateLabelAsync("owner", ["repo-a"], null!);
@@ -162,7 +172,7 @@ public sealed class LabelServiceTests
     public async Task CreateLabelAsync_RepositoriesEmpty_ThrowsArgumentException()
     {
         // Arrange
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
         var label = new LabelDto("area/labels", "c5def5", "Label Manager feature", string.Empty);
 
         // Act
@@ -178,19 +188,24 @@ public sealed class LabelServiceTests
         // Arrange
         var updatedLabel = new LabelDto("priority/high", "d93f0b", "Should be addressed in the current sprint or release", string.Empty);
 
-        _labelRepositoryMock
-            .Setup(repository => repository.UpdateLabelAsync("owner", It.IsAny<string>(), "priority/urgent", It.IsAny<Label>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, string repo, string _, Label value, CancellationToken _) => value with { RepositoryName = repo });
+        _labelRepository
+            .UpdateLabelAsync("owner", Arg.Any<string>(), "priority/urgent", Arg.Any<Label>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var repo = callInfo.ArgAt<string>(1);
+                var value = callInfo.ArgAt<Label>(3);
+                return value with { RepositoryName = repo };
+            });
 
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var result = await sut.UpdateLabelAsync("owner", ["repo-a", "repo-b"], "priority/urgent", updatedLabel);
 
         // Assert
         Assert.Equal(2, result.Count);
-        _labelRepositoryMock.Verify(repository => repository.UpdateLabelAsync("owner", "repo-a", "priority/urgent", It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Once);
-        _labelRepositoryMock.Verify(repository => repository.UpdateLabelAsync("owner", "repo-b", "priority/urgent", It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Once);
+        await _labelRepository.Received(1).UpdateLabelAsync("owner", "repo-a", "priority/urgent", Arg.Any<Label>(), Arg.Any<CancellationToken>());
+        await _labelRepository.Received(1).UpdateLabelAsync("owner", "repo-b", "priority/urgent", Arg.Any<Label>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -199,18 +214,18 @@ public sealed class LabelServiceTests
         // Arrange
         var updatedLabel = new LabelDto("priority/high", "d93f0b", "Should be addressed in the current sprint or release", string.Empty);
 
-        _labelRepositoryMock
-            .Setup(repository => repository.UpdateLabelAsync("owner", "repo-a", "priority/urgent", It.IsAny<Label>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new KeyNotFoundException("Label not found"));
+        _labelRepository
+            .UpdateLabelAsync("owner", "repo-a", "priority/urgent", Arg.Any<Label>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<Label>(new KeyNotFoundException("Label not found")));
 
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var action = async () => await sut.UpdateLabelAsync("owner", ["repo-a", "repo-b"], "priority/urgent", updatedLabel);
 
         // Assert
         _ = await Assert.ThrowsAsync<KeyNotFoundException>(action);
-        _labelRepositoryMock.Verify(repository => repository.UpdateLabelAsync("owner", "repo-b", "priority/urgent", It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Never);
+        await _labelRepository.DidNotReceive().UpdateLabelAsync("owner", "repo-b", "priority/urgent", Arg.Any<Label>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -219,105 +234,110 @@ public sealed class LabelServiceTests
         // Arrange
         var updatedLabel = new LabelDto("priority/high", "d93f0b", "Should be addressed in the current sprint or release", string.Empty);
 
-        _labelRepositoryMock
-            .Setup(repository => repository.UpdateLabelAsync("owner", "repo-a", "priority/urgent", It.IsAny<Label>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, string repo, string _, Label value, CancellationToken _) => value with { RepositoryName = repo });
+        _labelRepository
+            .UpdateLabelAsync("owner", "repo-a", "priority/urgent", Arg.Any<Label>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var repo = callInfo.ArgAt<string>(1);
+                var value = callInfo.ArgAt<Label>(3);
+                return value with { RepositoryName = repo };
+            });
 
-        _labelRepositoryMock
-            .Setup(repository => repository.UpdateLabelAsync("owner", "repo-b", "priority/urgent", It.IsAny<Label>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new HttpRequestException("GitHub API failure"));
+        _labelRepository
+            .UpdateLabelAsync("owner", "repo-b", "priority/urgent", Arg.Any<Label>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<Label>(new HttpRequestException("GitHub API failure")));
 
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var action = async () => await sut.UpdateLabelAsync("owner", ["repo-a", "repo-b", "repo-c"], "priority/urgent", updatedLabel);
 
         // Assert
         _ = await Assert.ThrowsAsync<HttpRequestException>(action);
-        _labelRepositoryMock.Verify(repository => repository.UpdateLabelAsync("owner", "repo-a", "priority/urgent", It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Once);
-        _labelRepositoryMock.Verify(repository => repository.UpdateLabelAsync("owner", "repo-b", "priority/urgent", It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Once);
-        _labelRepositoryMock.Verify(repository => repository.UpdateLabelAsync("owner", "repo-c", "priority/urgent", It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Never);
+        await _labelRepository.Received(1).UpdateLabelAsync("owner", "repo-a", "priority/urgent", Arg.Any<Label>(), Arg.Any<CancellationToken>());
+        await _labelRepository.Received(1).UpdateLabelAsync("owner", "repo-b", "priority/urgent", Arg.Any<Label>(), Arg.Any<CancellationToken>());
+        await _labelRepository.DidNotReceive().UpdateLabelAsync("owner", "repo-c", "priority/urgent", Arg.Any<Label>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task DeleteLabelAsync_MultipleRepositories_DeletesLabelInEachRepository()
     {
         // Arrange
-        _labelRepositoryMock
-            .Setup(repository => repository.DeleteLabelAsync("owner", It.IsAny<string>(), "status/blocked", It.IsAny<CancellationToken>()))
+        _labelRepository
+            .DeleteLabelAsync("owner", Arg.Any<string>(), "status/blocked", Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         await sut.DeleteLabelAsync("owner", ["repo-a", "repo-b"], "status/blocked");
 
         // Assert
-        _labelRepositoryMock.Verify(repository => repository.DeleteLabelAsync("owner", "repo-a", "status/blocked", It.IsAny<CancellationToken>()), Times.Once);
-        _labelRepositoryMock.Verify(repository => repository.DeleteLabelAsync("owner", "repo-b", "status/blocked", It.IsAny<CancellationToken>()), Times.Once);
+        await _labelRepository.Received(1).DeleteLabelAsync("owner", "repo-a", "status/blocked", Arg.Any<CancellationToken>());
+        await _labelRepository.Received(1).DeleteLabelAsync("owner", "repo-b", "status/blocked", Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task DeleteLabelAsync_LabelMissingInFirstRepository_ThrowsAndStopsFurtherProcessing()
     {
         // Arrange
-        _labelRepositoryMock
-            .Setup(repository => repository.DeleteLabelAsync("owner", "repo-a", "status/blocked", It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new KeyNotFoundException("Label not found"));
+        _labelRepository
+            .DeleteLabelAsync("owner", "repo-a", "status/blocked", Arg.Any<CancellationToken>())
+            .Returns(Task.FromException(new KeyNotFoundException("Label not found")));
 
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var action = async () => await sut.DeleteLabelAsync("owner", ["repo-a", "repo-b"], "status/blocked");
 
         // Assert
         _ = await Assert.ThrowsAsync<KeyNotFoundException>(action);
-        _labelRepositoryMock.Verify(repository => repository.DeleteLabelAsync("owner", "repo-b", "status/blocked", It.IsAny<CancellationToken>()), Times.Never);
+        await _labelRepository.DidNotReceive().DeleteLabelAsync("owner", "repo-b", "status/blocked", Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task DeleteLabelAsync_SecondRepositoryFails_ThrowsAndStopsFurtherProcessing()
     {
         // Arrange
-        _labelRepositoryMock
-            .Setup(repository => repository.DeleteLabelAsync("owner", "repo-a", "status/blocked", It.IsAny<CancellationToken>()))
+        _labelRepository
+            .DeleteLabelAsync("owner", "repo-a", "status/blocked", Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
-        _labelRepositoryMock
-            .Setup(repository => repository.DeleteLabelAsync("owner", "repo-b", "status/blocked", It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new HttpRequestException("GitHub API failure"));
+        _labelRepository
+            .DeleteLabelAsync("owner", "repo-b", "status/blocked", Arg.Any<CancellationToken>())
+            .Returns(Task.FromException(new HttpRequestException("GitHub API failure")));
 
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var action = async () => await sut.DeleteLabelAsync("owner", ["repo-a", "repo-b", "repo-c"], "status/blocked");
 
         // Assert
         _ = await Assert.ThrowsAsync<HttpRequestException>(action);
-        _labelRepositoryMock.Verify(repository => repository.DeleteLabelAsync("owner", "repo-a", "status/blocked", It.IsAny<CancellationToken>()), Times.Once);
-        _labelRepositoryMock.Verify(repository => repository.DeleteLabelAsync("owner", "repo-b", "status/blocked", It.IsAny<CancellationToken>()), Times.Once);
-        _labelRepositoryMock.Verify(repository => repository.DeleteLabelAsync("owner", "repo-c", "status/blocked", It.IsAny<CancellationToken>()), Times.Never);
+        await _labelRepository.Received(1).DeleteLabelAsync("owner", "repo-a", "status/blocked", Arg.Any<CancellationToken>());
+        await _labelRepository.Received(1).DeleteLabelAsync("owner", "repo-b", "status/blocked", Arg.Any<CancellationToken>());
+        await _labelRepository.DidNotReceive().DeleteLabelAsync("owner", "repo-c", "status/blocked", Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task SyncLabelsAsync_ApplyChangesFalse_ReturnsPreviewWithoutMutatingTarget()
     {
         // Arrange
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("source-owner", "source-repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelRepository
+            .GetLabelsAsync("source-owner", "source-repo", Arg.Any<CancellationToken>())
+            .Returns([
                 new Label { Name = "type/story", Colour = "1d76db", Description = "Story", RepositoryName = "source-repo" },
                 new Label { Name = "priority/high", Colour = "d93f0b", Description = "High updated", RepositoryName = "source-repo" },
             ]);
 
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("target-owner", "target-repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelRepository
+            .GetLabelsAsync("target-owner", "target-repo", Arg.Any<CancellationToken>())
+            .Returns([
                 new Label { Name = "priority/high", Colour = "fbca04", Description = "High old", RepositoryName = "target-repo" },
                 new Label { Name = "status/obsolete", Colour = "ffffff", Description = "Old", RepositoryName = "target-repo" },
             ]);
 
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var result = await sut.SyncLabelsAsync("source-owner", "source-repo", "target-owner", "target-repo", applyChanges: false);
@@ -331,42 +351,53 @@ public sealed class LabelServiceTests
         Assert.Equal("status/obsolete", result.ToDelete[0].Name);
         Assert.Empty(result.Skipped);
 
-        _labelRepositoryMock.Verify(repository => repository.CreateLabelAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Never);
-        _labelRepositoryMock.Verify(repository => repository.UpdateLabelAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Never);
-        _labelRepositoryMock.Verify(repository => repository.DeleteLabelAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        await _labelRepository.DidNotReceive().CreateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), Arg.Any<CancellationToken>());
+        await _labelRepository.DidNotReceive().UpdateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), Arg.Any<CancellationToken>());
+        await _labelRepository.DidNotReceive().DeleteLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task SyncLabelsAsync_ApplyChangesTrue_AppliesAddUpdateAndDeleteOperations()
     {
         // Arrange
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("source-owner", "source-repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelRepository
+            .GetLabelsAsync("source-owner", "source-repo", Arg.Any<CancellationToken>())
+            .Returns([
                 new Label { Name = "priority/high", Colour = "d93f0b", Description = "High", RepositoryName = "source-repo" },
                 new Label { Name = "type/story", Colour = "1d76db", Description = "Story", RepositoryName = "source-repo" },
             ]);
 
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("target-owner", "target-repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelRepository
+            .GetLabelsAsync("target-owner", "target-repo", Arg.Any<CancellationToken>())
+            .Returns([
                 new Label { Name = "type/story", Colour = "ffffff", Description = "Old Story", RepositoryName = "target-repo" },
                 new Label { Name = "status/obsolete", Colour = "ffffff", Description = "Old", RepositoryName = "target-repo" },
             ]);
 
-        _labelRepositoryMock
-            .Setup(repository => repository.UpdateLabelAsync("target-owner", "target-repo", "type/story", It.IsAny<Label>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, string repo, string name, Label value, CancellationToken _) => value with { Name = name, RepositoryName = repo });
+        _labelRepository
+            .UpdateLabelAsync("target-owner", "target-repo", "type/story", Arg.Any<Label>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var repo = callInfo.ArgAt<string>(1);
+                var name = callInfo.ArgAt<string>(2);
+                var value = callInfo.ArgAt<Label>(3);
+                return value with { Name = name, RepositoryName = repo };
+            });
 
-        _labelRepositoryMock
-            .Setup(repository => repository.CreateLabelAsync("target-owner", "target-repo", It.Is<Label>(label => label.Name == "priority/high"), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, string repo, Label value, CancellationToken _) => value with { RepositoryName = repo });
+        _labelRepository
+            .CreateLabelAsync("target-owner", "target-repo", Arg.Is<Label>(label => label.Name == "priority/high"), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var repo = callInfo.ArgAt<string>(1);
+                var value = callInfo.ArgAt<Label>(2);
+                return value with { RepositoryName = repo };
+            });
 
-        _labelRepositoryMock
-            .Setup(repository => repository.DeleteLabelAsync("target-owner", "target-repo", "status/obsolete", It.IsAny<CancellationToken>()))
+        _labelRepository
+            .DeleteLabelAsync("target-owner", "target-repo", "status/obsolete", Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var result = await sut.SyncLabelsAsync("source-owner", "source-repo", "target-owner", "target-repo", applyChanges: true);
@@ -375,9 +406,9 @@ public sealed class LabelServiceTests
         Assert.Single(result.ToAdd);
         Assert.Single(result.ToUpdate);
         Assert.Single(result.ToDelete);
-        _labelRepositoryMock.Verify(repository => repository.CreateLabelAsync("target-owner", "target-repo", It.Is<Label>(label => label.Name == "priority/high"), It.IsAny<CancellationToken>()), Times.Once);
-        _labelRepositoryMock.Verify(repository => repository.UpdateLabelAsync("target-owner", "target-repo", "type/story", It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Once);
-        _labelRepositoryMock.Verify(repository => repository.DeleteLabelAsync("target-owner", "target-repo", "status/obsolete", It.IsAny<CancellationToken>()), Times.Once);
+        await _labelRepository.Received(1).CreateLabelAsync("target-owner", "target-repo", Arg.Is<Label>(label => label.Name == "priority/high"), Arg.Any<CancellationToken>());
+        await _labelRepository.Received(1).UpdateLabelAsync("target-owner", "target-repo", "type/story", Arg.Any<Label>(), Arg.Any<CancellationToken>());
+        await _labelRepository.Received(1).DeleteLabelAsync("target-owner", "target-repo", "status/obsolete", Arg.Any<CancellationToken>());
         Assert.Empty(result.Skipped);
     }
 
@@ -391,15 +422,15 @@ public sealed class LabelServiceTests
             new Label { Name = "type/story", Colour = "1d76db", Description = "Story", RepositoryName = "repo" },
         };
 
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("source-owner", "source-repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(labels);
+        _labelRepository
+            .GetLabelsAsync("source-owner", "source-repo", Arg.Any<CancellationToken>())
+            .Returns(labels);
 
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("target-owner", "target-repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(labels);
+        _labelRepository
+            .GetLabelsAsync("target-owner", "target-repo", Arg.Any<CancellationToken>())
+            .Returns(labels);
 
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var result = await sut.SyncLabelsAsync("source-owner", "source-repo", "target-owner", "target-repo", applyChanges: true);
@@ -408,9 +439,9 @@ public sealed class LabelServiceTests
         Assert.Empty(result.ToAdd);
         Assert.Empty(result.ToUpdate);
         Assert.Empty(result.ToDelete);
-        _labelRepositoryMock.Verify(repository => repository.CreateLabelAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Never);
-        _labelRepositoryMock.Verify(repository => repository.UpdateLabelAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Never);
-        _labelRepositoryMock.Verify(repository => repository.DeleteLabelAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        await _labelRepository.DidNotReceive().CreateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), Arg.Any<CancellationToken>());
+        await _labelRepository.DidNotReceive().UpdateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), Arg.Any<CancellationToken>());
+        await _labelRepository.DidNotReceive().DeleteLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
         Assert.Equal(2, result.Skipped.Count);
     }
 
@@ -418,27 +449,27 @@ public sealed class LabelServiceTests
     public async Task PreviewLabelSynchronisationAsync_MultipleTargets_ReturnsPerRepositoryPreviews()
     {
         // Arrange
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("source-owner", "source-repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelRepository
+            .GetLabelsAsync("source-owner", "source-repo", Arg.Any<CancellationToken>())
+            .Returns([
                 new Label { Name = "type/story", Colour = "1d76db", Description = "Story", RepositoryName = "source-repo" },
                 new Label { Name = "priority/high", Colour = "d93f0b", Description = "High", RepositoryName = "source-repo" },
             ]);
 
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("target-owner", "target-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelRepository
+            .GetLabelsAsync("target-owner", "target-a", Arg.Any<CancellationToken>())
+            .Returns([
                 new Label { Name = "priority/high", Colour = "fbca04", Description = "Old", RepositoryName = "target-a" },
             ]);
 
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("target-owner", "target-b", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelRepository
+            .GetLabelsAsync("target-owner", "target-b", Arg.Any<CancellationToken>())
+            .Returns([
                 new Label { Name = "type/story", Colour = "1d76db", Description = "Story", RepositoryName = "target-b" },
                 new Label { Name = "priority/high", Colour = "d93f0b", Description = "High", RepositoryName = "target-b" },
             ]);
 
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var result = await sut.PreviewLabelSynchronisationAsync(
@@ -455,25 +486,30 @@ public sealed class LabelServiceTests
     public async Task ApplyLabelSynchronisationAsync_TargetFails_ReturnsPartialFailureWithoutAbortingOtherTargets()
     {
         // Arrange
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("source-owner", "source-repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelRepository
+            .GetLabelsAsync("source-owner", "source-repo", Arg.Any<CancellationToken>())
+            .Returns([
                 new Label { Name = "type/story", Colour = "1d76db", Description = "Story", RepositoryName = "source-repo" },
             ]);
 
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("target-owner", "target-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Array.Empty<Label>());
+        _labelRepository
+            .GetLabelsAsync("target-owner", "target-a", Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<Label>());
 
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("target-owner", "target-b", It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new HttpRequestException("GitHub API failure"));
+        _labelRepository
+            .GetLabelsAsync("target-owner", "target-b", Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<IReadOnlyList<Label>>(new HttpRequestException("GitHub API failure")));
 
-        _labelRepositoryMock
-            .Setup(repository => repository.CreateLabelAsync("target-owner", "target-a", It.IsAny<Label>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, string repo, Label label, CancellationToken _) => label with { RepositoryName = repo });
+        _labelRepository
+            .CreateLabelAsync("target-owner", "target-a", Arg.Any<Label>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var repo = callInfo.ArgAt<string>(1);
+                var label = callInfo.ArgAt<Label>(2);
+                return label with { RepositoryName = repo };
+            });
 
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var result = await sut.ApplyLabelSynchronisationAsync(
@@ -485,33 +521,31 @@ public sealed class LabelServiceTests
         Assert.Contains(result, item => item.RepositoryFullName == "target-owner/target-a" && !item.HasError && item.CreatedCount == 1);
         Assert.Contains(result, item => item.RepositoryFullName == "target-owner/target-b" && item.HasError);
 
-        _labelRepositoryMock.Verify(
-            repository => repository.CreateLabelAsync("target-owner", "target-a", It.Is<Label>(label => label.Name == "type/story"), It.IsAny<CancellationToken>()),
-            Times.Once);
+        await _labelRepository.Received(1).CreateLabelAsync("target-owner", "target-a", Arg.Is<Label>(label => label.Name == "type/story"), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task SyncLabelsAsync_ApplyChangesAndDeleteFails_ThrowsHttpRequestException()
     {
         // Arrange
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("source-owner", "source-repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelRepository
+            .GetLabelsAsync("source-owner", "source-repo", Arg.Any<CancellationToken>())
+            .Returns([
                 new Label { Name = "type/story", Colour = "1d76db", Description = "Story", RepositoryName = "source-repo" },
             ]);
 
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("target-owner", "target-repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelRepository
+            .GetLabelsAsync("target-owner", "target-repo", Arg.Any<CancellationToken>())
+            .Returns([
                 new Label { Name = "type/story", Colour = "1d76db", Description = "Story", RepositoryName = "target-repo" },
                 new Label { Name = "status/obsolete", Colour = "ffffff", Description = "Old", RepositoryName = "target-repo" },
             ]);
 
-        _labelRepositoryMock
-            .Setup(repository => repository.DeleteLabelAsync("target-owner", "target-repo", "status/obsolete", It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new HttpRequestException("GitHub API failure"));
+        _labelRepository
+            .DeleteLabelAsync("target-owner", "target-repo", "status/obsolete", Arg.Any<CancellationToken>())
+            .Returns(Task.FromException(new HttpRequestException("GitHub API failure")));
 
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var action = async () => await sut.SyncLabelsAsync("source-owner", "source-repo", "target-owner", "target-repo", applyChanges: true);
@@ -524,7 +558,7 @@ public sealed class LabelServiceTests
     public async Task GetRecommendedTaxonomyAsync_WhenCalled_ReturnsCanonicalTaxonomy()
     {
         // Arrange
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var result = await sut.GetRecommendedTaxonomyAsync();
@@ -552,7 +586,7 @@ public sealed class LabelServiceTests
     public async Task GetRecommendedLabelStrategiesAsync_WhenCalled_ReturnsBuiltInStrategies()
     {
         // Arrange
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var result = await sut.GetRecommendedLabelStrategiesAsync();
@@ -567,14 +601,14 @@ public sealed class LabelServiceTests
     public async Task PreviewRecommendedTaxonomyAsync_RepositoryHasMixedState_ReturnsCreateUpdateAndSkipped()
     {
         // Arrange
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-a", Arg.Any<CancellationToken>())
+            .Returns([
                 new Label { Name = "bug", Colour = "000000", Description = "Outdated", RepositoryName = "repo-a" },
                 new Label { Name = "documentation", Colour = "0075ca", Description = "Improvements or additions to documentation", RepositoryName = "repo-a" },
             ]);
 
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var result = await sut.PreviewRecommendedTaxonomyAsync("github-default", ["owner/repo-a"]);
@@ -591,9 +625,9 @@ public sealed class LabelServiceTests
     public async Task ApplyRecommendedTaxonomyAsync_LabelAlreadyMatches_SkipsWithoutMutatingApiCalls()
     {
         // Arrange
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-a", Arg.Any<CancellationToken>())
+            .Returns([
                 new Label { Name = "bug", Colour = "d73a4a", Description = "Something is not working", RepositoryName = "repo-a" },
                 new Label { Name = "documentation", Colour = "0075ca", Description = "Improvements or additions to documentation", RepositoryName = "repo-a" },
                 new Label { Name = "duplicate", Colour = "cfd3d7", Description = "This issue or pull request already exists", RepositoryName = "repo-a" },
@@ -605,7 +639,7 @@ public sealed class LabelServiceTests
                 new Label { Name = "wontfix", Colour = "ffffff", Description = "This will not be worked on", RepositoryName = "repo-a" },
             ]);
 
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a"]);
@@ -616,27 +650,32 @@ public sealed class LabelServiceTests
         Assert.Equal(0, summary.UpdatedCount);
         Assert.Equal(9, summary.SkippedCount);
         Assert.False(summary.HasError);
-        _labelRepositoryMock.Verify(repository => repository.CreateLabelAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Never);
-        _labelRepositoryMock.Verify(repository => repository.UpdateLabelAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Label>(), It.IsAny<CancellationToken>()), Times.Never);
+        await _labelRepository.DidNotReceive().CreateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), Arg.Any<CancellationToken>());
+        await _labelRepository.DidNotReceive().UpdateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task ApplyRecommendedTaxonomyAsync_OneRepositoryFails_ReturnsErrorAndContinues()
     {
         // Arrange
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Array.Empty<Label>());
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-a", Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<Label>());
 
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("owner", "repo-b", It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new HttpRequestException("Rate limited"));
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-b", Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<IReadOnlyList<Label>>(new HttpRequestException("Rate limited")));
 
-        _labelRepositoryMock
-            .Setup(repository => repository.CreateLabelAsync("owner", "repo-a", It.IsAny<Label>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, string repo, Label value, CancellationToken _) => value with { RepositoryName = repo });
+        _labelRepository
+            .CreateLabelAsync("owner", "repo-a", Arg.Any<Label>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var repo = callInfo.ArgAt<string>(1);
+                var value = callInfo.ArgAt<Label>(2);
+                return value with { RepositoryName = repo };
+            });
 
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a", "owner/repo-b"]);
@@ -651,15 +690,20 @@ public sealed class LabelServiceTests
     public async Task ApplyRecommendedTaxonomyAsync_OneRepositoryHasInvalidFormat_ReturnsErrorAndContinues()
     {
         // Arrange
-        _labelRepositoryMock
-            .Setup(repository => repository.GetLabelsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Array.Empty<Label>());
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-a", Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<Label>());
 
-        _labelRepositoryMock
-            .Setup(repository => repository.CreateLabelAsync("owner", "repo-a", It.IsAny<Label>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, string repo, Label value, CancellationToken _) => value with { RepositoryName = repo });
+        _labelRepository
+            .CreateLabelAsync("owner", "repo-a", Arg.Any<Label>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var repo = callInfo.ArgAt<string>(1);
+                var value = callInfo.ArgAt<Label>(2);
+                return value with { RepositoryName = repo };
+            });
 
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a", "invalid-format"]);
@@ -674,7 +718,7 @@ public sealed class LabelServiceTests
     public async Task GetLabelsForRepositoriesAsync_RepositoriesEmpty_ThrowsArgumentException()
     {
         // Arrange
-        var sut = new LabelService(_labelRepositoryMock.Object);
+        var sut = new LabelService(_labelRepository);
 
         // Act
         var action = async () => await sut.GetLabelsForRepositoriesAsync("owner", []);

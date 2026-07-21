@@ -1,6 +1,6 @@
 using System.Net;
 using Microsoft.Extensions.Options;
-using Moq;
+using NSubstitute;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Infrastructure.GitHub;
 
@@ -12,11 +12,11 @@ public sealed class GitHubAuthHandlerTests
     public async Task SendAsync_ValidAccessToken_AddsBearerAuthorisationHeader()
     {
         // Arrange
-        var currentUserContextMock = new Mock<ICurrentUserContext>();
-        currentUserContextMock.Setup(context => context.GetAccessToken()).Returns("test-token");
+        var currentUserContext = Substitute.For<ICurrentUserContext>();
+        currentUserContext.GetAccessToken().Returns("test-token");
 
         var terminalHandler = new TerminalHandler();
-        using var handler = CreateHandler(currentUserContextMock.Object);
+        using var handler = CreateHandler(currentUserContext);
         handler.InnerHandler = terminalHandler;
 
         using var invoker = new HttpMessageInvoker(handler);
@@ -30,18 +30,18 @@ public sealed class GitHubAuthHandlerTests
         Assert.NotNull(terminalHandler.LastRequest!.Headers.Authorization);
         Assert.Equal("Bearer", terminalHandler.LastRequest.Headers.Authorization!.Scheme);
         Assert.Equal("test-token", terminalHandler.LastRequest.Headers.Authorization.Parameter);
-        currentUserContextMock.Verify(context => context.GetAccessToken(), Times.Once);
+        currentUserContext.Received(1).GetAccessToken();
     }
 
     [Fact]
     public async Task SendAsync_EmptyAccessToken_ThrowsInvalidOperationException()
     {
         // Arrange
-        var currentUserContextMock = new Mock<ICurrentUserContext>();
-        currentUserContextMock.Setup(context => context.GetAccessToken()).Returns(string.Empty);
+        var currentUserContext = Substitute.For<ICurrentUserContext>();
+        currentUserContext.GetAccessToken().Returns(string.Empty);
 
         var terminalHandler = new TerminalHandler();
-        using var handler = CreateHandler(currentUserContextMock.Object);
+        using var handler = CreateHandler(currentUserContext);
         handler.InnerHandler = terminalHandler;
 
         using var invoker = new HttpMessageInvoker(handler);
@@ -58,11 +58,11 @@ public sealed class GitHubAuthHandlerTests
     public async Task SendAsync_WhitespaceAccessToken_ThrowsInvalidOperationException()
     {
         // Arrange
-        var currentUserContextMock = new Mock<ICurrentUserContext>();
-        currentUserContextMock.Setup(context => context.GetAccessToken()).Returns("   ");
+        var currentUserContext = Substitute.For<ICurrentUserContext>();
+        currentUserContext.GetAccessToken().Returns("   ");
 
         var terminalHandler = new TerminalHandler();
-        using var handler = CreateHandler(currentUserContextMock.Object);
+        using var handler = CreateHandler(currentUserContext);
         handler.InnerHandler = terminalHandler;
 
         using var invoker = new HttpMessageInvoker(handler);
@@ -79,11 +79,11 @@ public sealed class GitHubAuthHandlerTests
     public async Task SendAsync_NullAccessToken_ThrowsInvalidOperationException()
     {
         // Arrange
-        var currentUserContextMock = new Mock<ICurrentUserContext>();
-        currentUserContextMock.Setup(context => context.GetAccessToken()).Returns((string)null!);
+        var currentUserContext = Substitute.For<ICurrentUserContext>();
+        currentUserContext.GetAccessToken().Returns((string)null!);
 
         var terminalHandler = new TerminalHandler();
-        using var handler = CreateHandler(currentUserContextMock.Object);
+        using var handler = CreateHandler(currentUserContext);
         handler.InnerHandler = terminalHandler;
 
         using var invoker = new HttpMessageInvoker(handler);
@@ -100,11 +100,11 @@ public sealed class GitHubAuthHandlerTests
     public async Task SendAsync_HostedModeUnauthorizedResponse_ThrowsHostedAuthenticationRequiredException()
     {
         // Arrange
-        var currentUserContextMock = new Mock<ICurrentUserContext>();
-        currentUserContextMock.Setup(context => context.GetAccessToken()).Returns("revoked-token");
+        var currentUserContext = Substitute.For<ICurrentUserContext>();
+        currentUserContext.GetAccessToken().Returns("revoked-token");
 
         var terminalHandler = new TerminalHandler(HttpStatusCode.Unauthorized);
-        using var handler = CreateHandler(currentUserContextMock.Object, hostedSignInEnabled: true);
+        using var handler = CreateHandler(currentUserContext, hostedSignInEnabled: true);
         handler.InnerHandler = terminalHandler;
 
         using var invoker = new HttpMessageInvoker(handler);
@@ -121,11 +121,11 @@ public sealed class GitHubAuthHandlerTests
     public async Task SendAsync_PatModeUnauthorizedResponse_ReturnsUnauthorizedResponse()
     {
         // Arrange
-        var currentUserContextMock = new Mock<ICurrentUserContext>();
-        currentUserContextMock.Setup(context => context.GetAccessToken()).Returns("pat-token");
+        var currentUserContext = Substitute.For<ICurrentUserContext>();
+        currentUserContext.GetAccessToken().Returns("pat-token");
 
         var terminalHandler = new TerminalHandler(HttpStatusCode.Unauthorized);
-        using var handler = CreateHandler(currentUserContextMock.Object, hostedSignInEnabled: false);
+        using var handler = CreateHandler(currentUserContext, hostedSignInEnabled: false);
         handler.InnerHandler = terminalHandler;
 
         using var invoker = new HttpMessageInvoker(handler);

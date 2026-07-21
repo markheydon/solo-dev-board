@@ -1,6 +1,6 @@
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
+using NSubstitute;
 using MudBlazor;
 using MudBlazor.Services;
 using SoloDevBoard.App.Components.Features.BoardRules.Pages;
@@ -13,17 +13,15 @@ namespace SoloDevBoard.App.Tests;
 /// <summary>Component tests for the <see cref="BoardRules"/> page.</summary>
 public sealed class BoardRulesTests
 {
-    private readonly Mock<IRepositoryService> _repositoryServiceMock = new();
-    private readonly Mock<IBoardRulesService> _boardRulesServiceMock = new();
+    private readonly IRepositoryService _repositoryService = Substitute.For<IRepositoryService>();
+    private readonly IBoardRulesService _boardRulesService = Substitute.For<IBoardRulesService>();
 
     [Fact]
     public async Task BoardRules_WhileRepositoryServiceIsLoading_ShowsLoadingState()
     {
         // Arrange
         var repositoriesTask = new TaskCompletionSource<IReadOnlyList<RepositoryDto>>();
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .Returns(repositoriesTask.Task);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(repositoriesTask.Task);
 
         await using var ctx = CreateContext();
 
@@ -38,9 +36,7 @@ public sealed class BoardRulesTests
     public async Task BoardRules_InitialLoad_ShowsEmptyVisualisationPrompt()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
                 CreateRepository("owner", "repo-a"),
             ]);
 
@@ -61,9 +57,7 @@ public sealed class BoardRulesTests
     public async Task BoardRules_PageLayout_RendersRepositorySelectorBeforeVisualisationRegion()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
                 CreateRepository("owner", "repo-a"),
             ]);
 
@@ -92,13 +86,9 @@ public sealed class BoardRulesTests
         // Arrange
         var repository = CreateRepository("owner", "repo-a");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repository]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repository]);
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>()).Returns(new BoardRulesProjectBoardDiscoveryDto(
             [
                 new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
                 new BoardRulesProjectBoardOptionDto("PVT_beta", "Beta Board", "owner"),
@@ -106,9 +96,7 @@ public sealed class BoardRulesTests
             2,
             0));
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesDefinitionDto(
+        _boardRulesService.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", Arg.Any<CancellationToken>()).Returns(new BoardRulesDefinitionDto(
                 "PVT_alpha",
                 "Alpha Board",
                 "owner",
@@ -134,12 +122,8 @@ public sealed class BoardRulesTests
             Assert.Single(cut.FindAll("[data-testid='board-rules-board-context-ready-state']"));
         });
 
-        _boardRulesServiceMock.Verify(
-            service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()),
-            Times.Once);
-        _boardRulesServiceMock.Verify(
-            service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()),
-            Times.Once);
+        _boardRulesService.Received(1).GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>());
+        _boardRulesService.Received(1).GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -148,13 +132,9 @@ public sealed class BoardRulesTests
         // Arrange
         var repository = CreateRepository("owner", "repo-a");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repository]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repository]);
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto([], 0, 0));
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>()).Returns(new BoardRulesProjectBoardDiscoveryDto([], 0, 0));
 
         await using var ctx = CreateContext();
 
@@ -178,22 +158,16 @@ public sealed class BoardRulesTests
         // Arrange
         var repository = CreateRepository("owner", "repo-a");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repository]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repository]);
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>()).Returns(new BoardRulesProjectBoardDiscoveryDto(
             [
                 new BoardRulesProjectBoardOptionDto("PVT_public", "Public Board", "owner"),
             ],
             2,
             1));
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_public", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesDefinitionDto(
+        _boardRulesService.GetBoardRulesAsync("owner", "repo-a", "PVT_public", Arg.Any<CancellationToken>()).Returns(new BoardRulesDefinitionDto(
                 "PVT_public",
                 "Public Board",
                 "owner",
@@ -227,22 +201,16 @@ public sealed class BoardRulesTests
         // Arrange
         var repository = CreateRepository("owner", "repo-a");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repository]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repository]);
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>()).Returns(new BoardRulesProjectBoardDiscoveryDto(
             [
                 new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
             ],
             1,
             0));
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesDefinitionDto(
+        _boardRulesService.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", Arg.Any<CancellationToken>()).Returns(new BoardRulesDefinitionDto(
                 "PVT_alpha",
                 "Alpha Board",
                 "owner",
@@ -291,13 +259,9 @@ public sealed class BoardRulesTests
     {
         var repository = CreateRepository("owner", "repo-a");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repository]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repository]);
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>()).Returns(new BoardRulesProjectBoardDiscoveryDto(
             [
                 new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
                 new BoardRulesProjectBoardOptionDto("PVT_beta", "Beta Board", "owner"),
@@ -305,9 +269,7 @@ public sealed class BoardRulesTests
             2,
             0));
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesDefinitionDto(
+        _boardRulesService.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", Arg.Any<CancellationToken>()).Returns(new BoardRulesDefinitionDto(
                 "PVT_alpha",
                 "Alpha Board",
                 "owner",
@@ -320,9 +282,7 @@ public sealed class BoardRulesTests
                 ],
                 []));
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_beta", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesDefinitionDto(
+        _boardRulesService.GetBoardRulesAsync("owner", "repo-a", "PVT_beta", Arg.Any<CancellationToken>()).Returns(new BoardRulesDefinitionDto(
                 "PVT_beta",
                 "Beta Board",
                 "owner",
@@ -362,31 +322,23 @@ public sealed class BoardRulesTests
         var repositoryA = CreateRepository("owner", "repo-a");
         var repositoryB = CreateRepository("owner", "repo-b");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repositoryA, repositoryB]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repositoryA, repositoryB]);
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>()).Returns(new BoardRulesProjectBoardDiscoveryDto(
             [
                 new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
             ],
             1,
             0));
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-b", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-b", Arg.Any<CancellationToken>()).Returns(new BoardRulesProjectBoardDiscoveryDto(
             [
                 new BoardRulesProjectBoardOptionDto("PVT_beta", "Beta Board", "owner"),
             ],
             1,
             0));
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesDefinitionDto(
+        _boardRulesService.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", Arg.Any<CancellationToken>()).Returns(new BoardRulesDefinitionDto(
                 "PVT_alpha",
                 "Alpha Board",
                 "owner",
@@ -399,9 +351,7 @@ public sealed class BoardRulesTests
                 ],
                 []));
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetBoardRulesAsync("owner", "repo-b", "PVT_beta", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesDefinitionDto(
+        _boardRulesService.GetBoardRulesAsync("owner", "repo-b", "PVT_beta", Arg.Any<CancellationToken>()).Returns(new BoardRulesDefinitionDto(
                 "PVT_beta",
                 "Beta Board",
                 "owner",
@@ -439,22 +389,16 @@ public sealed class BoardRulesTests
     {
         var repository = CreateRepository("owner", "repo-a");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repository]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repository]);
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>()).Returns(new BoardRulesProjectBoardDiscoveryDto(
             [
                 new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
             ],
             1,
             0));
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesDefinitionDto(
+        _boardRulesService.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", Arg.Any<CancellationToken>()).Returns(new BoardRulesDefinitionDto(
                 "PVT_alpha",
                 "Alpha Board",
                 "owner",
@@ -488,9 +432,8 @@ public sealed class BoardRulesTests
     public async Task BoardRules_RepositoryLoadFailure_ShowsRetryAction()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new HttpRequestException("GitHub unavailable"));
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<IReadOnlyList<RepositoryDto>>(new HttpRequestException("GitHub unavailable")));
 
         await using var ctx = CreateContext();
 
@@ -509,9 +452,7 @@ public sealed class BoardRulesTests
     public async Task BoardRules_NoActiveRepositories_ShowsEmptyRepositoriesState()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([]);
 
         await using var ctx = CreateContext();
 
@@ -532,13 +473,10 @@ public sealed class BoardRulesTests
         // Arrange
         var repository = CreateRepository("owner", "repo-a");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repository]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repository]);
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new HttpRequestException("GitHub unavailable"));
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<BoardRulesProjectBoardDiscoveryDto>(new HttpRequestException("GitHub unavailable")));
 
         await using var ctx = CreateContext();
         var cut = ctx.Render<BoardRules>();
@@ -559,22 +497,17 @@ public sealed class BoardRulesTests
         // Arrange
         var repository = CreateRepository("owner", "repo-a");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repository]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repository]);
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>()).Returns(new BoardRulesProjectBoardDiscoveryDto(
             [
                 new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
             ],
             1,
             0));
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new HttpRequestException("GitHub unavailable"));
+        _boardRulesService.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<BoardRulesDefinitionDto>(new HttpRequestException("GitHub unavailable")));
 
         await using var ctx = CreateContext();
         var cut = ctx.Render<BoardRules>();
@@ -596,13 +529,9 @@ public sealed class BoardRulesTests
         var repository = CreateRepository("owner", "repo-a");
         var projectBoardsTask = new TaskCompletionSource<BoardRulesProjectBoardDiscoveryDto>();
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repository]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repository]);
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .Returns(projectBoardsTask.Task);
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>()).Returns(projectBoardsTask.Task);
 
         await using var ctx = CreateContext();
         var cut = ctx.Render<BoardRules>();
@@ -627,13 +556,9 @@ public sealed class BoardRulesTests
         // Arrange
         var repository = CreateRepository("owner", "repo-a");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repository]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repository]);
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>()).Returns(new BoardRulesProjectBoardDiscoveryDto(
             [
                 new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
                 new BoardRulesProjectBoardOptionDto("PVT_beta", "Beta Board", "owner"),
@@ -641,9 +566,7 @@ public sealed class BoardRulesTests
             2,
             0));
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesDefinitionDto(
+        _boardRulesService.GetBoardRulesAsync("owner", "repo-a", Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(new BoardRulesDefinitionDto(
                 "PVT_alpha",
                 "Alpha Board",
                 "owner",
@@ -670,22 +593,16 @@ public sealed class BoardRulesTests
         // Arrange
         var repository = CreateRepository("owner", "repo-a");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repository]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repository]);
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>()).Returns(new BoardRulesProjectBoardDiscoveryDto(
             [
                 new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
             ],
             1,
             0));
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesDefinitionDto(
+        _boardRulesService.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", Arg.Any<CancellationToken>()).Returns(new BoardRulesDefinitionDto(
                 "PVT_alpha",
                 "Alpha Board",
                 "owner",
@@ -715,9 +632,7 @@ public sealed class BoardRulesTests
     public async Task BoardRules_CompareModeEnabled_ShowsComparisonSelector()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
                 CreateRepository("owner", "repo-a"),
                 CreateRepository("owner", "repo-b"),
             ]);
@@ -777,39 +692,27 @@ public sealed class BoardRulesTests
                     "Column 'To Do' exists on the primary board but not on the comparison board."),
             ]);
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repositoryA, repositoryB]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repositoryA, repositoryB]);
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>()).Returns(new BoardRulesProjectBoardDiscoveryDto(
             [
                 new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
             ],
             1,
             0));
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-b", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-b", Arg.Any<CancellationToken>()).Returns(new BoardRulesProjectBoardDiscoveryDto(
             [
                 new BoardRulesProjectBoardOptionDto("PVT_beta", "Beta Board", "owner"),
             ],
             1,
             0));
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(primaryDefinition);
+        _boardRulesService.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", Arg.Any<CancellationToken>()).Returns(primaryDefinition);
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetBoardRulesAsync("owner", "repo-b", "PVT_beta", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(comparisonDefinition);
+        _boardRulesService.GetBoardRulesAsync("owner", "repo-b", "PVT_beta", Arg.Any<CancellationToken>()).Returns(comparisonDefinition);
 
-        _boardRulesServiceMock
-            .Setup(service => service.CompareBoardRules(primaryDefinition, comparisonDefinition))
-            .Returns(comparisonResult);
+        _boardRulesService.CompareBoardRules(primaryDefinition, comparisonDefinition).Returns(comparisonResult);
 
         await using var ctx = CreateContext();
         var cut = ctx.Render<BoardRules>();
@@ -833,9 +736,7 @@ public sealed class BoardRulesTests
             Assert.Single(cut.FindAll("[data-testid='board-rules-comparison-secondary-summary']"));
         });
 
-        _boardRulesServiceMock.Verify(
-            service => service.CompareBoardRules(primaryDefinition, comparisonDefinition),
-            Times.Once);
+        _boardRulesService.Received(1).CompareBoardRules(primaryDefinition, comparisonDefinition);
     }
 
     [Fact]
@@ -846,26 +747,18 @@ public sealed class BoardRulesTests
         var repositoryB = CreateRepository("owner", "repo-b");
         var repositoryADiscoveryTask = new TaskCompletionSource<BoardRulesProjectBoardDiscoveryDto>();
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([repositoryA, repositoryB]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repositoryA, repositoryB]);
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-a", It.IsAny<CancellationToken>()))
-            .Returns(repositoryADiscoveryTask.Task);
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>()).Returns(repositoryADiscoveryTask.Task);
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetProjectBoardOptionsAsync("owner", "repo-b", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesProjectBoardDiscoveryDto(
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-b", Arg.Any<CancellationToken>()).Returns(new BoardRulesProjectBoardDiscoveryDto(
             [
                 new BoardRulesProjectBoardOptionDto("PVT_beta", "Beta Board", "owner"),
             ],
             1,
             0));
 
-        _boardRulesServiceMock
-            .Setup(service => service.GetBoardRulesAsync("owner", "repo-b", "PVT_beta", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BoardRulesDefinitionDto(
+        _boardRulesService.GetBoardRulesAsync("owner", "repo-b", "PVT_beta", Arg.Any<CancellationToken>()).Returns(new BoardRulesDefinitionDto(
                 "PVT_beta",
                 "Beta Board",
                 "owner",
@@ -904,8 +797,8 @@ public sealed class BoardRulesTests
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddMudServices();
         ctx.Services.AddTestHostedAuthenticationRecovery();
-        ctx.Services.AddScoped(_ => _repositoryServiceMock.Object);
-        ctx.Services.AddScoped(_ => _boardRulesServiceMock.Object);
+        ctx.Services.AddScoped(_ => _repositoryService);
+        ctx.Services.AddScoped(_ => _boardRulesService);
 
         ctx.Render<MudPopoverProvider>();
         ctx.Render<MudDialogProvider>();

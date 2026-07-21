@@ -1,4 +1,4 @@
-using Moq;
+using NSubstitute;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.Audit;
 using SoloDevBoard.Application.Services.GitHub;
@@ -11,14 +11,14 @@ namespace SoloDevBoard.Application.Tests;
 
 public sealed class AuditDashboardServiceTests
 {
-    private readonly Mock<IGitHubService> _gitHubServiceMock = new();
-    private readonly Mock<ICurrentUserContext> _currentUserContextMock = new();
+    private readonly IGitHubService _gitHubService = Substitute.For<IGitHubService>();
+    private readonly ICurrentUserContext _currentUserContext = Substitute.For<ICurrentUserContext>();
     private readonly AuditDashboardService _sut;
 
     public AuditDashboardServiceTests()
     {
-        _currentUserContextMock.SetupGet(context => context.OwnerLogin).Returns("owner");
-        _sut = new AuditDashboardService(_gitHubServiceMock.Object, _currentUserContextMock.Object);
+        _currentUserContext.OwnerLogin.Returns("owner");
+        _sut = new AuditDashboardService(_gitHubService, _currentUserContext);
     }
 
     [Fact]
@@ -30,18 +30,18 @@ public sealed class AuditDashboardServiceTests
             new() { Id = 1, Name = "repo-one", FullName = "owner/repo-one" },
             new() { Id = 2, Name = "repo-two", FullName = "owner/repo-two" },
         };
-        _gitHubServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(repositories);
-        _gitHubServiceMock
-            .Setup(service => service.GetIssuesAsync("owner", It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
-        _gitHubServiceMock
-            .Setup(service => service.GetPullRequestsAsync("owner", It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
-        _gitHubServiceMock
-            .Setup(service => service.GetWorkflowRunsAsync("owner", It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
+        _gitHubService
+            .GetActiveRepositoriesAsync(Arg.Any<CancellationToken>())
+            .Returns(repositories);
+        _gitHubService
+            .GetIssuesAsync("owner", Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+        _gitHubService
+            .GetPullRequestsAsync("owner", Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+        _gitHubService
+            .GetWorkflowRunsAsync("owner", Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns([]);
 
         // Act
         var result = await _sut.GetRepositorySummaryAsync();
@@ -61,9 +61,9 @@ public sealed class AuditDashboardServiceTests
             new() { Id = 1, Number = 7, Title = "First issue", State = "open", HtmlUrl = "https://example/issue/7", CreatedAt = DateTimeOffset.UtcNow.AddDays(-3), UpdatedAt = DateTimeOffset.UtcNow },
             new() { Id = 2, Number = 8, Title = "Closed issue", State = "closed", HtmlUrl = "https://example/issue/8", CreatedAt = DateTimeOffset.UtcNow.AddDays(-10), UpdatedAt = DateTimeOffset.UtcNow },
         };
-        _gitHubServiceMock
-            .Setup(service => service.GetIssuesAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(issues);
+        _gitHubService
+            .GetIssuesAsync("owner", "repo", Arg.Any<CancellationToken>())
+            .Returns(issues);
 
         // Act
         var result = await _sut.GetOpenIssuesAsync("repo");
@@ -82,25 +82,25 @@ public sealed class AuditDashboardServiceTests
     {
         // Arrange
         var repos = new[] { "repo-one" };
-        _gitHubServiceMock
-            .Setup(service => service.GetIssuesAsync("owner", "repo-one", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(
+        _gitHubService
+            .GetIssuesAsync("owner", "repo-one", Arg.Any<CancellationToken>())
+            .Returns(
             [
                 new Issue { Id = 1, Number = 1, State = "open", Labels = [] },
                 new Issue { Id = 2, Number = 2, State = "open", Labels = [new Label { Name = "bug" }] },
                 new Issue { Id = 3, Number = 3, State = "closed", Labels = [] },
             ]);
-        _gitHubServiceMock
-            .Setup(service => service.GetPullRequestsAsync("owner", "repo-one", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(
+        _gitHubService
+            .GetPullRequestsAsync("owner", "repo-one", Arg.Any<CancellationToken>())
+            .Returns(
             [
                 new PullRequest { Id = 1, Number = 11, State = "open", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-20) },
                 new PullRequest { Id = 2, Number = 12, State = "open", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-2) },
                 new PullRequest { Id = 3, Number = 13, State = "closed", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-40) },
             ]);
-        _gitHubServiceMock
-            .Setup(service => service.GetWorkflowRunsAsync("owner", "repo-one", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(
+        _gitHubService
+            .GetWorkflowRunsAsync("owner", "repo-one", Arg.Any<CancellationToken>())
+            .Returns(
             [
                 new WorkflowRun { Id = 1, WorkflowName = "build", Conclusion = "failure", UpdatedAt = DateTimeOffset.UtcNow },
             ]);
@@ -129,9 +129,9 @@ public sealed class AuditDashboardServiceTests
 
         // Assert
         Assert.Empty(result);
-        _gitHubServiceMock.Verify(service => service.GetIssuesAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
-        _gitHubServiceMock.Verify(service => service.GetPullRequestsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
-        _gitHubServiceMock.Verify(service => service.GetWorkflowRunsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        await _gitHubService.DidNotReceive().GetIssuesAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _gitHubService.DidNotReceive().GetPullRequestsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _gitHubService.DidNotReceive().GetWorkflowRunsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -139,9 +139,9 @@ public sealed class AuditDashboardServiceTests
     {
         // Arrange
         var repos = new[] { "repo" };
-        _gitHubServiceMock
-            .Setup(service => service.GetIssuesAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(
+        _gitHubService
+            .GetIssuesAsync("owner", "repo", Arg.Any<CancellationToken>())
+            .Returns(
             [
                 new Issue { Id = 1, Number = 1, State = "open", Title = "No labels", HtmlUrl = "https://example/1", Labels = [] },
                 new Issue { Id = 2, Number = 2, State = "open", Title = "Has labels", HtmlUrl = "https://example/2", Labels = [new Label { Name = "bug" }] },
@@ -162,9 +162,9 @@ public sealed class AuditDashboardServiceTests
     {
         // Arrange
         var repos = new[] { "repo" };
-        _gitHubServiceMock
-            .Setup(service => service.GetPullRequestsAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(
+        _gitHubService
+            .GetPullRequestsAsync("owner", "repo", Arg.Any<CancellationToken>())
+            .Returns(
             [
                 new PullRequest { Id = 1, Number = 11, Title = "Stale", HtmlUrl = "https://example/pr/11", State = "open", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-30) },
                 new PullRequest { Id = 2, Number = 12, Title = "Fresh", HtmlUrl = "https://example/pr/12", State = "open", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-2), AuthorLogin = "octo" },
@@ -184,9 +184,9 @@ public sealed class AuditDashboardServiceTests
     {
         // Arrange
         var repos = new[] { "repo" };
-        _gitHubServiceMock
-            .Setup(service => service.GetPullRequestsAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(
+        _gitHubService
+            .GetPullRequestsAsync("owner", "repo", Arg.Any<CancellationToken>())
+            .Returns(
             [
                 new PullRequest { Id = 1, Number = 101, Title = "Stale", HtmlUrl = "https://example/pr/101", State = "open", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-21) },
                 new PullRequest { Id = 2, Number = 102, Title = "Recent", HtmlUrl = "https://example/pr/102", State = "open", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-4) },
@@ -206,9 +206,9 @@ public sealed class AuditDashboardServiceTests
     {
         // Arrange
         var repos = new[] { "repo" };
-        _gitHubServiceMock
-            .Setup(service => service.GetWorkflowRunsAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(
+        _gitHubService
+            .GetWorkflowRunsAsync("owner", "repo", Arg.Any<CancellationToken>())
+            .Returns(
             [
                 new WorkflowRun
                 {
@@ -249,9 +249,9 @@ public sealed class AuditDashboardServiceTests
     {
         // Arrange
         var repos = new[] { "repo" };
-        _gitHubServiceMock
-            .Setup(service => service.GetWorkflowRunsAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(
+        _gitHubService
+            .GetWorkflowRunsAsync("owner", "repo", Arg.Any<CancellationToken>())
+            .Returns(
             [
                 new WorkflowRun
                 {
@@ -287,15 +287,15 @@ public sealed class AuditDashboardServiceTests
     {
         // Arrange
         var repos = new[] { "another-owner/repo-one" };
-        _gitHubServiceMock
-            .Setup(service => service.GetIssuesAsync("another-owner", "repo-one", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
-        _gitHubServiceMock
-            .Setup(service => service.GetPullRequestsAsync("another-owner", "repo-one", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
-        _gitHubServiceMock
-            .Setup(service => service.GetWorkflowRunsAsync("another-owner", "repo-one", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
+        _gitHubService
+            .GetIssuesAsync("another-owner", "repo-one", Arg.Any<CancellationToken>())
+            .Returns([]);
+        _gitHubService
+            .GetPullRequestsAsync("another-owner", "repo-one", Arg.Any<CancellationToken>())
+            .Returns([]);
+        _gitHubService
+            .GetWorkflowRunsAsync("another-owner", "repo-one", Arg.Any<CancellationToken>())
+            .Returns([]);
 
         // Act
         var result = await _sut.GetAuditSummaryAsync(repos);
@@ -304,9 +304,9 @@ public sealed class AuditDashboardServiceTests
         var summary = Assert.Single(result);
         Assert.Equal("another-owner/repo-one", summary.RepositoryFullName);
 
-        _gitHubServiceMock.Verify(service => service.GetIssuesAsync("another-owner", "repo-one", It.IsAny<CancellationToken>()), Times.Once);
-        _gitHubServiceMock.Verify(service => service.GetPullRequestsAsync("another-owner", "repo-one", It.IsAny<CancellationToken>()), Times.Once);
-        _gitHubServiceMock.Verify(service => service.GetWorkflowRunsAsync("another-owner", "repo-one", It.IsAny<CancellationToken>()), Times.Once);
+        await _gitHubService.Received(1).GetIssuesAsync("another-owner", "repo-one", Arg.Any<CancellationToken>());
+        await _gitHubService.Received(1).GetPullRequestsAsync("another-owner", "repo-one", Arg.Any<CancellationToken>());
+        await _gitHubService.Received(1).GetWorkflowRunsAsync("another-owner", "repo-one", Arg.Any<CancellationToken>());
     }
 
     [Fact]

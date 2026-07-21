@@ -36,8 +36,8 @@ updates:
           - "bunit"
           - "coverlet.collector"
           - "Microsoft.NET.Test.Sdk"
-          - "Moq"
-          - "xunit"
+          - "NSubstitute"
+          - "xunit.v3"
           - "xunit.*"
         update-types:
           - "minor"

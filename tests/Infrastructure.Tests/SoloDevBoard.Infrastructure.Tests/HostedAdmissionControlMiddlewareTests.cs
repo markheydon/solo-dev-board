@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Moq;
+using NSubstitute;
 using SoloDevBoard.Infrastructure.Identity;
 
 namespace SoloDevBoard.Infrastructure.Tests;
@@ -141,15 +141,14 @@ public sealed class HostedAdmissionControlMiddlewareTests
         new(
             next,
             Options.Create(admissionOptions ?? new HostedAdmissionControlOptions { Enabled = true }),
-            Mock.Of<ILogger<HostedAdmissionControlMiddleware>>());
+            Substitute.For<ILogger<HostedAdmissionControlMiddleware>>());
 
     private static IHostedAdmissionEvaluator CreateEvaluator(HostedAdmissionDecision decision)
     {
-        var evaluator = new Mock<IHostedAdmissionEvaluator>();
-        evaluator.Setup(static evaluator => evaluator.Evaluate(It.IsAny<ClaimsPrincipal>()))
-            .Returns(decision);
+        var evaluator = Substitute.For<IHostedAdmissionEvaluator>();
+        evaluator.Evaluate(Arg.Any<ClaimsPrincipal>()).Returns(decision);
 
-        return evaluator.Object;
+        return evaluator;
     }
 
     private static DefaultHttpContext CreateHttpContext(bool isAuthenticated, string? acceptHeader)

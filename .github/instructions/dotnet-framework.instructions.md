@@ -28,9 +28,12 @@ This repository uses SDK-style projects:
 - Follow repository conventions for file-scoped namespaces, nullable reference types, and primary constructors where appropriate.
 
 ## Testing Baseline
-- Test framework: `xUnit`.
-- Mocking framework: `Moq`.
-- Assertions: xUnit built-in `Assert.*` methods. **Do not use FluentAssertions** — it requires a commercial licence under the Xceed Software licence and is prohibited in this open-source project (see [DEC-006](../../plan/DECISIONS.md#dec-006-no-fluentassertions--xunit-built-in-assertions-only)).
+- Test framework: `xUnit` v3 (`xunit.v3` package; test projects use `<OutputType>Exe</OutputType>`).
+- Mocking framework: `NSubstitute`.
+- Component tests: `bUnit` in the App test project.
+- End-to-end tests: `Playwright` for key user journeys (separate from `dotnet test`).
+- AppHost: do not test .NET Aspire AppHost modelling or orchestration.
+- Assertions: xUnit built-in `Assert.*` methods. **Do not use FluentAssertions, AwesomeAssertions, Shouldly, Moq, NUnit, or MSTest** (see [DEC-006](../../plan/DECISIONS.md#dec-006-no-fluentassertions--xunit-built-in-assertions-only) and [DEC-016](../../plan/DECISIONS.md#dec-016-formalised-testing-standard--xunit-v3-nsubstitute-playwright-e2e)).
 - Naming convention: `MethodUnderTest_Scenario_ExpectedOutcome`.
 - Structure tests using Arrange / Act / Assert with blank lines between sections.
 

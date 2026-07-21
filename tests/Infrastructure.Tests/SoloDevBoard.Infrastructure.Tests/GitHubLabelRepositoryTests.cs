@@ -2,7 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
-using Moq;
+using NSubstitute;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Domain.Entities.Labels;
 using SoloDevBoard.Infrastructure.GitHub;
@@ -171,13 +171,13 @@ public sealed class GitHubLabelRepositoryTests
     public async Task GetLabelsAsync_CurrentUserTokenMissing_ThrowsInvalidOperationException()
     {
         // Arrange
-        var currentUserContextMock = new Mock<ICurrentUserContext>();
-        currentUserContextMock
-            .Setup(context => context.GetAccessToken())
-            .Throws(new InvalidOperationException("Token missing."));
+        var currentUserContext = Substitute.For<ICurrentUserContext>();
+        currentUserContext
+            .When(x => x.GetAccessToken())
+            .Throw(new InvalidOperationException("Token missing."));
 
         var authHandler = new GitHubAuthHandler(
-            currentUserContextMock.Object,
+            currentUserContext,
             Options.Create(new GitHubAuthOptions()))
         {
             InnerHandler = new QueueMessageHandler([new HttpResponseMessage(HttpStatusCode.OK)]),
@@ -188,12 +188,12 @@ public sealed class GitHubLabelRepositoryTests
             BaseAddress = new Uri("https://api.github.com"),
         };
 
-        var httpClientFactoryMock = new Mock<IHttpClientFactory>();
-        httpClientFactoryMock
-            .Setup(factory => factory.CreateClient(GitHubService.GitHubApiClientName))
+        var httpClientFactory = Substitute.For<IHttpClientFactory>();
+        httpClientFactory
+            .CreateClient(GitHubService.GitHubApiClientName)
             .Returns(client);
 
-        var sut = new GitHubLabelRepository(httpClientFactoryMock.Object);
+        var sut = new GitHubLabelRepository(httpClientFactory);
 
         // Act / Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -202,13 +202,13 @@ public sealed class GitHubLabelRepositoryTests
 
     private static GitHubLabelRepository CreateSubject(HttpMessageHandler handler)
     {
-        var currentUserContextMock = new Mock<ICurrentUserContext>();
-        currentUserContextMock
-            .Setup(context => context.GetAccessToken())
+        var currentUserContext = Substitute.For<ICurrentUserContext>();
+        currentUserContext
+            .GetAccessToken()
             .Returns("test-token");
 
         var authHandler = new GitHubAuthHandler(
-            currentUserContextMock.Object,
+            currentUserContext,
             Options.Create(new GitHubAuthOptions()))
         {
             InnerHandler = handler,
@@ -219,12 +219,12 @@ public sealed class GitHubLabelRepositoryTests
             BaseAddress = new Uri("https://api.github.com"),
         };
 
-        var httpClientFactoryMock = new Mock<IHttpClientFactory>();
-        httpClientFactoryMock
-            .Setup(factory => factory.CreateClient(GitHubService.GitHubApiClientName))
+        var httpClientFactory = Substitute.For<IHttpClientFactory>();
+        httpClientFactory
+            .CreateClient(GitHubService.GitHubApiClientName)
             .Returns(client);
 
-        return new GitHubLabelRepository(httpClientFactoryMock.Object);
+        return new GitHubLabelRepository(httpClientFactory);
     }
 
     private static HttpResponseMessage CreateJsonResponse(HttpStatusCode statusCode, string json)

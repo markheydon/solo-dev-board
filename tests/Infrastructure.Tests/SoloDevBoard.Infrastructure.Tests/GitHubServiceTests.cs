@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using Moq;
+using NSubstitute;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Domain.Entities.Labels;
 using SoloDevBoard.Infrastructure.GitHub;
@@ -1391,12 +1391,12 @@ public sealed class GitHubServiceTests
             BaseAddress = new Uri("https://api.github.com"),
         };
 
-        var httpClientFactoryMock = new Mock<IHttpClientFactory>();
-        httpClientFactoryMock
-            .Setup(factory => factory.CreateClient(GitHubService.GitHubApiClientName))
+        var httpClientFactory = Substitute.For<IHttpClientFactory>();
+        httpClientFactory
+            .CreateClient(GitHubService.GitHubApiClientName)
             .Returns(client);
 
-        return new GitHubService(httpClientFactoryMock.Object);
+        return new GitHubService(httpClientFactory);
     }
 
     private static HttpResponseMessage CreateJsonResponse(HttpStatusCode statusCode, string json, string? linkHeader = null)

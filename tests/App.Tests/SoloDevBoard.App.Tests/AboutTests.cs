@@ -1,6 +1,6 @@
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
+using NSubstitute;
 using MudBlazor.Services;
 using SoloDevBoard.App.Components.Features.About.Pages;
 using SoloDevBoard.Application.Services.Common;
@@ -11,7 +11,7 @@ namespace SoloDevBoard.App.Tests;
 public sealed class AboutTests : BunitContext
 {
     private const string TestVersion = "1.2.3";
-    private readonly Mock<IAppVersionService> _appVersionServiceMock = new();
+    private readonly IAppVersionService _appVersionService = Substitute.For<IAppVersionService>();
 
     /// <summary>Initialises MudBlazor services and test doubles for About page rendering.</summary>
     public AboutTests()
@@ -19,18 +19,14 @@ public sealed class AboutTests : BunitContext
         JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddMudServices();
         ConfigureVersionService();
-        Services.AddSingleton(_appVersionServiceMock.Object);
+        Services.AddSingleton(_appVersionService);
     }
 
     private void ConfigureVersionService()
     {
-        _appVersionServiceMock
-            .Setup(service => service.Version)
-            .Returns(TestVersion);
+        _appVersionService.Version.Returns(TestVersion);
 
-        _appVersionServiceMock
-            .Setup(service => service.UserAgent)
-            .Returns($"SoloDevBoard/{TestVersion}");
+        _appVersionService.UserAgent.Returns($"SoloDevBoard/{TestVersion}");
     }
 
     [Fact]

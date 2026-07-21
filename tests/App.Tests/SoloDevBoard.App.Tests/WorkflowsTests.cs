@@ -1,6 +1,6 @@
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
+using NSubstitute;
 using MudBlazor;
 using MudBlazor.Services;
 using SoloDevBoard.App.Components.Features.Workflows.Pages;
@@ -12,21 +12,17 @@ namespace SoloDevBoard.App.Tests;
 /// <summary>Component tests for the <see cref="Workflows"/> page.</summary>
 public sealed class WorkflowsTests
 {
-    private readonly Mock<IWorkflowTemplateService> _workflowTemplateServiceMock = new();
-    private readonly Mock<IRepositoryService> _repositoryServiceMock = new();
+    private readonly IWorkflowTemplateService _workflowTemplateService = Substitute.For<IWorkflowTemplateService>();
+    private readonly IRepositoryService _repositoryService = Substitute.For<IRepositoryService>();
 
     [Fact]
     public async Task Workflows_WhileTemplatesAreLoading_ShowsLoadingState()
     {
         // Arrange
         var templatesTask = new TaskCompletionSource<IReadOnlyList<WorkflowTemplateDto>>();
-        _workflowTemplateServiceMock
-            .Setup(service => service.GetTemplatesAsync(It.IsAny<CancellationToken>()))
-            .Returns(templatesTask.Task);
+        _workflowTemplateService.GetTemplatesAsync(Arg.Any<CancellationToken>()).Returns(templatesTask.Task);
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(CreateRepositories());
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(CreateRepositories());
 
         await using var ctx = CreateContext();
 
@@ -65,9 +61,7 @@ public sealed class WorkflowsTests
     {
         // Arrange
         SetupDefaultServices();
-        _workflowTemplateServiceMock
-            .Setup(service => service.GetTemplateDetailAsync(1, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(CreateTemplateDetail());
+        _workflowTemplateService.GetTemplateDetailAsync(1, Arg.Any<CancellationToken>()).Returns(CreateTemplateDetail());
 
         await using var ctx = CreateContext();
         var cut = ctx.Render<Workflows>();
@@ -93,9 +87,7 @@ public sealed class WorkflowsTests
     {
         // Arrange
         SetupDefaultServices();
-        _workflowTemplateServiceMock
-            .Setup(service => service.GetTemplateDetailAsync(1, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(CreateTemplateDetail());
+        _workflowTemplateService.GetTemplateDetailAsync(1, Arg.Any<CancellationToken>()).Returns(CreateTemplateDetail());
 
         await using var ctx = CreateContext();
         var cut = ctx.Render<Workflows>();
@@ -119,9 +111,7 @@ public sealed class WorkflowsTests
     {
         // Arrange
         SetupDefaultServices();
-        _workflowTemplateServiceMock
-            .Setup(service => service.GetTemplateDetailAsync(1, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(CreateTemplateDetail());
+        _workflowTemplateService.GetTemplateDetailAsync(1, Arg.Any<CancellationToken>()).Returns(CreateTemplateDetail());
 
         await using var ctx = CreateContext();
         var cut = ctx.Render<Workflows>();
@@ -149,19 +139,13 @@ public sealed class WorkflowsTests
     {
         // Arrange
         SetupDefaultServices();
-        _workflowTemplateServiceMock
-            .Setup(service => service.GetTemplateDetailAsync(1, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(CreateTemplateDetail());
+        _workflowTemplateService.GetTemplateDetailAsync(1, Arg.Any<CancellationToken>()).Returns(CreateTemplateDetail());
 
-        _workflowTemplateServiceMock
-            .Setup(service => service.GetRepositoryStatusesAsync(1, It.IsAny<IReadOnlyList<string>>(), It.IsAny<IReadOnlyDictionary<string, string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _workflowTemplateService.GetRepositoryStatusesAsync(1, Arg.Any<IReadOnlyList<string>>(), Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<CancellationToken>()).Returns([
                 new WorkflowTemplateRepositoryStatusDto("owner/repo-a", WorkflowTemplateApplicationStatus.NotApplied, "Workflow file is not present in this repository."),
             ]);
 
-        _workflowTemplateServiceMock
-            .Setup(service => service.ApplyTemplateAsync(1, It.IsAny<IReadOnlyList<string>>(), It.IsAny<IReadOnlyDictionary<string, string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _workflowTemplateService.ApplyTemplateAsync(1, Arg.Any<IReadOnlyList<string>>(), Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<CancellationToken>()).Returns([
                 new WorkflowTemplateRepositoryResultDto("owner/repo-a", "Created", null),
             ]);
 
@@ -194,19 +178,13 @@ public sealed class WorkflowsTests
     {
         // Arrange
         SetupDefaultServices();
-        _workflowTemplateServiceMock
-            .Setup(service => service.GetTemplateDetailAsync(1, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(CreateTemplateDetail());
+        _workflowTemplateService.GetTemplateDetailAsync(1, Arg.Any<CancellationToken>()).Returns(CreateTemplateDetail());
 
-        _workflowTemplateServiceMock
-            .Setup(service => service.GetRepositoryStatusesAsync(1, It.IsAny<IReadOnlyList<string>>(), It.IsAny<IReadOnlyDictionary<string, string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _workflowTemplateService.GetRepositoryStatusesAsync(1, Arg.Any<IReadOnlyList<string>>(), Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<CancellationToken>()).Returns([
                 new WorkflowTemplateRepositoryStatusDto("owner/repo-a", WorkflowTemplateApplicationStatus.NotApplied, "Workflow file is not present in this repository."),
             ]);
 
-        _workflowTemplateServiceMock
-            .Setup(service => service.ApplyTemplateAsync(1, It.IsAny<IReadOnlyList<string>>(), It.IsAny<IReadOnlyDictionary<string, string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _workflowTemplateService.ApplyTemplateAsync(1, Arg.Any<IReadOnlyList<string>>(), Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<CancellationToken>()).Returns([
                 new WorkflowTemplateRepositoryResultDto("owner/repo-a", "Failed", "GitHub API request failed."),
             ]);
 
@@ -305,13 +283,9 @@ public sealed class WorkflowsTests
 
     private void SetupDefaultServices()
     {
-        _workflowTemplateServiceMock
-            .Setup(service => service.GetTemplatesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(CreateTemplates());
+        _workflowTemplateService.GetTemplatesAsync(Arg.Any<CancellationToken>()).Returns(CreateTemplates());
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(CreateRepositories());
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(CreateRepositories());
     }
 
     private BunitContext CreateContext()
@@ -320,8 +294,8 @@ public sealed class WorkflowsTests
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddMudServices();
         ctx.Services.AddTestHostedAuthenticationRecovery();
-        ctx.Services.AddScoped(_ => _workflowTemplateServiceMock.Object);
-        ctx.Services.AddScoped(_ => _repositoryServiceMock.Object);
+        ctx.Services.AddScoped(_ => _workflowTemplateService);
+        ctx.Services.AddScoped(_ => _repositoryService);
 
         ctx.Render<MudPopoverProvider>();
         ctx.Render<MudDialogProvider>();

@@ -1,6 +1,6 @@
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
+using NSubstitute;
 using MudBlazor;
 using MudBlazor.Services;
 using SoloDevBoard.App.Components.Features.Repositories.Pages;
@@ -11,16 +11,14 @@ namespace SoloDevBoard.App.Tests;
 /// <summary>Component tests for the <see cref="Repositories"/> page.</summary>
 public sealed class RepositoriesTests
 {
-    private readonly Mock<IRepositoryService> _repositoryServiceMock = new();
+    private readonly IRepositoryService _repositoryService = Substitute.For<IRepositoryService>();
 
     [Fact]
     public async Task Repositories_InitialRender_ShowsPrimaryCommandSurface()
     {
         // Arrange
         var tcs = new TaskCompletionSource<IReadOnlyList<RepositoryDto>>();
-        _repositoryServiceMock
-            .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .Returns(tcs.Task);
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(tcs.Task);
 
         await using var ctx = CreateContext();
 
@@ -41,9 +39,7 @@ public sealed class RepositoriesTests
     {
         // Arrange
         var tcs = new TaskCompletionSource<IReadOnlyList<RepositoryDto>>();
-        _repositoryServiceMock
-            .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .Returns(tcs.Task);
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(tcs.Task);
 
         await using var ctx = CreateContext();
 
@@ -60,9 +56,8 @@ public sealed class RepositoriesTests
     public async Task Repositories_ServiceThrowsHttpRequestException_ShowsErrorMessage()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new HttpRequestException("Connection refused"));
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<IReadOnlyList<RepositoryDto>>(new HttpRequestException("Connection refused")));
 
         await using var ctx = CreateContext();
 
@@ -82,9 +77,8 @@ public sealed class RepositoriesTests
     public async Task Repositories_ServiceThrowsUnexpectedException_ShowsGenericErrorMessage()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("Internal failure"));
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<IReadOnlyList<RepositoryDto>>(new InvalidOperationException("Internal failure")));
 
         await using var ctx = CreateContext();
 
@@ -100,9 +94,7 @@ public sealed class RepositoriesTests
     public async Task Repositories_ServiceReturnsEmptyList_ShowsEmptyState()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Array.Empty<RepositoryDto>());
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(Array.Empty<RepositoryDto>());
 
         await using var ctx = CreateContext();
 
@@ -128,9 +120,7 @@ public sealed class RepositoriesTests
             new(2, "my-private-repo", "owner/my-private-repo", string.Empty, string.Empty, true, false, DateTimeOffset.UnixEpoch, new DateTimeOffset(2026, 2, 20, 12, 0, 0, TimeSpan.Zero)),
         };
 
-        _repositoryServiceMock
-            .Setup(service => service.GetRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(repositories);
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(repositories);
 
         await using var ctx = CreateContext();
 
@@ -158,7 +148,7 @@ public sealed class RepositoriesTests
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddMudServices();
         ctx.Services.AddTestHostedAuthenticationRecovery();
-        ctx.Services.AddScoped(_ => _repositoryServiceMock.Object);
+        ctx.Services.AddScoped(_ => _repositoryService);
 
         ctx.Render<MudPopoverProvider>();
         ctx.Render<MudDialogProvider>();

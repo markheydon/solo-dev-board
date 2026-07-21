@@ -39,8 +39,8 @@ Invoke this agent when you need to review:
 
 ### Testing
 - Verify new or updated tests exist for changed behaviour.
-- Ensure tests use xUnit and Moq only.
-- Confirm there is no `FluentAssertions` usage ([DEC-006](../plan/DECISIONS.md#dec-006-no-fluentassertions--xunit-built-in-assertions-only) prohibits it).
+- Ensure tests use xUnit v3 and NSubstitute only.
+- Confirm there is no `FluentAssertions`, `Moq`, `Shouldly`, `AwesomeAssertions`, `NUnit`, or `MSTest` usage ([DEC-006](../plan/DECISIONS.md#dec-006-no-fluentassertions--xunit-built-in-assertions-only) and [DEC-016](../plan/DECISIONS.md#dec-016-formalised-testing-standard--xunit-v3-nsubstitute-playwright-e2e) prohibit them).
 - Check test naming follows `MethodUnderTest_Scenario_ExpectedOutcome`.
 - Ensure tests are placed in the matching `tests/*` project structure.
 

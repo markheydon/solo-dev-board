@@ -1,4 +1,4 @@
-using Moq;
+using NSubstitute;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Application.Services.Triage;
 using SoloDevBoard.Domain.Entities.Labels;
@@ -9,7 +9,7 @@ namespace SoloDevBoard.Application.Tests;
 /// <summary>Tests for <see cref="TriageService"/>.</summary>
 public sealed class TriageServiceTests
 {
-    private readonly Mock<IGitHubService> _gitHubServiceMock = new();
+    private readonly IGitHubService _gitHubService = Substitute.For<IGitHubService>();
 
     [Fact]
     public void Constructor_GitHubServiceIsNull_ThrowsArgumentNullException()
@@ -28,7 +28,7 @@ public sealed class TriageServiceTests
     public async Task StartSessionAsync_OwnerIsWhitespace_ThrowsArgumentException()
     {
         // Arrange
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
 
         // Act
         var action = async () => _ = await sut.StartSessionAsync(" ", "repo");
@@ -41,7 +41,7 @@ public sealed class TriageServiceTests
     public async Task StartSessionAsync_RepositoryIsWhitespace_ThrowsArgumentException()
     {
         // Arrange
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
 
         // Act
         var action = async () => _ = await sut.StartSessionAsync("owner", " ");
@@ -54,15 +54,15 @@ public sealed class TriageServiceTests
     public async Task StartSessionAsync_IssuesOnly_BuildsIssueQueueAndInitialProgress()
     {
         // Arrange
-        _gitHubServiceMock
-            .Setup(service => service.GetIssuesAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(
+        _gitHubService
+            .GetIssuesAsync("owner", "repo", Arg.Any<CancellationToken>())
+            .Returns(
             [
                 new Issue { Id = 1, Number = 11, Title = "Older", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-2) },
                 new Issue { Id = 2, Number = 12, Title = "Newer", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-1) },
             ]);
 
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
 
         // Act
         var result = await sut.StartSessionAsync("owner", "repo", includePullRequests: false);
@@ -78,26 +78,26 @@ public sealed class TriageServiceTests
         Assert.Equal(2, result.Progress.TotalItems);
         Assert.Equal(0, result.Progress.ProcessedItems);
         Assert.Equal(2, result.Progress.RemainingItems);
-        _gitHubServiceMock.Verify(service => service.GetPullRequestsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        await _gitHubService.DidNotReceive().GetPullRequestsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task StartSessionAsync_IncludePullRequests_CombinesIssuesAndPullRequests()
     {
         // Arrange
-        _gitHubServiceMock
-            .Setup(service => service.GetIssuesAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _gitHubService
+            .GetIssuesAsync("owner", "repo", Arg.Any<CancellationToken>())
+            .Returns([
                 new Issue { Id = 1, Number = 11, Title = "Issue", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-2) },
             ]);
 
-        _gitHubServiceMock
-            .Setup(service => service.GetPullRequestsAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _gitHubService
+            .GetPullRequestsAsync("owner", "repo", Arg.Any<CancellationToken>())
+            .Returns([
                 new PullRequest { Id = 2, Number = 21, Title = "Pull request", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-1) },
             ]);
 
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
 
         // Act
         var result = await sut.StartSessionAsync("owner", "repo", includePullRequests: true);
@@ -112,15 +112,15 @@ public sealed class TriageServiceTests
     public async Task StartSessionAsync_IncludePullRequestsWithLabelledPullRequest_ExcludesLabelledPullRequestFromQueue()
     {
         // Arrange
-        _gitHubServiceMock
-            .Setup(service => service.GetIssuesAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _gitHubService
+            .GetIssuesAsync("owner", "repo", Arg.Any<CancellationToken>())
+            .Returns([
                 new Issue { Id = 1, Number = 11, Title = "Issue", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-2), Labels = [] },
             ]);
 
-        _gitHubServiceMock
-            .Setup(service => service.GetPullRequestsAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _gitHubService
+            .GetPullRequestsAsync("owner", "repo", Arg.Any<CancellationToken>())
+            .Returns([
                 new PullRequest
                 {
                     Id = 2,
@@ -139,7 +139,7 @@ public sealed class TriageServiceTests
                 },
             ]);
 
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
 
         // Act
         var result = await sut.StartSessionAsync("owner", "repo", includePullRequests: true);
@@ -155,20 +155,20 @@ public sealed class TriageServiceTests
     public async Task StartSessionAsync_IncludePullRequestsWithMixedItems_OrdersQueueByUpdatedAtAcrossItemTypes()
     {
         // Arrange
-        _gitHubServiceMock
-            .Setup(service => service.GetIssuesAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _gitHubService
+            .GetIssuesAsync("owner", "repo", Arg.Any<CancellationToken>())
+            .Returns([
                 new Issue { Id = 1, Number = 11, Title = "Older issue", UpdatedAt = DateTimeOffset.Parse("2026-03-01T10:00:00Z"), Labels = [] },
                 new Issue { Id = 2, Number = 12, Title = "Newer issue", UpdatedAt = DateTimeOffset.Parse("2026-03-03T10:00:00Z"), Labels = [] },
             ]);
 
-        _gitHubServiceMock
-            .Setup(service => service.GetPullRequestsAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _gitHubService
+            .GetPullRequestsAsync("owner", "repo", Arg.Any<CancellationToken>())
+            .Returns([
                 new PullRequest { Id = 3, Number = 21, Title = "Middle pull request", UpdatedAt = DateTimeOffset.Parse("2026-03-02T10:00:00Z"), Labels = [] },
             ]);
 
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
 
         // Act
         var result = await sut.StartSessionAsync("owner", "repo", includePullRequests: true);
@@ -187,13 +187,13 @@ public sealed class TriageServiceTests
     public async Task StartSessionAsync_IncludePullRequestsWithMilestoneOnPullRequest_PreservesMilestoneDetails()
     {
         // Arrange
-        _gitHubServiceMock
-            .Setup(service => service.GetIssuesAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
+        _gitHubService
+            .GetIssuesAsync("owner", "repo", Arg.Any<CancellationToken>())
+            .Returns([]);
 
-        _gitHubServiceMock
-            .Setup(service => service.GetPullRequestsAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _gitHubService
+            .GetPullRequestsAsync("owner", "repo", Arg.Any<CancellationToken>())
+            .Returns([
                 new PullRequest
                 {
                     Id = 3,
@@ -209,7 +209,7 @@ public sealed class TriageServiceTests
                 },
             ]);
 
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
 
         // Act
         var result = await sut.StartSessionAsync("owner", "repo", includePullRequests: true);
@@ -225,14 +225,14 @@ public sealed class TriageServiceTests
     public async Task StartSessionAsync_LabelledIssuePresent_ExcludesLabelledIssueFromQueue()
     {
         // Arrange
-        _gitHubServiceMock
-            .Setup(service => service.GetIssuesAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _gitHubService
+            .GetIssuesAsync("owner", "repo", Arg.Any<CancellationToken>())
+            .Returns([
                 new Issue { Id = 1, Number = 11, Title = "Unlabelled", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-2), Labels = [] },
                 new Issue { Id = 2, Number = 12, Title = "Labelled", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-1), Labels = [new Label { Name = "priority/high" }] },
             ]);
 
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
 
         // Act
         var result = await sut.StartSessionAsync("owner", "repo", includePullRequests: false);
@@ -246,7 +246,7 @@ public sealed class TriageServiceTests
     public async Task AdvanceSessionAsync_QueueHasItems_IncrementsCurrentIndex()
     {
         // Arrange
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
         var session = CreateSession(queueCount: 2, currentIndex: 0);
 
         // Act
@@ -262,7 +262,7 @@ public sealed class TriageServiceTests
     public async Task SkipCurrentItemAsync_ActiveItemExists_AddsSkippedItemAndMovesForward()
     {
         // Arrange
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
         var session = CreateSession(queueCount: 2, currentIndex: 0);
 
         // Act
@@ -283,7 +283,7 @@ public sealed class TriageServiceTests
     public async Task RevisitSkippedItemsAsync_SkippedItemsExist_ClearsSkippedList()
     {
         // Arrange
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
         var queue = new[]
         {
             new TriageItemDto(TriageItemTypeDto.Issue, 1, 11, "owner/repo", "Item 1", string.Empty, string.Empty, "open", "mark", [], null, string.Empty, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow),
@@ -318,7 +318,7 @@ public sealed class TriageServiceTests
     public async Task RevisitSkippedItemsAsync_SkippedItemStillPresentInQueue_MovesItemToQueueEnd()
     {
         // Arrange
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
         var itemOne = new TriageItemDto(TriageItemTypeDto.Issue, 1, 11, "owner/repo", "Item 1", string.Empty, string.Empty, "open", "mark", [], null, string.Empty, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
         var itemTwo = new TriageItemDto(TriageItemTypeDto.Issue, 2, 12, "owner/repo", "Item 2", string.Empty, string.Empty, "open", "mark", [], null, string.Empty, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
 
@@ -349,7 +349,7 @@ public sealed class TriageServiceTests
     public async Task ApplyLabelToCurrentItemAsync_ActiveItemExists_AppliesLabelAndRecordsAction()
     {
         // Arrange
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
         var session = CreateSession(queueCount: 1, currentIndex: 0);
 
         // Act
@@ -363,16 +363,14 @@ public sealed class TriageServiceTests
         Assert.Contains("type/story", result.ActionHistory[0].Detail, StringComparison.Ordinal);
         Assert.Equal(1, result.Summary.LabelsAppliedCount);
 
-        _gitHubServiceMock.Verify(
-            service => service.ApplyLabelsToTriageItemAsync("owner", "repo", 1, It.Is<IReadOnlyList<string>>(labels => labels.Count == 1 && labels[0] == "type/story"), It.IsAny<CancellationToken>()),
-            Times.Once);
+        await _gitHubService.Received(1).ApplyLabelsToTriageItemAsync("owner", "repo", 1, Arg.Is<IReadOnlyList<string>>(labels => labels.Count == 1 && labels[0] == "type/story"), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task ApplyLabelToCurrentItemAsync_LabelAlreadyAssigned_DoesNotDuplicateAssignedLabel()
     {
         // Arrange
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
         var existingLabelItem = new TriageItemDto(
             TriageItemTypeDto.Issue,
             1,
@@ -409,16 +407,14 @@ public sealed class TriageServiceTests
         Assert.Single(result.Queue[0].Labels);
         Assert.Equal("priority/high", result.Queue[0].Labels[0]);
 
-        _gitHubServiceMock.Verify(
-            service => service.ApplyLabelsToTriageItemAsync("owner", "repo", 99, It.Is<IReadOnlyList<string>>(labels => labels.Count == 1 && labels[0] == "priority/high"), It.IsAny<CancellationToken>()),
-            Times.Once);
+        await _gitHubService.Received(1).ApplyLabelsToTriageItemAsync("owner", "repo", 99, Arg.Is<IReadOnlyList<string>>(labels => labels.Count == 1 && labels[0] == "priority/high"), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task ApplyLabelToCurrentItemAsync_InvalidRepositoryScope_ThrowsArgumentException()
     {
         // Arrange
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
         var invalidScopeItem = new TriageItemDto(
             TriageItemTypeDto.Issue,
             1,
@@ -459,14 +455,14 @@ public sealed class TriageServiceTests
     public async Task GetMilestoneOptionsAsync_MilestonesReturned_ReturnsSortedOptions()
     {
         // Arrange
-        _gitHubServiceMock
-            .Setup(service => service.GetMilestonesAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _gitHubService
+            .GetMilestonesAsync("owner", "repo", Arg.Any<CancellationToken>())
+            .Returns([
                 new SoloDevBoard.Domain.Entities.Milestones.Milestone { Number = 3, Title = "v0.3.0" },
                 new SoloDevBoard.Domain.Entities.Milestones.Milestone { Number = 1, Title = "v0.1.0" },
             ]);
 
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
         var session = CreateSession(queueCount: 1, currentIndex: 0);
 
         // Act
@@ -483,9 +479,9 @@ public sealed class TriageServiceTests
     public async Task GetProjectBoardOptionsAsync_ProjectBoardsReturned_ReturnsSortedOptions()
     {
         // Arrange
-        _gitHubServiceMock
-            .Setup(service => service.GetProjectBoardsForRepositoryAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RepositoryProjectBoardDiscoveryResult(
+        _gitHubService
+            .GetProjectBoardsForRepositoryAsync("owner", "repo", Arg.Any<CancellationToken>())
+            .Returns(new RepositoryProjectBoardDiscoveryResult(
             [
                 new TriageProjectBoard
                 {
@@ -514,7 +510,7 @@ public sealed class TriageServiceTests
             2,
             0));
 
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
         var session = CreateSession(queueCount: 1, currentIndex: 0);
 
         // Act
@@ -532,7 +528,7 @@ public sealed class TriageServiceTests
     public async Task AssignMilestoneToCurrentItemAsync_ValidMilestone_AssignsMilestoneAndRecordsAction()
     {
         // Arrange
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
         var session = CreateSession(queueCount: 1, currentIndex: 0);
 
         // Act
@@ -545,20 +541,18 @@ public sealed class TriageServiceTests
         Assert.Equal(TriageActionTypeDto.MilestoneAssigned, result.ActionHistory[0].ActionType);
         Assert.Equal(1, result.Summary.MilestonesAssignedCount);
 
-        _gitHubServiceMock.Verify(
-            service => service.AssignMilestoneToTriageItemAsync("owner", "repo", 1, 12, It.IsAny<CancellationToken>()),
-            Times.Once);
+        await _gitHubService.Received(1).AssignMilestoneToTriageItemAsync("owner", "repo", 1, 12, Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task AddCurrentItemToProjectBoardAsync_ValidInput_AddsItemAndUpdatesStatusAndRecordsAction()
     {
         // Arrange
-        _gitHubServiceMock
-            .Setup(service => service.AddTriageItemToProjectBoardAsync("owner", "repo", 1, "project-id", It.IsAny<CancellationToken>()))
-            .ReturnsAsync("project-item-id");
+        _gitHubService
+            .AddTriageItemToProjectBoardAsync("owner", "repo", 1, "project-id", Arg.Any<CancellationToken>())
+            .Returns("project-item-id");
 
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
         var session = CreateSession(queueCount: 1, currentIndex: 0);
 
         // Act
@@ -577,19 +571,15 @@ public sealed class TriageServiceTests
         Assert.Contains("In Progress", result.ActionHistory[0].Detail, StringComparison.Ordinal);
         Assert.Equal(1, result.Summary.ProjectAssignmentsCount);
 
-        _gitHubServiceMock.Verify(
-            service => service.AddTriageItemToProjectBoardAsync("owner", "repo", 1, "project-id", It.IsAny<CancellationToken>()),
-            Times.Once);
-        _gitHubServiceMock.Verify(
-            service => service.UpdateProjectBoardItemStatusAsync("project-id", "project-item-id", "status-field-id", "in-progress", It.IsAny<CancellationToken>()),
-            Times.Once);
+        await _gitHubService.Received(1).AddTriageItemToProjectBoardAsync("owner", "repo", 1, "project-id", Arg.Any<CancellationToken>());
+        await _gitHubService.Received(1).UpdateProjectBoardItemStatusAsync("project-id", "project-item-id", "status-field-id", "in-progress", Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task AddCurrentItemToProjectBoardAsync_InvalidRepositoryScope_ThrowsArgumentException()
     {
         // Arrange
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
         var invalidScopeItem = new TriageItemDto(
             TriageItemTypeDto.Issue,
             1,
@@ -636,7 +626,7 @@ public sealed class TriageServiceTests
     public async Task CloseCurrentItemAsDuplicateAsync_ActiveIssueExists_ClosesDuplicateAndRecordsAction()
     {
         // Arrange
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
         var session = CreateSession(queueCount: 1, currentIndex: 0);
 
         // Act
@@ -648,33 +638,31 @@ public sealed class TriageServiceTests
         Assert.Contains("#123", result.ActionHistory[0].Detail, StringComparison.Ordinal);
         Assert.Equal(1, result.Summary.DuplicateClosuresCount);
 
-        _gitHubServiceMock.Verify(
-            service => service.CloseTriageItemAsDuplicateAsync("owner", "repo", GitHubTriageItemType.Issue, 1, "#123", It.IsAny<CancellationToken>()),
-            Times.Once);
+        await _gitHubService.Received(1).CloseTriageItemAsDuplicateAsync("owner", "repo", GitHubTriageItemType.Issue, 1, "#123", Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task CloseCurrentItemAsDuplicateAsync_DuplicateLabelExists_AppliesCanonicalDuplicateLabel()
     {
         // Arrange
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
         var session = CreateSession(queueCount: 1, currentIndex: 0);
 
-        _gitHubServiceMock
-            .Setup(service => service.CloseTriageItemAsDuplicateAsync("owner", "repo", GitHubTriageItemType.Issue, 1, "#123", It.IsAny<CancellationToken>()))
+        _gitHubService
+            .CloseTriageItemAsDuplicateAsync("owner", "repo", GitHubTriageItemType.Issue, 1, "#123", Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
-        _gitHubServiceMock
-            .Setup(service => service.GetLabelsAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new[] { new Label { Name = "duplicate" } });
+        _gitHubService
+            .GetLabelsAsync("owner", "repo", Arg.Any<CancellationToken>())
+            .Returns(new[] { new Label { Name = "duplicate" } });
 
-        _gitHubServiceMock
-            .Setup(service => service.ApplyLabelsToTriageItemAsync(
+        _gitHubService
+            .ApplyLabelsToTriageItemAsync(
                 "owner",
                 "repo",
                 1,
-                It.Is<IReadOnlyList<string>>(labels => labels.SequenceEqual(new[] { "duplicate" })),
-                It.IsAny<CancellationToken>()))
+                Arg.Is<IReadOnlyList<string>>(labels => labels.SequenceEqual(new[] { "duplicate" })),
+                Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
         // Act
@@ -686,29 +674,29 @@ public sealed class TriageServiceTests
         Assert.Contains("Applied label 'duplicate'", result.ActionHistory[0].Detail, StringComparison.Ordinal);
         Assert.Equal(1, result.Summary.DuplicateClosuresCount);
 
-        _gitHubServiceMock.Verify(service => service.GetLabelsAsync("owner", "repo", It.IsAny<CancellationToken>()), Times.Once);
-        _gitHubServiceMock.Verify(service => service.ApplyLabelsToTriageItemAsync(
+        await _gitHubService.Received(1).GetLabelsAsync("owner", "repo", Arg.Any<CancellationToken>());
+        await _gitHubService.Received(1).ApplyLabelsToTriageItemAsync(
             "owner",
             "repo",
             1,
-            It.Is<IReadOnlyList<string>>(labels => labels.SequenceEqual(new[] { "duplicate" })),
-            It.IsAny<CancellationToken>()), Times.Once);
+            Arg.Is<IReadOnlyList<string>>(labels => labels.SequenceEqual(new[] { "duplicate" })),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task CloseCurrentItemAsDuplicateAsync_DuplicateLabelMissing_DoesNotApplyLabel()
     {
         // Arrange
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
         var session = CreateSession(queueCount: 1, currentIndex: 0);
 
-        _gitHubServiceMock
-            .Setup(service => service.CloseTriageItemAsDuplicateAsync("owner", "repo", GitHubTriageItemType.Issue, 1, "#123", It.IsAny<CancellationToken>()))
+        _gitHubService
+            .CloseTriageItemAsDuplicateAsync("owner", "repo", GitHubTriageItemType.Issue, 1, "#123", Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
-        _gitHubServiceMock
-            .Setup(service => service.GetLabelsAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Array.Empty<Label>());
+        _gitHubService
+            .GetLabelsAsync("owner", "repo", Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<Label>());
 
         // Act
         var result = await sut.CloseCurrentItemAsDuplicateAsync(session, "#123");
@@ -719,15 +707,15 @@ public sealed class TriageServiceTests
         Assert.Contains("No canonical duplicate label was available", result.ActionHistory[0].Detail, StringComparison.Ordinal);
         Assert.Equal(1, result.Summary.DuplicateClosuresCount);
 
-        _gitHubServiceMock.Verify(service => service.GetLabelsAsync("owner", "repo", It.IsAny<CancellationToken>()), Times.Once);
-        _gitHubServiceMock.Verify(service => service.ApplyLabelsToTriageItemAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()), Times.Never);
+        await _gitHubService.Received(1).GetLabelsAsync("owner", "repo", Arg.Any<CancellationToken>());
+        await _gitHubService.DidNotReceive().ApplyLabelsToTriageItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task CloseCurrentItemAsDuplicateAsync_ActivePullRequestExists_ClosesPullRequestDuplicate()
     {
         // Arrange
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
         var pullRequestItem = new TriageItemDto(
             TriageItemTypeDto.PullRequest,
             21,
@@ -761,22 +749,20 @@ public sealed class TriageServiceTests
         _ = await sut.CloseCurrentItemAsDuplicateAsync(session, "https://github.com/owner/repo/pull/20");
 
         // Assert
-        _gitHubServiceMock.Verify(
-            service => service.CloseTriageItemAsDuplicateAsync(
-                "owner",
-                "repo",
-                GitHubTriageItemType.PullRequest,
-                21,
-                "https://github.com/owner/repo/pull/20",
-                It.IsAny<CancellationToken>()),
-            Times.Once);
+        await _gitHubService.Received(1).CloseTriageItemAsDuplicateAsync(
+            "owner",
+            "repo",
+            GitHubTriageItemType.PullRequest,
+            21,
+            "https://github.com/owner/repo/pull/20",
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public void BuildSessionSummary_ActionHistoryIncludesAllActionTypes_ReturnsComputedCounts()
     {
         // Arrange
-        var sut = new TriageService(_gitHubServiceMock.Object);
+        var sut = new TriageService(_gitHubService);
         var actions = new[]
         {
             new TriageActionDto(TriageActionTypeDto.LabelApplied, TriageItemTypeDto.Issue, 1, "owner/repo", string.Empty, DateTimeOffset.UtcNow),

@@ -130,7 +130,7 @@ Implement issue #[number]
 **What it does:**
 - Invokes the **Delivery** contract ([`.agents/contracts/delivery.md`](../.agents/contracts/delivery.md))
 - Writes code following layered architecture (Domain/Application/Infrastructure/App)
-- Creates xUnit tests (Moq, `Assert.*`, correct naming)
+- Creates xUnit v3 tests (NSubstitute, `Assert.*`, correct naming)
 - Updates user-facing docs in `docs/user-guide/` if needed
 - Creates ADR in `adr/` if architectural decision made
 - Ensures UK English throughout
@@ -380,7 +380,7 @@ START
 
 **Responsibilities:**
 - Implements code (Domain/Application/Infrastructure/App layers)
-- Creates xUnit tests (Moq, `Assert.*`)
+- Creates xUnit v3 tests (NSubstitute, `Assert.*`)
 - Updates user-facing docs
 - Creates ADRs for architectural decisions
 - Ensures UK English throughout

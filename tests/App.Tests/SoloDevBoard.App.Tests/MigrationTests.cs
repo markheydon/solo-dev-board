@@ -1,6 +1,6 @@
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
+using NSubstitute;
 using MudBlazor;
 using MudBlazor.Services;
 using SoloDevBoard.App.Components.Features.Migration.Pages;
@@ -14,16 +14,14 @@ namespace SoloDevBoard.App.Tests;
 /// <summary>Component tests for the <see cref="Migration"/> page.</summary>
 public sealed class MigrationTests
 {
-    private readonly Mock<IRepositoryService> _repositoryServiceMock = new();
-    private readonly Mock<IMigrationService> _migrationServiceMock = new();
+    private readonly IRepositoryService _repositoryService = Substitute.For<IRepositoryService>();
+    private readonly IMigrationService _migrationService = Substitute.For<IMigrationService>();
 
     [Fact]
     public async Task Migration_ConflictStrategyOptions_RenderExplanatoryText()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
                 CreateRepository("owner", "repo-a"),
                 CreateRepository("owner", "repo-b"),
             ]);
@@ -47,9 +45,7 @@ public sealed class MigrationTests
     public async Task Migration_PageLoaded_RendersWorkflowAndFeedbackRegions()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
                 CreateRepository("owner", "repo-a"),
                 CreateRepository("owner", "repo-b"),
             ]);
@@ -76,18 +72,9 @@ public sealed class MigrationTests
         var sourceRepository = CreateRepository("owner", "repo-a");
         var targetRepository = CreateRepository("owner", "repo-b");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([sourceRepository, targetRepository]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([sourceRepository, targetRepository]);
 
-        _migrationServiceMock
-            .Setup(service => service.PreviewMigrationAsync(
-                "owner/repo-a",
-                It.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })),
-                It.Is<MigrationScopeDto>(scope => scope.IncludeLabels && scope.IncludeMilestones),
-                MigrationConflictStrategy.Overwrite,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new MigrationPreviewDto(
+        _migrationService.PreviewMigrationAsync( "owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })), Arg.Is<MigrationScopeDto>(scope => scope.IncludeLabels && scope.IncludeMilestones), MigrationConflictStrategy.Overwrite, Arg.Any<CancellationToken>()).Returns(new MigrationPreviewDto(
                 MigrationConflictStrategy.Overwrite,
                 [new LabelSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [])],
                 [new MilestoneSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [])]));
@@ -112,12 +99,7 @@ public sealed class MigrationTests
         // Assert
         cut.WaitForAssertion(() => Assert.Contains("Migration preview (Overwrite)", cut.Markup));
 
-        _migrationServiceMock.Verify(service => service.PreviewMigrationAsync(
-            "owner/repo-a",
-            It.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })),
-            It.Is<MigrationScopeDto>(scope => scope.IncludeLabels && scope.IncludeMilestones),
-            MigrationConflictStrategy.Overwrite,
-            It.IsAny<CancellationToken>()), Times.Once);
+        _migrationService.Received(1).PreviewMigrationAsync( "owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })), Arg.Is<MigrationScopeDto>(scope => scope.IncludeLabels && scope.IncludeMilestones), MigrationConflictStrategy.Overwrite, Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -127,18 +109,9 @@ public sealed class MigrationTests
         var sourceRepository = CreateRepository("owner", "repo-a");
         var targetRepository = CreateRepository("owner", "repo-b");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([sourceRepository, targetRepository]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([sourceRepository, targetRepository]);
 
-        _migrationServiceMock
-            .Setup(service => service.PreviewMigrationAsync(
-                "owner/repo-a",
-                It.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })),
-                It.IsAny<MigrationScopeDto>(),
-                MigrationConflictStrategy.Skip,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new MigrationPreviewDto(
+        _migrationService.PreviewMigrationAsync( "owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Skip, Arg.Any<CancellationToken>()).Returns(new MigrationPreviewDto(
                 MigrationConflictStrategy.Skip,
                 [new LabelSyncRepositoryPreviewDto(
                     "owner/repo-b",
@@ -179,18 +152,9 @@ public sealed class MigrationTests
         var sourceRepository = CreateRepository("owner", "repo-a");
         var targetRepository = CreateRepository("owner", "repo-b");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([sourceRepository, targetRepository]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([sourceRepository, targetRepository]);
 
-        _migrationServiceMock
-            .Setup(service => service.PreviewMigrationAsync(
-                "owner/repo-a",
-                It.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })),
-                It.IsAny<MigrationScopeDto>(),
-                MigrationConflictStrategy.Skip,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new MigrationPreviewDto(
+        _migrationService.PreviewMigrationAsync( "owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Skip, Arg.Any<CancellationToken>()).Returns(new MigrationPreviewDto(
                 MigrationConflictStrategy.Skip,
                 [new LabelSyncRepositoryPreviewDto(
                     "owner/repo-b",
@@ -229,18 +193,9 @@ public sealed class MigrationTests
         var sourceRepository = CreateRepository("owner", "repo-a");
         var targetRepository = CreateRepository("owner", "repo-b");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([sourceRepository, targetRepository]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([sourceRepository, targetRepository]);
 
-        _migrationServiceMock
-            .Setup(service => service.PreviewMigrationAsync(
-                "owner/repo-a",
-                It.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })),
-                It.IsAny<MigrationScopeDto>(),
-                MigrationConflictStrategy.Merge,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new MigrationPreviewDto(
+        _migrationService.PreviewMigrationAsync( "owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Merge, Arg.Any<CancellationToken>()).Returns(new MigrationPreviewDto(
                 MigrationConflictStrategy.Merge,
                 [new LabelSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [])],
                 [new MilestoneSyncRepositoryPreviewDto(
@@ -279,9 +234,7 @@ public sealed class MigrationTests
     public async Task Migration_NoRepositoriesAvailable_ShowsEmptyStateMessage()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([]);
 
         await using var ctx = CreateContext();
 
@@ -296,9 +249,7 @@ public sealed class MigrationTests
     public async Task Migration_PreviewClickedWithoutRequiredSelection_DoesNotInvokePreviewService()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
                 CreateRepository("owner", "repo-a"),
                 CreateRepository("owner", "repo-b"),
             ]);
@@ -312,12 +263,7 @@ public sealed class MigrationTests
 
         // Assert
         Assert.Empty(cut.FindAll("[data-testid='migration-preview-card']"));
-        _migrationServiceMock.Verify(service => service.PreviewMigrationAsync(
-            It.IsAny<string>(),
-            It.IsAny<IReadOnlyList<string>>(),
-            It.IsAny<MigrationScopeDto>(),
-            It.IsAny<MigrationConflictStrategy>(),
-            It.IsAny<CancellationToken>()), Times.Never);
+        _migrationService.DidNotReceive().PreviewMigrationAsync( Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<MigrationScopeDto>(), Arg.Any<MigrationConflictStrategy>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -328,18 +274,9 @@ public sealed class MigrationTests
         var targetRepository = CreateRepository("owner", "repo-b");
         var applyTaskSource = new TaskCompletionSource<MigrationResultDto>();
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([sourceRepository, targetRepository]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([sourceRepository, targetRepository]);
 
-        _migrationServiceMock
-            .Setup(service => service.PreviewMigrationAsync(
-                "owner/repo-a",
-                It.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })),
-                It.IsAny<MigrationScopeDto>(),
-                MigrationConflictStrategy.Skip,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new MigrationPreviewDto(
+        _migrationService.PreviewMigrationAsync( "owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Skip, Arg.Any<CancellationToken>()).Returns(new MigrationPreviewDto(
                 MigrationConflictStrategy.Skip,
                 [new LabelSyncRepositoryPreviewDto(
                     "owner/repo-b",
@@ -349,14 +286,7 @@ public sealed class MigrationTests
                     [])],
                 [new MilestoneSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [])]));
 
-        _migrationServiceMock
-            .Setup(service => service.ApplyMigrationAsync(
-                "owner/repo-a",
-                It.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })),
-                It.IsAny<MigrationScopeDto>(),
-                MigrationConflictStrategy.Skip,
-                It.IsAny<CancellationToken>()))
-            .Returns(applyTaskSource.Task);
+        _migrationService.ApplyMigrationAsync( "owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Skip, Arg.Any<CancellationToken>()).Returns(applyTaskSource.Task);
 
         await using var ctx = CreateContext();
 
@@ -383,12 +313,7 @@ public sealed class MigrationTests
 
         // Assert
         cut.WaitForAssertion(() => Assert.Contains("Migration completed successfully", cut.Markup));
-        _migrationServiceMock.Verify(service => service.ApplyMigrationAsync(
-            "owner/repo-a",
-            It.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })),
-            It.IsAny<MigrationScopeDto>(),
-            MigrationConflictStrategy.Skip,
-            It.IsAny<CancellationToken>()), Times.Once);
+        _migrationService.Received(1).ApplyMigrationAsync( "owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Skip, Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -398,18 +323,9 @@ public sealed class MigrationTests
         var sourceRepository = CreateRepository("owner", "repo-a");
         var targetRepository = CreateRepository("owner", "repo-b");
 
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([sourceRepository, targetRepository]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([sourceRepository, targetRepository]);
 
-        _migrationServiceMock
-            .Setup(service => service.PreviewMigrationAsync(
-                "owner/repo-a",
-                It.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })),
-                It.IsAny<MigrationScopeDto>(),
-                MigrationConflictStrategy.Merge,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new MigrationPreviewDto(
+        _migrationService.PreviewMigrationAsync( "owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Merge, Arg.Any<CancellationToken>()).Returns(new MigrationPreviewDto(
                 MigrationConflictStrategy.Merge,
                 [new LabelSyncRepositoryPreviewDto(
                     "owner/repo-b",
@@ -424,14 +340,7 @@ public sealed class MigrationTests
                     [],
                     [])]));
 
-        _migrationServiceMock
-            .Setup(service => service.ApplyMigrationAsync(
-                "owner/repo-a",
-                It.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })),
-                It.IsAny<MigrationScopeDto>(),
-                MigrationConflictStrategy.Merge,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new MigrationResultDto(
+        _migrationService.ApplyMigrationAsync( "owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Merge, Arg.Any<CancellationToken>()).Returns(new MigrationResultDto(
                 MigrationConflictStrategy.Merge,
                 [new LabelSyncRepositoryResultDto("owner/repo-b", 1, 0, 0, 0, "GitHub label API rate limit reached")],
                 [new MilestoneSyncRepositoryResultDto("owner/repo-b", 1, 0, 0, 0, null)]));
@@ -468,8 +377,8 @@ public sealed class MigrationTests
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddMudServices();
         ctx.Services.AddTestHostedAuthenticationRecovery();
-        ctx.Services.AddScoped(_ => _repositoryServiceMock.Object);
-        ctx.Services.AddScoped(_ => _migrationServiceMock.Object);
+        ctx.Services.AddScoped(_ => _repositoryService);
+        ctx.Services.AddScoped(_ => _migrationService);
 
         ctx.Render<MudPopoverProvider>();
         ctx.Render<MudDialogProvider>();

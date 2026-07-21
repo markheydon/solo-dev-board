@@ -2,7 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
-using Moq;
+using NSubstitute;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Domain.Entities.Milestones;
 using SoloDevBoard.Infrastructure.GitHub;
@@ -260,13 +260,13 @@ public sealed class GitHubMilestoneRepositoryTests
 
     private static GitHubMilestoneRepository CreateSubject(HttpMessageHandler handler)
     {
-        var currentUserContextMock = new Mock<ICurrentUserContext>();
-        currentUserContextMock
-            .Setup(context => context.GetAccessToken())
+        var currentUserContext = Substitute.For<ICurrentUserContext>();
+        currentUserContext
+            .GetAccessToken()
             .Returns("test-token");
 
         var authHandler = new GitHubAuthHandler(
-            currentUserContextMock.Object,
+            currentUserContext,
             Options.Create(new GitHubAuthOptions()))
         {
             InnerHandler = handler,
@@ -277,12 +277,12 @@ public sealed class GitHubMilestoneRepositoryTests
             BaseAddress = new Uri("https://api.github.com"),
         };
 
-        var httpClientFactoryMock = new Mock<IHttpClientFactory>();
-        httpClientFactoryMock
-            .Setup(factory => factory.CreateClient(GitHubService.GitHubApiClientName))
+        var httpClientFactory = Substitute.For<IHttpClientFactory>();
+        httpClientFactory
+            .CreateClient(GitHubService.GitHubApiClientName)
             .Returns(client);
 
-        return new GitHubMilestoneRepository(httpClientFactoryMock.Object);
+        return new GitHubMilestoneRepository(httpClientFactory);
     }
 
     private static HttpResponseMessage CreateJsonResponse(HttpStatusCode statusCode, string json)

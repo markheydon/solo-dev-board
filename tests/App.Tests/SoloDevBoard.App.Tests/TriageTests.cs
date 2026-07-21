@@ -1,7 +1,7 @@
 using System.Net;
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
+using NSubstitute;
 using MudBlazor;
 using MudBlazor.Services;
 using SoloDevBoard.App.Components.Features.Triage.Pages;
@@ -15,18 +15,30 @@ namespace SoloDevBoard.App.Tests;
 /// <summary>Component tests for the <see cref="Triage"/> page.</summary>
 public sealed class TriageTests
 {
-    private readonly Mock<IRepositoryService> _repositoryServiceMock = new();
-    private readonly Mock<ITriageService> _triageServiceMock = new();
-    private readonly Mock<ILabelManagerService> _labelManagerServiceMock = new();
+    private readonly IRepositoryService _repositoryService = Substitute.For<IRepositoryService>();
+    private readonly ITriageService _triageService = Substitute.For<ITriageService>();
+    private readonly ILabelManagerService _labelManagerService = Substitute.For<ILabelManagerService>();
+
+    public TriageTests()
+    {
+        _labelManagerService.GetLabelsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns([
+                new LabelDto("type/story", "1d76db", "A user-facing Story delivering a discrete piece of value", "repo"),
+            ]);
+
+        _triageService.GetMilestoneOptionsAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<TriageMilestoneOptionDto>());
+
+        _triageService.GetProjectBoardOptionsAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>())
+            .Returns(new TriageProjectBoardDiscoveryDto([], 0, 0));
+    }
 
     [Fact]
     public async Task Triage_RepositoriesAreLoading_ShowsLoadingStateUntilRepositoryDataArrives()
     {
         // Arrange
         var repositoryTaskSource = new TaskCompletionSource<IReadOnlyList<RepositoryDto>>();
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .Returns(repositoryTaskSource.Task);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(repositoryTaskSource.Task);
 
         await using var ctx = CreateContext();
 
@@ -45,9 +57,7 @@ public sealed class TriageTests
     public async Task Triage_NoRepositoriesReturned_ShowsNoRepositoriesWarningState()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Array.Empty<RepositoryDto>());
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(Array.Empty<RepositoryDto>());
 
         await using var ctx = CreateContext();
 
@@ -66,13 +76,10 @@ public sealed class TriageTests
     public async Task Triage_StartSessionFailure_ShowsErrorFeedbackRegion()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
 
-        _triageServiceMock
-            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new HttpRequestException("Bad gateway", null, HttpStatusCode.BadGateway));
+        _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<TriageSessionDto>(new HttpRequestException("Bad gateway", null, HttpStatusCode.BadGateway)));
 
         await using var ctx = CreateContext();
 
@@ -97,9 +104,7 @@ public sealed class TriageTests
     public async Task Triage_StartSessionWithEmptyQueue_ShowsSummaryStateAndEmptyQueueMessage()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
 
         var emptySession = CreateSession(
             "owner",
@@ -108,9 +113,7 @@ public sealed class TriageTests
             currentIndex: 0,
             skippedItems: []);
 
-        _triageServiceMock
-            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(emptySession);
+        _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>()).Returns(emptySession);
 
         await using var ctx = CreateContext();
 
@@ -136,9 +139,7 @@ public sealed class TriageTests
     public async Task Triage_StartedSessionWithPullRequestCurrentItem_ShowsPullRequestVariantAndKeyboardLegend()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
 
         var pullRequestItem = new TriageItemDto(
             TriageItemTypeDto.PullRequest,
@@ -163,9 +164,7 @@ public sealed class TriageTests
             currentIndex: 0,
             skippedItems: []);
 
-        _triageServiceMock
-            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(startedSession);
+        _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>()).Returns(startedSession);
 
         await using var ctx = CreateContext();
 
@@ -191,9 +190,7 @@ public sealed class TriageTests
     public async Task Triage_StartSessionClicked_LoadsFirstItemAndShowsRemainingCount()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
 
         var startedSession = CreateSession(
             "owner",
@@ -205,9 +202,7 @@ public sealed class TriageTests
             currentIndex: 0,
             skippedItems: []);
 
-        _triageServiceMock
-            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(startedSession);
+        _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>()).Returns(startedSession);
 
         await using var ctx = CreateContext();
 
@@ -228,18 +223,14 @@ public sealed class TriageTests
             Assert.Contains("Remaining: 2 items", cut.Markup);
         });
 
-        _triageServiceMock.Verify(
-            service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()),
-            Times.Once);
+        _triageService.Received(1).StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Triage_NextItemClicked_MovesToNextQueueItemAndUpdatesContext()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
 
         var startedSession = CreateSession(
             "owner",
@@ -258,13 +249,9 @@ public sealed class TriageTests
             Summary = new TriageSessionSummaryDto(2, 1, 1, 0, 0, 0, 0, 0),
         };
 
-        _triageServiceMock
-            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(startedSession);
+        _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>()).Returns(startedSession);
 
-        _triageServiceMock
-            .Setup(service => service.AdvanceSessionAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(advancedSession);
+        _triageService.AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>()).Returns(advancedSession);
 
         await using var ctx = CreateContext();
 
@@ -293,9 +280,7 @@ public sealed class TriageTests
     public async Task Triage_NextClicked_MovesToNextItemWithoutApplyingChanges()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
 
         var startedSession = CreateSession(
             "owner",
@@ -317,13 +302,9 @@ public sealed class TriageTests
             currentIndex: 1,
             skippedItems: []);
 
-        _triageServiceMock
-            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(startedSession);
+        _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>()).Returns(startedSession);
 
-        _triageServiceMock
-            .Setup(service => service.AdvanceSessionAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(advancedSession);
+        _triageService.AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>()).Returns(advancedSession);
 
         await using var ctx = CreateContext();
 
@@ -346,18 +327,14 @@ public sealed class TriageTests
             Assert.Contains("Skipped: 0 items", cut.Markup);
         });
 
-        _triageServiceMock.Verify(
-            service => service.AdvanceSessionAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+        _triageService.Received(1).AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Triage_NextClickedOnFinalItem_ShowsSessionCompleteWithoutProgressHeader()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
 
         var startedSession = CreateSession(
             "owner",
@@ -373,13 +350,9 @@ public sealed class TriageTests
             currentIndex: 1,
             skippedItems: []);
 
-        _triageServiceMock
-            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(startedSession);
+        _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>()).Returns(startedSession);
 
-        _triageServiceMock
-            .Setup(service => service.AdvanceSessionAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(completedSession);
+        _triageService.AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>()).Returns(completedSession);
 
         await using var ctx = CreateContext();
 
@@ -408,9 +381,7 @@ public sealed class TriageTests
     public async Task Triage_CurrentItemBodyContainsMarkdown_RendersFormattedBodyContent()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
 
         var markdownItem = new TriageItemDto(
             TriageItemTypeDto.Issue,
@@ -428,9 +399,7 @@ public sealed class TriageTests
             DateTimeOffset.UtcNow.AddDays(-2),
             DateTimeOffset.UtcNow.AddDays(-1));
 
-        _triageServiceMock
-            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(CreateSession("owner", "repo", [markdownItem], 0, []));
+        _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>()).Returns(CreateSession("owner", "repo", [markdownItem], 0, []));
 
         await using var ctx = CreateContext();
 
@@ -456,9 +425,7 @@ public sealed class TriageTests
     public async Task Triage_CurrentItemBodyContainsRelativeAndUnsafeLinks_PreservesRelativeAndNeutralisesUnsafeHref()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
 
         var markdownItem = new TriageItemDto(
             TriageItemTypeDto.Issue,
@@ -476,9 +443,7 @@ public sealed class TriageTests
             DateTimeOffset.UtcNow.AddDays(-2),
             DateTimeOffset.UtcNow.AddDays(-1));
 
-        _triageServiceMock
-            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(CreateSession("owner", "repo", [markdownItem], 0, []));
+        _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>()).Returns(CreateSession("owner", "repo", [markdownItem], 0, []));
 
         await using var ctx = CreateContext();
 
@@ -505,13 +470,9 @@ public sealed class TriageTests
     public async Task Triage_ApplyLabelClicked_InvokesTriageServiceAndShowsUpdatedLabels()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
 
-        _labelManagerServiceMock
-            .Setup(service => service.GetLabelsAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelManagerService.GetLabelsAsync("owner", "repo", Arg.Any<CancellationToken>()).Returns([
                 new LabelDto("type/bug", "d73a4a", "A bug or unexpected behaviour", "repo"),
             ]);
 
@@ -549,17 +510,11 @@ public sealed class TriageTests
             Summary = new TriageSessionSummaryDto(2, 1, 1, 0, 1, 0, 0, 0),
         };
 
-        _triageServiceMock
-            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(startedSession);
+        _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>()).Returns(startedSession);
 
-        _triageServiceMock
-            .Setup(service => service.ApplyLabelToCurrentItemAsync(It.IsAny<TriageSessionDto>(), "type/bug", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(labelledSession);
+        _triageService.ApplyLabelToCurrentItemAsync(Arg.Any<TriageSessionDto>(), "type/bug", Arg.Any<CancellationToken>()).Returns(labelledSession);
 
-        _triageServiceMock
-            .Setup(service => service.AdvanceSessionAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(advancedSession);
+        _triageService.AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>()).Returns(advancedSession);
 
         await using var ctx = CreateContext();
 
@@ -584,25 +539,17 @@ public sealed class TriageTests
             Assert.Contains("Applied label 'type/bug' to item #401 and moved to Item 2 of 2", cut.Markup, StringComparison.Ordinal);
         });
 
-        _triageServiceMock.Verify(
-            service => service.ApplyLabelToCurrentItemAsync(It.IsAny<TriageSessionDto>(), "type/bug", It.IsAny<CancellationToken>()),
-            Times.Once);
-        _triageServiceMock.Verify(
-            service => service.AdvanceSessionAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+        _triageService.Received(1).ApplyLabelToCurrentItemAsync(Arg.Any<TriageSessionDto>(), "type/bug", Arg.Any<CancellationToken>());
+        _triageService.Received(1).AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Triage_ActionSurfaceShortcutL_PressedAppliesSelectedLabel()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
 
-        _labelManagerServiceMock
-            .Setup(service => service.GetLabelsAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelManagerService.GetLabelsAsync("owner", "repo", Arg.Any<CancellationToken>()).Returns([
                 new LabelDto("priority/high", "d93f0b", "Should be addressed in the current sprint or release", "repo"),
             ]);
 
@@ -613,17 +560,11 @@ public sealed class TriageTests
             currentIndex: 0,
             skippedItems: []);
 
-        _triageServiceMock
-            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(startedSession);
+        _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>()).Returns(startedSession);
 
-        _triageServiceMock
-            .Setup(service => service.ApplyLabelToCurrentItemAsync(It.IsAny<TriageSessionDto>(), "priority/high", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(startedSession);
+        _triageService.ApplyLabelToCurrentItemAsync(Arg.Any<TriageSessionDto>(), "priority/high", Arg.Any<CancellationToken>()).Returns(startedSession);
 
-        _triageServiceMock
-            .Setup(service => service.AdvanceSessionAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(startedSession);
+        _triageService.AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>()).Returns(startedSession);
 
         await using var ctx = CreateContext();
 
@@ -642,25 +583,17 @@ public sealed class TriageTests
         cut.Find("[data-testid='triage-action-buttons-row']").KeyDown("l");
 
         // Assert
-        _triageServiceMock.Verify(
-            service => service.ApplyLabelToCurrentItemAsync(It.IsAny<TriageSessionDto>(), "priority/high", It.IsAny<CancellationToken>()),
-            Times.Once);
-        _triageServiceMock.Verify(
-            service => service.AdvanceSessionAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+        _triageService.Received(1).ApplyLabelToCurrentItemAsync(Arg.Any<TriageSessionDto>(), "priority/high", Arg.Any<CancellationToken>());
+        _triageService.Received(1).AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Triage_SessionStartsWithAvailableLabels_QuickLabelDefaultsToEmptyAndApplyDisabled()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
 
-        _labelManagerServiceMock
-            .Setup(service => service.GetLabelsAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelManagerService.GetLabelsAsync("owner", "repo", Arg.Any<CancellationToken>()).Returns([
                 new LabelDto("priority/high", "d93f0b", "Should be addressed in the current sprint or release", "repo"),
                 new LabelDto("type/bug", "d73a4a", "A bug or unexpected behaviour", "repo"),
             ]);
@@ -672,9 +605,7 @@ public sealed class TriageTests
             currentIndex: 0,
             skippedItems: []);
 
-        _triageServiceMock
-            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(startedSession);
+        _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>()).Returns(startedSession);
 
         await using var ctx = CreateContext();
 
@@ -694,18 +625,14 @@ public sealed class TriageTests
             Assert.True(cut.Find("[data-testid='triage-apply-label-button']").HasAttribute("disabled"));
         });
 
-        _triageServiceMock.Verify(
-            service => service.ApplyLabelToCurrentItemAsync(It.IsAny<TriageSessionDto>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
-            Times.Never);
+        _triageService.DidNotReceive().ApplyLabelToCurrentItemAsync(Arg.Any<TriageSessionDto>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Triage_AssignMilestoneClicked_AssignsMilestoneAndShowsSuccessMessage()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
 
         var startedSession = CreateSession(
             "owner",
@@ -731,21 +658,13 @@ public sealed class TriageTests
             Summary = new TriageSessionSummaryDto(1, 0, 1, 0, 0, 1, 0, 0),
         };
 
-        _triageServiceMock
-            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(startedSession);
+        _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>()).Returns(startedSession);
 
-        _triageServiceMock
-            .Setup(service => service.GetMilestoneOptionsAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([new TriageMilestoneOptionDto(7, "v0.7.0")]);
+        _triageService.GetMilestoneOptionsAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>()).Returns([new TriageMilestoneOptionDto(7, "v0.7.0")]);
 
-        _triageServiceMock
-            .Setup(service => service.GetProjectBoardOptionsAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new TriageProjectBoardDiscoveryDto([], 0, 0));
+        _triageService.GetProjectBoardOptionsAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>()).Returns(new TriageProjectBoardDiscoveryDto([], 0, 0));
 
-        _triageServiceMock
-            .Setup(service => service.AssignMilestoneToCurrentItemAsync(It.IsAny<TriageSessionDto>(), 7, "v0.7.0", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(milestoneAssignedSession);
+        _triageService.AssignMilestoneToCurrentItemAsync(Arg.Any<TriageSessionDto>(), 7, "v0.7.0", Arg.Any<CancellationToken>()).Returns(milestoneAssignedSession);
 
         await using var ctx = CreateContext();
 
@@ -772,18 +691,14 @@ public sealed class TriageTests
             Assert.Contains("Assigned milestone 'v0.7.0' to item #501", cut.Markup, StringComparison.Ordinal);
         });
 
-        _triageServiceMock.Verify(
-            service => service.AssignMilestoneToCurrentItemAsync(It.IsAny<TriageSessionDto>(), 7, "v0.7.0", It.IsAny<CancellationToken>()),
-            Times.Once);
+        _triageService.Received(1).AssignMilestoneToCurrentItemAsync(Arg.Any<TriageSessionDto>(), 7, "v0.7.0", Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Triage_StartSessionWithPullRequestMilestone_PreselectsMilestoneInDropdown()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
 
         var startedSession = CreateSession(
             "owner",
@@ -817,24 +732,16 @@ public sealed class TriageTests
             Summary = new TriageSessionSummaryDto(1, 0, 1, 0, 0, 1, 0, 0),
         };
 
-        _triageServiceMock
-            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(startedSession);
+        _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>()).Returns(startedSession);
 
-        _triageServiceMock
-            .Setup(service => service.GetMilestoneOptionsAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _triageService.GetMilestoneOptionsAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>()).Returns([
                 new TriageMilestoneOptionDto(7, "v0.7.0"),
                 new TriageMilestoneOptionDto(8, "v0.8.0"),
             ]);
 
-        _triageServiceMock
-            .Setup(service => service.GetProjectBoardOptionsAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new TriageProjectBoardDiscoveryDto([], 0, 0));
+        _triageService.GetProjectBoardOptionsAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>()).Returns(new TriageProjectBoardDiscoveryDto([], 0, 0));
 
-        _triageServiceMock
-            .Setup(service => service.AssignMilestoneToCurrentItemAsync(It.IsAny<TriageSessionDto>(), 7, "v0.7.0", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(milestoneAssignedSession);
+        _triageService.AssignMilestoneToCurrentItemAsync(Arg.Any<TriageSessionDto>(), 7, "v0.7.0", Arg.Any<CancellationToken>()).Returns(milestoneAssignedSession);
 
         await using var ctx = CreateContext();
 
@@ -857,18 +764,14 @@ public sealed class TriageTests
         });
 
         // Assert
-        _triageServiceMock.Verify(
-            service => service.AssignMilestoneToCurrentItemAsync(It.IsAny<TriageSessionDto>(), 7, "v0.7.0", It.IsAny<CancellationToken>()),
-            Times.Once);
+        _triageService.Received(1).AssignMilestoneToCurrentItemAsync(Arg.Any<TriageSessionDto>(), 7, "v0.7.0", Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Triage_AddToProjectBoardClicked_AddsItemAndShowsSuccessMessage()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
 
         var startedSession = CreateSession(
             "owner",
@@ -886,17 +789,11 @@ public sealed class TriageTests
             Summary = new TriageSessionSummaryDto(1, 0, 1, 0, 0, 0, 1, 0),
         };
 
-        _triageServiceMock
-            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(startedSession);
+        _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>()).Returns(startedSession);
 
-        _triageServiceMock
-            .Setup(service => service.GetMilestoneOptionsAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
+        _triageService.GetMilestoneOptionsAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>()).Returns([]);
 
-        _triageServiceMock
-            .Setup(service => service.GetProjectBoardOptionsAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new TriageProjectBoardDiscoveryDto(
+        _triageService.GetProjectBoardOptionsAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>()).Returns(new TriageProjectBoardDiscoveryDto(
             [
                 new TriageProjectBoardOptionDto(
                     "project-id",
@@ -911,16 +808,7 @@ public sealed class TriageTests
             1,
             0));
 
-        _triageServiceMock
-            .Setup(service => service.AddCurrentItemToProjectBoardAsync(
-                It.IsAny<TriageSessionDto>(),
-                "project-id",
-                "Roadmap",
-                "status-field-id",
-                "in-progress",
-                "In Progress",
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(updatedSession);
+        _triageService.AddCurrentItemToProjectBoardAsync( Arg.Any<TriageSessionDto>(), "project-id", "Roadmap", "status-field-id", "in-progress", "In Progress", Arg.Any<CancellationToken>()).Returns(updatedSession);
 
         await using var ctx = CreateContext();
 
@@ -942,25 +830,14 @@ public sealed class TriageTests
             Assert.Contains("Added item #601 to 'Roadmap' with status 'In Progress'", cut.Markup, StringComparison.Ordinal);
         });
 
-        _triageServiceMock.Verify(
-            service => service.AddCurrentItemToProjectBoardAsync(
-                It.IsAny<TriageSessionDto>(),
-                "project-id",
-                "Roadmap",
-                "status-field-id",
-                "in-progress",
-                "In Progress",
-                It.IsAny<CancellationToken>()),
-            Times.Once);
+        _triageService.Received(1).AddCurrentItemToProjectBoardAsync( Arg.Any<TriageSessionDto>(), "project-id", "Roadmap", "status-field-id", "in-progress", "In Progress", Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Triage_CloseAsDuplicateClicked_ClosesCurrentItemAndAdvancesSession()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
 
         var startedSession = CreateSession(
             "owner",
@@ -988,17 +865,11 @@ public sealed class TriageTests
             Summary = new TriageSessionSummaryDto(2, 1, 1, 0, 0, 0, 0, 1),
         };
 
-        _triageServiceMock
-            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(startedSession);
+        _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>()).Returns(startedSession);
 
-        _triageServiceMock
-            .Setup(service => service.CloseCurrentItemAsDuplicateAsync(It.IsAny<TriageSessionDto>(), "#555", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(duplicateClosedSession);
+        _triageService.CloseCurrentItemAsDuplicateAsync(Arg.Any<TriageSessionDto>(), "#555", Arg.Any<CancellationToken>()).Returns(duplicateClosedSession);
 
-        _triageServiceMock
-            .Setup(service => service.AdvanceSessionAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(advancedSession);
+        _triageService.AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>()).Returns(advancedSession);
 
         await using var ctx = CreateContext();
 
@@ -1027,21 +898,15 @@ public sealed class TriageTests
             Assert.Contains("Closed item #701 as a duplicate of '#555' and moved to Item 2 of 2", cut.Markup, StringComparison.Ordinal);
         });
 
-        _triageServiceMock.Verify(
-            service => service.CloseCurrentItemAsDuplicateAsync(It.IsAny<TriageSessionDto>(), "#555", It.IsAny<CancellationToken>()),
-            Times.Once);
-        _triageServiceMock.Verify(
-            service => service.AdvanceSessionAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+        _triageService.Received(1).CloseCurrentItemAsDuplicateAsync(Arg.Any<TriageSessionDto>(), "#555", Arg.Any<CancellationToken>());
+        _triageService.Received(1).AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Triage_ActionSurfaceShortcutD_PressedClosesCurrentItemAsDuplicate()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
 
         var startedSession = CreateSession(
             "owner",
@@ -1050,17 +915,11 @@ public sealed class TriageTests
             currentIndex: 0,
             skippedItems: []);
 
-        _triageServiceMock
-            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(startedSession);
+        _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>()).Returns(startedSession);
 
-        _triageServiceMock
-            .Setup(service => service.CloseCurrentItemAsDuplicateAsync(It.IsAny<TriageSessionDto>(), "#556", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(startedSession);
+        _triageService.CloseCurrentItemAsDuplicateAsync(Arg.Any<TriageSessionDto>(), "#556", Arg.Any<CancellationToken>()).Returns(startedSession);
 
-        _triageServiceMock
-            .Setup(service => service.AdvanceSessionAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(startedSession);
+        _triageService.AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>()).Returns(startedSession);
 
         await using var ctx = CreateContext();
 
@@ -1083,21 +942,15 @@ public sealed class TriageTests
         cut.Find("[data-testid='triage-action-buttons-row']").KeyDown("d");
 
         // Assert
-        _triageServiceMock.Verify(
-            service => service.CloseCurrentItemAsDuplicateAsync(It.IsAny<TriageSessionDto>(), "#556", It.IsAny<CancellationToken>()),
-            Times.Once);
-        _triageServiceMock.Verify(
-            service => service.AdvanceSessionAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+        _triageService.Received(1).CloseCurrentItemAsDuplicateAsync(Arg.Any<TriageSessionDto>(), "#556", Arg.Any<CancellationToken>());
+        _triageService.Received(1).AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Triage_SkipItemClicked_RecordsSkipAndMovesToNextItem()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
 
         var startedSession = CreateSession(
             "owner",
@@ -1127,13 +980,9 @@ public sealed class TriageTests
             },
             DateTimeOffset.UtcNow);
 
-        _triageServiceMock
-            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(startedSession);
+        _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>()).Returns(startedSession);
 
-        _triageServiceMock
-            .Setup(service => service.SkipCurrentItemAsync(It.IsAny<TriageSessionDto>(), "Requires broader context", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(skippedSession);
+        _triageService.SkipCurrentItemAsync(Arg.Any<TriageSessionDto>(), "Requires broader context", Arg.Any<CancellationToken>()).Returns(skippedSession);
 
         await using var ctx = CreateContext();
 
@@ -1162,18 +1011,14 @@ public sealed class TriageTests
             Assert.Contains("Skipped item #801 for later review and moved to Item 1 of 1", cut.Markup, StringComparison.Ordinal);
         });
 
-        _triageServiceMock.Verify(
-            service => service.SkipCurrentItemAsync(It.IsAny<TriageSessionDto>(), "Requires broader context", It.IsAny<CancellationToken>()),
-            Times.Once);
+        _triageService.Received(1).SkipCurrentItemAsync(Arg.Any<TriageSessionDto>(), "Requires broader context", Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Triage_SessionCompleted_ShowsGroupedSummaryDetailsAndSkippedRevisitButton()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
 
         var completedSession = new TriageSessionDto(
             Guid.NewGuid(),
@@ -1196,9 +1041,7 @@ public sealed class TriageTests
             },
             DateTimeOffset.UtcNow);
 
-        _triageServiceMock
-            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(completedSession);
+        _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>()).Returns(completedSession);
 
         await using var ctx = CreateContext();
 
@@ -1232,9 +1075,7 @@ public sealed class TriageTests
     public async Task Triage_SessionCompleted_MixedIssueAndPullRequestSummaryEntries_RenderTypeSpecificGitHubLinks()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
 
         var completedSession = new TriageSessionDto(
             Guid.NewGuid(),
@@ -1273,9 +1114,7 @@ public sealed class TriageTests
             },
             DateTimeOffset.UtcNow);
 
-        _triageServiceMock
-            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(completedSession);
+        _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>()).Returns(completedSession);
 
         await using var ctx = CreateContext();
 
@@ -1300,9 +1139,7 @@ public sealed class TriageTests
     public async Task Triage_RevisitSkippedItemsClicked_ResumesSessionFromSkippedQueue()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
 
         var completedSession = new TriageSessionDto(
             Guid.NewGuid(),
@@ -1333,13 +1170,9 @@ public sealed class TriageTests
             new TriageSessionSummaryDto(1, 0, 1, 0, 0, 0, 0, 0),
             DateTimeOffset.UtcNow);
 
-        _triageServiceMock
-            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(completedSession);
+        _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>()).Returns(completedSession);
 
-        _triageServiceMock
-            .Setup(service => service.RevisitSkippedItemsAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(resumedSession);
+        _triageService.RevisitSkippedItemsAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>()).Returns(resumedSession);
 
         await using var ctx = CreateContext();
 
@@ -1362,9 +1195,7 @@ public sealed class TriageTests
             Assert.Contains("Skipped items were appended to the queue for review.", cut.Markup, StringComparison.Ordinal);
         });
 
-        _triageServiceMock.Verify(
-            service => service.RevisitSkippedItemsAsync(It.IsAny<TriageSessionDto>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+        _triageService.Received(1).RevisitSkippedItemsAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>());
     }
 
     private static async Task SelectQuickLabelAsync(IRenderedComponent<Triage> cut, string labelName)
@@ -1383,13 +1214,9 @@ public sealed class TriageTests
     public async Task Triage_QuickLabelInputShortcutL_Pressed_DoesNotApplySelectedLabel()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
 
-        _labelManagerServiceMock
-            .Setup(service => service.GetLabelsAsync("owner", "repo", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
+        _labelManagerService.GetLabelsAsync("owner", "repo", Arg.Any<CancellationToken>()).Returns([
                 new LabelDto("priority/high", "d93f0b", "Should be addressed in the current sprint or release", "repo"),
             ]);
 
@@ -1400,9 +1227,7 @@ public sealed class TriageTests
             currentIndex: 0,
             skippedItems: []);
 
-        _triageServiceMock
-            .Setup(service => service.StartSessionAsync("owner", "repo", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(startedSession);
+        _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>()).Returns(startedSession);
 
         await using var ctx = CreateContext();
 
@@ -1419,18 +1244,14 @@ public sealed class TriageTests
         cut.Find("[data-testid='triage-quick-label-autocomplete']").KeyDown("l");
 
         // Assert
-        _triageServiceMock.Verify(
-            service => service.ApplyLabelToCurrentItemAsync(It.IsAny<TriageSessionDto>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
-            Times.Never);
+        _triageService.DidNotReceive().ApplyLabelToCurrentItemAsync(Arg.Any<TriageSessionDto>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Triage_RepositorySelectionClearedAfterSessionStarted_HidesActiveSessionDetails()
     {
         // Arrange
-        _repositoryServiceMock
-            .Setup(service => service.GetActiveRepositoriesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([CreateRepository("owner", "repo-a"), CreateRepository("owner", "repo-b")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a"), CreateRepository("owner", "repo-b")]);
 
         var startedSession = CreateSession(
             "owner",
@@ -1439,9 +1260,7 @@ public sealed class TriageTests
             currentIndex: 0,
             skippedItems: []);
 
-        _triageServiceMock
-            .Setup(service => service.StartSessionAsync("owner", "repo-a", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(startedSession);
+        _triageService.StartSessionAsync("owner", "repo-a", true, Arg.Any<CancellationToken>()).Returns(startedSession);
 
         await using var ctx = CreateContext();
 
@@ -1521,25 +1340,14 @@ public sealed class TriageTests
 
     private BunitContext CreateContext()
     {
-        _labelManagerServiceMock
-            .SetReturnsDefault(Task.FromResult<IReadOnlyList<LabelDto>>(
-            [
-                new LabelDto("type/story", "1d76db", "A user-facing Story delivering a discrete piece of value", "repo"),
-            ]));
-
         var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
 
-        _triageServiceMock
-            .SetReturnsDefault(Task.FromResult<IReadOnlyList<TriageMilestoneOptionDto>>(Array.Empty<TriageMilestoneOptionDto>()));
-        _triageServiceMock
-            .SetReturnsDefault(Task.FromResult<IReadOnlyList<TriageProjectBoardOptionDto>>(Array.Empty<TriageProjectBoardOptionDto>()));
-
         ctx.Services.AddMudServices();
         ctx.Services.AddTestHostedAuthenticationRecovery();
-        ctx.Services.AddScoped(_ => _repositoryServiceMock.Object);
-        ctx.Services.AddScoped(_ => _triageServiceMock.Object);
-        ctx.Services.AddScoped(_ => _labelManagerServiceMock.Object);
+        ctx.Services.AddScoped(_ => _repositoryService);
+        ctx.Services.AddScoped(_ => _triageService);
+        ctx.Services.AddScoped(_ => _labelManagerService);
 
         ctx.Render<MudPopoverProvider>();
         ctx.Render<MudDialogProvider>();
