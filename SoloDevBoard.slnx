@@ -6,12 +6,12 @@
     <Project Path="src/Infrastructure/SoloDevBoard.Infrastructure/SoloDevBoard.Infrastructure.csproj" />
     <Project Path="src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj" />
     <Project Path="src/SoloDevBoard.ServiceDefaults/SoloDevBoard.ServiceDefaults.csproj" />
-    <Project Path="tests/ServiceDefaults.Tests/SoloDevBoard.ServiceDefaults.Tests/SoloDevBoard.ServiceDefaults.Tests.csproj" />
     <Project Path="tests/Infrastructure.Tests/SoloDevBoard.Infrastructure.Tests/SoloDevBoard.Infrastructure.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/App.Tests/SoloDevBoard.App.Tests/SoloDevBoard.App.Tests.csproj" />
     <Project Path="tests/Application.Tests/SoloDevBoard.Application.Tests/SoloDevBoard.Application.Tests.csproj" />
     <Project Path="tests/Domain.Tests/SoloDevBoard.Domain.Tests/SoloDevBoard.Domain.Tests.csproj" />
+    <Project Path="tests/ServiceDefaults.Tests/SoloDevBoard.ServiceDefaults.Tests/SoloDevBoard.ServiceDefaults.Tests.csproj" />
   </Folder>
 </Solution>

@@ -73,11 +73,12 @@ Telemetry must never contain credentials, tokens, cookies, or personal data beyo
 
 SoloDevBoard applies the following defaults in `SoloDevBoard.ServiceDefaults`:
 
-- **URL redaction:** Sensitive query-string keys are replaced with `[Redacted]` before request URLs are attached to trace spans.
-- **Header deny-list:** `Authorization`, `Cookie`, `Set-Cookie`, `X-Api-Key`, and `X-GitHub-Api-Version` are documented as prohibited telemetry attributes.
+- **Inbound URL redaction:** Known OAuth-related query-string keys are replaced with `[Redacted]` on ASP.NET Core request spans before `url.full` is set.
+- **Outbound URL redaction:** Outbound `HttpClient` spans rely on the OpenTelemetry HTTP instrumenter's default behaviour, which redacts all query-string values.
+- **Header tag stripping:** If sensitive request header tags (`Authorization`, `Cookie`, `Set-Cookie`, `X-Api-Key`) are present on a span, they are removed at enrichment time.
 - **Health-check exclusion:** `/health` and `/alive` requests are excluded from distributed tracing to reduce noise.
 
-When adding new logging or custom span enrichment, follow the same rules. Prefer opaque identifiers (for example, repository owner/name) over secrets.
+When adding new logging or custom span enrichment, follow the same rules. Prefer opaque identifiers (for example, repository owner/name) over secrets. Do not add custom enrichment that copies request headers into telemetry.
 
 ---
 

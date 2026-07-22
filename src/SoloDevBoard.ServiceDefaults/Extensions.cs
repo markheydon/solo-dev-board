@@ -68,6 +68,7 @@ public static class Extensions
     {
         if (!builder.Environment.IsDevelopment())
         {
+            builder.Logging.ClearProviders();
             builder.Logging.AddJsonConsole(options =>
             {
                 options.IncludeScopes = true;
@@ -111,18 +112,12 @@ public static class Extensions
 
                         options.EnrichWithHttpRequest = (activity, request) =>
                         {
-                            EnrichHttpRequestActivity(activity, request.GetDisplayUrl());
+                            EnrichInboundHttpRequestActivity(activity, request.GetDisplayUrl());
                         };
                     })
                     // Uncomment the following line to enable gRPC instrumentation (requires the OpenTelemetry.Instrumentation.GrpcNetClient package)
                     //.AddGrpcClientInstrumentation()
-                    .AddHttpClientInstrumentation(options =>
-                    {
-                        options.EnrichWithHttpRequestMessage = (activity, request) =>
-                        {
-                            EnrichHttpRequestActivity(activity, request.RequestUri?.ToString());
-                        };
-                    });
+                    .AddHttpClientInstrumentation();
             });
 
         builder.AddOpenTelemetryExporters();
@@ -186,7 +181,7 @@ public static class Extensions
         return app;
     }
 
-    private static void EnrichHttpRequestActivity(Activity activity, string? url)
+    private static void EnrichInboundHttpRequestActivity(Activity activity, string? url)
     {
         if (string.IsNullOrWhiteSpace(url))
         {
@@ -196,5 +191,6 @@ public static class Extensions
         var redactedUrl = TelemetryRedaction.RedactHttpUrl(url);
         activity.SetTag("url.full", redactedUrl);
         activity.SetTag("http.url", redactedUrl);
+        TelemetryRedaction.StripSensitiveHeaderTags(activity);
     }
 }

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.WebUtilities;
 
 namespace SoloDevBoard.ServiceDefaults.Telemetry;
@@ -16,11 +17,10 @@ public static class TelemetryRedaction
         "Cookie",
         "Set-Cookie",
         "X-Api-Key",
-        "X-GitHub-Api-Version",
     };
 
     /// <summary>
-    /// Query-string keys that must be redacted from request URLs in telemetry.
+    /// Query-string keys that must be redacted from inbound ASP.NET Core request URLs in telemetry.
     /// </summary>
     public static IReadOnlySet<string> SensitiveQueryKeys { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
@@ -44,30 +44,81 @@ public static class TelemetryRedaction
             return string.Empty;
         }
 
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var absoluteUri))
+        if (url.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            if (Uri.TryCreate(url, UriKind.Absolute, out var absoluteUri))
+            {
+                return RedactAbsoluteUri(absoluteUri);
+            }
+
+            return url;
+        }
+
+        // Path-only URLs are not emitted by ASP.NET Core GetDisplayUrl(), but redact them defensively
+        // in case custom enrichment passes a relative value.
+        return RedactRelativeUrl(url);
+    }
+
+    /// <summary>
+    /// Removes sensitive HTTP request header tags from a trace activity when present.
+    /// </summary>
+    /// <param name="activity">The activity to sanitise.</param>
+    public static void StripSensitiveHeaderTags(Activity activity)
+    {
+        ArgumentNullException.ThrowIfNull(activity);
+
+        foreach (var header in SensitiveRequestHeaders)
+        {
+            activity.SetTag($"http.request.header.{header.ToLowerInvariant()}", null);
+        }
+    }
+
+    private static string RedactRelativeUrl(string url)
+    {
+        var queryIndex = url.IndexOf('?', StringComparison.Ordinal);
+        if (queryIndex < 0)
         {
             return url;
         }
 
+        var path = url[..queryIndex];
+        var redactedQuery = RedactQueryString(url[(queryIndex + 1)..]);
+        return string.IsNullOrEmpty(redactedQuery) ? path : $"{path}?{redactedQuery}";
+    }
+
+    private static string RedactAbsoluteUri(Uri absoluteUri)
+    {
         if (string.IsNullOrEmpty(absoluteUri.Query))
         {
-            return url;
+            return absoluteUri.ToString();
         }
 
-        var query = QueryHelpers.ParseQuery(absoluteUri.Query);
-        var redactedPairs = new List<string>(query.Count);
+        var redactedQuery = RedactQueryString(absoluteUri.Query.TrimStart('?'));
+        var builder = new UriBuilder(absoluteUri)
+        {
+            Query = redactedQuery,
+        };
 
-        foreach (var pair in query)
+        return builder.Uri.ToString();
+    }
+
+    private static string RedactQueryString(string query)
+    {
+        var parsedQuery = QueryHelpers.ParseQuery(query);
+        if (parsedQuery.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var redactedPairs = new List<string>(parsedQuery.Count);
+
+        foreach (var pair in parsedQuery)
         {
             var value = SensitiveQueryKeys.Contains(pair.Key) ? "[Redacted]" : pair.Value.ToString();
             redactedPairs.Add($"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(value)}");
         }
 
-        var builder = new UriBuilder(absoluteUri)
-        {
-            Query = string.Join('&', redactedPairs),
-        };
-
-        return builder.Uri.ToString();
+        return string.Join('&', redactedPairs);
     }
 }

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using SoloDevBoard.ServiceDefaults.Telemetry;
 
 namespace SoloDevBoard.ServiceDefaults.Tests;
@@ -40,12 +41,29 @@ public sealed class TelemetryRedactionTests
     }
 
     [Fact]
-    public void RedactHttpUrl_RelativeUrl_ReturnsOriginalValue()
+    public void RedactHttpUrl_RelativeUrl_RedactsSensitiveQueryKeys()
     {
-        const string url = "/auth/callback?code=secret";
+        const string url = "/auth/callback?code=secret&returnUrl=%2F";
 
         var redacted = TelemetryRedaction.RedactHttpUrl(url);
 
-        Assert.Equal(url, redacted);
+        Assert.Equal("/auth/callback?code=%5BRedacted%5D&returnUrl=%2F", redacted);
+        Assert.DoesNotContain("secret", redacted, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void StripSensitiveHeaderTags_RemovesKnownSensitiveHeaderTags()
+    {
+        using var activity = new Activity("test");
+        activity.Start();
+        activity.SetTag("http.request.header.authorization", "Bearer secret");
+        activity.SetTag("http.request.header.cookie", "session=opaque");
+        activity.SetTag("http.request.header.user-agent", "SoloDevBoard/1.0");
+
+        TelemetryRedaction.StripSensitiveHeaderTags(activity);
+
+        Assert.Null(activity.GetTagItem("http.request.header.authorization"));
+        Assert.Null(activity.GetTagItem("http.request.header.cookie"));
+        Assert.Equal("SoloDevBoard/1.0", activity.GetTagItem("http.request.header.user-agent"));
     }
 }
