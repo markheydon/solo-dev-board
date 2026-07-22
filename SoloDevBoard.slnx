@@ -12,5 +12,6 @@
     <Project Path="tests/App.Tests/SoloDevBoard.App.Tests/SoloDevBoard.App.Tests.csproj" />
     <Project Path="tests/Application.Tests/SoloDevBoard.Application.Tests/SoloDevBoard.Application.Tests.csproj" />
     <Project Path="tests/Domain.Tests/SoloDevBoard.Domain.Tests/SoloDevBoard.Domain.Tests.csproj" />
+    <Project Path="tests/ServiceDefaults.Tests/SoloDevBoard.ServiceDefaults.Tests/SoloDevBoard.ServiceDefaults.Tests.csproj" />
   </Folder>
 </Solution>

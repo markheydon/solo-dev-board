@@ -221,7 +221,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Configure OIDC authentication for GitHub Actions deployment to Azure (no long-lived credentials). _(#105)_
 - [ ] Add health check endpoints for Azure Container Apps monitoring. _(#106)_
 - [ ] Implement response caching for GitHub API calls to respect rate limits. _(#108)_
-- [ ] Configure structured logging and Application Insights telemetry. _(#107)_
+- [x] Configure structured logging and Application Insights telemetry. _(#107)_
 - [x] Set up Dependabot for automated dependency updates. _(#109)_
 - [ ] Formalise and document PAT-only local trusted mode and self-hoster deployment path. _(#247, #248, #249)_
 - [x] Implement hosted authentication session boundaries and per-request user context for GitHub App-first hosted mode. _(#103, #112; implemented on 2026-03-13, see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_

@@ -340,7 +340,7 @@ In production, secret AppHost parameters are supplied from the GitHub `productio
 
 ## Deploying to Azure
 
-SoloDevBoard deploys to Azure Container Apps via Aspire. See the [Deployment guide](deployment.md) for prerequisites, one-time OIDC bootstrap, GitHub Environment configuration, and first deploy steps.
+SoloDevBoard deploys to Azure Container Apps via Aspire. See the [Deployment guide](deployment.md) for prerequisites, one-time OIDC bootstrap, GitHub Environment configuration, and first deploy steps. For logs, metrics, and traces after deployment, see the [Observability guide](user-guide/observability.md).
 
 Summary:
 

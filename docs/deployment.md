@@ -125,6 +125,7 @@ The CD workflow (`.github/workflows/cd.yml`) runs `aspire deploy` with OIDC auth
 2. Open **Actions → CD - Deploy to Azure → Run workflow**.
 3. After a successful run, note the deployed Container App FQDN from the workflow output or Azure portal.
 4. Register the GitHub App callback URL: `https://<fqdn>/auth/callback`.
+5. Open the provisioned Application Insights resource to confirm telemetry is flowing (see [Observability guide](user-guide/observability.md)).
 
 ### Enable automatic deploys
 
@@ -172,7 +173,8 @@ Aspire generates and applies Bicep at deploy time. A typical deployment includes
 | Azure Container Apps environment | Hosts the containerised app (Consumption profile) |
 | Container App (`app`) | Runs SoloDevBoard (scale-to-zero enabled) |
 | Azure Container Registry | Stores built container images |
-| Log Analytics workspace | Container and environment logs |
+| Application Insights | Application logs, metrics, and distributed traces |
+| Log Analytics workspace | Container platform logs and Application Insights backing store |
 | Aspire dashboard | Optional operational dashboard (Aspire default) |
 | Managed identities | Image pull and runtime authentication |
 
