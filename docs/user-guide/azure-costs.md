@@ -4,14 +4,15 @@ Self-hosting SoloDevBoard on Azure incurs charges for the resources Aspire provi
 
 ## Resources Deployed
 
-Aspire deploys the following Azure resources (see [Deployment guide](../deployment.md)):
+Aspire deploys the following Azure resources (see [Deployment guide](../deployment.md) and [Observability guide](observability.md)):
 
 | Resource | Purpose | Pricing model |
 |---|---|---|
 | Azure Container Apps environment | Hosts containerised workloads on the Consumption profile | Environment + per-use compute |
 | Container App (`app`) | SoloDevBoard Blazor Server application | Consumption (vCPU-seconds, memory, requests) |
 | Azure Container Registry (Basic) | Stores built container images | Fixed monthly (Basic tier) |
-| Log Analytics workspace | Container and environment logs | Per GB ingested |
+| Log Analytics workspace | Container platform logs and Application Insights backing store | Per GB ingested |
+| Application Insights | Application logs, metrics, and traces | Per GB ingested (linked workspace) |
 | Managed identities | Image pull and runtime auth | No direct charge |
 
 ## Cost profile with scale-to-zero

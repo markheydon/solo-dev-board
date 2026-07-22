@@ -1,11 +1,15 @@
+using System.Diagnostics;
+using Azure.Monitor.OpenTelemetry.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using SoloDevBoard.ServiceDefaults.Telemetry;
 
 namespace Microsoft.Extensions.Hosting;
 
@@ -19,6 +23,7 @@ public static class Extensions
 {
     private const string HealthEndpointPath = "/health";
     private const string AlivenessEndpointPath = "/alive";
+    private const string ApplicationInsightsConnectionStringKey = "APPLICATIONINSIGHTS_CONNECTION_STRING";
 
     /// <summary>
     /// Adds default service configuration for resilience, service discovery, health checks, and OpenTelemetry.
@@ -28,6 +33,7 @@ public static class Extensions
     /// <returns>The configured host builder.</returns>
     public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
+        builder.ConfigureStructuredLogging();
         builder.ConfigureOpenTelemetry();
 
         builder.AddDefaultHealthChecks();
@@ -48,6 +54,27 @@ public static class Extensions
         // {
         //     options.AllowedSchemes = ["https"];
         // });
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Configures structured console logging for non-development environments.
+    /// </summary>
+    /// <typeparam name="TBuilder">The host builder type.</typeparam>
+    /// <param name="builder">The host builder to configure.</param>
+    /// <returns>The configured host builder.</returns>
+    public static TBuilder ConfigureStructuredLogging<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
+    {
+        if (!builder.Environment.IsDevelopment())
+        {
+            builder.Logging.AddJsonConsole(options =>
+            {
+                options.IncludeScopes = true;
+                options.TimestampFormat = "yyyy-MM-dd'T'HH:mm:ss.fffffff'Z'";
+                options.UseUtcTimestamp = true;
+            });
+        }
 
         return builder;
     }
@@ -77,14 +104,25 @@ public static class Extensions
             {
                 tracing.AddSource(builder.Environment.ApplicationName)
                     .AddAspNetCoreInstrumentation(options =>
-                        // Exclude health check requests from tracing
+                    {
                         options.Filter = context =>
                             !context.Request.Path.StartsWithSegments(HealthEndpointPath)
-                            && !context.Request.Path.StartsWithSegments(AlivenessEndpointPath)
-                    )
+                            && !context.Request.Path.StartsWithSegments(AlivenessEndpointPath);
+
+                        options.EnrichWithHttpRequest = (activity, request) =>
+                        {
+                            EnrichHttpRequestActivity(activity, request.GetDisplayUrl());
+                        };
+                    })
                     // Uncomment the following line to enable gRPC instrumentation (requires the OpenTelemetry.Instrumentation.GrpcNetClient package)
                     //.AddGrpcClientInstrumentation()
-                    .AddHttpClientInstrumentation();
+                    .AddHttpClientInstrumentation(options =>
+                    {
+                        options.EnrichWithHttpRequestMessage = (activity, request) =>
+                        {
+                            EnrichHttpRequestActivity(activity, request.RequestUri?.ToString());
+                        };
+                    });
             });
 
         builder.AddOpenTelemetryExporters();
@@ -101,12 +139,10 @@ public static class Extensions
             builder.Services.AddOpenTelemetry().UseOtlpExporter();
         }
 
-        // Uncomment the following lines to enable the Azure Monitor exporter (requires the Azure.Monitor.OpenTelemetry.AspNetCore package)
-        //if (!string.IsNullOrEmpty(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
-        //{
-        //    builder.Services.AddOpenTelemetry()
-        //       .UseAzureMonitor();
-        //}
+        if (!string.IsNullOrWhiteSpace(builder.Configuration[ApplicationInsightsConnectionStringKey]))
+        {
+            builder.Services.AddOpenTelemetry().UseAzureMonitor();
+        }
 
         return builder;
     }
@@ -148,5 +184,17 @@ public static class Extensions
         }
 
         return app;
+    }
+
+    private static void EnrichHttpRequestActivity(Activity activity, string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return;
+        }
+
+        var redactedUrl = TelemetryRedaction.RedactHttpUrl(url);
+        activity.SetTag("url.full", redactedUrl);
+        activity.SetTag("http.url", redactedUrl);
     }
 }

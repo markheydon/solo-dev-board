@@ -63,7 +63,7 @@ Open the `app` resource URL shown by `aspire describe`.
 
 ## Production deployment
 
-Deployment uses `aspire deploy` to Azure Container Apps with scale-to-zero. See [docs/deployment.md](../docs/deployment.md) for the full operator guide.
+Deployment uses `aspire deploy` to Azure Container Apps with scale-to-zero. Application Insights and structured logging are provisioned automatically. See [docs/deployment.md](../docs/deployment.md) and [docs/user-guide/observability.md](../docs/user-guide/observability.md) for the full operator guide.
 
 Preview deployment steps:
 
