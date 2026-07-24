@@ -48,8 +48,10 @@ public sealed class AuditDashboardMarkdownExporterTests
         Assert.Contains("| Total open issues | 5 |", markdown);
         Assert.Contains("| owner/repo-a | 4 | 2 |", markdown);
         Assert.Contains("[#12](https://github.com/owner/repo-a/issues/12)", markdown);
+        Assert.Contains("| owner/repo-a | [#12](https://github.com/owner/repo-a/issues/12) | Needs triage | 5 |", markdown);
         Assert.Contains("## Stale pull requests (>14 days)", markdown);
         Assert.Contains("[#44](https://github.com/owner/repo-a/pull/44)", markdown);
+        Assert.Contains("| owner/repo-a | [#44](https://github.com/owner/repo-a/pull/44) | Update docs | mark | 20 |", markdown);
         Assert.Contains("[Open run](https://github.com/owner/repo-a/actions/runs/123)", markdown);
     }
 

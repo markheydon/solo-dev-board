@@ -21,10 +21,12 @@ public sealed class AuditDashboardMarkdownExporter : IAuditDashboardMarkdownExpo
         builder.AppendLine($"Repositories: {repositoryList}");
         builder.AppendLine();
 
+        var generatedAtUtc = request.GeneratedAtUtc.ToUniversalTime();
+
         AppendKpiSummary(builder, request);
         AppendRepositorySummary(builder, request.RepositorySummaries);
-        AppendUnlabelledIssues(builder, request.UnlabelledIssues);
-        AppendStalePullRequests(builder, request.StalePullRequests, request.StalePullRequestDays);
+        AppendUnlabelledIssues(builder, request.UnlabelledIssues, generatedAtUtc);
+        AppendStalePullRequests(builder, request.StalePullRequests, request.StalePullRequestDays, generatedAtUtc);
         AppendFailingWorkflows(builder, request.FailingWorkflowRuns);
 
         return builder.ToString().TrimEnd();
@@ -66,7 +68,7 @@ public sealed class AuditDashboardMarkdownExporter : IAuditDashboardMarkdownExpo
         builder.AppendLine();
     }
 
-    private static void AppendUnlabelledIssues(StringBuilder builder, IReadOnlyList<IssueDto> unlabelledIssues)
+    private static void AppendUnlabelledIssues(StringBuilder builder, IReadOnlyList<IssueDto> unlabelledIssues, DateTimeOffset generatedAtUtc)
     {
         builder.AppendLine("## Unlabelled issues");
         builder.AppendLine();
@@ -83,14 +85,18 @@ public sealed class AuditDashboardMarkdownExporter : IAuditDashboardMarkdownExpo
 
         foreach (var issue in unlabelledIssues)
         {
-            var ageDays = GetDaysBetween(issue.CreatedAt);
+            var ageDays = GetDaysBetween(issue.CreatedAt, generatedAtUtc);
             builder.AppendLine($"| {issue.RepositoryFullName} | [#{issue.Number}]({issue.HtmlUrl}) | {EscapeMarkdownTableCell(issue.Title)} | {ageDays} |");
         }
 
         builder.AppendLine();
     }
 
-    private static void AppendStalePullRequests(StringBuilder builder, IReadOnlyList<PullRequestDto> stalePullRequests, int stalePullRequestDays)
+    private static void AppendStalePullRequests(
+        StringBuilder builder,
+        IReadOnlyList<PullRequestDto> stalePullRequests,
+        int stalePullRequestDays,
+        DateTimeOffset generatedAtUtc)
     {
         builder.AppendLine($"## Stale pull requests (>{stalePullRequestDays} days)");
         builder.AppendLine();
@@ -107,7 +113,7 @@ public sealed class AuditDashboardMarkdownExporter : IAuditDashboardMarkdownExpo
 
         foreach (var pullRequest in stalePullRequests)
         {
-            var daysSinceUpdate = GetDaysBetween(pullRequest.UpdatedAt);
+            var daysSinceUpdate = GetDaysBetween(pullRequest.UpdatedAt, generatedAtUtc);
             builder.AppendLine($"| {pullRequest.RepositoryFullName} | [#{pullRequest.Number}]({pullRequest.HtmlUrl}) | {EscapeMarkdownTableCell(pullRequest.Title)} | {pullRequest.AuthorLogin} | {daysSinceUpdate} |");
         }
 
@@ -137,9 +143,9 @@ public sealed class AuditDashboardMarkdownExporter : IAuditDashboardMarkdownExpo
         builder.AppendLine();
     }
 
-    private static int GetDaysBetween(DateTimeOffset value)
+    private static int GetDaysBetween(DateTimeOffset value, DateTimeOffset referenceUtc)
     {
-        var days = (int)Math.Floor((DateTimeOffset.UtcNow - value).TotalDays);
+        var days = (int)Math.Floor((referenceUtc.ToUniversalTime() - value.ToUniversalTime()).TotalDays);
         return Math.Max(days, 0);
     }
 

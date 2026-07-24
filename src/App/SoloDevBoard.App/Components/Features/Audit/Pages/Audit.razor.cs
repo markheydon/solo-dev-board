@@ -187,6 +187,9 @@ public partial class Audit : ComponentBase, IAsyncDisposable
             }
 
             isRefreshingAuditData = true;
+
+            // Trigger an immediate render so the refreshing indicator is visible before network calls begin.
+            await InvokeAsync(StateHasChanged);
         }
         else
         {
@@ -213,24 +216,30 @@ public partial class Audit : ComponentBase, IAsyncDisposable
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "Failed to load selected audit repositories due to a GitHub API error.");
-            if (!isBackgroundRefresh)
+            if (isBackgroundRefresh)
+            {
+                Snackbar.Add($"Background refresh failed. {ex.Message}", Severity.Warning);
+            }
+            else
             {
                 hasLoadedAuditSummary = false;
                 ResetDashboardData();
+                auditLoadErrorMessage = $"GitHub API request failed. {ex.Message}";
             }
-
-            auditLoadErrorMessage = $"GitHub API request failed. {ex.Message}";
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to load selected audit repositories.");
-            if (!isBackgroundRefresh)
+            if (isBackgroundRefresh)
+            {
+                Snackbar.Add("Background refresh failed due to an unexpected error.", Severity.Warning);
+            }
+            else
             {
                 hasLoadedAuditSummary = false;
                 ResetDashboardData();
+                auditLoadErrorMessage = "An unexpected error occurred while loading the audit summary.";
             }
-
-            auditLoadErrorMessage = "An unexpected error occurred while loading the audit summary.";
         }
         finally
         {

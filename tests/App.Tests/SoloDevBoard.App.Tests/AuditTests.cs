@@ -1,3 +1,4 @@
+using System.Reflection;
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
@@ -307,7 +308,7 @@ public sealed class AuditTests
     }
 
     [Fact]
-    public async Task Audit_WhenExportMarkdownIsClicked_CopiesFilteredSummaryToClipboard()
+    public async Task Audit_WhenExportMarkdownIsClicked_GeneratesMarkdownAndInvokesClipboardCopy()
     {
         // Arrange
         const string markdown = "# Audit Dashboard Summary";
@@ -321,7 +322,8 @@ public sealed class AuditTests
         _markdownExporter.GenerateSummaryMarkdown(Arg.Any<AuditDashboardMarkdownExportRequest>()).Returns(markdown);
 
         await using var ctx = CreateContext();
-        ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+        var clipboardModule = ctx.JSInterop.SetupModule("./Components/Features/Audit/Pages/Audit.razor.js");
+        clipboardModule.SetupVoid("copyTextToClipboard");
 
         // Act
         var cut = ctx.Render<Audit>();
@@ -336,10 +338,17 @@ public sealed class AuditTests
         // Assert
         cut.WaitForAssertion(() =>
         {
-            _markdownExporter.Received(1).GenerateSummaryMarkdown(Arg.Is<AuditDashboardMarkdownExportRequest>(request =>
-                request.SelectedRepositories.Count == 1 &&
-                string.Equals(request.SelectedRepositories[0], "owner/repo-a", StringComparison.Ordinal)));
+            _markdownExporter.Received(1).GenerateSummaryMarkdown(Arg.Any<AuditDashboardMarkdownExportRequest>());
+            clipboardModule.VerifyInvoke("copyTextToClipboard");
         });
+
+        var exportRequest = _markdownExporter.ReceivedCalls()
+            .Single(call => call.GetMethodInfo().Name == nameof(IAuditDashboardMarkdownExporter.GenerateSummaryMarkdown))
+            .GetArguments()[0] as AuditDashboardMarkdownExportRequest;
+
+        Assert.NotNull(exportRequest);
+        Assert.Single(exportRequest.SelectedRepositories);
+        Assert.Equal("owner/repo-a", exportRequest.SelectedRepositories[0]);
     }
 
     [Fact]
@@ -359,6 +368,135 @@ public sealed class AuditTests
             Assert.NotNull(cut.Find("[data-testid='audit-auto-refresh-select']"));
             Assert.Contains("Every 5 minutes", cut.Markup);
         });
+    }
+
+    [Fact]
+    public async Task Audit_WhenBackgroundRefreshRuns_ShowsRefreshingIndicatorWhileDataRemainsVisible()
+    {
+        // Arrange
+        var summary = new List<RepositoryAuditSummaryDto>
+        {
+            new("owner/repo-a", 1, 1, 0, 0, 0),
+        };
+
+        var refreshCompletionSource = new TaskCompletionSource<IReadOnlyList<RepositoryAuditSummaryDto>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var summaryCallCount = 0;
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
+        _auditDashboardService.GetAuditSummaryAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                summaryCallCount++;
+                return summaryCallCount == 1
+                    ? Task.FromResult<IReadOnlyList<RepositoryAuditSummaryDto>>(summary)
+                    : refreshCompletionSource.Task;
+            });
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Audit>();
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-command-surface']")));
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo-a" }));
+        cut.Find("[data-testid='audit-load-selected-button']").Click();
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-summary-table']")));
+
+        var refreshTask = InvokeBackgroundRefreshAsync(cut);
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='audit-refreshing-state']"));
+            Assert.Single(cut.FindAll("[data-testid='audit-summary-table']"));
+        });
+
+        await cut.InvokeAsync(() => refreshCompletionSource.SetResult(summary));
+        await refreshTask;
+    }
+
+    [Fact]
+    public async Task Audit_WhenBackgroundRefreshFails_KeepsExistingDataVisible()
+    {
+        // Arrange
+        var summary = new List<RepositoryAuditSummaryDto>
+        {
+            new("owner/repo-a", 1, 1, 0, 0, 0),
+        };
+
+        var summaryCallCount = 0;
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
+        _auditDashboardService.GetAuditSummaryAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                summaryCallCount++;
+                if (summaryCallCount == 1)
+                {
+                    return Task.FromResult<IReadOnlyList<RepositoryAuditSummaryDto>>(summary);
+                }
+
+                throw new HttpRequestException("rate limited");
+            });
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Audit>();
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-command-surface']")));
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo-a" }));
+        cut.Find("[data-testid='audit-load-selected-button']").Click();
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-summary-table']")));
+
+        await InvokeBackgroundRefreshAsync(cut);
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='audit-summary-table']"));
+            Assert.DoesNotContain("Unable to load audit summary", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task Audit_WhenAutoRefreshIntervalChangedToOff_UpdatesSelectedInterval()
+    {
+        // Arrange
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Audit>();
+        cut.WaitForAssertion(() => Assert.NotNull(cut.Find("[data-testid='audit-auto-refresh-select']")));
+
+        await InvokeAutoRefreshIntervalChangedAsync(cut, 0);
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            var selectedInterval = (int)typeof(Audit)
+                .GetField("selectedAutoRefreshIntervalMinutes", BindingFlags.Instance | BindingFlags.NonPublic)!
+                .GetValue(cut.Instance)!;
+            Assert.Equal(0, selectedInterval);
+        });
+    }
+
+    private static async Task InvokeBackgroundRefreshAsync(IRenderedComponent<Audit> cut)
+    {
+        var method = typeof(Audit).GetMethod("LoadAuditDataAsync", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(method);
+
+        await cut.InvokeAsync(async () => await (Task)method!.Invoke(cut.Instance, [true])!);
+    }
+
+    private static async Task InvokeAutoRefreshIntervalChangedAsync(IRenderedComponent<Audit> cut, int intervalMinutes)
+    {
+        var method = typeof(Audit).GetMethod("OnAutoRefreshIntervalChanged", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(method);
+
+        await cut.InvokeAsync(async () => await (Task)method!.Invoke(cut.Instance, [intervalMinutes])!);
     }
 
     private BunitContext CreateContext()
