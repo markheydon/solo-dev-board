@@ -136,7 +136,7 @@ Follow the taxonomy in [`plan/LABEL_STRATEGY.md`](plan/LABEL_STRATEGY.md). Apply
 
 - Production deployment uses **Aspire** (`aspire deploy`) from `SoloDevBoard.AppHost` to **Azure Container Apps** ([DEC-015](plan/DECISIONS.md#dec-015-aspire-azure-container-apps-deployment)).
 - Aspire generates and applies deployment Bicep at deploy time; do not maintain hand-authored `infra/*.bicep` for production hosting.
-- Secrets for hosted deployments are supplied via AppHost parameters from GitHub Environment secrets at deploy time.
+- Hosted authentication secrets (`gh-pat`, `gh-app-client-secret`) are supplied via AppHost parameters at deploy time and persisted in an Aspire-provisioned Azure Key Vault as Key Vault references on the Container App ([DEC-017](plan/DECISIONS.md#dec-017-key-vault-backed-hosted-auth-secrets)). Other parameters remain plain environment variables.
 - See `docs/deployment.md` for operator deployment instructions.
 
 ---
@@ -152,7 +152,7 @@ This repository is **open source and public**. The following guidelines ensure s
 - **GitHub Tokens for repository automation:** Repository-scoped GitHub Actions bridge tokens may be stored in GitHub Secrets when they are used only for repository/project automation workflows (for example, the SoloDevBoard roadmap bridge) and cannot be replaced by `GITHUB_TOKEN`.
 - **Local Development:** Use `dotnet user-secrets` for the legacy `dotnet run` path, or `aspire secret set` for Aspire AppHost. See `docs/getting-started.md` for setup instructions.
 - **App Settings Files:** `appsettings.json` and related files leave sensitive fields empty and instantiate with environment variables or secrets at runtime.
-- **Aspire Deployments:** Secrets are supplied as AppHost parameters from GitHub Environment secrets and injected into the `app` resource at deploy time. See `src/SoloDevBoard.AppHost/README.md` and `docs/deployment.md` for parameter mappings.
+- **Aspire Deployments:** Secret parameters are supplied from GitHub Environment secrets at deploy time, persisted in an Aspire-provisioned Key Vault, and referenced by the Container App. See `src/SoloDevBoard.AppHost/README.md`, `docs/deployment.md`, and `plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md` for parameter mappings.
 - **CI/CD:** GitHub Actions workflows use OIDC authentication with Azure (no long-lived credentials) and GitHub Environment secrets for AppHost parameters.
 
 ### Contributing & Pull Requests

@@ -2,7 +2,7 @@
 
 Aspire orchestrates the SoloDevBoard web app for local development, dev containers, Codespaces, and **production deployment to Azure Container Apps** ([DEC-015](../../plan/DECISIONS.md#dec-015-aspire-azure-container-apps-deployment)).
 
-GitHub authentication is configured through **AppHost parameters**, which are injected into the `app` resource as environment variables.
+GitHub authentication is configured through **AppHost parameters**. In local development they are injected into the `app` resource as environment variables. In deploy mode, secret parameters are persisted in Azure Key Vault and referenced by the Container App.
 
 Use `-` on inactive parameters. Shipped defaults are in `src/SoloDevBoard.AppHost/appsettings.json`; production non-secret defaults are in `src/SoloDevBoard.AppHost/appsettings.Production.json`. Values saved from the Aspire dashboard are stored in user secrets and **override** those defaults.
 
@@ -66,6 +66,19 @@ Application Insights is deploy-time only. Local telemetry uses the Aspire dashbo
 ## Production deployment
 
 Deployment uses `aspire deploy` to Azure Container Apps with scale-to-zero. Application Insights and structured logging are provisioned automatically. See [docs/deployment.md](../docs/deployment.md) and [docs/user-guide/observability.md](../docs/user-guide/observability.md) for the full operator guide.
+
+### Key Vault-backed auth secrets
+
+In publish/deploy mode, hosted authentication secrets are persisted in an Aspire-provisioned `auth-secrets` Key Vault and injected into the Container App as Key Vault references — not plain-text app settings. This applies to:
+
+| Secret parameter | Key Vault secret name | App configuration key |
+|---|---|---|
+| `gh-pat` | `gh-pat` | `GitHubAuth__PersonalAccessToken` |
+| `gh-app-client-secret` | `gh-app-client-secret` | `GitHubAuth__HostedGitHubAppClientSecret` |
+
+Local `aspire start` continues to bind these parameters directly from user secrets or the Aspire dashboard. Deploy-time input is unchanged: supply `Parameters__gh_pat` and `Parameters__gh_app_client_secret` as before.
+
+See [plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md](../../plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md) for the full pattern.
 
 Preview deployment steps:
 

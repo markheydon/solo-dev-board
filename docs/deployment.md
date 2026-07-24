@@ -101,6 +101,8 @@ In **Settings → Environments → production**, add:
 | `GH_PAT` | `-` for hosted sign-in, or a PAT for trusted self-hosted PAT mode |
 | `GH_APP_CLIENT_SECRET` | GitHub App client secret for hosted sign-in |
 
+Secret parameters are written to the Aspire-provisioned `auth-secrets` Key Vault at deploy time and referenced by the Container App. You do not create or manage Key Vault secrets manually for the default deployment path.
+
 **Variables**
 
 | Variable | Example | Purpose |
@@ -173,6 +175,7 @@ Aspire generates and applies Bicep at deploy time. A typical deployment includes
 | Azure Container Apps environment | Hosts the containerised app (Consumption profile) |
 | Container App (`app`) | Runs SoloDevBoard (scale-to-zero enabled) |
 | Azure Container Registry | Stores built container images |
+| Azure Key Vault (`auth-secrets`) | Stores hosted auth secret parameters as Key Vault secrets |
 | Application Insights | Application logs, metrics, and distributed traces |
 | Log Analytics workspace | Container platform logs and Application Insights backing store |
 | Aspire dashboard | Optional operational dashboard (Aspire default) |
@@ -213,5 +216,6 @@ az identity delete --name id-solodevboard-cd-prod --resource-group rg-solodevboa
 | Cold start / SignalR disconnect | Scale-to-zero idle | Expected; refresh the page or wait for the container to warm up |
 | 403 after sign-in | Allow-list | Update `ALLOWED_USER_LOGINS` or `ALLOWED_ORG_LOGINS` |
 | Callback URL mismatch | Stale GitHub App setting | Update callback to `https://<aca-fqdn>/auth/callback` |
+| Secret not visible in Container App settings | Key Vault reference | Expected — inspect the `auth-secrets` vault for secret names; values are resolved at runtime |
 
-For local development, see [Getting Started](getting-started.md). For hosted authentication details, see [Hosted Authentication](user-guide/hosted-authentication.md).
+For local development, see [Getting Started](getting-started.md). For hosted authentication details, see [Hosted Authentication](user-guide/hosted-authentication.md). For the Key Vault pattern, see [plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md](../plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md).

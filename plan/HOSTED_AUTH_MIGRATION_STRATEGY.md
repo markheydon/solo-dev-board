@@ -35,7 +35,7 @@ Work for this migration gate was carried out on the issue branch for #118 and de
 
 ## Hosted Configuration and Secret Migration Expectations
 
-1. Hosted deployments continue to source secrets from Azure Key Vault-backed app settings, never from committed files.
+1. Hosted deployments source authentication secrets from an Aspire-provisioned Azure Key Vault at deploy time; see [plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md](HOSTED_AUTH_KEY_VAULT_PATTERN.md).
 2. Hosted baseline for Feature #103 prioritises GitHub App authentication material and admission control configuration.
 3. Existing Key Vault-backed PAT reference remains only for local trusted mode compatibility and operational continuity until the hosted cutover completes.
 4. OAuth App secret material is not required for the default hosted path; introduce it only if explicit fallback criteria are met.

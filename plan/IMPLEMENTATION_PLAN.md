@@ -230,7 +230,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Restrict hosted access to operator-managed user and organisation allow-lists, with deny-by-default admission control. _(#103, #117; implemented on 2026-03-16; see ADR-0014, ADR-0015, and plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_
 - [x] Remove or demote the separate OAuth App dependency where GitHub App user authentication satisfies hosted sign-in requirements. _(#103, #113; implemented on 2026-03-16; see ADR-0015 and plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_
 - [x] Define and execute the migration and compatibility path away from the superseded hybrid hosted-authentication plan. _(#103, #118; strategy locked in plan/HOSTED_AUTH_MIGRATION_STRATEGY.md on 2026-03-13.)_
-- [ ] Persist hosted authentication material securely using Azure Key Vault-backed patterns where required. _(#250)_
+- [x] Persist hosted authentication material securely using Azure Key Vault-backed patterns where required. _(#250; see plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md.)_
 - [x] Replace the single-user `ICurrentUserContext` adapter with a per-request, per-user implementation backed by the hosted authentication session when hosted mode is enabled. _(Implemented on 2026-03-13; PAT-only local trusted mode preserved.)_
 - [ ] Enable CD pipeline with production environment gate (`.github/workflows/cd.yml` via `aspire deploy`). _(#251)_
 - [ ] Write end-to-end tests for critical user journeys. _(#255)_
