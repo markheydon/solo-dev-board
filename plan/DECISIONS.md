@@ -162,6 +162,15 @@ A formal migration to GitHub Spec Kit is planned — see [`plan/SPEC_KIT_MIGRATI
 
 ---
 
+### DEC-017: Key Vault-backed hosted auth secrets
+
+**Status:** Active  
+**Date:** 2026-07-24  
+**Constitution:** [AGENTS.md — Infrastructure](../AGENTS.md#infrastructure)  
+**Summary:** Hosted authentication secret parameters (`gh-pat`, `gh-app-client-secret`) are persisted in an Aspire-provisioned Azure Key Vault at deploy time and injected into Azure Container Apps as Key Vault references. Local development continues to bind secret parameters directly from Aspire user secrets. Non-secret hosted auth configuration remains plain environment variables. Reject storing hosted auth secrets in container images, committed files, or plain-text Container App settings in production.
+
+---
+
 ## Superseded legacy (archive only)
 
 | Legacy ADR | Superseded by | Notes |

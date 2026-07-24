@@ -1,3 +1,5 @@
+using Azure.Provisioning.KeyVault;
+
 var builder = DistributedApplication.CreateBuilder(args);
 
 builder.AddAzureContainerAppEnvironment("aca");
@@ -27,9 +29,7 @@ var app = builder.AddProject<Projects.SoloDevBoard_App>("app")
     .WithHttpHealthCheck("/health")
     .WithExternalHttpEndpoints()
     .WithEnvironment("GitHubAuth__HostedSignInEnabled", hostedSignInEnabled)
-    .WithEnvironment("GitHubAuth__PersonalAccessToken", githubPat)
     .WithEnvironment("GitHubAuth__HostedGitHubAppClientId", ghAppClientId)
-    .WithEnvironment("GitHubAuth__HostedGitHubAppClientSecret", ghAppClientSecret)
     .WithEnvironment("HostedAdmissionControl__Enabled", hostedAdmissionEnabled)
     .WithEnvironment("HostedAdmissionControl__AllowedUserLogins", allowedUserLogins)
     .WithEnvironment("HostedAdmissionControl__AllowedOrganisationLogins", allowedOrgLogins)
@@ -41,7 +41,23 @@ var app = builder.AddProject<Projects.SoloDevBoard_App>("app")
 
 if (builder.ExecutionContext.IsPublishMode)
 {
-    app = app.WithReference(builder.AddAzureApplicationInsights("app-insights"));
+    var authSecretsVault = builder.AddAzureKeyVault("auth-secrets");
+
+    authSecretsVault.AddSecret("gh-pat", githubPat);
+    authSecretsVault.AddSecret("gh-app-client-secret", ghAppClientSecret);
+
+    app = app
+        .WithRoleAssignments(authSecretsVault, KeyVaultBuiltInRole.KeyVaultSecretsUser)
+        .WithReference(authSecretsVault)
+        .WithEnvironment("GitHubAuth__PersonalAccessToken", authSecretsVault.GetSecret("gh-pat"))
+        .WithEnvironment("GitHubAuth__HostedGitHubAppClientSecret", authSecretsVault.GetSecret("gh-app-client-secret"))
+        .WithReference(builder.AddAzureApplicationInsights("app-insights"));
+}
+else
+{
+    app = app
+        .WithEnvironment("GitHubAuth__PersonalAccessToken", githubPat)
+        .WithEnvironment("GitHubAuth__HostedGitHubAppClientSecret", ghAppClientSecret);
 }
 
 app.WithEnvironment("GitHubAuth__HostedSignInCallbackBaseUri", app.GetEndpoint("https"));
