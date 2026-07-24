@@ -14,6 +14,7 @@ namespace SoloDevBoard.App.Tests;
 public sealed class AuditTests
 {
     private readonly IAuditDashboardService _auditDashboardService = Substitute.For<IAuditDashboardService>();
+    private readonly IAuditDashboardMarkdownExporter _markdownExporter = Substitute.For<IAuditDashboardMarkdownExporter>();
     private readonly IRepositoryService _repositoryService = Substitute.For<IRepositoryService>();
 
     [Fact]
@@ -275,6 +276,91 @@ public sealed class AuditTests
         await _auditDashboardService.Received(1).GetFailingWorkflowRunsAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 1 && repos[0] == "owner/repo-a"), Arg.Any<CancellationToken>());
     }
 
+    [Fact]
+    public async Task Audit_WhenAuditSummaryIsLoaded_ShowsAutoRefreshSelectorAndExportButton()
+    {
+        // Arrange
+        var summary = new List<RepositoryAuditSummaryDto>
+        {
+            new("owner/repo-a", 1, 1, 0, 0, 0),
+        };
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
+        _auditDashboardService.GetAuditSummaryAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(summary);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Audit>();
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-command-surface']")));
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo-a" }));
+        cut.Find("[data-testid='audit-load-selected-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.NotNull(cut.Find("[data-testid='audit-auto-refresh-select']"));
+            Assert.Single(cut.FindAll("[data-testid='audit-export-markdown-button']"));
+            Assert.False(cut.Find("[data-testid='audit-export-markdown-button']").HasAttribute("disabled"));
+        });
+    }
+
+    [Fact]
+    public async Task Audit_WhenExportMarkdownIsClicked_CopiesFilteredSummaryToClipboard()
+    {
+        // Arrange
+        const string markdown = "# Audit Dashboard Summary";
+        var summary = new List<RepositoryAuditSummaryDto>
+        {
+            new("owner/repo-a", 1, 1, 0, 0, 0),
+        };
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
+        _auditDashboardService.GetAuditSummaryAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(summary);
+        _markdownExporter.GenerateSummaryMarkdown(Arg.Any<AuditDashboardMarkdownExportRequest>()).Returns(markdown);
+
+        await using var ctx = CreateContext();
+        ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+        // Act
+        var cut = ctx.Render<Audit>();
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-command-surface']")));
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo-a" }));
+        cut.Find("[data-testid='audit-load-selected-button']").Click();
+
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-export-markdown-button']")));
+        cut.Find("[data-testid='audit-export-markdown-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            _markdownExporter.Received(1).GenerateSummaryMarkdown(Arg.Is<AuditDashboardMarkdownExportRequest>(request =>
+                request.SelectedRepositories.Count == 1 &&
+                string.Equals(request.SelectedRepositories[0], "owner/repo-a", StringComparison.Ordinal)));
+        });
+    }
+
+    [Fact]
+    public async Task Audit_WhenRendered_ShowsDefaultAutoRefreshInterval()
+    {
+        // Arrange
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Audit>();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.NotNull(cut.Find("[data-testid='audit-auto-refresh-select']"));
+            Assert.Contains("Every 5 minutes", cut.Markup);
+        });
+    }
+
     private BunitContext CreateContext()
     {
         _auditDashboardService.GetUnlabelledIssuesAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<IssueDto>());
@@ -287,6 +373,7 @@ public sealed class AuditTests
         ctx.Services.AddTestHostedAuthenticationRecovery();
         ctx.Services.AddScoped(_ => _repositoryService);
         ctx.Services.AddScoped(_ => _auditDashboardService);
+        ctx.Services.AddSingleton(_ => _markdownExporter);
 
         ctx.Render<MudPopoverProvider>();
         ctx.Render<MudDialogProvider>();

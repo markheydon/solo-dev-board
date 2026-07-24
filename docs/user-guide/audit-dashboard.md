@@ -23,6 +23,9 @@ The Audit Dashboard provides a summary of open issues, open pull requests, repos
 - KPI summary cards display total open issues, total open pull requests, unlabelled issues, and failing workflows across all selected repositories.
 - Health indicator sections are grouped in a dedicated container below the KPI summary, making it easier to scan repository health at a glance.
 - Feedback states (loading, empty, error, and prompt) are surfaced through a consistent feedback region, ensuring users always understand the current state of the dashboard.
+- Auto-refresh can be configured from the repository selector command surface (off, every 1 minute, every 5 minutes, or every 15 minutes). The default interval is every 5 minutes.
+- During auto-refresh, a progress indicator appears above the KPI summary while existing data remains visible.
+- **Export Markdown** copies the current audit summary to the clipboard as a Markdown report that respects the selected repository filter.
 - All UI elements follow the wireframe-aligned layout for improved clarity and usability.
 - The browser page title is set to 'Audit Dashboard — SoloDevBoard'.
 - The Unlabelled Issues section shows issues without any labels, including repository, issue number, title, and age.
@@ -43,8 +46,10 @@ The Audit Dashboard provides a summary of open issues, open pull requests, repos
 8. Review the KPI summary cards for a quick overview of repository health.
 9. Expand grouped health indicator sections to see details about unlabelled issues, stale pull requests, and failing workflows.
 10. Observe feedback states in the feedback region for loading, empty, error, or prompt messages.
-11. Click links in health sections to open items in GitHub (in a new tab).
-12. To change the repository set, adjust the selector and click **Load selected repositories** again.
+11. Optionally set **Auto-refresh** to keep the loaded summary up to date at your chosen interval.
+12. Click **Export Markdown** to copy the current summary to the clipboard for pasting into planning documents.
+13. Click links in health sections to open items in GitHub (in a new tab).
+14. To change the repository set, adjust the selector and click **Load selected repositories** again.
 
 ## Notes
 
@@ -53,5 +58,3 @@ Zero-state messages are shown when no items are found in a health indicator sect
 - "No stale pull requests — great."
 - "No failing workflows — great."
 Feedback region also displays loading, error, and prompt messages to guide the user through dashboard states.
-
-For deferred enhancements, see GitHub Issues [#258](https://github.com/markheydon/solo-dev-board/issues/258) and [#259](https://github.com/markheydon/solo-dev-board/issues/259).
