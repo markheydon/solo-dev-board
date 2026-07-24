@@ -2,8 +2,6 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 builder.AddAzureContainerAppEnvironment("aca");
 
-var appInsights = builder.AddAzureApplicationInsights("app-insights");
-
 var hostedSignInEnabled = builder.AddParameter("hosted-sign-in-enabled")
     .WithDescription("Enable GitHub App hosted sign-in at /auth/sign-in. When false, PAT mode is used (default).");
 
@@ -26,7 +24,6 @@ var allowedOrgLogins = builder.AddParameter("allowed-org-logins")
     .WithDescription("Comma-separated GitHub organisation logins for hosted admission. Use '-' when using allowed-user-logins instead, or in PAT mode.");
 
 var app = builder.AddProject<Projects.SoloDevBoard_App>("app")
-    .WithReference(appInsights)
     .WithHttpHealthCheck("/health")
     .WithExternalHttpEndpoints()
     .WithEnvironment("GitHubAuth__HostedSignInEnabled", hostedSignInEnabled)
@@ -41,6 +38,11 @@ var app = builder.AddProject<Projects.SoloDevBoard_App>("app")
         containerApp.Template.Scale.MinReplicas = 0;
         containerApp.Template.Scale.MaxReplicas = 1;
     });
+
+if (builder.ExecutionContext.IsPublishMode)
+{
+    app = app.WithReference(builder.AddAzureApplicationInsights("app-insights"));
+}
 
 app.WithEnvironment("GitHubAuth__HostedSignInCallbackBaseUri", app.GetEndpoint("https"));
 

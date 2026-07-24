@@ -129,7 +129,7 @@ Run the AppHost and open the Aspire dashboard:
 aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 ```
 
-Structured logs, traces, and metrics for the `app` resource appear in the dashboard via OTLP. Application Insights export is inactive locally unless you provide a connection string.
+Structured logs, traces, and metrics for the `app` resource appear in the dashboard via OTLP. The AppHost registers Application Insights only in publish/deploy mode, so no Azure credentials or deployment metadata are required for local runs. Application Insights export is inactive locally.
 
 ---
 
