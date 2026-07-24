@@ -24,6 +24,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<ILabelManagerService, LabelService>();
         services.AddScoped<IMigrationService, MigrationService>();
         services.AddScoped<IAuditDashboardService, AuditDashboardService>();
+        services.AddSingleton<IAuditDashboardMarkdownExporter, AuditDashboardMarkdownExporter>();
         services.AddScoped<IBoardRulesService, BoardRulesService>();
         services.AddScoped<ITriageService, TriageService>();
         services.AddScoped<IWorkflowTemplateService, WorkflowTemplateService>();

@@ -56,7 +56,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Milestone:** v0.2.0
 
-**Status:** Complete. Core Label Manager and Audit Dashboard features are delivered. Label consistency warnings and Audit Dashboard enhancements (auto-refresh, Markdown export) are deferred — see [#289](https://github.com/markheydon/solo-dev-board/issues/289) and child issues.
+**Status:** Complete. Core Label Manager and Audit Dashboard features are delivered, including Audit Dashboard auto-refresh ([#258](https://github.com/markheydon/solo-dev-board/issues/258)) and Markdown export ([#259](https://github.com/markheydon/solo-dev-board/issues/259)). Label consistency warnings remain deferred — see [#289](https://github.com/markheydon/solo-dev-board/issues/289) and child issues.
 
 ### Key Tasks
 
