@@ -33,14 +33,14 @@ We are committed to providing a welcoming and inclusive environment for all cont
 
 3. **Configure GitHub authentication (Aspire, recommended):**
 
-   For solo local development, use **PAT mode** (the default). Set your token via AppHost parameters:
+   For solo local development, use **PAT-only local trusted mode** (the default). Set your token via AppHost parameters:
 
    ```bash
    aspire secret set Parameters:gh-pat "<your-github-pat>"
    aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
-```
+   ```
 
-   Your GitHub login is resolved automatically from the PAT. See [`src/SoloDevBoard.AppHost/README.md`](src/SoloDevBoard.AppHost/README.md) for hosted sign-in parameters.
+   Your GitHub login is resolved automatically from the PAT. See [Getting Started — PAT-only local trusted mode](docs/getting-started.md#pat-only-local-trusted-mode) and [`src/SoloDevBoard.AppHost/README.md`](src/SoloDevBoard.AppHost/README.md) for the mode comparison and hosted sign-in parameters.
 4. **Open the app:**
    ```bash
    aspire describe

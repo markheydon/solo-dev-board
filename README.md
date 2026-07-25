@@ -42,7 +42,7 @@ Ensure you have the following installed:
 
 ### Run Locally
 
-SoloDevBoard uses **Aspire for local orchestration and production deployment** to Azure Container Apps. Two authentication modes are available: **PAT mode** (default, for solo local development) and **hosted sign-in** (GitHub App, for production). See [Getting Started](docs/getting-started.md#choose-your-authentication-mode) for the full mode guide.
+SoloDevBoard uses **Aspire for local orchestration and production deployment** to Azure Container Apps. Two authentication modes are available: **PAT-only local trusted mode** (default, for solo local development and trusted personal self-hosting) and **hosted sign-in** (GitHub App, for shared or public deployments). See [Getting Started — PAT-only local trusted mode](docs/getting-started.md#pat-only-local-trusted-mode) for the mode comparison.
 
 **Quick start with Aspire (recommended):**
 
@@ -54,7 +54,7 @@ cd solo-dev-board
 # Restore dependencies
 dotnet restore SoloDevBoard.slnx
 
-# Configure GitHub auth — one secret for PAT mode
+# Configure GitHub auth — one secret for PAT-only local trusted mode
 aspire secret set Parameters:gh-pat "<your-pat>"
 
 # Start with Aspire
@@ -74,7 +74,7 @@ dotnet run --project src/App/SoloDevBoard.App
 
 For **hosted sign-in mode** (GitHub App), see [docs/getting-started.md](docs/getting-started.md#hosted-sign-in-mode-setup) or [`src/SoloDevBoard.AppHost/README.md`](src/SoloDevBoard.AppHost/README.md).
 
-Aspire is used for both local orchestration and production deployment to Azure Container Apps. See [docs/deployment.md](docs/deployment.md) for Azure deployment instructions.
+Aspire is used for both local orchestration and production deployment to Azure Container Apps. See [docs/deployment.md](docs/deployment.md) for Azure deployment instructions, including the [self-hoster PAT path](docs/deployment.md#self-hoster-deployment-pat-mode) for a personal instance on your own subscription.
 
 ## Project Structure
 

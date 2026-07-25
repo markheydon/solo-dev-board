@@ -147,7 +147,7 @@ Use `-` on inactive parameters. Shipped defaults are in `src/SoloDevBoard.AppHos
 
 Use the Aspire dashboard **Parameters** tab (or `aspire secret set` for secrets). Restart Aspire after changing mode.
 
-**Switch to PAT mode**
+**Switch to PAT-only local trusted mode**
 
 | Parameter | Action |
 |---|---|

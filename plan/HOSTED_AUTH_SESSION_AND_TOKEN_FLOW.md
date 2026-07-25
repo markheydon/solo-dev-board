@@ -79,16 +79,14 @@ See [DEC-012](DECISIONS.md#dec-012-github-app-first-hosted-authentication) and G
 
 ## Remaining V1 Auth Polish
 
-The hosted sign-in and admission-control boundaries above are delivered. The following open stories complete the V1 auth polish bundle without changing the operator secret model (Aspire parameters, user secrets, and Key Vault remain the configuration surface):
+The hosted sign-in and admission-control boundaries above are delivered. Operator secrets remain Aspire parameters, user secrets, and Key Vault — in-app secret editing is out of scope.
 
-| Issue | Scope |
-|-------|-------|
-| [#249](https://github.com/markheydon/solo-dev-board/issues/249) | Hosted unauthenticated landing page and sign-out return path |
-| [#314](https://github.com/markheydon/solo-dev-board/issues/314) | PAT-mode GitHub connectivity readiness (startup probe, shell status, recovery UX, optional `/health/github`) |
-| [#247](https://github.com/markheydon/solo-dev-board/issues/247) | PAT-only local trusted mode documentation |
-| [#248](https://github.com/markheydon/solo-dev-board/issues/248) | Self-hoster deployment documentation |
-
-In-app secret or environment-variable editing is explicitly out of scope for these stories.
+| Issue | Scope | Status |
+|-------|-------|--------|
+| [#249](https://github.com/markheydon/solo-dev-board/issues/249) | Hosted unauthenticated landing page and sign-out return path | Done |
+| [#314](https://github.com/markheydon/solo-dev-board/issues/314) | PAT-mode GitHub connectivity readiness (startup probe, shell status, recovery UX, optional `/health/github`) | Done |
+| [#247](https://github.com/markheydon/solo-dev-board/issues/247) | PAT-only local trusted mode documentation | Docs in [PR #324](https://github.com/markheydon/solo-dev-board/pull/324); see [getting-started.md](../docs/getting-started.md#pat-only-local-trusted-mode) |
+| [#248](https://github.com/markheydon/solo-dev-board/issues/248) | Self-hoster deployment documentation | Docs in [PR #324](https://github.com/markheydon/solo-dev-board/pull/324); see [deployment.md](../docs/deployment.md#self-hoster-deployment-pat-mode) |
 
 ## Rollout Notes
 
