@@ -27,6 +27,24 @@ public sealed class HostedAuthErrorPageRendererTests
     }
 
     [Fact]
+    public void Render_AccessDeniedReason_UsesApplicationThemeColours()
+    {
+        // Arrange
+        var context = new DefaultHttpContext();
+
+        // Act
+        var page = HostedAuthErrorPageRenderer.Render(
+            context,
+            HostedAuthErrorRoutes.AccessDenied,
+            new GitHubAuthOptions());
+
+        // Assert
+        Assert.Contains("#167c38", page.Html, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("#ffffff", page.Html, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("#594ae2", page.Html, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void Render_AccessDeniedWithAuthenticatedUser_ShowsSignedInLogin()
     {
         // Arrange
