@@ -43,8 +43,8 @@ if (builder.ExecutionContext.IsPublishMode)
 {
     var authSecretsVault = builder.AddAzureKeyVault("auth-secrets");
 
-    authSecretsVault.AddSecret("gh-pat", githubPat);
-    authSecretsVault.AddSecret("gh-app-client-secret", ghAppClientSecret);
+    authSecretsVault.AddSecret("auth-gh-pat", "gh-pat", githubPat);
+    authSecretsVault.AddSecret("auth-gh-app-client-secret", "gh-app-client-secret", ghAppClientSecret);
 
     app = app
         .WithRoleAssignments(authSecretsVault, KeyVaultBuiltInRole.KeyVaultSecretsUser)
