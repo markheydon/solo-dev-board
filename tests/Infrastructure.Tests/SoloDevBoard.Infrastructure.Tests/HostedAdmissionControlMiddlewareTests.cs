@@ -141,6 +141,28 @@ public sealed class HostedAdmissionControlMiddlewareTests
         Assert.True(nextCalled);
     }
 
+    [Theory]
+    [InlineData("/health")]
+    [InlineData("/alive")]
+    public async Task InvokeAsync_UnauthenticatedHealthEndpoint_InvokesNextMiddleware(string requestPath)
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+
+        var context = CreateHttpContext(isAuthenticated: false, acceptHeader: "text/html");
+        context.Request.Path = requestPath;
+        var nextCalled = false;
+        var middleware = CreateMiddleware(_ =>
+        {
+            nextCalled = true;
+            return Task.CompletedTask;
+        });
+        var evaluator = CreateEvaluator(new HostedAdmissionDecision(false, "Hosted request is not authenticated."));
+
+        await middleware.InvokeAsync(context, evaluator);
+
+        Assert.True(nextCalled);
+    }
+
     private static HostedAdmissionControlMiddleware CreateMiddleware(
         RequestDelegate next,
         HostedAdmissionControlOptions? admissionOptions = null) =>

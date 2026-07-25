@@ -185,6 +185,53 @@ See [Azure Deployment Costs](user-guide/azure-costs.md) for cost guidance.
 
 ---
 
+## Health checks and Container Apps probes
+
+SoloDevBoard exposes two HTTP health endpoints via `SoloDevBoard.ServiceDefaults`:
+
+| Endpoint | Purpose | Checks included |
+|---|---|---|
+| `GET /health` | **Readiness** — the app can accept traffic after startup | All registered health checks |
+| `GET /alive` | **Liveness** — the process is responsive | Checks tagged `live` only (the built-in `self` check) |
+
+Both endpoints return `200 OK` with a `Healthy` body when checks pass. They are excluded from distributed tracing to reduce noise (see [Observability](user-guide/observability.md)).
+
+### Liveness versus readiness design
+
+| Probe type | Endpoint | Rationale |
+|---|---|---|
+| **Liveness** | `/alive` | Confirms the ASP.NET Core host is running. A failure here indicates the container should be restarted. |
+| **Readiness** | `/health` | Confirms the app finished startup and can serve requests. Used by Azure Container Apps after scale-from-zero and during deployments. |
+
+SoloDevBoard deliberately does **not** include GitHub API or other external dependency checks in health probes. External outages should surface as application errors and telemetry, not as container restarts or traffic withdrawal.
+
+### Azure Container Apps configuration
+
+The AppHost registers the readiness probe path for the `app` resource:
+
+```csharp
+.WithHttpHealthCheck("/health")
+```
+
+Aspire applies this as the Container App HTTP probe during `aspire deploy`. No manual Bicep or portal configuration is required for the default deployment path. Aspire wires `/health` as the platform probe; `/alive` remains available for manual liveness checks but is not configured as a separate ACA probe in the default AppHost model.
+
+After deployment, verify probes from the Azure portal:
+
+1. Open the Container App resource created by Aspire.
+2. Select **Containers** → your revision → **Health probes**.
+3. Confirm the HTTP probe targets `/health`.
+
+To test manually against the deployed FQDN:
+
+```bash
+curl -sf "https://<container-app-fqdn>/health"
+curl -sf "https://<container-app-fqdn>/alive"
+```
+
+The CD workflow and Playwright smoke tests also call `/health` during CI to confirm the app is ready before browser tests run.
+
+---
+
 ## Teardown
 
 To remove Aspire-managed resources:

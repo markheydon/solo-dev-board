@@ -114,6 +114,11 @@ public sealed class HostedAdmissionControlMiddleware(
             return true;
         }
 
+        if (path.StartsWithSegments("/health") || path.StartsWithSegments("/alive"))
+        {
+            return true;
+        }
+
         if (path.StartsWithSegments("/_framework") || path.StartsWithSegments("/_content"))
         {
             return true;
