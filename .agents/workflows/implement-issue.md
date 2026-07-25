@@ -12,6 +12,8 @@
 - For UI work, read the linked wireframe from [`plan/wireframes/`](../../plan/wireframes/).
 - Invoke `dotnet-best-practices` during preflight for all issues; invoke `mudblazor` for UI issues.
 - Apply the tiered proceed gate: auto-continue for `size/xs`, `size/s`, and `type/bug`; pause for `size/m+` and all `type/enabler` issues.
+- After the proceed gate, set `status/in-progress` on the issue (see Mark Work Started in the Delivery contract) before creating the feature branch.
+- Do not set `status/in-progress` during standalone `/preflight-issue`.
 - Consult other skills when relevant — do not require reading every skill up front.
 
 ### Area label → codebase hints

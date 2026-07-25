@@ -6,7 +6,7 @@
 
 ## Easy-to-miss specifics
 
-- Run preflight only — do not create a feature branch or write code.
+- Run preflight only — do not create a feature branch, write code, or change issue labels.
 - Follow Implementation Preflight in the Delivery contract (load context, validate readiness, codebase discovery, sketch).
 - Area label → codebase hints: see [implement-issue workflow](implement-issue.md).
 - Always pause after the **Preflight Complete** output, even for `size/xs` and `size/s` issues.

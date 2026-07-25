@@ -219,61 +219,26 @@ gh issue edit "$issueNumber" --repo markheydon/solo-dev-board --add-assignee mar
 
 ### Event 2: Implementation Started (Delivery Agent responsibility)
 
-When beginning work on an issue, set Status to "In Progress", set Start Date to today, and set Target Date using the size calibration table above. This transition can start from **Todo** or **Up Next**.
-
-```bash
-# Step 1: Find the project item ID for the issue.
-item_id=$(gh project item-list 8 --owner markheydon --format json --jq ".items[] | select(.content.number == $issueNumber) | .id" | head -n1)
-
-# Step 2: Update Status → In Progress.
-gh project item-edit \
-    --id "$item_id" \
-    --project-id "PVT_kwHOAJefG84BQ6bh" \
-    --field-id "PVTSSF_lAHOAJefG84BQ6bhzg-5WGY" \
-    --single-select-option-id "47fc9ee4"
-
-# Optional: Clear Focus Order once work starts so the queue only shows unstarted items.
-gh project item-edit --id "$item_id" --project-id "PVT_kwHOAJefG84BQ6bh" --field-id "PVTF_lAHOAJefG84BQ6bhzg_Lx34" --clear
-
-# Step 3: Set Start Date = today.
-today=$(date +%F)
-gh project item-edit \
-    --id "$item_id" \
-    --project-id "PVT_kwHOAJefG84BQ6bh" \
-    --field-id "PVTF_lAHOAJefG84BQ6bhzg-5WQE" \
-    --date "$today"
-
-# Step 4: Set Target Date = today + calendar days from size calibration table.
-#   xs → +1 day, s → +1 day, m → +3 days, l → +7 days, xl → +14 days.
-size_label=$(gh api "repos/markheydon/solo-dev-board/issues/$issueNumber" --jq '[.labels[].name | select(startswith("size/"))] | first')
-case "$size_label" in
-    "size/xs"|"size/s") calendar_days=1 ;;
-    "size/m") calendar_days=3 ;;
-    "size/l") calendar_days=7 ;;
-    "size/xl") calendar_days=14 ;;
-    *) calendar_days=3 ;;
-esac
-target_date=$(date -d "+$calendar_days day" +%F)
-gh project item-edit \
-    --id "$item_id" \
-    --project-id "PVT_kwHOAJefG84BQ6bh" \
-    --field-id "PVTF_lAHOAJefG84BQ6bhzg-5WQw" \
-    --date "$target_date"
-```
-
-Also update the issue label:
+When beginning work on an issue, apply `status/in-progress` to the issue. **Preferred path:** label only — the Roadmap Sync workflow moves the item to **In Progress** and sets Start Date and Target Date from the label event and `size/` label. Do not call `gh project` commands unless the user explicitly requests manual board repair.
 
 ```bash
 gh issue edit "$issueNumber" --repo markheydon/solo-dev-board --remove-label "status/todo" --add-label "status/in-progress"
 ```
 
-**If this is the first story started within its Feature**, also apply Event 2a to set the parent Feature and Epic Start Date = today and Target Date = the latest dated child Target Date currently known. Leave unstarted siblings blank until they actually begin work.
+Skip if the issue already has `status/in-progress`. Escalate if the issue has `status/blocked`.
+
+**Manual board path (fallback only):** If Roadmap Sync is unavailable and the user requests immediate board repair, use the `gh project item-edit` sequence from Event 2a patterns to set Status, Start Date, and Target Date on the implementing issue.
+
+**Parent roll-up:** Roadmap Sync updates parent Feature and Epic board Status and dates when a child receives `status/in-progress`. Do not edit parent issue labels during normal delivery.
+
+**Manual fallback (Event 2a):** If Roadmap Sync is unavailable and the user requests immediate parent repair, apply the sequence below for each parent Feature and Epic still in **Todo**.
 
 ---
 
-### Event 2a: Cascade "In Progress" to Parent Feature and Epic (Delivery Agent responsibility)
+### Event 2a: Cascade "In Progress" to Parent Feature and Epic (manual fallback)
 
-When starting work on a Story, Enabler, or Test, check whether the parent Feature and Epic are still "Todo" on the project board. If so:
+When starting work on a Story, Enabler, or Test, and Roadmap Sync cannot run, check whether the parent Feature and Epic are still "Todo" on the project board. If so:
+
 1. Move them to "In Progress" and set their Start Date = today.
 2. Set their Target Date = the latest Target Date among child issues that already have dates.
 
