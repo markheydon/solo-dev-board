@@ -36,3 +36,11 @@ export function setPreference(preference) {
 export function getSystemIsDarkMode() {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
 }
+
+/**
+ * Applies document-level colour-scheme and background for the resolved theme.
+ * @param {boolean} isDark
+ */
+export function applyDocumentTheme(isDark) {
+    window.soloDevBoardApplyDocumentTheme?.(isDark);
+}

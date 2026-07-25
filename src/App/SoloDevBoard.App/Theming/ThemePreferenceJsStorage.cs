@@ -33,11 +33,8 @@ public sealed class ThemePreferenceJsStorage(IJSRuntime jsRuntime) : IThemePrefe
     /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
-        if (module is not null)
-        {
-            await module.DisposeAsync().ConfigureAwait(false);
-            module = null;
-        }
+        await JsInteropGuards.DisposeModuleSafeAsync(module).ConfigureAwait(false);
+        module = null;
     }
 
     private async Task<IJSObjectReference> GetModuleAsync()

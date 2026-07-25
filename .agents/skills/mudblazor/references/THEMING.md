@@ -82,7 +82,7 @@ else
 }
 ```
 
-`App.razor` loads `themePreferenceConstants.js` and `themePreferenceFlash.js` in the document head to set `color-scheme` and background before the Blazor circuit connects, reducing theme flash on load. Background colours are kept in sync with `SoloDevBoardTheme` via `ThemePreferenceConstants`.
+`App.razor` loads `themePreferenceConstants.js`, `themePreferenceDocument.js`, and `themePreferenceFlash.js` in the document head. The flash script applies the correct `color-scheme` and background before the Blazor circuit connects; `AppThemeProvider` calls `applyDocumentTheme` again whenever the preference changes so page backgrounds stay in sync when cycling modes without a reload.
 
 ---
 

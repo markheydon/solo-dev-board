@@ -1,6 +1,6 @@
 (function () {
     var config = window.soloDevBoardThemePreference;
-    if (!config) {
+    if (!config || typeof window.soloDevBoardApplyDocumentTheme !== 'function') {
         return;
     }
 
@@ -14,11 +14,12 @@
 
     var isDark = preference === 'dark'
         || (preference === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    var background = isDark ? config.darkBackground : config.lightBackground;
 
-    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
-    document.documentElement.style.backgroundColor = background;
-    document.addEventListener('DOMContentLoaded', function () {
-        document.body.style.backgroundColor = background;
-    });
+    window.soloDevBoardApplyDocumentTheme(isDark);
+
+    if (!document.body) {
+        document.addEventListener('DOMContentLoaded', function () {
+            window.soloDevBoardApplyDocumentTheme(isDark);
+        });
+    }
 })();
