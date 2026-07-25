@@ -153,7 +153,7 @@ Implement issue #[number]
 - Starting work also stamps **Start Date** and the current size-based **Target Date** forecast on the roadmap item.
 - Untouched sibling items stay blank until they actually start.
 
-**Note:** The `/implement-issue` command runs preflight, then code, tests, and docs. Update project board fields and issue labels in a separate planning or board-sync step when needed.
+**Note:** The `/implement-issue` command runs preflight, sets `status/in-progress` on the issue, then code, tests, and docs. Roadmap Sync updates Project #8 board fields from the label. Do not call `gh project` commands during implementation.
 
 **What you produce:**
 - Preflight summary (context loaded, touch map, approach) before coding begins
@@ -395,6 +395,7 @@ START
 
 **Responsibilities:**
 - Runs implementation preflight (context, codebase discovery, touch map, proceed gate)
+- Sets `status/in-progress` on the implementing issue (Roadmap Sync updates Project #8)
 - Implements code (Domain/Application/Infrastructure/App layers)
 - Creates xUnit v3 tests (NSubstitute, `Assert.*`)
 - Updates user-facing docs
@@ -458,6 +459,7 @@ These gates are defined in [`AGENTS.md`](../AGENTS.md) and enforced by role cont
 
 ### Before Coding (Delivery Agent enforces)
 - ✅ Implementation preflight completed (context loaded, touch map produced, proceed gate satisfied)
+- ✅ Issue label set to `status/in-progress` (Roadmap Sync updates the board)
 - ✅ Linked wireframe read for page-producing UI work
 
 ### Before PR Creation (Delivery Agent enforces)

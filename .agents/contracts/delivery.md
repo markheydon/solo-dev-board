@@ -83,8 +83,8 @@ Present the **Preflight Complete** output (see Output Contract) before continuin
 
 | Condition | Action |
 |-----------|--------|
-| `size/xs`, `size/s`, or `type/bug` | Auto-continue to feature branch |
-| `size/m`, `size/l`, `size/xl`, or `type/enabler` | Pause for user confirmation before coding |
+| `size/xs`, `size/s`, or `type/bug` | Auto-continue to mark work started, then feature branch |
+| `size/m`, `size/l`, `size/xl`, or `type/enabler` | Pause for user confirmation before marking work started and coding |
 | Missing acceptance criteria, missing wireframe on page-producing UI, or unresolved blocker | Escalate; do not code |
 
 **Standalone preflight:** When invoked via `preflight-issue` workflow only, always pause after **Preflight Complete** — do not create a branch or write code.
@@ -99,7 +99,27 @@ Do NOT during preflight:
 
 ---
 
-### 2. Feature Branch
+### 2. Mark Work Started
+
+After the proceed gate is satisfied, transition the implementing issue to `status/in-progress` **before** creating the feature branch. This signals that work has begun without using project board APIs directly — the [Roadmap Sync workflow](../../.github/workflows/roadmap-sync.yml) reacts to the label and updates Project #8 Status, Start Date, and Target Date.
+
+```bash
+gh issue edit <N> --repo markheydon/solo-dev-board --remove-label "status/todo" --add-label "status/in-progress"
+```
+
+Rules:
+
+- Apply only to the issue being implemented.
+- Skip if the issue already has `status/in-progress`.
+- Do not change label if the issue has `status/blocked` — escalate instead.
+- Do not edit parent issues, milestones, assignees, or the issue body.
+- Do not call `gh project` commands or set board fields directly.
+
+**Standalone preflight:** Do not apply this transition — work has not started yet.
+
+---
+
+### 3. Feature Branch
 
 Work on a dedicated feature branch.
 
@@ -120,7 +140,7 @@ Never implement directly on `main`.
 
 ---
 
-### 3. Implementation
+### 4. Implementation
 
 Implement the issue following repository standards.
 
@@ -138,7 +158,7 @@ Avoid scope creep.
 
 ---
 
-### 4. Tests
+### 5. Tests
 
 Add or update tests as appropriate.
 
@@ -159,7 +179,7 @@ Do not create tests solely to inflate coverage numbers.
 
 ---
 
-### 5. Documentation
+### 6. Documentation
 
 Update documentation when required.
 
@@ -181,7 +201,7 @@ Technical or internal changes:
 
 ---
 
-### 6. Decision log
+### 7. Decision log
 
 Record decisions via [`repo-decision-log`](../skills/repo-decision-log/SKILL.md) when:
 
@@ -193,7 +213,7 @@ Do not create files under `adr/`. Do not log routine implementation choices.
 
 ---
 
-### 7. Scope Changes
+### 8. Scope Changes
 
 If implementation reveals scope changes:
 
@@ -203,7 +223,7 @@ If implementation reveals scope changes:
 
 ---
 
-### 8. Self Review
+### 9. Self Review
 
 Before handoff:
 
@@ -273,10 +293,11 @@ Do NOT:
 - Create pull requests
 - Close issues
 - Manage milestones
-- Update project boards
+- Update project boards (use the `status/in-progress` label transition in §2 instead; Roadmap Sync updates the board)
 - Update release plans
 - Perform roadmap management
 - Implement unplanned scope
+- Edit GitHub issues except the narrow `status/in-progress` transition on the issue being implemented
 
 Do NOT commit directly to `main`.
 
@@ -303,6 +324,7 @@ Escalate to the user if:
 Implementation is complete when:
 
 - Implementation preflight completed and proceed gate satisfied
+- Issue transitioned to `status/in-progress` (or already in progress)
 - Acceptance criteria are implemented
 - Build succeeds
 - Tests pass
