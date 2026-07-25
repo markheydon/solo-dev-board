@@ -213,7 +213,7 @@ The AppHost registers the readiness probe path for the `app` resource:
 .WithHttpHealthCheck("/health")
 ```
 
-Aspire applies this as the Container App HTTP probe during `aspire deploy`. No manual Bicep or portal configuration is required for the default deployment path.
+Aspire applies this as the Container App HTTP probe during `aspire deploy`. No manual Bicep or portal configuration is required for the default deployment path. Aspire wires `/health` as the platform probe; `/alive` remains available for manual liveness checks but is not configured as a separate ACA probe in the default AppHost model.
 
 After deployment, verify probes from the Azure portal:
 

@@ -164,6 +164,8 @@ public static class Extensions
     /// <returns>The configured web application.</returns>
     public static WebApplication MapDefaultEndpoints(this WebApplication app)
     {
+        // Expose health endpoints in all environments so container orchestrators (for example, Azure Container Apps)
+        // can probe readiness. Only the built-in "self" check is registered, so responses reveal no dependency detail.
         // All health checks must pass for app to be considered ready to accept traffic after starting.
         app.MapHealthChecks(HealthEndpointPath);
 

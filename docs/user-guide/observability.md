@@ -47,7 +47,7 @@ SoloDevBoard exposes operational health endpoints for container orchestration an
 | `GET /health` | Readiness | After deployment, scale-from-zero, or when verifying the app can accept traffic |
 | `GET /alive` | Liveness | When confirming the process is responsive (no external dependency checks) |
 
-Both endpoints are available in all environments, including production Azure Container Apps. They return `Healthy` when checks pass and do not require authentication.
+Both endpoints are available in all environments, including production Azure Container Apps. They return `Healthy` when checks pass and do not require authentication, including when hosted admission control is enabled.
 
 The AppHost wires `/health` as the Container App HTTP probe via `.WithHttpHealthCheck("/health")`. See [Deployment — Health checks and Container Apps probes](../deployment.md#health-checks-and-container-apps-probes) for probe design rationale and verification steps.
 
