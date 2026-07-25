@@ -123,6 +123,28 @@ public sealed class GitHubAuthHandlerTests
     }
 
     [Fact]
+    public async Task SendAsync_PatModeE2ePlaceholderUnauthorizedResponse_ReturnsUnauthorizedResponse()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        var currentUserContext = Substitute.For<ICurrentUserContext>();
+        currentUserContext.GetAccessToken().Returns(AuthConfigurationPlaceholders.CiE2ePlaceholder);
+
+        var terminalHandler = new TerminalHandler(HttpStatusCode.Unauthorized);
+        using var handler = CreateHandler(currentUserContext, hostedSignInEnabled: false);
+        handler.InnerHandler = terminalHandler;
+
+        using var invoker = new HttpMessageInvoker(handler);
+        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/user");
+
+        // Act
+        using var response = await invoker.SendAsync(request, cancellationToken);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
     public async Task SendAsync_PatModeUnauthorizedResponse_ThrowsGitHubPatConnectivityRequiredException()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;

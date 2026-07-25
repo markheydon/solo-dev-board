@@ -31,7 +31,8 @@ public sealed class GitHubAuthHandler(
 
         var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
-        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        if (response.StatusCode == HttpStatusCode.Unauthorized
+            && !AuthConfigurationPlaceholders.IsE2ePlaceholder(accessToken))
         {
             response.Dispose();
 

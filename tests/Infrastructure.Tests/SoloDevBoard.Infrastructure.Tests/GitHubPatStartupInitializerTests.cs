@@ -44,6 +44,39 @@ public sealed class GitHubPatStartupInitializerTests
     }
 
     [Fact]
+    public async Task StartAsync_E2ePlaceholderPat_DoesNotProbePat()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+
+        var handler = new StubHttpMessageHandler(static (_, _) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{"login":"resolved-user"}"""),
+            }));
+
+        var factory = new StubHttpClientFactory(new HttpClient(handler) { BaseAddress = new Uri("https://api.github.com") });
+        var resolver = new GitHubPatOwnerLoginResolver(
+            factory,
+            new TestAppVersionService(),
+            NullLogger<GitHubPatOwnerLoginResolver>.Instance);
+
+        var initializer = new GitHubPatStartupInitializer(
+            Options.Create(new GitHubAuthOptions
+            {
+                HostedSignInEnabled = false,
+                OwnerLogin = "ci-test-user",
+                PersonalAccessToken = AuthConfigurationPlaceholders.CiE2ePlaceholder,
+            }),
+            new ResolvedPatOwnerLogin(),
+            resolver,
+            NullLogger<GitHubPatStartupInitializer>.Instance);
+
+        await initializer.StartAsync(cancellationToken);
+
+        Assert.Empty(handler.Requests);
+    }
+
+    [Fact]
     public async Task StartAsync_HostedSignInEnabled_DoesNotProbePat()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;

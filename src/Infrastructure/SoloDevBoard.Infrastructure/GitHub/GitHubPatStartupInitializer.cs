@@ -24,7 +24,7 @@ public sealed class GitHubPatStartupInitializer(
             return;
         }
 
-        if (!AuthConfigurationPlaceholders.IsConfigured(_authOptions.PersonalAccessToken))
+        if (!AuthConfigurationPlaceholders.RequiresPatConnectivityProbe(_authOptions.PersonalAccessToken))
         {
             return;
         }

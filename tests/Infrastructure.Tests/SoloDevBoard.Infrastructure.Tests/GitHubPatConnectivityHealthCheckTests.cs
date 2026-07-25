@@ -36,6 +36,29 @@ public sealed class GitHubPatConnectivityHealthCheckTests
     }
 
     [Fact]
+    public async Task CheckHealthAsync_E2ePlaceholderPat_ReturnsHealthyWithoutProbe()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+
+        var handler = new StubHttpMessageHandler(static (_, _) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.Unauthorized)));
+
+        var resolver = CreateResolver(handler);
+        var healthCheck = new GitHubPatConnectivityHealthCheck(
+            Options.Create(new GitHubAuthOptions
+            {
+                HostedSignInEnabled = false,
+                PersonalAccessToken = AuthConfigurationPlaceholders.CiE2ePlaceholder,
+            }),
+            resolver);
+
+        var result = await healthCheck.CheckHealthAsync(new HealthCheckContext(), cancellationToken);
+
+        Assert.Equal(HealthStatus.Healthy, result.Status);
+        Assert.Contains("E2E placeholder", result.Description, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task CheckHealthAsync_InvalidPat_ReturnsUnhealthy()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;

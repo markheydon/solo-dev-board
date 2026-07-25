@@ -21,8 +21,14 @@ public sealed class GitHubPatConnectivityHealthCheck(
             return HealthCheckResult.Healthy("Hosted sign-in is enabled; PAT connectivity probe is not applicable.");
         }
 
-        if (!AuthConfigurationPlaceholders.IsConfigured(_authOptions.PersonalAccessToken))
+        if (!AuthConfigurationPlaceholders.RequiresPatConnectivityProbe(_authOptions.PersonalAccessToken))
         {
+            if (AuthConfigurationPlaceholders.IsE2ePlaceholder(_authOptions.PersonalAccessToken))
+            {
+                return HealthCheckResult.Healthy(
+                    "E2E placeholder personal access token is configured; GitHub connectivity probe is skipped.");
+            }
+
             return HealthCheckResult.Unhealthy(
                 "GitHub personal access token is not configured for PAT-only local trusted mode.");
         }
