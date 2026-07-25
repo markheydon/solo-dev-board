@@ -24,16 +24,7 @@ internal static class PatConnectivityErrorPageRenderer
         builder.AppendLine("  <meta charset=\"utf-8\" />");
         builder.AppendLine("  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />");
         builder.AppendLine($"  <title>{Encode(presentation.Title)}</title>");
-        builder.AppendLine("  <link href=\"https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap\" rel=\"stylesheet\" />");
-        builder.AppendLine("  <style>");
-        builder.AppendLine("    body { font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; background: #f5f5f5; color: #212121; }");
-        builder.AppendLine("  .app-bar { background: #594ae2; color: #fff; padding: 1rem 1.5rem; box-shadow: 0 2px 4px rgba(0,0,0,.2); }");
-        builder.AppendLine("  .app-bar h1 { margin: 0; font-size: 1.5rem; font-weight: 500; }");
-        builder.AppendLine("  main { max-width: 36rem; margin: 0 auto; padding: 2rem 1.5rem; }");
-        builder.AppendLine("  .actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.5rem; }");
-        builder.AppendLine("  .button { display: inline-block; border: none; border-radius: 4px; padding: 0.6rem 1rem; font: inherit; text-decoration: none; cursor: pointer; }");
-        builder.AppendLine("  .button-primary { background: #594ae2; color: #fff; }");
-        builder.AppendLine("  </style>");
+        StaticErrorPageStyles.AppendStyleBlock(builder);
         builder.AppendLine("</head>");
         builder.AppendLine("<body>");
         builder.AppendLine("  <header class=\"app-bar\"><h1>SoloDevBoard</h1></header>");
