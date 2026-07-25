@@ -51,7 +51,7 @@ test.describe('WCAG 2.1 AA accessibility', () => {
 
   test('info snackbar meets WCAG 2.1 AA contrast requirements', async ({ page }) => {
     await page.goto('/repositories');
-    await expect(page.getByRole('heading', { name: 'Repositories' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Repositories', exact: true })).toBeVisible();
     await expect(page.getByTestId('repositories-loading-state')).toBeHidden({ timeout: 15_000 });
 
     await page.getByRole('button', { name: 'Add' }).click();
