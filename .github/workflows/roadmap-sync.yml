@@ -17,6 +17,8 @@ on:
 
 permissions:
   contents: read
+  issues: write
+  pull-requests: write
 
 concurrency:
   group: roadmap-sync
@@ -48,6 +50,11 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: "24"
+
+      - name: Sync status labels
+        env:
+          ROADMAP_PROJECT_TOKEN: ${{ secrets.ROADMAP_PROJECT_TOKEN }}
+        run: node .github/scripts/sync-status-labels.mjs --apply
 
       - name: Sync roadmap board
         env:
