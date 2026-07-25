@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using NSubstitute;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Domain.Entities.Labels;
+using SoloDevBoard.Domain.Entities.Milestones;
 using SoloDevBoard.Infrastructure.GitHub;
 using SoloDevBoard.Infrastructure.Labels;
 using SoloDevBoard.Infrastructure.Milestones;
@@ -328,6 +329,289 @@ public sealed class GitHubApiCachingTests
         Assert.Equal(3, handler.Requests.Count);
         Assert.Equal(HttpMethod.Get, handler.Requests[0].Method);
         Assert.Equal(HttpMethod.Post, handler.Requests[1].Method);
+        Assert.Equal(HttpMethod.Get, handler.Requests[2].Method);
+    }
+
+    [Fact]
+    public async Task UpdateLabelAsync_AfterCachedGetLabels_RefetchesLabelsOnNextRead()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                [
+                  {
+                    "name": "enhancement",
+                    "color": "a2eeef",
+                    "description": null
+                  }
+                ]
+                """),
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                {
+                  "name": "enhancement",
+                  "color": "1d76db",
+                  "description": "Updated description"
+                }
+                """),
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                [
+                  {
+                    "name": "enhancement",
+                    "color": "1d76db",
+                    "description": "Updated description"
+                  }
+                ]
+                """),
+        ]);
+
+        var memoryCache = new MemoryCache(new MemoryCacheOptions());
+        var currentUserContext = GitHubCachingTestSupport.CreateCurrentUserContext();
+        var responseCache = GitHubCachingTestSupport.CreateResponseCache(memoryCache, currentUserContext);
+        var sut = CreateLabelRepository(handler, responseCache, currentUserContext);
+
+        // Act
+        await sut.GetLabelsAsync("owner", "repo", cancellationToken);
+        await sut.UpdateLabelAsync(
+            "owner",
+            "repo",
+            "enhancement",
+            new Label { Name = "enhancement", Colour = "1d76db", Description = "Updated description" },
+            cancellationToken);
+        var refreshed = await sut.GetLabelsAsync("owner", "repo", cancellationToken);
+
+        // Assert
+        Assert.Single(refreshed);
+        Assert.Equal("Updated description", refreshed[0].Description);
+        Assert.Equal(3, handler.Requests.Count);
+        Assert.Equal(HttpMethod.Get, handler.Requests[0].Method);
+        Assert.Equal(HttpMethod.Patch, handler.Requests[1].Method);
+        Assert.Equal(HttpMethod.Get, handler.Requests[2].Method);
+    }
+
+    [Fact]
+    public async Task DeleteLabelAsync_AfterCachedGetLabels_RefetchesLabelsOnNextRead()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                [
+                  {
+                    "name": "enhancement",
+                    "color": "a2eeef",
+                    "description": null
+                  }
+                ]
+                """),
+            new HttpResponseMessage(HttpStatusCode.NoContent),
+            CreateJsonResponse(HttpStatusCode.OK, "[]"),
+        ]);
+
+        var memoryCache = new MemoryCache(new MemoryCacheOptions());
+        var currentUserContext = GitHubCachingTestSupport.CreateCurrentUserContext();
+        var responseCache = GitHubCachingTestSupport.CreateResponseCache(memoryCache, currentUserContext);
+        var sut = CreateLabelRepository(handler, responseCache, currentUserContext);
+
+        // Act
+        await sut.GetLabelsAsync("owner", "repo", cancellationToken);
+        await sut.DeleteLabelAsync("owner", "repo", "enhancement", cancellationToken);
+        var refreshed = await sut.GetLabelsAsync("owner", "repo", cancellationToken);
+
+        // Assert
+        Assert.Empty(refreshed);
+        Assert.Equal(3, handler.Requests.Count);
+        Assert.Equal(HttpMethod.Get, handler.Requests[0].Method);
+        Assert.Equal(HttpMethod.Delete, handler.Requests[1].Method);
+        Assert.Equal(HttpMethod.Get, handler.Requests[2].Method);
+    }
+
+    [Fact]
+    public async Task CreateMilestoneAsync_AfterCachedGetMilestones_RefetchesMilestonesOnNextRead()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                [
+                  {
+                    "id": 123,
+                    "number": 7,
+                    "title": "Sprint 7",
+                    "description": "Milestone description",
+                    "state": "open",
+                    "due_on": null,
+                    "open_issues": 2,
+                    "closed_issues": 5
+                  }
+                ]
+                """),
+            CreateJsonResponse(
+                HttpStatusCode.Created,
+                """
+                {
+                  "id": 124,
+                  "number": 8,
+                  "title": "Sprint 8",
+                  "description": "Next sprint",
+                  "state": "open",
+                  "due_on": null,
+                  "open_issues": 0,
+                  "closed_issues": 0
+                }
+                """),
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                [
+                  {
+                    "id": 123,
+                    "number": 7,
+                    "title": "Sprint 7",
+                    "description": "Milestone description",
+                    "state": "open",
+                    "due_on": null,
+                    "open_issues": 2,
+                    "closed_issues": 5
+                  },
+                  {
+                    "id": 124,
+                    "number": 8,
+                    "title": "Sprint 8",
+                    "description": "Next sprint",
+                    "state": "open",
+                    "due_on": null,
+                    "open_issues": 0,
+                    "closed_issues": 0
+                  }
+                ]
+                """),
+        ]);
+
+        var memoryCache = new MemoryCache(new MemoryCacheOptions());
+        var currentUserContext = GitHubCachingTestSupport.CreateCurrentUserContext();
+        var responseCache = GitHubCachingTestSupport.CreateResponseCache(memoryCache, currentUserContext);
+        var sut = CreateMilestoneRepository(handler, responseCache, currentUserContext);
+
+        // Act
+        await sut.GetMilestonesAsync("owner", "repo", cancellationToken);
+        await sut.CreateMilestoneAsync(
+            "owner",
+            "repo",
+            new Milestone
+            {
+                Title = "Sprint 8",
+                Description = "Next sprint",
+                State = "open",
+            },
+            cancellationToken);
+        var refreshed = await sut.GetMilestonesAsync("owner", "repo", cancellationToken);
+
+        // Assert
+        Assert.Equal(2, refreshed.Count);
+        Assert.Equal("Sprint 8", refreshed[1].Title);
+        Assert.Equal(3, handler.Requests.Count);
+        Assert.Equal(HttpMethod.Get, handler.Requests[0].Method);
+        Assert.Equal(HttpMethod.Post, handler.Requests[1].Method);
+        Assert.Equal(HttpMethod.Get, handler.Requests[2].Method);
+    }
+
+    [Fact]
+    public async Task UpdateMilestoneAsync_AfterCachedGetMilestones_RefetchesMilestonesOnNextRead()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                [
+                  {
+                    "id": 123,
+                    "number": 7,
+                    "title": "Sprint 7",
+                    "description": "Milestone description",
+                    "state": "open",
+                    "due_on": null,
+                    "open_issues": 2,
+                    "closed_issues": 5
+                  }
+                ]
+                """),
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                {
+                  "id": 123,
+                  "number": 7,
+                  "title": "Sprint 7",
+                  "description": "Updated description",
+                  "state": "open",
+                  "due_on": null,
+                  "open_issues": 2,
+                  "closed_issues": 5
+                }
+                """),
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                [
+                  {
+                    "id": 123,
+                    "number": 7,
+                    "title": "Sprint 7",
+                    "description": "Updated description",
+                    "state": "open",
+                    "due_on": null,
+                    "open_issues": 2,
+                    "closed_issues": 5
+                  }
+                ]
+                """),
+        ]);
+
+        var memoryCache = new MemoryCache(new MemoryCacheOptions());
+        var currentUserContext = GitHubCachingTestSupport.CreateCurrentUserContext();
+        var responseCache = GitHubCachingTestSupport.CreateResponseCache(memoryCache, currentUserContext);
+        var sut = CreateMilestoneRepository(handler, responseCache, currentUserContext);
+
+        // Act
+        await sut.GetMilestonesAsync("owner", "repo", cancellationToken);
+        await sut.UpdateMilestoneAsync(
+            "owner",
+            "repo",
+            7,
+            new Milestone
+            {
+                Id = 123,
+                Number = 7,
+                Title = "Sprint 7",
+                Description = "Updated description",
+                State = "open",
+            },
+            cancellationToken);
+        var refreshed = await sut.GetMilestonesAsync("owner", "repo", cancellationToken);
+
+        // Assert
+        Assert.Single(refreshed);
+        Assert.Equal("Updated description", refreshed[0].Description);
+        Assert.Equal(3, handler.Requests.Count);
+        Assert.Equal(HttpMethod.Get, handler.Requests[0].Method);
+        Assert.Equal(HttpMethod.Patch, handler.Requests[1].Method);
         Assert.Equal(HttpMethod.Get, handler.Requests[2].Method);
     }
 

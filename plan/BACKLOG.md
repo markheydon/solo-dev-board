@@ -36,7 +36,7 @@ For historical backlog content (pre-migration), see [archive/BACKLOG-2026-07-18.
 
 Phases 1–4 delivered foundation, Label Manager, Audit Dashboard, One-Click Migration (labels + milestones), Triage UI, Board Rules Visualiser, and built-in Workflow Templates. Deferred follow-on slices (label consistency warnings, project board migration, custom template repos, Audit Dashboard polish) are tracked under [#289](https://github.com/markheydon/solo-dev-board/issues/289) and child issues.
 
-Phase 6 (v1.0.0) remaining work is tracked on the [v1.0.0 milestone](https://github.com/markheydon/solo-dev-board/milestone/4), including issues [#106](https://github.com/markheydon/solo-dev-board/issues/106)–[#108](https://github.com/markheydon/solo-dev-board/issues/108), [#110](https://github.com/markheydon/solo-dev-board/issues/110), and [#247](https://github.com/markheydon/solo-dev-board/issues/247)–[#259](https://github.com/markheydon/solo-dev-board/issues/259).
+Phase 6 (v1.0.0) remaining work is tracked on the [v1.0.0 milestone](https://github.com/markheydon/solo-dev-board/milestone/4), including issues [#110](https://github.com/markheydon/solo-dev-board/issues/110), [#247](https://github.com/markheydon/solo-dev-board/issues/247)–[#259](https://github.com/markheydon/solo-dev-board/issues/259). Operational hardening test coverage expectations are documented in [OPERATIONAL_HARDENING_TEST_COVERAGE.md](OPERATIONAL_HARDENING_TEST_COVERAGE.md).
 
 ### V1 auth polish (Epic #101 follow-on)
 

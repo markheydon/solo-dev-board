@@ -222,6 +222,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Add health check endpoints for Azure Container Apps monitoring. _(#106 — readiness `/health`, liveness `/alive`, ACA probe via AppHost `WithHttpHealthCheck`)_
 - [x] Implement response caching for GitHub API calls to respect rate limits. _(#108)_
 - [x] Configure structured logging and Application Insights telemetry. _(#107)_
+- [ ] Add operational hardening test coverage and validation expectations. _(#110; see plan/OPERATIONAL_HARDENING_TEST_COVERAGE.md.)_
 - [x] Set up Dependabot for automated dependency updates. _(#109)_
 - [ ] Formalise and document PAT-only local trusted mode and self-hoster deployment path. _(#247, #248)_
 - [x] Dedicated unauthenticated landing page for hosted deployments. _(#249)_
