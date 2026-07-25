@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using NSubstitute;
-using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Domain.Entities.Milestones;
 using SoloDevBoard.Infrastructure.GitHub;
 using SoloDevBoard.Infrastructure.Milestones;
@@ -269,10 +268,7 @@ public sealed class GitHubMilestoneRepositoryTests
 
     private static GitHubMilestoneRepository CreateSubject(HttpMessageHandler handler)
     {
-        var currentUserContext = Substitute.For<ICurrentUserContext>();
-        currentUserContext
-            .GetAccessToken()
-            .Returns("test-token");
+        var currentUserContext = GitHubCachingTestSupport.CreateCurrentUserContext();
 
         var authHandler = new GitHubAuthHandler(
             currentUserContext,
@@ -291,7 +287,8 @@ public sealed class GitHubMilestoneRepositoryTests
             .CreateClient(GitHubService.GitHubApiClientName)
             .Returns(client);
 
-        return new GitHubMilestoneRepository(httpClientFactory);
+        var responseCache = GitHubCachingTestSupport.CreateResponseCache(memoryCache: null, currentUserContext);
+        return new GitHubMilestoneRepository(httpClientFactory, responseCache);
     }
 
     private static HttpResponseMessage CreateJsonResponse(HttpStatusCode statusCode, string json)

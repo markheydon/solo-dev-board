@@ -18,26 +18,34 @@ public sealed class GitHubService : IGitHubService
     public const string GitHubApiClientName = "GitHubApiClient";
 
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly GitHubResponseCache _responseCache;
 
     /// <summary>Initialises a new instance of the <see cref="GitHubService"/> class.</summary>
     /// <param name="httpClientFactory">The factory used to create named <see cref="HttpClient"/> instances.</param>
-    public GitHubService(IHttpClientFactory httpClientFactory)
+    /// <param name="responseCache">The cache used for read-heavy GitHub API catalogue responses.</param>
+    public GitHubService(IHttpClientFactory httpClientFactory, GitHubResponseCache responseCache)
     {
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        _responseCache = responseCache ?? throw new ArgumentNullException(nameof(responseCache));
     }
 
     /// <inheritdoc/>
     public async Task<IReadOnlyList<Repository>> GetRepositoriesAsync(CancellationToken cancellationToken = default)
     {
-        var client = CreateAuthenticatedClient();
-        const string endpoint = "/user/repos?sort=updated&per_page=100";
-        return await GetPagedAsync<RepositoryResponseDto, Repository>(
-                client,
-                endpoint,
-                static dto => dto.ToDomain(),
-            JsonOptions,
-                cancellationToken)
-            .ConfigureAwait(false);
+        return await _responseCache.GetOrCreateUserRepositoriesAsync(
+            async ct =>
+            {
+                var client = CreateAuthenticatedClient();
+                const string endpoint = "/user/repos?sort=updated&per_page=100";
+                return await GetPagedAsync<RepositoryResponseDto, Repository>(
+                        client,
+                        endpoint,
+                        static dto => dto.ToDomain(),
+                        JsonOptions,
+                        ct)
+                    .ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -54,15 +62,21 @@ public sealed class GitHubService : IGitHubService
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
 
-        var client = CreateAuthenticatedClient();
-        var endpoint = $"/users/{Uri.EscapeDataString(owner)}/repos?per_page=100";
-        return await GetPagedAsync<RepositoryResponseDto, Repository>(
-                client,
-                endpoint,
-                static dto => dto.ToDomain(),
-            JsonOptions,
-                cancellationToken)
-            .ConfigureAwait(false);
+        return await _responseCache.GetOrCreateOwnerRepositoriesAsync(
+            owner,
+            async ct =>
+            {
+                var client = CreateAuthenticatedClient();
+                var endpoint = $"/users/{Uri.EscapeDataString(owner)}/repos?per_page=100";
+                return await GetPagedAsync<RepositoryResponseDto, Repository>(
+                        client,
+                        endpoint,
+                        static dto => dto.ToDomain(),
+                        JsonOptions,
+                        ct)
+                    .ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -142,17 +156,22 @@ public sealed class GitHubService : IGitHubService
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
         ArgumentException.ThrowIfNullOrWhiteSpace(repo);
 
-        var client = CreateAuthenticatedClient();
-        var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/milestones?state=all&per_page=100";
-        var milestones = await GetPagedAsync<MilestoneResponseDto, Milestone>(
-                client,
-                endpoint,
-                static dto => dto.ToDomain(),
-            JsonOptions,
-                cancellationToken)
-            .ConfigureAwait(false);
-
-        return milestones;
+        return await _responseCache.GetOrCreateMilestonesAsync(
+            owner,
+            repo,
+            async ct =>
+            {
+                var client = CreateAuthenticatedClient();
+                var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/milestones?state=all&per_page=100";
+                return await GetPagedAsync<MilestoneResponseDto, Milestone>(
+                        client,
+                        endpoint,
+                        static dto => dto.ToDomain(),
+                        JsonOptions,
+                        ct)
+                    .ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -161,17 +180,22 @@ public sealed class GitHubService : IGitHubService
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
         ArgumentException.ThrowIfNullOrWhiteSpace(repo);
 
-        var client = CreateAuthenticatedClient();
-        var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/labels?per_page=100";
-        var labels = await GetPagedAsync<LabelResponseDto, Label>(
-                client,
-                endpoint,
-                static dto => dto.ToDomain(),
-            JsonOptions,
-                cancellationToken)
-            .ConfigureAwait(false);
-
-        return labels;
+        return await _responseCache.GetOrCreateLabelsAsync(
+            owner,
+            repo,
+            async ct =>
+            {
+                var client = CreateAuthenticatedClient();
+                var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/labels?per_page=100";
+                return await GetPagedAsync<LabelResponseDto, Label>(
+                        client,
+                        endpoint,
+                        dto => dto.ToDomain(repo),
+                        JsonOptions,
+                        ct)
+                    .ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -190,7 +214,9 @@ public sealed class GitHubService : IGitHubService
         var created = await response.Content.ReadFromJsonAsync<LabelResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
             ?? throw CreateInvalidResponseException("Label response was empty.", endpoint);
 
-        return created.ToDomain();
+        _responseCache.InvalidateLabels(owner, repo);
+
+        return created.ToDomain(repo);
     }
 
     /// <inheritdoc/>
@@ -215,7 +241,9 @@ public sealed class GitHubService : IGitHubService
         var updated = await response.Content.ReadFromJsonAsync<LabelResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
             ?? throw CreateInvalidResponseException("Label response was empty.", endpoint);
 
-        return updated.ToDomain();
+        _responseCache.InvalidateLabels(owner, repo);
+
+        return updated.ToDomain(repo);
     }
 
     /// <inheritdoc/>
@@ -230,6 +258,8 @@ public sealed class GitHubService : IGitHubService
 
         using var response = await client.DeleteAsync(endpoint, cancellationToken).ConfigureAwait(false);
         await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
+
+        _responseCache.InvalidateLabels(owner, repo);
     }
 
     /// <inheritdoc/>
@@ -1059,6 +1089,14 @@ public sealed class GitHubService : IGitHubService
             Name = Name,
             Colour = Colour,
             Description = RepairCommonMojibake(Description),
+        };
+
+        public Label ToDomain(string repoName) => new()
+        {
+            Name = Name,
+            Colour = Colour,
+            Description = RepairCommonMojibake(Description),
+            RepositoryName = repoName,
         };
     }
 

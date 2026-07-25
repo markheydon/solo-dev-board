@@ -31,6 +31,28 @@ public static class InfrastructureServiceExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.Configure<GitHubAuthOptions>(configuration.GetSection(GitHubAuthOptions.SectionName));
+        services.AddOptions<GitHubCacheOptions>()
+            .Bind(configuration.GetSection(GitHubCacheOptions.SectionName))
+            .PostConfigure(static options =>
+            {
+                if (options.RepositoriesTtlSeconds == 0)
+                {
+                    options.RepositoriesTtlSeconds = 60;
+                }
+
+                if (options.LabelsTtlSeconds == 0)
+                {
+                    options.LabelsTtlSeconds = 300;
+                }
+
+                if (options.MilestonesTtlSeconds == 0)
+                {
+                    options.MilestonesTtlSeconds = 300;
+                }
+            })
+            .ValidateOnStart();
+        services.AddSingleton<IValidateOptions<GitHubCacheOptions>, GitHubCacheOptionsValidator>();
+        services.AddMemoryCache();
         services.Configure<HostedAdmissionControlOptions>(configuration.GetSection(HostedAdmissionControlOptions.SectionName));
         services.AddSingleton<ResolvedPatOwnerLogin>();
         services.AddSingleton<GitHubPatOwnerLoginResolver>();
@@ -70,6 +92,7 @@ public static class InfrastructureServiceExtensions
             })
             .AddHttpMessageHandler<GitHubAuthHandler>();
 
+        services.AddScoped<GitHubResponseCache>();
         services.AddScoped<IGitHubService, GitHubService>();
         services.AddScoped<ILabelRepository, GitHubLabelRepository>();
         services.AddScoped<IMilestoneRepository, GitHubMilestoneRepository>();

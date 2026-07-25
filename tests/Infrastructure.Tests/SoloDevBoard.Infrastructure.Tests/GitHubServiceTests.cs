@@ -578,7 +578,7 @@ public sealed class GitHubServiceTests
         ]);
 
         var sut = CreateSubject(handler);
-        var label = new Label { Name = "bug", Colour = "d73a4a", Description = "Something is not working" };
+        var label = new Label { Name = "bug", Colour = "d73a4a", Description = "Something is not working", RepositoryName = "repo" };
 
         // Act
         var result = await sut.CreateLabelAsync("owner", "repo", label, cancellationToken);
@@ -613,7 +613,7 @@ public sealed class GitHubServiceTests
         ]);
 
         var sut = CreateSubject(handler);
-        var updatedLabel = new Label { Name = "enhancement", Colour = "a2eeef", Description = "Feature request" };
+        var updatedLabel = new Label { Name = "enhancement", Colour = "a2eeef", Description = "Feature request", RepositoryName = "repo" };
 
         // Act
         var result = await sut.UpdateLabelAsync("owner", "repo", "feature", updatedLabel, cancellationToken);
@@ -1438,7 +1438,8 @@ public sealed class GitHubServiceTests
             .CreateClient(GitHubService.GitHubApiClientName)
             .Returns(client);
 
-        return new GitHubService(httpClientFactory);
+        var responseCache = GitHubCachingTestSupport.CreateResponseCache();
+        return new GitHubService(httpClientFactory, responseCache);
     }
 
     private static HttpResponseMessage CreateJsonResponse(HttpStatusCode statusCode, string json, string? linkHeader = null)

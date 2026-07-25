@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.Common;
 using SoloDevBoard.Infrastructure.Common;
@@ -58,6 +59,45 @@ public sealed class InfrastructureServiceExtensionsTests
 
         // Assert
         Assert.IsType<SingleUserCurrentUserContext>(currentUserContext);
+    }
+
+    [Fact]
+    public void AddInfrastructureServices_RegistersGitHubResponseCache()
+    {
+        // Arrange
+        var configuration = new ConfigurationBuilder().Build();
+        var services = new ServiceCollection();
+        services.AddSingleton<IAppVersionService>(new TestAppVersionService());
+
+        // Act
+        services.AddInfrastructureServices(configuration);
+        using var serviceProvider = services.BuildServiceProvider();
+        using var scope = serviceProvider.CreateScope();
+
+        // Assert
+        Assert.NotNull(scope.ServiceProvider.GetService<Microsoft.Extensions.Caching.Memory.IMemoryCache>());
+        Assert.NotNull(scope.ServiceProvider.GetService<GitHubResponseCache>());
+    }
+
+    [Fact]
+    public void AddInfrastructureServices_InvalidGitHubCacheTtl_ThrowsOnStartup()
+    {
+        // Arrange
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                [$"{GitHubCacheOptions.SectionName}:{nameof(GitHubCacheOptions.RepositoriesTtlSeconds)}"] = "-1",
+            })
+            .Build();
+
+        var services = new ServiceCollection();
+        services.AddSingleton<IAppVersionService>(new TestAppVersionService());
+        services.AddInfrastructureServices(configuration);
+
+        // Act / Assert
+        using var serviceProvider = services.BuildServiceProvider();
+        Assert.Throws<OptionsValidationException>(
+            () => _ = serviceProvider.GetRequiredService<IOptions<GitHubCacheOptions>>().Value);
     }
 }
 
