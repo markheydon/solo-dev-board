@@ -6,22 +6,32 @@ test.describe('Feature navigation', () => {
     await page.goto('/');
 
     await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Open Audit Dashboard' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Open Repositories' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Open One-Click Migration' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Open Label Manager' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Open Board Rules Visualiser' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Open Triage UI' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Open Workflow Templates' })).toBeVisible();
   });
 
   test('home feature cards navigate to the matching feature page', async ({ page }) => {
-    await page.goto('/');
+    const featureCards = [
+      { linkName: 'Open Audit Dashboard', path: '/audit-dashboard', title: /Audit Dashboard/ },
+      { linkName: 'Open Repositories', path: '/repositories', title: /Repositories/ },
+      { linkName: 'Open One-Click Migration', path: '/migrate', title: /One-Click Migration/ },
+      { linkName: 'Open Label Manager', path: '/labels', title: /Label Manager/ },
+      { linkName: 'Open Board Rules Visualiser', path: '/board-rules', title: /Board Rules Visualiser/ },
+      { linkName: 'Open Triage UI', path: '/triage', title: /Triage UI/ },
+      { linkName: 'Open Workflow Templates', path: '/workflows', title: /Workflow Templates/ },
+    ] as const;
 
-    await page.getByRole('link', { name: 'Open Label Manager' }).click();
-    await expect(page).toHaveURL(/\/labels$/);
-    await expect(page).toHaveTitle(/Label Manager/);
-
-    await page.goto('/');
-    await page.getByRole('link', { name: 'Open Workflow Templates' }).click();
-    await expect(page).toHaveURL(/\/workflows$/);
-    await expect(page).toHaveTitle(/Workflow Templates/);
+    for (const feature of featureCards) {
+      await page.goto('/');
+      await page.getByRole('link', { name: feature.linkName }).click();
+      await expect(page).toHaveURL(new RegExp(`${feature.path}$`));
+      await expect(page).toHaveTitle(feature.title);
+    }
   });
 
   test('drawer navigation reaches each primary feature route', async ({ page }) => {

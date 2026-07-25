@@ -14,7 +14,8 @@
                        Color="Color.Primary"
                        StartIcon="@Icons.Material.Filled.Refresh"
                        OnClick="ReloadAsync"
-                       Disabled="isLoading">
+                       Disabled="isLoading"
+                       data-testid="repositories-refresh-button">
                 Refresh
             </MudButton>
 
@@ -75,7 +76,7 @@
 
     @if (isLoading)
     {
-        <MudPaper Class="pa-6" Elevation="1" aria-live="polite" role="status">
+        <MudPaper Class="pa-6" Elevation="1" aria-live="polite" role="status" data-testid="repositories-loading-state">
             <MudStack AlignItems="AlignItems.Center" Spacing="2">
                 <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" aria-label="Loading repositories" />
                 <MudText Typo="Typo.body1">Loading repositories...</MudText>
@@ -84,7 +85,7 @@
     }
     else if (!string.IsNullOrWhiteSpace(errorMessage))
     {
-        <MudPaper Class="pa-4" Elevation="1" aria-live="assertive" role="alert">
+        <MudPaper Class="pa-4" Elevation="1" aria-live="assertive" role="alert" data-testid="repositories-error-state">
             <MudAlert Severity="Severity.Error" Variant="Variant.Filled">
                 <MudStack Spacing="2">
                     <MudText Typo="Typo.h6">Unable to load repositories</MudText>
@@ -96,7 +97,7 @@
     }
     else if (repositories.Count == 0)
     {
-        <MudPaper Class="pa-4" Elevation="1" aria-live="polite">
+        <MudPaper Class="pa-4" Elevation="1" aria-live="polite" data-testid="repositories-empty-state">
             <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
                 <MudStack Spacing="1">
                     <MudText Typo="Typo.h6">No repositories found</MudText>
@@ -107,7 +108,7 @@
     }
     else
     {
-        <MudPaper Class="pa-2" Elevation="1">
+        <MudPaper Class="pa-2" Elevation="1" data-testid="repositories-grid">
             <MudDataGrid T="RepositoryDto"
                          Items="FilteredRepositories"
                          Hover="true"

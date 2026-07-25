@@ -2,6 +2,8 @@
 
 Playwright tests for key user journeys. These complement unit and bUnit component tests — they validate complete workflows in a real browser rather than replacing isolated unit coverage.
 
+Critical journeys, priority tiers, and CI constraints are documented in [CRITICAL_JOURNEYS.md](CRITICAL_JOURNEYS.md).
+
 ## Test coverage
 
 | Spec | What it validates |
@@ -9,6 +11,11 @@ Playwright tests for key user journeys. These complement unit and bUnit componen
 | `smoke.spec.ts` | Health endpoint and home page render |
 | `navigation.spec.ts` | Home feature cards and drawer navigation to all primary routes |
 | `about.spec.ts` | About page metadata via the shell menu |
+| `auth-entry.spec.ts` | PAT-mode welcome redirect and connectivity error page |
+| `audit-dashboard.spec.ts` | Audit Dashboard shell and repository load failure; `/audit` alias |
+| `repositories.spec.ts` | Repositories command strip and load failure handling |
+| `migrate.spec.ts` | One-Click Migration setup shell and API failure feedback |
+| `board-rules.spec.ts` | Board Rules selector region, compare mode, and load failure |
 | `labels.spec.ts` | Label Manager shell, tabs, and empty-repository state |
 | `workflows.spec.ts` | Built-in template browse/filter/select and repository error state |
 | `triage.spec.ts` | Triage shell and no-repositories alert without a live GitHub connection |

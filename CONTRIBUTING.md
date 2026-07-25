@@ -106,7 +106,8 @@ When suggesting a feature:
    - Use the naming convention: `MethodUnderTest_Scenario_ExpectedOutcome`
    - All tests must pass: `dotnet test`
    - Aim for meaningful test coverage, not just coverage percentage
-   - Use Playwright for end-to-end user journeys where unit tests cannot validate the full workflow.
+   - Use Playwright for end-to-end user journeys where unit tests cannot validate the full workflow — see [`tests/E2E/README.md`](tests/E2E/README.md) and [`tests/E2E/CRITICAL_JOURNEYS.md`](tests/E2E/CRITICAL_JOURNEYS.md) for the CI journey inventory, local run steps, and selector conventions.
+   - Prefer `data-testid` attributes on loading, error, and empty UI states when adding journeys that will run in CI with placeholder auth.
    - Do not test .NET Aspire AppHost modelling or orchestration.
 
 4. **Architecture:**
