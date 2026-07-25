@@ -11,6 +11,17 @@
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
         <MudText Typo="Typo.h5" Class="ml-3">SoloDevBoard</MudText>
         <MudSpacer />
+        @if (_showPatConnectionStatus && _patConnectionStatus is not null)
+        {
+            <MudChip T="string"
+                     Color="@(_patConnectionStatus.IsConnected ? Color.Success : Color.Warning)"
+                     Variant="Variant.Text"
+                     Icon="@Icons.Material.Filled.Link"
+                     aria-label="@_patConnectionStatus.StatusMessage"
+                     data-testid="shell-github-connection-status">
+                @_patConnectionStatus.StatusMessage
+            </MudChip>
+        }
         <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
         <MudMenu Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" AriaLabel="More options">
             <MudMenuItem Href="/about" Icon="@Icons.Material.Filled.Info">About</MudMenuItem>

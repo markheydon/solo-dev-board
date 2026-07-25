@@ -109,7 +109,7 @@ public sealed class HostedAdmissionControlMiddleware(
 
     private static bool IsBypassedPath(PathString path)
     {
-        if (path.StartsWithSegments("/auth"))
+        if (path.StartsWithSegments("/auth") || path.StartsWithSegments("/welcome"))
         {
             return true;
         }
@@ -119,7 +119,9 @@ public sealed class HostedAdmissionControlMiddleware(
             return true;
         }
 
-        if (path.StartsWithSegments("/_framework") || path.StartsWithSegments("/_content"))
+        if (path.StartsWithSegments("/_framework")
+            || path.StartsWithSegments("/_content")
+            || path.StartsWithSegments("/_blazor"))
         {
             return true;
         }

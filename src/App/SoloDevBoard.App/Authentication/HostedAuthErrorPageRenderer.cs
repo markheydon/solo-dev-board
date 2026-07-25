@@ -12,8 +12,8 @@ internal static class HostedAuthErrorPageRenderer
     /// <param name="context">The current HTTP context.</param>
     /// <param name="reason">The hosted authentication failure reason code.</param>
     /// <param name="authOptions">GitHub authentication options.</param>
-    /// <returns>Static HTML for the error page.</returns>
-    public static string Render(HttpContext context, string? reason, GitHubAuthOptions authOptions)
+    /// <returns>The rendered error page and HTTP status code.</returns>
+    public static StaticErrorPageResult Render(HttpContext context, string? reason, GitHubAuthOptions authOptions)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(authOptions);
@@ -76,7 +76,7 @@ internal static class HostedAuthErrorPageRenderer
         builder.AppendLine("</body>");
         builder.AppendLine("</html>");
 
-        return builder.ToString();
+        return new StaticErrorPageResult(builder.ToString(), presentation.StatusCode);
     }
 
     private static string Encode(string? value) => WebUtility.HtmlEncode(value ?? string.Empty);

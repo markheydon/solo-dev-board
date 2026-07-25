@@ -1,0 +1,24 @@
+@page "/welcome"
+@layout LandingLayout
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+
+<PageTitle>Welcome — SoloDevBoard</PageTitle>
+
+<MudStack Spacing="4" AlignItems="AlignItems.Center" Class="text-center">
+    <MudText Typo="Typo.h4">SoloDevBoard</MudText>
+    <MudText Typo="Typo.body1">
+        Your single pane of glass for GitHub workloads.
+    </MudText>
+    <MudText Typo="Typo.body2">
+        Sign in with your GitHub account to access this deployment.
+        Access is limited to operator-approved users and organisations.
+    </MudText>
+    <MudButton Href="@_signInUrl"
+               Variant="Variant.Filled"
+               Color="Color.Primary"
+               Size="Size.Large"
+               StartIcon="@Icons.Material.Filled.Login"
+               data-testid="welcome-sign-in">
+        Sign in with GitHub
+    </MudButton>
+</MudStack>

@@ -14,15 +14,16 @@ public sealed class HostedAuthErrorPageRendererTests
         var context = new DefaultHttpContext();
 
         // Act
-        var html = HostedAuthErrorPageRenderer.Render(
+        var page = HostedAuthErrorPageRenderer.Render(
             context,
             HostedAuthErrorRoutes.AccessDenied,
             new GitHubAuthOptions());
 
         // Assert
-        Assert.Contains("Access denied", html);
-        Assert.Contains("not authorised for this deployment", html);
-        Assert.Contains("data-testid=\"auth-error-try-again\"", html);
+        Assert.Equal(StatusCodes.Status403Forbidden, page.StatusCode);
+        Assert.Contains("Access denied", page.Html);
+        Assert.Contains("not authorised for this deployment", page.Html);
+        Assert.Contains("data-testid=\"auth-error-try-again\"", page.Html);
     }
 
     [Fact]
@@ -40,15 +41,15 @@ public sealed class HostedAuthErrorPageRendererTests
         };
 
         // Act
-        var html = HostedAuthErrorPageRenderer.Render(
+        var page = HostedAuthErrorPageRenderer.Render(
             context,
             HostedAuthErrorRoutes.AccessDenied,
             new GitHubAuthOptions());
 
         // Assert
-        Assert.Contains("Signed in as", html);
-        Assert.Contains("markheydon", html);
-        Assert.Contains("data-testid=\"auth-error-sign-out\"", html);
+        Assert.Contains("Signed in as", page.Html);
+        Assert.Contains("markheydon", page.Html);
+        Assert.Contains("data-testid=\"auth-error-sign-out\"", page.Html);
     }
 
     [Fact]
@@ -59,16 +60,16 @@ public sealed class HostedAuthErrorPageRendererTests
         context.Request.QueryString = new QueryString("?returnUrl=%2Frepositories");
 
         // Act
-        var html = HostedAuthErrorPageRenderer.Render(
+        var page = HostedAuthErrorPageRenderer.Render(
             context,
             HostedAuthErrorRoutes.SessionExpired,
             new GitHubAuthOptions());
 
         // Assert
-        Assert.Contains("Session expired", html);
-        Assert.Contains("no longer valid", html);
-        Assert.Contains("Sign in again", html);
-        Assert.Contains("/auth/sign-in?returnUrl=%2Frepositories", html);
+        Assert.Contains("Session expired", page.Html);
+        Assert.Contains("no longer valid", page.Html);
+        Assert.Contains("Sign in again", page.Html);
+        Assert.Contains("/auth/sign-in?returnUrl=%2Frepositories", page.Html);
     }
 
     [Fact]
@@ -78,10 +79,10 @@ public sealed class HostedAuthErrorPageRendererTests
         var context = new DefaultHttpContext();
 
         // Act
-        var html = HostedAuthErrorPageRenderer.Render(context, "not-real", new GitHubAuthOptions());
+        var page = HostedAuthErrorPageRenderer.Render(context, "not-real", new GitHubAuthOptions());
 
         // Assert
-        Assert.Contains("Sign-in failed", html);
-        Assert.Contains("Hosted sign-in could not be completed", html);
+        Assert.Contains("Sign-in failed", page.Html);
+        Assert.Contains("Hosted sign-in could not be completed", page.Html);
     }
 }

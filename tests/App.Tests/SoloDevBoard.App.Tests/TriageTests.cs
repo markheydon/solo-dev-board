@@ -1344,7 +1344,7 @@ public sealed class TriageTests
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
 
         ctx.Services.AddMudServices();
-        ctx.Services.AddTestHostedAuthenticationRecovery();
+        ctx.Services.AddTestGitHubAuthenticationRecovery();
         ctx.Services.AddScoped(_ => _repositoryService);
         ctx.Services.AddScoped(_ => _triageService);
         ctx.Services.AddScoped(_ => _labelManagerService);

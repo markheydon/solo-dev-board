@@ -27,9 +27,9 @@ public partial class Migration : ComponentBase
     [Inject]
     public ISnackbar Snackbar { get; set; } = default!;
 
-    /// <summary>Gets or sets the hosted authentication recovery service.</summary>
+    /// <summary>Gets or sets the GitHub authentication recovery service.</summary>
     [Inject]
-    public IHostedAuthenticationRecoveryService HostedAuthRecovery { get; set; } = default!;
+    public IGitHubAuthenticationRecoveryService GitHubAuthRecovery { get; set; } = default!;
 
     private IReadOnlyList<RepositoryDto> availableRepositories = [];
     private IReadOnlyList<RepositoryDto> selectedRepositories = [];
@@ -73,9 +73,9 @@ public partial class Migration : ComponentBase
             selectedRepositories = [];
             ResetWorkflow();
         }
-        catch (HostedAuthenticationRequiredException ex)
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
-            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
             {
                 return;
             }
@@ -191,9 +191,9 @@ public partial class Migration : ComponentBase
             showPreview = true;
             applyResult = new MigrationResultDto(conflictStrategy, [], []);
         }
-        catch (HostedAuthenticationRequiredException ex)
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
-            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
             {
                 return;
             }

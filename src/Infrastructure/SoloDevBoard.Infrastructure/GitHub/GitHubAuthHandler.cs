@@ -31,11 +31,18 @@ public sealed class GitHubAuthHandler(
 
         var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
-        if (_authOptions.HostedSignInEnabled && response.StatusCode == HttpStatusCode.Unauthorized)
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
             response.Dispose();
-            throw new HostedAuthenticationRequiredException(
-                "GitHub rejected the hosted access token. Sign in again to continue.");
+
+            if (_authOptions.HostedSignInEnabled)
+            {
+                throw new HostedAuthenticationRequiredException(
+                    "GitHub rejected the hosted access token. Sign in again to continue.");
+            }
+
+            throw new GitHubPatConnectivityRequiredException(
+                "GitHub rejected the configured personal access token. Update the token and restart the application.");
         }
 
         return response;

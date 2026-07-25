@@ -18,6 +18,8 @@ The About page offers a concise summary of the application's identity and techni
 - Application name and branding.
 - Application version, retrieved from the centralised `IAppVersionService`.
 - .NET runtime version currently in use.
+- GitHub authentication mode (hosted sign-in or PAT-only local trusted mode).
+- Current GitHub identity (`@login`) for the active authentication mode.
 - Link to the SoloDevBoard GitHub repository.
 
 ## How to Access

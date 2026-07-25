@@ -32,7 +32,8 @@ This document defines the hosted authentication and admission-control boundaries
 
 - When GitHub returns `401 Unauthorized` for a hosted API request, the application throws `HostedAuthenticationRequiredException` and feature pages initiate recovery through `/auth/session-expired`.
 - The `/auth/session-expired` route signs out the stale auth cookie and redirects to `/auth/error?reason=session-expired` with user-facing copy and a **Sign in again** action that preserves the original page where possible.
-- Cookie authentication validates the token expiry claim on each request; principals with expired claims are rejected so full page loads are challenged to `/auth/sign-in`.
+- Cookie authentication validates the token expiry claim on each request; principals with expired claims are rejected so full page loads are challenged to `/welcome`.
+- Admission control middleware bypasses public infrastructure paths, including `/welcome` and `/_blazor`, so unauthenticated visitors can render the hosted landing page and establish a Blazor circuit.
 - The main application shell exposes a **Sign out** action when hosted sign-in is enabled and the user is authenticated.
 
 ## Secure Storage and Cache Boundaries (#111)

@@ -144,7 +144,10 @@ public sealed class HostedAdmissionControlMiddlewareTests
     [Theory]
     [InlineData("/health")]
     [InlineData("/alive")]
-    public async Task InvokeAsync_UnauthenticatedHealthEndpoint_InvokesNextMiddleware(string requestPath)
+    [InlineData("/health/github")]
+    [InlineData("/welcome")]
+    [InlineData("/_blazor/negotiate")]
+    public async Task InvokeAsync_UnauthenticatedBypassedPath_InvokesNextMiddleware(string requestPath)
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
 

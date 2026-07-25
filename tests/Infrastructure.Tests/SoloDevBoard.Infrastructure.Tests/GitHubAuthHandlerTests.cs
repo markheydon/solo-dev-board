@@ -123,7 +123,7 @@ public sealed class GitHubAuthHandlerTests
     }
 
     [Fact]
-    public async Task SendAsync_PatModeUnauthorizedResponse_ReturnsUnauthorizedResponse()
+    public async Task SendAsync_PatModeUnauthorizedResponse_ThrowsGitHubPatConnectivityRequiredException()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
@@ -138,10 +138,10 @@ public sealed class GitHubAuthHandlerTests
         using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/user");
 
         // Act
-        using var response = await invoker.SendAsync(request, cancellationToken);
+        var act = async () => _ = await invoker.SendAsync(request, cancellationToken);
 
         // Assert
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await Assert.ThrowsAsync<GitHubPatConnectivityRequiredException>(act);
     }
 
     private static GitHubAuthHandler CreateHandler(ICurrentUserContext currentUserContext, bool hostedSignInEnabled = false) =>

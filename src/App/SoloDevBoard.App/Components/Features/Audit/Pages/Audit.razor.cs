@@ -30,9 +30,9 @@ public partial class Audit : ComponentBase, IAsyncDisposable
     [Inject]
     public ILogger<Audit> Logger { get; set; } = default!;
 
-    /// <summary>Gets or sets the hosted authentication recovery service.</summary>
+    /// <summary>Gets or sets the GitHub authentication recovery service.</summary>
     [Inject]
-    public IHostedAuthenticationRecoveryService HostedAuthRecovery { get; set; } = default!;
+    public IGitHubAuthenticationRecoveryService GitHubAuthRecovery { get; set; } = default!;
 
     /// <summary>Gets or sets the snackbar service for user feedback.</summary>
     [Inject]
@@ -111,9 +111,9 @@ public partial class Audit : ComponentBase, IAsyncDisposable
             hasLoadedAuditSummary = false;
             ResetDashboardData();
         }
-        catch (HostedAuthenticationRequiredException ex)
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
-            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
             {
                 return;
             }
@@ -206,9 +206,9 @@ public partial class Audit : ComponentBase, IAsyncDisposable
             await LoadFilteredAuditDataAsync();
             hasLoadedAuditSummary = true;
         }
-        catch (HostedAuthenticationRequiredException ex)
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
-            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
             {
                 return;
             }

@@ -21,9 +21,9 @@ public partial class Repositories : ComponentBase
     [Inject]
     public ISnackbar Snackbar { get; set; } = default!;
 
-    /// <summary>Gets or sets the hosted authentication recovery service.</summary>
+    /// <summary>Gets or sets the GitHub authentication recovery service.</summary>
     [Inject]
-    public IHostedAuthenticationRecoveryService HostedAuthRecovery { get; set; } = default!;
+    public IGitHubAuthenticationRecoveryService GitHubAuthRecovery { get; set; } = default!;
 
     private IReadOnlyList<RepositoryDto> repositories = [];
     private bool isLoading = true;
@@ -110,9 +110,9 @@ public partial class Repositories : ComponentBase
                     : $"Loaded {repositories.Count} repositories.",
                 repositories.Count == 0 ? Severity.Info : Severity.Success);
         }
-        catch (HostedAuthenticationRequiredException ex)
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
-            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
             {
                 return;
             }

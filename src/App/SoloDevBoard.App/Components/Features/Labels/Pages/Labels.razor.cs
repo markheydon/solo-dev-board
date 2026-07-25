@@ -34,9 +34,9 @@ public partial class Labels : ComponentBase
     [Inject]
     public ISnackbar Snackbar { get; set; } = default!;
 
-    /// <summary>Gets or sets the hosted authentication recovery service.</summary>
+    /// <summary>Gets or sets the GitHub authentication recovery service.</summary>
     [Inject]
-    public IHostedAuthenticationRecoveryService HostedAuthRecovery { get; set; } = default!;
+    public IGitHubAuthenticationRecoveryService GitHubAuthRecovery { get; set; } = default!;
 
     private IReadOnlyList<RepositoryDto> availableRepositories = [];
     private IReadOnlyList<RepositoryDto> selectedRepositories = [];
@@ -139,9 +139,9 @@ public partial class Labels : ComponentBase
             taxonomyOperationMessage = null;
             ResetSyncWorkflow();
         }
-        catch (HostedAuthenticationRequiredException ex)
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
-            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
             {
                 return;
             }
@@ -245,9 +245,9 @@ public partial class Labels : ComponentBase
             recommendedPreview = await LabelManagerService.PreviewRecommendedTaxonomyAsync(selectedStrategyId, selectedFullNames);
             showRecommendedPreview = true;
         }
-        catch (HostedAuthenticationRequiredException ex)
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
-            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
             {
                 return;
             }
@@ -385,9 +385,9 @@ public partial class Labels : ComponentBase
 
             BuildRows(consolidatedLabels, selectedRepositoryFullNames);
         }
-        catch (HostedAuthenticationRequiredException ex)
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
-            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
             {
                 return;
             }
@@ -443,9 +443,9 @@ public partial class Labels : ComponentBase
             syncPreviewResults = await LabelManagerService.PreviewLabelSynchronisationAsync(syncSourceRepositoryFullName, targets);
             showSyncPreview = true;
         }
-        catch (HostedAuthenticationRequiredException ex)
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
-            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
             {
                 return;
             }
@@ -685,9 +685,9 @@ public partial class Labels : ComponentBase
 
             Snackbar.Add($"Created '{operation.LabelName}' in {changedRepositoryCount} repositories.", Severity.Success);
         }
-        catch (HostedAuthenticationRequiredException ex)
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
-            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
             {
                 return;
             }
@@ -725,9 +725,9 @@ public partial class Labels : ComponentBase
 
             Snackbar.Add($"Updated '{operation.OriginalLabelName}' across {changedRepositoryCount} repositories.", Severity.Success);
         }
-        catch (HostedAuthenticationRequiredException ex)
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
-            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
             {
                 return;
             }
@@ -764,9 +764,9 @@ public partial class Labels : ComponentBase
 
             Snackbar.Add($"Deleted '{operation.OriginalLabelName}' from {changedRepositoryCount} repositories.", Severity.Success);
         }
-        catch (HostedAuthenticationRequiredException ex)
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
-            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
             {
                 return;
             }
