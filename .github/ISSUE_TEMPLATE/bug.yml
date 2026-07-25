@@ -88,3 +88,18 @@ body:
       default: 2
     validations:
       required: false
+
+  - type: textarea
+    id: implementation-references
+    attributes:
+      label: "Implementation References"
+      description: "Links for the Delivery Agent preflight phase."
+      value: |
+        - **Wireframe:** N/A
+        - **Parent issue:** N/A
+        - **Test issue:** N/A
+        - **Related decisions:** N/A
+        - **Feature plan doc:** plan/... or N/A
+        - **Failing code area:** src/... (path or feature area)
+    validations:
+      required: false

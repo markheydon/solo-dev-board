@@ -12,7 +12,8 @@ This runbook orchestrates [`.agents/contracts/`](../.agents/contracts/) and [`.a
 |------------------------------------------|------------------------------------------------------------|-----------------------------------------------|
 | Start your day                           | "Run the daily start workflow" or `/daily-start`           | Status summary + next action recommendation   |
 | Plan the next feature                    | "Plan the next item" or `/plan-next-issue`                 | GitHub issues with full metadata + tech spec  |
-| Implement planned work                   | "Implement issue #N" or `/implement-issue`                 | Code + tests + docs + ADR (if needed)         |
+| Implement planned work                   | "Implement issue #N" or `/implement-issue`                 | Preflight + code + tests + docs + decision log (if needed) |
+| Preflight before implementation          | "Preflight issue #N" or `/preflight-issue`                  | Context, touch map, approach sketch (no code)              |
 | Verify and create PR                     | "Verify issue #N", "Create PR for issue #N", or `/verify-and-create-pr` | PR + quality validation + issue closure       |
 | Address PR review comments               | "Address PR review comments on PR #N" or `/address-pr-review-comments` | PR fixes + thread replies + resolved comments |
 | Weekly health check                      | "Run the weekly PM review" or `/weekly-pm-review`            | Executive summary + priorities for next week  |
@@ -117,6 +118,16 @@ Plan the [feature name]
 #### Stage 2: Implementation (2-8 hours per feature, varies by size)
 **Trigger:** Planning complete, issues have `status/todo` label.
 
+**Run (preflight only — optional, recommended for `size/l+` or enablers):**
+```
+Preflight issue #[number]
+```
+
+**Run (Cursor preflight):**
+```
+/preflight-issue [number]
+```
+
 **Run (prompt or natural language):**
 ```
 Implement issue #[number]
@@ -129,10 +140,11 @@ Implement issue #[number]
 
 **What it does:**
 - Invokes the **Delivery** contract ([`.agents/contracts/delivery.md`](../.agents/contracts/delivery.md))
+- Runs **implementation preflight** before coding (load context, codebase discovery, touch map, proceed gate)
 - Writes code following layered architecture (Domain/Application/Infrastructure/App)
 - Creates xUnit v3 tests (NSubstitute, `Assert.*`, correct naming)
 - Updates user-facing docs in `docs/user-guide/` if needed
-- Creates ADR in `adr/` if architectural decision made
+- Records architectural decisions via `repo-decision-log` / `plan/DECISIONS.md` when needed (do not create new `adr/` files)
 - Ensures UK English throughout
 
 **Board expectation before coding starts:**
@@ -141,19 +153,21 @@ Implement issue #[number]
 - Starting work also stamps **Start Date** and the current size-based **Target Date** forecast on the roadmap item.
 - Untouched sibling items stay blank until they actually start.
 
-**Note:** The `/implement-issue` command focuses on code, tests, and docs. Update project board fields and issue labels in a separate planning or board-sync step when needed.
+**Note:** The `/implement-issue` command runs preflight, then code, tests, and docs. Update project board fields and issue labels in a separate planning or board-sync step when needed.
 
 **What you produce:**
+- Preflight summary (context loaded, touch map, approach) before coding begins
 - Source code in `src/` (compiles, follows conventions)
 - Test code in `tests/` (passes, full coverage)
-- Documentation updates (user guides, ADRs, XML comments)
+- Documentation updates (user guides, decision log entries, XML comments)
 
 **Gates before proceeding:**
+- ✅ Implementation preflight completed and proceed gate satisfied
 - ✅ All acceptance criteria met
 - ✅ Code compiles, zero errors/warnings
 - ✅ Tests pass locally (`dotnet test`)
 - ✅ Docs updated (if user-facing feature)
-- ✅ ADR created (if architectural decision)
+- ✅ Decision log updated (if architectural decision)
 - ✅ UK English verified
 
 **Next action:** Move to Stage 3 (Review).
@@ -329,7 +343,8 @@ START
   │   └─> Run daily start workflow → Follow recommendation
   │
   ├─ Have planned issue ready for coding?
-  │   └─> `/implement-issue` or "Implement issue #N"
+  │   ├─> Large or enabler? → `/preflight-issue` or "Preflight issue #N" (optional)
+  │   └─> `/implement-issue` or "Implement issue #N" (runs preflight, then codes)
   │
   ├─ Have implemented code ready for review?
   │   └─> `/verify-and-create-pr` or "Verify issue #N"
@@ -376,13 +391,14 @@ START
 ---
 
 ### Delivery ([`.agents/contracts/delivery.md`](../.agents/contracts/delivery.md))
-**Trigger:** "Implement issue #X", "Build feature X"
+**Trigger:** "Implement issue #X", "Preflight issue #X", "Build feature X"
 
 **Responsibilities:**
+- Runs implementation preflight (context, codebase discovery, touch map, proceed gate)
 - Implements code (Domain/Application/Infrastructure/App layers)
 - Creates xUnit v3 tests (NSubstitute, `Assert.*`)
 - Updates user-facing docs
-- Creates ADRs for architectural decisions
+- Records architectural decisions via `repo-decision-log` / `plan/DECISIONS.md`
 - Ensures UK English throughout
 - Hands off to Verify Agent when complete
 
@@ -418,6 +434,7 @@ Canonical workflow definitions live in [`.agents/workflows/`](../.agents/workflo
 |----------|----------------|----------------|
 | Daily start | [`daily-start.md`](../.agents/workflows/daily-start.md) | `/daily-start` |
 | Plan next issue | [`plan-next-issue.md`](../.agents/workflows/plan-next-issue.md) | `/plan-next-issue` |
+| Preflight issue | [`preflight-issue.md`](../.agents/workflows/preflight-issue.md) | `/preflight-issue` |
 | Implement issue | [`implement-issue.md`](../.agents/workflows/implement-issue.md) | `/implement-issue` |
 | Verify and create PR | [`verify-and-create-pr.md`](../.agents/workflows/verify-and-create-pr.md) | `/verify-and-create-pr` |
 | Address PR review comments | [`address-pr-review-comments.md`](../.agents/workflows/address-pr-review-comments.md) | `/address-pr-review-comments` |
@@ -439,12 +456,16 @@ These gates are defined in [`AGENTS.md`](../AGENTS.md) and enforced by role cont
 - ✅ GitHub issues created with labels/milestones
 - ✅ Test strategy defined
 
+### Before Coding (Delivery Agent enforces)
+- ✅ Implementation preflight completed (context loaded, touch map produced, proceed gate satisfied)
+- ✅ Linked wireframe read for page-producing UI work
+
 ### Before PR Creation (Delivery Agent enforces)
 - ✅ All acceptance criteria met
 - ✅ Code compiles, zero errors/warnings
 - ✅ Tests pass locally
 - ✅ Documentation updated (if user-facing)
-- ✅ ADR created (if architectural decision)
+- ✅ Decision log updated via `repo-decision-log` (if architectural decision)
 - ✅ UK English verified
 - ✅ Roadmap item moved to **In Progress** with Start Date and Target Date recorded
 
@@ -472,8 +493,8 @@ These gates are defined in [`AGENTS.md`](../AGENTS.md) and enforced by role cont
 | `tests/` (test code)                  | Delivery Agent           | Implementation                        |
 | `docs/user-guide/` (user docs)        | Delivery Agent           | User-facing features                  |
 | `docs/index.md` (quick links)         | Delivery Agent           | New doc pages added                   |
-| `adr/` (architectural decisions)      | Delivery Agent           | Architectural decisions               |
-| `plan/DECISIONS.md`                   | Delivery Agent           | New decision recorded                 |
+| `adr/` (archived decisions)           | —                        | Historical reference only             |
+| `plan/DECISIONS.md`                   | Delivery Agent           | New decision recorded via `repo-decision-log` |
 
 ---
 
@@ -493,7 +514,7 @@ These gates are defined in [`AGENTS.md`](../AGENTS.md) and enforced by role cont
 **Action:**
 1. Delivery Agent flags issue and pauses
 2. **If scope change:** Update `plan/SCOPE.md`, re-run PM Orchestrator
-3. **If architectural decision:** Document decision, create ADR, resume
+3. **If architectural decision:** Record via `repo-decision-log` in `plan/DECISIONS.md`, resume
 4. **If technical blocker:** Document in issue comments, add `status/blocked` label, escalate to you
 
 ---
@@ -616,11 +637,12 @@ Plan next item for Phase 1
 - [ ] I run `daily-start` every morning to get oriented
 - [ ] I use `plan-next-issue` to create technical specs before coding
 - [ ] I use `implement-issue` (workflow prompt or `/implement-issue`) only for planned issues with clear acceptance criteria
+- [ ] `implement-issue` runs preflight before coding; I use `/preflight-issue` first for large items or enablers when I want to review the approach
 - [ ] I use `verify-and-create-pr` to validate quality before PR merge
 - [ ] I run `weekly-pm-review` at least once per week
 - [ ] All my GitHub issues have labels per `plan/LABEL_STRATEGY.md`
 - [ ] All user-facing features have docs in `docs/user-guide/`
-- [ ] All architectural decisions have ADRs in `adr/`
+- [ ] All architectural decisions are recorded in `plan/DECISIONS.md` via `repo-decision-log`
 - [ ] I create or update GitHub Issues when new work is discovered
 - [ ] I update `plan/SCOPE.md` when scope changes
 - [ ] I approve and merge PRs manually (agents don't auto-merge)
@@ -643,6 +665,7 @@ Plan next item for [milestone]
 
 **Implementation:**
 ```
+Preflight issue #[number]
 Implement issue #[number]
 Build [feature name]
 ```

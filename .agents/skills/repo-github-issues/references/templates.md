@@ -38,6 +38,14 @@
 
 ## Relevant Logs or Screenshots
 [Paste any relevant log output or attach screenshots]
+
+## Implementation References
+- **Wireframe:** N/A
+- **Parent issue:** N/A
+- **Test issue:** N/A
+- **Related decisions:** N/A
+- **Feature plan doc:** plan/... or N/A
+- **Failing code area:** src/... (path or feature area)
 ```
 
 **Note:** All text must be written in **UK English** (behaviour, colour, organise, etc.).
@@ -69,6 +77,16 @@
 
 ## Related Epic / Milestone
 [Which epic or milestone does this belong to? e.g. Phase 2 — Label Manager]
+
+## Implementation References
+- **Wireframe:** plan/wireframes/... or N/A
+- **Parent issue:** #N
+- **Test issue:** #N or N/A
+- **Related decisions:** DEC-NNN or N/A
+- **Feature plan doc:** plan/... or N/A
+
+## Implementation Notes
+[For `type/enabler` issues only: technical approach, layers affected, dependencies. Omit for stories.]
 
 ## Additional Context
 [Any other context, screenshots, or links relevant to this feature request]
@@ -103,6 +121,13 @@ Examples:
 
 ## Area
 [Which area of the codebase does this relate to? dashboard, migration, labels, board-rules, triage, workflows, infrastructure, docs]
+
+## Implementation References
+- **Wireframe:** N/A
+- **Parent issue:** #N
+- **Test issue:** N/A
+- **Related decisions:** DEC-NNN or N/A
+- **Feature plan doc:** plan/... or N/A
 ```
 
 **Note:** All text must be written in **UK English** (behaviour, colour, organise, etc.).
@@ -121,6 +146,13 @@ For very simple issues or quick tasks:
 - [ ] [Task 1]
 - [ ] [Task 2]
 - [ ] [Task 3]
+
+## Implementation References
+- **Wireframe:** N/A
+- **Parent issue:** #N or N/A
+- **Test issue:** N/A
+- **Related decisions:** N/A
+- **Feature plan doc:** N/A
 ```
 
 **Note:** Even simple issues should have at least `type/` and `priority/` labels applied.
