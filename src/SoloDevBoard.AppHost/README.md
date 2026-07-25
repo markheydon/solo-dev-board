@@ -67,6 +67,10 @@ Application Insights is deploy-time only. Local telemetry uses the Aspire dashbo
 
 Deployment uses `aspire deploy` to Azure Container Apps with scale-to-zero. Application Insights and structured logging are provisioned automatically. See [docs/deployment.md](../docs/deployment.md) and [docs/user-guide/observability.md](../docs/user-guide/observability.md) for the full operator guide.
 
+### Health probes
+
+The `app` resource registers `GET /health` as the Container App readiness probe (`.WithHttpHealthCheck("/health")`). A separate `GET /alive` liveness endpoint is also available. Neither probe calls GitHub or other external dependencies — see [Health checks and Container Apps probes](../docs/deployment.md#health-checks-and-container-apps-probes) for the design rationale.
+
 ### Key Vault-backed auth secrets
 
 In publish/deploy mode, hosted authentication secrets are persisted in an Aspire-provisioned `auth-secrets` Key Vault and injected into the Container App as Key Vault references — not plain-text app settings. This applies to:
