@@ -178,6 +178,8 @@ A formal migration to GitHub Spec Kit is planned — see [`plan/SPEC_KIT_MIGRATI
 **Legacy:** [ADR-0005](../adr/archive/0005-github-api-strategy.md)  
 **Summary:** Cache read-heavy GitHub catalogue responses (repositories, labels, milestones) in Infrastructure using scoped `IMemoryCache` keys tied to the current user's owner login. Invalidate label and milestone catalogue entries on corresponding CRUD mutations. Reject Application-layer DTO caching, distributed cache for this tranche, and caching issues, pull requests, workflow runs, or GraphQL project board queries until a follow-up performance pass.
 
+Test coverage expectations for cache-hit, cache-miss, invalidation, TTL expiry, and configuration validation are documented in [OPERATIONAL_HARDENING_TEST_COVERAGE.md](OPERATIONAL_HARDENING_TEST_COVERAGE.md).
+
 ---
 
 ## Superseded legacy (archive only)
