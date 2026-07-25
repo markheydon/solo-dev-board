@@ -23,6 +23,7 @@ Orchestration, rituals, and step-by-step guidance live in [`plan/PM_RUNBOOK.md`]
 | Validate implementation and open PR | "Verify issue #N", "Create PR for issue #N", `/verify-and-create-pr` | `verify-and-create-pr` | `verify` |
 | Audit code against conventions | "Code review PR #N", "Review PR #N for conventions", `/code-review` | `code-review` | `code-review` |
 | Weekly milestone health | "Run the weekly PM review", `/weekly-pm-review` | `weekly-pm-review` | `pm-orchestrator` |
+| Status label hygiene | "Clean up status labels", `/sync-status-labels` | `sync-status-labels` | `repo-github-gh-cli` |
 
 **Rule:** Never use bare "Review issue #N" for code-review, or bare "Review PR #N" for verify. The word **verify** = gate + PR; **code review** = conventions audit.
 
@@ -36,5 +37,6 @@ Orchestration, rituals, and step-by-step guidance live in [`plan/PM_RUNBOOK.md`]
 | [verify-and-create-pr](verify-and-create-pr.md) | "Verify issue #N", "Create PR for issue #N" | `verify` | — | Stage 3: Verify and PR |
 | [address-pr-review-comments](address-pr-review-comments.md) | "Address PR review comments on PR #N" | `delivery` | — | PR Review Comment Loop |
 | [weekly-pm-review](weekly-pm-review.md) | "Run the weekly PM review" | `pm-orchestrator` | — | Weekly Operating Rhythm |
+| [sync-status-labels](sync-status-labels.md) | "Clean up status labels", `/sync-status-labels` | `repo-github-gh-cli` | — | Weekly Board Hygiene Audit |
 | [code-review](code-review.md) | "Code review PR #N" | `code-review` | — | — |
 | [docs-update](docs-update.md) | "Refresh documentation for X" | `tech-writer` | `documentation-writer` | — |
