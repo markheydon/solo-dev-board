@@ -92,3 +92,26 @@ body:
       description: "Any other context, screenshots, or links relevant to this feature request."
     validations:
       required: false
+
+  - type: textarea
+    id: implementation-references
+    attributes:
+      label: "Implementation References"
+      description: "Links for the Delivery Agent preflight phase. Use N/A where not applicable."
+      value: |
+        - **Wireframe:** plan/wireframes/... or N/A
+        - **Parent issue:** #N
+        - **Test issue:** #N or N/A
+        - **Related decisions:** DEC-NNN or N/A
+        - **Feature plan doc:** plan/... or N/A
+    validations:
+      required: false
+
+  - type: textarea
+    id: implementation-notes
+    attributes:
+      label: "Implementation Notes"
+      description: "For enabler issues: technical approach, layers affected, and dependencies."
+      placeholder: "Required for type/enabler issues. Leave blank for stories."
+    validations:
+      required: false

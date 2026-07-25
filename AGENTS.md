@@ -192,6 +192,7 @@ When code changes are made, ensure the following are kept in sync:
 - For Blazor UI work, use MudBlazor components and the official MudBlazor layout patterns first; do not reintroduce bespoke layout structures when the library already provides an equivalent.
 - Prefer MudBlazor layout primitives and utility classes in `Class` attributes for spacing, alignment, sizing, and visibility before creating or extending `.razor.css` files.
 - Treat raw HTML and custom CSS as exceptional escape hatches only. If no MudBlazor component, parameter, or utility class can satisfy the requirement, keep the fallback minimal and explain the reason in the implementation summary or PR notes.
+- When implementing a planned issue, run implementation preflight before creating a feature branch; load linked wireframes and planning artefacts from the issue body.
 - When asked to "add a feature", apply the matching tier in **When Adding a New Feature** above.
 - When reviewing a PR diff, flag any non-UK English spelling in comments or strings.
 - For infrastructure changes, edit the AppHost in `src/SoloDevBoard.AppHost` or add configuration to `src/SoloDevBoard.App`; do not create hand-authored Bicep files (Aspire generates deployment Bicep at deploy time).
@@ -212,8 +213,9 @@ Canonical skills live in [`.agents/skills/`](.agents/skills/). See [`.agents/ski
 
 1. Do not start coding before planning and issue creation are complete.
 2. For page-producing UI work, do not start implementation before the planning wireframe exists in `plan/wireframes/` and is referenced by the relevant planning artefacts or issues.
-3. Do not close feature work before tests and documentation updates are complete.
-4. Scope-impacting changes must update `plan/SCOPE.md` and `plan/IMPLEMENTATION_PLAN.md` (via Tech Writer agent). New or changed work items must be created or updated as GitHub Issues and synced to Project #8.
+3. Do not start coding during `implement-issue` before implementation preflight completes (context loaded, touch map produced, proceed gate satisfied).
+4. Do not close feature work before tests and documentation updates are complete.
+5. Scope-impacting changes must update `plan/SCOPE.md` and `plan/IMPLEMENTATION_PLAN.md` (via Tech Writer agent). New or changed work items must be created or updated as GitHub Issues and synced to Project #8.
 
 ### PM operating system
 

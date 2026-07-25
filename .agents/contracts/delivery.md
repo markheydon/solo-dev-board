@@ -1,7 +1,7 @@
 ---
 role: Delivery
-description: Implements planned GitHub issues, creates tests, updates documentation, and prepares work for review.
-triggers: Implement issue #N; build feature X; fix bug #N
+description: Runs implementation preflight and implements planned GitHub issues, creates tests, updates documentation, and prepares work for review.
+triggers: Implement issue #N; preflight issue #N; build feature X; fix bug #N
 ---
 
 # Delivery Agent
@@ -29,6 +29,7 @@ Use after planning is complete.
 Examples:
 
 - Implement issue #123
+- Preflight issue #123
 - Build Label Manager UI
 - Fix bug #42
 - Implement issues #100 and #101
@@ -37,17 +38,64 @@ Examples:
 
 ## Responsibilities
 
-### 1. Verify Readiness
+### 1. Implementation Preflight
 
-Perform a lightweight readiness check:
+Run implementation preflight **before** creating a feature branch or writing code. This is a technical discovery phase — not a repeat of PM planning.
 
-- Issue exists
-- Issue is open
+#### Step 1: Load context
+
+- Load the issue: `gh issue view <N> --json title,body,state,labels`
+- Parse the `## Implementation References` section from the issue body
+- Load the parent issue if referenced
+- Read linked artefacts: wireframe path, test issue, feature plan doc under `plan/`, and related `DEC-NNN` entries in `plan/DECISIONS.md`
+- If `## Implementation References` is missing, fall back gracefully:
+  - Infer wireframe from `area/` label and [`plan/wireframes/README.md`](../../plan/wireframes/README.md)
+  - Load parent context from GitHub sub-issue relationships when available
+
+#### Step 2: Validate product readiness
+
+- Issue exists and is open
 - Acceptance criteria or implementation notes exist
+- For page-producing UI work (`area/*` excluding `area/infrastructure` and `area/docs`): wireframe must be linked and readable
+- For `type/enabler`: `## Implementation Notes` must exist beyond acceptance criteria alone
+- Unresolved blockers: escalate to PM Orchestrator; do not code
 
-Assume issues created via planning workflows are ready for implementation.
+Assume issues created via planning workflows are product-ready. Escalate only when a prerequisite is genuinely missing.
 
-Escalate only if implementation is genuinely blocked.
+#### Step 3: Codebase discovery
+
+Explore the feature area using the `area/` label (see [implement-issue workflow](../workflows/implement-issue.md) for path hints). Identify services, components, and tests to reuse. Produce a touch map of likely files and projects.
+
+Invoke `dotnet-best-practices` for all issues. Invoke `mudblazor` for UI work during the sketch.
+
+#### Step 4: Implementation sketch
+
+Produce a short summary:
+
+- Approach (1–3 sentences)
+- Files and projects to change (touch map)
+- Test placement (projects and scenarios; recap from linked test issue when present)
+- Risks or blockers
+
+#### Step 5: Proceed gate
+
+Present the **Preflight Complete** output (see Output Contract) before continuing.
+
+| Condition | Action |
+|-----------|--------|
+| `size/xs`, `size/s`, or `type/bug` | Auto-continue to feature branch |
+| `size/m`, `size/l`, `size/xl`, or `type/enabler` | Pause for user confirmation before coding |
+| Missing acceptance criteria, missing wireframe on page-producing UI, or unresolved blocker | Escalate; do not code |
+
+**Standalone preflight:** When invoked via `preflight-issue` workflow only, always pause after **Preflight Complete** — do not create a branch or write code.
+
+#### Preflight boundaries
+
+Do NOT during preflight:
+
+- Re-run `breakdown-plan` or PM Orchestrator planning
+- Create or update GitHub issues
+- Update `plan/SCOPE.md` or other planning documents
 
 ---
 
@@ -254,6 +302,7 @@ Escalate to the user if:
 
 Implementation is complete when:
 
+- Implementation preflight completed and proceed gate satisfied
 - Acceptance criteria are implemented
 - Build succeeds
 - Tests pass
@@ -265,7 +314,21 @@ Implementation is complete when:
 
 ## Output Contract
 
-Provide:
+After preflight, before coding, provide:
+
+```text
+Preflight Complete
+
+Issue: #123
+Context loaded: [wireframe, parent #X, test #Y, DEC-NNN]
+Touch map: [file list]
+Approach: [1-3 sentences]
+Tests: [projects + scenarios]
+Risks: [none | list]
+Proceeding: [auto | awaiting confirmation]
+```
+
+When implementation finishes, provide:
 
 ```text
 Implementation Complete

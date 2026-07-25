@@ -59,6 +59,13 @@ Invoke this when you need to:
   - `status/todo` for new items
 - Use markdown templates from `.agents/skills/repo-github-issues/references/templates.md`
 - **Note:** Markdown templates mirror YAML issue forms (`.github/ISSUE_TEMPLATE/*.yml`) which define the canonical structure
+- Every story, enabler, and test issue body must include an `## Implementation References` section with:
+  - **Wireframe:** path under `plan/wireframes/` (for page-producing UI) or `N/A`
+  - **Parent issue:** `#N` (feature or epic)
+  - **Test issue:** `#N` or `N/A`
+  - **Related decisions:** `DEC-NNN` entries or `N/A`
+  - **Feature plan doc:** path under `plan/` or `N/A`
+- For `type/enabler` issues, include an `## Implementation Notes` section (technical approach, layers affected, dependencies)
 - Assign to current milestone if applicable
 - **Assign to `markheydon`** — all issues must be assigned at creation (see repo-github-project skill Event 1)
 - Note parent/child sub-issue hierarchy (Epic→Feature→Story/Enabler/Test) and any blocking relationships — GitHub CLI cannot set either; produce a **Manual Linking Required** table in the handoff for the user to set via the GitHub UI
@@ -118,6 +125,8 @@ When complete, this agent produces:
 ### Artefacts Created
 - GitHub issues with full metadata (labels, milestones, acceptance criteria)
 - Technical plan (Epic/Feature/Story breakdown) in issue descriptions
+- `## Implementation References` section in every story, enabler, and test issue body
+- `## Implementation Notes` section in every enabler issue body
 - Wireframe artefact in `plan/wireframes/` for any page-producing feature or page refresh
 - Test issues linked to feature issues
 - Dependency relationships established
@@ -154,7 +163,7 @@ Planning is complete when:
 - ✅ Work item selected from GitHub Issues / Project #8 and scope validated
 - ✅ Technical plan produced via `breakdown-plan`
 - ✅ Wireframe created and referenced for any page-producing feature or page refresh
-- ✅ GitHub issues created with correct labels/milestones
+- ✅ GitHub issues created with correct labels/milestones and Implementation References sections
 - ✅ Test strategy defined via `breakdown-test`
 - ✅ Dependencies and acceptance criteria documented
 - ✅ All created issues added to project board with Phase/Priority/Status/dates set

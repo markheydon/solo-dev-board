@@ -77,9 +77,9 @@ The following **must** stay synchronised across formats:
 
 | YAML Template | Markdown Template | Key Fields | Default Labels |
 |---------------|-------------------|------------|----------------|
-| `bug.yml` | Bug Report | Description, Steps to Reproduce, Expected Behaviour, Actual Behaviour, Environment, Logs/Screenshots | `type/bug`, `priority/high` |
-| `feature.yml` | Feature/User Story | Description, User Story, Acceptance Criteria, Related Epic/Milestone, Area | `type/story` (user story), `type/feature` (feature grouping), `priority/medium`, optionally `area/*` |
-| `chore.yml` | Chore/Technical Debt | Description, Motivation/Context, Definition of Done, Area | `type/chore`, `priority/low`, optionally `area/*` |
+| `bug.yml` | Bug Report | Description, Steps to Reproduce, Expected/Actual Behaviour, Environment, Logs/Screenshots, Implementation References | `type/bug`, `priority/high` |
+| `feature.yml` | Feature/User Story | Description, User Story, Acceptance Criteria, Related Epic/Milestone, Area, Implementation References, Implementation Notes | `type/story` (user story), `type/feature` (feature grouping), `priority/medium`, optionally `area/*` |
+| `chore.yml` | Chore/Technical Debt | Description, Motivation/Context, Definition of Done, Area, Implementation References | `type/chore`, `priority/low`, optionally `area/*` |
 
 ---
 

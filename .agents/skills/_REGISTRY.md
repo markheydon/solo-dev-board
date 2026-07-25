@@ -35,7 +35,7 @@ Skills not listed as active or optional companion should be removed from `.agent
 SoloDevBoard defines specialised role contracts for daily PM workflows. These orchestrate skills and enforce quality gates.
 
 - `pm-orchestrator`: GitHub Issues / Project #8 selection → scope validation → technical planning (breakdown-plan) → GitHub issue setup
-- `delivery`: Implementation execution → tests → docs → decision log (if needed)
+- `delivery`: Implementation preflight → code → tests → docs → decision log (if needed)
 - `verify`: Quality validation → PR creation → issue closure → release impact assessment
 
 **Role contracts:** `.agents/contracts/*.md`  
@@ -49,7 +49,8 @@ Reusable workflows for daily PM operations (canonical definitions in `.agents/wo
 
 - `daily-start`: Morning status check → issue and project board health → blocker identification → next action recommendation
 - `plan-next-issue`: GitHub Issues / Project #8 selection → scope validation → breakdown-plan → GitHub issue creation
-- `implement-issue`: Implementation → tests → docs → decision log
+- `preflight-issue`: Implementation preflight only (context, codebase discovery, sketch) — no coding
+- `implement-issue`: Preflight → implementation → tests → docs → decision log
 - `verify-and-create-pr`: Quality gates → PR creation → issue closure
 - `address-pr-review-comments`: PR review feedback → thread replies → resolved conversations
 - `weekly-pm-review`: Milestone health → velocity trends → release confidence → top 3 priorities
@@ -61,7 +62,7 @@ Reusable workflows for daily PM operations (canonical definitions in `.agents/wo
 
 ## Tool entry points
 
-Cursor slash commands and Copilot prompts are thin discovery layers only. Example: `/implement-issue` → [`.agents/workflows/implement-issue.md`](../../.agents/workflows/implement-issue.md) → [`.agents/contracts/delivery.md`](../../.agents/contracts/delivery.md)
+Cursor slash commands and Copilot prompts are thin discovery layers only. Examples: `/preflight-issue` → [`.agents/workflows/preflight-issue.md`](../../.agents/workflows/preflight-issue.md) → [`.agents/contracts/delivery.md`](../../.agents/contracts/delivery.md); `/implement-issue` → [`.agents/workflows/implement-issue.md`](../../.agents/workflows/implement-issue.md) → [`.agents/contracts/delivery.md`](../../.agents/contracts/delivery.md)
 
 ## Canonical Sources
 

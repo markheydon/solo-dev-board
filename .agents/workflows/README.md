@@ -21,6 +21,7 @@ Orchestration, rituals, and step-by-step guidance live in [`plan/PM_RUNBOOK.md`]
 | User intent | Trigger phrases | Workflow | Contract |
 |-------------|-----------------|----------|----------|
 | Validate implementation and open PR | "Verify issue #N", "Create PR for issue #N", `/verify-and-create-pr` | `verify-and-create-pr` | `verify` |
+| Preflight before implementation | "Preflight issue #N", `/preflight-issue` | `preflight-issue` | `delivery` |
 | Audit code against conventions | "Code review PR #N", "Review PR #N for conventions", `/code-review` | `code-review` | `code-review` |
 | Weekly milestone health | "Run the weekly PM review", `/weekly-pm-review` | `weekly-pm-review` | `pm-orchestrator` |
 | Status label hygiene | "Clean up status labels", `/sync-status-labels` | `sync-status-labels` | `repo-github-gh-cli` |
@@ -33,6 +34,7 @@ Orchestration, rituals, and step-by-step guidance live in [`plan/PM_RUNBOOK.md`]
 |----------|--------------------------|----------|----------------|-----------------|
 | [daily-start](daily-start.md) | "Run the daily start workflow" | `pm-orchestrator` | `repo-github-project` (optional) | Morning Ritual |
 | [plan-next-issue](plan-next-issue.md) | "Plan the next item" | `pm-orchestrator` | `breakdown-plan`, `breakdown-test`, `repo-github-issues`, `repo-github-project` | Stage 1: Planning |
+| [preflight-issue](preflight-issue.md) | "Preflight issue #N" | `delivery` | `dotnet-best-practices`, `mudblazor` (on demand) | Stage 2: Implementation (preflight) |
 | [implement-issue](implement-issue.md) | "Implement issue #N" | `delivery` | `dotnet-best-practices`, `mudblazor`, etc. (on demand) | Stage 2: Implementation |
 | [verify-and-create-pr](verify-and-create-pr.md) | "Verify issue #N", "Create PR for issue #N" | `verify` | — | Stage 3: Verify and PR |
 | [address-pr-review-comments](address-pr-review-comments.md) | "Address PR review comments on PR #N" | `delivery` | — | PR Review Comment Loop |
