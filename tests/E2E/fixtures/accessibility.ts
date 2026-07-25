@@ -107,12 +107,12 @@ export async function waitForAccessibilityScanReady(page: Page, path: string): P
   }
 }
 
-/** Seeds the browser theme preference before navigation. */
+/** Seeds the browser theme preference before the next navigation. */
 export async function seedThemePreference(
   page: Page,
   preference: 'system' | 'light' | 'dark',
 ): Promise<void> {
-  await page.evaluate(([key, value]) => {
+  await page.addInitScript(([key, value]) => {
     localStorage.setItem(key, value);
   }, [THEME_PREFERENCE_STORAGE_KEY, preference] as const);
 }
