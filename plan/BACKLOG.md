@@ -12,7 +12,7 @@ For historical backlog content (pre-migration), see [archive/BACKLOG-2026-07-18.
 | [SoloDevBoard Roadmap (Project #8)](https://github.com/users/markheydon/projects/8) | Prioritisation, flow, Up Next queue |
 | [Milestones](https://github.com/markheydon/solo-dev-board/milestones) | Release targeting |
 
-## Roadmap Status (2026-07-18)
+## Roadmap Status (2026-07-25)
 
 | Phase | Milestone | Status |
 |-------|-----------|--------|
@@ -37,5 +37,14 @@ For historical backlog content (pre-migration), see [archive/BACKLOG-2026-07-18.
 Phases 1–4 delivered foundation, Label Manager, Audit Dashboard, One-Click Migration (labels + milestones), Triage UI, Board Rules Visualiser, and built-in Workflow Templates. Deferred follow-on slices (label consistency warnings, project board migration, custom template repos, Audit Dashboard polish) are tracked under [#289](https://github.com/markheydon/solo-dev-board/issues/289) and child issues.
 
 Phase 6 (v1.0.0) remaining work is tracked on the [v1.0.0 milestone](https://github.com/markheydon/solo-dev-board/milestone/4), including issues [#106](https://github.com/markheydon/solo-dev-board/issues/106)–[#108](https://github.com/markheydon/solo-dev-board/issues/108), [#110](https://github.com/markheydon/solo-dev-board/issues/110), and [#247](https://github.com/markheydon/solo-dev-board/issues/247)–[#259](https://github.com/markheydon/solo-dev-board/issues/259).
+
+### V1 auth polish (Epic #101 follow-on)
+
+| Issue | Focus |
+|-------|-------|
+| [#247](https://github.com/markheydon/solo-dev-board/issues/247) | PAT-only local trusted mode documentation |
+| [#248](https://github.com/markheydon/solo-dev-board/issues/248) | Self-hoster deployment path (`aspire deploy` with PAT) |
+| [#249](https://github.com/markheydon/solo-dev-board/issues/249) | Hosted unauthenticated landing page |
+| [#314](https://github.com/markheydon/solo-dev-board/issues/314) | PAT/GitHub connectivity readiness (startup probe, shell status, recovery UX) |
 
 For phase sequencing and architecture milestones, see [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). For product boundaries, see [SCOPE.md](SCOPE.md).

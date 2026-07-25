@@ -76,6 +76,19 @@ This section documents the test coverage requirements for GitHub App-first hoste
 
 See [DEC-012](DECISIONS.md#dec-012-github-app-first-hosted-authentication) and GitHub Issues [#247](https://github.com/markheydon/solo-dev-board/issues/247)–[#250](https://github.com/markheydon/solo-dev-board/issues/250) for references to completed coverage and test boundaries.
 
+## Remaining V1 Auth Polish
+
+The hosted sign-in and admission-control boundaries above are delivered. The following open stories complete the V1 auth polish bundle without changing the operator secret model (Aspire parameters, user secrets, and Key Vault remain the configuration surface):
+
+| Issue | Scope |
+|-------|-------|
+| [#249](https://github.com/markheydon/solo-dev-board/issues/249) | Hosted unauthenticated landing page and sign-out return path |
+| [#314](https://github.com/markheydon/solo-dev-board/issues/314) | PAT-mode GitHub connectivity readiness (startup probe, shell status, recovery UX, optional `/health/github`) |
+| [#247](https://github.com/markheydon/solo-dev-board/issues/247) | PAT-only local trusted mode documentation |
+| [#248](https://github.com/markheydon/solo-dev-board/issues/248) | Self-hoster deployment documentation |
+
+In-app secret or environment-variable editing is explicitly out of scope for these stories.
+
 ## Rollout Notes
 
 - The delivered implementation adds hosted-mode DI switching, hosted sign-in handshake and callback routes, hosted claim mapping configuration, per-request token validation with optional installation context, and hosted admission control.
