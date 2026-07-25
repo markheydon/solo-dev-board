@@ -59,6 +59,33 @@ MudBlazor uses a `MudTheme` object passed to `MudThemeProvider`.
 
 ---
 
+## SoloDevBoard Three-Way Theme Preference
+
+SoloDevBoard uses `AppThemeProvider` with `IThemePreferenceService` for **Automatic**, **Light**, and **Dark** modes.
+
+- **Automatic (default):** `ObserveSystemDarkModeChange="true"` and no fixed `IsDarkMode` binding — MudBlazor follows `prefers-color-scheme`.
+- **Light / Dark:** `ObserveSystemDarkModeChange="false"` with an explicit `IsDarkMode` value.
+- Preference persists in `localStorage` via `themePreferenceConstants.js` (key: `solo-dev-board.theme-preference`, shared with `ThemePreferenceConstants.StorageKey` in C#).
+- The shell app-bar button cycles Automatic → Light → Dark.
+
+```razor
+@* AppThemeProvider.razor *@
+@if (ThemePreferenceService.ObserveSystemPreference)
+{
+    <MudThemeProvider Theme="@Theme" ObserveSystemDarkModeChange="true" />
+}
+else
+{
+    <MudThemeProvider Theme="@Theme"
+                      ObserveSystemDarkModeChange="false"
+                      IsDarkMode="@ThemePreferenceService.EffectiveIsDarkMode" />
+}
+```
+
+`App.razor` loads `themePreferenceConstants.js`, `themePreferenceDocument.js`, and `themePreferenceFlash.js` in the document head. The flash script applies the correct `color-scheme` and background before the Blazor circuit connects; `AppThemeProvider` calls `applyDocumentTheme` again whenever the preference changes so page backgrounds stay in sync when cycling modes without a reload.
+
+---
+
 ## Using Theme Colours in Components
 
 ```razor

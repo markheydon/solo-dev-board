@@ -41,6 +41,7 @@ It is built with the solo developer in mind: opinionated defaults, minimal confi
 - 📖 [Getting Started](getting-started.md) — prerequisites, Aspire-first local setup, PAT-only local trusted mode, and configuration.
 - 🚀 [Deployment](deployment.md) — Azure Container Apps via Aspire, including the [self-hoster PAT path](deployment.md#self-hoster-deployment-pat-mode).
 - 👤 [User Guide](user-guide/) — detailed guides for each feature area.
+- 🎨 [Appearance Guide](user-guide/appearance.md) — automatic, light, and dark theme modes with browser persistence.
 - 👤 [Hosted Authentication Guide](user-guide/hosted-authentication.md) — hosted sign-in, operator allow-lists, and fallback modes for production deployments.
 - 🔑 [PAT Connectivity Guide](user-guide/pat-connectivity.md) — PAT validation, shell status, recovery UX, and `/health/github` for local trusted mode.
 - ℹ️ [About Guide](user-guide/about.md) — overview of the About page, version information, and repository link.

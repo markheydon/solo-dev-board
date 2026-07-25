@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Result } from 'axe-core';
 import { expect, type Page } from '@playwright/test';
+import { THEME_PREFERENCE_STORAGE_KEY } from './themePreference';
 
 /** Routes audited for WCAG 2.1 AA in the CI accessibility suite. */
 export const accessibilityRoutes = [
@@ -106,8 +107,12 @@ export async function waitForAccessibilityScanReady(page: Page, path: string): P
   }
 }
 
-/** Enables dark mode via the shell theme toggle. */
-export async function enableDarkMode(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Toggle dark mode' }).click();
-  await expect(page.getByRole('button', { name: 'Toggle light mode' })).toBeVisible();
+/** Seeds the browser theme preference before navigation. */
+export async function seedThemePreference(
+  page: Page,
+  preference: 'system' | 'light' | 'dark',
+): Promise<void> {
+  await page.evaluate(([key, value]) => {
+    localStorage.setItem(key, value);
+  }, [THEME_PREFERENCE_STORAGE_KEY, preference] as const);
 }
