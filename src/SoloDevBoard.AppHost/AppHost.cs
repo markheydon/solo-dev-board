@@ -49,8 +49,8 @@ if (builder.ExecutionContext.IsPublishMode)
     app = app
         .WithRoleAssignments(authSecretsVault, KeyVaultBuiltInRole.KeyVaultSecretsUser)
         .WithReference(authSecretsVault)
-        .WithEnvironment("GitHubAuth__PersonalAccessToken", authSecretsVault.GetSecret("auth-gh-pat"))
-        .WithEnvironment("GitHubAuth__HostedGitHubAppClientSecret", authSecretsVault.GetSecret("auth-gh-app-client-secret"))
+        .WithEnvironment("GitHubAuth__PersonalAccessToken", authSecretsVault.GetSecret("gh-pat"))
+        .WithEnvironment("GitHubAuth__HostedGitHubAppClientSecret", authSecretsVault.GetSecret("gh-app-client-secret"))
         .WithReference(builder.AddAzureApplicationInsights("app-insights"));
 }
 else
