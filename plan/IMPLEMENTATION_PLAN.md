@@ -220,7 +220,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Migrate production deployment to Aspire Azure Container Apps with scale-to-zero. _(ADR-0018.)_
 - [x] Configure OIDC authentication for GitHub Actions deployment to Azure (no long-lived credentials). _(#105)_
 - [x] Add health check endpoints for Azure Container Apps monitoring. _(#106 — readiness `/health`, liveness `/alive`, ACA probe via AppHost `WithHttpHealthCheck`)_
-- [ ] Implement response caching for GitHub API calls to respect rate limits. _(#108)_
+- [x] Implement response caching for GitHub API calls to respect rate limits. _(#108)_
 - [x] Configure structured logging and Application Insights telemetry. _(#107)_
 - [x] Set up Dependabot for automated dependency updates. _(#109)_
 - [ ] Formalise and document PAT-only local trusted mode and self-hoster deployment path. _(#247, #248)_

@@ -199,7 +199,7 @@ public sealed class GitHubLabelRepositoryTests
             .CreateClient(GitHubService.GitHubApiClientName)
             .Returns(client);
 
-        var sut = new GitHubLabelRepository(httpClientFactory);
+        var sut = new GitHubLabelRepository(httpClientFactory, GitHubCachingTestSupport.CreateResponseCache());
 
         // Act / Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -208,11 +208,7 @@ public sealed class GitHubLabelRepositoryTests
 
     private static GitHubLabelRepository CreateSubject(HttpMessageHandler handler)
     {
-        var currentUserContext = Substitute.For<ICurrentUserContext>();
-        currentUserContext
-            .GetAccessToken()
-            .Returns("test-token");
-
+        var currentUserContext = GitHubCachingTestSupport.CreateCurrentUserContext();
         var authHandler = new GitHubAuthHandler(
             currentUserContext,
             Options.Create(new GitHubAuthOptions()))
@@ -230,7 +226,8 @@ public sealed class GitHubLabelRepositoryTests
             .CreateClient(GitHubService.GitHubApiClientName)
             .Returns(client);
 
-        return new GitHubLabelRepository(httpClientFactory);
+        var responseCache = GitHubCachingTestSupport.CreateResponseCache(memoryCache: null, currentUserContext);
+        return new GitHubLabelRepository(httpClientFactory, responseCache);
     }
 
     private static HttpResponseMessage CreateJsonResponse(HttpStatusCode statusCode, string json)

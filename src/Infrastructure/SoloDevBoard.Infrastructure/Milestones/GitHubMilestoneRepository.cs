@@ -19,12 +19,15 @@ public sealed class GitHubMilestoneRepository : IMilestoneRepository
     };
 
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly GitHubResponseCache _responseCache;
 
     /// <summary>Initialises a new instance of the <see cref="GitHubMilestoneRepository"/> class.</summary>
     /// <param name="httpClientFactory">The factory used to create named <see cref="HttpClient"/> instances.</param>
-    public GitHubMilestoneRepository(IHttpClientFactory httpClientFactory)
+    /// <param name="responseCache">The cache used for read-heavy GitHub API catalogue responses.</param>
+    public GitHubMilestoneRepository(IHttpClientFactory httpClientFactory, GitHubResponseCache responseCache)
     {
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        _responseCache = responseCache ?? throw new ArgumentNullException(nameof(responseCache));
     }
 
     /// <inheritdoc/>
@@ -33,16 +36,23 @@ public sealed class GitHubMilestoneRepository : IMilestoneRepository
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
         ArgumentException.ThrowIfNullOrWhiteSpace(repo);
 
-        var client = CreateClient();
-        var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/milestones?state=all&per_page=100";
+        return await _responseCache.GetOrCreateMilestonesAsync(
+            owner,
+            repo,
+            async ct =>
+            {
+                var client = CreateClient();
+                var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/milestones?state=all&per_page=100";
 
-        return await GitHubService.GetPagedAsync<MilestoneResponseDto, Milestone>(
-                client,
-                endpoint,
-                static dto => dto.ToDomain(),
-                JsonOptions,
-                cancellationToken)
-            .ConfigureAwait(false);
+                return await GitHubService.GetPagedAsync<MilestoneResponseDto, Milestone>(
+                        client,
+                        endpoint,
+                        static dto => dto.ToDomain(),
+                        JsonOptions,
+                        ct)
+                    .ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -60,6 +70,8 @@ public sealed class GitHubMilestoneRepository : IMilestoneRepository
 
         var created = await response.Content.ReadFromJsonAsync<MilestoneResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
             ?? throw GitHubService.CreateInvalidResponseException("Milestone response was empty.", endpoint);
+
+        _responseCache.InvalidateMilestones(owner, repo);
 
         return created.ToDomain();
     }
@@ -90,6 +102,8 @@ public sealed class GitHubMilestoneRepository : IMilestoneRepository
         var updated = await response.Content.ReadFromJsonAsync<MilestoneResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
             ?? throw GitHubService.CreateInvalidResponseException("Milestone response was empty.", endpoint);
 
+        _responseCache.InvalidateMilestones(owner, repo);
+
         return updated.ToDomain();
     }
 
@@ -108,6 +122,8 @@ public sealed class GitHubMilestoneRepository : IMilestoneRepository
 
         using var response = await client.DeleteAsync(endpoint, cancellationToken).ConfigureAwait(false);
         await GitHubService.EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
+
+        _responseCache.InvalidateMilestones(owner, repo);
     }
 
     private HttpClient CreateClient()

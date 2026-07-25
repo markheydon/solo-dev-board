@@ -268,6 +268,13 @@ Located at `src/App/SoloDevBoard.App/appsettings.json`. The relevant sections ar
       "AllowedUserLogins": "",
       "AllowedOrganisationLogins": "",
       "HostedOrganisationLoginsClaimType": "solo-dev-board.github.organisation-logins"
+   },
+   "GitHub": {
+      "Cache": {
+         "RepositoriesTtlSeconds": 60,
+         "LabelsTtlSeconds": 300,
+         "MilestonesTtlSeconds": 300
+      }
    }
 }
 ```
@@ -289,6 +296,9 @@ Located at `src/App/SoloDevBoard.App/appsettings.json`. The relevant sections ar
 - `HostedAdmissionControl:AllowedUserLogins`: Comma-separated permitted GitHub user logins for hosted access.
 - `HostedAdmissionControl:AllowedOrganisationLogins`: Comma-separated permitted GitHub organisation logins for hosted access.
 - `HostedAdmissionControl:HostedOrganisationLoginsClaimType`: Claim type used to extract organisation logins from authentication claims.
+- `GitHub:Cache:RepositoriesTtlSeconds`: Absolute cache lifetime in seconds for repository catalogue responses (default `60`).
+- `GitHub:Cache:LabelsTtlSeconds`: Absolute cache lifetime in seconds for label catalogue responses (default `300`).
+- `GitHub:Cache:MilestonesTtlSeconds`: Absolute cache lifetime in seconds for milestone catalogue responses (default `300`).
 
 Leave `PersonalAccessToken` empty in `appsettings.json` and supply it via an environment variable or user secrets instead.
 
@@ -315,6 +325,9 @@ Leave `PersonalAccessToken` empty in `appsettings.json` and supply it via an env
 | `HostedAdmissionControl__AllowedUserLogins` | Comma-separated list of allowed GitHub user logins |
 | `HostedAdmissionControl__AllowedOrganisationLogins` | Comma-separated list of allowed GitHub organisation logins |
 | `HostedAdmissionControl__HostedOrganisationLoginsClaimType` | Claim type for organisation logins (string) |
+| `GitHub__Cache__RepositoriesTtlSeconds` | Cache lifetime in seconds for repository catalogue responses |
+| `GitHub__Cache__LabelsTtlSeconds` | Cache lifetime in seconds for label catalogue responses |
+| `GitHub__Cache__MilestonesTtlSeconds` | Cache lifetime in seconds for milestone catalogue responses |
 
 To set PAT-only values for the **legacy `dotnet run` path** (without Aspire), use .NET User Secrets on the app project. Only the PAT is required; owner login is resolved automatically:
 

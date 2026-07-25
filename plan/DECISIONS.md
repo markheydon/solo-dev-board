@@ -171,6 +171,15 @@ A formal migration to GitHub Spec Kit is planned — see [`plan/SPEC_KIT_MIGRATI
 
 ---
 
+### DEC-018: GitHub API response caching in Infrastructure
+
+**Status:** Active  
+**Date:** 2026-07-25  
+**Legacy:** [ADR-0005](../adr/archive/0005-github-api-strategy.md)  
+**Summary:** Cache read-heavy GitHub catalogue responses (repositories, labels, milestones) in Infrastructure using scoped `IMemoryCache` keys tied to the current user's owner login. Invalidate label and milestone catalogue entries on corresponding CRUD mutations. Reject Application-layer DTO caching, distributed cache for this tranche, and caching issues, pull requests, workflow runs, or GraphQL project board queries until a follow-up performance pass.
+
+---
+
 ## Superseded legacy (archive only)
 
 | Legacy ADR | Superseded by | Notes |
