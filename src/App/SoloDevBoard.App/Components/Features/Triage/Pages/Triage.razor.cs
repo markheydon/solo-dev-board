@@ -48,10 +48,6 @@ public partial class Triage : ComponentBase
     [Inject]
     public ILogger<Triage> Logger { get; set; } = default!;
 
-    /// <summary>Gets or sets the snackbar service used for non-blocking notifications.</summary>
-    [Inject]
-    public ISnackbar Snackbar { get; set; } = default!;
-
     /// <summary>Gets or sets the GitHub authentication recovery service.</summary>
     [Inject]
     public IGitHubAuthenticationRecoveryService GitHubAuthRecovery { get; set; } = default!;
@@ -73,6 +69,8 @@ public partial class Triage : ComponentBase
     private string selectedProjectBoardId = string.Empty;
     private string selectedProjectBoardStatusOptionId = string.Empty;
     private string? operationMessage;
+    // Persistent page feedback uses MudAlert via operationMessage; snackbars are not duplicated here
+    // because animated overlays can fail axe colour-contrast scans and duplicate inline alerts.
     private string? inaccessibleProjectBoardsWarning;
     private Severity operationSeverity = Severity.Info;
     private bool isLoadingPlanningOptions;
@@ -226,14 +224,12 @@ public partial class Triage : ComponentBase
             Logger.LogError(ex, "GitHub API request failed while loading triage repositories.");
             operationSeverity = Severity.Error;
             operationMessage = $"GitHub API request failed while loading repositories. {ex.Message}";
-            Snackbar.Add("Failed to load repositories for triage session scope.", Severity.Error);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to load triage repositories.");
             operationSeverity = Severity.Error;
             operationMessage = "An unexpected error occurred while loading repositories.";
-            Snackbar.Add("An unexpected error occurred while loading triage repositories.", Severity.Error);
         }
         finally
         {
@@ -289,7 +285,6 @@ public partial class Triage : ComponentBase
         {
             operationSeverity = Severity.Warning;
             operationMessage = "Repository scope must be in owner/repository format.";
-            Snackbar.Add("Select a valid repository scope before starting triage.", Severity.Warning);
             return;
         }
 
@@ -320,14 +315,12 @@ public partial class Triage : ComponentBase
             Logger.LogError(ex, "GitHub API request failed while starting triage session for {RepositoryScope}.", selectedRepositoryFullName);
             operationSeverity = Severity.Error;
             operationMessage = $"GitHub API request failed while starting triage session. {ex.Message}";
-            Snackbar.Add("Failed to start triage session due to a GitHub API error.", Severity.Error);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to start triage session for {RepositoryScope}.", selectedRepositoryFullName);
             operationSeverity = Severity.Error;
             operationMessage = "An unexpected error occurred while starting triage session.";
-            Snackbar.Add("An unexpected error occurred while starting triage session.", Severity.Error);
         }
         finally
         {
@@ -372,7 +365,6 @@ public partial class Triage : ComponentBase
             selectedQuickActionLabelName = string.Empty;
             operationSeverity = Severity.Error;
             operationMessage = $"GitHub API request failed while loading labels. {ex.Message}";
-            Snackbar.Add("Failed to load quick-action labels for triage.", Severity.Error);
         }
         catch (Exception ex)
         {
@@ -381,7 +373,6 @@ public partial class Triage : ComponentBase
             selectedQuickActionLabelName = string.Empty;
             operationSeverity = Severity.Error;
             operationMessage = "An unexpected error occurred while loading labels for quick actions.";
-            Snackbar.Add("An unexpected error occurred while loading quick-action labels.", Severity.Error);
         }
     }
 
@@ -473,14 +464,12 @@ public partial class Triage : ComponentBase
             Logger.LogError(ex, "GitHub API request failed while applying label to triage item.");
             operationSeverity = Severity.Error;
             operationMessage = $"GitHub API request failed while applying the label. {ex.Message}";
-            Snackbar.Add("Could not apply the selected label due to a GitHub API error.", Severity.Error);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to apply label to the current triage item.");
             operationSeverity = Severity.Error;
             operationMessage = "An unexpected error occurred while applying the selected label.";
-            Snackbar.Add("Could not apply the selected label.", Severity.Error);
         }
         finally
         {
@@ -512,7 +501,6 @@ public partial class Triage : ComponentBase
             Logger.LogError(ex, "Failed to move to the next triage item without changes.");
             operationSeverity = Severity.Error;
             operationMessage = "An unexpected error occurred while moving to the next item without changes.";
-            Snackbar.Add("Could not move to the next item without changes.", Severity.Error);
         }
         finally
         {
@@ -575,14 +563,12 @@ public partial class Triage : ComponentBase
             Logger.LogError(ex, "GitHub API request failed while closing triage item as duplicate.");
             operationSeverity = Severity.Error;
             operationMessage = $"GitHub API request failed while closing as duplicate. {ex.Message}";
-            Snackbar.Add("Could not close the item as a duplicate due to a GitHub API error.", Severity.Error);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to close the current triage item as duplicate.");
             operationSeverity = Severity.Error;
             operationMessage = "An unexpected error occurred while closing this item as a duplicate.";
-            Snackbar.Add("Could not close the item as a duplicate.", Severity.Error);
         }
         finally
         {
@@ -615,7 +601,6 @@ public partial class Triage : ComponentBase
             Logger.LogError(ex, "Failed to skip the current triage item.");
             operationSeverity = Severity.Error;
             operationMessage = "An unexpected error occurred while skipping this item.";
-            Snackbar.Add("Could not skip the current item.", Severity.Error);
         }
         finally
         {
@@ -692,14 +677,12 @@ public partial class Triage : ComponentBase
             Logger.LogError(ex, "GitHub API request failed while assigning milestone to triage item.");
             operationSeverity = Severity.Error;
             operationMessage = $"GitHub API request failed while assigning milestone. {ex.Message}";
-            Snackbar.Add("Could not assign the selected milestone due to a GitHub API error.", Severity.Error);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to assign milestone to the current triage item.");
             operationSeverity = Severity.Error;
             operationMessage = "An unexpected error occurred while assigning the selected milestone.";
-            Snackbar.Add("Could not assign the selected milestone.", Severity.Error);
         }
         finally
         {
@@ -750,14 +733,12 @@ public partial class Triage : ComponentBase
             Logger.LogError(ex, "GitHub API request failed while adding triage item to project board.");
             operationSeverity = Severity.Error;
             operationMessage = $"GitHub API request failed while adding to project board. {ex.Message}";
-            Snackbar.Add("Could not add the item to the selected project board due to a GitHub API error.", Severity.Error);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to add the current triage item to a project board.");
             operationSeverity = Severity.Error;
             operationMessage = "An unexpected error occurred while adding this item to a project board.";
-            Snackbar.Add("Could not add the item to the selected project board.", Severity.Error);
         }
         finally
         {
@@ -786,7 +767,6 @@ public partial class Triage : ComponentBase
             Logger.LogError(ex, "Failed to revisit skipped triage items.");
             operationSeverity = Severity.Error;
             operationMessage = "An unexpected error occurred while revisiting skipped items.";
-            Snackbar.Add("Could not revisit skipped triage items.", Severity.Error);
         }
         finally
         {
@@ -821,7 +801,6 @@ public partial class Triage : ComponentBase
             milestoneLoadFailed = true;
             operationSeverity = Severity.Error;
             operationMessage = $"GitHub API request failed while loading milestone options. {ex.Message}";
-            Snackbar.Add("Failed to load milestone options for triage.", Severity.Error);
         }
         catch (Exception ex)
         {
@@ -830,7 +809,6 @@ public partial class Triage : ComponentBase
             milestoneLoadFailed = true;
             operationSeverity = Severity.Error;
             operationMessage = "An unexpected error occurred while loading milestone options.";
-            Snackbar.Add("An unexpected error occurred while loading milestone options.", Severity.Error);
         }
 
         try
@@ -881,7 +859,6 @@ public partial class Triage : ComponentBase
             {
                 operationSeverity = Severity.Warning;
                 operationMessage = $"Milestones loaded, but project-board options could not be loaded. {ex.Message}";
-                Snackbar.Add("Failed to load project-board options for triage.", Severity.Warning);
             }
         }
         catch (Exception ex)
@@ -896,7 +873,6 @@ public partial class Triage : ComponentBase
             {
                 operationSeverity = Severity.Warning;
                 operationMessage = "Milestones loaded, but an unexpected error occurred while loading project-board options.";
-                Snackbar.Add("An unexpected error occurred while loading project-board options.", Severity.Warning);
             }
         }
         finally

@@ -5,7 +5,7 @@ test.describe('Repositories shell', () => {
     await page.goto('/repositories');
 
     await expect(page).toHaveTitle(/Repositories/);
-    await expect(page.getByRole('heading', { name: 'Repositories' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Repositories', exact: true })).toBeVisible();
     await expect(page.getByTestId('repositories-refresh-button')).toBeVisible();
     await expect(page.getByLabel('Search repositories')).toBeVisible();
     await expect(page.getByTestId('repositories-loading-state')).toBeHidden({ timeout: 15_000 });

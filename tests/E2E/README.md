@@ -19,8 +19,11 @@ Critical journeys, priority tiers, and CI constraints are documented in [CRITICA
 | `labels.spec.ts` | Label Manager shell, tabs, and empty-repository state |
 | `workflows.spec.ts` | Built-in template browse/filter/select and repository error state |
 | `triage.spec.ts` | Triage shell and no-repositories alert without a live GitHub connection |
+| `accessibility.spec.ts` | WCAG 2.1 AA axe-core scan of Tier 1–2 journeys in light and dark mode; labelled shell controls; isolated snackbar contrast scan |
 
 Tests are designed to pass in CI with placeholder auth (`GitHubAuth__PersonalAccessToken=ci-e2e-placeholder`). Repository-dependent features assert empty or error states rather than live GitHub data.
+
+Accessibility findings and remediation notes for issue #253 live in [plan/ACCESSIBILITY_AUDIT.md](../../plan/ACCESSIBILITY_AUDIT.md).
 
 ## Prerequisites
 

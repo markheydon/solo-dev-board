@@ -19,6 +19,7 @@ For data-driven journeys against a real GitHub account, run the suite locally wi
 | Drawer navigation reaches every primary feature route | `navigation.spec.ts` | URL and page title for each route in `fixtures/navigation.ts`. |
 | About page shows deployment metadata | `about.spec.ts` | Version, auth mode, and repository link from the shell menu. |
 | PAT-mode welcome redirect and connectivity error page | `auth-entry.spec.ts` | `/welcome` redirects to home; connectivity error page renders guidance. |
+| WCAG 2.1 AA shell and route audit (no critical/serious axe violations) | `accessibility.spec.ts` | axe-core scan of Tier 1–2 routes in light and dark mode; skip link, labelled shell controls, and isolated snackbar scan. See [plan/ACCESSIBILITY_AUDIT.md](../../plan/ACCESSIBILITY_AUDIT.md). |
 
 ### Tier 2 — Feature shells without live GitHub data
 

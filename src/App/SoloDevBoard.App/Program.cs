@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
+using MudBlazor;
 using MudBlazor.Services;
 using SoloDevBoard.App.Authentication;
 using SoloDevBoard.App.Components.Shell;
@@ -34,7 +35,16 @@ if (TryGetConfiguredHttpsPort(hostedCallbackBaseUri, out var httpsPort))
 }
 
 // Add MudBlazor services.
-builder.Services.AddMudServices();
+builder.Services.AddMudServices(config =>
+{
+    config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomRight;
+    config.SnackbarConfiguration.PreventDuplicates = true;
+    config.SnackbarConfiguration.ShowCloseIcon = true;
+    config.SnackbarConfiguration.VisibleStateDuration = 5000;
+    config.SnackbarConfiguration.ShowTransitionDuration = 0;
+    config.SnackbarConfiguration.HideTransitionDuration = 0;
+    config.SnackbarConfiguration.SnackbarVariant = Variant.Outlined;
+});
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
