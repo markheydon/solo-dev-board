@@ -52,9 +52,9 @@ public partial class Triage : ComponentBase
     [Inject]
     public ISnackbar Snackbar { get; set; } = default!;
 
-    /// <summary>Gets or sets the hosted authentication recovery service.</summary>
+    /// <summary>Gets or sets the GitHub authentication recovery service.</summary>
     [Inject]
-    public IHostedAuthenticationRecoveryService HostedAuthRecovery { get; set; } = default!;
+    public IGitHubAuthenticationRecoveryService GitHubAuthRecovery { get; set; } = default!;
 
     private IReadOnlyList<RepositoryDto> availableRepositories = [];
     private string selectedRepositoryFullName = string.Empty;
@@ -214,9 +214,9 @@ public partial class Triage : ComponentBase
                 selectedRepositoryFullName = string.Empty;
             }
         }
-        catch (HostedAuthenticationRequiredException ex)
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
-            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
             {
                 return;
             }
@@ -308,9 +308,9 @@ public partial class Triage : ComponentBase
                 ? $"No untriaged items were found in {selectedRepositoryFullName}."
                 : $"Started triage session for {selectedRepositoryFullName}.";
         }
-        catch (HostedAuthenticationRequiredException ex)
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
-            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
             {
                 return;
             }
@@ -358,9 +358,9 @@ public partial class Triage : ComponentBase
                 operationMessage = "No repository labels are available to apply as quick actions.";
             }
         }
-        catch (HostedAuthenticationRequiredException ex)
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
-            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
             {
                 return;
             }
@@ -461,9 +461,9 @@ public partial class Triage : ComponentBase
                 ? $"Applied label '{labelName}' to item #{appliedItemNumber}. Reached the end of the current queue."
                 : $"Applied label '{labelName}' to item #{appliedItemNumber} and moved to {CurrentPositionText}.";
         }
-        catch (HostedAuthenticationRequiredException ex)
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
-            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
             {
                 return;
             }
@@ -563,9 +563,9 @@ public partial class Triage : ComponentBase
                 ? baseMessage
                 : $"{baseMessage} {duplicateLabelSuffix}";
         }
-        catch (HostedAuthenticationRequiredException ex)
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
-            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
             {
                 return;
             }
@@ -680,9 +680,9 @@ public partial class Triage : ComponentBase
                 ? $"Cleared milestone assignment for item #{CurrentItem.Number}."
                 : $"Assigned milestone '{selectedMilestoneTitle}' to item #{CurrentItem.Number}.";
         }
-        catch (HostedAuthenticationRequiredException ex)
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
-            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
             {
                 return;
             }
@@ -738,9 +738,9 @@ public partial class Triage : ComponentBase
             operationSeverity = Severity.Success;
             operationMessage = $"Added item #{currentItemNumber} to '{ActiveProjectBoard.Title}' with status '{selectedStatusOption.Name}'.";
         }
-        catch (HostedAuthenticationRequiredException ex)
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
-            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
             {
                 return;
             }
@@ -807,9 +807,9 @@ public partial class Triage : ComponentBase
         {
             availableMilestoneOptions = await TriageService.GetMilestoneOptionsAsync(session);
         }
-        catch (HostedAuthenticationRequiredException ex)
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
-            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
             {
                 return;
             }
@@ -862,9 +862,9 @@ public partial class Triage : ComponentBase
                 return;
             }
         }
-        catch (HostedAuthenticationRequiredException ex)
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
-            if (HostedAuthRecovery.TryInitiateRecovery(ex))
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
             {
                 return;
             }

@@ -224,8 +224,8 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Configure structured logging and Application Insights telemetry. _(#107)_
 - [x] Set up Dependabot for automated dependency updates. _(#109)_
 - [ ] Formalise and document PAT-only local trusted mode and self-hoster deployment path. _(#247, #248)_
-- [ ] Dedicated unauthenticated landing page for hosted deployments. _(#249)_
-- [ ] Surface GitHub auth connectivity problems before feature work fails (PAT-mode readiness). _(#314)_
+- [x] Dedicated unauthenticated landing page for hosted deployments. _(#249)_
+- [x] Surface GitHub auth connectivity problems before feature work fails (PAT-mode readiness). _(#314)_
 - [x] Implement hosted authentication session boundaries and per-request user context for GitHub App-first hosted mode. _(#103, #112; implemented on 2026-03-13, see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_
 - [x] Integrate the real hosted sign-in gateway and session/callback handshake at `/auth/sign-in`, mapping required hosted claims before admission control and repository loading. _(#103, #123; implemented on 2026-03-16; see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md; closes the `/auth/sign-in` planning gap and unblocks #114 and #119.)_
 - [x] Handle hosted installation context validation and token lifecycle checks (expiry and failure handling) for hosted requests. _(#103, #111; implemented on 2026-03-13; see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_

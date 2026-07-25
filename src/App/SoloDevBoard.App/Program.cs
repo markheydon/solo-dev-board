@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using MudBlazor.Services;
@@ -39,7 +40,8 @@ builder.Services.AddMudServices();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddScoped<IHostedAuthenticationRecoveryService, HostedAuthenticationRecoveryService>();
+builder.Services.AddScoped<IGitHubAuthenticationRecoveryService, GitHubAuthenticationRecoveryService>();
+builder.Services.AddScoped<IGitHubAuthenticationSummaryService, GitHubAuthenticationSummaryService>();
 
 if (hostedSignInEnabled)
 {
@@ -63,7 +65,7 @@ if (hostedSignInEnabled)
         .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
         .AddCookie(options =>
         {
-            options.LoginPath = "/auth/sign-in";
+            options.LoginPath = "/welcome";
             options.LogoutPath = "/auth/sign-out";
             options.Events = HostedCookieAuthenticationEvents.Create(hostedAuthOptions);
         });
@@ -78,6 +80,11 @@ builder.Services.AddInfrastructureServices(builder.Configuration);
 
 var app = builder.Build();
 app.MapDefaultEndpoints();
+
+app.MapHealthChecks("/health/github", new HealthCheckOptions
+{
+    Predicate = registration => registration.Tags.Contains("github"),
+});
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -106,8 +113,8 @@ if (hostedSignInEnabled)
     app.MapGet("/auth/error", static (HttpContext context, IOptions<GitHubAuthOptions> authOptionsAccessor) =>
     {
         var reason = context.Request.Query["reason"].ToString();
-        var html = HostedAuthErrorPageRenderer.Render(context, reason, authOptionsAccessor.Value);
-        return Results.Content(html, "text/html; charset=utf-8");
+        var page = HostedAuthErrorPageRenderer.Render(context, reason, authOptionsAccessor.Value);
+        return Results.Content(page.Html, "text/html; charset=utf-8", statusCode: page.StatusCode);
     });
 
     app.MapGet("/auth/sign-in", static (HttpContext context, HostedGitHubAuthGateway authGateway, IOptions<GitHubAuthOptions> optionsAccessor) =>
@@ -219,6 +226,13 @@ if (hostedSignInEnabled)
     });
 }
 
+app.MapGet("/auth/connectivity-error", static (HttpContext context) =>
+{
+    var reason = context.Request.Query["reason"].ToString();
+    var page = PatConnectivityErrorPageRenderer.Render(context, reason);
+    return Results.Content(page.Html, "text/html; charset=utf-8", statusCode: page.StatusCode);
+});
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
@@ -228,7 +242,7 @@ static async Task<IResult> SignOutHostedSession(HttpContext context)
 {
     await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme).ConfigureAwait(false);
 
-    return Results.Redirect("/");
+    return Results.Redirect("/welcome");
 }
 
 static string BuildCallbackUri(HttpContext context, GitHubAuthOptions options)

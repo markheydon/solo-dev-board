@@ -54,7 +54,12 @@ public static class InfrastructureServiceExtensions
                 ? serviceProvider.GetRequiredService<HostedUserCurrentUserContext>()
                 : serviceProvider.GetRequiredService<SingleUserCurrentUserContext>();
         });
+        services.AddScoped<IGitHubConnectivityStatusService, GitHubConnectivityStatusService>();
         services.AddTransient<GitHubAuthHandler>();
+        services.AddHealthChecks()
+            .AddCheck<GitHubPatConnectivityHealthCheck>(
+                "github",
+                tags: ["github", "ready"]);
 
         services
             .AddHttpClient(GitHubService.GitHubApiClientName, static (serviceProvider, client) =>

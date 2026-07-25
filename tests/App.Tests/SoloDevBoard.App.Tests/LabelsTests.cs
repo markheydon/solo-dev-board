@@ -512,7 +512,7 @@ public sealed class LabelsTests
         var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddMudServices();
-        ctx.Services.AddTestHostedAuthenticationRecovery();
+        ctx.Services.AddTestGitHubAuthenticationRecovery();
 
         _labelManagerService.GetRecommendedLabelStrategiesAsync(Arg.Any<CancellationToken>()).Returns([
                 new RecommendedLabelStrategyDto("solodevboard", "SoloDevBoard", "SoloDevBoard canonical taxonomy"),

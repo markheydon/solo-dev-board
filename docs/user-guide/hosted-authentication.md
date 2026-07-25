@@ -14,9 +14,11 @@ SoloDevBoard supports a GitHub App-first hosted authentication model for product
 
 ## Accessing Hosted Sign-In
 
-- Hosted sign-in is available at `/auth/sign-in` when enabled by the operator.
+- Unauthenticated visitors are shown a dedicated landing page at `/welcome` with a **Sign in with GitHub** action.
+- The OAuth handshake starts at `/auth/sign-in` when you choose to sign in from the landing page.
 - You must have a valid GitHub App installation and be listed in the operator-managed allow-list to access hosted mode.
 - Sign-in establishes a session with mapped claims for your GitHub login, access token, installation ID, and organisation memberships.
+- Signing out returns you to `/welcome`.
 
 ## Operator Prerequisites
 
@@ -43,7 +45,13 @@ To exercise hosted sign-in locally (production-like, multi-tenant behaviour):
    - `gh-app-client-secret` → your client secret (via `aspire secret set`)
    - `allowed-user-logins` and/or `allowed-org-logins` → comma-separated logins
    - Leave `gh-pat` unset
-6. **Restart Aspire** and navigate to `/auth/sign-in` on the `app` URL.
+6. **Restart Aspire** and navigate to the app URL — you should see the `/welcome` landing page before signing in.
+
+### Manual verification (hosted landing)
+
+1. Open the app URL in a private browser window — expect the `/welcome` landing page, not the dashboard.
+2. Choose **Sign in with GitHub** — expect the GitHub OAuth flow and return to the originally requested page (for example `/about`) after success.
+3. Sign out from the app menu — expect return to `/welcome`.
 
 See [`src/SoloDevBoard.AppHost/README.md`](../../src/SoloDevBoard.AppHost/README.md) and [Getting Started — hosted sign-in setup](../getting-started.md#hosted-sign-in-mode-setup) for parameter details.
 

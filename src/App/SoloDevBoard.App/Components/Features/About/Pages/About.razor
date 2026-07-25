@@ -20,6 +20,23 @@
                 <MudText Typo="Typo.body2" data-testid="about-dotnet-version">@DotNetRuntimeVersion</MudText>
             </MudStack>
 
+            @if (_authenticationSummary is not null)
+            {
+                <MudDivider Class="my-2" />
+
+                <MudText Typo="Typo.subtitle1">GitHub authentication</MudText>
+
+                <MudStack Row="true" Spacing="1">
+                    <MudText Typo="Typo.subtitle2">Mode:</MudText>
+                    <MudText Typo="Typo.body2" data-testid="about-auth-mode">@_authenticationSummary.ModeLabel</MudText>
+                </MudStack>
+
+                <MudStack Row="true" Spacing="1">
+                    <MudText Typo="Typo.subtitle2">@($"{_authenticationSummary.IdentityLabel}:")</MudText>
+                    <MudText Typo="Typo.body2" data-testid="about-github-login">@FormatGitHubLogin(_authenticationSummary.GitHubLogin)</MudText>
+                </MudStack>
+            }
+
             <MudLink Href="@RepositoryUrl"
                      Target="_blank"
                      rel="noopener noreferrer"

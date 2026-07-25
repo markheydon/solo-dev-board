@@ -42,6 +42,7 @@ It is built with the solo developer in mind: opinionated defaults, minimal confi
 - 🚀 [Deployment](deployment.md) — Azure Container Apps deployment via Aspire.
 - 👤 [User Guide](user-guide/) — detailed guides for each feature area.
 - 👤 [Hosted Authentication Guide](user-guide/hosted-authentication.md) — hosted sign-in, operator allow-lists, and fallback modes for production deployments.
+- 🔑 [PAT Connectivity Guide](user-guide/pat-connectivity.md) — PAT validation, shell status, recovery UX, and `/health/github` for local trusted mode.
 - ℹ️ [About Guide](user-guide/about.md) — overview of the About page, version information, and repository link.
 - 💰 [Azure Deployment Costs](user-guide/azure-costs.md) — guide to resource charges, SKUs, and cost optimisation for self-hosted Azure deployments.
 - 📊 [Observability](user-guide/observability.md) — structured logging, Application Insights telemetry, and operational diagnostics.

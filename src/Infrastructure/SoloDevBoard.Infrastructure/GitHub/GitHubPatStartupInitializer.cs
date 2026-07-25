@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 
 namespace SoloDevBoard.Infrastructure.GitHub;
 
-/// <summary>Resolves <see cref="GitHubAuthOptions.OwnerLogin" /> from the PAT during PAT-mode startup.</summary>
+/// <summary>Validates the configured personal access token and resolves owner login during PAT-mode startup.</summary>
 public sealed class GitHubPatStartupInitializer(
     IOptions<GitHubAuthOptions> authOptions,
     ResolvedPatOwnerLogin resolvedPatOwnerLogin,
@@ -24,12 +24,7 @@ public sealed class GitHubPatStartupInitializer(
             return;
         }
 
-        if (AuthConfigurationPlaceholders.IsConfigured(_authOptions.OwnerLogin))
-        {
-            return;
-        }
-
-        if (!AuthConfigurationPlaceholders.IsConfigured(_authOptions.PersonalAccessToken))
+        if (!AuthConfigurationPlaceholders.RequiresPatConnectivityProbe(_authOptions.PersonalAccessToken))
         {
             return;
         }
@@ -39,7 +34,9 @@ public sealed class GitHubPatStartupInitializer(
             .ConfigureAwait(false);
 
         _resolvedPatOwnerLogin.Value = ownerLogin;
-        _logger.LogInformation("Resolved GitHub owner login '{OwnerLogin}' from the configured personal access token.", ownerLogin);
+        _logger.LogInformation(
+            "Verified GitHub personal access token connectivity for owner login '{OwnerLogin}'.",
+            ownerLogin);
     }
 
     /// <inheritdoc/>

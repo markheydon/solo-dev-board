@@ -293,7 +293,7 @@ public sealed class WorkflowsTests
         var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddMudServices();
-        ctx.Services.AddTestHostedAuthenticationRecovery();
+        ctx.Services.AddTestGitHubAuthenticationRecovery();
         ctx.Services.AddScoped(_ => _workflowTemplateService);
         ctx.Services.AddScoped(_ => _repositoryService);
 

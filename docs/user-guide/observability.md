@@ -46,6 +46,7 @@ SoloDevBoard exposes operational health endpoints for container orchestration an
 |---|---|---|
 | `GET /health` | Readiness | After deployment, scale-from-zero, or when verifying the app can accept traffic |
 | `GET /alive` | Liveness | When confirming the process is responsive (no external dependency checks) |
+| `GET /health/github` | GitHub PAT connectivity | When verifying the configured personal access token can reach GitHub (PAT mode only) |
 
 Both endpoints are available in all environments, including production Azure Container Apps. They return `Healthy` when checks pass and do not require authentication, including when hosted admission control is enabled.
 

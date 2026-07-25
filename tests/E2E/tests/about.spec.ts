@@ -11,5 +11,7 @@ test('about page shows deployment metadata from the shell menu', async ({ page }
   await expect(page.getByTestId('about-application-name')).toContainText('SoloDevBoard');
   await expect(page.getByTestId('about-version')).not.toBeEmpty();
   await expect(page.getByTestId('about-dotnet-version')).toHaveText(/\d+\.\d+/);
+  await expect(page.getByTestId('about-auth-mode')).not.toBeEmpty();
+  await expect(page.getByTestId('about-github-login')).toContainText('@');
   await expect(page.getByTestId('about-repository-link')).toHaveAttribute('href', /github\.com/);
 });
