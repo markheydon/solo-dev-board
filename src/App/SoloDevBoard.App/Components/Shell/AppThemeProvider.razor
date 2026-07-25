@@ -1,0 +1,41 @@
+@namespace SoloDevBoard.App.Components.Shell
+@using SoloDevBoard.App.Theming
+@implements IDisposable
+
+@if (ThemePreferenceService.ObserveSystemPreference)
+{
+    <MudThemeProvider Theme="@Theme" ObserveSystemDarkModeChange="true" />
+}
+else
+{
+    <MudThemeProvider Theme="@Theme"
+                      ObserveSystemDarkModeChange="false"
+                      IsDarkMode="@ThemePreferenceService.EffectiveIsDarkMode" />
+}
+
+@code {
+    /// <summary>Gets or sets the MudBlazor theme applied by the provider.</summary>
+    [Parameter]
+    public MudTheme Theme { get; set; } = default!;
+
+    [Inject]
+    private IThemePreferenceService ThemePreferenceService { get; set; } = default!;
+
+    /// <inheritdoc/>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            ThemePreferenceService.PreferenceChanged += OnPreferenceChanged;
+            await ThemePreferenceService.InitialiseAsync().ConfigureAwait(false);
+        }
+    }
+
+    private void OnPreferenceChanged() => _ = InvokeAsync(StateHasChanged);
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        ThemePreferenceService.PreferenceChanged -= OnPreferenceChanged;
+    }
+}

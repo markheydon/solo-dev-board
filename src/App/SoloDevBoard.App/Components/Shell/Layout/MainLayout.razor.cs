@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.Extensions.Options;
 using MudBlazor;
+using SoloDevBoard.App.Theming;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Infrastructure.GitHub;
 using SoloDevBoard.Themes;
@@ -13,7 +14,6 @@ namespace SoloDevBoard.App.Components.Shell.Layout;
 public partial class MainLayout : IDisposable
 {
     private bool _drawerOpen = true;
-    private bool _isDarkMode;
     private bool _showSignOut;
     private bool _showPatConnectionStatus;
     private GitHubConnectivityStatusDto? _patConnectionStatus;
@@ -35,16 +35,14 @@ public partial class MainLayout : IDisposable
     [Inject]
     public IGitHubConnectivityStatusService ConnectivityStatusService { get; set; } = default!;
 
-    /// <summary>Gets the icon for the dark mode toggle button.</summary>
-    public string DarkLightModeButtonIcon => _isDarkMode switch
-    {
-        true => Icons.Material.Rounded.AutoMode,
-        false => Icons.Material.Outlined.DarkMode,
-    };
+    /// <summary>Gets or sets the theme preference service.</summary>
+    [Inject]
+    public IThemePreferenceService ThemePreferenceService { get; set; } = default!;
 
     /// <inheritdoc/>
     protected override async Task OnInitializedAsync()
     {
+        ThemePreferenceService.PreferenceChanged += OnThemePreferenceChanged;
         NavigationManager.LocationChanged += OnLocationChanged;
         await LoadShellStateAsync().ConfigureAwait(false);
     }
@@ -52,6 +50,7 @@ public partial class MainLayout : IDisposable
     /// <inheritdoc/>
     public void Dispose()
     {
+        ThemePreferenceService.PreferenceChanged -= OnThemePreferenceChanged;
         NavigationManager.LocationChanged -= OnLocationChanged;
     }
 
@@ -63,6 +62,8 @@ public partial class MainLayout : IDisposable
             StateHasChanged();
         });
     }
+
+    private void OnThemePreferenceChanged() => _ = InvokeAsync(StateHasChanged);
 
     private async Task LoadShellStateAsync()
     {
@@ -85,8 +86,8 @@ public partial class MainLayout : IDisposable
         _drawerOpen = !_drawerOpen;
     }
 
-    private void DarkModeToggle()
+    private async Task OnThemeButtonClick()
     {
-        _isDarkMode = !_isDarkMode;
+        await ThemePreferenceService.CycleAsync().ConfigureAwait(false);
     }
 }

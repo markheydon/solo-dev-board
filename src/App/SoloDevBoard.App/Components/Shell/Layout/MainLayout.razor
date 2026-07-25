@@ -1,7 +1,8 @@
 ﻿@inherits LayoutComponentBase
 @namespace SoloDevBoard.App.Components.Shell.Layout
+@using SoloDevBoard.App.Theming
 
-<MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
+<AppThemeProvider Theme="@_theme" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -28,10 +29,13 @@
                 @_patConnectionStatus.StatusMessage
             </MudChip>
         }
-        <MudIconButton Icon="@(DarkLightModeButtonIcon)"
-                       Color="Color.Inherit"
-                       aria-label="@(_isDarkMode ? "Toggle light mode" : "Toggle dark mode")"
-                       OnClick="@DarkModeToggle" />
+        @if (ThemePreferenceService.IsInitialised)
+        {
+            <MudIconButton Icon="@ThemePreferenceService.Current.GetButtonIcon()"
+                           Color="Color.Inherit"
+                           aria-label="@ThemePreferenceService.Current.GetButtonAriaLabel()"
+                           OnClick="@OnThemeButtonClick" />
+        }
         <MudMenu Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" AriaLabel="More options">
             <MudMenuItem Href="/about" Icon="@Icons.Material.Filled.Info">About</MudMenuItem>
             @if (_showSignOut)

@@ -12,6 +12,7 @@ The SoloDevBoard user guide provides detailed documentation for available featur
 ## General Navigation
 
 - [Home Page](dashboard-shell.md) — Overview of the main dashboard and navigation structure.
+- [Appearance](appearance.md) — Automatic, light, and dark theme modes with browser persistence.
 
 ## Available Features
 
