@@ -18,6 +18,16 @@ export const accessibilityRoutes = [
 
 const wcagTags = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] as const;
 
+/** Route-specific loading indicators that must settle before page-level axe scans. */
+const routeLoadingTestIds: Readonly<Record<string, readonly string[]>> = {
+  '/repositories': ['repositories-loading-state'],
+  '/audit-dashboard': ['audit-loading-state'],
+  '/labels': ['labels-loading-state'],
+  '/board-rules': ['board-rules-repositories-loading-state'],
+  '/triage': ['triage-loading-repositories'],
+  '/workflows': ['workflow-repositories-loading-state', 'workflow-templates-loading-state'],
+};
+
 function getBlockingViolations(violations: Result['violations']) {
   return violations.filter(
     (violation) => violation.impact === 'critical' || violation.impact === 'serious',
@@ -82,6 +92,18 @@ export async function waitForAccessibilityScanReady(page: Page, path: string): P
   }
 
   await expect(page.getByRole('navigation')).toBeVisible();
+
+  const routePath = path.split('?')[0];
+  const loadingTestIds = routeLoadingTestIds[routePath] ?? [];
+
+  for (const testId of loadingTestIds) {
+    await expect(page.getByTestId(testId)).toBeHidden({ timeout: 15_000 });
+  }
+
+  // Filled primary controls are disabled during repository loads; wait for a stable enabled state.
+  if (routePath === '/repositories') {
+    await expect(page.getByTestId('repositories-refresh-button')).toBeEnabled({ timeout: 15_000 });
+  }
 }
 
 /** Enables dark mode via the shell theme toggle. */
