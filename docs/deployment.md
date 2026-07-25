@@ -10,6 +10,15 @@ SoloDevBoard deploys to **Azure Container Apps** via **Aspire** (`aspire deploy`
 
 Scale-to-zero is enabled (`MinReplicas = 0`) to minimise idle hosting costs. Expect cold starts and Blazor Server SignalR reconnects after idle periods.
 
+Choose an authentication mode **before** you deploy:
+
+| Path | Authentication | Best for |
+|---|---|---|
+| **[Self-hoster (PAT mode)](#self-hoster-deployment-pat-mode)** | One personal access token; no GitHub App | A personal instance on your own Azure subscription |
+| **[Hosted sign-in](#deploy-from-github-actions)** | GitHub App OAuth + allow-lists | Shared or public production deployments |
+
+Both paths use the same Aspire / Azure Container Apps stack. Only the AppHost parameters and GitHub Environment secrets differ.
+
 ---
 
 ## Prerequisites
@@ -18,12 +27,117 @@ Scale-to-zero is enabled (`MinReplicas = 0`) to minimise idle hosting costs. Exp
 |---|---|
 | Azure subscription | With permission to create resources in a resource group |
 | [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) | Logged in with `az login` |
-| GitHub repository admin access | To configure environments, secrets, and workflows |
-| GitHub App (hosted sign-in) | Recommended for production; see [Hosted Authentication](user-guide/hosted-authentication.md) |
+| GitHub repository admin access | To configure environments, secrets, and workflows (skip if you only deploy with local `aspire deploy`) |
+| GitHub Personal Access Token **or** GitHub App | PAT for [self-hoster mode](#self-hoster-deployment-pat-mode); GitHub App for [hosted sign-in](user-guide/hosted-authentication.md) |
+
+---
+
+## Self-hoster deployment (PAT mode)
+
+Use this path when you want a **personal** SoloDevBoard instance on your own Azure subscription without setting up a GitHub App. Authentication stays in **PAT-only local trusted mode**: the Container App uses one configured PAT for all GitHub API calls, and there is no `/auth/sign-in` flow.
+
+> **Trust boundary:** Anyone who can reach the Container App URL acts as the PAT owner. Prefer a private network, IP restrictions, or a URL you alone use. For shared or public endpoints, use [hosted sign-in](user-guide/hosted-authentication.md) instead. Local PAT setup is documented in [Getting Started — PAT-only local trusted mode](getting-started.md#pat-only-local-trusted-mode).
+
+### What you need
+
+1. An Azure subscription and a resource group (step 1 under [One-time Azure setup](#one-time-azure-setup)).
+2. A GitHub PAT with scopes `repo`, `read:org`, `workflow`, and `read:project` (same as local development).
+3. Either:
+   - **Local `aspire deploy`** (simplest for a personal instance — no GitHub Actions OIDC required), or
+   - **GitHub Actions CD** (same workflow as production; configure the environment for PAT mode).
+
+### Option A — Deploy locally with `aspire deploy` (recommended for first personal instance)
+
+1. Complete [Create a resource group](#1-create-a-resource-group) (OIDC identity is optional for this option).
+2. Log in and export Azure + PAT-mode parameters:
+
+```bash
+az login
+
+export Azure__SubscriptionId="$(az account show --query id -o tsv)"
+export Azure__Location="uksouth"
+export Azure__ResourceGroup="rg-solodevboard-prod"
+
+# PAT-only local trusted mode — no GitHub App
+export Parameters__hosted_sign_in_enabled="false"
+export Parameters__hosted_admission_enabled="true"   # ignored in PAT mode; any value is fine
+export Parameters__gh_pat="<your-github-pat>"
+export Parameters__gh_app_client_id="-"
+export Parameters__gh_app_client_secret="-"
+export Parameters__allowed_user_logins="-"
+export Parameters__allowed_org_logins="-"
+```
+
+On Windows PowerShell, use `$env:Azure__SubscriptionId = ...` (and the same pattern for the other variables) instead of `export`.
+
+3. Preview, then deploy:
+
+```bash
+dotnet build SoloDevBoard.slnx --configuration Release
+
+aspire deploy --list-steps \
+  --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj \
+  --environment Production \
+  --non-interactive
+
+aspire deploy \
+  --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj \
+  --environment Production \
+  --non-interactive
+```
+
+4. Open the Container App FQDN from the Aspire output or Azure portal. Expect the dashboard shell with a **Connected as @login** chip — not the `/welcome` hosted landing page.
+5. Optionally verify PAT connectivity: `curl -sf "https://<fqdn>/health/github"`.
+
+Secret parameters (`gh-pat`, and `gh-app-client-secret` when used) are written to the Aspire-provisioned `auth-secrets` Key Vault and referenced by the Container App. You do not create Key Vault secrets by hand.
+
+### Option B — Deploy via GitHub Actions in PAT mode
+
+Complete the full [One-time Azure setup](#one-time-azure-setup) (resource group + OIDC), then configure the GitHub environment for PAT mode:
+
+**Secrets**
+
+| Secret | Value |
+|---|---|
+| `AZURE_CLIENT_ID` | Managed identity `clientId` |
+| `AZURE_TENANT_ID` | `az account show --query tenantId -o tsv` |
+| `AZURE_SUBSCRIPTION_ID` | `az account show --query id -o tsv` |
+| `GH_PAT` | Your GitHub personal access token |
+| `GH_APP_CLIENT_SECRET` | `-` (not used in PAT mode; still required by the workflow mapping) |
+
+**Variables**
+
+| Variable | Value | Purpose |
+|---|---|---|
+| `AZURE_LOCATION` | e.g. `uksouth` | Azure region |
+| `AZURE_RESOURCE_GROUP` | e.g. `rg-solodevboard-prod` | Target resource group |
+| `HOSTED_SIGN_IN_ENABLED` | `false` | Keep PAT-only mode |
+| `HOSTED_ADMISSION_ENABLED` | `true` | Ignored in PAT mode |
+| `GH_APP_CLIENT_ID` | `-` | Inactive in PAT mode |
+| `ALLOWED_USER_LOGINS` | `-` | Inactive in PAT mode |
+| `ALLOWED_ORG_LOGINS` | `-` | Inactive in PAT mode |
+
+Then run **Actions → CD - Deploy to Azure → Run workflow**. No GitHub App callback URL is required for PAT mode.
+
+### PAT-mode parameter and environment variable cheat sheet
+
+| AppHost parameter | CD / local env var | Self-hoster (PAT) value |
+|---|---|---|
+| `hosted-sign-in-enabled` | `Parameters__hosted_sign_in_enabled` / `HOSTED_SIGN_IN_ENABLED` | `false` |
+| `gh-pat` | `Parameters__gh_pat` / `GH_PAT` | **your PAT** (secret) |
+| `gh-app-client-id` | `Parameters__gh_app_client_id` / `GH_APP_CLIENT_ID` | `-` |
+| `gh-app-client-secret` | `Parameters__gh_app_client_secret` / `GH_APP_CLIENT_SECRET` | `-` |
+| `hosted-admission-enabled` | `Parameters__hosted_admission_enabled` / `HOSTED_ADMISSION_ENABLED` | ignored |
+| `allowed-user-logins` | `Parameters__allowed_user_logins` / `ALLOWED_USER_LOGINS` | `-` |
+| `allowed-org-logins` | `Parameters__allowed_org_logins` / `ALLOWED_ORG_LOGINS` | `-` |
+
+See [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md) for the full parameter reference, [Azure Deployment Costs](user-guide/azure-costs.md) for cost guidance, and [PAT Connectivity](user-guide/pat-connectivity.md) for shell status and `/health/github`.
 
 ---
 
 ## One-time Azure setup
+
+The steps below are required for **GitHub Actions CD**. For a personal first deploy with local `aspire deploy` only, create the resource group (step 1) and skip OIDC (step 2) until you want CI/CD.
 
 ### 1. Create a resource group
 
@@ -89,31 +203,38 @@ az identity federated-credential create \
 
 ### 3. Configure the GitHub `production` environment
 
-In **Settings → Environments → production**, add:
+In **Settings → Environments → production**, add the secrets and variables for your chosen mode.
 
-**Secrets**
+**Shared Azure secrets (both modes)**
 
 | Secret | Value |
 |---|---|
 | `AZURE_CLIENT_ID` | Managed identity `clientId` from step 2 |
 | `AZURE_TENANT_ID` | `az account show --query tenantId -o tsv` |
 | `AZURE_SUBSCRIPTION_ID` | `az account show --query id -o tsv` |
-| `GH_PAT` | `-` for hosted sign-in, or a PAT for trusted self-hosted PAT mode |
-| `GH_APP_CLIENT_SECRET` | GitHub App client secret for hosted sign-in |
+
+**Hosted sign-in (recommended for shared / public production)**
+
+| Secret / variable | Value |
+|---|---|
+| Secret `GH_PAT` | `-` |
+| Secret `GH_APP_CLIENT_SECRET` | GitHub App client secret |
+| Variable `HOSTED_SIGN_IN_ENABLED` | `true` |
+| Variable `HOSTED_ADMISSION_ENABLED` | `true` |
+| Variable `GH_APP_CLIENT_ID` | your client ID |
+| Variable `ALLOWED_USER_LOGINS` | your login(s), or `-` |
+| Variable `ALLOWED_ORG_LOGINS` | org login(s), or `-` |
+
+**PAT self-hoster mode** — use the secret and variable tables under [Self-hoster deployment (PAT mode)](#self-hoster-deployment-pat-mode) instead (`HOSTED_SIGN_IN_ENABLED=false`, real `GH_PAT`, GitHub App values `-`).
 
 Secret parameters are written to the Aspire-provisioned `auth-secrets` Key Vault at deploy time and referenced by the Container App. You do not create or manage Key Vault secrets manually for the default deployment path.
 
-**Variables**
+**Shared Azure variables (both modes)**
 
 | Variable | Example | Purpose |
 |---|---|---|
 | `AZURE_LOCATION` | `uksouth` | Azure region for `aspire deploy` |
 | `AZURE_RESOURCE_GROUP` | `rg-solodevboard-prod` | Target resource group |
-| `HOSTED_SIGN_IN_ENABLED` | `true` | Enable hosted sign-in in production |
-| `HOSTED_ADMISSION_ENABLED` | `true` | Deny-by-default admission control |
-| `GH_APP_CLIENT_ID` | your client ID | GitHub App OAuth client ID |
-| `ALLOWED_USER_LOGINS` | `your-login` | Comma-separated user allow-list |
-| `ALLOWED_ORG_LOGINS` | `-` | Comma-separated org allow-list, or `-` |
 
 Enable required reviewers on the `production` environment before granting deploy access.
 
@@ -121,12 +242,12 @@ Enable required reviewers on the `production` environment before granting deploy
 
 ## Deploy from GitHub Actions
 
-The CD workflow (`.github/workflows/cd.yml`) runs `aspire deploy` with OIDC authentication.
+The CD workflow (`.github/workflows/cd.yml`) runs `aspire deploy` with OIDC authentication. Use this section for **hosted sign-in** production deploys (or PAT mode after configuring the environment as in [Option B](#option-b--deploy-via-github-actions-in-pat-mode)).
 
 1. Ensure steps above are complete.
 2. Open **Actions → CD - Deploy to Azure → Run workflow**.
 3. After a successful run, note the deployed Container App FQDN from the workflow output or Azure portal.
-4. Register the GitHub App callback URL: `https://<fqdn>/auth/callback`.
+4. **Hosted sign-in only:** register the GitHub App callback URL: `https://<fqdn>/auth/callback`.
 5. Open the provisioned Application Insights resource to confirm telemetry is flowing (see [Observability guide](user-guide/observability.md)).
 
 ### Enable automatic deploys
@@ -136,6 +257,8 @@ After the first successful manual deploy, uncomment the `push: branches: [main]`
 ---
 
 ## Deploy locally (operator testing)
+
+### Hosted sign-in
 
 ```bash
 az login
@@ -154,6 +277,10 @@ aspire deploy \
   --environment Production \
   --non-interactive
 ```
+
+### PAT self-hoster
+
+Use the environment exports and commands under [Option A — Deploy locally with aspire deploy](#option-a--deploy-locally-with-aspire-deploy-recommended-for-first-personal-instance).
 
 Preview deployment steps without applying:
 
@@ -262,7 +389,9 @@ az identity delete --name id-solodevboard-cd-prod --resource-group rg-solodevboa
 | Missing parameter prompt in CI | Secret not mapped | Add `Parameters__*` env vars to the deploy step |
 | Cold start / SignalR disconnect | Scale-to-zero idle | Expected; refresh the page or wait for the container to warm up |
 | 403 after sign-in | Allow-list | Update `ALLOWED_USER_LOGINS` or `ALLOWED_ORG_LOGINS` |
-| Callback URL mismatch | Stale GitHub App setting | Update callback to `https://<aca-fqdn>/auth/callback` |
+| Callback URL mismatch | Stale GitHub App setting | Update callback to `https://<aca-fqdn>/auth/callback` (hosted sign-in only) |
 | Secret not visible in Container App settings | Key Vault reference | Expected — inspect the `auth-secrets` vault for secret names; values are resolved at runtime |
+| PAT mode shows `/welcome` or requires sign-in | `hosted-sign-in-enabled` still `true` | Set `HOSTED_SIGN_IN_ENABLED` / `Parameters__hosted_sign_in_enabled` to `false` and redeploy |
+| PAT mode starts but GitHub calls fail | Missing or invalid `GH_PAT` | Set a real PAT with required scopes; confirm `/health/github` and the **Connected as @login** chip |
 
-For local development, see [Getting Started](getting-started.md). For hosted authentication details, see [Hosted Authentication](user-guide/hosted-authentication.md). For the Key Vault pattern, see [plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md](../plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md).
+For local development, see [Getting Started](getting-started.md) (including [PAT-only local trusted mode](getting-started.md#pat-only-local-trusted-mode)). For hosted authentication details, see [Hosted Authentication](user-guide/hosted-authentication.md). For the Key Vault pattern, see [plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md](../plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md).
