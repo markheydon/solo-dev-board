@@ -6,11 +6,13 @@ nav_order: 11
 
 # PAT Connectivity
 
-This guide explains how SoloDevBoard surfaces GitHub personal access token (PAT) connectivity in PAT-only local trusted mode. It complements [Hosted Authentication](hosted-authentication.md), which covers session-based sign-in for production deployments.
+This guide explains how SoloDevBoard surfaces GitHub personal access token (PAT) connectivity in **PAT-only local trusted mode**. It complements [Hosted Authentication](hosted-authentication.md), which covers session-based sign-in for multi-user and public deployments.
+
+For configuration, mode comparison, and when to choose PAT versus hosted sign-in, start with [Getting Started — PAT-only local trusted mode](../getting-started.md#pat-only-local-trusted-mode). For a personal Azure instance using the same mode, see [Self-hoster deployment (PAT mode)](../deployment.md#self-hoster-deployment-pat-mode).
 
 ## Overview
 
-When `GitHubAuth:HostedSignInEnabled` is `false`, SoloDevBoard authenticates to GitHub using a configured personal access token. The application now validates that token at startup and surfaces connectivity status in the shell before you reach feature workflows.
+When `GitHubAuth:HostedSignInEnabled` is `false`, SoloDevBoard authenticates to GitHub using a configured personal access token. The application validates that token at startup and surfaces connectivity status in the shell before you reach feature workflows.
 
 ## Startup validation
 
@@ -50,10 +52,11 @@ Use `/health/github` when you want Container Apps or external monitoring to veri
 
 ## Documentation references
 
-- See [Getting Started](../getting-started.md) for PAT configuration.
+- See [Getting Started — PAT-only local trusted mode](../getting-started.md#pat-only-local-trusted-mode) for configuration and mode comparison.
+- See [Self-hoster deployment (PAT mode)](../deployment.md#self-hoster-deployment-pat-mode) for deploying a personal Azure instance with a PAT.
 - See [Hosted Authentication](hosted-authentication.md) for the hosted sign-in model.
 - See [plan/wireframes/auth-entry-wireframe.md](../../plan/wireframes/auth-entry-wireframe.md) for layout reference.
 
 ---
 
-> PAT-only local trusted mode is intended for development and trusted self-hosted use. Production deployments should use hosted sign-in with admission control.
+> PAT-only local trusted mode is intended for development and trusted personal self-hosted use. Shared or public deployments should use hosted sign-in with admission control.

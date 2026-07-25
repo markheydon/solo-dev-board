@@ -57,7 +57,8 @@ See [`src/SoloDevBoard.AppHost/README.md`](../../src/SoloDevBoard.AppHost/README
 
 ## Fallback and Local Trusted Modes
 
-- PAT-only local trusted mode remains available for development and self-hosted use. It does not require hosted sign-in infrastructure.
+- **PAT-only local trusted mode** remains available for development and trusted personal self-hosting. It does not require hosted sign-in infrastructure. See [Getting Started — PAT-only local trusted mode](../getting-started.md#pat-only-local-trusted-mode) and [PAT Connectivity](pat-connectivity.md).
+- To run a personal Azure instance with a PAT (no GitHub App), follow [Self-hoster deployment (PAT mode)](../deployment.md#self-hoster-deployment-pat-mode).
 - OAuth App fallback is supported but disabled by default. It is only used if enabled and the primary GitHub App authentication path is unavailable.
 
 ## Session and Token Flow
@@ -83,10 +84,10 @@ This is a known GitHub platform limitation for GitHub Apps, not a SoloDevBoard c
 
 ## Documentation References
 
-- See [Getting Started](../getting-started.md) for prerequisites and setup.
+- See [Getting Started](../getting-started.md) for prerequisites and setup, including the PAT versus hosted comparison.
 - See [DEC-011](../../plan/DECISIONS.md#dec-011-hosted-access-control-for-public-deployments) and [DEC-012](../../plan/DECISIONS.md#dec-012-github-app-first-hosted-authentication) for architectural rationale. Legacy ADR text: [ADR-0014](../../adr/archive/0014-hosted-access-control-for-public-deployments.md), [ADR-0015](../../adr/archive/0015-github-app-first-hosted-authentication.md).
 - See [plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md](../../plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md) for session and token flow details.
 
 ---
 
-> Hosted authentication is recommended for production deployments. PAT-only local trusted mode is preserved for development and trusted self-hosted use.
+> Hosted authentication is recommended for shared or public production deployments. PAT-only local trusted mode is preserved for development and trusted personal self-hosted use.

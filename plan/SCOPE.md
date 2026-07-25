@@ -23,7 +23,7 @@ Public-release hardening is in scope for v1.0.0, including:
 - Azure deployment via Aspire to Azure Container Apps with scale-to-zero ([DEC-015](DECISIONS.md#dec-015-aspire-azure-container-apps-deployment)).
 - OIDC authentication for GitHub Actions to Azure.
 - Operational hardening: response caching, health checks, structured logging, Application Insights telemetry, Dependabot configuration.
-- PAT-only local trusted mode for development and trusted self-hosted use.
+- PAT-only local trusted mode for development and trusted personal self-hosted use (see [docs/getting-started.md](../docs/getting-started.md#pat-only-local-trusted-mode) and [self-hoster PAT deploy](../docs/deployment.md#self-hoster-deployment-pat-mode)).
 - Separate OAuth App registration is not the intended default end state; it is only a fallback if GitHub App user authentication proves insufficient for hosted sign-in requirements.
 - Hosted authentication is secure-by-default, with deny-by-default admission control.
 
@@ -115,4 +115,5 @@ The following are explicitly **not** in scope for the current version of SoloDev
 | 2026-07-18 | Backlog-to-issues migration complete: GitHub Issues are the single source of truth for work items. `plan/BACKLOG.md` retired as a living queue (slim index only). Open work migrated to Issues #247–#259 (v1.0.0), #272–#288 (Phase 5), and #289–#293 (post-v1). | Solo developer |
 | 2026-07-18 | Planning sync: Phases 1–4 marked complete in BACKLOG.md and IMPLEMENTATION_PLAN.md. Deferred follow-on slices (label consistency warnings, project board migration, custom workflow template repos, Audit Dashboard enhancements) explicitly tracked. Phase 5 and Phase 6 remain the only active delivery phases. | Solo developer |
 | 2026-07-25 | V1 auth polish bundle clarified: hosted sign-in entry UX (#249) and PAT-mode GitHub connectivity readiness (#314) split from operator documentation (#247, #248). In-app secret editing remains out of scope; operator configuration stays via Aspire parameters, user secrets, and Key Vault. | Solo developer |
+| 2026-07-25 | PAT-only local trusted mode and self-hoster PAT Azure deploy path formalised in docs (#247, #248; PR #324). Scope bullet now links to getting-started and deployment guides. | Solo developer |
 

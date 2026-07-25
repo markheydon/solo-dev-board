@@ -224,7 +224,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Configure structured logging and Application Insights telemetry. _(#107)_
 - [ ] Add operational hardening test coverage and validation expectations. _(#110; see plan/OPERATIONAL_HARDENING_TEST_COVERAGE.md.)_
 - [x] Set up Dependabot for automated dependency updates. _(#109)_
-- [ ] Formalise and document PAT-only local trusted mode and self-hoster deployment path. _(#247, #248)_
+- [x] Formalise and document PAT-only local trusted mode and self-hoster deployment path. _(#247, #248; see docs/getting-started.md#pat-only-local-trusted-mode and docs/deployment.md#self-hoster-deployment-pat-mode.)_
 - [x] Dedicated unauthenticated landing page for hosted deployments. _(#249)_
 - [x] Surface GitHub auth connectivity problems before feature work fails (PAT-mode readiness). _(#314)_
 - [x] Implement hosted authentication session boundaries and per-request user context for GitHub App-first hosted mode. _(#103, #112; implemented on 2026-03-13, see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_

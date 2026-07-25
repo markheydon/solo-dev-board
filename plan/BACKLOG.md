@@ -40,11 +40,11 @@ Phase 6 (v1.0.0) remaining work is tracked on the [v1.0.0 milestone](https://git
 
 ### V1 auth polish (Epic #101 follow-on)
 
-| Issue | Focus |
-|-------|-------|
-| [#247](https://github.com/markheydon/solo-dev-board/issues/247) | PAT-only local trusted mode documentation |
-| [#248](https://github.com/markheydon/solo-dev-board/issues/248) | Self-hoster deployment path (`aspire deploy` with PAT) |
-| [#249](https://github.com/markheydon/solo-dev-board/issues/249) | Hosted unauthenticated landing page |
-| [#314](https://github.com/markheydon/solo-dev-board/issues/314) | PAT/GitHub connectivity readiness (startup probe, shell status, recovery UX) |
+| Issue | Focus | Status |
+|-------|-------|--------|
+| [#247](https://github.com/markheydon/solo-dev-board/issues/247) | PAT-only local trusted mode documentation | Docs in [PR #324](https://github.com/markheydon/solo-dev-board/pull/324) |
+| [#248](https://github.com/markheydon/solo-dev-board/issues/248) | Self-hoster deployment path (`aspire deploy` with PAT) | Docs in [PR #324](https://github.com/markheydon/solo-dev-board/pull/324) |
+| [#249](https://github.com/markheydon/solo-dev-board/issues/249) | Hosted unauthenticated landing page | Done |
+| [#314](https://github.com/markheydon/solo-dev-board/issues/314) | PAT/GitHub connectivity readiness (startup probe, shell status, recovery UX) | Done |
 
 For phase sequencing and architecture milestones, see [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). For product boundaries, see [SCOPE.md](SCOPE.md).

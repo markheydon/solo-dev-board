@@ -4,7 +4,7 @@ Self-hosting SoloDevBoard on Azure incurs charges for the resources Aspire provi
 
 ## Resources Deployed
 
-Aspire deploys the following Azure resources (see [Deployment guide](../deployment.md) and [Observability guide](observability.md)):
+Aspire deploys the following Azure resources (see [Deployment guide](../deployment.md), including the [self-hoster PAT path](../deployment.md#self-hoster-deployment-pat-mode) for a personal instance, and [Observability guide](observability.md)):
 
 | Resource | Purpose | Pricing model |
 |---|---|---|
@@ -41,6 +41,12 @@ Aspire deploys the following Azure resources (see [Deployment guide](../deployme
 ## Azure Pricing Calculator
 
 For exact, up-to-date pricing, use the [Azure Pricing Calculator](https://azure.microsoft.com/en-gb/pricing/calculator/). Select UK South and add Container Apps, Container Registry (Basic), and Log Analytics.
+
+## Related documentation
+
+- [Self-hoster deployment (PAT mode)](../deployment.md#self-hoster-deployment-pat-mode) — personal Azure instance without a GitHub App.
+- [Getting Started — PAT-only local trusted mode](../getting-started.md#pat-only-local-trusted-mode) — local configuration and trust boundary.
+- [Observability](observability.md) — Application Insights and operational diagnostics after deploy.
 
 ## Disclaimer
 

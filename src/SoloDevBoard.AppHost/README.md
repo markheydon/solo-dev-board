@@ -8,7 +8,7 @@ Use `-` on inactive parameters. Shipped defaults are in `src/SoloDevBoard.AppHos
 
 ## Choose your authentication mode
 
-### PAT mode (default — solo local development)
+### PAT-only local trusted mode (default — solo local development and personal self-hosting)
 
 Set `gh-pat` to your token. Set all hosted-sign-in parameters to `-`:
 
@@ -20,6 +20,8 @@ Set `gh-pat` to your token. Set all hosted-sign-in parameters to `-`:
 | `gh-app-client-secret` | `-` |
 | `allowed-user-logins` | `-` |
 | `allowed-org-logins` | `-` |
+
+See [docs/getting-started.md — PAT-only local trusted mode](../docs/getting-started.md#pat-only-local-trusted-mode) for the mode comparison and local setup. For a personal Azure instance with the same mode, see [Self-hoster deployment (PAT mode)](../docs/deployment.md#self-hoster-deployment-pat-mode).
 
 ### Hosted sign-in mode (GitHub App)
 
