@@ -7,11 +7,13 @@ namespace SoloDevBoard.Themes;
 /// </summary>
 public static class SoloDevBoardTheme
 {
-    // Light palette inspired by GitHub.
+    // Light palette inspired by GitHub, tuned for WCAG 2.1 AA contrast (issue #253).
     private static PaletteLight PaletteLight => new()
     {
-        Primary = "#2da44e",
-        Secondary = "#2188ff",
+        Primary = "#167c38",
+        PrimaryContrastText = "#ffffff",
+        Secondary = "#0969da",
+        SecondaryContrastText = "#ffffff",
         Surface = "#f6f8fa",
         Background = "#ffffff",
         TextPrimary = "#24292e",
@@ -23,21 +25,27 @@ public static class SoloDevBoardTheme
         DrawerBackground = "#f6f8fa",
         AppbarBackground = "#ffffff",
         AppbarText = "#24292e",
-        Success = "#238636",
-        Warning = "#d29922",
+        Success = "#167c38",
+        SuccessContrastText = "#ffffff",
+        Warning = "#9a6700",
+        WarningContrastText = "#ffffff",
         Error = "#cf222e",
+        ErrorContrastText = "#ffffff",
         Info = "#0969da",
+        InfoContrastText = "#ffffff",
         LinesDefault = "#d0d7de",
         TableLines = "#d0d7de",
         Divider = "#d8dee4",
         OverlayLight = "#00000080",
     };
 
-    // Dark palette inspired by GitHub.
+    // Dark palette inspired by GitHub, tuned for WCAG 2.1 AA contrast (issue #253).
     private static PaletteDark PaletteDark => new()
     {
-        Primary = "#2ea043",
-        Secondary = "#2f81f7",
+        Primary = "#3fb950",
+        PrimaryContrastText = "#0d1117",
+        Secondary = "#58a6ff",
+        SecondaryContrastText = "#0d1117",
         Surface = "#161b22",
         Background = "#0d1117",
         TextPrimary = "#c9d1d9",
@@ -49,10 +57,14 @@ public static class SoloDevBoardTheme
         DrawerBackground = "#161b22",
         AppbarBackground = "#0d1117",
         AppbarText = "#c9d1d9",
-        Success = "#238636",
+        Success = "#3fb950",
+        SuccessContrastText = "#0d1117",
         Warning = "#d29922",
-        Error = "#cf222e",
-        Info = "#1f6feb",
+        WarningContrastText = "#0d1117",
+        Error = "#ff7b72",
+        ErrorContrastText = "#0d1117",
+        Info = "#58a6ff",
+        InfoContrastText = "#0d1117",
         LinesDefault = "#30363d",
         TableLines = "#30363d",
         Divider = "#30363d",

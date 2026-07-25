@@ -1,0 +1,20 @@
+/* Skip link is an accessibility escape hatch — MudBlazor has no skip-link primitive. */
+.skip-to-content {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 2000;
+    padding: 0.75rem 1rem;
+    background: var(--mud-palette-primary, #167c38);
+    color: var(--mud-palette-primary-text, #ffffff);
+    text-decoration: none;
+    border-radius: 0 0 6px 0;
+}
+
+.skip-to-content:focus {
+    left: 0;
+}
+
+#main-content:focus {
+    outline: none;
+}
