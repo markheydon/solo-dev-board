@@ -236,7 +236,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Persist hosted authentication material securely using Azure Key Vault-backed patterns where required. _(#250; see plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md.)_
 - [x] Replace the single-user `ICurrentUserContext` adapter with a per-request, per-user implementation backed by the hosted authentication session when hosted mode is enabled. _(Implemented on 2026-03-13; PAT-only local trusted mode preserved.)_
 - [ ] Enable CD pipeline with production environment gate (`.github/workflows/cd.yml` via `aspire deploy`). _(#251)_
-- [ ] Write end-to-end tests for critical user journeys. _(#255)_
+- [x] Write end-to-end tests for critical user journeys. _(#255; see tests/E2E/CRITICAL_JOURNEYS.md.)_
 - [x] Update hosted-authentication documentation for GitHub App-first hosted sign-in, admission-control allow-lists, PAT-only local trusted mode, and fallback boundaries. _(#119; completed on 2026-03-16; see docs/getting-started.md, infra/README.md, docs/user-guide/hosted-authentication.md, and docs/index.md.)_
 - [ ] Write comprehensive `docs/` content for all features. _(#256)_
 - [ ] Tag v1.0.0 release on GitHub with release notes. _(#257)_

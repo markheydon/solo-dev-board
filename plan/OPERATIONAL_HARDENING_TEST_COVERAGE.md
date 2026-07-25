@@ -63,6 +63,7 @@ The following automated checks are proportionate to current repository tooling a
 | `dotnet format --verify-no-changes` | `ci.yml` | Prevents formatting drift in test and production code. |
 | E2E job waits for `GET /health` before Playwright suite | `ci.yml` (`e2e` job) | Confirms the app host starts and readiness endpoint responds in a realistic PAT-mode configuration. |
 | Playwright smoke test for `/health` | `tests/E2E/tests/smoke.spec.ts` | Lightweight post-startup health assertion in the browser test harness. |
+| Playwright critical user journey suite | `tests/E2E/CRITICAL_JOURNEYS.md`, `tests/E2E/tests/*.spec.ts` | Feature shell, navigation, and placeholder-auth error-state coverage for v1.0.0 release readiness (issue #255). |
 
 Not automated in CI (manual or deploy-time verification only):
 
