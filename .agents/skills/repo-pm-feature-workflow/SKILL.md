@@ -40,8 +40,8 @@ Run a deterministic feature workflow so the user can act as product manager whil
 - Scope update when needed: `plan/SCOPE.md`
 - Wireframe: `plan/wireframes/*.md` and `plan/wireframes/README.md` for any page-producing feature or substantive page refresh
 - Decision log when needed: `plan/DECISIONS.md`
-- User guide stub when user-facing: `docs/user-guide/*.md`
-- Docs index quick links when a new page is added: `docs/index.md`
+- User guide stub when user-facing: `user-docs/content/docs/*.md`
+- Docs index quick links when a new page is added: `user-docs/content/_index.md`
 
 ## Prompt Starters
 

@@ -202,7 +202,7 @@ Issue:
 - Missing user documentation
 
 Required action:
-- Update docs/user-guide/...
+- Update user-docs/content/docs/...
 
 Re-run verify after correction.
 ```

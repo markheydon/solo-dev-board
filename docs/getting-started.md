@@ -1,8 +1,4 @@
----
-layout: page
-title: Getting Started
-nav_order: 2
----
+> **Audience:** Developers and operators. This guide is repository documentation and is not part of the published end-user site in `user-docs/`.
 
 This guide walks you through the prerequisites and steps required to run SoloDevBoard locally and deploy it to Azure.
 
@@ -40,7 +36,7 @@ Parameters for the mode you are **not** using can be left unset (or set to `-` w
 | **Admission control** | Not applicable — anyone who can reach the app acts as the PAT owner | Operator allow-lists (`allowed-user-logins` / `allowed-org-logins`); deny-by-default |
 | **GitHub App required?** | No | Yes (OAuth App fallback exists but is disabled by default) |
 | **Trust boundary** | Suitable only where you trust every person who can reach the deployment (localhost, private network, or a personal Azure instance you alone use) | Suitable for shared or public endpoints |
-| **Connectivity UX** | App-bar **Connected as @login** chip; recovery at `/auth/connectivity-error` — see [PAT Connectivity](user-guide/pat-connectivity.md) | Session expiry and re-sign-in — see [Hosted Authentication](user-guide/hosted-authentication.md) |
+| **Connectivity UX** | App-bar **Connected as @login** chip; recovery at `/auth/connectivity-error` — see [PAT Connectivity](pat-connectivity.md) | Session expiry and re-sign-in — see [Hosted Authentication](hosted-authentication.md) |
 
 > **Security note:** PAT-only mode does **not** provide multi-user isolation. Do not expose a PAT-mode instance on a public URL that others can reach. For shared or public hosting, use hosted sign-in with admission control.
 
@@ -62,11 +58,11 @@ aspire secret set Parameters:gh-pat "<your-token>"
 aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 ```
 
-Your GitHub login is resolved automatically from the PAT. Full parameter tables and mode-switching steps are under [Configuration](#configuration) below. For runtime connectivity status and recovery, see [PAT Connectivity](user-guide/pat-connectivity.md). To run a **personal hosted instance** on your own Azure subscription with the same PAT mode, see [Self-hoster deployment (PAT mode)](deployment.md#self-hoster-deployment-pat-mode).
+Your GitHub login is resolved automatically from the PAT. Full parameter tables and mode-switching steps are under [Configuration](#configuration) below. For runtime connectivity status and recovery, see [PAT Connectivity](pat-connectivity.md). To run a **personal hosted instance** on your own Azure subscription with the same PAT mode, see [Self-hoster deployment (PAT mode)](deployment.md#self-hoster-deployment-pat-mode).
 
 #### Hosted sign-in mode
 
-Uses a GitHub App for OAuth sign-in at `/auth/sign-in`, with operator-managed allow-lists for users and organisations. Recommended for production and multi-tenant deployments. See [Hosted Authentication Guide](user-guide/hosted-authentication.md) for the full operator and local testing walkthrough.
+Uses a GitHub App for OAuth sign-in at `/auth/sign-in`, with operator-managed allow-lists for users and organisations. Recommended for production and multi-tenant deployments. See [Hosted Authentication Guide](hosted-authentication.md) for the full operator and local testing walkthrough.
 
 #### OAuth App fallback
 
@@ -234,7 +230,7 @@ aspire secret set Parameters:gh-pat "<your-token>"
 aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 ```
 
-Your GitHub login is resolved automatically from the PAT at startup. You can also set the token via the Aspire dashboard **Parameters** tab on first run. After the app starts, confirm the shell shows **Connected as @login** — see [PAT Connectivity](user-guide/pat-connectivity.md).
+Your GitHub login is resolved automatically from the PAT at startup. You can also set the token via the Aspire dashboard **Parameters** tab on first run. After the app starts, confirm the shell shows **Connected as @login** — see [PAT Connectivity](pat-connectivity.md).
 
 #### Hosted sign-in mode setup
 
@@ -261,7 +257,7 @@ Set non-secret values via the dashboard, `appsettings.json`, or user secrets:
 
 6. **Restart Aspire** and open `/auth/sign-in` on the `app` URL.
 
-See [Hosted Authentication Guide](user-guide/hosted-authentication.md) for operator expectations, admission control, and production deployment notes.
+See [Hosted Authentication Guide](hosted-authentication.md) for operator expectations, admission control, and production deployment notes.
 
 ### `appsettings.json`
 
@@ -377,7 +373,7 @@ In production, secret AppHost parameters are supplied from the GitHub `productio
 
 ## Deploying to Azure
 
-SoloDevBoard deploys to Azure Container Apps via Aspire. See the [Deployment guide](deployment.md) for prerequisites, one-time OIDC bootstrap, GitHub Environment configuration, and first deploy steps. For a **personal instance with a PAT** (no GitHub App), start with [Self-hoster deployment (PAT mode)](deployment.md#self-hoster-deployment-pat-mode). For logs, metrics, and traces after deployment, see the [Observability guide](user-guide/observability.md).
+SoloDevBoard deploys to Azure Container Apps via Aspire. See the [Deployment guide](deployment.md) for prerequisites, one-time OIDC bootstrap, GitHub Environment configuration, and first deploy steps. For a **personal instance with a PAT** (no GitHub App), start with [Self-hoster deployment (PAT mode)](deployment.md#self-hoster-deployment-pat-mode). For logs, metrics, and traces after deployment, see the [Observability guide](observability.md).
 
 Summary:
 

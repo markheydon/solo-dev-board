@@ -1,10 +1,7 @@
 ---
-layout: page
+weight: 80
 title: Triage UI
-parent: User Guide
-nav_order: 5
 ---
-
 
 ## Overview
 
@@ -70,9 +67,7 @@ The Triage UI allows you to add issues to a GitHub project board and set their s
 
 If the issue is already on the selected board, you can update its status column directly. Any errors encountered during project board placement will be surfaced with actionable feedback.
 
-If GitHub reports linked project boards that cannot be loaded (commonly private user-owned projects under GitHub App sign-in), a warning appears above the project board selector. See [Hosted Authentication — Projects v2 access](hosted-authentication.md#projects-v2-access-under-hosted-sign-in).
-
-All planning actions use MudBlazor controls for a consistent and accessible experience, and the workflow aligns with the [triage wireframe](../../plan/wireframes/triage-ui-wireframe.md).
+If GitHub reports linked project boards that cannot be loaded (commonly private user-owned projects under GitHub App sign-in), a warning appears above the project board selector. See [Hosted Authentication — Projects v2 access](https://github.com/markheydon/solo-dev-board/blob/main/docs/hosted-authentication.md#projects-v2-access-under-hosted-sign-in).
 
 ## Session Completion Summary and Skip/Revisit Workflow
 
@@ -88,8 +83,6 @@ When you complete a triage session, a grouped summary is shown with details for 
 You can now skip the current item at any point during triage by clicking **Skip** or pressing **S** on your keyboard when the action button row is focused. When skipping, you may optionally provide a reason for skipping the item.
 
 After all items are processed, the session-complete summary allows you to revisit any skipped items. Skipped items are listed in a dedicated grouped section, and skip reasons (if provided) appear in the **Skip actions** detail section.
-
-The triage UI layout uses MudBlazor components and a responsive grid stack, ensuring readability and usability on both desktop and mobile devices.
 
 ### Keyboard Shortcuts
 

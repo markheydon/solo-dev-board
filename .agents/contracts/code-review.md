@@ -45,8 +45,8 @@ Invoke this agent when you need to review:
 - Ensure tests are placed in the matching `tests/*` project structure.
 
 ### Documentation and Planning
-- Confirm user-facing features include doc updates in `docs/user-guide/`.
-- Check `docs/index.md` is updated if a new user guide page was added.
+- Confirm user-facing features include doc updates in `user-docs/content/docs/`.
+- Check `user-docs/content/_index.md` is updated if a new user guide page was added.
 - Verify architectural decisions are captured in `adr/` if needed.
 - Ensure `plan/SCOPE.md` and related GitHub Issues are in sync when scope or completion status changes.
 

@@ -1,0 +1,25 @@
+name: Hugo Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "user-docs/**"
+      - ".github/workflows/hugo-build.yml"
+      - ".github/workflows/hugo-deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/hugo-build.yml
+    with:
+      deploy: true

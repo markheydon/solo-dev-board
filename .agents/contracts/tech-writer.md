@@ -55,7 +55,7 @@ Do not create files under `adr/`.
 
 Create or significantly expand:
 
-- `docs/user-guide/*.md`
+- `user-docs/content/docs/*.md`
 
 Focus on:
 

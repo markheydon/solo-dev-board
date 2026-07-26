@@ -97,7 +97,7 @@ The following are explicitly **not** in scope for the current version of SoloDev
 > 3. Create or update GitHub Issues for the scope change and sync Project #8.
 > 4. Create a GitHub Issue for the scope change using the `type/feature` or `type/chore` template.
 > 5. If the change affects the architecture, follow `repo-decision-log` — update [`plan/DECISIONS.md`](DECISIONS.md) and/or constitution.
-> 6. If the change affects the user-facing docs, update or create the relevant file in `docs/user-guide/`.
+> 6. If the change affects the user-facing docs, update or create the relevant file in `user-docs/content/docs/`.
 > 7. Add a changelog entry at the bottom of this file.
 
 ---

@@ -110,7 +110,7 @@ The following automation rules are configured on the board. These are documented
 
 ## Relationship to the Board Rules Visualiser Feature
 
-The Board Rules Visualiser feature (see [board-rules-visualiser.md](../docs/user-guide/board-rules-visualiser.md)) will:
+The Board Rules Visualiser feature (see [board-rules-visualiser.md](../user-docs/content/docs/board-rules-visualiser.md)) will:
 
 1. Read the automation rules configured on this board via the GitHub Projects v2 GraphQL API.
 2. Display them as an interactive flow diagram.
@@ -141,7 +141,7 @@ In addition to the default board view, the following saved views are useful:
 > 1. Update the **Column Structure** table in this document to reflect any added, renamed, or removed columns.
 > 2. Update the **Field Usage** section when a field is added or its operational meaning changes.
 > 3. Update the **Automation Rules** section to reflect any new or changed rules.
-> 4. If the rules change affects the Board Rules Visualiser feature, update `docs/user-guide/board-rules-visualiser.md` accordingly.
+> 4. If the rules change affects the Board Rules Visualiser feature, update `user-docs/content/docs/board-rules-visualiser.md` accordingly.
 > 5. Ensure label changes align with `LABEL_STRATEGY.md`.
 > 6. If a new automation rule requires a new label, add that label to `LABEL_STRATEGY.md` first.
 > 7. Keep project-only workflow states such as **Up Next** out of the issue label taxonomy unless there is a deliberate lifecycle change.

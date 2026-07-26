@@ -177,7 +177,8 @@ When code changes are made, ensure the following are kept in sync:
 
 | Change | Doc to update |
 |--------|--------------|
-| New feature | `docs/user-guide/<feature>.md`, `docs/index.md`, GitHub Issue + Project #8 sync |
+| New end-user feature | `user-docs/content/docs/<feature>.md`, `user-docs/content/_index.md` (and docs landing), GitHub Issue + Project #8 sync |
+| New developer / operator guidance | `docs/<topic>.md` and `docs/README.md` as needed |
 | New decision | `plan/DECISIONS.md` (+ constitution if cross-cutting) |
 | Scope change | `plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md` |
 | New env variable | `docs/getting-started.md`, `docs/deployment.md`, `src/SoloDevBoard.AppHost/README.md` |

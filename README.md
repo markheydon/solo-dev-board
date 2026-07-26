@@ -89,11 +89,15 @@ solo-dev-board/
 │   └── Infrastructure/         # GitHub API clients, external integrations
 ├── tests/
 │   └── App.Tests/              # xUnit test projects
-├── docs/
-│   ├── index.md                # Project overview (GitHub Pages)
+├── docs/                       # Developer / operator documentation
+│   ├── README.md               # Index for repository-centric docs
 │   ├── getting-started.md      # Setup and configuration guide
-│   ├── deployment.md           # Azure Container Apps deployment guide
-│   └── user-guide/             # Per-feature user guides
+│   └── deployment.md           # Azure Container Apps deployment guide
+├── user-docs/                  # End-user docs site (Hugo / Hextra → GitHub Pages)
+│   ├── hugo.yaml               # Hugo site configuration
+│   └── content/                # Published user guides
+├── scripts/
+│   └── Invoke-HugoSite.ps1     # Local Hugo build/serve via Podman/Docker
 ├── plan/
 │   ├── SCOPE.md                # Project scope and constraints
 │   ├── DECISIONS.md            # Active decision log (repo memory)
@@ -115,7 +119,9 @@ solo-dev-board/
 │   └── workflows/
 │       ├── ci.yml               # CI: build and test on every PR
 │       ├── cd.yml               # CD: Aspire deploy to Azure (manual until first success)
-│       └── aspire-deploy-validate.yml  # Validates AppHost deployment model on PR
+│       ├── aspire-deploy-validate.yml  # Validates AppHost deployment model on PR
+│       ├── hugo-ci.yml          # Hugo end-user docs build validation on PR
+│       └── hugo-deploy.yml      # Hugo end-user docs deploy to GitHub Pages
 ├── .agents/
 │   ├── contracts/               # Role boundary contracts (PM, delivery, verify, etc.)
 │   ├── workflows/               # Canonical workflow entry points
@@ -147,6 +153,7 @@ To contribute:
 
 For guidance on labels, see `plan/LABEL_STRATEGY.md`.
 For help with setup, see `docs/getting-started.md`.
+End-user documentation is published from `user-docs/` to [GitHub Pages](https://markheydon.me.uk/solo-dev-board/).
 
 ---
 

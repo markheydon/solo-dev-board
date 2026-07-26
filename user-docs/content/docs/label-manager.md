@@ -1,8 +1,6 @@
 ---
-layout: page
+weight: 40
 title: Label Manager
-parent: User Guide
-nav_order: 3
 ---
 
 ## Overview
@@ -48,7 +46,7 @@ The three available tabs are:
 The create and edit dialogs include:
 
 - `Label name` input.
-- `MudColorPicker` for choosing a valid hexadecimal colour value.
+- Colour picker for choosing a valid hexadecimal colour value.
 - Optional description input.
 - Repository selection controls scoped to valid repositories.
 
@@ -102,14 +100,3 @@ The Label Manager allows you to synchronise labels from a source repository to o
 - Partial failures (such as API errors affecting only some labels) are reported per repository, with guidance for retry or manual intervention.
 
 This workflow ensures you can preview all changes before applying, avoid redundant updates, and receive clear feedback on the outcome of each synchronisation operation.
-
-
-## Configuration
-
-*Coming soon — this section will describe configuration options for the Label Manager.*
-
-Planned configuration options include:
-
-- Default repository selection behaviour.
-- Optional label naming conventions per repository group.
-- Operational safeguards for high-impact bulk updates.

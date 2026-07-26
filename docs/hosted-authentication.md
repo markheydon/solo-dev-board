@@ -1,8 +1,4 @@
----
-layout: default
-title: Hosted Authentication
-nav_order: 10
----
+> **Audience:** Developers and operators. This guide is repository documentation and is not part of the published end-user site in `user-docs/`.
 
 # Hosted Authentication
 
@@ -53,12 +49,12 @@ To exercise hosted sign-in locally (production-like, multi-tenant behaviour):
 2. Choose **Sign in with GitHub** — expect the GitHub OAuth flow and return to the originally requested page (for example `/about`) after success.
 3. Sign out from the app menu — expect return to `/welcome`.
 
-See [`src/SoloDevBoard.AppHost/README.md`](../../src/SoloDevBoard.AppHost/README.md) and [Getting Started — hosted sign-in setup](../getting-started.md#hosted-sign-in-mode-setup) for parameter details.
+See [`src/SoloDevBoard.AppHost/README.md`](../../src/SoloDevBoard.AppHost/README.md) and [Getting Started — hosted sign-in setup](getting-started.md#hosted-sign-in-mode-setup) for parameter details.
 
 ## Fallback and Local Trusted Modes
 
-- **PAT-only local trusted mode** remains available for development and trusted personal self-hosting. It does not require hosted sign-in infrastructure. See [Getting Started — PAT-only local trusted mode](../getting-started.md#pat-only-local-trusted-mode) and [PAT Connectivity](pat-connectivity.md).
-- To run a personal Azure instance with a PAT (no GitHub App), follow [Self-hoster deployment (PAT mode)](../deployment.md#self-hoster-deployment-pat-mode).
+- **PAT-only local trusted mode** remains available for development and trusted personal self-hosting. It does not require hosted sign-in infrastructure. See [Getting Started — PAT-only local trusted mode](getting-started.md#pat-only-local-trusted-mode) and [PAT Connectivity](pat-connectivity.md).
+- To run a personal Azure instance with a PAT (no GitHub App), follow [Self-hoster deployment (PAT mode)](deployment.md#self-hoster-deployment-pat-mode).
 - OAuth App fallback is supported but disabled by default. It is only used if enabled and the primary GitHub App authentication path is unavailable.
 
 ## Session and Token Flow
@@ -80,13 +76,13 @@ When this happens, Board Rules and Triage show a warning naming how many linked 
 - Use **PAT mode** with the `read:project` scope for full user-level Projects v2 access.
 - Make the linked project **public** if GitHub App sign-in must remain the only auth path.
 
-This is a known GitHub platform limitation for GitHub Apps, not a SoloDevBoard configuration defect. See [plan/GITHUB_PROJECTS_V2_ACCESS.md](../../plan/GITHUB_PROJECTS_V2_ACCESS.md) and [Unlocking GitHub Apps: Why Bots Need Access to Private Projects v2](https://devactivity.com/posts/apps-tools/unlocking-github-apps-why-bots-need-access-to-private-projects-v2-for-enhanced-productivity/).
+This is a known GitHub platform limitation for GitHub Apps, not a SoloDevBoard configuration defect. See [plan/GITHUB_PROJECTS_V2_ACCESS.md](../plan/GITHUB_PROJECTS_V2_ACCESS.md) and [Unlocking GitHub Apps: Why Bots Need Access to Private Projects v2](https://devactivity.com/posts/apps-tools/unlocking-github-apps-why-bots-need-access-to-private-projects-v2-for-enhanced-productivity/).
 
 ## Documentation References
 
-- See [Getting Started](../getting-started.md) for prerequisites and setup, including the PAT versus hosted comparison.
-- See [DEC-011](../../plan/DECISIONS.md#dec-011-hosted-access-control-for-public-deployments) and [DEC-012](../../plan/DECISIONS.md#dec-012-github-app-first-hosted-authentication) for architectural rationale. Legacy ADR text: [ADR-0014](../../adr/archive/0014-hosted-access-control-for-public-deployments.md), [ADR-0015](../../adr/archive/0015-github-app-first-hosted-authentication.md).
-- See [plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md](../../plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md) for session and token flow details.
+- See [Getting Started](getting-started.md) for prerequisites and setup, including the PAT versus hosted comparison.
+- See [DEC-011](../plan/DECISIONS.md#dec-011-hosted-access-control-for-public-deployments) and [DEC-012](../plan/DECISIONS.md#dec-012-github-app-first-hosted-authentication) for architectural rationale. Legacy ADR text: [ADR-0014](../adr/archive/0014-hosted-access-control-for-public-deployments.md), [ADR-0015](../adr/archive/0015-github-app-first-hosted-authentication.md).
+- See [plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md](../plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md) for session and token flow details.
 
 ---
 

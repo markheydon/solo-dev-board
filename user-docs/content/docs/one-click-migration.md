@@ -1,8 +1,6 @@
 ---
-layout: page
+weight: 60
 title: One-Click Migration
-parent: User Guide
-nav_order: 2
 ---
 
 > ℹ️ **Phase 3 delivery** — The core One-Click Migration feature (labels and milestones) is complete. Project board configuration migration is planned for a later slice.

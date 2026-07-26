@@ -1,11 +1,7 @@
 ---
-layout: page
+weight: 10
 title: Appearance
-parent: User Guide
-nav_order: 2
 ---
-
-# Appearance
 
 SoloDevBoard supports three theme modes so you can match your operating system preference or choose a fixed light or dark appearance.
 
@@ -19,7 +15,7 @@ SoloDevBoard supports three theme modes so you can match your operating system p
 
 ## Changing the Theme
 
-1. Open any page that uses the main application shell (for example, Home or Repositories).
+1. Open any page that uses the main application shell (for example, Repositories or Audit Dashboard).
 2. Click the **theme** button in the app bar (the icon changes to reflect the current mode).
 3. Each click cycles through **Automatic → Light → Dark → Automatic**.
 
@@ -27,11 +23,6 @@ The button's accessible name describes the current mode and the mode that will b
 
 ## Persistence
 
-Your theme choice is saved in the browser's `localStorage` under the key `solo-dev-board.theme-preference`. The preference is restored on your next visit to SoloDevBoard in the same browser.
+Your selected theme mode is stored in the browser and restored on the next visit. Clearing site data for SoloDevBoard resets the preference to **Automatic**.
 
-If browser storage is unavailable or cleared, SoloDevBoard defaults to **Automatic** mode.
-
-## Notes
-
-- The hosted sign-in landing page uses the same stored preference but does not include a theme button in the app bar.
-- A small head script applies the correct page background before Blazor connects, reducing visible theme flash on reload.
+The hosted sign-in landing page uses the same stored preference but does not include a theme button in the app bar.

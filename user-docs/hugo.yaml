@@ -1,0 +1,94 @@
+# SoloDevBoard end-user documentation site (Hextra).
+baseURL: "https://markheydon.me.uk/solo-dev-board/"
+title: "SoloDevBoard"
+locale: en-gb
+defaultContentLanguage: en-gb
+enableRobotsTXT: true
+enableGitInfo: true
+
+outputs:
+  home: [html]
+  page: [html]
+  section: [html, rss]
+
+module:
+  hugoVersion:
+    extended: true
+    min: "0.146.0"
+  imports:
+    - path: github.com/imfing/hextra
+
+markup:
+  highlight:
+    noClasses: false
+  goldmark:
+    renderer:
+      unsafe: true
+
+menu:
+  main:
+    - name: Documentation
+      pageRef: /docs
+      weight: 1
+    - name: Search
+      weight: 2
+      params:
+        type: search
+    - name: GitHub
+      weight: 3
+      url: "https://github.com/markheydon/solo-dev-board"
+      params:
+        icon: github
+    - name: Theme Toggle
+      weight: 4
+      params:
+        type: theme-toggle
+
+params:
+  description: "A single pane of glass for solo developers managing GitHub workloads across multiple repositories."
+  externalLinkDecoration: false
+
+  navbar:
+    displayTitle: true
+    displayLogo: false
+    width: wide
+
+  theme:
+    default: system
+    displayToggle: true
+
+  footer:
+    enable: true
+    displayCopyright: true
+    displayPoweredBy: true
+    width: normal
+
+  displayUpdatedDate: true
+  dateFormat: "2 January 2006"
+
+  search:
+    enable: true
+    type: flexsearch
+
+  flexsearch:
+    index: content
+    tokenize: forward
+
+  editURL:
+    enable: true
+    base: "https://github.com/markheydon/solo-dev-board/edit/main/user-docs/content"
+
+  page:
+    width: normal
+
+  toc:
+    displayTags: false
+
+  highlight:
+    copy:
+      enable: true
+      display: hover
+
+caches:
+  images:
+    dir: ":cacheDir/images"

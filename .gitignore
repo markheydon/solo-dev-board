@@ -427,3 +427,8 @@ tests/E2E/test-results/
 
 # Local developer settings
 **/appsettings.Development.json
+
+# Hugo end-user documentation site
+user-docs/public/
+user-docs/resources/
+user-docs/.hugo_build.lock
