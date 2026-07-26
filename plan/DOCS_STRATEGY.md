@@ -78,6 +78,30 @@ When a new feature is implemented or reaches a stable state:
 
 ---
 
+## Screenshot convention
+
+Published end-user guides may include screenshots under:
+
+```
+user-docs/static/images/<feature-slug>/<descriptive-name>.png
+```
+
+Referenced in Markdown as:
+
+```markdown
+![Audit Dashboard overview](/images/audit-dashboard/overview.png)
+```
+
+Rules:
+
+- Capture with **light theme** at **1400×900** viewport.
+- Use kebab-case PNG filenames and meaningful alt text.
+- Always capture with **docs capture mode** enabled (`DocsCapture:Enabled=true`) so only public repositories and public Projects v2 boards appear. See [DEC-020](DECISIONS.md#dec-020-public-only-docs-capture-mode-for-documentation-screenshots) and [Docs capture mode](../docs/getting-started.md#docs-capture-mode).
+- Prefer the Playwright helper: `cd tests/E2E && npm run capture:docs` against a locally running app with a real PAT.
+- Do not commit screenshots that show private repositories, private project boards, or other non-public GitHub content.
+
+---
+
 ## Changelog Conventions
 
 SoloDevBoard follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) conventions. A `CHANGELOG.md` will be maintained at the root of the repository starting from v0.1.0.

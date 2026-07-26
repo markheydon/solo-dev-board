@@ -5,29 +5,31 @@ title: Repositories
 
 The Repositories page provides a central view of all repositories available to your authenticated GitHub account.
 
+![Repositories page showing public repositories in a data grid](/images/repositories/overview.png)
+
 ## Overview
 
 From this page you can:
 
 - View accessible repositories in a responsive data grid.
 - Search repositories by name.
-- Refresh, add, remove, and run bulk actions from the command strip.
+- Refresh the catalogue from the command strip.
 - See connection status (Connected/Archived) and visibility (Public/Private) at a glance.
 - Use row actions for each repository (some actions are placeholders for later enhancements).
 
-## Page Layout
+## Page layout
 
 - **Command strip** — Refresh, Add, Remove, and Bulk actions. On mobile these are grouped into a compact actions menu.
 - **Search field** — Filter repositories by name.
 - **Data grid** — Repository name, status chips, and row actions.
 - **Feedback region** — Loading, empty, success, and error messages.
 
-## How to Use
+## How to use
 
 1. Open **Repositories** from the left navigation menu.
 2. Use the search field to filter repositories by name if needed.
-3. Use the command strip to refresh the list, add repositories, remove selected ones, or perform bulk actions.
-4. Review status chips and row actions as needed.
+3. Use **Refresh** to reload the catalogue after connectivity changes.
+4. Review status and visibility chips and row actions as needed.
 
 ## Troubleshooting
 

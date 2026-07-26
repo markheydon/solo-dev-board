@@ -52,6 +52,28 @@ npx playwright install --with-deps chromium
 PLAYWRIGHT_BASE_URL=http://localhost:5080 npm test
 ```
 
+## Documentation screenshots
+
+Manual screenshot capture for the Hugo user guide lives in `docs-capture/` and is **not** part of the CI suite.
+
+Prerequisites:
+
+1. Run SoloDevBoard locally with a **real** GitHub PAT (not the CI placeholder).
+2. Enable docs capture mode so only public repositories and public Projects v2 boards appear:
+
+```bash
+dotnet user-secrets set "DocsCapture:Enabled" "true" --project src/App/SoloDevBoard.App
+```
+
+3. Capture screenshots:
+
+```bash
+cd tests/E2E
+npm run capture:docs
+```
+
+Images are written to `user-docs/static/images/<feature-slug>/`. See [DOCS_STRATEGY.md](../../plan/DOCS_STRATEGY.md) for the screenshot convention.
+
 ## CI
 
 The `e2e` job in [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) starts the app with placeholder auth configuration, captures application logs separately from Playwright output, and runs the full Playwright suite.

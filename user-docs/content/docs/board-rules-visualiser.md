@@ -3,13 +3,15 @@ weight: 70
 title: Board Rules Visualiser
 ---
 
-> ⚠️ **Partial delivery** — Repository and supported board selection is available, board columns and transitions are visualised, rule inspection and warnings are supported, and compare mode lets you contrast two repositories side by side. Full automation-rule retrieval from GitHub remains a later slice.
+> **Scope note** — Repository and supported board selection, column and transition visualisation, rule inspection warnings, and compare mode are available now. Full automation-rule retrieval from GitHub remains a later slice.
 
 ---
 
 ## Overview
 
 The Board Rules Visualiser displays the board states and supported transitions for a GitHub Project v2 board. It helps you understand how issues and pull requests move between columns without reading raw configuration payloads.
+
+![Board Rules Visualiser with repository and project board selectors](/images/board-rules-visualiser/overview.png)
 
 Key goals of the Board Rules Visualiser:
 - Make project board states and supported transitions visible and understandable at a glance.

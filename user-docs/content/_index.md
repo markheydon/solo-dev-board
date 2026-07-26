@@ -61,4 +61,22 @@ title: SoloDevBoard
     class="hx:aspect-auto"
     link="/docs/triage-ui/"
   >}}
+  {{< hextra/feature-card
+    title="Workflow Templates"
+    subtitle="Browse, customise, and apply GitHub Actions workflow templates across repositories."
+    class="hx:aspect-auto"
+    link="/docs/workflow-templates/"
+  >}}
+  {{< hextra/feature-card
+    title="Appearance"
+    subtitle="Automatic, light, and dark theme modes with browser persistence."
+    class="hx:aspect-auto"
+    link="/docs/appearance/"
+  >}}
+  {{< hextra/feature-card
+    title="About"
+    subtitle="Application version, runtime environment, and repository link."
+    class="hx:aspect-auto"
+    link="/docs/about/"
+  >}}
 {{< /hextra/feature-grid >}}

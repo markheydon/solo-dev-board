@@ -92,7 +92,7 @@ During the pre-1.0 development phase (`0.x.y`), minor version bumps may include 
 - ≥80% unit test coverage
 - Accessibility audit (WCAG 2.1 AA)
 - Performance review and optimisation
-- Complete user-facing documentation
+- Complete user-facing documentation _(in progress via #256; Hugo site live, feature guides and screenshots included)_
 - Full Azure deployment pipeline with environment gates
 
 **Status:** Partially complete. Hosted authentication and Aspire ACA deployment are delivered; operational hardening and release closure remain open.
