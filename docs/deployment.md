@@ -127,6 +127,8 @@ Then run **Actions → CD - Deploy to Azure → Run workflow**. No GitHub App ca
 | `allowed-user-logins` | `Parameters__allowed_user_logins` / `ALLOWED_USER_LOGINS` | `-` |
 | `allowed-org-logins` | `Parameters__allowed_org_logins` / `ALLOWED_ORG_LOGINS` | `-` |
 
+`DocsCapture__Enabled` is a **local-only** application setting for documentation screenshots. It is intentionally **not** an AppHost parameter and must not be enabled on hosted deployments. See [Docs capture mode](getting-started.md#docs-capture-mode) and [DEC-020](../plan/DECISIONS.md#dec-020-public-only-docs-capture-mode-for-documentation-screenshots).
+
 See [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md) for the full parameter reference, [Azure Deployment Costs](azure-costs.md) for cost guidance, and [PAT Connectivity](pat-connectivity.md) for shell status and `/health/github`.
 
 ---

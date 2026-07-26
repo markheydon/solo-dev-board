@@ -31,6 +31,7 @@ public static class InfrastructureServiceExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.Configure<GitHubAuthOptions>(configuration.GetSection(GitHubAuthOptions.SectionName));
+        services.Configure<DocsCaptureOptions>(configuration.GetSection(DocsCaptureOptions.SectionName));
         services.AddOptions<GitHubCacheOptions>()
             .Bind(configuration.GetSection(GitHubCacheOptions.SectionName))
             .PostConfigure(static options =>
@@ -58,6 +59,7 @@ public static class InfrastructureServiceExtensions
         services.AddSingleton<GitHubPatOwnerLoginResolver>();
         services.AddHostedService<GitHubAuthConfigurationValidator>();
         services.AddHostedService<GitHubPatStartupInitializer>();
+        services.AddHostedService<DocsCaptureStartupLogger>();
         services.AddHttpClient(GitHubPatOwnerLoginResolver.HttpClientName, static (serviceProvider, client) =>
         {
             var appVersionService = serviceProvider.GetRequiredService<IAppVersionService>();

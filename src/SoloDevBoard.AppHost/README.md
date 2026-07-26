@@ -116,3 +116,9 @@ Azure deployment settings:
 | Subscription | `Azure__SubscriptionId` |
 | Region | `Azure__Location` |
 | Resource group | `Azure__ResourceGroup` |
+
+### Local-only application settings (not AppHost parameters)
+
+| Setting | Environment variable | Notes |
+|---|---|---|
+| Docs capture mode | `DocsCapture__Enabled` | Local screenshot hygiene only. Defaults to `false`. Restricts repository and project board catalogues to public GitHub content. **Not** wired as an AppHost parameter and must stay disabled on hosted deployments. See [Docs capture mode](../../docs/getting-started.md#docs-capture-mode) and [DEC-020](../../plan/DECISIONS.md#dec-020-public-only-docs-capture-mode-for-documentation-screenshots). |

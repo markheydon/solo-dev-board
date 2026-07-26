@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Domain.Entities.Labels;
@@ -1439,7 +1440,7 @@ public sealed class GitHubServiceTests
             .Returns(client);
 
         var responseCache = GitHubCachingTestSupport.CreateResponseCache();
-        return new GitHubService(httpClientFactory, responseCache);
+        return new GitHubService(httpClientFactory, responseCache, Options.Create(new DocsCaptureOptions()));
     }
 
     private static HttpResponseMessage CreateJsonResponse(HttpStatusCode statusCode, string json, string? linkHeader = null)
