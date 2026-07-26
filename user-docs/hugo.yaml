@@ -44,20 +44,9 @@ menu:
       params:
         type: theme-toggle
 
-  sidebar:
-    - name: More
-      params:
-        type: separator
-      weight: 1
-    - name: "Repository"
-      url: "https://github.com/markheydon/solo-dev-board"
-      weight: 2
-    - name: "Developer docs"
-      url: "https://github.com/markheydon/solo-dev-board/tree/main/docs"
-      weight: 3
-
 params:
   description: "A single pane of glass for solo developers managing GitHub workloads across multiple repositories."
+  externalLinkDecoration: false
 
   navbar:
     displayTitle: true

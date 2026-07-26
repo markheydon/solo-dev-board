@@ -4,7 +4,7 @@ draft: true
 weight: 110
 ---
 
-> âš ï¸ **Under Development** â€” This feature is planned for Phase 5 (v0.5.0). This page will be updated as the feature progresses.
+> ⚠️ **Under Development** — This feature is planned for Phase 5 (v0.5.0). This page will be updated as the feature progresses.
 
 ---
 
@@ -14,8 +14,8 @@ The Cross-Repo PM Workflow brings a structured, two-mode operating system into S
 
 The system is built around two modes of operation:
 
-- **PM Mode** (weekly or fortnightly) â€” Active curation: review your backlog across all repositories, resolve stalled work, and populate your project board with a realistic set of committed items for the next few days.
-- **Work Mode** (daily) â€” Execution: the project board is the single pane of glass. Open it, pick the next item, and get things done. The optional Daily Focus view provides a quick morning nudge on what is most urgent today.
+- **PM Mode** (weekly or fortnightly) — Active curation: review your backlog across all repositories, resolve stalled work, and populate your project board with a realistic set of committed items for the next few days.
+- **Work Mode** (daily) — Execution: the project board is the single pane of glass. Open it, pick the next item, and get things done. The optional Daily Focus view provides a quick morning nudge on what is most urgent today.
 
 ---
 
@@ -61,10 +61,10 @@ Settings for cross-repo PM behaviour:
 
 ## How to Use
 
-*Coming soon â€” this section will describe the step-by-step usage once the feature is built.*
+*Coming soon — this section will describe the step-by-step usage once the feature is built.*
 
 ---
 
 ## Configuration
 
-*Coming soon â€” this section will describe capacity limits, excluded repos, and staleness thresholds.*
+*Coming soon — this section will describe capacity limits, excluded repos, and staleness thresholds.*

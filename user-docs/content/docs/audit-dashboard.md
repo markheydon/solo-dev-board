@@ -25,7 +25,7 @@ The Audit Dashboard provides a summary of open issues, open pull requests, repos
 - During auto-refresh, a progress indicator appears above the KPI summary while existing data remains visible.
 - **Export Markdown** copies the current audit summary to the clipboard as a Markdown report that respects the selected repository filter.
 - All UI elements follow the wireframe-aligned layout for improved clarity and usability.
-- The browser page title is set to 'Audit Dashboard â€” SoloDevBoard'.
+- The browser page title is set to 'Audit Dashboard — SoloDevBoard'.
 - The Unlabelled Issues section shows issues without any labels, including repository, issue number, title, and age.
 - The Stale Pull Requests section lists pull requests with no activity in the last 14 days, including repository, pull request number, title, author, and days since update.
 - The Failing Workflows section shows the latest run for each workflow where the conclusion is failure or cancelled, including repository, workflow name, branch, and run link.
@@ -52,7 +52,7 @@ The Audit Dashboard provides a summary of open issues, open pull requests, repos
 ## Notes
 
 Zero-state messages are shown when no items are found in a health indicator section:
-- "No unlabelled issues â€” great."
-- "No stale pull requests â€” great."
-- "No failing workflows â€” great."
+- "No unlabelled issues — great."
+- "No stale pull requests — great."
+- "No failing workflows — great."
 Feedback region also displays loading, error, and prompt messages to guide the user through dashboard states.

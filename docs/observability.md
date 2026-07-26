@@ -99,7 +99,7 @@ When adding new logging or custom span enrichment, follow the same rules. Prefer
 
 1. Open the Application Insights resource created by your deployment (named with the `app-insights` Aspire resource prefix).
 2. Use **Logs** to query `traces`, `requests`, `exceptions`, and `customEvents` tables.
-3. Use **Investigate â†’ Failures** for error spikes and **Performance** for slow requests.
+3. Use **Investigate → Failures** for error spikes and **Performance** for slow requests.
 
 Example Kusto query for recent errors:
 

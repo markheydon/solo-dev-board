@@ -21,8 +21,8 @@ Aspire deploys the following Azure resources (see [Deployment guide](deployment.
 
 | Scenario | Approximate monthly cost (UK South, early 2026) |
 |---|---|
-| Idle / no traffic | Low — mainly ACR Basic (~Â£4–5) and minimal Log Analytics |
-| Light personal use | Typically lower than an always-on App Service B1 (~Â£11–13) |
+| Idle / no traffic | Low — mainly ACR Basic (~£4–5) and minimal Log Analytics |
+| Light personal use | Typically lower than an always-on App Service B1 (~£11–13) |
 | Sustained daily use | Consumption compute adds up; monitor in Azure Cost Management |
 
 > **Note:** Figures are estimates. Use the [Azure Pricing Calculator](https://azure.microsoft.com/en-gb/pricing/calculator/) for up-to-date costs.

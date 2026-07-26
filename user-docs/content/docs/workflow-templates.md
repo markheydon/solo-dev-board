@@ -52,9 +52,9 @@ The feedback region shows per-repository results, including created, updated, sk
 
 When a template and repositories are selected, the detail panel shows workflow status for each repository:
 
-- **Not applied** â€” the workflow file is missing.
-- **Applied** â€” the workflow file matches the rendered template.
-- **Drifted** â€” the workflow file exists but differs from the canonical template.
+- **Not applied** — the workflow file is missing.
+- **Applied** — the workflow file matches the rendered template.
+- **Drifted** — the workflow file exists but differs from the canonical template.
 
 Drift detection is informational and does not block browsing or previewing templates. Review drift warnings before applying if you need to preserve local customisations.
 

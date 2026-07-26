@@ -68,7 +68,7 @@ switch ($Command) {
             -v "${rootForMount}:/src:Z" `
             -w /src/user-docs `
             $hugoImage `
-            hugo server --bind 0.0.0.0 --baseURL "http://localhost:$ServePort/" --buildDrafts
+            hugo server --bind 0.0.0.0 --baseURL "http://localhost:$ServePort/"
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     }
 
