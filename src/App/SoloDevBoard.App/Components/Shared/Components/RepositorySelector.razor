@@ -21,6 +21,8 @@
                          MinCharacters="0"
                          Clearable="true"
                          Immediate="true"
+                         CoerceValue="false"
+                         CoerceText="false"
                          Disabled="@(Disabled || (SingleSelectionOnly && SelectedRepositories.Count > 0))"
                          Adornment="Adornment.Start"
                          AdornmentIcon="@Icons.Material.Filled.Search"

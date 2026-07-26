@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Options;
 using SoloDevBoard.Application.Services.BoardRules;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Domain.Entities.Labels;
@@ -19,14 +20,22 @@ public sealed class GitHubService : IGitHubService
 
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly GitHubResponseCache _responseCache;
+    private readonly DocsCaptureOptions _docsCaptureOptions;
 
     /// <summary>Initialises a new instance of the <see cref="GitHubService"/> class.</summary>
     /// <param name="httpClientFactory">The factory used to create named <see cref="HttpClient"/> instances.</param>
     /// <param name="responseCache">The cache used for read-heavy GitHub API catalogue responses.</param>
-    public GitHubService(IHttpClientFactory httpClientFactory, GitHubResponseCache responseCache)
+    /// <param name="docsCaptureOptions">Docs capture mode options that restrict catalogues to public content when enabled.</param>
+    public GitHubService(
+        IHttpClientFactory httpClientFactory,
+        GitHubResponseCache responseCache,
+        IOptions<DocsCaptureOptions> docsCaptureOptions)
     {
+        ArgumentNullException.ThrowIfNull(docsCaptureOptions);
+
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _responseCache = responseCache ?? throw new ArgumentNullException(nameof(responseCache));
+        _docsCaptureOptions = docsCaptureOptions.Value;
     }
 
     /// <inheritdoc/>
@@ -36,14 +45,18 @@ public sealed class GitHubService : IGitHubService
             async ct =>
             {
                 var client = CreateAuthenticatedClient();
-                const string endpoint = "/user/repos?sort=updated&per_page=100";
-                return await GetPagedAsync<RepositoryResponseDto, Repository>(
+                var endpoint = _docsCaptureOptions.Enabled
+                    ? "/user/repos?sort=updated&per_page=100&type=public"
+                    : "/user/repos?sort=updated&per_page=100";
+                var repositories = await GetPagedAsync<RepositoryResponseDto, Repository>(
                         client,
                         endpoint,
                         static dto => dto.ToDomain(),
                         JsonOptions,
                         ct)
                     .ConfigureAwait(false);
+
+                return ApplyDocsCaptureRepositoryFilter(repositories);
             },
             cancellationToken).ConfigureAwait(false);
     }
@@ -68,13 +81,15 @@ public sealed class GitHubService : IGitHubService
             {
                 var client = CreateAuthenticatedClient();
                 var endpoint = $"/users/{Uri.EscapeDataString(owner)}/repos?per_page=100";
-                return await GetPagedAsync<RepositoryResponseDto, Repository>(
+                var repositories = await GetPagedAsync<RepositoryResponseDto, Repository>(
                         client,
                         endpoint,
                         static dto => dto.ToDomain(),
                         JsonOptions,
                         ct)
                     .ConfigureAwait(false);
+
+                return ApplyDocsCaptureRepositoryFilter(repositories);
             },
             cancellationToken).ConfigureAwait(false);
     }
@@ -88,6 +103,17 @@ public sealed class GitHubService : IGitHubService
             .ToArray();
     }
 
+    private IReadOnlyList<Repository> ApplyDocsCaptureRepositoryFilter(IReadOnlyList<Repository> repositories)
+    {
+        if (!_docsCaptureOptions.Enabled)
+        {
+            return repositories;
+        }
+
+        return repositories
+            .Where(static repository => !repository.IsPrivate)
+            .ToArray();
+    }
     /// <inheritdoc/>
     /// <remarks>
     /// The GitHub <c>/issues</c> endpoint returns both issues and pull requests. Items with a
@@ -384,7 +410,7 @@ public sealed class GitHubService : IGitHubService
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
         ArgumentException.ThrowIfNullOrWhiteSpace(repo);
 
-        const string query = "query TriageProjectBoards($owner: String!, $repo: String!) { repository(owner: $owner, name: $repo) { projectsV2(first: 50) { nodes { id title owner { ... on User { login } ... on Organization { login } } fields(first: 50) { nodes { ... on ProjectV2SingleSelectField { id name options { id name } } } } } } } }";
+        const string query = "query TriageProjectBoards($owner: String!, $repo: String!) { repository(owner: $owner, name: $repo) { projectsV2(first: 50) { nodes { id title public owner { ... on User { login } ... on Organization { login } } fields(first: 50) { nodes { ... on ProjectV2SingleSelectField { id name options { id name } } } } } } } }";
 
         var client = CreateAuthenticatedClient();
         var requestBody = new GraphQlRequestDto(
@@ -406,7 +432,20 @@ public sealed class GitHubService : IGitHubService
             .Where(static node => node is not null)
             .Select(static node => node!)
             .ToArray();
-        var inaccessibleLinkedProjectCount = rawNodes.Count - accessibleNodes.Length;
+
+        if (_docsCaptureOptions.Enabled)
+        {
+            accessibleNodes = accessibleNodes
+                .Where(static node => node.IsPublic)
+                .ToArray();
+        }
+
+        var totalLinkedProjectCount = _docsCaptureOptions.Enabled
+            ? accessibleNodes.Length
+            : rawNodes.Count;
+        var inaccessibleLinkedProjectCount = _docsCaptureOptions.Enabled
+            ? 0
+            : rawNodes.Count - accessibleNodes.Length;
 
         if (payload.Errors.Count > 0 && accessibleNodes.Length == 0)
         {
@@ -423,7 +462,7 @@ public sealed class GitHubService : IGitHubService
 
         return new RepositoryProjectBoardDiscoveryResult(
             supportedProjectBoards,
-            rawNodes.Count,
+            totalLinkedProjectCount,
             inaccessibleLinkedProjectCount);
     }
 
@@ -434,7 +473,7 @@ public sealed class GitHubService : IGitHubService
         ArgumentException.ThrowIfNullOrWhiteSpace(repo);
         ArgumentException.ThrowIfNullOrWhiteSpace(projectId);
 
-        const string query = "query GetBoardRulesDefinition($projectId: ID!) { node(id: $projectId) { ... on ProjectV2 { id title owner { ... on User { login } ... on Organization { login } } fields(first: 50) { nodes { ... on ProjectV2SingleSelectField { id name options { id name } } } } } } }";
+        const string query = "query GetBoardRulesDefinition($projectId: ID!) { node(id: $projectId) { ... on ProjectV2 { id title public owner { ... on User { login } ... on Organization { login } } fields(first: 50) { nodes { ... on ProjectV2SingleSelectField { id name options { id name } } } } } } }";
 
         var client = CreateAuthenticatedClient();
         var requestBody = new GraphQlRequestDto(
@@ -456,14 +495,23 @@ public sealed class GitHubService : IGitHubService
             throw new HttpRequestException($"GitHub GraphQL request failed. Errors: {combinedErrors}");
         }
 
-        return ToBoardRulesDefinitionDto(payload.Data?.Node) ?? new BoardRulesDefinitionDto(
+        var node = payload.Data?.Node;
+        if (_docsCaptureOptions.Enabled && node is not null && !node.IsPublic)
+        {
+            return CreateUnavailableBoardRulesDefinition(projectId);
+        }
+
+        return ToBoardRulesDefinitionDto(node) ?? CreateUnavailableBoardRulesDefinition(projectId);
+    }
+
+    private static BoardRulesDefinitionDto CreateUnavailableBoardRulesDefinition(string projectId)
+        => new(
             projectId,
             string.Empty,
             string.Empty,
             Array.Empty<BoardColumnDto>(),
             Array.Empty<BoardRuleDto>(),
             new[] { "The requested project board was not found or is unavailable." });
-    }
 
     private static BoardRulesDefinitionDto? ToBoardRulesDefinitionDto(ProjectBoardNodeDto? node)
     {
@@ -1282,6 +1330,9 @@ public sealed class GitHubService : IGitHubService
 
         [JsonPropertyName("title")]
         public string Title { get; init; } = string.Empty;
+
+        [JsonPropertyName("public")]
+        public bool IsPublic { get; init; }
 
         [JsonPropertyName("owner")]
         public GraphQlOwnerDto? Owner { get; init; }

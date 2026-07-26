@@ -348,12 +348,32 @@ Leave `PersonalAccessToken` empty in `appsettings.json` and supply it via an env
 | `GitHub__Cache__RepositoriesTtlSeconds` | Cache lifetime in seconds for repository catalogue responses |
 | `GitHub__Cache__LabelsTtlSeconds` | Cache lifetime in seconds for label catalogue responses |
 | `GitHub__Cache__MilestonesTtlSeconds` | Cache lifetime in seconds for milestone catalogue responses |
+| `DocsCapture__Enabled` | Set to `true` locally to restrict catalogues to public GitHub content for documentation screenshots (default `false`) |
 
 To set PAT-only values for the **legacy `dotnet run` path** (without Aspire), use .NET User Secrets on the app project. Only the PAT is required; owner login is resolved automatically:
 
 ```bash
 dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-token>" --project src/App/SoloDevBoard.App
 ```
+
+### Docs capture mode
+
+Use docs capture mode when taking screenshots for the published user guide so private repositories and private Projects v2 boards cannot appear in the UI.
+
+Enable it locally with user secrets or an environment variable:
+
+```bash
+dotnet user-secrets set "DocsCapture:Enabled" "true" --project src/App/SoloDevBoard.App
+```
+
+When enabled:
+
+- Repository catalogues return only public repositories (`type=public`, with a defensive `!IsPrivate` filter).
+- Project board discovery returns only public Projects v2 boards.
+- Board rules requests for a private project return the unavailable fallback.
+- A startup warning is logged to confirm the mode is active.
+
+This is **screenshot hygiene, not a security boundary**. It does not block write operations and is intentionally unavailable as an Aspire AppHost deploy parameter. Leave it disabled for normal development and all hosted deployments. See [DEC-020](../plan/DECISIONS.md#dec-020-public-only-docs-capture-mode-for-documentation-screenshots).
 
 
 ### Hosted Admission Control and Fallback Behaviour
