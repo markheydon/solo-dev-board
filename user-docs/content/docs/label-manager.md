@@ -7,6 +7,8 @@ title: Label Manager
 
 The Label Manager provides a unified interface for creating, editing, deleting, and synchronising GitHub labels across multiple repositories. Rather than managing labels repository by repository through the GitHub web interface, you can define a canonical label taxonomy once and push it to all relevant repositories.
 
+![Label Manager with repository selector and Labels, Recommended taxonomy, and Synchronise tabs](/images/label-manager/overview.png)
+
 Key goals of the Label Manager:
 
 - Create labels across multiple repositories in one operation.
@@ -14,7 +16,7 @@ Key goals of the Label Manager:
 - Delete labels from selected repositories safely.
 - Identify gaps where labels are missing.
 
-## How This Differs from One-Click Migration
+## How this differs from One-Click Migration
 
 Label Manager is the day-to-day tool for governing labels across repositories. It is not intended to replace One-Click Migration.
 
@@ -50,13 +52,7 @@ The create and edit dialogs include:
 - Optional description input.
 - Repository selection controls scoped to valid repositories.
 
-Planned interactions include:
-
-- Validation and feedback improvements for partial API failures.
-- Additional bulk operations for standard label templates.
-
-
-## Applying Recommended Taxonomy
+## Applying recommended taxonomy
 
 You can apply a recommended label taxonomy to selected repositories using a preview and confirm workflow.
 

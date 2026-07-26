@@ -238,7 +238,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [ ] Enable CD pipeline with production environment gate (`.github/workflows/cd.yml` via `aspire deploy`). _(#251)_
 - [x] Write end-to-end tests for critical user journeys. _(#255; see tests/E2E/CRITICAL_JOURNEYS.md.)_
 - [x] Update hosted-authentication documentation for GitHub App-first hosted sign-in, admission-control allow-lists, PAT-only local trusted mode, and fallback boundaries. _(#119; completed on 2026-03-16; see docs/getting-started.md, infra/README.md, docs/hosted-authentication.md, and user-docs/content/_index.md.)_
-- [ ] Write comprehensive `docs/` content for all features. _(#256)_
+- [x] Write comprehensive end-user documentation for all shipped features under `user-docs/`. _(#256; Hugo site + screenshots; `pm-workflow.md` remains draft until Phase 5)_
 - [ ] Tag v1.0.0 release on GitHub with release notes. _(#257)_
 
 

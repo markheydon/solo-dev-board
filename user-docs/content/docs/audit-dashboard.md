@@ -5,6 +5,8 @@ title: Audit Dashboard
 
 The Audit Dashboard summarises open issues, open pull requests, and repository health across the repositories you select.
 
+![Audit Dashboard with repository selector and load controls](/images/audit-dashboard/overview.png)
+
 ## Accessing the Audit Dashboard
 
 - Open **Audit Dashboard** from the app home page or the left navigation.
@@ -21,7 +23,7 @@ The Audit Dashboard summarises open issues, open pull requests, and repository h
 - **Export Markdown** copies the current audit summary to the clipboard, respecting the selected repository filter.
 - Links in health sections open in a new browser tab.
 
-## Usage
+## How to use
 
 1. Open the Audit Dashboard from the app home page or navigation menu.
 2. Search and select the repositories you want to audit.
@@ -33,7 +35,7 @@ The Audit Dashboard summarises open issues, open pull requests, and repository h
 8. Click **Export Markdown** to copy the current summary for planning notes.
 9. To change the repository set, adjust the selector and load again.
 
-## Empty States
+## Empty states
 
 When a health category has no items, the dashboard shows a positive empty-state message, for example:
 
