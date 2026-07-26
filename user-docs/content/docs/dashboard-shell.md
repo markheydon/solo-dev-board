@@ -1,8 +1,6 @@
 ---
-layout: default
+weight: 10
 title: Home
-parent: User Guide
-nav_order: 1
 ---
 
 The Home page is the starting point for SoloDevBoard and provides a single entry point into each core feature area.

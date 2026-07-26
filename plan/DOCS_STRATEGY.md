@@ -10,7 +10,8 @@ This document defines the conventions and processes for maintaining SoloDevBoard
 
 | Layer | Location | Audience |
 |-------|----------|----------|
-| **End-user docs** | `docs/` | App users (GitHub Pages) |
+| **End-user docs** | `user-docs/` (Hugo / Hextra, GitHub Pages) | App users |
+| **Developer / operator docs** | `docs/` | Contributors, self-hosters, and operators |
 | **Maintainer / PM** | `plan/` | Scope, decisions, runbooks, wireframes |
 | **Constitution** | `AGENTS.md`, `.github/instructions/` | AI agents and contributors (always-on rules) |
 | **ADR archive** | `adr/archive/` | Read-only historical records |
@@ -22,29 +23,45 @@ Do not add new files under `adr/` except via archive migration. Record new decis
 ## Documentation Structure
 
 ```
-docs/
-├── _config.yml              # Jekyll / GitHub Pages config
-├── index.md                 # Project overview and quick links
-├── getting-started.md       # Prerequisites, local setup, configuration
-└── user-guide/
-    └── ...
+user-docs/                         # Published end-user site (Hugo + Hextra)
+├── hugo.yaml
+├── go.mod / go.sum
+└── content/
+    ├── _index.md               # Site home
+    └── docs/
+        ├── _index.md           # User guide landing
+        └── <feature>.md        # Per-feature end-user guides
+
+docs/                           # Repository / developer / operator docs (not Pages)
+├── README.md                   # Index for developer/operator guides
+├── getting-started.md
+├── deployment.md
+├── hosted-authentication.md
+├── pat-connectivity.md
+├── azure-costs.md
+└── observability.md
 
 plan/
 ├── SCOPE.md
-├── DECISIONS.md             # Active decision log (repo memory)
+├── DECISIONS.md                # Active decision log (repo memory)
 ├── IMPLEMENTATION_PLAN.md
 ├── BACKLOG.md
 ├── RELEASE_PLAN.md
 ├── LABEL_STRATEGY.md
 ├── PROJECT_MANAGEMENT.md
 ├── PROJECT_BOARD_DESIGN.md
-├── SPEC_KIT_MIGRATION.md    # Parked — future Spec Kit adoption
-└── DOCS_STRATEGY.md         # This file
+├── SPEC_KIT_MIGRATION.md       # Parked — future Spec Kit adoption
+└── DOCS_STRATEGY.md            # This file
 
 adr/
-├── README.md                # Redirect to plan/DECISIONS.md
-└── archive/                 # Read-only legacy ADR files
+├── README.md                   # Redirect to plan/DECISIONS.md
+└── archive/                    # Read-only legacy ADR files
+
+scripts/
+└── Invoke-HugoSite.ps1         # Local Hugo build/serve/preview via Podman or Docker
 ```
+
+End-user docs are deployed by GitHub Actions (Hugo) to GitHub Pages. See [DEC-019](DECISIONS.md#dec-019-hugo-hextra-for-end-user-docs-on-github-pages).
 
 ---
 
@@ -52,11 +69,12 @@ adr/
 
 When a new feature is implemented or reaches a stable state:
 
-1. **User Guide Stub → Full Doc:** Update the stub in `docs/user-guide/<feature>.md`. Remove the "Under Development" notice. Write the **Overview**, **How to Use**, and **Configuration** sections with accurate, tested information.
-2. **Index Page:** Update `docs/index.md` to ensure the feature appears in the Key Features table and the Quick Links section.
-3. **Getting Started:** If the feature introduces new configuration (environment variables, appsettings keys), update `docs/getting-started.md`.
+1. **User Guide Stub → Full Doc:** Update the stub in `user-docs/content/docs/<feature>.md`. Remove the "Under Development" notice. Write the **Overview**, **How to Use**, and **Configuration** sections with accurate, tested information.
+2. **Site pages:** Update `user-docs/content/_index.md` and `user-docs/content/docs/_index.md` so the feature appears in the feature list and guide index.
+3. **Getting Started / Deployment:** If the feature introduces new configuration (environment variables, AppHost parameters), update `docs/getting-started.md` and `docs/deployment.md`.
 4. **Decisions:** If an architectural decision was made, follow `repo-decision-log` — update `plan/DECISIONS.md` and/or constitution (`AGENTS.md`, instructions).
 5. **Issues:** Close or update the corresponding GitHub Issue and sync Project #8.
+6. **Local preview:** Run `.\scripts\Invoke-HugoSite.ps1 serve` (or `build`) before merging user-docs changes.
 
 ---
 
@@ -65,12 +83,12 @@ When a new feature is implemented or reaches a stable state:
 SoloDevBoard follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) conventions. A `CHANGELOG.md` will be maintained at the root of the repository starting from v0.1.0.
 
 Changelog entries are grouped by:
-- `Added` — new features
-- `Changed` — changes to existing features
-- `Deprecated` — features to be removed in a future release
-- `Removed` — features that have been removed
-- `Fixed` — bug fixes
-- `Security` — security-related changes
+- `Added` — new features.
+- `Changed` — changes to existing features.
+- `Deprecated` — features to be removed in a future release.
+- `Removed` — features that have been removed.
+- `Fixed` — bug fixes.
+- `Security` — security-related changes.
 
 ---
 
@@ -91,11 +109,12 @@ When Copilot or another AI agent is asked to write or update documentation:
 1. **UK English required.** All documentation must use UK English spelling. Run a spell check if possible.
 2. **Accuracy over completeness.** Do not document features that are not yet implemented. Use "Coming Soon" or "Under Development" notices for stubs.
 3. **Sync with code.** When updating docs, verify that the documented behaviour matches the current implementation.
-4. **Link generously.** Cross-reference related docs, decisions, and planning files. Use relative links.
+4. **Link generously.** Cross-reference related docs, decisions, and planning files. Use relative links within the same docs tree; use GitHub blob URLs when linking from the published site to repository-only files.
 5. **Heading hierarchy.** Use H1 for the page title, H2 for major sections, H3 for subsections. Do not skip levels.
 6. **Code blocks.** All code, commands, and configuration snippets must be in fenced code blocks with the appropriate language identifier.
 7. **Tables for structured data.** Prefer Markdown tables over bullet lists for structured comparisons (e.g. configuration options, label taxonomy).
-8. **Update `index.md` last.** After writing a user guide page, check whether `docs/index.md` needs to be updated to reflect the new content.
+8. **Update site indexes last.** After writing a user guide page, check whether `user-docs/content/_index.md` and `user-docs/content/docs/_index.md` need updates.
+9. **Audience split.** Keep operator/self-hoster material in `docs/`; keep in-app end-user material in `user-docs/`.
 
 ---
 
@@ -105,10 +124,10 @@ When Copilot or another AI agent is asked to write or update documentation:
 >
 > | Code Change | Documentation Action |
 > |-------------|---------------------|
-> | New feature implemented | Update `docs/user-guide/<feature>.md` to full content; remove "Under Development" notice |
+> | New end-user feature implemented | Update `user-docs/content/docs/<feature>.md` to full content; remove "Under Development" notice; refresh site indexes |
 > | New environment variable | Update `docs/getting-started.md` configuration table and `docs/deployment.md` |
 > | New architectural decision | Follow `repo-decision-log`; update `plan/DECISIONS.md` and constitution if cross-cutting |
-> | Scope change | Update `plan/SCOPE.md`; update `docs/index.md` if feature list changes |
+> | Scope change | Update `plan/SCOPE.md`; update `user-docs/content/_index.md` if the published feature list changes |
 > | New release | Update `plan/RELEASE_PLAN.md`; draft CHANGELOG entry |
 > | New label | Update `plan/LABEL_STRATEGY.md` |
 > | New board column or rule | Update `plan/PROJECT_BOARD_DESIGN.md` |

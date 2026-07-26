@@ -1,9 +1,4 @@
----
-layout: page
-title: Observability
-parent: User Guide
-nav_order: 12
----
+> **Audience:** Developers and operators. This guide is repository documentation and is not part of the published end-user site in `user-docs/`.
 
 # Observability and Telemetry
 
@@ -34,7 +29,7 @@ Aspire provisions observability resources during `aspire deploy`:
 
 The AppHost wires the Application Insights connection string into the `app` resource as `APPLICATIONINSIGHTS_CONNECTION_STRING`. No manual secret mapping is required in the CD workflow.
 
-See [Deployment](../deployment.md) for the full operator guide.
+See [Deployment](deployment.md) for the full operator guide.
 
 ---
 
@@ -50,7 +45,7 @@ SoloDevBoard exposes operational health endpoints for container orchestration an
 
 Both endpoints are available in all environments, including production Azure Container Apps. They return `Healthy` when checks pass and do not require authentication, including when hosted admission control is enabled.
 
-The AppHost wires `/health` as the Container App HTTP probe via `.WithHttpHealthCheck("/health")`. See [Deployment — Health checks and Container Apps probes](../deployment.md#health-checks-and-container-apps-probes) for probe design rationale and verification steps.
+The AppHost wires `/health` as the Container App HTTP probe via `.WithHttpHealthCheck("/health")`. See [Deployment — Health checks and Container Apps probes](deployment.md#health-checks-and-container-apps-probes) for probe design rationale and verification steps.
 
 ---
 
@@ -104,7 +99,7 @@ When adding new logging or custom span enrichment, follow the same rules. Prefer
 
 1. Open the Application Insights resource created by your deployment (named with the `app-insights` Aspire resource prefix).
 2. Use **Logs** to query `traces`, `requests`, `exceptions`, and `customEvents` tables.
-3. Use **Investigate → Failures** for error spikes and **Performance** for slow requests.
+3. Use **Investigate â†’ Failures** for error spikes and **Performance** for slow requests.
 
 Example Kusto query for recent errors:
 
@@ -158,4 +153,4 @@ Structured logs, traces, and metrics for the `app` resource appear in the dashbo
 | High log volume / cost | Verbose categories left enabled | Restore production log levels; review Log Analytics ingestion in Cost Management |
 | OAuth codes visible in traces | Custom enrichment bypassing redaction | Use `TelemetryRedaction.RedactHttpUrl` before attaching URLs to spans |
 
-For deployment prerequisites and environment configuration, see [Deployment](../deployment.md) and [Azure Deployment Costs](azure-costs.md).
+For deployment prerequisites and environment configuration, see [Deployment](deployment.md) and [Azure Deployment Costs](azure-costs.md).

@@ -1,11 +1,9 @@
 ---
-layout: page
+weight: 60
 title: One-Click Migration
-parent: User Guide
-nav_order: 2
 ---
 
-> ℹ️ **Phase 3 delivery** — The core One-Click Migration feature (labels and milestones) is complete. Project board configuration migration is planned for a later slice.
+> â„¹ï¸ **Phase 3 delivery** â€” The core One-Click Migration feature (labels and milestones) is complete. Project board configuration migration is planned for a later slice.
 
 ---
 
@@ -40,20 +38,20 @@ For the current planned Phase 3 delivery slice, One-Click Migration covers label
 
 ## How to Use
 
-### Step 1 — Select repositories
+### Step 1 â€” Select repositories
 
 Choose one source repository and one or more target repositories. The source repository cannot also appear in the target list. The Preview and Apply buttons remain disabled until at least one source and one target are selected.
 
-### Step 2 — Choose migration scope
+### Step 2 â€” Choose migration scope
 
 Use the toggle switches to select which artefact types to include:
 
-- **Labels** — copies the full label taxonomy from the source repository.
-- **Milestones** — copies milestone titles, descriptions, states, and due dates.
+- **Labels** â€” copies the full label taxonomy from the source repository.
+- **Milestones** â€” copies milestone titles, descriptions, states, and due dates.
 
 Both are enabled by default. At least one must remain on or the Preview button will be unavailable.
 
-### Step 3 — Choose a conflict resolution strategy
+### Step 3 â€” Choose a conflict resolution strategy
 
 Select how existing artefacts in each target repository are handled when a match is found:
 
@@ -64,28 +62,28 @@ Select how existing artefacts in each target repository are handled when a match
 | **Merge** | Conflicting items are replaced with source values; items that exist only in the target are preserved. |
 
 
-### Step 4 — Review the preview and status guidance
+### Step 4 â€” Review the preview and status guidance
 
 Click **Preview** to generate a read-only diff for each target repository. No changes are made at this stage.
 
 The preview card for each target shows:
 
-- **Labels** — tables listing labels to create, update, and delete, with colour, name, and description for each row.
-- **Milestones** — tables listing milestones to create, update, and delete, with title, state, due date, and description for each row.
+- **Labels** â€” tables listing labels to create, update, and delete, with colour, name, and description for each row.
+- **Milestones** â€” tables listing milestones to create, update, and delete, with title, state, due date, and description for each row.
 
 If the preview shows no actionable changes for a target repository, an information notice is displayed instead and the **Apply** button is not shown.
 
 The status and guidance region provides immediate status updates, warnings, and error messages while you work through preview and apply actions.
 
-### Step 5 — Apply the migration
+### Step 5 â€” Apply the migration
 
 Once you are satisfied with the preview, click **Apply**. This button only appears when there is at least one actionable change across all target repositories.
 
 If you selected the **Overwrite** strategy, an on-page warning is shown before destructive changes are applied.
 
-Partial failures are reported per target repository — a failure for one target does not abort the remaining targets.
+Partial failures are reported per target repository â€” a failure for one target does not abort the remaining targets.
 
-### Step 6 — Review the post-migration summary
+### Step 6 â€” Review the post-migration summary
 
 After migration completes, a summary view is shown for each target repository in the post-migration summary region.
 

@@ -1,11 +1,9 @@
 ---
-layout: page
+weight: 70
 title: Board Rules Visualiser
-parent: User Guide
-nav_order: 4
 ---
 
-> ⚠️ **Partial delivery** — Repository and supported board selection is available, board columns and transitions are visualised, rule inspection and warnings are supported, and compare mode lets you contrast two repositories side by side. Full automation-rule retrieval from GitHub remains a later slice.
+> âš ï¸ **Partial delivery** â€” Repository and supported board selection is available, board columns and transitions are visualised, rule inspection and warnings are supported, and compare mode lets you contrast two repositories side by side. Full automation-rule retrieval from GitHub remains a later slice.
 
 ---
 
@@ -59,7 +57,7 @@ Key goals of the Board Rules Visualiser:
 
 - **No repository selected:** The visualisation area prompts you to choose a repository and project board.
 - **No supported boards:** If the repository has no GitHub Project v2 board with a Status field, SoloDevBoard explains why the visualiser cannot continue and does not show the diagram state.
-- **Some linked boards inaccessible:** If GitHub reports more linked project boards than SoloDevBoard can load, a warning explains how many could not be read. This commonly happens for **private user-owned** projects under GitHub App sign-in. Use PAT mode with the `read:project` scope, or make the project public. See [Hosted Authentication — Projects v2 access](hosted-authentication.md#projects-v2-access-under-hosted-sign-in).
+- **Some linked boards inaccessible:** If GitHub reports more linked project boards than SoloDevBoard can load, a warning explains how many could not be read. This commonly happens for **private user-owned** projects under GitHub App sign-in. Use PAT mode with the `read:project` scope, or make the project public. See [Hosted Authentication â€” Projects v2 access](https://github.com/markheydon/solo-dev-board/blob/main/docs/hosted-authentication.md#projects-v2-access-under-hosted-sign-in).
 - **Loading:** Progress indicators appear while repositories or project boards are loading.
 - **Errors:** If GitHub cannot be reached, an error message appears with a retry action.
 
@@ -67,7 +65,7 @@ Key goals of the Board Rules Visualiser:
 
 ## Configuration
 
-*Coming soon — this section will describe configuration options for the Board Rules Visualiser.*
+*Coming soon â€” this section will describe configuration options for the Board Rules Visualiser.*
 
 Planned configuration options include:
 - Choosing between GitHub classic projects and GitHub Projects (v2).

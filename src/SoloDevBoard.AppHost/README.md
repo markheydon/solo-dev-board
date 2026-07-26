@@ -67,7 +67,7 @@ Application Insights is deploy-time only. Local telemetry uses the Aspire dashbo
 
 ## Production deployment
 
-Deployment uses `aspire deploy` to Azure Container Apps with scale-to-zero. Application Insights and structured logging are provisioned automatically. See [docs/deployment.md](../docs/deployment.md) and [docs/user-guide/observability.md](../docs/user-guide/observability.md) for the full operator guide.
+Deployment uses `aspire deploy` to Azure Container Apps with scale-to-zero. Application Insights and structured logging are provisioned automatically. See [docs/deployment.md](../docs/deployment.md) and [docs/observability.md](../docs/observability.md) for the full operator guide.
 
 ### Health probes
 

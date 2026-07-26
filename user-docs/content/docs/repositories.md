@@ -1,8 +1,6 @@
 ---
-layout: page
+weight: 50
 title: Repositories
-parent: User Guide
-nav_order: 0
 ---
 
 The Repositories page provides a central view of all repositories available to your authenticated GitHub account.

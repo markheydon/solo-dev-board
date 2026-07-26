@@ -1,0 +1,18 @@
+name: Hugo CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "user-docs/**"
+      - ".github/workflows/hugo-build.yml"
+      - ".github/workflows/hugo-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  hugo:
+    uses: ./.github/workflows/hugo-build.yml
+    with:
+      deploy: false

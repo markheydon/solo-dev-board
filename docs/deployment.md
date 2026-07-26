@@ -1,8 +1,4 @@
----
-layout: page
-title: Deployment
-nav_order: 3
----
+> **Audience:** Developers and operators. This guide is repository documentation and is not part of the published end-user site in `user-docs/`.
 
 # Deploying SoloDevBoard to Azure
 
@@ -28,7 +24,7 @@ Both paths use the same Aspire / Azure Container Apps stack. Only the AppHost pa
 | Azure subscription | With permission to create resources in a resource group |
 | [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) | Logged in with `az login` |
 | GitHub repository admin access | To configure environments, secrets, and workflows (skip if you only deploy with local `aspire deploy`) |
-| GitHub Personal Access Token **or** GitHub App | PAT for [self-hoster mode](#self-hoster-deployment-pat-mode); GitHub App for [hosted sign-in](user-guide/hosted-authentication.md) |
+| GitHub Personal Access Token **or** GitHub App | PAT for [self-hoster mode](#self-hoster-deployment-pat-mode); GitHub App for [hosted sign-in](hosted-authentication.md) |
 
 ---
 
@@ -36,7 +32,7 @@ Both paths use the same Aspire / Azure Container Apps stack. Only the AppHost pa
 
 Use this path when you want a **personal** SoloDevBoard instance on your own Azure subscription without setting up a GitHub App. Authentication stays in **PAT-only local trusted mode**: the Container App uses one configured PAT for all GitHub API calls, and there is no `/auth/sign-in` flow.
 
-> **Trust boundary:** Anyone who can reach the Container App URL acts as the PAT owner. Prefer a private network, IP restrictions, or a URL you alone use. For shared or public endpoints, use [hosted sign-in](user-guide/hosted-authentication.md) instead. Local PAT setup is documented in [Getting Started — PAT-only local trusted mode](getting-started.md#pat-only-local-trusted-mode).
+> **Trust boundary:** Anyone who can reach the Container App URL acts as the PAT owner. Prefer a private network, IP restrictions, or a URL you alone use. For shared or public endpoints, use [hosted sign-in](hosted-authentication.md) instead. Local PAT setup is documented in [Getting Started — PAT-only local trusted mode](getting-started.md#pat-only-local-trusted-mode).
 
 ### What you need
 
@@ -131,7 +127,7 @@ Then run **Actions → CD - Deploy to Azure → Run workflow**. No GitHub App ca
 | `allowed-user-logins` | `Parameters__allowed_user_logins` / `ALLOWED_USER_LOGINS` | `-` |
 | `allowed-org-logins` | `Parameters__allowed_org_logins` / `ALLOWED_ORG_LOGINS` | `-` |
 
-See [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md) for the full parameter reference, [Azure Deployment Costs](user-guide/azure-costs.md) for cost guidance, and [PAT Connectivity](user-guide/pat-connectivity.md) for shell status and `/health/github`.
+See [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md) for the full parameter reference, [Azure Deployment Costs](azure-costs.md) for cost guidance, and [PAT Connectivity](pat-connectivity.md) for shell status and `/health/github`.
 
 ---
 
@@ -248,7 +244,7 @@ The CD workflow (`.github/workflows/cd.yml`) runs `aspire deploy` with OIDC auth
 2. Open **Actions → CD - Deploy to Azure → Run workflow**.
 3. After a successful run, note the deployed Container App FQDN from the workflow output or Azure portal.
 4. **Hosted sign-in only:** register the GitHub App callback URL: `https://<fqdn>/auth/callback`.
-5. Open the provisioned Application Insights resource to confirm telemetry is flowing (see [Observability guide](user-guide/observability.md)).
+5. Open the provisioned Application Insights resource to confirm telemetry is flowing (see [Observability guide](observability.md)).
 
 ### Enable automatic deploys
 
@@ -308,7 +304,7 @@ Aspire generates and applies Bicep at deploy time. A typical deployment includes
 | Aspire dashboard | Optional operational dashboard (Aspire default) |
 | Managed identities | Image pull and runtime authentication |
 
-See [Azure Deployment Costs](user-guide/azure-costs.md) for cost guidance.
+See [Azure Deployment Costs](azure-costs.md) for cost guidance.
 
 ---
 
@@ -321,7 +317,7 @@ SoloDevBoard exposes two HTTP health endpoints via `SoloDevBoard.ServiceDefaults
 | `GET /health` | **Readiness** — the app can accept traffic after startup | All registered health checks |
 | `GET /alive` | **Liveness** — the process is responsive | Checks tagged `live` only (the built-in `self` check) |
 
-Both endpoints return `200 OK` with a `Healthy` body when checks pass. They are excluded from distributed tracing to reduce noise (see [Observability](user-guide/observability.md)).
+Both endpoints return `200 OK` with a `Healthy` body when checks pass. They are excluded from distributed tracing to reduce noise (see [Observability](observability.md)).
 
 ### Liveness versus readiness design
 
@@ -394,4 +390,4 @@ az identity delete --name id-solodevboard-cd-prod --resource-group rg-solodevboa
 | PAT mode shows `/welcome` or requires sign-in | `hosted-sign-in-enabled` still `true` | Set `HOSTED_SIGN_IN_ENABLED` / `Parameters__hosted_sign_in_enabled` to `false` and redeploy |
 | PAT mode starts but GitHub calls fail | Missing or invalid `GH_PAT` | Set a real PAT with required scopes; confirm `/health/github` and the **Connected as @login** chip |
 
-For local development, see [Getting Started](getting-started.md) (including [PAT-only local trusted mode](getting-started.md#pat-only-local-trusted-mode)). For hosted authentication details, see [Hosted Authentication](user-guide/hosted-authentication.md). For the Key Vault pattern, see [plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md](../plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md).
+For local development, see [Getting Started](getting-started.md) (including [PAT-only local trusted mode](getting-started.md#pat-only-local-trusted-mode)). For hosted authentication details, see [Hosted Authentication](hosted-authentication.md). For the Key Vault pattern, see [plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md](../plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md).

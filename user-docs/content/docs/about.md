@@ -1,8 +1,6 @@
 ---
-layout: page
+weight: 100
 title: About
-parent: User Guide
-nav_order: 10
 ---
 
 # About

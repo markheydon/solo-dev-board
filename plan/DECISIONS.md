@@ -182,6 +182,15 @@ Test coverage expectations for cache-hit, cache-miss, invalidation, TTL expiry, 
 
 ---
 
+### DEC-019: Hugo (Hextra) for end-user docs on GitHub Pages
+
+**Status:** Active  
+**Date:** 2026-07-26  
+**Constitution:** [AGENTS.md — Documentation Sync](../AGENTS.md#documentation-sync)  
+**Summary:** End-user documentation is authored as a Hugo site with the Hextra theme under `user-docs/` and published to GitHub Pages via the official Hugo GitHub Actions workflow. Repository-centric developer and operator documentation remains in `docs/` and is not served by Pages. Local preview uses `scripts/Invoke-HugoSite.ps1` with Podman or Docker so contributors do not need a local Hugo or Go toolchain. Reject returning to Jekyll/`docs/` as the Pages source, and reject mixing operator deployment guides into the published end-user site.
+
+---
+
 ## Superseded legacy (archive only)
 
 | Legacy ADR | Superseded by | Notes |

@@ -143,7 +143,7 @@ Implement issue #[number]
 - Runs **implementation preflight** before coding (load context, codebase discovery, touch map, proceed gate)
 - Writes code following layered architecture (Domain/Application/Infrastructure/App)
 - Creates xUnit v3 tests (NSubstitute, `Assert.*`, correct naming)
-- Updates user-facing docs in `docs/user-guide/` if needed
+- Updates user-facing docs in `user-docs/content/docs/` if needed
 - Records architectural decisions via `repo-decision-log` / `plan/DECISIONS.md` when needed (do not create new `adr/` files)
 - Ensures UK English throughout
 
@@ -493,8 +493,8 @@ These gates are defined in [`AGENTS.md`](../AGENTS.md) and enforced by role cont
 | GitHub issues                         | PM Orchestrator, Review  | Planning (create), Review (close)     |
 | `src/` (source code)                  | Delivery Agent           | Implementation                        |
 | `tests/` (test code)                  | Delivery Agent           | Implementation                        |
-| `docs/user-guide/` (user docs)        | Delivery Agent           | User-facing features                  |
-| `docs/index.md` (quick links)         | Delivery Agent           | New doc pages added                   |
+| `user-docs/content/docs/` (user docs)        | Delivery Agent           | User-facing features                  |
+| `user-docs/content/_index.md` (quick links)         | Delivery Agent           | New doc pages added                   |
 | `adr/` (archived decisions)           | —                        | Historical reference only             |
 | `plan/DECISIONS.md`                   | Delivery Agent           | New decision recorded via `repo-decision-log` |
 
@@ -617,7 +617,7 @@ Plan next item for Phase 1
 ---
 
 ### "Quality gate failed: documentation missing"
-**Cause:** User-facing feature without `docs/user-guide/*.md`.  
+**Cause:** User-facing feature without `user-docs/content/docs/*.md`.  
 **Fix:** Delivery Agent escalates; add docs manually or re-run `implement-issue` with explicit doc request.
 
 ---
@@ -643,7 +643,7 @@ Plan next item for Phase 1
 - [ ] I use `verify-and-create-pr` to validate quality before PR merge
 - [ ] I run `weekly-pm-review` at least once per week
 - [ ] All my GitHub issues have labels per `plan/LABEL_STRATEGY.md`
-- [ ] All user-facing features have docs in `docs/user-guide/`
+- [ ] All user-facing features have docs in `user-docs/content/docs/`
 - [ ] All architectural decisions are recorded in `plan/DECISIONS.md` via `repo-decision-log`
 - [ ] I create or update GitHub Issues when new work is discovered
 - [ ] I update `plan/SCOPE.md` when scope changes

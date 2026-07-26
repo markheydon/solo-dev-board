@@ -47,7 +47,7 @@ Hosting probe wiring (`.WithHttpHealthCheck("/health")` on the AppHost `app` res
 | Sensitive HTTP header tag stripping on spans | Unit | `TelemetryRedactionTests.cs` |
 | Non-development environments configure JSON console logging | Unit | `StructuredLoggingConfigurationTests.cs` |
 
-Exporter selection (OTLP for local Aspire, Application Insights when `APPLICATIONINSIGHTS_CONNECTION_STRING` is present) is configuration-driven and verified operationally after deploy. See [docs/user-guide/observability.md](../docs/user-guide/observability.md).
+Exporter selection (OTLP for local Aspire, Application Insights when `APPLICATIONINSIGHTS_CONNECTION_STRING` is present) is configuration-driven and verified operationally after deploy. See [docs/observability.md](../docs/observability.md).
 
 Health endpoint tracing exclusion is implemented in `SoloDevBoard.ServiceDefaults` and documented in the observability guide; it is not duplicated with brittle instrumentation assertions in unit tests.
 
@@ -77,4 +77,4 @@ Not automated in CI (manual or deploy-time verification only):
 
 - [DEC-018: GitHub API response caching in Infrastructure](DECISIONS.md#dec-018-github-api-response-caching-in-infrastructure)
 - [Deployment — Health checks and Container Apps probes](../docs/deployment.md#health-checks-and-container-apps-probes)
-- [Observability and Telemetry](../docs/user-guide/observability.md)
+- [Observability and Telemetry](../docs/observability.md)

@@ -188,12 +188,16 @@ User-facing features:
 - Update or create relevant page in:
 
 ```text
-docs/user-guide/
+user-docs/content/docs/
 ```
 
 If a new guide page is created:
 
-- Update `docs/index.md`
+- Update `user-docs/content/_index.md` and `user-docs/content/docs/_index.md`
+
+Operator, self-hoster, or contributor-only changes:
+
+- Update the relevant file under `docs/` and `docs/README.md` when needed
 
 Technical or internal changes:
 

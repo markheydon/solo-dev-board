@@ -73,7 +73,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Implement label synchronisation logic (compare source and target, produce diff, apply changes)
 - [x] Write unit tests for `LabelService` using Moq
 - [x] Write infrastructure tests for `GitHubLabelRepository` (mocked HTTP)
-- [x] Update `docs/user-guide/label-manager.md`
+- [x] Update `user-docs/content/docs/label-manager.md`
 
 #### Audit Dashboard
 - [x] Design `AuditReport` domain record
@@ -82,7 +82,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Implement health indicators: unlabelled issues, stale PRs, failing workflows
 - [ ] Implement label consistency warnings _(deferred — originally scoped in SCOPE.md but not yet built)_
 - [x] Write unit tests for `AuditDashboardService`
-- [x] Update `docs/user-guide/audit-dashboard.md`
+- [x] Update `user-docs/content/docs/audit-dashboard.md`
 
 ### Dependencies
 
@@ -107,7 +107,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Support migration of labels and milestones for the current delivery slice.
 - [ ] Support migration of project board columns as a later slice of this feature.
 - [x] Write unit tests for `MigrationService`.
-- [x] Update `docs/user-guide/one-click-migration.md`.
+- [x] Update `user-docs/content/docs/one-click-migration.md`.
 
 #### Triage UI
 - [x] Design `TriageSession` and `TriageAction` domain records
@@ -115,7 +115,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Build focused MudBlazor triage view with keyboard shortcut support
 - [x] Implement quick actions: label, assign milestone, add to project, close as duplicate
 - [x] Write unit tests for `TriageService`
-- [x] Update `docs/user-guide/triage-ui.md`
+- [x] Update `user-docs/content/docs/triage-ui.md`
 
 
 ### Dependencies
@@ -143,7 +143,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Implement GraphQL client in `Infrastructure` (see ADR-0005)
 - [x] Build interactive MudBlazor-based diagram component (compare mode now available)
 - [x] Write unit tests for `BoardRuleService`, `BoardRulesComparer`, and compare mode functionality
-- [x] Update `docs/user-guide/board-rules-visualiser.md` _(compare mode documented as available)_
+- [x] Update `user-docs/content/docs/board-rules-visualiser.md` _(compare mode documented as available)_
 
 #### Workflow Templates
 - [x] Design `WorkflowTemplate` domain record
@@ -151,7 +151,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Build MudBlazor UI: template browser, parameter editor, apply to repositories, staleness tracker
 - [x] Include built-in templates: CI (dotnet), CD (Aspire deploy to Azure Container Apps), Dependabot
 - [x] Write unit tests for `WorkflowTemplateService`
-- [x] Update `docs/user-guide/workflow-templates.md`
+- [x] Update `user-docs/content/docs/workflow-templates.md`
 - [ ] Support custom template repositories _(deferred follow-on slice — only built-in templates are available today)_
 
 ### Dependencies
@@ -177,21 +177,21 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [ ] Build MudBlazor Daily Focus view: board state summary, stalled item alerts, top-3 recommended work items
 - [ ] Implement stalled item detection (Up Next for 3+ days; PRs In Review for 3+ days)
 - [ ] Write unit tests for `DailyFocusService`
-- [ ] Update `docs/user-guide/pm-workflow.md`
+- [ ] Update `user-docs/content/docs/pm-workflow.md`
 
 #### Backlog Review
 - [ ] Implement `BacklogReviewService` in `Application` (cross-repo, priority-grouped, PR-aware)
 - [ ] Build MudBlazor Backlog Review view: groups for urgent, ready, blocked, deferred; neglected repo alerts
 - [ ] Implement neglected repo detection (no issue or PR activity in 14 days)
 - [ ] Write unit tests for `BacklogReviewService`
-- [ ] Update `docs/user-guide/pm-workflow.md`
+- [ ] Update `user-docs/content/docs/pm-workflow.md`
 
 #### Iteration Planning
 - [ ] Design `IterationPlan` domain record
 - [ ] Implement `IterationPlanningService` in `Application` (capacity enforcement, stale resolution, milestone assignment)
 - [ ] Build MudBlazor Iteration Planning view: capacity indicator, stale item resolution, Up Next curation, optional milestone assignment
 - [ ] Write unit tests for `IterationPlanningService`
-- [ ] Update `docs/user-guide/pm-workflow.md`
+- [ ] Update `user-docs/content/docs/pm-workflow.md`
 
 #### Repo Management
 - [ ] Implement excluded-repos configuration (persisted per user, applied to all cross-repo operations)
@@ -237,7 +237,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Replace the single-user `ICurrentUserContext` adapter with a per-request, per-user implementation backed by the hosted authentication session when hosted mode is enabled. _(Implemented on 2026-03-13; PAT-only local trusted mode preserved.)_
 - [ ] Enable CD pipeline with production environment gate (`.github/workflows/cd.yml` via `aspire deploy`). _(#251)_
 - [x] Write end-to-end tests for critical user journeys. _(#255; see tests/E2E/CRITICAL_JOURNEYS.md.)_
-- [x] Update hosted-authentication documentation for GitHub App-first hosted sign-in, admission-control allow-lists, PAT-only local trusted mode, and fallback boundaries. _(#119; completed on 2026-03-16; see docs/getting-started.md, infra/README.md, docs/user-guide/hosted-authentication.md, and docs/index.md.)_
+- [x] Update hosted-authentication documentation for GitHub App-first hosted sign-in, admission-control allow-lists, PAT-only local trusted mode, and fallback boundaries. _(#119; completed on 2026-03-16; see docs/getting-started.md, infra/README.md, docs/hosted-authentication.md, and user-docs/content/_index.md.)_
 - [ ] Write comprehensive `docs/` content for all features. _(#256)_
 - [ ] Tag v1.0.0 release on GitHub with release notes. _(#257)_
 
@@ -256,12 +256,12 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 1. Check whether the feature is already in `plan/SCOPE.md`. If not, discuss with the developer whether it should be added to scope.
 2. Identify which phase the feature belongs to (or create a new phase if necessary) and add it to this file.
 3. Create a GitHub Issue using the `feature.yml` template with labels from `plan/LABEL_STRATEGY.md` and sync Project #8.
-4. Create a stub page in `docs/user-guide/<feature>.md`.
+4. Create a stub page in `user-docs/content/docs/<feature>.md`.
 5. Only then begin implementing the feature, following the architecture rules in `AGENTS.md`.
 
 ### Keeping Docs in Sync with Code
 
 - When a phase task is completed, tick it off in this document.
-- When a feature's user-facing doc is written, update the stub notice in `docs/user-guide/<feature>.md`.
+- When a feature's user-facing doc is written, update the stub notice in `user-docs/content/docs/<feature>.md`.
 - When a new decision is recorded, add it to `plan/DECISIONS.md` per `repo-decision-log`.
 - When a new environment variable is introduced, update `docs/getting-started.md` and `docs/deployment.md`.

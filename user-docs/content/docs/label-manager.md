@@ -1,8 +1,6 @@
 ---
-layout: page
+weight: 40
 title: Label Manager
-parent: User Guide
-nav_order: 3
 ---
 
 ## Overview
@@ -41,9 +39,9 @@ The Label Manager page now uses a tabbed layout to organise label management wor
 
 The three available tabs are:
 
-1. **Labels** — View, create, edit, and delete labels across the selected repositories. Use the consolidated label view and bulk CRUD operations here. Filter by label name, and use the `New label` button to add labels. Row-level actions allow editing and deleting existing labels.
-2. **Recommended taxonomy** — Apply a recommended label taxonomy to the selected repositories. Preview proposed changes, confirm before applying, and review a per-repository summary after completion.
-3. **Synchronise** — Synchronise labels from a source repository to one or more target repositories. Preview all changes before applying, and receive a summary of the synchronisation outcome for each target repository.
+1. **Labels** â€” View, create, edit, and delete labels across the selected repositories. Use the consolidated label view and bulk CRUD operations here. Filter by label name, and use the `New label` button to add labels. Row-level actions allow editing and deleting existing labels.
+2. **Recommended taxonomy** â€” Apply a recommended label taxonomy to the selected repositories. Preview proposed changes, confirm before applying, and review a per-repository summary after completion.
+3. **Synchronise** â€” Synchronise labels from a source repository to one or more target repositories. Preview all changes before applying, and receive a summary of the synchronisation outcome for each target repository.
 
 The create and edit dialogs include:
 
@@ -106,7 +104,7 @@ This workflow ensures you can preview all changes before applying, avoid redunda
 
 ## Configuration
 
-*Coming soon — this section will describe configuration options for the Label Manager.*
+*Coming soon â€” this section will describe configuration options for the Label Manager.*
 
 Planned configuration options include:
 

@@ -30,7 +30,7 @@ Closes #
 - [ ] I have updated relevant documentation in `docs/` or `plan/`
 - [ ] No new compiler warnings have been introduced
 - [ ] All text in comments, strings, and docs is written in **UK English**
-- [ ] If this adds a new feature, a GitHub Issue exists (or is updated), Project #8 is synced, and `docs/index.md` has been updated
+- [ ] If this adds a new feature, a GitHub Issue exists (or is updated), Project #8 is synced, and end-user docs under `user-docs/` (or developer docs under `docs/`) have been updated
 
 ## Screenshots (if applicable)
 
