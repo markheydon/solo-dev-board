@@ -18,7 +18,7 @@ Key goals of Workflow Templates:
 
 ### Browse built-in templates
 
-1. Open **Workflow Templates** from the navigation menu or the home dashboard.
+1. Open **Workflow Templates** from the navigation menu or the app home page.
 2. Select one or more target repositories using the repository selector at the top of the page.
 3. Review the built-in template cards for common .NET workflows such as CI, Azure CD (Aspire), and Dependabot auto-merge.
 4. Use the search field to filter templates by name, category, or tag.

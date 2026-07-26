@@ -5,43 +5,34 @@ title: Repositories
 
 The Repositories page provides a central view of all repositories available to your authenticated GitHub account.
 
----
-
 ## Overview
 
-The Repositories page enables you to:
-- View all accessible repositories in a responsive data grid.
-- Search repositories by name using the search field in the command area.
-- Perform actions such as refresh, add, remove, and bulk operations from the command strip.
-- See repository status at a glance with visual chips for connection (Connected/Archived) and visibility (Public/Private).
-- Access row actions for each repository, including Edit and More (placeholders for future milestones).
-- Receive clear feedback for loading, success, empty, and error states.
+From this page you can:
 
----
+- View accessible repositories in a responsive data grid.
+- Search repositories by name.
+- Refresh, add, remove, and run bulk actions from the command strip.
+- See connection status (Connected/Archived) and visibility (Public/Private) at a glance.
+- Use row actions for each repository (some actions are placeholders for later enhancements).
 
-## Page Layout and Behaviour
+## Page Layout
 
-- **Command Strip**: Located at the top of the page, the command strip includes buttons for Refresh, Add, Remove, and Bulk actions. On desktop, these appear as individual buttons; on mobile, they are grouped into a compact actions menu for easier access.
-- **Search Field**: The search box allows you to filter repositories by name directly from the command area.
-- **Data Grid**: The main grid displays repository name, status chips (Connected/Archived and Public/Private), and row actions. The Edit and More actions are placeholders for future enhancements.
-- **Feedback Region**: The page provides clear feedback for loading, success, empty, and error states, helping you understand the current status of your repositories.
-
----
+- **Command strip** — Refresh, Add, Remove, and Bulk actions. On mobile these are grouped into a compact actions menu.
+- **Search field** — Filter repositories by name.
+- **Data grid** — Repository name, status chips, and row actions.
+- **Feedback region** — Loading, empty, success, and error messages.
 
 ## How to Use
 
 1. Open **Repositories** from the left navigation menu.
 2. Use the search field to filter repositories by name if needed.
-3. Use the command strip to refresh the list, add new repositories, remove selected ones, or perform bulk actions.
-4. Review repository status using the visual chips and row actions.
-5. Observe the feedback region for loading, empty, or error messages.
-
----
+3. Use the command strip to refresh the list, add repositories, remove selected ones, or perform bulk actions.
+4. Review status chips and row actions as needed.
 
 ## Troubleshooting
 
 If repositories do not appear or loading fails:
-- Confirm your GitHub token is configured via user secrets or environment variables.
-- Ensure the token has the required scopes for your repositories.
-- Check that your network connection allows access to `api.github.com`.
-- Use the Refresh button to retry loading after resolving any issues.
+
+- Confirm GitHub authentication is working (connected status in the app bar).
+- Check that your account can access the repositories you expect.
+- Use **Refresh** to retry after resolving connectivity issues.

@@ -11,8 +11,6 @@ title: Board Rules Visualiser
 
 The Board Rules Visualiser displays the board states and supported transitions for a GitHub Project v2 board. It helps you understand how issues and pull requests move between columns without reading raw configuration payloads.
 
-For SoloDevBoard itself, the canonical project board now includes an **Up Next** planning state for the next short-horizon batch of stories, enablers, and tests, plus a **Focus Order** field that sequences that batch on the Story Board.
-
 Key goals of the Board Rules Visualiser:
 - Make project board states and supported transitions visible and understandable at a glance.
 - Help diagnose board flow issues by surfacing the supported column progression for a selected board.
@@ -60,13 +58,3 @@ Key goals of the Board Rules Visualiser:
 - **Some linked boards inaccessible:** If GitHub reports more linked project boards than SoloDevBoard can load, a warning explains how many could not be read. This commonly happens for **private user-owned** projects under GitHub App sign-in. Use PAT mode with the `read:project` scope, or make the project public. See [Hosted Authentication — Projects v2 access](https://github.com/markheydon/solo-dev-board/blob/main/docs/hosted-authentication.md#projects-v2-access-under-hosted-sign-in).
 - **Loading:** Progress indicators appear while repositories or project boards are loading.
 - **Errors:** If GitHub cannot be reached, an error message appears with a retry action.
-
----
-
-## Configuration
-
-*Coming soon — this section will describe configuration options for the Board Rules Visualiser.*
-
-Planned configuration options include:
-- Choosing between GitHub classic projects and GitHub Projects (v2).
-- Layout options for the visualisation diagram.
