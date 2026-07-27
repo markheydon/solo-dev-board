@@ -5,7 +5,7 @@ title: Repositories
 
 The Repositories page provides a central view of all repositories available to your authenticated GitHub account.
 
-![Repositories page showing public repositories in a data grid](/images/repositories/overview.png)
+![Repositories page filtered to markheydon/solo-dev-board in the data grid](/images/repositories/overview.png)
 
 ## Overview
 

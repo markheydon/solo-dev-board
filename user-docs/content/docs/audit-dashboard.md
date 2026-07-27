@@ -5,7 +5,7 @@ title: Audit Dashboard
 
 The Audit Dashboard summarises open issues, open pull requests, and repository health across the repositories you select.
 
-![Audit Dashboard with repository selector and load controls](/images/audit-dashboard/overview.png)
+![Audit Dashboard showing KPI summary and health indicators for markheydon/solo-dev-board](/images/audit-dashboard/overview.png)
 
 ## Accessing the Audit Dashboard
 

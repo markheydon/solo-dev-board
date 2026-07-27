@@ -100,6 +100,18 @@ Rules:
 - Prefer the Playwright helper: `cd tests/E2E && npm run capture:docs` against a locally running app with a real PAT.
 - Do not commit screenshots that show private repositories, private project boards, or other non-public GitHub content.
 
+### Screenshot composition
+
+Prefer screenshots that show a feature **in a useful, populated state**, not just the initial empty shell:
+
+- Where a page offers a **Load** (or equivalent read-only fetch) action after repository selection, capture **after** selecting the example repository and loading data — not the pre-selection empty state.
+- Use **`markheydon/solo-dev-board`** as the canonical example repository wherever a repository name is required. This public repository is always available under docs capture mode and keeps screenshots consistent.
+- Favour **read-only** interactions: load audit summaries, browse labels, inspect board rules, start a triage session (without applying labels or closing issues), or select a workflow template. Do **not** apply migrations, synchronise labels, apply taxonomy, close issues, or write workflow files for documentation screenshots.
+- Static pages (Home, About, Appearance) may remain as opening-state captures when no repository-scoped load action exists.
+- The Repositories page loads its grid automatically; capture it with the repository list populated (optionally filtered to the example repository).
+
+The Playwright docs-capture suite in `tests/E2E/docs-capture/` encodes these composition rules. Extend it when adding new feature guides rather than capturing ad hoc empty states.
+
 ---
 
 ## Changelog Conventions

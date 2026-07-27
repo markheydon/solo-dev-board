@@ -7,7 +7,7 @@ title: Workflow Templates
 
 The Workflow Templates feature allows you to browse, apply, and customise GitHub Actions workflow templates across your repositories, all from within SoloDevBoard. Rather than manually copying YAML files between repositories, you can manage templates centrally and push them where needed.
 
-![Workflow Templates library with built-in template cards and repository selector](/images/workflow-templates/overview.png)
+![Workflow Templates with a selected template YAML preview for markheydon/solo-dev-board](/images/workflow-templates/overview.png)
 
 Key goals of Workflow Templates:
 - Provide a library of reusable GitHub Actions workflow templates suited to common .NET development patterns.

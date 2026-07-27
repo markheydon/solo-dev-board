@@ -1,5 +1,15 @@
 import { test } from '@playwright/test';
-import { captureDocsScreenshot, openFeatureForCapture } from './helpers';
+import {
+  captureDocsScreenshot,
+  openFeatureForCapture,
+  prepareAuditDashboardForCapture,
+  prepareBoardRulesForCapture,
+  prepareLabelManagerForCapture,
+  prepareMigrationForCapture,
+  prepareRepositoriesForCapture,
+  prepareTriageForCapture,
+  prepareWorkflowTemplatesForCapture,
+} from './helpers';
 
 /**
  * Manual documentation screenshot suite.
@@ -7,25 +17,75 @@ import { captureDocsScreenshot, openFeatureForCapture } from './helpers';
  * - SoloDevBoard running locally with a real GitHub PAT.
  * - DocsCapture:Enabled=true (public-only catalogues).
  * - PLAYWRIGHT_BASE_URL pointing at the app (default http://localhost:5080).
+ *
+ * Composition rules: see plan/DOCS_STRATEGY.md#screenshot-composition.
  */
-const captures: ReadonlyArray<{ route: string; slug: string; file: string; title: string }> = [
-  { route: '/', slug: 'dashboard', file: 'home.png', title: 'Home dashboard' },
-  { route: '/audit-dashboard', slug: 'audit-dashboard', file: 'overview.png', title: 'Audit Dashboard' },
-  { route: '/repositories', slug: 'repositories', file: 'overview.png', title: 'Repositories' },
-  { route: '/labels', slug: 'label-manager', file: 'overview.png', title: 'Label Manager' },
-  { route: '/migrate', slug: 'one-click-migration', file: 'overview.png', title: 'One-Click Migration' },
-  { route: '/board-rules', slug: 'board-rules-visualiser', file: 'overview.png', title: 'Board Rules Visualiser' },
-  { route: '/triage', slug: 'triage-ui', file: 'overview.png', title: 'Triage UI' },
-  { route: '/workflows', slug: 'workflow-templates', file: 'overview.png', title: 'Workflow Templates' },
-  { route: '/about', slug: 'about', file: 'overview.png', title: 'About' },
+const loadedStateCaptures: ReadonlyArray<{
+  title: string;
+  slug: string;
+  file: string;
+  prepare: (page: import('@playwright/test').Page) => Promise<void>;
+}> = [
+  {
+    title: 'Audit Dashboard with loaded KPI summary',
+    slug: 'audit-dashboard',
+    file: 'overview.png',
+    prepare: prepareAuditDashboardForCapture,
+  },
+  {
+    title: 'Repositories with populated grid',
+    slug: 'repositories',
+    file: 'overview.png',
+    prepare: prepareRepositoriesForCapture,
+  },
+  {
+    title: 'Label Manager with loaded labels grid',
+    slug: 'label-manager',
+    file: 'overview.png',
+    prepare: prepareLabelManagerForCapture,
+  },
+  {
+    title: 'One-Click Migration with example repository selected',
+    slug: 'one-click-migration',
+    file: 'overview.png',
+    prepare: prepareMigrationForCapture,
+  },
+  {
+    title: 'Board Rules Visualiser with board context loaded',
+    slug: 'board-rules-visualiser',
+    file: 'overview.png',
+    prepare: prepareBoardRulesForCapture,
+  },
+  {
+    title: 'Triage UI with active session',
+    slug: 'triage-ui',
+    file: 'overview.png',
+    prepare: prepareTriageForCapture,
+  },
+  {
+    title: 'Workflow Templates with template detail open',
+    slug: 'workflow-templates',
+    file: 'overview.png',
+    prepare: prepareWorkflowTemplatesForCapture,
+  },
 ];
 
-for (const capture of captures) {
+for (const capture of loadedStateCaptures) {
   test(`capture ${capture.title}`, async ({ page }) => {
-    await openFeatureForCapture(page, capture.route);
+    await capture.prepare(page);
     await captureDocsScreenshot(page, capture.slug, capture.file);
   });
 }
+
+test('capture Home dashboard', async ({ page }) => {
+  await openFeatureForCapture(page, '/');
+  await captureDocsScreenshot(page, 'dashboard', 'home.png');
+});
+
+test('capture About page', async ({ page }) => {
+  await openFeatureForCapture(page, '/about');
+  await captureDocsScreenshot(page, 'about', 'overview.png');
+});
 
 test('capture Appearance theme control in app bar', async ({ page }) => {
   await openFeatureForCapture(page, '/');

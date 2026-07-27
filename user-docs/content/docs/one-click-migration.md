@@ -11,7 +11,7 @@ title: One-Click Migration
 
 One-Click Migration allows you to copy label taxonomies and milestones from one GitHub repository to another in a single action. This is particularly useful when bootstrapping a new repository to match the conventions of an existing project.
 
-![One-Click Migration setup with source and target repository selectors](/images/one-click-migration/overview.png)
+![One-Click Migration setup with markheydon/solo-dev-board selected](/images/one-click-migration/overview.png)
 
 Key goals of One-Click Migration:
 - Eliminate the repetitive manual work of recreating labels and milestones in new repositories.
