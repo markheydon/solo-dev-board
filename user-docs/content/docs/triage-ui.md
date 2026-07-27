@@ -7,7 +7,7 @@ title: Triage UI
 
 The Triage UI enables you to work through untriaged GitHub items for a single selected repository in a focused, step-by-step session. Unlabelled issues are always included, and you can optionally include unlabelled pull requests in the same queue.
 
-![Triage UI session scope with repository selector and include pull requests toggle](/images/triage-ui/overview.png)
+![Triage UI active session showing the first queue item for markheydon/solo-dev-board](/images/triage-ui/overview.png)
 
 Key features:
 - You can start a triage session for one repository at a time.

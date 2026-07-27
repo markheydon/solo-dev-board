@@ -33,7 +33,7 @@ See [DEC-019](../plan/DECISIONS.md#dec-019-hugo-hextra-for-end-user-docs-on-gith
 
 Feature screenshots live under `static/images/<feature-slug>/` and are referenced from guide pages as `/images/<feature-slug>/<name>.png`.
 
-Capture conventions (light theme, 1400×900, docs capture mode, kebab-case filenames) are documented in [DOCS_STRATEGY.md](../plan/DOCS_STRATEGY.md#screenshot-convention). To regenerate:
+Capture conventions (light theme, 1400×900, docs capture mode, kebab-case filenames, loaded-state composition with `markheydon/solo-dev-board`) are documented in [DOCS_STRATEGY.md](../plan/DOCS_STRATEGY.md#screenshot-convention). To regenerate:
 
 ```powershell
 # App running locally with a real PAT and DocsCapture:Enabled=true

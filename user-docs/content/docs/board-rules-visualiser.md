@@ -11,7 +11,7 @@ title: Board Rules Visualiser
 
 The Board Rules Visualiser displays the board states and supported transitions for a GitHub Project v2 board. It helps you understand how issues and pull requests move between columns without reading raw configuration payloads.
 
-![Board Rules Visualiser with repository and project board selectors](/images/board-rules-visualiser/overview.png)
+![Board Rules Visualiser showing board states and transitions for markheydon/solo-dev-board](/images/board-rules-visualiser/overview.png)
 
 Key goals of the Board Rules Visualiser:
 - Make project board states and supported transitions visible and understandable at a glance.

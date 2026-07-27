@@ -59,7 +59,9 @@ Manual screenshot capture for the Hugo user guide lives in `docs-capture/` and i
 Prerequisites:
 
 1. Run SoloDevBoard locally with a **real** GitHub PAT (not the CI placeholder).
-2. Enable docs capture mode so only public repositories and public Projects v2 boards appear:
+2. Build the app project first (`dotnet build src/App/SoloDevBoard.App/SoloDevBoard.App.csproj`) so Blazor framework assets are available.
+3. Start the app in **Development** on HTTP (for example `ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://localhost:5080 dotnet run --project src/App/SoloDevBoard.App --no-launch-profile --no-build`).
+4. Enable docs capture mode so only public repositories and public Projects v2 boards appear:
 
 ```bash
 dotnet user-secrets set "DocsCapture:Enabled" "true" --project src/App/SoloDevBoard.App
@@ -72,7 +74,7 @@ cd tests/E2E
 npm run capture:docs
 ```
 
-Images are written to `user-docs/static/images/<feature-slug>/`. See [DOCS_STRATEGY.md](../../plan/DOCS_STRATEGY.md) for the screenshot convention.
+Images are written to `user-docs/static/images/<feature-slug>/`. See [DOCS_STRATEGY.md](../../plan/DOCS_STRATEGY.md) for the screenshot convention and composition rules (prefer loaded states after selecting `markheydon/solo-dev-board`, not empty shells).
 
 ## CI
 
