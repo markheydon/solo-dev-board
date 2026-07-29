@@ -1,12 +1,11 @@
 name: Hugo Deploy
 
+# Publishes end-user docs to GitHub Pages on release tags only (DEC-021).
+# Pull requests validate Hugo builds via hugo-ci.yml without publishing.
+
 on:
   push:
-    branches: [main]
-    paths:
-      - "user-docs/**"
-      - ".github/workflows/hugo-build.yml"
-      - ".github/workflows/hugo-deploy.yml"
+    tags: ['v*']
   workflow_dispatch:
 
 permissions:

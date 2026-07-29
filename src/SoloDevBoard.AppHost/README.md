@@ -4,7 +4,7 @@ Aspire orchestrates the SoloDevBoard web app for local development, dev containe
 
 GitHub authentication is configured through **AppHost parameters**. In local development they are injected into the `app` resource as environment variables. In deploy mode, secret parameters are persisted in Azure Key Vault and referenced by the Container App.
 
-Use `-` on inactive parameters. Shipped defaults are in `src/SoloDevBoard.AppHost/appsettings.json`; production non-secret defaults are in `src/SoloDevBoard.AppHost/appsettings.Production.json`. Values saved from the Aspire dashboard are stored in user secrets and **override** those defaults.
+Use `-` on inactive parameters. Shipped defaults are in `src/SoloDevBoard.AppHost/appsettings.json`; staging and production non-secret defaults are in `appsettings.Staging.json` and `appsettings.Production.json` respectively. Values saved from the Aspire dashboard are stored in user secrets and **override** those defaults.
 
 ## Choose your authentication mode
 
@@ -64,6 +64,16 @@ aspire describe
 Open the `app` resource URL shown by `aspire describe`.
 
 Application Insights is deploy-time only. Local telemetry uses the Aspire dashboard via OTLP; no Azure subscription or deployment metadata is required.
+
+## CD pipeline tiers
+
+GitHub Actions CD deploys to three tiers sharing one Azure resource group (see [DEC-021](../../plan/DECISIONS.md#dec-021-three-tier-cd-pipeline-with-shared-azure-resource-group) and [docs/deployment.md](../../docs/deployment.md#cd-pipeline-tiers-dec-021)):
+
+| Tier | Aspire `--environment` | Authentication |
+|---|---|---|
+| Developer (`workflow_dispatch`) | `Development` | PAT-only |
+| Staging (push to `main`) | `Staging` | GitHub App hosted sign-in |
+| Production (push tag `v*`) | `Production` | GitHub App hosted sign-in |
 
 ## Production deployment
 

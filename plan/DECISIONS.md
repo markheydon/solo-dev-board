@@ -200,6 +200,15 @@ Test coverage expectations for cache-hit, cache-miss, invalidation, TTL expiry, 
 
 ---
 
+### DEC-021: Three-tier CD pipeline with shared Azure resource group
+
+**Status:** Active  
+**Date:** 2026-07-29  
+**Constitution:** [AGENTS.md — Infrastructure](../AGENTS.md#infrastructure)  
+**Summary:** GitHub Actions CD uses three protected GitHub Environments — `developer`, `staging`, and `production` — mapped to Aspire deploy environments `Development`, `Staging`, and `Production` respectively. All tiers share one Azure resource group; Aspire environment suffixes distinguish resources within that group. **Developer** deploys manually via `workflow_dispatch` with PAT-only authentication, restricted to the repository owner. **Staging** deploys automatically on push to `main` with GitHub App hosted sign-in for pre-release validation. **Production** deploys on `v*` release tags with GitHub App hosted sign-in and required environment reviewers. End-user docs on GitHub Pages publish on `v*` tags only; pull requests validate Hugo builds without publishing. Reject deploying production on every `main` merge, publishing Pages on `main`, or maintaining separate Azure resource groups per tier for this repository.
+
+---
+
 ## Superseded legacy (archive only)
 
 | Legacy ADR | Superseded by | Notes |
