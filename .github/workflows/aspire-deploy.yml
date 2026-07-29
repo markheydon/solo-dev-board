@@ -1,0 +1,77 @@
+name: Aspire Deploy
+
+on:
+  workflow_call:
+    inputs:
+      aspire_environment:
+        description: Aspire deploy environment name (Development, Staging, or Production).
+        required: true
+        type: string
+      github_environment:
+        description: GitHub Environment name for secrets and deployment protection.
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+  packages: write
+
+concurrency:
+  group: cd-${{ inputs.github_environment }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy (${{ inputs.aspire_environment }})
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.github_environment }}
+    timeout-minutes: 45
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+      DOTNET_NOLOGO: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up .NET SDK from global.json
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore and build solution
+        run: |
+          dotnet restore SoloDevBoard.slnx
+          dotnet build SoloDevBoard.slnx --no-restore --configuration Release
+
+      - name: Install Aspire CLI
+        run: |
+          curl -sSL https://aspire.dev/install.sh | bash
+          echo "$HOME/.aspire/bin" >> "$GITHUB_PATH"
+
+      - name: List Aspire deployment steps
+        run: aspire deploy --list-steps --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --environment ${{ inputs.aspire_environment }} --non-interactive
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy with Aspire
+        run: aspire deploy --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --environment ${{ inputs.aspire_environment }} --non-interactive
+        env:
+          Azure__SubscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          Azure__Location: ${{ vars.AZURE_LOCATION }}
+          Azure__ResourceGroup: ${{ vars.AZURE_RESOURCE_GROUP }}
+          Parameters__hosted_sign_in_enabled: ${{ vars.HOSTED_SIGN_IN_ENABLED }}
+          Parameters__hosted_admission_enabled: ${{ vars.HOSTED_ADMISSION_ENABLED }}
+          Parameters__gh_app_client_id: ${{ vars.GH_APP_CLIENT_ID }}
+          Parameters__allowed_user_logins: ${{ vars.ALLOWED_USER_LOGINS }}
+          Parameters__allowed_org_logins: ${{ vars.ALLOWED_ORG_LOGINS }}
+          Parameters__gh_pat: ${{ secrets.GH_PAT }}
+          Parameters__gh_app_client_secret: ${{ secrets.GH_APP_CLIENT_SECRET }}

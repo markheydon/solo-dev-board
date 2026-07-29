@@ -1,18 +1,18 @@
 name: CD - Deploy to Azure
 
-# Deploys SoloDevBoard to Azure Container Apps via Aspire.
+# Three-tier CD pipeline (DEC-021):
+#   developer  — workflow_dispatch only; PAT mode; restricted GitHub Environment
+#   staging    — push to main; GitHub App hosted sign-in
+#   production — push v* tag; GitHub App; required reviewers on GitHub Environment
 #
-# Before the first deploy:
-#   1. Follow docs/deployment.md to create the resource group and OIDC identity.
-#   2. Configure the GitHub 'production' environment secrets and variables listed below.
-#   3. Run this workflow manually via workflow_dispatch.
-#
-# After the first successful deploy, enable push to main by adding:
-#   push:
-#     branches: [main]
+# Before the first deploy, follow docs/deployment.md to configure Azure OIDC,
+# GitHub Environments (developer, staging, production), and environment secrets.
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    tags: ['v*']
 
 permissions:
   id-token: write
@@ -24,17 +24,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    name: Deploy with Aspire
+  validate:
+    name: Validate before deploy
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    environment:
-      name: staging
-    timeout-minutes: 45
-    env:
-      DOTNET_CLI_TELEMETRY_OPTOUT: 1
-      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-      DOTNET_NOLOGO: true
-
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -44,36 +38,40 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: Restore and build solution
-        run: |
-          dotnet restore
-          dotnet build --no-restore --configuration Release
+      - name: Restore dependencies
+        run: dotnet restore SoloDevBoard.slnx
 
-      - name: Install Aspire CLI
-        run: |
-          curl -sSL https://aspire.dev/install.sh | bash
-          echo "$HOME/.aspire/bin" >> "$GITHUB_PATH"
+      - name: Build solution
+        run: dotnet build SoloDevBoard.slnx --no-restore --configuration Release
 
-      - name: List Aspire deployment steps
-        run: aspire deploy --list-steps --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --environment Staging --non-interactive
+      - name: Run tests
+        run: dotnet test SoloDevBoard.slnx --no-build --verbosity normal
 
-      - name: Azure login (OIDC)
-        uses: azure/login@v3
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  developer:
+    name: Deploy to developer
+    if: github.event_name == 'workflow_dispatch'
+    uses: ./.github/workflows/aspire-deploy.yml
+    with:
+      aspire_environment: Development
+      github_environment: developer
+    secrets: inherit
 
-      - name: Deploy with Aspire
-        run: aspire deploy --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --environment Staging --non-interactive
-        env:
-          Azure__SubscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          Azure__Location: ${{ vars.AZURE_LOCATION }}
-          Azure__ResourceGroup: ${{ vars.AZURE_RESOURCE_GROUP }}
-          Parameters__hosted_sign_in_enabled: ${{ vars.HOSTED_SIGN_IN_ENABLED || 'true' }}
-          Parameters__hosted_admission_enabled: ${{ vars.HOSTED_ADMISSION_ENABLED || 'true' }}
-          Parameters__gh_app_client_id: ${{ vars.GH_APP_CLIENT_ID }}
-          Parameters__allowed_user_logins: ${{ vars.ALLOWED_USER_LOGINS }}
-          Parameters__allowed_org_logins: ${{ vars.ALLOWED_ORG_LOGINS }}
-          Parameters__gh_pat: ${{ secrets.GH_PAT }}
-          Parameters__gh_app_client_secret: ${{ secrets.GH_APP_CLIENT_SECRET }}
+  staging:
+    name: Deploy to staging
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: validate
+    uses: ./.github/workflows/aspire-deploy.yml
+    with:
+      aspire_environment: Staging
+      github_environment: staging
+    secrets: inherit
+
+  production:
+    name: Deploy to production
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: validate
+    uses: ./.github/workflows/aspire-deploy.yml
+    with:
+      aspire_environment: Production
+      github_environment: production
+    secrets: inherit

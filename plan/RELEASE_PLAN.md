@@ -106,14 +106,14 @@ During the pre-1.0 development phase (`0.x.y`), minor version bumps may include 
 ## Release Process
 
 ```
-Feature branch → Pull Request → CI passes → Code review → Merge to main → CD deploys to production → Tag release
+Feature branch → Pull Request → CI passes → Code review → Merge to main → CD deploys to staging → Tag release → CD deploys to production + Pages publish
 ```
 
 ### Step-by-Step
 
-1. **Merge to `main`:** All features for the release are merged via PRs with the CI pipeline passing.
-2. **Final smoke test:** Verify the deployment to the production Azure Container Apps environment is healthy.
-3. **Update documentation:** Ensure all user-facing docs reflect the released features.
+1. **Merge to `main`:** All features for the release are merged via PRs with the CI pipeline passing. CD deploys automatically to the **staging** Azure Container Apps environment.
+2. **Final smoke test:** Verify the deployment to the staging environment is healthy.
+3. **Update documentation:** Ensure all user-facing docs on `main` reflect the released features (validated by `hugo-ci` on PRs; not published until tagged).
 4. **Tag the release:**
    ```bash
    git tag -a v0.2.0 -m "Release v0.2.0 — Core Features"
@@ -126,6 +126,7 @@ Feature branch → Pull Request → CI passes → Code review → Merge to main 
    - Write release notes describing what's new, what's fixed, and any known issues.
    - Attach build artefacts if applicable.
    - Publish the release.
+   - Pushing the `v*` tag triggers production CD and GitHub Pages publish automatically.
 6. **Close the milestone:** Close the corresponding GitHub milestone (e.g. "Phase 2 — v0.2.0").
 
 ### Hotfix Process
