@@ -209,6 +209,15 @@ Test coverage expectations for cache-hit, cache-miss, invalidation, TTL expiry, 
 
 ---
 
+### DEC-022: Optional shared Azure Container Registry
+
+**Status:** Active  
+**Date:** 2026-07-30  
+**Constitution:** [AGENTS.md — Infrastructure](../AGENTS.md#infrastructure)  
+**Summary:** Deployments may optionally reference an existing Azure Container Registry in a dedicated platform resource group via AppHost parameters `shared-acr-name` and `shared-acr-resource-group`. When unset (default `-`), Aspire continues to auto-provision a per-deployment Basic ACR in the app resource group. Shared registry wiring is deploy-only (`IsPublishMode`); local `aspire start` is unchanged. Operators grant the CD managed identity AcrPush on the shared registry; Aspire assigns AcrPull to the Container Apps environment managed identity via `WithAzureContainerRegistry`. Reject mandatory shared ACR for local development, hand-authored Bicep for registry attachment, or automatic deletion of legacy per-deployment registries.
+
+---
+
 ## Superseded legacy (archive only)
 
 | Legacy ADR | Superseded by | Notes |
