@@ -2,7 +2,7 @@ using Azure.Provisioning.KeyVault;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-builder.AddAzureContainerAppEnvironment("aca");
+var aca = builder.AddAzureContainerAppEnvironment("aca");
 
 var hostedSignInEnabled = builder.AddParameter("hosted-sign-in-enabled")
     .WithDescription("Enable GitHub App hosted sign-in at /auth/sign-in. When false, PAT mode is used (default).");
@@ -41,6 +41,35 @@ var app = builder.AddProject<Projects.SoloDevBoard_App>("app")
 
 if (builder.ExecutionContext.IsPublishMode)
 {
+    builder.AddParameter("shared-acr-name")
+        .WithDescription("Optional shared Azure Container Registry name. Use '-' to let Aspire provision a per-deployment registry.");
+
+    builder.AddParameter("shared-acr-resource-group")
+        .WithDescription("Resource group containing the shared registry. Required when shared-acr-name is set.");
+
+    var acrNameValue = Environment.GetEnvironmentVariable("Parameters__shared_acr_name")
+        ?? builder.Configuration["Parameters:shared-acr-name"]
+        ?? builder.Configuration["Parameters:shared_acr_name"]
+        ?? "-";
+    var acrRgValue = Environment.GetEnvironmentVariable("Parameters__shared_acr_resource_group")
+        ?? builder.Configuration["Parameters:shared-acr-resource-group"]
+        ?? builder.Configuration["Parameters:shared_acr_resource_group"]
+        ?? "-";
+
+    if (acrNameValue is not ("-" or ""))
+    {
+        if (acrRgValue is "-" or "")
+        {
+            throw new InvalidOperationException(
+                "shared-acr-resource-group must be set when shared-acr-name is configured.");
+        }
+
+        var acr = builder.AddAzureContainerRegistry("shared-acr")
+            .PublishAsExisting(acrNameValue, acrRgValue);
+
+        aca = aca.WithAzureContainerRegistry(acr);
+    }
+
     var authSecretsVault = builder.AddAzureKeyVault("auth-secrets");
 
     authSecretsVault.AddSecret("auth-gh-pat", "gh-pat", githubPat);

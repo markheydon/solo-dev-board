@@ -75,3 +75,5 @@ jobs:
           Parameters__allowed_org_logins: ${{ vars.ALLOWED_ORG_LOGINS }}
           Parameters__gh_pat: ${{ secrets.GH_PAT }}
           Parameters__gh_app_client_secret: ${{ secrets.GH_APP_CLIENT_SECRET }}
+          Parameters__shared_acr_name: ${{ vars.SHARED_ACR_NAME }}
+          Parameters__shared_acr_resource_group: ${{ vars.SHARED_ACR_RESOURCE_GROUP }}

@@ -40,6 +40,14 @@ Aspire deploys the following Azure resources (see [Deployment guide](deployment.
 - Review Log Analytics ingestion if log volume grows.
 - Use dev/test pricing offers if eligible.
 
+## Shared Container Registry
+
+Aspire provisions a Basic ACR (~£4–5/month per registry in UK South) for each Aspire deploy environment by default. If you run several Aspire apps or CD tiers, those fixed charges can exceed compute costs.
+
+Set `SHARED_ACR_NAME` and `SHARED_ACR_RESOURCE_GROUP` on your GitHub Environments (or the matching `Parameters__shared_acr_*` values for local deploys) to push images to one central registry in a platform resource group instead. See [Optional shared Container Registry](deployment.md#optional-shared-container-registry) in the deployment guide and [DEC-022](../plan/DECISIONS.md#dec-022-optional-shared-azure-container-registry).
+
+After migrating, delete orphaned per-deployment registries in the app resource group to remove duplicate fixed charges.
+
 ## Azure Pricing Calculator
 
 For exact, up-to-date pricing, use the [Azure Pricing Calculator](https://azure.microsoft.com/en-gb/pricing/calculator/). Select UK South and add Container Apps, Container Registry (Basic), and Log Analytics.

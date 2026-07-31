@@ -96,6 +96,10 @@ Local `aspire start` continues to bind these parameters directly from user secre
 
 See [plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md](../../plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md) for the full pattern.
 
+### Optional shared Container Registry
+
+Deploy-only parameters `shared-acr-name` and `shared-acr-resource-group` default to `-`. When both are set at deploy time, the AppHost references an existing Azure Container Registry in a platform resource group instead of letting Aspire provision a per-deployment registry. Leave unset for the default stress-free path. See [docs/deployment.md — Optional shared Container Registry](../../docs/deployment.md#optional-shared-container-registry) and [DEC-022](../../plan/DECISIONS.md#dec-022-optional-shared-azure-container-registry).
+
 Preview deployment steps:
 
 ```bash
@@ -118,6 +122,8 @@ AppHost parameters map to workflow environment variables with underscores instea
 | `hosted-admission-enabled` | `Parameters__hosted_admission_enabled` |
 | `allowed-user-logins` | `Parameters__allowed_user_logins` |
 | `allowed-org-logins` | `Parameters__allowed_org_logins` |
+| `shared-acr-name` | `Parameters__shared_acr_name` / `SHARED_ACR_NAME` |
+| `shared-acr-resource-group` | `Parameters__shared_acr_resource_group` / `SHARED_ACR_RESOURCE_GROUP` |
 
 Azure deployment settings:
 
