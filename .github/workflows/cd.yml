@@ -1,15 +1,13 @@
 name: CD - Deploy to Azure
 
-# Three-tier CD pipeline (DEC-021):
-#   developer  — workflow_dispatch only; PAT mode; restricted GitHub Environment
+# Two-tier CD pipeline (DEC-021):
 #   staging    — push to main; GitHub App hosted sign-in
 #   production — push v* tag; GitHub App; required reviewers on GitHub Environment
 #
 # Before the first deploy, follow docs/deployment.md to configure Azure OIDC,
-# GitHub Environments (developer, staging, production), and environment secrets.
+# GitHub Environments (staging, production), and environment secrets.
 
 on:
-  workflow_dispatch:
   push:
     branches: [main]
     tags: ['v*']
@@ -26,7 +24,6 @@ concurrency:
 jobs:
   validate:
     name: Validate before deploy
-    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -47,18 +44,9 @@ jobs:
       - name: Run tests
         run: dotnet test SoloDevBoard.slnx --no-build --verbosity normal
 
-  developer:
-    name: Deploy to developer
-    if: github.event_name == 'workflow_dispatch'
-    uses: ./.github/workflows/aspire-deploy.yml
-    with:
-      aspire_environment: Development
-      github_environment: developer
-    secrets: inherit
-
   staging:
     name: Deploy to staging
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     needs: validate
     uses: ./.github/workflows/aspire-deploy.yml
     with:
@@ -68,7 +56,7 @@ jobs:
 
   production:
     name: Deploy to production
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: validate
     uses: ./.github/workflows/aspire-deploy.yml
     with:

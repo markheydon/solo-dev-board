@@ -61,7 +61,7 @@ scripts/
 └── Invoke-HugoSite.ps1         # Local Hugo build/serve/preview via Podman or Docker
 ```
 
-End-user docs are deployed by GitHub Actions (Hugo) to GitHub Pages on `v*` release tags only. Pull requests validate Hugo builds via `hugo-ci.yml` without publishing. See [DEC-019](DECISIONS.md#dec-019-hugo-hextra-for-end-user-docs-on-github-pages) and [DEC-021](DECISIONS.md#dec-021-three-tier-cd-pipeline-with-shared-azure-resource-group).
+End-user docs are deployed by GitHub Actions (Hugo) to GitHub Pages on `v*` release tags only. Pull requests validate Hugo builds via `hugo-ci.yml` without publishing. See [DEC-019](DECISIONS.md#dec-019-hugo-hextra-for-end-user-docs-on-github-pages) and [DEC-021](DECISIONS.md#dec-021-two-tier-cd-pipeline-with-shared-azure-resource-group).
 
 ---
 

@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       aspire_environment:
-        description: Aspire deploy environment name (Development, Staging, or Production).
+        description: Aspire deploy environment name (Staging or Production).
         required: true
         type: string
       github_environment:

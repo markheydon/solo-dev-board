@@ -17,11 +17,10 @@ Both paths use the same Aspire / Azure Container Apps stack. Only the AppHost pa
 
 ## CD pipeline tiers (DEC-021)
 
-GitHub Actions CD (`.github/workflows/cd.yml`) deploys to three tiers that share one Azure resource group. Aspire environment suffixes distinguish resources within that group.
+GitHub Actions CD (`.github/workflows/cd.yml`) deploys to two hosted tiers that share one Azure resource group. Aspire environment suffixes distinguish resources within that group. Both tiers use GitHub App hosted sign-in. PAT-only mode is for local development and personal self-hosting via local `aspire deploy` only — not as a hosted CD tier.
 
 | Tier | Trigger | GitHub Environment | Aspire `--environment` | Authentication |
 |---|---|---|---|---|
-| **Developer** | `workflow_dispatch` only | `developer` | `Development` | PAT-only (personal) |
 | **Staging** | Push to `main` | `staging` | `Staging` | GitHub App hosted sign-in |
 | **Production** | Push tag `v*` | `production` | `Production` | GitHub App hosted sign-in |
 
@@ -50,11 +49,9 @@ Use this path when you want a **personal** SoloDevBoard instance on your own Azu
 
 1. An Azure subscription and a resource group (step 1 under [One-time Azure setup](#one-time-azure-setup)).
 2. A GitHub PAT with scopes `repo`, `read:org`, `workflow`, and `read:project` (same as local development).
-3. Either:
-   - **Local `aspire deploy`** (simplest for a personal instance — no GitHub Actions OIDC required), or
-   - **GitHub Actions CD** (configure the `developer` GitHub Environment for PAT mode; see [Option B](#option-b--deploy-via-github-actions-in-pat-mode)).
+3. **Local `aspire deploy`** (no GitHub Actions OIDC required).
 
-### Option A — Deploy locally with `aspire deploy` (recommended for first personal instance)
+### Deploy locally with `aspire deploy` (recommended for personal instances)
 
 1. Complete [Create a resource group](#1-create-a-resource-group) (OIDC identity is optional for this option).
 2. Log in and export Azure + PAT-mode parameters:
@@ -99,34 +96,6 @@ aspire deploy \
 
 Secret parameters (`gh-pat`, and `gh-app-client-secret` when used) are written to the Aspire-provisioned `auth-secrets` Key Vault and referenced by the Container App. You do not create Key Vault secrets by hand.
 
-### Option B — Deploy via GitHub Actions in PAT mode
-
-Complete the full [One-time Azure setup](#one-time-azure-setup) (resource group + OIDC), then configure the GitHub `developer` environment for PAT mode:
-
-**Secrets**
-
-| Secret | Value |
-|---|---|
-| `AZURE_CLIENT_ID` | Managed identity `clientId` |
-| `AZURE_TENANT_ID` | `az account show --query tenantId -o tsv` |
-| `AZURE_SUBSCRIPTION_ID` | `az account show --query id -o tsv` |
-| `GH_PAT` | Your GitHub personal access token |
-| `GH_APP_CLIENT_SECRET` | `-` (not used in PAT mode; still required by the workflow mapping) |
-
-**Variables**
-
-| Variable | Value | Purpose |
-|---|---|---|
-| `AZURE_LOCATION` | e.g. `uksouth` | Azure region |
-| `AZURE_RESOURCE_GROUP` | e.g. `rg-solodevboard-prod` | Target resource group |
-| `HOSTED_SIGN_IN_ENABLED` | `false` | Keep PAT-only mode |
-| `HOSTED_ADMISSION_ENABLED` | `true` | Ignored in PAT mode |
-| `GH_APP_CLIENT_ID` | `-` | Inactive in PAT mode |
-| `ALLOWED_USER_LOGINS` | `-` | Inactive in PAT mode |
-| `ALLOWED_ORG_LOGINS` | `-` | Inactive in PAT mode |
-
-Then run **Actions → CD - Deploy to Azure → Run workflow**. No GitHub App callback URL is required for PAT mode.
-
 ### PAT-mode parameter and environment variable cheat sheet
 
 | AppHost parameter | CD / local env var | Self-hoster (PAT) value |
@@ -157,7 +126,7 @@ az group create \
   --location uksouth
 ```
 
-Replace the name and region as needed. Set `AZURE_RESOURCE_GROUP` in each GitHub Environment (`developer`, `staging`, `production`) to this same value.
+Replace the name and region as needed. Set `AZURE_RESOURCE_GROUP` in each GitHub Environment (`staging`, `production`) to this same value.
 
 ### 2. Create a GitHub Actions OIDC identity
 
@@ -196,12 +165,12 @@ az role assignment create \
   --scope "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP"
 ```
 
-Create a federated credential for each GitHub Environment (`developer`, `staging`, `production`). Repeat for each tier, changing `GITHUB_ENV` and the credential `--name`:
+Create a federated credential for each GitHub Environment (`staging`, `production`):
 
 ```bash
 CLIENT_ID="$(az identity show --name "$IDENTITY_NAME" --resource-group "$RESOURCE_GROUP" --query clientId -o tsv)"
 
-for GITHUB_ENV in developer staging production; do
+for GITHUB_ENV in staging production; do
   az identity federated-credential create \
     --name "github-${GITHUB_ENV}" \
     --identity-name "$IDENTITY_NAME" \
@@ -214,9 +183,9 @@ done
 
 ### 3. Configure GitHub Environments
 
-Create three GitHub Environments in **Settings → Environments**: `developer`, `staging`, and `production`. Each uses the same Azure OIDC secrets and `AZURE_RESOURCE_GROUP` variable. Authentication parameters differ per tier (see tables below).
+Create two GitHub Environments in **Settings → Environments**: `staging` and `production`. Each uses the same Azure OIDC secrets and `AZURE_RESOURCE_GROUP` variable. Both use GitHub App hosted sign-in (see table below).
 
-**Shared Azure secrets (all tiers)**
+**Shared Azure secrets (both environments)**
 
 | Secret | Value |
 |---|---|
@@ -236,11 +205,9 @@ Create three GitHub Environments in **Settings → Environments**: `developer`, 
 | Variable `ALLOWED_USER_LOGINS` | your login(s), or `-` |
 | Variable `ALLOWED_ORG_LOGINS` | org login(s), or `-` |
 
-**PAT developer tier (`developer` environment)** — use the secret and variable tables under [Self-hoster deployment (PAT mode)](#self-hoster-deployment-pat-mode) instead (`HOSTED_SIGN_IN_ENABLED=false`, real `GH_PAT`, GitHub App values `-`). Restrict deployment to the repository owner in the `developer` environment protection rules.
-
 Secret parameters are written to the Aspire-provisioned `auth-secrets` Key Vault at deploy time and referenced by the Container App. You do not create or manage Key Vault secrets manually for the default deployment path.
 
-**Shared Azure variables (all tiers)**
+**Shared Azure variables (both environments)**
 
 | Variable | Example | Purpose |
 |---|---|---|
@@ -253,7 +220,7 @@ Enable required reviewers on the `production` environment before granting produc
 
 ### Optional shared Container Registry
 
-By default, Aspire provisions a Basic Azure Container Registry in the app resource group for each Aspire deploy environment (Development, Staging, Production). That is convenient for contributors but can multiply fixed ACR costs across tiers and projects.
+By default, Aspire provisions a Basic Azure Container Registry in the app resource group for each Aspire deploy environment (`Staging`, `Production`). That is convenient for contributors but can multiply fixed ACR costs across tiers and projects.
 
 To use one central registry in a dedicated platform resource group instead, set `SHARED_ACR_NAME` and `SHARED_ACR_RESOURCE_GROUP` on the GitHub Environment (or export the matching `Parameters__*` values for local deploys). When both are set, the AppHost references the existing registry via `PublishAsExisting` and attaches it to the Container Apps environment. When unset, behaviour is unchanged.
 
@@ -278,11 +245,10 @@ Leave both unset (or set to `-` locally) to keep the default Aspire-provisioned 
 
 ## Deploy from GitHub Actions
 
-The CD workflow (`.github/workflows/cd.yml`) runs `aspire deploy` with OIDC authentication across three tiers (see [CD pipeline tiers](#cd-pipeline-tiers-dec-021)).
+The CD workflow (`.github/workflows/cd.yml`) runs `aspire deploy` with OIDC authentication across two hosted tiers (see [CD pipeline tiers](#cd-pipeline-tiers-dec-021)).
 
 | Tier | How to trigger |
 |---|---|
-| **Developer** | **Actions → CD - Deploy to Azure → Run workflow** (PAT mode; `developer` environment) |
 | **Staging** | Merge to `main` (automatic after build and test validation) |
 | **Production** | Push a `v*` release tag (requires `production` environment approval if reviewers are configured) |
 
@@ -316,7 +282,7 @@ aspire deploy \
 
 ### PAT self-hoster
 
-Use the environment exports and commands under [Option A — Deploy locally with aspire deploy](#option-a--deploy-locally-with-aspire-deploy-recommended-for-first-personal-instance).
+Use the environment exports and commands under [Deploy locally with aspire deploy](#deploy-locally-with-aspire-deploy-recommended-for-personal-instances).
 
 Preview deployment steps without applying:
 
@@ -408,7 +374,7 @@ aspire destroy \
   --non-interactive
 ```
 
-Use `Development`, `Staging`, or `Production` to target the corresponding tier. All tiers share the same resource group, so confirm the subscription, resource group, and environment before running destroy. Verify removal with `az resource list --resource-group <rg>`.
+Use `Staging` or `Production` to target the corresponding hosted tier. All tiers share the same resource group, so confirm the subscription, resource group, and environment before running destroy. Verify removal with `az resource list --resource-group <rg>`.
 
 The OIDC managed identity is not removed by `aspire destroy`. Delete it manually if no longer needed:
 
@@ -422,7 +388,7 @@ az identity delete --name id-solodevboard-cd-prod --resource-group rg-solodevboa
 
 | Symptom | Likely cause | Action |
 |---|---|---|
-| OIDC login fails in CD | Federated credential subject mismatch | Verify subject is `repo:<owner>/<repo>:environment:<developer|staging|production>` |
+| OIDC login fails in CD | Federated credential subject mismatch | Verify subject is `repo:<owner>/<repo>:environment:<staging|production>` |
 | Missing parameter prompt in CI | Secret not mapped | Add `Parameters__*` env vars to the deploy step |
 | Cold start / SignalR disconnect | Scale-to-zero idle | Expected; refresh the page or wait for the container to warm up |
 | 403 after sign-in | Allow-list | Update `ALLOWED_USER_LOGINS` or `ALLOWED_ORG_LOGINS` |
