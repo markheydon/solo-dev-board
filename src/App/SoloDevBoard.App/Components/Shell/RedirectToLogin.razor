@@ -1,0 +1,16 @@
+@namespace SoloDevBoard.App.Components.Shell
+@inject NavigationManager NavigationManager
+
+@code {
+    /// <inheritdoc />
+    protected override void OnInitialized()
+    {
+        var relativePath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        var returnUrl = string.IsNullOrWhiteSpace(relativePath)
+            ? "/"
+            : "/" + relativePath.TrimStart('/');
+
+        var destination = $"/welcome?returnUrl={Uri.EscapeDataString(returnUrl)}";
+        NavigationManager.NavigateTo(destination, forceLoad: true);
+    }
+}

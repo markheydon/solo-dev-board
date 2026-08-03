@@ -267,6 +267,12 @@ After a successful deploy:
 1. Note the deployed Container App FQDN from the workflow output or Azure portal.
 2. **Hosted sign-in only:** register the GitHub App callback URL: `https://<fqdn>/auth/callback` (staging and production each have their own FQDN).
 3. Open the provisioned Application Insights resource to confirm telemetry is flowing (see [Observability guide](observability.md)).
+4. **Hosted sign-in smoke checks** (run in a private browser window with no existing cookies):
+   - `GET https://<fqdn>/` redirects to `/welcome` (not the Home dashboard shell).
+   - Sign in with an allow-listed GitHub account completes and returns to the app.
+   - One feature page (for example **Repositories**) loads GitHub data without errors.
+   - Sign out returns to `/welcome`.
+5. **Container App environment verification:** confirm `GitHubAuth__HostedGitHubAppClientId` and `HostedAdmissionControl__AllowedUserLogins` on the active revision show real values (not `-` placeholders from `appsettings.Staging.json`).
 
 ## Deploy locally (operator testing)
 
@@ -404,6 +410,7 @@ az identity delete --name id-solodevboard-cd-prod --resource-group rg-solodevboa
 | 403 after sign-in | Allow-list | Update `ALLOWED_USER_LOGINS` or `ALLOWED_ORG_LOGINS` |
 | Callback URL mismatch | Stale GitHub App setting | Update callback to `https://<aca-fqdn>/auth/callback` (hosted sign-in only) |
 | Secret not visible in Container App settings | Key Vault reference | Expected — inspect the `auth-secrets` vault for secret names; values are resolved at runtime |
+| Home dashboard shown without sign-in | Missing login gate or placeholder deploy parameters | Confirm `/` redirects to `/welcome`; redeploy with `Parameters__*` env vars mapped in CD; verify Container App env shows real client ID and allow-list values |
 | PAT mode shows `/welcome` or requires sign-in | `hosted-sign-in-enabled` still `true` | Set `HOSTED_SIGN_IN_ENABLED` / `Parameters__hosted_sign_in_enabled` to `false` and redeploy |
 | PAT mode starts but GitHub calls fail | Missing or invalid `GH_PAT` | Set a real PAT with required scopes; confirm `/health/github` and the **Connected as @login** chip |
 | Image pull fails after enabling shared ACR | Missing AcrPush or AcrPull on shared registry | Grant AcrPush to the CD identity and verify AcrPull on the Container Apps managed identity |

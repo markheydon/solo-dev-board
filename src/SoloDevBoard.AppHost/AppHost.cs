@@ -47,16 +47,21 @@ if (builder.ExecutionContext.IsPublishMode)
     builder.AddParameter("shared-acr-resource-group")
         .WithDescription("Resource group containing the shared registry. Required when shared-acr-name is set.");
 
-    var acrNameValue = Environment.GetEnvironmentVariable("Parameters__shared_acr_name")
-        ?? builder.Configuration["Parameters:shared-acr-name"]
-        ?? builder.Configuration["Parameters:shared_acr_name"]
-        ?? "-";
-    var acrRgValue = Environment.GetEnvironmentVariable("Parameters__shared_acr_resource_group")
-        ?? builder.Configuration["Parameters:shared-acr-resource-group"]
-        ?? builder.Configuration["Parameters:shared_acr_resource_group"]
-        ?? "-";
+    var resolvedHostedSignInEnabled = AppHostDeployParameterResolver.Resolve(builder.Configuration, "hosted-sign-in-enabled", "true");
+    var resolvedHostedAdmissionEnabled = AppHostDeployParameterResolver.Resolve(builder.Configuration, "hosted-admission-enabled", "true");
+    var resolvedGhAppClientId = AppHostDeployParameterResolver.Resolve(builder.Configuration, "gh-app-client-id");
+    var resolvedAllowedUserLogins = AppHostDeployParameterResolver.Resolve(builder.Configuration, "allowed-user-logins");
+    var resolvedAllowedOrgLogins = AppHostDeployParameterResolver.Resolve(builder.Configuration, "allowed-org-logins");
 
-    if (acrNameValue is not ("-" or ""))
+    app = app
+        .WithEnvironment("GitHubAuth__HostedSignInEnabled", resolvedHostedSignInEnabled)
+        .WithEnvironment("GitHubAuth__HostedGitHubAppClientId", resolvedGhAppClientId)
+        .WithEnvironment("HostedAdmissionControl__Enabled", resolvedHostedAdmissionEnabled)
+        .WithEnvironment("HostedAdmissionControl__AllowedUserLogins", resolvedAllowedUserLogins)
+        .WithEnvironment("HostedAdmissionControl__AllowedOrganisationLogins", resolvedAllowedOrgLogins);
+
+    var acrNameValue = AppHostDeployParameterResolver.Resolve(builder.Configuration, "shared-acr-name");
+    var acrRgValue = AppHostDeployParameterResolver.Resolve(builder.Configuration, "shared-acr-resource-group");
     {
         if (acrRgValue is "-" or "")
         {
