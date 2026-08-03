@@ -1,4 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { isPatE2eMode } from '../fixtures/e2eAuthMode';
+
+test.beforeEach(() => {
+  test.skip(!isPatE2eMode(), 'PAT mode only');
+});
 
 test('PAT connectivity error page returns token-rejected status and guidance', async ({ page }) => {
   const response = await page.goto('/auth/connectivity-error?reason=token-rejected');

@@ -225,6 +225,7 @@ Secret parameters are written to the Aspire-provisioned `auth-secrets` Key Vault
 | `AZURE_RESOURCE_GROUP` | `rg-solodevboard-prod` | Target resource group (shared across tiers) |
 | `SHARED_ACR_NAME` | *(unset)* or `acrmyorgprod` | Optional shared Container Registry name; leave unset for Aspire-provisioned per-deployment registry |
 | `SHARED_ACR_RESOURCE_GROUP` | *(unset)* or `rg-platform-shared` | Resource group containing the shared registry; required when `SHARED_ACR_NAME` is set |
+| `HOSTED_CALLBACK_BASE_URI` | *(unset)* or `https://staging.solodevboard.app` | Optional public HTTPS origin for GitHub App OAuth callbacks when using a custom domain |
 
 Enable required reviewers on the `production` environment before granting production deploy access. Staging deploys automatically on merge to `main`; production deploys on `v*` release tags.
 
@@ -265,7 +266,7 @@ The CD workflow (`.github/workflows/cd.yml`) runs `aspire deploy` with OIDC auth
 After a successful deploy:
 
 1. Note the deployed Container App FQDN from the workflow output or Azure portal.
-2. **Hosted sign-in only:** register the GitHub App callback URL: `https://<fqdn>/auth/callback` (staging and production each have their own FQDN).
+2. **Hosted sign-in only:** register the GitHub App callback URL: `https://<fqdn>/auth/callback` (staging and production each have their own FQDN). When using a custom domain, set `HOSTED_CALLBACK_BASE_URI` on the GitHub Environment to the public HTTPS origin (for example `https://staging.solodevboard.app`) and register `https://<custom-domain>/auth/callback` on the GitHub App.
 3. Open the provisioned Application Insights resource to confirm telemetry is flowing (see [Observability guide](observability.md)).
 4. **Hosted sign-in smoke checks** (run in a private browser window with no existing cookies):
    - `GET https://<fqdn>/` redirects to `/welcome` (not the Home dashboard shell).
@@ -410,7 +411,7 @@ az identity delete --name id-solodevboard-cd-prod --resource-group rg-solodevboa
 | 403 after sign-in | Allow-list | Update `ALLOWED_USER_LOGINS` or `ALLOWED_ORG_LOGINS` |
 | Callback URL mismatch | Stale GitHub App setting | Update callback to `https://<aca-fqdn>/auth/callback` (hosted sign-in only) |
 | Secret not visible in Container App settings | Key Vault reference | Expected — inspect the `auth-secrets` vault for secret names; values are resolved at runtime |
-| Home dashboard shown without sign-in | Missing login gate or placeholder deploy parameters | Confirm `/` redirects to `/welcome`; redeploy with `Parameters__*` env vars mapped in CD; verify Container App env shows real client ID and allow-list values |
+| Home dashboard shown without sign-in | Missing login gate or placeholder deploy parameters | Confirm `/` redirects to `/welcome`; redeploy with `Parameters__*` env vars mapped in CD; verify Container App env shows real client ID and allow-list values. CI `e2e-hosted` job asserts this gate with placeholder credentials. |
 | PAT mode shows `/welcome` or requires sign-in | `hosted-sign-in-enabled` still `true` | Set `HOSTED_SIGN_IN_ENABLED` / `Parameters__hosted_sign_in_enabled` to `false` and redeploy |
 | PAT mode starts but GitHub calls fail | Missing or invalid `GH_PAT` | Set a real PAT with required scopes; confirm `/health/github` and the **Connected as @login** chip |
 | Image pull fails after enabling shared ACR | Missing AcrPush or AcrPull on shared registry | Grant AcrPush to the CD identity and verify AcrPull on the Container Apps managed identity |

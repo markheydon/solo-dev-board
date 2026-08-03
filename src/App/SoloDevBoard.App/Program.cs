@@ -252,8 +252,16 @@ app.MapGet("/auth/connectivity-error", static (HttpContext context) =>
     return Results.Content(page.Html, "text/html; charset=utf-8", statusCode: page.StatusCode);
 }).AllowAnonymous();
 
-app.MapRazorComponents<App>()
+// Hosted sign-in uses AuthorizeRouteView and admission middleware for page protection.
+// Do not call RequireAuthorization() here: it challenges Blazor infrastructure endpoints
+// (for example POST /_blazor/negotiate) before the circuit starts, leaving /welcome blank.
+var razorComponents = app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+if (hostedSignInEnabled)
+{
+    razorComponents.AllowAnonymous();
+}
 
 app.Run();
 

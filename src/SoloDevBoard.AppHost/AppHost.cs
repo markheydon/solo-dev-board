@@ -47,6 +47,9 @@ if (builder.ExecutionContext.IsPublishMode)
     builder.AddParameter("shared-acr-resource-group")
         .WithDescription("Resource group containing the shared registry. Required when shared-acr-name is set.");
 
+    builder.AddParameter("hosted-callback-base-uri")
+        .WithDescription("Optional absolute HTTPS base URI for hosted OAuth callbacks (for example https://staging.solodevboard.app). Use '-' to use the Aspire-provisioned endpoint.");
+
     var resolvedHostedSignInEnabled = AppHostDeployParameterResolver.Resolve(builder.Configuration, "hosted-sign-in-enabled", "true");
     var resolvedHostedAdmissionEnabled = AppHostDeployParameterResolver.Resolve(builder.Configuration, "hosted-admission-enabled", "true");
     var resolvedGhAppClientId = AppHostDeployParameterResolver.Resolve(builder.Configuration, "gh-app-client-id");
@@ -83,14 +86,23 @@ if (builder.ExecutionContext.IsPublishMode)
         .WithEnvironment("GitHubAuth__PersonalAccessToken", authSecretsVault.GetSecret("gh-pat"))
         .WithEnvironment("GitHubAuth__HostedGitHubAppClientSecret", authSecretsVault.GetSecret("gh-app-client-secret"))
         .WithReference(builder.AddAzureApplicationInsights("app-insights"));
+
+    var resolvedCallbackBaseUri = AppHostDeployParameterResolver.Resolve(builder.Configuration, "hosted-callback-base-uri");
+    if (AppHostDeployParameterResolver.IsActiveParameterValue(resolvedCallbackBaseUri))
+    {
+        app = app.WithEnvironment("GitHubAuth__HostedSignInCallbackBaseUri", resolvedCallbackBaseUri);
+    }
+    else
+    {
+        app = app.WithEnvironment("GitHubAuth__HostedSignInCallbackBaseUri", app.GetEndpoint("https"));
+    }
 }
 else
 {
     app = app
         .WithEnvironment("GitHubAuth__PersonalAccessToken", githubPat)
-        .WithEnvironment("GitHubAuth__HostedGitHubAppClientSecret", ghAppClientSecret);
+        .WithEnvironment("GitHubAuth__HostedGitHubAppClientSecret", ghAppClientSecret)
+        .WithEnvironment("GitHubAuth__HostedSignInCallbackBaseUri", app.GetEndpoint("https"));
 }
-
-app.WithEnvironment("GitHubAuth__HostedSignInCallbackBaseUri", app.GetEndpoint("https"));
 
 builder.Build().Run();

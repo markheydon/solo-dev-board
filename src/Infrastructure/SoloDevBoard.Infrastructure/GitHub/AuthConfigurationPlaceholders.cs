@@ -15,6 +15,12 @@ public static class AuthConfigurationPlaceholders
     /// <summary>Local placeholder personal access token used by Playwright end-to-end tests.</summary>
     public const string LocalE2ePlaceholder = "local-e2e-placeholder";
 
+    /// <summary>CI placeholder GitHub App client ID used by hosted-mode Playwright end-to-end tests.</summary>
+    public const string CiE2eHostedClientId = "ci-e2e-hosted-client-id";
+
+    /// <summary>CI placeholder GitHub App client secret used by hosted-mode Playwright end-to-end tests.</summary>
+    public const string CiE2eHostedClientSecret = "ci-e2e-hosted-client-secret";
+
     /// <summary>Returns <see langword="true" /> when <paramref name="value" /> is a real configuration value.</summary>
     public static bool IsConfigured(string? value) =>
         !string.IsNullOrWhiteSpace(value)
