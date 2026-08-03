@@ -88,6 +88,7 @@ jobs:
             ASPNETCORE_ENVIRONMENT=Development \
             GitHubAuth__PersonalAccessToken=ci-e2e-placeholder \
             GitHubAuth__OwnerLogin=ci-test-user \
+            GitHubAuth__HostedSignInEnabled=false \
             HostedAdmissionControl__Enabled=false \
             dotnet run --project src/App/SoloDevBoard.App --no-launch-profile --no-build \
             >>"$APP_LOG" 2>&1 &

@@ -83,7 +83,12 @@ if (hostedSignInEnabled)
             options.Events = HostedCookieAuthenticationEvents.Create(hostedAuthOptions);
         });
 
-    builder.Services.AddAuthorization();
+    builder.Services.AddAuthorization(options =>
+    {
+        options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
+            .RequireAuthenticatedUser()
+            .Build();
+    });
 }
 
 // Add our services.
