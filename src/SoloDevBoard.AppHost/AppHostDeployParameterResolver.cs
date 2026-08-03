@@ -19,23 +19,27 @@ internal static class AppHostDeployParameterResolver
 
         var underscoredName = hyphenatedParameterName.Replace('-', '_');
         var environmentValue = Environment.GetEnvironmentVariable($"Parameters__{underscoredName}");
-        if (!string.IsNullOrWhiteSpace(environmentValue))
+        if (IsActiveParameterValue(environmentValue))
         {
-            return environmentValue;
+            return environmentValue!.Trim();
         }
 
         var hyphenatedConfigurationValue = configuration[$"Parameters:{hyphenatedParameterName}"];
-        if (!string.IsNullOrWhiteSpace(hyphenatedConfigurationValue))
+        if (IsActiveParameterValue(hyphenatedConfigurationValue))
         {
-            return hyphenatedConfigurationValue;
+            return hyphenatedConfigurationValue!.Trim();
         }
 
         var underscoredConfigurationValue = configuration[$"Parameters:{underscoredName}"];
-        if (!string.IsNullOrWhiteSpace(underscoredConfigurationValue))
+        if (IsActiveParameterValue(underscoredConfigurationValue))
         {
-            return underscoredConfigurationValue;
+            return underscoredConfigurationValue!.Trim();
         }
 
         return defaultValue;
     }
+
+    /// <summary>Returns <see langword="true" /> when a deploy parameter value is active (not unset or <c>-</c>).</summary>
+    public static bool IsActiveParameterValue(string? value) =>
+        !string.IsNullOrWhiteSpace(value) && !string.Equals(value.Trim(), "-", StringComparison.Ordinal);
 }

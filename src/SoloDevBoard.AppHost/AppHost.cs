@@ -62,13 +62,10 @@ if (builder.ExecutionContext.IsPublishMode)
 
     var acrNameValue = AppHostDeployParameterResolver.Resolve(builder.Configuration, "shared-acr-name");
     var acrRgValue = AppHostDeployParameterResolver.Resolve(builder.Configuration, "shared-acr-resource-group");
-    {
-        if (acrRgValue is "-" or "")
-        {
-            throw new InvalidOperationException(
-                "shared-acr-resource-group must be set when shared-acr-name is configured.");
-        }
 
+    if (AppHostDeployParameterResolver.IsActiveParameterValue(acrNameValue)
+        && AppHostDeployParameterResolver.IsActiveParameterValue(acrRgValue))
+    {
         var acr = builder.AddAzureContainerRegistry("shared-acr")
             .PublishAsExisting(acrNameValue, acrRgValue);
 
