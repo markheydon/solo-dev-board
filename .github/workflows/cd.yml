@@ -44,7 +44,7 @@ jobs:
         run: dotnet build SoloDevBoard.slnx --no-restore --configuration Release
 
       - name: Run tests
-        run: dotnet test SoloDevBoard.slnx --no-build --verbosity normal
+        run: dotnet test SoloDevBoard.slnx --no-build --configuration Release --verbosity normal
 
   staging:
     name: Deploy to staging
