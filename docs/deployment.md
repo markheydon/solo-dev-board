@@ -226,6 +226,8 @@ Secret parameters are written to the Aspire-provisioned `auth-secrets` Key Vault
 | `SHARED_ACR_NAME` | *(unset)* or `acrmyorgprod` | Optional shared Container Registry name; leave unset for Aspire-provisioned per-deployment registry |
 | `SHARED_ACR_RESOURCE_GROUP` | *(unset)* or `rg-platform-shared` | Resource group containing the shared registry; required when `SHARED_ACR_NAME` is set |
 | `HOSTED_CALLBACK_BASE_URI` | *(unset)* or `https://staging.solodevboard.app` | Optional public HTTPS origin for GitHub App OAuth callbacks when using a custom domain |
+| `CUSTOM_DOMAIN` | *(unset)* or `staging.solodevboard.app` | Optional Container App custom hostname; must match DNS and managed certificate |
+| `CUSTOM_DOMAIN_CERTIFICATE_NAME` | *(unset)* or `staging-solodevboard-app` | Managed certificate name in the Container Apps environment; leave unset on first deploy before the certificate exists |
 
 Enable required reviewers on the `production` environment before granting production deploy access. Staging deploys automatically on merge to `main`; production deploys on `v*` release tags.
 
@@ -251,6 +253,32 @@ After a successful deploy using the shared registry, manually delete orphaned `M
 | `shared-acr-resource-group` | `Parameters__shared_acr_resource_group` / `SHARED_ACR_RESOURCE_GROUP` | platform resource group (for example `rg-platform-shared`) |
 
 Leave both unset (or set to `-` locally) to keep the default Aspire-provisioned registry. See [DEC-022](../plan/DECISIONS.md#dec-022-optional-shared-azure-container-registry) and [Azure Deployment Costs](azure-costs.md#shared-container-registry).
+
+### Custom domain (Container Apps)
+
+Aspire can persist a custom hostname and managed certificate binding across `aspire deploy` runs via `ConfigureCustomDomain` in the AppHost. Without this, redeployments can remove the custom domain from the Container App.
+
+**One-time DNS and certificate setup (per hostname)**
+
+1. Add a **CNAME** from your hostname to the Container App default FQDN (for example `staging` → `app.<env>.<region>.azurecontainerapps.io`).
+2. Add the **TXT** validation record shown by Azure (`asuid.<hostname>`).
+3. Add the hostname: `az containerapp hostname add --hostname <hostname> --name app --resource-group <rg>`.
+4. Create a managed certificate in the Container Apps environment:
+   `az containerapp env certificate create --name <aca-env> --resource-group <rg> --hostname <hostname> --validation-method CNAME --certificate-name <cert-name>`.
+5. Bind the certificate: `az containerapp hostname bind --hostname <hostname> --name app --resource-group <rg> --environment <aca-env> --certificate <cert-name>`.
+
+**AppHost and CD configuration**
+
+Set AppHost parameters (or matching GitHub Environment variables) so subsequent deploys preserve the binding:
+
+| AppHost parameter | CD / local env var | Staging example |
+|---|---|---|
+| `custom-domain` | `Parameters__custom_domain` / `CUSTOM_DOMAIN` | `staging.solodevboard.app` |
+| `custom-domain-certificate-name` | `Parameters__custom_domain_certificate_name` / `CUSTOM_DOMAIN_CERTIFICATE_NAME` | `staging-solodevboard-app` |
+
+When using a custom domain for hosted sign-in, also set `HOSTED_CALLBACK_BASE_URI` to the public HTTPS origin and register `https://<hostname>/auth/callback` on the GitHub App.
+
+Leave `custom-domain` and `custom-domain-certificate-name` unset (or `-`) to use the Aspire-provisioned FQDN only. On the first deploy with a new hostname, leave `custom-domain-certificate-name` unset until the managed certificate exists; set it on subsequent deploys.
 
 ---
 

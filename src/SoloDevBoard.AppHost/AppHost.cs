@@ -50,6 +50,12 @@ if (builder.ExecutionContext.IsPublishMode)
     builder.AddParameter("hosted-callback-base-uri")
         .WithDescription("Optional absolute HTTPS base URI for hosted OAuth callbacks (for example https://staging.solodevboard.app). Use '-' to use the Aspire-provisioned endpoint.");
 
+    var customDomain = builder.AddParameter("custom-domain")
+        .WithDescription("Optional custom hostname for the Container App (for example staging.solodevboard.app). Use '-' to use the Aspire-provisioned FQDN only.");
+
+    var customDomainCertificateName = builder.AddParameter("custom-domain-certificate-name")
+        .WithDescription("Managed certificate name in the Container Apps environment for the custom domain. Leave '-' on first deploy before the certificate is provisioned.");
+
     var resolvedHostedSignInEnabled = AppHostDeployParameterResolver.Resolve(builder.Configuration, "hosted-sign-in-enabled", "true");
     var resolvedHostedAdmissionEnabled = AppHostDeployParameterResolver.Resolve(builder.Configuration, "hosted-admission-enabled", "true");
     var resolvedGhAppClientId = AppHostDeployParameterResolver.Resolve(builder.Configuration, "gh-app-client-id");
@@ -95,6 +101,17 @@ if (builder.ExecutionContext.IsPublishMode)
     else
     {
         app = app.WithEnvironment("GitHubAuth__HostedSignInCallbackBaseUri", app.GetEndpoint("https"));
+    }
+
+    var resolvedCustomDomain = AppHostDeployParameterResolver.Resolve(builder.Configuration, "custom-domain");
+    if (AppHostDeployParameterResolver.IsActiveParameterValue(resolvedCustomDomain))
+    {
+        app = app.PublishAsAzureContainerApp((_, containerApp) =>
+        {
+#pragma warning disable ASPIREACADOMAINS001 // ConfigureCustomDomain is preview; required to persist custom domain across deploys.
+            containerApp.ConfigureCustomDomain(customDomain, customDomainCertificateName);
+#pragma warning restore ASPIREACADOMAINS001
+        });
     }
 }
 else
