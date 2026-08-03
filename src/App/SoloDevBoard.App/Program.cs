@@ -247,17 +247,8 @@ app.MapGet("/auth/connectivity-error", static (HttpContext context) =>
     return Results.Content(page.Html, "text/html; charset=utf-8", statusCode: page.StatusCode);
 }).AllowAnonymous();
 
-if (hostedSignInEnabled)
-{
-    app.MapRazorComponents<App>()
-        .AddInteractiveServerRenderMode()
-        .RequireAuthorization();
-}
-else
-{
-    app.MapRazorComponents<App>()
-        .AddInteractiveServerRenderMode();
-}
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
 
 app.Run();
 
