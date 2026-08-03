@@ -83,12 +83,9 @@ if (hostedSignInEnabled)
             options.Events = HostedCookieAuthenticationEvents.Create(hostedAuthOptions);
         });
 
-    builder.Services.AddAuthorization(options =>
-    {
-        options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
-            .RequireAuthenticatedUser()
-            .Build();
-    });
+    // Do not set FallbackPolicy: it challenges static assets (/_framework, /_content) before
+    // Blazor can start. Page protection uses AuthorizeRouteView; HTTP protection uses admission middleware.
+    builder.Services.AddAuthorization();
 }
 
 // Add our services.
