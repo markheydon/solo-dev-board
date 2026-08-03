@@ -1,16 +1,19 @@
 @namespace SoloDevBoard.App.Components.Shell
+@using SoloDevBoard.App.Authentication
 @inject NavigationManager NavigationManager
 
 @code {
     /// <inheritdoc />
     protected override void OnInitialized()
     {
-        var relativePath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-        var returnUrl = string.IsNullOrWhiteSpace(relativePath)
-            ? "/"
-            : "/" + relativePath.TrimStart('/');
+        var absoluteUri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        if (absoluteUri.AbsolutePath.Equals("/welcome", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
 
-        var destination = $"/welcome?returnUrl={Uri.EscapeDataString(returnUrl)}";
+        var returnUrl = HostedAuthReturnUrl.GetRequestedReturnUrl(absoluteUri);
+        var destination = $"/welcome?returnUrl={Uri.EscapeDataString(returnUrl ?? "/")}";
         NavigationManager.NavigateTo(destination, forceLoad: true);
     }
 }
