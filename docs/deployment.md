@@ -21,7 +21,7 @@ GitHub Actions CD (`.github/workflows/cd.yml`) deploys to two hosted tiers that 
 
 | Tier | Trigger | GitHub Environment | Aspire `--environment` | Authentication |
 |---|---|---|---|---|
-| **Staging** | Push to `main` | `staging` | `Staging` | GitHub App hosted sign-in |
+| **Staging** | Merge to `main`, or **Actions → CD - Deploy to Azure → Run workflow** (manual staging deploy) | `staging` | `Staging` | GitHub App hosted sign-in |
 | **Production** | Push tag `v*` | `production` | `Production` | GitHub App hosted sign-in |
 
 End-user documentation in `user-docs/` is published to GitHub Pages on `v*` release tags only. Pull requests validate Hugo builds via `hugo-ci.yml` without publishing.
@@ -165,6 +165,16 @@ az role assignment create \
   --scope "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP"
 ```
 
+Aspire deploy also creates managed-identity role assignments (for example Key Vault and Container Registry access). Grant **User Access Administrator** on the same resource group scope so the CD identity can create those assignments:
+
+```bash
+az role assignment create \
+  --assignee-object-id "$PRINCIPAL_ID" \
+  --assignee-principal-type ServicePrincipal \
+  --role "User Access Administrator" \
+  --scope "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP"
+```
+
 Create a federated credential for each GitHub Environment (`staging`, `production`):
 
 ```bash
@@ -249,7 +259,7 @@ The CD workflow (`.github/workflows/cd.yml`) runs `aspire deploy` with OIDC auth
 
 | Tier | How to trigger |
 |---|---|
-| **Staging** | Merge to `main` (automatic after build and test validation) |
+| **Staging** | Merge to `main`, or **Actions → CD - Deploy to Azure → Run workflow** (manual) |
 | **Production** | Push a `v*` release tag (requires `production` environment approval if reviewers are configured) |
 
 After a successful deploy:
