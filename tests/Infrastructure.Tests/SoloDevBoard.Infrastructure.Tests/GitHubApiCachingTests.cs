@@ -672,7 +672,11 @@ public sealed class GitHubApiCachingTests
             .Returns(new HttpClient(handler) { BaseAddress = new Uri("https://api.github.com") });
 
         var responseCache = GitHubCachingTestSupport.CreateResponseCache(memoryCache, context);
-        return new GitHubService(httpClientFactory, responseCache, Options.Create(new DocsCaptureOptions()));
+        return new GitHubService(
+            httpClientFactory,
+            responseCache,
+            Options.Create(new DocsCaptureOptions()),
+            Options.Create(new GitHubPaginationOptions()));
     }
 
     private static GitHubLabelRepository CreateLabelRepository(

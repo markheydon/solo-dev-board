@@ -215,7 +215,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 ### Key Tasks
 - [ ] Achieve ≥80% unit test coverage across `Application` and `Domain` projects. _(#252)_
 - [x] Perform accessibility audit of primary journey shells (WCAG 2.1 AA). _(#253; see plan/ACCESSIBILITY_AUDIT.md and tests/E2E/tests/accessibility.spec.ts.)_
-- [ ] Conduct performance review: identify and address slow GitHub API calls (caching, pagination). _(#254)_
+- [x] Conduct performance review: identify and address slow GitHub API calls (caching, pagination). _(#254)_
 - [x] Complete Azure infrastructure baseline via Bicep (App Service, Key Vault, managed identity). _(#104 — superseded by ADR-0018 Aspire ACA migration.)_
 - [x] Migrate production deployment to Aspire Azure Container Apps with scale-to-zero. _(ADR-0018.)_
 - [x] Configure OIDC authentication for GitHub Actions deployment to Azure (no long-lived credentials). _(#105)_

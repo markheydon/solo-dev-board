@@ -1,3 +1,5 @@
+using System.Net;
+using Microsoft.Extensions.Logging;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Domain.Entities.Triage;
@@ -9,20 +11,28 @@ namespace SoloDevBoard.Application.Services.Audit;
 public sealed class AuditDashboardService : IAuditDashboardService
 {
     private const int DefaultStaleDays = 14;
+    private const string OpenItemState = "open";
 
     private readonly IGitHubService _gitHubService;
     private readonly ICurrentUserContext _currentUserContext;
+    private readonly ILogger<AuditDashboardService> _logger;
 
     /// <summary>Initialises a new instance of the <see cref="AuditDashboardService"/> class.</summary>
     /// <param name="gitHubService">The GitHub service used for repository data retrieval.</param>
     /// <param name="currentUserContext">The current user context used to resolve the owner login.</param>
-    public AuditDashboardService(IGitHubService gitHubService, ICurrentUserContext currentUserContext)
+    /// <param name="logger">The logger used for audit dashboard diagnostics.</param>
+    public AuditDashboardService(
+        IGitHubService gitHubService,
+        ICurrentUserContext currentUserContext,
+        ILogger<AuditDashboardService> logger)
     {
         ArgumentNullException.ThrowIfNull(gitHubService);
         ArgumentNullException.ThrowIfNull(currentUserContext);
+        ArgumentNullException.ThrowIfNull(logger);
 
         _gitHubService = gitHubService;
         _currentUserContext = currentUserContext;
+        _logger = logger;
     }
 
     /// <inheritdoc/>
@@ -41,11 +51,10 @@ public sealed class AuditDashboardService : IAuditDashboardService
 
         var repositoryReference = ResolveRepositoryReference(repo);
         var issues = await _gitHubService
-            .GetIssuesAsync(repositoryReference.Owner, repositoryReference.RepoName, cancellationToken)
+            .GetIssuesAsync(repositoryReference.Owner, repositoryReference.RepoName, OpenItemState, cancellationToken)
             .ConfigureAwait(false);
 
         return issues
-            .Where(static issue => IsOpenState(issue.State))
             .Select(issue => MapIssue(issue, repositoryReference.FullName))
             .ToArray();
     }
@@ -64,6 +73,46 @@ public sealed class AuditDashboardService : IAuditDashboardService
     }
 
     /// <inheritdoc/>
+    public async Task<AuditDashboardSnapshotDto> GetDashboardSnapshotAsync(
+        IReadOnlyList<string> repos,
+        int staleDays = DefaultStaleDays,
+        bool includeWorkflowRuns = true,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(repos);
+
+        if (staleDays < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(staleDays), staleDays, "Stale days must be greater than zero.");
+        }
+
+        var repositoryReferences = GetRepositoryReferences(repos);
+        var dataTasks = repositoryReferences.Select(repositoryReference =>
+            LoadRepositoryAuditDataAsync(repositoryReference.Owner, repositoryReference.RepoName, includeWorkflowRuns, cancellationToken));
+        var dataByRepository = await Task.WhenAll(dataTasks).ConfigureAwait(false);
+
+        var staleBefore = DateTimeOffset.UtcNow.AddDays(-staleDays);
+        var summaries = new List<RepositoryAuditSummaryDto>(dataByRepository.Length);
+        var unlabelledIssues = new List<IssueDto>();
+        var stalePullRequests = new List<PullRequestDto>();
+        var failingWorkflowRuns = new List<WorkflowRunDto>();
+
+        foreach (var repositoryData in dataByRepository)
+        {
+            summaries.Add(BuildRepositoryAuditSummary(repositoryData, staleBefore));
+            unlabelledIssues.AddRange(BuildUnlabelledIssues(repositoryData));
+            stalePullRequests.AddRange(BuildStalePullRequests(repositoryData, staleBefore));
+            failingWorkflowRuns.AddRange(BuildFailingWorkflowRuns(repositoryData));
+        }
+
+        return new AuditDashboardSnapshotDto(
+            summaries.ToArray(),
+            unlabelledIssues.ToArray(),
+            stalePullRequests.ToArray(),
+            failingWorkflowRuns.ToArray());
+    }
+
+    /// <inheritdoc/>
     public async Task<IReadOnlyList<IssueDto>> GetUnlabelledIssuesAsync(IReadOnlyList<string> repos, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(repos);
@@ -72,11 +121,11 @@ public sealed class AuditDashboardService : IAuditDashboardService
         var issueTasks = repositoryReferences.Select(async repositoryReference =>
         {
             var issues = await _gitHubService
-                .GetIssuesAsync(repositoryReference.Owner, repositoryReference.RepoName, cancellationToken)
+                .GetIssuesAsync(repositoryReference.Owner, repositoryReference.RepoName, OpenItemState, cancellationToken)
                 .ConfigureAwait(false);
 
             return issues
-                .Where(static issue => IsOpenState(issue.State) && issue.Labels.Count == 0)
+                .Where(static issue => issue.Labels.Count == 0)
                 .Select(issue => MapIssue(issue, repositoryReference.FullName))
                 .ToArray();
         });
@@ -100,11 +149,11 @@ public sealed class AuditDashboardService : IAuditDashboardService
         var pullRequestTasks = repositoryReferences.Select(async repositoryReference =>
         {
             var pullRequests = await _gitHubService
-                .GetPullRequestsAsync(repositoryReference.Owner, repositoryReference.RepoName, cancellationToken)
+                .GetPullRequestsAsync(repositoryReference.Owner, repositoryReference.RepoName, OpenItemState, cancellationToken)
                 .ConfigureAwait(false);
 
             return pullRequests
-                .Where(pullRequest => pullRequest.State.Equals("open", StringComparison.OrdinalIgnoreCase) && pullRequest.UpdatedAt < staleBefore)
+                .Where(pullRequest => pullRequest.UpdatedAt < staleBefore)
                 .Select(pullRequest => MapPullRequest(pullRequest, repositoryReference.FullName))
                 .ToArray();
         });
@@ -121,20 +170,13 @@ public sealed class AuditDashboardService : IAuditDashboardService
         var repositoryReferences = GetRepositoryReferences(repos);
         var workflowTasks = repositoryReferences.Select(async repositoryReference =>
         {
-            var workflowRuns = await _gitHubService
-                .GetWorkflowRunsAsync(repositoryReference.Owner, repositoryReference.RepoName, cancellationToken)
-                .ConfigureAwait(false);
+            var repositoryFullName = BuildRepositoryFullName(repositoryReference.Owner, repositoryReference.RepoName);
+            var workflowRuns = await GetRepositoryResourceSafeAsync(
+                () => _gitHubService.GetWorkflowRunsAsync(repositoryReference.Owner, repositoryReference.RepoName, cancellationToken),
+                repositoryFullName,
+                "workflow runs").ConfigureAwait(false);
 
-            return workflowRuns
-                .Where(static workflowRun => !string.IsNullOrWhiteSpace(workflowRun.WorkflowName))
-                .GroupBy(static workflowRun => workflowRun.WorkflowName, StringComparer.OrdinalIgnoreCase)
-                .Select(static workflowGroup => workflowGroup
-                    .OrderByDescending(static workflowRun => workflowRun.UpdatedAt)
-                    .ThenByDescending(static workflowRun => workflowRun.CreatedAt)
-                    .First())
-                .Where(static workflowRun => IsFailingConclusion(workflowRun.Conclusion))
-                .Select(workflowRun => MapWorkflowRun(workflowRun, repositoryReference.FullName))
-                .ToArray();
+            return BuildFailingWorkflowRuns(repositoryFullName, workflowRuns);
         });
 
         var workflowRunsByRepository = await Task.WhenAll(workflowTasks).ConfigureAwait(false);
@@ -217,41 +259,120 @@ public sealed class AuditDashboardService : IAuditDashboardService
         return owner;
     }
 
-    private async Task<RepositoryAuditSummaryDto> BuildRepositoryAuditSummaryAsync(string owner, string repoName, CancellationToken cancellationToken)
+    private async Task<RepositoryAuditData> LoadRepositoryAuditDataAsync(
+        string owner,
+        string repoName,
+        bool includeWorkflowRuns,
+        CancellationToken cancellationToken)
     {
         var repositoryFullName = BuildRepositoryFullName(owner, repoName);
-        var issuesTask = _gitHubService.GetIssuesAsync(owner, repoName, cancellationToken);
-        var pullRequestsTask = _gitHubService.GetPullRequestsAsync(owner, repoName, cancellationToken);
-        var workflowRunsTask = _gitHubService.GetWorkflowRunsAsync(owner, repoName, cancellationToken);
+        var issuesTask = GetRepositoryResourceSafeAsync(
+            () => _gitHubService.GetIssuesAsync(owner, repoName, OpenItemState, cancellationToken),
+            repositoryFullName,
+            "issues");
+        var pullRequestsTask = GetRepositoryResourceSafeAsync(
+            () => _gitHubService.GetPullRequestsAsync(owner, repoName, OpenItemState, cancellationToken),
+            repositoryFullName,
+            "pull requests");
+        Task<IReadOnlyList<WorkflowRun>> workflowRunsTask = includeWorkflowRuns
+            ? GetRepositoryResourceSafeAsync(
+                () => _gitHubService.GetWorkflowRunsAsync(owner, repoName, cancellationToken),
+                repositoryFullName,
+                "workflow runs")
+            : Task.FromResult<IReadOnlyList<WorkflowRun>>([]);
 
         await Task.WhenAll(issuesTask, pullRequestsTask, workflowRunsTask).ConfigureAwait(false);
 
-        var issues = await issuesTask.ConfigureAwait(false);
-        var pullRequests = await pullRequestsTask.ConfigureAwait(false);
-        var workflowRuns = await workflowRunsTask.ConfigureAwait(false);
+        return new RepositoryAuditData(
+            repositoryFullName,
+            await issuesTask.ConfigureAwait(false),
+            await pullRequestsTask.ConfigureAwait(false),
+            await workflowRunsTask.ConfigureAwait(false));
+    }
 
-        var openIssues = issues.Where(static issue => IsOpenState(issue.State)).ToArray();
-        var openPullRequests = pullRequests.Where(static pullRequest => IsOpenState(pullRequest.State)).ToArray();
+    private async Task<IReadOnlyList<T>> GetRepositoryResourceSafeAsync<T>(
+        Func<Task<IReadOnlyList<T>>> fetch,
+        string repositoryFullName,
+        string resourceName)
+    {
+        try
+        {
+            return await fetch().ConfigureAwait(false);
+        }
+        catch (HttpRequestException ex) when (IsSkippableGitHubStatus(ex.StatusCode))
+        {
+            _logger.LogWarning(
+                ex,
+                "Skipping {ResourceName} for {RepositoryFullName} because the GitHub API returned {StatusCode}.",
+                resourceName,
+                repositoryFullName,
+                ex.StatusCode);
+            return [];
+        }
+    }
 
-        var failingWorkflowCount = workflowRuns
+    private static bool IsSkippableGitHubStatus(HttpStatusCode? statusCode)
+        => statusCode is HttpStatusCode.NotFound or HttpStatusCode.Forbidden or HttpStatusCode.Gone;
+
+    private async Task<RepositoryAuditSummaryDto> BuildRepositoryAuditSummaryAsync(string owner, string repoName, CancellationToken cancellationToken)
+    {
+        var repositoryData = await LoadRepositoryAuditDataAsync(owner, repoName, includeWorkflowRuns: true, cancellationToken).ConfigureAwait(false);
+        var staleBefore = DateTimeOffset.UtcNow.AddDays(-DefaultStaleDays);
+        return BuildRepositoryAuditSummary(repositoryData, staleBefore);
+    }
+
+    private static RepositoryAuditSummaryDto BuildRepositoryAuditSummary(RepositoryAuditData repositoryData, DateTimeOffset staleBefore)
+    {
+        var openIssues = repositoryData.Issues.Where(static issue => IsOpenState(issue.State)).ToArray();
+        var openPullRequests = repositoryData.PullRequests.Where(static pullRequest => IsOpenState(pullRequest.State)).ToArray();
+
+        var failingWorkflowCount = GetLatestWorkflowRunsByName(repositoryData.WorkflowRuns)
+            .Count(static workflowRun => IsFailingConclusion(workflowRun.Conclusion));
+
+        return new RepositoryAuditSummaryDto(
+            repositoryData.RepositoryFullName,
+            openIssues.Length,
+            openPullRequests.Length,
+            openIssues.Count(static issue => issue.Labels.Count == 0),
+            openPullRequests.Count(pullRequest => pullRequest.UpdatedAt < staleBefore),
+            failingWorkflowCount);
+    }
+
+    private static IReadOnlyList<IssueDto> BuildUnlabelledIssues(RepositoryAuditData repositoryData)
+        => repositoryData.Issues
+            .Where(static issue => IsOpenState(issue.State) && issue.Labels.Count == 0)
+            .Select(issue => MapIssue(issue, repositoryData.RepositoryFullName))
+            .ToArray();
+
+    private static IReadOnlyList<PullRequestDto> BuildStalePullRequests(RepositoryAuditData repositoryData, DateTimeOffset staleBefore)
+        => repositoryData.PullRequests
+            .Where(pullRequest => pullRequest.State.Equals("open", StringComparison.OrdinalIgnoreCase) && pullRequest.UpdatedAt < staleBefore)
+            .Select(pullRequest => MapPullRequest(pullRequest, repositoryData.RepositoryFullName))
+            .ToArray();
+
+    private static IReadOnlyList<WorkflowRunDto> BuildFailingWorkflowRuns(RepositoryAuditData repositoryData)
+        => BuildFailingWorkflowRuns(repositoryData.RepositoryFullName, repositoryData.WorkflowRuns);
+
+    private static IReadOnlyList<WorkflowRunDto> BuildFailingWorkflowRuns(string repositoryFullName, IReadOnlyList<WorkflowRun> workflowRuns)
+        => GetLatestWorkflowRunsByName(workflowRuns)
+            .Where(static workflowRun => IsFailingConclusion(workflowRun.Conclusion))
+            .Select(workflowRun => MapWorkflowRun(workflowRun, repositoryFullName))
+            .ToArray();
+
+    private static IEnumerable<WorkflowRun> GetLatestWorkflowRunsByName(IReadOnlyList<WorkflowRun> workflowRuns)
+        => workflowRuns
             .Where(static workflowRun => !string.IsNullOrWhiteSpace(workflowRun.WorkflowName))
             .GroupBy(static workflowRun => workflowRun.WorkflowName, StringComparer.OrdinalIgnoreCase)
             .Select(static workflowGroup => workflowGroup
                 .OrderByDescending(static workflowRun => workflowRun.UpdatedAt)
                 .ThenByDescending(static workflowRun => workflowRun.CreatedAt)
-                .First())
-            .Count(static workflowRun => IsFailingConclusion(workflowRun.Conclusion));
+                .First());
 
-        var staleThreshold = DateTimeOffset.UtcNow.AddDays(-DefaultStaleDays);
-
-        return new RepositoryAuditSummaryDto(
-            repositoryFullName,
-            openIssues.Length,
-            openPullRequests.Length,
-            openIssues.Count(static issue => issue.Labels.Count == 0),
-            openPullRequests.Count(pullRequest => pullRequest.UpdatedAt < staleThreshold),
-            failingWorkflowCount);
-    }
+    private sealed record RepositoryAuditData(
+        string RepositoryFullName,
+        IReadOnlyList<Issue> Issues,
+        IReadOnlyList<PullRequest> PullRequests,
+        IReadOnlyList<WorkflowRun> WorkflowRuns);
 
     private sealed record RepositoryReference(string Owner, string RepoName)
     {
