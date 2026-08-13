@@ -10,7 +10,8 @@ The About page provides essential information about the SoloDevBoard application
 ## Information shown
 
 - Application name and branding.
-- Application version.
+- Application version (SemVer from git tags via MinVer at build time).
+- Build commit SHA (when available), linked to the source repository for verification.
 - .NET runtime version currently in use.
 - GitHub authentication mode (hosted sign-in or PAT-only local trusted mode).
 - Current GitHub identity (`@login`) for the active authentication mode.

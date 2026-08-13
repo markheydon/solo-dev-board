@@ -10,6 +10,24 @@ SoloDevBoard follows [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PA
 
 During the pre-1.0 development phase (`0.x.y`), minor version bumps may include breaking changes as the application stabilises.
 
+### Build-time versioning (MinVer)
+
+Application version numbers are calculated automatically at build time by [MinVer](https://github.com/adamralph/minver) from git tags on `SoloDevBoard.App`. The About page and GitHub API user-agent both read this stamped assembly metadata.
+
+| Deploy tier | Git state | Example About version | Example build metadata |
+|---|---|---|---|
+| **Production** | Build at tag `v1.0.0` | `1.0.0` | Short commit SHA (for example `abc1234`) |
+| **Staging** | `main` commits after the latest tag | `1.0.1-staging.0.42` | Short commit SHA |
+| **Local dev** | Untagged working tree | `1.0.x-staging.0.n` (from git history) | Short commit SHA when git metadata is available |
+
+**Production source of truth:** the `vX.Y.Z` git tag pushed for the release. Pushing that tag triggers production CD; MinVer stamps the tag version into the deployed assembly.
+
+**Staging identification:** staging builds use the `staging.0` pre-release identifier so the About version is clearly not a production release. Compare the About **Build** value with the commit SHA on `main` in GitHub to confirm which deployment you are viewing.
+
+**CI requirement:** CD and CI workflows check out the repository with `fetch-depth: 0` so MinVer can read tags and commit history.
+
+**Temporary v1 bootstrap:** until the first `v1.0.0` tag exists, `MinVerMinimumMajorMinor=1.0` in `SoloDevBoard.App.csproj` floors calculated versions at the 1.0 release line. Remove that property after `v1.0.0` is tagged.
+
 ---
 
 ## Release Roadmap
@@ -112,7 +130,7 @@ Feature branch → Pull Request → CI passes → Code review → Merge to main 
 ### Step-by-Step
 
 1. **Merge to `main`:** All features for the release are merged via PRs with the CI pipeline passing. CD deploys automatically to the **staging** Azure Container Apps environment.
-2. **Final smoke test:** Verify the deployment to the staging environment is healthy.
+2. **Final smoke test:** Verify the deployment to the staging environment is healthy. Open **More options → About** and confirm the version shows a `staging` pre-release suffix and that the **Build** commit SHA matches the latest commit on `main` for that deploy.
 3. **Update documentation:** Ensure all user-facing docs on `main` reflect the released features (validated by `hugo-ci` on PRs; not published until tagged).
 4. **Tag the release:**
    ```bash

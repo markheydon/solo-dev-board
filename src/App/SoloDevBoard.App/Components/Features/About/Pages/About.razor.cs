@@ -24,6 +24,13 @@ public partial class About : ComponentBase
 
     private string Version => AppVersionService.Version;
 
+    private string BuildMetadata => AppVersionService.BuildMetadata;
+
+    private string? BuildCommitUrl =>
+        string.IsNullOrWhiteSpace(BuildMetadata)
+            ? null
+            : $"{RepositoryAddress}/commit/{BuildMetadata}";
+
     private string DotNetRuntimeVersion => Environment.Version.ToString();
 
     private string RepositoryUrl => RepositoryAddress;

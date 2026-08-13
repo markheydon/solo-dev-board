@@ -12,6 +12,7 @@ namespace SoloDevBoard.App.Tests;
 public sealed class AboutTests : BunitContext
 {
     private const string TestVersion = "1.2.3";
+    private const string TestBuildMetadata = "abc1234";
     private readonly IAppVersionService _appVersionService = Substitute.For<IAppVersionService>();
     private readonly IGitHubAuthenticationSummaryService _authenticationSummaryService = Substitute.For<IGitHubAuthenticationSummaryService>();
 
@@ -29,7 +30,7 @@ public sealed class AboutTests : BunitContext
     private void ConfigureVersionService()
     {
         _appVersionService.Version.Returns(TestVersion);
-
+        _appVersionService.BuildMetadata.Returns(TestBuildMetadata);
         _appVersionService.UserAgent.Returns($"SoloDevBoard/{TestVersion}");
     }
 
@@ -61,6 +62,33 @@ public sealed class AboutTests : BunitContext
 
         // Assert
         Assert.Contains(TestVersion, cut.Markup);
+    }
+
+    [Fact]
+    public void AboutPage_RenderedWithMockedVersionService_DisplaysBuildMetadataLink()
+    {
+        // Act
+        var cut = Render<About>();
+
+        // Assert
+        var buildLink = cut.Find("[data-testid='about-build']");
+        Assert.Equal(TestBuildMetadata, buildLink.TextContent.Trim());
+        Assert.Equal(
+            $"https://github.com/markheydon/solo-dev-board/commit/{TestBuildMetadata}",
+            buildLink.GetAttribute("href"));
+    }
+
+    [Fact]
+    public void AboutPage_RenderedWithoutBuildMetadata_HidesBuildRow()
+    {
+        // Arrange
+        _appVersionService.BuildMetadata.Returns(string.Empty);
+
+        // Act
+        var cut = Render<About>();
+
+        // Assert
+        Assert.Empty(cut.FindAll("[data-testid='about-build']"));
     }
 
     [Fact]

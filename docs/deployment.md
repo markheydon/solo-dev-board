@@ -261,6 +261,8 @@ Leave `custom-domain` and `custom-domain-certificate-name` unset (or `-`) to use
 
 The CD workflow (`.github/workflows/cd.yml`) runs `aspire deploy` with OIDC authentication across two hosted tiers (see [CD pipeline tiers](#cd-pipeline-tiers-dec-021)).
 
+Deploy jobs check out the repository with `fetch-depth: 0` so [MinVer](https://github.com/adamralph/minver) can stamp version metadata from git tags and commit history into the built application. See [Release Plan — Build-time versioning](../plan/RELEASE_PLAN.md#build-time-versioning-minver) for expected version shapes on staging and production.
+
 | Tier | How to trigger |
 |---|---|
 | **Staging** | Merge to `main`, or **Actions → CD - Deploy to Azure → Run workflow** (manual) |
@@ -276,7 +278,8 @@ After a successful deploy:
    - Sign in with an allow-listed GitHub account completes and returns to the app.
    - One feature page (for example **Repositories**) loads GitHub data without errors.
    - Sign out returns to `/welcome`.
-5. **Container App environment verification:** confirm `GitHubAuth__HostedGitHubAppClientId` and `HostedAdmissionControl__AllowedUserLogins` on the active revision show real values (not `-` placeholders from `appsettings.Staging.json`).
+5. **Deployment version check:** open **More options → About**. Staging should show a version with a `staging` pre-release suffix (for example `1.0.1-staging.0.42`); production should show a clean SemVer matching the release tag (for example `1.0.0`). The **Build** line links to the deployed commit — compare it with the commit SHA from the GitHub Actions deploy run or the tip of the deployed branch/tag.
+6. **Container App environment verification:** confirm `GitHubAuth__HostedGitHubAppClientId` and `HostedAdmissionControl__AllowedUserLogins` on the active revision show real values (not `-` placeholders from `appsettings.Staging.json`).
 
 ## Deploy locally (operator testing)
 

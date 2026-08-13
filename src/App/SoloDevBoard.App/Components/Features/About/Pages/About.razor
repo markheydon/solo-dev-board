@@ -15,6 +15,27 @@
                 <MudText Typo="Typo.body2" data-testid="about-version">@Version</MudText>
             </MudStack>
 
+            @if (!string.IsNullOrWhiteSpace(BuildMetadata))
+            {
+                <MudStack Row="true" Spacing="1">
+                    <MudText Typo="Typo.subtitle2">Build:</MudText>
+                    @if (BuildCommitUrl is not null)
+                    {
+                        <MudLink Href="@BuildCommitUrl"
+                                 Target="_blank"
+                                 rel="noopener noreferrer"
+                                 Typo="Typo.body2"
+                                 data-testid="about-build">
+                            @BuildMetadata
+                        </MudLink>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" data-testid="about-build">@BuildMetadata</MudText>
+                    }
+                </MudStack>
+            }
+
             <MudStack Row="true" Spacing="1">
                 <MudText Typo="Typo.subtitle2">.NET runtime:</MudText>
                 <MudText Typo="Typo.body2" data-testid="about-dotnet-version">@DotNetRuntimeVersion</MudText>

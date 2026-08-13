@@ -19,6 +19,19 @@ public sealed class AppVersionServiceTests
     }
 
     [Fact]
+    public void BuildMetadata_ValueRequested_ReturnsString()
+    {
+        // Arrange
+        var sut = new AppVersionService();
+
+        // Act
+        var buildMetadata = sut.BuildMetadata;
+
+        // Assert
+        Assert.NotNull(buildMetadata);
+    }
+
+    [Fact]
     public void UserAgent_ValueRequested_StartsWithAppNamePrefix()
     {
         // Arrange
