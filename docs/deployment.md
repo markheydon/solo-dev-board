@@ -223,36 +223,11 @@ Secret parameters are written to the Aspire-provisioned `auth-secrets` Key Vault
 |---|---|---|
 | `AZURE_LOCATION` | `uksouth` | Azure region for `aspire deploy` |
 | `AZURE_RESOURCE_GROUP` | `rg-solodevboard-prod` | Target resource group (shared across tiers) |
-| `SHARED_ACR_NAME` | *(unset)* or `acrmyorgprod` | Optional shared Container Registry name; leave unset for Aspire-provisioned per-deployment registry |
-| `SHARED_ACR_RESOURCE_GROUP` | *(unset)* or `rg-platform-shared` | Resource group containing the shared registry; required when `SHARED_ACR_NAME` is set |
 | `HOSTED_CALLBACK_BASE_URI` | *(unset)* or `https://staging.solodevboard.app` | Optional public HTTPS origin for GitHub App OAuth callbacks when using a custom domain |
 | `CUSTOM_DOMAIN` | *(unset)* or `staging.solodevboard.app` | Optional Container App custom hostname; must match DNS and managed certificate |
 | `CUSTOM_DOMAIN_CERTIFICATE_NAME` | *(unset)* or `staging-solodevboard-app` | Managed certificate name in the Container Apps environment; leave unset on first deploy before the certificate exists |
 
 Enable required reviewers on the `production` environment before granting production deploy access. Staging deploys automatically on merge to `main`; production deploys on `v*` release tags.
-
-### Optional shared Container Registry
-
-By default, Aspire provisions a Basic Azure Container Registry in the app resource group for each Aspire deploy environment (`Staging`, `Production`). That is convenient for contributors but can multiply fixed ACR costs across tiers and projects.
-
-To use one central registry in a dedicated platform resource group instead, set `SHARED_ACR_NAME` and `SHARED_ACR_RESOURCE_GROUP` on the GitHub Environment (or export the matching `Parameters__*` values for local deploys). When both are set, the AppHost references the existing registry via `PublishAsExisting` and attaches it to the Container Apps environment. When unset, behaviour is unchanged.
-
-**One-time platform setup**
-
-1. Create the shared ACR once in your platform resource group (for example `rg-platform-shared`). Basic tier is sufficient unless you need geo-replication or advanced features.
-2. Grant the CD deploy managed identity (`AZURE_CLIENT_ID`) **AcrPush** on the shared ACR. Contributor on the app resource group remains unchanged.
-3. After the first shared deploy, verify Aspire assigned **AcrPull** to the Container Apps environment managed identity on the shared registry (Azure portal → Access control (IAM)).
-
-**Migration from per-deployment registries**
-
-After a successful deploy using the shared registry, manually delete orphaned `Microsoft.ContainerRegistry/registries` resources in the app resource group. Aspire does not remove them automatically.
-
-| AppHost parameter | CD / local env var | Shared ACR value |
-|---|---|---|
-| `shared-acr-name` | `Parameters__shared_acr_name` / `SHARED_ACR_NAME` | registry name (for example `acrmyorgprod`) |
-| `shared-acr-resource-group` | `Parameters__shared_acr_resource_group` / `SHARED_ACR_RESOURCE_GROUP` | platform resource group (for example `rg-platform-shared`) |
-
-Leave both unset (or set to `-` locally) to keep the default Aspire-provisioned registry. See [DEC-022](../plan/DECISIONS.md#dec-022-optional-shared-azure-container-registry) and [Azure Deployment Costs](azure-costs.md#shared-container-registry).
 
 ### Custom domain (Container Apps)
 
@@ -442,7 +417,5 @@ az identity delete --name id-solodevboard-cd-prod --resource-group rg-solodevboa
 | Home dashboard shown without sign-in | Missing login gate or placeholder deploy parameters | Confirm `/` redirects to `/welcome`; redeploy with `Parameters__*` env vars mapped in CD; verify Container App env shows real client ID and allow-list values. CI `e2e-hosted` job asserts this gate with placeholder credentials. |
 | PAT mode shows `/welcome` or requires sign-in | `hosted-sign-in-enabled` still `true` | Set `HOSTED_SIGN_IN_ENABLED` / `Parameters__hosted_sign_in_enabled` to `false` and redeploy |
 | PAT mode starts but GitHub calls fail | Missing or invalid `GH_PAT` | Set a real PAT with required scopes; confirm `/health/github` and the **Connected as @login** chip |
-| Image pull fails after enabling shared ACR | Missing AcrPush or AcrPull on shared registry | Grant AcrPush to the CD identity and verify AcrPull on the Container Apps managed identity |
-| Deploy fails with shared ACR parameter error | `SHARED_ACR_NAME` set without resource group | Set both `SHARED_ACR_NAME` and `SHARED_ACR_RESOURCE_GROUP` |
 
 For local development, see [Getting Started](getting-started.md) (including [PAT-only local trusted mode](getting-started.md#pat-only-local-trusted-mode)). For hosted authentication details, see [Hosted Authentication](hosted-authentication.md). For the Key Vault pattern, see [plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md](../plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md).

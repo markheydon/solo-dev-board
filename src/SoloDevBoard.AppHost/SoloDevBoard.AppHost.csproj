@@ -2,7 +2,6 @@
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.Azure.AppContainers" />
-    <PackageReference Include="Aspire.Hosting.Azure.ContainerRegistry" />
     <PackageReference Include="Aspire.Hosting.Azure.ApplicationInsights" />
     <PackageReference Include="Aspire.Hosting.Azure.KeyVault" />
     <PackageReference Include="MessagePack" />

@@ -95,10 +95,6 @@ Local `aspire start` continues to bind these parameters directly from user secre
 
 See [plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md](../../plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md) for the full pattern.
 
-### Optional shared Container Registry
-
-Deploy-only parameters `shared-acr-name` and `shared-acr-resource-group` default to `-`. When both are set at deploy time, the AppHost references an existing Azure Container Registry in a platform resource group instead of letting Aspire provision a per-deployment registry. Leave unset for the default stress-free path. See [docs/deployment.md — Optional shared Container Registry](../../docs/deployment.md#optional-shared-container-registry) and [DEC-022](../../plan/DECISIONS.md#dec-022-optional-shared-azure-container-registry).
-
 ### Custom domain
 
 Deploy-only parameters `custom-domain` and `custom-domain-certificate-name` default to `-`. When `custom-domain` is set, the AppHost calls `ConfigureCustomDomain` so `aspire deploy` preserves the hostname and managed certificate binding on Azure Container Apps. Provision DNS and the managed certificate once in Azure, then set both parameters (or `CUSTOM_DOMAIN` / `CUSTOM_DOMAIN_CERTIFICATE_NAME` on the GitHub Environment). See [docs/deployment.md — Custom domain](../../docs/deployment.md#custom-domain-container-apps).
@@ -125,8 +121,6 @@ AppHost parameters map to workflow environment variables with underscores instea
 | `hosted-admission-enabled` | `Parameters__hosted_admission_enabled` |
 | `allowed-user-logins` | `Parameters__allowed_user_logins` |
 | `allowed-org-logins` | `Parameters__allowed_org_logins` |
-| `shared-acr-name` | `Parameters__shared_acr_name` / `SHARED_ACR_NAME` |
-| `shared-acr-resource-group` | `Parameters__shared_acr_resource_group` / `SHARED_ACR_RESOURCE_GROUP` |
 | `hosted-callback-base-uri` | `Parameters__hosted_callback_base_uri` / `HOSTED_CALLBACK_BASE_URI` |
 | `custom-domain` | `Parameters__custom_domain` / `CUSTOM_DOMAIN` |
 | `custom-domain-certificate-name` | `Parameters__custom_domain_certificate_name` / `CUSTOM_DOMAIN_CERTIFICATE_NAME` |
