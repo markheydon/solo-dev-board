@@ -20,6 +20,7 @@ The scope covers response caching, health endpoints and hosting probes, structur
 | Label and milestone catalogue invalidation after create, update, and delete mutations | Unit | `GitHubApiCachingTests.cs`, `GitHubResponseCacheTests.cs` |
 | TTL expiry and refetch after configured lifetime (labels and milestones) | Unit | `GitHubResponseCacheTests.cs` |
 | Invalid TTL configuration rejected at startup | Unit | `GitHubCacheOptionsValidatorTests.cs`, `InfrastructureServiceExtensionsTests.cs` |
+| Invalid pagination configuration rejected at startup | Unit | `GitHubPaginationOptionsValidatorTests.cs`, `InfrastructureServiceExtensionsTests.cs` |
 | `GitHubResponseCache` registered in DI composition root | Unit | `InfrastructureServiceExtensionsTests.cs` |
 
 Out of scope for this tranche: caching issues, pull requests, workflow runs, GraphQL project board queries, distributed cache, and Application-layer DTO caching (see DEC-018).
@@ -31,6 +32,8 @@ Out of scope for this tranche: caching issues, pull requests, workflow runs, Gra
 | Audit dashboard snapshot fetches issues, pull requests, and workflow runs once per repository | Unit (mocked `IGitHubService`) | `tests/Application.Tests/.../AuditDashboardServiceTests.cs` |
 | Snapshot derives summary counters and health-indicator lists from a single fetch | Unit | `AuditDashboardServiceTests.cs` |
 | Workflow runs paginate via `Link: rel="next"` headers | Unit (mocked HTTP) | `tests/Infrastructure.Tests/.../GitHubServiceTests.cs` |
+| Workflow run pagination honours configured max page limit | Unit (mocked HTTP) | `GitHubServiceTests.cs` |
+| Audit dashboard snapshot returns immutable collections | Unit | `AuditDashboardServiceTests.cs` |
 | Audit page loads dashboard data via snapshot API | Component (bUnit) | `tests/App.Tests/.../AuditTests.cs` |
 
 Volatile-data Infrastructure caching (issues, pull requests, workflow runs) remains out of scope for V1. GraphQL project board `first: 50` limits are documented in [getting-started.md](../docs/getting-started.md#github-api-performance).

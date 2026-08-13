@@ -441,6 +441,26 @@ public sealed class AuditDashboardServiceTests
     }
 
     [Fact]
+    public async Task GetDashboardSnapshotAsync_ReposProvided_ReturnsImmutableCollections()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        var repos = new[] { "repo-one" };
+        _gitHubService.GetIssuesAsync("owner", "repo-one", cancellationToken).Returns([]);
+        _gitHubService.GetPullRequestsAsync("owner", "repo-one", cancellationToken).Returns([]);
+        _gitHubService.GetWorkflowRunsAsync("owner", "repo-one", cancellationToken).Returns([]);
+
+        // Act
+        var result = await _sut.GetDashboardSnapshotAsync(repos, cancellationToken: cancellationToken);
+
+        // Assert
+        Assert.IsType<RepositoryAuditSummaryDto[]>(result.RepositorySummaries);
+        Assert.IsType<IssueDto[]>(result.UnlabelledIssues);
+        Assert.IsType<PullRequestDto[]>(result.StalePullRequests);
+        Assert.IsType<WorkflowRunDto[]>(result.FailingWorkflowRuns);
+    }
+
+    [Fact]
     public async Task GetDashboardSnapshotAsync_StaleDaysIsZero_ThrowsArgumentOutOfRangeException()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;

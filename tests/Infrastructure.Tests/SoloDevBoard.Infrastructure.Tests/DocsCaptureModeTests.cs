@@ -319,7 +319,8 @@ public sealed class DocsCaptureModeTests
         return new GitHubService(
             httpClientFactory,
             responseCache,
-            Options.Create(new DocsCaptureOptions { Enabled = docsCaptureEnabled }));
+            Options.Create(new DocsCaptureOptions { Enabled = docsCaptureEnabled }),
+            Options.Create(new GitHubPaginationOptions()));
     }
 
     private static HttpResponseMessage CreateJsonResponse(HttpStatusCode statusCode, string json)

@@ -99,6 +99,27 @@ public sealed class InfrastructureServiceExtensionsTests
         Assert.Throws<OptionsValidationException>(
             () => _ = serviceProvider.GetRequiredService<IOptions<GitHubCacheOptions>>().Value);
     }
+
+    [Fact]
+    public void AddInfrastructureServices_InvalidGitHubPaginationOptions_ThrowsOnStartup()
+    {
+        // Arrange
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                [$"{GitHubPaginationOptions.SectionName}:{nameof(GitHubPaginationOptions.WorkflowRunsMaxPages)}"] = "-1",
+            })
+            .Build();
+
+        var services = new ServiceCollection();
+        services.AddSingleton<IAppVersionService>(new TestAppVersionService());
+        services.AddInfrastructureServices(configuration);
+
+        // Act / Assert
+        using var serviceProvider = services.BuildServiceProvider();
+        Assert.Throws<OptionsValidationException>(
+            () => _ = serviceProvider.GetRequiredService<IOptions<GitHubPaginationOptions>>().Value);
+    }
 }
 
 internal sealed class TestAppVersionService : IAppVersionService

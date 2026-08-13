@@ -457,6 +457,86 @@ public sealed class GitHubServiceTests
     }
 
     [Fact]
+    public async Task GetWorkflowRunsAsync_MaxPagesReached_StopsFetchingAdditionalPages()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                {
+                  "workflow_runs": [
+                    {
+                      "id": 1,
+                      "name": "build",
+                      "status": "completed",
+                      "conclusion": "success",
+                      "head_branch": "main",
+                      "head_sha": "abc123",
+                      "created_at": "2026-03-10T08:00:00Z",
+                      "updated_at": "2026-03-10T08:05:00Z",
+                      "html_url": "https://github.com/owner/repo/actions/runs/1"
+                    }
+                  ]
+                }
+                """,
+                "<https://api.github.com/repos/owner/repo/actions/runs?page=2&per_page=100>; rel=\"next\""),
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                {
+                  "workflow_runs": [
+                    {
+                      "id": 2,
+                      "name": "deploy",
+                      "status": "completed",
+                      "conclusion": "failure",
+                      "head_branch": "main",
+                      "head_sha": "def456",
+                      "created_at": "2026-03-11T08:00:00Z",
+                      "updated_at": "2026-03-11T08:05:00Z",
+                      "html_url": "https://github.com/owner/repo/actions/runs/2"
+                    }
+                  ]
+                }
+                """,
+                "<https://api.github.com/repos/owner/repo/actions/runs?page=3&per_page=100>; rel=\"next\""),
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                {
+                  "workflow_runs": [
+                    {
+                      "id": 3,
+                      "name": "release",
+                      "status": "completed",
+                      "conclusion": "success",
+                      "head_branch": "main",
+                      "head_sha": "ghi789",
+                      "created_at": "2026-03-12T08:00:00Z",
+                      "updated_at": "2026-03-12T08:05:00Z",
+                      "html_url": "https://github.com/owner/repo/actions/runs/3"
+                    }
+                  ]
+                }
+                """),
+        ]);
+
+        var sut = CreateSubject(handler, new GitHubPaginationOptions { WorkflowRunsMaxPages = 2 });
+
+        // Act
+        var result = await sut.GetWorkflowRunsAsync("owner", "repo", cancellationToken);
+
+        // Assert
+        Assert.Equal(2, result.Count);
+        Assert.Equal("build", result[0].WorkflowName);
+        Assert.Equal("deploy", result[1].WorkflowName);
+        Assert.Equal(2, handler.Requests.Count);
+    }
+
+    [Fact]
     public async Task GetWorkflowRunsAsync_EmptyWrapper_ReturnsEmptyList()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
@@ -1489,7 +1569,7 @@ public sealed class GitHubServiceTests
         Assert.Equal("https://api.github.com/repos/owner/repo/issues/99/comments", handler.Requests[0].RequestUri!.ToString());
     }
 
-    private static GitHubService CreateSubject(HttpMessageHandler handler)
+    private static GitHubService CreateSubject(HttpMessageHandler handler, GitHubPaginationOptions? paginationOptions = null)
     {
         var client = new HttpClient(handler)
         {
@@ -1502,7 +1582,11 @@ public sealed class GitHubServiceTests
             .Returns(client);
 
         var responseCache = GitHubCachingTestSupport.CreateResponseCache();
-        return new GitHubService(httpClientFactory, responseCache, Options.Create(new DocsCaptureOptions()));
+        return new GitHubService(
+            httpClientFactory,
+            responseCache,
+            Options.Create(new DocsCaptureOptions()),
+            Options.Create(paginationOptions ?? new GitHubPaginationOptions()));
     }
 
     private static HttpResponseMessage CreateJsonResponse(HttpStatusCode statusCode, string json, string? linkHeader = null)

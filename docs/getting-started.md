@@ -321,6 +321,7 @@ Located at `src/App/SoloDevBoard.App/appsettings.json`. The relevant sections ar
 - `GitHub:Cache:RepositoriesTtlSeconds`: Absolute cache lifetime in seconds for repository catalogue responses (default `60`).
 - `GitHub:Cache:LabelsTtlSeconds`: Absolute cache lifetime in seconds for label catalogue responses (default `300`).
 - `GitHub:Cache:MilestonesTtlSeconds`: Absolute cache lifetime in seconds for milestone catalogue responses (default `300`).
+- `GitHub:Pagination:WorkflowRunsMaxPages`: Maximum number of pages to fetch for workflow run catalogue responses (default `5`, i.e. up to 500 runs at `per_page=100`).
 
 #### GitHub API performance
 
@@ -328,11 +329,12 @@ SoloDevBoard reduces GitHub API usage in two ways:
 
 - **Catalogue caching (DEC-018):** Repository, label, and milestone lists are cached in memory for the configured TTLs above. Label and milestone caches invalidate after corresponding mutations.
 - **Audit dashboard snapshot:** The Audit page fetches issues, pull requests, and workflow runs once per selected repository per load, then derives summary counters and health indicators in memory.
-- **Pagination:** REST catalogue endpoints (including workflow runs) follow GitHub `Link: rel="next"` headers until all pages are retrieved.
+- **Pagination:** REST catalogue endpoints follow GitHub `Link: rel="next"` headers until all pages are retrieved. Workflow runs are capped by `GitHub:Pagination:WorkflowRunsMaxPages` to avoid unbounded API usage on repositories with very high CI activity.
 
 Known V1 limits (accepted trade-offs for solo-developer scale):
 
 - Issues, pull requests, and workflow runs are not cached in Infrastructure; each Audit load or Triage session refetches them.
+- Workflow run pagination may omit older runs beyond the configured page cap; the Audit dashboard only needs the most recent run per workflow.
 - GraphQL project board discovery and field definitions are capped at `first: 50` per query.
 
 Leave `PersonalAccessToken` empty in `appsettings.json` and supply it via an environment variable or user secrets instead.

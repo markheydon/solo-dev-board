@@ -21,21 +21,26 @@ public sealed class GitHubService : IGitHubService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly GitHubResponseCache _responseCache;
     private readonly DocsCaptureOptions _docsCaptureOptions;
+    private readonly GitHubPaginationOptions _paginationOptions;
 
     /// <summary>Initialises a new instance of the <see cref="GitHubService"/> class.</summary>
     /// <param name="httpClientFactory">The factory used to create named <see cref="HttpClient"/> instances.</param>
     /// <param name="responseCache">The cache used for read-heavy GitHub API catalogue responses.</param>
     /// <param name="docsCaptureOptions">Docs capture mode options that restrict catalogues to public content when enabled.</param>
+    /// <param name="paginationOptions">Pagination limits for GitHub API catalogue responses.</param>
     public GitHubService(
         IHttpClientFactory httpClientFactory,
         GitHubResponseCache responseCache,
-        IOptions<DocsCaptureOptions> docsCaptureOptions)
+        IOptions<DocsCaptureOptions> docsCaptureOptions,
+        IOptions<GitHubPaginationOptions> paginationOptions)
     {
         ArgumentNullException.ThrowIfNull(docsCaptureOptions);
+        ArgumentNullException.ThrowIfNull(paginationOptions);
 
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _responseCache = responseCache ?? throw new ArgumentNullException(nameof(responseCache));
         _docsCaptureOptions = docsCaptureOptions.Value;
+        _paginationOptions = paginationOptions.Value;
     }
 
     /// <inheritdoc/>
@@ -166,7 +171,13 @@ public sealed class GitHubService : IGitHubService
         var client = CreateAuthenticatedClient();
         var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/actions/runs?per_page=100";
 
-        return await GetPagedWorkflowRunsAsync(client, endpoint, JsonOptions, cancellationToken).ConfigureAwait(false);
+        return await GetPagedWorkflowRunsAsync(
+                client,
+                endpoint,
+                JsonOptions,
+                _paginationOptions.WorkflowRunsMaxPages,
+                cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -786,61 +797,94 @@ public sealed class GitHubService : IGitHubService
         CancellationToken cancellationToken)
         where TDomain : class
     {
-        var results = new List<TDomain>();
-        // Start with the caller-supplied URL; GetNextPageUrl returns the next page URL or null when exhausted.
-        string? nextUrl = initialEndpoint;
-
-        while (!string.IsNullOrWhiteSpace(nextUrl))
-        {
-            using var response = await client.GetAsync(nextUrl, cancellationToken).ConfigureAwait(false);
-            await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
-
-            var dtos = await response.Content.ReadFromJsonAsync<List<TDto>>(jsonOptions, cancellationToken).ConfigureAwait(false)
-                ?? throw CreateInvalidResponseException("The list response body was empty.", nextUrl);
-
-            foreach (var dto in dtos)
-            {
-                var mapped = map(dto);
-                if (mapped is not null)
+        return await AccumulatePagedAsync<TDomain>(
+                client,
+                initialEndpoint,
+                async (response, ct) =>
                 {
-                    results.Add(mapped);
-                }
-            }
+                    var requestUrl = response.RequestMessage?.RequestUri?.ToString() ?? initialEndpoint;
+                    var dtos = await response.Content.ReadFromJsonAsync<List<TDto>>(jsonOptions, ct).ConfigureAwait(false)
+                        ?? throw CreateInvalidResponseException("The list response body was empty.", requestUrl);
 
-            // Advance to the next page URL extracted from the Link response header, or null to exit the loop.
-            nextUrl = GetNextPageUrl(response);
-        }
+                    var pageResults = new List<TDomain>(dtos.Count);
+                    foreach (var dto in dtos)
+                    {
+                        var mapped = map(dto);
+                        if (mapped is not null)
+                        {
+                            pageResults.Add(mapped);
+                        }
+                    }
 
-        return results;
+                    return pageResults;
+                },
+                cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Fetches all pages of a GitHub workflow runs endpoint and accumulates mapped domain entities
-    /// across all pages, following <c>Link: rel="next"</c> headers until no further pages exist.
+    /// Fetches pages of a GitHub workflow runs endpoint and accumulates mapped domain entities,
+    /// following <c>Link: rel="next"</c> headers until no further pages exist or <paramref name="maxPages"/> is reached.
     /// </summary>
     /// <param name="client">The <see cref="HttpClient"/> configured for the GitHub API.</param>
     /// <param name="initialEndpoint">The relative URL of the first page to fetch.</param>
     /// <param name="jsonOptions">The JSON serialisation options.</param>
+    /// <param name="maxPages">The maximum number of pages to fetch.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
-    /// <returns>A read-only list of all mapped workflow runs across all pages.</returns>
+    /// <returns>A read-only list of mapped workflow runs across the fetched pages.</returns>
     internal static async Task<IReadOnlyList<WorkflowRun>> GetPagedWorkflowRunsAsync(
         HttpClient client,
         string initialEndpoint,
         JsonSerializerOptions jsonOptions,
+        int maxPages,
         CancellationToken cancellationToken)
     {
-        var results = new List<WorkflowRun>();
-        string? nextUrl = initialEndpoint;
+        return await AccumulatePagedAsync<WorkflowRun>(
+                client,
+                initialEndpoint,
+                async (response, ct) =>
+                {
+                    var requestUrl = response.RequestMessage?.RequestUri?.ToString() ?? initialEndpoint;
+                    var workflowRunsResponse = await response.Content.ReadFromJsonAsync<WorkflowRunsResponseDto>(jsonOptions, ct).ConfigureAwait(false)
+                        ?? throw CreateInvalidResponseException("Workflow runs response was empty.", requestUrl);
 
-        while (!string.IsNullOrWhiteSpace(nextUrl))
+                    return workflowRunsResponse.WorkflowRuns.ConvertAll(static workflowRun => workflowRun.ToDomain());
+                },
+                cancellationToken,
+                maxPages)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Fetches pages from a GitHub API endpoint and accumulates items returned by <paramref name="readPageAsync"/>,
+    /// following <c>Link: rel="next"</c> headers until no further pages exist or <paramref name="maxPages"/> is reached.
+    /// </summary>
+    /// <typeparam name="TItem">The item type accumulated across pages.</typeparam>
+    /// <param name="client">The <see cref="HttpClient"/> configured for the GitHub API.</param>
+    /// <param name="initialEndpoint">The relative URL of the first page to fetch.</param>
+    /// <param name="readPageAsync">A function that reads and maps items from a single page response.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <param name="maxPages">The maximum number of pages to fetch.</param>
+    /// <returns>A read-only list of all items across the fetched pages.</returns>
+    internal static async Task<IReadOnlyList<TItem>> AccumulatePagedAsync<TItem>(
+        HttpClient client,
+        string initialEndpoint,
+        Func<HttpResponseMessage, CancellationToken, Task<IReadOnlyList<TItem>>> readPageAsync,
+        CancellationToken cancellationToken,
+        int maxPages = int.MaxValue)
+    {
+        var results = new List<TItem>();
+        string? nextUrl = initialEndpoint;
+        var pagesFetched = 0;
+
+        while (!string.IsNullOrWhiteSpace(nextUrl) && pagesFetched < maxPages)
         {
+            pagesFetched++;
             using var response = await client.GetAsync(nextUrl, cancellationToken).ConfigureAwait(false);
             await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
 
-            var workflowRunsResponse = await response.Content.ReadFromJsonAsync<WorkflowRunsResponseDto>(jsonOptions, cancellationToken).ConfigureAwait(false)
-                ?? throw CreateInvalidResponseException("Workflow runs response was empty.", nextUrl);
-
-            results.AddRange(workflowRunsResponse.WorkflowRuns.ConvertAll(static workflowRun => workflowRun.ToDomain()));
+            var pageItems = await readPageAsync(response, cancellationToken).ConfigureAwait(false);
+            results.AddRange(pageItems);
             nextUrl = GetNextPageUrl(response);
         }
 

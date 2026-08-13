@@ -92,7 +92,11 @@ public sealed class AuditDashboardService : IAuditDashboardService
             failingWorkflowRuns.AddRange(BuildFailingWorkflowRuns(repositoryData));
         }
 
-        return new AuditDashboardSnapshotDto(summaries, unlabelledIssues, stalePullRequests, failingWorkflowRuns);
+        return new AuditDashboardSnapshotDto(
+            summaries.ToArray(),
+            unlabelledIssues.ToArray(),
+            stalePullRequests.ToArray(),
+            failingWorkflowRuns.ToArray());
     }
 
     /// <inheritdoc/>

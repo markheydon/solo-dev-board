@@ -53,6 +53,17 @@ public static class InfrastructureServiceExtensions
             })
             .ValidateOnStart();
         services.AddSingleton<IValidateOptions<GitHubCacheOptions>, GitHubCacheOptionsValidator>();
+        services.AddOptions<GitHubPaginationOptions>()
+            .Bind(configuration.GetSection(GitHubPaginationOptions.SectionName))
+            .PostConfigure(static options =>
+            {
+                if (options.WorkflowRunsMaxPages == 0)
+                {
+                    options.WorkflowRunsMaxPages = 5;
+                }
+            })
+            .ValidateOnStart();
+        services.AddSingleton<IValidateOptions<GitHubPaginationOptions>, GitHubPaginationOptionsValidator>();
         services.AddMemoryCache();
         services.Configure<HostedAdmissionControlOptions>(configuration.GetSection(HostedAdmissionControlOptions.SectionName));
         services.AddSingleton<ResolvedPatOwnerLogin>();
