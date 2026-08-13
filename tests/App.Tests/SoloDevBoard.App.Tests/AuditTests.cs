@@ -210,6 +210,47 @@ public sealed class AuditTests
     }
 
     [Fact]
+    public async Task Audit_WhenWorkflowHealthFails_KeepsCoreAuditDataVisible()
+    {
+        // Arrange
+        var summary = new List<RepositoryAuditSummaryDto>
+        {
+            new("owner/repo-a", 2, 1, 1, 0, 0),
+        };
+
+        var issues = new List<IssueDto>
+        {
+            new(12, "Needs triage", "https://github.com/owner/repo-a/issues/12", "owner/repo-a", DateTimeOffset.UtcNow.AddDays(-5), DateTimeOffset.UtcNow.AddDays(-2)),
+        };
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
+        _auditDashboardService
+            .GetDashboardSnapshotAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), false, Arg.Any<CancellationToken>())
+            .Returns(CreateSnapshot(summary, issues));
+        _auditDashboardService
+            .GetFailingWorkflowRunsAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>())
+            .Returns<Task<IReadOnlyList<WorkflowRunDto>>>(_ => throw new HttpRequestException("GitHub API request failed."));
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Audit>();
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-command-surface']")));
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo-a" }));
+        cut.Find("[data-testid='audit-load-selected-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='audit-summary-table']"));
+            Assert.Contains("Needs triage", cut.Markup);
+            Assert.DoesNotContain("Unable to load audit summary", cut.Markup);
+            Assert.Contains("No failing workflows — great!", cut.Markup);
+        });
+    }
+
+    [Fact]
     public async Task Audit_WhenHealthIndicatorsAreEmpty_ShowsZeroStateMessages()
     {
         // Arrange

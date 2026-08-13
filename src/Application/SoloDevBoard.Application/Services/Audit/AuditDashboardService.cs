@@ -170,11 +170,13 @@ public sealed class AuditDashboardService : IAuditDashboardService
         var repositoryReferences = GetRepositoryReferences(repos);
         var workflowTasks = repositoryReferences.Select(async repositoryReference =>
         {
-            var workflowRuns = await _gitHubService
-                .GetWorkflowRunsAsync(repositoryReference.Owner, repositoryReference.RepoName, cancellationToken)
-                .ConfigureAwait(false);
+            var repositoryFullName = BuildRepositoryFullName(repositoryReference.Owner, repositoryReference.RepoName);
+            var workflowRuns = await GetRepositoryResourceSafeAsync(
+                () => _gitHubService.GetWorkflowRunsAsync(repositoryReference.Owner, repositoryReference.RepoName, cancellationToken),
+                repositoryFullName,
+                "workflow runs").ConfigureAwait(false);
 
-            return BuildFailingWorkflowRuns(repositoryReference.FullName, workflowRuns);
+            return BuildFailingWorkflowRuns(repositoryFullName, workflowRuns);
         });
 
         var workflowRunsByRepository = await Task.WhenAll(workflowTasks).ConfigureAwait(false);

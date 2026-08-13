@@ -236,6 +236,30 @@ public partial class Audit : ComponentBase, IAsyncDisposable
                 ApplyWorkflowCountsToSummaries();
                 totalFailingWorkflows = repositorySummaries.Sum(result => result.FailingWorkflowCount);
             }
+            catch (HttpRequestException ex)
+            {
+                Logger.LogWarning(ex, "Failed to load workflow health for selected audit repositories.");
+                if (isBackgroundRefresh)
+                {
+                    Snackbar.Add($"Workflow health refresh failed. {ex.Message}", Severity.Warning);
+                }
+                else
+                {
+                    Snackbar.Add($"Workflow health could not be loaded. {ex.Message}", Severity.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Failed to load workflow health for selected audit repositories.");
+                if (isBackgroundRefresh)
+                {
+                    Snackbar.Add("Workflow health refresh failed due to an unexpected error.", Severity.Warning);
+                }
+                else
+                {
+                    Snackbar.Add("Workflow health could not be loaded due to an unexpected error.", Severity.Warning);
+                }
+            }
             finally
             {
                 isLoadingWorkflowHealth = false;

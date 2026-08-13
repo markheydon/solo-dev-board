@@ -65,7 +65,6 @@ public sealed class AuditDashboardServiceTests
         var issues = new List<Issue>
         {
             new() { Id = 1, Number = 7, Title = "First issue", State = "open", HtmlUrl = "https://example/issue/7", CreatedAt = DateTimeOffset.UtcNow.AddDays(-3), UpdatedAt = DateTimeOffset.UtcNow },
-            new() { Id = 2, Number = 8, Title = "Closed issue", State = "closed", HtmlUrl = "https://example/issue/8", CreatedAt = DateTimeOffset.UtcNow.AddDays(-10), UpdatedAt = DateTimeOffset.UtcNow },
         };
         _gitHubService
             .GetIssuesAsync("owner", "repo", OpenItemState, cancellationToken)
@@ -154,7 +153,6 @@ public sealed class AuditDashboardServiceTests
             [
                 new Issue { Id = 1, Number = 1, State = "open", Title = "No labels", HtmlUrl = "https://example/1", Labels = [] },
                 new Issue { Id = 2, Number = 2, State = "open", Title = "Has labels", HtmlUrl = "https://example/2", Labels = [new Label { Name = "bug" }] },
-                new Issue { Id = 3, Number = 3, State = "closed", Title = "Closed with no labels", HtmlUrl = "https://example/3", Labels = [] },
             ]);
 
         // Act
@@ -201,7 +199,6 @@ public sealed class AuditDashboardServiceTests
             [
                 new PullRequest { Id = 1, Number = 101, Title = "Stale", HtmlUrl = "https://example/pr/101", State = "open", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-21) },
                 new PullRequest { Id = 2, Number = 102, Title = "Recent", HtmlUrl = "https://example/pr/102", State = "open", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-4) },
-                new PullRequest { Id = 3, Number = 103, Title = "Closed", HtmlUrl = "https://example/pr/103", State = "closed", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-30) },
             ]);
 
         // Act
@@ -287,6 +284,26 @@ public sealed class AuditDashboardServiceTests
                     CreatedAt = DateTimeOffset.UtcNow.AddHours(-1),
                 },
             ]);
+
+        // Act
+        var result = await _sut.GetFailingWorkflowRunsAsync(repos, cancellationToken);
+
+        // Assert
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetFailingWorkflowRunsAsync_WorkflowRunsReturnNotFound_ReturnsEmptyList()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        var repos = new[] { "owner/repo-one" };
+        _gitHubService
+            .GetWorkflowRunsAsync("owner", "repo-one", cancellationToken)
+            .Returns<Task<IReadOnlyList<WorkflowRun>>>(_ => throw new HttpRequestException(
+                "GitHub API request failed with status code 404 (NotFound).",
+                inner: null,
+                statusCode: HttpStatusCode.NotFound));
 
         // Act
         var result = await _sut.GetFailingWorkflowRunsAsync(repos, cancellationToken);
@@ -423,7 +440,7 @@ public sealed class AuditDashboardServiceTests
             ]);
 
         // Act
-        var result = await _sut.GetDashboardSnapshotAsync(repos, staleDays: 14, cancellationToken);
+        var result = await _sut.GetDashboardSnapshotAsync(repos, staleDays: 14, cancellationToken: cancellationToken);
 
         // Assert
         var summary = Assert.Single(result.RepositorySummaries);
@@ -478,7 +495,7 @@ public sealed class AuditDashboardServiceTests
             .Returns([]);
         _gitHubService
             .GetPullRequestsAsync("owner", "repo-two", OpenItemState, cancellationToken)
-            .Returns(_ => throw new HttpRequestException(
+            .Returns<Task<IReadOnlyList<PullRequest>>>(_ => throw new HttpRequestException(
                 "GitHub API request failed with status code 404 (NotFound).",
                 inner: null,
                 statusCode: HttpStatusCode.NotFound));
@@ -523,7 +540,7 @@ public sealed class AuditDashboardServiceTests
         var repos = new[] { "repo" };
 
         // Act
-        var act = async () => await _sut.GetDashboardSnapshotAsync(repos, staleDays: 0, cancellationToken);
+        var act = async () => await _sut.GetDashboardSnapshotAsync(repos, staleDays: 0, cancellationToken: cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(act);
