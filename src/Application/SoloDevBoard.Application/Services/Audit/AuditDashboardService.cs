@@ -1,3 +1,5 @@
+using System.Net;
+using Microsoft.Extensions.Logging;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Domain.Entities.Triage;
@@ -12,17 +14,24 @@ public sealed class AuditDashboardService : IAuditDashboardService
 
     private readonly IGitHubService _gitHubService;
     private readonly ICurrentUserContext _currentUserContext;
+    private readonly ILogger<AuditDashboardService> _logger;
 
     /// <summary>Initialises a new instance of the <see cref="AuditDashboardService"/> class.</summary>
     /// <param name="gitHubService">The GitHub service used for repository data retrieval.</param>
     /// <param name="currentUserContext">The current user context used to resolve the owner login.</param>
-    public AuditDashboardService(IGitHubService gitHubService, ICurrentUserContext currentUserContext)
+    /// <param name="logger">The logger used for audit dashboard diagnostics.</param>
+    public AuditDashboardService(
+        IGitHubService gitHubService,
+        ICurrentUserContext currentUserContext,
+        ILogger<AuditDashboardService> logger)
     {
         ArgumentNullException.ThrowIfNull(gitHubService);
         ArgumentNullException.ThrowIfNull(currentUserContext);
+        ArgumentNullException.ThrowIfNull(logger);
 
         _gitHubService = gitHubService;
         _currentUserContext = currentUserContext;
+        _logger = logger;
     }
 
     /// <inheritdoc/>
@@ -246,18 +255,52 @@ public sealed class AuditDashboardService : IAuditDashboardService
 
     private async Task<RepositoryAuditData> LoadRepositoryAuditDataAsync(string owner, string repoName, CancellationToken cancellationToken)
     {
-        var issuesTask = _gitHubService.GetIssuesAsync(owner, repoName, cancellationToken);
-        var pullRequestsTask = _gitHubService.GetPullRequestsAsync(owner, repoName, cancellationToken);
-        var workflowRunsTask = _gitHubService.GetWorkflowRunsAsync(owner, repoName, cancellationToken);
+        var repositoryFullName = BuildRepositoryFullName(owner, repoName);
+        var issuesTask = GetRepositoryResourceSafeAsync(
+            () => _gitHubService.GetIssuesAsync(owner, repoName, cancellationToken),
+            repositoryFullName,
+            "issues");
+        var pullRequestsTask = GetRepositoryResourceSafeAsync(
+            () => _gitHubService.GetPullRequestsAsync(owner, repoName, cancellationToken),
+            repositoryFullName,
+            "pull requests");
+        var workflowRunsTask = GetRepositoryResourceSafeAsync(
+            () => _gitHubService.GetWorkflowRunsAsync(owner, repoName, cancellationToken),
+            repositoryFullName,
+            "workflow runs");
 
         await Task.WhenAll(issuesTask, pullRequestsTask, workflowRunsTask).ConfigureAwait(false);
 
         return new RepositoryAuditData(
-            BuildRepositoryFullName(owner, repoName),
+            repositoryFullName,
             await issuesTask.ConfigureAwait(false),
             await pullRequestsTask.ConfigureAwait(false),
             await workflowRunsTask.ConfigureAwait(false));
     }
+
+    private async Task<IReadOnlyList<T>> GetRepositoryResourceSafeAsync<T>(
+        Func<Task<IReadOnlyList<T>>> fetch,
+        string repositoryFullName,
+        string resourceName)
+    {
+        try
+        {
+            return await fetch().ConfigureAwait(false);
+        }
+        catch (HttpRequestException ex) when (IsSkippableGitHubStatus(ex.StatusCode))
+        {
+            _logger.LogWarning(
+                ex,
+                "Skipping {ResourceName} for {RepositoryFullName} because the GitHub API returned {StatusCode}.",
+                resourceName,
+                repositoryFullName,
+                ex.StatusCode);
+            return [];
+        }
+    }
+
+    private static bool IsSkippableGitHubStatus(HttpStatusCode? statusCode)
+        => statusCode is HttpStatusCode.NotFound or HttpStatusCode.Forbidden or HttpStatusCode.Gone;
 
     private async Task<RepositoryAuditSummaryDto> BuildRepositoryAuditSummaryAsync(string owner, string repoName, CancellationToken cancellationToken)
     {

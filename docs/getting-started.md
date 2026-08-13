@@ -335,6 +335,7 @@ Known V1 limits (accepted trade-offs for solo-developer scale):
 
 - Issues, pull requests, and workflow runs are not cached in Infrastructure; each Audit load or Triage session refetches them.
 - Workflow run pagination may omit older runs beyond the configured page cap; the Audit dashboard only needs the most recent run per workflow.
+- When auditing many repositories, individual repositories that return `404`, `403`, or `410` for issues, pull requests, or workflow runs are skipped for that resource and the dashboard continues with partial results.
 - GraphQL project board discovery and field definitions are capped at `first: 50` per query.
 
 Leave `PersonalAccessToken` empty in `appsettings.json` and supply it via an environment variable or user secrets instead.

@@ -1,3 +1,5 @@
+using System.Net;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.Audit;
@@ -18,7 +20,7 @@ public sealed class AuditDashboardServiceTests
     public AuditDashboardServiceTests()
     {
         _currentUserContext.OwnerLogin.Returns("owner");
-        _sut = new AuditDashboardService(_gitHubService, _currentUserContext);
+        _sut = new AuditDashboardService(_gitHubService, _currentUserContext, NullLogger<AuditDashboardService>.Instance);
     }
 
     [Fact]
@@ -458,6 +460,36 @@ public sealed class AuditDashboardServiceTests
         Assert.IsType<IssueDto[]>(result.UnlabelledIssues);
         Assert.IsType<PullRequestDto[]>(result.StalePullRequests);
         Assert.IsType<WorkflowRunDto[]>(result.FailingWorkflowRuns);
+    }
+
+    [Fact]
+    public async Task GetDashboardSnapshotAsync_RepositoryResourceReturnsNotFound_ReturnsPartialSnapshot()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        var repos = new[] { "owner/repo-one", "owner/repo-two" };
+        _gitHubService
+            .GetIssuesAsync("owner", Arg.Any<string>(), cancellationToken)
+            .Returns([]);
+        _gitHubService
+            .GetPullRequestsAsync("owner", "repo-one", cancellationToken)
+            .Returns([]);
+        _gitHubService
+            .GetPullRequestsAsync("owner", "repo-two", cancellationToken)
+            .Returns(_ => throw new HttpRequestException(
+                "GitHub API request failed with status code 404 (NotFound).",
+                inner: null,
+                statusCode: HttpStatusCode.NotFound));
+        _gitHubService
+            .GetWorkflowRunsAsync("owner", Arg.Any<string>(), cancellationToken)
+            .Returns([]);
+
+        // Act
+        var result = await _sut.GetDashboardSnapshotAsync(repos, cancellationToken: cancellationToken);
+
+        // Assert
+        Assert.Equal(2, result.RepositorySummaries.Count);
+        Assert.Empty(result.StalePullRequests);
     }
 
     [Fact]

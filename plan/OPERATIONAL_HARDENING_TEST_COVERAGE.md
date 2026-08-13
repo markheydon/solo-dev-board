@@ -34,6 +34,7 @@ Out of scope for this tranche: caching issues, pull requests, workflow runs, Gra
 | Workflow runs paginate via `Link: rel="next"` headers | Unit (mocked HTTP) | `tests/Infrastructure.Tests/.../GitHubServiceTests.cs` |
 | Workflow run pagination honours configured max page limit | Unit (mocked HTTP) | `GitHubServiceTests.cs` |
 | Audit dashboard snapshot returns immutable collections | Unit | `AuditDashboardServiceTests.cs` |
+| Audit dashboard snapshot skips unavailable repository resources and continues | Unit | `AuditDashboardServiceTests.cs` |
 | Audit page loads dashboard data via snapshot API | Component (bUnit) | `tests/App.Tests/.../AuditTests.cs` |
 
 Volatile-data Infrastructure caching (issues, pull requests, workflow runs) remains out of scope for V1. GraphQL project board `first: 50` limits are documented in [getting-started.md](../docs/getting-started.md#github-api-performance).
