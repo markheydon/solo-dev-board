@@ -20,8 +20,8 @@ const string HostedSignInStateCookieName = "solo-dev-board.hosted-sign-in-state"
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
-var hostedSignInEnabled = builder.Configuration.GetSection(GitHubAuthOptions.SectionName)
-    .GetValue<bool>(nameof(GitHubAuthOptions.HostedSignInEnabled));
+var hostedSignInEnabled = builder.Configuration.GetValue<bool>(
+    $"{GitHubAuthOptions.SectionName}:{nameof(GitHubAuthOptions.HostedSignInEnabled)}");
 var hostedOAuthFallbackEnabled = builder.Configuration.GetSection(GitHubAuthOptions.SectionName)
     .GetValue<bool>(nameof(GitHubAuthOptions.HostedOAuthAppFallbackEnabled));
 var hostedCallbackBaseUri = builder.Configuration.GetSection(GitHubAuthOptions.SectionName)
@@ -83,6 +83,8 @@ if (hostedSignInEnabled)
             options.Events = HostedCookieAuthenticationEvents.Create(hostedAuthOptions);
         });
 
+    // Do not set FallbackPolicy: it challenges static assets (/_framework, /_content) before
+    // Blazor can start. Page protection uses AuthorizeRouteView; HTTP protection uses admission middleware.
     builder.Services.AddAuthorization();
 }
 
@@ -128,7 +130,7 @@ if (hostedSignInEnabled)
         var reason = context.Request.Query["reason"].ToString();
         var page = HostedAuthErrorPageRenderer.Render(context, reason, authOptionsAccessor.Value);
         return Results.Content(page.Html, "text/html; charset=utf-8", statusCode: page.StatusCode);
-    });
+    }).AllowAnonymous();
 
     app.MapGet("/auth/sign-in", static (HttpContext context, HostedGitHubAuthGateway authGateway, IOptions<GitHubAuthOptions> optionsAccessor) =>
     {
@@ -153,7 +155,7 @@ if (hostedSignInEnabled)
             });
 
         return Results.Redirect(authoriseUrl);
-    });
+    }).AllowAnonymous();
 
     app.MapGet("/auth/callback", static async (
         HttpContext context,
@@ -218,16 +220,17 @@ if (hostedSignInEnabled)
             .ConfigureAwait(false);
 
         return Results.Redirect(returnUrl);
-    });
+    }).AllowAnonymous();
 
     if (hostedOAuthFallbackEnabled)
     {
         app.MapGet("/auth/sign-in/oauth-fallback", static () =>
-            Results.Redirect(HostedAuthErrorRoutes.BuildErrorUrl(HostedAuthErrorRoutes.SignInMisconfigured)));
+            Results.Redirect(HostedAuthErrorRoutes.BuildErrorUrl(HostedAuthErrorRoutes.SignInMisconfigured)))
+            .AllowAnonymous();
     }
 
-    app.MapGet("/auth/sign-out", (Delegate)SignOutHostedSession);
-    app.MapPost("/auth/sign-out", (Delegate)SignOutHostedSession).DisableAntiforgery();
+    app.MapGet("/auth/sign-out", (Delegate)SignOutHostedSession).AllowAnonymous();
+    app.MapPost("/auth/sign-out", (Delegate)SignOutHostedSession).DisableAntiforgery().AllowAnonymous();
 
     app.MapGet("/auth/session-expired", static async (HttpContext context) =>
     {
@@ -236,7 +239,7 @@ if (hostedSignInEnabled)
         await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme).ConfigureAwait(false);
 
         return Results.Redirect(HostedAuthErrorRoutes.BuildErrorUrl(HostedAuthErrorRoutes.SessionExpired, returnUrl));
-    });
+    }).AllowAnonymous();
 }
 
 app.MapGet("/auth/connectivity-error", static (HttpContext context) =>
@@ -244,10 +247,18 @@ app.MapGet("/auth/connectivity-error", static (HttpContext context) =>
     var reason = context.Request.Query["reason"].ToString();
     var page = PatConnectivityErrorPageRenderer.Render(context, reason);
     return Results.Content(page.Html, "text/html; charset=utf-8", statusCode: page.StatusCode);
-});
+}).AllowAnonymous();
 
-app.MapRazorComponents<App>()
+// Hosted sign-in uses AuthorizeRouteView and admission middleware for page protection.
+// Do not call RequireAuthorization() here: it challenges Blazor infrastructure endpoints
+// (for example POST /_blazor/negotiate) before the circuit starts, leaving /welcome blank.
+var razorComponents = app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+if (hostedSignInEnabled)
+{
+    razorComponents.AllowAnonymous();
+}
 
 app.Run();
 

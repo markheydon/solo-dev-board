@@ -4,7 +4,7 @@ Aspire orchestrates the SoloDevBoard web app for local development, dev containe
 
 GitHub authentication is configured through **AppHost parameters**. In local development they are injected into the `app` resource as environment variables. In deploy mode, secret parameters are persisted in Azure Key Vault and referenced by the Container App.
 
-Use `-` on inactive parameters. Shipped defaults are in `src/SoloDevBoard.AppHost/appsettings.json`; production non-secret defaults are in `src/SoloDevBoard.AppHost/appsettings.Production.json`. Values saved from the Aspire dashboard are stored in user secrets and **override** those defaults.
+Use `-` on inactive parameters. Shipped defaults are in `src/SoloDevBoard.AppHost/appsettings.json`; staging and production non-secret defaults are in `appsettings.Staging.json` and `appsettings.Production.json` respectively. Values saved from the Aspire dashboard are stored in user secrets and **override** those defaults.
 
 ## Choose your authentication mode
 
@@ -65,6 +65,15 @@ Open the `app` resource URL shown by `aspire describe`.
 
 Application Insights is deploy-time only. Local telemetry uses the Aspire dashboard via OTLP; no Azure subscription or deployment metadata is required.
 
+## CD pipeline tiers
+
+GitHub Actions CD deploys to two hosted tiers sharing one Azure resource group (see [DEC-021](../../plan/DECISIONS.md#dec-021-two-tier-cd-pipeline-with-shared-azure-resource-group) and [docs/deployment.md](../../docs/deployment.md#cd-pipeline-tiers-dec-021)). PAT mode is for local development and personal self-hosting via local `aspire deploy` only.
+
+| Tier | Aspire `--environment` | Authentication |
+|---|---|---|
+| Staging (push to `main`) | `Staging` | GitHub App hosted sign-in |
+| Production (push tag `v*`) | `Production` | GitHub App hosted sign-in |
+
 ## Production deployment
 
 Deployment uses `aspire deploy` to Azure Container Apps with scale-to-zero. Application Insights and structured logging are provisioned automatically. See [docs/deployment.md](../docs/deployment.md) and [docs/observability.md](../docs/observability.md) for the full operator guide.
@@ -85,6 +94,10 @@ In publish/deploy mode, hosted authentication secrets are persisted in an Aspire
 Local `aspire start` continues to bind these parameters directly from user secrets or the Aspire dashboard. Deploy-time input is unchanged: supply `Parameters__gh_pat` and `Parameters__gh_app_client_secret` as before.
 
 See [plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md](../../plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md) for the full pattern.
+
+### Custom domain
+
+Deploy-only parameters `custom-domain` and `custom-domain-certificate-name` default to `-`. When `custom-domain` is set, the AppHost calls `ConfigureCustomDomain` so `aspire deploy` preserves the hostname and managed certificate binding on Azure Container Apps. Provision DNS and the managed certificate once in Azure, then set both parameters (or `CUSTOM_DOMAIN` / `CUSTOM_DOMAIN_CERTIFICATE_NAME` on the GitHub Environment). See [docs/deployment.md — Custom domain](../../docs/deployment.md#custom-domain-container-apps).
 
 Preview deployment steps:
 
@@ -108,6 +121,9 @@ AppHost parameters map to workflow environment variables with underscores instea
 | `hosted-admission-enabled` | `Parameters__hosted_admission_enabled` |
 | `allowed-user-logins` | `Parameters__allowed_user_logins` |
 | `allowed-org-logins` | `Parameters__allowed_org_logins` |
+| `hosted-callback-base-uri` | `Parameters__hosted_callback_base_uri` / `HOSTED_CALLBACK_BASE_URI` |
+| `custom-domain` | `Parameters__custom_domain` / `CUSTOM_DOMAIN` |
+| `custom-domain-certificate-name` | `Parameters__custom_domain_certificate_name` / `CUSTOM_DOMAIN_CERTIFICATE_NAME` |
 
 Azure deployment settings:
 

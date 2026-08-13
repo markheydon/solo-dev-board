@@ -95,12 +95,36 @@ public sealed class HostedAdmissionControlMiddlewareTests
     }
 
     [Fact]
+    public async Task InvokeAsync_UnauthenticatedUser_ChallengesWelcomePage()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        var context = CreateHttpContext(isAuthenticated: false, acceptHeader: "text/html");
+        ConfigureAuthentication(context, loginPath: "/welcome");
+        var nextCalled = false;
+        var middleware = CreateMiddleware(_ =>
+        {
+            nextCalled = true;
+            return Task.CompletedTask;
+        });
+        var evaluator = CreateEvaluator(new HostedAdmissionDecision(false, "Hosted request is not authenticated."));
+
+        // Act
+        await middleware.InvokeAsync(context, evaluator);
+
+        // Assert
+        Assert.False(nextCalled);
+        Assert.Equal(StatusCodes.Status302Found, context.Response.StatusCode);
+        Assert.Contains("/welcome", context.Response.Headers.Location.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task InvokeAsync_UnauthenticatedUser_ChallengesSignIn()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
         var context = CreateHttpContext(isAuthenticated: false, acceptHeader: "text/html");
-        ConfigureAuthentication(context);
+        ConfigureAuthentication(context, loginPath: "/auth/sign-in");
         var nextCalled = false;
         var middleware = CreateMiddleware(_ =>
         {
@@ -211,13 +235,13 @@ public sealed class HostedAdmissionControlMiddlewareTests
         return context;
     }
 
-    private static void ConfigureAuthentication(HttpContext context)
+    private static void ConfigureAuthentication(HttpContext context, string loginPath = "/welcome")
     {
         var services = new ServiceCollection();
         services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
             .AddCookie(options =>
             {
-                options.LoginPath = "/auth/sign-in";
+                options.LoginPath = loginPath;
             });
         services.AddLogging();
 

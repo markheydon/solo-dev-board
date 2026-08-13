@@ -15,9 +15,13 @@ concurrency:
 
 jobs:
   validate:
-    name: Aspire deploy list-steps
+    name: Aspire deploy list-steps (${{ matrix.aspire_environment }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        aspire_environment: [Staging, Production]
     env:
       DOTNET_CLI_TELEMETRY_OPTOUT: 1
       DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
@@ -43,4 +47,4 @@ jobs:
           echo "$HOME/.aspire/bin" >> "$GITHUB_PATH"
 
       - name: Validate Aspire deployment steps
-        run: aspire deploy --list-steps --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --environment Staging --non-interactive
+        run: aspire deploy --list-steps --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --environment ${{ matrix.aspire_environment }} --non-interactive

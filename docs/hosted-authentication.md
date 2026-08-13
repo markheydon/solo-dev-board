@@ -51,6 +51,16 @@ To exercise hosted sign-in locally (production-like, multi-tenant behaviour):
 
 See [`src/SoloDevBoard.AppHost/README.md`](../../src/SoloDevBoard.AppHost/README.md) and [Getting Started — hosted sign-in setup](getting-started.md#hosted-sign-in-mode-setup) for parameter details.
 
+## Continuous integration
+
+CI runs a dedicated Playwright job (`e2e-hosted` in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)) that starts the app with placeholder GitHub App credentials and asserts the login gate without live OAuth:
+
+- Unauthenticated `/` and protected routes redirect to `/welcome`.
+- The welcome landing shows the **Sign in with GitHub** action.
+- `POST /_blazor/negotiate` succeeds so the Blazor circuit can start before sign-in.
+
+Full OAuth callback and post-login journeys remain manual or staging validation. See [tests/E2E/CRITICAL_JOURNEYS.md](../tests/E2E/CRITICAL_JOURNEYS.md).
+
 ## Fallback and Local Trusted Modes
 
 - **PAT-only local trusted mode** remains available for development and trusted personal self-hosting. It does not require hosted sign-in infrastructure. See [Getting Started — PAT-only local trusted mode](getting-started.md#pat-only-local-trusted-mode) and [PAT Connectivity](pat-connectivity.md).

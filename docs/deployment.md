@@ -15,6 +15,17 @@ Choose an authentication mode **before** you deploy:
 
 Both paths use the same Aspire / Azure Container Apps stack. Only the AppHost parameters and GitHub Environment secrets differ.
 
+## CD pipeline tiers (DEC-021)
+
+GitHub Actions CD (`.github/workflows/cd.yml`) deploys to two hosted tiers that share one Azure resource group. Aspire environment suffixes distinguish resources within that group. Both tiers use GitHub App hosted sign-in. PAT-only mode is for local development and personal self-hosting via local `aspire deploy` only — not as a hosted CD tier.
+
+| Tier | Trigger | GitHub Environment | Aspire `--environment` | Authentication |
+|---|---|---|---|---|
+| **Staging** | Merge to `main`, or **Actions → CD - Deploy to Azure → Run workflow** (manual staging deploy) | `staging` | `Staging` | GitHub App hosted sign-in |
+| **Production** | Push tag `v*` | `production` | `Production` | GitHub App hosted sign-in |
+
+End-user documentation in `user-docs/` is published to GitHub Pages on `v*` release tags only. Pull requests validate Hugo builds via `hugo-ci.yml` without publishing.
+
 ---
 
 ## Prerequisites
@@ -38,11 +49,9 @@ Use this path when you want a **personal** SoloDevBoard instance on your own Azu
 
 1. An Azure subscription and a resource group (step 1 under [One-time Azure setup](#one-time-azure-setup)).
 2. A GitHub PAT with scopes `repo`, `read:org`, `workflow`, and `read:project` (same as local development).
-3. Either:
-   - **Local `aspire deploy`** (simplest for a personal instance — no GitHub Actions OIDC required), or
-   - **GitHub Actions CD** (same workflow as production; configure the environment for PAT mode).
+3. **Local `aspire deploy`** (no GitHub Actions OIDC required).
 
-### Option A — Deploy locally with `aspire deploy` (recommended for first personal instance)
+### Deploy locally with `aspire deploy` (recommended for personal instances)
 
 1. Complete [Create a resource group](#1-create-a-resource-group) (OIDC identity is optional for this option).
 2. Log in and export Azure + PAT-mode parameters:
@@ -87,34 +96,6 @@ aspire deploy \
 
 Secret parameters (`gh-pat`, and `gh-app-client-secret` when used) are written to the Aspire-provisioned `auth-secrets` Key Vault and referenced by the Container App. You do not create Key Vault secrets by hand.
 
-### Option B — Deploy via GitHub Actions in PAT mode
-
-Complete the full [One-time Azure setup](#one-time-azure-setup) (resource group + OIDC), then configure the GitHub environment for PAT mode:
-
-**Secrets**
-
-| Secret | Value |
-|---|---|
-| `AZURE_CLIENT_ID` | Managed identity `clientId` |
-| `AZURE_TENANT_ID` | `az account show --query tenantId -o tsv` |
-| `AZURE_SUBSCRIPTION_ID` | `az account show --query id -o tsv` |
-| `GH_PAT` | Your GitHub personal access token |
-| `GH_APP_CLIENT_SECRET` | `-` (not used in PAT mode; still required by the workflow mapping) |
-
-**Variables**
-
-| Variable | Value | Purpose |
-|---|---|---|
-| `AZURE_LOCATION` | e.g. `uksouth` | Azure region |
-| `AZURE_RESOURCE_GROUP` | e.g. `rg-solodevboard-prod` | Target resource group |
-| `HOSTED_SIGN_IN_ENABLED` | `false` | Keep PAT-only mode |
-| `HOSTED_ADMISSION_ENABLED` | `true` | Ignored in PAT mode |
-| `GH_APP_CLIENT_ID` | `-` | Inactive in PAT mode |
-| `ALLOWED_USER_LOGINS` | `-` | Inactive in PAT mode |
-| `ALLOWED_ORG_LOGINS` | `-` | Inactive in PAT mode |
-
-Then run **Actions → CD - Deploy to Azure → Run workflow**. No GitHub App callback URL is required for PAT mode.
-
 ### PAT-mode parameter and environment variable cheat sheet
 
 | AppHost parameter | CD / local env var | Self-hoster (PAT) value |
@@ -145,7 +126,7 @@ az group create \
   --location uksouth
 ```
 
-Replace the name and region as needed. Set `AZURE_RESOURCE_GROUP` in the GitHub `production` environment to this value.
+Replace the name and region as needed. Set `AZURE_RESOURCE_GROUP` in each GitHub Environment (`staging`, `production`) to this same value.
 
 ### 2. Create a GitHub Actions OIDC identity
 
@@ -158,7 +139,6 @@ RESOURCE_GROUP="rg-solodevboard-prod"
 LOCATION="uksouth"
 GITHUB_ORG="markheydon"
 GITHUB_REPO="solo-dev-board"
-GITHUB_ENV="production"
 IDENTITY_NAME="id-solodevboard-cd-prod"
 ```
 
@@ -185,25 +165,37 @@ az role assignment create \
   --scope "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP"
 ```
 
-Create a federated credential for the GitHub `production` environment:
+Aspire deploy also creates managed-identity role assignments (for example Key Vault and Container Registry access). Grant **User Access Administrator** on the same resource group scope so the CD identity can create those assignments:
+
+```bash
+az role assignment create \
+  --assignee-object-id "$PRINCIPAL_ID" \
+  --assignee-principal-type ServicePrincipal \
+  --role "User Access Administrator" \
+  --scope "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP"
+```
+
+Create a federated credential for each GitHub Environment (`staging`, `production`):
 
 ```bash
 CLIENT_ID="$(az identity show --name "$IDENTITY_NAME" --resource-group "$RESOURCE_GROUP" --query clientId -o tsv)"
 
-az identity federated-credential create \
-  --name "github-production" \
-  --identity-name "$IDENTITY_NAME" \
-  --resource-group "$RESOURCE_GROUP" \
-  --issuer "https://token.actions.githubusercontent.com" \
-  --subject "repo:${GITHUB_ORG}/${GITHUB_REPO}:environment:${GITHUB_ENV}" \
-  --audiences "api://AzureADTokenExchange"
+for GITHUB_ENV in staging production; do
+  az identity federated-credential create \
+    --name "github-${GITHUB_ENV}" \
+    --identity-name "$IDENTITY_NAME" \
+    --resource-group "$RESOURCE_GROUP" \
+    --issuer "https://token.actions.githubusercontent.com" \
+    --subject "repo:${GITHUB_ORG}/${GITHUB_REPO}:environment:${GITHUB_ENV}" \
+    --audiences "api://AzureADTokenExchange"
+done
 ```
 
-### 3. Configure the GitHub `production` environment
+### 3. Configure GitHub Environments
 
-In **Settings → Environments → production**, add the secrets and variables for your chosen mode.
+Create two GitHub Environments in **Settings → Environments**: `staging` and `production`. Each uses the same Azure OIDC secrets and `AZURE_RESOURCE_GROUP` variable. Both use GitHub App hosted sign-in (see table below).
 
-**Shared Azure secrets (both modes)**
+**Shared Azure secrets (both environments)**
 
 | Secret | Value |
 |---|---|
@@ -211,7 +203,7 @@ In **Settings → Environments → production**, add the secrets and variables f
 | `AZURE_TENANT_ID` | `az account show --query tenantId -o tsv` |
 | `AZURE_SUBSCRIPTION_ID` | `az account show --query id -o tsv` |
 
-**Hosted sign-in (recommended for shared / public production)**
+**Hosted sign-in (`staging` and `production` environments)**
 
 | Secret / variable | Value |
 |---|---|
@@ -223,36 +215,68 @@ In **Settings → Environments → production**, add the secrets and variables f
 | Variable `ALLOWED_USER_LOGINS` | your login(s), or `-` |
 | Variable `ALLOWED_ORG_LOGINS` | org login(s), or `-` |
 
-**PAT self-hoster mode** — use the secret and variable tables under [Self-hoster deployment (PAT mode)](#self-hoster-deployment-pat-mode) instead (`HOSTED_SIGN_IN_ENABLED=false`, real `GH_PAT`, GitHub App values `-`).
-
 Secret parameters are written to the Aspire-provisioned `auth-secrets` Key Vault at deploy time and referenced by the Container App. You do not create or manage Key Vault secrets manually for the default deployment path.
 
-**Shared Azure variables (both modes)**
+**Shared Azure variables (both environments)**
 
 | Variable | Example | Purpose |
 |---|---|---|
 | `AZURE_LOCATION` | `uksouth` | Azure region for `aspire deploy` |
-| `AZURE_RESOURCE_GROUP` | `rg-solodevboard-prod` | Target resource group |
+| `AZURE_RESOURCE_GROUP` | `rg-solodevboard-prod` | Target resource group (shared across tiers) |
+| `HOSTED_CALLBACK_BASE_URI` | *(unset)* or `https://staging.solodevboard.app` | Optional public HTTPS origin for GitHub App OAuth callbacks when using a custom domain |
+| `CUSTOM_DOMAIN` | *(unset)* or `staging.solodevboard.app` | Optional Container App custom hostname; must match DNS and managed certificate |
+| `CUSTOM_DOMAIN_CERTIFICATE_NAME` | *(unset)* or `staging-solodevboard-app` | Managed certificate name in the Container Apps environment; leave unset on first deploy before the certificate exists |
 
-Enable required reviewers on the `production` environment before granting deploy access.
+Enable required reviewers on the `production` environment before granting production deploy access. Staging deploys automatically on merge to `main`; production deploys on `v*` release tags.
+
+### Custom domain (Container Apps)
+
+Aspire can persist a custom hostname and managed certificate binding across `aspire deploy` runs via `ConfigureCustomDomain` in the AppHost. Without this, redeployments can remove the custom domain from the Container App.
+
+**One-time DNS and certificate setup (per hostname)**
+
+1. Add a **CNAME** from your hostname to the Container App default FQDN (for example `staging` → `app.<env>.<region>.azurecontainerapps.io`).
+2. Add the **TXT** validation record shown by Azure (`asuid.<hostname>`).
+3. Add the hostname: `az containerapp hostname add --hostname <hostname> --name app --resource-group <rg>`.
+4. Create a managed certificate in the Container Apps environment:
+   `az containerapp env certificate create --name <aca-env> --resource-group <rg> --hostname <hostname> --validation-method CNAME --certificate-name <cert-name>`.
+5. Bind the certificate: `az containerapp hostname bind --hostname <hostname> --name app --resource-group <rg> --environment <aca-env> --certificate <cert-name>`.
+
+**AppHost and CD configuration**
+
+Set AppHost parameters (or matching GitHub Environment variables) so subsequent deploys preserve the binding:
+
+| AppHost parameter | CD / local env var | Staging example |
+|---|---|---|
+| `custom-domain` | `Parameters__custom_domain` / `CUSTOM_DOMAIN` | `staging.solodevboard.app` |
+| `custom-domain-certificate-name` | `Parameters__custom_domain_certificate_name` / `CUSTOM_DOMAIN_CERTIFICATE_NAME` | `staging-solodevboard-app` |
+
+When using a custom domain for hosted sign-in, also set `HOSTED_CALLBACK_BASE_URI` to the public HTTPS origin and register `https://<hostname>/auth/callback` on the GitHub App.
+
+Leave `custom-domain` and `custom-domain-certificate-name` unset (or `-`) to use the Aspire-provisioned FQDN only. On the first deploy with a new hostname, leave `custom-domain-certificate-name` unset until the managed certificate exists; set it on subsequent deploys.
 
 ---
 
 ## Deploy from GitHub Actions
 
-The CD workflow (`.github/workflows/cd.yml`) runs `aspire deploy` with OIDC authentication. Use this section for **hosted sign-in** production deploys (or PAT mode after configuring the environment as in [Option B](#option-b--deploy-via-github-actions-in-pat-mode)).
+The CD workflow (`.github/workflows/cd.yml`) runs `aspire deploy` with OIDC authentication across two hosted tiers (see [CD pipeline tiers](#cd-pipeline-tiers-dec-021)).
 
-1. Ensure steps above are complete.
-2. Open **Actions → CD - Deploy to Azure → Run workflow**.
-3. After a successful run, note the deployed Container App FQDN from the workflow output or Azure portal.
-4. **Hosted sign-in only:** register the GitHub App callback URL: `https://<fqdn>/auth/callback`.
-5. Open the provisioned Application Insights resource to confirm telemetry is flowing (see [Observability guide](observability.md)).
+| Tier | How to trigger |
+|---|---|
+| **Staging** | Merge to `main`, or **Actions → CD - Deploy to Azure → Run workflow** (manual) |
+| **Production** | Push a `v*` release tag (requires `production` environment approval if reviewers are configured) |
 
-### Enable automatic deploys
+After a successful deploy:
 
-After the first successful manual deploy, uncomment the `push: branches: [main]` trigger in `.github/workflows/cd.yml` to deploy on merge to `main`.
-
----
+1. Note the deployed Container App FQDN from the workflow output or Azure portal.
+2. **Hosted sign-in only:** register the GitHub App callback URL: `https://<fqdn>/auth/callback` (staging and production each have their own FQDN). When using a custom domain, set `HOSTED_CALLBACK_BASE_URI` on the GitHub Environment to the public HTTPS origin (for example `https://staging.solodevboard.app`) and register `https://<custom-domain>/auth/callback` on the GitHub App.
+3. Open the provisioned Application Insights resource to confirm telemetry is flowing (see [Observability guide](observability.md)).
+4. **Hosted sign-in smoke checks** (run in a private browser window with no existing cookies):
+   - `GET https://<fqdn>/` redirects to `/welcome` (not the Home dashboard shell).
+   - Sign in with an allow-listed GitHub account completes and returns to the app.
+   - One feature page (for example **Repositories**) loads GitHub data without errors.
+   - Sign out returns to `/welcome`.
+5. **Container App environment verification:** confirm `GitHubAuth__HostedGitHubAppClientId` and `HostedAdmissionControl__AllowedUserLogins` on the active revision show real values (not `-` placeholders from `appsettings.Staging.json`).
 
 ## Deploy locally (operator testing)
 
@@ -278,7 +302,7 @@ aspire deploy \
 
 ### PAT self-hoster
 
-Use the environment exports and commands under [Option A — Deploy locally with aspire deploy](#option-a--deploy-locally-with-aspire-deploy-recommended-for-first-personal-instance).
+Use the environment exports and commands under [Deploy locally with aspire deploy](#deploy-locally-with-aspire-deploy-recommended-for-personal-instances).
 
 Preview deployment steps without applying:
 
@@ -299,7 +323,7 @@ Aspire generates and applies Bicep at deploy time. A typical deployment includes
 |---|---|
 | Azure Container Apps environment | Hosts the containerised app (Consumption profile) |
 | Container App (`app`) | Runs SoloDevBoard (scale-to-zero enabled) |
-| Azure Container Registry | Stores built container images |
+| Azure Container Registry | Stores built container images (Aspire-provisioned per deployment, or optional shared registry — see [Optional shared Container Registry](#optional-shared-container-registry)) |
 | Azure Key Vault (`auth-secrets`) | Stores hosted auth secret parameters as Key Vault secrets |
 | Application Insights | Application logs, metrics, and distributed traces |
 | Log Analytics workspace | Container platform logs and Application Insights backing store |
@@ -359,9 +383,10 @@ The CD workflow and Playwright smoke tests also call `/health` during CI to conf
 
 ## Teardown
 
-To remove Aspire-managed resources:
+To remove Aspire-managed resources for a specific tier, pass the matching Aspire environment name:
 
 ```bash
+# Example: tear down production resources only
 aspire destroy \
   --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj \
   --environment Production \
@@ -369,7 +394,7 @@ aspire destroy \
   --non-interactive
 ```
 
-Confirm the subscription, resource group, and environment before running destroy. Verify removal with `az resource list --resource-group <rg>`.
+Use `Staging` or `Production` to target the corresponding hosted tier. All tiers share the same resource group, so confirm the subscription, resource group, and environment before running destroy. Verify removal with `az resource list --resource-group <rg>`.
 
 The OIDC managed identity is not removed by `aspire destroy`. Delete it manually if no longer needed:
 
@@ -383,12 +408,13 @@ az identity delete --name id-solodevboard-cd-prod --resource-group rg-solodevboa
 
 | Symptom | Likely cause | Action |
 |---|---|---|
-| OIDC login fails in CD | Federated credential subject mismatch | Verify subject is `repo:<owner>/<repo>:environment:production` |
+| OIDC login fails in CD | Federated credential subject mismatch | Verify subject is `repo:<owner>/<repo>:environment:<staging|production>` |
 | Missing parameter prompt in CI | Secret not mapped | Add `Parameters__*` env vars to the deploy step |
 | Cold start / SignalR disconnect | Scale-to-zero idle | Expected; refresh the page or wait for the container to warm up |
 | 403 after sign-in | Allow-list | Update `ALLOWED_USER_LOGINS` or `ALLOWED_ORG_LOGINS` |
 | Callback URL mismatch | Stale GitHub App setting | Update callback to `https://<aca-fqdn>/auth/callback` (hosted sign-in only) |
 | Secret not visible in Container App settings | Key Vault reference | Expected — inspect the `auth-secrets` vault for secret names; values are resolved at runtime |
+| Home dashboard shown without sign-in | Missing login gate or placeholder deploy parameters | Confirm `/` redirects to `/welcome`; redeploy with `Parameters__*` env vars mapped in CD; verify Container App env shows real client ID and allow-list values. CI `e2e-hosted` job asserts this gate with placeholder credentials. |
 | PAT mode shows `/welcome` or requires sign-in | `hosted-sign-in-enabled` still `true` | Set `HOSTED_SIGN_IN_ENABLED` / `Parameters__hosted_sign_in_enabled` to `false` and redeploy |
 | PAT mode starts but GitHub calls fail | Missing or invalid `GH_PAT` | Set a real PAT with required scopes; confirm `/health/github` and the **Connected as @login** chip |
 

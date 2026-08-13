@@ -4,9 +4,16 @@ This document defines the highest-priority SoloDevBoard user journeys covered by
 
 ## CI constraints
 
-The `e2e` job in [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) starts the app with a placeholder personal access token (`GitHubAuth__PersonalAccessToken=ci-e2e-placeholder`) and hosted admission control disabled. Tests therefore assert **shell rendering, navigation, and empty or error states** rather than live GitHub catalogue data.
+CI runs two Playwright jobs in [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml):
 
-For data-driven journeys against a real GitHub account, run the suite locally with a valid token — see [README.md](README.md).
+| Job | Auth mode | What it validates |
+|-----|-----------|-------------------|
+| `e2e-pat` | PAT (`HostedSignInEnabled=false`, `ci-e2e-placeholder` token) | Shell rendering, navigation, and empty or error states without live GitHub data. |
+| `e2e-hosted` | Hosted sign-in (`HostedSignInEnabled=true`, placeholder GitHub App credentials) | Login gate: `/` and protected routes redirect to `/welcome`; sign-in CTA visible; Blazor circuit negotiates before authentication. |
+
+Neither job uses live GitHub secrets. Repository-dependent PAT journeys assert empty or error states rather than live GitHub catalogue data.
+
+For data-driven journeys against a real GitHub account, run the PAT suite locally with a valid token — see [README.md](README.md).
 
 ## Priority tiers
 
@@ -19,6 +26,7 @@ For data-driven journeys against a real GitHub account, run the suite locally wi
 | Drawer navigation reaches every primary feature route | `navigation.spec.ts` | URL and page title for each route in `fixtures/navigation.ts`. |
 | About page shows deployment metadata | `about.spec.ts` | Version, auth mode, and repository link from the shell menu. |
 | PAT-mode welcome redirect and connectivity error page | `auth-entry.spec.ts` | `/welcome` redirects to home; connectivity error page renders guidance. |
+| Hosted sign-in login gate (unauthenticated redirect and welcome landing) | `auth-entry-hosted.spec.ts` | `/` and protected routes redirect to `/welcome`; sign-in CTA visible; Blazor negotiate succeeds. |
 | WCAG 2.1 AA shell and route audit (no critical/serious axe violations) | `accessibility.spec.ts` | axe-core scan of Tier 1–2 routes in light and dark mode; skip link, labelled shell controls, and isolated snackbar scan. See [plan/ACCESSIBILITY_AUDIT.md](../../plan/ACCESSIBILITY_AUDIT.md). |
 
 ### Tier 2 — Feature shells without live GitHub data
@@ -37,7 +45,8 @@ For data-driven journeys against a real GitHub account, run the suite locally wi
 
 | Journey | Rationale |
 |---------|-----------|
-| Hosted sign-in and admission-control denial | CI runs PAT mode with `HostedAdmissionControl__Enabled=false`. |
+| Live GitHub OAuth sign-in and post-login feature journeys | Requires real GitHub App credentials and an interactive OAuth flow; validated manually on staging. |
+| Admission-control denial after sign-in | Requires an authenticated session with a disallowed GitHub identity. |
 | Live GitHub catalogue mutations (labels, migration apply, workflow deploy) | Requires a valid token and test repositories; covered by unit and component tests. |
 | Azure Container Apps probe behaviour | Validated at deploy time; see [OPERATIONAL_HARDENING_TEST_COVERAGE.md](../../plan/OPERATIONAL_HARDENING_TEST_COVERAGE.md). |
 
