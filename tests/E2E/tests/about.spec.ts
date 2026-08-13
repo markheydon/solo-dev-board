@@ -15,6 +15,7 @@ test('about page shows deployment metadata from the shell menu', async ({ page }
   await expect(page).toHaveTitle(/About/);
   await expect(page.getByTestId('about-application-name')).toContainText('SoloDevBoard');
   await expect(page.getByTestId('about-version')).not.toBeEmpty();
+  await expect(page.getByTestId('about-build')).not.toBeEmpty();
   await expect(page.getByTestId('about-dotnet-version')).toHaveText(/\d+\.\d+/);
   await expect(page.getByTestId('about-auth-mode')).toContainText('PAT-only local trusted mode');
   await expect(page.getByTestId('about-github-login')).toContainText('@');

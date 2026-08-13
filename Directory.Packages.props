@@ -2,6 +2,10 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
+  <!-- Build -->
+  <ItemGroup>
+    <PackageVersion Include="MinVer" Version="7.0.0" />
+  </ItemGroup>
   <!-- UI -->
   <ItemGroup>
     <PackageVersion Include="AngleSharp" Version="1.7.1" />

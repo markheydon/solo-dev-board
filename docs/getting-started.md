@@ -121,6 +121,8 @@ dotnet run --project src/App/SoloDevBoard.App
 
 > **Recommendation:** Aspire is the standardised path for local development. It ensures consistent behaviour across all environments and prepares you for production deployment to Azure Container Apps.
 
+When you run locally, open **More options → About** to see the MinVer-calculated application version and build commit SHA. Local builds use the same git-based versioning as CI; staging-style pre-release suffixes appear when your checkout is ahead of the latest `v*` tag.
+
 ---
 
 ## Configuration

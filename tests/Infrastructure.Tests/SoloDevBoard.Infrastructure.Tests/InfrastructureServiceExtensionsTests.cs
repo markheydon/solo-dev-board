@@ -105,5 +105,7 @@ internal sealed class TestAppVersionService : IAppVersionService
 {
     public string Version => "1.0.0-test";
 
+    public string BuildMetadata => "test-build";
+
     public string UserAgent => "SoloDevBoard/1.0.0-test";
 }

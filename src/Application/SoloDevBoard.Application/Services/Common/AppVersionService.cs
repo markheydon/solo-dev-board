@@ -6,35 +6,27 @@ namespace SoloDevBoard.Application.Services.Common;
 public sealed class AppVersionService : IAppVersionService
 {
     private const string ApplicationName = "SoloDevBoard";
-    private readonly string _version;
 
     /// <summary>Initialises a new instance of the <see cref="AppVersionService"/> class.</summary>
     public AppVersionService()
     {
-        _version = ResolveVersion();
+        var metadata = ResolveMetadata();
+        Version = metadata.Version;
+        BuildMetadata = metadata.BuildMetadata;
     }
 
     /// <inheritdoc/>
-    public string Version => _version;
+    public string Version { get; }
+
+    /// <inheritdoc/>
+    public string BuildMetadata { get; }
 
     /// <inheritdoc/>
     public string UserAgent => $"{ApplicationName}/{Version}";
 
-    private static string ResolveVersion()
+    private static AppVersionMetadata ResolveMetadata()
     {
         var assembly = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
-        var informationalVersion = assembly
-            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
-            .InformationalVersion;
-
-        if (!string.IsNullOrWhiteSpace(informationalVersion))
-        {
-            var metadataSeparatorIndex = informationalVersion.IndexOf('+', StringComparison.Ordinal);
-            return metadataSeparatorIndex < 0
-                ? informationalVersion
-                : informationalVersion[..metadataSeparatorIndex];
-        }
-
-        return assembly.GetName().Version?.ToString() ?? "unknown";
+        return AppVersionMetadataParser.Parse(assembly);
     }
 }
