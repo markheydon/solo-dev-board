@@ -144,7 +144,7 @@ When Copilot or another AI agent is asked to write or update documentation:
 
 1. **UK English required.** All documentation must use UK English spelling. Run a spell check if possible.
 2. **Accuracy over completeness.** Do not document features that are not yet implemented. Use "Coming Soon" or "Under Development" notices for stubs.
-3. **Sync with code.** When updating docs, verify that the documented behaviour matches the current implementation.
+3. **Sync with code and E2E.** When updating docs, verify that the documented behaviour matches the current implementation and that Playwright specs in `tests/E2E/tests/` assert the same routes, controls, and workflows. Maintain the mapping in [tests/E2E/USER_DOCS_ALIGNMENT.md](../tests/E2E/USER_DOCS_ALIGNMENT.md).
 4. **Link generously.** Cross-reference related docs, decisions, and planning files. Use relative links within the same docs tree; use GitHub blob URLs when linking from the published site to repository-only files.
 5. **Heading hierarchy.** Use H1 for the page title, H2 for major sections, H3 for subsections. Do not skip levels.
 6. **Code blocks.** All code, commands, and configuration snippets must be in fenced code blocks with the appropriate language identifier.

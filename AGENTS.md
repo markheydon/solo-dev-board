@@ -97,6 +97,18 @@ DTOs are `sealed record` types named `<Entity>Dto`, co-located in `SoloDevBoard.
 - Arrange / Act / Assert sections separated by blank lines (no comments required).
 - Use xUnit's built-in `Assert.*` methods for all assertions. **Do not add FluentAssertions, AwesomeAssertions, Shouldly, Moq, NUnit, or MSTest** (see [DEC-006](plan/DECISIONS.md#dec-006-no-fluentassertions--xunit-built-in-assertions-only) and [DEC-016](plan/DECISIONS.md#dec-016-formalised-testing-standard--xunit-v3-nsubstitute-playwright-e2e)).
 
+### End-user docs and Playwright E2E alignment
+
+The published user guide (`user-docs/`) and Playwright suite (`tests/E2E/`) must stay aligned **like-for-like**:
+
+1. **User guides describe actual application behaviour.** Do not document capabilities that are not shipped. Use scope notes for partial delivery.
+2. **Playwright E2E tests exercise what the guides claim.** Every published page in `user-docs/content/docs/` must map to at least one spec under `tests/E2E/tests/`. Assertions should target routes, controls, labels, and workflows described in the guide.
+3. **Loaded-state journeys use the docs-capture suite.** CI runs with placeholder auth and asserts shells, navigation, and empty or error states. Screenshots and populated UI states are captured manually via `tests/E2E/docs-capture/` with a real PAT — see [tests/E2E/USER_DOCS_ALIGNMENT.md](tests/E2E/USER_DOCS_ALIGNMENT.md).
+
+Canonical mapping and section-level inventory: [tests/E2E/USER_DOCS_ALIGNMENT.md](tests/E2E/USER_DOCS_ALIGNMENT.md). Update it alongside [tests/E2E/CRITICAL_JOURNEYS.md](tests/E2E/CRITICAL_JOURNEYS.md) when journeys change.
+
+**Screenshot hygiene (mandatory):** Never commit screenshots showing private repositories, private Projects v2 boards, tokens, or other confidential information. Capture with `DocsCapture:Enabled=true` (public catalogues only), light theme, 1400×900 viewport, and the `markheydon/solo-dev-board` example repository. See [plan/DOCS_STRATEGY.md](plan/DOCS_STRATEGY.md#screenshot-convention), [DEC-020](plan/DECISIONS.md#dec-020-public-only-docs-capture-mode-for-documentation-screenshots), and [docs/getting-started.md](docs/getting-started.md#docs-capture-mode).
+
 ---
 
 ## When Adding a New Feature
@@ -177,7 +189,8 @@ When code changes are made, ensure the following are kept in sync:
 
 | Change | Doc to update |
 |--------|--------------|
-| New end-user feature | `user-docs/content/docs/<feature>.md`, `user-docs/content/_index.md` (and docs landing), GitHub Issue + Project #8 sync |
+| New end-user feature | `user-docs/content/docs/<feature>.md`, `user-docs/content/_index.md` (and docs landing), matching Playwright spec in `tests/E2E/tests/`, `tests/E2E/USER_DOCS_ALIGNMENT.md`, `tests/E2E/CRITICAL_JOURNEYS.md`, GitHub Issue + Project #8 sync |
+| End-user behaviour change | `user-docs/content/docs/<feature>.md` and matching Playwright spec(s); refresh `tests/E2E/docs-capture/` screenshots when the UI changes materially |
 | New developer / operator guidance | `docs/<topic>.md` and `docs/README.md` as needed |
 | New decision | `plan/DECISIONS.md` (+ constitution if cross-cutting) |
 | Scope change | `plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md` |

@@ -2,6 +2,8 @@
 
 This document defines the highest-priority SoloDevBoard user journeys covered by Playwright end-to-end tests in CI. It satisfies the journey-identification acceptance criterion for issue [#255](https://github.com/markheydon/solo-dev-board/issues/255) and complements [DEC-016](../../plan/DECISIONS.md#dec-016-formalised-testing-standard--xunit-v3-nsubstitute-playwright-e2e).
 
+Published user guides in `user-docs/content/docs/` must map to these journeys like-for-like. See [USER_DOCS_ALIGNMENT.md](USER_DOCS_ALIGNMENT.md) for the full guide-to-spec inventory and screenshot hygiene rules.
+
 ## CI constraints
 
 CI runs two Playwright jobs in [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml):
@@ -24,6 +26,7 @@ For data-driven journeys against a real GitHub account, run the PAT suite locall
 | Health endpoint responds before browser tests run | `smoke.spec.ts` | `GET /health` returns `Healthy`. |
 | Home dashboard renders and lists all feature entry points | `navigation.spec.ts`, `smoke.spec.ts` | Title, navigation shell, and all seven feature cards. |
 | Drawer navigation reaches every primary feature route | `navigation.spec.ts` | URL and page title for each route in `fixtures/navigation.ts`. |
+| Appearance theme control cycles modes and persists preference | `appearance.spec.ts` | Automatic → Light → Dark cycle and browser storage persistence per [Appearance](../../user-docs/content/docs/appearance.md). |
 | About page shows deployment metadata | `about.spec.ts` | Version, auth mode, and repository link from the shell menu. |
 | PAT-mode welcome redirect and connectivity error page | `auth-entry.spec.ts` | `/welcome` redirects to home; connectivity error page renders guidance. |
 | Hosted sign-in login gate (unauthenticated redirect and welcome landing) | `auth-entry-hosted.spec.ts` | `/` and protected routes redirect to `/welcome`; sign-in CTA visible; Blazor negotiate succeeds. |
@@ -60,6 +63,7 @@ For data-driven journeys against a real GitHub account, run the PAT suite locall
 
 ## Related documentation
 
+- [tests/E2E/USER_DOCS_ALIGNMENT.md](USER_DOCS_ALIGNMENT.md) — user guide to Playwright spec mapping and screenshot hygiene.
 - [tests/E2E/README.md](README.md) — local run and CI overview.
 - [plan/OPERATIONAL_HARDENING_TEST_COVERAGE.md](../../plan/OPERATIONAL_HARDENING_TEST_COVERAGE.md) — health and operational E2E expectations.
 - [CONTRIBUTING.md](../../CONTRIBUTING.md) — contributor testing guidance.
