@@ -4,12 +4,15 @@ Playwright tests for key user journeys. These complement unit and bUnit componen
 
 Critical journeys, priority tiers, and CI constraints are documented in [CRITICAL_JOURNEYS.md](CRITICAL_JOURNEYS.md).
 
+Published user guides must stay aligned with these tests like-for-like. See [USER_DOCS_ALIGNMENT.md](USER_DOCS_ALIGNMENT.md) for the guide-to-spec inventory and screenshot confidentiality rules.
+
 ## Test coverage
 
 | Spec | What it validates |
 |------|-------------------|
 | `smoke.spec.ts` | Health endpoint and home page render |
 | `navigation.spec.ts` | Home feature cards and drawer navigation to all primary routes |
+| `appearance.spec.ts` | Theme control cycles Automatic → Light → Dark and persists preference |
 | `about.spec.ts` | About page metadata via the shell menu |
 | `auth-entry.spec.ts` | PAT-mode welcome redirect and connectivity error page |
 | `auth-entry-hosted.spec.ts` | Hosted-mode login gate, welcome landing, and Blazor negotiate |
