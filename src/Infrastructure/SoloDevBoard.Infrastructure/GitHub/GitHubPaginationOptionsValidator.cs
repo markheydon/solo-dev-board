@@ -17,6 +17,11 @@ public sealed class GitHubPaginationOptionsValidator : IValidateOptions<GitHubPa
             failures.Add($"{nameof(GitHubPaginationOptions.WorkflowRunsMaxPages)} must be at least 1.");
         }
 
+        if (options.WorkflowRunsPerPage is < 1 or > 100)
+        {
+            failures.Add($"{nameof(GitHubPaginationOptions.WorkflowRunsPerPage)} must be between 1 and 100.");
+        }
+
         return failures.Count > 0
             ? ValidateOptionsResult.Fail(failures)
             : ValidateOptionsResult.Success;

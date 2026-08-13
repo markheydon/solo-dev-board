@@ -443,7 +443,7 @@ public sealed class GitHubServiceTests
         Assert.Equal("abc123", result[0].HeadSha);
         Assert.Equal("https://github.com/owner/repo/actions/runs/12345", result[0].HtmlUrl);
         Assert.Single(handler.Requests);
-        Assert.Equal("https://api.github.com/repos/owner/repo/actions/runs?per_page=100", handler.Requests[0].RequestUri!.ToString());
+        Assert.Equal("https://api.github.com/repos/owner/repo/actions/runs?per_page=30&status=completed&exclude_pull_requests=true", handler.Requests[0].RequestUri!.ToString());
     }
 
     [Fact]
@@ -472,7 +472,7 @@ public sealed class GitHubServiceTests
                   ]
                 }
                 """,
-                "<https://api.github.com/repos/owner/repo/actions/runs?page=2&per_page=100>; rel=\"next\""),
+                "<https://api.github.com/repos/owner/repo/actions/runs?page=2&per_page=30&status=completed&exclude_pull_requests=true>; rel=\"next\""),
             CreateJsonResponse(
                 HttpStatusCode.OK,
                 """
@@ -504,8 +504,8 @@ public sealed class GitHubServiceTests
         Assert.Equal("build", result[0].WorkflowName);
         Assert.Equal("deploy", result[1].WorkflowName);
         Assert.Equal(2, handler.Requests.Count);
-        Assert.Equal("https://api.github.com/repos/owner/repo/actions/runs?per_page=100", handler.Requests[0].RequestUri!.ToString());
-        Assert.Equal("https://api.github.com/repos/owner/repo/actions/runs?page=2&per_page=100", handler.Requests[1].RequestUri!.ToString());
+        Assert.Equal("https://api.github.com/repos/owner/repo/actions/runs?per_page=30&status=completed&exclude_pull_requests=true", handler.Requests[0].RequestUri!.ToString());
+        Assert.Equal("https://api.github.com/repos/owner/repo/actions/runs?page=2&per_page=30&status=completed&exclude_pull_requests=true", handler.Requests[1].RequestUri!.ToString());
     }
 
     [Fact]
@@ -534,7 +534,7 @@ public sealed class GitHubServiceTests
                   ]
                 }
                 """,
-                "<https://api.github.com/repos/owner/repo/actions/runs?page=2&per_page=100>; rel=\"next\""),
+                "<https://api.github.com/repos/owner/repo/actions/runs?page=2&per_page=30&status=completed&exclude_pull_requests=true>; rel=\"next\""),
             CreateJsonResponse(
                 HttpStatusCode.OK,
                 """
@@ -610,7 +610,7 @@ public sealed class GitHubServiceTests
         // Assert
         Assert.Empty(result);
         Assert.Single(handler.Requests);
-        Assert.Equal("https://api.github.com/repos/owner/repo/actions/runs?per_page=100", handler.Requests[0].RequestUri!.ToString());
+        Assert.Equal("https://api.github.com/repos/owner/repo/actions/runs?per_page=30&status=completed&exclude_pull_requests=true", handler.Requests[0].RequestUri!.ToString());
     }
 
     [Fact]

@@ -61,6 +61,11 @@ public static class InfrastructureServiceExtensions
                 {
                     options.WorkflowRunsMaxPages = 1;
                 }
+
+                if (options.WorkflowRunsPerPage == 0)
+                {
+                    options.WorkflowRunsPerPage = 30;
+                }
             })
             .ValidateOnStart();
         services.AddSingleton<IValidateOptions<GitHubPaginationOptions>, GitHubPaginationOptionsValidator>();

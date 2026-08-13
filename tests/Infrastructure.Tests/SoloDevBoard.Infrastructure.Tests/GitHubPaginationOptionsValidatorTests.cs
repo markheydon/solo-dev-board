@@ -35,4 +35,20 @@ public sealed class GitHubPaginationOptionsValidatorTests
         Assert.False(result.Succeeded);
         Assert.Contains(nameof(GitHubPaginationOptions.WorkflowRunsMaxPages), result.FailureMessage, StringComparison.Ordinal);
     }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(101)]
+    public void Validate_InvalidWorkflowRunsPerPage_ReturnsFailure(int invalidValue)
+    {
+        // Arrange
+        var options = new GitHubPaginationOptions { WorkflowRunsPerPage = invalidValue };
+
+        // Act
+        var result = _sut.Validate(null, options);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Contains(nameof(GitHubPaginationOptions.WorkflowRunsPerPage), result.FailureMessage, StringComparison.Ordinal);
+    }
 }

@@ -73,7 +73,11 @@ public sealed class AuditDashboardService : IAuditDashboardService
     }
 
     /// <inheritdoc/>
-    public async Task<AuditDashboardSnapshotDto> GetDashboardSnapshotAsync(IReadOnlyList<string> repos, int staleDays = DefaultStaleDays, CancellationToken cancellationToken = default)
+    public async Task<AuditDashboardSnapshotDto> GetDashboardSnapshotAsync(
+        IReadOnlyList<string> repos,
+        int staleDays = DefaultStaleDays,
+        bool includeWorkflowRuns = true,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(repos);
 
@@ -84,7 +88,7 @@ public sealed class AuditDashboardService : IAuditDashboardService
 
         var repositoryReferences = GetRepositoryReferences(repos);
         var dataTasks = repositoryReferences.Select(repositoryReference =>
-            LoadRepositoryAuditDataAsync(repositoryReference.Owner, repositoryReference.RepoName, cancellationToken));
+            LoadRepositoryAuditDataAsync(repositoryReference.Owner, repositoryReference.RepoName, includeWorkflowRuns, cancellationToken));
         var dataByRepository = await Task.WhenAll(dataTasks).ConfigureAwait(false);
 
         var staleBefore = DateTimeOffset.UtcNow.AddDays(-staleDays);
@@ -253,7 +257,11 @@ public sealed class AuditDashboardService : IAuditDashboardService
         return owner;
     }
 
-    private async Task<RepositoryAuditData> LoadRepositoryAuditDataAsync(string owner, string repoName, CancellationToken cancellationToken)
+    private async Task<RepositoryAuditData> LoadRepositoryAuditDataAsync(
+        string owner,
+        string repoName,
+        bool includeWorkflowRuns,
+        CancellationToken cancellationToken)
     {
         var repositoryFullName = BuildRepositoryFullName(owner, repoName);
         var issuesTask = GetRepositoryResourceSafeAsync(
@@ -264,10 +272,12 @@ public sealed class AuditDashboardService : IAuditDashboardService
             () => _gitHubService.GetPullRequestsAsync(owner, repoName, OpenItemState, cancellationToken),
             repositoryFullName,
             "pull requests");
-        var workflowRunsTask = GetRepositoryResourceSafeAsync(
-            () => _gitHubService.GetWorkflowRunsAsync(owner, repoName, cancellationToken),
-            repositoryFullName,
-            "workflow runs");
+        Task<IReadOnlyList<WorkflowRun>> workflowRunsTask = includeWorkflowRuns
+            ? GetRepositoryResourceSafeAsync(
+                () => _gitHubService.GetWorkflowRunsAsync(owner, repoName, cancellationToken),
+                repositoryFullName,
+                "workflow runs")
+            : Task.FromResult<IReadOnlyList<WorkflowRun>>([]);
 
         await Task.WhenAll(issuesTask, pullRequestsTask, workflowRunsTask).ConfigureAwait(false);
 
@@ -304,7 +314,7 @@ public sealed class AuditDashboardService : IAuditDashboardService
 
     private async Task<RepositoryAuditSummaryDto> BuildRepositoryAuditSummaryAsync(string owner, string repoName, CancellationToken cancellationToken)
     {
-        var repositoryData = await LoadRepositoryAuditDataAsync(owner, repoName, cancellationToken).ConfigureAwait(false);
+        var repositoryData = await LoadRepositoryAuditDataAsync(owner, repoName, includeWorkflowRuns: true, cancellationToken).ConfigureAwait(false);
         var staleBefore = DateTimeOffset.UtcNow.AddDays(-DefaultStaleDays);
         return BuildRepositoryAuditSummary(repositoryData, staleBefore);
     }

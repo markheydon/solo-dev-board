@@ -26,9 +26,14 @@ public interface IAuditDashboardService
     /// </summary>
     /// <param name="repos">A read-only list of repository names.</param>
     /// <param name="staleDays">The number of days since the last activity after which a pull request is stale.</param>
+    /// <param name="includeWorkflowRuns">When <see langword="false"/>, workflow runs are omitted for faster issue and pull request snapshots.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>A consolidated audit dashboard snapshot.</returns>
-    Task<AuditDashboardSnapshotDto> GetDashboardSnapshotAsync(IReadOnlyList<string> repos, int staleDays = 14, CancellationToken cancellationToken = default);
+    Task<AuditDashboardSnapshotDto> GetDashboardSnapshotAsync(
+        IReadOnlyList<string> repos,
+        int staleDays = 14,
+        bool includeWorkflowRuns = true,
+        CancellationToken cancellationToken = default);
 
     /// <summary>Retrieves open unlabelled issues across the specified repositories.</summary>
     /// <param name="repos">A read-only list of repository names.</param>

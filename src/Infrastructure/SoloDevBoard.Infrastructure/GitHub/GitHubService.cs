@@ -179,7 +179,8 @@ public sealed class GitHubService : IGitHubService
         ArgumentException.ThrowIfNullOrWhiteSpace(repo);
 
         var client = CreateAuthenticatedClient();
-        var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/actions/runs?per_page=100";
+        var endpoint =
+            $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/actions/runs?per_page={_paginationOptions.WorkflowRunsPerPage}&status=completed&exclude_pull_requests=true";
 
         return await GetPagedWorkflowRunsAsync(
                 client,

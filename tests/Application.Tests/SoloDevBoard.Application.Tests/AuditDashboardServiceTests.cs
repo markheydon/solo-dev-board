@@ -495,6 +495,27 @@ public sealed class AuditDashboardServiceTests
     }
 
     [Fact]
+    public async Task GetDashboardSnapshotAsync_ExcludeWorkflowRuns_DoesNotFetchWorkflowRuns()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        var repos = new[] { "repo-one" };
+        _gitHubService
+            .GetIssuesAsync("owner", "repo-one", OpenItemState, cancellationToken)
+            .Returns([]);
+        _gitHubService
+            .GetPullRequestsAsync("owner", "repo-one", OpenItemState, cancellationToken)
+            .Returns([]);
+
+        // Act
+        var result = await _sut.GetDashboardSnapshotAsync(repos, includeWorkflowRuns: false, cancellationToken: cancellationToken);
+
+        // Assert
+        Assert.Empty(result.FailingWorkflowRuns);
+        await _gitHubService.DidNotReceive().GetWorkflowRunsAsync(Arg.Any<string>(), Arg.Any<string>(), cancellationToken);
+    }
+
+    [Fact]
     public async Task GetDashboardSnapshotAsync_StaleDaysIsZero_ThrowsArgumentOutOfRangeException()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;

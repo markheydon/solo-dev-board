@@ -12,4 +12,7 @@ public sealed class GitHubPaginationOptions
     /// newest-first, so one page is sufficient for typical solo-developer repositories.
     /// </remarks>
     public int WorkflowRunsMaxPages { get; set; } = 1;
+
+    /// <summary>Number of workflow runs to request per page from the GitHub API.</summary>
+    public int WorkflowRunsPerPage { get; set; } = 30;
 }

@@ -55,6 +55,7 @@ public partial class Audit : ComponentBase, IAsyncDisposable
     private bool isLoadingRepositories = true;
     private bool isLoadingAuditData;
     private bool isRefreshingAuditData;
+    private bool isLoadingWorkflowHealth;
     private bool hasLoadedAuditSummary;
     private string? repositoryLoadErrorMessage;
     private string? auditLoadErrorMessage;
@@ -203,8 +204,42 @@ public partial class Audit : ComponentBase, IAsyncDisposable
 
         try
         {
-            await LoadFilteredAuditDataAsync();
+            var selectedRepoNames = selectedRepositories
+                .OrderBy(static repository => repository, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            if (selectedRepoNames.Length == 0)
+            {
+                hasLoadedAuditSummary = false;
+                ResetDashboardData();
+                return;
+            }
+
+            var coreSnapshot = await AuditDashboardService.GetDashboardSnapshotAsync(
+                selectedRepoNames,
+                StalePullRequestDays,
+                includeWorkflowRuns: false);
+
+            ApplySnapshot(coreSnapshot);
             hasLoadedAuditSummary = true;
+            isLoadingAuditData = false;
+            isLoadingWorkflowHealth = true;
+            await InvokeAsync(StateHasChanged);
+
+            try
+            {
+                var failingRuns = await AuditDashboardService.GetFailingWorkflowRunsAsync(selectedRepoNames);
+                failingWorkflowRuns = failingRuns
+                    .OrderBy(workflowRun => workflowRun.RepositoryFullName, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(workflowRun => workflowRun.WorkflowName, StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+                ApplyWorkflowCountsToSummaries();
+                totalFailingWorkflows = repositorySummaries.Sum(result => result.FailingWorkflowCount);
+            }
+            finally
+            {
+                isLoadingWorkflowHealth = false;
+            }
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
@@ -250,7 +285,7 @@ public partial class Audit : ComponentBase, IAsyncDisposable
 
     private async Task ExportMarkdownSummaryAsync()
     {
-        if (!hasLoadedAuditSummary)
+        if (!hasLoadedAuditSummary || isLoadingWorkflowHealth)
         {
             Snackbar.Add("Load an audit summary before exporting Markdown.", Severity.Warning);
             return;
@@ -294,20 +329,8 @@ public partial class Audit : ComponentBase, IAsyncDisposable
             StalePullRequestDays,
             DateTimeOffset.UtcNow);
 
-    private async Task LoadFilteredAuditDataAsync()
+    private void ApplySnapshot(AuditDashboardSnapshotDto snapshot)
     {
-        var selectedRepoNames = selectedRepositories
-            .OrderBy(static repository => repository, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-
-        if (selectedRepoNames.Length == 0)
-        {
-            ResetDashboardData();
-            return;
-        }
-
-        var snapshot = await AuditDashboardService.GetDashboardSnapshotAsync(selectedRepoNames, StalePullRequestDays);
-
         repositorySummaries = snapshot.RepositorySummaries
             .OrderBy(result => result.RepositoryFullName, StringComparer.OrdinalIgnoreCase)
             .ToArray();
@@ -331,6 +354,20 @@ public partial class Audit : ComponentBase, IAsyncDisposable
         totalOpenPullRequests = repositorySummaries.Sum(result => result.OpenPullRequestCount);
         totalUnlabelledIssues = repositorySummaries.Sum(result => result.UnlabelledIssueCount);
         totalFailingWorkflows = repositorySummaries.Sum(result => result.FailingWorkflowCount);
+    }
+
+    private void ApplyWorkflowCountsToSummaries()
+    {
+        var failingWorkflowCountByRepository = failingWorkflowRuns
+            .GroupBy(workflowRun => workflowRun.RepositoryFullName, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.Count(), StringComparer.OrdinalIgnoreCase);
+
+        repositorySummaries = repositorySummaries
+            .Select(summary => summary with
+            {
+                FailingWorkflowCount = failingWorkflowCountByRepository.GetValueOrDefault(summary.RepositoryFullName),
+            })
+            .ToArray();
     }
 
     private async Task StartAutoRefreshAsync()
