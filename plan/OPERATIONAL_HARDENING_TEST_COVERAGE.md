@@ -24,6 +24,17 @@ The scope covers response caching, health endpoints and hosting probes, structur
 
 Out of scope for this tranche: caching issues, pull requests, workflow runs, GraphQL project board queries, distributed cache, and Application-layer DTO caching (see DEC-018).
 
+### GitHub API performance review ([#254](https://github.com/markheydon/solo-dev-board/issues/254))
+
+| Scenario | Test layer | Location |
+|---|---|---|
+| Audit dashboard snapshot fetches issues, pull requests, and workflow runs once per repository | Unit (mocked `IGitHubService`) | `tests/Application.Tests/.../AuditDashboardServiceTests.cs` |
+| Snapshot derives summary counters and health-indicator lists from a single fetch | Unit | `AuditDashboardServiceTests.cs` |
+| Workflow runs paginate via `Link: rel="next"` headers | Unit (mocked HTTP) | `tests/Infrastructure.Tests/.../GitHubServiceTests.cs` |
+| Audit page loads dashboard data via snapshot API | Component (bUnit) | `tests/App.Tests/.../AuditTests.cs` |
+
+Volatile-data Infrastructure caching (issues, pull requests, workflow runs) remains out of scope for V1. GraphQL project board `first: 50` limits are documented in [getting-started.md](../docs/getting-started.md#github-api-performance).
+
 ### Health checks and hosting configuration ([#106](https://github.com/markheydon/solo-dev-board/issues/106))
 
 | Scenario | Test layer | Location |

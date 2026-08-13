@@ -306,29 +306,23 @@ public partial class Audit : ComponentBase, IAsyncDisposable
             return;
         }
 
-        var summaryTask = AuditDashboardService.GetAuditSummaryAsync(selectedRepoNames);
+        var snapshot = await AuditDashboardService.GetDashboardSnapshotAsync(selectedRepoNames, StalePullRequestDays);
 
-        var unlabelledIssuesTask = AuditDashboardService.GetUnlabelledIssuesAsync(selectedRepoNames);
-        var stalePullRequestsTask = AuditDashboardService.GetStalePullRequestsAsync(selectedRepoNames, StalePullRequestDays);
-        var failingWorkflowRunsTask = AuditDashboardService.GetFailingWorkflowRunsAsync(selectedRepoNames);
-
-        await Task.WhenAll(summaryTask, unlabelledIssuesTask, stalePullRequestsTask, failingWorkflowRunsTask);
-
-        repositorySummaries = (await summaryTask)
+        repositorySummaries = snapshot.RepositorySummaries
             .OrderBy(result => result.RepositoryFullName, StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
-        unlabelledIssues = (await unlabelledIssuesTask)
+        unlabelledIssues = snapshot.UnlabelledIssues
             .OrderBy(issue => issue.RepositoryFullName, StringComparer.OrdinalIgnoreCase)
             .ThenBy(issue => issue.Number)
             .ToArray();
 
-        stalePullRequests = (await stalePullRequestsTask)
+        stalePullRequests = snapshot.StalePullRequests
             .OrderBy(pullRequest => pullRequest.RepositoryFullName, StringComparer.OrdinalIgnoreCase)
             .ThenBy(pullRequest => pullRequest.Number)
             .ToArray();
 
-        failingWorkflowRuns = (await failingWorkflowRunsTask)
+        failingWorkflowRuns = snapshot.FailingWorkflowRuns
             .OrderBy(workflowRun => workflowRun.RepositoryFullName, StringComparer.OrdinalIgnoreCase)
             .ThenBy(workflowRun => workflowRun.WorkflowName, StringComparer.OrdinalIgnoreCase)
             .ToArray();

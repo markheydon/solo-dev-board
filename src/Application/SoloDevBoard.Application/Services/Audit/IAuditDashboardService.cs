@@ -20,6 +20,16 @@ public interface IAuditDashboardService
     /// <returns>A read-only list of per-repository audit summary counters.</returns>
     Task<IReadOnlyList<RepositoryAuditSummaryDto>> GetAuditSummaryAsync(IReadOnlyList<string> repos, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Retrieves a consolidated audit dashboard snapshot for the specified repositories,
+    /// fetching issues, pull requests, and workflow runs once per repository.
+    /// </summary>
+    /// <param name="repos">A read-only list of repository names.</param>
+    /// <param name="staleDays">The number of days since the last activity after which a pull request is stale.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A consolidated audit dashboard snapshot.</returns>
+    Task<AuditDashboardSnapshotDto> GetDashboardSnapshotAsync(IReadOnlyList<string> repos, int staleDays = 14, CancellationToken cancellationToken = default);
+
     /// <summary>Retrieves open unlabelled issues across the specified repositories.</summary>
     /// <param name="repos">A read-only list of repository names.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>

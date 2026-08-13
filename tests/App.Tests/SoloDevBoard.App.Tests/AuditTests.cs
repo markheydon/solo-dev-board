@@ -24,7 +24,7 @@ public sealed class AuditTests
         // Arrange
         var tcs = new TaskCompletionSource<IReadOnlyList<RepositoryDto>>();
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(tcs.Task);
-        _auditDashboardService.GetAuditSummaryAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<RepositoryAuditSummaryDto>());
+        _auditDashboardService.GetDashboardSnapshotAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(CreateSnapshot());
 
         await using var ctx = CreateContext();
 
@@ -72,7 +72,7 @@ public sealed class AuditTests
                 CreateRepository("owner", "repo-b"),
             ]);
 
-        _auditDashboardService.GetAuditSummaryAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(summary);
+        _auditDashboardService.GetDashboardSnapshotAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(CreateSnapshot(summary));
 
         await using var ctx = CreateContext();
 
@@ -115,9 +115,9 @@ public sealed class AuditTests
         // Arrange
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
 
-        var summaryCompletionSource = new TaskCompletionSource<IReadOnlyList<RepositoryAuditSummaryDto>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var snapshotCompletionSource = new TaskCompletionSource<AuditDashboardSnapshotDto>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        _auditDashboardService.GetAuditSummaryAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(summaryCompletionSource.Task);
+        _auditDashboardService.GetDashboardSnapshotAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(snapshotCompletionSource.Task);
 
         await using var ctx = CreateContext();
 
@@ -136,7 +136,7 @@ public sealed class AuditTests
         cut.Find("[data-testid='audit-load-selected-button']").Click();
 
         // Assert
-        await _auditDashboardService.Received(1).GetAuditSummaryAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 1 && repos[0] == "owner/repo-a"), Arg.Any<CancellationToken>());
+        await _auditDashboardService.Received(1).GetDashboardSnapshotAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 1 && repos[0] == "owner/repo-a"), 14, Arg.Any<CancellationToken>());
 
         cut.WaitForAssertion(() =>
         {
@@ -144,7 +144,7 @@ public sealed class AuditTests
             Assert.True(button.HasAttribute("disabled"));
         });
 
-        await cut.InvokeAsync(() => summaryCompletionSource.SetResult([new RepositoryAuditSummaryDto("owner/repo-a", 1, 1, 0, 0, 0)]));
+        await cut.InvokeAsync(() => snapshotCompletionSource.SetResult(CreateSnapshot([new RepositoryAuditSummaryDto("owner/repo-a", 1, 1, 0, 0, 0)])));
         cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-summary-table']")));
     }
 
@@ -174,13 +174,9 @@ public sealed class AuditTests
             new("build", "completed", "failure", "https://github.com/owner/repo-a/actions/runs/123", "owner/repo-a", "main"),
         };
 
-        _auditDashboardService.GetAuditSummaryAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(summary);
+        _auditDashboardService.GetDashboardSnapshotAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(CreateSnapshot(summary, issues, pullRequests, workflows));
 
         await using var ctx = CreateContext();
-
-        _auditDashboardService.GetUnlabelledIssuesAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(issues);
-        _auditDashboardService.GetStalePullRequestsAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(pullRequests);
-        _auditDashboardService.GetFailingWorkflowRunsAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(workflows);
 
         // Act
         var cut = ctx.Render<Audit>();
@@ -223,7 +219,7 @@ public sealed class AuditTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
 
-        _auditDashboardService.GetAuditSummaryAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(summary);
+        _auditDashboardService.GetDashboardSnapshotAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(CreateSnapshot(summary));
 
         await using var ctx = CreateContext();
 
@@ -258,8 +254,8 @@ public sealed class AuditTests
                 CreateRepository("owner", "repo-b"),
             ]);
 
-        _auditDashboardService.GetAuditSummaryAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 2), Arg.Any<CancellationToken>()).Returns(summary);
-        _auditDashboardService.GetAuditSummaryAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 1 && repos[0] == "owner/repo-a"), Arg.Any<CancellationToken>()).Returns([new RepositoryAuditSummaryDto("owner/repo-a", 4, 2, 1, 1, 0)]);
+        _auditDashboardService.GetDashboardSnapshotAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 2), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(CreateSnapshot(summary));
+        _auditDashboardService.GetDashboardSnapshotAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 1 && repos[0] == "owner/repo-a"), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(CreateSnapshot([new RepositoryAuditSummaryDto("owner/repo-a", 4, 2, 1, 1, 0)]));
 
         await using var ctx = CreateContext();
 
@@ -271,10 +267,7 @@ public sealed class AuditTests
         cut.Find("[data-testid='audit-load-selected-button']").Click();
 
         // Assert
-        await _auditDashboardService.Received(1).GetAuditSummaryAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 1 && repos[0] == "owner/repo-a"), Arg.Any<CancellationToken>());
-        await _auditDashboardService.Received(1).GetUnlabelledIssuesAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 1 && repos[0] == "owner/repo-a"), Arg.Any<CancellationToken>());
-        await _auditDashboardService.Received(1).GetStalePullRequestsAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 1 && repos[0] == "owner/repo-a"), 14, Arg.Any<CancellationToken>());
-        await _auditDashboardService.Received(1).GetFailingWorkflowRunsAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 1 && repos[0] == "owner/repo-a"), Arg.Any<CancellationToken>());
+        await _auditDashboardService.Received(1).GetDashboardSnapshotAsync(Arg.Is<IReadOnlyList<string>>(repos => repos!.Count == 1 && repos[0] == "owner/repo-a"), 14, Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -287,7 +280,7 @@ public sealed class AuditTests
         };
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
-        _auditDashboardService.GetAuditSummaryAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(summary);
+        _auditDashboardService.GetDashboardSnapshotAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(CreateSnapshot(summary));
 
         await using var ctx = CreateContext();
 
@@ -318,7 +311,7 @@ public sealed class AuditTests
         };
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
-        _auditDashboardService.GetAuditSummaryAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(summary);
+        _auditDashboardService.GetDashboardSnapshotAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(CreateSnapshot(summary));
         _markdownExporter.GenerateSummaryMarkdown(Arg.Any<AuditDashboardMarkdownExportRequest>()).Returns(markdown);
 
         await using var ctx = CreateContext();
@@ -379,16 +372,16 @@ public sealed class AuditTests
             new("owner/repo-a", 1, 1, 0, 0, 0),
         };
 
-        var refreshCompletionSource = new TaskCompletionSource<IReadOnlyList<RepositoryAuditSummaryDto>>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var summaryCallCount = 0;
+        var refreshCompletionSource = new TaskCompletionSource<AuditDashboardSnapshotDto>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var snapshotCallCount = 0;
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
-        _auditDashboardService.GetAuditSummaryAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>())
+        _auditDashboardService.GetDashboardSnapshotAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(callInfo =>
             {
-                summaryCallCount++;
-                return summaryCallCount == 1
-                    ? Task.FromResult<IReadOnlyList<RepositoryAuditSummaryDto>>(summary)
+                snapshotCallCount++;
+                return snapshotCallCount == 1
+                    ? Task.FromResult(CreateSnapshot(summary))
                     : refreshCompletionSource.Task;
             });
 
@@ -411,7 +404,7 @@ public sealed class AuditTests
             Assert.Single(cut.FindAll("[data-testid='audit-summary-table']"));
         });
 
-        await cut.InvokeAsync(() => refreshCompletionSource.SetResult(summary));
+        await cut.InvokeAsync(() => refreshCompletionSource.SetResult(CreateSnapshot(summary)));
         await refreshTask;
     }
 
@@ -424,16 +417,16 @@ public sealed class AuditTests
             new("owner/repo-a", 1, 1, 0, 0, 0),
         };
 
-        var summaryCallCount = 0;
+        var snapshotCallCount = 0;
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
-        _auditDashboardService.GetAuditSummaryAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>())
+        _auditDashboardService.GetDashboardSnapshotAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(callInfo =>
             {
-                summaryCallCount++;
-                if (summaryCallCount == 1)
+                snapshotCallCount++;
+                if (snapshotCallCount == 1)
                 {
-                    return Task.FromResult<IReadOnlyList<RepositoryAuditSummaryDto>>(summary);
+                    return Task.FromResult(CreateSnapshot(summary));
                 }
 
                 throw new HttpRequestException("rate limited");
@@ -501,10 +494,6 @@ public sealed class AuditTests
 
     private BunitContext CreateContext()
     {
-        _auditDashboardService.GetUnlabelledIssuesAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<IssueDto>());
-        _auditDashboardService.GetStalePullRequestsAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<PullRequestDto>());
-        _auditDashboardService.GetFailingWorkflowRunsAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<WorkflowRunDto>());
-
         var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddMudServices();
@@ -519,6 +508,17 @@ public sealed class AuditTests
 
         return ctx;
     }
+
+    private static AuditDashboardSnapshotDto CreateSnapshot(
+        IReadOnlyList<RepositoryAuditSummaryDto>? summaries = null,
+        IReadOnlyList<IssueDto>? unlabelledIssues = null,
+        IReadOnlyList<PullRequestDto>? stalePullRequests = null,
+        IReadOnlyList<WorkflowRunDto>? failingWorkflowRuns = null)
+        => new(
+            summaries ?? Array.Empty<RepositoryAuditSummaryDto>(),
+            unlabelledIssues ?? Array.Empty<IssueDto>(),
+            stalePullRequests ?? Array.Empty<PullRequestDto>(),
+            failingWorkflowRuns ?? Array.Empty<WorkflowRunDto>());
 
     private static RepositoryDto CreateRepository(string owner, string name)
         => new(

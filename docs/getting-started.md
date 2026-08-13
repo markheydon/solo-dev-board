@@ -322,6 +322,19 @@ Located at `src/App/SoloDevBoard.App/appsettings.json`. The relevant sections ar
 - `GitHub:Cache:LabelsTtlSeconds`: Absolute cache lifetime in seconds for label catalogue responses (default `300`).
 - `GitHub:Cache:MilestonesTtlSeconds`: Absolute cache lifetime in seconds for milestone catalogue responses (default `300`).
 
+#### GitHub API performance
+
+SoloDevBoard reduces GitHub API usage in two ways:
+
+- **Catalogue caching (DEC-018):** Repository, label, and milestone lists are cached in memory for the configured TTLs above. Label and milestone caches invalidate after corresponding mutations.
+- **Audit dashboard snapshot:** The Audit page fetches issues, pull requests, and workflow runs once per selected repository per load, then derives summary counters and health indicators in memory.
+- **Pagination:** REST catalogue endpoints (including workflow runs) follow GitHub `Link: rel="next"` headers until all pages are retrieved.
+
+Known V1 limits (accepted trade-offs for solo-developer scale):
+
+- Issues, pull requests, and workflow runs are not cached in Infrastructure; each Audit load or Triage session refetches them.
+- GraphQL project board discovery and field definitions are capped at `first: 50` per query.
+
 Leave `PersonalAccessToken` empty in `appsettings.json` and supply it via an environment variable or user secrets instead.
 
 ### Environment Variables

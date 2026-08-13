@@ -391,7 +391,69 @@ public sealed class GitHubServiceTests
         Assert.Equal("abc123", result[0].HeadSha);
         Assert.Equal("https://github.com/owner/repo/actions/runs/12345", result[0].HtmlUrl);
         Assert.Single(handler.Requests);
-        Assert.Equal("https://api.github.com/repos/owner/repo/actions/runs?per_page=25", handler.Requests[0].RequestUri!.ToString());
+        Assert.Equal("https://api.github.com/repos/owner/repo/actions/runs?per_page=100", handler.Requests[0].RequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task GetWorkflowRunsAsync_MultiplePages_ReturnsMappedWorkflowRuns()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                {
+                  "workflow_runs": [
+                    {
+                      "id": 1,
+                      "name": "build",
+                      "status": "completed",
+                      "conclusion": "success",
+                      "head_branch": "main",
+                      "head_sha": "abc123",
+                      "created_at": "2026-03-10T08:00:00Z",
+                      "updated_at": "2026-03-10T08:05:00Z",
+                      "html_url": "https://github.com/owner/repo/actions/runs/1"
+                    }
+                  ]
+                }
+                """,
+                "<https://api.github.com/repos/owner/repo/actions/runs?page=2&per_page=100>; rel=\"next\""),
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                {
+                  "workflow_runs": [
+                    {
+                      "id": 2,
+                      "name": "deploy",
+                      "status": "completed",
+                      "conclusion": "failure",
+                      "head_branch": "main",
+                      "head_sha": "def456",
+                      "created_at": "2026-03-11T08:00:00Z",
+                      "updated_at": "2026-03-11T08:05:00Z",
+                      "html_url": "https://github.com/owner/repo/actions/runs/2"
+                    }
+                  ]
+                }
+                """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var result = await sut.GetWorkflowRunsAsync("owner", "repo", cancellationToken);
+
+        // Assert
+        Assert.Equal(2, result.Count);
+        Assert.Equal("build", result[0].WorkflowName);
+        Assert.Equal("deploy", result[1].WorkflowName);
+        Assert.Equal(2, handler.Requests.Count);
+        Assert.Equal("https://api.github.com/repos/owner/repo/actions/runs?per_page=100", handler.Requests[0].RequestUri!.ToString());
+        Assert.Equal("https://api.github.com/repos/owner/repo/actions/runs?page=2&per_page=100", handler.Requests[1].RequestUri!.ToString());
     }
 
     [Fact]
@@ -416,7 +478,7 @@ public sealed class GitHubServiceTests
         // Assert
         Assert.Empty(result);
         Assert.Single(handler.Requests);
-        Assert.Equal("https://api.github.com/repos/owner/repo/actions/runs?per_page=25", handler.Requests[0].RequestUri!.ToString());
+        Assert.Equal("https://api.github.com/repos/owner/repo/actions/runs?per_page=100", handler.Requests[0].RequestUri!.ToString());
     }
 
     [Fact]
