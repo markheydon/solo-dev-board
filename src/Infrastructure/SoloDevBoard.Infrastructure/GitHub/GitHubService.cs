@@ -125,13 +125,18 @@ public sealed class GitHubService : IGitHubService
     /// non-<see langword="null"/> <c>pull_request</c> marker property are filtered out so that
     /// only genuine issues are returned.
     /// </remarks>
-    public async Task<IReadOnlyList<Issue>> GetIssuesAsync(string owner, string repo, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyList<Issue>> GetIssuesAsync(string owner, string repo, CancellationToken cancellationToken = default)
+        => GetIssuesAsync(owner, repo, "all", cancellationToken);
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<Issue>> GetIssuesAsync(string owner, string repo, string state, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
         ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+        ValidateItemState(state);
 
         var client = CreateAuthenticatedClient();
-        var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/issues?state=all&per_page=100";
+        var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/issues?state={Uri.EscapeDataString(state)}&per_page=100";
         var issues = await GetPagedAsync<IssueResponseDto, Issue>(
                 client,
                 endpoint,
@@ -144,13 +149,18 @@ public sealed class GitHubService : IGitHubService
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<PullRequest>> GetPullRequestsAsync(string owner, string repo, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyList<PullRequest>> GetPullRequestsAsync(string owner, string repo, CancellationToken cancellationToken = default)
+        => GetPullRequestsAsync(owner, repo, "all", cancellationToken);
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<PullRequest>> GetPullRequestsAsync(string owner, string repo, string state, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
         ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+        ValidateItemState(state);
 
         var client = CreateAuthenticatedClient();
-        var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/pulls?state=all&per_page=100";
+        var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/pulls?state={Uri.EscapeDataString(state)}&per_page=100";
         var pullRequests = await GetPagedAsync<PullRequestResponseDto, PullRequest>(
                 client,
                 endpoint,
@@ -661,6 +671,18 @@ public sealed class GitHubService : IGitHubService
     {
         PropertyNameCaseInsensitive = true,
     };
+
+    internal static void ValidateItemState(string state)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(state);
+
+        if (!state.Equals("open", StringComparison.OrdinalIgnoreCase)
+            && !state.Equals("closed", StringComparison.OrdinalIgnoreCase)
+            && !state.Equals("all", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException("State must be 'open', 'closed', or 'all'.", nameof(state));
+        }
+    }
 
     /// <summary>
     /// Reads the response body and throws an <see cref="HttpRequestException"/> if the response

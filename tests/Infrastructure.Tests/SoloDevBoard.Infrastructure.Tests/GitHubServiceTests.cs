@@ -349,6 +349,58 @@ public sealed class GitHubServiceTests
     }
 
     [Fact]
+    public async Task GetIssuesAsync_OpenState_UsesOpenFilterInRequest()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, "[]"),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var result = await sut.GetIssuesAsync("owner", "repo", "open", cancellationToken);
+
+        // Assert
+        Assert.Empty(result);
+        Assert.Single(handler.Requests);
+        Assert.Equal("https://api.github.com/repos/owner/repo/issues?state=open&per_page=100", handler.Requests[0].RequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task GetPullRequestsAsync_OpenState_UsesOpenFilterInRequest()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, "[]"),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var result = await sut.GetPullRequestsAsync("owner", "repo", "open", cancellationToken);
+
+        // Assert
+        Assert.Empty(result);
+        Assert.Single(handler.Requests);
+        Assert.Equal("https://api.github.com/repos/owner/repo/pulls?state=open&per_page=100", handler.Requests[0].RequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task GetIssuesAsync_InvalidState_ThrowsArgumentException()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var sut = CreateSubject(new QueueMessageHandler([]));
+
+        await Assert.ThrowsAsync<ArgumentException>(
+            async () => _ = await sut.GetIssuesAsync("owner", "repo", "invalid", cancellationToken));
+    }
+
+    [Fact]
     public async Task GetWorkflowRunsAsync_ValidResponse_ReturnsMappedWorkflowRuns()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
@@ -442,7 +494,7 @@ public sealed class GitHubServiceTests
                 """),
         ]);
 
-        var sut = CreateSubject(handler);
+        var sut = CreateSubject(handler, new GitHubPaginationOptions { WorkflowRunsMaxPages = 5 });
 
         // Act
         var result = await sut.GetWorkflowRunsAsync("owner", "repo", cancellationToken);

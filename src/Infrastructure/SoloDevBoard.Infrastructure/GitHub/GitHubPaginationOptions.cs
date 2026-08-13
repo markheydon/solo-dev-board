@@ -7,5 +7,9 @@ public sealed class GitHubPaginationOptions
     public const string SectionName = "GitHub:Pagination";
 
     /// <summary>Maximum number of pages to fetch for workflow run catalogue responses.</summary>
-    public int WorkflowRunsMaxPages { get; set; } = 5;
+    /// <remarks>
+    /// The Audit dashboard only needs the most recent run per workflow name. GitHub returns runs
+    /// newest-first, so one page is sufficient for typical solo-developer repositories.
+    /// </remarks>
+    public int WorkflowRunsMaxPages { get; set; } = 1;
 }

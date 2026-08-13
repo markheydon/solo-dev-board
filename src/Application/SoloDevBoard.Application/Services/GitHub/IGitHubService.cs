@@ -39,12 +39,28 @@ public interface IGitHubService
     /// <returns>A read-only list of issues for the specified repository.</returns>
     Task<IReadOnlyList<Issue>> GetIssuesAsync(string owner, string repo, CancellationToken cancellationToken = default);
 
+    /// <summary>Retrieves issues for the specified repository filtered by state.</summary>
+    /// <param name="owner">The GitHub account owner login.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="state">The issue state filter: <c>open</c>, <c>closed</c>, or <c>all</c>.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A read-only list of issues for the specified repository.</returns>
+    Task<IReadOnlyList<Issue>> GetIssuesAsync(string owner, string repo, string state, CancellationToken cancellationToken);
+
     /// <summary>Retrieves all pull requests for the specified repository.</summary>
     /// <param name="owner">The GitHub account owner login.</param>
     /// <param name="repo">The repository name.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>A read-only list of pull requests for the specified repository.</returns>
     Task<IReadOnlyList<PullRequest>> GetPullRequestsAsync(string owner, string repo, CancellationToken cancellationToken = default);
+
+    /// <summary>Retrieves pull requests for the specified repository filtered by state.</summary>
+    /// <param name="owner">The GitHub account owner login.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="state">The pull request state filter: <c>open</c>, <c>closed</c>, or <c>all</c>.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A read-only list of pull requests for the specified repository.</returns>
+    Task<IReadOnlyList<PullRequest>> GetPullRequestsAsync(string owner, string repo, string state, CancellationToken cancellationToken);
 
     /// <summary>Retrieves recent workflow runs for the specified repository.</summary>
     /// <param name="owner">The GitHub account owner login.</param>

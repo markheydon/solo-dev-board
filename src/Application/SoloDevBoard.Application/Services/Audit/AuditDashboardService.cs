@@ -11,6 +11,7 @@ namespace SoloDevBoard.Application.Services.Audit;
 public sealed class AuditDashboardService : IAuditDashboardService
 {
     private const int DefaultStaleDays = 14;
+    private const string OpenItemState = "open";
 
     private readonly IGitHubService _gitHubService;
     private readonly ICurrentUserContext _currentUserContext;
@@ -50,11 +51,10 @@ public sealed class AuditDashboardService : IAuditDashboardService
 
         var repositoryReference = ResolveRepositoryReference(repo);
         var issues = await _gitHubService
-            .GetIssuesAsync(repositoryReference.Owner, repositoryReference.RepoName, cancellationToken)
+            .GetIssuesAsync(repositoryReference.Owner, repositoryReference.RepoName, OpenItemState, cancellationToken)
             .ConfigureAwait(false);
 
         return issues
-            .Where(static issue => IsOpenState(issue.State))
             .Select(issue => MapIssue(issue, repositoryReference.FullName))
             .ToArray();
     }
@@ -117,11 +117,11 @@ public sealed class AuditDashboardService : IAuditDashboardService
         var issueTasks = repositoryReferences.Select(async repositoryReference =>
         {
             var issues = await _gitHubService
-                .GetIssuesAsync(repositoryReference.Owner, repositoryReference.RepoName, cancellationToken)
+                .GetIssuesAsync(repositoryReference.Owner, repositoryReference.RepoName, OpenItemState, cancellationToken)
                 .ConfigureAwait(false);
 
             return issues
-                .Where(static issue => IsOpenState(issue.State) && issue.Labels.Count == 0)
+                .Where(static issue => issue.Labels.Count == 0)
                 .Select(issue => MapIssue(issue, repositoryReference.FullName))
                 .ToArray();
         });
@@ -145,11 +145,11 @@ public sealed class AuditDashboardService : IAuditDashboardService
         var pullRequestTasks = repositoryReferences.Select(async repositoryReference =>
         {
             var pullRequests = await _gitHubService
-                .GetPullRequestsAsync(repositoryReference.Owner, repositoryReference.RepoName, cancellationToken)
+                .GetPullRequestsAsync(repositoryReference.Owner, repositoryReference.RepoName, OpenItemState, cancellationToken)
                 .ConfigureAwait(false);
 
             return pullRequests
-                .Where(pullRequest => pullRequest.State.Equals("open", StringComparison.OrdinalIgnoreCase) && pullRequest.UpdatedAt < staleBefore)
+                .Where(pullRequest => pullRequest.UpdatedAt < staleBefore)
                 .Select(pullRequest => MapPullRequest(pullRequest, repositoryReference.FullName))
                 .ToArray();
         });
@@ -257,11 +257,11 @@ public sealed class AuditDashboardService : IAuditDashboardService
     {
         var repositoryFullName = BuildRepositoryFullName(owner, repoName);
         var issuesTask = GetRepositoryResourceSafeAsync(
-            () => _gitHubService.GetIssuesAsync(owner, repoName, cancellationToken),
+            () => _gitHubService.GetIssuesAsync(owner, repoName, OpenItemState, cancellationToken),
             repositoryFullName,
             "issues");
         var pullRequestsTask = GetRepositoryResourceSafeAsync(
-            () => _gitHubService.GetPullRequestsAsync(owner, repoName, cancellationToken),
+            () => _gitHubService.GetPullRequestsAsync(owner, repoName, OpenItemState, cancellationToken),
             repositoryFullName,
             "pull requests");
         var workflowRunsTask = GetRepositoryResourceSafeAsync(

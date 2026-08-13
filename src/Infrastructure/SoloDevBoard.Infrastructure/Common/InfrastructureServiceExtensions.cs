@@ -59,7 +59,7 @@ public static class InfrastructureServiceExtensions
             {
                 if (options.WorkflowRunsMaxPages == 0)
                 {
-                    options.WorkflowRunsMaxPages = 5;
+                    options.WorkflowRunsMaxPages = 1;
                 }
             })
             .ValidateOnStart();
