@@ -53,6 +53,18 @@ public sealed class GitHubAuthOptions
     public string HostedTokenExpiresAtClaimType { get; set; } = HostedAuthClaimTypes.TokenExpiresAt;
 
     /// <summary>
+    /// Gets or sets the claim type used to read the hosted GitHub refresh token.
+    /// </summary>
+    /// <value>The hosted authentication claim type for the refresh token.</value>
+    public string HostedRefreshTokenClaimType { get; set; } = HostedAuthClaimTypes.RefreshToken;
+
+    /// <summary>
+    /// Gets or sets the claim type used to read the hosted GitHub refresh token expiry timestamp.
+    /// </summary>
+    /// <value>The hosted authentication claim type for refresh token expiry in UTC.</value>
+    public string HostedRefreshTokenExpiresAtClaimType { get; set; } = HostedAuthClaimTypes.RefreshTokenExpiresAt;
+
+    /// <summary>
     /// Gets or sets the GitHub App client identifier used for hosted user sign-in.
     /// </summary>
     /// <value>The hosted GitHub App client identifier.</value>

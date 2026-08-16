@@ -57,13 +57,45 @@ internal sealed class HostedGitHubAuthGateway(
         var installationId = await ResolveInstallationIdAsync(client, tokenResponse.AccessToken, user.Login, cancellationToken).ConfigureAwait(false);
         var organisationLogins = await GetOrganisationLoginsAsync(client, tokenResponse.AccessToken, cancellationToken).ConfigureAwait(false);
 
-        DateTimeOffset? tokenExpiresAtUtc = null;
-        if (tokenResponse.ExpiresInSeconds is > 0)
-        {
-            tokenExpiresAtUtc = DateTimeOffset.UtcNow.AddSeconds(tokenResponse.ExpiresInSeconds.Value);
-        }
+        var tokenExpiresAtUtc = ComputeExpiresAtUtc(tokenResponse.ExpiresInSeconds);
+        var refreshTokenExpiresAtUtc = ComputeExpiresAtUtc(tokenResponse.RefreshTokenExpiresInSeconds);
+        var refreshToken = tokenResponse.RefreshToken ?? string.Empty;
 
-        return new HostedGitHubAuthSession(user.Login, tokenResponse.AccessToken, installationId, tokenExpiresAtUtc, organisationLogins);
+        return new HostedGitHubAuthSession(
+            user.Login,
+            tokenResponse.AccessToken,
+            installationId,
+            tokenExpiresAtUtc,
+            organisationLogins,
+            refreshToken,
+            refreshTokenExpiresAtUtc);
+    }
+
+    internal async Task<HostedGitHubAuthSession> RefreshSessionAsync(HostedGitHubAuthSession currentSession, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(currentSession);
+        ArgumentException.ThrowIfNullOrWhiteSpace(currentSession.RefreshToken);
+
+        EnsureHostedSignInConfiguration();
+
+        var client = _httpClientFactory.CreateClient(HostedGitHubAuthClientName);
+
+        var tokenResponse = await ExchangeRefreshTokenForAccessTokenAsync(client, currentSession.RefreshToken, cancellationToken).ConfigureAwait(false);
+
+        var tokenExpiresAtUtc = ComputeExpiresAtUtc(tokenResponse.ExpiresInSeconds);
+        var refreshTokenExpiresAtUtc = ComputeExpiresAtUtc(tokenResponse.RefreshTokenExpiresInSeconds);
+        var refreshToken = !string.IsNullOrWhiteSpace(tokenResponse.RefreshToken)
+            ? tokenResponse.RefreshToken
+            : currentSession.RefreshToken;
+
+        return new HostedGitHubAuthSession(
+            currentSession.OwnerLogin,
+            tokenResponse.AccessToken,
+            currentSession.InstallationId,
+            tokenExpiresAtUtc,
+            currentSession.OrganisationLogins,
+            refreshToken,
+            refreshTokenExpiresAtUtc);
     }
 
     internal ClaimsPrincipal CreatePrincipal(HostedGitHubAuthSession session)
@@ -88,6 +120,16 @@ internal sealed class HostedGitHubAuthGateway(
             claims.Add(new Claim(_authOptions.HostedTokenExpiresAtClaimType, expiresAtUtc.ToString("O")));
         }
 
+        if (!string.IsNullOrWhiteSpace(_authOptions.HostedRefreshTokenClaimType) && !string.IsNullOrWhiteSpace(session.RefreshToken))
+        {
+            claims.Add(new Claim(_authOptions.HostedRefreshTokenClaimType, session.RefreshToken));
+        }
+
+        if (!string.IsNullOrWhiteSpace(_authOptions.HostedRefreshTokenExpiresAtClaimType) && session.RefreshTokenExpiresAtUtc is { } refreshTokenExpiresAtUtc)
+        {
+            claims.Add(new Claim(_authOptions.HostedRefreshTokenExpiresAtClaimType, refreshTokenExpiresAtUtc.ToString("O")));
+        }
+
         if (!string.IsNullOrWhiteSpace(_admissionOptions.HostedOrganisationLoginsClaimType))
         {
             foreach (var organisationLogin in session.OrganisationLogins)
@@ -102,17 +144,10 @@ internal sealed class HostedGitHubAuthGateway(
 
     private async Task<AccessTokenResponseDto> ExchangeCodeForAccessTokenAsync(HttpClient client, string code, CancellationToken cancellationToken)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post, _authOptions.HostedGitHubAccessTokenEndpoint)
+        using var request = CreateTokenEndpointRequest(new Dictionary<string, string>
         {
-            Content = new FormUrlEncodedContent(new Dictionary<string, string>
-            {
-                ["client_id"] = _authOptions.HostedGitHubAppClientId,
-                ["client_secret"] = _authOptions.HostedGitHubAppClientSecret,
-                ["code"] = code,
-            }),
-        };
-
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            ["code"] = code,
+        });
 
         using var response = await client.SendAsync(request, cancellationToken).ConfigureAwait(false);
         EnsureSuccessStatusCode(response);
@@ -126,6 +161,51 @@ internal sealed class HostedGitHubAuthGateway(
         }
 
         return payload;
+    }
+
+    private async Task<AccessTokenResponseDto> ExchangeRefreshTokenForAccessTokenAsync(HttpClient client, string refreshToken, CancellationToken cancellationToken)
+    {
+        using var request = CreateTokenEndpointRequest(new Dictionary<string, string>
+        {
+            ["grant_type"] = "refresh_token",
+            ["refresh_token"] = refreshToken,
+        });
+
+        using var response = await client.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        EnsureSuccessStatusCode(response);
+
+        var payload = await response.Content.ReadFromJsonAsync<AccessTokenResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
+            ?? throw new InvalidOperationException("Hosted token refresh failed because the GitHub access-token response was empty.");
+
+        if (!string.IsNullOrWhiteSpace(payload.Error) || string.IsNullOrWhiteSpace(payload.AccessToken))
+        {
+            throw new InvalidOperationException("Hosted token refresh failed because GitHub did not return a valid access token.");
+        }
+
+        return payload;
+    }
+
+    private HttpRequestMessage CreateTokenEndpointRequest(Dictionary<string, string> extraFields)
+    {
+        var formFields = new Dictionary<string, string>
+        {
+            ["client_id"] = _authOptions.HostedGitHubAppClientId,
+            ["client_secret"] = _authOptions.HostedGitHubAppClientSecret,
+        };
+
+        foreach (var field in extraFields)
+        {
+            formFields[field.Key] = field.Value;
+        }
+
+        var request = new HttpRequestMessage(HttpMethod.Post, _authOptions.HostedGitHubAccessTokenEndpoint)
+        {
+            Content = new FormUrlEncodedContent(formFields),
+        };
+
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        return request;
     }
 
     private static async Task<AuthenticatedUserDto> GetAuthenticatedUserAsync(HttpClient client, string accessToken, CancellationToken cancellationToken)
@@ -200,6 +280,16 @@ internal sealed class HostedGitHubAuthGateway(
         }
     }
 
+    private static DateTimeOffset? ComputeExpiresAtUtc(long? expiresInSeconds)
+    {
+        if (expiresInSeconds is > 0)
+        {
+            return DateTimeOffset.UtcNow.AddSeconds(expiresInSeconds.Value);
+        }
+
+        return null;
+    }
+
     private static void EnsureSuccessStatusCode(HttpResponseMessage response)
     {
         if (response.IsSuccessStatusCode)
@@ -220,6 +310,12 @@ internal sealed class HostedGitHubAuthGateway(
 
         [JsonPropertyName("expires_in")]
         public long? ExpiresInSeconds { get; set; }
+
+        [JsonPropertyName("refresh_token")]
+        public string? RefreshToken { get; set; }
+
+        [JsonPropertyName("refresh_token_expires_in")]
+        public long? RefreshTokenExpiresInSeconds { get; set; }
 
         [JsonPropertyName("error")]
         public string? Error { get; set; }
@@ -264,4 +360,6 @@ internal sealed record HostedGitHubAuthSession(
     string AccessToken,
     long? InstallationId,
     DateTimeOffset? TokenExpiresAtUtc,
-    IReadOnlyList<string> OrganisationLogins);
+    IReadOnlyList<string> OrganisationLogins,
+    string RefreshToken,
+    DateTimeOffset? RefreshTokenExpiresAtUtc);

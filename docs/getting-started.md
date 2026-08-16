@@ -104,6 +104,26 @@ SoloDevBoard uses **Aspire for local orchestration**, which provides standardise
    aspire start --isolated --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
    ```
 
+### GitHub Codespaces secrets
+
+Codespaces and dev containers can load AppHost parameters from repository **Codespaces secrets** using the same `SDB_*` names as the Cursor Cloud Environment (see [`plan/CURSOR_CLOUD.md`](../plan/CURSOR_CLOUD.md)). Add them at **Settings → Secrets and variables → Codespaces** for your repository.
+
+| Codespaces secret | AppHost parameter |
+|---|---|
+| `SDB_GH_PAT` | `gh-pat` |
+| `SDB_GH_APP_CLIENT_ID` | `gh-app-client-id` |
+| `SDB_GH_APP_CLIENT_SECRET` | `gh-app-client-secret` |
+| `SDB_HOSTED_SIGN_IN_ENABLED` | `hosted-sign-in-enabled` |
+| `SDB_HOSTED_ADMISSION_ENABLED` | `hosted-admission-enabled` |
+| `SDB_ALLOWED_USER_LOGINS` | `allowed-user-logins` |
+| `SDB_ALLOWED_ORG_LOGINS` | `allowed-org-logins` |
+
+On container create, `.devcontainer/map-apphost-secrets.sh` maps any set `SDB_*` variables into AppHost parameters with `aspire secret set` (the same user-secrets store as manual `dotnet user-secrets` on the AppHost project). Rebuild the Codespace after adding or changing secrets.
+
+On each container start, `.devcontainer/setup-dev-certs.sh` trusts the ASP.NET HTTPS development certificate and persists `SSL_CERT_DIR` in your shell profile so `aspire doctor` does not warn about partial certificate trust.
+
+For hosted sign-in testing (for example refresh-token work), set `SDB_HOSTED_SIGN_IN_ENABLED` to `true` and register `{app-https-url}/auth/callback` on your GitHub App after the first `aspire describe`.
+
 ### Legacy run path (without Aspire orchestration)
 
 If you prefer to run directly without Aspire:
