@@ -162,10 +162,10 @@ When Copilot or another AI agent is asked to write or update documentation:
 >
 > | Code Change | Documentation Action |
 > |-------------|---------------------|
-> | New end-user feature implemented | Update `user-docs/content/docs/<feature>.md` to full content; remove "Under Development" notice; refresh site indexes |
+> | New end-user feature implemented | Update `website/content/docs/<feature>.md` to full content; remove "Under Development" notice; refresh site indexes |
 > | New environment variable | Update `docs/getting-started.md` configuration table and `docs/deployment.md` |
 > | New architectural decision | Follow `repo-decision-log`; update `plan/DECISIONS.md` and constitution if cross-cutting |
-> | Scope change | Update `plan/SCOPE.md`; update `user-docs/content/_index.md` if the published feature list changes |
+> | Scope change | Update `plan/SCOPE.md`; update `website/content/_index.md` if the published feature list changes |
 > | New release | Update `plan/RELEASE_PLAN.md`; draft CHANGELOG entry |
 > | New label | Update `plan/LABEL_STRATEGY.md` |
 > | New board column or rule | Update `plan/PROJECT_BOARD_DESIGN.md` |
