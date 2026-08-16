@@ -27,7 +27,7 @@ public sealed class HealthEndpointTests
         await app.StartAsync(cancellationToken);
         try
         {
-            var baseAddress = new Uri(app.Urls.First());
+            var baseAddress = GetClientBaseAddress(app);
             using var client = new HttpClient { BaseAddress = baseAddress };
 
             var healthResponse = await client.GetAsync("/health", cancellationToken);
@@ -67,7 +67,7 @@ public sealed class HealthEndpointTests
         await app.StartAsync(cancellationToken);
         try
         {
-            var baseAddress = new Uri(app.Urls.First());
+            var baseAddress = GetClientBaseAddress(app);
             using var client = new HttpClient { BaseAddress = baseAddress };
 
             var healthResponse = await client.GetAsync("/health", cancellationToken);
@@ -85,5 +85,15 @@ public sealed class HealthEndpointTests
         {
             await app.StopAsync(cancellationToken);
         }
+    }
+
+    /// <summary>
+    /// Kestrel may listen on <c>http://[::]:port</c> or <c>http://0.0.0.0:port</c>, which HttpClient cannot target.
+    /// Map to loopback so health endpoint integration tests work in Codespaces and other Linux hosts.
+    /// </summary>
+    private static Uri GetClientBaseAddress(WebApplication app)
+    {
+        var listenUri = new Uri(app.Urls.First());
+        return new UriBuilder(Uri.UriSchemeHttp, "127.0.0.1", listenUri.Port).Uri;
     }
 }
