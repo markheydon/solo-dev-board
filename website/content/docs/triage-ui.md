@@ -3,6 +3,7 @@ weight: 80
 title: Triage UI
 landing: true
 landingIcon: inbox
+landingImage: /images/triage-ui/overview.png
 landingSubtitle: "Keyboard-friendly interface for triaging incoming issues quickly."
 guideStatus: Available
 ---

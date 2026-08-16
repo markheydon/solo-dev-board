@@ -41,9 +41,10 @@
 |                                                                  |
 | [ Learn more about the project ]  → /about/                      |
 +------------------------------------------------------------------+
-| Feature grid (3 columns; 7 tiles; icon + name + one-liner)       |
-| Icons match the in-app nav (Material Symbols).                   |
-| Tiles are not links.                                             |
+| Feature grid (3 columns; 7 tiles; icon + name + one-liner + screenshot) |
+| Uses Hextra `hextra-feature-card` layout (see imfing.github.io/hextra). |
+| Screenshots from `website/static/images/<feature>/overview.png`.       |
+| Tiles are not links.                                                   |
 +------------------------------------------------------------------+
 | Footer: copyright, MIT licence and repo docs/, release, Hugo     |
 +------------------------------------------------------------------+
@@ -54,7 +55,7 @@
 - Layout: `hextra-home`.
 - Hero badge shows release tag from `params.releaseVersion` (injected on tag deploy).
 - Single on-page CTA: Learn more about the project (`/about/`).
-- Feature tiles are **not** links. Titles, one-liners, and icons come from guide front matter (`landing: true`, `landingSubtitle`, `landingIcon`) so claims stay aligned with published guides (DEC-023).
+- Feature tiles are **not** links. Titles, one-liners, icons, and screenshots come from guide front matter (`landing: true`, `landingSubtitle`, `landingIcon`, `landingImage`) so claims stay aligned with published guides (DEC-023). Layout follows Hextra’s screenshot feature cards (`cols="3"`).
 - Do not list in-app About or Appearance as landing pillars.
 - Do not advertise paid tiers, Marketplace, or a public hosted URL.
 - Do not invent filler cards to force a 3×3 or 4×4 cell count.

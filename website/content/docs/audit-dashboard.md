@@ -3,6 +3,7 @@ weight: 30
 title: Audit Dashboard
 landing: true
 landingIcon: analytics
+landingImage: /images/audit-dashboard/overview.png
 landingSubtitle: "Consolidated view of issues, open PRs, label consistency, and workflow health across all repositories."
 guideStatus: Available
 ---
