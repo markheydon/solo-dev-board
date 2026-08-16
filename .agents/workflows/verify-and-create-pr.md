@@ -5,8 +5,9 @@
 
 ## Easy-to-miss specifics
 
-- Use `gh pr create --fill` so the repository PR template is applied; do not bypass with a custom `--body`.
-- Always use the repo's label strategy for the relevant labels. See the [label strategy](../../plan/label-strategy.md) for more details.
+- Follow [`plan/PULL_REQUEST_POLICY.md`](../../plan/PULL_REQUEST_POLICY.md) for title, body, labels, linking, draft state, assignee, and milestone.
+- Use `gh pr create --fill` so the repository PR template is applied; do not bypass with a custom `--body` unless the platform cannot apply the template — then copy the template headings into the body.
+- Always use the repo's label strategy for the relevant labels. See the [label strategy](../../plan/LABEL_STRATEGY.md).
 
 ## Invocation
 

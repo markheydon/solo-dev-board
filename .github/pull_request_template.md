@@ -1,6 +1,6 @@
 ## Summary of Changes
 
-<!-- Provide a concise summary of what this PR does and why. Use UK English. -->
+<!-- Provide a concise summary of what this PR does and why. Use UK English. Title form: [<Type>] Imperative summary (#N) — see plan/PULL_REQUEST_POLICY.md. -->
 
 ## Related Issue(s)
 

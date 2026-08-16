@@ -4,6 +4,12 @@ Maintainer notes for running SoloDevBoard in the Cursor Cloud VM. Standard local
 
 ---
 
+## Pull requests
+
+Cursor Cloud agents often default to **draft** PRs, `cursor/…` branch names, and a custom body. Those platform defaults **do not** replace repository policy. Follow [`PULL_REQUEST_POLICY.md`](PULL_REQUEST_POLICY.md): `[<Type>]` titles, the GitHub PR template headings in the body, taxonomy labels on the PR, ready-for-review when Verify gates pass, and no standalone Project #8 PR cards.
+
+---
+
 ## Toolchain
 
 - The .NET SDK pinned by `global.json` (`10.0.300`) is installed at `~/.dotnet`; the Aspire CLI (`13.4.6`, matching `Aspire.AppHost.Sdk`) is installed as a global tool at `~/.dotnet/tools`. Both are on `PATH` via `~/.bashrc`. Non-login shells (for example `bash -c`) do not source `~/.bashrc`, so invoke the SDK with the absolute path `~/.dotnet/dotnet` when `dotnet`/`aspire` are not already on `PATH`.

@@ -52,11 +52,11 @@ Roadmap date handling follows the same lifecycle:
 
 ### Linking Issues to PRs
 
-Reference the issue in your PR description using `Closes #<issue-number>` so GitHub automatically closes the issue when the PR is merged.
+Follow [`PULL_REQUEST_POLICY.md`](PULL_REQUEST_POLICY.md). Reference the issue in the PR description using `Closes #<issue-number>` so GitHub automatically closes the issue when the PR is merged.
 
 ### Automated Dependency PRs
 
-- Dependabot pull requests are treated as maintenance work and should use the `type/chore` label.
+- Dependabot pull requests are treated as maintenance work. [`.github/dependabot.yml`](../.github/dependabot.yml) applies `type/chore`, `priority/low`, `status/in-review`, `area/infrastructure`, and `dependencies`.
 - Dependabot pull requests should normally use `priority/low`, `status/in-review`, and `area/infrastructure` unless the update affects a different area or becomes urgent.
 - Dependabot pull requests do not need a separate tracking issue unless the update uncovers breaking changes, follow-up work, or a broader remediation task.
 - Dependabot updates should be grouped by related package area where practical so each pull request stays reviewable.

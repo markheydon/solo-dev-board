@@ -53,7 +53,7 @@ Use this instruction for authoring and reviewing workflows in this repository.
 ## Dependabot Pull Requests
 
 - Dependabot pull requests must use the normal pull request CI workflow and meet the same build and test requirements as any other pull request.
-- Apply labels that match the repository taxonomy: `type/chore`, `priority/low`, `status/in-review`, and `area/infrastructure` unless a specific update warrants different priority or area labels.
+- Apply labels that match the repository taxonomy via [`.github/dependabot.yml`](../dependabot.yml): `type/chore`, `priority/low`, `status/in-review`, and `area/infrastructure` unless a specific update warrants different priority or area labels. See [`plan/PULL_REQUEST_POLICY.md`](../../plan/PULL_REQUEST_POLICY.md).
 - Group related dependency updates so review stays focused and pull request volume remains manageable.
 - Review each Dependabot pull request for package relevance, release notes, and any breaking-change risk before merging.
 - Merge only after required checks pass; do not bypass branch protection or deployment gates for automated dependency updates.

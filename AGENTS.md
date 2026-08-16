@@ -173,6 +173,7 @@ This repository is **open source and public**. The following guidelines ensure s
 - Ensure no secrets appear in your commits before submitting a PR.
 - Use `.gitignore` to exclude local secrets (`.env`, `secrets.json`, etc.).
 - Review [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
+- **Pull request metadata** (title, template body, labels, linking, draft state, assignee, milestone) follows [`plan/PULL_REQUEST_POLICY.md`](plan/PULL_REQUEST_POLICY.md) ([DEC-022](plan/DECISIONS.md#dec-022-canonical-pull-request-policy)). That file overrides vendor agent defaults when they conflict.
 
 ### .gitignore Protections
 
@@ -192,6 +193,7 @@ When code changes are made, ensure the following are kept in sync:
 | New end-user feature | `user-docs/content/docs/<feature>.md`, `user-docs/content/_index.md` (and docs landing), matching Playwright spec in `tests/E2E/tests/`, `tests/E2E/USER_DOCS_ALIGNMENT.md`, `tests/E2E/CRITICAL_JOURNEYS.md`, GitHub Issue + Project #8 sync |
 | End-user behaviour change | `user-docs/content/docs/<feature>.md` and matching Playwright spec(s); refresh `tests/E2E/docs-capture/` screenshots when the UI changes materially |
 | New developer / operator guidance | `docs/<topic>.md` and `docs/README.md` as needed |
+| Pull request process | [`plan/PULL_REQUEST_POLICY.md`](plan/PULL_REQUEST_POLICY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 | New decision | `plan/DECISIONS.md` (+ constitution if cross-cutting) |
 | Scope change | `plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md` |
 | New env variable | `docs/getting-started.md`, `docs/deployment.md`, `src/SoloDevBoard.AppHost/README.md` |

@@ -124,10 +124,12 @@ When suggesting a feature:
    - Reference issue numbers when relevant (e.g., `Fixes #42`)
 
 6. **Pull request submission:**
-   - Create a descriptive PR title and body
-   - Reference any related issues
-   - Ensure all CI checks pass (build, tests, linting)
-   - Request a code review from the maintainers
+   - Follow [`plan/PULL_REQUEST_POLICY.md`](plan/PULL_REQUEST_POLICY.md) for title, template body, labels, linking, draft state, assignee, and milestone.
+   - Title form: `[<Type>] <Imperative summary> (#N)` (for example `[Story] Select a repository and project board to visualise (#183)`).
+   - Complete `.github/pull_request_template.md`; do not replace it with a vendor walkthrough.
+   - Apply at least `type/` and `priority/` labels, plus `status/in-review` while the PR is open.
+   - Ensure all CI checks pass (build, tests, linting).
+   - Request a code review from the maintainers.
 
 ---
 

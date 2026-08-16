@@ -4,7 +4,7 @@
 
 This document defines the canonical label taxonomy for all SoloDevBoard GitHub repositories. All labels should be created using the definitions below to ensure consistency.
 
-For instructions on how to create these labels in bulk, see [PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md).
+For instructions on how to create these labels in bulk, see [PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md). For pull request titles, template usage, and PR metadata, see [PULL_REQUEST_POLICY.md](PULL_REQUEST_POLICY.md).
 
 ---
 
@@ -112,7 +112,7 @@ A script to create all labels at once will be provided in `infra/scripts/create-
 - Apply `type/chore` to maintenance tasks, refactoring, or dependency updates with no user-facing change.
 - Apply `type/documentation` to issues or PRs that only touch documentation.
 
-#### `priority/` — Always required on issues
+#### `priority/` — Always required on issues and PRs
 - Apply `priority/critical` only when the issue is blocking all progress or affects production.
 - Apply `priority/high` when the issue should be resolved in the current release.
 - Apply `priority/medium` as the default for new feature requests.

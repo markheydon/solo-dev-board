@@ -147,7 +147,7 @@ To contribute:
 5. Use the issue templates in `.github/ISSUE_TEMPLATE/` to report bugs or request features.
 6. When implementing a feature or fix, reference the relevant issue in your commit message.
 7. Add or update tests in the appropriate test project under `tests/`.
-8. Submit your changes via a pull request using the provided template.
+8. Submit your changes via a pull request that follows [`plan/PULL_REQUEST_POLICY.md`](plan/PULL_REQUEST_POLICY.md) and `.github/pull_request_template.md`.
 9. The CI workflow will build and test your changes automatically.
 10. The project maintainer will review your PR and provide feedback or merge when ready.
 

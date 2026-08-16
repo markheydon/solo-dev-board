@@ -48,6 +48,7 @@ plan/
 ├── BACKLOG.md
 ├── RELEASE_PLAN.md
 ├── LABEL_STRATEGY.md
+├── PULL_REQUEST_POLICY.md      # Canonical PR title, body, labels, metadata
 ├── PROJECT_MANAGEMENT.md
 ├── PROJECT_BOARD_DESIGN.md
 ├── SPEC_KIT_MIGRATION.md       # Parked — future Spec Kit adoption
