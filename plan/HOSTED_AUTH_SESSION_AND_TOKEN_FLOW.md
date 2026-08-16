@@ -1,6 +1,6 @@
 # Hosted Authentication Session and Token Flow
 
-This document defines the hosted authentication and admission-control boundaries delivered for issues #111, #112, #113, #117, and #123.
+This document defines the hosted authentication and admission-control boundaries delivered for issues #111, #112, #117, and #123.
 
 ## Hosted Sign-In Application Boundary (#112)
 
@@ -58,12 +58,9 @@ This document defines the hosted authentication and admission-control boundaries
 - Operators are expected to review denied admission attempts regularly to detect unauthorised access attempts or misconfiguration.
 - Audit logs should be retained according to organisational policy and reviewed for suspicious activity.
 
-## OAuth App Fallback Boundary (#113)
+## Removed OAuth App Fallback Boundary (#113)
 
-- A separate OAuth App fallback path is now explicitly supported but remains disabled by default.
-- The fallback is controlled by the `GitHubAuth:HostedOAuthAppFallbackEnabled` configuration key.
-- OAuth App fallback is only used if enabled and the primary GitHub App authentication path is unavailable.
-- PAT-only local trusted mode is preserved and unaffected by hosted fallback settings.
+Hosted sign-in now uses GitHub App user authentication only. The separate OAuth App fallback path has been removed. PAT-only local trusted mode is preserved and unaffected by hosted sign-in settings.
 
 ## Test Coverage Expectations (Issue #114)
 
@@ -73,7 +70,7 @@ This section documents the test coverage requirements for GitHub App-first hoste
 - Installation discovery, token issuance, expiry, and failure handling are covered by unit tests and integration tests. Expiry and invalid token scenarios must be tested for explicit failure and no silent fallback.
 - Admission control and allow-list enforcement are covered by unit tests for edge cases (deny-by-default, allow-list misconfiguration, organisation claims mapping). Operator-managed allow-lists must be tested for both user and organisation paths.
 - Unit-test and mocked seams cover session creation, claim mapping, and admission control logic. Environment-dependent tests cover real GitHub App installation, token issuance, and expiry scenarios.
-- Documentation-sensitive regressions are covered by tests ensuring OAuth App fallback remains available but disabled by default, and PAT-only local trusted mode is preserved.
+- Documentation-sensitive regressions are covered by tests ensuring PAT-only local trusted mode is preserved.
 
 See [DEC-012](DECISIONS.md#dec-012-github-app-first-hosted-authentication) and GitHub Issues [#247](https://github.com/markheydon/solo-dev-board/issues/247)–[#250](https://github.com/markheydon/solo-dev-board/issues/250) for references to completed coverage and test boundaries.
 

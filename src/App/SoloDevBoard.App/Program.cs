@@ -22,8 +22,6 @@ builder.AddServiceDefaults();
 
 var hostedSignInEnabled = builder.Configuration.GetValue<bool>(
     $"{GitHubAuthOptions.SectionName}:{nameof(GitHubAuthOptions.HostedSignInEnabled)}");
-var hostedOAuthFallbackEnabled = builder.Configuration.GetSection(GitHubAuthOptions.SectionName)
-    .GetValue<bool>(nameof(GitHubAuthOptions.HostedOAuthAppFallbackEnabled));
 var hostedCallbackBaseUri = builder.Configuration.GetSection(GitHubAuthOptions.SectionName)
     .GetValue<string>(nameof(GitHubAuthOptions.HostedSignInCallbackBaseUri));
 
@@ -221,13 +219,6 @@ if (hostedSignInEnabled)
 
         return Results.Redirect(returnUrl);
     }).AllowAnonymous();
-
-    if (hostedOAuthFallbackEnabled)
-    {
-        app.MapGet("/auth/sign-in/oauth-fallback", static () =>
-            Results.Redirect(HostedAuthErrorRoutes.BuildErrorUrl(HostedAuthErrorRoutes.SignInMisconfigured)))
-            .AllowAnonymous();
-    }
 
     app.MapGet("/auth/sign-out", (Delegate)SignOutHostedSession).AllowAnonymous();
     app.MapPost("/auth/sign-out", (Delegate)SignOutHostedSession).DisableAntiforgery().AllowAnonymous();

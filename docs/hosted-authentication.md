@@ -2,7 +2,7 @@
 
 # Hosted Authentication
 
-This guide explains the hosted sign-in model for SoloDevBoard, including user and operator expectations, prerequisites, and fallback paths.
+This guide explains the hosted sign-in model for SoloDevBoard, including user and operator expectations, prerequisites, and local trusted mode notes.
 
 ## Overview
 
@@ -61,11 +61,10 @@ CI runs a dedicated Playwright job (`e2e-hosted` in [`.github/workflows/ci.yml`]
 
 Full OAuth callback and post-login journeys remain manual or staging validation. See [tests/E2E/CRITICAL_JOURNEYS.md](../tests/E2E/CRITICAL_JOURNEYS.md).
 
-## Fallback and Local Trusted Modes
+## Local Trusted Modes
 
 - **PAT-only local trusted mode** remains available for development and trusted personal self-hosting. It does not require hosted sign-in infrastructure. See [Getting Started — PAT-only local trusted mode](getting-started.md#pat-only-local-trusted-mode) and [PAT Connectivity](pat-connectivity.md).
 - To run a personal Azure instance with a PAT (no GitHub App), follow [Self-hoster deployment (PAT mode)](deployment.md#self-hoster-deployment-pat-mode).
-- OAuth App fallback is supported but disabled by default. It is only used if enabled and the primary GitHub App authentication path is unavailable.
 
 ## Session and Token Flow
 

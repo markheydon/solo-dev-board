@@ -34,7 +34,7 @@ Parameters for the mode you are **not** using can be left unset (or set to `-` w
 | **Who authenticates** | Nobody signs in to SoloDevBoard — the app uses one configured token for all GitHub API calls | Each visitor signs in with GitHub at `/auth/sign-in` (landing at `/welcome`) |
 | **Identity** | Your login is resolved automatically from the PAT at startup | Per-user session claims (login, access token, installation, organisations) |
 | **Admission control** | Not applicable — anyone who can reach the app acts as the PAT owner | Operator allow-lists (`allowed-user-logins` / `allowed-org-logins`); deny-by-default |
-| **GitHub App required?** | No | Yes (OAuth App fallback exists but is disabled by default) |
+| **GitHub App required?** | No | Yes |
 | **Trust boundary** | Suitable only where you trust every person who can reach the deployment (localhost, private network, or a personal Azure instance you alone use) | Suitable for shared or public endpoints |
 | **Connectivity UX** | App-bar **Connected as @login** chip; recovery at `/auth/connectivity-error` — see [PAT Connectivity](pat-connectivity.md) | Session expiry and re-sign-in — see [Hosted Authentication](hosted-authentication.md) |
 
@@ -64,9 +64,6 @@ Your GitHub login is resolved automatically from the PAT. Full parameter tables 
 
 Uses a GitHub App for OAuth sign-in at `/auth/sign-in`, with operator-managed allow-lists for users and organisations. Recommended for production and multi-tenant deployments. See [Hosted Authentication Guide](hosted-authentication.md) for the full operator and local testing walkthrough.
 
-#### OAuth App fallback
-
-OAuth App fallback is supported but disabled by default. It is only used if enabled and the primary GitHub App authentication path is unavailable. It does not replace PAT-only local trusted mode.
 
 ## Running Locally
 
@@ -277,7 +274,6 @@ Located at `src/App/SoloDevBoard.App/appsettings.json`. The relevant sections ar
       "HostedAccessTokenClaimType": "solo-dev-board.github.access-token",
       "HostedInstallationIdClaimType": "solo-dev-board.github.installation-id",
       "HostedTokenExpiresAtClaimType": "solo-dev-board.github.token-expires-at",
-      "HostedOAuthAppFallbackEnabled": false,
       "HostedGitHubAppClientId": "",
       "HostedGitHubAppClientSecret": "",
       "HostedSignInCallbackPath": "/auth/callback",
@@ -307,7 +303,6 @@ Located at `src/App/SoloDevBoard.App/appsettings.json`. The relevant sections ar
 - `HostedAccessTokenClaimType`: Claim type used to map the hosted GitHub access token.
 - `HostedInstallationIdClaimType`: Claim type used to map the hosted GitHub installation identifier.
 - `HostedTokenExpiresAtClaimType`: Claim type used to map hosted token expiry (UTC) for fail-fast token validation.
-- `HostedOAuthAppFallbackEnabled`: Enables the OAuth App fallback compatibility boundary for hosted mode (disabled by default; only use if GitHub App auth is unavailable).
 - `HostedGitHubAppClientId`: GitHub App client identifier used for hosted sign-in.
 - `HostedGitHubAppClientSecret`: GitHub App client secret used for hosted sign-in.
 - `HostedSignInCallbackPath`: Callback route used by the hosted sign-in handshake.
@@ -353,7 +348,6 @@ Leave `PersonalAccessToken` empty in `appsettings.json` and supply it via an env
 | `GitHubAuth__HostedAccessTokenClaimType` | Claim type for hosted access token |
 | `GitHubAuth__HostedInstallationIdClaimType` | Claim type for hosted installation identifier |
 | `GitHubAuth__HostedTokenExpiresAtClaimType` | Claim type for hosted token expiry (UTC) |
-| `GitHubAuth__HostedOAuthAppFallbackEnabled` | Set to `true` to enable OAuth App fallback (disabled by default) |
 | `GitHubAuth__HostedGitHubAppClientId` | GitHub App client identifier for hosted sign-in |
 | `GitHubAuth__HostedGitHubAppClientSecret` | GitHub App client secret for hosted sign-in |
 | `GitHubAuth__HostedSignInCallbackPath` | Callback path for hosted sign-in |
@@ -395,14 +389,13 @@ When enabled:
 This is **screenshot hygiene, not a security boundary**. It does not block write operations and is intentionally unavailable as an Aspire AppHost deploy parameter. Leave it disabled for normal development and all hosted deployments. See [DEC-020](../plan/DECISIONS.md#dec-020-public-only-docs-capture-mode-for-documentation-screenshots).
 
 
-### Hosted Admission Control and Fallback Behaviour
+### Hosted Admission Control and Local Trusted Modes
 
 - Hosted sign-in mode requires `HostedGitHubAppClientId` and `HostedGitHubAppClientSecret` so the `/auth/sign-in` and `/auth/callback` handshake can establish a hosted session.
 - When `HostedAdmissionControl:Enabled` is true, hosted deployments deny all access by default unless the authenticated user's login or organisation is explicitly listed in the allow-lists.
 - All denied admission attempts are logged for operator review.
 - The claim type for organisation logins can be set using `HostedOrganisationLoginsClaimType` to match your identity provider's claim mapping.
-- OAuth App fallback is only used if `HostedOAuthAppFallbackEnabled` is true and the primary GitHub App authentication path is unavailable. This fallback is disabled by default for security.
-- PAT-only local trusted mode is always available for local development and trusted self-hosted use, independent of hosted admission control or fallback settings. See [PAT-only local trusted mode](#pat-only-local-trusted-mode) above and [Self-hoster deployment (PAT mode)](deployment.md#self-hoster-deployment-pat-mode) for Azure.
+- PAT-only local trusted mode is always available for local development and trusted self-hosted use, independent of hosted admission control. See [PAT-only local trusted mode](#pat-only-local-trusted-mode) above and [Self-hoster deployment (PAT mode)](deployment.md#self-hoster-deployment-pat-mode) for Azure.
 
 ### Production secrets (GitHub Actions)
 

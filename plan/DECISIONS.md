@@ -120,7 +120,7 @@ A formal migration to GitHub Spec Kit is planned — see [`plan/SPEC_KIT_MIGRATI
 **Status:** Active  
 **Date:** 2026-03-13  
 **Legacy:** [ADR-0015](../adr/archive/0015-github-app-first-hosted-authentication.md)  
-**Summary:** Hosted sign-in prioritises GitHub App user authentication with admission control layered on top. OAuth App and hybrid flows are demoted to fallback only when App auth cannot satisfy requirements.
+**Summary:** Hosted sign-in uses GitHub App user authentication with admission control layered on top. The legacy OAuth App fallback boundary has been removed. PAT-only local trusted mode remains for development and trusted personal self-hosting.
 
 ---
 
