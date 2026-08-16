@@ -20,6 +20,7 @@
 		"storage": "32gb"
 	},
 
+	"postCreateCommand": "bash .devcontainer/map-apphost-secrets.sh",
 	"postStartCommand": "bash -lc 'export SSL_CERT_DIR=\"$HOME/.aspnet/dev-certs/trust:${SSL_CERT_DIR:-/etc/ssl/certs}\"; dotnet dev-certs https --trust || { echo \"Warning: HTTPS development certificate trust could not be fully applied in this environment; continuing startup.\"; dotnet dev-certs https >/dev/null; }'",
 
 	"customizations": {
