@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
-# Maps Codespaces / devcontainer SDB_* environment variables to AppHost user secrets.
-# Secret names mirror the Cursor Cloud Environment mapping in plan/CURSOR_CLOUD.md.
+# Maps Codespaces / devcontainer SDB_* environment variables to AppHost parameters
+# via aspire secret set (same user-secrets store as dotnet user-secrets; see UserSecretsId
+# on SoloDevBoard.AppHost.csproj). Secret names mirror the Cursor Cloud Environment
+# mapping in plan/CURSOR_CLOUD.md.
 
 set -euo pipefail
 
-PROJECT="src/SoloDevBoard.AppHost"
+APPHOST="src/SoloDevBoard.AppHost"
+ASPIRE_FLAGS=(--apphost "$APPHOST" --non-interactive --nologo)
 
 map_parameter() {
   local env_name="$1"
@@ -12,7 +15,7 @@ map_parameter() {
   local value="${!env_name:-}"
 
   if [[ -n "$value" ]]; then
-    dotnet user-secrets set "Parameters:${param_name}" "$value" --project "$PROJECT"
+    aspire secret set "Parameters:${param_name}" "$value" "${ASPIRE_FLAGS[@]}"
     echo "Mapped ${env_name} -> Parameters:${param_name}"
   fi
 }

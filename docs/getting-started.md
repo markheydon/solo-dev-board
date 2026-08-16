@@ -118,7 +118,7 @@ Codespaces and dev containers can load AppHost parameters from repository **Code
 | `SDB_ALLOWED_USER_LOGINS` | `allowed-user-logins` |
 | `SDB_ALLOWED_ORG_LOGINS` | `allowed-org-logins` |
 
-On container create, `.devcontainer/map-apphost-secrets.sh` maps any set `SDB_*` variables into AppHost user secrets. Rebuild the Codespace after adding or changing secrets.
+On container create, `.devcontainer/map-apphost-secrets.sh` maps any set `SDB_*` variables into AppHost parameters with `aspire secret set` (the same user-secrets store as manual `dotnet user-secrets` on the AppHost project). Rebuild the Codespace after adding or changing secrets.
 
 For hosted sign-in testing (for example refresh-token work), set `SDB_HOSTED_SIGN_IN_ENABLED` to `true` and register `{app-https-url}/auth/callback` on your GitHub App after the first `aspire describe`.
 
