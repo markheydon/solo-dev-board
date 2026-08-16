@@ -26,9 +26,6 @@ public static class HostedAuthErrorRoutes
     /// <summary>Gets the reason code when GitHub is unavailable during sign-in.</summary>
     public const string SignInUnavailable = "sign-in-unavailable";
 
-    /// <summary>Gets the reason code when a requested sign-in method is not configured.</summary>
-    public const string SignInMisconfigured = "sign-in-misconfigured";
-
     /// <summary>Gets the fallback reason code for unknown hosted authentication failures.</summary>
     public const string SignInUnknown = "sign-in-unknown";
 

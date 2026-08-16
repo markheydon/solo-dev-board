@@ -38,10 +38,6 @@ public static class HostedAuthErrorPresentationMapper
                 "GitHub unavailable",
                 "GitHub sign-in could not complete because GitHub returned an unexpected response. Try again later.",
                 StatusCodes.Status502BadGateway),
-            [HostedAuthErrorRoutes.SignInMisconfigured] = new(
-                "Sign-in unavailable",
-                "The requested sign-in method is not available on this deployment.",
-                StatusCodes.Status501NotImplemented),
             [HostedAuthErrorRoutes.SignInUnknown] = new(
                 "Sign-in failed",
                 "Hosted sign-in could not be completed. Try again, or contact the operator if the problem continues.",

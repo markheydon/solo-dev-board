@@ -53,15 +53,6 @@ public sealed class GitHubAuthOptions
     public string HostedTokenExpiresAtClaimType { get; set; } = HostedAuthClaimTypes.TokenExpiresAt;
 
     /// <summary>
-    /// Gets or sets a value indicating whether the legacy OAuth App hosted sign-in fallback boundary is enabled.
-    /// </summary>
-    /// <value>
-    /// <see langword="true" /> to expose the fallback-only compatibility boundary; otherwise, <see langword="false" />.
-    /// The default is <see langword="false" /> to keep GitHub App-first hosted sign-in as the standard path.
-    /// </value>
-    public bool HostedOAuthAppFallbackEnabled { get; set; }
-
-    /// <summary>
     /// Gets or sets the GitHub App client identifier used for hosted user sign-in.
     /// </summary>
     /// <value>The hosted GitHub App client identifier.</value>
