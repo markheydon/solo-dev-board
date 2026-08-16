@@ -220,6 +220,15 @@ Test coverage expectations for cache-hit, cache-miss, invalidation, TTL expiry, 
 
 ---
 
+### DEC-023: Public product site IA and canonical domain
+
+**Status:** Active  
+**Date:** 2026-08-16  
+**Constitution:** [AGENTS.md — Documentation Sync](../AGENTS.md#documentation-sync)  
+**Summary:** The Hugo/Hextra site lives under `website/` (renamed from `user-docs/`) and is the single public product site: marketing landing at `/`, User Guide at `/docs/`, and narrative About pages at `/about/`. Canonical URL is `https://solodevboard.com/` (apex) on GitHub Pages with tag-only publish (DEC-021). Landing feature claims must derive from published User Guide pages, not duplicated marketing lists. Developer and operator documentation stays in `docs/` and is not served on the product domain (DEC-019). Reject a second Hugo site, a second publish pipeline, converting guide articles into marketing copy, or moving operator docs onto the product domain.
+
+---
+
 ## Superseded legacy (archive only)
 
 | Legacy ADR | Superseded by | Notes |

@@ -99,10 +99,10 @@ DTOs are `sealed record` types named `<Entity>Dto`, co-located in `SoloDevBoard.
 
 ### End-user docs and Playwright E2E alignment
 
-The published user guide (`user-docs/`) and Playwright suite (`tests/E2E/`) must stay aligned **like-for-like**:
+The published User Guide (`website/content/docs/`) and Playwright suite (`tests/E2E/`) must stay aligned **like-for-like**:
 
 1. **User guides describe actual application behaviour.** Do not document capabilities that are not shipped. Use scope notes for partial delivery.
-2. **Playwright E2E tests exercise what the guides claim.** Every published page in `user-docs/content/docs/` must map to at least one spec under `tests/E2E/tests/`. Assertions should target routes, controls, labels, and workflows described in the guide.
+2. **Playwright E2E tests exercise what the guides claim.** Every published page in `website/content/docs/` must map to at least one spec under `tests/E2E/tests/`. Assertions should target routes, controls, labels, and workflows described in the guide.
 3. **Loaded-state journeys use the docs-capture suite.** CI runs with placeholder auth and asserts shells, navigation, and empty or error states. Screenshots and populated UI states are captured manually via `tests/E2E/docs-capture/` with a real PAT — see [tests/E2E/USER_DOCS_ALIGNMENT.md](tests/E2E/USER_DOCS_ALIGNMENT.md).
 
 Canonical mapping and section-level inventory: [tests/E2E/USER_DOCS_ALIGNMENT.md](tests/E2E/USER_DOCS_ALIGNMENT.md). Update it alongside [tests/E2E/CRITICAL_JOURNEYS.md](tests/E2E/CRITICAL_JOURNEYS.md) when journeys change.
@@ -190,8 +190,8 @@ When code changes are made, ensure the following are kept in sync:
 
 | Change | Doc to update |
 |--------|--------------|
-| New end-user feature | `user-docs/content/docs/<feature>.md`, `user-docs/content/_index.md` (and docs landing), matching Playwright spec in `tests/E2E/tests/`, `tests/E2E/USER_DOCS_ALIGNMENT.md`, `tests/E2E/CRITICAL_JOURNEYS.md`, GitHub Issue + Project #8 sync |
-| End-user behaviour change | `user-docs/content/docs/<feature>.md` and matching Playwright spec(s); refresh `tests/E2E/docs-capture/` screenshots when the UI changes materially |
+| New end-user feature | `website/content/docs/<feature>.md`, `website/content/_index.md` (and docs landing), matching Playwright spec in `tests/E2E/tests/`, `tests/E2E/USER_DOCS_ALIGNMENT.md`, `tests/E2E/CRITICAL_JOURNEYS.md`, GitHub Issue + Project #8 sync |
+| End-user behaviour change | `website/content/docs/<feature>.md` and matching Playwright spec(s); refresh `tests/E2E/docs-capture/` screenshots when the UI changes materially |
 | New developer / operator guidance | `docs/<topic>.md` and `docs/README.md` as needed |
 | Pull request process | [`plan/PULL_REQUEST_POLICY.md`](plan/PULL_REQUEST_POLICY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 | New decision | `plan/DECISIONS.md` (+ constitution if cross-cutting) |

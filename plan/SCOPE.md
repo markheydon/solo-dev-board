@@ -55,6 +55,10 @@ Browse, customise, and apply GitHub Actions workflow templates across repositori
 
 A UI-based implementation of the two-mode PM operating system from [markheydon/github-workflows](https://github.com/markheydon/github-workflows): a Daily Focus view (board state, stalled items, top priorities), a cross-repository Backlog Review (prioritised work across all repos, neglected repo detection), and an Iteration Planning tool (capacity management, Up Next curation, milestone assignment). This epic represents the ultimate destination of SoloDevBoard.
 
+### 8. Public product site (GitHub Pages)
+
+The Hugo/Hextra site in `website/` (published at `https://solodevboard.com/`) serves as the public product front door: marketing landing, User Guide at `/docs/`, and narrative About pages. Developer and operator documentation remains in `docs/` and is not published on the product domain (DEC-019, DEC-023).
+
 ---
 
 ## Out of Scope
@@ -97,7 +101,7 @@ The following are explicitly **not** in scope for the current version of SoloDev
 > 3. Create or update GitHub Issues for the scope change and sync Project #8.
 > 4. Create a GitHub Issue for the scope change using the `type/feature` or `type/chore` template.
 > 5. If the change affects the architecture, follow `repo-decision-log` — update [`plan/DECISIONS.md`](DECISIONS.md) and/or constitution.
-> 6. If the change affects the user-facing docs, update or create the relevant file in `user-docs/content/docs/`.
+> 6. If the change affects the user-facing docs, update or create the relevant file in `website/content/docs/`.
 > 7. Add a changelog entry at the bottom of this file.
 
 ---
@@ -116,4 +120,5 @@ The following are explicitly **not** in scope for the current version of SoloDev
 | 2026-07-18 | Planning sync: Phases 1–4 marked complete in BACKLOG.md and IMPLEMENTATION_PLAN.md. Deferred follow-on slices (label consistency warnings, project board migration, custom workflow template repos, Audit Dashboard enhancements) explicitly tracked. Phase 5 and Phase 6 remain the only active delivery phases. | Solo developer |
 | 2026-07-25 | V1 auth polish bundle clarified: hosted sign-in entry UX (#249) and PAT-mode GitHub connectivity readiness (#314) split from operator documentation (#247, #248). In-app secret editing remains out of scope; operator configuration stays via Aspire parameters, user secrets, and Key Vault. | Solo developer |
 | 2026-07-25 | PAT-only local trusted mode and self-hoster PAT Azure deploy path formalised in docs (#247, #248; PR #324). Scope bullet now links to getting-started and deployment guides. | Solo developer |
+| 2026-08-16 | Public product site on GitHub Pages: landing, User Guide, About narrative, canonical `solodevboard.com`, source tree `website/` (DEC-023). | Solo developer |
 
