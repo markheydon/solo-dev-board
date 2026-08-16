@@ -97,7 +97,8 @@ solo-dev-board/
 │   ├── hugo.yaml               # Hugo site configuration
 │   └── content/                # Landing, User Guide, and About pages
 ├── scripts/
-│   └── Invoke-HugoSite.ps1     # Local Hugo build/serve via Podman/Docker
+│   ├── invoke-hugo-site.sh     # Local Hugo build/serve via Docker/Podman (bash)
+│   └── Invoke-HugoSite.ps1     # Windows PowerShell equivalent
 ├── plan/
 │   ├── SCOPE.md                # Project scope and constraints
 │   ├── DECISIONS.md            # Active decision log (repo memory)

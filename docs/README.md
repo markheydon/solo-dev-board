@@ -18,8 +18,10 @@ The public product site (landing, User Guide, About) is published from [`website
 
 ## Previewing the end-user site locally
 
-```powershell
-.\scripts\Invoke-HugoSite.ps1 serve
+```bash
+./scripts/invoke-hugo-site.sh serve
 ```
 
-See also [DEC-019](../plan/DECISIONS.md#dec-019-hugo-hextra-for-end-website-on-github-pages) and [DOCS_STRATEGY.md](../plan/DOCS_STRATEGY.md).
+On Windows PowerShell, use `.\scripts\Invoke-HugoSite.ps1 serve`.
+
+See also [DEC-019](../plan/DECISIONS.md#dec-019-hugo-hextra-for-end-user-docs-on-github-pages) and [DOCS_STRATEGY.md](../plan/DOCS_STRATEGY.md).

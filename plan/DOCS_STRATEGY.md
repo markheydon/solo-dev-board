@@ -60,7 +60,8 @@ adr/
 └── archive/                    # Read-only legacy ADR files
 
 scripts/
-└── Invoke-HugoSite.ps1         # Local Hugo build/serve/preview via Podman or Docker
+├── invoke-hugo-site.sh         # Local Hugo build/serve/preview via Docker or Podman (bash)
+└── Invoke-HugoSite.ps1         # Windows PowerShell equivalent
 ```
 
 End-user guides and the product landing are deployed by GitHub Actions (Hugo) to GitHub Pages on `v*` release tags only. Pull requests validate Hugo builds via `hugo-ci.yml` without publishing. See [DEC-019](DECISIONS.md#dec-019-hugo-hextra-for-end-user-docs-on-github-pages), [DEC-021](DECISIONS.md#dec-021-two-tier-cd-pipeline-with-shared-azure-resource-group), and [DEC-023](DECISIONS.md#dec-023-public-product-site-ia-and-canonical-domain).
@@ -76,7 +77,7 @@ When a new feature is implemented or reaches a stable state:
 3. **Getting Started / Deployment:** If the feature introduces new configuration (environment variables, AppHost parameters), update `docs/getting-started.md` and `docs/deployment.md`.
 4. **Decisions:** If an architectural decision was made, follow `repo-decision-log` — update `plan/DECISIONS.md` and/or constitution (`AGENTS.md`, instructions).
 5. **Issues:** Close or update the corresponding GitHub Issue and sync Project #8.
-6. **Local preview:** Run `.\scripts\Invoke-HugoSite.ps1 serve` (or `build`) before merging `website/` changes.
+6. **Local preview:** Run `./scripts/invoke-hugo-site.sh serve` (or `build`) before merging `website/` changes. On Windows, use `.\scripts\Invoke-HugoSite.ps1`.
 
 ---
 

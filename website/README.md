@@ -12,16 +12,18 @@ Developer and operator documentation lives in [`docs/`](../docs/) and is not pub
 
 Requires Podman (default) or Docker. No local Hugo or Go install is needed.
 
-```powershell
+```bash
 # Live-reload development server (http://localhost:1313)
-.\scripts\Invoke-HugoSite.ps1 serve
+./scripts/invoke-hugo-site.sh serve
 
 # One-shot production-style build to website/public
-.\scripts\Invoke-HugoSite.ps1 build
+./scripts/invoke-hugo-site.sh build
 
 # Build then serve the static output with nginx (http://localhost:8080)
-.\scripts\Invoke-HugoSite.ps1 preview
+./scripts/invoke-hugo-site.sh preview
 ```
+
+On Windows PowerShell, the same commands are available via `.\scripts\Invoke-HugoSite.ps1`.
 
 ## Deployment
 
