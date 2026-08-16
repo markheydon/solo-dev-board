@@ -68,9 +68,10 @@ Full OAuth callback and post-login journeys remain manual or staging validation.
 
 ## Session and Token Flow
 
-- Hosted sign-in establishes a session with per-request user context and access token claims.
-- Token expiry and failure handling are enforced; expired or invalid tokens require a fresh sign-in.
-- When GitHub rejects the access token (for example after revocation) or the token expiry claim is in the past, the application signs you out automatically and shows a **Session expired** page with a **Sign in again** action.
+- Hosted sign-in establishes a session with per-request user context, access token, and refresh token claims.
+- Token expiry and failure handling are enforced; expired or invalid tokens require a fresh sign-in unless a valid refresh token is available.
+- When the access token is expired or within five minutes of expiry, the application attempts to exchange the refresh token for a new access token before the request is rejected.
+- If the refresh succeeds, the cookie principal is replaced silently and the cookie is renewed. If the refresh token is missing, expired, or rejected, the application signs you out automatically and shows a **Session expired** page with a **Sign in again** action.
 - You can also sign out manually from the app menu at any time when hosted sign-in is enabled.
 - Admission control is applied after authentication, based on allow-list configuration.
 

@@ -200,7 +200,9 @@ public sealed class HostedGitHubAuthGatewayTests
             "token-123",
             987654321,
             DateTimeOffset.UtcNow.AddHours(1),
-            ["org-one", "org-two"]);
+            ["org-one", "org-two"],
+            "refresh-token-123",
+            DateTimeOffset.UtcNow.AddDays(7));
 
         // Act
         var principal = gateway.CreatePrincipal(session);
@@ -210,6 +212,8 @@ public sealed class HostedGitHubAuthGatewayTests
         Assert.Equal("token-123", principal.FindFirstValue(HostedAuthClaimTypes.AccessToken));
         Assert.Equal("987654321", principal.FindFirstValue(HostedAuthClaimTypes.InstallationId));
         Assert.NotNull(principal.FindFirstValue(HostedAuthClaimTypes.TokenExpiresAt));
+        Assert.Equal("refresh-token-123", principal.FindFirstValue(HostedAuthClaimTypes.RefreshToken));
+        Assert.NotNull(principal.FindFirstValue(HostedAuthClaimTypes.RefreshTokenExpiresAt));
 
         var organisationClaims = principal.FindAll(HostedAuthClaimTypes.OrganisationLogins).Select(claim => claim.Value).ToArray();
         Assert.Equal(2, organisationClaims.Length);
@@ -227,7 +231,9 @@ public sealed class HostedGitHubAuthGatewayTests
             "token-123",
             null,
             DateTimeOffset.UtcNow.AddHours(1),
-            []);
+            [],
+            "refresh-token-123",
+            DateTimeOffset.UtcNow.AddDays(7));
 
         // Act
         var principal = gateway.CreatePrincipal(session);
@@ -236,6 +242,113 @@ public sealed class HostedGitHubAuthGatewayTests
         Assert.Equal("markheydon", principal.FindFirstValue(HostedAuthClaimTypes.OwnerLogin));
         Assert.Equal("token-123", principal.FindFirstValue(HostedAuthClaimTypes.AccessToken));
         Assert.Null(principal.FindFirstValue(HostedAuthClaimTypes.InstallationId));
+        Assert.Equal("refresh-token-123", principal.FindFirstValue(HostedAuthClaimTypes.RefreshToken));
+    }
+
+    [Fact]
+    public async Task RefreshSessionAsync_ValidResponse_ReturnsRefreshedSession()
+    {
+        // Arrange
+        var responses = new Queue<HttpResponseMessage>(
+        [
+            CreateJsonResponse(new { access_token = "new-token-123", refresh_token = "new-refresh-123", expires_in = 3600, refresh_token_expires_in = 604800 }),
+        ]);
+        var gateway = CreateSubject(responses);
+        var session = new HostedGitHubAuthSession(
+            "markheydon",
+            "token-123",
+            987654321,
+            DateTimeOffset.UtcNow.AddHours(1),
+            ["org-one"],
+            "refresh-123",
+            DateTimeOffset.UtcNow.AddDays(6));
+
+        // Act
+        var refreshed = await gateway.RefreshSessionAsync(session, CancellationToken.None);
+
+        // Assert
+        Assert.Equal("markheydon", refreshed.OwnerLogin);
+        Assert.Equal("new-token-123", refreshed.AccessToken);
+        Assert.Equal("new-refresh-123", refreshed.RefreshToken);
+        Assert.Equal(987654321, refreshed.InstallationId);
+        Assert.NotNull(refreshed.TokenExpiresAtUtc);
+        Assert.NotNull(refreshed.RefreshTokenExpiresAtUtc);
+    }
+
+    [Fact]
+    public async Task RefreshSessionAsync_ResponseOmitsRefreshToken_ReusesExistingRefreshToken()
+    {
+        // Arrange
+        var responses = new Queue<HttpResponseMessage>(
+        [
+            CreateJsonResponse(new { access_token = "new-token-123", expires_in = 3600 }),
+        ]);
+        var gateway = CreateSubject(responses);
+        var session = new HostedGitHubAuthSession(
+            "markheydon",
+            "token-123",
+            987654321,
+            DateTimeOffset.UtcNow.AddHours(1),
+            [],
+            "refresh-123",
+            null);
+
+        // Act
+        var refreshed = await gateway.RefreshSessionAsync(session, CancellationToken.None);
+
+        // Assert
+        Assert.Equal("new-token-123", refreshed.AccessToken);
+        Assert.Equal("refresh-123", refreshed.RefreshToken);
+    }
+
+    [Fact]
+    public async Task RefreshSessionAsync_TokenPayloadContainsError_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var responses = new Queue<HttpResponseMessage>(
+        [
+            CreateJsonResponse(new { error = "bad_refresh_token" }),
+        ]);
+        var gateway = CreateSubject(responses);
+        var session = new HostedGitHubAuthSession(
+            "markheydon",
+            "token-123",
+            987654321,
+            DateTimeOffset.UtcNow.AddHours(1),
+            [],
+            "refresh-123",
+            null);
+
+        // Act
+        var act = async () => await gateway.RefreshSessionAsync(session, CancellationToken.None);
+
+        // Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(act);
+    }
+
+    [Fact]
+    public async Task RefreshSessionAsync_HttpRequestFails_ThrowsHttpRequestException()
+    {
+        // Arrange
+        var responses = new Queue<HttpResponseMessage>(
+        [
+            new HttpResponseMessage(HttpStatusCode.BadRequest) { Content = new StringContent("bad request") },
+        ]);
+        var gateway = CreateSubject(responses);
+        var session = new HostedGitHubAuthSession(
+            "markheydon",
+            "token-123",
+            987654321,
+            DateTimeOffset.UtcNow.AddHours(1),
+            [],
+            "refresh-123",
+            null);
+
+        // Act
+        var act = async () => await gateway.RefreshSessionAsync(session, CancellationToken.None);
+
+        // Assert
+        await Assert.ThrowsAsync<HttpRequestException>(act);
     }
 
     private static HostedGitHubAuthGateway CreateSubject(Queue<HttpResponseMessage> responses)

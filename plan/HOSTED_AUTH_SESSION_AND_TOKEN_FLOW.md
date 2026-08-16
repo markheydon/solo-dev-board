@@ -21,18 +21,19 @@ This document defines the hosted authentication and admission-control boundaries
 - Token retrieval fails fast if installation context is missing.
 - This claim requirement defines the minimum installation lookup contract for hosted requests.
 
-## Token Lifecycle Expectations (#111)
+## Token Lifecycle Expectations (#111, #349)
 
 - Hosted access tokens are read from per-request claims supplied by the hosted authentication boundary.
 - Optional expiry claims are validated as UTC timestamps.
-- Expired tokens are rejected and require a fresh hosted sign-in.
+- Expired access tokens are refreshed automatically when a valid refresh token is present in the hosted claims.
 - Invalid or missing hosted token claims fail fast with explicit exceptions to prevent silent downgrade to insecure behaviour.
 
 ## Runtime Session Recovery
 
 - When GitHub returns `401 Unauthorized` for a hosted API request, the application throws `HostedAuthenticationRequiredException` and feature pages initiate recovery through `/auth/session-expired`.
 - The `/auth/session-expired` route signs out the stale auth cookie and redirects to `/auth/error?reason=session-expired` with user-facing copy and a **Sign in again** action that preserves the original page where possible.
-- Cookie authentication validates the token expiry claim on each request; principals with expired claims are rejected so full page loads are challenged to `/welcome`.
+- Cookie authentication validates the token expiry claim on each request. When the access token is expired or within a five-minute refresh skew, the application attempts to exchange the refresh token for a new access token. On success, the cookie principal is replaced and the cookie is renewed.
+- If the refresh token is missing, expired, or rejected, the principal is rejected and the next request is challenged to `/welcome`, then redirected to the session expired page.
 - Admission control middleware bypasses public infrastructure paths, including `/welcome` and `/_blazor`, so unauthenticated visitors can render the hosted landing page and establish a Blazor circuit.
 - The main application shell exposes a **Sign out** action when hosted sign-in is enabled and the user is authenticated.
 
@@ -57,6 +58,14 @@ This document defines the hosted authentication and admission-control boundaries
 - All denied hosted admission requests are logged with the attempted user login, organisation claims, and the reason for denial.
 - Operators are expected to review denied admission attempts regularly to detect unauthorised access attempts or misconfiguration.
 - Audit logs should be retained according to organisational policy and reviewed for suspicious activity.
+
+## Refresh Token Support (#349)
+
+- The hosted sign-in token exchange now captures `refresh_token` and `refresh_token_expires_in` from the GitHub access-token response.
+- `HostedGitHubAuthSession` carries the refresh token and its expiry, and `CreatePrincipal` maps these to encrypted cookie claims.
+- A new `HostedGitHubAuthGateway.RefreshSessionAsync` method exchanges `grant_type=refresh_token` with the GitHub access-token endpoint and returns a refreshed session.
+- `HostedCookieAuthenticationEvents` triggers refresh when the access token is near or past expiry. Successful refresh replaces the principal and renews the cookie; failure falls back to the existing **Session expired** flow.
+- PAT-only local trusted mode does not use refresh tokens and is unaffected by this change.
 
 ## Removed OAuth App Fallback Boundary (#113)
 
