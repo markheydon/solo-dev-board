@@ -3,7 +3,6 @@ weight: 50
 title: Repositories
 landing: true
 landingIcon: folder
-landingImage: /images/repositories/overview.png
 landingSubtitle: "View and manage repositories accessible to your GitHub account."
 guideStatus: Available
 ---

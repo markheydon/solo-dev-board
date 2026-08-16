@@ -3,7 +3,6 @@ weight: 70
 title: Board Rules Visualiser
 landing: true
 landingIcon: rule
-landingImage: /images/board-rules-visualiser/overview.png
 landingSubtitle: "Visualise supported board states and transitions for GitHub Project v2 boards."
 guideStatus: Partially Available
 ---

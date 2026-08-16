@@ -3,7 +3,6 @@ weight: 60
 title: One-Click Migration
 landing: true
 landingIcon: swap_horiz
-landingImage: /images/one-click-migration/overview.png
 landingSubtitle: "Migrate labels and milestones from one repository to another in a single action."
 guideStatus: Partially Available
 ---

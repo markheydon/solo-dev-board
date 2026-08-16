@@ -6,12 +6,8 @@
 >
 {{- range $pages }}
   {{- $title := .Title -}}
-  {{- $image := .Params.landingImage -}}
-  {{- if and $image (hasPrefix $image "/") -}}
-    {{- $image = relURL (strings.TrimPrefix "/" $image) -}}
-  {{- end -}}
   <div
-    class="hextra-feature-card not-prose hx:block hx:relative hx:overflow-hidden hx:rounded-3xl hx:border hx:border-gray-200 hx:dark:border-neutral-800 hx:before:pointer-events-none hx:before:absolute hx:before:inset-0 hx:before:bg-glass-gradient hx:aspect-auto hx:md:aspect-[1.1/1] hx:max-md:min-h-[340px]"
+    class="hextra-feature-card not-prose hx:block hx:relative hx:overflow-hidden hx:rounded-3xl hx:border hx:border-gray-200 hx:dark:border-neutral-800 hx:before:pointer-events-none hx:before:absolute hx:before:inset-0 hx:before:bg-glass-gradient"
     style="background: radial-gradient(ellipse at 50% 80%, rgba(59, 130, 246, 0.08), hsla(0, 0%, 100%, 0));"
   >
     <div class="hx:relative hx:w-full hx:p-6">
@@ -23,14 +19,6 @@
       </h3>
       <p class="hx:text-gray-500 hx:dark:text-gray-400 hx:text-sm hx:leading-6">{{ .Params.landingSubtitle }}</p>
     </div>
-    {{- if $image }}
-    <img
-      src="{{ $image }}"
-      class="hx:absolute hx:max-w-none hx:top-[38%] hx:left-[20px] hx:w-[175%] hx:sm:w-[108%] hx:dark:opacity-90 hx:rounded-md hx:border hx:border-gray-200/60 hx:shadow-lg hx:dark:border-neutral-700/60"
-      alt="{{ $title }} in SoloDevBoard"
-      loading="lazy"
-    />
-    {{- end }}
   </div>
 {{- end }}
 </div>
