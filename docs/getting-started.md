@@ -120,6 +120,8 @@ Codespaces and dev containers can load AppHost parameters from repository **Code
 
 On container create, `.devcontainer/map-apphost-secrets.sh` maps any set `SDB_*` variables into AppHost parameters with `aspire secret set` (the same user-secrets store as manual `dotnet user-secrets` on the AppHost project). Rebuild the Codespace after adding or changing secrets.
 
+On each container start, `.devcontainer/setup-dev-certs.sh` trusts the ASP.NET HTTPS development certificate and persists `SSL_CERT_DIR` in your shell profile so `aspire doctor` does not warn about partial certificate trust.
+
 For hosted sign-in testing (for example refresh-token work), set `SDB_HOSTED_SIGN_IN_ENABLED` to `true` and register `{app-https-url}/auth/callback` on your GitHub App after the first `aspire describe`.
 
 ### Legacy run path (without Aspire orchestration)
