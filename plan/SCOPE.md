@@ -57,7 +57,7 @@ A UI-based implementation of the two-mode PM operating system from [markheydon/g
 
 ### 8. Public product site (GitHub Pages)
 
-The Hugo/Hextra site in `website/` (published at `https://solodevboard.com/`) serves as the public product front door: marketing landing, User Guide at `/docs/`, and narrative About pages. Developer and operator documentation remains in `docs/` and is not published on the product domain (DEC-019, DEC-023).
+The Hugo/Hextra site in `website/` (published at `https://solodevboard.com/`) serves as the public product front door: marketing landing (product and project), narrative About pages, and User Guide at `/docs/`. Developer and operator documentation remains in `docs/` and is not published on the product domain (DEC-019, DEC-023).
 
 ---
 
