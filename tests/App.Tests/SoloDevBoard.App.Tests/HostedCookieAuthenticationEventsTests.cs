@@ -4,6 +4,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using NSubstitute;
@@ -172,6 +173,8 @@ public sealed class HostedCookieAuthenticationEventsTests
         // Assert
         Assert.StartsWith("/auth/error?reason=session-expired", redirectContext.RedirectUri);
         Assert.Contains("returnUrl=%2Fdashboard", redirectContext.RedirectUri);
+        Assert.Equal(StatusCodes.Status302Found, redirectContext.Response.StatusCode);
+        Assert.Equal(redirectContext.RedirectUri, redirectContext.Response.Headers["Location"].ToString());
     }
 
     [Fact]
@@ -188,6 +191,33 @@ public sealed class HostedCookieAuthenticationEventsTests
 
         // Assert
         Assert.Equal("/Account/Login?ReturnUrl=%2Fdashboard", redirectContext.RedirectUri);
+        Assert.Equal(StatusCodes.Status302Found, redirectContext.Response.StatusCode);
+        Assert.Equal(redirectContext.RedirectUri, redirectContext.Response.Headers["Location"].ToString());
+    }
+
+    [Fact]
+    public async Task OnRedirectToLogin_ApiEndpoint_Returns401WithLocationHeader()
+    {
+        // Arrange
+        var options = CreateOptions();
+        var httpContext = new DefaultHttpContext();
+        httpContext.SetEndpoint(new Endpoint(
+            _ => Task.CompletedTask,
+            new EndpointMetadataCollection(new DisableCookieRedirectTestMetadata()),
+            "api"));
+        var redirectContext = CreateRedirectContext(httpContext, "/Account/Login?ReturnUrl=%2Fdashboard");
+        var events = HostedCookieAuthenticationEvents.Create(options);
+
+        // Act
+        await events.OnRedirectToLogin(redirectContext);
+
+        // Assert
+        Assert.Equal(StatusCodes.Status401Unauthorized, redirectContext.Response.StatusCode);
+        Assert.Equal(redirectContext.RedirectUri, redirectContext.Response.Headers["Location"].ToString());
+    }
+
+    private sealed class DisableCookieRedirectTestMetadata : IDisableCookieRedirectMetadata
+    {
     }
 
     private static GitHubAuthOptions CreateOptions()

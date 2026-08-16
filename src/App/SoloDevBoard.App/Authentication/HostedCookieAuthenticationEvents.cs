@@ -2,8 +2,10 @@ using System.Globalization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
+using Microsoft.Net.Http.Headers;
 using SoloDevBoard.Infrastructure.GitHub;
 using SoloDevBoard.Infrastructure.Identity;
 
@@ -101,7 +103,39 @@ internal static class HostedCookieAuthenticationEvents
             context.RedirectUri = HostedAuthErrorRoutes.BuildErrorUrl(HostedAuthErrorRoutes.SessionExpired, returnUrl);
         }
 
+        if (IsApiRequest(context))
+        {
+            context.Response.Headers.Location = context.RedirectUri;
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        }
+        else
+        {
+            context.Response.Redirect(context.RedirectUri);
+        }
+
         return Task.CompletedTask;
+    }
+
+    private static bool IsApiRequest(RedirectContext<CookieAuthenticationOptions> context)
+    {
+        var request = context.Request;
+
+        if (string.Equals(request.Query[HeaderNames.XRequestedWith], "XMLHttpRequest", StringComparison.Ordinal)
+            || string.Equals(request.Headers.XRequestedWith, "XMLHttpRequest", StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        var endpoint = context.HttpContext.GetEndpoint();
+        if (endpoint is null)
+        {
+            return false;
+        }
+
+        var disableRedirect = endpoint.Metadata.GetMetadata<IDisableCookieRedirectMetadata>() is not null;
+        var allowRedirect = endpoint.Metadata.GetMetadata<IAllowCookieRedirectMetadata>() is not null;
+
+        return disableRedirect && !allowRedirect;
     }
 
     private static void MarkSessionExpired(CookieValidatePrincipalContext context)
