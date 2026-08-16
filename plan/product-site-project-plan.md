@@ -6,12 +6,12 @@ Turn the Hugo/Hextra site into the **public product site** for SoloDevBoard: mar
 
 ## Success criteria
 
-- Landing page explains what SoloDevBoard is, who it is for, and why the project exists, with About and GitHub as the primary calls to action.
+- Landing page explains what SoloDevBoard is, who it is for, and why the project exists, with a single Learn more about the project CTA and GitHub in the header.
 - User Guide content at `/docs/` remains accurate; per-feature guides are not rewritten as marketing copy.
 - About section covers origin and AI-collaborator experiment honestly, and is linked from the landing and first in the site nav.
 - Hugo builds in CI; tag deploy is ready for `solodevboard.com` with operator DNS steps documented.
 - Release version stamped on tag builds; no "Early access" badge unless still true.
-- Feature tiles on the landing derive from published guide front matter (no duplicated feature lists) and are capability summaries, not links into the User Guide.
+- Feature tiles on the landing derive from published guide front matter (icon, name, one-liner) and are capability summaries, not links into the User Guide.
 
 ## Key milestones
 
@@ -32,7 +32,7 @@ Turn the Hugo/Hextra site into the **public product site** for SoloDevBoard: mar
 ## Work item hierarchy
 
 - **Feature:** Public product site on `solodevboard.com`
-  - **Story:** Hextra landing, nav IA (About first), project cards, version stamp
+  - **Story:** Hextra landing, nav IA (About first), icon capability tiles, version stamp
   - **Story:** Narrative About/origin/AI-experiment pages
   - **Enabler:** Rename to `website/`, canonical domain, CNAME, deploy `baseURL`
   - **Test:** Hugo published-route smoke + alignment doc update

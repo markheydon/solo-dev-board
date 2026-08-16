@@ -2,8 +2,11 @@
 {{- $pages = sort $pages "Weight" -}}
 <div class="hextra-feature-grid hx:grid hx:grid-cols-1 hx:sm:grid-cols-2 hx:lg:grid-cols-3 hx:gap-4 hx:mt-4">
 {{- range $pages }}
-  <div class="hextra-feature-card hx:rounded-lg hx:border hx:border-gray-200 hx:dark:border-neutral-800 hx:bg-white hx:dark:bg-neutral-900 hx:p-6 hx:shadow-sm hx:aspect-auto">
-    <h3 class="hx:text-lg hx:font-semibold hx:mb-2">{{ .Title }}</h3>
+  <div class="hextra-feature-card hx:rounded-lg hx:border hx:border-gray-200 hx:dark:border-neutral-800 hx:bg-white hx:dark:bg-neutral-900 hx:p-4 hx:shadow-sm hx:aspect-auto">
+    {{- with .Params.landingIcon }}
+    <span class="material-symbols-outlined hx:mb-2 hx:block hx:text-primary-600 hx:dark:text-primary-400" aria-hidden="true">{{ . }}</span>
+    {{- end }}
+    <h3 class="hx:text-base hx:font-semibold hx:mb-1">{{ .Title }}</h3>
     <p class="hx:text-sm hx:text-gray-600 hx:dark:text-gray-400">{{ .Params.landingSubtitle }}</p>
   </div>
 {{- end }}

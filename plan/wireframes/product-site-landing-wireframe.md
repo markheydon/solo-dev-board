@@ -2,16 +2,16 @@
 
 ## Purpose
 
-- Introduce SoloDevBoard as a **product and a project**: what the app is, why it exists, and how the repository is run.
-- Route primary traffic to GitHub and the About section.
-- Keep the User Guide as a how-to path, not the story of the home page.
+- Introduce SoloDevBoard as a product and a project: what the app is, why it exists, and how the repository is run.
+- Keep the home page short: summary, one path into About, then a capability grid.
+- Keep the User Guide and GitHub as header (and GitHub icon) destinations, not competing hero buttons.
 
 ## User goals
 
 - Understand what SoloDevBoard is and who it is for (solo developers on GitHub.com).
-- Open the GitHub repository or the About section in one click.
-- Read why the project exists and how it is run without first entering the User Guide.
-- Scan shipped capabilities as a secondary product summary.
+- Open About for the full origin and how-the-project-is-run story.
+- Scan shipped capabilities as icon + name + one-liner tiles, matching the in-app nav icons.
+- Reach the User Guide or GitHub from the site chrome when they want more.
 
 ## Global navigation
 
@@ -21,64 +21,50 @@
 +------------------------------------------------------------------+
 ```
 
-- **About** → `/about/` (first item after the title; this is the project story).
-- **User Guide** → `/docs/` (how to use the app).
-- **GitHub** → repository (new tab).
+- **About** → `/about/` (first item after the title).
+- **User Guide** → `/docs/`.
+- **GitHub** → repository (header icon; no duplicate hero button).
 - Theme toggle and search unchanged from Hextra defaults.
 
 ## Landing page (`/`)
 
 ```
 +------------------------------------------------------------------+
-| [Released v1.0.0]  (badge — git tag on tag builds; unreleased in CI) |
+| [Released v1.0.0]                                                |
 |                                                                  |
 | SoloDevBoard                                                     |
 | A single pane of glass for solo developers managing GitHub         |
 | workloads across multiple repositories.                          |
 |                                                                  |
-| Pitch: GitHub spreads the work across tabs; this is the app you  |
-| run locally or self-host.                                        |
+| Three short paragraphs: problem + what the app is; github-workflows |
+| PM/Work lineage; AI-collaborator experiment under human direction.|
 |                                                                  |
-| [ View on GitHub ]    [ About the project ]                      |
-|                                                                  |
-| MIT licence. Operator setup in repo docs. User Guide as text link.|
+| [ Learn more about the project ]  → /about/                      |
 +------------------------------------------------------------------+
-| The project (cards link into /about/)                            |
-| +---------------------------+ +---------------------------+      |
-| | Origin                    | | How the project is run    |      |
-| | why it exists...          | | AI-collaborator experiment|      |
-| +---------------------------+ +---------------------------+      |
+| Feature grid (3 columns; 7 tiles; icon + name + one-liner)       |
+| Icons match the in-app nav (Material Symbols).                   |
+| Tiles are not links.                                             |
 +------------------------------------------------------------------+
-| What the app does (capability tiles, not documentation links)    |
-| Feature grid from guide front matter `landing: true`             |
-| +----------------+ +----------------+ +----------------+           |
-| | Audit Dashboard| | Label Manager  | | Repositories   |           |
-| | subtitle...    | | subtitle...    | | subtitle...    |           |
-| +----------------+ +----------------+ +----------------+           |
-| ... (seven product features; omit draft pm-workflow)             |
-+------------------------------------------------------------------+
-| Footer: copyright, powered by Hugo/Hextra, release version       |
+| Footer: copyright, MIT licence and repo docs/, release, Hugo     |
 +------------------------------------------------------------------+
 ```
 
 ### Interaction notes
 
-- Layout: `hextra-home` (existing Hextra landing layout).
+- Layout: `hextra-home`.
 - Hero badge shows release tag from `params.releaseVersion` (injected on tag deploy).
-- Primary CTAs: GitHub repository and About (`/about/`). The User Guide is a text link in the hero footnote and remains in the nav; it is not a hero button.
-- **Project cards** link to `/about/origin/` and `/about/how-we-work/`. Subtitles come from About page front matter (`landing: true`, `landingSubtitle`).
-- **Feature tiles** are **not** links. They summarise shipped capabilities from guide front matter (`landing: true`, `landingSubtitle`) so claims stay aligned with published guides (DEC-023). How-to copy stays on `/docs/`.
+- Single on-page CTA: Learn more about the project (`/about/`).
+- Feature tiles are **not** links. Titles, one-liners, and icons come from guide front matter (`landing: true`, `landingSubtitle`, `landingIcon`) so claims stay aligned with published guides (DEC-023).
 - Do not list in-app About or Appearance as landing pillars.
 - Do not advertise paid tiers, Marketplace, or a public hosted URL.
+- Do not invent filler cards to force a 3×3 or 4×4 cell count.
 
 ### Accessibility
 
-- CTAs are real links with visible text.
-- Project cards are keyboard-focusable links into About.
-- Feature tiles are static content (headings and paragraphs), not fake buttons.
+- CTA is a real link with visible text.
+- Feature icons are `aria-hidden`; the heading is the accessible name.
 - Colour contrast follows Hextra theme defaults.
 
 ### Responsive behaviour
 
-- Project cards: two columns, collapsing to one on narrow viewports.
-- Feature grid collapses to fewer columns on narrow viewports (Hextra `feature-grid`).
+- Feature grid: one column, then two, then three (`hx:sm:grid-cols-2 hx:lg:grid-cols-3`).

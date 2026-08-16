@@ -1,8 +1,6 @@
 ---
 title: How the project is run
 weight: 20
-landing: true
-landingSubtitle: "An honest account of AI-collaborator planning and delivery in this repository — not a marketing claim about autonomous software."
 ---
 
 ## AI-collaborator experiment
