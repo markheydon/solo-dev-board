@@ -185,7 +185,7 @@ Verify issue #[number]
 **What it does:**
 - Invokes **Verify Agent**
 - Validates all quality gates (code, tests, docs)
-- Creates pull request with proper metadata
+- Creates pull request with metadata from [`PULL_REQUEST_POLICY.md`](PULL_REQUEST_POLICY.md)
 - Updates issue labels to `status/in-review`
 - Provides verify summary
 
@@ -415,7 +415,7 @@ START
 
 **Responsibilities:**
 - Validates quality gates (code, tests, docs, backlog sync)
-- Creates pull request with metadata
+- Creates pull request with metadata from [`PULL_REQUEST_POLICY.md`](PULL_REQUEST_POLICY.md)
 - Updates issue labels (`status/in-review` → `status/done`)
 - Closes issues post-merge
 - Suggests next backlog item

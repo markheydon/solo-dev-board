@@ -24,7 +24,7 @@ Use this skill when the user asks for command-line GitHub operations. Prioritise
 
 - Issue creation, updates, and triage
 - Label taxonomy operations aligned to `plan/LABEL_STRATEGY.md`
-- Pull request status and checks
+- Pull request status and checks (creation metadata: [`plan/PULL_REQUEST_POLICY.md`](../../plan/PULL_REQUEST_POLICY.md))
 - CI/CD workflow triggering and monitoring
 - Basic project board item operations
 

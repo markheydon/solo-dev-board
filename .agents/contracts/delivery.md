@@ -123,11 +123,13 @@ Rules:
 
 Work on a dedicated feature branch.
 
-Naming convention:
+Naming convention (see also [`plan/PULL_REQUEST_POLICY.md`](../../plan/PULL_REQUEST_POLICY.md)):
 
 ```text
 feature/issue-N-description
 ```
+
+Platform-imposed names (`cursor/…`, `copilot/…`) are allowed; do not retitle the PR to match them.
 
 Examples:
 

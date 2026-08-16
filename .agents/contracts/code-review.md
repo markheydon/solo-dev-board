@@ -44,6 +44,9 @@ Invoke this agent when you need to review:
 - Check test naming follows `MethodUnderTest_Scenario_ExpectedOutcome`.
 - Ensure tests are placed in the matching `tests/*` project structure.
 
+### Pull request metadata
+- Confirm the title, template headings, labels, linking, and draft state match [`plan/PULL_REQUEST_POLICY.md`](../../plan/PULL_REQUEST_POLICY.md).
+
 ### Documentation and Planning
 - Confirm user-facing features include doc updates in `user-docs/content/docs/`.
 - Check `user-docs/content/_index.md` is updated if a new user guide page was added.

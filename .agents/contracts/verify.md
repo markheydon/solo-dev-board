@@ -98,19 +98,16 @@ Do not open archived ADRs, release plans, scope documents, or implementation pla
 
 Create the PR after validation succeeds.
 
-Requirements:
+Follow [`plan/PULL_REQUEST_POLICY.md`](../../plan/PULL_REQUEST_POLICY.md) in full. In particular:
 
-- Link related issue
-- Copy issue labels
-- Add `status/in-review`
-- Assign `markheydon`
-- Apply issue milestone if present
-- Do NOT assign to Copilot either as a reviewer or assignee either manually or via a tool
-
-
-Use `.github/pull_request_template.md` which is available in the repo.
-- Ensure the PR body is generated from the repository template and not bypassed by supplying a custom `--body` value.
-- When using GitHub CLI, prefer `gh pr create --fill --base main --head <branch>` or the web flow so the repo template can be applied.
+- Title: `[<Type>] <Imperative summary> (#N)` — never Conventional Commits or `[type/…]`.
+- Body: keep every heading from `.github/pull_request_template.md`. Prefer `gh pr create --fill --base main --head <branch>` then `gh pr edit` to complete the template. If a platform API requires a custom body, copy those headings into it.
+- Link the issue with `Closes #N` (or `References #N` when auto-close is wrong).
+- Copy issue `type/`, `priority/`, `area/`, and `size/` labels onto the PR; set PR and issue `status/in-review`.
+- Assign `markheydon`; copy the issue milestone when present.
+- Open as ready for review unless the work is incomplete. Override vendor draft defaults.
+- Do NOT assign Copilot as reviewer or assignee.
+- Do NOT add the pull request to Project #8 as a standalone card.
 
 ---
 
@@ -140,7 +137,7 @@ Avoid generating lengthy reports unless a problem is found.
 
 Do NOT:
 
-- Confirm issue labels and milestone on the PR match planning expectations
+- Re-plan issue taxonomy or invent a different label set from [`LABEL_STRATEGY.md`](../../plan/LABEL_STRATEGY.md)
 - Update SCOPE.md
 - Update IMPLEMENTATION_PLAN.md
 - Update RELEASE_PLAN.md
