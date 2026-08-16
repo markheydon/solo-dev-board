@@ -11,7 +11,7 @@ Turn the Hugo/Hextra site into the **public product site** for SoloDevBoard: mar
 - About section covers origin and AI-collaborator experiment honestly.
 - Hugo builds in CI; tag deploy is ready for `solodevboard.com` with operator DNS steps documented.
 - Release version stamped on tag builds; no "Early access" badge unless still true.
-- Feature cards on landing derive from published guide front matter (no duplicated feature lists).
+- Feature tiles on the landing derive from published guide front matter (no duplicated feature lists) and are capability summaries, not links into the User Guide.
 
 ## Key milestones
 
