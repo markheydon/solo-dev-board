@@ -1,6 +1,8 @@
 ---
 title: Origin
 weight: 10
+landing: true
+landingSubtitle: "Why SoloDevBoard exists: one place for GitHub work that is otherwise scattered across repositories and tabs."
 ---
 
 ## Single pane of glass

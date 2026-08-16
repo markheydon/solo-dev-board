@@ -1,0 +1,10 @@
+{{- $pages := where (where site.RegularPages "Section" "about") "Params.landing" true -}}
+{{- $pages = sort $pages "Weight" -}}
+<div class="hextra-feature-grid hx:grid hx:grid-cols-1 hx:sm:grid-cols-2 hx:gap-4 hx:mt-4">
+{{- range $pages }}
+  <a href="{{ .RelPermalink }}" class="hextra-feature-card hx:block hx:rounded-lg hx:border hx:border-gray-200 hx:dark:border-neutral-800 hx:bg-white hx:dark:bg-neutral-900 hx:p-6 hx:shadow-sm hx:transition-colors hover:hx:border-primary-500 hx:aspect-auto">
+    <h3 class="hx:text-lg hx:font-semibold hx:mb-2">{{ .Title }}</h3>
+    <p class="hx:text-sm hx:text-gray-600 hx:dark:text-gray-400">{{ .Params.landingSubtitle }}</p>
+  </a>
+{{- end }}
+</div>

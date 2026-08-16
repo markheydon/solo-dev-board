@@ -27,11 +27,11 @@ markup:
 
 menu:
   main:
-    - name: User Guide
-      pageRef: /docs
-      weight: 1
     - name: About
       pageRef: /about
+      weight: 1
+    - name: User Guide
+      pageRef: /docs
       weight: 2
     - name: Search
       weight: 3

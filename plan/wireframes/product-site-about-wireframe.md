@@ -15,7 +15,7 @@
 
 ```
 +------------------------------------------------------------------+
-| SoloDevBoard    User Guide   About   [Search]   GitHub   [theme] |
+| SoloDevBoard    About   User Guide   [Search]   GitHub   [theme] |
 +------------------------------------------------------------------+
 | About SoloDevBoard                                               |
 |                                                                  |
