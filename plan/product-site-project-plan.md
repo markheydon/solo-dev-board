@@ -41,10 +41,10 @@ Turn the Hugo/Hextra site into the **public product site** for SoloDevBoard: mar
 
 | Child | Parent | Relationship |
 |-------|--------|--------------|
-| Landing story | Feature | sub-issue |
-| About story | Feature | sub-issue |
-| Domain/rename enabler | Feature | sub-issue (blocks deploy) |
-| Hugo test issue | Feature | sub-issue |
+| Landing story | #359 | #358 | sub-issue |
+| About story | #360 | #358 | sub-issue |
+| Domain/rename enabler | #361 | #358 | sub-issue (blocks deploy) |
+| Hugo test issue | #362 | #358 | sub-issue |
 
 GitHub CLI cannot set sub-issue relationships; link manually in the GitHub UI after creation.
 
