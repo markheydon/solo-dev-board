@@ -19,6 +19,51 @@ public sealed class HostedCookieAuthenticationEventsTests
     private const string SessionExpiredItemKey = "solo-dev-board.hosted-session-expired";
 
     [Fact]
+    public async Task ValidatePrincipal_AccessTokenExpiryClaimMissing_DoesNotRefreshOrReject()
+    {
+        // Arrange
+        var options = CreateOptions();
+        var gateway = CreateGateway(new Queue<HttpResponseMessage>());
+        var httpContext = CreateHttpContext(gateway);
+        var principal = CreatePrincipal(options, accessTokenExpiresAtUtc: null, refreshToken: "refresh-token-123");
+        var context = CreateValidateContext(httpContext, principal);
+        var events = HostedCookieAuthenticationEvents.Create(options);
+
+        // Act
+        await events.OnValidatePrincipal(context);
+
+        // Assert
+        Assert.False(context.ShouldRenew);
+        Assert.Equal("access-token-123", context.Principal!.FindFirstValue(HostedAuthClaimTypes.AccessToken));
+    }
+
+    [Fact]
+    public async Task ValidatePrincipal_AccessTokenAlreadyExpired_RefreshSucceeds()
+    {
+        // Arrange
+        var options = CreateOptions();
+        var gateway = CreateGateway(new Queue<HttpResponseMessage>(
+        [
+            CreateJsonResponse(new { access_token = "new-access-token", refresh_token = "new-refresh-token", expires_in = 3600, refresh_token_expires_in = 604800 }),
+        ]));
+        var httpContext = CreateHttpContext(gateway);
+        var principal = CreatePrincipal(
+            options,
+            accessTokenExpiresAtUtc: DateTimeOffset.UtcNow.AddMinutes(-10),
+            refreshToken: "refresh-token-123",
+            refreshTokenExpiresAtUtc: DateTimeOffset.UtcNow.AddDays(6));
+        var context = CreateValidateContext(httpContext, principal);
+        var events = HostedCookieAuthenticationEvents.Create(options);
+
+        // Act
+        await events.OnValidatePrincipal(context);
+
+        // Assert
+        Assert.True(context.ShouldRenew);
+        Assert.Equal("new-access-token", context.Principal!.FindFirstValue(HostedAuthClaimTypes.AccessToken));
+    }
+
+    [Fact]
     public async Task ValidatePrincipal_AccessTokenNotExpired_DoesNotRefresh()
     {
         // Arrange

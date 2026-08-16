@@ -17,7 +17,7 @@ public sealed class HostedGitHubAuthGatewayTests
         // Arrange
         var responses = new Queue<HttpResponseMessage>(
         [
-            CreateJsonResponse(new { access_token = "token-123", expires_in = 3600 }),
+            CreateJsonResponse(new { access_token = "token-123", refresh_token = "refresh-123", expires_in = 3600, refresh_token_expires_in = 604800 }),
             CreateJsonResponse(new { login = "markheydon" }),
             CreateJsonResponse(new
             {
@@ -46,6 +46,8 @@ public sealed class HostedGitHubAuthGatewayTests
         Assert.Equal("token-123", session.AccessToken);
         Assert.Equal(987654321, session.InstallationId);
         Assert.NotNull(session.TokenExpiresAtUtc);
+        Assert.Equal("refresh-123", session.RefreshToken);
+        Assert.NotNull(session.RefreshTokenExpiresAtUtc);
         Assert.Contains("org-one", session.OrganisationLogins);
         Assert.Contains("org-two", session.OrganisationLogins);
     }
