@@ -1,4 +1,4 @@
-> **Audience:** Developers and operators. This guide is repository documentation and is not part of the published end-user site in `user-docs/`.
+> **Audience:** Developers and operators. This guide is repository documentation and is not part of the published end-user site in `website/`.
 
 # Deploying SoloDevBoard to Azure
 
@@ -24,7 +24,7 @@ GitHub Actions CD (`.github/workflows/cd.yml`) deploys to two hosted tiers that 
 | **Staging** | Merge to `main`, or **Actions → CD - Deploy to Azure → Run workflow** (manual staging deploy) | `staging` | `Staging` | GitHub App hosted sign-in |
 | **Production** | Push tag `v*` | `production` | `Production` | GitHub App hosted sign-in |
 
-End-user documentation in `user-docs/` is published to GitHub Pages on `v*` release tags only. Pull requests validate Hugo builds via `hugo-ci.yml` without publishing.
+The public product site in `website/` is published to GitHub Pages on `v*` release tags only. Pull requests validate Hugo builds via `hugo-ci.yml` without publishing. Canonical URL: `https://solodevboard.com/` (see [website/README.md](../website/README.md#custom-domain-solodevboardcom)).
 
 ---
 

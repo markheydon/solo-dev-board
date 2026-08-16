@@ -1,6 +1,9 @@
 ---
 weight: 80
 title: Triage UI
+landing: true
+landingSubtitle: "Keyboard-friendly interface for triaging incoming issues quickly."
+guideStatus: Available
 ---
 
 ## Overview

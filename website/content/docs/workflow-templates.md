@@ -1,6 +1,9 @@
 ---
 weight: 90
 title: Workflow Templates
+landing: true
+landingSubtitle: "Browse, customise, and apply GitHub Actions workflow templates across repositories."
+guideStatus: Partially Available
 ---
 
 ## Overview

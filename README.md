@@ -93,9 +93,9 @@ solo-dev-board/
 │   ├── README.md               # Index for repository-centric docs
 │   ├── getting-started.md      # Setup and configuration guide
 │   └── deployment.md           # Azure Container Apps deployment guide
-├── user-docs/                  # End-user docs site (Hugo / Hextra → GitHub Pages)
+├── website/                    # Public product site (Hugo / Hextra → GitHub Pages)
 │   ├── hugo.yaml               # Hugo site configuration
-│   └── content/                # Published user guides
+│   └── content/                # Landing, User Guide, and About pages
 ├── scripts/
 │   └── Invoke-HugoSite.ps1     # Local Hugo build/serve via Podman/Docker
 ├── plan/
@@ -153,7 +153,7 @@ To contribute:
 
 For guidance on labels, see `plan/LABEL_STRATEGY.md`.
 For help with setup, see `docs/getting-started.md`.
-End-user documentation is published from `user-docs/` to [GitHub Pages](https://markheydon.me.uk/solo-dev-board/).
+End-user documentation is published from `website/` to [GitHub Pages](https://solodevboard.com/) on `v*` release tags.
 
 ---
 

@@ -6,7 +6,7 @@ import { seedThemePreference } from '../fixtures/accessibility';
 export const DOCS_EXAMPLE_REPOSITORY = 'markheydon/solo-dev-board';
 
 /** Repository-root-relative output directory for Hugo static images. */
-export const docsImagesRoot = path.resolve(__dirname, '../../../user-docs/static/images');
+export const docsImagesRoot = path.resolve(__dirname, '../../../website/static/images');
 
 /**
  * Seeds light theme preference and opens a feature page ready for screenshot capture.
@@ -84,7 +84,7 @@ export async function selectRepositoryInAutocomplete(
 /**
  * Captures a full-page screenshot into the Hugo static images tree.
  * @param page Playwright page.
- * @param featureSlug Feature folder name under `user-docs/static/images/`.
+ * @param featureSlug Feature folder name under `website/static/images/`.
  * @param fileName Kebab-case PNG file name, including the `.png` extension.
  */
 export async function captureDocsScreenshot(

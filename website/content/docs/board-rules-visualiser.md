@@ -1,6 +1,9 @@
 ---
 weight: 70
 title: Board Rules Visualiser
+landing: true
+landingSubtitle: "Visualise supported board states and transitions for GitHub Project v2 boards."
+guideStatus: Partially Available
 ---
 
 > **Scope note** — Repository and supported board selection, column and transition visualisation, rule inspection warnings, and compare mode are available now. Full automation-rule retrieval from GitHub remains a later slice.

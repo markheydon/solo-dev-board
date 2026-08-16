@@ -1,0 +1,20 @@
+{{- $pages := where (where site.RegularPages "Section" "docs") "Params.landing" true -}}
+{{- $pages = sort $pages "Weight" -}}
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>Description</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+{{- range $pages }}
+    <tr>
+      <td><a href="{{ .RelPermalink }}">{{ .Title }}</a></td>
+      <td>{{ .Params.landingSubtitle }}</td>
+      <td>{{ .Params.guideStatus | default "Available" }}</td>
+    </tr>
+{{- end }}
+  </tbody>
+</table>

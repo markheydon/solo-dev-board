@@ -27,7 +27,7 @@
 | `area/board-rules` | `src/App/.../Features/BoardRules/`, `src/Application/.../Services/BoardRules/` |
 | `area/workflows` | `src/App/.../Features/Workflows/`, `src/Application/.../Services/Workflows/` |
 | `area/infrastructure` | `src/Infrastructure/`, `src/SoloDevBoard.AppHost/` |
-| `area/docs` | `docs/`, `plan/` |
+| `area/docs` | `website/`, `docs/`, `plan/` |
 
 ## Invocation
 

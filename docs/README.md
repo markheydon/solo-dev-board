@@ -2,8 +2,8 @@
 
 This folder holds **repository-centric** documentation for contributors, self-hosters, and operators.
 
-End-user (in-app) documentation is published from [`user-docs/`](../user-docs/) via Hugo and GitHub Pages:
-`https://markheydon.me.uk/solo-dev-board/`.
+The public product site (landing, User Guide, About) is published from [`website/`](../website/) via Hugo and GitHub Pages:
+`https://solodevboard.com/`.
 
 ## Contents
 
@@ -22,4 +22,4 @@ End-user (in-app) documentation is published from [`user-docs/`](../user-docs/) 
 .\scripts\Invoke-HugoSite.ps1 serve
 ```
 
-See also [DEC-019](../plan/DECISIONS.md#dec-019-hugo-hextra-for-end-user-docs-on-github-pages) and [DOCS_STRATEGY.md](../plan/DOCS_STRATEGY.md).
+See also [DEC-019](../plan/DECISIONS.md#dec-019-hugo-hextra-for-end-website-on-github-pages) and [DOCS_STRATEGY.md](../plan/DOCS_STRATEGY.md).

@@ -199,7 +199,7 @@ Issue:
 - Missing user documentation
 
 Required action:
-- Update user-docs/content/docs/...
+- Update website/content/docs/...
 
 Re-run verify after correction.
 ```

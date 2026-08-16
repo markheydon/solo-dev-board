@@ -1,5 +1,5 @@
-# SoloDevBoard end-user documentation site (Hextra).
-baseURL: "https://markheydon.me.uk/solo-dev-board/"
+# SoloDevBoard public product site (Hextra).
+baseURL: "https://solodevboard.com/"
 title: "SoloDevBoard"
 locale: en-gb
 defaultContentLanguage: en-gb
@@ -27,26 +27,30 @@ markup:
 
 menu:
   main:
-    - name: Documentation
+    - name: User Guide
       pageRef: /docs
       weight: 1
-    - name: Search
+    - name: About
+      pageRef: /about
       weight: 2
+    - name: Search
+      weight: 3
       params:
         type: search
     - name: GitHub
-      weight: 3
+      weight: 4
       url: "https://github.com/markheydon/solo-dev-board"
       params:
         icon: github
     - name: Theme Toggle
-      weight: 4
+      weight: 5
       params:
         type: theme-toggle
 
 params:
   description: "A single pane of glass for solo developers managing GitHub workloads across multiple repositories."
   externalLinkDecoration: false
+  releaseVersion: unreleased
 
   navbar:
     displayTitle: true
@@ -76,7 +80,7 @@ params:
 
   editURL:
     enable: true
-    base: "https://github.com/markheydon/solo-dev-board/edit/main/user-docs/content"
+    base: "https://github.com/markheydon/solo-dev-board/edit/main/website/content"
 
   page:
     width: normal
