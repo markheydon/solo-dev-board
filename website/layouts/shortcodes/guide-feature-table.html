@@ -11,7 +11,12 @@
   <tbody>
 {{- range $pages }}
     <tr>
-      <td><a href="{{ .RelPermalink }}">{{ .Title }}</a></td>
+      <td>
+        <a href="{{ .RelPermalink }}" class="hx:inline-flex hx:items-center hx:gap-2">
+          {{ partial "feature-icon.html" (dict "page" .) }}
+          <span>{{ .Title }}</span>
+        </a>
+      </td>
       <td>{{ .Params.landingSubtitle }}</td>
       <td>{{ .Params.guideStatus | default "Available" }}</td>
     </tr>

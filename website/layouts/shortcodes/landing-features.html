@@ -12,9 +12,7 @@
   >
     <div class="hx:relative hx:w-full hx:p-6">
       <h3 class="hx:text-2xl hx:font-medium hx:leading-6 hx:mb-2 hx:flex hx:items-center">
-        {{- with .Params.landingIcon }}
-        <span class="material-symbols-outlined hx:pr-2 hx:text-primary-600 hx:dark:text-primary-400" aria-hidden="true">{{ . }}</span>
-        {{- end }}
+        {{ partial "feature-icon.html" (dict "page" . "class" "hx:pr-2") }}
         <span>{{ $title }}</span>
       </h3>
       <p class="hx:text-gray-500 hx:dark:text-gray-400 hx:text-sm hx:leading-6">{{ .Params.landingSubtitle }}</p>
