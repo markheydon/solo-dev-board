@@ -24,7 +24,7 @@ For historical backlog content (pre-migration), see [archive/BACKLOG-2026-07-18.
 | Deferred follow-ons | v1.1.0 | Not started — [#289](https://github.com/markheydon/solo-dev-board/issues/289) |
 | Phase 5 — Cross-Repo PM Workflow | v1.2.0 | Parked until after v1.0.0 — [#272](https://github.com/markheydon/solo-dev-board/issues/272) |
 
-The GitHub milestone for Phase 5 may still show the former title `v0.5.0 — Cross-Repo PM Workflow` until it is renamed. The v1.1.0 GitHub milestone does not exist yet.
+The GitHub milestone for Phase 5 is `v1.2.0 — Cross-Repo PM Workflow` (renamed from `v0.5.0`). Deferred follow-ons use `v1.1.0 — Deferred follow-ons`.
 
 ## Key epics
 
@@ -32,8 +32,8 @@ The GitHub milestone for Phase 5 may still show the former title `v0.5.0 — Cro
 |------|-------|-----------|
 | Public Release Infrastructure and Authentication | [#101](https://github.com/markheydon/solo-dev-board/issues/101) | v1.0.0 (closed) |
 | Operational hardening for public release | [#102](https://github.com/markheydon/solo-dev-board/issues/102) | v1.0.0 (closed) |
-| v1.1 deferred follow-ons | [#289](https://github.com/markheydon/solo-dev-board/issues/289) | v1.1.0 (create GitHub milestone) |
-| Cross-Repo PM Workflow (Phase 5) | [#272](https://github.com/markheydon/solo-dev-board/issues/272) | v1.2.0 (rename GitHub milestone from v0.5.0) |
+| v1.1 deferred follow-ons | [#289](https://github.com/markheydon/solo-dev-board/issues/289) | v1.1.0 |
+| Cross-Repo PM Workflow (Phase 5) | [#272](https://github.com/markheydon/solo-dev-board/issues/272) | v1.2.0 |
 
 ## Completed phases (summary)
 

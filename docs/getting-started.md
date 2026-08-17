@@ -253,7 +253,7 @@ Your GitHub login is resolved automatically from the PAT at startup. You can als
 
 #### Hosted sign-in mode setup
 
-1. **Create or reuse a GitHub App** at [GitHub → Settings → Developer settings → GitHub Apps](https://github.com/settings/apps). Note the **Client ID** and generate a **Client secret**.
+1. **Create or reuse a GitHub App** at [GitHub → Settings → Developer settings → GitHub Apps](https://github.com/settings/apps). Note the **Client ID** and generate a **Client secret**. Apply the [GitHub App listing](github-app.md) checklist (logo, homepage, callback URLs, expiring user tokens, and minimum permissions).
 2. **Start Aspire once** to allocate an HTTPS endpoint, then run `aspire describe` and note the `app` resource HTTPS URL.
 3. **Register the callback URL** on your GitHub App: `{https-endpoint}/auth/callback` (for example, `https://localhost:17123/auth/callback`). SoloDevBoard sets `GitHubAuth:HostedSignInCallbackBaseUri` from the Aspire endpoint automatically.
 4. **Install the GitHub App** on the users or organisations you want to test with.

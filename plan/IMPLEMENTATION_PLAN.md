@@ -12,7 +12,7 @@ Phases remain the primary sequence for feature delivery. Unfinished work from ea
 - Phases 1–4 are complete. All six core feature areas are delivered (Label Manager, Audit Dashboard, One-Click Migration, Triage UI, Board Rules Visualiser, Workflow Templates).
 - Phase 6 (Production Ready, v1.0.0) is ready to tag. Remaining delivery work is [#257](https://github.com/markheydon/solo-dev-board/issues/257) (annotated tag, GitHub Release, production CD).
 - Deferred follow-on slices from Phases 1–4 are **v1.1.0**, tracked in [#289](https://github.com/markheydon/solo-dev-board/issues/289) and child issues [#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#293](https://github.com/markheydon/solo-dev-board/issues/293).
-- Phase 5 (Cross-Repo PM Workflow) is parked as **v1.2.0** — tracked in [#272](https://github.com/markheydon/solo-dev-board/issues/272). The GitHub milestone may still show the former `v0.5.0` title until it is renamed.
+- Phase 5 (Cross-Repo PM Workflow) is parked as **v1.2.0** — tracked in [#272](https://github.com/markheydon/solo-dev-board/issues/272).
 
 For the full feature scope, see [SCOPE.md](SCOPE.md). For open work, see [GitHub Issues](https://github.com/markheydon/solo-dev-board/issues) and [Project #8](https://github.com/users/markheydon/projects/8). The backlog index is at [BACKLOG.md](BACKLOG.md).
 
@@ -167,7 +167,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Milestone:** v1.2.0
 
-**Status:** Parked until after v1.0.0. Tracked in [#272](https://github.com/markheydon/solo-dev-board/issues/272). Do not tag this work as `v0.5.0` after 1.0 exists ([DEC-024](DECISIONS.md#dec-024-post-10-milestone-numbering)).
+**Status:** Parked until after v1.0.0. Tracked in [#272](https://github.com/markheydon/solo-dev-board/issues/272). GitHub milestone: `v1.2.0 — Cross-Repo PM Workflow`. Do not tag `v0.5.0` after 1.0 exists ([DEC-024](DECISIONS.md#dec-024-post-10-milestone-numbering)).
 
 ### Key Tasks
 

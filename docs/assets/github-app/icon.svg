@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="SoloDevBoard">
+  <!-- Full-bleed square so GitHub's crop stays on-brand. Primary green matches SoloDevBoardTheme. -->
+  <rect width="512" height="512" fill="#167c38"/>
+  <rect x="90" y="140" width="84" height="260" rx="14" fill="#ffffff"/>
+  <rect x="214" y="180" width="84" height="220" rx="14" fill="#ffffff"/>
+  <rect x="338" y="240" width="84" height="160" rx="14" fill="#ffffff"/>
+</svg>
