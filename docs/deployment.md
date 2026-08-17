@@ -294,15 +294,35 @@ Secret parameters are written to the Aspire-provisioned `auth-secrets` Key Vault
 |---|---|---|
 | `AZURE_LOCATION` | `uksouth` | Azure region for `aspire deploy` |
 | `AZURE_RESOURCE_GROUP` | `rg-solodevboard-staging` / `rg-solodevboard-prod` | App resource group for this Environment (may differ per tier) |
-| `ACR_NAME` | *(unset)* or `acrmarkheydon` | Optional existing ACR resource name — set with `ACR_RESOURCE_GROUP` or omit both |
+| `ACR_NAME` | *(unset)* or `acrmyshared` | Optional existing ACR resource name — set with `ACR_RESOURCE_GROUP` or omit both |
 | `ACR_RESOURCE_GROUP` | *(unset)* or `rg-shared-acr` | Resource group that owns the existing ACR — same value on both Environments when opting in |
-| `HOSTED_CALLBACK_BASE_URI` | *(unset)* or `https://staging.solodevboard.app` | Optional public HTTPS origin for GitHub App OAuth callbacks when using a custom domain |
-| `CUSTOM_DOMAIN` | *(unset)* or `staging.solodevboard.app` | Optional Container App custom hostname; must match DNS and managed certificate |
-| `CUSTOM_DOMAIN_CERTIFICATE_NAME` | *(unset)* or `staging-solodevboard-app` | Managed certificate name in the Container Apps environment; leave unset on first deploy before the certificate exists |
+| `HOSTED_CALLBACK_BASE_URI` | *(unset)* or `https://staging.example.com` | Public HTTPS origin for GitHub App OAuth callbacks when using a custom domain; omit to use the Aspire-provisioned FQDN |
+| `CUSTOM_DOMAIN` | *(unset)* or `staging.example.com` | Optional Container App custom hostname; must match DNS and managed certificate |
+| `CUSTOM_DOMAIN_CERTIFICATE_NAME` | *(unset)* or `staging-example-com` | Managed certificate name in the Container Apps environment; leave unset on first deploy before the certificate exists |
 
 Prefer **repository-level** variables for `ACR_NAME` and `ACR_RESOURCE_GROUP` so Staging and Production cannot drift onto different registries.
 
 Enable required reviewers on the `production` environment before granting production deploy access. Staging deploys automatically on merge to `main`; production deploys on `v*` release tags.
+
+### Fork and independent operators
+
+Shipped `appsettings.Staging.json` and `appsettings.Production.json` contain **tier defaults only** (for example `hosted-sign-in-enabled: true` for CD tiers). They do not contain operator-specific hostnames, OAuth callback URLs, custom domains, or GitHub allow-lists.
+
+Configure **your** instance via GitHub Environment secrets and variables (for CD) or `Parameters__*` environment variables (for local `aspire deploy`). Do not commit operator-specific values into appsettings files in a fork.
+
+| You must set (hosted CD) | Purpose |
+|---|---|
+| `GH_APP_CLIENT_ID`, `GH_APP_CLIENT_SECRET` | GitHub App OAuth |
+| `ALLOWED_USER_LOGINS` and/or `ALLOWED_ORG_LOGINS` | Admission allow-list |
+| `AZURE_*` secrets and `AZURE_LOCATION`, `AZURE_RESOURCE_GROUP` | Azure deploy target |
+
+| Set when using a custom domain | Purpose |
+|---|---|
+| `HOSTED_CALLBACK_BASE_URI` | Public HTTPS origin for OAuth callbacks (`https://<hostname>`) |
+| `CUSTOM_DOMAIN` | Container App hostname |
+| `CUSTOM_DOMAIN_CERTIFICATE_NAME` | Managed certificate name in the ACA environment (after the cert exists) |
+
+Without a custom domain, leave callback and domain variables unset; the AppHost uses the Aspire-provisioned `*.azurecontainerapps.io` FQDN for OAuth callbacks.
 
 ### Custom domain (Container Apps)
 
@@ -317,20 +337,20 @@ Aspire can persist a custom hostname and managed certificate binding across `asp
    `az containerapp env certificate create --name <aca-env> --resource-group <rg> --hostname <hostname> --validation-method CNAME --certificate-name <cert-name>`.
 5. Bind the certificate: `az containerapp hostname bind --hostname <hostname> --name app --resource-group <rg> --environment <aca-env> --certificate <cert-name>`.
 
-Leave `custom-domain` and `custom-domain-certificate-name` at `-` in `appsettings.Staging.json` (and unset the matching GitHub Environment variables) until the managed certificate exists in that tier's Container Apps environment. Shipping a hostname in AppHost configuration without a matching certificate causes `CertificateNotFound` during deploy.
+Leave `CUSTOM_DOMAIN` and `CUSTOM_DOMAIN_CERTIFICATE_NAME` unset (or `-`) until the managed certificate exists in that tier's Container Apps environment. Set both via GitHub Environment variables or `Parameters__*` environment variables only — not in shipped appsettings files. Shipping a hostname without a matching certificate causes `CertificateNotFound` during deploy.
 
 **AppHost and CD configuration**
 
-Set AppHost parameters (or matching GitHub Environment variables) so subsequent deploys preserve the binding:
+Set both parameters so subsequent deploys preserve the binding. The AppHost calls `ConfigureCustomDomain` only when **both** are active:
 
-| AppHost parameter | CD / local env var | Staging example |
+| AppHost parameter | CD / local env var | Example |
 |---|---|---|
-| `custom-domain` | `Parameters__custom_domain` / `CUSTOM_DOMAIN` | `staging.solodevboard.app` |
-| `custom-domain-certificate-name` | `Parameters__custom_domain_certificate_name` / `CUSTOM_DOMAIN_CERTIFICATE_NAME` | `staging-solodevboard-app` |
+| `custom-domain` | `Parameters__custom_domain` / `CUSTOM_DOMAIN` | `staging.example.com` |
+| `custom-domain-certificate-name` | `Parameters__custom_domain_certificate_name` / `CUSTOM_DOMAIN_CERTIFICATE_NAME` | `staging-example-com` |
 
 When using a custom domain for hosted sign-in, also set `HOSTED_CALLBACK_BASE_URI` to the public HTTPS origin and register `https://<hostname>/auth/callback` on the GitHub App.
 
-Leave `custom-domain` and `custom-domain-certificate-name` unset (or `-`) to use the Aspire-provisioned FQDN only. On the first deploy with a new hostname, leave `custom-domain-certificate-name` unset until the managed certificate exists; set it on subsequent deploys.
+Leave both domain parameters unset to use the Aspire-provisioned FQDN only. On the first deploy with a new hostname, leave `CUSTOM_DOMAIN_CERTIFICATE_NAME` unset until the managed certificate exists; set it on subsequent deploys.
 
 ---
 
@@ -348,7 +368,7 @@ Deploy jobs check out the repository with `fetch-depth: 0` so [MinVer](https://g
 After a successful deploy:
 
 1. Note the deployed Container App FQDN from the workflow output or Azure portal.
-2. **Hosted sign-in only:** register the GitHub App callback URL: `https://<fqdn>/auth/callback` (staging and production each have their own FQDN). When using a custom domain, set `HOSTED_CALLBACK_BASE_URI` on the GitHub Environment to the public HTTPS origin (for example `https://staging.solodevboard.app`) and register `https://<custom-domain>/auth/callback` on the GitHub App. Polish the app listing (logo, description, permissions) using [GitHub App listing](github-app.md).
+2. **Hosted sign-in only:** register the GitHub App callback URL: `https://<fqdn>/auth/callback` (staging and production each have their own FQDN). When using a custom domain, set `HOSTED_CALLBACK_BASE_URI` on the GitHub Environment to the public HTTPS origin (for example `https://staging.example.com`) and register `https://<custom-domain>/auth/callback` on the GitHub App. Polish the app listing (logo, description, permissions) using [GitHub App listing](github-app.md).
 3. Open the provisioned Application Insights resource to confirm telemetry is flowing (see [Observability guide](observability.md)).
 4. **Hosted sign-in smoke checks** (run in a private browser window with no existing cookies):
    - `GET https://<fqdn>/` redirects to `/welcome` (not the Home dashboard shell).
@@ -356,7 +376,7 @@ After a successful deploy:
    - One feature page (for example **Repositories**) loads GitHub data without errors.
    - Sign out returns to `/welcome`.
 5. **Deployment version check:** open **More options → About**. Staging should show a version with a `staging` pre-release suffix (for example `1.0.1-staging.0.42`); production should show a clean SemVer matching the release tag (for example `1.0.0`). The **Build** line links to the deployed commit — compare it with the commit SHA from the GitHub Actions deploy run or the tip of the deployed branch/tag.
-6. **Container App environment verification:** confirm `GitHubAuth__HostedGitHubAppClientId` and `HostedAdmissionControl__AllowedUserLogins` on the active revision show real values (not `-` placeholders from `appsettings.Staging.json`).
+6. **Container App environment verification:** confirm `GitHubAuth__HostedGitHubAppClientId` and `HostedAdmissionControl__AllowedUserLogins` on the active revision show real values (not `-` placeholders). If they still show `-`, the GitHub Environment variables were not applied — see [Fork and independent operators](#fork-and-independent-operators).
 
 ## Deploy locally (operator testing)
 

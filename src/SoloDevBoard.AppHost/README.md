@@ -4,7 +4,7 @@ Aspire orchestrates the SoloDevBoard web app for local development, dev containe
 
 GitHub authentication is configured through **AppHost parameters**. In local development they are injected into the `app` resource as environment variables. In deploy mode, secret parameters are persisted in Azure Key Vault and referenced by the Container App.
 
-Use `-` on inactive parameters. Shipped defaults are in `src/SoloDevBoard.AppHost/appsettings.json`; staging and production non-secret defaults are in `appsettings.Staging.json` and `appsettings.Production.json` respectively. Values saved from the Aspire dashboard are stored in user secrets and **override** those defaults.
+Use `-` on inactive parameters. Shipped defaults are in `src/SoloDevBoard.AppHost/appsettings.json`; staging and production tier defaults are in `appsettings.Staging.json` and `appsettings.Production.json` respectively (hosted sign-in enabled for CD tiers only — no operator hostnames or allow-lists). Operator-specific deploy values (callback URL, custom domain, GitHub App client ID, allow-lists) must be supplied via `Parameters__*` environment variables or GitHub Environment variables — not committed in appsettings. Values saved from the Aspire dashboard are stored in user secrets and **override** those defaults.
 
 ## Choose your authentication mode
 
@@ -97,7 +97,7 @@ See [plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md](../../plan/HOSTED_AUTH_KEY_VAULT_PAT
 
 ### Custom domain
 
-Deploy-only parameters `custom-domain` and `custom-domain-certificate-name` default to `-`. When `custom-domain` is set, the AppHost calls `ConfigureCustomDomain` so `aspire deploy` preserves the hostname and managed certificate binding on Azure Container Apps. Provision DNS and the managed certificate once in Azure, then set both parameters (or `CUSTOM_DOMAIN` / `CUSTOM_DOMAIN_CERTIFICATE_NAME` on the GitHub Environment). See [docs/deployment.md — Custom domain](../../docs/deployment.md#custom-domain-container-apps).
+Deploy-only parameters `custom-domain` and `custom-domain-certificate-name` default to `-`. When **both** are set (via `Parameters__*` or GitHub Environment variables), the AppHost calls `ConfigureCustomDomain` so `aspire deploy` preserves the hostname and managed certificate binding on Azure Container Apps. Provision DNS and the managed certificate once in Azure, then set both parameters. See [docs/deployment.md — Custom domain](../../docs/deployment.md#custom-domain-container-apps).
 
 Preview deployment steps:
 

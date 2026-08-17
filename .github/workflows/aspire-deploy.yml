@@ -64,9 +64,31 @@ jobs:
 
       - name: List Aspire deployment steps
         run: aspire deploy --list-steps --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --environment ${{ inputs.aspire_environment }} --non-interactive
+        env:
+          Azure__SubscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          Azure__Location: ${{ vars.AZURE_LOCATION }}
+          Azure__ResourceGroup: ${{ vars.AZURE_RESOURCE_GROUP }}
+          Parameters__acr_name: ${{ vars.ACR_NAME || '-' }}
+          Parameters__acr_resource_group: ${{ vars.ACR_RESOURCE_GROUP || '-' }}
 
       - name: Deploy with Aspire
-        run: aspire deploy --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --environment ${{ inputs.aspire_environment }} --non-interactive
+        run: |
+          set -euo pipefail
+          deploy_env="${{ inputs.aspire_environment }}"
+          apphost="src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj"
+          for attempt in 1 2 3; do
+            echo "Aspire deploy attempt ${attempt}/3 for ${deploy_env}"
+            rm -rf "${HOME}/.aspire/deployments"
+            if aspire deploy --apphost "${apphost}" --environment "${deploy_env}" --non-interactive; then
+              exit 0
+            fi
+            if [ "${attempt}" -lt 3 ]; then
+              echo "Deploy failed; waiting 20s before retry..."
+              sleep 20
+            fi
+          done
+          echo "Aspire deploy failed after 3 attempts"
+          exit 1
         env:
           Azure__SubscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           Azure__Location: ${{ vars.AZURE_LOCATION }}
