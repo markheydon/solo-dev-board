@@ -411,8 +411,8 @@ az identity delete --name id-solodevboard-cd-prod --resource-group rg-solodevboa
 
 | Symptom | Likely cause | Action |
 |---|---|---|
-| OIDC login fails in CD | Federated credential subject mismatch | Verify subject is `repo:<owner>/<repo>:environment:<staging|production>` |
-| Missing parameter prompt in CI | Secret not mapped | Add `Parameters__*` env vars to the deploy step |
+| OIDC login fails in CD | Stale `AZURE_CLIENT_ID` / tenant, or federated credential subject mismatch | CD logs in with OIDC immediately after checkout. Confirm secrets match the CD managed identity (`id-solodevboard-cd-prod`) and that a federated credential exists for `repo:<owner>/<repo>:environment:<staging\|production>`. `AADSTS700016` usually means the client ID is not in that tenant. |
+| Aspire deploy fails with `CertificateNotFound` | `CUSTOM_DOMAIN` set but `CUSTOM_DOMAIN_CERTIFICATE_NAME` does not exist in that Container Apps environment | List certificates on the **production** (or staging) ACA environment and set the variable to the certificate **name**, not the hostname. Leave the cert name unset until the managed certificate exists. |
 | Cold start / SignalR disconnect | Scale-to-zero idle | Expected; refresh the page or wait for the container to warm up |
 | 403 after sign-in | Allow-list | Update `ALLOWED_USER_LOGINS` or `ALLOWED_ORG_LOGINS` |
 | Callback URL mismatch | Stale GitHub App setting | Update callback to `https://<aca-fqdn>/auth/callback` (hosted sign-in only) |
