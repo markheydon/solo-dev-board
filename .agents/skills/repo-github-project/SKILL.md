@@ -96,7 +96,6 @@ Determine the correct **Phase** option from the issue's milestone or area label:
 | `v0.2.0` | `area/labels`, `area/dashboard` | Phase 2 — Label Manager + Audit |
 | `v0.3.0` | `area/migration`, `area/triage` | Phase 3 — Migration + Triage |
 | `v0.4.0` | `area/board-rules`, `area/workflows` | Phase 4 — Board Rules + Workflows |
-| `v0.5.0` | `area/dashboard` | Phase 5 — Cross-Repo PM Workflow (legacy title; rename to v1.2.0) |
 | `v1.2.0` | `area/dashboard` | Phase 5 — Cross-Repo PM Workflow |
 | `v1.0.0` | any | Phase 6 — Polish and v1.0 |
 | `v1.1.0` | any | Phase 6 — Polish and v1.0 (deferred follow-ons) |
