@@ -1,3 +1,5 @@
+using Aspire.Hosting.Azure;
+using Azure.Provisioning.ContainerRegistry;
 using Azure.Provisioning.KeyVault;
 
 var builder = DistributedApplication.CreateBuilder(args);
@@ -67,7 +69,13 @@ if (builder.ExecutionContext.IsPublishMode)
         var acr = builder.AddAzureContainerRegistry("acr")
             .PublishAsExisting(acrName, acrResourceGroup);
 
-        aca.WithAzureContainerRegistry(acr);
+        // Cross-RG existing ACR: default ACA Bicep emits an AcrPull role assignment at the wrong scope (BCP139).
+        // WithAcrPullIdentity provisions AcrPull via a user-assigned identity module instead (Aspire #11256).
+        var acrPullIdentity = builder.AddAzureUserAssignedIdentity(AzureName("acr-pull"))
+            .WithRoleAssignments(acr, ContainerRegistryBuiltInRole.AcrPull);
+
+        aca.WithAzureContainerRegistry(acr)
+            .WithAcrPullIdentity(acrPullIdentity);
     }
 
     var customDomain = builder.AddParameter("custom-domain")

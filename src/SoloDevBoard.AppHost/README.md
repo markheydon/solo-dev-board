@@ -127,7 +127,7 @@ AppHost parameters map to workflow environment variables with underscores instea
 | `acr-name` | `Parameters__acr_name` / `ACR_NAME` |
 | `acr-resource-group` | `Parameters__acr_resource_group` / `ACR_RESOURCE_GROUP` |
 
-Omit `acr-name` and `acr-resource-group` (or set both to `-`) for Aspire's default registry. See [Optional shared Container Registry](../../docs/deployment.md#optional-shared-container-registry) and [DEC-025](../../plan/DECISIONS.md#dec-025-optional-shared-azure-container-registry).
+Omit `acr-name` and `acr-resource-group` (or set both to `-`) for Aspire's default registry. When opting in to a shared registry, the AppHost also provisions an `acr-pull` user-assigned identity with `AcrPull` via `WithAcrPullIdentity`. See [Optional shared Container Registry](../../docs/deployment.md#optional-shared-container-registry) and [DEC-025](../../plan/DECISIONS.md#dec-025-optional-shared-azure-container-registry).
 
 Azure deployment settings:
 

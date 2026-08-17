@@ -258,7 +258,7 @@ Two identities participate at deploy time:
 | Principal | Created by | Needs on shared ACR | Needs on app RG |
 |---|---|---|---|
 | CD user-assigned MI | You (`az identity create`) | AcrPush + User Access Administrator (registry scope) | Contributor + User Access Administrator |
-| ACA environment MI | Aspire during `aspire deploy` | AcrPull (Aspire Bicep creates this) | Lives in the app RG |
+| ACA `acr-pull` user-assigned MI | Aspire during `aspire deploy` (`WithAcrPullIdentity`) | AcrPull (provisioned in a separate Bicep module) | Lives in the app RG |
 
 The CD identity pushes images. The Container Apps environment identity pulls them at runtime. Do not grant AcrPush to the running Container App.
 
@@ -316,6 +316,8 @@ Aspire can persist a custom hostname and managed certificate binding across `asp
 4. Create a managed certificate in the Container Apps environment:
    `az containerapp env certificate create --name <aca-env> --resource-group <rg> --hostname <hostname> --validation-method CNAME --certificate-name <cert-name>`.
 5. Bind the certificate: `az containerapp hostname bind --hostname <hostname> --name app --resource-group <rg> --environment <aca-env> --certificate <cert-name>`.
+
+Leave `custom-domain` and `custom-domain-certificate-name` at `-` in `appsettings.Staging.json` (and unset the matching GitHub Environment variables) until the managed certificate exists in that tier's Container Apps environment. Shipping a hostname in AppHost configuration without a matching certificate causes `CertificateNotFound` during deploy.
 
 **AppHost and CD configuration**
 
@@ -416,7 +418,7 @@ See [Azure Deployment Costs](azure-costs.md) for cost guidance.
 
 Leave `ACR_NAME` and `ACR_RESOURCE_GROUP` **unset** unless you already manage a registry you want Staging and Production to share. When both are omitted, Aspire provisions a registry in the app resource group — the default for forks and self-hosters.
 
-When both are set (repository-level GitHub variables recommended), the AppHost uses `PublishAsExisting` and `WithAzureContainerRegistry` so `aspire deploy` pushes to your existing ACR instead of creating one per tier. Image repositories remain distinct (`app` vs `app-staging` from the AppHost `AzureName` suffix).
+When both are set (repository-level GitHub variables recommended), the AppHost uses `PublishAsExisting`, `WithAzureContainerRegistry`, and `WithAcrPullIdentity` so `aspire deploy` pushes to your existing ACR instead of creating one per tier. The `acr-pull` user-assigned identity (or `acr-pull-staging` on Staging) receives `AcrPull` on the shared registry in a separate Bicep module, which avoids a cross-resource-group Bicep scope error ([Aspire #11256](https://github.com/dotnet/aspire/issues/11256)). Image repositories remain distinct (`app` vs `app-staging` from the AppHost `AzureName` suffix).
 
 | AppHost parameter | CD / local env var | When opting in |
 |---|---|---|
@@ -505,6 +507,7 @@ az identity delete --name id-solodevboard-cd --resource-group <acr-resource-grou
 |---|---|---|
 | OIDC login fails in CD | Stale `AZURE_CLIENT_ID` / tenant, or federated credential subject mismatch | CD logs in with OIDC immediately after checkout. Confirm secrets match the CD managed identity and that a federated credential exists for `repo:<owner>/<repo>:environment:<staging\|production>`. `AADSTS700016` usually means the client ID is not in that tenant. |
 | ACR push or pull fails on shared registry | CD identity missing AcrPush or User Access Administrator on the registry | Grant both roles on the **ACR resource** scope. App-RG Contributor does not cover a registry in another group. See [shared ACR OIDC setup](#2-create-a-github-actions-oidc-identity-shared-acr). |
+| Deploy fails with BCP139 on `aca` / `aca-staging` Bicep | Shared ACR in another resource group on an unfixed AppHost | Upgrade to a build that uses `WithAcrPullIdentity` for shared ACR (see [Optional shared Container Registry](#optional-shared-container-registry)). Do not rely on default `WithAzureContainerRegistry` alone for cross-RG registries. |
 | Deploy fails: acr-name / acr-resource-group mismatch | Only one ACR parameter set | Set both `ACR_NAME` and `ACR_RESOURCE_GROUP`, or omit both for Aspire's default registry. |
 | Aspire deploy fails with `CertificateNotFound` | `CUSTOM_DOMAIN` set but `CUSTOM_DOMAIN_CERTIFICATE_NAME` does not exist in that Container Apps environment | List certificates on the **production** (or staging) ACA environment and set the variable to the certificate **name**, not the hostname. Leave the cert name unset until the managed certificate exists. |
 | Staging disappears after a Production deploy | Both tiers targeted Container App `app` in the shared resource group | Do not re-run staging CD on unfixed `main`. Deploy Staging only after the AppHost `-staging` resource-name suffix is merged, so it provisions `app-staging`. Production stays on `app`. |
