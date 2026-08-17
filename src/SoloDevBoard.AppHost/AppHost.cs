@@ -2,7 +2,16 @@ using Azure.Provisioning.KeyVault;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-builder.AddAzureContainerAppEnvironment("aca");
+// Staging and Production share one resource group (DEC-021). Aspire --environment
+// does not suffix Azure names, so Staging must use distinct resource names or it
+// overwrites the Production Container App. Production keeps the original names
+// so the live v1.0.0 deployment is not recreated.
+string AzureName(string resourceName) =>
+    string.Equals(builder.Environment.EnvironmentName, "Staging", StringComparison.OrdinalIgnoreCase)
+        ? $"{resourceName}-staging"
+        : resourceName;
+
+builder.AddAzureContainerAppEnvironment(AzureName("aca"));
 
 var hostedSignInEnabled = builder.AddParameter("hosted-sign-in-enabled")
     .WithDescription("Enable GitHub App hosted sign-in at /auth/sign-in. When false, PAT mode is used (default).");
@@ -25,7 +34,7 @@ var allowedUserLogins = builder.AddParameter("allowed-user-logins")
 var allowedOrgLogins = builder.AddParameter("allowed-org-logins")
     .WithDescription("Comma-separated GitHub organisation logins for hosted admission. Use '-' when using allowed-user-logins instead, or in PAT mode.");
 
-var app = builder.AddProject<Projects.SoloDevBoard_App>("app")
+var app = builder.AddProject<Projects.SoloDevBoard_App>(AzureName("app"))
     .WithHttpHealthCheck("/health")
     .WithExternalHttpEndpoints()
     .WithEnvironment("GitHubAuth__HostedSignInEnabled", hostedSignInEnabled)
@@ -63,7 +72,7 @@ if (builder.ExecutionContext.IsPublishMode)
         .WithEnvironment("HostedAdmissionControl__AllowedUserLogins", resolvedAllowedUserLogins)
         .WithEnvironment("HostedAdmissionControl__AllowedOrganisationLogins", resolvedAllowedOrgLogins);
 
-    var authSecretsVault = builder.AddAzureKeyVault("auth-secrets");
+    var authSecretsVault = builder.AddAzureKeyVault(AzureName("auth-secrets"));
 
     authSecretsVault.AddSecret("auth-gh-pat", "gh-pat", githubPat);
     authSecretsVault.AddSecret("auth-gh-app-client-secret", "gh-app-client-secret", ghAppClientSecret);
@@ -73,7 +82,7 @@ if (builder.ExecutionContext.IsPublishMode)
         .WithReference(authSecretsVault)
         .WithEnvironment("GitHubAuth__PersonalAccessToken", authSecretsVault.GetSecret("gh-pat"))
         .WithEnvironment("GitHubAuth__HostedGitHubAppClientSecret", authSecretsVault.GetSecret("gh-app-client-secret"))
-        .WithReference(builder.AddAzureApplicationInsights("app-insights"));
+        .WithReference(builder.AddAzureApplicationInsights(AzureName("app-insights")));
 
     var resolvedCallbackBaseUri = AppHostDeployParameterResolver.Resolve(builder.Configuration, "hosted-callback-base-uri");
     if (AppHostDeployParameterResolver.IsActiveParameterValue(resolvedCallbackBaseUri))
