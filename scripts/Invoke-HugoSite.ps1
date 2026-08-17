@@ -1,4 +1,4 @@
-# Build or preview the Hugo end-user documentation site via Podman/Docker
+# Build or preview the Hugo public product site via Podman/Docker
 # (no local Hugo or Go install required).
 # Usage: .\scripts\Invoke-HugoSite.ps1 build|serve|preview
 
@@ -16,7 +16,7 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $rootForMount = $repoRoot -replace '\\', '/'
-$siteDir = Join-Path $repoRoot "user-docs"
+$siteDir = Join-Path $repoRoot "website"
 $hugoImage = "docker.io/hugomods/hugo:latest"
 
 function Test-ContainerRuntime {
@@ -33,19 +33,26 @@ function Test-ContainerRuntime {
 function Invoke-HugoBuild {
     <#
     .SYNOPSIS
-        Builds the Hugo site into user-docs/public using a containerised Hugo runtime.
+        Builds the Hugo site into website/public using a containerised Hugo runtime.
     #>
+    param([string]$BaseUrl = "")
+
+    $hugoArgs = @("hugo", "--minify")
+    if ($BaseUrl) {
+        $hugoArgs += @("--baseURL", $BaseUrl)
+    }
+
     & $Runtime run --rm `
         -v "${rootForMount}:/src:Z" `
-        -w /src/user-docs `
+        -w /src/website `
         $hugoImage `
-        hugo --minify
+        @hugoArgs
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Hugo build failed (exit $LASTEXITCODE). Fix errors above before previewing."
     }
     $publicPath = Join-Path $siteDir "public"
     if (-not (Test-Path (Join-Path $publicPath "index.html"))) {
-        Write-Error "Hugo did not produce user-docs/public/index.html."
+        Write-Error "Hugo did not produce website/public/index.html."
     }
 }
 
@@ -57,16 +64,16 @@ if (-not (Test-Path $siteDir)) {
 
 switch ($Command) {
     "build" {
-        Write-Host "Building Hugo site to user-docs/public..." -ForegroundColor Cyan
+        Write-Host "Building Hugo site to website/public..." -ForegroundColor Cyan
         Invoke-HugoBuild
-        Write-Host "Done. Output: $repoRoot\user-docs\public" -ForegroundColor Green
+        Write-Host "Done. Output: $repoRoot\website\public" -ForegroundColor Green
     }
 
     "serve" {
         Write-Host "Starting Hugo dev server at http://localhost:$ServePort ..." -ForegroundColor Cyan
         & $Runtime run --rm -p "${ServePort}:1313" `
             -v "${rootForMount}:/src:Z" `
-            -w /src/user-docs `
+            -w /src/website `
             $hugoImage `
             hugo server --bind 0.0.0.0 --baseURL "http://localhost:$ServePort/"
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -74,10 +81,10 @@ switch ($Command) {
 
     "preview" {
         Write-Host "Building Hugo site..." -ForegroundColor Cyan
-        Invoke-HugoBuild
-        Write-Host "Serving user-docs/public at http://localhost:$PreviewPort ..." -ForegroundColor Cyan
+        Invoke-HugoBuild -BaseUrl "http://localhost:$PreviewPort/"
+        Write-Host "Serving website/public at http://localhost:$PreviewPort ..." -ForegroundColor Cyan
         & $Runtime run --rm -p "${PreviewPort}:80" `
-            -v "${rootForMount}/user-docs/public:/usr/share/nginx/html:ro,Z" `
+            -v "${rootForMount}/website/public:/usr/share/nginx/html:ro,Z" `
             docker.io/library/nginx:alpine
     }
 }

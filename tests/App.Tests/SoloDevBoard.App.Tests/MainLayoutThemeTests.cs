@@ -67,6 +67,24 @@ public sealed class MainLayoutThemeTests : BunitContext
     }
 
     [Fact]
+    public async Task MainLayout_WhenMoreOptionsOpened_ExposesUserGuideLinkAboveAbout()
+    {
+        var cut = Render<MainLayout>();
+
+        await cut.Find("button[aria-label='More options']").ClickAsync();
+
+        var menuItems = cut.FindAll("a.mud-menu-item");
+        var userGuide = menuItems.FirstOrDefault(item => item.TextContent.Contains("User Guide", StringComparison.Ordinal));
+        var about = menuItems.FirstOrDefault(item => item.TextContent.Trim() == "About");
+
+        Assert.NotNull(userGuide);
+        Assert.NotNull(about);
+        Assert.Equal("https://solodevboard.com/docs/", userGuide!.GetAttribute("href"));
+        Assert.Equal("_blank", userGuide.GetAttribute("target"));
+        Assert.True(menuItems.ToList().IndexOf(userGuide) < menuItems.ToList().IndexOf(about));
+    }
+
+    [Fact]
     public async Task MainLayout_WhenThemeButtonClicked_CyclesThemePreference()
     {
         var cut = Render<MainLayout>();

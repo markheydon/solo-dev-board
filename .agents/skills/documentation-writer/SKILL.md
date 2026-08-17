@@ -20,4 +20,4 @@ This skill enables Copilot to create, review, and improve software documentation
 
 ## References
 - [Diátaxis Framework](https://diataxis.fr/)
-- [SoloDevBoard Documentation](../../user-docs/content/docs/)
+- [SoloDevBoard Documentation](../../website/content/docs/)

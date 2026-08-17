@@ -10,7 +10,7 @@ This document defines the conventions and processes for maintaining SoloDevBoard
 
 | Layer | Location | Audience |
 |-------|----------|----------|
-| **End-user docs** | `user-docs/` (Hugo / Hextra, GitHub Pages) | App users |
+| **Public product site** | `website/` (Hugo / Hextra, GitHub Pages) | Visitors and app users (landing + User Guide) |
 | **Developer / operator docs** | `docs/` | Contributors, self-hosters, and operators |
 | **Maintainer / PM** | `plan/` | Scope, decisions, runbooks, wireframes |
 | **Constitution** | `AGENTS.md`, `.github/instructions/` | AI agents and contributors (always-on rules) |
@@ -23,11 +23,12 @@ Do not add new files under `adr/` except via archive migration. Record new decis
 ## Documentation Structure
 
 ```
-user-docs/                         # Published end-user site (Hugo + Hextra)
+website/                         # Published public product site (Hugo + Hextra)
 ├── hugo.yaml
 ├── go.mod / go.sum
 └── content/
-    ├── _index.md               # Site home
+    ├── _index.md               # Product landing
+    ├── about/                  # Narrative (origin, how we work)
     └── docs/
         ├── _index.md           # User guide landing
         └── <feature>.md        # Per-feature end-user guides
@@ -59,10 +60,11 @@ adr/
 └── archive/                    # Read-only legacy ADR files
 
 scripts/
-└── Invoke-HugoSite.ps1         # Local Hugo build/serve/preview via Podman or Docker
+├── invoke-hugo-site.sh         # Local Hugo build/serve/preview via Docker or Podman (bash)
+└── Invoke-HugoSite.ps1         # Windows PowerShell equivalent
 ```
 
-End-user docs are deployed by GitHub Actions (Hugo) to GitHub Pages on `v*` release tags only. Pull requests validate Hugo builds via `hugo-ci.yml` without publishing. See [DEC-019](DECISIONS.md#dec-019-hugo-hextra-for-end-user-docs-on-github-pages) and [DEC-021](DECISIONS.md#dec-021-two-tier-cd-pipeline-with-shared-azure-resource-group).
+End-user guides and the product landing are deployed by GitHub Actions (Hugo) to GitHub Pages on `v*` release tags only. Pull requests validate Hugo builds via `hugo-ci.yml` without publishing. See [DEC-019](DECISIONS.md#dec-019-hugo-hextra-for-end-user-docs-on-github-pages), [DEC-021](DECISIONS.md#dec-021-two-tier-cd-pipeline-with-shared-azure-resource-group), and [DEC-023](DECISIONS.md#dec-023-public-product-site-ia-and-canonical-domain).
 
 ---
 
@@ -70,12 +72,12 @@ End-user docs are deployed by GitHub Actions (Hugo) to GitHub Pages on `v*` rele
 
 When a new feature is implemented or reaches a stable state:
 
-1. **User Guide Stub → Full Doc:** Update the stub in `user-docs/content/docs/<feature>.md`. Remove the "Under Development" notice. Write the **Overview**, **How to Use**, and **Configuration** sections with accurate, tested information.
-2. **Site pages:** Update `user-docs/content/_index.md` and `user-docs/content/docs/_index.md` so the feature appears in the feature list and guide index.
+1. **User Guide Stub → Full Doc:** Update the stub in `website/content/docs/<feature>.md`. Remove the "Under Development" notice. Write the **Overview**, **How to Use**, and **Configuration** sections with accurate, tested information.
+2. **Site pages:** Update `website/content/_index.md` and `website/content/docs/_index.md` so the feature appears in the feature list and guide index.
 3. **Getting Started / Deployment:** If the feature introduces new configuration (environment variables, AppHost parameters), update `docs/getting-started.md` and `docs/deployment.md`.
 4. **Decisions:** If an architectural decision was made, follow `repo-decision-log` — update `plan/DECISIONS.md` and/or constitution (`AGENTS.md`, instructions).
 5. **Issues:** Close or update the corresponding GitHub Issue and sync Project #8.
-6. **Local preview:** Run `.\scripts\Invoke-HugoSite.ps1 serve` (or `build`) before merging user-docs changes.
+6. **Local preview:** Run `./scripts/invoke-hugo-site.sh serve` (or `build`) before merging `website/` changes. On Windows, use `.\scripts\Invoke-HugoSite.ps1`.
 
 ---
 
@@ -84,7 +86,7 @@ When a new feature is implemented or reaches a stable state:
 Published end-user guides may include screenshots under:
 
 ```
-user-docs/static/images/<feature-slug>/<descriptive-name>.png
+website/static/images/<feature-slug>/<descriptive-name>.png
 ```
 
 Referenced in Markdown as:
@@ -110,6 +112,7 @@ Prefer screenshots that show a feature **in a useful, populated state**, not jus
 - Favour **read-only** interactions: load audit summaries, browse labels, inspect board rules, start a triage session (without applying labels or closing issues), or select a workflow template. Do **not** apply migrations, synchronise labels, apply taxonomy, close issues, or write workflow files for documentation screenshots.
 - Static pages (Home, About, Appearance) may remain as opening-state captures when no repository-scoped load action exists.
 - The Repositories page loads its grid automatically; capture it with the repository list populated (optionally filtered to the example repository).
+- **Collapse the app navigation drawer** before capture so feature content fills the viewport. Expanded nav screenshots obscure the feature in landing cards and user-guide hero images; refresh captures with the drawer collapsed when updating `website/static/images/` or landing tiles.
 
 The Playwright docs-capture suite in `tests/E2E/docs-capture/` encodes these composition rules. Extend it when adding new feature guides rather than capturing ad hoc empty states.
 
@@ -150,8 +153,8 @@ When Copilot or another AI agent is asked to write or update documentation:
 5. **Heading hierarchy.** Use H1 for the page title, H2 for major sections, H3 for subsections. Do not skip levels.
 6. **Code blocks.** All code, commands, and configuration snippets must be in fenced code blocks with the appropriate language identifier.
 7. **Tables for structured data.** Prefer Markdown tables over bullet lists for structured comparisons (e.g. configuration options, label taxonomy).
-8. **Update site indexes last.** After writing a user guide page, check whether `user-docs/content/_index.md` and `user-docs/content/docs/_index.md` need updates.
-9. **Audience split.** Keep operator/self-hoster material in `docs/`; keep in-app end-user material in `user-docs/`.
+8. **Update site indexes last.** After writing a user guide page, check whether `website/content/_index.md` and `website/content/docs/_index.md` need updates.
+9. **Audience split.** Keep operator/self-hoster material in `docs/`; keep in-app end-user material in `website/content/docs/`.
 
 ---
 
@@ -161,10 +164,10 @@ When Copilot or another AI agent is asked to write or update documentation:
 >
 > | Code Change | Documentation Action |
 > |-------------|---------------------|
-> | New end-user feature implemented | Update `user-docs/content/docs/<feature>.md` to full content; remove "Under Development" notice; refresh site indexes |
+> | New end-user feature implemented | Update `website/content/docs/<feature>.md` to full content; remove "Under Development" notice; refresh site indexes |
 > | New environment variable | Update `docs/getting-started.md` configuration table and `docs/deployment.md` |
 > | New architectural decision | Follow `repo-decision-log`; update `plan/DECISIONS.md` and constitution if cross-cutting |
-> | Scope change | Update `plan/SCOPE.md`; update `user-docs/content/_index.md` if the published feature list changes |
+> | Scope change | Update `plan/SCOPE.md`; update `website/content/_index.md` if the published feature list changes |
 > | New release | Update `plan/RELEASE_PLAN.md`; draft CHANGELOG entry |
 > | New label | Update `plan/LABEL_STRATEGY.md` |
 > | New board column or rule | Update `plan/PROJECT_BOARD_DESIGN.md` |

@@ -190,12 +190,12 @@ User-facing features:
 - Update or create relevant page in:
 
 ```text
-user-docs/content/docs/
+website/content/docs/
 ```
 
 If a new guide page is created:
 
-- Update `user-docs/content/_index.md` and `user-docs/content/docs/_index.md`
+- Update `website/content/_index.md` and `website/content/docs/_index.md`
 
 Operator, self-hoster, or contributor-only changes:
 

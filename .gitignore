@@ -429,6 +429,6 @@ tests/E2E/test-results/
 **/appsettings.Development.json
 
 # Hugo end-user documentation site
-user-docs/public/
-user-docs/resources/
-user-docs/.hugo_build.lock
+website/public/
+website/resources/
+website/.hugo_build.lock

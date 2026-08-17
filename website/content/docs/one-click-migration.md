@@ -1,6 +1,10 @@
 ---
 weight: 60
 title: One-Click Migration
+landing: true
+landingIcon: swap_horiz
+landingSubtitle: "Migrate labels and milestones from one repository to another in a single action."
+guideStatus: Partially Available
 ---
 
 > **Scope note** — Labels and milestones migration is available now. Project board configuration migration is planned for a later slice and is not part of this guide.

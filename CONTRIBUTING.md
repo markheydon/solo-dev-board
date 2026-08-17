@@ -150,7 +150,7 @@ When submitting a pull request that changes code, ensure related documentation i
 
 | Change | Documentation to Update |
 |--------|------------------------|
-| New end-user feature | `user-docs/content/docs/<feature>.md`, `user-docs/content/_index.md` (and docs landing), GitHub Issue + Project #8 sync |
+| New end-user feature | `website/content/docs/<feature>.md`, `website/content/_index.md` (and docs landing), GitHub Issue + Project #8 sync |
 | New developer / operator guidance | `docs/<topic>.md` and `docs/README.md` as needed |
 | New decision | `plan/DECISIONS.md` (if architectural decision required; see `repo-decision-log` skill) |
 | Scope change | `plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md` |

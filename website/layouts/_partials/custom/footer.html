@@ -1,0 +1,16 @@
+{{- $version := site.Params.releaseVersion | default "unreleased" -}}
+<div class="hx:mx-auto hx:flex hx:max-w-screen-xl hx:flex-col hx:items-center hx:gap-2 hx:px-6 hx:py-8 hx:text-center hx:text-sm hx:text-gray-600 hx:dark:text-gray-400">
+  {{- if site.Params.footer.displayCopyright }}
+  <div>© {{ now.Year }} SoloDevBoard</div>
+  {{- end }}
+  <div>Open source under the MIT licence. Setup, Aspire, and Azure deployment live in the repository <code>docs/</code> folder.</div>
+  {{- if and $version (ne $version "unreleased") }}
+  <div>Documentation for release {{ $version }}</div>
+  {{- end }}
+  {{- if site.Params.footer.displayPoweredBy }}
+  <div>
+    Powered by <a class="hx:underline" href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a>
+    and <a class="hx:underline" href="https://imfing.github.io/hextra/" target="_blank" rel="noopener">Hextra</a>
+  </div>
+  {{- end }}
+</div>

@@ -1,0 +1,10 @@
+{{- /*
+Renders a Material Symbols icon when the page has landingIcon front matter.
+@param page The Hugo page object.
+@param class Optional extra CSS classes on the span.
+*/ -}}
+{{- $page := .page -}}
+{{- $class := .class | default "hx:text-primary-600 hx:dark:text-primary-400" -}}
+{{- with $page.Params.landingIcon -}}
+<span class="material-symbols-outlined hx:shrink-0 {{ $class }}" aria-hidden="true">{{ . }}</span>
+{{- end -}}

@@ -1,6 +1,10 @@
 ---
 weight: 40
 title: Label Manager
+landing: true
+landingIcon: label
+landingSubtitle: "Create, edit, synchronise, and enforce label taxonomies across multiple repositories from a single interface."
+guideStatus: Available
 ---
 
 ## Overview

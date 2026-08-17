@@ -126,7 +126,7 @@ updates:
           - patch
 
   - package-ecosystem: gomod
-    directory: /user-docs
+    directory: /website
     schedule:
       interval: weekly
       day: monday

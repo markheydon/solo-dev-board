@@ -1,4 +1,4 @@
-> **Audience:** Developers and operators. This guide is repository documentation and is not part of the published end-user site in `user-docs/`.
+> **Audience:** Developers and operators. This guide is repository documentation and is not part of the published end-user site in `website/`.
 
 # PAT Connectivity
 

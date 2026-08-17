@@ -239,6 +239,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Write end-to-end tests for critical user journeys. _(#255; see tests/E2E/CRITICAL_JOURNEYS.md.)_
 - [x] Update hosted-authentication documentation for GitHub App-first hosted sign-in, admission-control allow-lists, PAT-only local trusted mode, and fallback boundaries. _(#119; completed on 2026-03-16; see docs/getting-started.md, infra/README.md, docs/hosted-authentication.md, and user-docs/content/_index.md.)_
 - [x] Write comprehensive end-user documentation for all shipped features under `user-docs/`. _(#256; Hugo site + screenshots; `pm-workflow.md` remains draft until Phase 5)_
+- [ ] Public product site: landing, User Guide IA, About narrative, `website/` rename, canonical `solodevboard.com`. _(#358; see plan/product-site-project-plan.md and DEC-023.)_
 - [ ] Tag v1.0.0 release on GitHub with release notes. _(#257)_
 
 
@@ -256,12 +257,12 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 1. Check whether the feature is already in `plan/SCOPE.md`. If not, discuss with the developer whether it should be added to scope.
 2. Identify which phase the feature belongs to (or create a new phase if necessary) and add it to this file.
 3. Create a GitHub Issue using the `feature.yml` template with labels from `plan/LABEL_STRATEGY.md` and sync Project #8.
-4. Create a stub page in `user-docs/content/docs/<feature>.md`.
+4. Create a stub page in `website/content/docs/<feature>.md`.
 5. Only then begin implementing the feature, following the architecture rules in `AGENTS.md`.
 
 ### Keeping Docs in Sync with Code
 
 - When a phase task is completed, tick it off in this document.
-- When a feature's user-facing doc is written, update the stub notice in `user-docs/content/docs/<feature>.md`.
+- When a feature's user-facing doc is written, update the stub notice in `website/content/docs/<feature>.md`.
 - When a new decision is recorded, add it to `plan/DECISIONS.md` per `repo-decision-log`.
 - When a new environment variable is introduced, update `docs/getting-started.md` and `docs/deployment.md`.

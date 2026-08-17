@@ -189,7 +189,7 @@ Test coverage expectations for cache-hit, cache-miss, invalidation, TTL expiry, 
 **Status:** Active  
 **Date:** 2026-07-26  
 **Constitution:** [AGENTS.md — Documentation Sync](../AGENTS.md#documentation-sync)  
-**Summary:** End-user documentation is authored as a Hugo site with the Hextra theme under `user-docs/` and published to GitHub Pages via the official Hugo GitHub Actions workflow. Repository-centric developer and operator documentation remains in `docs/` and is not served by Pages. Local preview uses `scripts/Invoke-HugoSite.ps1` with Podman or Docker so contributors do not need a local Hugo or Go toolchain. Reject returning to Jekyll/`docs/` as the Pages source, and reject mixing operator deployment guides into the published end-user site.
+**Summary:** End-user documentation is authored as a Hugo site with the Hextra theme (now under `website/` per DEC-023; formerly `user-docs/`) and published to GitHub Pages via the official Hugo GitHub Actions workflow. Repository-centric developer and operator documentation remains in `docs/` and is not served by Pages. Local preview uses `scripts/invoke-hugo-site.sh` (bash) or `scripts/Invoke-HugoSite.ps1` (PowerShell) with Podman or Docker so contributors do not need a local Hugo or Go toolchain. Reject returning to Jekyll/`docs/` as the Pages source, and reject mixing operator deployment guides into the published end-user site.
 
 ---
 
@@ -217,6 +217,15 @@ Test coverage expectations for cache-hit, cache-miss, invalidation, TTL expiry, 
 **Date:** 2026-08-16  
 **Constitution:** [AGENTS.md — Contributing & Pull Requests](../AGENTS.md#contributing--pull-requests)  
 **Summary:** Pull request title, body, labels, linking, draft state, assignee, milestone, and branch conventions are defined in [`plan/PULL_REQUEST_POLICY.md`](PULL_REQUEST_POLICY.md). That file is the single source of truth for humans and AI agents. Titles use `[<Type>] <Imperative summary> (#N)` (not Conventional Commits). Bodies must keep the GitHub PR template headings. PRs require `type/` and `priority/` labels (plus `status/in-review` while open) and must not be added as standalone Project #8 cards. Ready-for-review is the default when Verify gates pass; vendor draft defaults must be overridden. Reject ad-hoc agent title styles, template-free bodies, and unlabelled agent PRs.
+
+---
+
+### DEC-023: Public product site IA and canonical domain
+
+**Status:** Active  
+**Date:** 2026-08-16  
+**Constitution:** [AGENTS.md — Documentation Sync](../AGENTS.md#documentation-sync)  
+**Summary:** The Hugo/Hextra site lives under `website/` (renamed from `user-docs/`) and is the single public product site: marketing landing at `/`, narrative About pages at `/about/`, and User Guide at `/docs/`. Canonical URL is `https://solodevboard.com/` (apex) on GitHub Pages with tag-only publish (DEC-021). The landing is a short product-and-project page: an About-derived summary, one Learn more about the project CTA, and static capability tiles (icon + name + one-liner from published guide front matter, matching in-app nav icons). About is first in the site nav; GitHub is header chrome only. The User Guide is a how-to path, not the home-page narrative. Developer and operator documentation stays in `docs/` and is not served on the product domain (DEC-019). Reject a second Hugo site, a second publish pipeline, converting guide articles into marketing copy, or moving operator docs onto the product domain.
 
 ---
 

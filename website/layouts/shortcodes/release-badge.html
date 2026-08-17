@@ -1,0 +1,7 @@
+{{- $version := site.Params.releaseVersion | default "unreleased" -}}
+{{- if and $version (ne $version "unreleased") }}
+<div class="hextra-hero-badge hx:inline-flex hx:items-center hx:gap-2 hx:rounded-full hx:border hx:border-gray-200 hx:dark:border-neutral-700 hx:px-3 hx:py-1 hx:text-sm hx:mb-4">
+  <div class="hx:w-2 hx:h-2 hx:rounded-full hx:bg-primary-400"></div>
+  <span>Released {{ $version }}</span>
+</div>
+{{- end }}

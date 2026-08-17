@@ -1,6 +1,10 @@
 ---
 weight: 30
 title: Audit Dashboard
+landing: true
+landingIcon: analytics
+landingSubtitle: "Consolidated view of issues, open PRs, label consistency, and workflow health across all repositories."
+guideStatus: Available
 ---
 
 The Audit Dashboard summarises open issues, open pull requests, and repository health across the repositories you select.

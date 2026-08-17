@@ -37,6 +37,9 @@
                            OnClick="@OnThemeButtonClick" />
         }
         <MudMenu Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" AriaLabel="More options">
+            <MudMenuItem Href="https://solodevboard.com/docs/"
+                         Target="_blank"
+                         Icon="@Icons.Material.Filled.MenuBook">User Guide</MudMenuItem>
             <MudMenuItem Href="/about" Icon="@Icons.Material.Filled.Info">About</MudMenuItem>
             @if (_showSignOut)
             {

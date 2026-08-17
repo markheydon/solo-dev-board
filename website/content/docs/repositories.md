@@ -1,6 +1,10 @@
 ---
 weight: 50
 title: Repositories
+landing: true
+landingIcon: folder
+landingSubtitle: "View and manage repositories accessible to your GitHub account."
+guideStatus: Available
 ---
 
 The Repositories page provides a central view of all repositories available to your authenticated GitHub account.

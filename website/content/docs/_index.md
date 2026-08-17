@@ -1,6 +1,6 @@
 ---
 title: User Guide
-linkTitle: Documentation
+linkTitle: User Guide
 weight: 1
 ---
 
@@ -8,17 +8,7 @@ Guides for using SoloDevBoard in the app. Developer and operator material (local
 
 ## Features
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| [Audit Dashboard](audit-dashboard/) | Consolidated view of issues, open PRs, label consistency, and workflow health across repositories. | Available |
-| [Label Manager](label-manager/) | Create, edit, synchronise, and enforce label taxonomies across multiple repositories. | Available |
-| [Repositories](repositories/) | View and manage repositories accessible to your GitHub account. | Available |
-| [One-Click Migration](one-click-migration/) | Migrate labels and milestones from one repository to another in a single action. | Partially Available |
-| [Board Rules Visualiser](board-rules-visualiser/) | Visualise supported board states and transitions for GitHub Project v2 boards. | Partially Available |
-| [Triage UI](triage-ui/) | Keyboard-friendly interface for triaging incoming issues quickly. | Available |
-| [Workflow Templates](workflow-templates/) | Browse, customise, and apply GitHub Actions workflow templates across repositories. | Partially Available |
-| [Appearance](appearance/) | Automatic, light, and dark theme modes with browser persistence. | Available |
-| [About](about/) | Application version, runtime environment, and repository link. | Available |
+{{< guide-feature-table >}}
 
 ## Coming later
 

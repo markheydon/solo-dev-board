@@ -1,6 +1,7 @@
 ---
 weight: 100
 title: About
+landingIcon: info
 ---
 
 The About page provides essential information about the SoloDevBoard application, including its version, runtime environment, and repository link.
@@ -19,5 +20,5 @@ The About page provides essential information about the SoloDevBoard application
 
 ## How to access
 
-- Click the **More options** (three dots) menu in the app bar, then select **About**.
+- Click the **More options** (three dots) menu in the app bar, then select **User Guide** (opens the published documentation at [solodevboard.com/docs/](https://solodevboard.com/docs/)) or **About**.
 - Visit the `/about` route directly in your browser.

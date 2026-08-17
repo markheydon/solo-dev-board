@@ -33,7 +33,7 @@ jobs:
         run: mkdir -p "${HOME}/.local"
 
       - name: Install Go
-        if: hashFiles('user-docs/go.mod') != ''
+        if: hashFiles('website/go.mod') != ''
         uses: actions/setup-go@v7
         with:
           go-version: ${{ env.GO_VERSION }}
@@ -72,13 +72,22 @@ jobs:
           restore-keys: hugo-
 
       - name: Build
-        working-directory: user-docs
+        working-directory: website
+        env:
+          HUGO_PARAMS_RELEASEVERSION: ${{ inputs.deploy && github.ref_name || 'unreleased' }}
         run: |
           if [ "${{ inputs.deploy }}" = "true" ]; then
-            hugo build --gc --minify --baseURL "${{ steps.pages.outputs.base_url }}/" --cacheDir "${{ runner.temp }}/.cache/hugo"
+            hugo build --gc --minify --baseURL "https://solodevboard.com/" --cacheDir "${{ runner.temp }}/.cache/hugo"
           else
             hugo build --gc --minify --cacheDir "${{ runner.temp }}/.cache/hugo"
           fi
+
+      - name: Verify published routes
+        working-directory: website
+        run: |
+          test -f public/index.html
+          test -d public/docs
+          test -d public/about
 
       - name: Cache save
         uses: actions/cache/save@v6
@@ -90,7 +99,7 @@ jobs:
         if: inputs.deploy
         uses: actions/upload-pages-artifact@v5
         with:
-          path: user-docs/public
+          path: website/public
 
   deploy:
     if: inputs.deploy
