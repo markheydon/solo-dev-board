@@ -12,7 +12,7 @@
 {{- range $pages }}
     <tr>
       <td>
-        <a href="{{ .RelPermalink }}" class="hx:inline-flex hx:items-center hx:gap-2.5">
+        <a href="{{ .RelPermalink }}" class="guide-feature-link">
           {{ partial "feature-icon.html" (dict "page" .) }}
           <span>{{ .Title }}</span>
         </a>
