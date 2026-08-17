@@ -116,7 +116,7 @@ Application version numbers are calculated automatically at build time by [MinVe
 - Private user-owned Projects v2 via hosted sign-in ([#293](https://github.com/markheydon/solo-dev-board/issues/293))
 - Dogfood fixes raised after v1.0.0
 
-**Status:** Not started. Epic [#289](https://github.com/markheydon/solo-dev-board/issues/289). Create the GitHub milestone `v1.1.0 — Deferred follow-ons` and assign #289–#293 before work begins.
+**Status:** Not started. Epic [#289](https://github.com/markheydon/solo-dev-board/issues/289). GitHub milestone: `v1.1.0 — Deferred follow-ons`.
 
 **Target:** After v1.0.0
 
@@ -132,7 +132,7 @@ Application version numbers are calculated automatically at build time by [MinVe
 - Iteration Planning: capacity management, Up Next curation, milestone assignment
 - Repo Management: excluded-repositories configuration
 
-**Status:** Parked until after v1.0.0. Epic [#272](https://github.com/markheydon/solo-dev-board/issues/272). The GitHub milestone is still titled `v0.5.0 — Cross-Repo PM Workflow` until renamed to `v1.2.0`. Do not tag `v0.5.0` after 1.0 exists.
+**Status:** Parked until after v1.0.0. Epic [#272](https://github.com/markheydon/solo-dev-board/issues/272). GitHub milestone: `v1.2.0 — Cross-Repo PM Workflow`. Do not tag `v0.5.0` after 1.0 exists.
 
 **Target:** End of Phase 5 (see [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md))
 
