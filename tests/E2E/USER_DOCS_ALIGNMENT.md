@@ -35,7 +35,7 @@ When you add or change an end-user feature, update the user guide, the relevant 
 | [Triage UI](../../website/content/docs/triage-ui.md) | `/triage` | `triage.spec.ts`, `accessibility.spec.ts` | `triage-ui/overview.png` | Tier 2 | Guide describes session queue, shortcuts, milestones, and project board actions; CI asserts not-started region and no-repositories alert. |
 | [Workflow Templates](../../website/content/docs/workflow-templates.md) | `/workflows` | `workflows.spec.ts`, `accessibility.spec.ts` | `workflow-templates/overview.png` | Tier 2 | Guide describes browse, parameterise, apply, and drift; CI asserts built-in template browse/filter/select and repository error state. |
 | [Appearance](../../website/content/docs/appearance.md) | App bar (all shell pages) | `appearance.spec.ts`, `accessibility.spec.ts` | `appearance/theme-toggle.png` | Tier 1 | Guide describes Automatic → Light → Dark cycling and persistence; not a drawer route. |
-| [About (in-app)](../../website/content/docs/about.md) | `/about` | `about.spec.ts`, `accessibility.spec.ts` | `about/overview.png` | Tier 1 | Guide describes More options menu access and metadata fields. Not the Hugo `/about/` narrative section. |
+| [About (in-app)](../../website/content/docs/about.md) | `/about` | `about.spec.ts`, `accessibility.spec.ts` | `about/overview.png` | Tier 1 | Guide describes More options menu access (User Guide external link and About route) and metadata fields. Not the Hugo `/about/` narrative section. |
 | Cross-Repo PM Workflow (`draft: true`) | — | — | — | — | Not published; excluded until Phase 5. |
 
 ### Auth and entry journeys (operator docs, not user guide)
@@ -78,6 +78,7 @@ Use this when extending specs so assertions track documented workflows.
 
 | Guide section | CI assertion |
 |---------------|--------------|
+| More options → User Guide | `about.spec.ts` menu link to `https://solodevboard.com/docs/` |
 | More options → About | `about.spec.ts` navigation |
 | Version, build, .NET, auth mode, login, repository link | `about.spec.ts` `data-testid` fields |
 

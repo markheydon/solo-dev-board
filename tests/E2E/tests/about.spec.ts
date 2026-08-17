@@ -9,7 +9,11 @@ test('about page shows deployment metadata from the shell menu', async ({ page }
   await page.goto('/');
 
   await page.getByRole('button', { name: 'More options' }).click();
-  await page.getByRole('link', { name: 'About' }).click();
+  const userGuide = page.getByRole('menuitem', { name: 'User Guide' });
+  await expect(userGuide).toBeVisible();
+  await expect(userGuide).toHaveAttribute('href', 'https://solodevboard.com/docs/');
+  await expect(userGuide).toHaveAttribute('target', '_blank');
+  await page.getByRole('menuitem', { name: 'About' }).click();
 
   await expect(page).toHaveURL(/\/about$/);
   await expect(page).toHaveTitle(/About/);
