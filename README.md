@@ -4,7 +4,7 @@
 
 > **A single pane of glass for solo developers managing GitHub workloads across multiple repositories.**
 
-> **IMPORTANT** Public **v1.0.0** is ready to tag. The six core tools plus hosted and self-host hardening are in the v1 slice. Cross-Repo PM Workflow is later (**v1.2.0**). Please refer to the [project plan](plan/IMPLEMENTATION_PLAN.md) for the current roadmap and feature status.
+> **IMPORTANT** Public **v1.0.0** is paused before retag. The six core tools plus hosted and self-host hardening are in the v1 slice. Shared Azure Container Registry and separate staging/production resource groups land before the tag is reapplied. Cross-Repo PM Workflow is later (**v1.2.0**). Please refer to the [project plan](plan/IMPLEMENTATION_PLAN.md) for the current roadmap and feature status.
 
 ## What Is SoloDevBoard?
 
