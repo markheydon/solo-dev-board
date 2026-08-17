@@ -4,7 +4,7 @@
 
 > **A single pane of glass for solo developers managing GitHub workloads across multiple repositories.**
 
-**IMPORTANT** SoloDevBoard is currently in **early development**. The project is under active development (or as active as my schedule will allow at least!). Please refer to the [project plan](plan/IMPLEMENTATION_PLAN.md) for the current roadmap and feature status.
+> **IMPORTANT** Public **v1.0.0** is ready to tag. The six core tools plus hosted and self-host hardening are in the v1 slice. Cross-Repo PM Workflow is later (**v1.2.0**). Please refer to the [project plan](plan/IMPLEMENTATION_PLAN.md) for the current roadmap and feature status.
 
 ## What Is SoloDevBoard?
 
@@ -13,13 +13,13 @@
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| **Audit Dashboard** | Consolidated view of issues, open PRs, label consistency, and workflow health across all repositories. | Available |
+| **Audit Dashboard** | Consolidated view of issues, open PRs, and workflow health across selected repositories. | Available |
 | **Label Manager** | Create, edit, synchronise, and enforce label taxonomies across multiple repositories from a single interface. | Available |
 | **Repositories** | View and manage repositories accessible to your GitHub account. | Available |
-| **One-Click Migration** | Migrate labels and milestones from one repository to another in a single action. Project board migration is planned. | Partially Available |
+| **One-Click Migration** | Migrate labels and milestones from one repository to another in a single action. Project board migration is planned for v1.1.0. | Partially Available |
 | **Board Rules Visualiser** | Visualise supported board states and transitions for GitHub Project v2 boards. | Partially Available |
 | **Triage UI** | Keyboard-friendly interface for triaging incoming issues quickly. | Available |
-| **Workflow Templates** | Browse, customise, and apply GitHub Actions workflow templates across repositories. | Coming Soon |
+| **Workflow Templates** | Browse, customise, and apply built-in GitHub Actions workflow templates across repositories. Custom template repositories are planned for v1.1.0. | Partially Available |
 
 
 ## Tech Stack

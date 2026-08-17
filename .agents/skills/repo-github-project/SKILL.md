@@ -30,7 +30,7 @@ Centralised reference and command patterns for maintaining the **SoloDevBoard Ro
 
 ### Phase Model Note
 
-As of 2026-03-17, the live GitHub Project board and the repository planning artefacts are aligned on a six-phase roadmap. `v0.5.0` maps to **Phase 5 — Cross-Repo PM Workflow** and `v1.0.0` maps to **Phase 6 — Polish and v1.0**.
+As of 2026-08-17, the live GitHub Project board and the repository planning artefacts stay on the six-phase model, with post-1.0 SemVer retargeting: `v1.1.0` is deferred follow-on polish (Phase 6 field), `v1.2.0` (formerly `v0.5.0`) maps to **Phase 5 — Cross-Repo PM Workflow**, and `v1.0.0` maps to **Phase 6 — Polish and v1.0**.
 
 ---
 
@@ -72,8 +72,8 @@ As of 2026-03-17, the live GitHub Project board and the repository planning arte
 | Phase 2 — Label Manager + Audit | `0f90ba94` | v0.2.0 |
 | Phase 3 — Migration + Triage | `f3de38ba` | v0.3.0 |
 | Phase 4 — Board Rules + Workflows | `f5bc6726` | v0.4.0 |
-| Phase 5 — Cross-Repo PM Workflow | `495afaf1` | v0.5.0 |
-| Phase 6 — Polish and v1.0 | `dfa36cee` | v1.0.0 |
+| Phase 5 — Cross-Repo PM Workflow | `495afaf1` | v1.2.0 (formerly v0.5.0) |
+| Phase 6 — Polish and v1.0 | `dfa36cee` | v1.0.0 and v1.1.0 |
 
 ### Priority Options
 
@@ -96,8 +96,10 @@ Determine the correct **Phase** option from the issue's milestone or area label:
 | `v0.2.0` | `area/labels`, `area/dashboard` | Phase 2 — Label Manager + Audit |
 | `v0.3.0` | `area/migration`, `area/triage` | Phase 3 — Migration + Triage |
 | `v0.4.0` | `area/board-rules`, `area/workflows` | Phase 4 — Board Rules + Workflows |
-| `v0.5.0` | `area/dashboard` | Phase 5 — Cross-Repo PM Workflow |
+| `v0.5.0` | `area/dashboard` | Phase 5 — Cross-Repo PM Workflow (legacy title; rename to v1.2.0) |
+| `v1.2.0` | `area/dashboard` | Phase 5 — Cross-Repo PM Workflow |
 | `v1.0.0` | any | Phase 6 — Polish and v1.0 |
+| `v1.1.0` | any | Phase 6 — Polish and v1.0 (deferred follow-ons) |
 
 **Precedence:** Milestone > area label. When a milestone is assigned, use the milestone to determine the phase.
 

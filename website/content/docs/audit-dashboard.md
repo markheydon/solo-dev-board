@@ -3,11 +3,13 @@ weight: 30
 title: Audit Dashboard
 landing: true
 landingIcon: analytics
-landingSubtitle: "Consolidated view of issues, open PRs, label consistency, and workflow health across all repositories."
+landingSubtitle: "Consolidated view of issues, open PRs, and workflow health across selected repositories."
 guideStatus: Available
 ---
 
 The Audit Dashboard summarises open issues, open pull requests, and repository health across the repositories you select.
+
+> **Scope note** — Label consistency warnings are not part of v1.0.0. They are tracked for v1.1.0 as [#290](https://github.com/markheydon/solo-dev-board/issues/290).
 
 ![Audit Dashboard showing KPI summary and health indicators for markheydon/solo-dev-board](/images/audit-dashboard/overview.png)
 

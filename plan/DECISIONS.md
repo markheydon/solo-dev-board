@@ -229,6 +229,15 @@ Test coverage expectations for cache-hit, cache-miss, invalidation, TTL expiry, 
 
 ---
 
+### DEC-024: Post-1.0 milestone numbering
+
+**Status:** Active  
+**Date:** 2026-08-17  
+**Constitution:** [AGENTS.md — When Adding a New Feature](../AGENTS.md#when-adding-a-new-feature)  
+**Summary:** After the public `v1.0.0` tag, do not ship a `v0.x` release. Deferred slices from Phases 1–4 (label consistency warnings, project board migration, custom workflow template repositories, hosted private Projects v2) plus dogfood fixes use milestone **v1.1.0** under epic [#289](https://github.com/markheydon/solo-dev-board/issues/289). Cross-Repo PM Workflow (Phase 5, epic [#272](https://github.com/markheydon/solo-dev-board/issues/272)) uses milestone **v1.2.0** (the GitHub milestone formerly titled `v0.5.0`). Reject tagging `v0.5.0` after `v1.0.0` exists.
+
+---
+
 ## Superseded legacy (archive only)
 
 | Legacy ADR | Superseded by | Notes |

@@ -18,7 +18,7 @@ title: SoloDevBoard
 </div>
 
 <p class="hx:text-base hx:leading-7 hx:text-gray-700 hx:dark:text-gray-300 hx:mb-4">
-  If you keep several repositories, GitHub spreads the work across tabs: issues here, labels there, project boards somewhere else. SoloDevBoard is an open-source Blazor app you run locally or self-host — one place to audit those repositories, keep labels consistent, triage incoming work, and see how your boards behave.
+  If you keep several repositories, GitHub spreads the work across tabs: issues here, labels there, project boards somewhere else. SoloDevBoard is an open-source Blazor app you run locally or self-host — one place to audit those repositories, synchronise labels, triage incoming work, and see how your boards behave.
 </p>
 
 <p class="hx:text-base hx:leading-7 hx:text-gray-700 hx:dark:text-gray-300 hx:mb-4">
