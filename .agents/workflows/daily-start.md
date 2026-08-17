@@ -1,7 +1,11 @@
 # Daily Start
 
 **Contract:** [`.agents/contracts/pm-orchestrator.md`](../contracts/pm-orchestrator.md) (read-only orientation mode)
-**Runbook:** [`plan/PM_RUNBOOK.md`](../../plan/PM_RUNBOOK.md) — Morning Ritual
+**Runbook:** [`plan/PM_RUNBOOK.md`](../../plan/PM_RUNBOOK.md) — Session Start
+
+## Purpose
+
+Read-only orientation at the **start of a working session** — not tied to a calendar day. Use whenever you sit down to work on the project after a gap or at the beginning of a focused block.
 
 ## Easy-to-miss specifics
 
@@ -12,3 +16,5 @@
 ## Invocation
 
 Natural language: "Run the daily start workflow"
+
+Slash command: `/daily-start`

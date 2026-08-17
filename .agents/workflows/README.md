@@ -20,11 +20,16 @@ Orchestration, rituals, and step-by-step guidance live in [`plan/PM_RUNBOOK.md`]
 
 | User intent | Trigger phrases | Workflow | Contract |
 |-------------|-----------------|----------|----------|
-| Validate implementation and open PR | "Verify issue #N", "Create PR for issue #N", `/verify-and-create-pr` | `verify-and-create-pr` | `verify` |
+| Start a working session | "Run the daily start workflow", `/daily-start` | `daily-start` | `pm-orchestrator` |
+| Plan the next feature | "Plan the next item", `/plan-next-issue` | `plan-next-issue` | `pm-orchestrator` |
 | Preflight before implementation | "Preflight issue #N", `/preflight-issue` | `preflight-issue` | `delivery` |
-| Audit code against conventions | "Code review PR #N", "Review PR #N for conventions", `/code-review` | `code-review` | `code-review` |
-| Weekly milestone health | "Run the weekly PM review", `/weekly-pm-review` | `weekly-pm-review` | `pm-orchestrator` |
+| Implement planned work | "Implement issue #N", `/implement-issue` | `implement-issue` | `delivery` |
+| Validate implementation and open PR | "Verify issue #N", "Create PR for issue #N", `/verify-and-create-pr` | `verify-and-create-pr` | `verify` |
+| Address PR review comments | "Address PR review comments on PR #N", `/address-pr-review-comments` | `address-pr-review-comments` | `delivery` |
+| Progress review since last update | "Run the PM progress review", `/pm-progress-review` | `pm-progress-review` | `pm-orchestrator` |
 | Status label hygiene | "Clean up status labels", `/sync-status-labels` | `sync-status-labels` | `repo-github-gh-cli` |
+| Audit code against conventions | "Code review PR #N", "Review PR #N for conventions", `/code-review` | `code-review` | `code-review` |
+| Refresh documentation | "Refresh documentation for X", `/docs-update` | `docs-update` | `tech-writer` |
 
 **Rule:** Never use bare "Review issue #N" for code-review, or bare "Review PR #N" for verify. The word **verify** = gate + PR; **code review** = conventions audit.
 
@@ -32,13 +37,13 @@ Orchestration, rituals, and step-by-step guidance live in [`plan/PM_RUNBOOK.md`]
 
 | Workflow | Natural-language trigger | Contract | Primary skills | Runbook section |
 |----------|--------------------------|----------|----------------|-----------------|
-| [daily-start](daily-start.md) | "Run the daily start workflow" | `pm-orchestrator` | `repo-github-project` (optional) | Morning Ritual |
+| [daily-start](daily-start.md) | "Run the daily start workflow" | `pm-orchestrator` | `repo-github-project` (optional) | Session Start |
 | [plan-next-issue](plan-next-issue.md) | "Plan the next item" | `pm-orchestrator` | `breakdown-plan`, `breakdown-test`, `repo-github-issues`, `repo-github-project` | Stage 1: Planning |
 | [preflight-issue](preflight-issue.md) | "Preflight issue #N" | `delivery` | `dotnet-best-practices`, `mudblazor` (on demand) | Stage 2: Implementation (preflight) |
 | [implement-issue](implement-issue.md) | "Implement issue #N" | `delivery` | `dotnet-best-practices`, `mudblazor`, etc. (on demand) | Stage 2: Implementation |
 | [verify-and-create-pr](verify-and-create-pr.md) | "Verify issue #N", "Create PR for issue #N" | `verify` | — | Stage 3: Verify and PR |
 | [address-pr-review-comments](address-pr-review-comments.md) | "Address PR review comments on PR #N" | `delivery` | — | PR Review Comment Loop |
-| [weekly-pm-review](weekly-pm-review.md) | "Run the weekly PM review" | `pm-orchestrator` | — | Weekly Operating Rhythm |
-| [sync-status-labels](sync-status-labels.md) | "Clean up status labels", `/sync-status-labels` | `repo-github-gh-cli` | — | Weekly Board Hygiene Audit |
+| [pm-progress-review](pm-progress-review.md) | "Run the PM progress review" | `pm-orchestrator` | — | Progress Review Rhythm |
+| [sync-status-labels](sync-status-labels.md) | "Clean up status labels", `/sync-status-labels` | `repo-github-gh-cli` | — | Board Hygiene Audit |
 | [code-review](code-review.md) | "Code review PR #N" | `code-review` | — | — |
 | [docs-update](docs-update.md) | "Refresh documentation for X" | `tech-writer` | `documentation-writer` | — |

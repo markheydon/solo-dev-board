@@ -50,13 +50,13 @@ Invoke this agent when you need to review:
 ### Documentation and Planning
 - Confirm user-facing features include doc updates in `website/content/docs/`.
 - Check `website/content/_index.md` is updated if a new user guide page was added.
-- Verify architectural decisions are captured in `adr/` if needed.
+- Verify architectural decisions are recorded in `plan/DECISIONS.md` via `repo-decision-log` when needed. Do not create new files under `adr/`.
 - Ensure `plan/SCOPE.md` and related GitHub Issues are in sync when scope or completion status changes.
 
 ### Security and Secrets
 - Confirm no secrets, tokens, or user credentials are committed.
-- Verify Bicep or infrastructure changes do not expose secrets in source files.
-- Flag any new code that weakens authentication, authorization, or data handling.
+- Verify AppHost parameter and infrastructure configuration changes do not expose secrets in source files (production Bicep is Aspire-generated at deploy time per [DEC-015](../../plan/DECISIONS.md#dec-015-aspire-azure-container-apps-deployment); do not expect hand-authored production Bicep).
+- Flag any new code that weakens authentication, authorisation, or data handling.
 
 ### UK English
 - Check user-facing strings, comments, and docs for UK English spelling (`colour`, `organise`, `behaviour`, etc.).

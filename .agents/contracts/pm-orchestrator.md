@@ -198,6 +198,39 @@ Delivery Agent should treat issues produced by this workflow as implementation-r
 
 ---
 
+## Progress Review Mode (Read-Only)
+
+Use this mode when the user runs the PM progress review workflow. This is **not** planning or issue creation.
+
+### When to Use
+
+- "Run the PM progress review"
+- "Run a progress review since the last update"
+- `/pm-progress-review`
+
+### Responsibilities
+
+1. Establish the review window from the newest file in `plan/weekly-updates/` (or project inception if none).
+2. Query GitHub Issues, Project #8, and planning artefacts read-only.
+3. Assess milestone health, scope/governance, backlog hygiene, release confidence, blockers, and board hygiene.
+4. Write `plan/weekly-updates/YYYY-MM-DD.md` using the workflow artefact template.
+5. Present an executive summary and top 3 priorities for the **next working session(s)**.
+
+### Boundaries (What NOT to Do)
+
+❌ **Do not mutate** the project board or issues unless the user explicitly requests follow-up actions.  
+❌ **Do not use** `plan/BACKLOG.md` as a work queue.  
+❌ **Do not assume** a seven-day cadence — the window is since the last review file.  
+❌ **Do not invent** filler reviews for idle periods with no delivery.  
+❌ **Do not write code** or create planning issues during the review.
+
+### Output Contract
+
+- Saved artefact: `plan/weekly-updates/YYYY-MM-DD.md` titled **PM Progress Review — {date}**.
+- Chat summary: overall status, key deltas, top 3 next-session priorities, recommended actions.
+
+---
+
 ## Example Invocations
 
 **Example 1: Next item selection**
