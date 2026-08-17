@@ -112,6 +112,7 @@ Prefer screenshots that show a feature **in a useful, populated state**, not jus
 - Favour **read-only** interactions: load audit summaries, browse labels, inspect board rules, start a triage session (without applying labels or closing issues), or select a workflow template. Do **not** apply migrations, synchronise labels, apply taxonomy, close issues, or write workflow files for documentation screenshots.
 - Static pages (Home, About, Appearance) may remain as opening-state captures when no repository-scoped load action exists.
 - The Repositories page loads its grid automatically; capture it with the repository list populated (optionally filtered to the example repository).
+- **Collapse the app navigation drawer** before capture so feature content fills the viewport. Expanded nav screenshots obscure the feature in landing cards and user-guide hero images; refresh captures with the drawer collapsed when updating `website/static/images/` or landing tiles.
 
 The Playwright docs-capture suite in `tests/E2E/docs-capture/` encodes these composition rules. Extend it when adding new feature guides rather than capturing ad hoc empty states.
 
