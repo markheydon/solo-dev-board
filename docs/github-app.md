@@ -44,7 +44,7 @@ Replace hostnames if yours differ. Local Aspire ports change; add the current `a
 
 - `https://<production-fqdn>/auth/callback`
 - `https://<staging-fqdn>/auth/callback`
-- Optional custom domains, for example `https://solodevboard.app/auth/callback` and `https://staging.solodevboard.app/auth/callback`
+- Optional custom domains, for example `https://app.example.com/auth/callback` and `https://staging.example.com/auth/callback`
 - Optional local: `https://localhost:<aspire-https-port>/auth/callback`
 
 Match each callback origin with `HOSTED_CALLBACK_BASE_URI` on the corresponding GitHub Environment when using a custom domain. See [Deployment](deployment.md#custom-domain-container-apps).

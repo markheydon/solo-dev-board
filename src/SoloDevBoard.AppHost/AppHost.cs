@@ -52,7 +52,7 @@ var app = builder.AddProject<Projects.SoloDevBoard_App>(AzureName("app"))
 if (builder.ExecutionContext.IsPublishMode)
 {
     builder.AddParameter("hosted-callback-base-uri")
-        .WithDescription("Optional absolute HTTPS base URI for hosted OAuth callbacks (for example https://staging.solodevboard.app). Use '-' to use the Aspire-provisioned endpoint.");
+        .WithDescription("Optional absolute HTTPS base URI for hosted OAuth callbacks (for example https://staging.example.com). Use '-' to use the Aspire-provisioned endpoint.");
 
     var acrName = builder.AddParameter("acr-name")
         .WithDescription("Optional existing Azure Container Registry resource name. Use with acr-resource-group, or omit both for Aspire's default registry.");
@@ -78,10 +78,13 @@ if (builder.ExecutionContext.IsPublishMode)
             .WithAcrPullIdentity(acrPullIdentity);
     }
 
-    var customDomain = builder.AddParameter("custom-domain")
-        .WithDescription("Optional custom hostname for the Container App (for example staging.solodevboard.app). Use '-' to use the Aspire-provisioned FQDN only.");
+    var resolvedCustomDomain = AppHostDeployParameterResolver.Resolve(builder.Configuration, "custom-domain");
+    var resolvedCustomDomainCertificateName = AppHostDeployParameterResolver.Resolve(builder.Configuration, "custom-domain-certificate-name");
 
-    var customDomainCertificateName = builder.AddParameter("custom-domain-certificate-name")
+    var customDomain = builder.AddParameter("custom-domain", resolvedCustomDomain)
+        .WithDescription("Optional custom hostname for the Container App (for example staging.example.com). Use '-' to use the Aspire-provisioned FQDN only.");
+
+    var customDomainCertificateName = builder.AddParameter("custom-domain-certificate-name", resolvedCustomDomainCertificateName)
         .WithDescription("Managed certificate name in the Container Apps environment for the custom domain. Leave '-' on first deploy before the certificate is provisioned.");
 
     var resolvedHostedSignInEnabled = AppHostDeployParameterResolver.Resolve(builder.Configuration, "hosted-sign-in-enabled", "true");
@@ -119,8 +122,8 @@ if (builder.ExecutionContext.IsPublishMode)
         app = app.WithEnvironment("GitHubAuth__HostedSignInCallbackBaseUri", app.GetEndpoint("https"));
     }
 
-    var resolvedCustomDomain = AppHostDeployParameterResolver.Resolve(builder.Configuration, "custom-domain");
-    if (AppHostDeployParameterResolver.IsActiveParameterValue(resolvedCustomDomain))
+    if (AppHostDeployParameterResolver.IsActiveParameterValue(resolvedCustomDomain)
+        && AppHostDeployParameterResolver.IsActiveParameterValue(resolvedCustomDomainCertificateName))
     {
         app = app.PublishAsAzureContainerApp((_, containerApp) =>
         {
