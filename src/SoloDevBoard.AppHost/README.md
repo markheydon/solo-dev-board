@@ -67,7 +67,7 @@ Application Insights is deploy-time only. Local telemetry uses the Aspire dashbo
 
 ## CD pipeline tiers
 
-GitHub Actions CD deploys to two hosted tiers sharing one Azure resource group (see [DEC-021](../../plan/DECISIONS.md#dec-021-two-tier-cd-pipeline-with-shared-azure-resource-group) and [docs/deployment.md](../../docs/deployment.md#cd-pipeline-tiers-dec-021)). PAT mode is for local development and personal self-hosting via local `aspire deploy` only.
+GitHub Actions CD deploys to two hosted tiers (see [DEC-021](../../plan/DECISIONS.md#dec-021-two-tier-cd-pipeline) and [docs/deployment.md](../../docs/deployment.md#cd-pipeline-tiers-dec-021)). The app resource group is per GitHub Environment. Staging Azure resources are named with a `-staging` suffix so they do not overwrite Production when both tiers share an RG. PAT mode is for local development and personal self-hosting via local `aspire deploy` only.
 
 | Tier | Aspire `--environment` | Authentication |
 |---|---|---|
@@ -124,6 +124,10 @@ AppHost parameters map to workflow environment variables with underscores instea
 | `hosted-callback-base-uri` | `Parameters__hosted_callback_base_uri` / `HOSTED_CALLBACK_BASE_URI` |
 | `custom-domain` | `Parameters__custom_domain` / `CUSTOM_DOMAIN` |
 | `custom-domain-certificate-name` | `Parameters__custom_domain_certificate_name` / `CUSTOM_DOMAIN_CERTIFICATE_NAME` |
+| `acr-name` | `Parameters__acr_name` / `ACR_NAME` |
+| `acr-resource-group` | `Parameters__acr_resource_group` / `ACR_RESOURCE_GROUP` |
+
+Omit `acr-name` and `acr-resource-group` (or set both to `-`) for Aspire's default registry. See [Optional shared Container Registry](../../docs/deployment.md#optional-shared-container-registry) and [DEC-025](../../plan/DECISIONS.md#dec-025-optional-shared-azure-container-registry).
 
 Azure deployment settings:
 

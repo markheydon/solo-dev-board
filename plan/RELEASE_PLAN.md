@@ -97,7 +97,7 @@ Application version numbers are calculated automatically at build time by [MinVe
 - Complete user-facing documentation for shipped features (Hugo site at `https://solodevboard.com/`; Cross-Repo PM Workflow guide remains draft until v1.2.0)
 - Full Azure deployment pipeline with staging and production environment gates
 
-**Status:** Ready to tag. Delivery issues on the v1.0.0 milestone are complete except [#257](https://github.com/markheydon/solo-dev-board/issues/257) (annotated tag, GitHub Release, production CD) and paperwork alignment [#364](https://github.com/markheydon/solo-dev-board/issues/364).
+**Status:** Tag withdrawn. Delivery is complete except [#257](https://github.com/markheydon/solo-dev-board/issues/257). An annotated `v1.0.0` was pushed on 17 August 2026 and then deleted so shared Azure Container Registry and separate staging/production resource groups can land first. Draft GitHub Release notes are in [`plan/drafts/v1.0.0-release-notes.md`](drafts/v1.0.0-release-notes.md). Paperwork alignment [#364](https://github.com/markheydon/solo-dev-board/issues/364) is done.
 
 **Sequencing note:** Selected hosted-authentication and Azure-delivery items were pulled forward to support safe hosted validation. Phases 1–4 are complete. Phase 5 is **not** a v1.0.0 blocker. After the tag, deferred slices are v1.1.0 and Cross-Repo PM Workflow is v1.2.0 ([DEC-024](DECISIONS.md#dec-024-post-10-milestone-numbering)).
 

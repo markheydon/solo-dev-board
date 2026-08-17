@@ -17,7 +17,7 @@ Both paths use the same Aspire / Azure Container Apps stack. Only the AppHost pa
 
 ## CD pipeline tiers (DEC-021)
 
-GitHub Actions CD (`.github/workflows/cd.yml`) deploys to two hosted tiers that share one Azure resource group. Aspire environment suffixes distinguish resources within that group. Both tiers use GitHub App hosted sign-in. PAT-only mode is for local development and personal self-hosting via local `aspire deploy` only — not as a hosted CD tier.
+GitHub Actions CD (`.github/workflows/cd.yml`) deploys to two hosted tiers. Aspire `--environment` does **not** suffix Azure resource names on its own; the AppHost suffixes Staging resources (`aca-staging`, `app-staging`, and so on) so they do not overwrite Production when both tiers target the **same** app resource group. Production keeps the original names (`aca`, `app`) so an existing production Container App is not recreated. The **app resource group** is an operator choice per GitHub Environment — use one RG for both tiers or separate RGs. Both tiers use GitHub App hosted sign-in. PAT-only mode is for local development and personal self-hosting via local `aspire deploy` only — not as a hosted CD tier.
 
 | Tier | Trigger | GitHub Environment | Aspire `--environment` | Authentication |
 |---|---|---|---|---|
@@ -118,19 +118,32 @@ See [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md
 
 The steps below are required for **GitHub Actions CD**. For a personal first deploy with local `aspire deploy` only, create the resource group (step 1) and skip OIDC (step 2) until you want CI/CD.
 
-### 1. Create a resource group
+Choose an OIDC layout:
+
+| Path | When to use |
+|---|---|
+| **[Default (no shared ACR)](#2-create-a-github-actions-oidc-identity-default)** | Forks, first-time self-hosters, or anyone who omits `ACR_NAME` / `ACR_RESOURCE_GROUP`. The CD identity lives in the app resource group. |
+| **[Shared ACR (opt-in)](#2-create-a-github-actions-oidc-identity-shared-acr)** | Hosted Staging and Production share one existing registry (see [DEC-025](../plan/DECISIONS.md#dec-025-optional-shared-azure-container-registry)). The CD identity lives in the **ACR resource group**. |
+
+### 1. Create app resource group(s)
+
+Create one or two resource groups for Container Apps, Key Vault, and Application Insights. Set `AZURE_RESOURCE_GROUP` on each GitHub Environment (`staging`, `production`) to the app RG for that tier.
 
 ```bash
+az group create \
+  --name rg-solodevboard-staging \
+  --location uksouth
+
 az group create \
   --name rg-solodevboard-prod \
   --location uksouth
 ```
 
-Replace the name and region as needed. Set `AZURE_RESOURCE_GROUP` in each GitHub Environment (`staging`, `production`) to this same value.
+Use one RG for both tiers or separate RGs — your choice. Replace names and region as needed.
 
-### 2. Create a GitHub Actions OIDC identity
+### 2. Create a GitHub Actions OIDC identity (default)
 
-Aspire does not create the federated credential for GitHub Actions. Run these commands once per subscription and repository.
+Aspire does **not** create the federated credential for GitHub Actions. Run these commands once per subscription and repository when you are **not** using a shared ACR.
 
 Set variables for your environment:
 
@@ -139,10 +152,10 @@ RESOURCE_GROUP="rg-solodevboard-prod"
 LOCATION="uksouth"
 GITHUB_ORG="markheydon"
 GITHUB_REPO="solo-dev-board"
-IDENTITY_NAME="id-solodevboard-cd-prod"
+IDENTITY_NAME="id-solodevboard-cd"
 ```
 
-Create a user-assigned managed identity:
+Create a user-assigned managed identity in the **app** resource group:
 
 ```bash
 az identity create \
@@ -175,6 +188,8 @@ az role assignment create \
   --scope "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP"
 ```
 
+Repeat the Contributor and User Access Administrator assignments for each **app** resource group if Staging and Production use different groups.
+
 Create a federated credential for each GitHub Environment (`staging`, `production`):
 
 ```bash
@@ -191,9 +206,65 @@ for GITHUB_ENV in staging production; do
 done
 ```
 
+### 2. Create a GitHub Actions OIDC identity (shared ACR)
+
+When using an existing shared Azure Container Registry (see [Optional shared Container Registry](#optional-shared-container-registry)), create the CD identity in the **ACR resource group** so tearing down an app RG does not remove OIDC.
+
+```bash
+ACR_RG="<shared-acr-resource-group>"
+ACR_NAME="<acr-name>"
+LOCATION="uksouth"
+GITHUB_ORG="markheydon"
+GITHUB_REPO="solo-dev-board"
+IDENTITY_NAME="id-solodevboard-cd"
+APP_RG_STAGING="rg-solodevboard-staging"
+APP_RG_PROD="rg-solodevboard-prod"
+
+az identity create --name "$IDENTITY_NAME" --resource-group "$ACR_RG" --location "$LOCATION"
+PRINCIPAL_ID="$(az identity show --name "$IDENTITY_NAME" --resource-group "$ACR_RG" --query principalId -o tsv)"
+ACR_ID="$(az acr show --name "$ACR_NAME" --resource-group "$ACR_RG" --query id -o tsv)"
+SUBSCRIPTION_SCOPE="/subscriptions/$(az account show --query id -o tsv)"
+
+for APP_RG in "$APP_RG_STAGING" "$APP_RG_PROD"; do
+  az role assignment create \
+    --assignee-object-id "$PRINCIPAL_ID" \
+    --assignee-principal-type ServicePrincipal \
+    --role Contributor \
+    --scope "${SUBSCRIPTION_SCOPE}/resourceGroups/${APP_RG}"
+  az role assignment create \
+    --assignee-object-id "$PRINCIPAL_ID" \
+    --assignee-principal-type ServicePrincipal \
+    --role "User Access Administrator" \
+    --scope "${SUBSCRIPTION_SCOPE}/resourceGroups/${APP_RG}"
+done
+
+az role assignment create \
+  --assignee-object-id "$PRINCIPAL_ID" \
+  --assignee-principal-type ServicePrincipal \
+  --role AcrPush \
+  --scope "$ACR_ID"
+
+az role assignment create \
+  --assignee-object-id "$PRINCIPAL_ID" \
+  --assignee-principal-type ServicePrincipal \
+  --role "User Access Administrator" \
+  --scope "$ACR_ID"
+```
+
+Then create federated credentials as in the [default path](#2-create-a-github-actions-oidc-identity-default), using `$ACR_RG` as the identity resource group.
+
+Two identities participate at deploy time:
+
+| Principal | Created by | Needs on shared ACR | Needs on app RG |
+|---|---|---|---|
+| CD user-assigned MI | You (`az identity create`) | AcrPush + User Access Administrator (registry scope) | Contributor + User Access Administrator |
+| ACA environment MI | Aspire during `aspire deploy` | AcrPull (Aspire Bicep creates this) | Lives in the app RG |
+
+The CD identity pushes images. The Container Apps environment identity pulls them at runtime. Do not grant AcrPush to the running Container App.
+
 ### 3. Configure GitHub Environments
 
-Create two GitHub Environments in **Settings → Environments**: `staging` and `production`. Each uses the same Azure OIDC secrets and `AZURE_RESOURCE_GROUP` variable. Both use GitHub App hosted sign-in (see table below).
+Create two GitHub Environments in **Settings → Environments**: `staging` and `production`. Each uses the same Azure OIDC secrets. Set `AZURE_RESOURCE_GROUP` per Environment to that tier's app resource group. Both use GitHub App hosted sign-in (see table below).
 
 **Shared Azure secrets (both environments)**
 
@@ -222,10 +293,14 @@ Secret parameters are written to the Aspire-provisioned `auth-secrets` Key Vault
 | Variable | Example | Purpose |
 |---|---|---|
 | `AZURE_LOCATION` | `uksouth` | Azure region for `aspire deploy` |
-| `AZURE_RESOURCE_GROUP` | `rg-solodevboard-prod` | Target resource group (shared across tiers) |
+| `AZURE_RESOURCE_GROUP` | `rg-solodevboard-staging` / `rg-solodevboard-prod` | App resource group for this Environment (may differ per tier) |
+| `ACR_NAME` | *(unset)* or `acrmarkheydon` | Optional existing ACR resource name — set with `ACR_RESOURCE_GROUP` or omit both |
+| `ACR_RESOURCE_GROUP` | *(unset)* or `rg-shared-acr` | Resource group that owns the existing ACR — same value on both Environments when opting in |
 | `HOSTED_CALLBACK_BASE_URI` | *(unset)* or `https://staging.solodevboard.app` | Optional public HTTPS origin for GitHub App OAuth callbacks when using a custom domain |
 | `CUSTOM_DOMAIN` | *(unset)* or `staging.solodevboard.app` | Optional Container App custom hostname; must match DNS and managed certificate |
 | `CUSTOM_DOMAIN_CERTIFICATE_NAME` | *(unset)* or `staging-solodevboard-app` | Managed certificate name in the Container Apps environment; leave unset on first deploy before the certificate exists |
+
+Prefer **repository-level** variables for `ACR_NAME` and `ACR_RESOURCE_GROUP` so Staging and Production cannot drift onto different registries.
 
 Enable required reviewers on the `production` environment before granting production deploy access. Staging deploys automatically on merge to `main`; production deploys on `v*` release tags.
 
@@ -327,13 +402,30 @@ Aspire generates and applies Bicep at deploy time. A typical deployment includes
 | Azure Container Apps environment | Hosts the containerised app (Consumption profile) |
 | Container App (`app`) | Runs SoloDevBoard (scale-to-zero enabled) |
 | Azure Container Registry | Stores built container images (Aspire-provisioned per deployment, or optional shared registry — see [Optional shared Container Registry](#optional-shared-container-registry)) |
-| Azure Key Vault (`auth-secrets`) | Stores hosted auth secret parameters as Key Vault secrets |
+| Azure Key Vault (`auth-secrets`, or `auth-secrets-staging`) | Stores hosted auth secret parameters as Key Vault secrets |
 | Application Insights | Application logs, metrics, and distributed traces |
 | Log Analytics workspace | Container platform logs and Application Insights backing store |
 | Aspire dashboard | Optional operational dashboard (Aspire default) |
 | Managed identities | Image pull and runtime authentication |
 
 See [Azure Deployment Costs](azure-costs.md) for cost guidance.
+
+---
+
+## Optional shared Container Registry
+
+Leave `ACR_NAME` and `ACR_RESOURCE_GROUP` **unset** unless you already manage a registry you want Staging and Production to share. When both are omitted, Aspire provisions a registry in the app resource group — the default for forks and self-hosters.
+
+When both are set (repository-level GitHub variables recommended), the AppHost uses `PublishAsExisting` and `WithAzureContainerRegistry` so `aspire deploy` pushes to your existing ACR instead of creating one per tier. Image repositories remain distinct (`app` vs `app-staging` from the AppHost `AzureName` suffix).
+
+| AppHost parameter | CD / local env var | When opting in |
+|---|---|---|
+| `acr-name` | `Parameters__acr_name` / `ACR_NAME` | Azure resource name of the registry (not the login server) |
+| `acr-resource-group` | `Parameters__acr_resource_group` / `ACR_RESOURCE_GROUP` | Resource group that owns the ACR |
+
+Set both or neither. Setting exactly one fails the deploy with a clear error.
+
+Operator bootstrap and RBAC for a shared registry are in [One-time Azure setup — shared ACR](#2-create-a-github-actions-oidc-identity-shared-acr). `aspire destroy` does **not** delete an existing shared registry. Delete leftover per-tier ACRs Aspire previously created in an app RG after the first successful shared-ACR deploy.
 
 ---
 
@@ -397,12 +489,12 @@ aspire destroy \
   --non-interactive
 ```
 
-Use `Staging` or `Production` to target the corresponding hosted tier. All tiers share the same resource group, so confirm the subscription, resource group, and environment before running destroy. Verify removal with `az resource list --resource-group <rg>`.
+Use `Staging` or `Production` to target the corresponding hosted tier. Confirm the subscription, app resource group (`AZURE_RESOURCE_GROUP` for that Environment), and environment before running destroy. Verify removal with `az resource list --resource-group <rg>`.
 
-The OIDC managed identity is not removed by `aspire destroy`. Delete it manually if no longer needed:
+The OIDC managed identity is not removed by `aspire destroy`. Delete it manually if no longer needed. When using a shared ACR, the identity lives in the ACR resource group:
 
 ```bash
-az identity delete --name id-solodevboard-cd-prod --resource-group rg-solodevboard-prod
+az identity delete --name id-solodevboard-cd --resource-group <acr-resource-group>
 ```
 
 ---
@@ -411,7 +503,11 @@ az identity delete --name id-solodevboard-cd-prod --resource-group rg-solodevboa
 
 | Symptom | Likely cause | Action |
 |---|---|---|
-| OIDC login fails in CD | Federated credential subject mismatch | Verify subject is `repo:<owner>/<repo>:environment:<staging|production>` |
+| OIDC login fails in CD | Stale `AZURE_CLIENT_ID` / tenant, or federated credential subject mismatch | CD logs in with OIDC immediately after checkout. Confirm secrets match the CD managed identity and that a federated credential exists for `repo:<owner>/<repo>:environment:<staging\|production>`. `AADSTS700016` usually means the client ID is not in that tenant. |
+| ACR push or pull fails on shared registry | CD identity missing AcrPush or User Access Administrator on the registry | Grant both roles on the **ACR resource** scope. App-RG Contributor does not cover a registry in another group. See [shared ACR OIDC setup](#2-create-a-github-actions-oidc-identity-shared-acr). |
+| Deploy fails: acr-name / acr-resource-group mismatch | Only one ACR parameter set | Set both `ACR_NAME` and `ACR_RESOURCE_GROUP`, or omit both for Aspire's default registry. |
+| Aspire deploy fails with `CertificateNotFound` | `CUSTOM_DOMAIN` set but `CUSTOM_DOMAIN_CERTIFICATE_NAME` does not exist in that Container Apps environment | List certificates on the **production** (or staging) ACA environment and set the variable to the certificate **name**, not the hostname. Leave the cert name unset until the managed certificate exists. |
+| Staging disappears after a Production deploy | Both tiers targeted Container App `app` in the shared resource group | Do not re-run staging CD on unfixed `main`. Deploy Staging only after the AppHost `-staging` resource-name suffix is merged, so it provisions `app-staging`. Production stays on `app`. |
 | Missing parameter prompt in CI | Secret not mapped | Add `Parameters__*` env vars to the deploy step |
 | Cold start / SignalR disconnect | Scale-to-zero idle | Expected; refresh the page or wait for the container to warm up |
 | 403 after sign-in | Allow-list | Update `ALLOWED_USER_LOGINS` or `ALLOWED_ORG_LOGINS` |

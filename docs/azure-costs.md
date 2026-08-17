@@ -12,7 +12,7 @@ Aspire deploys the following Azure resources (see [Deployment guide](deployment.
 |---|---|---|
 | Azure Container Apps environment | Hosts containerised workloads on the Consumption profile | Environment + per-use compute |
 | Container App (`app`) | SoloDevBoard Blazor Server application | Consumption (vCPU-seconds, memory, requests) |
-| Azure Container Registry (Basic) | Stores built container images | Fixed monthly (Basic tier) |
+| Azure Container Registry (Basic) | Stores built container images when not using a shared registry ([DEC-025](../plan/DECISIONS.md#dec-025-optional-shared-azure-container-registry)) | Fixed monthly (Basic tier) when Aspire provisions one per deploy |
 | Log Analytics workspace | Container platform logs and Application Insights backing store | Per GB ingested |
 | Application Insights | Application logs, metrics, and traces | Per GB ingested (linked workspace) |
 | Managed identities | Image pull and runtime auth | No direct charge |
@@ -21,7 +21,7 @@ Aspire deploys the following Azure resources (see [Deployment guide](deployment.
 
 | Scenario | Approximate monthly cost (UK South, early 2026) |
 |---|---|
-| Idle / no traffic | Low — mainly ACR Basic (~£4–5) and minimal Log Analytics |
+| Idle / no traffic | Low — mainly ACR Basic (~£4–5) per Aspire-provisioned registry and minimal Log Analytics |
 | Light personal use | Typically lower than an always-on App Service B1 (~£11–13) |
 | Sustained daily use | Consumption compute adds up; monitor in Azure Cost Management |
 
@@ -36,6 +36,7 @@ Aspire deploys the following Azure resources (see [Deployment guide](deployment.
 ## Cost optimisation tips
 
 - Scale-to-zero is enabled by default (`MinReplicas = 0`) in the AppHost.
+- Share one existing ACR across Staging and Production when opting in — see [Optional shared Container Registry](deployment.md#optional-shared-container-registry).
 - Delete unused deployments with `aspire destroy` when you no longer need a hosted instance.
 - Review Log Analytics ingestion if log volume grows.
 - Use dev/test pricing offers if eligible.

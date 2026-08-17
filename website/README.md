@@ -32,7 +32,7 @@ GitHub Actions workflows:
 - `.github/workflows/hugo-ci.yml` — build validation on pull requests.
 - `.github/workflows/hugo-deploy.yml` — build and deploy to GitHub Pages on `v*` release tags only (DEC-021).
 
-See [DEC-019](../plan/DECISIONS.md#dec-019-hugo-hextra-for-end-user-docs-on-github-pages), [DEC-021](../plan/DECISIONS.md#dec-021-two-tier-cd-pipeline-with-shared-azure-resource-group), and [DEC-023](../plan/DECISIONS.md#dec-023-public-product-site-ia-and-canonical-domain).
+See [DEC-019](../plan/DECISIONS.md#dec-019-hugo-hextra-for-end-user-docs-on-github-pages), [DEC-021](../plan/DECISIONS.md#dec-021-two-tier-cd-pipeline), and [DEC-023](../plan/DECISIONS.md#dec-023-public-product-site-ia-and-canonical-domain).
 
 ## Custom domain (`solodevboard.com`)
 

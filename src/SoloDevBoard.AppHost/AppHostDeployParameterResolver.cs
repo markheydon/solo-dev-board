@@ -42,4 +42,33 @@ internal static class AppHostDeployParameterResolver
     /// <summary>Returns <see langword="true" /> when a deploy parameter value is active (not unset or <c>-</c>).</summary>
     public static bool IsActiveParameterValue(string? value) =>
         !string.IsNullOrWhiteSpace(value) && !string.Equals(value.Trim(), "-", StringComparison.Ordinal);
+
+    /// <summary>
+    /// Ensures both optional deploy parameters are active together or neither is active.
+    /// </summary>
+    /// <param name="firstValue">Resolved value for the first parameter.</param>
+    /// <param name="secondValue">Resolved value for the second parameter.</param>
+    /// <param name="firstParameterName">First parameter name for error messages.</param>
+    /// <param name="secondParameterName">Second parameter name for error messages.</param>
+    /// <exception cref="InvalidOperationException">Thrown when exactly one parameter is active.</exception>
+    public static void EnsurePairOrNeither(
+        string firstValue,
+        string secondValue,
+        string firstParameterName,
+        string secondParameterName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(firstParameterName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(secondParameterName);
+
+        var firstActive = IsActiveParameterValue(firstValue);
+        var secondActive = IsActiveParameterValue(secondValue);
+        if (firstActive == secondActive)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(
+            $"Deploy parameters '{firstParameterName}' and '{secondParameterName}' must both be set or both omitted. " +
+            $"Set Parameters__{firstParameterName.Replace('-', '_')} and Parameters__{secondParameterName.Replace('-', '_')} together, or leave both unset for Aspire's default registry.");
+    }
 }
