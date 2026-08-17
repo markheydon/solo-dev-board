@@ -17,7 +17,7 @@ Both paths use the same Aspire / Azure Container Apps stack. Only the AppHost pa
 
 ## CD pipeline tiers (DEC-021)
 
-GitHub Actions CD (`.github/workflows/cd.yml`) deploys to two hosted tiers that share one Azure resource group. Aspire environment suffixes distinguish resources within that group. Both tiers use GitHub App hosted sign-in. PAT-only mode is for local development and personal self-hosting via local `aspire deploy` only — not as a hosted CD tier.
+GitHub Actions CD (`.github/workflows/cd.yml`) deploys to two hosted tiers that share one Azure resource group. Aspire `--environment` does **not** change Azure resource names on its own; the AppHost suffixes Staging resources (`aca-staging`, `app-staging`, and so on) so they do not overwrite Production. Production keeps the original names (`aca`, `app`) so the live v1.0.0 Container App is not recreated. Both tiers use GitHub App hosted sign-in. PAT-only mode is for local development and personal self-hosting via local `aspire deploy` only — not as a hosted CD tier.
 
 | Tier | Trigger | GitHub Environment | Aspire `--environment` | Authentication |
 |---|---|---|---|---|
@@ -327,7 +327,7 @@ Aspire generates and applies Bicep at deploy time. A typical deployment includes
 | Azure Container Apps environment | Hosts the containerised app (Consumption profile) |
 | Container App (`app`) | Runs SoloDevBoard (scale-to-zero enabled) |
 | Azure Container Registry | Stores built container images (Aspire-provisioned per deployment, or optional shared registry — see [Optional shared Container Registry](#optional-shared-container-registry)) |
-| Azure Key Vault (`auth-secrets`) | Stores hosted auth secret parameters as Key Vault secrets |
+| Azure Key Vault (`auth-secrets`, or `auth-secrets-staging`) | Stores hosted auth secret parameters as Key Vault secrets |
 | Application Insights | Application logs, metrics, and distributed traces |
 | Log Analytics workspace | Container platform logs and Application Insights backing store |
 | Aspire dashboard | Optional operational dashboard (Aspire default) |
@@ -412,6 +412,7 @@ az identity delete --name id-solodevboard-cd-prod --resource-group rg-solodevboa
 | Symptom | Likely cause | Action |
 |---|---|---|
 | OIDC login fails in CD | Federated credential subject mismatch | Verify subject is `repo:<owner>/<repo>:environment:<staging|production>` |
+| Staging disappears after a Production deploy | Both tiers targeted Container App `app` in the shared resource group | Do not re-run staging CD on unfixed `main`. Deploy Staging only after the AppHost `-staging` resource-name suffix is merged, so it provisions `app-staging`. Production stays on `app`. |
 | Missing parameter prompt in CI | Secret not mapped | Add `Parameters__*` env vars to the deploy step |
 | Cold start / SignalR disconnect | Scale-to-zero idle | Expected; refresh the page or wait for the container to warm up |
 | 403 after sign-in | Allow-list | Update `ALLOWED_USER_LOGINS` or `ALLOWED_ORG_LOGINS` |

@@ -67,7 +67,7 @@ Application Insights is deploy-time only. Local telemetry uses the Aspire dashbo
 
 ## CD pipeline tiers
 
-GitHub Actions CD deploys to two hosted tiers sharing one Azure resource group (see [DEC-021](../../plan/DECISIONS.md#dec-021-two-tier-cd-pipeline-with-shared-azure-resource-group) and [docs/deployment.md](../../docs/deployment.md#cd-pipeline-tiers-dec-021)). PAT mode is for local development and personal self-hosting via local `aspire deploy` only.
+GitHub Actions CD deploys to two hosted tiers sharing one Azure resource group (see [DEC-021](../../plan/DECISIONS.md#dec-021-two-tier-cd-pipeline-with-shared-azure-resource-group) and [docs/deployment.md](../../docs/deployment.md#cd-pipeline-tiers-dec-021)). Staging Azure resources are named with a `-staging` suffix so they do not overwrite Production. PAT mode is for local development and personal self-hosting via local `aspire deploy` only.
 
 | Tier | Aspire `--environment` | Authentication |
 |---|---|---|
