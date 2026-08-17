@@ -6,7 +6,7 @@ Thank you for your interest in contributing to SoloDevBoard! This document provi
 
 ## Code of Conduct
 
-We are committed to providing a welcoming and inclusive environment for all contributors. Please be respectful, constructive, and professional in all interactions. If you witness behaviour that violates these principles, please reach out to the project maintainers.
+This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). Please be respectful, constructive, and professional in all interactions. Report unacceptable behaviour to the maintainer as described in that document.
 
 ---
 
@@ -84,7 +84,7 @@ When suggesting a feature:
 
 ### Security Issues
 
-**Do not file public security issues.** If you discover a security vulnerability, please email the maintainers privately to allow for a fix before disclosure.
+**Do not file public security issues.** Follow [`SECURITY.md`](SECURITY.md) and use [GitHub private vulnerability reporting](https://github.com/markheydon/solo-dev-board/security/advisories/new).
 
 ---
 
@@ -160,7 +160,7 @@ When submitting a pull request that changes code, ensure related documentation i
 
 ## Licensing
 
-By contributing to SoloDevBoard, you agree that your contributions will be licensed under the [MIT License](LICENSE). This means your code can be used freely by others under the terms of that licence.
+By contributing to SoloDevBoard, you agree that your contributions will be licensed under the [MIT licence](LICENSE). This means your code can be used freely by others under the terms of that licence.
 
 ---
 

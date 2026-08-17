@@ -137,7 +137,7 @@ solo-dev-board/
 
 ## Contributing
 
-SoloDevBoard welcomes contributions from all developers.
+SoloDevBoard welcomes contributions from all developers. Please read [`CONTRIBUTING.md`](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 To contribute:
 
@@ -163,6 +163,10 @@ End-user documentation is published from `website/` to [GitHub Pages](https://so
 SoloDevBoard is developed with AI agents as active collaborators. [`AGENTS.md`](AGENTS.md) is the canonical source for architecture, conventions, UK English requirements, and workflow gates. Role contracts in [`.agents/contracts/`](.agents/contracts/), workflow entry points in [`.agents/workflows/`](.agents/workflows/), skills in [`.agents/skills/`](.agents/skills/), and the PM runbook in [`plan/PM_RUNBOOK.md`](plan/PM_RUNBOOK.md) provide structured workflows for planning, implementation, and review. For Cursor Cloud VM development, see [`plan/CURSOR_CLOUD.md`](plan/CURSOR_CLOUD.md).
 
 ---
+
+## Security
+
+Please report vulnerabilities privately as described in [`SECURITY.md`](SECURITY.md). Do not file public issues for security problems.
 
 ## Licence
 

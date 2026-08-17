@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/markheydon/solo-dev-board/security/advisories/new
+    about: Use private vulnerability reporting. Do not file a public issue for security problems.
+  - name: User Guide
+    url: https://solodevboard.com/docs/
+    about: End-user documentation for hosted and self-hosted SoloDevBoard.
+  - name: GitHub Discussions
+    url: https://github.com/markheydon/solo-dev-board/discussions
+    about: Questions and general conversation that are not bug reports or feature requests.
