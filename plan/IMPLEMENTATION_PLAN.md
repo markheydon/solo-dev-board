@@ -6,13 +6,13 @@
 This document describes the phased implementation of SoloDevBoard. Each phase has a clear goal, a set of key tasks, and defined dependencies.
 
 **Note on sequencing:**
-Phases remain the primary sequence for feature delivery. Unfinished work from earlier phases remains open until completed, regardless of progress in later phases. However, certain public-release prerequisites from Phase 6 (such as hosted authentication and admission control) may be pulled forward out of sequence when required to enable safe hosted validation. This does not imply that earlier phases are complete or that the product has reached v1.0.0 readiness.
+Phases remain the primary sequence for feature delivery. Unfinished work from earlier phases remains open until completed, regardless of progress in later phases. Public-release prerequisites from Phase 6 (hosted authentication and admission control) were pulled forward to enable safe hosted validation. After `v1.0.0`, deferred Phase 1–4 slices ship as **v1.1.0** and Cross-Repo PM Workflow (Phase 5) ships as **v1.2.0** ([DEC-024](DECISIONS.md#dec-024-post-10-milestone-numbering)).
 
-**Current roadmap status (2026-07-18):**
+**Current roadmap status (2026-08-17):**
 - Phases 1–4 are complete. All six core feature areas are delivered (Label Manager, Audit Dashboard, One-Click Migration, Triage UI, Board Rules Visualiser, Workflow Templates).
-- Phase 5 (Cross-Repo PM Workflow, v0.5.0) is parked until after v1.0.0 ships — tracked in [#272](https://github.com/markheydon/solo-dev-board/issues/272).
-- Phase 6 (Production Ready, v1.0.0) is the active release-closure phase.
-- Deferred follow-on slices from Phases 1–4 are tracked in [#289](https://github.com/markheydon/solo-dev-board/issues/289) and child issues.
+- Phase 6 (Production Ready, v1.0.0) is ready to tag. Remaining delivery work is [#257](https://github.com/markheydon/solo-dev-board/issues/257) (annotated tag, GitHub Release, production CD).
+- Deferred follow-on slices from Phases 1–4 are **v1.1.0**, tracked in [#289](https://github.com/markheydon/solo-dev-board/issues/289) and child issues [#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#293](https://github.com/markheydon/solo-dev-board/issues/293).
+- Phase 5 (Cross-Repo PM Workflow) is parked as **v1.2.0** — tracked in [#272](https://github.com/markheydon/solo-dev-board/issues/272). The GitHub milestone may still show the former `v0.5.0` title until it is renamed.
 
 For the full feature scope, see [SCOPE.md](SCOPE.md). For open work, see [GitHub Issues](https://github.com/markheydon/solo-dev-board/issues) and [Project #8](https://github.com/users/markheydon/projects/8). The backlog index is at [BACKLOG.md](BACKLOG.md).
 
@@ -71,18 +71,18 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Implement `LabelService` in `Application` (CRUD, sync operations)
 - [x] Build MudBlazor UI components for the Label Manager
 - [x] Implement label synchronisation logic (compare source and target, produce diff, apply changes)
-- [x] Write unit tests for `LabelService` using Moq
+- [x] Write unit tests for `LabelService` using NSubstitute
 - [x] Write infrastructure tests for `GitHubLabelRepository` (mocked HTTP)
-- [x] Update `user-docs/content/docs/label-manager.md`
+- [x] Update `website/content/docs/label-manager.md`
 
 #### Audit Dashboard
 - [x] Design `AuditReport` domain record
 - [x] Implement `AuditDashboardService` in `Application` (aggregate data from multiple repositories)
 - [x] Build MudBlazor UI components for the Audit Dashboard
 - [x] Implement health indicators: unlabelled issues, stale PRs, failing workflows
-- [ ] Implement label consistency warnings _(deferred — originally scoped in SCOPE.md but not yet built)_
+- [ ] Implement label consistency warnings _(deferred to v1.1.0 — [#290](https://github.com/markheydon/solo-dev-board/issues/290))_
 - [x] Write unit tests for `AuditDashboardService`
-- [x] Update `user-docs/content/docs/audit-dashboard.md`
+- [x] Update `website/content/docs/audit-dashboard.md`
 
 ### Dependencies
 
@@ -105,9 +105,9 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Implement `MigrationService` in `Application` (diff, preview, apply).
 - [x] Build MudBlazor UI: source/target repository selection, diff preview, confirmation, summary.
 - [x] Support migration of labels and milestones for the current delivery slice.
-- [ ] Support migration of project board columns as a later slice of this feature.
+- [ ] Support migration of project board columns as a later slice of this feature. _(deferred to v1.1.0 — [#291](https://github.com/markheydon/solo-dev-board/issues/291))_
 - [x] Write unit tests for `MigrationService`.
-- [x] Update `user-docs/content/docs/one-click-migration.md`.
+- [x] Update `website/content/docs/one-click-migration.md`.
 
 #### Triage UI
 - [x] Design `TriageSession` and `TriageAction` domain records
@@ -115,14 +115,14 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Build focused MudBlazor triage view with keyboard shortcut support
 - [x] Implement quick actions: label, assign milestone, add to project, close as duplicate
 - [x] Write unit tests for `TriageService`
-- [x] Update `user-docs/content/docs/triage-ui.md`
+- [x] Update `website/content/docs/triage-ui.md`
 
 
 ### Dependencies
 
 - Phase 2 complete (Label Manager, GitHub label/milestone API integration)
 
-**Note:** v0.3.0 is complete. Project board column migration remains a deferred follow-on slice (ADR-0013).
+**Note:** v0.3.0 is complete. Project board column migration remains a deferred v1.1.0 slice (ADR-0013, [#291](https://github.com/markheydon/solo-dev-board/issues/291)).
 
 ---
 
@@ -143,7 +143,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Implement GraphQL client in `Infrastructure` (see ADR-0005)
 - [x] Build interactive MudBlazor-based diagram component (compare mode now available)
 - [x] Write unit tests for `BoardRuleService`, `BoardRulesComparer`, and compare mode functionality
-- [x] Update `user-docs/content/docs/board-rules-visualiser.md` _(compare mode documented as available)_
+- [x] Update `website/content/docs/board-rules-visualiser.md` _(compare mode documented as available)_
 
 #### Workflow Templates
 - [x] Design `WorkflowTemplate` domain record
@@ -151,8 +151,8 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Build MudBlazor UI: template browser, parameter editor, apply to repositories, staleness tracker
 - [x] Include built-in templates: CI (dotnet), CD (Aspire deploy to Azure Container Apps), Dependabot
 - [x] Write unit tests for `WorkflowTemplateService`
-- [x] Update `user-docs/content/docs/workflow-templates.md`
-- [ ] Support custom template repositories _(deferred follow-on slice — only built-in templates are available today)_
+- [x] Update `website/content/docs/workflow-templates.md`
+- [ ] Support custom template repositories _(deferred to v1.1.0 — [#292](https://github.com/markheydon/solo-dev-board/issues/292); only built-in templates are available today)_
 
 ### Dependencies
 
@@ -165,9 +165,9 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Goal:** Deliver Epic 7 — the UI-based implementation of the two-mode PM operating system from [markheydon/github-workflows](https://github.com/markheydon/github-workflows). This phase transforms SoloDevBoard from a collection of individual tools into a cohesive planning environment.
 
-**Milestone:** v0.5.0
+**Milestone:** v1.2.0
 
-**Status:** Not started. Phases 1–4 are complete; this is the next active phase.
+**Status:** Parked until after v1.0.0. Tracked in [#272](https://github.com/markheydon/solo-dev-board/issues/272). Do not tag this work as `v0.5.0` after 1.0 exists ([DEC-024](DECISIONS.md#dec-024-post-10-milestone-numbering)).
 
 ### Key Tasks
 
@@ -177,21 +177,21 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [ ] Build MudBlazor Daily Focus view: board state summary, stalled item alerts, top-3 recommended work items
 - [ ] Implement stalled item detection (Up Next for 3+ days; PRs In Review for 3+ days)
 - [ ] Write unit tests for `DailyFocusService`
-- [ ] Update `user-docs/content/docs/pm-workflow.md`
+- [ ] Update `website/content/docs/pm-workflow.md`
 
 #### Backlog Review
 - [ ] Implement `BacklogReviewService` in `Application` (cross-repo, priority-grouped, PR-aware)
 - [ ] Build MudBlazor Backlog Review view: groups for urgent, ready, blocked, deferred; neglected repo alerts
 - [ ] Implement neglected repo detection (no issue or PR activity in 14 days)
 - [ ] Write unit tests for `BacklogReviewService`
-- [ ] Update `user-docs/content/docs/pm-workflow.md`
+- [ ] Update `website/content/docs/pm-workflow.md`
 
 #### Iteration Planning
 - [ ] Design `IterationPlan` domain record
 - [ ] Implement `IterationPlanningService` in `Application` (capacity enforcement, stale resolution, milestone assignment)
 - [ ] Build MudBlazor Iteration Planning view: capacity indicator, stale item resolution, Up Next curation, optional milestone assignment
 - [ ] Write unit tests for `IterationPlanningService`
-- [ ] Update `user-docs/content/docs/pm-workflow.md`
+- [ ] Update `website/content/docs/pm-workflow.md`
 
 #### Repo Management
 - [ ] Implement excluded-repos configuration (persisted per user, applied to all cross-repo operations)
@@ -210,10 +210,10 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Milestone:** v1.0.0
 
-**Status:** Partially complete. Hosted authentication, Aspire ACA deployment, and Dependabot are delivered. Operational hardening, release closure, and remaining auth polish are open. Begins in earnest after Phase 5.
+**Status:** Delivery complete except the public tag. Hosted authentication, Aspire ACA deployment, operational hardening, 80% coverage, accessibility, E2E, and the public product site are done. Remaining: [#257](https://github.com/markheydon/solo-dev-board/issues/257) (tag and GitHub Release). Paperwork alignment is [#364](https://github.com/markheydon/solo-dev-board/issues/364).
 
 ### Key Tasks
-- [ ] Achieve ≥80% unit test coverage across `Application` and `Domain` projects. _(#252)_
+- [x] Achieve ≥80% unit test coverage across `Application` and `Domain` projects. _(#252)_
 - [x] Perform accessibility audit of primary journey shells (WCAG 2.1 AA). _(#253; see plan/ACCESSIBILITY_AUDIT.md and tests/E2E/tests/accessibility.spec.ts.)_
 - [x] Conduct performance review: identify and address slow GitHub API calls (caching, pagination). _(#254)_
 - [x] Complete Azure infrastructure baseline via Bicep (App Service, Key Vault, managed identity). _(#104 — superseded by ADR-0018 Aspire ACA migration.)_
@@ -222,7 +222,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Add health check endpoints for Azure Container Apps monitoring. _(#106 — readiness `/health`, liveness `/alive`, ACA probe via AppHost `WithHttpHealthCheck`)_
 - [x] Implement response caching for GitHub API calls to respect rate limits. _(#108)_
 - [x] Configure structured logging and Application Insights telemetry. _(#107)_
-- [ ] Add operational hardening test coverage and validation expectations. _(#110; see plan/OPERATIONAL_HARDENING_TEST_COVERAGE.md.)_
+- [x] Add operational hardening test coverage and validation expectations. _(#110; see plan/OPERATIONAL_HARDENING_TEST_COVERAGE.md.)_
 - [x] Set up Dependabot for automated dependency updates. _(#109)_
 - [x] Formalise and document PAT-only local trusted mode and self-hoster deployment path. _(#247, #248; see docs/getting-started.md#pat-only-local-trusted-mode and docs/deployment.md#self-hoster-deployment-pat-mode.)_
 - [x] Dedicated unauthenticated landing page for hosted deployments. _(#249)_
@@ -235,19 +235,19 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Define and execute the migration and compatibility path away from the superseded hybrid hosted-authentication plan. _(#103, #118; strategy locked in plan/HOSTED_AUTH_MIGRATION_STRATEGY.md on 2026-03-13.)_
 - [x] Persist hosted authentication material securely using Azure Key Vault-backed patterns where required. _(#250; see plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md.)_
 - [x] Replace the single-user `ICurrentUserContext` adapter with a per-request, per-user implementation backed by the hosted authentication session when hosted mode is enabled. _(Implemented on 2026-03-13; PAT-only local trusted mode preserved.)_
-- [ ] Enable CD pipeline with production environment gate (`.github/workflows/cd.yml` via `aspire deploy`). _(#251)_
+- [x] Enable CD pipeline with production environment gate (`.github/workflows/cd.yml` via `aspire deploy`). _(#251)_
 - [x] Write end-to-end tests for critical user journeys. _(#255; see tests/E2E/CRITICAL_JOURNEYS.md.)_
-- [x] Update hosted-authentication documentation for GitHub App-first hosted sign-in, admission-control allow-lists, PAT-only local trusted mode, and fallback boundaries. _(#119; completed on 2026-03-16; see docs/getting-started.md, infra/README.md, docs/hosted-authentication.md, and user-docs/content/_index.md.)_
-- [x] Write comprehensive end-user documentation for all shipped features under `user-docs/`. _(#256; Hugo site + screenshots; `pm-workflow.md` remains draft until Phase 5)_
-- [ ] Public product site: landing, User Guide IA, About narrative, `website/` rename, canonical `solodevboard.com`. _(#358; see plan/product-site-project-plan.md and DEC-023.)_
+- [x] Update hosted-authentication documentation for GitHub App-first hosted sign-in, admission-control allow-lists, PAT-only local trusted mode, and fallback boundaries. _(#119; completed on 2026-03-16; see docs/getting-started.md, docs/hosted-authentication.md, and website/content/_index.md.)_
+- [x] Write comprehensive end-user documentation for all shipped features under `website/`. _(#256; Hugo site + screenshots; `pm-workflow.md` remains draft until Phase 5 / v1.2.0)_
+- [x] Public product site: landing, User Guide IA, About narrative, `website/` rename, canonical `solodevboard.com`. _(#358; see plan/product-site-project-plan.md and DEC-023.)_
 - [ ] Tag v1.0.0 release on GitHub with release notes. _(#257)_
 
 
 ### Dependencies
 
-- Intended release sequence: complete Phase 5, then close out the remaining Phase 6 release work.
+- Intended release sequence: close v1.0.0, then v1.1.0 deferred slices, then Phase 5 as v1.2.0.
 
-**Note:** Hosted authentication and admission control were advanced out of sequence to enable safe hosted validation. Phases 1–4 are complete; v1.0.0 readiness depends on Phase 5 and the remaining Phase 6 tasks above.
+**Note:** Hosted authentication and admission control were advanced out of sequence to enable safe hosted validation. Phases 1–4 are complete. v1.0.0 readiness does not depend on Phase 5.
 
 
 ## AI Collaborator Instructions

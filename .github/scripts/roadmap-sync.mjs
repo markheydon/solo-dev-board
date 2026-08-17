@@ -26,7 +26,9 @@ const phaseOptionsByMilestone = new Map([
     ['v0.3.0', 'f3de38ba'],
     ['v0.4.0', 'f5bc6726'],
     ['v0.5.0', '495afaf1'],
+    ['v1.2.0', '495afaf1'],
     ['v1.0.0', 'dfa36cee'],
+    ['v1.1.0', 'dfa36cee'],
 ]);
 
 const priorityOptionsByLabel = new Map([
@@ -348,8 +350,18 @@ function isClosedAsDuplicate(issue) {
 function determinePhaseOptionId(issue) {
     const milestoneTitle = issue.milestone?.title ?? null;
 
-    if (milestoneTitle && phaseOptionsByMilestone.has(milestoneTitle)) {
+    if (!milestoneTitle) {
+        return null;
+    }
+
+    if (phaseOptionsByMilestone.has(milestoneTitle)) {
         return phaseOptionsByMilestone.get(milestoneTitle);
+    }
+
+    for (const [prefix, optionId] of phaseOptionsByMilestone.entries()) {
+        if (milestoneTitle.startsWith(`${prefix} `) || milestoneTitle.startsWith(`${prefix}—`) || milestoneTitle.startsWith(`${prefix} —`)) {
+            return optionId;
+        }
     }
 
     return null;

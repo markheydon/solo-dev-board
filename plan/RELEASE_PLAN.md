@@ -53,7 +53,7 @@ Application version numbers are calculated automatically at build time by [MinVe
 
 **Scope:**
 - Label Manager: view, create, edit, delete, and synchronise labels across repositories
-- Audit Dashboard: open issues, stale PRs, workflow statuses, label inconsistencies
+- Audit Dashboard: open issues, stale PRs, workflow statuses (label consistency warnings deferred to v1.1.0)
 
 **Target:** End of Phase 2
 
@@ -85,7 +85,44 @@ Application version numbers are calculated automatically at build time by [MinVe
 
 ---
 
-### v0.5.0 — Cross-Repo PM Workflow
+### v1.0.0 — Production Ready
+
+**Goal:** A stable, well-tested, and fully documented release of the six shipped tools, suitable for regular hosted and self-hosted use.
+
+**Scope:**
+- GitHub App authentication for hosted deployments (PAT remains for local trusted and self-hoster paths)
+- ≥80% unit test coverage on Application and Domain
+- Accessibility audit of primary journey shells (WCAG 2.1 AA)
+- Performance review and optimisation
+- Complete user-facing documentation for shipped features (Hugo site at `https://solodevboard.com/`; Cross-Repo PM Workflow guide remains draft until v1.2.0)
+- Full Azure deployment pipeline with staging and production environment gates
+
+**Status:** Ready to tag. Delivery issues on the v1.0.0 milestone are complete except [#257](https://github.com/markheydon/solo-dev-board/issues/257) (annotated tag, GitHub Release, production CD) and paperwork alignment [#364](https://github.com/markheydon/solo-dev-board/issues/364).
+
+**Sequencing note:** Selected hosted-authentication and Azure-delivery items were pulled forward to support safe hosted validation. Phases 1–4 are complete. Phase 5 is **not** a v1.0.0 blocker. After the tag, deferred slices are v1.1.0 and Cross-Repo PM Workflow is v1.2.0 ([DEC-024](DECISIONS.md#dec-024-post-10-milestone-numbering)).
+
+**Target:** End of Phase 6
+
+---
+
+### v1.1.0 — Deferred follow-ons
+
+**Goal:** Ship the Phase 1–4 slices that were parked to close v1.0.0, plus dogfood fixes found after the public tag.
+
+**Scope:**
+- Label consistency warnings on the Audit Dashboard ([#290](https://github.com/markheydon/solo-dev-board/issues/290))
+- Project board column migration ([#291](https://github.com/markheydon/solo-dev-board/issues/291))
+- Custom workflow template repositories ([#292](https://github.com/markheydon/solo-dev-board/issues/292))
+- Private user-owned Projects v2 via hosted sign-in ([#293](https://github.com/markheydon/solo-dev-board/issues/293))
+- Dogfood fixes raised after v1.0.0
+
+**Status:** Not started. Epic [#289](https://github.com/markheydon/solo-dev-board/issues/289). Create the GitHub milestone `v1.1.0 — Deferred follow-ons` and assign #289–#293 before work begins.
+
+**Target:** After v1.0.0
+
+---
+
+### v1.2.0 — Cross-Repo PM Workflow
 
 **Goal:** Deliver the Cross-Repo PM Workflow epic — Daily Focus, Backlog Review, Iteration Planning, and Repo Management.
 
@@ -95,29 +132,9 @@ Application version numbers are calculated automatically at build time by [MinVe
 - Iteration Planning: capacity management, Up Next curation, milestone assignment
 - Repo Management: excluded-repositories configuration
 
-**Status:** Not started. Next active phase.
+**Status:** Parked until after v1.0.0. Epic [#272](https://github.com/markheydon/solo-dev-board/issues/272). The GitHub milestone is still titled `v0.5.0 — Cross-Repo PM Workflow` until renamed to `v1.2.0`. Do not tag `v0.5.0` after 1.0 exists.
 
 **Target:** End of Phase 5 (see [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md))
-
----
-
-### v1.0.0 — Production Ready
-
-**Goal:** A stable, well-tested, and fully documented release suitable for regular use.
-
-**Scope:**
-- GitHub App authentication (replacing PAT for production)
-- ≥80% unit test coverage
-- Accessibility audit (WCAG 2.1 AA)
-- Performance review and optimisation
-- Complete user-facing documentation _(in progress via #256; Hugo site live, feature guides and screenshots included)_
-- Full Azure deployment pipeline with environment gates
-
-**Status:** Partially complete. Hosted authentication and Aspire ACA deployment are delivered; operational hardening and release closure remain open.
-
-**Sequencing note:** Selected hosted-authentication and Azure-delivery items were pulled forward to support safe hosted validation. Phases 1–4 are complete. The remaining delivery order is Phase 5, then Phase 6 closure.
-
-**Target:** End of Phase 6
 
 ---
 
