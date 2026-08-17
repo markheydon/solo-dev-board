@@ -12,7 +12,7 @@ For historical backlog content (pre-migration), see [archive/BACKLOG-2026-07-18.
 | [SoloDevBoard Roadmap (Project #8)](https://github.com/users/markheydon/projects/8) | Prioritisation, flow, Up Next queue |
 | [Milestones](https://github.com/markheydon/solo-dev-board/milestones) | Release targeting |
 
-## Roadmap Status (2026-08-17)
+## Roadmap Status (2026-08-18)
 
 | Phase | Milestone | Status |
 |-------|-----------|--------|
@@ -20,7 +20,7 @@ For historical backlog content (pre-migration), see [archive/BACKLOG-2026-07-18.
 | Phase 2 — Label Manager + Audit Dashboard | v0.2.0 | Complete |
 | Phase 3 — One-Click Migration + Triage UI | v0.3.0 | Complete |
 | Phase 4 — Board Rules Visualiser + Workflow Templates | v0.4.0 | Complete |
-| Phase 6 — Polish, Testing, and Azure Deployment | v1.0.0 | Ready to tag — [#257](https://github.com/markheydon/solo-dev-board/issues/257) |
+| Phase 6 — Polish, Testing, and Azure Deployment | v1.0.0 | Complete — [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) (2026-08-18) |
 | Deferred follow-ons | v1.1.0 | Not started — [#289](https://github.com/markheydon/solo-dev-board/issues/289) |
 | Phase 5 — Cross-Repo PM Workflow | v1.2.0 | Parked until after v1.0.0 — [#272](https://github.com/markheydon/solo-dev-board/issues/272) |
 
@@ -39,7 +39,7 @@ The GitHub milestone for Phase 5 is `v1.2.0 — Cross-Repo PM Workflow` (renamed
 
 Phases 1–4 delivered foundation, Label Manager, Audit Dashboard, One-Click Migration (labels + milestones), Triage UI, Board Rules Visualiser, and built-in Workflow Templates. Deferred follow-on slices (label consistency warnings, project board migration, custom template repos, hosted private Projects v2) are tracked under [#289](https://github.com/markheydon/solo-dev-board/issues/289) and child issues [#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#293](https://github.com/markheydon/solo-dev-board/issues/293).
 
-Phase 6 (v1.0.0) delivery is complete aside from tagging. Remaining work on the [v1.0.0 milestone](https://github.com/markheydon/solo-dev-board/milestone/4) is [#257](https://github.com/markheydon/solo-dev-board/issues/257) (tag and release notes) and [#364](https://github.com/markheydon/solo-dev-board/issues/364) (paperwork alignment). Duplicate Phase 5 issues #260–#271 were closed as duplicates of the #272-family stories. Operational hardening test coverage expectations are documented in [OPERATIONAL_HARDENING_TEST_COVERAGE.md](OPERATIONAL_HARDENING_TEST_COVERAGE.md).
+Phase 6 (v1.0.0) is complete. Public release [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) shipped on 2026-08-18 ([#257](https://github.com/markheydon/solo-dev-board/issues/257)). Duplicate Phase 5 issues #260–#271 were closed as duplicates of the #272-family stories. Operational hardening test coverage expectations are documented in [OPERATIONAL_HARDENING_TEST_COVERAGE.md](OPERATIONAL_HARDENING_TEST_COVERAGE.md).
 
 ### V1 auth polish (Epic #101 follow-on)
 

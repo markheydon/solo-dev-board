@@ -8,9 +8,9 @@ This document describes the phased implementation of SoloDevBoard. Each phase ha
 **Note on sequencing:**
 Phases remain the primary sequence for feature delivery. Unfinished work from earlier phases remains open until completed, regardless of progress in later phases. Public-release prerequisites from Phase 6 (hosted authentication and admission control) were pulled forward to enable safe hosted validation. After `v1.0.0`, deferred Phase 1–4 slices ship as **v1.1.0** and Cross-Repo PM Workflow (Phase 5) ships as **v1.2.0** ([DEC-024](DECISIONS.md#dec-024-post-10-milestone-numbering)).
 
-**Current roadmap status (2026-08-17):**
+**Current roadmap status (2026-08-18):**
 - Phases 1–4 are complete. All six core feature areas are delivered (Label Manager, Audit Dashboard, One-Click Migration, Triage UI, Board Rules Visualiser, Workflow Templates).
-- Phase 6 (Production Ready, v1.0.0) is ready to tag. Remaining delivery work is [#257](https://github.com/markheydon/solo-dev-board/issues/257) (annotated tag, GitHub Release, production CD).
+- Phase 6 (Production Ready, v1.0.0) is complete. Public release [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) tagged on 2026-08-18.
 - Deferred follow-on slices from Phases 1–4 are **v1.1.0**, tracked in [#289](https://github.com/markheydon/solo-dev-board/issues/289) and child issues [#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#293](https://github.com/markheydon/solo-dev-board/issues/293).
 - Phase 5 (Cross-Repo PM Workflow) is parked as **v1.2.0** — tracked in [#272](https://github.com/markheydon/solo-dev-board/issues/272).
 
@@ -210,7 +210,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Milestone:** v1.0.0
 
-**Status:** Delivery complete except the public tag and shared ACR enabler. Hosted authentication, Aspire ACA deployment, operational hardening, 80% coverage, accessibility, E2E, and the public product site are done. Remaining: [#372](https://github.com/markheydon/solo-dev-board/issues/372) (optional shared ACR), [#257](https://github.com/markheydon/solo-dev-board/issues/257) (tag and GitHub Release). Paperwork alignment is [#364](https://github.com/markheydon/solo-dev-board/issues/364).
+**Status:** Complete (2026-08-18). Hosted authentication, Aspire ACA deployment, optional shared ACR ([#372](https://github.com/markheydon/solo-dev-board/issues/372)), operational hardening, 80% coverage, accessibility, E2E, public product site, and [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) release closure ([#257](https://github.com/markheydon/solo-dev-board/issues/257)) are done.
 
 ### Key Tasks
 - [x] Achieve ≥80% unit test coverage across `Application` and `Domain` projects. _(#252)_
@@ -240,8 +240,8 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Update hosted-authentication documentation for GitHub App-first hosted sign-in, admission-control allow-lists, PAT-only local trusted mode, and fallback boundaries. _(#119; completed on 2026-03-16; see docs/getting-started.md, docs/hosted-authentication.md, and website/content/_index.md.)_
 - [x] Write comprehensive end-user documentation for all shipped features under `website/`. _(#256; Hugo site + screenshots; `pm-workflow.md` remains draft until Phase 5 / v1.2.0)_
 - [x] Public product site: landing, User Guide IA, About narrative, `website/` rename, canonical `solodevboard.com`. _(#358; see plan/product-site-project-plan.md and DEC-023.)_
-- [ ] Optional shared Azure Container Registry for CD (opt-in `acr-name` / `acr-resource-group`; default Aspire registry unchanged). _(#372)_
-- [ ] Tag v1.0.0 release on GitHub with release notes. _(#257)_
+- [x] Optional shared Azure Container Registry for CD (opt-in `acr-name` / `acr-resource-group`; default Aspire registry unchanged). _(#372)_
+- [x] Tag v1.0.0 release on GitHub with release notes. _(#257)_
 
 
 ### Dependencies

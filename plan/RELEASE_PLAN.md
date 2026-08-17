@@ -26,8 +26,6 @@ Application version numbers are calculated automatically at build time by [MinVe
 
 **CI requirement:** CD and CI workflows check out the repository with `fetch-depth: 0` so MinVer can read tags and commit history.
 
-**Temporary v1 bootstrap:** until the first `v1.0.0` tag exists, `MinVerMinimumMajorMinor=1.0` in `SoloDevBoard.App.csproj` floors calculated versions at the 1.0 release line. Remove that property after `v1.0.0` is tagged.
-
 ---
 
 ## Release Roadmap
@@ -97,7 +95,7 @@ Application version numbers are calculated automatically at build time by [MinVe
 - Complete user-facing documentation for shipped features (Hugo site at `https://solodevboard.com/`; Cross-Repo PM Workflow guide remains draft until v1.2.0)
 - Full Azure deployment pipeline with staging and production environment gates
 
-**Status:** Tag withdrawn. Delivery is complete except [#257](https://github.com/markheydon/solo-dev-board/issues/257). An annotated `v1.0.0` was pushed on 17 August 2026 and then deleted so shared Azure Container Registry and separate staging/production resource groups can land first. Draft GitHub Release notes are in [`plan/drafts/v1.0.0-release-notes.md`](drafts/v1.0.0-release-notes.md). Paperwork alignment [#364](https://github.com/markheydon/solo-dev-board/issues/364) is done.
+**Status:** Complete (2026-08-18). Tagged [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0). Production CD and GitHub Pages publish from `v*` tags.
 
 **Sequencing note:** Selected hosted-authentication and Azure-delivery items were pulled forward to support safe hosted validation. Phases 1–4 are complete. Phase 5 is **not** a v1.0.0 blocker. After the tag, deferred slices are v1.1.0 and Cross-Repo PM Workflow is v1.2.0 ([DEC-024](DECISIONS.md#dec-024-post-10-milestone-numbering)).
 

@@ -8,8 +8,6 @@
 		<UserSecretsId>cbdadc72-0914-4dd0-928d-5f374af9c526</UserSecretsId>
 		<MinVerTagPrefix>v</MinVerTagPrefix>
 		<MinVerDefaultPreReleaseIdentifiers>staging.0</MinVerDefaultPreReleaseIdentifiers>
-		<!-- Remove after the v1.0.0 tag is created. -->
-		<MinVerMinimumMajorMinor>1.0</MinVerMinimumMajorMinor>
 	</PropertyGroup>
 
 	<ItemGroup>
