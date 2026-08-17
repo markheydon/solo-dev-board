@@ -39,6 +39,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Fail fast on OIDC or environment-secret mistakes before restore, build, or Aspire install.
+      - name: Azure login (OIDC)
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
       - name: Set up .NET SDK from global.json
         uses: actions/setup-dotnet@v6
         with:
@@ -56,13 +64,6 @@ jobs:
 
       - name: List Aspire deployment steps
         run: aspire deploy --list-steps --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --environment ${{ inputs.aspire_environment }} --non-interactive
-
-      - name: Azure login (OIDC)
-        uses: azure/login@v3
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Deploy with Aspire
         run: aspire deploy --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --environment ${{ inputs.aspire_environment }} --non-interactive
