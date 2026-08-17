@@ -202,14 +202,23 @@ Test coverage expectations for cache-hit, cache-miss, invalidation, TTL expiry, 
 
 ---
 
-### DEC-021: Two-tier CD pipeline with shared Azure resource group
+### DEC-021: Two-tier CD pipeline
 
 **Status:** Active  
 **Date:** 2026-07-29  
 **Constitution:** [AGENTS.md — Infrastructure](../AGENTS.md#infrastructure)  
-**Summary:** GitHub Actions CD uses two protected GitHub Environments — `staging` and `production` — mapped to Aspire deploy environments `Staging` and `Production` respectively. All tiers share one Azure resource group. Aspire `--environment` does not suffix Azure resource names; the AppHost must use distinct resource names for Staging (`aca-staging`, `app-staging`, `auth-secrets-staging`, `app-insights-staging`) while Production keeps the original names (`aca`, `app`, `auth-secrets`, `app-insights`) so an existing production Container App is not recreated. **Staging** deploys automatically on push to `main` with GitHub App hosted sign-in for pre-release validation. **Production** deploys on `v*` release tags with GitHub App hosted sign-in and required environment reviewers. PAT-only authentication remains for local development and personal self-hosting via local `aspire deploy` only — not as a hosted CD tier, because a deployed PAT-mode instance exposes the token owner's full GitHub account to anyone who can reach the URL. End-user docs on GitHub Pages publish on `v*` tags only; pull requests validate Hugo builds without publishing. Reject deploying production on every `main` merge, publishing Pages on `main`, maintaining separate Azure resource groups per tier for this repository, or a hosted CD tier that deploys PAT-only authentication.
+**Summary:** GitHub Actions CD uses two protected GitHub Environments — `staging` and `production` — mapped to Aspire deploy environments `Staging` and `Production` respectively. The **app resource group** is an operator choice per GitHub Environment (`AZURE_RESOURCE_GROUP`); one RG for both tiers or separate RGs are both valid. Aspire `--environment` does not suffix Azure resource names; the AppHost must use distinct resource names for Staging (`aca-staging`, `app-staging`, `auth-secrets-staging`, `app-insights-staging`) while Production keeps the original names (`aca`, `app`, `auth-secrets`, `app-insights`) so an existing production Container App is not recreated when both tiers share an RG. **Staging** deploys automatically on push to `main` with GitHub App hosted sign-in for pre-release validation. **Production** deploys on `v*` release tags with GitHub App hosted sign-in and required environment reviewers. PAT-only authentication remains for local development and personal self-hosting via local `aspire deploy` only — not as a hosted CD tier, because a deployed PAT-mode instance exposes the token owner's full GitHub account to anyone who can reach the URL. End-user docs on GitHub Pages publish on `v*` tags only; pull requests validate Hugo builds without publishing. Reject deploying production on every `main` merge, publishing Pages on `main`, or a hosted CD tier that deploys PAT-only authentication.
 
-**Implementation note (2026-08-17):** The first `v1.0.0` production deploy targeted the same Container App as staging because both used resource name `app` in `rg-solodevboard-prod`. Staging isolation is the AppHost `AzureName` suffix, not a second resource group.
+**Clarification (2026-08-17):** An early production deploy overwrote staging because both tiers used Container App name `app` in the same RG. Staging isolation is the AppHost `AzureName` suffix. One app RG or two app RGs are operator choices; DEC-021 does not mandate either layout.
+
+---
+
+### DEC-025: Optional shared Azure Container Registry
+
+**Status:** Active  
+**Date:** 2026-08-17  
+**Constitution:** [AGENTS.md — Infrastructure](../AGENTS.md#infrastructure)  
+**Summary:** Hosted CD may opt in to an **existing** Azure Container Registry via AppHost parameters `acr-name` and `acr-resource-group` (`PublishAsExisting` + `WithAzureContainerRegistry`). When both are omitted, Aspire keeps its default behaviour and provisions a registry in the app resource group — required for forks and self-hosters who need no extra setup. When both are set, Staging and Production share that registry; use the same `ACR_NAME` and `ACR_RESOURCE_GROUP` on both GitHub Environments (repository-level variables preferred). The GitHub Actions OIDC identity for shared-ACR layouts should live in the ACR resource group with AcrPush and User Access Administrator on the registry, plus Contributor and User Access Administrator on each app RG. Reject documenting shared ACR as mandatory, calling `WithPurgeTask` or SKU `ConfigureInfrastructure` on a registry owned by other projects, or granting AcrPush to the running Container App.
 
 ---
 

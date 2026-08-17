@@ -52,6 +52,28 @@ public sealed class AppHostDeployParameterResolverTests
         Assert.Equal("-", actual);
     }
 
+    [Fact]
+    public void EnsurePairOrNeither_WhenBothInactive_DoesNotThrow()
+    {
+        DeployParameterResolver.EnsurePairOrNeither("-", "-", "acr-name", "acr-resource-group");
+    }
+
+    [Fact]
+    public void EnsurePairOrNeither_WhenBothActive_DoesNotThrow()
+    {
+        DeployParameterResolver.EnsurePairOrNeither("myacr", "rg-shared", "acr-name", "acr-resource-group");
+    }
+
+    [Fact]
+    public void EnsurePairOrNeither_WhenOnlyFirstActive_ThrowsInvalidOperationException()
+    {
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            DeployParameterResolver.EnsurePairOrNeither("myacr", "-", "acr-name", "acr-resource-group"));
+
+        Assert.Contains("acr-name", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("acr-resource-group", exception.Message, StringComparison.Ordinal);
+    }
+
     /// <summary>Test double mirroring AppHost deploy parameter resolution.</summary>
     private static class DeployParameterResolver
     {
@@ -80,6 +102,30 @@ public sealed class AppHostDeployParameterResolverTests
             }
 
             return defaultValue;
+        }
+
+        public static bool IsActiveParameterValue(string? value) =>
+            !string.IsNullOrWhiteSpace(value) && !string.Equals(value.Trim(), "-", StringComparison.Ordinal);
+
+        public static void EnsurePairOrNeither(
+            string firstValue,
+            string secondValue,
+            string firstParameterName,
+            string secondParameterName)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(firstParameterName);
+            ArgumentException.ThrowIfNullOrWhiteSpace(secondParameterName);
+
+            var firstActive = IsActiveParameterValue(firstValue);
+            var secondActive = IsActiveParameterValue(secondValue);
+            if (firstActive == secondActive)
+            {
+                return;
+            }
+
+            throw new InvalidOperationException(
+                $"Deploy parameters '{firstParameterName}' and '{secondParameterName}' must both be set or both omitted. " +
+                $"Set Parameters__{firstParameterName.Replace('-', '_')} and Parameters__{secondParameterName.Replace('-', '_')} together, or leave both unset for Aspire's default registry.");
         }
     }
 }

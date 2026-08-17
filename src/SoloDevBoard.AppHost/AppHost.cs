@@ -2,16 +2,15 @@ using Azure.Provisioning.KeyVault;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-// Staging and Production share one resource group (DEC-021). Aspire --environment
-// does not suffix Azure names, so Staging must use distinct resource names or it
-// overwrites the Production Container App. Production keeps the original names
-// so the live v1.0.0 deployment is not recreated.
+// Aspire --environment does not suffix Azure names (DEC-021). Staging uses distinct
+// resource names so it does not overwrite Production when both tiers share an app RG.
+// Production keeps the original names so an existing production Container App is not recreated.
 string AzureName(string resourceName) =>
     string.Equals(builder.Environment.EnvironmentName, "Staging", StringComparison.OrdinalIgnoreCase)
         ? $"{resourceName}-staging"
         : resourceName;
 
-builder.AddAzureContainerAppEnvironment(AzureName("aca"));
+var aca = builder.AddAzureContainerAppEnvironment(AzureName("aca"));
 
 var hostedSignInEnabled = builder.AddParameter("hosted-sign-in-enabled")
     .WithDescription("Enable GitHub App hosted sign-in at /auth/sign-in. When false, PAT mode is used (default).");
@@ -52,6 +51,24 @@ if (builder.ExecutionContext.IsPublishMode)
 {
     builder.AddParameter("hosted-callback-base-uri")
         .WithDescription("Optional absolute HTTPS base URI for hosted OAuth callbacks (for example https://staging.solodevboard.app). Use '-' to use the Aspire-provisioned endpoint.");
+
+    var acrName = builder.AddParameter("acr-name")
+        .WithDescription("Optional existing Azure Container Registry resource name. Use with acr-resource-group, or omit both for Aspire's default registry.");
+
+    var acrResourceGroup = builder.AddParameter("acr-resource-group")
+        .WithDescription("Resource group that owns the existing ACR. Use with acr-name, or omit both for Aspire's default registry.");
+
+    var resolvedAcrName = AppHostDeployParameterResolver.Resolve(builder.Configuration, "acr-name");
+    var resolvedAcrResourceGroup = AppHostDeployParameterResolver.Resolve(builder.Configuration, "acr-resource-group");
+    AppHostDeployParameterResolver.EnsurePairOrNeither(resolvedAcrName, resolvedAcrResourceGroup, "acr-name", "acr-resource-group");
+
+    if (AppHostDeployParameterResolver.IsActiveParameterValue(resolvedAcrName))
+    {
+        var acr = builder.AddAzureContainerRegistry("acr")
+            .PublishAsExisting(acrName, acrResourceGroup);
+
+        aca.WithAzureContainerRegistry(acr);
+    }
 
     var customDomain = builder.AddParameter("custom-domain")
         .WithDescription("Optional custom hostname for the Container App (for example staging.solodevboard.app). Use '-' to use the Aspire-provisioned FQDN only.");

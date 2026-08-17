@@ -64,7 +64,7 @@ scripts/
 └── Invoke-HugoSite.ps1         # Windows PowerShell equivalent
 ```
 
-End-user guides and the product landing are deployed by GitHub Actions (Hugo) to GitHub Pages on `v*` release tags only. Pull requests validate Hugo builds via `hugo-ci.yml` without publishing. See [DEC-019](DECISIONS.md#dec-019-hugo-hextra-for-end-user-docs-on-github-pages), [DEC-021](DECISIONS.md#dec-021-two-tier-cd-pipeline-with-shared-azure-resource-group), and [DEC-023](DECISIONS.md#dec-023-public-product-site-ia-and-canonical-domain).
+End-user guides and the product landing are deployed by GitHub Actions (Hugo) to GitHub Pages on `v*` release tags only. Pull requests validate Hugo builds via `hugo-ci.yml` without publishing. See [DEC-019](DECISIONS.md#dec-019-hugo-hextra-for-end-user-docs-on-github-pages), [DEC-021](DECISIONS.md#dec-021-two-tier-cd-pipeline), and [DEC-023](DECISIONS.md#dec-023-public-product-site-ia-and-canonical-domain).
 
 ---
 
