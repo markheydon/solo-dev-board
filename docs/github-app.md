@@ -32,7 +32,7 @@ Hosted sign-in is an OAuth **authorization code** flow against this GitHub App. 
 | Setting | Value |
 |---------|--------|
 | **Callback URL** | One entry per public origin, each ending `/auth/callback`. Register **all** of them (GitHub allows up to ten). Do **not** enable wildcard matching. |
-| **Expire user authorization tokens** | **On** (required). SoloDevBoard already refreshes user access tokens. |
+| **Expire user authorization tokens** | **On** (required). SoloDevBoard already refreshes user access tokens. On current GitHub App settings this is **Optional features → User-to-server token expiration** (leave it enabled; do not click **Opt-out**). |
 | **Request user authorization (OAuth) during installation** | **On**. The hosted app needs a user-to-server token (`ghu_…`), not only an installation token. |
 | **Enable Device Flow** | **Off**. Device flow is for CLIs and headless clients and increases phishing risk. |
 | **Setup URL** | Leave blank if OAuth-during-install is on (GitHub sends users through the callback instead). Otherwise use `https://solodevboard.com/`. |
@@ -80,7 +80,7 @@ Private user-owned Projects v2 still often fail under GitHub App tokens even wit
 
 | Permission | Access | Why |
 |------------|--------|-----|
-| Profile | Read-only | `GET /user` for the signed-in login. |
+| Profile | Read and write | `GET /user` for the signed-in login. GitHub App **Account** permissions offer only **No access** or **Read and write** for Profile; there is no read-only option. |
 | Email addresses | No access | SoloDevBoard does not use email. |
 
 Hosted OAuth scopes requested by the app are `read:user read:org` ([`GitHubAuth:HostedSignInScopes`](getting-started.md)). Repository work uses the GitHub App's repository permissions on the user-to-server token, not extra OAuth scopes.
