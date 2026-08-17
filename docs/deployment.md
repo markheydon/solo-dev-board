@@ -271,7 +271,7 @@ Deploy jobs check out the repository with `fetch-depth: 0` so [MinVer](https://g
 After a successful deploy:
 
 1. Note the deployed Container App FQDN from the workflow output or Azure portal.
-2. **Hosted sign-in only:** register the GitHub App callback URL: `https://<fqdn>/auth/callback` (staging and production each have their own FQDN). When using a custom domain, set `HOSTED_CALLBACK_BASE_URI` on the GitHub Environment to the public HTTPS origin (for example `https://staging.solodevboard.app`) and register `https://<custom-domain>/auth/callback` on the GitHub App.
+2. **Hosted sign-in only:** register the GitHub App callback URL: `https://<fqdn>/auth/callback` (staging and production each have their own FQDN). When using a custom domain, set `HOSTED_CALLBACK_BASE_URI` on the GitHub Environment to the public HTTPS origin (for example `https://staging.solodevboard.app`) and register `https://<custom-domain>/auth/callback` on the GitHub App. Polish the app listing (logo, description, permissions) using [GitHub App listing](github-app.md).
 3. Open the provisioned Application Insights resource to confirm telemetry is flowing (see [Observability guide](observability.md)).
 4. **Hosted sign-in smoke checks** (run in a private browser window with no existing cookies):
    - `GET https://<fqdn>/` redirects to `/welcome` (not the Home dashboard shell).

@@ -27,7 +27,7 @@ SoloDevBoard supports a GitHub App-first hosted authentication model for product
 
 To exercise hosted sign-in locally (production-like, multi-tenant behaviour):
 
-1. **Create a GitHub App** at [GitHub → Settings → Developer settings → GitHub Apps](https://github.com/settings/apps). Note the **Client ID** and generate a **Client secret**.
+1. **Create a GitHub App** at [GitHub → Settings → Developer settings → GitHub Apps](https://github.com/settings/apps). Note the **Client ID** and generate a **Client secret**. For listing copy, logo, callback URLs, and the minimum permission set, follow [GitHub App listing](github-app.md).
 2. **Start Aspire** to allocate an endpoint:
    ```bash
    aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj

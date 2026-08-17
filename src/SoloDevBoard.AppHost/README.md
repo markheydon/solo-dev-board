@@ -36,7 +36,7 @@ Set `gh-pat` to `-`. Configure GitHub App credentials and allow-lists:
 | `allowed-user-logins` | your login(s), or `-` |
 | `allowed-org-logins` | org login(s), or `-` |
 
-Register `{https-endpoint}/auth/callback` on your GitHub App. Run `aspire describe` for the current HTTPS URL.
+Register `{https-endpoint}/auth/callback` on your GitHub App. Run `aspire describe` for the current HTTPS URL. For logo, listing copy, and permissions, see [docs/github-app.md](../../docs/github-app.md).
 
 See [docs/getting-started.md](../docs/getting-started.md) for full setup and [Switching between modes](../docs/getting-started.md#switching-between-pat-and-hosted-sign-in).
 
