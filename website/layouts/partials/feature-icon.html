@@ -6,5 +6,5 @@ Renders a Material Symbols icon when the page has landingIcon front matter.
 {{- $page := .page -}}
 {{- $class := .class | default "hx:text-primary-600 hx:dark:text-primary-400" -}}
 {{- with $page.Params.landingIcon -}}
-<span class="material-symbols-outlined {{ $class }}" aria-hidden="true">{{ . }}</span>
+<span class="material-symbols-outlined hx:shrink-0 {{ $class }}" aria-hidden="true">{{ . }}</span>
 {{- end -}}

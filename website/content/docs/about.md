@@ -1,6 +1,7 @@
 ---
 weight: 100
 title: About
+landingIcon: info
 ---
 
 The About page provides essential information about the SoloDevBoard application, including its version, runtime environment, and repository link.
