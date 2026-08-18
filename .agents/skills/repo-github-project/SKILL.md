@@ -62,6 +62,8 @@ As of 2026-08-18, the Project board **Phase** field is **legacy** for closed pre
 | Todo | `f75ad846` |
 | Up Next | `df9275ed` |
 | In Progress | `47fc9ee4` |
+| Blocked | `9796fb74` |
+| Ice Box | `1c235cb1` |
 | Done | `98236657` |
 
 ### Phase Options
@@ -149,6 +151,7 @@ This keeps the roadmap aligned with actual delivery signals and avoids speculati
 
 - **Up Next** is a project-only planning state for the next short-horizon batch of stories, enablers, and tests.
 - **Up Next** is not a GitHub issue label and must not be added to issues.
+- **Blocked** and **Ice Box** are issue labels (`status/blocked`, `status/ice-box`) that Roadmap Sync maps to board Status. Apply the label when parking work; do not rely on manual board moves alone.
 - **Focus Order** is used only on Story Board items that are currently in **Up Next**.
 - Leave **Focus Order** blank for Features, Epics, and all non-queued items.
 
@@ -226,7 +229,7 @@ When beginning work on an issue, apply `status/in-progress` to the issue. **Pref
 gh issue edit "$issueNumber" --repo markheydon/solo-dev-board --remove-label "status/todo" --add-label "status/in-progress"
 ```
 
-Skip if the issue already has `status/in-progress`. Escalate if the issue has `status/blocked`.
+Skip if the issue already has `status/in-progress`. Escalate if the issue has `status/blocked` or `status/ice-box`.
 
 **Manual board path (fallback only):** If Roadmap Sync is unavailable and the user requests immediate board repair, use the `gh project item-edit` sequence from Event 2a patterns to set Status, Start Date, and Target Date on the implementing issue.
 

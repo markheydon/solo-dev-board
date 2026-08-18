@@ -46,6 +46,7 @@ Cover each area:
 | **Backlog hygiene** | Missing labels, acceptance criteria, size estimates, stale items. |
 | **Release confidence** | Next planned release, blockers, docs/ADR completeness for ship. |
 | **Blockers** | Explicit `status/blocked` issues and dependency chains. |
+| **Ice Box** | Explicit `status/ice-box` issues (shelved backlog — separate from blockers). |
 | **Board hygiene** | Missing dates, invalid date pairs, roadmap issues missing from board, stray PR cards — see [`plan/PROJECT_BOARD_DESIGN.md`](../../plan/PROJECT_BOARD_DESIGN.md). |
 | **Delivery since last review** | Issues closed, PRs merged, notable commits in the window. |
 | **Velocity** | Count closed/merged since last review; note if the sample is too small for forecasting. |

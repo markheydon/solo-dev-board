@@ -268,6 +268,15 @@ Test coverage expectations for cache-hit, cache-miss, invalidation, TTL expiry, 
 
 ---
 
+### DEC-028: Blocked and Ice Box project Status options
+
+**Status:** Active  
+**Date:** 2026-08-18  
+**Related:** [DEC-014](#dec-014-github-actions-bridge-for-roadmap-project-sync), [`plan/PROJECT_BOARD_DESIGN.md`](PROJECT_BOARD_DESIGN.md), [`plan/LABEL_STRATEGY.md`](LABEL_STRATEGY.md)  
+**Summary:** Project #8 **Status** includes **Blocked** (`9796fb74`) and **Ice Box** (`1c235cb1`) alongside Todo, Up Next, In Progress, and Done. **Up Next** remains the only project-only status (no issue label). **Blocked** maps to `status/blocked` (external dependency); **Ice Box** maps to `status/ice-box` (shelved, not in the active queue). Roadmap Sync sets board Status from these labels and clears Focus Order when parking. Ice Box clears Start/Target dates; Blocked preserves dates if work had started. Parent Feature/Epic roll-up: In Progress beats Blocked; Blocked beats Ice Box; all open children Ice Box → parent Ice Box. Roadmap view filter includes Todo, Up Next, In Progress, Blocked, and Done; excludes Ice Box. Reject adding Up Next as an issue label or leaving blocked/ice-box issues on Todo because sync does not infer parked states without labels.
+
+---
+
 ## Superseded legacy (archive only)
 
 | Legacy ADR | Superseded by | Notes |

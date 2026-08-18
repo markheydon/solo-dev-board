@@ -21,6 +21,8 @@ const statusOptions = {
     Todo: 'f75ad846',
     'Up Next': 'df9275ed',
     'In Progress': '47fc9ee4',
+    Blocked: '9796fb74',
+    'Ice Box': '1c235cb1',
     Done: '98236657',
 };
 
@@ -41,7 +43,7 @@ const priorityOptionsByLabel = new Map([
     ['priority/low', '0f0afb94'],
 ]);
 
-const roadmapStates = new Set(['Todo', 'Up Next', 'In Progress', 'Done']);
+const parkedStates = new Set(['Todo', 'Up Next', 'Ice Box']);
 const token = process.env.ROADMAP_PROJECT_TOKEN;
 
 if (!token) {
@@ -283,9 +285,16 @@ async function syncIssueAsync(issue, issueItemsByContentId, timelineCache) {
         return;
     }
 
-    if (desiredStatusName === 'Todo') {
+    if (desiredStatusName === 'Todo' || desiredStatusName === 'Ice Box') {
         await syncDateFieldAsync(projectItem.id, fieldIds.startDate, projectItem.startDate?.date ?? null, null, `issue #${issue.number} start date`);
         await syncDateFieldAsync(projectItem.id, fieldIds.targetDate, projectItem.targetDate?.date ?? null, null, `issue #${issue.number} target date`);
+        await clearFieldAsync(projectItem.id, fieldIds.focusOrder, projectItem.focusOrder?.number ?? null, `issue #${issue.number} focus order`);
+        return;
+    }
+
+    if (desiredStatusName === 'Blocked') {
+        await syncDateFieldAsync(projectItem.id, fieldIds.startDate, projectItem.startDate?.date ?? null, startDate, `issue #${issue.number} start date`);
+        await syncDateFieldAsync(projectItem.id, fieldIds.targetDate, projectItem.targetDate?.date ?? null, targetDate, `issue #${issue.number} target date`);
         await clearFieldAsync(projectItem.id, fieldIds.focusOrder, projectItem.focusOrder?.number ?? null, `issue #${issue.number} focus order`);
         return;
     }
@@ -323,8 +332,20 @@ async function syncParentIssuesAsync(issueItemsByContentId, issueByNumber, timel
 
         const childStates = childItems.map(childItem => determineChildLifecycleState(childItem));
         const allChildrenDone = childStates.every(state => state === 'Done');
-        const anyChildStarted = childStates.some(state => state === 'In Progress' || state === 'Done');
-        const desiredStatusName = allChildrenDone ? 'Done' : anyChildStarted ? 'In Progress' : 'Todo';
+        const anyChildInProgress = childStates.some(state => state === 'In Progress');
+        const anyChildBlocked = childStates.some(state => state === 'Blocked');
+        const openChildStates = childStates.filter(state => state !== 'Done');
+        const allOpenChildrenIceBox = openChildStates.length > 0 && openChildStates.every(state => state === 'Ice Box');
+
+        const desiredStatusName = allChildrenDone
+            ? 'Done'
+            : anyChildInProgress
+                ? 'In Progress'
+                : anyChildBlocked
+                    ? 'Blocked'
+                    : allOpenChildrenIceBox
+                        ? 'Ice Box'
+                        : 'Todo';
 
         const parentIssue = issueByNumber.get(issue.number) ?? createRepositoryIssueFromProjectItem(issue);
         const desiredPhaseOptionId = determinePhaseOptionId(parentIssue);
@@ -338,9 +359,9 @@ async function syncParentIssuesAsync(issueItemsByContentId, issueByNumber, timel
             .filter(Boolean)
             .sort();
 
-        const desiredStartDate = desiredStatusName === 'Todo' ? null : effectiveChildStartDates[0] ?? null;
+        const desiredStartDate = parkedStates.has(desiredStatusName) ? null : effectiveChildStartDates[0] ?? null;
         const desiredTargetDate =
-            desiredStatusName === 'Todo'
+            parkedStates.has(desiredStatusName)
                 ? null
                 : effectiveChildTargetDates.length > 0
                     ? effectiveChildTargetDates[effectiveChildTargetDates.length - 1]
@@ -367,7 +388,19 @@ function determineRoadmapStatus(issue, currentStatusName) {
     }
 
     if (labels.has('status/in-review')) {
-        return roadmapStates.has(currentStatusName) ? currentStatusName : 'In Progress';
+        if (currentStatusName === 'Todo' || currentStatusName === 'Up Next' || currentStatusName === 'In Progress') {
+            return currentStatusName;
+        }
+
+        return 'In Progress';
+    }
+
+    if (labels.has('status/blocked')) {
+        return 'Blocked';
+    }
+
+    if (labels.has('status/ice-box')) {
+        return 'Ice Box';
     }
 
     if (currentStatusName === 'Up Next') {
@@ -422,7 +455,7 @@ async function determineStartDateAsync(issue, desiredStatusName, currentStartDat
         }
     }
 
-    if (desiredStatusName === 'Todo' || desiredStatusName === 'Up Next') {
+    if (desiredStatusName === 'Todo' || desiredStatusName === 'Up Next' || desiredStatusName === 'Ice Box') {
         return null;
     }
 
@@ -438,6 +471,10 @@ async function determineStartDateAsync(issue, desiredStatusName, currentStartDat
         return closedDate;
     }
 
+    if (desiredStatusName === 'Blocked') {
+        return null;
+    }
+
     return getRunDate();
 }
 
@@ -451,7 +488,7 @@ async function determineProjectItemStartDateAsync(projectItem, issueByNumber, ti
 }
 
 function determineTargetDate(issue, desiredStatusName, startDate) {
-    if (desiredStatusName === 'Todo' || desiredStatusName === 'Up Next') {
+    if (desiredStatusName === 'Todo' || desiredStatusName === 'Up Next' || desiredStatusName === 'Ice Box') {
         return null;
     }
 

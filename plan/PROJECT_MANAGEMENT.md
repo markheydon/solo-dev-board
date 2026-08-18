@@ -55,15 +55,18 @@ Implementation **phases** in `IMPLEMENTATION_PLAN.md` are historical sequencing 
 
 ```
 Created → [status/todo] → [status/in-progress] → [status/in-review] → [status/done] → Closed
+         ↘ [status/blocked]  (external blocker — can return to todo/in-progress when unblocked)
+         ↘ [status/ice-box]  (shelved for later — not the same as blocked)
                                                         ↑
                                                PR opened (linked)
 ```
 
-The issue lifecycle labels remain the source of truth for GitHub Issues. The project board may show an additional planning state, **Up Next**, but that state is board-only and does not have a matching GitHub issue label.
+The issue lifecycle labels remain the source of truth for GitHub Issues. The project board may show an additional planning state, **Up Next**, but that state is board-only and does not have a matching GitHub issue label. **Blocked** and **Ice Box** are both board Status options **and** issue labels (`status/blocked`, `status/ice-box`); Roadmap Sync maps labels to board columns ([DEC-028](DECISIONS.md#dec-028-blocked-and-ice-box-project-status-options)).
 
 Roadmap date handling follows the same lifecycle:
 
-- **Todo** items stay blank until work actually starts.
+- **Todo** and **Ice Box** items stay blank until work actually starts.
+- **Blocked** items preserve **Start Date** and **Target Date** if work had already begun; otherwise dates stay blank.
 - **In Progress** items must have a **Start Date** and a size-based **Target Date** forecast.
 - **Done** items keep their **Start Date** and replace **Target Date** with the actual completion date.
 - Parent Features and Epics inherit their first **Start Date** when the first child starts; untouched sibling issues remain blank until they begin.
@@ -112,7 +115,7 @@ SoloDevBoard uses a single **GitHub Projects (v2)** board called "SoloDevBoard".
 ### Workflow Ownership
 
 - The roadmap board is **issue-driven**. Issues are the primary planning and delivery records.
-- Copilot agents own deliberate board changes such as adding planned issues, setting `Phase` and `Priority`, moving items through `Todo` / `Up Next` / `In Progress` / `Done`, and maintaining dates.
+- Copilot agents own deliberate board changes such as adding planned issues, setting `Phase` and `Priority`, moving items through `Todo` / `Up Next` / `In Progress` / `Blocked` / `Ice Box` / `Done`, and maintaining dates.
 - `.github/workflows/roadmap-sync.yml` is the operational bridge for the user-owned roadmap board. It reconciles board metadata from issue lifecycle events plus scheduled and manual hygiene runs when direct project-board credentials are unavailable to the current agent runtime.
 - Progress-review governance must also audit board hygiene: missing dates on active or done items, invalid date pairs, roadmap issues missing from the board, and stray pull request cards.
 - GitHub project workflows are kept intentionally narrow and issue-centric so they act as safety nets rather than competing sources of truth.
@@ -123,6 +126,7 @@ SoloDevBoard uses a single **GitHub Projects (v2)** board called "SoloDevBoard".
 
 - **Up Next** is a project board status used to queue the next short-horizon batch of stories, enablers, and tests.
 - **Up Next** is not a GitHub issue label and must not be added to the issue taxonomy in [LABEL_STRATEGY.md](LABEL_STRATEGY.md).
+- **Blocked** and **Ice Box** are both project Status options and GitHub issue labels; apply `status/blocked` or `status/ice-box` when parking work so Roadmap Sync keeps the board aligned.
 - **Focus Order** is a project number field used to order the current **Up Next** batch on the Story Board.
 - Apply **Focus Order** only to stories, enablers, and tests that are currently in **Up Next**.
 - Leave **Focus Order** blank for Features, Epics, and all non-queued items.

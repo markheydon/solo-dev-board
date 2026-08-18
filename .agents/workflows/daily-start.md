@@ -12,6 +12,7 @@ Read-only orientation at the **start of a working session** — not tied to a ca
 - Read-only by default — do not update Project #8 unless the user explicitly asks.
 - Query `gh issue list` and Project #8 for work selection; do not use `plan/BACKLOG.md` as a work queue.
 - May identify candidates for **Up Next** and **Focus Order**, but only apply board changes when requested.
+- Do not recommend **Blocked** or **Ice Box** items for implementation; skip issues with `status/blocked` or `status/ice-box`.
 
 ## Invocation
 
