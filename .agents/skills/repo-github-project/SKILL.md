@@ -161,7 +161,7 @@ After the daily-start workflow recommends a short execution batch and the user e
 
 ```bash
 # Step 1: Find the project item ID for the issue.
-item_id=$(gh project item-list 8 --owner markheydon --format json --jq ".items[] | select(.content.number == $issueNumber) | .id" | head -n1)
+item_id=$(gh project item-list 8 --owner markheydon --query "$issueNumber" --format json --jq ".items[0].id")
 
 # Step 2: Set Status → Up Next.
 gh project item-edit \
@@ -183,12 +183,10 @@ gh project item-edit \
 After creating a new issue, add it to the project and set Status, Phase, and Priority. **Do not set Start Date or Target Date** — dates are calculated and set only when work actually begins (Event 2).
 
 ```bash
-# Step 1: Add the issue to the project.
+# Step 1: Add the issue to the project and capture the item id.
+# Do not rely on `item-list` without `--query`: it defaults to 30 items.
 issue_url="https://github.com/markheydon/solo-dev-board/issues/$issueNumber"
-gh project item-add 8 --owner markheydon --url "$issue_url" >/dev/null
-
-# Step 2: Find the new project item ID.
-item_id=$(gh project item-list 8 --owner markheydon --format json --jq ".items[] | select(.content.number == $issueNumber) | .id" | head -n1)
+item_id=$(gh project item-add 8 --owner markheydon --url "$issue_url" --format json --jq .id)
 
 # Step 3: Set Status → Todo.
 gh project item-edit \
@@ -252,7 +250,7 @@ This is a **one-time transition** — once a parent is "In Progress" it remains 
 # For each parent issue number ($parent_issue_number = Feature or Epic issue number):
 
 # Step 1: Find the parent project item ID if the parent is still in Todo.
-parent_item_id=$(gh project item-list 8 --owner markheydon --format json --jq ".items[] | select(.content.number == $parent_issue_number and .status == \"Todo\") | .id" | head -n1)
+parent_item_id=$(gh project item-list 8 --owner markheydon --query "$parent_issue_number" --format json --jq 'select(.items[0].status == "Todo") | .items[0].id')
 
 # Step 2: If the parent is still Todo, update Status → In Progress and Start Date → today.
 if [ -n "$parent_item_id" ]; then
@@ -273,7 +271,7 @@ When a PR is merged and the issue is closed, update Status to "Done" and **overw
 
 ```bash
 # Step 1: Find the project item ID for the issue.
-item_id=$(gh project item-list 8 --owner markheydon --format json --jq ".items[] | select(.content.number == $issueNumber) | .id" | head -n1)
+item_id=$(gh project item-list 8 --owner markheydon --query "$issueNumber" --format json --jq ".items[0].id")
 
 # Step 2: Update Status → Done.
 gh project item-edit \
@@ -301,7 +299,7 @@ After closing a Story, Enabler, or Test via Event 3, check whether **all sibling
 
 ```bash
 # For the parent Feature ($feature_issue_number) — run after each child closure.
-feature_item_id=$(gh project item-list 8 --owner markheydon --format json --jq ".items[] | select(.content.number == $feature_issue_number) | .id" | head -n1)
+feature_item_id=$(gh project item-list 8 --owner markheydon --query "$feature_issue_number" --format json --jq ".items[0].id")
 
 # Close the Feature issue only if all children are closed.
 gh issue edit "$feature_issue_number" --repo markheydon/solo-dev-board --remove-label "status/in-progress" --add-label "status/done"
@@ -339,10 +337,11 @@ Historical backfills should prefer accurate actuals, but a conservative same-day
 
 ## Checking Project State
 
-List all items and their current state:
+List items (raise `--limit` or use `--query`; the default list is 30 items):
 
 ```bash
-gh project item-list 8 --owner markheydon --format json --jq '.items[] | {id, title: .title, number: .content.number, status}'
+gh project item-list 8 --owner markheydon --limit 100 --format json --jq '.items[] | {id, title: .title, number: .content.number, status}'
+gh project item-list 8 --owner markheydon --query 382 --format json --jq '.items[0] | {id, title, status}'
 ```
 
 View the roadmap in the browser:

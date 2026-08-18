@@ -17,6 +17,7 @@ Manage GitHub issues using the `@modelcontextprotocol/server-github` MCP server.
 | `mcp__github__search_issues` | Search issues |
 | `mcp__github__add_issue_comment` | Add comments |
 | `mcp__github__list_issues` | List repository issues |
+| `mcp__github__sub_issue_write` | Add, remove, or reprioritise a sub-issue (`sub_issue_id` is the numeric GitHub issue **id**, not the `#` number) |
 
 ## Workflow
 
@@ -127,6 +128,16 @@ Always apply at least one `type/` and one `priority/` label.
 | `status/` | `status/todo`, `status/in-progress`, `status/blocked`, `status/ice-box`, `status/in-review`, `status/done` |
 | `area/` | `area/dashboard`, `area/migration`, `area/labels`, `area/board-rules`, `area/triage`, `area/workflows`, `area/infrastructure`, `area/docs` |
 | `size/` | `size/xs`, `size/s`, `size/m`, `size/l`, `size/xl` |
+
+## Issue relationships (agents must set these)
+
+After creating a planned hierarchy, **do not** ask the user to click Sub-issues or Relationships in the GitHub UI.
+
+1. **Parent / child:** GitHub MCP `sub_issue_write` with `method: add`, parent `issue_number`, and child `sub_issue_id` (database id from create/get). To move a child, use `replace_parent: true`.
+2. **Blocking:** REST via `gh api` as documented in `repo-github-gh-cli` (`POST .../issues/{blocked_number}/dependencies/blocked_by` with JSON integer `issue_id` of the **blocking** issue). `gh issue` has no first-class block command yet ([cli/cli#10298](https://github.com/cli/cli/issues/10298)).
+3. Mention `#N` in the issue body as well so the graph is readable without opening the Relationships widget.
+
+If either API returns an error other than “already taken”, put a **Manual fallback** table in the planning handoff with the exact `gh api` commands.
 
 ## Tips
 

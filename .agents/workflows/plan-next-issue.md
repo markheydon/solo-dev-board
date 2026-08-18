@@ -7,7 +7,7 @@
 ## Easy-to-miss specifics
 
 - A wireframe in `plan/wireframes/` is required before page-producing UI planning is considered complete.
-- Produce a **Manual Linking Required** table for parent/child sub-issues and blocking relationships — the GitHub CLI cannot set these.
+- Set parent/child sub-issues (MCP `sub_issue_write`) and blocking relationships (`gh api` REST issue-dependencies) as part of planning. Do not leave them for the user. Report a **Manual fallback** table only if those APIs fail.
 - Sync each created issue to Project #8 per the `repo-github-project` skill.
 
 ## Invocation
