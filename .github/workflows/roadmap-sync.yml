@@ -51,8 +51,8 @@ jobs:
         with:
           node-version: "24"
 
-      - name: Run archive-rule tests
-        run: node --test .github/scripts/roadmap-sync-archive.test.mjs
+      - name: Run GitHub automation script tests
+        run: node --test .github/scripts/*.test.mjs
 
       - name: Sync status labels
         env:

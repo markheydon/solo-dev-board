@@ -1,3 +1,5 @@
+import { githubJsonRequest } from './github-http.mjs';
+
 const apiBaseUrl = 'https://api.github.com';
 const owner = 'markheydon';
 const repo = 'solo-dev-board';
@@ -33,11 +35,8 @@ if (!token) {
 await main();
 
 async function main() {
-    const [issues, pullRequests, openLinkedIssueNumbers] = await Promise.all([
-        fetchIssuesAsync(),
-        fetchPullRequestsAsync(),
-        fetchOpenLinkedIssueNumbersAsync(),
-    ]);
+    const { issues, pullRequests } = await fetchIssuesAndPullRequestsAsync();
+    const openLinkedIssueNumbers = await fetchOpenLinkedIssueNumbersAsync();
 
     const items = [
         ...issues.map(issue => ({ kind: 'issue', item: issue })),
@@ -79,11 +78,8 @@ async function main() {
 
     console.log(`Applied status label repairs to ${repairs.filter(repair => !repair.plan.reportOnly).length} item(s).`);
 
-    const [refreshedIssues, refreshedPullRequests, refreshedOpenLinkedIssueNumbers] = await Promise.all([
-        fetchIssuesAsync(),
-        fetchPullRequestsAsync(),
-        fetchOpenLinkedIssueNumbersAsync(),
-    ]);
+    const { issues: refreshedIssues, pullRequests: refreshedPullRequests } = await fetchIssuesAndPullRequestsAsync();
+    const refreshedOpenLinkedIssueNumbers = await fetchOpenLinkedIssueNumbersAsync();
 
     const refreshedItems = [
         ...refreshedIssues.map(issue => ({ kind: 'issue', item: issue })),
@@ -228,54 +224,36 @@ async function applyRepairAsync({ kind, item, plan }) {
     console.log(`Updated ${kind} #${item.number}: ${plan.action}`);
 }
 
-async function fetchIssuesAsync() {
+async function fetchIssuesAndPullRequestsAsync() {
     const issues = [];
-    let page = 1;
-
-    while (true) {
-        const pageIssues = await restAsync(`/repos/${owner}/${repo}/issues?state=all&per_page=100&page=${page}`);
-        const issuesOnly = pageIssues.filter(issue => !issue.pull_request);
-
-        issues.push(...issuesOnly);
-
-        if (pageIssues.length < 100) {
-            break;
-        }
-
-        page += 1;
-    }
-
-    return issues;
-}
-
-async function fetchPullRequestsAsync() {
     const pullRequests = [];
     let page = 1;
 
     while (true) {
-        const pagePullRequests = await restAsync(`/repos/${owner}/${repo}/pulls?state=all&per_page=100&page=${page}`);
-        const issueBackedPullRequests = await Promise.all(
-            pagePullRequests.map(async pullRequest => {
-                const issue = await restAsync(`/repos/${owner}/${repo}/issues/${pullRequest.number}`);
-                return {
-                    number: pullRequest.number,
-                    state: pullRequest.state,
+        const pageItems = await restAsync(`/repos/${owner}/${repo}/issues?state=all&per_page=100&page=${page}`);
+
+        for (const item of pageItems) {
+            if (item.pull_request) {
+                pullRequests.push({
+                    number: item.number,
+                    state: item.state,
                     state_reason: null,
-                    labels: issue.labels ?? [],
-                };
-            }),
-        );
+                    labels: item.labels ?? [],
+                });
+                continue;
+            }
 
-        pullRequests.push(...issueBackedPullRequests);
+            issues.push(item);
+        }
 
-        if (pagePullRequests.length < 100) {
+        if (pageItems.length < 100) {
             break;
         }
 
         page += 1;
     }
 
-    return pullRequests;
+    return { issues, pullRequests };
 }
 
 async function fetchOpenLinkedIssueNumbersAsync() {
@@ -314,25 +292,12 @@ async function fetchOpenLinkedIssueNumbersAsync() {
 }
 
 async function restAsync(path, options = {}) {
-    const response = await fetch(`${apiBaseUrl}${path}`, {
+    return githubJsonRequest({
+        url: `${apiBaseUrl}${path}`,
+        token,
+        userAgent: 'solo-dev-board-sync-status-labels',
+        apiVersion: '2022-11-28',
         method: options.method ?? 'GET',
-        headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/vnd.github+json',
-            'User-Agent': 'solo-dev-board-sync-status-labels',
-            'X-GitHub-Api-Version': '2022-11-28',
-            ...(options.body ? { 'Content-Type': 'application/json' } : {}),
-        },
         body: options.body,
     });
-
-    if (response.status === 204) {
-        return null;
-    }
-
-    if (!response.ok) {
-        throw new Error(`REST request failed (${response.status}) for ${path}: ${await response.text()}`);
-    }
-
-    return response.json();
 }

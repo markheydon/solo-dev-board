@@ -1,4 +1,5 @@
 import { isIssueClosedLongEnoughToArchive } from './roadmap-sync-archive.mjs';
+import { githubJsonRequest, isTransientGitHubGraphQlError, withGitHubRetry } from './github-http.mjs';
 
 const apiBaseUrl = 'https://api.github.com';
 const graphqlUrl = `${apiBaseUrl}/graphql`;
@@ -260,6 +261,12 @@ async function syncIssueAsync(issue, issueItemsByContentId, timelineCache) {
         projectItem.isArchived = false;
     }
 
+    if (shouldArchive) {
+        await archiveProjectItemAsync(projectItem.id, `issue #${issue.number}`);
+        projectItem.isArchived = true;
+        return;
+    }
+
     const currentStatusName = projectItem.status?.name ?? null;
     const desiredStatusName = determineRoadmapStatus(issue, currentStatusName);
     const desiredPhaseOptionId = determinePhaseOptionId(issue);
@@ -287,11 +294,6 @@ async function syncIssueAsync(issue, issueItemsByContentId, timelineCache) {
     await syncDateFieldAsync(projectItem.id, fieldIds.startDate, projectItem.startDate?.date ?? null, startDate, `issue #${issue.number} start date`);
     await syncDateFieldAsync(projectItem.id, fieldIds.targetDate, projectItem.targetDate?.date ?? null, targetDate, `issue #${issue.number} target date`);
     await clearFieldAsync(projectItem.id, fieldIds.focusOrder, projectItem.focusOrder?.number ?? null, `issue #${issue.number} focus order`);
-
-    if (shouldArchive) {
-        await archiveProjectItemAsync(projectItem.id, `issue #${issue.number}`);
-        projectItem.isArchived = true;
-    }
 }
 
 async function syncParentIssuesAsync(issueItemsByContentId, issueByNumber, timelineCache) {
@@ -693,41 +695,53 @@ async function fetchIssueTimelineAsync(issueNumber) {
 }
 
 async function graphqlAsync(query, variables) {
-    const response = await fetch(graphqlUrl, {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            Accept: 'application/vnd.github+json',
-            'User-Agent': 'solo-dev-board-roadmap-sync',
-        },
-        body: JSON.stringify({ query, variables }),
-    });
+    return withGitHubRetry(async () => {
+        const response = await fetch(graphqlUrl, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                Accept: 'application/vnd.github+json',
+                'User-Agent': 'solo-dev-board-roadmap-sync',
+            },
+            body: JSON.stringify({ query, variables }),
+        });
 
-    const payload = await response.json();
+        const text = await response.text();
+        let payload = {};
 
-    if (!response.ok || (payload.errors && payload.errors.length > 0)) {
-        throw new Error(`GraphQL request failed: ${JSON.stringify(payload.errors ?? payload, null, 2)}`);
-    }
+        try {
+            payload = text ? JSON.parse(text) : {};
+        } catch {
+            payload = { message: text };
+        }
 
-    return payload.data;
+        const hasErrors = Boolean(payload.errors && payload.errors.length > 0);
+        const errorText = hasErrors ? JSON.stringify(payload.errors) : text;
+        const graphqlRateLimited = hasErrors && isTransientGitHubGraphQlError(errorText);
+
+        if (response.ok && !hasErrors) {
+            return { success: true, value: payload.data };
+        }
+
+        return {
+            success: false,
+            status: response.status,
+            errorText,
+            retryAfter: response.headers.get('retry-after'),
+            graphqlRateLimited,
+            error: new Error(`GraphQL request failed: ${JSON.stringify(payload.errors ?? payload, null, 2)}`),
+        };
+    }, 'GraphQL');
 }
 
 async function restAsync(path) {
-    const response = await fetch(`${apiBaseUrl}${path}`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/vnd.github+json',
-            'User-Agent': 'solo-dev-board-roadmap-sync',
-            'X-GitHub-Api-Version': '2022-11-28',
-        },
+    return githubJsonRequest({
+        url: `${apiBaseUrl}${path}`,
+        token,
+        userAgent: 'solo-dev-board-roadmap-sync',
+        apiVersion: '2022-11-28',
     });
-
-    if (!response.ok) {
-        throw new Error(`REST request failed (${response.status}) for ${path}: ${await response.text()}`);
-    }
-
-    return response.json();
 }
 
 function getLabelNames(issue) {

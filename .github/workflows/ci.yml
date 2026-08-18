@@ -60,8 +60,8 @@ jobs:
         with:
           node-version: "24"
 
-      - name: Run archive-rule tests
-        run: node --test .github/scripts/roadmap-sync-archive.test.mjs
+      - name: Run GitHub automation script tests
+        run: node --test .github/scripts/*.test.mjs
 
   e2e-pat:
     name: End-to-End (Playwright, PAT mode)

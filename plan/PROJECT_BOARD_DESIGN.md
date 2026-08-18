@@ -75,7 +75,7 @@ The following automation rules are configured on the board. These are documented
 - **Disabled:** `Auto-add to project`, `Pull request linked to issue`, `Pull request merged`, `Auto-archive items`, `Code changes requested`, `Code review approved`, and `Item reopened`.
 - **Reason:** SoloDevBoard uses an issue-driven roadmap. Agents manage issue creation and metadata deliberately. Built-in GitHub workflows stay as narrow safety nets. **Archiving closed cards is Roadmap Sync’s job**, not GitHub’s Auto-archive workflow, because GitHub’s `updated:` filter is the project-card clock and a bulk field write resets it.
 
-**Archive rule (Roadmap Sync, nightly and on issue events):** closed, non-duplicate issues whose **`closed_at` is at least 14 calendar days ago** are archived on Project #8 via `archiveProjectV2Item`. Open items are never archived. Reopened issues are unarchived. Duplicate closures are still **removed**, not archived. Prefer this over GitHub **Auto-archive items**; if that workflow is on, turn it off so the two clocks do not fight.
+**Archive rule (Roadmap Sync, nightly and on issue events):** closed, non-duplicate issues whose **`closed_at` is at least 14 calendar days ago** are archived on Project #8 via `archiveProjectV2Item` without a preceding field-sync pass ([DEC-026](DECISIONS.md#dec-026-project-8-archive-rule-via-roadmap-sync)). Open items are never archived. Reopened issues are unarchived. Duplicate closures are still **removed**, not archived. Prefer this over GitHub **Auto-archive items**; if that workflow is on, turn it off so the two clocks do not fight.
 
 ### Label: status/in-progress Applied
 - **Trigger:** The `status/in-progress` label is applied to an issue.
