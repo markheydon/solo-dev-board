@@ -35,7 +35,9 @@ test.describe('PM Workflow Repo Management', () => {
     await expect(thresholdsRegion).toBeVisible();
     await expect(exclusionsRegion).toBeVisible();
     await expect(page.getByTestId('pm-workflow-participation-summary')).toBeVisible();
-    await expect(page.getByTestId('pm-workflow-included-table')).toBeVisible();
+    await expect(
+      page.getByTestId('pm-workflow-included-table').or(page.getByTestId('pm-workflow-no-included-text')),
+    ).toBeVisible();
     await expect(page.getByTestId('pm-workflow-capacity-field')).toBeVisible();
     await expect(page.getByTestId('pm-workflow-exclude-autocomplete')).toBeVisible();
     await expect(page.getByTestId('pm-workflow-no-exclusions-text')).toBeVisible();

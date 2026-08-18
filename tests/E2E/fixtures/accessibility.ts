@@ -106,6 +106,11 @@ export async function waitForAccessibilityScanReady(page: Page, path: string): P
   if (routePath === '/repositories') {
     await expect(page.getByTestId('repositories-refresh-button')).toBeEnabled({ timeout: 15_000 });
   }
+
+  if (routePath === '/pm-workflow/repos') {
+    await expect(page.getByTestId('pm-workflow-shell')).toBeVisible();
+    await expect(page.locator('[aria-label="Loading PM Workflow"]')).toBeHidden({ timeout: 15_000 });
+  }
 }
 
 /** Seeds the browser theme preference before the next navigation. */
