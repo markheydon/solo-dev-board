@@ -3,6 +3,7 @@ using SoloDevBoard.Application.Services.Audit;
 using SoloDevBoard.Application.Services.BoardRules;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Migration;
+using SoloDevBoard.Application.Services.PmWorkflow;
 using SoloDevBoard.Application.Services.Repositories;
 using SoloDevBoard.Application.Services.Triage;
 using SoloDevBoard.Application.Services.Workflows;
@@ -28,6 +29,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IBoardRulesService, BoardRulesService>();
         services.AddScoped<ITriageService, TriageService>();
         services.AddScoped<IWorkflowTemplateService, WorkflowTemplateService>();
+        services.AddScoped<IPmSettingsService, PmSettingsService>();
 
         return services;
     }

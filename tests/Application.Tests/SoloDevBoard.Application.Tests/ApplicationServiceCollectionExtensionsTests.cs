@@ -4,6 +4,7 @@ using SoloDevBoard.Application.Services.BoardRules;
 using SoloDevBoard.Application.Services.Common;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Migration;
+using SoloDevBoard.Application.Services.PmWorkflow;
 using SoloDevBoard.Application.Services.Repositories;
 using SoloDevBoard.Application.Services.Triage;
 using SoloDevBoard.Application.Services.Workflows;
@@ -45,6 +46,7 @@ public sealed class ApplicationServiceCollectionExtensionsTests
         AssertServiceRegistration<IBoardRulesService, BoardRulesService>(services, ServiceLifetime.Scoped);
         AssertServiceRegistration<ITriageService, TriageService>(services, ServiceLifetime.Scoped);
         AssertServiceRegistration<IWorkflowTemplateService, WorkflowTemplateService>(services, ServiceLifetime.Scoped);
+        AssertServiceRegistration<IPmSettingsService, PmSettingsService>(services, ServiceLifetime.Scoped);
     }
 
     private static void AssertServiceRegistration<TService, TImplementation>(

@@ -9,7 +9,9 @@ using MudBlazor;
 using MudBlazor.Services;
 using SoloDevBoard.App.Authentication;
 using SoloDevBoard.App.Components.Shell;
+using SoloDevBoard.App.PmWorkflow;
 using SoloDevBoard.App.Theming;
+using SoloDevBoard.Application.Services.PmWorkflow;
 using SoloDevBoard.Application.Services.Common;
 using SoloDevBoard.Infrastructure.Common;
 using SoloDevBoard.Infrastructure.GitHub;
@@ -53,6 +55,7 @@ builder.Services.AddScoped<IGitHubAuthenticationRecoveryService, GitHubAuthentic
 builder.Services.AddScoped<IGitHubAuthenticationSummaryService, GitHubAuthenticationSummaryService>();
 builder.Services.AddScoped<IThemePreferenceStorage, ThemePreferenceJsStorage>();
 builder.Services.AddScoped<IThemePreferenceService, ThemePreferenceService>();
+builder.Services.AddScoped<IPmSettingsStorage, PmSettingsJsStorage>();
 
 if (hostedSignInEnabled)
 {
