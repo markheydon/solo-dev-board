@@ -40,8 +40,8 @@ Skills not listed as active or optional companion should be removed from `.agent
 SoloDevBoard defines specialised role contracts for PM workflows. These orchestrate skills and enforce quality gates.
 
 - `pm-orchestrator`: GitHub Issues / Project #8 selection → scope validation → technical planning (breakdown-plan) → GitHub issue setup
-- `delivery`: Implementation preflight → code → tests → docs → decision log (if needed)
-- `verify`: Quality validation → PR creation → issue closure → release impact assessment
+- `delivery`: Implementation preflight → code → tests → docs → decision log (if needed) → PR review comment loop
+- `verify`: Quality validation (clean rebuild, package hygiene) → PR creation → issue closure → release impact assessment
 
 **Role contracts:** `.agents/contracts/*.md`  
 **Workflow entry points:** `.agents/workflows/*.md` (canonical)  
@@ -55,11 +55,12 @@ Reusable workflows for PM operations (canonical definitions in `.agents/workflow
 - `daily-start`: Session orientation → issue and project board health → blocker identification → next action recommendation
 - `plan-next-issue`: GitHub Issues / Project #8 selection → scope validation → breakdown-plan → GitHub issue creation
 - `preflight-issue`: Implementation preflight only (context, codebase discovery, sketch) — no coding
+- `deliver-issue`: Preflight (when required) → implementation → verify/PR (happy path orchestration)
 - `implement-issue`: Preflight → implementation → tests → docs → decision log
-- `verify-and-create-pr`: Quality gates → PR creation → issue closure
-- `address-pr-review-comments`: PR review feedback → thread replies → resolved conversations
+- `verify-and-create-pr`: Quality gates (clean rebuild, package hygiene) → PR creation → issue closure
+- `address-pr-review-comments`: PR review feedback (any reviewer) → implement → thread replies → resolved conversations
 - `pm-progress-review`: Milestone health since last review → velocity trends → release confidence → top 3 next-session priorities
-- `code-review`: PR and branch review against repository conventions
+- `code-review`: PR and branch review against repository conventions (GitHub review with resolvable threads)
 - `docs-update`: Documentation refresh and decision log updates
 
 **Workflow definitions:** [`.agents/workflows/`](../../.agents/workflows/)  
@@ -67,7 +68,7 @@ Reusable workflows for PM operations (canonical definitions in `.agents/workflow
 
 ## Tool entry points
 
-Cursor slash commands and Copilot prompts are thin discovery layers only. Examples: `/preflight-issue` → [`.agents/workflows/preflight-issue.md`](../../.agents/workflows/preflight-issue.md) → [`.agents/contracts/delivery.md`](../../.agents/contracts/delivery.md); `/implement-issue` → [`.agents/workflows/implement-issue.md`](../../.agents/workflows/implement-issue.md) → [`.agents/contracts/delivery.md`](../../.agents/contracts/delivery.md)
+Cursor slash commands and Copilot prompts are thin discovery layers only. Examples: `/preflight-issue` → [`.agents/workflows/preflight-issue.md`](../../.agents/workflows/preflight-issue.md) → [`.agents/contracts/delivery.md`](../../.agents/contracts/delivery.md); `/deliver-issue` → [`.agents/workflows/deliver-issue.md`](../../.agents/workflows/deliver-issue.md) → Delivery + Verify contracts; `/implement-issue` → [`.agents/workflows/implement-issue.md`](../../.agents/workflows/implement-issue.md) → [`.agents/contracts/delivery.md`](../../.agents/contracts/delivery.md)
 
 ## Canonical Sources
 

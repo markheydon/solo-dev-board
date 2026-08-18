@@ -60,12 +60,12 @@ Confirm:
 
 ### 3. Test Validation
 
-Validate relevant tests execute successfully.
+Validate relevant tests execute successfully on a clean rebuild.
 
 Suggested command:
 
 ```bash
-dotnet test
+dotnet clean SoloDevBoard.slnx && dotnet test SoloDevBoard.slnx
 ```
 
 Confirm:
@@ -75,9 +75,29 @@ Confirm:
 
 Do not perform exhaustive test audits.
 
+Escalate to Delivery Agent if tests fail. Do not patch code.
+
 ---
 
-### 4. Documentation Validation
+### 4. Package Validation
+
+Before creating the pull request, confirm direct package references introduced or bumped on this branch are current.
+
+Suggested command:
+
+```bash
+dotnet list SoloDevBoard.slnx package --outdated
+```
+
+Rules:
+
+- Compare against `.csproj` files changed on this branch.
+- If a **direct** `PackageReference` added or version-bumped in this branch is not the latest version listed by `dotnet list package --outdated`, escalate to Delivery Agent to bump before opening the PR.
+- Do not block on unrelated pre-existing outdated packages elsewhere in the solution.
+
+---
+
+### 5. Documentation Validation
 
 Only check documentation when:
 
@@ -94,7 +114,7 @@ Do not open archived ADRs, release plans, scope documents, or implementation pla
 
 ---
 
-### 5. Pull Request Creation
+### 6. Pull Request Creation
 
 Create the PR after validation succeeds.
 
@@ -111,7 +131,7 @@ Follow [`plan/PULL_REQUEST_POLICY.md`](../../plan/PULL_REQUEST_POLICY.md) in ful
 
 ---
 
-### 6. Verify Summary
+### 7. Verify Summary
 
 Provide a concise verify summary.
 
@@ -119,12 +139,13 @@ Preferred format:
 
 ```text
 ✅ Build passed
-✅ Tests passed
+✅ Tests passed (clean rebuild)
+✅ Packages validated
 ✅ Documentation validated
 
-PR #123 created.
+PR #123 created: <url>
 
-Ready for merge.
+Next: open a new agent session and run `/code-review` on PR #123 (must submit a GitHub review, not chat only).
 ```
 
 Keep summaries brief.
@@ -159,6 +180,7 @@ Escalate to Delivery Agent if:
 
 - Build fails
 - Tests fail
+- A direct package added or bumped on this branch is outdated
 - Code changes are required
 - Documentation updates are required
 
@@ -169,10 +191,11 @@ Escalate to Delivery Agent if:
 Verify is complete when:
 
 - Build passes
-- Tests pass
+- Clean rebuild tests pass
+- Package validation passes (direct packages introduced or bumped on this branch)
 - Documentation validation passes (if applicable)
 - PR is created
-- User is informed of outcome
+- User is informed of outcome and the `/code-review` handoff
 
 ---
 
@@ -182,12 +205,13 @@ Successful verify:
 
 ```text
 ✅ Build passed
-✅ Tests passed
+✅ Tests passed (clean rebuild)
+✅ Packages validated
 ✅ Documentation validated
 
-PR #123 created.
+PR #123 created: <url>
 
-Ready for merge.
+Next: open a new agent session and run `/code-review` on PR #123.
 ```
 
 Failed verify:
