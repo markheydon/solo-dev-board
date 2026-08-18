@@ -206,4 +206,30 @@ public interface IGitHubService
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>A task that represents the asynchronous duplicate closure operation.</returns>
     Task CloseTriageItemAsDuplicateAsync(string owner, string repo, GitHubTriageItemType itemType, int itemNumber, string duplicateReference, CancellationToken cancellationToken = default);
+
+    #region Work-item catalogue methods
+
+    /// <summary>Retrieves review-pending metadata for open pull requests in the specified repository.</summary>
+    /// <param name="owner">The GitHub account owner login.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>Review metadata keyed by pull request number.</returns>
+    Task<IReadOnlyList<PullRequestReviewMetadata>> GetOpenPullRequestReviewMetadataAsync(
+        string owner,
+        string repo,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Retrieves tracked sub-issue summary counts for the specified open issues.</summary>
+    /// <param name="owner">The GitHub account owner login.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="issueNumbers">Repository-scoped issue numbers to inspect.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>Sub-issue totals for issues that expose tracked sub-issues.</returns>
+    Task<IReadOnlyList<IssueSubIssueSummary>> GetIssueSubIssueSummariesAsync(
+        string owner,
+        string repo,
+        IReadOnlyList<int> issueNumbers,
+        CancellationToken cancellationToken = default);
+
+    #endregion
 }

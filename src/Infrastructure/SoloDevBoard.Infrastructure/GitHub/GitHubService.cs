@@ -788,6 +788,206 @@ public sealed class GitHubService : IGitHubService
         }
     }
 
+    #region Work-item catalogue methods
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<PullRequestReviewMetadata>> GetOpenPullRequestReviewMetadataAsync(
+        string owner,
+        string repo,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+
+        const string query =
+            """
+            query WorkItemCataloguePullRequestReviews($owner: String!, $repo: String!) {
+              repository(owner: $owner, name: $repo) {
+                pullRequests(first: 100, states: OPEN) {
+                  nodes {
+                    number
+                    isDraft
+                    reviewDecision
+                    reviewRequests(first: 1) {
+                      totalCount
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        var client = CreateAuthenticatedClient();
+        var requestBody = new GraphQlRequestDto(
+            query,
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["owner"] = owner,
+                ["repo"] = repo,
+            });
+
+        using var response = await client.PostAsJsonAsync("/graphql", requestBody, JsonOptions, cancellationToken).ConfigureAwait(false);
+        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
+
+        var payload = await response.Content.ReadFromJsonAsync<WorkItemCataloguePullRequestReviewsResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
+            ?? throw CreateInvalidResponseException("GraphQL response body was empty.", "/graphql");
+
+        if (payload.Errors.Count > 0)
+        {
+            var combinedErrors = string.Join("; ", payload.Errors.Select(static error => error.Message));
+            throw new HttpRequestException($"GitHub GraphQL request failed. Errors: {combinedErrors}");
+        }
+
+        return payload.Data?.Repository?.PullRequests?.Nodes
+            .Where(static node => node is not null)
+            .Select(static node => node!)
+            .Select(static node => new PullRequestReviewMetadata
+            {
+                Number = node.Number,
+                HasReviewPending = IsReviewPending(node.IsDraft, node.ReviewDecision, node.ReviewRequests?.TotalCount ?? 0),
+            })
+            .ToArray() ?? [];
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<IssueSubIssueSummary>> GetIssueSubIssueSummariesAsync(
+        string owner,
+        string repo,
+        IReadOnlyList<int> issueNumbers,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+        ArgumentNullException.ThrowIfNull(issueNumbers);
+
+        if (issueNumbers.Count == 0)
+        {
+            return [];
+        }
+
+        const string query =
+            """
+            query WorkItemCatalogueSubIssues($owner: String!, $repo: String!) {
+              repository(owner: $owner, name: $repo) {
+                epics: issues(states: OPEN, first: 100, labels: ["type/epic"]) {
+                  nodes {
+                    number
+                    trackedIssues(first: 100) {
+                      totalCount
+                      nodes {
+                        ... on Issue {
+                          state
+                        }
+                      }
+                    }
+                  }
+                }
+                features: issues(states: OPEN, first: 100, labels: ["type/feature"]) {
+                  nodes {
+                    number
+                    trackedIssues(first: 100) {
+                      totalCount
+                      nodes {
+                        ... on Issue {
+                          state
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        var client = CreateAuthenticatedClient();
+        var requestBody = new GraphQlRequestDto(
+            query,
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["owner"] = owner,
+                ["repo"] = repo,
+            });
+
+        using var response = await client.PostAsJsonAsync("/graphql", requestBody, JsonOptions, cancellationToken).ConfigureAwait(false);
+        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
+
+        var payload = await response.Content.ReadFromJsonAsync<WorkItemCatalogueSubIssuesResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
+            ?? throw CreateInvalidResponseException("GraphQL response body was empty.", "/graphql");
+
+        if (payload.Errors.Count > 0)
+        {
+            var combinedErrors = string.Join("; ", payload.Errors.Select(static error => error.Message));
+            throw new HttpRequestException($"GitHub GraphQL request failed. Errors: {combinedErrors}");
+        }
+
+        var requestedNumbers = issueNumbers.ToHashSet();
+        var summaries = new List<IssueSubIssueSummary>();
+        var repository = payload.Data?.Repository;
+        if (repository is null)
+        {
+            return [];
+        }
+
+        AppendSubIssueSummaries(summaries, repository.Epics?.Nodes, requestedNumbers);
+        AppendSubIssueSummaries(summaries, repository.Features?.Nodes, requestedNumbers);
+
+        return summaries;
+    }
+
+    private static void AppendSubIssueSummaries(
+        ICollection<IssueSubIssueSummary> summaries,
+        IReadOnlyList<WorkItemCatalogueIssueNodeDto?>? nodes,
+        ISet<int> requestedNumbers)
+    {
+        if (nodes is null)
+        {
+            return;
+        }
+
+        foreach (var node in nodes)
+        {
+            if (node is null || !requestedNumbers.Contains(node.Number))
+            {
+                continue;
+            }
+
+            var trackedIssues = node.TrackedIssues;
+            if (trackedIssues is null || trackedIssues.TotalCount == 0)
+            {
+                continue;
+            }
+
+            var completedCount = trackedIssues.Nodes
+                .Count(static child => child is not null
+                    && child.State.Equals("CLOSED", StringComparison.OrdinalIgnoreCase));
+
+            summaries.Add(new IssueSubIssueSummary
+            {
+                Number = node.Number,
+                TotalCount = trackedIssues.TotalCount,
+                CompletedCount = completedCount,
+            });
+        }
+    }
+
+    private static bool IsReviewPending(bool isDraft, string? reviewDecision, int reviewRequestCount)
+    {
+        if (isDraft)
+        {
+            return false;
+        }
+
+        if (string.Equals(reviewDecision, "REVIEW_REQUIRED", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return reviewRequestCount > 0
+            && !string.Equals(reviewDecision, "APPROVED", StringComparison.OrdinalIgnoreCase);
+    }
+
+    #endregion
+
     private HttpClient CreateAuthenticatedClient()
     {
         // Authentication is handled by the configured GitHubAuthHandler on the named HttpClient.
@@ -1935,4 +2135,123 @@ public sealed class GitHubService : IGitHubService
         [JsonPropertyName("message")]
         public string Message { get; init; } = string.Empty;
     }
+
+    #region Work-item catalogue GraphQL DTOs
+
+    /// <summary>DTO wrapper for pull-request review metadata GraphQL responses.</summary>
+    private sealed record WorkItemCataloguePullRequestReviewsResponseDto
+    {
+        [JsonPropertyName("data")]
+        public WorkItemCataloguePullRequestReviewsDataDto? Data { get; init; }
+
+        [JsonPropertyName("errors")]
+        public IReadOnlyList<GraphQlErrorDto> Errors { get; init; } = [];
+    }
+
+    /// <summary>DTO for pull-request review metadata GraphQL data payload.</summary>
+    private sealed record WorkItemCataloguePullRequestReviewsDataDto
+    {
+        [JsonPropertyName("repository")]
+        public WorkItemCataloguePullRequestReviewsRepositoryDto? Repository { get; init; }
+    }
+
+    /// <summary>DTO for repository pull-request review metadata.</summary>
+    private sealed record WorkItemCataloguePullRequestReviewsRepositoryDto
+    {
+        [JsonPropertyName("pullRequests")]
+        public WorkItemCataloguePullRequestConnectionDto? PullRequests { get; init; }
+    }
+
+    /// <summary>DTO for pull-request review metadata connections.</summary>
+    private sealed record WorkItemCataloguePullRequestConnectionDto
+    {
+        [JsonPropertyName("nodes")]
+        public IReadOnlyList<WorkItemCataloguePullRequestNodeDto?> Nodes { get; init; } = [];
+    }
+
+    /// <summary>DTO for pull-request review metadata nodes.</summary>
+    private sealed record WorkItemCataloguePullRequestNodeDto
+    {
+        [JsonPropertyName("number")]
+        public int Number { get; init; }
+
+        [JsonPropertyName("isDraft")]
+        public bool IsDraft { get; init; }
+
+        [JsonPropertyName("reviewDecision")]
+        public string? ReviewDecision { get; init; }
+
+        [JsonPropertyName("reviewRequests")]
+        public WorkItemCatalogueReviewRequestConnectionDto? ReviewRequests { get; init; }
+    }
+
+    /// <summary>DTO for review-request connections.</summary>
+    private sealed record WorkItemCatalogueReviewRequestConnectionDto
+    {
+        [JsonPropertyName("totalCount")]
+        public int TotalCount { get; init; }
+    }
+
+    /// <summary>DTO wrapper for sub-issue summary GraphQL responses.</summary>
+    private sealed record WorkItemCatalogueSubIssuesResponseDto
+    {
+        [JsonPropertyName("data")]
+        public WorkItemCatalogueSubIssuesDataDto? Data { get; init; }
+
+        [JsonPropertyName("errors")]
+        public IReadOnlyList<GraphQlErrorDto> Errors { get; init; } = [];
+    }
+
+    /// <summary>DTO for sub-issue summary GraphQL data payload.</summary>
+    private sealed record WorkItemCatalogueSubIssuesDataDto
+    {
+        [JsonPropertyName("repository")]
+        public WorkItemCatalogueSubIssuesRepositoryDto? Repository { get; init; }
+    }
+
+    /// <summary>DTO for repository sub-issue summaries.</summary>
+    private sealed record WorkItemCatalogueSubIssuesRepositoryDto
+    {
+        [JsonPropertyName("epics")]
+        public WorkItemCatalogueIssueConnectionDto? Epics { get; init; }
+
+        [JsonPropertyName("features")]
+        public WorkItemCatalogueIssueConnectionDto? Features { get; init; }
+    }
+
+    /// <summary>DTO for issue connections in sub-issue summary queries.</summary>
+    private sealed record WorkItemCatalogueIssueConnectionDto
+    {
+        [JsonPropertyName("nodes")]
+        public IReadOnlyList<WorkItemCatalogueIssueNodeDto?> Nodes { get; init; } = [];
+    }
+
+    /// <summary>DTO for issue nodes in sub-issue summary queries.</summary>
+    private sealed record WorkItemCatalogueIssueNodeDto
+    {
+        [JsonPropertyName("number")]
+        public int Number { get; init; }
+
+        [JsonPropertyName("trackedIssues")]
+        public WorkItemCatalogueTrackedIssueConnectionDto? TrackedIssues { get; init; }
+    }
+
+    /// <summary>DTO for tracked-issue connections.</summary>
+    private sealed record WorkItemCatalogueTrackedIssueConnectionDto
+    {
+        [JsonPropertyName("totalCount")]
+        public int TotalCount { get; init; }
+
+        [JsonPropertyName("nodes")]
+        public IReadOnlyList<WorkItemCatalogueTrackedIssueNodeDto?> Nodes { get; init; } = [];
+    }
+
+    /// <summary>DTO for tracked-issue nodes.</summary>
+    private sealed record WorkItemCatalogueTrackedIssueNodeDto
+    {
+        [JsonPropertyName("state")]
+        public string State { get; init; } = string.Empty;
+    }
+
+    #endregion
 }

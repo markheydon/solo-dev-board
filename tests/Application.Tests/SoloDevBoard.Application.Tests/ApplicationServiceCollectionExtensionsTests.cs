@@ -48,6 +48,7 @@ public sealed class ApplicationServiceCollectionExtensionsTests
         AssertServiceRegistration<IWorkflowTemplateService, WorkflowTemplateService>(services, ServiceLifetime.Scoped);
         AssertServiceRegistration<IPmSettingsService, PmSettingsService>(services, ServiceLifetime.Scoped);
         AssertServiceRegistration<IProjectItemCatalogueService, ProjectItemCatalogueService>(services, ServiceLifetime.Scoped);
+        AssertServiceRegistration<IPmWorkItemCatalogueService, PmWorkItemCatalogueService>(services, ServiceLifetime.Scoped);
     }
 
     private static void AssertServiceRegistration<TService, TImplementation>(
