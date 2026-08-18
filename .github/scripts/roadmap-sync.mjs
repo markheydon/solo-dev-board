@@ -1,4 +1,5 @@
 import { isIssueClosedLongEnoughToArchive } from './roadmap-sync-archive.mjs';
+import { githubJsonRequest, isTransientGitHubLimit, delayMsForAttempt, sleep, githubMaxAttempts } from './github-http.mjs';
 
 const apiBaseUrl = 'https://api.github.com';
 const graphqlUrl = `${apiBaseUrl}/graphql`;
@@ -693,41 +694,58 @@ async function fetchIssueTimelineAsync(issueNumber) {
 }
 
 async function graphqlAsync(query, variables) {
-    const response = await fetch(graphqlUrl, {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            Accept: 'application/vnd.github+json',
-            'User-Agent': 'solo-dev-board-roadmap-sync',
-        },
-        body: JSON.stringify({ query, variables }),
-    });
+    for (let attempt = 1; attempt <= githubMaxAttempts; attempt += 1) {
+        const response = await fetch(graphqlUrl, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                Accept: 'application/vnd.github+json',
+                'User-Agent': 'solo-dev-board-roadmap-sync',
+            },
+            body: JSON.stringify({ query, variables }),
+        });
 
-    const payload = await response.json();
+        const text = await response.text();
+        let payload = {};
 
-    if (!response.ok || (payload.errors && payload.errors.length > 0)) {
+        try {
+            payload = text ? JSON.parse(text) : {};
+        } catch {
+            payload = { message: text };
+        }
+
+        const payloadText = text;
+        const hasErrors = Boolean(payload.errors && payload.errors.length > 0);
+        const errorText = hasErrors ? JSON.stringify(payload.errors) : payloadText;
+        const graphqlRateLimited = hasErrors && /RATE_LIMITED|rate limit/i.test(errorText);
+
+        if (response.ok && !hasErrors) {
+            return payload.data;
+        }
+
+        if ((isTransientGitHubLimit(response.status, errorText) || graphqlRateLimited) && attempt < githubMaxAttempts) {
+            const delayMs = delayMsForAttempt(attempt, response.headers.get('retry-after'));
+            console.warn(
+                `GitHub rate limit on GraphQL (HTTP ${response.status}); waiting ${delayMs}ms (attempt ${attempt}/${githubMaxAttempts}).`,
+            );
+            await sleep(delayMs);
+            continue;
+        }
+
         throw new Error(`GraphQL request failed: ${JSON.stringify(payload.errors ?? payload, null, 2)}`);
     }
 
-    return payload.data;
+    throw new Error('GraphQL request failed after retries.');
 }
 
 async function restAsync(path) {
-    const response = await fetch(`${apiBaseUrl}${path}`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/vnd.github+json',
-            'User-Agent': 'solo-dev-board-roadmap-sync',
-            'X-GitHub-Api-Version': '2022-11-28',
-        },
+    return githubJsonRequest({
+        url: `${apiBaseUrl}${path}`,
+        token,
+        userAgent: 'solo-dev-board-roadmap-sync',
+        apiVersion: '2022-11-28',
     });
-
-    if (!response.ok) {
-        throw new Error(`REST request failed (${response.status}) for ${path}: ${await response.text()}`);
-    }
-
-    return response.json();
 }
 
 function getLabelNames(issue) {
