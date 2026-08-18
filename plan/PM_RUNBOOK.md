@@ -1,4 +1,4 @@
-# Product Manager Daily Runbook
+# Product Manager Runbook
 
 **Purpose:** Your single source of truth for managing SoloDevBoard development using AI agents and prompts.
 
@@ -10,22 +10,22 @@ This runbook orchestrates [`.agents/contracts/`](../.agents/contracts/) and [`.a
 
 | **When you want to...**                  | **How to invoke**                                          | **What it produces**                          |
 |------------------------------------------|------------------------------------------------------------|-----------------------------------------------|
-| Start your day                           | "Run the daily start workflow" or `/daily-start`           | Status summary + next action recommendation   |
+| Start a working session                  | "Run the daily start workflow" or `/daily-start`           | Status summary + next action recommendation   |
 | Plan the next feature                    | "Plan the next item" or `/plan-next-issue`                 | GitHub issues with full metadata + tech spec  |
 | Implement planned work                   | "Implement issue #N" or `/implement-issue`                 | Preflight + code + tests + docs + decision log (if needed) |
 | Preflight before implementation          | "Preflight issue #N" or `/preflight-issue`                  | Context, touch map, approach sketch (no code)              |
 | Verify and create PR                     | "Verify issue #N", "Create PR for issue #N", or `/verify-and-create-pr` | PR + quality validation + issue closure       |
 | Address PR review comments               | "Address PR review comments on PR #N" or `/address-pr-review-comments` | PR fixes + thread replies + resolved comments |
-| Weekly health check                      | "Run the weekly PM review" or `/weekly-pm-review`            | Executive summary + priorities for next week  |
+| Progress review (since last update)      | "Run the PM progress review" or `/pm-progress-review`        | Executive summary + next-session priorities   |
 | End-to-end feature delivery              | `.agents/skills/repo-pm-feature-workflow/SKILL.md`         | Full workflow from backlog to closure         |
 
 ---
 
-## Daily Operating Rhythm
+## Working Session Rhythm
 
-### Morning Ritual (5-10 minutes)
+### Session Start (5–10 minutes)
 
-**Goal:** Get oriented, identify priorities, clear blockers.
+**Goal:** Get oriented at the start of a working session, identify priorities, clear blockers.
 
 #### Step 1: Run Daily Start Prompt
 ```
@@ -39,7 +39,7 @@ Run the daily start workflow
 - Recommends your next action
 - Identifies the next story-level batch that can be placed in **Up Next** if you request board updates.
 
-**What you produce:** Decision on what to work on today.
+**What you produce:** Decision on what to work on in this session.
 
 **Queue rule:** Daily start is read-only by default. If you want the recommendation reflected on the board, explicitly ask the agent to move the chosen stories, enablers, or tests into **Up Next** and set **Focus Order**.
 
@@ -58,7 +58,7 @@ Run the daily start workflow
 
 **Run:**
 ```
-Populate Up Next for today
+Populate Up Next for this session
 ```
 
 **What it does:**
@@ -74,14 +74,14 @@ Populate Up Next for today
 
 ---
 
-### Execution Ritual (throughout the day)
+### Execution (throughout the session)
 
 **Goal:** Move work from backlog → planned → implemented → reviewed → closed.
 
 You'll follow this **4-stage workflow** for each feature:
 
 #### Stage 1: Planning (30-60 minutes per feature)
-**Trigger:** Daily start recommends planning, or you decide to plan specific item.
+**Trigger:** Session start recommends planning, or you decide to plan a specific item.
 
 **Run:**
 ```
@@ -148,7 +148,7 @@ Implement issue #[number]
 - Ensures UK English throughout
 
 **Board expectation before coding starts:**
-- The issue may already be in **Up Next** if it was selected during the morning ritual.
+- The issue may already be in **Up Next** if it was selected during session start.
 - Starting work moves the issue from **Up Next** or **Todo** into **In Progress**.
 - Starting work also stamps **Start Date** and the current size-based **Target Date** forecast on the roadmap item.
 - Untouched sibling items stay blank until they actually start.
@@ -269,22 +269,22 @@ Address PR review comments on PR #[number]
 
 ---
 
-### End-of-Day Ritual (5 minutes)
+### End-of-Session Wrap-Up (5 minutes)
 
-**Goal:** Leave work in a clean state, capture notes for tomorrow.
+**Goal:** Leave work in a clean state before you step away.
 
 #### Step 1: Quick Status Check
 **Run:**
 ```
 Run the daily start workflow
 ```
-*(Yes, same as morning — but now you see end-of-day status)*
+*(Same workflow as session start — now you see end-of-session status.)*
 
 **What to check:**
-- Any PRs still awaiting your approval? (Approve/merge before end of day if possible)
-- Any work still `status/in-progress`? (Leave note on what's next)
+- Any PRs still awaiting your approval? (Approve/merge before stepping away if possible)
+- Any work still `status/in-progress`? (Leave a note on what's next)
 - Any new blockers? (Document in issue comments)
-- Any stale **Up Next** items? (Either keep them queued for tomorrow or clear their **Focus Order** if they no longer belong in the active batch.)
+- Any stale **Up Next** items? (Either keep them queued for the next session or clear their **Focus Order** if they no longer belong in the active batch.)
 - Any roadmap drift? (Active or done items missing dates, stray PR cards, or planned issues missing from the board.)
 
 #### Step 2: Update Planning Artefacts (if needed)
@@ -293,42 +293,44 @@ Run the daily start workflow
 - **Release impact?** Update `plan/RELEASE_PLAN.md`
 
 #### Step 3: Commit and Push
-Ensure all today's work is committed and pushed to your branch.
+Ensure this session's work is committed and pushed to your branch.
 
 ---
 
-## Weekly Operating Rhythm
+## Progress Review Rhythm
 
-### End-of-Week Review (30-45 minutes, typically Friday or Monday)
+### Progress Review (30–45 minutes when you return to the project)
 
-**Goal:** Assess project health, validate governance, plan next week's priorities.
+**Goal:** Assess project health since the last review, validate governance, and set priorities for your next working session(s).
 
-#### Run Weekly PM Review Prompt
+#### Run PM Progress Review Prompt
 ```
-Run the weekly PM review
+Run the PM progress review
 ```
 
 **What it does:**
-- Calculates milestone progress and completion estimates
-- Validates scope (no drift detected)
-- Checks backlog hygiene (missing metadata, stale items)
-- Assesses release confidence (MVP completion, docs, ADRs)
-- Identifies blockers and velocity trends
-- Recommends top 3 priorities for next week
+- Establishes the review window from the newest file in `plan/weekly-updates/` (not a fixed seven-day cadence).
+- Calculates milestone progress and completion estimates.
+- Validates scope (no drift detected).
+- Checks backlog hygiene (missing metadata, stale items).
+- Assesses release confidence (MVP completion, docs, decision log).
+- Identifies blockers and delivery since the last review.
+- Recommends top 3 priorities for the next working session(s).
+- Writes `plan/weekly-updates/YYYY-MM-DD.md`.
 
 **What you produce:**
-- Weekly executive summary (status report)
-- Top 3 priorities for coming week
-- Backlog grooming to-do list (metadata gaps, stale items)
-- Release confidence assessment
+- Progress executive summary (status report).
+- Top 3 priorities for the next session(s).
+- Backlog grooming to-do list (metadata gaps, stale items).
+- Release confidence assessment.
 
 **Actions after review:**
-- Resolve flagged blockers
-- Update backlog metadata (acceptance criteria, size estimates)
-- Adjust priorities if milestones at risk
-- Update `plan/RELEASE_PLAN.md` if release confidence low
+- Resolve flagged blockers.
+- Update backlog metadata (acceptance criteria, size estimates).
+- Adjust priorities if milestones at risk.
+- Update `plan/RELEASE_PLAN.md` if release confidence low.
 
-**Next action:** Use top 3 priorities to guide next week's `plan-next-issue` selections.
+**Next action:** Use top 3 priorities to guide your next `plan-next-issue` selections.
 
 ---
 
@@ -339,7 +341,7 @@ Use this decision tree when you're unsure what to do next:
 ```
 START
   │
-  ├─ Morning / Start of Session?
+  ├─ Start of a working session?
   │   └─> Run daily start workflow → Follow recommendation
   │
   ├─ Have planned issue ready for coding?
@@ -358,8 +360,8 @@ START
   ├─ Need to plan next feature?
   │   └─> Run plan-next-issue workflow (auto-select or specify)
   │
-  ├─ End of week?
-  │   └─> Run weekly PM review → Review and plan next week
+  ├─ Time for a progress review?
+  │   └─> Run PM progress review → Review and plan next session(s)
   │
   ├─ Stuck / Blocked / Unsure?
   │   └─> Run daily start workflow → Get recommendation
@@ -373,7 +375,7 @@ START
 ## Agent Responsibilities (Who Does What)
 
 ### PM Orchestrator ([`.agents/contracts/pm-orchestrator.md`](../.agents/contracts/pm-orchestrator.md))
-**Trigger:** "Plan the next item", "What's next?", "Plan feature X"
+**Trigger:** "Plan the next item", "What's next?", "Plan feature X", "Run the PM progress review"
 
 **Responsibilities:**
 - Selects from backlog (priority, dependencies, milestone)
@@ -384,7 +386,7 @@ START
 - Hands off to Delivery Agent when ready
 
 **Boundaries:**
-- ❌ Does NOT write code (planning only)
+- ❌ Does NOT write code (planning and read-only progress review only)
 - ❌ Does NOT close issues (Verify Agent's job)
 - ❌ Does NOT override your scope decisions (flags and asks)
 
@@ -439,11 +441,11 @@ Canonical workflow definitions live in [`.agents/workflows/`](../.agents/workflo
 | Implement issue | [`implement-issue.md`](../.agents/workflows/implement-issue.md) | `/implement-issue` |
 | Verify and create PR | [`verify-and-create-pr.md`](../.agents/workflows/verify-and-create-pr.md) | `/verify-and-create-pr` |
 | Address PR review comments | [`address-pr-review-comments.md`](../.agents/workflows/address-pr-review-comments.md) | `/address-pr-review-comments` |
-| Weekly PM review | [`weekly-pm-review.md`](../.agents/workflows/weekly-pm-review.md) | `/weekly-pm-review` |
+| PM progress review | [`pm-progress-review.md`](../.agents/workflows/pm-progress-review.md) | `/pm-progress-review` |
 | Code review | [`code-review.md`](../.agents/workflows/code-review.md) | `/code-review` |
 | Docs update | [`docs-update.md`](../.agents/workflows/docs-update.md) | `/docs-update` |
 
-See the daily and weekly sections above for orchestration rhythm and quality gates.
+See the session and progress-review sections above for orchestration rhythm and quality gates.
 
 ---
 
@@ -531,7 +533,7 @@ These gates are defined in [`AGENTS.md`](../AGENTS.md) and enforced by role cont
 ---
 
 ### When Velocity Drops
-**Symptom:** Weekly review shows <50% of average velocity  
+**Symptom:** Progress review shows milestone at risk (<50% complete with deadline approaching).  
 **Action:**
 1. Check for blockers (external dependencies, waiting on review)
 2. Check for scope creep (too many in-progress items)
@@ -583,14 +585,14 @@ Take the next backlog item and run the full PM feature workflow
 ### Pattern 2: Milestone Sprint
 **Scenario:** Focus on completing a specific milestone (e.g., Phase 1).
 
-**Morning routine:**
+**Session start:**
 ```
 Plan next item for Phase 1
 ```
 
-**Throughout day:** Implement and review Phase 1 issues only.
+**Throughout the session:** Implement and review milestone issues only.
 
-**End of week:** Run weekly review, check Phase 1 completion percentage.
+**After a focused delivery block:** Run progress review, check milestone completion percentage.
 
 ---
 
@@ -628,20 +630,20 @@ Plan next item for Phase 1
 
 ---
 
-### "Weekly review shows milestone at risk"
-**Cause:** <50% complete with <2 weeks remaining.  
+### "Progress review shows milestone at risk"
+**Cause:** <50% complete with deadline approaching.  
 **Fix:** Re-prioritise backlog (defer lower-priority items), or extend milestone deadline in `plan/IMPLEMENTATION_PLAN.md`.
 
 ---
 
 ## Checklist: "Am I Using This Correctly?"
 
-- [ ] I run `daily-start` every morning to get oriented
+- [ ] I run `daily-start` at the start of each working session to get oriented
 - [ ] I use `plan-next-issue` to create technical specs before coding
 - [ ] I use `implement-issue` (workflow prompt or `/implement-issue`) only for planned issues with clear acceptance criteria
 - [ ] `implement-issue` runs preflight before coding; I use `/preflight-issue` first for large items or enablers when I want to review the approach
 - [ ] I use `verify-and-create-pr` to validate quality before PR merge
-- [ ] I run `weekly-pm-review` at least once per week
+- [ ] I run `pm-progress-review` when I return to the project after a gap or need a governance checkpoint
 - [ ] All my GitHub issues have labels per `plan/LABEL_STRATEGY.md`
 - [ ] All user-facing features have docs in `website/content/docs/`
 - [ ] All architectural decisions are recorded in `plan/DECISIONS.md` via `repo-decision-log`
@@ -653,7 +655,7 @@ Plan next item for Phase 1
 
 ## Quick Command Reference
 
-**Morning:**
+**Session start:**
 ```
 Run the daily start workflow
 ```
@@ -683,9 +685,9 @@ Create PR for [feature name]
 Close issue #[number] after PR #[number] merged
 ```
 
-**Weekly:**
+**Progress review:**
 ```
-Run the weekly PM review
+Run the PM progress review
 ```
 
 **End-to-End:**
@@ -703,9 +705,9 @@ Take the next backlog item and run the full PM feature workflow
 2. **Governance** ([`AGENTS.md`](../AGENTS.md), `plan/LABEL_STRATEGY.md`, `plan/PROJECT_MANAGEMENT.md`) — define how to build it
 3. **Role contracts** ([`.agents/contracts/`](../.agents/contracts/)) — execution contracts (who does what)
 4. **Workflow entry points** ([`.agents/workflows/`](../.agents/workflows/)) — canonical workflow stubs (when to do it)
-5. **This runbook** — orchestration guide (daily/weekly rhythm)
+5. **This runbook** — orchestration guide (session rhythm and progress reviews)
 
-**Use this runbook as your daily reference.** It tells you which workflow to run at each stage, what each produces, and what gates must pass before moving forward.
+**Use this runbook as your operating reference.** It tells you which workflow to run at each stage, what each produces, and what gates must pass before moving forward.
 
 ---
 

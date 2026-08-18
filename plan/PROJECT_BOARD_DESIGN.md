@@ -91,8 +91,8 @@ The following automation rules are configured on the board. These are documented
 - **Trigger:** An issue is closed as a duplicate (via the Triage UI or manually).
 - **Action:** Remove from the board (do not add to Done).
 
-### Weekly Board Hygiene Audit
-- **Trigger:** Weekly PM review, or any time the roadmap view appears inconsistent.
+### Board Hygiene Audit
+- **Trigger:** PM progress review, or any time the roadmap view appears inconsistent.
 - **Action:** Backfill missing Start Date / Target Date values for active or done items, correct invalid date pairs, remove stray pull request cards, and add missing planned issues back to the roadmap board.
 - **Status labels:** `.github/scripts/sync-status-labels.mjs` runs automatically before `roadmap-sync.mjs` in the Roadmap Sync workflow (nightly schedule, `workflow_dispatch`, and issue events). Use `/sync-status-labels` for on-demand inspection and ad-hoc repairs.
 

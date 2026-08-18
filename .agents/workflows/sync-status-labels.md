@@ -1,7 +1,7 @@
 # Sync Status Labels
 
 **Contract:** [`.agents/skills/repo-github-gh-cli/SKILL.md`](../skills/repo-github-gh-cli/SKILL.md) (label safety rules)
-**Runbook:** [`plan/PROJECT_BOARD_DESIGN.md`](../../plan/PROJECT_BOARD_DESIGN.md) — Weekly Board Hygiene Audit
+**Runbook:** [`plan/PROJECT_BOARD_DESIGN.md`](../../plan/PROJECT_BOARD_DESIGN.md) — Board Hygiene Audit
 
 ## Easy-to-miss specifics
 

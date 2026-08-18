@@ -314,9 +314,9 @@ gh project item-edit --id "$feature_item_id" --project-id "PVT_kwHOAJefG84BQ6bh"
 
 ---
 
-### Event 4: Weekly Board Hygiene Audit (PM Orchestrator responsibility)
+### Event 4: Board Hygiene Audit (PM Orchestrator responsibility)
 
-Run this during the weekly review, after unusual manual board edits, or whenever the roadmap view looks wrong.
+Run this during the PM progress review, after unusual manual board edits, or whenever the roadmap view looks wrong.
 
 Audit for:
 
