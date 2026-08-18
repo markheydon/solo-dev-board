@@ -124,13 +124,36 @@ The rules defined here serve as both the operational configuration and the refer
 
 In addition to the default board view, the following saved views are useful:
 
-| View | Filter | Purpose |
+| View | Layout | Purpose |
 |------|--------|---------|
-| **Story Board** | `-label:type/epic -label:type/feature` | Day-to-day execution view; sort by **Focus Order** ascending when using **Up Next**. |
-| **Feature Board** | `label:type/feature` | Track feature-level progress without execution sequencing. |
-| **Epic Board** | `label:type/epic` | Track epic-level progress and phase coverage. |
-| **By Phase** | Filter by milestone | Focus on the current phase. |
-| **Untracked Issues** | No milestone assigned | Identify issues that need scheduling. |
+| **Story Board** | Board | Day-to-day execution; filter `-label:type/epic -label:type/feature`; sort by **Focus Order** ascending when using **Up Next**. This is the view that should stay useful after v1.0.0. |
+| **Feature Board** | Board | Track feature-level progress (`label:type/feature`). |
+| **Epic Board** | Board | Track epic-level progress (`label:type/epic`). |
+| **Roadmap** | Roadmap (Gantt) | Date-range visualisation of items that already have **Start Date** and **Target Date**. See [Keeping the Roadmap layout useful](#keeping-the-roadmap-layout-useful). Filter out Done for a live queue. |
+
+The GitHub **Roadmap** layout only draws bars for items with dates. SoloDevBoard date rules leave **Todo** items blank until work starts, then overwrite **Target Date** with the close date. After a release, a month-scale Roadmap zoomed to "today" therefore shows:
+
+- Closed items as left-pointing arrows (their date range is in the past).
+- Parked v1.1.0 / v1.2.0 items with **no bars** (no dates yet).
+
+That is expected. Do not invent Start/Target dates on untouched items just to fill the Gantt.
+
+### Keeping the Roadmap layout useful
+
+Do this in the GitHub UI (saved view settings); agents cannot edit Project views via the GitHub MCP server.
+
+1. **Filter out Done** on the Roadmap view: `status:Todo,Up Next,In Progress` (or equivalent). The live queue is 22 items, not 152 closed cards.
+2. **Zoom to Quarter or Year** when you want historical bars; Month + Today will always look empty between active slices.
+3. **Treat Story Board as the default working view.** Bars reappear on Roadmap automatically when Roadmap Sync sets dates at Event 2 (work started) and Event 3 (done).
+4. Optional: enable **Auto-archive items** for Done cards after a cooling-off period so the Gantt is not dominated by Phases 1–4. Auto-archive is currently disabled by design; turning it on is a view-hygiene choice, not a date-policy change.
+
+Do not put speculative dates on the parked Phase 5 queue (#272–#288) or unstarted v1.1.0 stories. The next visible Roadmap bar should be the first v1.1.0 item that actually starts.
+
+### Agent write access (Projects v2)
+
+GitHub MCP in Cursor can list issues and pull requests. It cannot mutate a **user-owned** Project. The Cloud Agent `gh` token is typically a GitHub App installation token, which can **read** Project #8 (`gh project item-list`) but often cannot **edit** README, short description, views, or item fields.
+
+Item-field writes already go through the Actions bridge and `ROADMAP_PROJECT_TOKEN` (ADR-0017). That is enough for Status/Phase/Priority/dates. A second PAT in Cursor Cloud (`SDB_ROADMAP_PROJECT_TOKEN`, classic, `project` plus `repo` scopes) is optional and only worth it if you want agents to update the info pane README, short description, or repair fields without waiting for the workflow. Reuse the same token family as `ROADMAP_PROJECT_TOKEN`; do not mint a broader token.
 
 ---
 
@@ -139,6 +162,8 @@ In addition to the default board view, the following saved views are useful:
 The Project #8 info pane (https://github.com/users/markheydon/projects/8?pane=info) is a short public description. Keep it aligned with live milestones, not with a stale phase name.
 
 Canonical copy: [`plan/PROJECT_README.md`](PROJECT_README.md). Refresh that file during each PM progress review, then paste the **Info pane README** block into the project (this repository cannot always write the user-owned Project README from an agent runtime).
+
+Leave the Project **short description** empty unless it is updated in the same pass as the README. It is a separate field and currently tends to lag.
 
 Do not treat [`plan/BACKLOG.md`](BACKLOG.md) as the work queue in that README. Link GitHub Issues and this project instead.
 
