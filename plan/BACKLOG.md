@@ -2,7 +2,7 @@
 
 **GitHub Issues are the single source of truth for open work.** This page is a roadmap index only — it does not hold a living work queue.
 
-For historical backlog content (pre-migration), see [archive/BACKLOG-2026-07-18.md](archive/BACKLOG-2026-07-18.md). Migration details: [BACKLOG_TO_ISSUES_MIGRATION.md](BACKLOG_TO_ISSUES_MIGRATION.md). Post-1.0 numbering is [DEC-024](DECISIONS.md#dec-024-post-10-milestone-numbering).
+For historical backlog content (pre-migration), see [archive/BACKLOG-2026-07-18.md](archive/BACKLOG-2026-07-18.md). Migration details: [BACKLOG_TO_ISSUES_MIGRATION.md](BACKLOG_TO_ISSUES_MIGRATION.md). Post-1.0 planning is [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy).
 
 ## Where to find work
 
@@ -13,42 +13,33 @@ For historical backlog content (pre-migration), see [archive/BACKLOG-2026-07-18.
 | [Project info pane README](PROJECT_README.md) | Canonical copy of the Project #8 info pane text |
 | [Milestones](https://github.com/markheydon/solo-dev-board/milestones) | Release targeting |
 
-## Roadmap Status (2026-08-18)
+## Roadmap status (2026-08-18)
 
-| Phase | Milestone | Status |
-|-------|-----------|--------|
-| Phase 1 — Foundation | v0.1.0 | Complete |
-| Phase 2 — Label Manager + Audit Dashboard | v0.2.0 | Complete |
-| Phase 3 — One-Click Migration + Triage UI | v0.3.0 | Complete |
-| Phase 4 — Board Rules Visualiser + Workflow Templates | v0.4.0 | Complete |
-| Phase 6 — Polish, Testing, and Azure Deployment | v1.0.0 | Complete — [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) (2026-08-18) |
-| Deferred follow-ons | v1.1.0 | Not started — [#289](https://github.com/markheydon/solo-dev-board/issues/289) |
-| Phase 5 — Cross-Repo PM Workflow | v1.2.0 | Parked until after v1.0.0 — [#272](https://github.com/markheydon/solo-dev-board/issues/272) |
+| Release | Milestone | Status |
+|---------|-----------|--------|
+| Foundation | v0.1.0 | Complete |
+| Core features | v0.2.0 | Complete |
+| Migration + Triage | v0.3.0 | Complete |
+| Visualisation + Templates | v0.4.0 | Complete |
+| Production Ready | v1.0.0 | Complete — [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) (2026-08-18) |
+| **Next release** | **v1.1.0** | **Not started — 20 open issues** |
 
-The GitHub milestone for Phase 5 is `v1.2.0 — Cross-Repo PM Workflow` (renamed from `v0.5.0`). Deferred follow-ons use `v1.1.0 — Deferred follow-ons`.
+The sole open milestone is **v1.1.0**. It includes deferred v1.0 slices ([#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#292](https://github.com/markheydon/solo-dev-board/issues/292)), Cross-Repo PM Workflow ([#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288)), and dogfood fixes as they are raised.
 
-## Key epics
+**Unmilestoned backlog:** [#293](https://github.com/markheydon/solo-dev-board/issues/293) (platform-blocked private user-owned Projects v2 under hosted sign-in).
 
-| Epic | Issue | Milestone |
-|------|-------|-----------|
-| Public Release Infrastructure and Authentication | [#101](https://github.com/markheydon/solo-dev-board/issues/101) | v1.0.0 (closed) |
-| Operational hardening for public release | [#102](https://github.com/markheydon/solo-dev-board/issues/102) | v1.0.0 (closed) |
-| v1.1 deferred follow-ons | [#289](https://github.com/markheydon/solo-dev-board/issues/289) | v1.1.0 |
-| Cross-Repo PM Workflow (Phase 5) | [#272](https://github.com/markheydon/solo-dev-board/issues/272) | v1.2.0 |
+Implementation phases in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) are historical sequencing for the v1.0 release only.
 
-## Completed phases (summary)
+## Key features (open work)
 
-Phases 1–4 delivered foundation, Label Manager, Audit Dashboard, One-Click Migration (labels + milestones), Triage UI, Board Rules Visualiser, and built-in Workflow Templates. Deferred follow-on slices (label consistency warnings, project board migration, custom template repos, hosted private Projects v2) are tracked under [#289](https://github.com/markheydon/solo-dev-board/issues/289) and child issues [#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#293](https://github.com/markheydon/solo-dev-board/issues/293).
+| Feature | Issue | Milestone |
+|---------|-------|-----------|
+| Cross-Repo PM Workflow | [#272](https://github.com/markheydon/solo-dev-board/issues/272) | v1.1.0 |
 
-Phase 6 (v1.0.0) is complete. Public release [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) shipped on 2026-08-18 ([#257](https://github.com/markheydon/solo-dev-board/issues/257)). Duplicate Phase 5 issues #260–#271 were closed as duplicates of the #272-family stories. Operational hardening test coverage expectations are documented in [OPERATIONAL_HARDENING_TEST_COVERAGE.md](OPERATIONAL_HARDENING_TEST_COVERAGE.md).
+Deferred slices ([#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#292](https://github.com/markheydon/solo-dev-board/issues/292)) are milestone stories extending shipped features, not children of a bucket epic.
 
-### V1 auth polish (Epic #101 follow-on)
+## Shipped summary
 
-| Issue | Focus | Status |
-|-------|-------|--------|
-| [#247](https://github.com/markheydon/solo-dev-board/issues/247) | PAT-only local trusted mode documentation | Done |
-| [#248](https://github.com/markheydon/solo-dev-board/issues/248) | Self-hoster deployment path (`aspire deploy` with PAT) | Done |
-| [#249](https://github.com/markheydon/solo-dev-board/issues/249) | Hosted unauthenticated landing page | Done |
-| [#314](https://github.com/markheydon/solo-dev-board/issues/314) | PAT/GitHub connectivity readiness (startup probe, shell status, recovery UX) | Done |
+The six core tools (Label Manager, Audit Dashboard, One-Click Migration, Triage UI, Board Rules Visualiser, Workflow Templates) plus hosted and self-host hardening shipped in v1.0.0. Duplicate Cross-Repo PM Workflow issues #260–#271 were closed as duplicates of the #272–#288 family.
 
-For phase sequencing and architecture milestones, see [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). For product boundaries, see [SCOPE.md](SCOPE.md).
+For phase sequencing history and architecture milestones, see [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). For product boundaries, see [SCOPE.md](SCOPE.md).

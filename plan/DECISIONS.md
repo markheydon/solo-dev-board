@@ -242,10 +242,20 @@ Test coverage expectations for cache-hit, cache-miss, invalidation, TTL expiry, 
 
 ### DEC-024: Post-1.0 milestone numbering
 
-**Status:** Active  
+**Status:** Superseded  
 **Date:** 2026-08-17  
+**Superseded by:** [DEC-027](#dec-027-post-10-milestone-and-work-item-hierarchy)  
+**Summary:** After the public `v1.0.0` tag, do not ship a `v0.x` release. The original split (deferred slices on **v1.1.0**, Cross-Repo PM Workflow on **v1.2.0**) was replaced by a single active milestone model in DEC-027.
+
+---
+
+### DEC-027: Post-1.0 milestone and work-item hierarchy
+
+**Status:** Active  
+**Date:** 2026-08-18  
 **Constitution:** [AGENTS.md — When Adding a New Feature](../AGENTS.md#when-adding-a-new-feature)  
-**Summary:** After the public `v1.0.0` tag, do not ship a `v0.x` release. Deferred slices from Phases 1–4 (label consistency warnings, project board migration, custom workflow template repositories, hosted private Projects v2) plus dogfood fixes use milestone **v1.1.0** under epic [#289](https://github.com/markheydon/solo-dev-board/issues/289). Cross-Repo PM Workflow (Phase 5, epic [#272](https://github.com/markheydon/solo-dev-board/issues/272)) uses milestone **v1.2.0** (the GitHub milestone formerly titled `v0.5.0`). Reject tagging `v0.5.0` after `v1.0.0` exists.
+**Related:** [DEC-024](#dec-024-post-10-milestone-numbering), [`plan/PROJECT_MANAGEMENT.md`](PROJECT_MANAGEMENT.md)  
+**Summary:** After `v1.0.0`, maintain **one open GitHub milestone** at a time (currently **v1.1.0**). It holds deferred v1.0 slices ([#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#292](https://github.com/markheydon/solo-dev-board/issues/292)), Cross-Repo PM Workflow as feature [#272](https://github.com/markheydon/solo-dev-board/issues/272) with stories [#273](https://github.com/markheydon/solo-dev-board/issues/273)–[#288](https://github.com/markheydon/solo-dev-board/issues/288), and dogfood fixes as they are raised. Further work stays **unmilestoned** until the next release is declared. Do not create a `v1.2.0` milestone prematurely. Platform-blocked work ([#293](https://github.com/markheydon/solo-dev-board/issues/293)) stays unmilestoned backlog. **Epic → Feature → Story** applies when each level names real product structure: Epics are shippable themes spanning multiple features (not milestone buckets); Features group related stories/enablers ([#272](https://github.com/markheydon/solo-dev-board/issues/272) is a catch-up exception — classified as a feature without a parent epic); Stories are delivery units. Use GitHub sub-issues for parent links. During catch-up, milestone stories may sit without Feature parents when they complete shipped features ([#40](https://github.com/markheydon/solo-dev-board/issues/40), [#88](https://github.com/markheydon/solo-dev-board/issues/88), etc.). Implementation **phases** in `IMPLEMENTATION_PLAN.md` are historical sequencing for the v1.0 release only; the Project board **Phase** field is legacy for closed pre-1.0 milestones. Reject bucket epics that duplicate milestones, fabricated Features, and multiple concurrent open milestones.
 
 ---
 

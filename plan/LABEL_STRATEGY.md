@@ -16,8 +16,8 @@ Describes the nature of the issue or PR.
 
 | Label | Colour | Description |
 |-------|--------|-------------|
-| `type/epic` | `#6f42c1` | A high-level grouping of related features (spans a full phase) |
-| `type/feature` | `#0075ca` | A Feature — groups related stories within an epic |
+| `type/epic` | `#6f42c1` | A named product theme spanning multiple features or a major increment — not a milestone bucket |
+| `type/feature` | `#0075ca` | A user-facing capability grouping **two or more** related stories/enablers within an epic |
 | `type/story` | `#1d76db` | A user-facing Story delivering a discrete piece of value |
 | `type/enabler` | `#e4e669` | An Enabler — technical prerequisite that unblocks stories |
 | `type/test` | `#bfd4f2` | A Test issue — test coverage deliverable (unit, component, integration) |
@@ -103,8 +103,8 @@ A script to create all labels at once will be provided in `infra/scripts/create-
 ### When to Apply Each Label
 
 #### `type/` — Always required on issues and PRs
-- Apply `type/epic` to parent issues that span a full phase and group related features.
-- Apply `type/feature` to issues that group related stories within an epic (e.g. `[Feature] GitHub API Integration`).
+- Apply `type/epic` to issues that name a shippable product theme spanning multiple features or a major increment (for example Cross-Repo PM Workflow). Do not create epics that duplicate milestones or catch unrelated deferred work.
+- Apply `type/feature` when **two or more** related stories/enablers deliver one user-facing capability under an epic.
 - Apply `type/story` to user-facing delivery issues (e.g. `[Story] Implement REST API calls`).
 - Apply `type/enabler` to technical prerequisite issues that unblock stories (e.g. `[Enabler] Configure HttpClient`).
 - Apply `type/test` to issues whose primary deliverable is test coverage (e.g. `[Test] Unit tests for GitHubService`).

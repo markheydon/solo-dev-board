@@ -16,7 +16,25 @@ SoloDevBoard uses GitHub's native project management tools:
 | **GitHub Milestones** | Phases / releases (e.g. "Phase 1 — Foundation") |
 | **GitHub Projects (v2)** | The project board (see [PROJECT_BOARD_DESIGN.md](PROJECT_BOARD_DESIGN.md)) |
 | **Labels** | Classification, priority, status, area (see [LABEL_STRATEGY.md](LABEL_STRATEGY.md)) |
-| **Epics** | Represented as parent Issues with `type/epic` label; child issues reference the parent |
+| **Epics** | Named product themes with `type/epic`; parent links via GitHub sub-issues |
+| **Features** | User-facing capability groupings with `type/feature`; parent of two or more stories/enablers |
+
+---
+
+## Work-item hierarchy (post-1.0)
+
+Follow [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy).
+
+| Level | When to use | When not to use |
+|-------|-------------|-----------------|
+| **Milestone** | One open release target at a time (`v1.1.0` today) | Do not mirror milestone scope with a bucket epic |
+| **Epic** | A shippable product theme spanning **multiple features** | Milestone labels, catch-all parents, or single-story wrappers |
+| **Feature** | A user-facing capability; groups two or more stories/enablers ([#272](https://github.com/markheydon/solo-dev-board/issues/272) is a catch-up exception — large, no parent epic) | Single-story features; inventing a layer for organisation only |
+| **Story** | A discrete delivery unit with clear acceptance criteria | — |
+
+During catch-up, deferred slices may sit on the milestone as **unlinked stories** that extend already-shipped features (for example [#290](https://github.com/markheydon/solo-dev-board/issues/290) extending Audit Dashboard [#40](https://github.com/markheydon/solo-dev-board/issues/40)). Add Feature parents when planning delivery, not before.
+
+Implementation **phases** in `IMPLEMENTATION_PLAN.md` are historical sequencing for the v1.0 release. The Project board **Phase** field is legacy for closed pre-1.0 milestones only.
 
 ---
 
@@ -67,24 +85,22 @@ Follow [`PULL_REQUEST_POLICY.md`](PULL_REQUEST_POLICY.md). Reference the issue i
 
 ## Milestones
 
-Milestones map to implementation phases and releases:
+Milestones map to **releases**, not ongoing product themes. After v1.0.0, keep **one open milestone** at a time ([DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)).
 
-| Milestone | Phase | Target Release |
-|-----------|-------|---------------|
-| Phase 1 — Foundation | Phase 1 | v0.1.0 |
-| Phase 2 — Core Features | Phase 2 | v0.2.0 |
-| Phase 3 — Migration and Triage | Phase 3 | v0.3.0 |
-| Phase 4 — Visualisation and Templates | Phase 4 | v0.4.0 |
-| Phase 5 — Cross-Repo PM Workflow | Phase 5 | v1.2.0 |
-| Phase 6 — Polish and v1.0 | Phase 6 | v1.0.0 |
-| Deferred follow-ons | Phase 6 field | v1.1.0 |
+| Milestone | Status | Notes |
+|-----------|--------|-------|
+| v0.1.0 – v0.4.0 | Closed | Historical pre-1.0 releases |
+| v1.0.0 | Closed | Public release (2026-08-18) |
+| **v1.1.0** | **Open** | Sole active milestone — deferred slices, Cross-Repo PM Workflow, dogfood fixes |
+| v1.2.0 — Cross-Repo PM Workflow | Closed (unused) | Closed 2026-08-18; work moved to v1.1.0 |
 
 ### Milestone Workflow
 
-1. Create the milestone on GitHub at the start of each phase.
-2. Assign all issues planned for that phase to the milestone.
+1. Create a milestone when a new release is declared.
+2. Assign planned issues to that milestone only.
 3. Track progress via the milestone's completion percentage.
 4. Close the milestone when all issues are resolved and the release is tagged.
+5. Further work stays unmilestoned until the next release milestone exists.
 
 ---
 

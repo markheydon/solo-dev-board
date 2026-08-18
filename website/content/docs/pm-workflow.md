@@ -4,7 +4,7 @@ draft: true
 weight: 110
 ---
 
-> ⚠️ **Under Development** — This feature is planned for Phase 5 (v1.2.0). This page will be updated as the feature progresses.
+> ⚠️ **Under Development** — This feature is planned for **v1.1.0**. This page will be updated as the feature progresses.
 
 ---
 
