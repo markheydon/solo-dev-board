@@ -9,6 +9,9 @@ public partial class PmWorkflowReposPanel : ComponentBase
     [CascadingParameter]
     public PmWorkflowChromeState? ChromeState { get; set; }
 
+    [CascadingParameter(Name = "PmWorkflowDataRevision")]
+    public int DataRevision { get; set; }
+
     private int capacity = PmSettingsDefaults.Capacity;
     private int stallDays = PmSettingsDefaults.StallDays;
     private int neglectDays = PmSettingsDefaults.NeglectDays;
@@ -65,7 +68,6 @@ public partial class PmWorkflowReposPanel : ComponentBase
 
         await ChromeState.SaveSettingsAsync(ChromeState.Settings with { ExcludedRepositories = exclusions });
         repositoryToExclude = null;
-        OnParametersSet();
     }
 
     private async Task IncludeRepositoryAsync(string repositoryFullName)
@@ -80,7 +82,6 @@ public partial class PmWorkflowReposPanel : ComponentBase
             .ToArray();
 
         await ChromeState.SaveSettingsAsync(ChromeState.Settings with { ExcludedRepositories = exclusions });
-        OnParametersSet();
     }
 
     private Task<IEnumerable<string>> SearchIncludedRepositoriesAsync(string? value, CancellationToken cancellationToken)

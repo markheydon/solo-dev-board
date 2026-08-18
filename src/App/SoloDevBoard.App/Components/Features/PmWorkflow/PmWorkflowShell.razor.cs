@@ -53,12 +53,9 @@ public partial class PmWorkflowShell : ComponentBase
             chromeState.Settings = await PmSettingsService.GetSettingsAsync();
             selectedPlanningBoardId = chromeState.Settings.PlanningBoardNodeId ?? string.Empty;
 
-            var repositoriesTask = RepositoryService.GetActiveRepositoriesAsync();
-            var discoveryTask = ProjectBoardDiscoveryService.GetPlanningBoardOptionsAsync();
-            await Task.WhenAll(repositoriesTask, discoveryTask);
-
-            chromeState.ActiveRepositories = await repositoriesTask;
-            var discovery = await discoveryTask;
+            chromeState.ActiveRepositories = await RepositoryService.GetActiveRepositoriesAsync();
+            var discovery = await ProjectBoardDiscoveryService.GetPlanningBoardOptionsForRepositoriesAsync(
+                chromeState.ActiveRepositories);
             chromeState.PlanningBoardOptions = discovery.Options;
             chromeState.InaccessibleProjectBoardsWarning = LinkedProjectBoardVisibility.BuildInaccessibleProjectsWarning(
                 discovery.TotalLinkedProjectCount,
@@ -78,6 +75,7 @@ public partial class PmWorkflowShell : ComponentBase
             }
 
             chromeState.LastRefreshedAtUtc = DateTimeOffset.UtcNow;
+            chromeState.MarkDataChanged();
         }
         catch (Exception exception)
         {
@@ -104,6 +102,7 @@ public partial class PmWorkflowShell : ComponentBase
         await PmSettingsService.SaveSettingsAsync(settings);
         chromeState.Settings = await PmSettingsService.GetSettingsAsync();
         selectedPlanningBoardId = chromeState.Settings.PlanningBoardNodeId ?? string.Empty;
+        chromeState.MarkDataChanged();
         await InvokeAsync(StateHasChanged);
     }
 

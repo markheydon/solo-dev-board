@@ -81,6 +81,8 @@
     }
 
     <CascadingValue Value="chromeState" IsFixed="false">
-        @ChildContent
+        <CascadingValue Value="chromeState.DataRevision" Name="PmWorkflowDataRevision" IsFixed="false">
+            @ChildContent
+        </CascadingValue>
     </CascadingValue>
 </MudStack>

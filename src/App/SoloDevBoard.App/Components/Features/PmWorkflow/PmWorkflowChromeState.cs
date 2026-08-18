@@ -45,6 +45,12 @@ public sealed class PmWorkflowChromeState
     /// <summary>Gets or sets the callback used to reload chrome data.</summary>
     public Func<Task> RefreshAsync { get; set; } = () => Task.CompletedTask;
 
+    /// <summary>Gets a monotonic revision that changes when cascaded chrome data is refreshed or saved.</summary>
+    public int DataRevision { get; private set; }
+
+    /// <summary>Increments <see cref="DataRevision"/> so child panels can resync local state.</summary>
+    public void MarkDataChanged() => DataRevision++;
+
     /// <summary>Returns whether the repository is excluded from PM queries.</summary>
     /// <param name="repositoryFullName">The repository full name.</param>
     /// <returns><see langword="true" /> when excluded; otherwise <see langword="false" />.</returns>
