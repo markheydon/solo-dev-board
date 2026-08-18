@@ -1,5 +1,5 @@
 import { isIssueClosedLongEnoughToArchive } from './roadmap-sync-archive.mjs';
-import { githubJsonRequest, isTransientGitHubLimit, delayMsForAttempt, sleep, githubMaxAttempts } from './github-http.mjs';
+import { githubJsonRequest, isTransientGitHubGraphQlError, withGitHubRetry } from './github-http.mjs';
 
 const apiBaseUrl = 'https://api.github.com';
 const graphqlUrl = `${apiBaseUrl}/graphql`;
@@ -261,6 +261,12 @@ async function syncIssueAsync(issue, issueItemsByContentId, timelineCache) {
         projectItem.isArchived = false;
     }
 
+    if (shouldArchive) {
+        await archiveProjectItemAsync(projectItem.id, `issue #${issue.number}`);
+        projectItem.isArchived = true;
+        return;
+    }
+
     const currentStatusName = projectItem.status?.name ?? null;
     const desiredStatusName = determineRoadmapStatus(issue, currentStatusName);
     const desiredPhaseOptionId = determinePhaseOptionId(issue);
@@ -288,11 +294,6 @@ async function syncIssueAsync(issue, issueItemsByContentId, timelineCache) {
     await syncDateFieldAsync(projectItem.id, fieldIds.startDate, projectItem.startDate?.date ?? null, startDate, `issue #${issue.number} start date`);
     await syncDateFieldAsync(projectItem.id, fieldIds.targetDate, projectItem.targetDate?.date ?? null, targetDate, `issue #${issue.number} target date`);
     await clearFieldAsync(projectItem.id, fieldIds.focusOrder, projectItem.focusOrder?.number ?? null, `issue #${issue.number} focus order`);
-
-    if (shouldArchive) {
-        await archiveProjectItemAsync(projectItem.id, `issue #${issue.number}`);
-        projectItem.isArchived = true;
-    }
 }
 
 async function syncParentIssuesAsync(issueItemsByContentId, issueByNumber, timelineCache) {
@@ -694,7 +695,7 @@ async function fetchIssueTimelineAsync(issueNumber) {
 }
 
 async function graphqlAsync(query, variables) {
-    for (let attempt = 1; attempt <= githubMaxAttempts; attempt += 1) {
+    return withGitHubRetry(async () => {
         const response = await fetch(graphqlUrl, {
             method: 'POST',
             headers: {
@@ -715,28 +716,23 @@ async function graphqlAsync(query, variables) {
             payload = { message: text };
         }
 
-        const payloadText = text;
         const hasErrors = Boolean(payload.errors && payload.errors.length > 0);
-        const errorText = hasErrors ? JSON.stringify(payload.errors) : payloadText;
-        const graphqlRateLimited = hasErrors && /RATE_LIMITED|rate limit/i.test(errorText);
+        const errorText = hasErrors ? JSON.stringify(payload.errors) : text;
+        const graphqlRateLimited = hasErrors && isTransientGitHubGraphQlError(errorText);
 
         if (response.ok && !hasErrors) {
-            return payload.data;
+            return { success: true, value: payload.data };
         }
 
-        if ((isTransientGitHubLimit(response.status, errorText) || graphqlRateLimited) && attempt < githubMaxAttempts) {
-            const delayMs = delayMsForAttempt(attempt, response.headers.get('retry-after'));
-            console.warn(
-                `GitHub rate limit on GraphQL (HTTP ${response.status}); waiting ${delayMs}ms (attempt ${attempt}/${githubMaxAttempts}).`,
-            );
-            await sleep(delayMs);
-            continue;
-        }
-
-        throw new Error(`GraphQL request failed: ${JSON.stringify(payload.errors ?? payload, null, 2)}`);
-    }
-
-    throw new Error('GraphQL request failed after retries.');
+        return {
+            success: false,
+            status: response.status,
+            errorText,
+            retryAfter: response.headers.get('retry-after'),
+            graphqlRateLimited,
+            error: new Error(`GraphQL request failed: ${JSON.stringify(payload.errors ?? payload, null, 2)}`),
+        };
+    }, 'GraphQL');
 }
 
 async function restAsync(path) {
