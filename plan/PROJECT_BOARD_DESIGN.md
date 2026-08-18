@@ -72,17 +72,10 @@ The following automation rules are configured on the board. These are documented
 
 ### Current Default Workflow Settings
 - **Enabled:** `Auto-add sub-issues to project`, `Auto-close issue`, `Item added to project`, and `Item closed`.
-- **Should be enabled:** `Auto-archive items` with GitHub’s default `is:issue is:closed updated:<@today-2w`. This was left **off** on purpose during Phases 1–4 so the full history stayed on the board; it is not a broken workflow.
-- **Disabled:** `Auto-add to project`, `Pull request linked to issue`, `Pull request merged`, `Code changes requested`, `Code review approved`, and `Item reopened`.
-- **Reason:** SoloDevBoard uses an issue-driven roadmap. Agents manage issue creation and metadata deliberately. Built-in GitHub workflows stay as narrow safety nets, except auto-archive, which is now the way to keep Roadmap and Story Board on the live queue after v1.0.0.
+- **Disabled:** `Auto-add to project`, `Pull request linked to issue`, `Pull request merged`, `Auto-archive items`, `Code changes requested`, `Code review approved`, and `Item reopened`.
+- **Reason:** SoloDevBoard uses an issue-driven roadmap. Agents manage issue creation and metadata deliberately. Built-in GitHub workflows stay as narrow safety nets. **Archiving closed cards is Roadmap Sync’s job**, not GitHub’s Auto-archive workflow, because GitHub’s `updated:` filter is the project-card clock and a bulk field write resets it.
 
-**How to turn auto-archive on (project owner, GitHub UI):** Project #8 → **Workflows** (the header currently shows 4 active, which matches the four enabled rules above) → **Auto-archive items** → enable. Use GitHub’s default filter:
-
-```text
-is:issue is:closed updated:<@today-2w
-```
-
-That keeps open and in-flight work, ignores pull request cards, and archives closed issues that have had no **project-item** activity for two weeks. GitHub’s `updated:` here is the card’s last update on Project #8, not `issue.updated_at`. A bulk field write (for example the 17 August 2026 paperwork pass) resets that clock for every card, so the enable dialog may offer only a handful of matches even when the linked issues closed months ago. After such a pass, either wait two weeks or, for a one-off catch-up, temporarily use `is:issue is:closed` to archive every closed card, then restore the two-week filter. A comment or label repair on a closed issue also resets the clock; nightly Roadmap Sync does not, once fields already match.
+**Archive rule (Roadmap Sync, nightly and on issue events):** closed, non-duplicate issues whose **`closed_at` is at least 14 calendar days ago** are archived on Project #8 via `archiveProjectV2Item`. Open items are never archived. Reopened issues are unarchived. Duplicate closures are still **removed**, not archived. Prefer this over GitHub **Auto-archive items**; if that workflow is on, turn it off so the two clocks do not fight.
 
 ### Label: status/in-progress Applied
 - **Trigger:** The `status/in-progress` label is applied to an issue.
@@ -154,7 +147,7 @@ Do this in the GitHub UI (saved view settings); agents cannot edit Project views
 1. **Filter out Done** on the Roadmap view: `status:Todo,Up Next,In Progress` (or equivalent). The live queue is 22 items, not 152 closed cards.
 2. **Zoom to Quarter or Year** when you want historical bars; Month + Today will always look empty between active slices.
 3. **Treat Story Board as the default working view.** Bars reappear on Roadmap automatically when Roadmap Sync sets dates at Event 2 (work started) and Event 3 (done).
-4. **Enable Auto-archive items** with `is:issue is:closed updated:<@today-2w`. That is the fix for the Roadmap list being all of Phases 1–4: GitHub shows archived items only in the archive, so the Gantt starts at recent and in-flight work. This was disabled by design during build-out; turn it on in **Workflows**. Agents cannot toggle project workflows with the current GitHub MCP token.
+4. **Leave GitHub Auto-archive off.** Roadmap Sync archives closed non-duplicate issues 14 days after `closed_at`. That is the catch-up for Phases 1–4 and the ongoing rule.
 
 Do not put speculative dates on the parked Phase 5 queue (#272–#288) or unstarted v1.1.0 stories. The next visible Roadmap bar should be the first v1.1.0 item that actually starts.
 

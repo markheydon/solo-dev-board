@@ -51,6 +51,9 @@ jobs:
         with:
           node-version: "24"
 
+      - name: Run archive-rule tests
+        run: node --test .github/scripts/roadmap-sync-archive.test.mjs
+
       - name: Sync status labels
         env:
           ROADMAP_PROJECT_TOKEN: ${{ secrets.ROADMAP_PROJECT_TOKEN }}
