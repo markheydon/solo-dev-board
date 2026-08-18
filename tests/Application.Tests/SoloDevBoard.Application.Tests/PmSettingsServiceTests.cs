@@ -18,6 +18,34 @@ public sealed class PmSettingsServiceTests
     }
 
     [Fact]
+    public async Task GetSettingsAsync_WhenStoredJsonIsEmptyString_ReturnsDefaults()
+    {
+        var storage = new FakePmSettingsStorage
+        {
+            StoredJson = string.Empty,
+        };
+        var service = CreateService(storage);
+
+        var settings = await service.GetSettingsAsync();
+
+        Assert.Equal(PmSettingsDefaults.Create(), settings);
+    }
+
+    [Fact]
+    public async Task GetSettingsAsync_WhenStoredJsonIsNullLiteral_ReturnsDefaults()
+    {
+        var storage = new FakePmSettingsStorage
+        {
+            StoredJson = "null",
+        };
+        var service = CreateService(storage);
+
+        var settings = await service.GetSettingsAsync();
+
+        Assert.Equal(PmSettingsDefaults.Create(), settings);
+    }
+
+    [Fact]
     public async Task GetSettingsAsync_WhenValidJson_ReturnsNormalisedSettings()
     {
         var storage = new FakePmSettingsStorage
@@ -55,6 +83,28 @@ public sealed class PmSettingsServiceTests
         var settings = await service.GetSettingsAsync();
 
         Assert.Equal(PmSettingsDefaults.Create(), settings);
+    }
+
+    [Fact]
+    public async Task GetSettingsAsync_WhenPlanningBoardNodeIdIsWhitespace_ReturnsNullBoardId()
+    {
+        var storage = new FakePmSettingsStorage
+        {
+            StoredJson = """
+                {
+                  "planningBoardNodeId": "   "
+                }
+                """,
+        };
+        var service = CreateService(storage);
+
+        var settings = await service.GetSettingsAsync();
+
+        Assert.Null(settings.PlanningBoardNodeId);
+        Assert.Empty(settings.ExcludedRepositories);
+        Assert.Equal(PmSettingsDefaults.Capacity, settings.Capacity);
+        Assert.Equal(PmSettingsDefaults.StallDays, settings.StallDays);
+        Assert.Equal(PmSettingsDefaults.NeglectDays, settings.NeglectDays);
     }
 
     [Fact]
