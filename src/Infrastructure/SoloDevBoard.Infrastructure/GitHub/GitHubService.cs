@@ -695,7 +695,7 @@ public sealed class GitHubService : IGitHubService
             ["focusOrder"] = focusOrder,
         };
 
-        var payload = await PostGraphQlAsync<UpdateProjectBoardItemStatusResponseDto>(client, mutation, variables, cancellationToken)
+        var payload = await PostGraphQlAsync<UpdateProjectBoardItemFocusOrderResponseDto>(client, mutation, variables, cancellationToken)
             .ConfigureAwait(false);
 
         var updatedItemId = payload.Data?.UpdateProjectV2ItemFieldValue?.ProjectV2Item?.Id;
@@ -801,9 +801,13 @@ public sealed class GitHubService : IGitHubService
 
         const string query =
             """
-            query WorkItemCataloguePullRequestReviews($owner: String!, $repo: String!) {
+            query WorkItemCataloguePullRequestReviews($owner: String!, $repo: String!, $after: String) {
               repository(owner: $owner, name: $repo) {
-                pullRequests(first: 100, states: OPEN) {
+                pullRequests(first: 100, states: OPEN, after: $after) {
+                  pageInfo {
+                    hasNextPage
+                    endCursor
+                  }
                   nodes {
                     number
                     isDraft
@@ -818,35 +822,52 @@ public sealed class GitHubService : IGitHubService
             """;
 
         var client = CreateAuthenticatedClient();
-        var requestBody = new GraphQlRequestDto(
-            query,
-            new Dictionary<string, string>(StringComparer.Ordinal)
+        var metadata = new List<PullRequestReviewMetadata>();
+        string? after = null;
+        var hasNextPage = true;
+
+        while (hasNextPage)
+        {
+            var variables = new Dictionary<string, object?>(StringComparer.Ordinal)
             {
                 ["owner"] = owner,
                 ["repo"] = repo,
-            });
+                ["after"] = after,
+            };
 
-        using var response = await client.PostAsJsonAsync("/graphql", requestBody, JsonOptions, cancellationToken).ConfigureAwait(false);
-        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
+            var payload = await PostGraphQlAsync<WorkItemCataloguePullRequestReviewsResponseDto>(
+                    client,
+                    query,
+                    variables,
+                    cancellationToken)
+                .ConfigureAwait(false);
 
-        var payload = await response.Content.ReadFromJsonAsync<WorkItemCataloguePullRequestReviewsResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
-            ?? throw CreateInvalidResponseException("GraphQL response body was empty.", "/graphql");
+            var pullRequests = payload.Data?.Repository?.PullRequests;
+            if (pullRequests?.Nodes is { Count: > 0 })
+            {
+                foreach (var node in pullRequests.Nodes)
+                {
+                    if (node is null)
+                    {
+                        continue;
+                    }
 
-        if (payload.Errors.Count > 0)
-        {
-            var combinedErrors = string.Join("; ", payload.Errors.Select(static error => error.Message));
-            throw new HttpRequestException($"GitHub GraphQL request failed. Errors: {combinedErrors}");
+                    metadata.Add(new PullRequestReviewMetadata
+                    {
+                        Number = node.Number,
+                        HasReviewPending = IsReviewPending(
+                            node.IsDraft,
+                            node.ReviewDecision,
+                            node.ReviewRequests?.TotalCount ?? 0),
+                    });
+                }
+            }
+
+            hasNextPage = pullRequests?.PageInfo?.HasNextPage ?? false;
+            after = pullRequests?.PageInfo?.EndCursor;
         }
 
-        return payload.Data?.Repository?.PullRequests?.Nodes
-            .Where(static node => node is not null)
-            .Select(static node => node!)
-            .Select(static node => new PullRequestReviewMetadata
-            {
-                Number = node.Number,
-                HasReviewPending = IsReviewPending(node.IsDraft, node.ReviewDecision, node.ReviewRequests?.TotalCount ?? 0),
-            })
-            .ToArray() ?? [];
+        return metadata;
     }
 
     /// <inheritdoc/>
@@ -865,32 +886,44 @@ public sealed class GitHubService : IGitHubService
             return [];
         }
 
+        var client = CreateAuthenticatedClient();
+        var summaries = new List<IssueSubIssueSummary>();
+
+        foreach (var issueNumber in issueNumbers.Distinct())
+        {
+            var summary = await LoadIssueSubIssueSummaryAsync(client, owner, repo, issueNumber, cancellationToken)
+                .ConfigureAwait(false);
+            if (summary is not null)
+            {
+                summaries.Add(summary);
+            }
+        }
+
+        return summaries;
+    }
+
+    private async Task<IssueSubIssueSummary?> LoadIssueSubIssueSummaryAsync(
+        HttpClient client,
+        string owner,
+        string repo,
+        int issueNumber,
+        CancellationToken cancellationToken)
+    {
         const string query =
             """
-            query WorkItemCatalogueSubIssues($owner: String!, $repo: String!) {
+            query WorkItemCatalogueSubIssues($owner: String!, $repo: String!, $issueNumber: Int!, $after: String) {
               repository(owner: $owner, name: $repo) {
-                epics: issues(states: OPEN, first: 100, labels: ["type/epic"]) {
-                  nodes {
-                    number
-                    trackedIssues(first: 100) {
-                      totalCount
-                      nodes {
-                        ... on Issue {
-                          state
-                        }
-                      }
+                issue(number: $issueNumber) {
+                  number
+                  trackedIssues(first: 100, after: $after) {
+                    pageInfo {
+                      hasNextPage
+                      endCursor
                     }
-                  }
-                }
-                features: issues(states: OPEN, first: 100, labels: ["type/feature"]) {
-                  nodes {
-                    number
-                    trackedIssues(first: 100) {
-                      totalCount
-                      nodes {
-                        ... on Issue {
-                          state
-                        }
+                    totalCount
+                    nodes {
+                      ... on Issue {
+                        state
                       }
                     }
                   }
@@ -899,75 +932,59 @@ public sealed class GitHubService : IGitHubService
             }
             """;
 
-        var client = CreateAuthenticatedClient();
-        var requestBody = new GraphQlRequestDto(
-            query,
-            new Dictionary<string, string>(StringComparer.Ordinal)
+        int? totalCount = null;
+        var completedCount = 0;
+        string? after = null;
+        var hasNextPage = true;
+        int? resolvedIssueNumber = null;
+
+        while (hasNextPage)
+        {
+            var variables = new Dictionary<string, object?>(StringComparer.Ordinal)
             {
                 ["owner"] = owner,
                 ["repo"] = repo,
-            });
+                ["issueNumber"] = issueNumber,
+                ["after"] = after,
+            };
 
-        using var response = await client.PostAsJsonAsync("/graphql", requestBody, JsonOptions, cancellationToken).ConfigureAwait(false);
-        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
+            var payload = await PostGraphQlAsync<WorkItemCatalogueSubIssuesResponseDto>(
+                    client,
+                    query,
+                    variables,
+                    cancellationToken)
+                .ConfigureAwait(false);
 
-        var payload = await response.Content.ReadFromJsonAsync<WorkItemCatalogueSubIssuesResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
-            ?? throw CreateInvalidResponseException("GraphQL response body was empty.", "/graphql");
-
-        if (payload.Errors.Count > 0)
-        {
-            var combinedErrors = string.Join("; ", payload.Errors.Select(static error => error.Message));
-            throw new HttpRequestException($"GitHub GraphQL request failed. Errors: {combinedErrors}");
-        }
-
-        var requestedNumbers = issueNumbers.ToHashSet();
-        var summaries = new List<IssueSubIssueSummary>();
-        var repository = payload.Data?.Repository;
-        if (repository is null)
-        {
-            return [];
-        }
-
-        AppendSubIssueSummaries(summaries, repository.Epics?.Nodes, requestedNumbers);
-        AppendSubIssueSummaries(summaries, repository.Features?.Nodes, requestedNumbers);
-
-        return summaries;
-    }
-
-    private static void AppendSubIssueSummaries(
-        ICollection<IssueSubIssueSummary> summaries,
-        IReadOnlyList<WorkItemCatalogueIssueNodeDto?>? nodes,
-        ISet<int> requestedNumbers)
-    {
-        if (nodes is null)
-        {
-            return;
-        }
-
-        foreach (var node in nodes)
-        {
-            if (node is null || !requestedNumbers.Contains(node.Number))
+            var issue = payload.Data?.Repository?.Issue;
+            if (issue is null)
             {
-                continue;
+                return null;
             }
 
-            var trackedIssues = node.TrackedIssues;
+            resolvedIssueNumber = issue.Number;
+            var trackedIssues = issue.TrackedIssues;
             if (trackedIssues is null || trackedIssues.TotalCount == 0)
             {
-                continue;
+                return null;
             }
 
-            var completedCount = trackedIssues.Nodes
+            totalCount ??= trackedIssues.TotalCount;
+            completedCount += trackedIssues.Nodes
                 .Count(static child => child is not null
                     && child.State.Equals("CLOSED", StringComparison.OrdinalIgnoreCase));
 
-            summaries.Add(new IssueSubIssueSummary
-            {
-                Number = node.Number,
-                TotalCount = trackedIssues.TotalCount,
-                CompletedCount = completedCount,
-            });
+            hasNextPage = trackedIssues.PageInfo?.HasNextPage ?? false;
+            after = trackedIssues.PageInfo?.EndCursor;
         }
+
+        return resolvedIssueNumber is null || totalCount is null or 0
+            ? null
+            : new IssueSubIssueSummary
+            {
+                Number = resolvedIssueNumber.Value,
+                TotalCount = totalCount.Value,
+                CompletedCount = completedCount,
+            };
     }
 
     private static bool IsReviewPending(bool isDraft, string? reviewDecision, int reviewRequestCount)
@@ -1118,11 +1135,8 @@ public sealed class GitHubService : IGitHubService
             };
         }
 
-        var activityTimestamp = node.Status?.UpdatedAt ?? node.UpdatedAt;
-        if (activityTimestamp == default)
-        {
-            return null;
-        }
+        // Prefer Status field-updated time; fall back to item updatedAt, then Unix epoch when GitHub omits both.
+        var activityTimestamp = node.Status?.UpdatedAt ?? node.UpdatedAt ?? DateTimeOffset.UnixEpoch;
 
         return new ProjectBoardItem
         {
@@ -1871,7 +1885,7 @@ public sealed class GitHubService : IGitHubService
         public string Id { get; init; } = string.Empty;
 
         [JsonPropertyName("updatedAt")]
-        public DateTimeOffset UpdatedAt { get; init; }
+        public DateTimeOffset? UpdatedAt { get; init; }
 
         [JsonPropertyName("content")]
         public ProjectBoardItemContentNodeDto? Content { get; init; }
@@ -2098,6 +2112,30 @@ public sealed class GitHubService : IGitHubService
         public string Name { get; init; } = string.Empty;
     }
 
+    /// <summary>DTO wrapper for GraphQL update-project-item-focus-order responses.</summary>
+    private sealed record UpdateProjectBoardItemFocusOrderResponseDto
+    {
+        [JsonPropertyName("data")]
+        public UpdateProjectBoardItemFocusOrderDataDto? Data { get; init; }
+
+        [JsonPropertyName("errors")]
+        public IReadOnlyList<GraphQlErrorDto> Errors { get; init; } = [];
+    }
+
+    /// <summary>DTO for update-project-item-focus-order GraphQL data payload.</summary>
+    private sealed record UpdateProjectBoardItemFocusOrderDataDto
+    {
+        [JsonPropertyName("updateProjectV2ItemFieldValue")]
+        public UpdateProjectBoardItemFocusOrderPayloadDto? UpdateProjectV2ItemFieldValue { get; init; }
+    }
+
+    /// <summary>DTO for update-project-item-focus-order GraphQL payload.</summary>
+    private sealed record UpdateProjectBoardItemFocusOrderPayloadDto
+    {
+        [JsonPropertyName("projectV2Item")]
+        public UpdateProjectBoardItemStatusItemDto? ProjectV2Item { get; init; }
+    }
+
     /// <summary>DTO wrapper for GraphQL update-project-item-status responses.</summary>
     private sealed record UpdateProjectBoardItemStatusResponseDto
     {
@@ -2165,6 +2203,9 @@ public sealed class GitHubService : IGitHubService
     /// <summary>DTO for pull-request review metadata connections.</summary>
     private sealed record WorkItemCataloguePullRequestConnectionDto
     {
+        [JsonPropertyName("pageInfo")]
+        public GraphQlPageInfoDto? PageInfo { get; init; }
+
         [JsonPropertyName("nodes")]
         public IReadOnlyList<WorkItemCataloguePullRequestNodeDto?> Nodes { get; init; } = [];
     }
@@ -2212,18 +2253,8 @@ public sealed class GitHubService : IGitHubService
     /// <summary>DTO for repository sub-issue summaries.</summary>
     private sealed record WorkItemCatalogueSubIssuesRepositoryDto
     {
-        [JsonPropertyName("epics")]
-        public WorkItemCatalogueIssueConnectionDto? Epics { get; init; }
-
-        [JsonPropertyName("features")]
-        public WorkItemCatalogueIssueConnectionDto? Features { get; init; }
-    }
-
-    /// <summary>DTO for issue connections in sub-issue summary queries.</summary>
-    private sealed record WorkItemCatalogueIssueConnectionDto
-    {
-        [JsonPropertyName("nodes")]
-        public IReadOnlyList<WorkItemCatalogueIssueNodeDto?> Nodes { get; init; } = [];
+        [JsonPropertyName("issue")]
+        public WorkItemCatalogueIssueNodeDto? Issue { get; init; }
     }
 
     /// <summary>DTO for issue nodes in sub-issue summary queries.</summary>
@@ -2239,6 +2270,9 @@ public sealed class GitHubService : IGitHubService
     /// <summary>DTO for tracked-issue connections.</summary>
     private sealed record WorkItemCatalogueTrackedIssueConnectionDto
     {
+        [JsonPropertyName("pageInfo")]
+        public GraphQlPageInfoDto? PageInfo { get; init; }
+
         [JsonPropertyName("totalCount")]
         public int TotalCount { get; init; }
 

@@ -226,6 +226,93 @@ public sealed class PmWorkItemCatalogueServiceTests
         Assert.False(PmLabelHelpers.IsUnblocked(blocked.Labels));
     }
 
+    [Fact]
+    public async Task GetCatalogueAsync_ReviewMetadataLoadFails_ReturnsItemsWithoutReviewPending()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+
+        _gitHubService.GetActiveRepositoriesAsync(cancellationToken).Returns(
+        [
+            new Repository { Id = 1, Name = "repo", FullName = "owner/repo" },
+        ]);
+        _gitHubService
+            .GetIssuesAsync("owner", "repo", OpenItemState, cancellationToken)
+            .Returns([]);
+        _gitHubService
+            .GetPullRequestsAsync("owner", "repo", OpenItemState, cancellationToken)
+            .Returns([CreatePullRequest(30, "Needs review", ["type/story", "priority/medium"], isDraft: false)]);
+        _gitHubService
+            .GetOpenPullRequestReviewMetadataAsync("owner", "repo", cancellationToken)
+            .Throws(new HttpRequestException("Review metadata unavailable"));
+        _gitHubService
+            .GetIssueSubIssueSummariesAsync("owner", "repo", Arg.Any<IReadOnlyList<int>>(), cancellationToken)
+            .Returns([]);
+
+        var result = await _sut.GetCatalogueAsync(cancellationToken);
+
+        var pullRequest = Assert.Single(result.Items);
+        Assert.Equal(30, pullRequest.Number);
+        Assert.Null(pullRequest.HasReviewPending);
+        Assert.Empty(result.Failures);
+    }
+
+    [Fact]
+    public async Task GetCatalogueAsync_SubIssueSummaryLoadFails_ReturnsItemsWithoutSubIssueCounts()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+
+        _gitHubService.GetActiveRepositoriesAsync(cancellationToken).Returns(
+        [
+            new Repository { Id = 1, Name = "repo", FullName = "owner/repo" },
+        ]);
+        _gitHubService
+            .GetIssuesAsync("owner", "repo", OpenItemState, cancellationToken)
+            .Returns([CreateIssue(10, "Epic parent", ["type/epic", "priority/high"])]);
+        _gitHubService
+            .GetPullRequestsAsync("owner", "repo", OpenItemState, cancellationToken)
+            .Returns([]);
+        _gitHubService
+            .GetOpenPullRequestReviewMetadataAsync("owner", "repo", cancellationToken)
+            .Returns([]);
+        _gitHubService
+            .GetIssueSubIssueSummariesAsync("owner", "repo", Arg.Is<IReadOnlyList<int>>(numbers => numbers.SequenceEqual(new[] { 10 })), cancellationToken)
+            .Throws(new HttpRequestException("Sub-issue summaries unavailable"));
+
+        var result = await _sut.GetCatalogueAsync(cancellationToken);
+
+        var issue = Assert.Single(result.Items);
+        Assert.Equal(10, issue.Number);
+        Assert.Null(issue.SubIssueTotal);
+        Assert.Null(issue.SubIssueCompleted);
+        Assert.Empty(result.Failures);
+    }
+
+    [Fact]
+    public async Task GetCatalogueAsync_BothIssueAndPullRequestLoadFail_ReturnsFailureWithCombinedMessage()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+
+        _gitHubService.GetActiveRepositoriesAsync(cancellationToken).Returns(
+        [
+            new Repository { Id = 1, Name = "broken", FullName = "owner/broken" },
+        ]);
+        _gitHubService
+            .GetIssuesAsync("owner", "broken", OpenItemState, cancellationToken)
+            .Throws(new HttpRequestException("Issues unavailable", null, HttpStatusCode.Forbidden));
+        _gitHubService
+            .GetPullRequestsAsync("owner", "broken", OpenItemState, cancellationToken)
+            .Throws(new HttpRequestException("Pull requests unavailable", null, HttpStatusCode.ServiceUnavailable));
+
+        var result = await _sut.GetCatalogueAsync(cancellationToken);
+
+        Assert.Empty(result.Items);
+        var failure = Assert.Single(result.Failures);
+        Assert.Equal("owner/broken", failure.RepositoryFullName);
+        Assert.Contains("Issues:", failure.Message, StringComparison.Ordinal);
+        Assert.Contains("Pull requests:", failure.Message, StringComparison.Ordinal);
+        Assert.Equal((int)HttpStatusCode.Forbidden, failure.HttpStatusCode);
+    }
+
     private static Issue CreateIssue(
         int number,
         string title,

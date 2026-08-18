@@ -1826,6 +1826,368 @@ public sealed class GitHubServiceTests
     }
 
     [Fact]
+    public async Task GetOpenPullRequestReviewMetadataAsync_ReviewRequired_ReturnsPendingMetadata()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "repository": {
+                        "pullRequests": {
+                            "pageInfo": { "hasNextPage": false, "endCursor": null },
+                            "nodes": [
+                                {
+                                    "number": 20,
+                                    "isDraft": false,
+                                    "reviewDecision": "REVIEW_REQUIRED",
+                                    "reviewRequests": { "totalCount": 0 }
+                                }
+                            ]
+                        }
+                    }
+                },
+                "errors": []
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        var result = await sut.GetOpenPullRequestReviewMetadataAsync("owner", "repo", cancellationToken);
+
+        var metadata = Assert.Single(result);
+        Assert.Equal(20, metadata.Number);
+        Assert.True(metadata.HasReviewPending);
+    }
+
+    [Fact]
+    public async Task GetOpenPullRequestReviewMetadataAsync_DraftPullRequest_ReturnsNotPending()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "repository": {
+                        "pullRequests": {
+                            "pageInfo": { "hasNextPage": false, "endCursor": null },
+                            "nodes": [
+                                {
+                                    "number": 21,
+                                    "isDraft": true,
+                                    "reviewDecision": "REVIEW_REQUIRED",
+                                    "reviewRequests": { "totalCount": 2 }
+                                }
+                            ]
+                        }
+                    }
+                },
+                "errors": []
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        var result = await sut.GetOpenPullRequestReviewMetadataAsync("owner", "repo", cancellationToken);
+
+        var metadata = Assert.Single(result);
+        Assert.False(metadata.HasReviewPending);
+    }
+
+    [Fact]
+    public async Task GetOpenPullRequestReviewMetadataAsync_ApprovedWithRequests_ReturnsNotPending()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "repository": {
+                        "pullRequests": {
+                            "pageInfo": { "hasNextPage": false, "endCursor": null },
+                            "nodes": [
+                                {
+                                    "number": 22,
+                                    "isDraft": false,
+                                    "reviewDecision": "APPROVED",
+                                    "reviewRequests": { "totalCount": 1 }
+                                }
+                            ]
+                        }
+                    }
+                },
+                "errors": []
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        var result = await sut.GetOpenPullRequestReviewMetadataAsync("owner", "repo", cancellationToken);
+
+        var metadata = Assert.Single(result);
+        Assert.False(metadata.HasReviewPending);
+    }
+
+    [Fact]
+    public async Task GetOpenPullRequestReviewMetadataAsync_HasNextPage_FetchesAllPages()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "repository": {
+                        "pullRequests": {
+                            "pageInfo": { "hasNextPage": true, "endCursor": "cursor-one" },
+                            "nodes": [
+                                {
+                                    "number": 1,
+                                    "isDraft": false,
+                                    "reviewDecision": null,
+                                    "reviewRequests": { "totalCount": 1 }
+                                }
+                            ]
+                        }
+                    }
+                },
+                "errors": []
+            }
+            """),
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "repository": {
+                        "pullRequests": {
+                            "pageInfo": { "hasNextPage": false, "endCursor": null },
+                            "nodes": [
+                                {
+                                    "number": 2,
+                                    "isDraft": false,
+                                    "reviewDecision": "REVIEW_REQUIRED",
+                                    "reviewRequests": { "totalCount": 0 }
+                                }
+                            ]
+                        }
+                    }
+                },
+                "errors": []
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        var result = await sut.GetOpenPullRequestReviewMetadataAsync("owner", "repo", cancellationToken);
+
+        Assert.Equal(2, result.Count);
+        Assert.True(result[0].HasReviewPending);
+        Assert.True(result[1].HasReviewPending);
+        Assert.Equal(2, handler.Requests.Count);
+    }
+
+    [Fact]
+    public async Task GetIssueSubIssueSummariesAsync_TrackedIssuesPresent_ReturnsSummary()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "repository": {
+                        "issue": {
+                            "number": 10,
+                            "trackedIssues": {
+                                "pageInfo": { "hasNextPage": false, "endCursor": null },
+                                "totalCount": 2,
+                                "nodes": [
+                                    { "state": "CLOSED" },
+                                    { "state": "OPEN" }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "errors": []
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        var result = await sut.GetIssueSubIssueSummariesAsync("owner", "repo", [10], cancellationToken);
+
+        var summary = Assert.Single(result);
+        Assert.Equal(10, summary.Number);
+        Assert.Equal(2, summary.TotalCount);
+        Assert.Equal(1, summary.CompletedCount);
+    }
+
+    [Fact]
+    public async Task GetIssueSubIssueSummariesAsync_TrackedIssuesHasNextPage_CountsAllCompleted()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "repository": {
+                        "issue": {
+                            "number": 10,
+                            "trackedIssues": {
+                                "pageInfo": { "hasNextPage": true, "endCursor": "cursor-one" },
+                                "totalCount": 2,
+                                "nodes": [
+                                    { "state": "CLOSED" }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "errors": []
+            }
+            """),
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "repository": {
+                        "issue": {
+                            "number": 10,
+                            "trackedIssues": {
+                                "pageInfo": { "hasNextPage": false, "endCursor": null },
+                                "totalCount": 2,
+                                "nodes": [
+                                    { "state": "CLOSED" }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "errors": []
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        var result = await sut.GetIssueSubIssueSummariesAsync("owner", "repo", [10], cancellationToken);
+
+        var summary = Assert.Single(result);
+        Assert.Equal(2, summary.TotalCount);
+        Assert.Equal(2, summary.CompletedCount);
+        Assert.Equal(2, handler.Requests.Count);
+    }
+
+    [Fact]
+    public async Task GetIssueSubIssueSummariesAsync_MultipleIssueNumbers_QueriesEachRequestedIssue()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "repository": {
+                        "issue": {
+                            "number": 10,
+                            "trackedIssues": {
+                                "pageInfo": { "hasNextPage": false, "endCursor": null },
+                                "totalCount": 1,
+                                "nodes": [ { "state": "CLOSED" } ]
+                            }
+                        }
+                    }
+                },
+                "errors": []
+            }
+            """),
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "repository": {
+                        "issue": {
+                            "number": 20,
+                            "trackedIssues": {
+                                "pageInfo": { "hasNextPage": false, "endCursor": null },
+                                "totalCount": 1,
+                                "nodes": [ { "state": "OPEN" } ]
+                            }
+                        }
+                    }
+                },
+                "errors": []
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        var result = await sut.GetIssueSubIssueSummariesAsync("owner", "repo", [10, 20], cancellationToken);
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal(2, handler.Requests.Count);
+    }
+
+    [Fact]
+    public async Task GetProjectBoardItemsAsync_MissingUpdatedAt_UsesUnixEpochActivityTimestamp()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "node": {
+                        "fields": {
+                            "nodes": [
+                                { "id": "PVTF_status", "name": "Status", "dataType": "SINGLE_SELECT" }
+                            ]
+                        },
+                        "items": {
+                            "pageInfo": { "hasNextPage": false, "endCursor": null },
+                            "nodes": [
+                                {
+                                    "id": "PVTI_item-one",
+                                    "updatedAt": null,
+                                    "content": {
+                                        "__typename": "Issue",
+                                        "number": 5,
+                                        "title": "No timestamps",
+                                        "url": "https://github.com/markheydon/solo-dev-board/issues/5",
+                                        "repository": {
+                                            "name": "solo-dev-board",
+                                            "owner": { "login": "markheydon" }
+                                        }
+                                    },
+                                    "status": null,
+                                    "focusOrder": null
+                                }
+                            ]
+                        }
+                    }
+                },
+                "errors": []
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        var result = await sut.GetProjectBoardItemsAsync("project-id", cancellationToken);
+
+        Assert.Single(result.Items);
+        Assert.Equal(DateTimeOffset.UnixEpoch, result.Items[0].ActivityTimestamp);
+    }
+
+    [Fact]
     public async Task CloseTriageItemAsDuplicateAsync_Issue_PostsCommentAndClosesIssue()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;

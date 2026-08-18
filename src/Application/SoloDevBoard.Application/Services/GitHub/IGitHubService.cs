@@ -209,7 +209,10 @@ public interface IGitHubService
 
     #region Work-item catalogue methods
 
-    /// <summary>Retrieves review-pending metadata for open pull requests in the specified repository.</summary>
+    /// <summary>
+    /// Retrieves review-pending metadata for open pull requests in the specified repository.
+    /// Paginates through all open pull requests when a repository has more than 100.
+    /// </summary>
     /// <param name="owner">The GitHub account owner login.</param>
     /// <param name="repo">The repository name.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
@@ -219,7 +222,10 @@ public interface IGitHubService
         string repo,
         CancellationToken cancellationToken = default);
 
-    /// <summary>Retrieves tracked sub-issue summary counts for the specified open issues.</summary>
+    /// <summary>
+    /// Retrieves tracked sub-issue summary counts for the specified open issues.
+    /// Queries only the requested issue numbers and paginates tracked sub-issues for accurate completion counts.
+    /// </summary>
     /// <param name="owner">The GitHub account owner login.</param>
     /// <param name="repo">The repository name.</param>
     /// <param name="issueNumbers">Repository-scoped issue numbers to inspect.</param>
