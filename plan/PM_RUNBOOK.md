@@ -12,9 +12,11 @@ This runbook orchestrates [`.agents/contracts/`](../.agents/contracts/) and [`.a
 |------------------------------------------|------------------------------------------------------------|-----------------------------------------------|
 | Start a working session                  | "Run the daily start workflow" or `/daily-start`           | Status summary + next action recommendation   |
 | Plan the next feature                    | "Plan the next item" or `/plan-next-issue`                 | GitHub issues with full metadata + tech spec  |
-| Implement planned work                   | "Implement issue #N" or `/implement-issue`                 | Preflight + code + tests + docs + decision log (if needed) |
+| Deliver planned work (happy path)        | "Deliver issue #N" or `/deliver-issue`                     | Preflight (when required) + code + verify + PR |
+| Implement planned work (split)           | "Implement issue #N" or `/implement-issue`                 | Preflight + code + tests + docs + decision log (if needed) |
 | Preflight before implementation          | "Preflight issue #N" or `/preflight-issue`                  | Context, touch map, approach sketch (no code)              |
 | Verify and create PR                     | "Verify issue #N", "Create PR for issue #N", or `/verify-and-create-pr` | PR + quality validation + issue closure       |
+| Code review (independent session)        | "Code review PR #N" or `/code-review`                      | GitHub review with resolvable threads         |
 | Address PR review comments               | "Address PR review comments on PR #N" or `/address-pr-review-comments` | PR fixes + thread replies + resolved comments |
 | Progress review (since last update)      | "Run the PM progress review" or `/pm-progress-review`        | Executive summary + next-session priorities   |
 | End-to-end feature delivery              | `.agents/skills/repo-pm-feature-workflow/SKILL.md`         | Full workflow from backlog to closure         |
@@ -118,6 +120,18 @@ Plan the [feature name]
 #### Stage 2: Implementation (2-8 hours per feature, varies by size)
 **Trigger:** Planning complete, issues have `status/todo` label.
 
+**Run (happy path — recommended):**
+```
+Deliver issue #[number]
+```
+
+**Run (Cursor happy path):**
+```
+/deliver-issue [number]
+```
+
+This orchestrates preflight (when required), implementation, and verify/PR creation in one session. Use split commands below when you want to pause between stages.
+
 **Run (preflight only — optional, recommended for `size/l+` or enablers):**
 ```
 Preflight issue #[number]
@@ -170,12 +184,12 @@ Implement issue #[number]
 - ✅ Decision log updated (if architectural decision)
 - ✅ UK English verified
 
-**Next action:** Move to Stage 3 (Review).
+**Next action:** If you used `/deliver-issue`, verify and PR creation run in the same session. Otherwise move to Stage 3 (Verify). After the PR exists, open a **new** agent session for `/code-review`.
 
 ---
 
 #### Stage 3: Verify & PR Creation (15-30 minutes per feature)
-**Trigger:** Implementation complete, ready for quality check and PR.
+**Trigger:** Implementation complete, ready for quality check and PR. Skipped when you used `/deliver-issue` (verify runs at the end of that workflow).
 
 **Run:**
 ```
@@ -184,25 +198,53 @@ Verify issue #[number]
 
 **What it does:**
 - Invokes **Verify Agent**
-- Validates all quality gates (code, tests, docs)
+- Validates all quality gates (build, clean rebuild tests, direct package versions on changed projects, docs)
 - Creates pull request with metadata from [`PULL_REQUEST_POLICY.md`](PULL_REQUEST_POLICY.md)
 - Updates issue labels to `status/in-review`
-- Provides verify summary
+- Provides verify summary and hands off to `/code-review` in a new session
 
 **What you produce:**
 - Pull request linked to issue
 - Quality validation report
-- Issue ready for your PR approval
+- Issue ready for independent code review
 
 **Gates before proceeding:**
 - ✅ All quality gates passed
 - ✅ PR created and linked to issue
-- ✅ No compile errors, tests pass
+- ✅ Clean rebuild tests pass (`dotnet clean && dotnet test`)
+- ✅ Direct packages added or bumped on this branch are current
 - ✅ Documentation complete
 - ✅ Backlog synchronised
 - ✅ Roadmap item still has a valid Start Date before merge
 
-**Next action:** **You** approve and merge PR (manual step).
+**Next action:** Open a **new** agent session and run `/code-review` on the PR. You approve and merge manually after manual testing.
+
+---
+
+#### Stage 3b: Independent Code Review (15-30 minutes per feature)
+**Trigger:** Pull request exists and verify has completed.
+
+**Run (new agent session — do not reuse the implement/verify session):**
+```
+/code-review [PR number]
+```
+
+**What it does:**
+- Invokes **Code Review Agent** ([`.agents/contracts/code-review.md`](../.agents/contracts/code-review.md))
+- Audits the PR against architecture, testing, documentation, and UK English conventions
+- Submits a **GitHub Pull Request Review** with resolvable inline threads (not a lone issue comment)
+
+**What you produce:**
+- GitHub review with severities and merge recommendation
+- Resolvable review threads for any findings (same shape as Copilot or human reviews)
+
+**Gates before proceeding:**
+- ✅ Review submitted on GitHub (not chat only)
+- ✅ Actionable findings appear as resolvable review threads
+
+**Next action:** If unresolved review threads remain, run `/address-pr-review-comments`. Then manual product test and merge.
+
+**Optional:** A Cursor Automation on pull request opened (ignore drafts) can run the same `/code-review` prompt in the background. Configure in the Cursor Automations dashboard — not in this repository.
 
 ---
 
@@ -238,9 +280,9 @@ Close issue #[number] after PR #[number] merged
 
 ### PR Review Comment Loop (5-20 minutes per round)
 
-**Goal:** Keep an open pull request moving after coding review feedback arrives, without losing thread history.
+**Goal:** Keep an open pull request moving after coding review feedback arrives, without losing thread history. Merge is blocked while **unresolved review conversations** remain.
 
-**Trigger:** A reviewer leaves coding review comments or requested changes on an open pull request.
+**Trigger:** A reviewer (Copilot, human, `/code-review` agent, or bot) leaves coding review comments or requested changes on an open pull request.
 
 **Run:**
 ```
@@ -248,24 +290,27 @@ Address PR review comments on PR #[number]
 ```
 
 **What it does:**
-- Invokes **Delivery Agent** on the existing pull request branch.
-- Fetches unresolved coding review comments and review conversations.
-- Implements the requested code changes.
-- Posts a reply on each addressed coding review comment.
-- Resolves each addressed conversation.
-- Posts one final summary comment on the pull request once all addressed comments are handled.
+- Invokes **Delivery Agent** on the existing pull request branch ([`.agents/contracts/delivery.md`](../.agents/contracts/delivery.md) §10).
+- Fetches every unresolved review thread on the PR (not only one reviewer).
+- Implements in-scope findings; replies on each thread; resolves conversations.
+- Invalid or out-of-scope threads: reply with the reason, then resolve so merge is not blocked.
+- Threads needing your decision: reply and leave unresolved; stop with a short list.
+- Posts one final summary issue comment when all addressed threads are handled.
+- No-ops when no unresolved review threads exist.
 
 **What you produce:**
 - Updated branch contents on the existing PR.
 - Thread-by-thread reviewer feedback responses.
-- A clean pull request with resolved conversations and a summary comment.
+- A clean pull request with resolved review conversations.
 
 **Gates before returning to review:**
-- ✅ Requested changes implemented.
+- ✅ Requested changes implemented (or declined threads resolved with explanation).
 - ✅ Relevant tests rerun.
 - ✅ Each addressed review thread has a reply.
 - ✅ Each addressed review thread is resolved.
-- ✅ Final PR summary comment posted.
+- ✅ Final PR summary comment posted (informational issue comment — not a review thread).
+
+**Note:** Top-level issue comments are not review threads and cannot be resolved. Actionable work must live on GitHub review conversations.
 
 ---
 
@@ -345,11 +390,15 @@ START
   │   └─> Run daily start workflow → Follow recommendation
   │
   ├─ Have planned issue ready for coding?
-  │   ├─> Large or enabler? → `/preflight-issue` or "Preflight issue #N" (optional)
-  │   └─> `/implement-issue` or "Implement issue #N" (runs preflight, then codes)
+  │   ├─> Happy path → `/deliver-issue` or "Deliver issue #N"
+  │   ├─> Large or enabler? → `/preflight-issue` first (optional), then deliver or implement
+  │   └─> Split workflow → `/implement-issue` or "Implement issue #N"
   │
-  ├─ Have implemented code ready for review?
+  ├─ Have implemented code ready for review (split workflow)?
   │   └─> `/verify-and-create-pr` or "Verify issue #N"
+  │
+  ├─ Have a PR and need independent conventions review?
+  │   └─> New session: `/code-review` on PR #N
   │
   ├─ Has an open PR received coding review comments?
   │   └─> `/address-pr-review-comments` or "Address PR review comments on PR #N"
@@ -367,7 +416,7 @@ START
   │   └─> Run daily start workflow → Get recommendation
   │
   └─ Want end-to-end automation?
-      └─> Use repo-pm-feature-workflow skill (plans + implements + reviews)
+      └─> Use repo-pm-feature-workflow skill (plans + implements + reviews), or `/deliver-issue` for delivery-only happy path
 ```
 
 ---
@@ -393,7 +442,7 @@ START
 ---
 
 ### Delivery ([`.agents/contracts/delivery.md`](../.agents/contracts/delivery.md))
-**Trigger:** "Implement issue #X", "Preflight issue #X", "Build feature X"
+**Trigger:** "Implement issue #X", "Preflight issue #X", "Deliver issue #X", "Address PR review comments on PR #N", "Build feature X"
 
 **Responsibilities:**
 - Runs implementation preflight (context, codebase discovery, touch map, proceed gate)
@@ -404,9 +453,11 @@ START
 - Records architectural decisions via `repo-decision-log` / `plan/DECISIONS.md`
 - Ensures UK English throughout
 - Hands off to Verify Agent when complete
+- Addresses PR review comment threads (implement, reply, resolve) on existing pull requests
 
 **Boundaries:**
 - ❌ Does NOT start without clear acceptance criteria (escalates to PM Orchestrator)
+- ❌ Does NOT create pull requests (Verify Agent's job)
 - ❌ Does NOT close issues (Verify Agent's job)
 - ❌ Does NOT change scope without your approval
 
@@ -416,10 +467,11 @@ START
 **Trigger:** "Verify issue #X", "Create PR for issue #X"
 
 **Responsibilities:**
-- Validates quality gates (code, tests, docs, backlog sync)
+- Validates quality gates (build, clean rebuild tests, direct package hygiene, docs, backlog sync)
 - Creates pull request with metadata from [`PULL_REQUEST_POLICY.md`](PULL_REQUEST_POLICY.md)
 - Updates issue labels (`status/in-review` → `status/done`)
 - Closes issues post-merge
+- Hands off to independent `/code-review` in a new session
 - Suggests next backlog item
 
 **Boundaries:**
@@ -437,6 +489,7 @@ Canonical workflow definitions live in [`.agents/workflows/`](../.agents/workflo
 |----------|----------------|----------------|
 | Daily start | [`daily-start.md`](../.agents/workflows/daily-start.md) | `/daily-start` |
 | Plan next issue | [`plan-next-issue.md`](../.agents/workflows/plan-next-issue.md) | `/plan-next-issue` |
+| Deliver issue | [`deliver-issue.md`](../.agents/workflows/deliver-issue.md) | `/deliver-issue` |
 | Preflight issue | [`preflight-issue.md`](../.agents/workflows/preflight-issue.md) | `/preflight-issue` |
 | Implement issue | [`implement-issue.md`](../.agents/workflows/implement-issue.md) | `/implement-issue` |
 | Verify and create PR | [`verify-and-create-pr.md`](../.agents/workflows/verify-and-create-pr.md) | `/verify-and-create-pr` |
@@ -464,10 +517,11 @@ These gates are defined in [`AGENTS.md`](../AGENTS.md) and enforced by role cont
 - ✅ Issue label set to `status/in-progress` (Roadmap Sync updates the board)
 - ✅ Linked wireframe read for page-producing UI work
 
-### Before PR Creation (Delivery Agent enforces)
-- ✅ All acceptance criteria met
+### Before PR Creation (Verify Agent enforces)
+- ✅ All acceptance criteria met (Delivery handoff)
 - ✅ Code compiles, zero errors/warnings
-- ✅ Tests pass locally
+- ✅ Clean rebuild tests pass (`dotnet clean && dotnet test`)
+- ✅ Direct packages added or bumped on this branch are current (`dotnet list package --outdated`)
 - ✅ Documentation updated (if user-facing)
 - ✅ Decision log updated via `repo-decision-log` (if architectural decision)
 - ✅ UK English verified
@@ -565,7 +619,25 @@ This runbook orchestrates (does NOT duplicate) existing policy:
 
 ## Advanced Usage Patterns
 
-### Pattern 1: End-to-End Automation
+### Pattern 1: Delivery Happy Path
+**Scenario:** You have a planned issue and want to implement and open a PR in one session.
+
+**Command:**
+```
+/deliver-issue [number]
+```
+
+**What happens:**
+1. Preflight (pauses for `size/m+` and enablers unless already completed in this session)
+2. Implementation (Delivery Agent)
+3. Verify and PR creation (Verify Agent)
+4. Handoff to a **new** session for `/code-review`
+
+**Use when:** You have uninterrupted time and want the default delivery loop without chaining slash commands manually.
+
+---
+
+### Pattern 2: End-to-End Automation
 **Scenario:** You want to plan and implement a feature in one go.
 
 **Command:**
@@ -583,7 +655,7 @@ Take the next backlog item and run the full PM feature workflow
 
 ---
 
-### Pattern 2: Milestone Sprint
+### Pattern 3: Milestone Sprint
 **Scenario:** Focus on completing a specific milestone (e.g., Phase 1).
 
 **Session start:**
@@ -597,15 +669,17 @@ Plan next item for Phase 1
 
 ---
 
-### Pattern 3: Hotfix Mode
+### Pattern 4: Hotfix Mode
 **Scenario:** Critical bug needs immediate fix, bypass planning workflow.
 
 **Steps:**
 1. Create issue manually (type/bug, priority/critical)
-2. Run `/implement-issue` or "Implement issue #N" (Delivery contract implements)
-3. Run `/verify-and-create-pr` or "Verify issue #N" (create PR)
-4. Approve and merge immediately
-5. Run `Close issue #X after PR #Y merged`
+2. Run `/deliver-issue` or `/implement-issue` (Delivery contract implements)
+3. If split workflow: run `/verify-and-create-pr` (create PR)
+4. New session: `/code-review` on the PR
+5. `/address-pr-review-comments` if review threads remain
+6. Approve and merge immediately
+7. Run `Close issue #X after PR #Y merged`
 
 **Skip:** Planning workflow (breakdown-plan), test strategy (if time-critical).
 
@@ -641,9 +715,10 @@ Plan next item for Phase 1
 
 - [ ] I run `daily-start` at the start of each working session to get oriented
 - [ ] I use `plan-next-issue` to create technical specs before coding
-- [ ] I use `implement-issue` (workflow prompt or `/implement-issue`) only for planned issues with clear acceptance criteria
+- [ ] I use `/deliver-issue` for the default happy path, or split `/implement-issue` and `/verify-and-create-pr` when I want to pause between stages
 - [ ] `implement-issue` runs preflight before coding; I use `/preflight-issue` first for large items or enablers when I want to review the approach
-- [ ] I use `verify-and-create-pr` to validate quality before PR merge
+- [ ] I run `/code-review` in a **new** agent session after the PR exists (not in the same chat as implement/verify)
+- [ ] I use `/address-pr-review-comments` to implement findings and resolve review threads before merge
 - [ ] I run `pm-progress-review` when I return to the project after a gap or need a governance checkpoint
 - [ ] All my GitHub issues have labels per `plan/LABEL_STRATEGY.md`
 - [ ] All user-facing features have docs in `website/content/docs/`
@@ -668,7 +743,12 @@ Plan the [feature name]
 Plan next item for [milestone]
 ```
 
-**Implementation:**
+**Delivery (happy path):**
+```
+Deliver issue #[number]
+```
+
+**Implementation (split):**
 ```
 Preflight issue #[number]
 Implement issue #[number]
@@ -679,6 +759,16 @@ Build [feature name]
 ```
 Verify issue #[number]
 Create PR for [feature name]
+```
+
+**Code review (new session):**
+```
+Code review PR #[number]
+```
+
+**Address review threads:**
+```
+Address PR review comments on PR #[number]
 ```
 
 **Closure:**
@@ -712,6 +802,6 @@ Take the next backlog item and run the full PM feature workflow
 
 ---
 
-**Last Updated:** March 5, 2026  
+**Last Updated:** March 5, 2026 (delivery loop: `/deliver-issue`, verify hygiene, review threads)  
 **Version:** 1.0  
 **Maintained by:** Product Manager (you)

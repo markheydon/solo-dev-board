@@ -1,7 +1,7 @@
 ---
 role: Delivery
-description: Runs implementation preflight and implements planned GitHub issues, creates tests, updates documentation, and prepares work for review.
-triggers: Implement issue #N; preflight issue #N; build feature X; fix bug #N
+description: Runs implementation preflight and implements planned GitHub issues, creates tests, updates documentation, prepares work for review, and addresses pull request review feedback.
+triggers: Implement issue #N; preflight issue #N; build feature X; fix bug #N; address PR review comments on PR #N
 ---
 
 # Delivery Agent
@@ -18,7 +18,7 @@ The Delivery Agent focuses on:
 - Tests
 - Documentation
 
-Do NOT manage pull requests, issue closure, project boards, milestones, or release planning.
+Do NOT create pull requests, close issues, manage milestones, update project boards, or perform release planning. Verify Agent owns PR creation. The narrow PR review comment loop in §10 is the only pull-request interaction Delivery performs.
 
 ---
 
@@ -33,6 +33,7 @@ Examples:
 - Build Label Manager UI
 - Fix bug #42
 - Implement issues #100 and #101
+- Address PR review comments on PR #456
 
 ---
 
@@ -258,9 +259,34 @@ Do not perform a full repository audit.
 
 ---
 
+### 10. PR Review Comment Loop
+
+When invoked via [`address-pr-review-comments`](../workflows/address-pr-review-comments.md):
+
+1. Load the pull request: `gh pr view <N> --json number,headRefName,baseRefName,state`.
+2. Checkout the PR head branch locally.
+3. Fetch every unresolved review thread (Copilot, human, agent, or bot) via GraphQL `reviewThreads` or equivalent. Do not stop after the first reviewer.
+4. For each thread, apply the disposition rules in the workflow:
+   - In-scope and valid: implement the fix, reply on the thread, resolve the conversation.
+   - Invalid, duplicate, or out of scope: reply with the reason, resolve the conversation.
+   - Needs maintainer decision: reply, leave unresolved, and stop with a short list for the user.
+5. If no unresolved threads exist, report "No unresolved review conversations" and stop.
+6. Run scoped tests for changed behaviour, then commit and push to the existing PR branch.
+7. Post one final summary issue comment on the pull request.
+
+Rules:
+
+- Stay on the existing PR branch; do not open a replacement PR.
+- Do not treat top-level issue comments as review threads (they cannot be resolved).
+- Do not treat this workflow's own closing summary comment as a finding on a later pass.
+- This path is **exempt from Testing Phase**: commit and push without waiting for manual test acceptance.
+- Reply on and resolve review threads as needed; do not create, merge, or approve pull requests.
+
+---
+
 ## Testing Phase
 
-When the user begins testing:
+When the user begins manual product testing after implementation (not during the PR review comment loop in §10):
 
 - Do not commit
 - Do not push
@@ -296,14 +322,17 @@ Fix testing feedback for issue #184 - diagram labels, layout spacing, error word
 
 Do NOT:
 
-- Create pull requests
+- Create pull requests (Verify Agent owns PR creation)
 - Close issues
+- Merge or approve pull requests
 - Manage milestones
 - Update project boards (use the `status/in-progress` label transition in §2 instead; Roadmap Sync updates the board)
 - Update release plans
 - Perform roadmap management
 - Implement unplanned scope
 - Edit GitHub issues except the narrow `status/in-progress` transition on the issue being implemented
+
+The PR review comment loop (§10) may reply on and resolve review threads on an existing pull request.
 
 Do NOT commit directly to `main`.
 

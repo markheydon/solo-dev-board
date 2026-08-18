@@ -71,18 +71,34 @@ Invoke this agent when you need to review:
 
 ## Review Output
 
-For each issue found:
+### When reviewing an open pull request
+
+Submit findings as a **GitHub Pull Request Review** so they appear as resolvable review conversations (same shape as Copilot or human reviews). Do not post actionable findings as a lone `gh pr comment` issue comment — issue comments cannot be resolved and block the `/address-pr-review-comments` loop.
+
+- Use `gh pr review` with inline comments, or GraphQL review comments, for file- or line-specific findings.
+- Cross-cutting findings with no natural line go in the review body or as a comment on a representative changed file within the same review submission.
+- Include severities and a merge recommendation in the review body:
+  - `Approve`
+  - `Approve with minor concerns`
+  - `Request changes`
+- Use `--request-changes` when Critical or High findings exist; use `--comment` otherwise. Do not use `--approve` via the API unless the maintainer explicitly wants a GitHub approve — prefer `--comment` plus the text recommendation to preserve the manual merge gate.
+- When the review is clean, submit a `COMMENT` review with no inline threads (or an approving summary in the review body only).
+
+### When reviewing a branch with no pull request yet
+
+Provide findings in chat. For each issue found:
+
 - Provide severity: `Critical`, `High`, `Medium`, or `Low`.
 - Explain why it matters.
 - Suggest a concrete improvement.
 
 At the end of the review:
+
 - Summarise the key findings.
 - State whether the branch is ready for merge.
-- Provide a merge recommendation when reviewing a PR:
-  - `Approve`
-  - `Approve with minor concerns`
-  - `Request changes`
+- Provide a merge recommendation (`Approve`, `Approve with minor concerns`, or `Request changes`).
+
+Do not assign Copilot as reviewer. Do not merge the pull request.
 
 ## Integration Points
 - Reference [`AGENTS.md`](../../AGENTS.md) for repository requirements.
