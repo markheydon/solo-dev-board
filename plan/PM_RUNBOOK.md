@@ -284,7 +284,7 @@ Run the daily start workflow
 - Any PRs still awaiting your approval? (Approve/merge before stepping away if possible)
 - Any work still `status/in-progress`? (Leave a note on what's next)
 - Any new blockers? (Document in issue comments)
-- Any stale **Up Next** items? (Either keep them queued for the next session or clear their **Focus Order** if they no longer belong in the active batch.)
+- Any stale **Up Next** items? (Either keep them queued for the next session, move to **Ice Box** with `status/ice-box`, mark **Blocked** with `status/blocked`, or clear their **Focus Order** if they no longer belong in the active batch.)
 - Any roadmap drift? (Active or done items missing dates, stray PR cards, or planned issues missing from the board.)
 
 #### Step 2: Update Planning Artefacts (if needed)
@@ -520,6 +520,7 @@ These gates are defined in [`AGENTS.md`](../AGENTS.md) and enforced by role cont
 2. **If scope change:** Update `plan/SCOPE.md`, re-run PM Orchestrator
 3. **If architectural decision:** Record via `repo-decision-log` in `plan/DECISIONS.md`, resume
 4. **If technical blocker:** Document in issue comments, add `status/blocked` label, escalate to you
+5. **If shelved for later (not blocked):** Document in issue comments, apply `status/ice-box` label (removes from active queue; Roadmap Sync moves the card to **Ice Box**)
 
 ---
 

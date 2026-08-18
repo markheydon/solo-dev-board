@@ -595,7 +595,7 @@ public sealed class LabelServiceTests
         Assert.Contains(result, label => label.Name == "area/labels" && label.Colour == "c5def5");
         Assert.Contains(result, label => label.Name == "size/m" && label.Colour == "fef2c0");
         Assert.Contains(result, label => label.Name == "size/xs" && label.Description == "Trivial — less than 1 hour (e.g. typo fix, config change)");
-        Assert.Equal(30, result.Count);
+        Assert.Equal(31, result.Count);
         Assert.Contains(result, label => label.Name.StartsWith("type/", StringComparison.Ordinal));
         Assert.Contains(result, label => label.Name.StartsWith("priority/", StringComparison.Ordinal));
         Assert.Contains(result, label => label.Name.StartsWith("status/", StringComparison.Ordinal));

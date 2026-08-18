@@ -28,7 +28,7 @@ Canonical `status/*` labels are defined in [`plan/LABEL_STRATEGY.md`](../../plan
 | Condition | Action |
 |-----------|--------|
 | Open with `status/done` | Remove `status/done`; set `status/in-review` if the item has an open linked PR, otherwise `status/todo`. |
-| Open with multiple `status/*` labels | Keep the most advanced label (`in-review` > `in-progress` > `blocked` > `todo`); remove the rest. |
+| Open with multiple `status/*` labels | Keep the most advanced label (`in-review` > `in-progress` > `blocked` > `ice-box` > `todo`); remove the rest. |
 | Open with no `status/*` label | Report only — do not auto-add. |
 
 ## Invocation

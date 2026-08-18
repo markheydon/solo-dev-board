@@ -8,6 +8,7 @@ const statusLabels = [
     'status/todo',
     'status/in-progress',
     'status/blocked',
+    'status/ice-box',
     'status/in-review',
     'status/done',
 ];
@@ -16,6 +17,7 @@ const statusPrecedence = [
     'status/in-review',
     'status/in-progress',
     'status/blocked',
+    'status/ice-box',
     'status/todo',
 ];
 

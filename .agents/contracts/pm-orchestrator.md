@@ -57,6 +57,7 @@ Invoke this when you need to:
   - `area/` (dashboard, migration, labels, board-rules, triage, workflows, infrastructure, docs)
   - `size/` (xs, s, m, l, xl)
   - `status/todo` for new items
+- To park work: apply `status/blocked` (external dependency) or `status/ice-box` (shelved for later); Roadmap Sync maps these to Project #8 **Blocked** and **Ice Box** ([DEC-028](../../plan/DECISIONS.md#dec-028-blocked-and-ice-box-project-status-options)). **Up Next** is board-only and has no issue label.
 - Use markdown templates from `.agents/skills/repo-github-issues/references/templates.md`
 - **Note:** Markdown templates mirror YAML issue forms (`.github/ISSUE_TEMPLATE/*.yml`) which define the canonical structure
 - Every story, enabler, and test issue body must include an `## Implementation References` section with:

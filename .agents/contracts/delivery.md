@@ -111,7 +111,7 @@ Rules:
 
 - Apply only to the issue being implemented.
 - Skip if the issue already has `status/in-progress`.
-- Do not change label if the issue has `status/blocked` — escalate instead.
+- Do not change label if the issue has `status/blocked` or `status/ice-box` — escalate instead.
 - Do not edit parent issues, milestones, assignees, or the issue body.
 - Do not call `gh project` commands or set board fields directly.
 

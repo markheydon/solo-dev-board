@@ -19,6 +19,8 @@ This document defines the design of the SoloDevBoard GitHub Projects (v2) board,
 | **Todo** | Issues assigned to the current phase and ready to start, but not yet selected for the immediate execution batch. |
 | **Up Next** | The next short-horizon batch of stories, enablers, and tests chosen for execution. |
 | **In Progress** | Issues actively being worked on. |
+| **Blocked** | Issues that cannot proceed because of an external dependency; mirrored by `status/blocked`. |
+| **Ice Box** | Issues shelved for later and outside the active queue; mirrored by `status/ice-box`. |
 | **Done** | Issues completed and closed. |
 
 ---
@@ -31,7 +33,7 @@ This document defines the design of the SoloDevBoard GitHub Projects (v2) board,
 | **Phase** | Maps issues to the implementation phase via milestone. |
 | **Priority** | Mirrors the issue's delivery priority. |
 | **Focus Order** | Numeric sequence for the current **Up Next** batch on the Story Board only. |
-| **Start Date / Target Date** | Blank while an item is still untouched in **Todo**; record the actual start plus the active forecast once work begins, then overwrite Target Date with the actual completion date when the item is done. |
+| **Start Date / Target Date** | Blank while an item is still untouched in **Todo** or parked in **Ice Box**; record the actual start plus the active forecast once work begins; **Blocked** preserves dates if work had started; overwrite Target Date with the actual completion date when the item is done. |
 
 Rules for **Focus Order**:
 - Apply it only to stories, enablers, and tests.
@@ -85,6 +87,14 @@ The following automation rules are configured on the board. These are documented
 - **Trigger:** The `status/todo` label is applied to an issue.
 - **Action:** Move the issue to **Todo** if it is not explicitly queued in **Up Next**.
 
+### Label: status/blocked Applied
+- **Trigger:** The `status/blocked` label is applied to an issue.
+- **Action:** Move the issue to **Blocked**; clear **Focus Order**; preserve **Start Date** and **Target Date** if already set.
+
+### Label: status/ice-box Applied
+- **Trigger:** The `status/ice-box` label is applied to an issue.
+- **Action:** Move the issue to **Ice Box**; clear **Start Date**, **Target Date**, and **Focus Order**.
+
 ### Issue Closed (Not as Duplicate)
 - **Trigger:** An issue is closed without being marked as a duplicate.
 - **Action:** Move the issue to **Done**; apply `status/done` label if not already present; ensure **Target Date** reflects the actual close date.
@@ -106,7 +116,7 @@ The following automation rules are configured on the board. These are documented
 - **Pull Requests** linked to issues (via `Closes #N` in the PR body) update the linked issue's column automatically via the rules above and appear through the **Linked pull requests** field, not as standalone roadmap cards.
 - **Unlinked PRs** (no linked issue) are tracked separately and should not appear on the main board. Use a separate view or filter.
 - If a pull request card appears on the roadmap board because of an accidentally enabled workflow or manual add, remove it unless you are intentionally using a separate PR review view.
-- **Todo issues** may legitimately have blank Start Date and Target Date values until work begins. **In Progress** and **Done** items should not.
+- **Todo** and **Ice Box** issues may legitimately have blank Start Date and Target Date values until work begins. **Blocked** preserves dates if work had started. **In Progress** and **Done** items should not have missing dates when active hygiene expects them.
 
 ---
 
@@ -131,7 +141,7 @@ In addition to the default board view, the following saved views are useful:
 | **Story Board** | Board | Day-to-day execution; filter `-label:type/epic -label:type/feature`; sort by **Focus Order** ascending when using **Up Next**. This is the view that should stay useful after v1.0.0. |
 | **Feature Board** | Board | Track feature-level progress (`label:type/feature`). |
 | **Epic Board** | Board | Track epic-level progress (`label:type/epic`). |
-| **Roadmap** | Roadmap (Gantt) | Date-range visualisation of items that already have **Start Date** and **Target Date**. See [Keeping the Roadmap layout useful](#keeping-the-roadmap-layout-useful). Filter out Done for a live queue. |
+| **Roadmap** | Roadmap (Gantt) | Date-range visualisation of items that already have **Start Date** and **Target Date**. See [Keeping the Roadmap layout useful](#keeping-the-roadmap-layout-useful). Includes **Done** for recent completions; excludes **Ice Box**. |
 
 The GitHub **Roadmap** layout only draws bars for items with dates. SoloDevBoard date rules leave **Todo** items blank until work starts, then overwrite **Target Date** with the close date. After a release, a month-scale Roadmap zoomed to "today" therefore shows:
 
@@ -144,7 +154,7 @@ That is expected. Do not invent Start/Target dates on untouched items just to fi
 
 Do this in the GitHub UI (saved view settings); agents cannot edit Project views via the GitHub MCP server.
 
-1. **Filter out Done** on the Roadmap view: `status:Todo,Up Next,In Progress` (or equivalent). The live queue is 21 items, not 152 closed cards.
+1. **Roadmap saved filter:** `status:Todo,Up Next,In Progress,Blocked,Done` (or equivalent). Exclude **Ice Box** so shelved work does not appear on the Gantt. **Done** stays visible so recently completed bars remain on the timeline.
 2. **Zoom to Quarter or Year** when you want historical bars; Month + Today will always look empty between active slices.
 3. **Treat Story Board as the default working view.** Bars reappear on Roadmap automatically when Roadmap Sync sets dates at Event 2 (work started) and Event 3 (done).
 4. **Leave GitHub Auto-archive off.** Roadmap Sync archives closed non-duplicate issues 14 days after `closed_at`. That is the catch-up for Phases 1–4 and the ongoing rule.

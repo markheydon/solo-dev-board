@@ -49,6 +49,7 @@ Describes the current state of the issue or PR in the workflow.
 | `status/todo` | `#ffffff` | Ready to be worked on; not yet started |
 | `status/in-progress` | `#0e8a16` | Currently being worked on |
 | `status/blocked` | `#e11d48` | Cannot proceed; waiting on something external |
+| `status/ice-box` | `#8b949e` | Shelved for later; not in the active delivery queue |
 | `status/in-review` | `#1d76db` | Pull request open; awaiting code review |
 | `status/done` | `#cfd3d7` | Completed and closed |
 
@@ -121,7 +122,8 @@ A script to create all labels at once will be provided in `infra/scripts/create-
 #### `status/` — Updated as work progresses
 - Apply `status/todo` when an issue is ready to start (refined, has acceptance criteria).
 - Change to `status/in-progress` when work begins.
-- Change to `status/blocked` if the issue cannot proceed.
+- Change to `status/blocked` if the issue cannot proceed because of an external dependency.
+- Change to `status/ice-box` if the issue is shelved for later and should leave the active queue (not the same as blocked — no external blocker).
 - Change to `status/in-review` when a PR is opened for the issue.
 - Change to `status/done` when the issue is closed.
 

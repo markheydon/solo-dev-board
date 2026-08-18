@@ -24,6 +24,7 @@ public sealed class LabelService : ILabelManagerService
         new("status/todo", "ffffff", "Ready to be worked on; not yet started", string.Empty),
         new("status/in-progress", "0e8a16", "Currently being worked on", string.Empty),
         new("status/blocked", "e11d48", "Cannot proceed; waiting on something external", string.Empty),
+        new("status/ice-box", "8b949e", "Shelved for later; not in the active delivery queue", string.Empty),
         new("status/in-review", "1d76db", "Pull request open; awaiting code review", string.Empty),
         new("status/done", "cfd3d7", "Completed and closed", string.Empty),
 
