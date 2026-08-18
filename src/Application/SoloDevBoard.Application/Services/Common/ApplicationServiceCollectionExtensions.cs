@@ -30,6 +30,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<ITriageService, TriageService>();
         services.AddScoped<IWorkflowTemplateService, WorkflowTemplateService>();
         services.AddScoped<IPmSettingsService, PmSettingsService>();
+        services.AddScoped<IPmWorkItemCatalogueService, PmWorkItemCatalogueService>();
 
         return services;
     }
