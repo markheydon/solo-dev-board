@@ -55,7 +55,7 @@ Cover each area:
 - **Overall status:** On track / at risk / blocked (one line).
 - **Top 3 priorities** for the next working session(s).
 - **Recommended actions** — grooming, scope updates, release plan changes, board metadata refresh.
-- **Project board status block** (optional markdown snippet for manual Project #8 readme update).
+- **Project board status block** — refresh [`plan/PROJECT_README.md`](../../plan/PROJECT_README.md) when the Project #8 info pane is stale, and include the paste-ready README in the review artefact.
 
 ### 5. Write the artefact
 

@@ -134,6 +134,16 @@ In addition to the default board view, the following saved views are useful:
 
 ---
 
+## Info pane README
+
+The Project #8 info pane (https://github.com/users/markheydon/projects/8?pane=info) is a short public description. Keep it aligned with live milestones, not with a stale phase name.
+
+Canonical copy: [`plan/PROJECT_README.md`](PROJECT_README.md). Refresh that file during each PM progress review, then paste the **Info pane README** block into the project (this repository cannot always write the user-owned Project README from an agent runtime).
+
+Do not treat [`plan/BACKLOG.md`](BACKLOG.md) as the work queue in that README. Link GitHub Issues and this project instead.
+
+---
+
 ## AI Collaborator Instructions
 
 > When making changes to the project board structure:
@@ -145,3 +155,4 @@ In addition to the default board view, the following saved views are useful:
 > 5. Ensure label changes align with `LABEL_STRATEGY.md`.
 > 6. If a new automation rule requires a new label, add that label to `LABEL_STRATEGY.md` first.
 > 7. Keep project-only workflow states such as **Up Next** out of the issue label taxonomy unless there is a deliberate lifecycle change.
+> 8. When phase or milestone status changes, update [`plan/PROJECT_README.md`](PROJECT_README.md) so the info pane can be refreshed.
