@@ -10,6 +10,7 @@ For historical backlog content (pre-migration), see [archive/BACKLOG-2026-07-18.
 |----------|---------|
 | [GitHub Issues (open)](https://github.com/markheydon/solo-dev-board/issues?q=is%3Aissue+is%3Aopen) | Canonical work items |
 | [SoloDevBoard Roadmap (Project #8)](https://github.com/users/markheydon/projects/8) | Prioritisation, flow, Up Next queue |
+| [Project info pane README](PROJECT_README.md) | Canonical copy of the Project #8 info pane text |
 | [Milestones](https://github.com/markheydon/solo-dev-board/milestones) | Release targeting |
 
 ## Roadmap Status (2026-08-18)

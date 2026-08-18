@@ -73,7 +73,9 @@ The following automation rules are configured on the board. These are documented
 ### Current Default Workflow Settings
 - **Enabled:** `Auto-add sub-issues to project`, `Auto-close issue`, `Item added to project`, and `Item closed`.
 - **Disabled:** `Auto-add to project`, `Pull request linked to issue`, `Pull request merged`, `Auto-archive items`, `Code changes requested`, `Code review approved`, and `Item reopened`.
-- **Reason:** SoloDevBoard uses an issue-driven roadmap. Agents manage issue creation and metadata deliberately, while GitHub workflow automation is kept to narrow issue-centric safety nets.
+- **Reason:** SoloDevBoard uses an issue-driven roadmap. Agents manage issue creation and metadata deliberately. Built-in GitHub workflows stay as narrow safety nets. **Archiving closed cards is Roadmap Sync’s job**, not GitHub’s Auto-archive workflow, because GitHub’s `updated:` filter is the project-card clock and a bulk field write resets it.
+
+**Archive rule (Roadmap Sync, nightly and on issue events):** closed, non-duplicate issues whose **`closed_at` is at least 14 calendar days ago** are archived on Project #8 via `archiveProjectV2Item`. Open items are never archived. Reopened issues are unarchived. Duplicate closures are still **removed**, not archived. Prefer this over GitHub **Auto-archive items**; if that workflow is on, turn it off so the two clocks do not fight.
 
 ### Label: status/in-progress Applied
 - **Trigger:** The `status/in-progress` label is applied to an issue.
@@ -124,13 +126,48 @@ The rules defined here serve as both the operational configuration and the refer
 
 In addition to the default board view, the following saved views are useful:
 
-| View | Filter | Purpose |
+| View | Layout | Purpose |
 |------|--------|---------|
-| **Story Board** | `-label:type/epic -label:type/feature` | Day-to-day execution view; sort by **Focus Order** ascending when using **Up Next**. |
-| **Feature Board** | `label:type/feature` | Track feature-level progress without execution sequencing. |
-| **Epic Board** | `label:type/epic` | Track epic-level progress and phase coverage. |
-| **By Phase** | Filter by milestone | Focus on the current phase. |
-| **Untracked Issues** | No milestone assigned | Identify issues that need scheduling. |
+| **Story Board** | Board | Day-to-day execution; filter `-label:type/epic -label:type/feature`; sort by **Focus Order** ascending when using **Up Next**. This is the view that should stay useful after v1.0.0. |
+| **Feature Board** | Board | Track feature-level progress (`label:type/feature`). |
+| **Epic Board** | Board | Track epic-level progress (`label:type/epic`). |
+| **Roadmap** | Roadmap (Gantt) | Date-range visualisation of items that already have **Start Date** and **Target Date**. See [Keeping the Roadmap layout useful](#keeping-the-roadmap-layout-useful). Filter out Done for a live queue. |
+
+The GitHub **Roadmap** layout only draws bars for items with dates. SoloDevBoard date rules leave **Todo** items blank until work starts, then overwrite **Target Date** with the close date. After a release, a month-scale Roadmap zoomed to "today" therefore shows:
+
+- Closed items as left-pointing arrows (their date range is in the past).
+- Parked v1.1.0 / v1.2.0 items with **no bars** (no dates yet).
+
+That is expected. Do not invent Start/Target dates on untouched items just to fill the Gantt.
+
+### Keeping the Roadmap layout useful
+
+Do this in the GitHub UI (saved view settings); agents cannot edit Project views via the GitHub MCP server.
+
+1. **Filter out Done** on the Roadmap view: `status:Todo,Up Next,In Progress` (or equivalent). The live queue is 22 items, not 152 closed cards.
+2. **Zoom to Quarter or Year** when you want historical bars; Month + Today will always look empty between active slices.
+3. **Treat Story Board as the default working view.** Bars reappear on Roadmap automatically when Roadmap Sync sets dates at Event 2 (work started) and Event 3 (done).
+4. **Leave GitHub Auto-archive off.** Roadmap Sync archives closed non-duplicate issues 14 days after `closed_at`. That is the catch-up for Phases 1–4 and the ongoing rule.
+
+Do not put speculative dates on the parked Phase 5 queue (#272–#288) or unstarted v1.1.0 stories. The next visible Roadmap bar should be the first v1.1.0 item that actually starts.
+
+### Agent write access (Projects v2)
+
+GitHub MCP in Cursor can list issues and pull requests. It cannot mutate a **user-owned** Project. The Cloud Agent `gh` token is typically a GitHub App installation token, which can **read** Project #8 (`gh project item-list`) but often cannot **edit** README, short description, views, or item fields.
+
+Item-field writes already go through the Actions bridge and `ROADMAP_PROJECT_TOKEN` (ADR-0017). That is enough for Status/Phase/Priority/dates. A second PAT in Cursor Cloud (`SDB_ROADMAP_PROJECT_TOKEN`, classic, `project` plus `repo` scopes) is optional and only worth it if you want agents to update the info pane README, short description, or repair fields without waiting for the workflow. Reuse the same token family as `ROADMAP_PROJECT_TOKEN`; do not mint a broader token.
+
+---
+
+## Info pane README
+
+The Project #8 info pane (https://github.com/users/markheydon/projects/8?pane=info) is a short public description. Keep it aligned with live milestones, not with a stale phase name.
+
+Canonical copy: [`plan/PROJECT_README.md`](PROJECT_README.md). Refresh that file during each PM progress review, then paste the **Info pane README** block into the project (this repository cannot always write the user-owned Project README from an agent runtime).
+
+Leave the Project **short description** as a current one-liner (GitHub may refuse to save an empty value). Update it in the same pass as the README so it does not lag.
+
+Do not treat [`plan/BACKLOG.md`](BACKLOG.md) as the work queue in that README. Link GitHub Issues and this project instead.
 
 ---
 
@@ -145,3 +182,4 @@ In addition to the default board view, the following saved views are useful:
 > 5. Ensure label changes align with `LABEL_STRATEGY.md`.
 > 6. If a new automation rule requires a new label, add that label to `LABEL_STRATEGY.md` first.
 > 7. Keep project-only workflow states such as **Up Next** out of the issue label taxonomy unless there is a deliberate lifecycle change.
+> 8. When phase or milestone status changes, update [`plan/PROJECT_README.md`](PROJECT_README.md) so the info pane can be refreshed.

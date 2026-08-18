@@ -52,6 +52,7 @@ plan/
 ├── PULL_REQUEST_POLICY.md      # Canonical PR title, body, labels, metadata
 ├── PROJECT_MANAGEMENT.md
 ├── PROJECT_BOARD_DESIGN.md
+├── PROJECT_README.md           # Canonical Project #8 info pane README
 ├── SPEC_KIT_MIGRATION.md       # Parked — future Spec Kit adoption
 └── DOCS_STRATEGY.md            # This file
 
@@ -171,5 +172,6 @@ When Copilot or another AI agent is asked to write or update documentation:
 > | New release | Update `plan/RELEASE_PLAN.md`; draft CHANGELOG entry |
 > | New label | Update `plan/LABEL_STRATEGY.md` |
 > | New board column or rule | Update `plan/PROJECT_BOARD_DESIGN.md` |
+> | Project #8 info pane / phase status | Update `plan/PROJECT_README.md` and paste into the project info pane |
 >
 > Documentation changes should be included in the **same PR** as the code change where possible. A PR that adds a feature without updating the relevant docs is considered incomplete.

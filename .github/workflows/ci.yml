@@ -46,6 +46,23 @@ jobs:
       - name: Run tests
         run: dotnet test SoloDevBoard.slnx --no-build --verbosity normal
 
+  roadmap-sync-helpers:
+    name: Roadmap sync helpers
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Run archive-rule tests
+        run: node --test .github/scripts/roadmap-sync-archive.test.mjs
+
   e2e-pat:
     name: End-to-End (Playwright, PAT mode)
     runs-on: ubuntu-latest

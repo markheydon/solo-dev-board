@@ -1,8 +1,11 @@
+import { isIssueClosedLongEnoughToArchive } from './roadmap-sync-archive.mjs';
+
 const apiBaseUrl = 'https://api.github.com';
 const graphqlUrl = `${apiBaseUrl}/graphql`;
 const owner = 'markheydon';
 const repo = 'solo-dev-board';
 const projectId = 'PVT_kwHOAJefG84BQ6bh';
+const archivedStates = ['ARCHIVED', 'NOT_ARCHIVED'];
 
 const fieldIds = {
     status: 'PVTSSF_lAHOAJefG84BQ6bhzg-5WGY',
@@ -64,6 +67,10 @@ async function main() {
     console.log(`Roadmap sync complete for ${repositoryIssues.issues.length} issue(s).`);
 }
 
+function isProjectItemArchived(projectItem) {
+    return projectItem?.isArchived === true;
+}
+
 async function fetchProjectItemsAsync() {
     const issueItemsByContentId = new Map();
     const pullRequestItems = [];
@@ -73,16 +80,17 @@ async function fetchProjectItemsAsync() {
     while (hasNextPage) {
         const response = await graphqlAsync(
             `
-            query ProjectItems($projectId: ID!, $after: String) {
+            query ProjectItems($projectId: ID!, $after: String, $archivedStates: [ProjectV2ItemArchivedState!]) {
               node(id: $projectId) {
                 ... on ProjectV2 {
-                  items(first: 100, after: $after) {
+                  items(first: 100, after: $after, archivedStates: $archivedStates) {
                     pageInfo {
                       hasNextPage
                       endCursor
                     }
                     nodes {
                       id
+                      isArchived
                       content {
                         __typename
                         ... on Issue {
@@ -153,7 +161,7 @@ async function fetchProjectItemsAsync() {
                 }
               }
             }`,
-            { projectId, after });
+            { projectId, after, archivedStates });
 
         const itemsConnection = response.node?.items;
         const nodes = itemsConnection?.nodes ?? [];
@@ -215,10 +223,17 @@ async function syncIssueAsync(issue, issueItemsByContentId, timelineCache) {
         return;
     }
 
+    const shouldArchive = isIssueClosedLongEnoughToArchive(issue, getRunDate());
+
     if (!projectItem) {
+        if (shouldArchive) {
+            return;
+        }
+
         const projectItemId = await addIssueToProjectAsync(issue.node_id);
         projectItem = {
             id: projectItemId,
+            isArchived: false,
             content: {
                 __typename: 'Issue',
                 id: issue.node_id,
@@ -234,6 +249,15 @@ async function syncIssueAsync(issue, issueItemsByContentId, timelineCache) {
 
         issueItemsByContentId.set(issue.node_id, projectItem);
         console.log(`Added issue #${issue.number} to the roadmap project.`);
+    }
+
+    if (isProjectItemArchived(projectItem)) {
+        if (shouldArchive) {
+            return;
+        }
+
+        await unarchiveProjectItemAsync(projectItem.id, `issue #${issue.number}`);
+        projectItem.isArchived = false;
     }
 
     const currentStatusName = projectItem.status?.name ?? null;
@@ -263,6 +287,11 @@ async function syncIssueAsync(issue, issueItemsByContentId, timelineCache) {
     await syncDateFieldAsync(projectItem.id, fieldIds.startDate, projectItem.startDate?.date ?? null, startDate, `issue #${issue.number} start date`);
     await syncDateFieldAsync(projectItem.id, fieldIds.targetDate, projectItem.targetDate?.date ?? null, targetDate, `issue #${issue.number} target date`);
     await clearFieldAsync(projectItem.id, fieldIds.focusOrder, projectItem.focusOrder?.number ?? null, `issue #${issue.number} focus order`);
+
+    if (shouldArchive) {
+        await archiveProjectItemAsync(projectItem.id, `issue #${issue.number}`);
+        projectItem.isArchived = true;
+    }
 }
 
 async function syncParentIssuesAsync(issueItemsByContentId, issueByNumber, timelineCache) {
@@ -270,6 +299,10 @@ async function syncParentIssuesAsync(issueItemsByContentId, issueByNumber, timel
         const issue = projectItem.content;
 
         if (issue?.__typename !== 'Issue') {
+            continue;
+        }
+
+        if (isProjectItemArchived(projectItem)) {
             continue;
         }
 
@@ -480,6 +513,36 @@ async function addIssueToProjectAsync(contentId) {
         { projectId, contentId });
 
     return response.addProjectV2ItemById.item.id;
+}
+
+async function archiveProjectItemAsync(itemId, label) {
+    await graphqlAsync(
+        `
+        mutation ArchiveProjectItem($projectId: ID!, $itemId: ID!) {
+          archiveProjectV2Item(input: { projectId: $projectId, itemId: $itemId }) {
+            item {
+              id
+            }
+          }
+        }`,
+        { projectId, itemId });
+
+    console.log(`Archived ${label} on the roadmap project.`);
+}
+
+async function unarchiveProjectItemAsync(itemId, label) {
+    await graphqlAsync(
+        `
+        mutation UnarchiveProjectItem($projectId: ID!, $itemId: ID!) {
+          unarchiveProjectV2Item(input: { projectId: $projectId, itemId: $itemId }) {
+            item {
+              id
+            }
+          }
+        }`,
+        { projectId, itemId });
+
+    console.log(`Unarchived ${label} on the roadmap project.`);
 }
 
 async function deleteProjectItemAsync(itemId, label) {

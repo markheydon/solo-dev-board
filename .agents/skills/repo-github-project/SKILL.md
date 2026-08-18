@@ -355,8 +355,9 @@ This repository also carries `.github/workflows/roadmap-sync.yml`, which exists 
 - missing roadmap items,
 - Status / Phase / Priority field drift,
 - Start Date / Target Date drift,
-- parent Feature / Epic roll-up dates, and
-- stray standalone pull request cards.
+- parent Feature / Epic roll-up dates,
+- stray standalone pull request cards, and
+- archiving closed non-duplicate issues 14 days after `closed_at` (and unarchiving if reopened).
 
 Prefer direct project updates when you have working credentials. Use the bridge as the reliability layer and fallback path.
 
