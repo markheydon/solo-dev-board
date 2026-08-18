@@ -8,6 +8,7 @@ export const featureRoutes = [
   { navLabel: 'Board Rules', path: '/board-rules', title: /Board Rules Visualiser/ },
   { navLabel: 'Triage', path: '/triage', title: /Triage UI/ },
   { navLabel: 'Workflows', path: '/workflows', title: /Workflow Templates/ },
+  { navLabel: 'PM Workflow', path: '/pm-workflow/repos', title: /PM Workflow — Repos/ },
 ] as const;
 
 async function ensureDrawerOpen(page: Page): Promise<void> {

@@ -32,6 +32,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IPmSettingsService, PmSettingsService>();
         services.AddScoped<IProjectItemCatalogueService, ProjectItemCatalogueService>();
         services.AddScoped<IPmWorkItemCatalogueService, PmWorkItemCatalogueService>();
+        services.AddScoped<IPmProjectBoardDiscoveryService, PmProjectBoardDiscoveryService>();
 
         return services;
     }

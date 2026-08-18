@@ -15,6 +15,7 @@ export const accessibilityRoutes = [
   { path: '/board-rules', name: 'Board Rules' },
   { path: '/triage', name: 'Triage' },
   { path: '/workflows', name: 'Workflow Templates' },
+  { path: '/pm-workflow/repos', name: 'PM Workflow Repos' },
 ] as const;
 
 const wcagTags = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] as const;
@@ -104,6 +105,11 @@ export async function waitForAccessibilityScanReady(page: Page, path: string): P
   // Filled primary controls are disabled during repository loads; wait for a stable enabled state.
   if (routePath === '/repositories') {
     await expect(page.getByTestId('repositories-refresh-button')).toBeEnabled({ timeout: 15_000 });
+  }
+
+  if (routePath === '/pm-workflow/repos') {
+    await expect(page.getByTestId('pm-workflow-shell')).toBeVisible();
+    await expect(page.locator('[aria-label="Loading PM Workflow"]')).toBeHidden({ timeout: 15_000 });
   }
 }
 
