@@ -6,6 +6,7 @@ using SoloDevBoard.Application.Services.BoardRules;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Domain.Entities.Labels;
 using SoloDevBoard.Domain.Entities.Milestones;
+using SoloDevBoard.Domain.Entities.PmWorkflow;
 using SoloDevBoard.Domain.Entities.Repositories;
 using SoloDevBoard.Domain.Entities.Triage;
 using SoloDevBoard.Domain.Entities.Workflows;
@@ -611,6 +612,131 @@ public sealed class GitHubService : IGitHubService
     }
 
     /// <inheritdoc/>
+    public async Task<ProjectBoardItemCatalogue> GetProjectBoardItemsAsync(string projectId, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectId);
+
+        const string query = "query ProjectBoardItemCatalogue($projectId: ID!, $after: String) { node(id: $projectId) { ... on ProjectV2 { fields(first: 50) { nodes { ... on ProjectV2SingleSelectField { id name } ... on ProjectV2Field { id name dataType } } } items(first: 100, after: $after, archivedStates: [NOT_ARCHIVED]) { pageInfo { hasNextPage endCursor } nodes { id updatedAt content { __typename ... on Issue { number title url repository { name owner { login } } } ... on PullRequest { number title url repository { name owner { login } } } } status: fieldValueByName(name: \"Status\") { ... on ProjectV2ItemFieldSingleSelectValue { optionId name updatedAt } } focusOrder: fieldValueByName(name: \"Focus Order\") { ... on ProjectV2ItemFieldNumberValue { number } } } } } } }";
+
+        var client = CreateAuthenticatedClient();
+        var fieldIds = new ProjectBoardFieldIds();
+        var items = new List<ProjectBoardItem>();
+        string? after = null;
+        var hasNextPage = true;
+        var fieldIdsResolved = false;
+
+        while (hasNextPage)
+        {
+            var variables = new Dictionary<string, object?>(StringComparer.Ordinal)
+            {
+                ["projectId"] = projectId,
+                ["after"] = after,
+            };
+
+            var payload = await PostGraphQlAsync<GetProjectBoardItemCatalogueResponseDto>(client, query, variables, cancellationToken)
+                .ConfigureAwait(false);
+
+            var node = payload.Data?.Node;
+            if (!fieldIdsResolved)
+            {
+                fieldIds = ToProjectBoardFieldIds(node?.Fields?.Nodes ?? []);
+                if (string.IsNullOrWhiteSpace(fieldIds.StatusFieldId))
+                {
+                    throw CreateInvalidResponseException("GraphQL response did not contain a supported Status field.", "/graphql");
+                }
+
+                fieldIdsResolved = true;
+            }
+
+            var itemsConnection = node?.Items;
+            if (itemsConnection?.Nodes is { Count: > 0 })
+            {
+                foreach (var itemNode in itemsConnection.Nodes)
+                {
+                    var mappedItem = ToProjectBoardItemDomain(itemNode);
+                    if (mappedItem is not null)
+                    {
+                        items.Add(mappedItem);
+                    }
+                }
+            }
+
+            hasNextPage = itemsConnection?.PageInfo?.HasNextPage ?? false;
+            after = itemsConnection?.PageInfo?.EndCursor;
+        }
+
+        return new ProjectBoardItemCatalogue
+        {
+            FieldIds = fieldIds,
+            Items = items,
+        };
+    }
+
+    /// <inheritdoc/>
+    public async Task UpdateProjectBoardItemFocusOrderAsync(
+        string projectId,
+        string projectItemId,
+        string focusOrderFieldId,
+        double focusOrder,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectItemId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(focusOrderFieldId);
+
+        const string mutation = "mutation SetProjectV2FocusOrder($projectId: ID!, $itemId: ID!, $fieldId: ID!, $focusOrder: Float!) { updateProjectV2ItemFieldValue(input: { projectId: $projectId, itemId: $itemId, fieldId: $fieldId, value: { number: $focusOrder } }) { projectV2Item { id } } }";
+
+        var client = CreateAuthenticatedClient();
+        var variables = new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            ["projectId"] = projectId,
+            ["itemId"] = projectItemId,
+            ["fieldId"] = focusOrderFieldId,
+            ["focusOrder"] = focusOrder,
+        };
+
+        var payload = await PostGraphQlAsync<UpdateProjectBoardItemStatusResponseDto>(client, mutation, variables, cancellationToken)
+            .ConfigureAwait(false);
+
+        var updatedItemId = payload.Data?.UpdateProjectV2ItemFieldValue?.ProjectV2Item?.Id;
+        if (string.IsNullOrWhiteSpace(updatedItemId))
+        {
+            throw CreateInvalidResponseException("GraphQL response did not contain the updated project item identifier.", "/graphql");
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task ClearProjectBoardItemFocusOrderAsync(
+        string projectId,
+        string projectItemId,
+        string focusOrderFieldId,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectItemId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(focusOrderFieldId);
+
+        const string mutation = "mutation ClearProjectV2FocusOrder($projectId: ID!, $itemId: ID!, $fieldId: ID!) { clearProjectV2ItemFieldValue(input: { projectId: $projectId, itemId: $itemId, fieldId: $fieldId }) { projectV2Item { id } } }";
+
+        var client = CreateAuthenticatedClient();
+        var variables = new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            ["projectId"] = projectId,
+            ["itemId"] = projectItemId,
+            ["fieldId"] = focusOrderFieldId,
+        };
+
+        var payload = await PostGraphQlAsync<ClearProjectBoardItemFieldResponseDto>(client, mutation, variables, cancellationToken)
+            .ConfigureAwait(false);
+
+        var clearedItemId = payload.Data?.ClearProjectV2ItemFieldValue?.ProjectV2Item?.Id;
+        if (string.IsNullOrWhiteSpace(clearedItemId))
+        {
+            throw CreateInvalidResponseException("GraphQL response did not contain the cleared project item identifier.", "/graphql");
+        }
+    }
+
+    /// <inheritdoc/>
     public async Task CloseTriageItemAsDuplicateAsync(string owner, string repo, GitHubTriageItemType itemType, int itemNumber, string duplicateReference, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
@@ -744,6 +870,143 @@ public sealed class GitHubService : IGitHubService
             StatusFieldId = statusField.Id,
             StatusOptions = statusOptions,
         };
+    }
+
+    private static ProjectBoardFieldIds ToProjectBoardFieldIds(IReadOnlyList<ProjectBoardCatalogueFieldDto> fields)
+    {
+        var statusField = fields
+            .FirstOrDefault(field =>
+                !string.IsNullOrWhiteSpace(field.Id)
+                && field.Name.Equals("Status", StringComparison.OrdinalIgnoreCase));
+
+        var focusOrderField = fields
+            .FirstOrDefault(field =>
+                !string.IsNullOrWhiteSpace(field.Id)
+                && field.Name.Equals("Focus Order", StringComparison.OrdinalIgnoreCase)
+                && (string.IsNullOrWhiteSpace(field.DataType)
+                    || field.DataType.Equals("NUMBER", StringComparison.OrdinalIgnoreCase)));
+
+        return new ProjectBoardFieldIds
+        {
+            StatusFieldId = statusField?.Id ?? string.Empty,
+            FocusOrderFieldId = string.IsNullOrWhiteSpace(focusOrderField?.Id) ? null : focusOrderField.Id,
+        };
+    }
+
+    private static ProjectBoardItem? ToProjectBoardItemDomain(ProjectBoardItemNodeDto? node)
+    {
+        if (node is null || string.IsNullOrWhiteSpace(node.Id))
+        {
+            return null;
+        }
+
+        var content = ToProjectBoardItemContent(node.Content);
+        if (content is null)
+        {
+            return null;
+        }
+
+        ProjectBoardItemStatus? status = null;
+        if (node.Status is not null
+            && !string.IsNullOrWhiteSpace(node.Status.OptionId)
+            && !string.IsNullOrWhiteSpace(node.Status.Name))
+        {
+            status = new ProjectBoardItemStatus
+            {
+                OptionId = node.Status.OptionId,
+                Name = node.Status.Name,
+            };
+        }
+
+        var activityTimestamp = node.Status?.UpdatedAt ?? node.UpdatedAt;
+        if (activityTimestamp == default)
+        {
+            return null;
+        }
+
+        return new ProjectBoardItem
+        {
+            ProjectItemId = node.Id,
+            Status = status,
+            FocusOrder = node.FocusOrder?.Number,
+            Content = content,
+            ActivityTimestamp = activityTimestamp,
+        };
+    }
+
+    private static ProjectBoardItemContent? ToProjectBoardItemContent(ProjectBoardItemContentNodeDto? content)
+    {
+        if (content is null || string.IsNullOrWhiteSpace(content.Typename))
+        {
+            return null;
+        }
+
+        if (content.Number <= 0
+            || string.IsNullOrWhiteSpace(content.Title)
+            || string.IsNullOrWhiteSpace(content.Url)
+            || content.Repository is null
+            || string.IsNullOrWhiteSpace(content.Repository.Name)
+            || string.IsNullOrWhiteSpace(content.Repository.Owner?.Login))
+        {
+            return null;
+        }
+
+        var contentType = content.Typename.Equals("PullRequest", StringComparison.Ordinal)
+            ? TriageItemType.PullRequest
+            : content.Typename.Equals("Issue", StringComparison.Ordinal)
+                ? TriageItemType.Issue
+                : (TriageItemType?)null;
+
+        if (contentType is null)
+        {
+            return null;
+        }
+
+        return new ProjectBoardItemContent
+        {
+            ContentType = contentType.Value,
+            Number = content.Number,
+            RepositoryOwner = content.Repository.Owner.Login,
+            RepositoryName = content.Repository.Name,
+            Title = RepairCommonMojibake(content.Title),
+            Url = content.Url,
+        };
+    }
+
+    private async Task<TGraphQlResponse> PostGraphQlAsync<TGraphQlResponse>(
+        HttpClient client,
+        string query,
+        IReadOnlyDictionary<string, object?> variables,
+        CancellationToken cancellationToken)
+    {
+        var requestBody = new GraphQlObjectVariablesRequestDto(query, variables);
+
+        using var response = await client.PostAsJsonAsync("/graphql", requestBody, JsonOptions, cancellationToken).ConfigureAwait(false);
+        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
+
+        var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        using var document = JsonDocument.Parse(json);
+        if (document.RootElement.TryGetProperty("errors", out var errorsElement)
+            && errorsElement.ValueKind == JsonValueKind.Array
+            && errorsElement.GetArrayLength() > 0)
+        {
+            var errorMessages = errorsElement
+                .EnumerateArray()
+                .Select(static error => error.TryGetProperty("message", out var message) ? message.GetString() : null)
+                .Where(static message => !string.IsNullOrWhiteSpace(message))
+                .ToArray();
+
+            var combinedErrors = errorMessages.Length > 0
+                ? string.Join("; ", errorMessages)
+                : "Unknown GraphQL error.";
+
+            throw new HttpRequestException($"GitHub GraphQL request failed. Errors: {combinedErrors}");
+        }
+
+        var payload = JsonSerializer.Deserialize<TGraphQlResponse>(json, JsonOptions)
+            ?? throw CreateInvalidResponseException("GraphQL response body was empty.", "/graphql");
+
+        return payload;
     }
 
     /// <summary>Creates an <see cref="HttpRequestException"/> describing an unexpected or empty API response body.</summary>
@@ -1328,6 +1591,170 @@ public sealed class GitHubService : IGitHubService
     private sealed record GraphQlRequestDto(
         [property: JsonPropertyName("query")] string Query,
         [property: JsonPropertyName("variables")] IReadOnlyDictionary<string, string> Variables);
+
+    /// <summary>Request body DTO for GitHub GraphQL requests with object-typed variables.</summary>
+    private sealed record GraphQlObjectVariablesRequestDto(
+        [property: JsonPropertyName("query")] string Query,
+        [property: JsonPropertyName("variables")] IReadOnlyDictionary<string, object?> Variables);
+
+    /// <summary>DTO wrapper for GraphQL project board item catalogue responses.</summary>
+    private sealed record GetProjectBoardItemCatalogueResponseDto
+    {
+        [JsonPropertyName("data")]
+        public GetProjectBoardItemCatalogueDataDto? Data { get; init; }
+
+        [JsonPropertyName("errors")]
+        public IReadOnlyList<GraphQlErrorDto> Errors { get; init; } = [];
+    }
+
+    /// <summary>DTO for GraphQL project board item catalogue data payload.</summary>
+    private sealed record GetProjectBoardItemCatalogueDataDto
+    {
+        [JsonPropertyName("node")]
+        public ProjectBoardCatalogueNodeDto? Node { get; init; }
+    }
+
+    /// <summary>DTO for a project board node in item catalogue queries.</summary>
+    private sealed record ProjectBoardCatalogueNodeDto
+    {
+        [JsonPropertyName("fields")]
+        public ProjectBoardCatalogueFieldConnectionDto? Fields { get; init; }
+
+        [JsonPropertyName("items")]
+        public ProjectBoardItemConnectionDto? Items { get; init; }
+    }
+
+    /// <summary>DTO for project board field nodes in item catalogue queries.</summary>
+    private sealed record ProjectBoardCatalogueFieldConnectionDto
+    {
+        [JsonPropertyName("nodes")]
+        public IReadOnlyList<ProjectBoardCatalogueFieldDto> Nodes { get; init; } = [];
+    }
+
+    /// <summary>DTO for a project board field in item catalogue queries.</summary>
+    private sealed record ProjectBoardCatalogueFieldDto
+    {
+        [JsonPropertyName("id")]
+        public string Id { get; init; } = string.Empty;
+
+        [JsonPropertyName("name")]
+        public string Name { get; init; } = string.Empty;
+
+        [JsonPropertyName("dataType")]
+        public string DataType { get; init; } = string.Empty;
+    }
+
+    /// <summary>DTO for paginated project board items.</summary>
+    private sealed record ProjectBoardItemConnectionDto
+    {
+        [JsonPropertyName("pageInfo")]
+        public GraphQlPageInfoDto? PageInfo { get; init; }
+
+        [JsonPropertyName("nodes")]
+        public IReadOnlyList<ProjectBoardItemNodeDto> Nodes { get; init; } = [];
+    }
+
+    /// <summary>DTO for GraphQL page info.</summary>
+    private sealed record GraphQlPageInfoDto
+    {
+        [JsonPropertyName("hasNextPage")]
+        public bool HasNextPage { get; init; }
+
+        [JsonPropertyName("endCursor")]
+        public string? EndCursor { get; init; }
+    }
+
+    /// <summary>DTO for a project board item node.</summary>
+    private sealed record ProjectBoardItemNodeDto
+    {
+        [JsonPropertyName("id")]
+        public string Id { get; init; } = string.Empty;
+
+        [JsonPropertyName("updatedAt")]
+        public DateTimeOffset UpdatedAt { get; init; }
+
+        [JsonPropertyName("content")]
+        public ProjectBoardItemContentNodeDto? Content { get; init; }
+
+        [JsonPropertyName("status")]
+        public ProjectBoardItemStatusValueDto? Status { get; init; }
+
+        [JsonPropertyName("focusOrder")]
+        public ProjectBoardItemFocusOrderValueDto? FocusOrder { get; init; }
+    }
+
+    /// <summary>DTO for linked issue or pull request content on a project board item.</summary>
+    private sealed record ProjectBoardItemContentNodeDto
+    {
+        [JsonPropertyName("__typename")]
+        public string Typename { get; init; } = string.Empty;
+
+        [JsonPropertyName("number")]
+        public int Number { get; init; }
+
+        [JsonPropertyName("title")]
+        public string Title { get; init; } = string.Empty;
+
+        [JsonPropertyName("url")]
+        public string Url { get; init; } = string.Empty;
+
+        [JsonPropertyName("repository")]
+        public ProjectBoardItemRepositoryDto? Repository { get; init; }
+    }
+
+    /// <summary>DTO for repository metadata on project board item content.</summary>
+    private sealed record ProjectBoardItemRepositoryDto
+    {
+        [JsonPropertyName("name")]
+        public string Name { get; init; } = string.Empty;
+
+        [JsonPropertyName("owner")]
+        public GraphQlOwnerDto? Owner { get; init; }
+    }
+
+    /// <summary>DTO for Status field values on project board items.</summary>
+    private sealed record ProjectBoardItemStatusValueDto
+    {
+        [JsonPropertyName("optionId")]
+        public string OptionId { get; init; } = string.Empty;
+
+        [JsonPropertyName("name")]
+        public string Name { get; init; } = string.Empty;
+
+        [JsonPropertyName("updatedAt")]
+        public DateTimeOffset UpdatedAt { get; init; }
+    }
+
+    /// <summary>DTO for Focus Order field values on project board items.</summary>
+    private sealed record ProjectBoardItemFocusOrderValueDto
+    {
+        [JsonPropertyName("number")]
+        public double? Number { get; init; }
+    }
+
+    /// <summary>DTO wrapper for GraphQL clear field responses.</summary>
+    private sealed record ClearProjectBoardItemFieldResponseDto
+    {
+        [JsonPropertyName("data")]
+        public ClearProjectBoardItemFieldDataDto? Data { get; init; }
+
+        [JsonPropertyName("errors")]
+        public IReadOnlyList<GraphQlErrorDto> Errors { get; init; } = [];
+    }
+
+    /// <summary>DTO for GraphQL clear field data payload.</summary>
+    private sealed record ClearProjectBoardItemFieldDataDto
+    {
+        [JsonPropertyName("clearProjectV2ItemFieldValue")]
+        public ClearProjectBoardItemFieldPayloadDto? ClearProjectV2ItemFieldValue { get; init; }
+    }
+
+    /// <summary>DTO for GraphQL clear field mutation payload.</summary>
+    private sealed record ClearProjectBoardItemFieldPayloadDto
+    {
+        [JsonPropertyName("projectV2Item")]
+        public UpdateProjectBoardItemStatusItemDto? ProjectV2Item { get; init; }
+    }
 
     /// <summary>DTO wrapper for GraphQL get-board-rules responses.</summary>
     private sealed record GetBoardRulesResponseDto

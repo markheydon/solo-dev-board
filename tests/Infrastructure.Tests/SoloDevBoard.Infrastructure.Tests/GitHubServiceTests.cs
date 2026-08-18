@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using NSubstitute;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Domain.Entities.Labels;
+using SoloDevBoard.Domain.Entities.Triage;
 using SoloDevBoard.Infrastructure.GitHub;
 
 namespace SoloDevBoard.Infrastructure.Tests;
@@ -1535,6 +1536,293 @@ public sealed class GitHubServiceTests
         // Assert
         var exception = await Assert.ThrowsAsync<HttpRequestException>(action);
         Assert.Contains("GitHub GraphQL request failed", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetProjectBoardItemsAsync_StatusAndFocusOrderPresent_ReturnsMappedCatalogue()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "node": {
+                        "fields": {
+                            "nodes": [
+                                { "id": "PVTF_status", "name": "Status", "dataType": "SINGLE_SELECT" },
+                                { "id": "PVTF_focus", "name": "Focus Order", "dataType": "NUMBER" }
+                            ]
+                        },
+                        "items": {
+                            "pageInfo": { "hasNextPage": false, "endCursor": null },
+                            "nodes": [
+                                {
+                                    "id": "PVTI_item-one",
+                                    "updatedAt": "2026-03-01T10:00:00Z",
+                                    "content": {
+                                        "__typename": "Issue",
+                                        "number": 40,
+                                        "title": "Daily Focus",
+                                        "url": "https://github.com/markheydon/solo-dev-board/issues/40",
+                                        "repository": {
+                                            "name": "solo-dev-board",
+                                            "owner": { "login": "markheydon" }
+                                        }
+                                    },
+                                    "status": {
+                                        "optionId": "option-up-next",
+                                        "name": "Up Next",
+                                        "updatedAt": "2026-03-05T12:00:00Z"
+                                    },
+                                    "focusOrder": { "number": 2 }
+                                }
+                            ]
+                        }
+                    }
+                },
+                "errors": []
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var result = await sut.GetProjectBoardItemsAsync("project-id", cancellationToken);
+
+        // Assert
+        Assert.Equal("PVTF_status", result.FieldIds.StatusFieldId);
+        Assert.Equal("PVTF_focus", result.FieldIds.FocusOrderFieldId);
+        Assert.Single(result.Items);
+        Assert.Equal("PVTI_item-one", result.Items[0].ProjectItemId);
+        Assert.Equal("Up Next", result.Items[0].Status?.Name);
+        Assert.Equal("option-up-next", result.Items[0].Status?.OptionId);
+        Assert.Equal(2, result.Items[0].FocusOrder);
+        Assert.Equal(TriageItemType.Issue, result.Items[0].Content.ContentType);
+        Assert.Equal(40, result.Items[0].Content.Number);
+        Assert.Equal(new DateTimeOffset(2026, 3, 5, 12, 0, 0, TimeSpan.Zero), result.Items[0].ActivityTimestamp);
+        Assert.Single(handler.Requests);
+    }
+
+    [Fact]
+    public async Task GetProjectBoardItemsAsync_MissingFocusOrderField_ReturnsCatalogueWithoutFocusOrderFieldId()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "node": {
+                        "fields": {
+                            "nodes": [
+                                { "id": "PVTF_status", "name": "Status", "dataType": "SINGLE_SELECT" }
+                            ]
+                        },
+                        "items": {
+                            "pageInfo": { "hasNextPage": false, "endCursor": null },
+                            "nodes": [
+                                {
+                                    "id": "PVTI_item-one",
+                                    "updatedAt": "2026-03-01T10:00:00Z",
+                                    "content": {
+                                        "__typename": "PullRequest",
+                                        "number": 12,
+                                        "title": "PM workflow PR",
+                                        "url": "https://github.com/markheydon/solo-dev-board/pull/12",
+                                        "repository": {
+                                            "name": "solo-dev-board",
+                                            "owner": { "login": "markheydon" }
+                                        }
+                                    },
+                                    "status": null,
+                                    "focusOrder": null
+                                }
+                            ]
+                        }
+                    }
+                },
+                "errors": []
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var result = await sut.GetProjectBoardItemsAsync("project-id", cancellationToken);
+
+        // Assert
+        Assert.Equal("PVTF_status", result.FieldIds.StatusFieldId);
+        Assert.Null(result.FieldIds.FocusOrderFieldId);
+        Assert.Single(result.Items);
+        Assert.Null(result.Items[0].Status);
+        Assert.Null(result.Items[0].FocusOrder);
+        Assert.Equal(TriageItemType.PullRequest, result.Items[0].Content.ContentType);
+        Assert.Equal(new DateTimeOffset(2026, 3, 1, 10, 0, 0, TimeSpan.Zero), result.Items[0].ActivityTimestamp);
+    }
+
+    [Fact]
+    public async Task GetProjectBoardItemsAsync_HasNextPage_FetchesAllPages()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "node": {
+                        "fields": {
+                            "nodes": [
+                                { "id": "PVTF_status", "name": "Status", "dataType": "SINGLE_SELECT" }
+                            ]
+                        },
+                        "items": {
+                            "pageInfo": { "hasNextPage": true, "endCursor": "cursor-one" },
+                            "nodes": [
+                                {
+                                    "id": "PVTI_item-one",
+                                    "updatedAt": "2026-03-01T10:00:00Z",
+                                    "content": {
+                                        "__typename": "Issue",
+                                        "number": 1,
+                                        "title": "First",
+                                        "url": "https://github.com/markheydon/solo-dev-board/issues/1",
+                                        "repository": {
+                                            "name": "solo-dev-board",
+                                            "owner": { "login": "markheydon" }
+                                        }
+                                    },
+                                    "status": null,
+                                    "focusOrder": null
+                                }
+                            ]
+                        }
+                    }
+                },
+                "errors": []
+            }
+            """),
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "node": {
+                        "fields": {
+                            "nodes": [
+                                { "id": "PVTF_status", "name": "Status", "dataType": "SINGLE_SELECT" }
+                            ]
+                        },
+                        "items": {
+                            "pageInfo": { "hasNextPage": false, "endCursor": null },
+                            "nodes": [
+                                {
+                                    "id": "PVTI_item-two",
+                                    "updatedAt": "2026-03-02T10:00:00Z",
+                                    "content": {
+                                        "__typename": "Issue",
+                                        "number": 2,
+                                        "title": "Second",
+                                        "url": "https://github.com/markheydon/solo-dev-board/issues/2",
+                                        "repository": {
+                                            "name": "solo-dev-board",
+                                            "owner": { "login": "markheydon" }
+                                        }
+                                    },
+                                    "status": null,
+                                    "focusOrder": null
+                                }
+                            ]
+                        }
+                    }
+                },
+                "errors": []
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        var result = await sut.GetProjectBoardItemsAsync("project-id", cancellationToken);
+
+        // Assert
+        Assert.Equal(2, result.Items.Count);
+        Assert.Equal("PVTI_item-one", result.Items[0].ProjectItemId);
+        Assert.Equal("PVTI_item-two", result.Items[1].ProjectItemId);
+        Assert.Equal(2, handler.Requests.Count);
+    }
+
+    [Fact]
+    public async Task UpdateProjectBoardItemFocusOrderAsync_ValidResponse_PostsGraphQlMutation()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "updateProjectV2ItemFieldValue": {
+                        "projectV2Item": { "id": "PVTI_item-one" }
+                    }
+                },
+                "errors": []
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        await sut.UpdateProjectBoardItemFocusOrderAsync("project-id", "project-item-id", "focus-field-id", 4, cancellationToken);
+
+        // Assert
+        Assert.Single(handler.Requests);
+        var payload = await handler.Requests[0].Content!.ReadAsStringAsync(cancellationToken);
+        using var document = JsonDocument.Parse(payload);
+        var variables = document.RootElement.GetProperty("variables");
+        Assert.Equal("project-id", variables.GetProperty("projectId").GetString());
+        Assert.Equal("project-item-id", variables.GetProperty("itemId").GetString());
+        Assert.Equal("focus-field-id", variables.GetProperty("fieldId").GetString());
+        Assert.Equal(4, variables.GetProperty("focusOrder").GetDouble());
+    }
+
+    [Fact]
+    public async Task ClearProjectBoardItemFocusOrderAsync_ValidResponse_PostsGraphQlMutation()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "clearProjectV2ItemFieldValue": {
+                        "projectV2Item": { "id": "PVTI_item-one" }
+                    }
+                },
+                "errors": []
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        // Act
+        await sut.ClearProjectBoardItemFocusOrderAsync("project-id", "project-item-id", "focus-field-id", cancellationToken);
+
+        // Assert
+        Assert.Single(handler.Requests);
+        var payload = await handler.Requests[0].Content!.ReadAsStringAsync(cancellationToken);
+        using var document = JsonDocument.Parse(payload);
+        var variables = document.RootElement.GetProperty("variables");
+        Assert.Equal("project-id", variables.GetProperty("projectId").GetString());
+        Assert.Equal("project-item-id", variables.GetProperty("itemId").GetString());
+        Assert.Equal("focus-field-id", variables.GetProperty("fieldId").GetString());
     }
 
     [Fact]

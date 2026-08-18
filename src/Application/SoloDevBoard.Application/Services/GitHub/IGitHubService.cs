@@ -1,6 +1,7 @@
 using SoloDevBoard.Application.Services.BoardRules;
 using SoloDevBoard.Domain.Entities.Labels;
 using SoloDevBoard.Domain.Entities.Milestones;
+using SoloDevBoard.Domain.Entities.PmWorkflow;
 using SoloDevBoard.Domain.Entities.Repositories;
 using SoloDevBoard.Domain.Entities.Triage;
 using SoloDevBoard.Domain.Entities.Workflows;
@@ -162,6 +163,38 @@ public interface IGitHubService
         string projectItemId,
         string statusFieldId,
         string statusOptionId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Retrieves all project board items with Status, optional Focus Order, and linked content.</summary>
+    /// <param name="projectId">The GitHub Project v2 node identifier.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>The project board item catalogue including discovered field identifiers.</returns>
+    Task<ProjectBoardItemCatalogue> GetProjectBoardItemsAsync(string projectId, CancellationToken cancellationToken = default);
+
+    /// <summary>Sets the Focus Order number field on a project board item.</summary>
+    /// <param name="projectId">The GitHub Project v2 node identifier.</param>
+    /// <param name="projectItemId">The project-item node identifier.</param>
+    /// <param name="focusOrderFieldId">The Focus Order field node identifier.</param>
+    /// <param name="focusOrder">The Focus Order value to set.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous update operation.</returns>
+    Task UpdateProjectBoardItemFocusOrderAsync(
+        string projectId,
+        string projectItemId,
+        string focusOrderFieldId,
+        double focusOrder,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Clears the Focus Order number field on a project board item.</summary>
+    /// <param name="projectId">The GitHub Project v2 node identifier.</param>
+    /// <param name="projectItemId">The project-item node identifier.</param>
+    /// <param name="focusOrderFieldId">The Focus Order field node identifier.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous clear operation.</returns>
+    Task ClearProjectBoardItemFocusOrderAsync(
+        string projectId,
+        string projectItemId,
+        string focusOrderFieldId,
         CancellationToken cancellationToken = default);
 
     /// <summary>Closes a triage item as duplicate and records a duplicate reference comment.</summary>
