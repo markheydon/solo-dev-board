@@ -1,0 +1,101 @@
+@using SoloDevBoard.App.Components.Features.PmWorkflow
+
+<MudStack Spacing="3" data-testid="pm-workflow-repos-page">
+    <MudText Typo="Typo.h5">Repo Management</MudText>
+    <MudText Typo="Typo.body1">
+        Choose which repositories participate in PM recommendations and set planning thresholds.
+        Board occupancy on the selected planning board still counts every linked card.
+    </MudText>
+
+    @if (ChromeState is null)
+    {
+        <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">PM Workflow chrome is unavailable.</MudAlert>
+    }
+    else
+    {
+        <MudPaper Class="pa-4" Elevation="1" data-testid="pm-workflow-thresholds-region">
+            <MudStack Spacing="2">
+                <MudText Typo="Typo.h6">Planning thresholds</MudText>
+                <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                    <MudNumericField @bind-Value="capacity"
+                                     Label="Capacity limit"
+                                     Variant="Variant.Outlined"
+                                     Min="1"
+                                     Immediate="false"
+                                     data-testid="pm-workflow-capacity-field" />
+                    <MudNumericField @bind-Value="stallDays"
+                                     Label="Stall days"
+                                     Variant="Variant.Outlined"
+                                     Min="1"
+                                     Immediate="false"
+                                     data-testid="pm-workflow-stall-days-field" />
+                    <MudNumericField @bind-Value="neglectDays"
+                                     Label="Neglect days"
+                                     Variant="Variant.Outlined"
+                                     Min="1"
+                                     Immediate="false"
+                                     data-testid="pm-workflow-neglect-days-field" />
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               OnClick="SaveThresholdsAsync"
+                               data-testid="pm-workflow-save-thresholds-button">
+                        Save thresholds
+                    </MudButton>
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+
+        <MudPaper Class="pa-4" Elevation="1" data-testid="pm-workflow-exclusions-region">
+            <MudStack Spacing="2">
+                <MudText Typo="Typo.h6">Excluded repositories</MudText>
+                <MudText Typo="Typo.body2">
+                    Excluded repositories are omitted from Daily Focus recommendations, Backlog Review, and Planning candidates.
+                    Archived repositories are not offered for inclusion.
+                </MudText>
+
+                <MudStack Row="true" Wrap="Wrap.Wrap" AlignItems="AlignItems.End" Spacing="2">
+                    <MudAutocomplete T="string"
+                                     @bind-Value="repositoryToExclude"
+                                     Label="Search catalogue"
+                                     Variant="Variant.Outlined"
+                                     SearchFunc="SearchIncludedRepositoriesAsync"
+                                     ResetValueOnEmptyText="true"
+                                     CoerceText="true"
+                                     CoerceValue="true"
+                                     Disabled="includedRepositoryOptions.Count == 0"
+                                     data-testid="pm-workflow-exclude-autocomplete" />
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Primary"
+                               Disabled="string.IsNullOrWhiteSpace(repositoryToExclude)"
+                               OnClick="() => ExcludeRepositoryAsync(repositoryToExclude)"
+                               data-testid="pm-workflow-exclude-button">
+                        Exclude
+                    </MudButton>
+                </MudStack>
+
+                @if (excludedRepositories.Count == 0)
+                {
+                    <MudText Typo="Typo.body2" data-testid="pm-workflow-no-exclusions-text">
+                        No repositories are excluded.
+                    </MudText>
+                }
+                else
+                {
+                    <MudStack Spacing="1" data-testid="pm-workflow-excluded-list">
+                        @foreach (var repository in excludedRepositories)
+                        {
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudChip T="string" Color="Color.Default" Variant="Variant.Outlined">@repository</MudChip>
+                                <MudButton Variant="Variant.Text"
+                                           OnClick="() => IncludeRepositoryAsync(repository)"
+                                           data-testid="pm-workflow-include-button">
+                                    Include
+                                </MudButton>
+                            </MudStack>
+                        }
+                    </MudStack>
+                }
+            </MudStack>
+        </MudPaper>
+    }
+</MudStack>
