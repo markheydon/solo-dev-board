@@ -24,15 +24,14 @@ const statusOptions = {
     Done: '98236657',
 };
 
-const phaseOptionsByMilestone = new Map([
+// Phase field is legacy (closed pre-1.0 releases). Post-1.0 milestones do not set Phase.
+const legacyPhaseOptionsByMilestone = new Map([
     ['v0.1.0', '1fbac877'],
     ['v0.2.0', '0f90ba94'],
     ['v0.3.0', 'f3de38ba'],
     ['v0.4.0', 'f5bc6726'],
     ['v0.5.0', '495afaf1'],
-    ['v1.2.0', '495afaf1'],
     ['v1.0.0', 'dfa36cee'],
-    ['v1.1.0', 'dfa36cee'],
 ]);
 
 const priorityOptionsByLabel = new Map([
@@ -389,11 +388,11 @@ function determinePhaseOptionId(issue) {
         return null;
     }
 
-    if (phaseOptionsByMilestone.has(milestoneTitle)) {
-        return phaseOptionsByMilestone.get(milestoneTitle);
+    if (legacyPhaseOptionsByMilestone.has(milestoneTitle)) {
+        return legacyPhaseOptionsByMilestone.get(milestoneTitle);
     }
 
-    for (const [prefix, optionId] of phaseOptionsByMilestone.entries()) {
+    for (const [prefix, optionId] of legacyPhaseOptionsByMilestone.entries()) {
         if (milestoneTitle.startsWith(`${prefix} `) || milestoneTitle.startsWith(`${prefix}—`) || milestoneTitle.startsWith(`${prefix} —`)) {
             return optionId;
         }

@@ -53,7 +53,7 @@ Browse, customise, and apply built-in GitHub Actions workflow templates across r
 
 ### 7. Cross-Repo PM Workflow
 
-A UI-based implementation of the two-mode PM operating system from [markheydon/github-workflows](https://github.com/markheydon/github-workflows): a Daily Focus view (board state, stalled items, top priorities), a cross-repository Backlog Review (prioritised work across all repos, neglected repo detection), and an Iteration Planning tool (capacity management, Up Next curation, milestone assignment). This epic is **v1.2.0** (Phase 5) and is not part of the v1.0.0 tag ([DEC-024](DECISIONS.md#dec-024-post-10-milestone-numbering)).
+A UI-based implementation of the two-mode PM operating system from [markheydon/github-workflows](https://github.com/markheydon/github-workflows): a Daily Focus view (board state, stalled items, top priorities), a cross-repository Backlog Review (prioritised work across all repos, neglected repo detection), and an Iteration Planning tool (capacity management, Up Next curation, milestone assignment). Tracked in [#272](https://github.com/markheydon/solo-dev-board/issues/272) on milestone **v1.1.0** ([DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)).
 
 ### 8. Public product site (GitHub Pages)
 
@@ -121,5 +121,5 @@ The following are explicitly **not** in scope for the current version of SoloDev
 | 2026-07-25 | V1 auth polish bundle clarified: hosted sign-in entry UX (#249) and PAT-mode GitHub connectivity readiness (#314) split from operator documentation (#247, #248). In-app secret editing remains out of scope; operator configuration stays via Aspire parameters, user secrets, and Key Vault. | Solo developer |
 | 2026-07-25 | PAT-only local trusted mode and self-hoster PAT Azure deploy path formalised in docs (#247, #248; PR #324). Scope bullet now links to getting-started and deployment guides. | Solo developer |
 | 2026-08-16 | Public product site on GitHub Pages: landing, User Guide, About narrative, canonical `solodevboard.com`, source tree `website/` (DEC-023). | Solo developer |
-| 2026-08-17 | Post-1.0 numbering: deferred Phase 1–4 slices are v1.1.0 (#289–#293); Cross-Repo PM Workflow is v1.2.0 (#272). v1.0.0 is the six shipped tools plus hosted/self-host hardening, not Phase 5. Label consistency, project board migration, and custom template repos are explicitly not v1.0.0 (DEC-024). | Solo developer |
+| 2026-08-18 | Post-1.0 backlog cleanup: one open milestone (`v1.1.0`); Cross-Repo PM Workflow and deferred slices consolidated there; bucket epic #289 closed; unused v1.2.0 milestone closed and deleted; #293 unmilestoned (DEC-027). | Solo developer |
 

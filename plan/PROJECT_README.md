@@ -17,27 +17,26 @@ Refresh this file during each [PM progress review](../.agents/workflows/pm-progr
 
 SoloDevBoard provides a single pane of glass for solo developers managing GitHub workloads across multiple repositories.
 
-**Status:** On track. Public release [v1.0.0](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) tagged 17 August 2026.
+**Status:** On track. Public release [v1.0.0](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) tagged 18 August 2026.
 
 ### Current focus
 
-v1.1.0 — deferred follow-ons ([#289](https://github.com/markheydon/solo-dev-board/issues/289)).
+**v1.1.0** — sole open milestone (20 issues): deferred v1.0 slices ([#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#292](https://github.com/markheydon/solo-dev-board/issues/292)) and Cross-Repo PM Workflow ([#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288)). Dogfood fixes from the public tag are added here as they arise.
 
-Phases 1–4 and Phase 6 are complete. The six shipped tools plus hosted and self-host hardening are in production. Next work is the parked Phase 1–4 slices (label consistency warnings, project board column migration, custom workflow template repositories) and any dogfood fixes from the public tag. Private user-owned Projects v2 under hosted sign-in remains blocked ([#293](https://github.com/markheydon/solo-dev-board/issues/293)). Cross-Repo PM Workflow (Phase 5 / v1.2.0) stays parked until v1.1.0 is underway.
+Platform-blocked private user-owned Projects v2 ([#293](https://github.com/markheydon/solo-dev-board/issues/293)) is unmilestoned backlog.
 
-### Roadmap
+### Release history
 
-| Phase | Milestone | Goal | Status |
-|---|---|---|---|
-| Phase 1 | v0.1.0 | Foundation — auth, repositories, dashboard shell. | Complete. |
-| Phase 2 | v0.2.0 | Label Manager + Audit Dashboard. | Complete. |
-| Phase 3 | v0.3.0 | One-Click Migration + Triage UI. | Complete. |
-| Phase 4 | v0.4.0 | Board Rules Visualiser + Workflow Templates. | Complete. |
-| Phase 6 | v1.0.0 | Production Ready — hosted validation and public release. | Complete. |
-| Phase 6 follow-ons | v1.1.0 | Deferred Phase 1–4 slices and dogfood fixes. | Not started. |
-| Phase 5 | v1.2.0 | Cross-Repo PM Workflow. | Parked. |
+| Release | Milestone | Status |
+|---|---|---|
+| Foundation | v0.1.0 | Complete |
+| Core features | v0.2.0 | Complete |
+| Migration + Triage | v0.3.0 | Complete |
+| Visualisation + Templates | v0.4.0 | Complete |
+| Production Ready | v1.0.0 | Complete |
+| **Next** | **v1.1.0** | **Not started** |
 
-Do not tag `v0.5.0` now that `v1.0.0` exists ([DEC-024](https://github.com/markheydon/solo-dev-board/blob/main/plan/DECISIONS.md#dec-024-post-10-milestone-numbering)).
+Post-1.0 model: one open milestone at a time ([DEC-027](https://github.com/markheydon/solo-dev-board/blob/main/plan/DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)).
 
 ### Current snapshot
 
@@ -50,10 +49,9 @@ Snapshot date: 18 August 2026.
 | v0.3.0 | 38 | 0 | 100% |
 | v0.4.0 | 25 | 0 | 100% |
 | v1.0.0 | 78 | 0 | 100% |
-| v1.1.0 | 0 | 5 | 0% |
-| v1.2.0 | 0 | 17 | Parked |
+| v1.1.0 | 1 | 20 | 5% |
 
-v1.2.0 still has 12 closed duplicate issues (#260–#271) on the GitHub milestone. The live Phase 5 queue is #272–#288 (17 open). The table uses the live queue, not the duplicate closed count.
+v1.1.0 closed count includes organisational epic #289 (closed during backlog cleanup). Live queue: #272–#288 and #290–#292.
 
 ### Key resources
 

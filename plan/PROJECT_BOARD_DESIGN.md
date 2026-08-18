@@ -136,7 +136,7 @@ In addition to the default board view, the following saved views are useful:
 The GitHub **Roadmap** layout only draws bars for items with dates. SoloDevBoard date rules leave **Todo** items blank until work starts, then overwrite **Target Date** with the close date. After a release, a month-scale Roadmap zoomed to "today" therefore shows:
 
 - Closed items as left-pointing arrows (their date range is in the past).
-- Parked v1.1.0 / v1.2.0 items with **no bars** (no dates yet).
+- Unstarted v1.1.0 items with **no bars** (no dates yet).
 
 That is expected. Do not invent Start/Target dates on untouched items just to fill the Gantt.
 
@@ -144,12 +144,12 @@ That is expected. Do not invent Start/Target dates on untouched items just to fi
 
 Do this in the GitHub UI (saved view settings); agents cannot edit Project views via the GitHub MCP server.
 
-1. **Filter out Done** on the Roadmap view: `status:Todo,Up Next,In Progress` (or equivalent). The live queue is 22 items, not 152 closed cards.
+1. **Filter out Done** on the Roadmap view: `status:Todo,Up Next,In Progress` (or equivalent). The live queue is 21 items, not 152 closed cards.
 2. **Zoom to Quarter or Year** when you want historical bars; Month + Today will always look empty between active slices.
 3. **Treat Story Board as the default working view.** Bars reappear on Roadmap automatically when Roadmap Sync sets dates at Event 2 (work started) and Event 3 (done).
 4. **Leave GitHub Auto-archive off.** Roadmap Sync archives closed non-duplicate issues 14 days after `closed_at`. That is the catch-up for Phases 1–4 and the ongoing rule.
 
-Do not put speculative dates on the parked Phase 5 queue (#272–#288) or unstarted v1.1.0 stories. The next visible Roadmap bar should be the first v1.1.0 item that actually starts.
+Do not put speculative dates on unstarted v1.1.0 stories. The next visible Roadmap bar should be the first v1.1.0 item that actually starts.
 
 ### Agent write access (Projects v2)
 

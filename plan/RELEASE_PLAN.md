@@ -92,47 +92,31 @@ Application version numbers are calculated automatically at build time by [MinVe
 - ≥80% unit test coverage on Application and Domain
 - Accessibility audit of primary journey shells (WCAG 2.1 AA)
 - Performance review and optimisation
-- Complete user-facing documentation for shipped features (Hugo site at `https://solodevboard.com/`; Cross-Repo PM Workflow guide remains draft until v1.2.0)
+- Complete user-facing documentation for shipped features (Hugo site at `https://solodevboard.com/`; Cross-Repo PM Workflow guide remains draft until v1.1.0)
 - Full Azure deployment pipeline with staging and production environment gates
 
 **Status:** Complete (2026-08-18). Tagged [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0). Production CD and GitHub Pages publish from `v*` tags.
 
-**Sequencing note:** Selected hosted-authentication and Azure-delivery items were pulled forward to support safe hosted validation. Phases 1–4 are complete. Phase 5 is **not** a v1.0.0 blocker. After the tag, deferred slices are v1.1.0 and Cross-Repo PM Workflow is v1.2.0 ([DEC-024](DECISIONS.md#dec-024-post-10-milestone-numbering)).
-
-**Target:** End of Phase 6
+**Sequencing note:** Selected hosted-authentication and Azure-delivery items were pulled forward to support safe hosted validation. The six core tools shipped in v1.0.0. Post-1.0 delivery uses a single active milestone model ([DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)).
 
 ---
 
-### v1.1.0 — Deferred follow-ons
+### v1.1.0 — Next release
 
-**Goal:** Ship the Phase 1–4 slices that were parked to close v1.0.0, plus dogfood fixes found after the public tag.
+**Goal:** Close out incomplete v1.0 slices, deliver Cross-Repo PM Workflow, and ship dogfood fixes from public use.
 
 **Scope:**
-- Label consistency warnings on the Audit Dashboard ([#290](https://github.com/markheydon/solo-dev-board/issues/290))
-- Project board column migration ([#291](https://github.com/markheydon/solo-dev-board/issues/291))
-- Custom workflow template repositories ([#292](https://github.com/markheydon/solo-dev-board/issues/292))
-- Private user-owned Projects v2 via hosted sign-in ([#293](https://github.com/markheydon/solo-dev-board/issues/293))
+- Label consistency warnings on the Audit Dashboard ([#290](https://github.com/markheydon/solo-dev-board/issues/290)) — extends [#40](https://github.com/markheydon/solo-dev-board/issues/40)
+- Project board column migration ([#291](https://github.com/markheydon/solo-dev-board/issues/291)) — extends [#88](https://github.com/markheydon/solo-dev-board/issues/88)
+- Custom workflow template repositories ([#292](https://github.com/markheydon/solo-dev-board/issues/292)) — extends Workflow Templates
+- Cross-Repo PM Workflow ([#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288)): Daily Focus, Backlog Review, Iteration Planning, Repo Management
 - Dogfood fixes raised after v1.0.0
 
-**Status:** Not started. Epic [#289](https://github.com/markheydon/solo-dev-board/issues/289). GitHub milestone: `v1.1.0 — Deferred follow-ons`.
+**Out of milestone (backlog):** Private user-owned Projects v2 via hosted sign-in ([#293](https://github.com/markheydon/solo-dev-board/issues/293)) — platform-blocked; see [`plan/GITHUB_PROJECTS_V2_ACCESS.md`](GITHUB_PROJECTS_V2_ACCESS.md).
+
+**Status:** Not started. GitHub milestone: `v1.1.0` (sole open milestone).
 
 **Target:** After v1.0.0
-
----
-
-### v1.2.0 — Cross-Repo PM Workflow
-
-**Goal:** Deliver the Cross-Repo PM Workflow epic — Daily Focus, Backlog Review, Iteration Planning, and Repo Management.
-
-**Scope:**
-- Daily Focus view: board state, stalled items, top-priority recommendations
-- Backlog Review: cross-repository priority grouping, neglected-repo detection
-- Iteration Planning: capacity management, Up Next curation, milestone assignment
-- Repo Management: excluded-repositories configuration
-
-**Status:** Parked until after v1.0.0. Epic [#272](https://github.com/markheydon/solo-dev-board/issues/272). GitHub milestone: `v1.2.0 — Cross-Repo PM Workflow`. Do not tag `v0.5.0` after 1.0 exists.
-
-**Target:** End of Phase 5 (see [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md))
 
 ---
 
