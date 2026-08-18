@@ -69,7 +69,7 @@ Invoke this when you need to:
 - For `type/enabler` issues, include an `## Implementation Notes` section (technical approach, layers affected, dependencies)
 - Assign to current milestone if applicable
 - **Assign to `markheydon`** — all issues must be assigned at creation (see repo-github-project skill Event 1)
-- Note parent/child sub-issue hierarchy (Epic→Feature→Story/Enabler/Test) and any blocking relationships — GitHub CLI cannot set either; produce a **Manual Linking Required** table in the handoff for the user to set via the GitHub UI
+- Set parent/child sub-issue hierarchy (Epic→Feature→Story/Enabler/Test) and blocking relationships after creating issues. Use GitHub MCP `sub_issue_write` for parents and `gh api` REST issue-dependencies for blocking — see `repo-github-gh-cli` and `repo-github-issues`. Do **not** ask the user to click Relationships in the GitHub UI unless those APIs fail. Dedicated `gh issue` subcommands still do not exist ([cli/cli#10298](https://github.com/cli/cli/issues/10298), [cli/cli#11757](https://github.com/cli/cli/issues/11757)); the REST and MCP paths are the supported workaround.
 
 ### 5. Project Board Sync
 - Use `repo-github-project` skill to add each created issue to the **SoloDevBoard Roadmap** project (#8)
@@ -143,15 +143,15 @@ Deliver to user:
 2. **Issue links**: Direct links to created issues
 3. **Next action**: "Ready for Delivery Agent — run 'implement issue #X'" or, for a tightly related batch, "implement issues #X, #Y, and #Z"
 4. **Blockers**: Any dependencies or scope questions that need resolution
-5. **Manual Linking Required** — table of parent/child and blocking relationships to set via the GitHub UI (since `gh` CLI supports neither; see [cli/cli#11757](https://github.com/cli/cli/issues/11757) and [cli/cli#10298](https://github.com/cli/cli/issues/10298)):
+5. **Relationships applied** — table of parent/child and blocking links the agent set. Only include a **Manual fallback** subsection if MCP or REST failed (permissions, circular dependency, API error):
 
-   **Sub-issues** (open parent issue → Sub-issues → Add):
+   **Sub-issues** (set via MCP `sub_issue_write`):
    | Parent Issue | Child Issue(s) | Relationship |
    |---|---|---|
    | #X Epic title | #Y Feature title | Epic → Feature |
    | #Y Feature title | #Z Enabler, #A Story, #B Test | Feature → deliverables |
 
-   **Blocking** (open issue → Relationships → Mark as blocking):
+   **Blocking** (set via REST `dependencies/blocked_by`):
    | Blocking Issue | Blocked Issue | Type |
    |---|---|---|
    | #Z Enabler title | #A Story, #B Story | blocks |
@@ -167,6 +167,7 @@ Planning is complete when:
 - ✅ GitHub issues created with correct labels/milestones and Implementation References sections
 - ✅ Test strategy defined via `breakdown-test`
 - ✅ Dependencies and acceptance criteria documented
+- ✅ Sub-issue parents and blocking relationships set via MCP/REST (manual UI only if APIs fail)
 - ✅ All created issues added to project board with Phase/Priority/Status/dates set
 - ✅ No scope ambiguity or blockers
 - ✅ Handoff package delivered

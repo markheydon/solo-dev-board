@@ -110,7 +110,40 @@ gh project item-edit \
 # NOTE: Prefer `gh project item-edit` for project field updates.
 # Use raw GraphQL only when `gh project` does not expose the required operation.
 # See `.agents/skills/repo-github-project/SKILL.md` for the SoloDevBoard-specific field IDs and queue workflow.
+
+# Capture the project item id from item-add (item-list defaults to 30 items).
+item_id=$(gh project item-add 8 --owner markheydon \
+	--url https://github.com/markheydon/solo-dev-board/issues/123 \
+	--format json --jq .id)
+
+# Look up an existing item without listing the whole board.
+gh project item-list 8 --owner markheydon --query 123 --format json --jq '.items[0].id'
 ```
+
+### Issue hierarchy and blocking
+
+`gh issue` has **no** first-class sub-issue or block commands yet ([cli/cli#11757](https://github.com/cli/cli/issues/11757), [cli/cli#10298](https://github.com/cli/cli/issues/10298)). Agents must still set both via API and must **not** leave them as a GitHub UI chore for the user.
+
+**Sub-issues:** GitHub MCP `sub_issue_write` (`method: add`). `sub_issue_id` is the issue **database id** (`gh api repos/OWNER/REPO/issues/N --jq .id`), not the `#` number.
+
+**Blocking:** REST [issue dependencies](https://docs.github.com/en/rest/issues/issue-dependencies). POST against the **blocked** issue; `issue_id` is the **blocking** issue's database id as a JSON integer (a quoted string returns 422).
+
+```bash
+# Resolve database ids (not issue numbers).
+blocker_id=$(gh api repos/markheydon/solo-dev-board/issues/382 --jq .id)
+
+# Mark #273 as blocked by #382.
+gh api -X POST repos/markheydon/solo-dev-board/issues/273/dependencies/blocked_by \
+	--input - <<EOF
+{"issue_id": ${blocker_id}}
+EOF
+
+# HTTP 422 "already been taken" means the link already exists — treat as success.
+# List current blockers:
+gh api repos/markheydon/solo-dev-board/issues/273/dependencies/blocked_by --jq '.[].number'
+```
+
+The inverse endpoint is `.../issues/{number}/dependencies/blocking` (this issue blocks others). Prefer `blocked_by` so the dependent issue is the path parameter.
 
 ### Safety Rules
 
