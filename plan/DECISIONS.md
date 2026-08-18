@@ -284,6 +284,8 @@ Test coverage expectations for cache-hit, cache-miss, invalidation, TTL expiry, 
 **Related:** [DEC-018](#dec-018-github-api-response-caching-in-infrastructure), [DEC-027](#dec-027-post-10-milestone-and-work-item-hierarchy), [`plan/GITHUB_PROJECTS_V2_ACCESS.md`](GITHUB_PROJECTS_V2_ACCESS.md)  
 **Summary:** Cross-Repo PM Workflow ([#272](https://github.com/markheydon/solo-dev-board/issues/272)) uses a **user-selected Projects v2 board** as the planning board (discovered the same way as Triage/Board Rules). Do not hard-code SoloDevBoard Roadmap (Project #8) field ids in application code. PM settings (selected board node id, excluded `owner/name` repositories, capacity limit, stall and neglect day thresholds) persist in **browser localStorage**, following the theme-preference pattern, because the solution has no application database. Board-state counts include all cards on the selected board; Daily Focus recommendations, Backlog Review, Planning candidates, and per-repo summaries honour exclusions. Hosted GitHub App sign-in still cannot read some private user-owned boards ([#293](https://github.com/markheydon/solo-dev-board/issues/293)); reuse the existing inaccessible-board warning. Reject storing PATs in localStorage, treating Project #8 as the only supported board, or adding EF Core solely for these preferences.
 
+**Future:** When an Aspire-provisioned backing store exists for first-class product data (see [`plan/ASPIRE_MULTI_PROCESS_FINDINGS.md`](ASPIRE_MULTI_PROCESS_FINDINGS.md) §3.4), migrate PM settings off `localStorage` per [#391](https://github.com/markheydon/solo-dev-board/issues/391). `localStorage` remains acceptable until that gate is met.
+
 ---
 
 ## Superseded legacy (archive only)
