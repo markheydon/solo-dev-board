@@ -586,15 +586,15 @@ public sealed class LabelServiceTests
 
         // Assert
         Assert.Contains(result, label => label.Name == "type/story" && label.Colour == "1d76db");
-        Assert.Contains(result, label => label.Name == "type/feature" && label.Description == "A Feature — groups related stories within an epic");
-        Assert.Contains(result, label => label.Name == "type/enabler" && label.Description == "An Enabler — technical prerequisite that unblocks stories");
-        Assert.Contains(result, label => label.Name == "type/test" && label.Description == "A Test issue — test coverage deliverable (unit, component, integration)");
+        Assert.Contains(result, label => label.Name == "type/feature" && label.Description == "A Feature - groups related stories within an epic");
+        Assert.Contains(result, label => label.Name == "type/enabler" && label.Description == "An Enabler - technical prerequisite that unblocks stories");
+        Assert.Contains(result, label => label.Name == "type/test" && label.Description == "A Test issue - test coverage deliverable (unit, component, integration)");
         Assert.Contains(result, label => label.Name == "priority/high" && label.Colour == "d93f0b");
-        Assert.Contains(result, label => label.Name == "priority/critical" && label.Description == "Blocking — must be resolved immediately");
+        Assert.Contains(result, label => label.Name == "priority/critical" && label.Description == "Blocking - must be resolved immediately");
         Assert.Contains(result, label => label.Name == "status/in-progress" && label.Colour == "0e8a16");
         Assert.Contains(result, label => label.Name == "area/labels" && label.Colour == "c5def5");
         Assert.Contains(result, label => label.Name == "size/m" && label.Colour == "fef2c0");
-        Assert.Contains(result, label => label.Name == "size/xs" && label.Description == "Trivial — less than 1 hour (e.g. typo fix, config change)");
+        Assert.Contains(result, label => label.Name == "size/xs" && label.Description == "Trivial - less than 1 hour (e.g. typo fix, config change)");
         Assert.Equal(31, result.Count);
         Assert.Contains(result, label => label.Name.StartsWith("type/", StringComparison.Ordinal));
         Assert.Contains(result, label => label.Name.StartsWith("priority/", StringComparison.Ordinal));
