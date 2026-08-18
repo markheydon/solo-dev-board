@@ -72,11 +72,17 @@ The following automation rules are configured on the board. These are documented
 
 ### Current Default Workflow Settings
 - **Enabled:** `Auto-add sub-issues to project`, `Auto-close issue`, `Item added to project`, and `Item closed`.
-- **Should be enabled:** `Auto-archive items` when Status is **Done** for 14 days (see below). This was left **off** on purpose during Phases 1–4 so the full history stayed on the board; it is not a broken workflow.
+- **Should be enabled:** `Auto-archive items` with GitHub’s default `is:issue is:closed updated:<@today-2w`. This was left **off** on purpose during Phases 1–4 so the full history stayed on the board; it is not a broken workflow.
 - **Disabled:** `Auto-add to project`, `Pull request linked to issue`, `Pull request merged`, `Code changes requested`, `Code review approved`, and `Item reopened`.
 - **Reason:** SoloDevBoard uses an issue-driven roadmap. Agents manage issue creation and metadata deliberately. Built-in GitHub workflows stay as narrow safety nets, except auto-archive, which is now the way to keep Roadmap and Story Board on the live queue after v1.0.0.
 
-**How to turn auto-archive on (project owner, GitHub UI):** Project #8 → **Workflows** (the header currently shows 4 active, which matches the four enabled rules above) → **Auto-archive items** → enable → when items have been in **Done** for **2 weeks** (or 14 days). GitHub then hides those cards from board and Roadmap views; they remain in the project archive and the issues stay closed. Existing Phase 1–4 Done items should disappear from the Gantt on the next archive pass because they have been Done for months.
+**How to turn auto-archive on (project owner, GitHub UI):** Project #8 → **Workflows** (the header currently shows 4 active, which matches the four enabled rules above) → **Auto-archive items** → enable. Use GitHub’s default filter:
+
+```text
+is:issue is:closed updated:<@today-2w
+```
+
+That keeps open and in-flight work, ignores pull request cards, and archives closed issues that have had no activity for two weeks. Existing Phase 1–4 Done items should disappear from the Gantt on the next archive pass. A comment or label repair on a closed issue resets the two-week clock; nightly Roadmap Sync does not bump `updated` once `status/done` is already correct.
 
 ### Label: status/in-progress Applied
 - **Trigger:** The `status/in-progress` label is applied to an issue.
