@@ -1,4 +1,5 @@
 @using SoloDevBoard.App.Components.Features.PmWorkflow
+@using MudBlazor
 
 <MudStack Spacing="3" data-testid="pm-workflow-shell">
     <MudText Typo="Typo.h4">PM Workflow</MudText>
@@ -64,12 +65,16 @@
                 </MudStack>
             </MudStack>
 
-            <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" data-testid="pm-workflow-tab-strip">
-                <MudNavLink Href="/pm-workflow/daily-focus" Match="NavLinkMatch.All" Class="@TabClass(ActiveTab, "daily-focus")">Daily Focus</MudNavLink>
-                <MudNavLink Href="/pm-workflow/backlog" Match="NavLinkMatch.All" Class="@TabClass(ActiveTab, "backlog")">Backlog</MudNavLink>
-                <MudNavLink Href="/pm-workflow/planning" Match="NavLinkMatch.All" Class="@TabClass(ActiveTab, "planning")">Planning</MudNavLink>
-                <MudNavLink Href="/pm-workflow/repos" Match="NavLinkMatch.All" Class="@TabClass(ActiveTab, "repos")">Repos</MudNavLink>
-            </MudStack>
+            <MudTabs Rounded="true"
+                     ApplyEffectsToContainer="true"
+                     ActivePanelIndex="ActiveTabIndex"
+                     ActivePanelIndexChanged="OnTabIndexChangedAsync"
+                     data-testid="pm-workflow-tab-strip">
+                <MudTabPanel Text="Daily Focus" />
+                <MudTabPanel Text="Backlog" />
+                <MudTabPanel Text="Planning" />
+                <MudTabPanel Text="Repos" />
+            </MudTabs>
         </MudStack>
     </MudPaper>
 

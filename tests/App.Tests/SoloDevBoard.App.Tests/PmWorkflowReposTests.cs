@@ -90,11 +90,11 @@ public sealed class PmWorkflowReposTests
         await using var ctx = CreateContext();
         var firstRender = ctx.Render<PmWorkflowRepos>();
 
-        firstRender.WaitForAssertion(() => Assert.Contains("Excluded repositories", firstRender.Markup));
+        firstRender.WaitForAssertion(() => Assert.Contains("Repository participation", firstRender.Markup));
 
         var excludeAutocomplete = firstRender
             .FindComponents<MudAutocomplete<string>>()
-            .First(component => component.Markup.Contains("Search catalogue", StringComparison.Ordinal));
+            .First(component => component.Markup.Contains("Quick exclude", StringComparison.Ordinal));
 
         await firstRender.InvokeAsync(() => excludeAutocomplete.Instance.ValueChanged.InvokeAsync("owner/repo-b"));
         firstRender.Find("[data-testid='pm-workflow-exclude-button']").Click();
@@ -102,7 +102,7 @@ public sealed class PmWorkflowReposTests
         firstRender.WaitForAssertion(() =>
         {
             Assert.Contains("owner/repo-b", firstRender.Markup);
-            Assert.Contains("Include", firstRender.Markup);
+            Assert.Contains("Include again", firstRender.Markup);
         });
 
         await using var reloadContext = CreateContext();
@@ -111,7 +111,7 @@ public sealed class PmWorkflowReposTests
         secondRender.WaitForAssertion(() =>
         {
             Assert.Contains("owner/repo-b", secondRender.Markup);
-            Assert.DoesNotContain("No repositories are excluded", secondRender.Markup);
+            Assert.DoesNotContain("No repositories are excluded. All active repositories participate.", secondRender.Markup);
         });
     }
 

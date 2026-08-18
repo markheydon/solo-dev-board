@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using MudBlazor;
 using SoloDevBoard.Application.Services.PmWorkflow;
 
 namespace SoloDevBoard.App.Components.Features.PmWorkflow;
@@ -12,12 +13,33 @@ public partial class PmWorkflowReposPanel : ComponentBase
     [CascadingParameter(Name = "PmWorkflowDataRevision")]
     public int DataRevision { get; set; }
 
+    [Inject]
+    public ISnackbar Snackbar { get; set; } = default!;
+
     private int capacity = PmSettingsDefaults.Capacity;
     private int stallDays = PmSettingsDefaults.StallDays;
     private int neglectDays = PmSettingsDefaults.NeglectDays;
     private IReadOnlyList<string> includedRepositoryOptions = [];
     private IReadOnlyList<string> excludedRepositories = [];
     private string? repositoryToExclude;
+    private string includedRepositoryFilter = string.Empty;
+
+    private int IncludedRepositoryCount => includedRepositoryOptions.Count;
+
+    private IEnumerable<string> FilteredIncludedRepositories
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(includedRepositoryFilter))
+            {
+                return includedRepositoryOptions;
+            }
+
+            var filter = includedRepositoryFilter.Trim();
+            return includedRepositoryOptions.Where(repository =>
+                repository.Contains(filter, StringComparison.OrdinalIgnoreCase));
+        }
+    }
 
     /// <inheritdoc/>
     protected override void OnParametersSet()
@@ -51,6 +73,8 @@ public partial class PmWorkflowReposPanel : ComponentBase
             StallDays = stallDays,
             NeglectDays = neglectDays,
         });
+
+        Snackbar.Add("Planning thresholds saved.", Severity.Success);
     }
 
     private async Task ExcludeRepositoryAsync(string? repositoryFullName)
@@ -68,6 +92,8 @@ public partial class PmWorkflowReposPanel : ComponentBase
 
         await ChromeState.SaveSettingsAsync(ChromeState.Settings with { ExcludedRepositories = exclusions });
         repositoryToExclude = null;
+        Snackbar.Add($"'{repositoryFullName.Trim()}' excluded from PM queries.", Severity.Success);
+        OnParametersSet();
     }
 
     private async Task IncludeRepositoryAsync(string repositoryFullName)
@@ -82,6 +108,8 @@ public partial class PmWorkflowReposPanel : ComponentBase
             .ToArray();
 
         await ChromeState.SaveSettingsAsync(ChromeState.Settings with { ExcludedRepositories = exclusions });
+        Snackbar.Add($"'{repositoryFullName}' included in PM queries again.", Severity.Success);
+        OnParametersSet();
     }
 
     private Task<IEnumerable<string>> SearchIncludedRepositoriesAsync(string? value, CancellationToken cancellationToken)

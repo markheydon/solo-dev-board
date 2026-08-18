@@ -15,6 +15,7 @@ export const accessibilityRoutes = [
   { path: '/board-rules', name: 'Board Rules' },
   { path: '/triage', name: 'Triage' },
   { path: '/workflows', name: 'Workflow Templates' },
+  { path: '/pm-workflow/repos', name: 'PM Workflow Repos' },
 ] as const;
 
 const wcagTags = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] as const;

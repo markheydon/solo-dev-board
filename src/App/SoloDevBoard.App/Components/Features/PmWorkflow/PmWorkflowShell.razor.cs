@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using MudBlazor;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Application.Services.PmWorkflow;
 using SoloDevBoard.Application.Services.Repositories;
@@ -31,6 +32,14 @@ public partial class PmWorkflowShell : ComponentBase
     /// <summary>Gets or sets the logger.</summary>
     [Inject]
     public ILogger<PmWorkflowShell> Logger { get; set; } = default!;
+
+    /// <summary>Gets or sets the snackbar service.</summary>
+    [Inject]
+    public ISnackbar Snackbar { get; set; } = default!;
+
+    /// <summary>Gets or sets the navigation manager.</summary>
+    [Inject]
+    public NavigationManager NavigationManager { get; set; } = default!;
 
     private readonly PmWorkflowChromeState chromeState = new();
     private string selectedPlanningBoardId = string.Empty;
@@ -95,6 +104,9 @@ public partial class PmWorkflowShell : ComponentBase
         {
             PlanningBoardNodeId = string.IsNullOrWhiteSpace(selectedPlanningBoardId) ? null : selectedPlanningBoardId,
         });
+
+        var boardTitle = chromeState.SelectedPlanningBoardTitle ?? "Planning board";
+        Snackbar.Add($"{boardTitle} selected.", Severity.Success);
     }
 
     private async Task SaveSettingsAsync(PmSettingsDto settings)
@@ -109,8 +121,30 @@ public partial class PmWorkflowShell : ComponentBase
     private static string FormatLastRefreshed(DateTimeOffset? refreshedAtUtc) =>
         refreshedAtUtc?.ToLocalTime().ToString("g") ?? "Not yet refreshed";
 
-    private static string TabClass(string activeTab, string tabName) =>
-        string.Equals(activeTab, tabName, StringComparison.OrdinalIgnoreCase)
-            ? "mud-tab mud-tab-active"
-            : "mud-tab";
+    private int ActiveTabIndex => ActiveTab.ToLowerInvariant() switch
+    {
+        "daily-focus" => 0,
+        "backlog" => 1,
+        "planning" => 2,
+        "repos" => 3,
+        _ => 3,
+    };
+
+    private Task OnTabIndexChangedAsync(int index)
+    {
+        var route = index switch
+        {
+            0 => "/pm-workflow/daily-focus",
+            1 => "/pm-workflow/backlog",
+            2 => "/pm-workflow/planning",
+            _ => "/pm-workflow/repos",
+        };
+
+        if (!NavigationManager.Uri.EndsWith(route, StringComparison.OrdinalIgnoreCase))
+        {
+            NavigationManager.NavigateTo(route);
+        }
+
+        return Task.CompletedTask;
+    }
 }

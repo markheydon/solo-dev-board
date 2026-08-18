@@ -43,6 +43,7 @@ For data-driven journeys against a real GitHub account, run the PAT suite locall
 | Label Manager taxonomy tabs and empty repository state | `labels.spec.ts` | Tab strip, disabled actions, and no-repositories message. |
 | Workflow template browse, filter, and select | `workflows.spec.ts` | Built-in templates load; repository selector shows error. |
 | Triage not-started region without repositories | `triage.spec.ts` | Shell heading and no-repositories alert. |
+| PM Workflow Repo Management shell | `pm-workflow.spec.ts` | Shared chrome, Repos tab content or chrome error with retry. |
 
 ### Tier 3 — Out of CI scope (manual or future)
 
