@@ -1,6 +1,7 @@
 using SoloDevBoard.Application.Services.BoardRules;
 using SoloDevBoard.Domain.Entities.Labels;
 using SoloDevBoard.Domain.Entities.Milestones;
+using SoloDevBoard.Domain.Entities.PmWorkflow;
 using SoloDevBoard.Domain.Entities.Repositories;
 using SoloDevBoard.Domain.Entities.Triage;
 using SoloDevBoard.Domain.Entities.Workflows;
@@ -164,6 +165,38 @@ public interface IGitHubService
         string statusOptionId,
         CancellationToken cancellationToken = default);
 
+    /// <summary>Retrieves all project board items with Status, optional Focus Order, and linked content.</summary>
+    /// <param name="projectId">The GitHub Project v2 node identifier.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>The project board item catalogue including discovered field identifiers.</returns>
+    Task<ProjectBoardItemCatalogue> GetProjectBoardItemsAsync(string projectId, CancellationToken cancellationToken = default);
+
+    /// <summary>Sets the Focus Order number field on a project board item.</summary>
+    /// <param name="projectId">The GitHub Project v2 node identifier.</param>
+    /// <param name="projectItemId">The project-item node identifier.</param>
+    /// <param name="focusOrderFieldId">The Focus Order field node identifier.</param>
+    /// <param name="focusOrder">The Focus Order value to set.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous update operation.</returns>
+    Task UpdateProjectBoardItemFocusOrderAsync(
+        string projectId,
+        string projectItemId,
+        string focusOrderFieldId,
+        double focusOrder,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Clears the Focus Order number field on a project board item.</summary>
+    /// <param name="projectId">The GitHub Project v2 node identifier.</param>
+    /// <param name="projectItemId">The project-item node identifier.</param>
+    /// <param name="focusOrderFieldId">The Focus Order field node identifier.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous clear operation.</returns>
+    Task ClearProjectBoardItemFocusOrderAsync(
+        string projectId,
+        string projectItemId,
+        string focusOrderFieldId,
+        CancellationToken cancellationToken = default);
+
     /// <summary>Closes a triage item as duplicate and records a duplicate reference comment.</summary>
     /// <param name="owner">The GitHub account owner login.</param>
     /// <param name="repo">The repository name.</param>
@@ -173,4 +206,36 @@ public interface IGitHubService
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>A task that represents the asynchronous duplicate closure operation.</returns>
     Task CloseTriageItemAsDuplicateAsync(string owner, string repo, GitHubTriageItemType itemType, int itemNumber, string duplicateReference, CancellationToken cancellationToken = default);
+
+    #region Work-item catalogue methods
+
+    /// <summary>
+    /// Retrieves review-pending metadata for open pull requests in the specified repository.
+    /// Paginates through all open pull requests when a repository has more than 100.
+    /// </summary>
+    /// <param name="owner">The GitHub account owner login.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>Review metadata keyed by pull request number.</returns>
+    Task<IReadOnlyList<PullRequestReviewMetadata>> GetOpenPullRequestReviewMetadataAsync(
+        string owner,
+        string repo,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves tracked sub-issue summary counts for the specified open issues.
+    /// Queries only the requested issue numbers and paginates tracked sub-issues for accurate completion counts.
+    /// </summary>
+    /// <param name="owner">The GitHub account owner login.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="issueNumbers">Repository-scoped issue numbers to inspect.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>Sub-issue totals for issues that expose tracked sub-issues.</returns>
+    Task<IReadOnlyList<IssueSubIssueSummary>> GetIssueSubIssueSummariesAsync(
+        string owner,
+        string repo,
+        IReadOnlyList<int> issueNumbers,
+        CancellationToken cancellationToken = default);
+
+    #endregion
 }
