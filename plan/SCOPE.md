@@ -121,5 +121,5 @@ The following are explicitly **not** in scope for the current version of SoloDev
 | 2026-07-25 | V1 auth polish bundle clarified: hosted sign-in entry UX (#249) and PAT-mode GitHub connectivity readiness (#314) split from operator documentation (#247, #248). In-app secret editing remains out of scope; operator configuration stays via Aspire parameters, user secrets, and Key Vault. | Solo developer |
 | 2026-07-25 | PAT-only local trusted mode and self-hoster PAT Azure deploy path formalised in docs (#247, #248; PR #324). Scope bullet now links to getting-started and deployment guides. | Solo developer |
 | 2026-08-16 | Public product site on GitHub Pages: landing, User Guide, About narrative, canonical `solodevboard.com`, source tree `website/` (DEC-023). | Solo developer |
-| 2026-08-18 | Post-1.0 backlog cleanup: one open milestone (`v1.1.0`); Cross-Repo PM Workflow and deferred slices consolidated there; bucket epic #289 closed; v1.2.0 milestone closed unused; #293 unmilestoned (DEC-027). | Solo developer |
+| 2026-08-18 | Post-1.0 backlog cleanup: one open milestone (`v1.1.0`); Cross-Repo PM Workflow and deferred slices consolidated there; bucket epic #289 closed; unused v1.2.0 milestone closed and deleted; #293 unmilestoned (DEC-027). | Solo developer |
 

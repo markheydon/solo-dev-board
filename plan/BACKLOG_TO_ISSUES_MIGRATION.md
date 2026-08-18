@@ -2,7 +2,7 @@
 
 <!-- AI Collaborator Instructions: Migration complete 2026-07-18. This document is retained for history. -->
 
-**Status:** Complete — executed 2026-07-18. Historical numbering in this file (`v0.5.0` for Phase 5, “post-v1” with no milestone) is superseded by [DEC-024](DECISIONS.md#dec-024-post-10-milestone-numbering): deferred slices are **v1.1.0**, Cross-Repo PM Workflow is **v1.2.0**.
+**Status:** Complete — executed 2026-07-18. Historical numbering in this file (`v0.5.0` for Phase 5, “post-v1” with no milestone) is superseded by [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy) (single `v1.1.0` milestone; v1.2.0 milestone deleted 2026-08-18).
 
 **Created:** 2026-07-18.
 

@@ -92,7 +92,7 @@ Application version numbers are calculated automatically at build time by [MinVe
 - ≥80% unit test coverage on Application and Domain
 - Accessibility audit of primary journey shells (WCAG 2.1 AA)
 - Performance review and optimisation
-- Complete user-facing documentation for shipped features (Hugo site at `https://solodevboard.com/`; Cross-Repo PM Workflow guide remains draft until v1.2.0)
+- Complete user-facing documentation for shipped features (Hugo site at `https://solodevboard.com/`; Cross-Repo PM Workflow guide remains draft until v1.1.0)
 - Full Azure deployment pipeline with staging and production environment gates
 
 **Status:** Complete (2026-08-18). Tagged [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0). Production CD and GitHub Pages publish from `v*` tags.
