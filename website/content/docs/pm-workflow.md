@@ -44,8 +44,7 @@ Repo Management controls which repositories and which Projects v2 board particip
 Shared chrome on every PM Workflow tab includes:
 
 - **Planning board** selector — choose a Projects v2 board discovered from your active repositories (same discovery model as Triage and Board Rules).
-- **Repos included** count — active repositories minus exclusions.
-- **Refresh** — reload board options and repository catalogue.
+- **Status line** — `Repos: N included`, selected board title (when chosen), last refreshed time, and a **Refresh** control to reload board options and the repository catalogue.
 - **Tab strip** — Daily Focus, Backlog, Planning, and Repos (only Repos is functional today).
 
 If GitHub reports linked project boards that cannot be read with your current sign-in (common for private user-owned boards under GitHub App sign-in), a warning appears at the top of the page. See [plan/GITHUB_PROJECTS_V2_ACCESS.md](https://github.com/markheydon/solo-dev-board/blob/main/plan/GITHUB_PROJECTS_V2_ACCESS.md) in the repository.
@@ -73,23 +72,30 @@ Under **Planning thresholds**:
 1. Adjust the numeric fields.
 2. Select **Save thresholds**.
 
-### Exclude or include repositories
+### Manage repository participation
 
-Excluded repositories are omitted from Daily Focus recommendations, Backlog Review, Planning candidates, and per-repository summaries. Archived repositories are never offered for inclusion.
+The **Repository participation** section shows how many repositories are included and excluded. Every active repository participates in PM queries by default. Archived repositories are never offered.
 
-**To exclude a repository:**
+Excluded repositories are omitted from Daily Focus recommendations, Backlog Review, and Planning candidates.
 
-1. Under **Excluded repositories**, search the catalogue for an active `owner/name` repository.
+**Included repositories** lists active `owner/name` values that currently participate:
+
+1. Optionally narrow the list with **Filter included repositories**.
+2. Select **Exclude** on the row you want to remove.
+
+**Quick exclude** under **Excluded repositories** offers the same action via search:
+
+1. Type an `owner/name` value in **Quick exclude**.
 2. Select **Exclude**.
 
 **To include a repository again:**
 
-1. Find the repository in the **Currently excluded** list.
-2. Select **Include**.
+1. Find the repository in the **Excluded repositories** list.
+2. Select **Include again**.
 
 Exclusions persist immediately in browser storage.
 
-> **Scope note** — The per-repository summary table (open issue and PR counts) is tracked on story [#288](https://github.com/markheydon/solo-dev-board/issues/288) and is not shown yet.
+> **Scope note** — Open issue and PR counts plus last-activity columns for each repository are tracked on story [#288](https://github.com/markheydon/solo-dev-board/issues/288) and are not shown yet. The included repositories table lists participation only today.
 
 ---
 

@@ -87,8 +87,11 @@ Use this when extending specs so assertions track documented workflows.
 | Guide section | CI assertion | Loaded-state validation |
 |---------------|--------------|-------------------------|
 | Drawer → PM Workflow → Repos | `pm-workflow.spec.ts` URL, title, shell, tab strip | `docs-capture` (pending) |
-| Planning board selector and refresh | `pm-workflow.spec.ts` shared chrome `data-testid`s | `docs-capture` (pending) |
-| Thresholds and exclusions | `pm-workflow.spec.ts` regions and controls, or chrome error | `docs-capture` (pending) |
+| Planning board selector, status line, and refresh | `pm-workflow.spec.ts` shared chrome `data-testid`s | `docs-capture` (pending) |
+| Planning thresholds | `pm-workflow-thresholds-region`, capacity field, or chrome error | `docs-capture` (pending) |
+| Repository participation summary | `pm-workflow-participation-summary` | `docs-capture` (pending) |
+| Included repositories table or empty state | `pm-workflow-included-table` / `pm-workflow-no-included-text` | `docs-capture` (pending) |
+| Excluded repositories and quick exclude | `pm-workflow-exclusions-region`, exclude autocomplete | `docs-capture` (pending) |
 | Daily Focus, Backlog, Planning | — | Not shipped |
 
 ## Screenshot hygiene
