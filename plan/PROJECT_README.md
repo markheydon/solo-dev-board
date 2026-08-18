@@ -4,7 +4,7 @@ Canonical copy of the GitHub Project **SoloDevBoard Roadmap** README (the text i
 
 This file is **not** applied automatically. After editing it, copy the fenced **Info pane README** block (the markdown inside the code fence) and paste it into Project #8 → Info.
 
-Leave the Project **short description** empty (or a one-liner that matches the current focus). It is a separate field from this README and goes stale faster.
+Keep the Project **short description** as a current one-liner (GitHub may refuse to save an empty value). Update it whenever the README focus changes.
 
 Refresh this file during each [PM progress review](../.agents/workflows/pm-progress-review.md) so the public board description does not lag the milestones.
 

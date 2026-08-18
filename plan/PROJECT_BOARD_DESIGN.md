@@ -72,8 +72,11 @@ The following automation rules are configured on the board. These are documented
 
 ### Current Default Workflow Settings
 - **Enabled:** `Auto-add sub-issues to project`, `Auto-close issue`, `Item added to project`, and `Item closed`.
-- **Disabled:** `Auto-add to project`, `Pull request linked to issue`, `Pull request merged`, `Auto-archive items`, `Code changes requested`, `Code review approved`, and `Item reopened`.
-- **Reason:** SoloDevBoard uses an issue-driven roadmap. Agents manage issue creation and metadata deliberately, while GitHub workflow automation is kept to narrow issue-centric safety nets.
+- **Should be enabled:** `Auto-archive items` when Status is **Done** for 14 days (see below). This was left **off** on purpose during Phases 1–4 so the full history stayed on the board; it is not a broken workflow.
+- **Disabled:** `Auto-add to project`, `Pull request linked to issue`, `Pull request merged`, `Code changes requested`, `Code review approved`, and `Item reopened`.
+- **Reason:** SoloDevBoard uses an issue-driven roadmap. Agents manage issue creation and metadata deliberately. Built-in GitHub workflows stay as narrow safety nets, except auto-archive, which is now the way to keep Roadmap and Story Board on the live queue after v1.0.0.
+
+**How to turn auto-archive on (project owner, GitHub UI):** Project #8 → **Workflows** (the header currently shows 4 active, which matches the four enabled rules above) → **Auto-archive items** → enable → when items have been in **Done** for **2 weeks** (or 14 days). GitHub then hides those cards from board and Roadmap views; they remain in the project archive and the issues stay closed. Existing Phase 1–4 Done items should disappear from the Gantt on the next archive pass because they have been Done for months.
 
 ### Label: status/in-progress Applied
 - **Trigger:** The `status/in-progress` label is applied to an issue.
@@ -145,7 +148,7 @@ Do this in the GitHub UI (saved view settings); agents cannot edit Project views
 1. **Filter out Done** on the Roadmap view: `status:Todo,Up Next,In Progress` (or equivalent). The live queue is 22 items, not 152 closed cards.
 2. **Zoom to Quarter or Year** when you want historical bars; Month + Today will always look empty between active slices.
 3. **Treat Story Board as the default working view.** Bars reappear on Roadmap automatically when Roadmap Sync sets dates at Event 2 (work started) and Event 3 (done).
-4. Optional: enable **Auto-archive items** for Done cards after a cooling-off period so the Gantt is not dominated by Phases 1–4. Auto-archive is currently disabled by design; turning it on is a view-hygiene choice, not a date-policy change.
+4. **Enable Auto-archive items** for cards that have been in **Done** for 14 days. That is the fix for the Roadmap list being all of Phases 1–4: GitHub shows archived items only in the archive, so the Gantt starts at recent and in-flight work. This was disabled by design during build-out; turn it on in **Workflows**. Agents cannot toggle project workflows with the current GitHub MCP token.
 
 Do not put speculative dates on the parked Phase 5 queue (#272–#288) or unstarted v1.1.0 stories. The next visible Roadmap bar should be the first v1.1.0 item that actually starts.
 
@@ -163,7 +166,7 @@ The Project #8 info pane (https://github.com/users/markheydon/projects/8?pane=in
 
 Canonical copy: [`plan/PROJECT_README.md`](PROJECT_README.md). Refresh that file during each PM progress review, then paste the **Info pane README** block into the project (this repository cannot always write the user-owned Project README from an agent runtime).
 
-Leave the Project **short description** empty unless it is updated in the same pass as the README. It is a separate field and currently tends to lag.
+Leave the Project **short description** as a current one-liner (GitHub may refuse to save an empty value). Update it in the same pass as the README so it does not lag.
 
 Do not treat [`plan/BACKLOG.md`](BACKLOG.md) as the work queue in that README. Link GitHub Issues and this project instead.
 
