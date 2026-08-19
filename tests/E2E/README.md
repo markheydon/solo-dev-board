@@ -103,4 +103,4 @@ Images are written to `website/static/images/<feature-slug>/`. See [DOCS_STRATEG
 - **`pat`** — full suite with PAT mode (`E2E_AUTH_MODE=pat`).
 - **`hosted`** — hosted login-gate suite (`auth-entry-hosted.spec.ts`) with placeholder GitHub App credentials and no live OAuth.
 
-Playwright starts the app via `webServer` in `playwright.config.ts` on HTTP **port 5080** (not Aspire on 5074). CI installs Chromium with `npx playwright install --with-deps chromium` and uploads the HTML report as a workflow artefact on every run.
+Playwright starts the app via `webServer` in `playwright.config.ts` on HTTP **port 5080** (not Aspire on 5074). CI installs Chromium with `npx playwright install chromium` only — it does **not** use `--with-deps`, so GitHub-hosted runners never call `apt` for browser OS packages. Local development should still use `npx playwright install --with-deps chromium` so system libraries are present on your machine. CI uploads the HTML report as a workflow artefact on every run.

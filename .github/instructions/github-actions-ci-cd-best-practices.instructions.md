@@ -40,7 +40,7 @@ Use this instruction for authoring and reviewing workflows in this repository.
 - Ensure pull request workflows also run for Dependabot-authored pull requests to `main`.
 - Fail fast on build/test failures.
 - Surface test outputs clearly in logs and artefacts when useful.
-- Playwright E2E runs in `.github/workflows/playwright.yml` using the official GitHub Actions shape: `npm ci`, `npx playwright install --with-deps chromium`, `npx playwright test`, and upload `playwright-report/` as a workflow artefact. The Blazor app is started by Playwright `webServer` in `tests/E2E/playwright.config.ts`, not bespoke bash in the workflow.
+- Playwright E2E runs in `.github/workflows/playwright.yml` using the official GitHub Actions shape: `npm ci`, `npx playwright install chromium`, `npx playwright test`, and upload `playwright-report/` as a workflow artefact. The official template uses `npx playwright install --with-deps` (all browsers); this repository installs Chromium only and omits `--with-deps` on `ubuntu-latest` because `apt` during browser install can hang on GitHub-hosted runners (see PR #404). Local development should use `npx playwright install --with-deps chromium`. The Blazor app is started by Playwright `webServer` in `tests/E2E/playwright.config.ts`, not bespoke bash in the workflow.
 
 ## Deployment Safety
 

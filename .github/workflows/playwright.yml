@@ -66,7 +66,7 @@ jobs:
         working-directory: tests/E2E
         env:
           NODE_OPTIONS: --dns-result-order=ipv4first
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Run Playwright tests
         working-directory: tests/E2E
