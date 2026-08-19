@@ -5,7 +5,7 @@ using SoloDevBoard.Application.Services.PmWorkflow;
 namespace SoloDevBoard.App.Components.Features.PmWorkflow;
 
 /// <summary>Repo Management panel rendered inside <see cref="PmWorkflowShell"/>.</summary>
-public partial class PmWorkflowReposPanel : ComponentBase
+public partial class PmWorkflowReposPanel : ComponentBase, IDisposable
 {
     [CascadingParameter]
     public PmWorkflowChromeState? ChromeState { get; set; }
@@ -34,6 +34,8 @@ public partial class PmWorkflowReposPanel : ComponentBase
     private bool isLoadingSummaries;
     private string? summaryErrorMessage;
     private int loadedSummaryRevision = -1;
+    private int summaryLoadGeneration;
+    private CancellationTokenSource? summaryLoadCts;
 
     private int IncludedRepositoryCount => includedRepositoryOptions.Count;
 
@@ -65,12 +67,19 @@ public partial class PmWorkflowReposPanel : ComponentBase
             return;
         }
 
-        if (loadedSummaryRevision == DataRevision && !isLoadingSummaries)
+        if (loadedSummaryRevision == DataRevision)
         {
             return;
         }
 
-        await LoadSummariesAsync().ConfigureAwait(false);
+        await LoadSummariesAsync();
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        CancelSummaryLoad();
+        GC.SuppressFinalize(this);
     }
 
     private void SyncChromeFields()
@@ -99,18 +108,35 @@ public partial class PmWorkflowReposPanel : ComponentBase
 
     private async Task LoadSummariesAsync()
     {
+        var revision = DataRevision;
+        var loadCts = BeginSummaryLoad();
+        var generation = summaryLoadGeneration;
+        loadedSummaryRevision = revision;
         isLoadingSummaries = true;
         summaryErrorMessage = null;
-        loadedSummaryRevision = DataRevision;
 
         try
         {
-            var catalogue = await WorkItemCatalogueService.GetCatalogueAsync().ConfigureAwait(false);
+            var catalogue = await WorkItemCatalogueService.GetCatalogueAsync(loadCts.Token);
+            if (IsStaleSummaryLoad(loadCts, generation))
+            {
+                return;
+            }
+
             repositorySummaries = catalogue.RepositorySummaries;
             summaryFailures = catalogue.Failures;
         }
+        catch (OperationCanceledException) when (loadCts.IsCancellationRequested)
+        {
+            Logger.LogDebug("PM repository summary load cancelled.");
+        }
         catch (Exception exception)
         {
+            if (IsStaleSummaryLoad(loadCts, generation))
+            {
+                return;
+            }
+
             Logger.LogError(exception, "Failed to load PM repository summaries.");
             repositorySummaries = [];
             summaryFailures = [];
@@ -119,9 +145,36 @@ public partial class PmWorkflowReposPanel : ComponentBase
         }
         finally
         {
-            isLoadingSummaries = false;
+            if (!IsStaleSummaryLoad(loadCts, generation))
+            {
+                isLoadingSummaries = false;
+            }
         }
     }
+
+    private CancellationTokenSource BeginSummaryLoad()
+    {
+        CancelSummaryLoad();
+        summaryLoadCts = new CancellationTokenSource();
+        summaryLoadGeneration++;
+        return summaryLoadCts;
+    }
+
+    private void CancelSummaryLoad()
+    {
+        if (summaryLoadCts is null)
+        {
+            return;
+        }
+
+        summaryLoadCts.Cancel();
+        summaryLoadCts.Dispose();
+        summaryLoadCts = null;
+    }
+
+    private bool IsStaleSummaryLoad(CancellationTokenSource loadCts, int generation)
+        => generation != summaryLoadGeneration
+            || !ReferenceEquals(summaryLoadCts, loadCts);
 
     private static string FormatLastActivity(DateTimeOffset lastActivityAt)
     {

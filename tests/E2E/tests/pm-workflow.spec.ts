@@ -72,6 +72,7 @@ test.describe('PM Workflow', () => {
         .getByTestId('pm-workflow-repository-summary-table')
         .or(page.getByTestId('pm-workflow-repository-summary-empty'))
         .or(page.getByTestId('pm-workflow-repository-summary-error'))
+        .or(page.getByTestId('pm-workflow-repository-summary-partial-failure'))
         .or(page.getByTestId('pm-workflow-repository-summary-loading')),
     ).toBeVisible();
   });

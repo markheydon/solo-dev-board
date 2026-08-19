@@ -185,6 +185,11 @@ public sealed class PmWorkItemCatalogueServiceTests
         Assert.Equal("owner/broken", failure.RepositoryFullName);
         Assert.Equal((int)HttpStatusCode.Forbidden, failure.HttpStatusCode);
         Assert.Contains("Issues:", failure.Message, StringComparison.Ordinal);
+
+        var healthySummary = Assert.Single(result.RepositorySummaries);
+        Assert.Equal("owner/healthy", healthySummary.FullName);
+        Assert.Equal(1, healthySummary.OpenIssueCount);
+        Assert.Equal(0, healthySummary.OpenPullRequestCount);
     }
 
     [Fact]
@@ -375,6 +380,7 @@ public sealed class PmWorkItemCatalogueServiceTests
         Assert.Contains("Issues:", failure.Message, StringComparison.Ordinal);
         Assert.Contains("Pull requests:", failure.Message, StringComparison.Ordinal);
         Assert.Equal((int)HttpStatusCode.Forbidden, failure.HttpStatusCode);
+        Assert.Empty(result.RepositorySummaries);
     }
 
     private static Issue CreateIssue(

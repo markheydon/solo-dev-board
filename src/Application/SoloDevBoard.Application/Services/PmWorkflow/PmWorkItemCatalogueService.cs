@@ -37,7 +37,13 @@ public sealed class PmWorkItemCatalogueService(
             .Where(static failure => failure is not null)
             .Select(static failure => failure!)
             .ToArray();
-        var summaries = BuildRepositorySummaries(includedRepositories, items);
+        var failedRepositories = new HashSet<string>(
+            failures.Select(static failure => failure.RepositoryFullName),
+            StringComparer.OrdinalIgnoreCase);
+        var summarisedRepositories = includedRepositories
+            .Where(repository => !failedRepositories.Contains(repository.FullName))
+            .ToArray();
+        var summaries = BuildRepositorySummaries(summarisedRepositories, items);
 
         return new PmWorkItemCatalogueResultDto(items, failures, summaries);
     }

@@ -93,7 +93,7 @@ Use this when extending specs so assertions track documented workflows.
 | Repository participation summary | `pm-workflow-participation-summary` | `docs-capture` (pending) |
 | Included repositories table or empty state | `pm-workflow-included-table` / `pm-workflow-no-included-text` | `docs-capture` (pending) |
 | Excluded repositories and quick exclude | `pm-workflow-exclusions-region`, exclude autocomplete | `docs-capture` (pending) |
-| Per-repository summary table, empty state, or load error | `pm-workflow-repository-summary-table` / `pm-workflow-repository-summary-empty` / `pm-workflow-repository-summary-error` | `docs-capture` (pending) |
+| Per-repository summary table, empty state, load error, or partial failure | `pm-workflow-repository-summary-table` / `pm-workflow-repository-summary-empty` / `pm-workflow-repository-summary-error` / `pm-workflow-repository-summary-partial-failure` | `docs-capture` (pending) |
 | Daily Focus stall and recommendations, Backlog, Planning | — | Not shipped |
 
 ## Screenshot hygiene

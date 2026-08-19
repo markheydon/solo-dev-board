@@ -188,6 +188,110 @@ public sealed class PmWorkflowReposTests
         });
     }
 
+    [Fact]
+    public async Task PmWorkflowRepos_PartialRepositoryFailure_ShowsWarningAndOmitsFailedRepository()
+    {
+        ConfigureDefaults();
+        _workItemCatalogueService.GetCatalogueAsync(Arg.Any<CancellationToken>()).Returns(
+            new PmWorkItemCatalogueResultDto(
+                [],
+                [new PmRepositoryCatalogueFailureDto("owner/repo-b", "Issues: Forbidden", 403)],
+                [new PmRepositorySummaryDto("owner/repo-a", 12, 2, DateTimeOffset.UtcNow.AddDays(-2), true)]));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowRepos>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Counts are unavailable", cut.Markup);
+            Assert.Contains("Failed repositories are omitted from the table.", cut.Markup);
+            Assert.NotNull(cut.Find("[data-testid='pm-workflow-repository-summary-partial-failure']"));
+            Assert.NotNull(cut.Find("[data-testid='pm-workflow-repository-summary-partial-retry']"));
+
+            var summaryTable = cut.Find("[data-testid='pm-workflow-repository-summary-table']").InnerHtml;
+            Assert.Contains("owner/repo-a", summaryTable);
+            Assert.DoesNotContain("owner/repo-b", summaryTable);
+        });
+    }
+
+    [Fact]
+    public async Task PmWorkflowRepos_ExcludeWhileCatalogueLoadInFlight_CancelsPreviousLoadAndIgnoresStaleSummaries()
+    {
+        ConfigureDefaults();
+        var loads = new List<(CancellationToken Token, TaskCompletionSource<PmWorkItemCatalogueResultDto> Completion)>();
+        _workItemCatalogueService.GetCatalogueAsync(Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var completion = new TaskCompletionSource<PmWorkItemCatalogueResultDto>();
+                loads.Add((callInfo.Arg<CancellationToken>(), completion));
+                return completion.Task;
+            });
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowRepos>();
+
+        cut.WaitForAssertion(() => Assert.Single(loads));
+
+        var excludeAutocomplete = cut
+            .FindComponents<MudAutocomplete<string>>()
+            .First(component => component.Markup.Contains("Quick exclude", StringComparison.Ordinal));
+
+        await cut.InvokeAsync(() => excludeAutocomplete.Instance.ValueChanged.InvokeAsync("owner/repo-b"));
+        cut.Find("[data-testid='pm-workflow-exclude-button']").Click();
+
+        cut.WaitForAssertion(() => Assert.Equal(2, loads.Count));
+        Assert.True(loads[0].Token.IsCancellationRequested);
+
+        loads[0].Completion.SetResult(
+            new PmWorkItemCatalogueResultDto(
+                [],
+                [],
+                [
+                    new PmRepositorySummaryDto("owner/repo-a", 12, 2, DateTimeOffset.UtcNow, true),
+                    new PmRepositorySummaryDto("owner/repo-b", 1, 0, DateTimeOffset.UtcNow, true),
+                ]));
+        loads[1].Completion.SetResult(
+            new PmWorkItemCatalogueResultDto(
+                [],
+                [],
+                [new PmRepositorySummaryDto("owner/repo-a", 12, 2, DateTimeOffset.UtcNow, true)]));
+
+        cut.WaitForAssertion(() =>
+        {
+            var summaryTable = cut.Find("[data-testid='pm-workflow-repository-summary-table']").InnerHtml;
+            Assert.Contains("owner/repo-a", summaryTable);
+            Assert.DoesNotContain("owner/repo-b", summaryTable);
+        });
+    }
+
+    [Fact]
+    public async Task PmWorkflowRepos_SameRevisionWhileLoading_DoesNotStartSecondCatalogueLoad()
+    {
+        ConfigureDefaults();
+        var completion = new TaskCompletionSource<PmWorkItemCatalogueResultDto>();
+        _workItemCatalogueService.GetCatalogueAsync(Arg.Any<CancellationToken>())
+            .Returns(completion.Task);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowRepos>();
+
+        cut.WaitForAssertion(() =>
+            Assert.NotNull(cut.Find("[data-testid='pm-workflow-repository-summary-loading']")));
+
+        cut.Render();
+
+        await _workItemCatalogueService.Received(1).GetCatalogueAsync(Arg.Any<CancellationToken>());
+
+        completion.SetResult(
+            new PmWorkItemCatalogueResultDto(
+                [],
+                [],
+                [new PmRepositorySummaryDto("owner/repo-a", 3, 1, DateTimeOffset.UtcNow, true)]));
+
+        cut.WaitForAssertion(() =>
+            Assert.Contains("owner/repo-a", cut.Find("[data-testid='pm-workflow-repository-summary-table']").InnerHtml));
+    }
+
     private void ConfigureDefaults()
     {
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([

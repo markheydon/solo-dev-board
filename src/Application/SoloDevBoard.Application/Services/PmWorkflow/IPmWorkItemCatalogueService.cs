@@ -5,8 +5,9 @@ public interface IPmWorkItemCatalogueService
 {
     /// <summary>
     /// Builds the PM work-item catalogue for all active repositories that are not excluded in PM settings.
+    /// This call fans out to GitHub for issues, pull requests, review metadata, and sub-issue summaries.
     /// Partial per-repository failures are returned alongside successfully loaded items.
-    /// Repository summaries are aggregated from the same catalogue and do not issue a second GitHub fan-out.
+    /// Repository summaries are aggregated in memory from those items; failed repositories are omitted so counts are not shown as zero.
     /// </summary>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>The catalogue items and any repository-level failures.</returns>

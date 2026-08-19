@@ -1,5 +1,6 @@
 @using SoloDevBoard.App.Components.Features.PmWorkflow
 @using SoloDevBoard.Application.Services.PmWorkflow
+@implements IDisposable
 
 <MudStack Spacing="3" data-testid="pm-workflow-repos-page">
     <MudText Typo="Typo.h5">Repo Management</MudText>
@@ -202,9 +203,10 @@
                         <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" data-testid="pm-workflow-repository-summary-partial-failure">
                             <MudStack Spacing="2">
                                 <MudText>
-                                    Counts may be incomplete for @summaryFailures.Count
+                                    Counts are unavailable for @summaryFailures.Count
                                     @(summaryFailures.Count == 1 ? "repository" : "repositories"):
                                     @string.Join(", ", summaryFailures.Select(failure => failure.RepositoryFullName)).
+                                    Failed repositories are omitted from the table.
                                 </MudText>
                                 <MudButton Variant="Variant.Outlined"
                                            Color="Color.Primary"

@@ -137,9 +137,9 @@ The **Per-repository summary** table lists included repositories only:
 | **Last activity** | Latest catalogue item update, or the repository update time when there are no open items. |
 | **Included** | Always **Yes** in this table, because excluded repositories are omitted. |
 
-Counts reuse the Cross-Repo PM work-item catalogue (the same read model used by later Daily Focus and Backlog views). They do not call GitHub a second time for issues and pull requests.
+Counts are aggregated in memory from the Cross-Repo PM work-item catalogue (the same read model later Daily Focus and Backlog views use). There is no separate GitHub count or search endpoint. Opening Repo Management still loads that catalogue from GitHub (issues, pull requests, review metadata, and sub-issue summaries) when it runs. Daily Focus occupancy uses the project board catalogue, so this visit is often the first work-item catalogue load rather than a reuse of an already-fetched snapshot.
 
-If some repositories fail to load, a warning lists them and **Retry** reloads the catalogue. A complete load failure shows an error with **Retry**.
+If some repositories fail to load, a warning lists them. Failed repositories are omitted from the table so unavailable counts are not shown as zero open work. **Retry** reloads the catalogue. A complete load failure shows an error with **Retry**.
 
 Use this table to see load at a glance before excluding a repository or planning the next iteration.
 
