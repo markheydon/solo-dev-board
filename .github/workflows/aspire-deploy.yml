@@ -52,15 +52,15 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Install Aspire CLI
+        run: |
+          curl -sSL https://aspire.dev/install.sh | bash -s -- --version 13.5.0
+          echo "$HOME/.aspire/bin" >> "$GITHUB_PATH"
+
       - name: Restore and build solution
         run: |
           dotnet restore SoloDevBoard.slnx
           dotnet build SoloDevBoard.slnx --no-restore --configuration Release
-
-      - name: Install Aspire CLI
-        run: |
-          curl -sSL https://aspire.dev/install.sh | bash
-          echo "$HOME/.aspire/bin" >> "$GITHUB_PATH"
 
       - name: List Aspire deployment steps
         run: aspire deploy --list-steps --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --environment ${{ inputs.aspire_environment }} --non-interactive
