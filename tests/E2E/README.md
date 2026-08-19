@@ -110,9 +110,11 @@ Images are written to `website/static/images/<feature-slug>/`. See [DOCS_STRATEG
 
 ## CI
 
-Two jobs in [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) run Playwright against placeholder auth configuration:
+Two jobs in [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) run Playwright against placeholder auth configuration. They start in parallel with **Build and Test** (no `needs` dependency) so Chromium setup overlaps unit tests.
 
 - **`e2e-pat`** — full suite with PAT mode (`E2E_AUTH_MODE=pat`).
 - **`e2e-hosted`** — hosted login-gate suite (`auth-entry-hosted.spec.ts`) with placeholder GitHub App credentials and no live OAuth.
+
+Both jobs start the app with `dotnet run` on HTTP **port 5080** (not Aspire on 5074). CI installs Chromium with `npx playwright install chromium` only — it does **not** use `--with-deps`, so GitHub-hosted runners never call `apt` for browser OS packages. Local development should still use `npx playwright install --with-deps chromium` so system libraries are present on your machine.
 
 Both jobs capture application logs separately from Playwright output.

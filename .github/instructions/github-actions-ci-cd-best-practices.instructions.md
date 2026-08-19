@@ -39,6 +39,7 @@ Use this instruction for authoring and reviewing workflows in this repository.
 - Ensure pull request workflows also run for Dependabot-authored pull requests to `main`.
 - Fail fast on build/test failures.
 - Surface test outputs clearly in logs and artefacts when useful.
+- Playwright E2E jobs (`e2e-pat`, `e2e-hosted`) must use `npx playwright install chromium` on `ubuntu-latest` — do **not** use `--with-deps` (avoids `apt` mirror hangs). Use the official `mcr.microsoft.com/playwright` job container only if Chromium fails to launch on the runner.
 
 ## Deployment Safety
 
