@@ -300,7 +300,7 @@ public sealed class PmWorkflowDailyFocusTests
 
         cut.WaitForAssertion(() =>
         {
-            Assert.Contains("Recommended today", cut.Markup);
+            Assert.Contains("Recommended today (all included repositories)", cut.Markup);
             Assert.Contains("owner/repo-a#40", cut.Markup);
             Assert.Contains("Todo 1", cut.Markup);
         });
@@ -338,7 +338,7 @@ public sealed class PmWorkflowDailyFocusTests
 
         cut.WaitForAssertion(() =>
         {
-            Assert.Contains("Recommended today", cut.Markup);
+            Assert.Contains("Recommended today (all included repositories)", cut.Markup);
             Assert.Contains("owner/repo-a#40", cut.Markup);
             Assert.Contains("priority/high", cut.Markup);
             Assert.Contains("Unlabelled", cut.Markup);
@@ -438,7 +438,7 @@ public sealed class PmWorkflowDailyFocusTests
 
         cut.WaitForAssertion(() =>
         {
-            Assert.Contains("Recommended today", cut.Markup);
+            Assert.Contains("Recommended today (all included repositories)", cut.Markup);
             Assert.Contains("owner/repo-a#40", cut.Markup);
             Assert.Contains("markheydon/markheydon", cut.Markup);
             Assert.Contains("ranked without 1 repository that failed to load", cut.Markup);

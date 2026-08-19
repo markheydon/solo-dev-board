@@ -89,7 +89,7 @@ Use this when extending specs so assertions track documented workflows.
 | Drawer or Home → PM Workflow → Daily Focus | `pm-workflow.spec.ts` URL, title, shell, tab strip | `docs-capture` (pending) |
 | Planning board selector, status line, and refresh | `pm-workflow.spec.ts` shared chrome `data-testid`s | `docs-capture` (pending) |
 | Occupancy chips, active load, empty board, or catalogue error | `pm-workflow-daily-focus-board-state` / empty or error copy, or chrome error | `docs-capture` (pending) |
-| Recommended today list, empty copy, or catalogue error | `pm-workflow-daily-focus-recommendations` / empty or error copy when occupancy loaded | `docs-capture` (pending) |
+| Recommended today (all included repositories) list, empty copy, or catalogue error | `pm-workflow-daily-focus-recommendations` heading, empty or error copy when occupancy loaded | `docs-capture` (pending) |
 | Planning thresholds | `pm-workflow-thresholds-region`, capacity field, or chrome error | `docs-capture` (pending) |
 | Repository participation summary | `pm-workflow-participation-summary` | `docs-capture` (pending) |
 | Included repositories table or empty state | `pm-workflow-included-table` / `pm-workflow-no-included-text` | `docs-capture` (pending) |

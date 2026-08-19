@@ -45,6 +45,11 @@ test.describe('PM Workflow', () => {
       const recommendationsError = page.getByTestId('pm-workflow-daily-focus-recommendations-error');
       const recommendationsWarning = page.getByTestId('pm-workflow-daily-focus-recommendations-warning');
       await expect(recommendationsRegion.or(recommendationsError).or(recommendationsWarning).first()).toBeVisible();
+      if (await recommendationsRegion.isVisible()) {
+        await expect(
+          page.getByRole('heading', { name: 'Recommended today (all included repositories)' }),
+        ).toBeVisible();
+      }
     }
   });
 

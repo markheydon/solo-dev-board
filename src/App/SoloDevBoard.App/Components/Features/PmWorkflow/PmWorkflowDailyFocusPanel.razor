@@ -4,7 +4,7 @@
 <MudStack Spacing="3" data-testid="pm-workflow-daily-focus-page">
     <MudText Typo="Typo.h5">Daily Focus</MudText>
     <MudText Typo="Typo.body1">
-        Morning board occupancy, active load, and the top three unblocked work items for the selected planning board.
+        Occupancy and active load are for the selected planning board. Recommended today is the top three unblocked items from all included repositories.
         Stalled Up Next items and stalled review pull requests will appear here in later stories.
     </MudText>
 
@@ -108,7 +108,7 @@
 
             <MudPaper Class="pa-4" Elevation="1" data-testid="pm-workflow-daily-focus-recommendations">
                 <MudStack Spacing="2">
-                    <MudText Typo="Typo.h6">Recommended today</MudText>
+                    <MudText Typo="Typo.h6">Recommended today (all included repositories)</MudText>
                     @if (recommendations.Count == 0)
                     {
                         <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" data-testid="pm-workflow-daily-focus-recommendations-empty">

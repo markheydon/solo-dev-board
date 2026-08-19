@@ -16,7 +16,7 @@ The Cross-Repo PM Workflow brings a structured, two-mode operating system into S
 The system is built around two modes of operation:
 
 - **PM Mode** (weekly or fortnightly) — Active curation: review your backlog across all repositories, resolve stalled work, and populate your project board with a realistic set of committed items for the next few days.
-- **Work Mode** (daily) — Execution: the project board is the single pane of glass. Open it, pick the next item, and get things done. Daily Focus currently shows board occupancy, active load, and the top three unblocked work items so you can start the day without opening GitHub.
+- **Work Mode** (daily) — Execution: the project board is the single pane of glass. Open it, pick the next item, and get things done. Daily Focus currently shows occupancy and active load for the selected planning board, plus the top three unblocked items from all included repositories, so you can start the day without opening GitHub.
 
 ### What is available now
 
@@ -33,7 +33,7 @@ Open **PM Workflow** from the Home card or the navigation drawer. The hub redire
 
 ## Daily Focus (partial)
 
-Daily Focus is a read-only morning snapshot of the selected planning board. It answers how busy the board is today and which unblocked items are most worth starting. Stall clocks will follow in later stories.
+Daily Focus is a read-only morning snapshot. Occupancy and active load describe the selected planning board. **Recommended today** lists the top three unblocked items from all included repositories, not only cards on that board. Stall clocks will follow in later stories.
 
 ### Accessing
 
@@ -64,9 +64,9 @@ Board occupancy counts mapped **Issue** and **Pull Request** cards on the select
 
 If the occupancy catalogue cannot be loaded, an error alert includes **Retry**. An empty board still lists Status chips at zero and explains that there are no items.
 
-### Recommended today
+### Recommended today (all included repositories)
 
-After a board is selected, Daily Focus also lists up to three unblocked work items from included repositories:
+After a board is selected, Daily Focus also lists up to three unblocked work items from all included repositories, not only cards on that board:
 
 1. Items labelled `status/blocked` or `status/ice-box` are omitted.
 2. Items whose board Status is **Blocked**, **Ice Box**, or **In Progress** are omitted.
