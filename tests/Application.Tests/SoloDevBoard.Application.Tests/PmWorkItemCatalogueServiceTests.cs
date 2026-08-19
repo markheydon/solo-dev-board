@@ -357,6 +357,68 @@ public sealed class PmWorkItemCatalogueServiceTests
     }
 
     [Fact]
+    public async Task GetCatalogueAsync_PullRequestsReturnNotFound_TreatsAsEmptyWithoutFailure()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+
+        _gitHubService.GetActiveRepositoriesAsync(cancellationToken).Returns(
+        [
+            new Repository { Id = 1, Name = "owner", FullName = "owner/owner" },
+        ]);
+        _gitHubService
+            .GetIssuesAsync("owner", "owner", OpenItemState, cancellationToken)
+            .Returns([]);
+        _gitHubService
+            .GetPullRequestsAsync("owner", "owner", OpenItemState, cancellationToken)
+            .Throws(new HttpRequestException(
+                "GitHub API request failed with status code 404 (NotFound).",
+                null,
+                HttpStatusCode.NotFound));
+        _gitHubService
+            .GetOpenPullRequestReviewMetadataAsync("owner", "owner", cancellationToken)
+            .Returns([]);
+        _gitHubService
+            .GetIssueSubIssueSummariesAsync("owner", "owner", Arg.Any<IReadOnlyList<int>>(), cancellationToken)
+            .Returns([]);
+
+        var result = await _sut.GetCatalogueAsync(cancellationToken);
+
+        Assert.Empty(result.Items);
+        Assert.Empty(result.Failures);
+    }
+
+    [Fact]
+    public async Task GetCatalogueAsync_IssuesReturnGone_TreatsAsEmptyWithoutFailure()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+
+        _gitHubService.GetActiveRepositoriesAsync(cancellationToken).Returns(
+        [
+            new Repository { Id = 1, Name = "repo", FullName = "owner/repo" },
+        ]);
+        _gitHubService
+            .GetIssuesAsync("owner", "repo", OpenItemState, cancellationToken)
+            .Throws(new HttpRequestException(
+                "GitHub API request failed with status code 410 (Gone).",
+                null,
+                HttpStatusCode.Gone));
+        _gitHubService
+            .GetPullRequestsAsync("owner", "repo", OpenItemState, cancellationToken)
+            .Returns([]);
+        _gitHubService
+            .GetOpenPullRequestReviewMetadataAsync("owner", "repo", cancellationToken)
+            .Returns([]);
+        _gitHubService
+            .GetIssueSubIssueSummariesAsync("owner", "repo", Arg.Any<IReadOnlyList<int>>(), cancellationToken)
+            .Returns([]);
+
+        var result = await _sut.GetCatalogueAsync(cancellationToken);
+
+        Assert.Empty(result.Items);
+        Assert.Empty(result.Failures);
+    }
+
+    [Fact]
     public async Task GetCatalogueAsync_BothIssueAndPullRequestLoadFail_ReturnsFailureWithCombinedMessage()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;

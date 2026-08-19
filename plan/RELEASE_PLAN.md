@@ -130,7 +130,7 @@ Feature branch → Pull Request → CI passes → Code review → Merge to main 
 
 1. **Merge to `main`:** All features for the release are merged via PRs with the CI pipeline passing. CD deploys automatically to the **staging** Azure Container Apps environment.
 2. **Final smoke test:** Verify the deployment to the staging environment is healthy. Open **More options → About** and confirm the version shows a `staging` pre-release suffix and that the **Build** commit SHA matches the latest commit on `main` for that deploy.
-3. **Update documentation:** Ensure all user-facing docs on `main` reflect the released features (validated by `hugo-ci` on PRs; not published until tagged).
+3. **Update documentation:** Ensure all user-facing docs on `main` reflect the released features (validated by `hugo-validate` on PRs; not published until tagged).
 4. **Tag the release:**
    ```bash
    git tag -a v0.2.0 -m "Release v0.2.0 — Core Features"
