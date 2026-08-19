@@ -34,6 +34,8 @@ internal static class HostedAuthErrorPageRenderer
         builder.AppendLine("  <meta charset=\"utf-8\" />");
         builder.AppendLine("  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />");
         builder.AppendLine($"  <title>{Encode(presentation.Title)}</title>");
+        builder.AppendLine("  <link rel=\"icon\" type=\"image/svg+xml\" href=\"/favicon.svg\" />");
+        builder.AppendLine("  <link rel=\"icon\" type=\"image/png\" href=\"/favicon.png\" />");
         StaticErrorPageStyles.AppendStyleBlock(builder);
         builder.AppendLine("</head>");
         builder.AppendLine("<body>");

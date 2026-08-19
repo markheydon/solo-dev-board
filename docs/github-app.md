@@ -17,6 +17,8 @@ Upload the square icon from this repository:
 
 GitHub crops logos to a square. Use the PNG, not the SVG. After upload, set the **badge background colour** to `#167c38` so it matches the SoloDevBoard primary green.
 
+The Blazor app reuses the same mark as an interim favicon (`wwwroot/favicon.svg` and `wwwroot/favicon.png`). A dedicated product logo remains ice-box work — see GitHub issue #397.
+
 Suggested listing copy (UK English):
 
 | Field | Suggested value |

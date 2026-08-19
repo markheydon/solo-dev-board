@@ -24,6 +24,7 @@ public sealed class HostedAuthErrorPageRendererTests
         Assert.Contains("Access denied", page.Html);
         Assert.Contains("not authorised for this deployment", page.Html);
         Assert.Contains("data-testid=\"auth-error-try-again\"", page.Html);
+        Assert.Contains("href=\"/favicon.svg\"", page.Html);
     }
 
     [Fact]
