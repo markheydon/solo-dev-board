@@ -75,7 +75,7 @@ After a board is selected, Daily Focus also lists up to three unblocked work ite
 
 Excluded repositories (see [Repo Management](#manage-repository-participation)) are omitted from this list. Items already in **Up Next** can still appear so you know what is queued.
 
-If no unblocked items remain, an informational alert explains that there is nothing to recommend today. If every included repository fails to load, a separate error alert includes **Retry** rather than an empty list. If some repositories fail but others succeed, Daily Focus still ranks the remaining items and shows a warning with **Retry**. Occupancy can still show on its own while recommendations continue to load.
+If no unblocked items remain, an informational alert explains that there is nothing to recommend today. If every included repository fails to load, a separate error alert includes **Retry** rather than an empty list. If some repositories fail but others succeed, Daily Focus still ranks the remaining items and shows a warning with **Retry**. Occupancy can still show on its own while recommendations continue to load. GitHub 404 or 410 responses for issues or pull requests on a repository that is already in the catalogue (for example a profile README repository whose `/pulls` endpoint is not found) are treated as no items, not as a load failure.
 
 > **Scope note** — Stalled Up Next items and stalled review pull requests are tracked on stories [#275](https://github.com/markheydon/solo-dev-board/issues/275) and [#276](https://github.com/markheydon/solo-dev-board/issues/276) and are not shown yet.
 

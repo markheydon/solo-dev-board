@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.Extensions.Logging;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Domain.Entities.PmWorkflow;
@@ -15,6 +16,10 @@ public sealed class PmWorkItemCatalogueService(
     private const string OpenItemState = "open";
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// A 404 or 410 from GitHub when loading issues or pull requests is treated as an empty list.
+    /// Other HTTP failures are recorded on the result so Daily Focus can warn or retry.
+    /// </remarks>
     public async Task<PmWorkItemCatalogueResultDto> GetCatalogueAsync(CancellationToken cancellationToken = default)
     {
         var settings = await pmSettingsService.GetSettingsAsync().ConfigureAwait(false);
@@ -125,6 +130,15 @@ public sealed class PmWorkItemCatalogueService(
                 .ConfigureAwait(false);
             return new LoadAttempt<IReadOnlyList<Issue>>(issues, null, null);
         }
+        catch (HttpRequestException exception) when (IsAbsentGitHubResource(exception.StatusCode))
+        {
+            logger.LogWarning(
+                exception,
+                "Treating issues for {RepositoryFullName} as empty because the GitHub API returned {StatusCode}.",
+                $"{owner}/{repoName}",
+                exception.StatusCode);
+            return new LoadAttempt<IReadOnlyList<Issue>>([], null, null);
+        }
         catch (HttpRequestException exception)
         {
             logger.LogWarning(
@@ -146,6 +160,15 @@ public sealed class PmWorkItemCatalogueService(
                 .GetPullRequestsAsync(owner, repoName, OpenItemState, cancellationToken)
                 .ConfigureAwait(false);
             return new LoadAttempt<IReadOnlyList<PullRequest>>(pullRequests, null, null);
+        }
+        catch (HttpRequestException exception) when (IsAbsentGitHubResource(exception.StatusCode))
+        {
+            logger.LogWarning(
+                exception,
+                "Treating pull requests for {RepositoryFullName} as empty because the GitHub API returned {StatusCode}.",
+                $"{owner}/{repoName}",
+                exception.StatusCode);
+            return new LoadAttempt<IReadOnlyList<PullRequest>>([], null, null);
         }
         catch (HttpRequestException exception)
         {
@@ -268,6 +291,23 @@ public sealed class PmWorkItemCatalogueService(
             (not null, not null) => $"Issues: {issueError}; Pull requests: {pullRequestError}",
         };
     }
+
+    /// <summary>
+    /// Returns whether a GitHub status means the issues or pull-requests resource is unavailable
+    /// for a repository that was already listed, rather than a load failure to surface in the UI.
+    /// </summary>
+    /// <param name="statusCode">The status from a GitHub <see cref="HttpRequestException"/>.</param>
+    /// <returns>
+    /// <see langword="true"/> for <see cref="HttpStatusCode.NotFound"/> and <see cref="HttpStatusCode.Gone"/>;
+    /// otherwise, <see langword="false"/>.
+    /// </returns>
+    /// <remarks>
+    /// Profile README repositories such as <c>owner/owner</c> often return 404 from
+    /// <c>GET /repos/{owner}/{repo}/pulls</c> while listing the repository and its issues still succeeds.
+    /// The Audit Dashboard uses the same skip for those statuses.
+    /// </remarks>
+    private static bool IsAbsentGitHubResource(HttpStatusCode? statusCode)
+        => statusCode is HttpStatusCode.NotFound or HttpStatusCode.Gone;
 
     private static string ParseOwnerLogin(string repositoryFullName)
     {
