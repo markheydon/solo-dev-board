@@ -73,7 +73,7 @@ jobs:
         run: ${{ matrix.test_command }}
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: playwright-report-${{ matrix.auth }}
