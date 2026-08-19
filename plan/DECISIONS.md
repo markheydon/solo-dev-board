@@ -288,6 +288,15 @@ Test coverage expectations for cache-hit, cache-miss, invalidation, TTL expiry, 
 
 ---
 
+### DEC-030: Self-documenting CI workflow split
+
+**Status:** Active  
+**Date:** 2026-08-19  
+**Related:** [DEC-016](#dec-016-formalised-testing-standard--xunit-v3-nsubstitute-playwright-e2e), [DEC-021](#dec-021-two-tier-cd-pipeline)  
+**Summary:** Quality gates use one workflow file per concern with a self-documenting name. `ci.yml` runs .NET restore, format, build, and test only. `playwright.yml` follows the official Playwright GitHub Actions template (matrix for PAT and hosted auth modes, `npx playwright install chromium`, HTML report artefact upload). The official template uses `npx playwright install --with-deps` for all browsers; this repository omits `--with-deps` on GitHub-hosted runners because `apt` can hang during install. The Blazor app is started by Playwright `webServer` in `tests/E2E/playwright.config.ts` so local `npm test` matches CI. Other gates use `{subject}-validate.yml` (for example `bash-validate.yml`, `powershell-validate.yml`, `github-actions-validate.yml`, `github-scripts-validate.yml`, `hugo-validate.yml`). Reject monolithic CI files that mix unrelated jobs or opaque workflow names such as `automation-lint.yml` or `shell.yml`.
+
+---
+
 ## Superseded legacy (archive only)
 
 | Legacy ADR | Superseded by | Notes |

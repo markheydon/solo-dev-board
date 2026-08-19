@@ -1,0 +1,47 @@
+name: Bash validate
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/**'
+      - '.github/workflows/bash-validate.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'scripts/**'
+      - '.github/workflows/bash-validate.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bash-validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bash-validate:
+    name: Bash validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install ShellCheck
+        env:
+          SHELLCHECK_VERSION: v0.10.0
+        run: |
+          curl -fsSL "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" -o /tmp/shellcheck.tar.xz
+          tar -xJf /tmp/shellcheck.tar.xz -C /tmp
+          sudo install -m 0755 "/tmp/shellcheck-${SHELLCHECK_VERSION}/shellcheck" /usr/local/bin/shellcheck
+
+      - name: Run ShellCheck on shell scripts
+        run: |
+          mapfile -t scripts < <(find scripts -name '*.sh' -type f | sort)
+          if ((${#scripts[@]} == 0)); then
+            echo "No shell scripts found."
+            exit 0
+          fi
+          shellcheck "${scripts[@]}"

@@ -35,6 +35,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IPmProjectBoardDiscoveryService, PmProjectBoardDiscoveryService>();
         services.AddScoped<IDailyFocusBoardStateService, DailyFocusBoardStateService>();
         services.AddScoped<IDailyFocusStalledReviewService, DailyFocusStalledReviewService>();
+        services.AddScoped<IDailyFocusRecommendationService, DailyFocusRecommendationService>();
 
         return services;
     }

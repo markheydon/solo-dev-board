@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Domain.Entities.PmWorkflow;
 using SoloDevBoard.Domain.Entities.Triage;
@@ -8,9 +9,8 @@ namespace SoloDevBoard.Application.Services.PmWorkflow;
 public sealed class ProjectItemCatalogueService : IProjectItemCatalogueService
 {
     private readonly IGitHubService _gitHubService;
-    private readonly Dictionary<string, Task<ProjectBoardItemCatalogueDto>> _inFlightCatalogues =
+    private readonly ConcurrentDictionary<string, Task<ProjectBoardItemCatalogueDto>> _catalogueByProjectId =
         new(StringComparer.Ordinal);
-    private readonly object _inFlightGate = new();
 
     /// <summary>Initialises a new instance of the <see cref="ProjectItemCatalogueService"/> class.</summary>
     /// <param name="gitHubService">The GitHub service used to retrieve and update project board items.</param>
@@ -20,47 +20,48 @@ public sealed class ProjectItemCatalogueService : IProjectItemCatalogueService
     }
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// Successful catalogues are cached for the DI scope so occupancy and recommendations share one Projects v2 round-trip.
+    /// Failed loads are not cached, so Retry can fetch again.
+    /// </remarks>
     public async Task<ProjectBoardItemCatalogueDto> GetCatalogueAsync(string projectId, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentException.ThrowIfNullOrWhiteSpace(projectId);
 
-        Task<ProjectBoardItemCatalogueDto> catalogueTask;
-        lock (_inFlightGate)
+        while (true)
         {
-            if (!_inFlightCatalogues.TryGetValue(projectId, out catalogueTask!))
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (_catalogueByProjectId.TryGetValue(projectId, out var existing))
             {
-                catalogueTask = LoadCatalogueAsync(projectId, cancellationToken);
-                _inFlightCatalogues[projectId] = catalogueTask;
+                return await existing.WaitAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            var completion = new TaskCompletionSource<ProjectBoardItemCatalogueDto>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+
+            if (!_catalogueByProjectId.TryAdd(projectId, completion.Task))
+            {
+                continue;
+            }
+
+            try
+            {
+                var catalogue = await _gitHubService
+                    .GetProjectBoardItemsAsync(projectId, cancellationToken)
+                    .ConfigureAwait(false);
+                var mapped = MapCatalogue(catalogue);
+                completion.SetResult(mapped);
+                return mapped;
+            }
+            catch (Exception exception)
+            {
+                _catalogueByProjectId.TryRemove(projectId, out _);
+                completion.SetException(exception);
+                throw;
             }
         }
-
-        try
-        {
-            return await catalogueTask.ConfigureAwait(false);
-        }
-        finally
-        {
-            lock (_inFlightGate)
-            {
-                if (_inFlightCatalogues.TryGetValue(projectId, out var current)
-                    && ReferenceEquals(current, catalogueTask))
-                {
-                    _inFlightCatalogues.Remove(projectId);
-                }
-            }
-        }
-    }
-
-    private async Task<ProjectBoardItemCatalogueDto> LoadCatalogueAsync(
-        string projectId,
-        CancellationToken cancellationToken)
-    {
-        var catalogue = await _gitHubService
-            .GetProjectBoardItemsAsync(projectId, cancellationToken)
-            .ConfigureAwait(false);
-
-        return MapCatalogue(catalogue);
     }
 
     /// <inheritdoc/>
@@ -79,6 +80,8 @@ public sealed class ProjectItemCatalogueService : IProjectItemCatalogueService
         await _gitHubService
             .UpdateProjectBoardItemFocusOrderAsync(projectId, projectItemId, focusOrderFieldId, focusOrder, cancellationToken)
             .ConfigureAwait(false);
+
+        _catalogueByProjectId.TryRemove(projectId, out _);
     }
 
     /// <inheritdoc/>
@@ -96,6 +99,8 @@ public sealed class ProjectItemCatalogueService : IProjectItemCatalogueService
         await _gitHubService
             .ClearProjectBoardItemFocusOrderAsync(projectId, projectItemId, focusOrderFieldId, cancellationToken)
             .ConfigureAwait(false);
+
+        _catalogueByProjectId.TryRemove(projectId, out _);
     }
 
     private static void ValidateFocusOrderFieldId(string focusOrderFieldId)

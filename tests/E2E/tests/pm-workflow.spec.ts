@@ -16,7 +16,7 @@ test.describe('PM Workflow', () => {
     await expect(page.getByRole('heading', { name: 'Daily Focus' })).toBeVisible();
   });
 
-  test('daily focus shows occupancy region, empty copy, or a load error', async ({ page }) => {
+  test('daily focus shows occupancy and recommendations, empty copy, or a load error', async ({ page }) => {
     await page.goto('/pm-workflow/daily-focus');
 
     await expect(page.getByTestId('pm-workflow-shell')).toBeVisible();
@@ -45,6 +45,18 @@ test.describe('PM Workflow', () => {
       const stalledRegion = page.getByTestId('pm-workflow-daily-focus-stalled-reviews');
       const stalledError = page.getByTestId('pm-workflow-daily-focus-stalled-reviews-error');
       await expect(stalledRegion.or(stalledError).first()).toBeVisible();
+    }
+
+    if (await occupancyRegion.isVisible()) {
+      const recommendationsRegion = page.getByTestId('pm-workflow-daily-focus-recommendations');
+      const recommendationsError = page.getByTestId('pm-workflow-daily-focus-recommendations-error');
+      const recommendationsWarning = page.getByTestId('pm-workflow-daily-focus-recommendations-warning');
+      await expect(recommendationsRegion.or(recommendationsError).or(recommendationsWarning).first()).toBeVisible();
+      if (await recommendationsRegion.isVisible()) {
+        await expect(
+          page.getByRole('heading', { name: 'Recommended today (all included repositories)' }),
+        ).toBeVisible();
+      }
     }
   });
 
