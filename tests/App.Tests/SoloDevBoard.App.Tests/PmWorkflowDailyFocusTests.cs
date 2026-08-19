@@ -6,6 +6,7 @@ using MudBlazor;
 using MudBlazor.Services;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using SoloDevBoard.App.Components.Features.PmWorkflow;
 using SoloDevBoard.App.Components.Features.PmWorkflow.Pages;
 using SoloDevBoard.Application.Services.PmWorkflow;
 using SoloDevBoard.Application.Services.Repositories;
@@ -32,7 +33,7 @@ public sealed class PmWorkflowDailyFocusTests
             new PmProjectBoardDiscoveryDto([], 0, 0));
 
         await using var ctx = CreateContext();
-        var cut = ctx.Render<PmWorkflowDailyFocus>();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
 
         cut.WaitForAssertion(() =>
         {
@@ -57,7 +58,7 @@ public sealed class PmWorkflowDailyFocusTests
                 ItemCount: 8));
 
         await using var ctx = CreateContext();
-        var cut = ctx.Render<PmWorkflowDailyFocus>();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
 
         cut.WaitForAssertion(() =>
         {
@@ -80,7 +81,7 @@ public sealed class PmWorkflowDailyFocusTests
                 ItemCount: 0));
 
         await using var ctx = CreateContext();
-        var cut = ctx.Render<PmWorkflowDailyFocus>();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
 
         cut.WaitForAssertion(() =>
         {
@@ -97,7 +98,7 @@ public sealed class PmWorkflowDailyFocusTests
             .ThrowsAsync(new InvalidOperationException("GitHub unavailable"));
 
         await using var ctx = CreateContext();
-        var cut = ctx.Render<PmWorkflowDailyFocus>();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
 
         cut.WaitForAssertion(() =>
         {
@@ -124,7 +125,7 @@ public sealed class PmWorkflowDailyFocusTests
                     ItemCount: 1));
 
         await using var ctx = CreateContext();
-        var cut = ctx.Render<PmWorkflowDailyFocus>();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
 
         cut.WaitForAssertion(() => Assert.Contains("Unable to load board occupancy.", cut.Markup));
 
@@ -154,12 +155,33 @@ public sealed class PmWorkflowDailyFocusTests
             .Returns(new DailyFocusBoardStateDto([], 0, 8, 0));
 
         await using var ctx = CreateContext();
-        var cut = ctx.Render<PmWorkflowDailyFocus>();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
 
         cut.WaitForAssertion(() =>
         {
             Assert.Contains("could not be loaded", cut.Markup, StringComparison.OrdinalIgnoreCase);
         });
+    }
+
+    [Fact]
+    public async Task PmWorkflowTabSwitch_WhenChromeAlreadyLoaded_DoesNotFetchRepositoriesAgain()
+    {
+        ConfigureDefaults();
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>())
+            .Returns(new DailyFocusBoardStateDto(
+                [new DailyFocusOccupancyChipDto("Todo", 1)],
+                ActiveLoad: 0,
+                Capacity: 8,
+                ItemCount: 1));
+
+        await using var ctx = CreateContext();
+        var dailyFocus = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
+
+        dailyFocus.WaitForAssertion(() => Assert.Contains("Active load: 0 / 8", dailyFocus.Markup));
+
+        ctx.RenderPmWorkflowPage<PmWorkflowRepos>();
+
+        await _repositoryService.Received(1).GetActiveRepositoriesAsync(Arg.Any<CancellationToken>());
     }
 
     private void ConfigureDefaults()
@@ -187,6 +209,7 @@ public sealed class PmWorkflowDailyFocusTests
         ctx.Services.AddScoped(_ => _repositoryService);
         ctx.Services.AddScoped(_ => _projectBoardDiscoveryService);
         ctx.Services.AddScoped(_ => _boardStateService);
+        ctx.Services.AddScoped<PmWorkflowChromeCoordinator>();
         ctx.Services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
 
         ctx.Render<MudPopoverProvider>();

@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using MudBlazor;
 using MudBlazor.Services;
 using SoloDevBoard.App.Authentication;
+using SoloDevBoard.App.Components.Features.PmWorkflow;
 using SoloDevBoard.App.Components.Shell;
 using SoloDevBoard.App.PmWorkflow;
 using SoloDevBoard.App.Theming;
@@ -56,6 +57,7 @@ builder.Services.AddScoped<IGitHubAuthenticationSummaryService, GitHubAuthentica
 builder.Services.AddScoped<IThemePreferenceStorage, ThemePreferenceJsStorage>();
 builder.Services.AddScoped<IThemePreferenceService, ThemePreferenceService>();
 builder.Services.AddScoped<IPmSettingsStorage, PmSettingsJsStorage>();
+builder.Services.AddScoped<PmWorkflowChromeCoordinator>();
 
 if (hostedSignInEnabled)
 {

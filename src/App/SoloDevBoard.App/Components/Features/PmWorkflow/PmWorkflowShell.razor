@@ -4,23 +4,27 @@
 <MudStack Spacing="3" data-testid="pm-workflow-shell">
     <MudText Typo="Typo.h4">PM Workflow</MudText>
 
-    @if (chromeState.IsLoading)
+    @if (ChromeState.IsLoading)
     {
         <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="Loading PM Workflow" />
     }
+    else if (ChromeState.IsRefreshing)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="Refreshing PM Workflow" />
+    }
 
-    @if (!string.IsNullOrWhiteSpace(chromeState.LoadErrorMessage))
+    @if (!string.IsNullOrWhiteSpace(ChromeState.LoadErrorMessage))
     {
         <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" data-testid="pm-workflow-chrome-error">
-            @chromeState.LoadErrorMessage
+            @ChromeState.LoadErrorMessage
             <MudButton Variant="Variant.Text" OnClick="RefreshAsync">Retry</MudButton>
         </MudAlert>
     }
 
-    @if (!string.IsNullOrWhiteSpace(chromeState.InaccessibleProjectBoardsWarning))
+    @if (!string.IsNullOrWhiteSpace(ChromeState.InaccessibleProjectBoardsWarning))
     {
         <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" data-testid="pm-workflow-inaccessible-boards-warning">
-            @chromeState.InaccessibleProjectBoardsWarning
+            @ChromeState.InaccessibleProjectBoardsWarning
         </MudAlert>
     }
 
@@ -33,15 +37,15 @@
                            Dense="true"
                            Value="selectedPlanningBoardId"
                            ValueChanged="OnPlanningBoardChangedAsync"
-                           Disabled="chromeState.IsLoading || chromeState.PlanningBoardOptions.Count == 0"
+                           Disabled="ChromeState.IsLoading || ChromeState.PlanningBoardOptions.Count == 0"
                            data-testid="pm-workflow-board-select">
-                    @if (chromeState.PlanningBoardOptions.Count == 0)
+                    @if (ChromeState.PlanningBoardOptions.Count == 0)
                     {
                         <MudSelectItem T="string" Value="@string.Empty">No boards discovered</MudSelectItem>
                     }
                     else
                     {
-                        @foreach (var board in chromeState.PlanningBoardOptions)
+                        @foreach (var board in ChromeState.PlanningBoardOptions)
                         {
                             <MudSelectItem T="string" Value="@board.Id">@board.Title</MudSelectItem>
                         }
@@ -50,16 +54,16 @@
 
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                     <MudText Typo="Typo.body2" aria-live="polite">
-                        Repos: @chromeState.IncludedRepositoryCount included
-                        @if (!string.IsNullOrWhiteSpace(chromeState.SelectedPlanningBoardTitle))
+                        Repos: @ChromeState.IncludedRepositoryCount included
+                        @if (!string.IsNullOrWhiteSpace(ChromeState.SelectedPlanningBoardTitle))
                         {
-                            <span> · Board: @chromeState.SelectedPlanningBoardTitle</span>
+                            <span> · Board: @ChromeState.SelectedPlanningBoardTitle</span>
                         }
-                        · Refreshed @FormatLastRefreshed(chromeState.LastRefreshedAtUtc)
+                        · Refreshed @FormatLastRefreshed(ChromeState.LastRefreshedAtUtc)
                     </MudText>
                     <MudIconButton Icon="@Icons.Material.Filled.Refresh"
                                    aria-label="Refresh PM Workflow data"
-                                   Disabled="chromeState.IsLoading"
+                                   Disabled="ChromeState.IsLoading || ChromeState.IsRefreshing"
                                    OnClick="RefreshAsync"
                                    data-testid="pm-workflow-refresh-button" />
                 </MudStack>
@@ -78,15 +82,15 @@
         </MudStack>
     </MudPaper>
 
-    @if (!chromeState.HasPlanningBoardSelected && !chromeState.IsLoading && string.IsNullOrWhiteSpace(chromeState.LoadErrorMessage))
+    @if (!ChromeState.HasPlanningBoardSelected && !ChromeState.IsLoading && string.IsNullOrWhiteSpace(ChromeState.LoadErrorMessage))
     {
         <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" data-testid="pm-workflow-no-board-alert">
             Select a planning board to load PM Workflow data on future tabs. Repo Management settings can still be edited below.
         </MudAlert>
     }
 
-    <CascadingValue Value="chromeState" IsFixed="false">
-        <CascadingValue Value="chromeState.DataRevision" Name="PmWorkflowDataRevision" IsFixed="false">
+    <CascadingValue Value="ChromeState" IsFixed="false">
+        <CascadingValue Value="ChromeState.DataRevision" Name="PmWorkflowDataRevision" IsFixed="false">
             @ChildContent
         </CascadingValue>
     </CascadingValue>

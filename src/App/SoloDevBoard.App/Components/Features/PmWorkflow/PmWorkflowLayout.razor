@@ -1,0 +1,32 @@
+@inherits LayoutComponentBase
+@namespace SoloDevBoard.App.Components.Features.PmWorkflow
+@using SoloDevBoard.App.Components.Features.PmWorkflow
+@implements IDisposable
+
+<PmWorkflowShell ActiveTab="@ResolveActiveTab()">
+    @Body
+</PmWorkflowShell>
+
+@code {
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+
+    [Inject]
+    private PmWorkflowChromeCoordinator ChromeCoordinator { get; set; } = default!;
+
+    /// <inheritdoc/>
+    public void Dispose() => ChromeCoordinator.CancelPendingLoad();
+
+    private string ResolveActiveTab()
+    {
+        var path = new Uri(NavigationManager.Uri).AbsolutePath.TrimEnd('/');
+        return path switch
+        {
+            "/pm-workflow/daily-focus" => "daily-focus",
+            "/pm-workflow/backlog" => "backlog",
+            "/pm-workflow/planning" => "planning",
+            "/pm-workflow/repos" => "repos",
+            _ => "daily-focus",
+        };
+    }
+}

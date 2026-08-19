@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
-using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Application.Services.PmWorkflow;
-using SoloDevBoard.Application.Services.Repositories;
 
 namespace SoloDevBoard.App.Components.Features.PmWorkflow;
 
@@ -17,21 +15,9 @@ public partial class PmWorkflowShell : ComponentBase
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
 
-    /// <summary>Gets or sets the PM settings service.</summary>
+    /// <summary>Gets or sets the PM Workflow chrome coordinator.</summary>
     [Inject]
-    public IPmSettingsService PmSettingsService { get; set; } = default!;
-
-    /// <summary>Gets or sets the repository service.</summary>
-    [Inject]
-    public IRepositoryService RepositoryService { get; set; } = default!;
-
-    /// <summary>Gets or sets the planning board discovery service.</summary>
-    [Inject]
-    public IPmProjectBoardDiscoveryService ProjectBoardDiscoveryService { get; set; } = default!;
-
-    /// <summary>Gets or sets the logger.</summary>
-    [Inject]
-    public ILogger<PmWorkflowShell> Logger { get; set; } = default!;
+    public PmWorkflowChromeCoordinator ChromeCoordinator { get; set; } = default!;
 
     /// <summary>Gets or sets the snackbar service.</summary>
     [Inject]
@@ -41,81 +27,54 @@ public partial class PmWorkflowShell : ComponentBase
     [Inject]
     public NavigationManager NavigationManager { get; set; } = default!;
 
-    private readonly PmWorkflowChromeState chromeState = new();
+    private PmWorkflowChromeState ChromeState => ChromeCoordinator.State;
     private string selectedPlanningBoardId = string.Empty;
 
     /// <inheritdoc/>
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        chromeState.SaveSettingsAsync = SaveSettingsAsync;
-        chromeState.RefreshAsync = RefreshAsync;
-        await RefreshAsync();
+        ChromeState.SaveSettingsAsync = SaveSettingsAsync;
+        ChromeState.RefreshAsync = () => ChromeCoordinator.RefreshAsync(forceReload: true);
+        selectedPlanningBoardId = ChromeState.Settings.PlanningBoardNodeId ?? string.Empty;
+    }
+
+    /// <inheritdoc/>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        await ChromeCoordinator.EnsureLoadedAsync().ConfigureAwait(false);
+        selectedPlanningBoardId = ChromeState.Settings.PlanningBoardNodeId ?? string.Empty;
+        await InvokeAsync(StateHasChanged).ConfigureAwait(false);
     }
 
     private async Task RefreshAsync()
     {
-        chromeState.IsLoading = true;
-        chromeState.LoadErrorMessage = null;
-
-        try
-        {
-            chromeState.Settings = await PmSettingsService.GetSettingsAsync();
-            selectedPlanningBoardId = chromeState.Settings.PlanningBoardNodeId ?? string.Empty;
-
-            chromeState.ActiveRepositories = await RepositoryService.GetActiveRepositoriesAsync();
-            var discovery = await ProjectBoardDiscoveryService.GetPlanningBoardOptionsForRepositoriesAsync(
-                chromeState.ActiveRepositories);
-            chromeState.PlanningBoardOptions = discovery.Options;
-            chromeState.InaccessibleProjectBoardsWarning = LinkedProjectBoardVisibility.BuildInaccessibleProjectsWarning(
-                discovery.TotalLinkedProjectCount,
-                discovery.InaccessibleLinkedProjectCount);
-
-            if (!chromeState.PlanningBoardOptions.Any(option =>
-                    option.Id.Equals(selectedPlanningBoardId, StringComparison.Ordinal)))
-            {
-                selectedPlanningBoardId = chromeState.PlanningBoardOptions.FirstOrDefault()?.Id ?? string.Empty;
-                if (!string.Equals(chromeState.Settings.PlanningBoardNodeId, selectedPlanningBoardId, StringComparison.Ordinal))
-                {
-                    await SaveSettingsAsync(chromeState.Settings with
-                    {
-                        PlanningBoardNodeId = string.IsNullOrWhiteSpace(selectedPlanningBoardId) ? null : selectedPlanningBoardId,
-                    });
-                }
-            }
-
-            chromeState.LastRefreshedAtUtc = DateTimeOffset.UtcNow;
-            chromeState.MarkDataChanged();
-        }
-        catch (Exception exception)
-        {
-            Logger.LogError(exception, "Failed to load PM Workflow chrome data.");
-            chromeState.LoadErrorMessage = "Unable to load PM Workflow settings. Check your GitHub connection and try again.";
-        }
-        finally
-        {
-            chromeState.IsLoading = false;
-        }
+        await ChromeCoordinator.RefreshAsync(forceReload: true).ConfigureAwait(false);
+        selectedPlanningBoardId = ChromeState.Settings.PlanningBoardNodeId ?? string.Empty;
+        await InvokeAsync(StateHasChanged).ConfigureAwait(false);
     }
 
     private async Task OnPlanningBoardChangedAsync(string? boardId)
     {
         selectedPlanningBoardId = boardId ?? string.Empty;
-        await SaveSettingsAsync(chromeState.Settings with
+        await SaveSettingsAsync(ChromeState.Settings with
         {
             PlanningBoardNodeId = string.IsNullOrWhiteSpace(selectedPlanningBoardId) ? null : selectedPlanningBoardId,
-        });
+        }).ConfigureAwait(false);
 
-        var boardTitle = chromeState.SelectedPlanningBoardTitle ?? "Planning board";
+        var boardTitle = ChromeState.SelectedPlanningBoardTitle ?? "Planning board";
         Snackbar.Add($"{boardTitle} selected.", Severity.Success);
     }
 
     private async Task SaveSettingsAsync(PmSettingsDto settings)
     {
-        await PmSettingsService.SaveSettingsAsync(settings);
-        chromeState.Settings = await PmSettingsService.GetSettingsAsync();
-        selectedPlanningBoardId = chromeState.Settings.PlanningBoardNodeId ?? string.Empty;
-        chromeState.MarkDataChanged();
-        await InvokeAsync(StateHasChanged);
+        await ChromeCoordinator.SaveSettingsAsync(settings).ConfigureAwait(false);
+        selectedPlanningBoardId = ChromeState.Settings.PlanningBoardNodeId ?? string.Empty;
+        await InvokeAsync(StateHasChanged).ConfigureAwait(false);
     }
 
     private static string FormatLastRefreshed(DateTimeOffset? refreshedAtUtc) =>
