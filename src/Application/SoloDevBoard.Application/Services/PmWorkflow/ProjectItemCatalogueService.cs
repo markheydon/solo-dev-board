@@ -8,6 +8,9 @@ namespace SoloDevBoard.Application.Services.PmWorkflow;
 public sealed class ProjectItemCatalogueService : IProjectItemCatalogueService
 {
     private readonly IGitHubService _gitHubService;
+    private readonly Dictionary<string, Task<ProjectBoardItemCatalogueDto>> _inFlightCatalogues =
+        new(StringComparer.Ordinal);
+    private readonly object _inFlightGate = new();
 
     /// <summary>Initialises a new instance of the <see cref="ProjectItemCatalogueService"/> class.</summary>
     /// <param name="gitHubService">The GitHub service used to retrieve and update project board items.</param>
@@ -22,6 +25,37 @@ public sealed class ProjectItemCatalogueService : IProjectItemCatalogueService
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentException.ThrowIfNullOrWhiteSpace(projectId);
 
+        Task<ProjectBoardItemCatalogueDto> catalogueTask;
+        lock (_inFlightGate)
+        {
+            if (!_inFlightCatalogues.TryGetValue(projectId, out catalogueTask!))
+            {
+                catalogueTask = LoadCatalogueAsync(projectId, cancellationToken);
+                _inFlightCatalogues[projectId] = catalogueTask;
+            }
+        }
+
+        try
+        {
+            return await catalogueTask.ConfigureAwait(false);
+        }
+        finally
+        {
+            lock (_inFlightGate)
+            {
+                if (_inFlightCatalogues.TryGetValue(projectId, out var current)
+                    && ReferenceEquals(current, catalogueTask))
+                {
+                    _inFlightCatalogues.Remove(projectId);
+                }
+            }
+        }
+    }
+
+    private async Task<ProjectBoardItemCatalogueDto> LoadCatalogueAsync(
+        string projectId,
+        CancellationToken cancellationToken)
+    {
         var catalogue = await _gitHubService
             .GetProjectBoardItemsAsync(projectId, cancellationToken)
             .ConfigureAwait(false);

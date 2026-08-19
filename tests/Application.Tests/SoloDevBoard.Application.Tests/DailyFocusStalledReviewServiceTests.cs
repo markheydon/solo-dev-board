@@ -115,4 +115,66 @@ public sealed class DailyFocusStalledReviewServiceTests
         Assert.Equal(21, stalled.Number);
         await _workCatalogue.Received(1).GetCatalogueAsync(cancellationToken);
     }
+
+    [Fact]
+    public async Task GetStalledReviewPullRequestsAsync_NoInReviewColumnAndExcludedRepository_OmitsExcludedPullRequest()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var boardCatalogue = new ProjectBoardItemCatalogueDto(
+            new ProjectBoardFieldIdsDto("PVTF_status", null),
+            [new ProjectBoardStatusOptionDto("opt-todo", "Todo")],
+            []);
+        _projectCatalogue.GetCatalogueAsync("project-id", cancellationToken).Returns(boardCatalogue);
+
+        var excludedItem = new PmWorkItemDto(
+            PmWorkItemTypeDto.PullRequest,
+            21,
+            "Pending review",
+            "https://github.com/owner/skipped/pull/21",
+            "owner/skipped",
+            [],
+            null,
+            null,
+            UtcNow.AddDays(-4),
+            UtcNow,
+            IsDraft: false,
+            HasReviewPending: true,
+            SubIssueTotal: null,
+            SubIssueCompleted: null);
+        _workCatalogue.GetCatalogueAsync(cancellationToken)
+            .Returns(new PmWorkItemCatalogueResultDto([excludedItem], []));
+
+        var sut = new DailyFocusStalledReviewService(_projectCatalogue, _workCatalogue);
+
+        var result = await sut.GetStalledReviewPullRequestsAsync(
+            "project-id",
+            3,
+            ["owner/skipped"],
+            cancellationToken);
+
+        Assert.False(result.UsedInReviewColumn);
+        Assert.Empty(result.Items);
+    }
+
+    [Fact]
+    public async Task GetStalledReviewPullRequestsAsync_WorkCatalogueHasFailures_ThrowsInvalidOperationException()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var boardCatalogue = new ProjectBoardItemCatalogueDto(
+            new ProjectBoardFieldIdsDto("PVTF_status", null),
+            [new ProjectBoardStatusOptionDto("opt-todo", "Todo")],
+            []);
+        _projectCatalogue.GetCatalogueAsync("project-id", cancellationToken).Returns(boardCatalogue);
+        _workCatalogue.GetCatalogueAsync(cancellationToken)
+            .Returns(new PmWorkItemCatalogueResultDto(
+                [],
+                [new PmRepositoryCatalogueFailureDto("owner/repo", "GitHub unavailable", 502)]));
+
+        var sut = new DailyFocusStalledReviewService(_projectCatalogue, _workCatalogue);
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            sut.GetStalledReviewPullRequestsAsync("project-id", 3, [], cancellationToken));
+
+        Assert.Contains("failed to load", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
 }

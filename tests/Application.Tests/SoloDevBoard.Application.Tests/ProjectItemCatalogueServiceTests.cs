@@ -190,4 +190,30 @@ public sealed class ProjectItemCatalogueServiceTests
             "focus-field-id",
             cancellationToken);
     }
+
+    [Fact]
+    public async Task GetCatalogueAsync_ConcurrentCallsForSameProject_ShareOneGitHubRequest()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var catalogueReady = new TaskCompletionSource<ProjectBoardItemCatalogue>();
+        _gitHubService
+            .GetProjectBoardItemsAsync("project-id", Arg.Any<CancellationToken>())
+            .Returns(_ => catalogueReady.Task);
+
+        var sut = new ProjectItemCatalogueService(_gitHubService);
+
+        var first = sut.GetCatalogueAsync("project-id", cancellationToken);
+        var second = sut.GetCatalogueAsync("project-id", cancellationToken);
+
+        catalogueReady.SetResult(new ProjectBoardItemCatalogue
+        {
+            FieldIds = new ProjectBoardFieldIds { StatusFieldId = "PVTF_status" },
+            Items = [],
+        });
+
+        var results = await Task.WhenAll(first, second);
+
+        Assert.Same(results[0], results[1]);
+        await _gitHubService.Received(1).GetProjectBoardItemsAsync("project-id", Arg.Any<CancellationToken>());
+    }
 }

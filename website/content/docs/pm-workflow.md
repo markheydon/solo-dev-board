@@ -16,13 +16,13 @@ The Cross-Repo PM Workflow brings a structured, two-mode operating system into S
 The system is built around two modes of operation:
 
 - **PM Mode** (weekly or fortnightly) — Active curation: review your backlog across all repositories, resolve stalled work, and populate your project board with a realistic set of committed items for the next few days.
-- **Work Mode** (daily) — Execution: the project board is the single pane of glass. Open it, pick the next item, and get things done. Daily Focus currently shows board occupancy, active load, and pull requests that have been waiting on review for three or more days.
+- **Work Mode** (daily) — Execution: the project board is the single pane of glass. Open it, pick the next item, and get things done. Daily Focus currently shows board occupancy, active load, and pull requests that have been waiting on review for the configured **Stall days** threshold (default 3).
 
 ### What is available now
 
 | Tab | Route | Status |
 |-----|-------|--------|
-| **Daily Focus** | `/pm-workflow/daily-focus` | **Partial** — Status occupancy chips, active load, and pull requests awaiting review for three or more days. Stalled Up Next items and recommendations are still planned. |
+| **Daily Focus** | `/pm-workflow/daily-focus` | **Partial** — Status occupancy chips, active load, and pull requests awaiting review for the configured Stall days threshold. Stalled Up Next items and recommendations are still planned. |
 | Backlog | `/pm-workflow/backlog` | Placeholder — story [#277](https://github.com/markheydon/solo-dev-board/issues/277). |
 | Planning | `/pm-workflow/planning` | Placeholder — story [#283](https://github.com/markheydon/solo-dev-board/issues/283). |
 | **Repos** | `/pm-workflow/repos` | **Available** — planning board selection, thresholds, and repository exclusions. |

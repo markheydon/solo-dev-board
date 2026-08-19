@@ -47,6 +47,9 @@ public sealed class PmWorkflowChromeCoordinator
     /// <summary>Gets the cached Daily Focus board state for the current circuit, if any.</summary>
     public DailyFocusBoardStateCacheEntry? DailyFocusBoardState { get; private set; }
 
+    /// <summary>Gets the cached Daily Focus stalled-review snapshot for the current circuit, if any.</summary>
+    public DailyFocusStalledReviewsCacheEntry? DailyFocusStalledReviews { get; private set; }
+
     /// <summary>Loads chrome data when it has not been loaded yet for this circuit.</summary>
     /// <returns>A task that completes when the load attempt finishes or is skipped.</returns>
     public Task EnsureLoadedAsync() =>
@@ -67,6 +70,7 @@ public sealed class PmWorkflowChromeCoordinator
         if (forceReload)
         {
             ClearDailyFocusBoardState();
+            ClearDailyFocusStalledReviews();
         }
 
         CancelPendingLoad();
@@ -109,6 +113,36 @@ public sealed class PmWorkflowChromeCoordinator
 
     /// <summary>Clears cached Daily Focus board state.</summary>
     public void ClearDailyFocusBoardState() => DailyFocusBoardState = null;
+
+    /// <summary>Stores Daily Focus stalled reviews in the circuit cache.</summary>
+    /// <param name="boardId">The planning board node identifier.</param>
+    /// <param name="stallDays">The inclusive stall threshold in days.</param>
+    /// <param name="excludedRepositories">Repositories omitted from stall alerts, in <c>owner/name</c> form.</param>
+    /// <param name="snapshot">The loaded snapshot, when successful.</param>
+    /// <param name="errorMessage">The load error message, when unsuccessful.</param>
+    /// <param name="isLoading">Whether a load is currently in flight.</param>
+    public void SetDailyFocusStalledReviews(
+        string boardId,
+        int stallDays,
+        IReadOnlyList<string> excludedRepositories,
+        DailyFocusStalledReviewSnapshotDto? snapshot,
+        string? errorMessage,
+        bool isLoading)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(boardId);
+        ArgumentNullException.ThrowIfNull(excludedRepositories);
+
+        DailyFocusStalledReviews = new DailyFocusStalledReviewsCacheEntry(
+            boardId,
+            stallDays,
+            [.. excludedRepositories],
+            snapshot,
+            errorMessage,
+            isLoading);
+    }
+
+    /// <summary>Clears cached Daily Focus stalled reviews.</summary>
+    public void ClearDailyFocusStalledReviews() => DailyFocusStalledReviews = null;
 
     /// <summary>Cancels any in-flight chrome load, for example when leaving PM Workflow.</summary>
     public void CancelPendingLoad()
@@ -205,5 +239,20 @@ public sealed record DailyFocusBoardStateCacheEntry(
     string BoardId,
     int Capacity,
     DailyFocusBoardStateDto? State,
+    string? ErrorMessage,
+    bool IsLoading);
+
+/// <summary>Cached Daily Focus stalled-review snapshot for a planning board within the current circuit.</summary>
+/// <param name="BoardId">The planning board node identifier.</param>
+/// <param name="StallDays">The inclusive stall threshold in days.</param>
+/// <param name="ExcludedRepositories">Repositories omitted from stall alerts, in <c>owner/name</c> form.</param>
+/// <param name="Snapshot">The loaded snapshot, when successful.</param>
+/// <param name="ErrorMessage">The load error message, when unsuccessful.</param>
+/// <param name="IsLoading">Whether a load is currently in flight.</param>
+public sealed record DailyFocusStalledReviewsCacheEntry(
+    string BoardId,
+    int StallDays,
+    IReadOnlyList<string> ExcludedRepositories,
+    DailyFocusStalledReviewSnapshotDto? Snapshot,
     string? ErrorMessage,
     bool IsLoading);

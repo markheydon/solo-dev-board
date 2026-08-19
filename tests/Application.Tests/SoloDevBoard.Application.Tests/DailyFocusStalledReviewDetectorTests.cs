@@ -167,7 +167,7 @@ public sealed class DailyFocusStalledReviewDetectorTests
                 hasReviewPending: false),
         };
 
-        var result = DailyFocusStalledReviewDetector.DetectFromPendingReviewCatalogue(items, UtcNow, stallDays: 3);
+        var result = DailyFocusStalledReviewDetector.DetectFromPendingReviewCatalogue(items, UtcNow, stallDays: 3, []);
 
         var stalled = Assert.Single(result);
         Assert.Equal("owner/repo", stalled.RepositoryFullName);
@@ -198,9 +198,39 @@ public sealed class DailyFocusStalledReviewDetectorTests
                 SubIssueCompleted: null),
         };
 
-        var result = DailyFocusStalledReviewDetector.DetectFromPendingReviewCatalogue(items, UtcNow, stallDays: 3);
+        var result = DailyFocusStalledReviewDetector.DetectFromPendingReviewCatalogue(items, UtcNow, stallDays: 3, []);
 
         Assert.Empty(result);
+    }
+
+    [Fact]
+    public void DetectFromPendingReviewCatalogue_ExcludedRepository_IsOmitted()
+    {
+        var items = new[]
+        {
+            CreateWorkItem(
+                number: 12,
+                createdAt: UtcNow.AddDays(-5),
+                isDraft: false,
+                hasReviewPending: true,
+                repositoryFullName: "owner/skipped"),
+            CreateWorkItem(
+                number: 13,
+                createdAt: UtcNow.AddDays(-5),
+                isDraft: false,
+                hasReviewPending: true,
+                repositoryFullName: "owner/kept"),
+        };
+
+        var result = DailyFocusStalledReviewDetector.DetectFromPendingReviewCatalogue(
+            items,
+            UtcNow,
+            stallDays: 3,
+            ["owner/skipped"]);
+
+        var stalled = Assert.Single(result);
+        Assert.Equal("owner/kept", stalled.RepositoryFullName);
+        Assert.Equal(13, stalled.Number);
     }
 
     [Fact]
@@ -216,7 +246,9 @@ public sealed class DailyFocusStalledReviewDetectorTests
     public void DetectFromPendingReviewCatalogue_NullWorkItems_ThrowsArgumentNullException()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            DailyFocusStalledReviewDetector.DetectFromPendingReviewCatalogue(null!, UtcNow, 3));
+            DailyFocusStalledReviewDetector.DetectFromPendingReviewCatalogue(null!, UtcNow, 3, []));
+        Assert.Throws<ArgumentNullException>(() =>
+            DailyFocusStalledReviewDetector.DetectFromPendingReviewCatalogue([], UtcNow, 3, null!));
     }
 
     private static ProjectBoardItemDto CreateBoardItem(
@@ -238,13 +270,14 @@ public sealed class DailyFocusStalledReviewDetectorTests
         int number,
         DateTimeOffset createdAt,
         bool isDraft,
-        bool hasReviewPending)
+        bool hasReviewPending,
+        string repositoryFullName = "owner/repo")
         => new(
             PmWorkItemTypeDto.PullRequest,
             number,
             $"PR {number}",
-            $"https://github.com/owner/repo/pull/{number}",
-            "owner/repo",
+            $"https://github.com/{repositoryFullName}/pull/{number}",
+            repositoryFullName,
             [],
             null,
             null,

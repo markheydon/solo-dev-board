@@ -69,14 +69,18 @@ public static partial class DailyFocusStalledReviewDetector
     /// <param name="workItems">Open issues and pull requests from the PM work-item catalogue.</param>
     /// <param name="utcNow">The current UTC instant used for age calculation.</param>
     /// <param name="stallDays">Inclusive stall threshold in days.</param>
+    /// <param name="excludedRepositories">Repositories omitted from the result, in <c>owner/name</c> form.</param>
     /// <returns>Stalled pull requests, oldest first.</returns>
     public static IReadOnlyList<DailyFocusStalledReviewPullRequestDto> DetectFromPendingReviewCatalogue(
         IReadOnlyList<PmWorkItemDto> workItems,
         DateTimeOffset utcNow,
-        int stallDays)
+        int stallDays,
+        IReadOnlyList<string> excludedRepositories)
     {
         ArgumentNullException.ThrowIfNull(workItems);
+        ArgumentNullException.ThrowIfNull(excludedRepositories);
 
+        var excluded = new HashSet<string>(excludedRepositories, StringComparer.OrdinalIgnoreCase);
         var resolvedStallDays = ResolveStallDays(stallDays);
 
         return workItems
@@ -84,6 +88,7 @@ public static partial class DailyFocusStalledReviewDetector
                 item.ItemType == PmWorkItemTypeDto.PullRequest
                 && item.IsDraft == false
                 && item.HasReviewPending == true
+                && !excluded.Contains(item.RepositoryFullName)
                 && IsStalled(item.CreatedAt, utcNow, resolvedStallDays))
             .Select(item => MapWorkItem(item, utcNow))
             .OrderByDescending(static row => row.AgeDays)

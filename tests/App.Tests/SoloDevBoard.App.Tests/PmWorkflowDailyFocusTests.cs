@@ -205,6 +205,158 @@ public sealed class PmWorkflowDailyFocusTests
     }
 
     [Fact]
+    public async Task PmWorkflowDailyFocus_WhenNoStalledReviewPullRequests_ShowsEmptyAlert()
+    {
+        ConfigureDefaults();
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>())
+            .Returns(new DailyFocusBoardStateDto(
+                [new DailyFocusOccupancyChipDto("Todo", 1)],
+                ActiveLoad: 0,
+                Capacity: 8,
+                ItemCount: 1));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("No pull requests have been awaiting review for 3 or more days.", cut.Markup);
+            Assert.Contains("data-testid=\"pm-workflow-daily-focus-stalled-reviews-empty\"", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task PmWorkflowDailyFocus_WhenStalledReviewLoadFails_ShowsErrorWithRetry()
+    {
+        ConfigureDefaults();
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>())
+            .Returns(new DailyFocusBoardStateDto(
+                [new DailyFocusOccupancyChipDto("Todo", 1)],
+                ActiveLoad: 0,
+                Capacity: 8,
+                ItemCount: 1));
+        _stalledReviewService.GetStalledReviewPullRequestsAsync(
+                "PVT_board",
+                3,
+                Arg.Any<IReadOnlyList<string>>(),
+                Arg.Any<CancellationToken>())
+            .ThrowsAsync(new InvalidOperationException("GitHub unavailable"));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Unable to load pull requests awaiting review.", cut.Markup);
+            Assert.Contains("data-testid=\"pm-workflow-daily-focus-stalled-reviews-retry\"", cut.Markup);
+        });
+
+        await _stalledReviewService.Received(1).GetStalledReviewPullRequestsAsync(
+            "PVT_board",
+            3,
+            Arg.Any<IReadOnlyList<string>>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task PmWorkflowDailyFocus_WhenRetryClickedAfterStalledReviewFailure_ReloadsStalledReviews()
+    {
+        ConfigureDefaults();
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>())
+            .Returns(new DailyFocusBoardStateDto(
+                [new DailyFocusOccupancyChipDto("Todo", 1)],
+                ActiveLoad: 0,
+                Capacity: 8,
+                ItemCount: 1));
+        _stalledReviewService.GetStalledReviewPullRequestsAsync(
+                "PVT_board",
+                3,
+                Arg.Any<IReadOnlyList<string>>(),
+                Arg.Any<CancellationToken>())
+            .Returns(
+                _ => throw new InvalidOperationException("GitHub unavailable"),
+                _ => new DailyFocusStalledReviewSnapshotDto(
+                    [
+                        new DailyFocusStalledReviewPullRequestDto(
+                            "owner/repo",
+                            12,
+                            5,
+                            "https://github.com/owner/repo/pull/12",
+                            "Stalled review"),
+                    ],
+                    UsedInReviewColumn: true));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
+
+        cut.WaitForAssertion(() => Assert.Contains("Unable to load pull requests awaiting review.", cut.Markup));
+
+        await cut.InvokeAsync(() => cut.Find("[data-testid='pm-workflow-daily-focus-stalled-reviews-retry']").Click());
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("owner/repo#12", cut.Markup);
+            Assert.Contains("(5d)", cut.Markup);
+        });
+
+        await _stalledReviewService.Received(2).GetStalledReviewPullRequestsAsync(
+            "PVT_board",
+            3,
+            Arg.Any<IReadOnlyList<string>>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task PmWorkflowDailyFocus_WhenStallDaysIsConfigured_IntroUsesThreshold()
+    {
+        _settingsStorage.StoredJson = """{"capacity":8,"stallDays":5,"neglectDays":14,"excludedRepositories":[]}""";
+        ConfigureDefaults();
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>())
+            .Returns(new DailyFocusBoardStateDto(
+                [new DailyFocusOccupancyChipDto("Todo", 1)],
+                ActiveLoad: 0,
+                Capacity: 8,
+                ItemCount: 1));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("awaiting review for 5 or more days", cut.Markup);
+            Assert.Contains("PRs awaiting review 5+ days", cut.Markup);
+            Assert.DoesNotContain("three or more days", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task PmWorkflowTabSwitch_WhenReturningToDailyFocus_DoesNotReloadStalledReviews()
+    {
+        ConfigureDefaults();
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>())
+            .Returns(new DailyFocusBoardStateDto(
+                [new DailyFocusOccupancyChipDto("Todo", 1)],
+                ActiveLoad: 0,
+                Capacity: 8,
+                ItemCount: 1));
+
+        await using var ctx = CreateContext();
+        var dailyFocus = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
+
+        dailyFocus.WaitForAssertion(() =>
+            Assert.Contains("No pull requests have been awaiting review for 3 or more days.", dailyFocus.Markup));
+
+        ctx.RenderPmWorkflowPage<PmWorkflowRepos>();
+        ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
+
+        await _stalledReviewService.Received(1).GetStalledReviewPullRequestsAsync(
+            "PVT_board",
+            3,
+            Arg.Any<IReadOnlyList<string>>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task PmWorkflowDailyFocus_WhenLinkedBoardsAreInaccessible_ShowsWarning()
     {
         ConfigureDefaults();

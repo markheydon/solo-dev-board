@@ -52,10 +52,17 @@ public sealed class DailyFocusStalledReviewService : IDailyFocusStalledReviewSer
             .GetCatalogueAsync(cancellationToken)
             .ConfigureAwait(false);
 
+        if (workCatalogue.Failures.Count > 0)
+        {
+            throw new InvalidOperationException(
+                "Unable to load pull requests awaiting review because one or more repositories failed to load.");
+        }
+
         var catalogueRows = DailyFocusStalledReviewDetector.DetectFromPendingReviewCatalogue(
             workCatalogue.Items,
             utcNow,
-            stallDays);
+            stallDays,
+            excludedRepositories);
         return new DailyFocusStalledReviewSnapshotDto(catalogueRows, UsedInReviewColumn: false);
     }
 }

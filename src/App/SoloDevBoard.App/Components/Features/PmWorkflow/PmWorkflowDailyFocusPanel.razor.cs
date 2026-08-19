@@ -31,6 +31,7 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
     private bool isLoadingStalledReviews;
     private string? stalledReviewsErrorMessage;
     private int stallDaysThreshold = PmSettingsDefaults.StallDays;
+    private int stalledReviewsLoadGeneration;
 
     /// <inheritdoc/>
     protected override async Task OnParametersSetAsync()
@@ -39,6 +40,10 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
         {
             return;
         }
+
+        stallDaysThreshold = ChromeState.Settings.StallDays > 0
+            ? ChromeState.Settings.StallDays
+            : PmSettingsDefaults.StallDays;
 
         if (!ChromeState.HasPlanningBoardSelected)
         {
@@ -49,19 +54,17 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
             return;
         }
 
-        stallDaysThreshold = ChromeState.Settings.StallDays > 0
-            ? ChromeState.Settings.StallDays
-            : PmSettingsDefaults.StallDays;
-
         var boardId = ChromeState.Settings.PlanningBoardNodeId!;
         var capacity = ChromeState.Settings.Capacity;
         var occupancyTask = TryApplyCachedBoardState(boardId, capacity)
             ? Task.CompletedTask
             : LoadBoardStateAsync(boardId, capacity);
-        var stalledTask = LoadStalledReviewsAsync(
-            boardId,
-            stallDaysThreshold,
-            ChromeState.Settings.ExcludedRepositories);
+        var stalledTask = TryApplyCachedStalledReviews(boardId, stallDaysThreshold, ChromeState.Settings.ExcludedRepositories)
+            ? Task.CompletedTask
+            : LoadStalledReviewsAsync(
+                boardId,
+                stallDaysThreshold,
+                ChromeState.Settings.ExcludedRepositories);
 
         await Task.WhenAll(occupancyTask, stalledTask).ConfigureAwait(false);
     }
@@ -81,6 +84,32 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
         loadErrorMessage = cached.ErrorMessage;
         return cached.IsLoading || cached.State is not null || !string.IsNullOrWhiteSpace(cached.ErrorMessage);
     }
+
+    private bool TryApplyCachedStalledReviews(
+        string boardId,
+        int stallDays,
+        IReadOnlyList<string> excludedRepositories)
+    {
+        var cached = ChromeCoordinator.DailyFocusStalledReviews;
+        if (cached is null
+            || !cached.BoardId.Equals(boardId, StringComparison.Ordinal)
+            || cached.StallDays != stallDays
+            || !ExcludedRepositoriesMatch(cached.ExcludedRepositories, excludedRepositories))
+        {
+            return false;
+        }
+
+        isLoadingStalledReviews = cached.IsLoading;
+        stalledReviews = cached.Snapshot;
+        stalledReviewsErrorMessage = cached.ErrorMessage;
+        return cached.IsLoading || cached.Snapshot is not null || !string.IsNullOrWhiteSpace(cached.ErrorMessage);
+    }
+
+    private static bool ExcludedRepositoriesMatch(
+        IReadOnlyList<string> cached,
+        IReadOnlyList<string> current)
+        => cached.Count == current.Count
+            && cached.SequenceEqual(current, StringComparer.OrdinalIgnoreCase);
 
     private Task RetryLoadBoardStateAsync()
     {
@@ -104,6 +133,7 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
             ? ChromeState.Settings.StallDays
             : PmSettingsDefaults.StallDays;
 
+        ChromeCoordinator.ClearDailyFocusStalledReviews();
         return LoadStalledReviewsAsync(
             ChromeState.Settings.PlanningBoardNodeId,
             stallDaysThreshold,
@@ -145,26 +175,81 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
         int stallDays,
         IReadOnlyList<string> excludedRepositories)
     {
+        if (TryApplyCachedStalledReviews(boardId, stallDays, excludedRepositories))
+        {
+            return;
+        }
+
+        var generation = Interlocked.Increment(ref stalledReviewsLoadGeneration);
         isLoadingStalledReviews = true;
         stalledReviewsErrorMessage = null;
         stalledReviews = null;
+        ChromeCoordinator.SetDailyFocusStalledReviews(
+            boardId,
+            stallDays,
+            excludedRepositories,
+            null,
+            null,
+            isLoading: true);
 
         try
         {
-            stalledReviews = await StalledReviewService
+            var snapshot = await StalledReviewService
                 .GetStalledReviewPullRequestsAsync(boardId, stallDays, excludedRepositories)
                 .ConfigureAwait(false);
+
+            if (!ShouldApplyStalledReviewsResult(generation, boardId))
+            {
+                return;
+            }
+
+            stalledReviews = snapshot;
+            ChromeCoordinator.SetDailyFocusStalledReviews(
+                boardId,
+                stallDays,
+                excludedRepositories,
+                snapshot,
+                null,
+                isLoading: false);
         }
         catch (Exception exception)
         {
             Logger.LogError(exception, "Failed to load Daily Focus stalled review pull requests.");
+
+            if (!ShouldApplyStalledReviewsResult(generation, boardId))
+            {
+                return;
+            }
+
             stalledReviews = null;
             stalledReviewsErrorMessage =
                 "Unable to load pull requests awaiting review. Check your GitHub connection and try again.";
+            ChromeCoordinator.SetDailyFocusStalledReviews(
+                boardId,
+                stallDays,
+                excludedRepositories,
+                null,
+                stalledReviewsErrorMessage,
+                isLoading: false);
         }
         finally
         {
-            isLoadingStalledReviews = false;
+            if (generation == stalledReviewsLoadGeneration)
+            {
+                isLoadingStalledReviews = false;
+            }
         }
+    }
+
+    private bool ShouldApplyStalledReviewsResult(int generation, string boardId)
+    {
+        if (generation != stalledReviewsLoadGeneration)
+        {
+            return false;
+        }
+
+        var currentBoardId = ChromeState?.Settings.PlanningBoardNodeId;
+        return !string.IsNullOrWhiteSpace(currentBoardId)
+            && currentBoardId.Equals(boardId, StringComparison.Ordinal);
     }
 }
