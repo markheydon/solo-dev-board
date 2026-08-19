@@ -120,17 +120,20 @@ public sealed class PmWorkflowChromeCoordinator
     /// <param name="recommendations">The ranked recommendations, when successful.</param>
     /// <param name="errorMessage">The load error message, when unsuccessful.</param>
     /// <param name="isLoading"><see langword="true"/> when a load is currently in flight; otherwise, <see langword="false"/>.</param>
+    /// <param name="warningMessage">A partial-catalogue warning, when ranking proceeded without every repository.</param>
     public void SetDailyFocusRecommendations(
         string boardId,
         IReadOnlyList<DailyFocusRecommendationDto>? recommendations,
         string? errorMessage,
-        bool isLoading)
+        bool isLoading,
+        string? warningMessage = null)
     {
         DailyFocusRecommendations = new DailyFocusRecommendationsCacheEntry(
             boardId,
             recommendations,
             errorMessage,
-            isLoading);
+            isLoading,
+            warningMessage);
     }
 
     /// <summary>Clears cached Daily Focus recommendations.</summary>
@@ -239,8 +242,10 @@ public sealed record DailyFocusBoardStateCacheEntry(
 /// <param name="Recommendations">The ranked recommendations, when successful.</param>
 /// <param name="ErrorMessage">The load error message, when unsuccessful.</param>
 /// <param name="IsLoading">Whether a load is currently in flight.</param>
+/// <param name="WarningMessage">A partial-catalogue warning, when ranking proceeded without every repository.</param>
 public sealed record DailyFocusRecommendationsCacheEntry(
     string BoardId,
     IReadOnlyList<DailyFocusRecommendationDto>? Recommendations,
     string? ErrorMessage,
-    bool IsLoading);
+    bool IsLoading,
+    string? WarningMessage = null);

@@ -96,6 +96,16 @@
         }
         else if (!isLoadingRecommendations && recommendations is not null)
         {
+            @if (!string.IsNullOrWhiteSpace(recommendationsWarningMessage))
+            {
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" data-testid="pm-workflow-daily-focus-recommendations-warning">
+                    @recommendationsWarningMessage
+                    <MudButton Variant="Variant.Text"
+                               OnClick="RetryLoadRecommendationsAsync"
+                               data-testid="pm-workflow-daily-focus-recommendations-retry">Retry</MudButton>
+                </MudAlert>
+            }
+
             <MudPaper Class="pa-4" Elevation="1" data-testid="pm-workflow-daily-focus-recommendations">
                 <MudStack Spacing="2">
                     <MudText Typo="Typo.h6">Recommended today</MudText>

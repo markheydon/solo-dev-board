@@ -24,8 +24,10 @@ public sealed class DailyFocusRecommendationService : IDailyFocusRecommendationS
     /// <remarks>
     /// Repository exclusions are applied by <see cref="IPmWorkItemCatalogueService"/>.
     /// Board Status filtering uses the selected planning board catalogue.
+    /// Partial catalogue failures still rank the remaining items; a total failure (no items and at least
+    /// one repository error) throws so the App can show Retry instead of a false empty list.
     /// </remarks>
-    public async Task<IReadOnlyList<DailyFocusRecommendationDto>> GetRecommendationsAsync(
+    public async Task<DailyFocusRecommendationResultDto> GetRecommendationsAsync(
         string projectId,
         CancellationToken cancellationToken = default)
     {
@@ -39,12 +41,13 @@ public sealed class DailyFocusRecommendationService : IDailyFocusRecommendationS
         var workItems = await workItemsTask.ConfigureAwait(false);
         var boardCatalogue = await boardCatalogueTask.ConfigureAwait(false);
 
-        if (workItems.Failures.Count > 0)
+        if (workItems.Items.Count == 0 && workItems.Failures.Count > 0)
         {
             throw CreateCatalogueFailureException(workItems.Failures);
         }
 
-        return DailyFocusRecommendationMapper.SelectTopThree(workItems.Items, boardCatalogue.Items);
+        var recommendations = DailyFocusRecommendationMapper.SelectTopThree(workItems.Items, boardCatalogue.Items);
+        return new DailyFocusRecommendationResultDto(recommendations, workItems.Failures);
     }
 
     private static InvalidOperationException CreateCatalogueFailureException(

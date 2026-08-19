@@ -9,11 +9,13 @@ public interface IDailyFocusRecommendationService
     /// </summary>
     /// <param name="projectId">The GitHub Project v2 node identifier for the selected planning board.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
-    /// <returns>Up to three ranked recommendations.</returns>
+    /// <returns>
+    /// Ranked recommendations and any per-repository catalogue failures that did not prevent ranking.
+    /// </returns>
     /// <exception cref="InvalidOperationException">
-    /// Thrown when the work-item catalogue reports one or more repository failures, including an empty item set.
+    /// The work-item catalogue reported repository failures and returned no items to rank.
     /// </exception>
-    Task<IReadOnlyList<DailyFocusRecommendationDto>> GetRecommendationsAsync(
+    Task<DailyFocusRecommendationResultDto> GetRecommendationsAsync(
         string projectId,
         CancellationToken cancellationToken = default);
 }

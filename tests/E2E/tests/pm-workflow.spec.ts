@@ -43,7 +43,8 @@ test.describe('PM Workflow', () => {
     if (await occupancyRegion.isVisible()) {
       const recommendationsRegion = page.getByTestId('pm-workflow-daily-focus-recommendations');
       const recommendationsError = page.getByTestId('pm-workflow-daily-focus-recommendations-error');
-      await expect(recommendationsRegion.or(recommendationsError).first()).toBeVisible();
+      const recommendationsWarning = page.getByTestId('pm-workflow-daily-focus-recommendations-warning');
+      await expect(recommendationsRegion.or(recommendationsError).or(recommendationsWarning).first()).toBeVisible();
     }
   });
 

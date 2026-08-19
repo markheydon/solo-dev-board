@@ -99,9 +99,10 @@ public sealed class DailyFocusRecommendationServiceTests
 
         var result = await sut.GetRecommendationsAsync("PVT_board", cancellationToken);
 
-        var recommended = Assert.Single(result);
+        var recommended = Assert.Single(result.Recommendations);
         Assert.Equal(40, recommended.Number);
         Assert.Equal("priority/high", recommended.PriorityLabel);
+        Assert.Empty(result.Failures);
         await _workItemCatalogueService.Received(1).GetCatalogueAsync(cancellationToken);
         await _projectItemCatalogueService.Received(1).GetCatalogueAsync("PVT_board", cancellationToken);
     }
@@ -130,7 +131,7 @@ public sealed class DailyFocusRecommendationServiceTests
     }
 
     [Fact]
-    public async Task GetRecommendationsAsync_CatalogueHasPartialFailures_ThrowsInvalidOperationException()
+    public async Task GetRecommendationsAsync_CatalogueHasPartialFailures_RanksRemainingItemsAndReturnsFailures()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         var updated = DateTimeOffset.Parse("2026-08-18T00:00:00Z");
@@ -168,10 +169,12 @@ public sealed class DailyFocusRecommendationServiceTests
 
         var sut = new DailyFocusRecommendationService(_workItemCatalogueService, _projectItemCatalogueService);
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            sut.GetRecommendationsAsync("PVT_board", cancellationToken));
+        var result = await sut.GetRecommendationsAsync("PVT_board", cancellationToken);
 
-        Assert.Contains("2 repositories failed", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("owner/repo-b", exception.Message, StringComparison.Ordinal);
+        var recommended = Assert.Single(result.Recommendations);
+        Assert.Equal(40, recommended.Number);
+        Assert.Equal(2, result.Failures.Count);
+        Assert.Contains(result.Failures, failure => failure.RepositoryFullName == "owner/repo-b");
+        Assert.Contains(result.Failures, failure => failure.RepositoryFullName == "owner/repo-c");
     }
 }

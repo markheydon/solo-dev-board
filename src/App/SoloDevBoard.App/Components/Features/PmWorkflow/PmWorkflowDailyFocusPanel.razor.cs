@@ -30,6 +30,7 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
     private bool isLoadingRecommendations;
     private string? loadErrorMessage;
     private string? recommendationsErrorMessage;
+    private string? recommendationsWarningMessage;
 
     /// <inheritdoc/>
     protected override Task OnParametersSetAsync()
@@ -45,6 +46,7 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
             recommendations = null;
             loadErrorMessage = null;
             recommendationsErrorMessage = null;
+            recommendationsWarningMessage = null;
             return Task.CompletedTask;
         }
 
@@ -93,6 +95,7 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
         isLoadingRecommendations = cached.IsLoading;
         recommendations = cached.Recommendations;
         recommendationsErrorMessage = cached.ErrorMessage;
+        recommendationsWarningMessage = cached.WarningMessage;
         return cached.IsLoading
             || cached.Recommendations is not null
             || !string.IsNullOrWhiteSpace(cached.ErrorMessage);
@@ -160,18 +163,27 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
 
         isLoadingRecommendations = true;
         recommendationsErrorMessage = null;
+        recommendationsWarningMessage = null;
         recommendations = null;
         ChromeCoordinator.SetDailyFocusRecommendations(boardId, null, null, isLoading: true);
 
         try
         {
-            recommendations = await RecommendationService.GetRecommendationsAsync(boardId).ConfigureAwait(false);
-            ChromeCoordinator.SetDailyFocusRecommendations(boardId, recommendations, null, isLoading: false);
+            var result = await RecommendationService.GetRecommendationsAsync(boardId).ConfigureAwait(false);
+            recommendations = result.Recommendations;
+            recommendationsWarningMessage = FormatPartialFailureWarning(result.Failures);
+            ChromeCoordinator.SetDailyFocusRecommendations(
+                boardId,
+                recommendations,
+                null,
+                isLoading: false,
+                recommendationsWarningMessage);
         }
         catch (Exception exception)
         {
             Logger.LogError(exception, "Failed to load Daily Focus recommendations.");
             recommendations = null;
+            recommendationsWarningMessage = null;
             recommendationsErrorMessage =
                 "Unable to load recommended work. Check your GitHub connection and try again.";
             ChromeCoordinator.SetDailyFocusRecommendations(
@@ -210,4 +222,16 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
 
     private static string FormatItemReference(DailyFocusRecommendationDto recommendation)
         => $"{recommendation.RepositoryFullName}#{recommendation.Number}";
+
+    private static string? FormatPartialFailureWarning(IReadOnlyList<PmRepositoryCatalogueFailureDto> failures)
+    {
+        if (failures.Count == 0)
+        {
+            return null;
+        }
+
+        var repositories = string.Join(", ", failures.Select(static failure => failure.RepositoryFullName));
+        var noun = failures.Count == 1 ? "repository" : "repositories";
+        return $"Recommended work was ranked without {failures.Count} {noun} that failed to load: {repositories}.";
+    }
 }

@@ -265,7 +265,7 @@ public sealed class PmWorkflowDailyFocusTests
     {
         ConfigureDefaults();
         var occupancyReady = new TaskCompletionSource<DailyFocusBoardStateDto>();
-        var recommendationsReady = new TaskCompletionSource<IReadOnlyList<DailyFocusRecommendationDto>>();
+        var recommendationsReady = new TaskCompletionSource<DailyFocusRecommendationResultDto>();
         _boardStateService.GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>())
             .Returns(_ => occupancyReady.Task);
         _recommendationService.GetRecommendationsAsync("PVT_board", Arg.Any<CancellationToken>())
@@ -289,15 +289,14 @@ public sealed class PmWorkflowDailyFocusTests
             Assert.Contains("Loading Daily Focus recommendations", cut.Markup);
         });
 
-        recommendationsReady.SetResult([
+        recommendationsReady.SetResult(CreateRecommendationResult(
             new DailyFocusRecommendationDto(
                 1,
                 "owner/repo-a",
                 40,
                 "Ship Daily Focus",
                 "https://github.com/owner/repo-a/issues/40",
-                "priority/high"),
-        ]);
+                "priority/high")));
 
         cut.WaitForAssertion(() =>
         {
@@ -318,7 +317,7 @@ public sealed class PmWorkflowDailyFocusTests
                 Capacity: 8,
                 ItemCount: 1));
         _recommendationService.GetRecommendationsAsync("PVT_board", Arg.Any<CancellationToken>())
-            .Returns([
+            .Returns(CreateRecommendationResult(
                 new DailyFocusRecommendationDto(
                     1,
                     "owner/repo-a",
@@ -332,8 +331,7 @@ public sealed class PmWorkflowDailyFocusTests
                     41,
                     "Unlabelled follow-up",
                     "https://github.com/owner/repo-a/issues/41",
-                    null),
-            ]);
+                    null)));
 
         await using var ctx = CreateContext();
         var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
@@ -383,16 +381,14 @@ public sealed class PmWorkflowDailyFocusTests
         _recommendationService.GetRecommendationsAsync("PVT_board", Arg.Any<CancellationToken>())
             .Returns(
                 _ => throw new InvalidOperationException("GitHub unavailable"),
-                _ => new List<DailyFocusRecommendationDto>
-                {
-                    new(
+                _ => CreateRecommendationResult(
+                    new DailyFocusRecommendationDto(
                         1,
                         "owner/repo-a",
                         42,
                         "Recovered item",
                         "https://github.com/owner/repo-a/issues/42",
-                        "priority/medium"),
-                });
+                        "priority/medium")));
 
         await using var ctx = CreateContext();
         var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
@@ -414,6 +410,42 @@ public sealed class PmWorkflowDailyFocusTests
         await _recommendationService.Received(2).GetRecommendationsAsync("PVT_board", Arg.Any<CancellationToken>());
     }
 
+    [Fact]
+    public async Task PmWorkflowDailyFocus_WhenCatalogueHasPartialFailures_ShowsWarningAndRankedRows()
+    {
+        ConfigureDefaults();
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>())
+            .Returns(new DailyFocusBoardStateDto(
+                [new DailyFocusOccupancyChipDto("Todo", 1)],
+                ActiveLoad: 0,
+                Capacity: 8,
+                ItemCount: 1));
+        _recommendationService.GetRecommendationsAsync("PVT_board", Arg.Any<CancellationToken>())
+            .Returns(new DailyFocusRecommendationResultDto(
+                [
+                    new DailyFocusRecommendationDto(
+                        1,
+                        "owner/repo-a",
+                        40,
+                        "Ship Daily Focus",
+                        "https://github.com/owner/repo-a/issues/40",
+                        "priority/high"),
+                ],
+                [new PmRepositoryCatalogueFailureDto("markheydon/markheydon", "Not found", 404)]));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Recommended today", cut.Markup);
+            Assert.Contains("owner/repo-a#40", cut.Markup);
+            Assert.Contains("markheydon/markheydon", cut.Markup);
+            Assert.Contains("ranked without 1 repository that failed to load", cut.Markup);
+            Assert.DoesNotContain("Unable to load recommended work.", cut.Markup);
+        });
+    }
+
     private void ConfigureDefaults()
     {
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
@@ -427,7 +459,7 @@ public sealed class PmWorkflowDailyFocusTests
                 1,
                 0));
         _recommendationService.GetRecommendationsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns([]);
+            .Returns(CreateRecommendationResult());
     }
 
     private BunitContext CreateContext()
@@ -451,6 +483,10 @@ public sealed class PmWorkflowDailyFocusTests
 
         return ctx;
     }
+
+    private static DailyFocusRecommendationResultDto CreateRecommendationResult(
+        params DailyFocusRecommendationDto[] recommendations)
+        => new(recommendations, []);
 
     private static RepositoryDto CreateRepository(string owner, string name) =>
         new(1, name, $"{owner}/{name}", string.Empty, $"https://github.com/{owner}/{name}", false, false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
