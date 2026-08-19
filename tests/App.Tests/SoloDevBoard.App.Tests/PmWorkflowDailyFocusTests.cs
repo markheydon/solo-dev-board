@@ -1,4 +1,5 @@
 using Bunit;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -8,6 +9,7 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using SoloDevBoard.App.Components.Features.PmWorkflow;
 using SoloDevBoard.App.Components.Features.PmWorkflow.Pages;
+using SoloDevBoard.App.Components.Shell.Layout;
 using SoloDevBoard.Application.Services.PmWorkflow;
 using SoloDevBoard.Application.Services.Repositories;
 
@@ -20,6 +22,18 @@ public sealed class PmWorkflowDailyFocusTests
     private readonly IPmProjectBoardDiscoveryService _projectBoardDiscoveryService = Substitute.For<IPmProjectBoardDiscoveryService>();
     private readonly IDailyFocusBoardStateService _boardStateService = Substitute.For<IDailyFocusBoardStateService>();
     private readonly FakePmSettingsStorage _settingsStorage = new();
+
+    [Fact]
+    public void PmWorkflowLayout_UsesMainLayoutAsParent()
+    {
+        var layoutAttribute = typeof(PmWorkflowLayout)
+            .GetCustomAttributes(typeof(LayoutAttribute), inherit: true)
+            .Cast<LayoutAttribute>()
+            .FirstOrDefault();
+
+        Assert.NotNull(layoutAttribute);
+        Assert.Equal(typeof(MainLayout), layoutAttribute.LayoutType);
+    }
 
     [Fact]
     public async Task PmWorkflowDailyFocus_WhenNoBoardIsSelected_ShowsInstructionalAlert()
