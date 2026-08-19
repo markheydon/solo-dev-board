@@ -47,6 +47,9 @@ public sealed class PmWorkflowChromeCoordinator
     /// <summary>Gets the cached Daily Focus board state for the current circuit, if any.</summary>
     public DailyFocusBoardStateCacheEntry? DailyFocusBoardState { get; private set; }
 
+    /// <summary>Gets the cached Daily Focus recommendations for the current circuit, if any.</summary>
+    public DailyFocusRecommendationsCacheEntry? DailyFocusRecommendations { get; private set; }
+
     /// <summary>Loads chrome data when it has not been loaded yet for this circuit.</summary>
     /// <returns>A task that completes when the load attempt finishes or is skipped.</returns>
     public Task EnsureLoadedAsync() =>
@@ -67,6 +70,7 @@ public sealed class PmWorkflowChromeCoordinator
         if (forceReload)
         {
             ClearDailyFocusBoardState();
+            ClearDailyFocusRecommendations();
         }
 
         CancelPendingLoad();
@@ -83,6 +87,7 @@ public sealed class PmWorkflowChromeCoordinator
     {
         await _pmSettingsService.SaveSettingsAsync(settings).ConfigureAwait(false);
         State.Settings = await _pmSettingsService.GetSettingsAsync().ConfigureAwait(false);
+        ClearDailyFocusRecommendations();
         State.MarkDataChanged();
     }
 
@@ -109,6 +114,27 @@ public sealed class PmWorkflowChromeCoordinator
 
     /// <summary>Clears cached Daily Focus board state.</summary>
     public void ClearDailyFocusBoardState() => DailyFocusBoardState = null;
+
+    /// <summary>Stores Daily Focus recommendations in the circuit cache.</summary>
+    /// <param name="boardId">The planning board node identifier.</param>
+    /// <param name="recommendations">The ranked recommendations, when successful.</param>
+    /// <param name="errorMessage">The load error message, when unsuccessful.</param>
+    /// <param name="isLoading"><see langword="true"/> when a load is currently in flight; otherwise, <see langword="false"/>.</param>
+    public void SetDailyFocusRecommendations(
+        string boardId,
+        IReadOnlyList<DailyFocusRecommendationDto>? recommendations,
+        string? errorMessage,
+        bool isLoading)
+    {
+        DailyFocusRecommendations = new DailyFocusRecommendationsCacheEntry(
+            boardId,
+            recommendations,
+            errorMessage,
+            isLoading);
+    }
+
+    /// <summary>Clears cached Daily Focus recommendations.</summary>
+    public void ClearDailyFocusRecommendations() => DailyFocusRecommendations = null;
 
     /// <summary>Cancels any in-flight chrome load, for example when leaving PM Workflow.</summary>
     public void CancelPendingLoad()
@@ -205,5 +231,16 @@ public sealed record DailyFocusBoardStateCacheEntry(
     string BoardId,
     int Capacity,
     DailyFocusBoardStateDto? State,
+    string? ErrorMessage,
+    bool IsLoading);
+
+/// <summary>Cached Daily Focus recommendations for a planning board within the current circuit.</summary>
+/// <param name="BoardId">The planning board node identifier.</param>
+/// <param name="Recommendations">The ranked recommendations, when successful.</param>
+/// <param name="ErrorMessage">The load error message, when unsuccessful.</param>
+/// <param name="IsLoading">Whether a load is currently in flight.</param>
+public sealed record DailyFocusRecommendationsCacheEntry(
+    string BoardId,
+    IReadOnlyList<DailyFocusRecommendationDto>? Recommendations,
     string? ErrorMessage,
     bool IsLoading);

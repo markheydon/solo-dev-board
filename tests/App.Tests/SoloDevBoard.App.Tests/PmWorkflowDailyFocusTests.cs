@@ -21,6 +21,7 @@ public sealed class PmWorkflowDailyFocusTests
     private readonly IRepositoryService _repositoryService = Substitute.For<IRepositoryService>();
     private readonly IPmProjectBoardDiscoveryService _projectBoardDiscoveryService = Substitute.For<IPmProjectBoardDiscoveryService>();
     private readonly IDailyFocusBoardStateService _boardStateService = Substitute.For<IDailyFocusBoardStateService>();
+    private readonly IDailyFocusRecommendationService _recommendationService = Substitute.For<IDailyFocusRecommendationService>();
     private readonly FakePmSettingsStorage _settingsStorage = new();
 
     [Fact]
@@ -194,7 +195,7 @@ public sealed class PmWorkflowDailyFocusTests
         cut.WaitForAssertion(() =>
         {
             Assert.Contains("Loading PM Workflow", cut.Markup);
-            Assert.Contains("Loading planning boards and occupancy.", cut.Markup);
+            Assert.Contains("Loading planning boards, occupancy, and recommendations.", cut.Markup);
         });
 
         repositoriesReady.SetResult([CreateRepository("owner", "repo-a")]);
@@ -259,6 +260,113 @@ public sealed class PmWorkflowDailyFocusTests
         await _repositoryService.Received(1).GetActiveRepositoriesAsync(Arg.Any<CancellationToken>());
     }
 
+    [Fact]
+    public async Task PmWorkflowDailyFocus_WhenRecommendationsExist_ShowsRankedRowsWithGitHubLinks()
+    {
+        ConfigureDefaults();
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>())
+            .Returns(new DailyFocusBoardStateDto(
+                [new DailyFocusOccupancyChipDto("Todo", 1)],
+                ActiveLoad: 0,
+                Capacity: 8,
+                ItemCount: 1));
+        _recommendationService.GetRecommendationsAsync("PVT_board", Arg.Any<CancellationToken>())
+            .Returns([
+                new DailyFocusRecommendationDto(
+                    1,
+                    "owner/repo-a",
+                    40,
+                    "Ship Daily Focus",
+                    "https://github.com/owner/repo-a/issues/40",
+                    "priority/high"),
+                new DailyFocusRecommendationDto(
+                    2,
+                    "owner/repo-a",
+                    41,
+                    "Unlabelled follow-up",
+                    "https://github.com/owner/repo-a/issues/41",
+                    null),
+            ]);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Recommended today", cut.Markup);
+            Assert.Contains("owner/repo-a#40", cut.Markup);
+            Assert.Contains("priority/high", cut.Markup);
+            Assert.Contains("Unlabelled", cut.Markup);
+            Assert.Contains("https://github.com/owner/repo-a/issues/40", cut.Markup);
+            Assert.Contains("Ship Daily Focus", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task PmWorkflowDailyFocus_WhenNoRecommendations_ShowsEmptyAlert()
+    {
+        ConfigureDefaults();
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>())
+            .Returns(new DailyFocusBoardStateDto(
+                [new DailyFocusOccupancyChipDto("Todo", 1)],
+                ActiveLoad: 0,
+                Capacity: 8,
+                ItemCount: 1));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("No unblocked work items to recommend today.", cut.Markup);
+            Assert.Contains("Active load: 0 / 8", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task PmWorkflowDailyFocus_WhenRecommendationsFail_ShowsErrorWithRetryAndKeepsOccupancy()
+    {
+        ConfigureDefaults();
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>())
+            .Returns(new DailyFocusBoardStateDto(
+                [new DailyFocusOccupancyChipDto("Todo", 1)],
+                ActiveLoad: 0,
+                Capacity: 8,
+                ItemCount: 1));
+        _recommendationService.GetRecommendationsAsync("PVT_board", Arg.Any<CancellationToken>())
+            .Returns(
+                _ => throw new InvalidOperationException("GitHub unavailable"),
+                _ => new List<DailyFocusRecommendationDto>
+                {
+                    new(
+                        1,
+                        "owner/repo-a",
+                        42,
+                        "Recovered item",
+                        "https://github.com/owner/repo-a/issues/42",
+                        "priority/medium"),
+                });
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Unable to load recommended work.", cut.Markup);
+            Assert.Contains("Todo 1", cut.Markup);
+        });
+
+        await cut.InvokeAsync(() => cut.Find("[data-testid='pm-workflow-daily-focus-recommendations-retry']").Click());
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("owner/repo-a#42", cut.Markup);
+            Assert.Contains("priority/medium", cut.Markup);
+        });
+
+        await _recommendationService.Received(2).GetRecommendationsAsync("PVT_board", Arg.Any<CancellationToken>());
+    }
+
     private void ConfigureDefaults()
     {
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
@@ -271,6 +379,8 @@ public sealed class PmWorkflowDailyFocusTests
                 [new PmPlanningBoardOptionDto("PVT_board", "Roadmap", "owner", "status-field")],
                 1,
                 0));
+        _recommendationService.GetRecommendationsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns([]);
     }
 
     private BunitContext CreateContext()
@@ -284,6 +394,7 @@ public sealed class PmWorkflowDailyFocusTests
         ctx.Services.AddScoped(_ => _repositoryService);
         ctx.Services.AddScoped(_ => _projectBoardDiscoveryService);
         ctx.Services.AddScoped(_ => _boardStateService);
+        ctx.Services.AddScoped(_ => _recommendationService);
         ctx.Services.AddScoped<PmWorkflowChromeCoordinator>();
         ctx.Services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
 

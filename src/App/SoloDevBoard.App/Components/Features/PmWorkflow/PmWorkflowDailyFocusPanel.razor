@@ -4,8 +4,8 @@
 <MudStack Spacing="3" data-testid="pm-workflow-daily-focus-page">
     <MudText Typo="Typo.h5">Daily Focus</MudText>
     <MudText Typo="Typo.body1">
-        Morning board occupancy and active load for the selected planning board.
-        Stalled items and recommended work will appear here in later stories.
+        Morning board occupancy, active load, and the top three unblocked work items for the selected planning board.
+        Stalled Up Next items and stalled review pull requests will appear here in later stories.
     </MudText>
 
     @if (ChromeState is null)
@@ -19,7 +19,7 @@
     else if (ChromeState.IsLoading)
     {
         <MudText Typo="Typo.body2" data-testid="pm-workflow-daily-focus-loading">
-            Loading planning boards and occupancy.
+            Loading planning boards, occupancy, and recommendations.
         </MudText>
     }
     else if (!ChromeState.HasPlanningBoardSelected)
@@ -30,7 +30,7 @@
     }
     else
     {
-        @if (isLoadingBoardState)
+        @if (isLoadingBoardState || isLoadingRecommendations)
         {
             <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="Loading Daily Focus board state" />
         }
@@ -80,6 +80,69 @@
                         <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" data-testid="pm-workflow-daily-focus-empty-board">
                             This planning board has no items.
                         </MudAlert>
+                    }
+                </MudStack>
+            </MudPaper>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(recommendationsErrorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" data-testid="pm-workflow-daily-focus-recommendations-error">
+                @recommendationsErrorMessage
+                <MudButton Variant="Variant.Text"
+                           OnClick="RetryLoadRecommendationsAsync"
+                           data-testid="pm-workflow-daily-focus-recommendations-retry">Retry</MudButton>
+            </MudAlert>
+        }
+        else if (!isLoadingRecommendations && recommendations is not null)
+        {
+            <MudPaper Class="pa-4" Elevation="1" data-testid="pm-workflow-daily-focus-recommendations">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.h6">Recommended today</MudText>
+                    @if (recommendations.Count == 0)
+                    {
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" data-testid="pm-workflow-daily-focus-recommendations-empty">
+                            No unblocked work items to recommend today.
+                        </MudAlert>
+                    }
+                    else
+                    {
+                        <MudSimpleTable Hover="true" Dense="true" data-testid="pm-workflow-daily-focus-recommendations-table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Priority</th>
+                                    <th>Item</th>
+                                    <th>Title</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var recommendation in recommendations)
+                                {
+                                    <tr data-testid="pm-workflow-daily-focus-recommendation-row">
+                                        <td>@recommendation.Rank</td>
+                                        <td>
+                                            <MudChip T="string"
+                                                     Value="@FormatPriorityChip(recommendation.PriorityLabel)"
+                                                     Variant="Variant.Outlined"
+                                                     Color="Color.Default"
+                                                     data-testid="pm-workflow-recommendation-priority-chip">
+                                                @FormatPriorityChip(recommendation.PriorityLabel)
+                                            </MudChip>
+                                        </td>
+                                        <td>
+                                            <MudLink Href="@recommendation.HtmlUrl"
+                                                     Target="_blank"
+                                                     rel="noopener noreferrer"
+                                                     data-testid="pm-workflow-recommendation-link">
+                                                @FormatItemReference(recommendation)
+                                            </MudLink>
+                                        </td>
+                                        <td>@recommendation.Title</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
                     }
                 </MudStack>
             </MudPaper>

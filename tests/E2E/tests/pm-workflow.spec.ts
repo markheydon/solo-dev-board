@@ -16,7 +16,7 @@ test.describe('PM Workflow', () => {
     await expect(page.getByRole('heading', { name: 'Daily Focus' })).toBeVisible();
   });
 
-  test('daily focus shows occupancy region, empty copy, or a load error', async ({ page }) => {
+  test('daily focus shows occupancy and recommendations, empty copy, or a load error', async ({ page }) => {
     await page.goto('/pm-workflow/daily-focus');
 
     await expect(page.getByTestId('pm-workflow-shell')).toBeVisible();
@@ -38,6 +38,12 @@ test.describe('PM Workflow', () => {
     if (await occupancyError.isVisible()) {
       await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
       await expect(occupancyError).toContainText('Unable to load board occupancy');
+    }
+
+    if (await occupancyRegion.isVisible()) {
+      const recommendationsRegion = page.getByTestId('pm-workflow-daily-focus-recommendations');
+      const recommendationsError = page.getByTestId('pm-workflow-daily-focus-recommendations-error');
+      await expect(recommendationsRegion.or(recommendationsError).first()).toBeVisible();
     }
   });
 

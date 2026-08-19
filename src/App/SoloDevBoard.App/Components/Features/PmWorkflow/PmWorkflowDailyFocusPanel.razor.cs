@@ -3,7 +3,7 @@ using SoloDevBoard.Application.Services.PmWorkflow;
 
 namespace SoloDevBoard.App.Components.Features.PmWorkflow;
 
-/// <summary>Daily Focus occupancy panel rendered inside <see cref="PmWorkflowShell"/>.</summary>
+/// <summary>Daily Focus occupancy and recommendation panel rendered inside <see cref="PmWorkflowShell"/>.</summary>
 public partial class PmWorkflowDailyFocusPanel : ComponentBase
 {
     [CascadingParameter]
@@ -19,11 +19,17 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
     public IDailyFocusBoardStateService BoardStateService { get; set; } = default!;
 
     [Inject]
+    public IDailyFocusRecommendationService RecommendationService { get; set; } = default!;
+
+    [Inject]
     public ILogger<PmWorkflowDailyFocusPanel> Logger { get; set; } = default!;
 
     private DailyFocusBoardStateDto? boardState;
+    private IReadOnlyList<DailyFocusRecommendationDto>? recommendations;
     private bool isLoadingBoardState;
+    private bool isLoadingRecommendations;
     private string? loadErrorMessage;
+    private string? recommendationsErrorMessage;
 
     /// <inheritdoc/>
     protected override async Task OnParametersSetAsync()
@@ -36,18 +42,25 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
         if (!ChromeState.HasPlanningBoardSelected)
         {
             boardState = null;
+            recommendations = null;
             loadErrorMessage = null;
+            recommendationsErrorMessage = null;
             return;
         }
 
         var boardId = ChromeState.Settings.PlanningBoardNodeId!;
         var capacity = ChromeState.Settings.Capacity;
-        if (TryApplyCachedBoardState(boardId, capacity))
-        {
-            return;
-        }
+        var boardCached = TryApplyCachedBoardState(boardId, capacity);
+        var recommendationsCached = TryApplyCachedRecommendations(boardId);
 
-        await LoadBoardStateAsync(boardId, capacity).ConfigureAwait(false);
+        var loadBoard = boardCached
+            ? Task.CompletedTask
+            : LoadBoardStateAsync(boardId, capacity);
+        var loadRecommendations = recommendationsCached
+            ? Task.CompletedTask
+            : LoadRecommendationsAsync(boardId);
+
+        await Task.WhenAll(loadBoard, loadRecommendations).ConfigureAwait(false);
     }
 
     private bool TryApplyCachedBoardState(string boardId, int capacity)
@@ -66,6 +79,22 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
         return cached.IsLoading || cached.State is not null || !string.IsNullOrWhiteSpace(cached.ErrorMessage);
     }
 
+    private bool TryApplyCachedRecommendations(string boardId)
+    {
+        var cached = ChromeCoordinator.DailyFocusRecommendations;
+        if (cached is null || !cached.BoardId.Equals(boardId, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        isLoadingRecommendations = cached.IsLoading;
+        recommendations = cached.Recommendations;
+        recommendationsErrorMessage = cached.ErrorMessage;
+        return cached.IsLoading
+            || cached.Recommendations is not null
+            || !string.IsNullOrWhiteSpace(cached.ErrorMessage);
+    }
+
     private Task RetryLoadBoardStateAsync()
     {
         if (ChromeState is null || string.IsNullOrWhiteSpace(ChromeState.Settings.PlanningBoardNodeId))
@@ -75,6 +104,17 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
 
         ChromeCoordinator.ClearDailyFocusBoardState();
         return LoadBoardStateAsync(ChromeState.Settings.PlanningBoardNodeId, ChromeState.Settings.Capacity);
+    }
+
+    private Task RetryLoadRecommendationsAsync()
+    {
+        if (ChromeState is null || string.IsNullOrWhiteSpace(ChromeState.Settings.PlanningBoardNodeId))
+        {
+            return Task.CompletedTask;
+        }
+
+        ChromeCoordinator.ClearDailyFocusRecommendations();
+        return LoadRecommendationsAsync(ChromeState.Settings.PlanningBoardNodeId);
     }
 
     private async Task LoadBoardStateAsync(string boardId, int capacity)
@@ -106,4 +146,45 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
             isLoadingBoardState = false;
         }
     }
+
+    private async Task LoadRecommendationsAsync(string boardId)
+    {
+        if (TryApplyCachedRecommendations(boardId))
+        {
+            return;
+        }
+
+        isLoadingRecommendations = true;
+        recommendationsErrorMessage = null;
+        recommendations = null;
+        ChromeCoordinator.SetDailyFocusRecommendations(boardId, null, null, isLoading: true);
+
+        try
+        {
+            recommendations = await RecommendationService.GetRecommendationsAsync(boardId).ConfigureAwait(false);
+            ChromeCoordinator.SetDailyFocusRecommendations(boardId, recommendations, null, isLoading: false);
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Failed to load Daily Focus recommendations.");
+            recommendations = null;
+            recommendationsErrorMessage =
+                "Unable to load recommended work. Check your GitHub connection and try again.";
+            ChromeCoordinator.SetDailyFocusRecommendations(
+                boardId,
+                null,
+                recommendationsErrorMessage,
+                isLoading: false);
+        }
+        finally
+        {
+            isLoadingRecommendations = false;
+        }
+    }
+
+    private static string FormatPriorityChip(string? priorityLabel)
+        => string.IsNullOrWhiteSpace(priorityLabel) ? "Unlabelled" : priorityLabel;
+
+    private static string FormatItemReference(DailyFocusRecommendationDto recommendation)
+        => $"{recommendation.RepositoryFullName}#{recommendation.Number}";
 }
