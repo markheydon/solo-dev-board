@@ -50,6 +50,7 @@ Use this instruction for authoring and reviewing workflows in this repository.
 - Include rollback-aware operational guidance in deployment comments or documentation.
 - CD uses two tiers via `.github/workflows/cd.yml` and reusable `.github/workflows/aspire-deploy.yml` (DEC-021): **staging** (push to `main`, GitHub App), **production** (push tag `v*`, GitHub App, required reviewers). PAT mode is local or self-hoster `aspire deploy` only — not a hosted CD tier.
 - Production CD uses `aspire deploy` from `SoloDevBoard.AppHost` with OIDC Azure login and `Parameters__*` environment variables for AppHost secrets.
+- The AppHost uses the Aspire CLI bundle (`AspireUseCliBundle=true`). Install Aspire CLI `13.5.0` (matching `Aspire.AppHost.Sdk`) **before** `dotnet build` in deploy and validate workflows: `curl -sSL https://aspire.dev/install.sh | bash -s -- --version 13.5.0` and add `$HOME/.aspire/bin` to `PATH`. General `ci.yml` builds rely on the SDK `dnx` fallback when no CLI is installed.
 - End-user docs publish to GitHub Pages on `v*` tags only (`hugo-deploy.yml`); pull requests validate Hugo builds without publishing (`hugo-validate.yml`).
 - Use `aspire deploy --list-steps --non-interactive` in validation workflows to prove the deployment model without provisioning Azure resources. Validate both `Staging` and `Production` Aspire environments.
 
