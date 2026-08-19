@@ -67,7 +67,7 @@ Assume issues created via planning workflows are product-ready. Escalate only wh
 
 Explore the feature area using the `area/` label (see [implement-issue workflow](../workflows/implement-issue.md) for path hints). Identify services, components, and tests to reuse. Produce a touch map of likely files and projects.
 
-Invoke `dotnet-best-practices` for all issues. Invoke `mudblazor` for UI work during the sketch.
+Invoke `dotnet-best-practices` for all issues. Invoke `mudblazor` for UI work during the sketch. Read [`.agents/skills/aspire/SKILL.md`](../skills/aspire/SKILL.md) for all issues (this repo is Aspire-hosted); route to `aspire-orchestration` and `aspire-monitoring` when the AppHost is running or when diagnosing exceptions. Do not invoke `aspire-init` or `aspireify` unless the AppHost is missing or unwired.
 
 #### Step 4: Implementation sketch
 
@@ -158,6 +158,19 @@ Key rules:
 Focus only on work required for the issue.
 
 Avoid scope creep.
+
+#### Aspire runtime
+
+SoloDevBoard is a **.NET Aspire** distributed application. Local orchestration is [`src/SoloDevBoard.AppHost`](../../src/SoloDevBoard.AppHost), not `dotnet run` on the AppHost.
+
+At the start of implement or deliver work, and whenever diagnosing a running app, read [`.agents/skills/aspire/SKILL.md`](../skills/aspire/SKILL.md), then route to [`aspire-orchestration`](../skills/aspire-orchestration/SKILL.md) and [`aspire-monitoring`](../skills/aspire-monitoring/SKILL.md). Leave `aspire-init` and `aspireify` unused unless the AppHost is missing or unwired.
+
+The resource to wait, rebuild, and log is normally **`app`** (`AddProject<…>(AzureName("app"))` in Development).
+
+- On exceptions or unexpected UI, inspect with `aspire describe`, then `aspire otel logs app --search "severity:error"` and `aspire logs app`. Do not guess from a dashboard screenshot alone.
+- After C# or Razor fixes while Aspire is running, run `aspire resource app rebuild` then `aspire wait app`. Do not assume hot reload applied the change. Do not restart the whole AppHost for app-only edits. Re-run `aspire start` only when AppHost model or AppHost code changed.
+- On file locks (`MSB3491` / `CS2012`), run `aspire stop` before a solution rebuild.
+- Do not use `aspire stop --force` unless the user explicitly asked to delete persistent resource data.
 
 ---
 
@@ -253,6 +266,8 @@ Confirm:
 - No obvious architecture violations
 - No obvious coding standard violations
 
+If the AppHost is already running, rebuild the live `app` resource (`aspire resource app rebuild` then `aspire wait app`) so manual testing sees the fix. `dotnet build` / `dotnet test` remain required and are not a substitute for that live rebuild.
+
 Review only files changed by the implementation.
 
 Do not perform a full repository audit.
@@ -272,7 +287,8 @@ When invoked via [`address-pr-review-comments`](../workflows/address-pr-review-c
    - Needs maintainer decision: reply, leave unresolved, and stop with a short list for the user.
 5. If no unresolved threads exist, report "No unresolved review conversations" and stop.
 6. Run scoped tests for changed behaviour, then commit and push to the existing PR branch.
-7. Post one final summary issue comment on the pull request.
+7. If Aspire is running after those fixes, rebuild `app` (`aspire resource app rebuild` then `aspire wait app`) so a live instance matches the branch.
+8. Post one final summary issue comment on the pull request.
 
 Rules:
 
@@ -288,9 +304,10 @@ Rules:
 
 When the user begins manual product testing after implementation (not during the PR review comment loop in §10):
 
-- Do not commit
-- Do not push
-- Apply fixes directly to the working tree
+- Do not commit.
+- Do not push.
+- Apply fixes directly to the working tree.
+- Use the Aspire runtime loop: inspect `aspire otel logs app` / `aspire logs app` on exceptions, then `aspire resource app rebuild` and `aspire wait app` after each C# or Razor fix.
 - Confirm:
 
 ```text

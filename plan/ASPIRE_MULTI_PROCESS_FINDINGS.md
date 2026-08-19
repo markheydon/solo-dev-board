@@ -324,7 +324,7 @@ A greenfield “Aspire from day one” would have started at step 2 with an empt
 
 - Current AppHost: `src/SoloDevBoard.AppHost/AppHost.cs`.
 - ADR-0016 / DEC-013, DEC-015, DEC-017.
-- Aspire 13.4.6 docs (CLI `aspire docs`): Azure Functions hosting, runtime configuration, supported triggers, Azure Container App Jobs.
+- Aspire 13.4.6 docs (CLI `aspire docs`): Azure Functions hosting, runtime configuration, supported triggers, Azure Container App Jobs. Versions in this note were current at the time of writing (2026-08-14); the repo now targets Aspire 13.5.0.
 - Package discovery: `Aspire.Hosting.Azure.Functions` 13.4.6 via `aspire integration search azure-functions`.
 
 ---

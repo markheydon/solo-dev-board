@@ -155,7 +155,9 @@ Implement issue #[number]
 **What it does:**
 - Invokes the **Delivery** contract ([`.agents/contracts/delivery.md`](../.agents/contracts/delivery.md))
 - Runs **implementation preflight** before coding (load context, codebase discovery, touch map, proceed gate)
+- Loads Aspire skills (`aspire`, then `aspire-orchestration` / `aspire-monitoring` when the AppHost is running)
 - Writes code following layered architecture (Domain/Application/Infrastructure/App)
+- After C# or Razor fixes while Aspire is running, rebuilds the live `app` resource (`aspire resource app rebuild` then `aspire wait app`) and inspects `aspire otel logs` / `aspire logs` on exceptions
 - Creates xUnit v3 tests (NSubstitute, `Assert.*`, correct naming)
 - Updates user-facing docs in `website/content/docs/` if needed
 - Records architectural decisions via `repo-decision-log` / `plan/DECISIONS.md` when needed (do not create new `adr/` files)
@@ -447,6 +449,7 @@ START
 **Responsibilities:**
 - Runs implementation preflight (context, codebase discovery, touch map, proceed gate)
 - Sets `status/in-progress` on the implementing issue (Roadmap Sync updates Project #8)
+- Loads Aspire skills and follows the live AppHost loop (logs, `app` resource rebuild)
 - Implements code (Domain/Application/Infrastructure/App layers)
 - Creates xUnit v3 tests (NSubstitute, `Assert.*`)
 - Updates user-facing docs
@@ -802,6 +805,6 @@ Take the next backlog item and run the full PM feature workflow
 
 ---
 
-**Last Updated:** March 5, 2026 (delivery loop: `/deliver-issue`, verify hygiene, review threads)  
+**Last Updated:** August 19, 2026 (Aspire runtime required for Delivery)  
 **Version:** 1.0  
 **Maintained by:** Product Manager (you)

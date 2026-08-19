@@ -40,11 +40,11 @@ Orchestration, rituals, and step-by-step guidance live in [`plan/PM_RUNBOOK.md`]
 |----------|--------------------------|----------|----------------|-----------------|
 | [daily-start](daily-start.md) | "Run the daily start workflow" | `pm-orchestrator` | `repo-github-project` (optional) | Session Start |
 | [plan-next-issue](plan-next-issue.md) | "Plan the next item" | `pm-orchestrator` | `breakdown-plan`, `breakdown-test`, `repo-github-issues`, `repo-github-project` | Stage 1: Planning |
-| [preflight-issue](preflight-issue.md) | "Preflight issue #N" | `delivery` | `dotnet-best-practices`, `mudblazor` (on demand) | Stage 2: Implementation (preflight) |
-| [deliver-issue](deliver-issue.md) | "Deliver issue #N" | `delivery`, `verify` | `dotnet-best-practices`, `mudblazor`, etc. (on demand) | Stage 2–3: Delivery happy path |
-| [implement-issue](implement-issue.md) | "Implement issue #N" | `delivery` | `dotnet-best-practices`, `mudblazor`, etc. (on demand) | Stage 2: Implementation |
+| [preflight-issue](preflight-issue.md) | "Preflight issue #N" | `delivery` | `aspire`, `dotnet-best-practices`, `mudblazor` (on demand) | Stage 2: Implementation (preflight) |
+| [deliver-issue](deliver-issue.md) | "Deliver issue #N" | `delivery`, `verify` | `aspire`, `dotnet-best-practices`, `mudblazor`, etc. | Stage 2–3: Delivery happy path |
+| [implement-issue](implement-issue.md) | "Implement issue #N" | `delivery` | `aspire`, `dotnet-best-practices`, `mudblazor`, etc. | Stage 2: Implementation |
 | [verify-and-create-pr](verify-and-create-pr.md) | "Verify issue #N", "Create PR for issue #N" | `verify` | — | Stage 3: Verify and PR |
-| [address-pr-review-comments](address-pr-review-comments.md) | "Address PR review comments on PR #N" | `delivery` | — | PR Review Comment Loop |
+| [address-pr-review-comments](address-pr-review-comments.md) | "Address PR review comments on PR #N" | `delivery` | `aspire` (when AppHost is running) | PR Review Comment Loop |
 | [pm-progress-review](pm-progress-review.md) | "Run the PM progress review" | `pm-orchestrator` | — | Progress Review Rhythm |
 | [sync-status-labels](sync-status-labels.md) | "Clean up status labels", `/sync-status-labels` | `repo-github-gh-cli` | — | Board Hygiene Audit |
 | [code-review](code-review.md) | "Code review PR #N" | `code-review` | — | Stage 3b: Independent code review |

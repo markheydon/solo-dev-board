@@ -3,6 +3,7 @@
 **Contract:** [`.agents/contracts/delivery.md`](../contracts/delivery.md)
 **Runbook:** [`plan/PM_RUNBOOK.md`](../../plan/PM_RUNBOOK.md) — Stage 2: Implementation
 **Skills (on demand):** `dotnet-best-practices`, `mudblazor`, `csharp-xunit`, `csharp-docs`, `repo-decision-log`, `documentation-writer`
+**Skills (required):** `aspire` (router), then `aspire-orchestration` and `aspire-monitoring` when running or diagnosing the AppHost
 
 ## Easy-to-miss specifics
 
@@ -11,11 +12,12 @@
 - Parse the `## Implementation References` section from the issue body.
 - For UI work, read the linked wireframe from [`plan/wireframes/`](../../plan/wireframes/).
 - Invoke `dotnet-best-practices` during preflight for all issues; invoke `mudblazor` for UI issues.
+- This repo is Aspire-hosted. Read the `aspire` skill at the start of implementation. After C# or Razor fixes while the AppHost is running, `aspire resource app rebuild` then `aspire wait app`. On exceptions, use `aspire otel logs app` and `aspire logs app`.
 - Apply the tiered proceed gate: auto-continue for `size/xs`, `size/s`, and `type/bug`; pause for `size/m+` and all `type/enabler` issues.
 - After the proceed gate, set `status/in-progress` on the issue (see Mark Work Started in the Delivery contract) before creating the feature branch.
 - Do not implement issues with `status/blocked` or `status/ice-box` — escalate or re-queue first.
 - Do not set `status/in-progress` during standalone `/preflight-issue`.
-- Consult other skills when relevant — do not require reading every skill up front.
+- Consult other skills when relevant — do not require reading every skill up front, except the required Aspire skills above.
 
 ### Area label → codebase hints
 
