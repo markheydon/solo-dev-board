@@ -116,10 +116,15 @@ solo-dev-board/
 │   ├── ISSUE_TEMPLATE/          # Issue templates (feature, bug, chore)
 │   ├── pull_request_template.md
 │   └── workflows/
-│       ├── ci.yml               # CI: build and test on every PR
-│       ├── cd.yml               # CD: Aspire deploy to Azure (manual until first success)
+│       ├── ci.yml               # .NET build, format, and test on every PR
+│       ├── playwright.yml       # Playwright E2E (PAT and hosted matrix)
+│       ├── cd.yml               # CD: Aspire deploy to Azure
 │       ├── aspire-deploy-validate.yml  # Validates AppHost deployment model on PR
-│       ├── hugo-ci.yml          # Hugo end-user docs build validation on PR
+│       ├── bash-validate.yml    # ShellCheck on scripts/**/*.sh
+│       ├── powershell-validate.yml  # PSScriptAnalyzer on scripts/**/*.ps1
+│       ├── github-actions-validate.yml  # actionlint on workflow YAML
+│       ├── github-scripts-validate.yml  # ESLint and tests for .github/scripts
+│       ├── hugo-validate.yml    # Hugo end-user docs build validation on PR
 │       └── hugo-deploy.yml      # Hugo end-user docs deploy to GitHub Pages
 ├── .agents/
 │   ├── contracts/               # Role boundary contracts (PM, delivery, verify, etc.)

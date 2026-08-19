@@ -1,27 +1,27 @@
-name: Shell lint
+name: Bash validate
 
 on:
   pull_request:
     paths:
       - 'scripts/**'
-      - '.github/workflows/shell.yml'
+      - '.github/workflows/bash-validate.yml'
   push:
     branches:
       - main
     paths:
       - 'scripts/**'
-      - '.github/workflows/shell.yml'
+      - '.github/workflows/bash-validate.yml'
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: bash-validate-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  shellcheck:
-    name: shellcheck
+  bash-validate:
+    name: Bash validate
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -32,7 +32,7 @@ jobs:
       - name: Install ShellCheck
         run: sudo apt-get update && sudo apt-get install -y shellcheck
 
-      - name: Analyse shell scripts
+      - name: Run ShellCheck on shell scripts
         run: |
           mapfile -t scripts < <(find scripts -name '*.sh' -type f | sort)
           if ((${#scripts[@]} == 0)); then

@@ -24,7 +24,7 @@ GitHub Actions CD (`.github/workflows/cd.yml`) deploys to two hosted tiers. Aspi
 | **Staging** | Merge to `main`, or **Actions → CD - Deploy to Azure → Run workflow** (manual staging deploy) | `staging` | `Staging` | GitHub App hosted sign-in |
 | **Production** | Push tag `v*` | `production` | `Production` | GitHub App hosted sign-in |
 
-The public product site in `website/` is published to GitHub Pages on `v*` release tags only. Pull requests validate Hugo builds via `hugo-ci.yml` without publishing. Canonical URL: `https://solodevboard.com/` (see [website/README.md](../website/README.md#custom-domain-solodevboardcom)).
+The public product site in `website/` is published to GitHub Pages on `v*` release tags only. Pull requests validate Hugo builds via `hugo-validate.yml` without publishing. Canonical URL: `https://solodevboard.com/` (see [website/README.md](../website/README.md#custom-domain-solodevboardcom)).
 
 ---
 
@@ -536,7 +536,7 @@ az identity delete --name id-solodevboard-cd --resource-group <acr-resource-grou
 | 403 after sign-in | Allow-list | Update `ALLOWED_USER_LOGINS` or `ALLOWED_ORG_LOGINS` |
 | Callback URL mismatch | Stale GitHub App setting | Update callback to `https://<aca-fqdn>/auth/callback` (hosted sign-in only) |
 | Secret not visible in Container App settings | Key Vault reference | Expected — inspect the `auth-secrets` vault for secret names; values are resolved at runtime |
-| Home dashboard shown without sign-in | Missing login gate or placeholder deploy parameters | Confirm `/` redirects to `/welcome`; redeploy with `Parameters__*` env vars mapped in CD; verify Container App env shows real client ID and allow-list values. CI `e2e-hosted` job asserts this gate with placeholder credentials. |
+| Home dashboard shown without sign-in | Missing login gate or placeholder deploy parameters | Confirm `/` redirects to `/welcome`; redeploy with `Parameters__*` env vars mapped in CD; verify Container App env shows real client ID and allow-list values. CI Playwright `hosted` job asserts this gate with placeholder credentials. |
 | PAT mode shows `/welcome` or requires sign-in | `hosted-sign-in-enabled` still `true` | Set `HOSTED_SIGN_IN_ENABLED` / `Parameters__hosted_sign_in_enabled` to `false` and redeploy |
 | PAT mode starts but GitHub calls fail | Missing or invalid `GH_PAT` | Set a real PAT with required scopes; confirm `/health/github` and the **Connected as @login** chip |
 

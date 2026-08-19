@@ -53,7 +53,7 @@ See [`src/SoloDevBoard.AppHost/README.md`](../../src/SoloDevBoard.AppHost/README
 
 ## Continuous integration
 
-CI runs a dedicated Playwright job (`e2e-hosted` in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)) that starts the app with placeholder GitHub App credentials and asserts the login gate without live OAuth:
+CI runs a dedicated Playwright matrix job (`hosted` in [`.github/workflows/playwright.yml`](../.github/workflows/playwright.yml)) that starts the app with placeholder GitHub App credentials and asserts the login gate without live OAuth:
 
 - Unauthenticated `/` and protected routes redirect to `/welcome`.
 - The welcome landing shows the **Sign in with GitHub** action.
