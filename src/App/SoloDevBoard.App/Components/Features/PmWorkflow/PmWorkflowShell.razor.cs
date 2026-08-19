@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
 using SoloDevBoard.Application.Services.PmWorkflow;
 
 namespace SoloDevBoard.App.Components.Features.PmWorkflow;
@@ -19,10 +18,6 @@ public partial class PmWorkflowShell : ComponentBase
     [Inject]
     public PmWorkflowChromeCoordinator ChromeCoordinator { get; set; } = default!;
 
-    /// <summary>Gets or sets the snackbar service.</summary>
-    [Inject]
-    public ISnackbar Snackbar { get; set; } = default!;
-
     /// <summary>Gets or sets the navigation manager.</summary>
     [Inject]
     public NavigationManager NavigationManager { get; set; } = default!;
@@ -31,24 +26,14 @@ public partial class PmWorkflowShell : ComponentBase
     private string selectedPlanningBoardId = string.Empty;
 
     /// <inheritdoc/>
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         ChromeState.SaveSettingsAsync = SaveSettingsAsync;
         ChromeState.RefreshAsync = () => ChromeCoordinator.RefreshAsync(forceReload: true);
-        selectedPlanningBoardId = ChromeState.Settings.PlanningBoardNodeId ?? string.Empty;
-    }
 
-    /// <inheritdoc/>
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (!firstRender)
-        {
-            return;
-        }
-
-        await ChromeCoordinator.EnsureLoadedAsync().ConfigureAwait(false);
+        // Start before the first paint so IsLoading is true on Daily Focus entry.
+        await ChromeCoordinator.EnsureLoadedAsync();
         selectedPlanningBoardId = ChromeState.Settings.PlanningBoardNodeId ?? string.Empty;
-        await InvokeAsync(StateHasChanged).ConfigureAwait(false);
     }
 
     private async Task RefreshAsync()
@@ -65,9 +50,6 @@ public partial class PmWorkflowShell : ComponentBase
         {
             PlanningBoardNodeId = string.IsNullOrWhiteSpace(selectedPlanningBoardId) ? null : selectedPlanningBoardId,
         }).ConfigureAwait(false);
-
-        var boardTitle = ChromeState.SelectedPlanningBoardTitle ?? "Planning board";
-        Snackbar.Add($"{boardTitle} selected.", Severity.Success);
     }
 
     private async Task SaveSettingsAsync(PmSettingsDto settings)

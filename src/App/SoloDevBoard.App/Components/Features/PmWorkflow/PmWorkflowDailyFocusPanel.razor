@@ -16,10 +16,16 @@
     {
         @* Chrome already shows the error and retry. *@
     }
-    else if (!ChromeState.HasPlanningBoardSelected && !ChromeState.IsLoading)
+    else if (ChromeState.IsLoading)
+    {
+        <MudText Typo="Typo.body2" data-testid="pm-workflow-daily-focus-loading">
+            Loading planning boards and occupancy.
+        </MudText>
+    }
+    else if (!ChromeState.HasPlanningBoardSelected)
     {
         <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" data-testid="pm-workflow-daily-focus-no-board">
-            Select a planning board to load Daily Focus occupancy.
+            Select a planning board in the dropdown above to load Daily Focus occupancy.
         </MudAlert>
     }
     else

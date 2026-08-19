@@ -52,7 +52,7 @@ public sealed class PmWorkflowDailyFocusTests
         cut.WaitForAssertion(() =>
         {
             Assert.Contains("Daily Focus", cut.Markup);
-            Assert.Contains("Select a planning board to load Daily Focus occupancy.", cut.Markup);
+            Assert.Contains("Select a planning board in the dropdown above to load Daily Focus occupancy.", cut.Markup);
         });
     }
 
@@ -175,6 +175,67 @@ public sealed class PmWorkflowDailyFocusTests
         {
             Assert.Contains("could not be loaded", cut.Markup, StringComparison.OrdinalIgnoreCase);
         });
+    }
+
+    [Fact]
+    public async Task PmWorkflowDailyFocus_WhenChromeLoadIsInFlight_ShowsLoadingIndicator()
+    {
+        var repositoriesReady = new TaskCompletionSource<IReadOnlyList<RepositoryDto>>();
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>())
+            .Returns(repositoriesReady.Task);
+        _projectBoardDiscoveryService.GetPlanningBoardOptionsForRepositoriesAsync(
+            Arg.Any<IReadOnlyList<RepositoryDto>>(),
+            Arg.Any<CancellationToken>()).Returns(
+            new PmProjectBoardDiscoveryDto([], 0, 0));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Loading PM Workflow", cut.Markup);
+            Assert.Contains("Loading planning boards and occupancy.", cut.Markup);
+        });
+
+        repositoriesReady.SetResult([CreateRepository("owner", "repo-a")]);
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Select a planning board in the dropdown above to load Daily Focus occupancy.", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task PmWorkflowLayout_DisposeWhileStillOnPmWorkflow_DoesNotCancelChromeLoad()
+    {
+        var repositoriesReady = new TaskCompletionSource<IReadOnlyList<RepositoryDto>>();
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>())
+            .Returns(repositoriesReady.Task);
+        _projectBoardDiscoveryService.GetPlanningBoardOptionsForRepositoriesAsync(
+            Arg.Any<IReadOnlyList<RepositoryDto>>(),
+            Arg.Any<CancellationToken>()).Returns(
+            new PmProjectBoardDiscoveryDto(
+                [new PmPlanningBoardOptionDto("PVT_board", "Roadmap", "owner", "status-field")],
+                1,
+                0));
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>())
+            .Returns(new DailyFocusBoardStateDto(
+                [new DailyFocusOccupancyChipDto("Todo", 1)],
+                ActiveLoad: 0,
+                Capacity: 8,
+                ItemCount: 1));
+
+        await using var ctx = CreateContext();
+        ctx.Services.GetRequiredService<NavigationManager>().NavigateTo("/pm-workflow/daily-focus");
+        var coordinator = ctx.Services.GetRequiredService<PmWorkflowChromeCoordinator>();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
+
+        cut.WaitForAssertion(() => Assert.Contains("Loading PM Workflow", cut.Markup));
+
+        cut.Instance.Dispose();
+        repositoriesReady.SetResult([CreateRepository("owner", "repo-a")]);
+
+        cut.WaitForAssertion(() => Assert.True(coordinator.HasLoadedOnce));
     }
 
     [Fact]

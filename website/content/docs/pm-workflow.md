@@ -49,7 +49,9 @@ Shared chrome on every PM Workflow tab includes:
 
 If GitHub reports linked project boards that cannot be read with your current sign-in (common for private user-owned boards under GitHub App sign-in), a warning appears at the top of the page. See [plan/GITHUB_PROJECTS_V2_ACCESS.md](https://github.com/markheydon/solo-dev-board/blob/main/plan/GITHUB_PROJECTS_V2_ACCESS.md) in the repository.
 
-Until a board is selected, an informational alert explains that Daily Focus needs a planning board. Use the **Repos** tab to keep editing settings meanwhile.
+Until a board is selected, an informational alert points at the **Planning board** dropdown. Occupancy loads as soon as you open Daily Focus when a board is already stored, or as soon as you choose one. Use the **Repos** tab to edit exclusions and thresholds.
+
+A progress bar at the top of the page shows while planning boards are discovered. Switching tabs does not restart that load.
 
 ### Board occupancy and active load
 

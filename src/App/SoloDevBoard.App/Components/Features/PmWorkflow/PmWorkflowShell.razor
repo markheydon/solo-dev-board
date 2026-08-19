@@ -85,7 +85,8 @@
     @if (!ChromeState.HasPlanningBoardSelected && !ChromeState.IsLoading && string.IsNullOrWhiteSpace(ChromeState.LoadErrorMessage))
     {
         <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" data-testid="pm-workflow-no-board-alert">
-            Select a planning board to load PM Workflow data on future tabs. Repo Management settings can still be edited below.
+            Select a planning board in the dropdown above to load occupancy on Daily Focus.
+            You can still open the Repos tab to edit exclusions and thresholds.
         </MudAlert>
     }
 
