@@ -131,6 +131,9 @@ public sealed class PmWorkItemCatalogueServiceTests
 
         Assert.Single(result.Items);
         Assert.Equal("owner/included", result.Items[0].RepositoryFullName);
+        var summary = Assert.Single(result.RepositorySummaries);
+        Assert.Equal("owner/included", summary.FullName);
+        Assert.True(summary.IsIncluded);
         await _gitHubService.DidNotReceive().GetIssuesAsync("owner", "excluded", OpenItemState, cancellationToken);
         await _gitHubService.DidNotReceive().GetPullRequestsAsync("owner", "excluded", OpenItemState, cancellationToken);
     }
@@ -182,6 +185,67 @@ public sealed class PmWorkItemCatalogueServiceTests
         Assert.Equal("owner/broken", failure.RepositoryFullName);
         Assert.Equal((int)HttpStatusCode.Forbidden, failure.HttpStatusCode);
         Assert.Contains("Issues:", failure.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetCatalogueAsync_IncludedRepositories_AggregatesIssueAndPullRequestCounts()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var repositoryUpdatedAt = DateTimeOffset.Parse("2026-01-01T00:00:00Z");
+        var issueUpdatedAt = DateTimeOffset.Parse("2026-08-10T00:00:00Z");
+        var pullRequestUpdatedAt = DateTimeOffset.Parse("2026-08-18T12:00:00Z");
+
+        _gitHubService.GetActiveRepositoriesAsync(cancellationToken).Returns(
+        [
+            new Repository { Id = 1, Name = "busy", FullName = "owner/busy", UpdatedAt = repositoryUpdatedAt },
+            new Repository { Id = 2, Name = "quiet", FullName = "owner/quiet", UpdatedAt = repositoryUpdatedAt },
+        ]);
+
+        _gitHubService
+            .GetIssuesAsync("owner", "busy", OpenItemState, cancellationToken)
+            .Returns(
+            [
+                CreateIssue(1, "First", ["type/story", "priority/low"], updatedAt: issueUpdatedAt),
+                CreateIssue(2, "Second", ["type/bug", "priority/medium"], updatedAt: issueUpdatedAt),
+            ]);
+        _gitHubService
+            .GetPullRequestsAsync("owner", "busy", OpenItemState, cancellationToken)
+            .Returns([CreatePullRequest(3, "Open PR", ["type/story", "priority/low"], isDraft: false, updatedAt: pullRequestUpdatedAt)]);
+        _gitHubService
+            .GetOpenPullRequestReviewMetadataAsync("owner", "busy", cancellationToken)
+            .Returns([]);
+        _gitHubService
+            .GetIssueSubIssueSummariesAsync("owner", "busy", Arg.Any<IReadOnlyList<int>>(), cancellationToken)
+            .Returns([]);
+
+        _gitHubService
+            .GetIssuesAsync("owner", "quiet", OpenItemState, cancellationToken)
+            .Returns([]);
+        _gitHubService
+            .GetPullRequestsAsync("owner", "quiet", OpenItemState, cancellationToken)
+            .Returns([]);
+        _gitHubService
+            .GetOpenPullRequestReviewMetadataAsync("owner", "quiet", cancellationToken)
+            .Returns([]);
+        _gitHubService
+            .GetIssueSubIssueSummariesAsync("owner", "quiet", Arg.Any<IReadOnlyList<int>>(), cancellationToken)
+            .Returns([]);
+
+        var result = await _sut.GetCatalogueAsync(cancellationToken);
+
+        Assert.Equal(2, result.RepositorySummaries.Count);
+
+        var busy = Assert.Single(result.RepositorySummaries, summary => summary.FullName == "owner/busy");
+        Assert.Equal(2, busy.OpenIssueCount);
+        Assert.Equal(1, busy.OpenPullRequestCount);
+        Assert.Equal(pullRequestUpdatedAt, busy.LastActivityAt);
+        Assert.True(busy.IsIncluded);
+
+        var quiet = Assert.Single(result.RepositorySummaries, summary => summary.FullName == "owner/quiet");
+        Assert.Equal(0, quiet.OpenIssueCount);
+        Assert.Equal(0, quiet.OpenPullRequestCount);
+        Assert.Equal(repositoryUpdatedAt, quiet.LastActivityAt);
+        Assert.True(quiet.IsIncluded);
     }
 
     [Fact]
@@ -318,7 +382,8 @@ public sealed class PmWorkItemCatalogueServiceTests
         string title,
         IReadOnlyList<string> labelNames,
         string state = "open",
-        string? milestoneTitle = null)
+        string? milestoneTitle = null,
+        DateTimeOffset? updatedAt = null)
         => new()
         {
             Id = number,
@@ -331,14 +396,15 @@ public sealed class PmWorkItemCatalogueServiceTests
                 ? null
                 : new Milestone { Number = 4, Title = milestoneTitle },
             CreatedAt = DateTimeOffset.UtcNow.AddDays(-5),
-            UpdatedAt = DateTimeOffset.UtcNow.AddDays(-1),
+            UpdatedAt = updatedAt ?? DateTimeOffset.UtcNow.AddDays(-1),
         };
 
     private static PullRequest CreatePullRequest(
         int number,
         string title,
         IReadOnlyList<string> labelNames,
-        bool isDraft)
+        bool isDraft,
+        DateTimeOffset? updatedAt = null)
         => new()
         {
             Id = number,
@@ -349,6 +415,6 @@ public sealed class PmWorkItemCatalogueServiceTests
             IsDraft = isDraft,
             Labels = labelNames.Select(name => new Label { Name = name }).ToArray(),
             CreatedAt = DateTimeOffset.UtcNow.AddDays(-3),
-            UpdatedAt = DateTimeOffset.UtcNow.AddHours(-2),
+            UpdatedAt = updatedAt ?? DateTimeOffset.UtcNow.AddHours(-2),
         };
 }

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using MudBlazor;
 using MudBlazor.Services;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using SoloDevBoard.App.Components.Features.PmWorkflow;
 using SoloDevBoard.App.Components.Features.PmWorkflow.Pages;
 using SoloDevBoard.Application.Services.PmWorkflow;
@@ -17,7 +18,14 @@ public sealed class PmWorkflowReposTests
 {
     private readonly IRepositoryService _repositoryService = Substitute.For<IRepositoryService>();
     private readonly IPmProjectBoardDiscoveryService _projectBoardDiscoveryService = Substitute.For<IPmProjectBoardDiscoveryService>();
+    private readonly IPmWorkItemCatalogueService _workItemCatalogueService = Substitute.For<IPmWorkItemCatalogueService>();
     private readonly FakePmSettingsStorage _settingsStorage = new();
+
+    public PmWorkflowReposTests()
+    {
+        _workItemCatalogueService.GetCatalogueAsync(Arg.Any<CancellationToken>())
+            .Returns(new PmWorkItemCatalogueResultDto([], [], []));
+    }
 
     [Fact]
     public async Task PmWorkflowRepos_WhenNoBoardIsSelected_ShowsInstructionalAlert()
@@ -116,6 +124,70 @@ public sealed class PmWorkflowReposTests
         });
     }
 
+    [Fact]
+    public async Task PmWorkflowRepos_RepositorySummary_ShowsCountsAndOmitsExcludedRepositories()
+    {
+        ConfigureDefaults();
+        _workItemCatalogueService.GetCatalogueAsync(Arg.Any<CancellationToken>()).Returns(
+            new PmWorkItemCatalogueResultDto(
+                [],
+                [],
+                [
+                    new PmRepositorySummaryDto("owner/repo-a", 12, 2, DateTimeOffset.UtcNow.AddDays(-2), true),
+                    new PmRepositorySummaryDto("owner/repo-b", 1, 0, DateTimeOffset.UtcNow.AddDays(-1), true),
+                ]));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowRepos>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Per-repository summary", cut.Markup);
+            Assert.Contains("owner/repo-a", cut.Find("[data-testid='pm-workflow-repository-summary-table']").InnerHtml);
+            Assert.Contains("12", cut.Find("[data-testid='pm-workflow-repository-summary-table']").InnerHtml);
+            Assert.Contains("2", cut.Find("[data-testid='pm-workflow-repository-summary-table']").InnerHtml);
+            Assert.Contains("Yes", cut.Find("[data-testid='pm-workflow-repository-summary-table']").InnerHtml);
+            Assert.Contains("owner/repo-b", cut.Find("[data-testid='pm-workflow-repository-summary-table']").InnerHtml);
+        });
+
+        _workItemCatalogueService.GetCatalogueAsync(Arg.Any<CancellationToken>()).Returns(
+            new PmWorkItemCatalogueResultDto(
+                [],
+                [],
+                [new PmRepositorySummaryDto("owner/repo-a", 12, 2, DateTimeOffset.UtcNow.AddDays(-2), true)]));
+
+        var excludeAutocomplete = cut
+            .FindComponents<MudAutocomplete<string>>()
+            .First(component => component.Markup.Contains("Quick exclude", StringComparison.Ordinal));
+
+        await cut.InvokeAsync(() => excludeAutocomplete.Instance.ValueChanged.InvokeAsync("owner/repo-b"));
+        cut.Find("[data-testid='pm-workflow-exclude-button']").Click();
+
+        cut.WaitForAssertion(() =>
+        {
+            var summaryTable = cut.Find("[data-testid='pm-workflow-repository-summary-table']").InnerHtml;
+            Assert.Contains("owner/repo-a", summaryTable);
+            Assert.DoesNotContain("owner/repo-b", summaryTable);
+        });
+    }
+
+    [Fact]
+    public async Task PmWorkflowRepos_RepositorySummaryLoadFails_ShowsRetryAlert()
+    {
+        ConfigureDefaults();
+        _workItemCatalogueService.GetCatalogueAsync(Arg.Any<CancellationToken>())
+            .ThrowsAsync(new HttpRequestException("Catalogue unavailable"));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowRepos>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Unable to load per-repository issue and pull request counts", cut.Markup);
+            Assert.NotNull(cut.Find("[data-testid='pm-workflow-repository-summary-retry']"));
+        });
+    }
+
     private void ConfigureDefaults()
     {
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
@@ -130,6 +202,9 @@ public sealed class PmWorkflowReposTests
                 [new PmPlanningBoardOptionDto("PVT_board", "Roadmap", "owner", "status-field")],
                 1,
                 0));
+
+        _workItemCatalogueService.GetCatalogueAsync(Arg.Any<CancellationToken>()).Returns(
+            new PmWorkItemCatalogueResultDto([], [], []));
     }
 
     private BunitContext CreateContext()
@@ -142,6 +217,7 @@ public sealed class PmWorkflowReposTests
         ctx.Services.AddScoped<IPmSettingsService, PmSettingsService>();
         ctx.Services.AddScoped(_ => _repositoryService);
         ctx.Services.AddScoped(_ => _projectBoardDiscoveryService);
+        ctx.Services.AddScoped(_ => _workItemCatalogueService);
         ctx.Services.AddScoped<PmWorkflowChromeCoordinator>();
         ctx.Services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
 
