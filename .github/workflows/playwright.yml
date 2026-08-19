@@ -78,4 +78,4 @@ jobs:
         with:
           name: playwright-report-${{ matrix.auth }}
           path: tests/E2E/playwright-report/
-          retention-days: 30
+          retention-days: 14
