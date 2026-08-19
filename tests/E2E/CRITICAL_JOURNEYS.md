@@ -6,12 +6,12 @@ Published user guides in `website/content/docs/` must map to these journeys like
 
 ## CI constraints
 
-CI runs two Playwright jobs in [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml):
+CI runs two Playwright matrix jobs in [`.github/workflows/playwright.yml`](../../.github/workflows/playwright.yml):
 
 | Job | Auth mode | What it validates |
 |-----|-----------|-------------------|
-| `e2e-pat` | PAT (`HostedSignInEnabled=false`, `ci-e2e-placeholder` token) | Shell rendering, navigation, and empty or error states without live GitHub data. |
-| `e2e-hosted` | Hosted sign-in (`HostedSignInEnabled=true`, placeholder GitHub App credentials) | Login gate: `/` and protected routes redirect to `/welcome`; sign-in CTA visible; Blazor circuit negotiates before authentication. |
+| `pat` | PAT (`HostedSignInEnabled=false`, `ci-e2e-placeholder` token) | Shell rendering, navigation, and empty or error states without live GitHub data. |
+| `hosted` | Hosted sign-in (`HostedSignInEnabled=true`, placeholder GitHub App credentials) | Login gate: `/` and protected routes redirect to `/welcome`; sign-in CTA visible; Blazor circuit negotiates before authentication. |
 
 Neither job uses live GitHub secrets. Repository-dependent PAT journeys assert empty or error states rather than live GitHub catalogue data.
 

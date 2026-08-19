@@ -1,31 +1,31 @@
-name: Automation Lint
+name: GitHub scripts validate
 
 on:
   push:
     branches:
       - main
     paths:
-      - .github/workflows/**
       - .github/scripts/**
       - .github/eslint.config.mjs
+      - .github/workflows/github-scripts-validate.yml
   pull_request:
     branches:
       - main
     paths:
-      - .github/workflows/**
       - .github/scripts/**
       - .github/eslint.config.mjs
+      - .github/workflows/github-scripts-validate.yml
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: github-scripts-validate-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  lint-workflows:
-    name: Lint GitHub Actions workflows
+  github-scripts-validate:
+    name: GitHub scripts validate
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -33,22 +33,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Run actionlint
-        uses: rhysd/actionlint@v1.7.12
-
-  lint-github-scripts:
-    name: Lint GitHub automation scripts
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
-      - name: Set up Node.js 24
+      - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
           node-version: "24"
 
       - name: Run ESLint for GitHub scripts
         run: npx --yes eslint@9.0.0 --config .github/eslint.config.mjs '.github/scripts/**/*.mjs'
+
+      - name: Run GitHub automation script tests
+        run: node --test .github/scripts/*.test.mjs

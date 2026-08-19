@@ -1,4 +1,4 @@
-name: Hugo CI
+name: Hugo validate
 
 on:
   pull_request:
@@ -6,13 +6,14 @@ on:
     paths:
       - "website/**"
       - ".github/workflows/hugo-build.yml"
-      - ".github/workflows/hugo-ci.yml"
+      - ".github/workflows/hugo-validate.yml"
 
 permissions:
   contents: read
 
 jobs:
-  hugo:
+  hugo-validate:
+    name: Hugo validate
     uses: ./.github/workflows/hugo-build.yml
     with:
       deploy: false

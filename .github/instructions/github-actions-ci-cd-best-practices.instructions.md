@@ -11,6 +11,7 @@ Use this instruction for authoring and reviewing workflows in this repository.
 
 - Use .NET 10 SDK setup for build and test jobs.
 - Keep workflow intent explicit and easy to scan.
+- Prefer one workflow file per quality gate with a self-documenting `{subject}-validate.yml` name (for example `bash-validate.yml`, `github-scripts-validate.yml`). Keep `ci.yml` for .NET and `playwright.yml` for end-to-end tests.
 - Prefer small, composable jobs with clear `needs` dependencies.
 
 ## Security
@@ -39,7 +40,8 @@ Use this instruction for authoring and reviewing workflows in this repository.
 - Ensure pull request workflows also run for Dependabot-authored pull requests to `main`.
 - Fail fast on build/test failures.
 - Surface test outputs clearly in logs and artefacts when useful.
-- Playwright E2E jobs (`e2e-pat`, `e2e-hosted`) must use `npx playwright install chromium` on `ubuntu-latest` — do **not** use `--with-deps` (avoids `apt` mirror hangs). Use the official `mcr.microsoft.com/playwright` job container only if Chromium fails to launch on the runner.
+- Playwright E2E runs in `.github/workflows/playwright.yml` using the official GitHub Actions shape: `npm ci`, `npx playwright install chromium`, `npx playwright test`, and upload `playwright-report/` as a workflow artefact. The official template uses `npx playwright install --with-deps` (all browsers); this repository installs Chromium only and omits `--with-deps` on `ubuntu-latest` because `apt` during browser install can hang on GitHub-hosted runners (see PR #404). Local development should use `npx playwright install --with-deps chromium`. The Blazor app is started by Playwright `webServer` in `tests/E2E/playwright.config.ts`, not bespoke bash in the workflow.
+- `bash-validate.yml` installs ShellCheck from the upstream GitHub release tarball instead of `apt-get`, for the same runner reliability reasons.
 
 ## Deployment Safety
 
@@ -48,7 +50,7 @@ Use this instruction for authoring and reviewing workflows in this repository.
 - Include rollback-aware operational guidance in deployment comments or documentation.
 - CD uses two tiers via `.github/workflows/cd.yml` and reusable `.github/workflows/aspire-deploy.yml` (DEC-021): **staging** (push to `main`, GitHub App), **production** (push tag `v*`, GitHub App, required reviewers). PAT mode is local or self-hoster `aspire deploy` only — not a hosted CD tier.
 - Production CD uses `aspire deploy` from `SoloDevBoard.AppHost` with OIDC Azure login and `Parameters__*` environment variables for AppHost secrets.
-- End-user docs publish to GitHub Pages on `v*` tags only (`hugo-deploy.yml`); pull requests validate Hugo builds without publishing (`hugo-ci.yml`).
+- End-user docs publish to GitHub Pages on `v*` tags only (`hugo-deploy.yml`); pull requests validate Hugo builds without publishing (`hugo-validate.yml`).
 - Use `aspire deploy --list-steps --non-interactive` in validation workflows to prove the deployment model without provisioning Azure resources. Validate both `Staging` and `Production` Aspire environments.
 
 ## Dependabot Pull Requests

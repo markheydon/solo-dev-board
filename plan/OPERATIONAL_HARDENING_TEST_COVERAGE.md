@@ -48,7 +48,7 @@ Volatile-data Infrastructure caching (issues, pull requests, workflow runs) rema
 | GitHub PAT connectivity health check: valid PAT, invalid PAT, E2E placeholder skip | Unit | `tests/Infrastructure.Tests/.../GitHubPatConnectivityHealthCheckTests.cs` |
 | Hosted sign-in mode skips PAT connectivity probe | Unit | `GitHubPatConnectivityHealthCheckTests.cs` |
 | Health endpoints bypass hosted admission control middleware | Unit | `HostedAdmissionControlMiddlewareTests.cs` |
-| E2E smoke: `/health` returns `Healthy` before browser tests run | E2E | `tests/E2E/tests/smoke.spec.ts`, `.github/workflows/ci.yml` |
+| E2E smoke: `/health` returns `Healthy` before browser tests run | E2E | `tests/E2E/tests/smoke.spec.ts`, `.github/workflows/playwright.yml` |
 
 Hosting probe wiring (`.WithHttpHealthCheck("/health")` on the AppHost `app` resource) is validated by manual deploy verification and operator documentation in [docs/deployment.md](../docs/deployment.md). AppHost orchestration modelling is not unit-tested per repository policy.
 
@@ -76,9 +76,9 @@ The following automated checks are proportionate to current repository tooling a
 |---|---|---|
 | `dotnet build` and `dotnet test` on every PR and push to `main` | `.github/workflows/ci.yml` (`build-and-test` job) | Regression gate for all unit and component tests, including operational hardening coverage above. |
 | `dotnet format --verify-no-changes` | `ci.yml` | Prevents formatting drift in test and production code. |
-| E2E job waits for `GET /health` before Playwright suite | `ci.yml` (`e2e` job) | Confirms the app host starts and readiness endpoint responds in a realistic PAT-mode configuration. |
+| E2E `webServer` waits for `GET /health` before Playwright suite | `playwright.yml`, `tests/E2E/playwright.config.ts` | Confirms the app host starts and readiness endpoint responds in a realistic PAT-mode configuration. |
 | Playwright smoke test for `/health` | `tests/E2E/tests/smoke.spec.ts` | Lightweight post-startup health assertion in the browser test harness. |
-| Playwright critical user journey suite | `tests/E2E/CRITICAL_JOURNEYS.md`, `tests/E2E/tests/*.spec.ts` | Feature shell, navigation, and placeholder-auth error-state coverage for v1.0.0 release readiness (issue #255). |
+| Playwright critical user journey suite | `tests/E2E/CRITICAL_JOURNEYS.md`, `tests/E2E/tests/*.spec.ts`, `.github/workflows/playwright.yml` | Feature shell, navigation, and placeholder-auth error-state coverage for v1.0.0 release readiness (issue #255). |
 
 Not automated in CI (manual or deploy-time verification only):
 

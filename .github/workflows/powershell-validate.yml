@@ -1,0 +1,46 @@
+name: PowerShell validate
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/**'
+      - '.github/workflows/powershell-validate.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'scripts/**'
+      - '.github/workflows/powershell-validate.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: powershell-validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  powershell-validate:
+    name: PowerShell validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Run PSScriptAnalyzer on PowerShell scripts
+        shell: pwsh
+        run: |
+          $scripts = Get-ChildItem -Path scripts -Filter '*.ps1' -Recurse -File | Sort-Object FullName
+          if ($scripts.Count -eq 0) {
+            Write-Host 'No PowerShell scripts found.'
+            exit 0
+          }
+
+          Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -Repository PSGallery
+          $results = Invoke-ScriptAnalyzer -Path scripts -Recurse -Settings PSGallery
+          if ($results) {
+            $results | Format-Table -AutoSize
+            Write-Error "PSScriptAnalyzer reported $($results.Count) finding(s)."
+          }

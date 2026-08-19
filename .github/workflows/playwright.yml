@@ -1,0 +1,81 @@
+name: Playwright
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: playwright-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Playwright (${{ matrix.auth }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - auth: pat
+            test_command: npx playwright test
+          - auth: hosted
+            test_command: npx playwright test auth-entry-hosted.spec.ts
+
+    env:
+      PLAYWRIGHT_BASE_URL: http://localhost:5080
+      E2E_AUTH_MODE: ${{ matrix.auth }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET SDK from global.json
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: tests/E2E/package-lock.json
+
+      - name: Restore and build application
+        run: |
+          dotnet restore SoloDevBoard.slnx
+          dotnet build src/App/SoloDevBoard.App/SoloDevBoard.App.csproj --no-restore
+
+      - name: Install dependencies
+        working-directory: tests/E2E
+        env:
+          NODE_OPTIONS: --dns-result-order=ipv4first
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: tests/E2E
+        env:
+          NODE_OPTIONS: --dns-result-order=ipv4first
+        run: npx playwright install chromium
+
+      - name: Run Playwright tests
+        working-directory: tests/E2E
+        run: ${{ matrix.test_command }}
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report-${{ matrix.auth }}
+          path: tests/E2E/playwright-report/
+          retention-days: 14

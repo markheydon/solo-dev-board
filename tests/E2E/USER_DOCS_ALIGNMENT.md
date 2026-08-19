@@ -44,8 +44,8 @@ These journeys are documented in `docs/hosted-authentication.md` and `docs/pat-c
 
 | Journey | Playwright spec | CI job |
 |---------|-----------------|--------|
-| PAT-mode welcome redirect and connectivity error page | `auth-entry.spec.ts` | `e2e-pat` |
-| Hosted sign-in login gate | `auth-entry-hosted.spec.ts` | `e2e-hosted` |
+| PAT-mode welcome redirect and connectivity error page | `auth-entry.spec.ts` | `pat` |
+| Hosted sign-in login gate | `auth-entry-hosted.spec.ts` | `hosted` |
 
 ## Guide section → assertion mapping
 
