@@ -42,10 +42,7 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
         }
 
         var boardId = ChromeState.Settings.PlanningBoardNodeId;
-        if (string.Equals(loadedBoardId, boardId, StringComparison.Ordinal)
-            && loadedRevision == DataRevision
-            && boardState is not null
-            && string.IsNullOrWhiteSpace(loadErrorMessage))
+        if (HasCompletedOrInFlightLoad(boardId))
         {
             return;
         }
@@ -53,9 +50,28 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
         await LoadBoardStateAsync();
     }
 
+    private bool HasCompletedOrInFlightLoad(string? boardId) =>
+        string.Equals(loadedBoardId, boardId, StringComparison.Ordinal)
+        && loadedRevision == DataRevision
+        && (isLoadingBoardState
+            || boardState is not null
+            || !string.IsNullOrWhiteSpace(loadErrorMessage));
+
+    private Task RetryLoadBoardStateAsync()
+    {
+        loadedBoardId = null;
+        loadedRevision = -1;
+        return LoadBoardStateAsync();
+    }
+
     private async Task LoadBoardStateAsync()
     {
         if (ChromeState is null || string.IsNullOrWhiteSpace(ChromeState.Settings.PlanningBoardNodeId))
+        {
+            return;
+        }
+
+        if (HasCompletedOrInFlightLoad(ChromeState.Settings.PlanningBoardNodeId))
         {
             return;
         }

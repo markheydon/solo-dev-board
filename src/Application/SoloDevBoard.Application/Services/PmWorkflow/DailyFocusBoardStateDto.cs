@@ -4,7 +4,7 @@ namespace SoloDevBoard.Application.Services.PmWorkflow;
 /// <param name="Occupancy">Item counts per discovered Status option, in board-defined order.</param>
 /// <param name="ActiveLoad">The number of items whose Status name is <c>Up Next</c> or <c>In Progress</c>.</param>
 /// <param name="Capacity">The persisted planning capacity used as the active-load denominator.</param>
-/// <param name="ItemCount">The total number of items on the selected board.</param>
+/// <param name="ItemCount">The number of mapped Issue and Pull Request items in the catalogue.</param>
 public sealed record DailyFocusBoardStateDto(
     IReadOnlyList<DailyFocusOccupancyChipDto> Occupancy,
     int ActiveLoad,

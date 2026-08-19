@@ -58,7 +58,7 @@ After a board is selected, Daily Focus shows:
 - **Status chips** — one chip per Status option discovered on that board (including empty columns), with the item count. Option identifiers are not hard-coded to any one GitHub project.
 - **Active load** — `Up Next` plus `In Progress` item counts over the persisted **Capacity limit** (default 8).
 
-Board occupancy counts **every** linked card on the selected board. Repository exclusions do not change these counts; they will apply to recommendations when that panel ships.
+Board occupancy counts mapped **Issue** and **Pull Request** cards on the selected board. Notes, draft issues, and redacted items are omitted. Repository exclusions do not change these counts; they will apply to recommendations when that panel ships.
 
 If the catalogue cannot be loaded, an error alert includes **Retry**. An empty board still lists Status chips at zero and explains that there are no items.
 
@@ -85,7 +85,7 @@ The same shared chrome described under Daily Focus appears on this tab.
 
 Until a board is selected, an informational alert explains that other tabs need a board. You can still edit Repo Management settings below.
 
-Board occupancy on Daily Focus counts **every** linked card. Recommendations, backlog queries, and planning candidates will honour repository exclusions.
+Board occupancy on Daily Focus counts mapped Issue and Pull Request cards. Recommendations, backlog queries, and planning candidates will honour repository exclusions.
 
 ### Set planning thresholds
 

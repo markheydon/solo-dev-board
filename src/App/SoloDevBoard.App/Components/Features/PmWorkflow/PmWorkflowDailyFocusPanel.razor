@@ -33,7 +33,9 @@
         {
             <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" data-testid="pm-workflow-daily-focus-error">
                 @loadErrorMessage
-                <MudButton Variant="Variant.Text" OnClick="LoadBoardStateAsync">Retry</MudButton>
+                <MudButton Variant="Variant.Text"
+                           OnClick="RetryLoadBoardStateAsync"
+                           data-testid="pm-workflow-daily-focus-retry">Retry</MudButton>
             </MudAlert>
         }
         else if (!isLoadingBoardState && boardState is not null)

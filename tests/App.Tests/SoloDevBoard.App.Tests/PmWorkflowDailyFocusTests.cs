@@ -104,6 +104,39 @@ public sealed class PmWorkflowDailyFocusTests
             Assert.Contains("Unable to load board occupancy.", cut.Markup);
             Assert.Contains("Retry", cut.Markup);
         });
+
+        cut.Render();
+
+        await _boardStateService.Received(1).GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task PmWorkflowDailyFocus_WhenRetryClickedAfterCatalogueFailure_ReloadsBoardState()
+    {
+        ConfigureDefaults();
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>())
+            .Returns(
+                _ => throw new InvalidOperationException("GitHub unavailable"),
+                _ => new DailyFocusBoardStateDto(
+                    [new DailyFocusOccupancyChipDto("Todo", 1)],
+                    ActiveLoad: 0,
+                    Capacity: 8,
+                    ItemCount: 1));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<PmWorkflowDailyFocus>();
+
+        cut.WaitForAssertion(() => Assert.Contains("Unable to load board occupancy.", cut.Markup));
+
+        await cut.InvokeAsync(() => cut.Find("[data-testid='pm-workflow-daily-focus-retry']").Click());
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Todo 1", cut.Markup);
+            Assert.Contains("Active load: 0 / 8", cut.Markup);
+        });
+
+        await _boardStateService.Received(2).GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>());
     }
 
     [Fact]
