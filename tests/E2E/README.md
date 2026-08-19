@@ -23,7 +23,7 @@ Published user guides must stay aligned with these tests like-for-like. See [USE
 | `labels.spec.ts` | Label Manager shell, tabs, and empty-repository state |
 | `workflows.spec.ts` | Built-in template browse/filter/select and repository error state |
 | `triage.spec.ts` | Triage shell and no-repositories alert without a live GitHub connection |
-| `pm-workflow.spec.ts` | PM Workflow Daily Focus occupancy and stalled Up Next shell and Repos tab threshold/exclusion regions or chrome error |
+| `pm-workflow.spec.ts` | PM Workflow Daily Focus occupancy, recommendations, and stalled Up Next shell and Repos tab threshold/exclusion regions or chrome error |
 | `accessibility.spec.ts` | WCAG 2.1 AA axe-core scan of Tier 1–2 journeys in light and dark mode; labelled shell controls; isolated snackbar contrast scan |
 
 Tests are designed to pass in CI with placeholder auth. The PAT job uses `GitHubAuth__PersonalAccessToken=ci-e2e-placeholder`. The hosted job uses placeholder GitHub App credentials and asserts the login gate without live OAuth. Repository-dependent features assert empty or error states rather than live GitHub data.
@@ -33,56 +33,44 @@ Accessibility findings and remediation notes for issue #253 live in [plan/ACCESS
 ## Prerequisites
 
 - Node.js 20 or later.
-- A running SoloDevBoard instance (see below).
+- .NET 10 SDK (Playwright starts the app via `webServer` in [`playwright.config.ts`](playwright.config.ts)).
 
 ## Local run
 
+Build the application once, then run Playwright from `tests/E2E`. Playwright starts SoloDevBoard with the same placeholder auth configuration as CI.
+
 ### PAT mode (default)
 
-Start the app on HTTP (plain HTTP avoids dev-certificate issues in headless environments):
-
 ```bash
-ASPNETCORE_URLS=http://localhost:5080 \
-  ASPNETCORE_ENVIRONMENT=Development \
-  GitHubAuth__PersonalAccessToken=local-e2e-placeholder \
-  GitHubAuth__OwnerLogin=local-test-user \
-  GitHubAuth__HostedSignInEnabled=false \
-  HostedAdmissionControl__Enabled=false \
-  dotnet run --project src/App/SoloDevBoard.App --no-launch-profile
-```
-
-In a second terminal:
-
-```bash
+dotnet build src/App/SoloDevBoard.App/SoloDevBoard.App.csproj
 cd tests/E2E
 npm ci
 npx playwright install --with-deps chromium
-PLAYWRIGHT_BASE_URL=http://localhost:5080 E2E_AUTH_MODE=pat npm test
+npm test
 ```
 
 ### Hosted mode (login gate only)
 
-Start the app with hosted sign-in enabled and placeholder GitHub App credentials:
-
 ```bash
-ASPNETCORE_URLS=http://localhost:5080 \
-  ASPNETCORE_ENVIRONMENT=Development \
-  GitHubAuth__PersonalAccessToken=- \
-  GitHubAuth__HostedSignInEnabled=true \
-  GitHubAuth__HostedGitHubAppClientId=ci-e2e-hosted-client-id \
-  GitHubAuth__HostedGitHubAppClientSecret=ci-e2e-hosted-client-secret \
-  HostedAdmissionControl__Enabled=true \
-  HostedAdmissionControl__AllowedUserLogins=local-test-user \
-  HostedAdmissionControl__AllowedOrganisationLogins=- \
-  dotnet run --project src/App/SoloDevBoard.App --no-launch-profile
+dotnet build src/App/SoloDevBoard.App/SoloDevBoard.App.csproj
+cd tests/E2E
+E2E_AUTH_MODE=hosted npx playwright test auth-entry-hosted.spec.ts
 ```
 
-In a second terminal:
+### Reusing an already-running app
+
+By default Playwright starts its own placeholder-configured instance. To point tests at an app you started manually (for example Aspire or a real PAT), set `PLAYWRIGHT_REUSE_SERVER=1` and ensure `PLAYWRIGHT_BASE_URL` matches the running instance.
+
+### Viewing the HTML report
+
+After a run, open the report locally:
 
 ```bash
 cd tests/E2E
-PLAYWRIGHT_BASE_URL=http://localhost:5080 E2E_AUTH_MODE=hosted npx playwright test auth-entry-hosted.spec.ts
+npx playwright show-report
 ```
+
+In CI, download the `playwright-report-pat` or `playwright-report-hosted` artefact from the workflow run and run `npx playwright show-report` inside the extracted folder.
 
 ## Documentation screenshots
 
@@ -110,9 +98,9 @@ Images are written to `website/static/images/<feature-slug>/`. See [DOCS_STRATEG
 
 ## CI
 
-Two jobs in [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) run Playwright against placeholder auth configuration:
+[`.github/workflows/playwright.yml`](../../.github/workflows/playwright.yml) runs two matrix jobs in parallel with **Build and Test** in [`ci.yml`](../../.github/workflows/ci.yml):
 
-- **`e2e-pat`** — full suite with PAT mode (`E2E_AUTH_MODE=pat`).
-- **`e2e-hosted`** — hosted login-gate suite (`auth-entry-hosted.spec.ts`) with placeholder GitHub App credentials and no live OAuth.
+- **`pat`** — full suite with PAT mode (`E2E_AUTH_MODE=pat`).
+- **`hosted`** — hosted login-gate suite (`auth-entry-hosted.spec.ts`) with placeholder GitHub App credentials and no live OAuth.
 
-Both jobs capture application logs separately from Playwright output.
+Playwright starts the app via `webServer` in `playwright.config.ts` on HTTP **port 5080** (not Aspire on 5074). CI installs Chromium with `npx playwright install chromium` only — it does **not** use `--with-deps`, so GitHub-hosted runners never call `apt` for browser OS packages. Local development should still use `npx playwright install --with-deps chromium` so system libraries are present on your machine. CI uploads the HTML report as a workflow artefact on every run.

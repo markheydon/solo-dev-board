@@ -1,0 +1,33 @@
+name: GitHub Actions validate
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/**
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/**
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-actions-validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  github-actions-validate:
+    name: GitHub Actions validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Run actionlint
+        uses: rhysd/actionlint@v1.7.12

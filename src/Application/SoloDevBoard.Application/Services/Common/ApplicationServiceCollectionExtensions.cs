@@ -36,6 +36,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IPmProjectBoardDiscoveryService, PmProjectBoardDiscoveryService>();
         services.AddScoped<IDailyFocusBoardStateService, DailyFocusBoardStateService>();
         services.TryAddSingleton(TimeProvider.System);
+        services.AddScoped<IDailyFocusRecommendationService, DailyFocusRecommendationService>();
 
         return services;
     }

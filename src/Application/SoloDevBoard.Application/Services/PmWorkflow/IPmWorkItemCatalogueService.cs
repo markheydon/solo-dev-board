@@ -6,6 +6,8 @@ public interface IPmWorkItemCatalogueService
     /// <summary>
     /// Builds the PM work-item catalogue for all active repositories that are not excluded in PM settings.
     /// Partial per-repository failures are returned alongside successfully loaded items.
+    /// GitHub 404 and 410 responses for issues or pull requests on a listed repository are treated as
+    /// empty lists, not failures.
     /// </summary>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>The catalogue items and any repository-level failures.</returns>

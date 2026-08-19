@@ -5,7 +5,7 @@ weight: 110
 guideStatus: Partially Available
 ---
 
-> ⚠️ **Partial delivery** — Daily Focus occupancy, stalled Up Next alerts, and Repo Management are available in the app under **PM Workflow**. Backlog Review, Iteration Planning, stalled review pull requests, and Daily Focus recommendations are not shipped yet. This guide remains a draft until all four tabs match the wireframe; only the sections below describe current behaviour.
+> ⚠️ **Partial delivery** — Daily Focus board occupancy, top-three recommendations, stalled Up Next alerts, and Repo Management are available in the app under **PM Workflow**. Backlog Review, Iteration Planning, and stalled review pull requests are not shipped yet. This guide remains a draft until all four tabs match the wireframe; only the sections below describe current behaviour.
 
 ---
 
@@ -16,13 +16,13 @@ The Cross-Repo PM Workflow brings a structured, two-mode operating system into S
 The system is built around two modes of operation:
 
 - **PM Mode** (weekly or fortnightly) — Active curation: review your backlog across all repositories, resolve stalled work, and populate your project board with a realistic set of committed items for the next few days.
-- **Work Mode** (daily) — Execution: the project board is the single pane of glass. Open it, pick the next item, and get things done. Daily Focus currently shows board occupancy, active load, and stalled Up Next items so you can start the day without opening GitHub.
+- **Work Mode** (daily) — Execution: the project board is the single pane of glass. Open it, pick the next item, and get things done. Daily Focus currently shows occupancy and active load for the selected planning board, stalled Up Next items, and the top three unblocked items from all included repositories, so you can start the day without opening GitHub.
 
 ### What is available now
 
 | Tab | Route | Status |
 |-----|-------|--------|
-| **Daily Focus** | `/pm-workflow/daily-focus` | **Partial** — Status occupancy chips, active load, and stalled Up Next. Recommendations are still planned. |
+| **Daily Focus** | `/pm-workflow/daily-focus` | **Partial** — Status occupancy chips, active load, stalled Up Next, and top-three recommendations. |
 | Backlog | `/pm-workflow/backlog` | Placeholder — story [#277](https://github.com/markheydon/solo-dev-board/issues/277). |
 | Planning | `/pm-workflow/planning` | Placeholder — story [#283](https://github.com/markheydon/solo-dev-board/issues/283). |
 | **Repos** | `/pm-workflow/repos` | **Available** — planning board selection, thresholds, and repository exclusions. |
@@ -33,7 +33,7 @@ Open **PM Workflow** from the Home card or the navigation drawer. The hub redire
 
 ## Daily Focus (partial)
 
-Daily Focus is a read-only morning snapshot of the selected planning board. It answers how busy the board is today and whether any Up Next items have stalled.
+Daily Focus is a read-only morning snapshot. Occupancy and active load describe the selected planning board. Stalled Up Next items surface when the stall threshold is reached. **Recommended today** lists the top three unblocked items from all included repositories, not only cards on that board.
 
 ### Accessing
 
@@ -49,7 +49,7 @@ Shared chrome on every PM Workflow tab includes:
 
 If GitHub reports linked project boards that cannot be read with your current sign-in (common for private user-owned boards under GitHub App sign-in), a warning appears at the top of the page. See [plan/GITHUB_PROJECTS_V2_ACCESS.md](https://github.com/markheydon/solo-dev-board/blob/main/plan/GITHUB_PROJECTS_V2_ACCESS.md) in the repository.
 
-Until a board is selected, an informational alert points at the **Planning board** dropdown. Occupancy and stalled Up Next items load as soon as you open Daily Focus when a board is already stored, or as soon as you choose one. Use the **Repos** tab to edit exclusions and thresholds.
+Until a board is selected, an informational alert points at the **Planning board** dropdown. Occupancy, stalled Up Next items, and recommendations load as soon as you open Daily Focus when a board is already stored, or as soon as you choose one. Use the **Repos** tab to edit exclusions and thresholds.
 
 A progress bar at the top of the page shows while planning boards are discovered. Switching tabs does not restart that load.
 
@@ -65,11 +65,24 @@ Age prefers Status-changed-at. When that timestamp is missing, Daily Focus uses 
 
 If no Up Next items meet the threshold, the stalled section still appears with a short none-stalled sentence.
 
-Board occupancy counts mapped **Issue** and **Pull Request** cards on the selected board. Notes, draft issues, and redacted items are omitted. Repository exclusions do not change occupancy or stalled Up Next counts; they will apply to recommendations when that panel ships.
+Board occupancy counts mapped **Issue** and **Pull Request** cards on the selected board. Notes, draft issues, and redacted items are omitted. Repository exclusions do not change occupancy or stalled Up Next counts; they do apply to the recommended-today list.
 
-If the catalogue cannot be loaded, an error alert includes **Retry**. An empty board still lists Status chips at zero and explains that there are no items.
+If the occupancy catalogue cannot be loaded, an error alert includes **Retry**. An empty board still lists Status chips at zero and explains that there are no items.
 
-> **Scope note** — Stalled review pull requests and the top-three recommended list are tracked on stories [#274](https://github.com/markheydon/solo-dev-board/issues/274) and [#276](https://github.com/markheydon/solo-dev-board/issues/276) and are not shown yet.
+### Recommended today (all included repositories)
+
+After a board is selected, Daily Focus also lists up to three unblocked work items from all included repositories, not only cards on that board:
+
+1. Items labelled `status/blocked` or `status/ice-box` are omitted.
+2. Items whose board Status is **Blocked**, **Ice Box**, or **In Progress** are omitted.
+3. Remaining items are ranked `priority/critical`, then `priority/high`, `priority/medium`, `priority/low`, then unlabelled, and then by most recently updated.
+4. Each row shows rank, a priority chip, an `owner/name#number` link that opens GitHub in a new tab, and the title.
+
+Excluded repositories (see [Repo Management](#manage-repository-participation)) are omitted from this list. Items already in **Up Next** can still appear so you know what is queued.
+
+If no unblocked items remain, an informational alert explains that there is nothing to recommend today. If every included repository fails to load, a separate error alert includes **Retry** rather than an empty list. If some repositories fail but others succeed, Daily Focus still ranks the remaining items and shows a warning with **Retry**. Occupancy can still show on its own while recommendations continue to load. GitHub 404 or 410 responses for issues or pull requests on a repository that is already in the catalogue (for example a profile README repository whose `/pulls` endpoint is not found) are treated as no items, not as a load failure.
+
+> **Scope note** — Stalled review pull requests are tracked on story [#276](https://github.com/markheydon/solo-dev-board/issues/276) and are not shown yet.
 
 ---
 
@@ -92,7 +105,7 @@ The same shared chrome described under Daily Focus appears on this tab.
 
 Until a board is selected, an informational alert explains that other tabs need a board. You can still edit Repo Management settings below.
 
-Board occupancy on Daily Focus counts mapped Issue and Pull Request cards. Recommendations, backlog queries, and planning candidates will honour repository exclusions.
+Board occupancy on Daily Focus counts mapped Issue and Pull Request cards. Recommendations, backlog queries, and planning candidates honour repository exclusions.
 
 ### Set planning thresholds
 
@@ -140,10 +153,11 @@ The following sections describe the full v1.1.0 feature set. They are **not** av
 
 ### Daily Focus (remaining)
 
-A quick morning summary that will also answer "what should I work on right now?":
+A quick morning summary that will also answer stalled-work questions:
 
 - Stalled PR reviews: pull requests in review for three or more days that need a merge, close, or return-to-progress decision.
-- Top three recommended work items, ranked by priority across included repositories.
+
+Top three recommended work items already appear on Daily Focus, ranked by priority across included repositories.
 
 ### Backlog Review
 
