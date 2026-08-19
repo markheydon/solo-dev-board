@@ -21,7 +21,18 @@ public sealed class PmWorkflowDailyFocusTests
     private readonly IRepositoryService _repositoryService = Substitute.For<IRepositoryService>();
     private readonly IPmProjectBoardDiscoveryService _projectBoardDiscoveryService = Substitute.For<IPmProjectBoardDiscoveryService>();
     private readonly IDailyFocusBoardStateService _boardStateService = Substitute.For<IDailyFocusBoardStateService>();
+    private readonly IDailyFocusStalledReviewService _stalledReviewService = Substitute.For<IDailyFocusStalledReviewService>();
     private readonly FakePmSettingsStorage _settingsStorage = new();
+
+    public PmWorkflowDailyFocusTests()
+    {
+        _stalledReviewService.GetStalledReviewPullRequestsAsync(
+                Arg.Any<string>(),
+                Arg.Any<int>(),
+                Arg.Any<IReadOnlyList<string>>(),
+                Arg.Any<CancellationToken>())
+            .Returns(new DailyFocusStalledReviewSnapshotDto([], UsedInReviewColumn: false));
+    }
 
     [Fact]
     public void PmWorkflowLayout_UsesMainLayoutAsParent()
@@ -155,6 +166,45 @@ public sealed class PmWorkflowDailyFocusTests
     }
 
     [Fact]
+    public async Task PmWorkflowDailyFocus_WhenStalledReviewPullRequestsExist_ShowsRepoNumberAgeAndLink()
+    {
+        ConfigureDefaults();
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>())
+            .Returns(new DailyFocusBoardStateDto(
+                [new DailyFocusOccupancyChipDto("In Review", 1)],
+                ActiveLoad: 0,
+                Capacity: 8,
+                ItemCount: 1));
+        _stalledReviewService.GetStalledReviewPullRequestsAsync(
+                "PVT_board",
+                3,
+                Arg.Any<IReadOnlyList<string>>(),
+                Arg.Any<CancellationToken>())
+            .Returns(new DailyFocusStalledReviewSnapshotDto(
+                [
+                    new DailyFocusStalledReviewPullRequestDto(
+                        "owner/repo",
+                        12,
+                        5,
+                        "https://github.com/owner/repo/pull/12",
+                        "Stalled review"),
+                ],
+                UsedInReviewColumn: true));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("PRs awaiting review 3+ days", cut.Markup);
+            Assert.Contains("owner/repo#12", cut.Markup);
+            Assert.Contains("(5d)", cut.Markup);
+            Assert.Contains("https://github.com/owner/repo/pull/12", cut.Markup);
+            Assert.Contains(">Open<", cut.Markup);
+        });
+    }
+
+    [Fact]
     public async Task PmWorkflowDailyFocus_WhenLinkedBoardsAreInaccessible_ShowsWarning()
     {
         ConfigureDefaults();
@@ -284,6 +334,7 @@ public sealed class PmWorkflowDailyFocusTests
         ctx.Services.AddScoped(_ => _repositoryService);
         ctx.Services.AddScoped(_ => _projectBoardDiscoveryService);
         ctx.Services.AddScoped(_ => _boardStateService);
+        ctx.Services.AddScoped(_ => _stalledReviewService);
         ctx.Services.AddScoped<PmWorkflowChromeCoordinator>();
         ctx.Services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
 

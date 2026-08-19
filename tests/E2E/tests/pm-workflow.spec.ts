@@ -38,6 +38,13 @@ test.describe('PM Workflow', () => {
     if (await occupancyError.isVisible()) {
       await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
       await expect(occupancyError).toContainText('Unable to load board occupancy');
+      return;
+    }
+
+    if (await occupancyRegion.isVisible()) {
+      const stalledRegion = page.getByTestId('pm-workflow-daily-focus-stalled-reviews');
+      const stalledError = page.getByTestId('pm-workflow-daily-focus-stalled-reviews-error');
+      await expect(stalledRegion.or(stalledError).first()).toBeVisible();
     }
   });
 

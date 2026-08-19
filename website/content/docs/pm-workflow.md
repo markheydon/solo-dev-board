@@ -5,7 +5,7 @@ weight: 110
 guideStatus: Partially Available
 ---
 
-> ⚠️ **Partial delivery** — Daily Focus board occupancy and Repo Management are available in the app under **PM Workflow**. Backlog Review, Iteration Planning, and Daily Focus stall/recommendation panels are not shipped yet. This guide remains a draft until all four tabs match the wireframe; only the sections below describe current behaviour.
+> ⚠️ **Partial delivery** — Daily Focus board occupancy, stalled review pull requests, and Repo Management are available in the app under **PM Workflow**. Backlog Review, Iteration Planning, stalled Up Next items, and ranked recommendations are not shipped yet. This guide remains a draft until all four tabs match the wireframe; only the sections below describe current behaviour.
 
 ---
 
@@ -16,13 +16,13 @@ The Cross-Repo PM Workflow brings a structured, two-mode operating system into S
 The system is built around two modes of operation:
 
 - **PM Mode** (weekly or fortnightly) — Active curation: review your backlog across all repositories, resolve stalled work, and populate your project board with a realistic set of committed items for the next few days.
-- **Work Mode** (daily) — Execution: the project board is the single pane of glass. Open it, pick the next item, and get things done. Daily Focus currently shows board occupancy and active load so you can start the day without opening GitHub.
+- **Work Mode** (daily) — Execution: the project board is the single pane of glass. Open it, pick the next item, and get things done. Daily Focus currently shows board occupancy, active load, and pull requests that have been waiting on review for three or more days.
 
 ### What is available now
 
 | Tab | Route | Status |
 |-----|-------|--------|
-| **Daily Focus** | `/pm-workflow/daily-focus` | **Partial** — Status occupancy chips and active load. Stalled items and recommendations are still planned. |
+| **Daily Focus** | `/pm-workflow/daily-focus` | **Partial** — Status occupancy chips, active load, and pull requests awaiting review for three or more days. Stalled Up Next items and recommendations are still planned. |
 | Backlog | `/pm-workflow/backlog` | Placeholder — story [#277](https://github.com/markheydon/solo-dev-board/issues/277). |
 | Planning | `/pm-workflow/planning` | Placeholder — story [#283](https://github.com/markheydon/solo-dev-board/issues/283). |
 | **Repos** | `/pm-workflow/repos` | **Available** — planning board selection, thresholds, and repository exclusions. |
@@ -33,7 +33,7 @@ Open **PM Workflow** from the Home card or the navigation drawer. The hub redire
 
 ## Daily Focus (partial)
 
-Daily Focus is a read-only morning snapshot of the selected planning board. It answers how busy the board is today; stall clocks and ranked recommendations will follow in later stories.
+Daily Focus is a read-only morning snapshot of the selected planning board. It answers how busy the board is today and which pull requests have been waiting on review for too long. Stalled Up Next items and ranked recommendations will follow in later stories.
 
 ### Accessing
 
@@ -60,11 +60,24 @@ After a board is selected, Daily Focus shows:
 - **Status chips** — one chip per Status option discovered on that board (including empty columns), with the item count. Option identifiers are not hard-coded to any one GitHub project.
 - **Active load** — `Up Next` plus `In Progress` item counts over the persisted **Capacity limit** (default 8).
 
-Board occupancy counts mapped **Issue** and **Pull Request** cards on the selected board. Notes, draft issues, and redacted items are omitted. Repository exclusions do not change these counts; they will apply to recommendations when that panel ships.
+Board occupancy counts mapped **Issue** and **Pull Request** cards on the selected board. Notes, draft issues, and redacted items are omitted. Repository exclusions do not change occupancy counts; they do apply to stalled review pull requests.
 
 If the catalogue cannot be loaded, an error alert includes **Retry**. An empty board still lists Status chips at zero and explains that there are no items.
 
-> **Scope note** — Stalled Up Next items, stalled review pull requests, and the top-three recommended list are tracked on stories [#274](https://github.com/markheydon/solo-dev-board/issues/274)–[#276](https://github.com/markheydon/solo-dev-board/issues/276) and are not shown yet.
+### Stalled review pull requests
+
+After a board is selected, Daily Focus also lists pull requests that have been waiting on review for the configured **Stall days** threshold (default 3, inclusive).
+
+Detection uses two modes:
+
+1. **Board column** — if the selected board has an **In Review** Status, or a clearly equivalent name such as **Waiting on review** or **Code Review**, SoloDevBoard uses time in that column (Status-changed time when GitHub provides it).
+2. **Pending review fallback** — if there is no such column, it uses open, non-draft pull requests with a pending review (`REVIEW_REQUIRED` or requested reviewers) that are at least the stall threshold old.
+
+Each row shows the repository (`owner/name`), pull request number, age in days, and an **Open** link to GitHub. Excluded repositories are omitted from this list.
+
+If no pull requests meet the threshold, an informational alert says so. If the list cannot be loaded, an error alert includes **Retry**.
+
+> **Scope note** — Stalled Up Next items and the top-three recommended list are tracked on stories [#274](https://github.com/markheydon/solo-dev-board/issues/274) and [#275](https://github.com/markheydon/solo-dev-board/issues/275) and are not shown yet.
 
 ---
 
@@ -87,7 +100,7 @@ The same shared chrome described under Daily Focus appears on this tab.
 
 Until a board is selected, an informational alert explains that other tabs need a board. You can still edit Repo Management settings below.
 
-Board occupancy on Daily Focus counts mapped Issue and Pull Request cards. Recommendations, backlog queries, and planning candidates will honour repository exclusions.
+Board occupancy on Daily Focus counts mapped Issue and Pull Request cards. Stalled review pull requests honour repository exclusions. Recommendations, backlog queries, and planning candidates will also honour exclusions when those panels ship.
 
 ### Set planning thresholds
 
@@ -96,7 +109,7 @@ Under **Planning thresholds**:
 | Field | Default | Purpose |
 |-------|---------|---------|
 | **Capacity limit** | 8 | Denominator for Daily Focus active load, and the planned ceiling for Planning warnings. |
-| **Stall days** | 3 | Days before an Up Next item is treated as stalled. |
+| **Stall days** | 3 | Days before Daily Focus treats a pull request as stalled awaiting review. |
 | **Neglect days** | 14 | Days before a repository is treated as neglected in backlog views. |
 
 1. Adjust the numeric fields.
@@ -106,7 +119,7 @@ Under **Planning thresholds**:
 
 The **Repository participation** section shows how many repositories are included and excluded. Every active repository participates in PM queries by default. Archived repositories are never offered.
 
-Excluded repositories are omitted from Daily Focus recommendations, Backlog Review, and Planning candidates.
+Excluded repositories are omitted from Daily Focus stalled review pull requests and, when they ship, recommendations, Backlog Review, and Planning candidates.
 
 **Included repositories** lists active `owner/name` values that currently participate:
 
@@ -137,9 +150,9 @@ The following sections describe the full v1.1.0 feature set. They are **not** av
 
 A quick morning summary that will also answer "what should I work on right now?":
 
-- Stalled items: anything in your Up Next column for three or more days.
-- Stalled PR reviews: pull requests in review for three or more days that need a merge, close, or return-to-progress decision.
-- Top three recommended work items, ranked by priority across included repositories.
+- Stalled items: anything in your Up Next column for three or more days (not shipped yet).
+- Stalled PR reviews: shipped on Daily Focus as described above.
+- Top three recommended work items, ranked by priority across included repositories (not shipped yet).
 
 ### Backlog Review
 
@@ -174,7 +187,7 @@ Persisted fields:
 | Planning board node id | GitHub GraphQL node id for the selected Projects v2 board. |
 | Excluded repositories | `owner/name` values omitted from PM queries. |
 | Capacity limit | Active load ceiling for planning (default 8). |
-| Stall days | Up Next stall threshold (default 3). |
+| Stall days | Review pull request stall threshold on Daily Focus (default 3). |
 | Neglect days | Repository neglect threshold (default 14). |
 
 Clearing site data for SoloDevBoard resets PM settings to defaults. Settings do not sync across browsers or devices.

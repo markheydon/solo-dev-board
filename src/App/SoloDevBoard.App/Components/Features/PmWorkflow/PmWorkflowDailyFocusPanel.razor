@@ -4,8 +4,8 @@
 <MudStack Spacing="3" data-testid="pm-workflow-daily-focus-page">
     <MudText Typo="Typo.h5">Daily Focus</MudText>
     <MudText Typo="Typo.body1">
-        Morning board occupancy and active load for the selected planning board.
-        Stalled items and recommended work will appear here in later stories.
+        Morning board occupancy, active load, and pull requests awaiting review for three or more days.
+        Stalled Up Next items and recommended work will appear here in later stories.
     </MudText>
 
     @if (ChromeState is null)
@@ -80,6 +80,57 @@
                         <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" data-testid="pm-workflow-daily-focus-empty-board">
                             This planning board has no items.
                         </MudAlert>
+                    }
+                </MudStack>
+            </MudPaper>
+        }
+
+        @if (isLoadingStalledReviews)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="Loading stalled review pull requests" />
+        }
+
+        @if (!string.IsNullOrWhiteSpace(stalledReviewsErrorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" data-testid="pm-workflow-daily-focus-stalled-reviews-error">
+                @stalledReviewsErrorMessage
+                <MudButton Variant="Variant.Text"
+                           OnClick="RetryLoadStalledReviewsAsync"
+                           data-testid="pm-workflow-daily-focus-stalled-reviews-retry">Retry</MudButton>
+            </MudAlert>
+        }
+        else if (!isLoadingStalledReviews && stalledReviews is not null)
+        {
+            <MudPaper Class="pa-4" Elevation="1" data-testid="pm-workflow-daily-focus-stalled-reviews">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.h6">Stalled</MudText>
+                    <MudText Typo="Typo.subtitle2">
+                        PRs awaiting review @stallDaysThreshold+ days
+                    </MudText>
+                    @if (stalledReviews.Items.Count == 0)
+                    {
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" data-testid="pm-workflow-daily-focus-stalled-reviews-empty">
+                            No pull requests have been awaiting review for @stallDaysThreshold or more days.
+                        </MudAlert>
+                    }
+                    else
+                    {
+                        <MudList T="DailyFocusStalledReviewPullRequestDto" data-testid="pm-workflow-daily-focus-stalled-reviews-list">
+                            @foreach (var pullRequest in stalledReviews.Items)
+                            {
+                                <MudListItem T="DailyFocusStalledReviewPullRequestDto" data-testid="pm-workflow-stalled-review-row">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
+                                        <MudText Typo="Typo.body1">
+                                            @pullRequest.RepositoryFullName#@pullRequest.Number
+                                        </MudText>
+                                        <MudText Typo="Typo.body2">@($"({pullRequest.AgeDays}d)")</MudText>
+                                        <MudLink Href="@pullRequest.HtmlUrl"
+                                                 Target="_blank"
+                                                 rel="noopener noreferrer">Open</MudLink>
+                                    </MudStack>
+                                </MudListItem>
+                            }
+                        </MudList>
                     }
                 </MudStack>
             </MudPaper>
