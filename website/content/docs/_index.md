@@ -12,7 +12,7 @@ Guides for using SoloDevBoard in the app. Developer and operator material (local
 
 ## Coming later
 
-- Cross-Repo PM Workflow — full PM Mode and Work Mode across four tabs (user guide remains `draft: true`; **Repo Management** is available in the app under **PM Workflow** in the drawer).
+- Cross-Repo PM Workflow — Daily Focus occupancy and Repo Management are in the app; the user guide remains `draft: true` until Backlog and Planning ship.
 
 ## Related repository docs
 

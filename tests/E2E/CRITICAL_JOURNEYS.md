@@ -24,7 +24,7 @@ For data-driven journeys against a real GitHub account, run the PAT suite locall
 | Journey | Spec | What CI validates |
 |---------|------|-------------------|
 | Health endpoint responds before browser tests run | `smoke.spec.ts` | `GET /health` returns `Healthy`. |
-| Home dashboard renders and lists all feature entry points | `navigation.spec.ts`, `smoke.spec.ts` | Title, navigation shell, and all seven feature cards. |
+| Home dashboard renders and lists all feature entry points | `navigation.spec.ts`, `smoke.spec.ts` | Title, navigation shell, and all eight feature cards. |
 | Drawer navigation reaches every primary feature route | `navigation.spec.ts` | URL and page title for each route in `fixtures/navigation.ts`. |
 | Appearance theme control cycles modes and persists preference | `appearance.spec.ts` | Automatic → Light → Dark cycle and browser storage persistence per [Appearance](../../website/content/docs/appearance.md). |
 | About page shows deployment metadata | `about.spec.ts` | Version, auth mode, and repository link from the shell menu. |
@@ -43,7 +43,7 @@ For data-driven journeys against a real GitHub account, run the PAT suite locall
 | Label Manager taxonomy tabs and empty repository state | `labels.spec.ts` | Tab strip, disabled actions, and no-repositories message. |
 | Workflow template browse, filter, and select | `workflows.spec.ts` | Built-in templates load; repository selector shows error. |
 | Triage not-started region without repositories | `triage.spec.ts` | Shell heading and no-repositories alert. |
-| PM Workflow Repo Management shell | `pm-workflow.spec.ts` | Shared chrome, Repos tab content or chrome error with retry. |
+| PM Workflow Daily Focus and Repo Management shells | `pm-workflow.spec.ts` | Shared chrome, Daily Focus occupancy or empty/error copy, Repos tab content or chrome error with retry. |
 
 ### Tier 3 — Out of CI scope (manual or future)
 

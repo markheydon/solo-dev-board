@@ -127,7 +127,7 @@ public partial class PmWorkflowShell : ComponentBase
         "backlog" => 1,
         "planning" => 2,
         "repos" => 3,
-        _ => 3,
+        _ => 0,
     };
 
     private Task OnTabIndexChangedAsync(int index)

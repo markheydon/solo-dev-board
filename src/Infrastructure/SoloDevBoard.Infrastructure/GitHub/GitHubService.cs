@@ -616,10 +616,11 @@ public sealed class GitHubService : IGitHubService
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(projectId);
 
-        const string query = "query ProjectBoardItemCatalogue($projectId: ID!, $after: String) { node(id: $projectId) { ... on ProjectV2 { fields(first: 50) { nodes { ... on ProjectV2SingleSelectField { id name } ... on ProjectV2Field { id name dataType } } } items(first: 100, after: $after, archivedStates: [NOT_ARCHIVED]) { pageInfo { hasNextPage endCursor } nodes { id updatedAt content { __typename ... on Issue { number title url repository { name owner { login } } } ... on PullRequest { number title url repository { name owner { login } } } } status: fieldValueByName(name: \"Status\") { ... on ProjectV2ItemFieldSingleSelectValue { optionId name updatedAt } } focusOrder: fieldValueByName(name: \"Focus Order\") { ... on ProjectV2ItemFieldNumberValue { number } } } } } } }";
+        const string query = "query ProjectBoardItemCatalogue($projectId: ID!, $after: String) { node(id: $projectId) { ... on ProjectV2 { fields(first: 50) { nodes { ... on ProjectV2SingleSelectField { id name options { id name } } ... on ProjectV2Field { id name dataType } } } items(first: 100, after: $after, archivedStates: [NOT_ARCHIVED]) { pageInfo { hasNextPage endCursor } nodes { id updatedAt content { __typename ... on Issue { number title url repository { name owner { login } } } ... on PullRequest { number title url repository { name owner { login } } } } status: fieldValueByName(name: \"Status\") { ... on ProjectV2ItemFieldSingleSelectValue { optionId name updatedAt } } focusOrder: fieldValueByName(name: \"Focus Order\") { ... on ProjectV2ItemFieldNumberValue { number } } } } } } }";
 
         var client = CreateAuthenticatedClient();
         var fieldIds = new ProjectBoardFieldIds();
+        IReadOnlyList<ProjectBoardStatusOption> statusOptions = [];
         var items = new List<ProjectBoardItem>();
         string? after = null;
         var hasNextPage = true;
@@ -645,6 +646,7 @@ public sealed class GitHubService : IGitHubService
                     throw CreateInvalidResponseException("GraphQL response did not contain a supported Status field.", "/graphql");
                 }
 
+                statusOptions = ToProjectBoardStatusOptions(node?.Fields?.Nodes ?? []);
                 fieldIdsResolved = true;
             }
 
@@ -668,6 +670,7 @@ public sealed class GitHubService : IGitHubService
         return new ProjectBoardItemCatalogue
         {
             FieldIds = fieldIds,
+            StatusOptions = statusOptions,
             Items = items,
         };
     }
@@ -1108,6 +1111,32 @@ public sealed class GitHubService : IGitHubService
             StatusFieldId = statusField?.Id ?? string.Empty,
             FocusOrderFieldId = string.IsNullOrWhiteSpace(focusOrderField?.Id) ? null : focusOrderField.Id,
         };
+    }
+
+    /// <summary>Maps Status single-select options from catalogue field nodes.</summary>
+    /// <param name="fields">Field nodes returned by the item catalogue query.</param>
+    /// <returns>Status options in board-defined order.</returns>
+    private static IReadOnlyList<ProjectBoardStatusOption> ToProjectBoardStatusOptions(
+        IReadOnlyList<ProjectBoardCatalogueFieldDto> fields)
+    {
+        var statusField = fields.FirstOrDefault(field =>
+            !string.IsNullOrWhiteSpace(field.Id)
+            && field.Name.Equals("Status", StringComparison.OrdinalIgnoreCase));
+
+        if (statusField is null)
+        {
+            return [];
+        }
+
+        return statusField.Options
+            .Where(static option =>
+                !string.IsNullOrWhiteSpace(option.Id) && !string.IsNullOrWhiteSpace(option.Name))
+            .Select(static option => new ProjectBoardStatusOption
+            {
+                OptionId = option.Id,
+                Name = option.Name,
+            })
+            .ToArray();
     }
 
     private static ProjectBoardItem? ToProjectBoardItemDomain(ProjectBoardItemNodeDto? node)
@@ -1856,6 +1885,9 @@ public sealed class GitHubService : IGitHubService
 
         [JsonPropertyName("dataType")]
         public string DataType { get; init; } = string.Empty;
+
+        [JsonPropertyName("options")]
+        public IReadOnlyList<ProjectBoardSingleSelectOptionDto> Options { get; init; } = [];
     }
 
     /// <summary>DTO for paginated project board items.</summary>
