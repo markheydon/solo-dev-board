@@ -150,6 +150,8 @@ A formal migration to GitHub Spec Kit is planned — see [`plan/SPEC_KIT_MIGRATI
 **Constitution:** [AGENTS.md — Infrastructure](../AGENTS.md#infrastructure)  
 **Summary:** Production deploys via `aspire deploy` from AppHost to Azure Container Apps. Aspire generates deployment Bicep at deploy time. Reject hand-authored `infra/*.bicep` for production hosting (supersedes legacy ADR-0003).
 
+**Clarification (2026-08-19):** The AppHost opts into the Aspire CLI bundle (`AspireUseCliBundle=true`). Dashboard and DCP orchestration binaries come from the Aspire CLI (or the SDK-paired `Aspire.Cli` via `dnx` when no CLI is on `PATH`). Pin the CLI to the same version as `Aspire.AppHost.Sdk` (`13.5.0` today). Reject suppressing `ASPIRE010` while staying on NuGet-restored orchestration.
+
 ---
 
 ### DEC-016: Formalised testing standard — xUnit v3, NSubstitute, Playwright E2E

@@ -12,7 +12,7 @@ Before you begin, ensure you have the following installed:
 |---|---|---|
 | [.NET SDK](https://dotnet.microsoft.com/download/dotnet/10.0) | 10.0 or later | Required to build and run the application |
 | Git | Any recent version | Required to clone the repository |
-| Aspire CLI | Latest | Required for local orchestration via AppHost |
+| Aspire CLI | 13.5.0 (match `Aspire.AppHost.Sdk`) | Required for local orchestration via AppHost; install with `curl -sSL https://aspire.dev/install.sh \| bash -s -- --version 13.5.0` or `dotnet tool install -g Aspire.Cli --version 13.5.0` |
 | A GitHub account | — | Required for GitHub API access |
 | A GitHub Personal Access Token (PAT) **or** GitHub App | — | Required for API authentication (see below) |
 
