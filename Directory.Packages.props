@@ -9,10 +9,10 @@
   <!-- UI -->
   <ItemGroup>
     <PackageVersion Include="AngleSharp" Version="1.7.1" />
-    <PackageVersion Include="Aspire.Hosting.Azure.AppContainers" Version="13.4.6" />
-    <PackageVersion Include="Aspire.Hosting.Azure.ContainerRegistry" Version="13.4.6" />
-    <PackageVersion Include="Aspire.Hosting.Azure.ApplicationInsights" Version="13.4.6" />
-    <PackageVersion Include="Aspire.Hosting.Azure.KeyVault" Version="13.4.6" />
+    <PackageVersion Include="Aspire.Hosting.Azure.AppContainers" Version="13.5.0" />
+    <PackageVersion Include="Aspire.Hosting.Azure.ContainerRegistry" Version="13.5.0" />
+    <PackageVersion Include="Aspire.Hosting.Azure.ApplicationInsights" Version="13.5.0" />
+    <PackageVersion Include="Aspire.Hosting.Azure.KeyVault" Version="13.5.0" />
     <PackageVersion Include="Azure.Monitor.OpenTelemetry.AspNetCore" Version="1.6.0" />
     <PackageVersion Include="MessagePack" Version="3.1.8" />
     <PackageVersion Include="MudBlazor" Version="9.8.0" />

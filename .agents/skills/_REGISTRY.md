@@ -40,7 +40,7 @@ Skills not listed as active or optional companion should be removed from `.agent
 SoloDevBoard defines specialised role contracts for PM workflows. These orchestrate skills and enforce quality gates.
 
 - `pm-orchestrator`: GitHub Issues / Project #8 selection → scope validation → technical planning (breakdown-plan) → GitHub issue setup
-- `delivery`: Implementation preflight → code → tests → docs → decision log (if needed) → PR review comment loop
+- `delivery`: Implementation preflight → Aspire runtime (logs, resource rebuild) → code → tests → docs → decision log (if needed) → PR review comment loop
 - `verify`: Quality validation (clean rebuild, package hygiene) → PR creation → issue closure → release impact assessment
 
 **Role contracts:** `.agents/contracts/*.md`  

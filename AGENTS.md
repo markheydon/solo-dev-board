@@ -225,6 +225,8 @@ The **`.agents/`** directory holds agent-agnostic AI collaboration artefacts —
 
 Canonical skills live in [`.agents/skills/`](.agents/skills/). See [`.agents/skills/_REGISTRY.md`](.agents/skills/_REGISTRY.md) for the active set, optional companions, and default workflow order.
 
+This repository is a **.NET Aspire** distributed application (`src/SoloDevBoard.AppHost`). Delivery, implement, and live-debug work **must** load the `aspire` skill (then `aspire-orchestration` and `aspire-monitoring` as needed). Do not load every skill up front for PM-only work.
+
 ### Execution gates
 
 1. Do not start coding before planning and issue creation are complete.
@@ -240,7 +242,7 @@ Canonical skills live in [`.agents/skills/`](.agents/skills/). See [`.agents/ski
 - **Contracts:** [`.agents/contracts/`](.agents/contracts/) (role boundaries)
 - **Tool mirrors:** [`.github/prompts/`](.github/prompts/) and [`.cursor/commands/`](.cursor/commands/) — thin pointers only; never duplicate workflow content
 
-Consult the workflow or contract index when entering a PM or delivery mode. Do not load every skill up front.
+Consult the workflow or contract index when entering a PM or delivery mode. Do not load every skill up front for PM-only work. Delivery must still load Aspire skills as above.
 
 ---
 

@@ -2,6 +2,7 @@
 
 **Contract:** [`.agents/contracts/delivery.md`](../contracts/delivery.md) (PR review comment loop section)
 **Runbook:** [`plan/PM_RUNBOOK.md`](../../plan/PM_RUNBOOK.md) — PR Review Comment Loop
+**Skills (required when the AppHost is running):** `aspire`, `aspire-orchestration`, `aspire-monitoring`
 
 ## Easy-to-miss specifics
 
@@ -18,6 +19,7 @@
 - Post one final summary issue comment on the pull request once all addressed threads are handled.
 - This path is exempt from the Delivery Testing Phase (commit and push without waiting for manual test acceptance).
 - Re-run scoped tests after fixes; push to the existing PR branch.
+- If Aspire is running after those fixes, `aspire resource app rebuild` then `aspire wait app`. On exceptions, use `aspire otel logs app` and `aspire logs app`.
 
 ## Invocation
 

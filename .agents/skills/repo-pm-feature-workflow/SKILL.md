@@ -20,7 +20,7 @@ Run a deterministic feature workflow so the user can act as product manager whil
 5. Create or update GitHub issues with `repo-github-issues` (use `repo-github-gh-cli` for bulk changes), then sync each issue to the project board with `repo-github-project` skill.
 6. Trigger quality planning with `breakdown-test`.
 7. Run implementation preflight (load context, codebase discovery, sketch). For `size/l+` or enablers, consider standalone `preflight-issue` first.
-8. Implement using repository standards (`dotnet-best-practices`, and `mudblazor` for UI work), with MudBlazor components and utility classes preferred over custom CSS or raw HTML.
+8. Implement using repository standards (`aspire` plus `dotnet-best-practices`, and `mudblazor` for UI work), with MudBlazor components and utility classes preferred over custom CSS or raw HTML. Rebuild the live Aspire `app` resource after C# or Razor fixes; inspect Aspire logs on exceptions.
 9. Record architectural decisions via `repo-decision-log` when introduced.
 10. Update user-facing documentation and index links.
 11. Verify completion gates and then close issue states.
