@@ -42,20 +42,22 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
 
         var boardId = ChromeState.Settings.PlanningBoardNodeId!;
         var capacity = ChromeState.Settings.Capacity;
-        if (TryApplyCachedBoardState(boardId, capacity))
+        var stallDays = ChromeState.Settings.StallDays;
+        if (TryApplyCachedBoardState(boardId, capacity, stallDays))
         {
             return;
         }
 
-        await LoadBoardStateAsync(boardId, capacity).ConfigureAwait(false);
+        await LoadBoardStateAsync(boardId, capacity, stallDays).ConfigureAwait(false);
     }
 
-    private bool TryApplyCachedBoardState(string boardId, int capacity)
+    private bool TryApplyCachedBoardState(string boardId, int capacity, int stallDays)
     {
         var cached = ChromeCoordinator.DailyFocusBoardState;
         if (cached is null
             || !cached.BoardId.Equals(boardId, StringComparison.Ordinal)
-            || cached.Capacity != capacity)
+            || cached.Capacity != capacity
+            || cached.StallDays != stallDays)
         {
             return false;
         }
@@ -74,12 +76,15 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
         }
 
         ChromeCoordinator.ClearDailyFocusBoardState();
-        return LoadBoardStateAsync(ChromeState.Settings.PlanningBoardNodeId, ChromeState.Settings.Capacity);
+        return LoadBoardStateAsync(
+            ChromeState.Settings.PlanningBoardNodeId,
+            ChromeState.Settings.Capacity,
+            ChromeState.Settings.StallDays);
     }
 
-    private async Task LoadBoardStateAsync(string boardId, int capacity)
+    private async Task LoadBoardStateAsync(string boardId, int capacity, int stallDays)
     {
-        if (TryApplyCachedBoardState(boardId, capacity))
+        if (TryApplyCachedBoardState(boardId, capacity, stallDays))
         {
             return;
         }
@@ -87,19 +92,21 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
         isLoadingBoardState = true;
         loadErrorMessage = null;
         boardState = null;
-        ChromeCoordinator.SetDailyFocusBoardState(boardId, capacity, null, null, isLoading: true);
+        ChromeCoordinator.SetDailyFocusBoardState(boardId, capacity, stallDays, null, null, isLoading: true);
 
         try
         {
-            boardState = await BoardStateService.GetBoardStateAsync(boardId, capacity).ConfigureAwait(false);
-            ChromeCoordinator.SetDailyFocusBoardState(boardId, capacity, boardState, null, isLoading: false);
+            boardState = await BoardStateService
+                .GetBoardStateAsync(boardId, capacity, stallDays)
+                .ConfigureAwait(false);
+            ChromeCoordinator.SetDailyFocusBoardState(boardId, capacity, stallDays, boardState, null, isLoading: false);
         }
         catch (Exception exception)
         {
             Logger.LogError(exception, "Failed to load Daily Focus board occupancy.");
             boardState = null;
             loadErrorMessage = "Unable to load board occupancy. Check your GitHub connection and try again.";
-            ChromeCoordinator.SetDailyFocusBoardState(boardId, capacity, null, loadErrorMessage, isLoading: false);
+            ChromeCoordinator.SetDailyFocusBoardState(boardId, capacity, stallDays, null, loadErrorMessage, isLoading: false);
         }
         finally
         {

@@ -5,6 +5,8 @@ namespace SoloDevBoard.Application.Tests;
 /// <summary>Tests for <see cref="DailyFocusBoardStateMapper"/>.</summary>
 public sealed class DailyFocusBoardStateMapperTests
 {
+    private static readonly DateTimeOffset UtcNow = new(2026, 8, 19, 12, 0, 0, TimeSpan.Zero);
+
     [Fact]
     public void Map_DiscoveredStatusOptions_IncludesEmptyColumnsInBoardOrder()
     {
@@ -29,7 +31,7 @@ public sealed class DailyFocusBoardStateMapperTests
             CreateItem("opt-waiting", "Waiting on review"),
         };
 
-        var result = DailyFocusBoardStateMapper.Map(statusOptions, items, capacity: 8);
+        var result = Map(statusOptions, items, capacity: 8);
 
         Assert.Equal(7, result.Occupancy.Count);
         Assert.Equal("Todo", result.Occupancy[0].StatusName);
@@ -47,6 +49,7 @@ public sealed class DailyFocusBoardStateMapperTests
         Assert.Equal("Waiting on review", result.Occupancy[6].StatusName);
         Assert.Equal(1, result.Occupancy[6].Count);
         Assert.Equal(6, result.ItemCount);
+        Assert.Empty(result.StalledUpNextItems);
     }
 
     [Fact]
@@ -70,7 +73,7 @@ public sealed class DailyFocusBoardStateMapperTests
             CreateItem("opt-todo", "Todo"),
         };
 
-        var result = DailyFocusBoardStateMapper.Map(statusOptions, items, capacity: 8);
+        var result = Map(statusOptions, items, capacity: 8);
 
         Assert.Equal(6, result.ActiveLoad);
         Assert.Equal(8, result.Capacity);
@@ -79,11 +82,12 @@ public sealed class DailyFocusBoardStateMapperTests
     [Fact]
     public void Map_CapacityLessThanOne_UsesDefaultCapacity()
     {
-        var result = DailyFocusBoardStateMapper.Map([], [], capacity: 0);
+        var result = Map([], [], capacity: 0);
 
         Assert.Equal(0, result.ActiveLoad);
         Assert.Equal(PmSettingsDefaults.Capacity, result.Capacity);
         Assert.Empty(result.Occupancy);
+        Assert.Equal(PmSettingsDefaults.StallDays, result.StallDays);
     }
 
     [Fact]
@@ -100,7 +104,7 @@ public sealed class DailyFocusBoardStateMapperTests
             CreateItem(null, null),
         };
 
-        var result = DailyFocusBoardStateMapper.Map(statusOptions, items, capacity: 8);
+        var result = Map(statusOptions, items, capacity: 8);
 
         Assert.Equal(2, result.Occupancy.Count);
         Assert.Equal("Todo", result.Occupancy[0].StatusName);
@@ -120,7 +124,7 @@ public sealed class DailyFocusBoardStateMapperTests
             CreateItem("opt-parked", "Parked"),
         };
 
-        var result = DailyFocusBoardStateMapper.Map([], items, capacity: 5);
+        var result = Map([], items, capacity: 5);
 
         Assert.Equal(2, result.Occupancy.Count);
         Assert.Equal("Ready", result.Occupancy[0].StatusName);
@@ -132,10 +136,104 @@ public sealed class DailyFocusBoardStateMapperTests
     }
 
     [Fact]
+    public void Map_UpNextItemAgedTwoDays_IsNotStalled()
+    {
+        var items = new[]
+        {
+            CreateItem(
+                "opt-up-next",
+                "Up Next",
+                activityTimestamp: UtcNow.AddDays(-2),
+                title: "Day two item"),
+        };
+
+        var result = Map(UpNextOptions(), items, capacity: 8);
+
+        Assert.Empty(result.StalledUpNextItems);
+    }
+
+    [Fact]
+    public void Map_UpNextItemAgedExactlyThreeDays_IsStalled()
+    {
+        var items = new[]
+        {
+            CreateItem(
+                "opt-up-next",
+                "Up Next",
+                activityTimestamp: UtcNow.AddDays(-3),
+                title: "Day three item"),
+        };
+
+        var result = Map(UpNextOptions(), items, capacity: 8);
+
+        var stalled = Assert.Single(result.StalledUpNextItems);
+        Assert.Equal("Day three item", stalled.Title);
+        Assert.Equal(3, stalled.AgeInDays);
+        Assert.False(stalled.UsedUpdatedAtFallback);
+        Assert.Equal(PmSettingsDefaults.StallDays, result.StallDays);
+    }
+
+    [Fact]
+    public void Map_UpNextItemJustUnderThreeDays_IsNotStalled()
+    {
+        var items = new[]
+        {
+            CreateItem(
+                "opt-up-next",
+                "Up Next",
+                activityTimestamp: UtcNow.AddDays(-3).AddHours(1),
+                title: "Just under three days"),
+        };
+
+        var result = Map(UpNextOptions(), items, capacity: 8);
+
+        Assert.Empty(result.StalledUpNextItems);
+    }
+
+    [Fact]
+    public void Map_ConfigurableStallDays_UsesInclusiveThreshold()
+    {
+        var items = new[]
+        {
+            CreateItem("opt-up-next", "Up Next", UtcNow.AddDays(-4), title: "Four days"),
+            CreateItem("opt-up-next", "Up Next", UtcNow.AddDays(-5), title: "Five days"),
+            CreateItem("opt-todo", "Todo", UtcNow.AddDays(-10), title: "Todo aged"),
+        };
+
+        var result = Map(UpNextOptions(), items, capacity: 8, stallDays: 5);
+
+        var stalled = Assert.Single(result.StalledUpNextItems);
+        Assert.Equal("Five days", stalled.Title);
+        Assert.Equal(5, stalled.AgeInDays);
+        Assert.Equal(5, result.StallDays);
+    }
+
+    [Fact]
+    public void Map_StalledItemWithUpdatedAtFallback_SetsFallbackFlag()
+    {
+        var items = new[]
+        {
+            CreateItem(
+                "opt-up-next",
+                "Up Next",
+                UtcNow.AddDays(-4),
+                usedFallback: true,
+                title: "Fallback item",
+                url: "https://github.com/owner/repo/issues/42"),
+        };
+
+        var result = Map(UpNextOptions(), items, capacity: 8);
+
+        var stalled = Assert.Single(result.StalledUpNextItems);
+        Assert.True(stalled.UsedUpdatedAtFallback);
+        Assert.Equal("https://github.com/owner/repo/issues/42", stalled.Url);
+    }
+
+    [Fact]
     public void Map_NullArguments_ThrowsArgumentNullException()
     {
-        Assert.Throws<ArgumentNullException>(() => DailyFocusBoardStateMapper.Map(null!, [], 8));
-        Assert.Throws<ArgumentNullException>(() => DailyFocusBoardStateMapper.Map([], null!, 8));
+        Assert.Throws<ArgumentNullException>(() => Map(null!, [], capacity: 8));
+        Assert.Throws<ArgumentNullException>(() => Map([], null!, capacity: 8));
     }
 
     [Theory]
@@ -149,7 +247,35 @@ public sealed class DailyFocusBoardStateMapperTests
         Assert.Equal(expected, DailyFocusBoardStateMapper.IsActiveLoadStatus(statusName));
     }
 
-    private static ProjectBoardItemDto CreateItem(string? optionId, string? statusName)
+    [Theory]
+    [InlineData(-2, 2)]
+    [InlineData(-3, 3)]
+    [InlineData(1, 0)]
+    public void GetAgeInDays_Elapsed_ExpectedWholeDays(int daysFromNow, int expectedAge)
+    {
+        Assert.Equal(expectedAge, DailyFocusBoardStateMapper.GetAgeInDays(UtcNow.AddDays(daysFromNow), UtcNow));
+    }
+
+    private static DailyFocusBoardStateDto Map(
+        IReadOnlyList<ProjectBoardStatusOptionDto> statusOptions,
+        IReadOnlyList<ProjectBoardItemDto> items,
+        int capacity,
+        int stallDays = PmSettingsDefaults.StallDays) =>
+        DailyFocusBoardStateMapper.Map(statusOptions, items, capacity, stallDays, UtcNow);
+
+    private static IReadOnlyList<ProjectBoardStatusOptionDto> UpNextOptions() =>
+    [
+        new ProjectBoardStatusOptionDto("opt-up-next", "Up Next"),
+        new ProjectBoardStatusOptionDto("opt-todo", "Todo"),
+    ];
+
+    private static ProjectBoardItemDto CreateItem(
+        string? optionId,
+        string? statusName,
+        DateTimeOffset? activityTimestamp = null,
+        bool usedFallback = false,
+        string title = "Title",
+        string url = "https://github.com/owner/repo/issues/1")
     {
         var status = optionId is null || statusName is null
             ? null
@@ -164,8 +290,9 @@ public sealed class DailyFocusBoardStateMapperTests
                 1,
                 "owner",
                 "repo",
-                "Title",
-                "https://github.com/owner/repo/issues/1"),
-            DateTimeOffset.UnixEpoch);
+                title,
+                url),
+            activityTimestamp ?? UtcNow,
+            usedFallback);
     }
 }

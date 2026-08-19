@@ -20,4 +20,10 @@ public sealed record ProjectBoardItem
     /// Prefer the Status field-updated time when available; otherwise fall back to the item <c>updatedAt</c> value.
     /// </summary>
     public DateTimeOffset ActivityTimestamp { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether <see cref="ActivityTimestamp"/> used the item <c>updatedAt</c>
+    /// (or Unix epoch) because Status-changed-at was unavailable.
+    /// </summary>
+    public bool UsedItemUpdatedAtFallback { get; init; }
 }

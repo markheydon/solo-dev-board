@@ -60,7 +60,7 @@ public sealed class PmWorkflowDailyFocusTests
     public async Task PmWorkflowDailyFocus_WhenBoardHasItems_ShowsOccupancyAndActiveLoad()
     {
         ConfigureDefaults();
-        _boardStateService.GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>())
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>())
             .Returns(new DailyFocusBoardStateDto(
                 [
                     new DailyFocusOccupancyChipDto("Todo", 2),
@@ -69,7 +69,9 @@ public sealed class PmWorkflowDailyFocusTests
                 ],
                 ActiveLoad: 6,
                 Capacity: 8,
-                ItemCount: 8));
+                ItemCount: 8,
+                StalledUpNextItems: [],
+                StallDays: 3));
 
         await using var ctx = CreateContext();
         var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
@@ -80,6 +82,69 @@ public sealed class PmWorkflowDailyFocusTests
             Assert.Contains("Up Next 4", cut.Markup);
             Assert.Contains("In Progress 2", cut.Markup);
             Assert.Contains("Active load: 6 / 8 (Up Next + In Progress)", cut.Markup);
+            Assert.Contains("No Up Next items have been stalled for 3 or more days.", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task PmWorkflowDailyFocus_WhenUpNextItemsAreStalled_ShowsTitleAgeAndGitHubLink()
+    {
+        ConfigureDefaults();
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>())
+            .Returns(new DailyFocusBoardStateDto(
+                [new DailyFocusOccupancyChipDto("Up Next", 1)],
+                ActiveLoad: 1,
+                Capacity: 8,
+                ItemCount: 1,
+                StalledUpNextItems:
+                [
+                    new DailyFocusStalledItemDto(
+                        "Stalled story",
+                        4,
+                        "https://github.com/owner/repo/issues/42",
+                        UsedUpdatedAtFallback: false),
+                ],
+                StallDays: 3));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Stalled story", cut.Markup);
+            Assert.Contains("(4d)", cut.Markup);
+            Assert.Contains("https://github.com/owner/repo/issues/42", cut.Markup);
+            Assert.DoesNotContain("Status-changed-at was not available", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task PmWorkflowDailyFocus_WhenStallUsesUpdatedAtFallback_ShowsFootnote()
+    {
+        ConfigureDefaults();
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>())
+            .Returns(new DailyFocusBoardStateDto(
+                [new DailyFocusOccupancyChipDto("Up Next", 1)],
+                ActiveLoad: 1,
+                Capacity: 8,
+                ItemCount: 1,
+                StalledUpNextItems:
+                [
+                    new DailyFocusStalledItemDto(
+                        "Fallback stall",
+                        5,
+                        "https://github.com/owner/repo/issues/7",
+                        UsedUpdatedAtFallback: true),
+                ],
+                StallDays: 3));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Fallback stall", cut.Markup);
+            Assert.Contains("Age uses the item last-updated time because Status-changed-at was not available.", cut.Markup);
         });
     }
 
@@ -87,12 +152,14 @@ public sealed class PmWorkflowDailyFocusTests
     public async Task PmWorkflowDailyFocus_WhenBoardHasNoItems_ShowsEmptyAlert()
     {
         ConfigureDefaults();
-        _boardStateService.GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>())
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>())
             .Returns(new DailyFocusBoardStateDto(
                 [new DailyFocusOccupancyChipDto("Todo", 0)],
                 ActiveLoad: 0,
                 Capacity: 8,
-                ItemCount: 0));
+                ItemCount: 0,
+                StalledUpNextItems: [],
+                StallDays: 3));
 
         await using var ctx = CreateContext();
         var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
@@ -108,7 +175,7 @@ public sealed class PmWorkflowDailyFocusTests
     public async Task PmWorkflowDailyFocus_WhenCatalogueFails_ShowsErrorWithRetry()
     {
         ConfigureDefaults();
-        _boardStateService.GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>())
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>())
             .ThrowsAsync(new InvalidOperationException("GitHub unavailable"));
 
         await using var ctx = CreateContext();
@@ -122,21 +189,23 @@ public sealed class PmWorkflowDailyFocusTests
 
         cut.Render();
 
-        await _boardStateService.Received(1).GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>());
+        await _boardStateService.Received(1).GetBoardStateAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task PmWorkflowDailyFocus_WhenRetryClickedAfterCatalogueFailure_ReloadsBoardState()
     {
         ConfigureDefaults();
-        _boardStateService.GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>())
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>())
             .Returns(
                 _ => throw new InvalidOperationException("GitHub unavailable"),
                 _ => new DailyFocusBoardStateDto(
                     [new DailyFocusOccupancyChipDto("Todo", 1)],
                     ActiveLoad: 0,
                     Capacity: 8,
-                    ItemCount: 1));
+                    ItemCount: 1,
+                    StalledUpNextItems: [],
+                    StallDays: 3));
 
         await using var ctx = CreateContext();
         var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
@@ -151,7 +220,7 @@ public sealed class PmWorkflowDailyFocusTests
             Assert.Contains("Active load: 0 / 8", cut.Markup);
         });
 
-        await _boardStateService.Received(2).GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>());
+        await _boardStateService.Received(2).GetBoardStateAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -165,8 +234,8 @@ public sealed class PmWorkflowDailyFocusTests
                 [new PmPlanningBoardOptionDto("PVT_board", "Roadmap", "owner", "status-field")],
                 2,
                 1));
-        _boardStateService.GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>())
-            .Returns(new DailyFocusBoardStateDto([], 0, 8, 0));
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>())
+            .Returns(new DailyFocusBoardStateDto([], 0, 8, 0, [], 3));
 
         await using var ctx = CreateContext();
         var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
@@ -218,12 +287,14 @@ public sealed class PmWorkflowDailyFocusTests
                 [new PmPlanningBoardOptionDto("PVT_board", "Roadmap", "owner", "status-field")],
                 1,
                 0));
-        _boardStateService.GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>())
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>())
             .Returns(new DailyFocusBoardStateDto(
                 [new DailyFocusOccupancyChipDto("Todo", 1)],
                 ActiveLoad: 0,
                 Capacity: 8,
-                ItemCount: 1));
+                ItemCount: 1,
+                StalledUpNextItems: [],
+                StallDays: 3));
 
         await using var ctx = CreateContext();
         ctx.Services.GetRequiredService<NavigationManager>().NavigateTo("/pm-workflow/daily-focus");
@@ -242,12 +313,14 @@ public sealed class PmWorkflowDailyFocusTests
     public async Task PmWorkflowTabSwitch_WhenChromeAlreadyLoaded_DoesNotFetchRepositoriesAgain()
     {
         ConfigureDefaults();
-        _boardStateService.GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>())
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>())
             .Returns(new DailyFocusBoardStateDto(
                 [new DailyFocusOccupancyChipDto("Todo", 1)],
                 ActiveLoad: 0,
                 Capacity: 8,
-                ItemCount: 1));
+                ItemCount: 1,
+                StalledUpNextItems: [],
+                StallDays: 3));
 
         await using var ctx = CreateContext();
         var dailyFocus = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();

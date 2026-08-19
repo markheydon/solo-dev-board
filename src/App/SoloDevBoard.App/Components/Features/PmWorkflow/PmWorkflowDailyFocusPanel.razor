@@ -4,8 +4,8 @@
 <MudStack Spacing="3" data-testid="pm-workflow-daily-focus-page">
     <MudText Typo="Typo.h5">Daily Focus</MudText>
     <MudText Typo="Typo.body1">
-        Morning board occupancy and active load for the selected planning board.
-        Stalled items and recommended work will appear here in later stories.
+        Morning board occupancy, active load, and stalled Up Next items for the selected planning board.
+        Recommended work will appear here in a later story.
     </MudText>
 
     @if (ChromeState is null)
@@ -74,6 +74,46 @@
                     <MudText Typo="Typo.body1" aria-live="polite" data-testid="pm-workflow-active-load">
                         Active load: @boardState.ActiveLoad / @boardState.Capacity (Up Next + In Progress)
                     </MudText>
+
+                    <MudStack Spacing="2" data-testid="pm-workflow-daily-focus-stalled">
+                        <MudText Typo="Typo.h6">Stalled</MudText>
+                        <MudText Typo="Typo.body2">Up Next @boardState.StallDays+ days</MudText>
+                        @if (boardState.StalledUpNextItems.Count == 0)
+                        {
+                            <MudText Typo="Typo.body2" data-testid="pm-workflow-daily-focus-none-stalled">
+                                No Up Next items have been stalled for @boardState.StallDays or more days.
+                            </MudText>
+                        }
+                        else
+                        {
+                            <MudStack Spacing="1" aria-live="polite">
+                                @foreach (var stalled in boardState.StalledUpNextItems)
+                                {
+                                    <MudStack Row="true"
+                                              Wrap="Wrap.Wrap"
+                                              AlignItems="AlignItems.Center"
+                                              Spacing="2"
+                                              data-testid="pm-workflow-stalled-row">
+                                        <MudText Typo="Typo.body1">@stalled.Title</MudText>
+                                        <MudText Typo="Typo.body2">@($"({stalled.AgeInDays}d)")</MudText>
+                                        <MudLink Href="@stalled.Url"
+                                                 Target="_blank"
+                                                 rel="noopener noreferrer"
+                                                 data-testid="pm-workflow-stalled-github-link">
+                                            Open
+                                        </MudLink>
+                                    </MudStack>
+                                }
+                            </MudStack>
+                        }
+
+                        @if (boardState.StalledUpNextItems.Any(static item => item.UsedUpdatedAtFallback))
+                        {
+                            <MudText Typo="Typo.caption" data-testid="pm-workflow-stalled-footnote">
+                                Age uses the item last-updated time because Status-changed-at was not available.
+                            </MudText>
+                        }
+                    </MudStack>
 
                     @if (boardState.ItemCount == 0 && boardState.Occupancy.Count > 0)
                     {

@@ -34,6 +34,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IPmWorkItemCatalogueService, PmWorkItemCatalogueService>();
         services.AddScoped<IPmProjectBoardDiscoveryService, PmProjectBoardDiscoveryService>();
         services.AddScoped<IDailyFocusBoardStateService, DailyFocusBoardStateService>();
+        services.AddSingleton(TimeProvider.System);
 
         return services;
     }
