@@ -132,8 +132,8 @@ public sealed class PmWorkItemCatalogueService(
         }
         catch (HttpRequestException exception) when (IsAbsentGitHubResource(exception.StatusCode))
         {
+            // Do not attach the exception. Aspire surfaces exception payloads as errors even at Warning level.
             logger.LogWarning(
-                exception,
                 "Treating issues for {RepositoryFullName} as empty because the GitHub API returned {StatusCode}.",
                 $"{owner}/{repoName}",
                 exception.StatusCode);
@@ -163,8 +163,8 @@ public sealed class PmWorkItemCatalogueService(
         }
         catch (HttpRequestException exception) when (IsAbsentGitHubResource(exception.StatusCode))
         {
+            // Do not attach the exception. Aspire surfaces exception payloads as errors even at Warning level.
             logger.LogWarning(
-                exception,
                 "Treating pull requests for {RepositoryFullName} as empty because the GitHub API returned {StatusCode}.",
                 $"{owner}/{repoName}",
                 exception.StatusCode);

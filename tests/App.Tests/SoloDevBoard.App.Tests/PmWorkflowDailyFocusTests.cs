@@ -284,7 +284,7 @@ public sealed class PmWorkflowDailyFocusTests
         {
             Assert.Contains("Todo 1", cut.Markup);
             Assert.Contains("Active load: 0 / 8", cut.Markup);
-            Assert.DoesNotContain("Recommended today", cut.Markup);
+            Assert.DoesNotContain("Recommended today (all included repositories)", cut.Markup);
             Assert.DoesNotContain("No unblocked work items to recommend today.", cut.Markup);
             Assert.Contains("Loading Daily Focus recommendations", cut.Markup);
         });
