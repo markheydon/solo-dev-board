@@ -7,6 +7,10 @@ public interface IProjectItemCatalogueService
     /// <param name="projectId">The GitHub Project v2 node identifier.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>The project board item catalogue.</returns>
+    /// <remarks>
+    /// Implementations may cache a successful catalogue for the current DI scope so occupancy and recommendation
+    /// ranking share one Projects v2 round-trip. Failed loads must not be cached.
+    /// </remarks>
     Task<ProjectBoardItemCatalogueDto> GetCatalogueAsync(string projectId, CancellationToken cancellationToken = default);
 
     /// <summary>Sets the Focus Order number on a project board item.</summary>

@@ -36,8 +36,23 @@ public sealed class DailyFocusRecommendationService : IDailyFocusRecommendationS
         var boardCatalogueTask = _projectItemCatalogueService.GetCatalogueAsync(projectId, cancellationToken);
         await Task.WhenAll(workItemsTask, boardCatalogueTask).ConfigureAwait(false);
 
-        return DailyFocusRecommendationMapper.SelectTopThree(
-            workItemsTask.Result.Items,
-            boardCatalogueTask.Result.Items);
+        var workItems = await workItemsTask.ConfigureAwait(false);
+        var boardCatalogue = await boardCatalogueTask.ConfigureAwait(false);
+
+        if (workItems.Failures.Count > 0)
+        {
+            throw CreateCatalogueFailureException(workItems.Failures);
+        }
+
+        return DailyFocusRecommendationMapper.SelectTopThree(workItems.Items, boardCatalogue.Items);
+    }
+
+    private static InvalidOperationException CreateCatalogueFailureException(
+        IReadOnlyList<PmRepositoryCatalogueFailureDto> failures)
+    {
+        var repositories = string.Join(", ", failures.Select(static failure => failure.RepositoryFullName));
+        var noun = failures.Count == 1 ? "repository" : "repositories";
+        return new InvalidOperationException(
+            $"Unable to load recommended work because {failures.Count} {noun} failed to load: {repositories}.");
     }
 }

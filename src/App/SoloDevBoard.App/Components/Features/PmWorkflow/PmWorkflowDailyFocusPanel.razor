@@ -25,14 +25,14 @@
     else if (!ChromeState.HasPlanningBoardSelected)
     {
         <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" data-testid="pm-workflow-daily-focus-no-board">
-            Select a planning board in the dropdown above to load Daily Focus occupancy.
+            Select a planning board in the dropdown above to load Daily Focus occupancy and recommendations.
         </MudAlert>
     }
     else
     {
         @if (isLoadingBoardState || isLoadingRecommendations)
         {
-            <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="Loading Daily Focus board state" />
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="@DailyFocusLoadingAriaLabel" />
         }
 
         @if (!string.IsNullOrWhiteSpace(loadErrorMessage))

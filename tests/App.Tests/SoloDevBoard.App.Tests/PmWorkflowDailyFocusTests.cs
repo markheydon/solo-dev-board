@@ -53,7 +53,7 @@ public sealed class PmWorkflowDailyFocusTests
         cut.WaitForAssertion(() =>
         {
             Assert.Contains("Daily Focus", cut.Markup);
-            Assert.Contains("Select a planning board in the dropdown above to load Daily Focus occupancy.", cut.Markup);
+            Assert.Contains("Select a planning board in the dropdown above to load Daily Focus occupancy and recommendations.", cut.Markup);
         });
     }
 
@@ -202,7 +202,7 @@ public sealed class PmWorkflowDailyFocusTests
 
         cut.WaitForAssertion(() =>
         {
-            Assert.Contains("Select a planning board in the dropdown above to load Daily Focus occupancy.", cut.Markup);
+            Assert.Contains("Select a planning board in the dropdown above to load Daily Focus occupancy and recommendations.", cut.Markup);
         });
     }
 
@@ -258,6 +258,53 @@ public sealed class PmWorkflowDailyFocusTests
         ctx.RenderPmWorkflowPage<PmWorkflowRepos>();
 
         await _repositoryService.Received(1).GetActiveRepositoriesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task PmWorkflowDailyFocus_WhenOccupancyReturnsFirst_ShowsOccupancyBeforeRecommendations()
+    {
+        ConfigureDefaults();
+        var occupancyReady = new TaskCompletionSource<DailyFocusBoardStateDto>();
+        var recommendationsReady = new TaskCompletionSource<IReadOnlyList<DailyFocusRecommendationDto>>();
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, Arg.Any<CancellationToken>())
+            .Returns(_ => occupancyReady.Task);
+        _recommendationService.GetRecommendationsAsync("PVT_board", Arg.Any<CancellationToken>())
+            .Returns(_ => recommendationsReady.Task);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
+
+        occupancyReady.SetResult(new DailyFocusBoardStateDto(
+            [new DailyFocusOccupancyChipDto("Todo", 1)],
+            ActiveLoad: 0,
+            Capacity: 8,
+            ItemCount: 1));
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Todo 1", cut.Markup);
+            Assert.Contains("Active load: 0 / 8", cut.Markup);
+            Assert.DoesNotContain("Recommended today", cut.Markup);
+            Assert.DoesNotContain("No unblocked work items to recommend today.", cut.Markup);
+            Assert.Contains("Loading Daily Focus recommendations", cut.Markup);
+        });
+
+        recommendationsReady.SetResult([
+            new DailyFocusRecommendationDto(
+                1,
+                "owner/repo-a",
+                40,
+                "Ship Daily Focus",
+                "https://github.com/owner/repo-a/issues/40",
+                "priority/high"),
+        ]);
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Recommended today", cut.Markup);
+            Assert.Contains("owner/repo-a#40", cut.Markup);
+            Assert.Contains("Todo 1", cut.Markup);
+        });
     }
 
     [Fact]

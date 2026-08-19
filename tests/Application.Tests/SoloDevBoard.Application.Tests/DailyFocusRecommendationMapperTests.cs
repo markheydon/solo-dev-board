@@ -130,11 +130,28 @@ public sealed class DailyFocusRecommendationMapperTests
     }
 
     [Fact]
-    public void SelectTopThree_FewerThanThreeEligible_ReturnsAllEligible()
+    public void SelectTopThree_NoEligibleItems_ReturnsEmpty()
     {
         var result = DailyFocusRecommendationMapper.SelectTopThree([], []);
 
         Assert.Empty(result);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    public void SelectTopThree_FewerThanThreeEligible_ReturnsAllEligible(int eligibleCount)
+    {
+        var updated = DateTimeOffset.Parse("2026-08-18T00:00:00Z");
+        var workItems = Enumerable.Range(1, eligibleCount)
+            .Select(number => CreateWorkItem("owner/a", number, $"Item {number}", ["priority/high"], updated))
+            .ToArray();
+
+        var result = DailyFocusRecommendationMapper.SelectTopThree(workItems, []);
+
+        Assert.Equal(eligibleCount, result.Count);
+        Assert.Equal(Enumerable.Range(1, eligibleCount).ToArray(), result.Select(item => item.Number).ToArray());
+        Assert.Equal(Enumerable.Range(1, eligibleCount).ToArray(), result.Select(item => item.Rank).ToArray());
     }
 
     [Fact]

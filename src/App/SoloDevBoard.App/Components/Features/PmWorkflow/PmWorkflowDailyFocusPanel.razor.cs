@@ -32,11 +32,11 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
     private string? recommendationsErrorMessage;
 
     /// <inheritdoc/>
-    protected override async Task OnParametersSetAsync()
+    protected override Task OnParametersSetAsync()
     {
         if (ChromeState is null || ChromeState.IsLoading)
         {
-            return;
+            return Task.CompletedTask;
         }
 
         if (!ChromeState.HasPlanningBoardSelected)
@@ -45,7 +45,7 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
             recommendations = null;
             loadErrorMessage = null;
             recommendationsErrorMessage = null;
-            return;
+            return Task.CompletedTask;
         }
 
         var boardId = ChromeState.Settings.PlanningBoardNodeId!;
@@ -53,14 +53,17 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
         var boardCached = TryApplyCachedBoardState(boardId, capacity);
         var recommendationsCached = TryApplyCachedRecommendations(boardId);
 
-        var loadBoard = boardCached
-            ? Task.CompletedTask
-            : LoadBoardStateAsync(boardId, capacity);
-        var loadRecommendations = recommendationsCached
-            ? Task.CompletedTask
-            : LoadRecommendationsAsync(boardId);
+        if (!boardCached)
+        {
+            _ = LoadBoardStateAsync(boardId, capacity);
+        }
 
-        await Task.WhenAll(loadBoard, loadRecommendations).ConfigureAwait(false);
+        if (!recommendationsCached)
+        {
+            _ = LoadRecommendationsAsync(boardId);
+        }
+
+        return Task.CompletedTask;
     }
 
     private bool TryApplyCachedBoardState(string boardId, int capacity)
@@ -144,6 +147,7 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
         finally
         {
             isLoadingBoardState = false;
+            await InvokeAsync(StateHasChanged).ConfigureAwait(false);
         }
     }
 
@@ -179,6 +183,25 @@ public partial class PmWorkflowDailyFocusPanel : ComponentBase
         finally
         {
             isLoadingRecommendations = false;
+            await InvokeAsync(StateHasChanged).ConfigureAwait(false);
+        }
+    }
+
+    private string DailyFocusLoadingAriaLabel
+    {
+        get
+        {
+            if (isLoadingBoardState && isLoadingRecommendations)
+            {
+                return "Loading Daily Focus occupancy and recommendations";
+            }
+
+            if (isLoadingBoardState)
+            {
+                return "Loading Daily Focus occupancy";
+            }
+
+            return "Loading Daily Focus recommendations";
         }
     }
 

@@ -105,4 +105,73 @@ public sealed class DailyFocusRecommendationServiceTests
         await _workItemCatalogueService.Received(1).GetCatalogueAsync(cancellationToken);
         await _projectItemCatalogueService.Received(1).GetCatalogueAsync("PVT_board", cancellationToken);
     }
+
+    [Fact]
+    public async Task GetRecommendationsAsync_CatalogueHasFailuresAndNoItems_ThrowsInvalidOperationException()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        _workItemCatalogueService.GetCatalogueAsync(cancellationToken)
+            .Returns(new PmWorkItemCatalogueResultDto(
+                [],
+                [new PmRepositoryCatalogueFailureDto("owner/repo-a", "GitHub unavailable", 500)]));
+        _projectItemCatalogueService.GetCatalogueAsync("PVT_board", cancellationToken)
+            .Returns(new ProjectBoardItemCatalogueDto(
+                new ProjectBoardFieldIdsDto("PVTF_status", null),
+                [],
+                []));
+
+        var sut = new DailyFocusRecommendationService(_workItemCatalogueService, _projectItemCatalogueService);
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            sut.GetRecommendationsAsync("PVT_board", cancellationToken));
+
+        Assert.Contains("owner/repo-a", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("1 repository failed", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetRecommendationsAsync_CatalogueHasPartialFailures_ThrowsInvalidOperationException()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var updated = DateTimeOffset.Parse("2026-08-18T00:00:00Z");
+        var workItems = new[]
+        {
+            new PmWorkItemDto(
+                PmWorkItemTypeDto.Issue,
+                40,
+                "Do this",
+                "https://github.com/owner/repo/issues/40",
+                "owner/repo",
+                ["priority/high"],
+                null,
+                null,
+                updated,
+                updated,
+                null,
+                null,
+                null,
+                null),
+        };
+
+        _workItemCatalogueService.GetCatalogueAsync(cancellationToken)
+            .Returns(new PmWorkItemCatalogueResultDto(
+                workItems,
+                [
+                    new PmRepositoryCatalogueFailureDto("owner/repo-b", "Not found", 404),
+                    new PmRepositoryCatalogueFailureDto("owner/repo-c", "Forbidden", 403),
+                ]));
+        _projectItemCatalogueService.GetCatalogueAsync("PVT_board", cancellationToken)
+            .Returns(new ProjectBoardItemCatalogueDto(
+                new ProjectBoardFieldIdsDto("PVTF_status", null),
+                [],
+                []));
+
+        var sut = new DailyFocusRecommendationService(_workItemCatalogueService, _projectItemCatalogueService);
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            sut.GetRecommendationsAsync("PVT_board", cancellationToken));
+
+        Assert.Contains("2 repositories failed", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("owner/repo-b", exception.Message, StringComparison.Ordinal);
+    }
 }
