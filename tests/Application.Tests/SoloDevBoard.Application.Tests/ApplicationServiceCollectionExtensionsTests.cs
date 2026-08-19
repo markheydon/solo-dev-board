@@ -50,6 +50,7 @@ public sealed class ApplicationServiceCollectionExtensionsTests
         AssertServiceRegistration<IProjectItemCatalogueService, ProjectItemCatalogueService>(services, ServiceLifetime.Scoped);
         AssertServiceRegistration<IPmWorkItemCatalogueService, PmWorkItemCatalogueService>(services, ServiceLifetime.Scoped);
         AssertServiceRegistration<IPmProjectBoardDiscoveryService, PmProjectBoardDiscoveryService>(services, ServiceLifetime.Scoped);
+        AssertServiceRegistration<IDailyFocusBoardStateService, DailyFocusBoardStateService>(services, ServiceLifetime.Scoped);
     }
 
     private static void AssertServiceRegistration<TService, TImplementation>(

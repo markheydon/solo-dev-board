@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using MudBlazor;
 using MudBlazor.Services;
 using NSubstitute;
+using SoloDevBoard.App.Components.Features.PmWorkflow;
 using SoloDevBoard.App.Components.Features.PmWorkflow.Pages;
 using SoloDevBoard.Application.Services.PmWorkflow;
 using SoloDevBoard.Application.Services.Repositories;
@@ -30,7 +31,7 @@ public sealed class PmWorkflowReposTests
             new PmProjectBoardDiscoveryDto([], 0, 0));
 
         await using var ctx = CreateContext();
-        var cut = ctx.Render<PmWorkflowRepos>();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowRepos>();
 
         cut.WaitForAssertion(() =>
         {
@@ -46,7 +47,7 @@ public sealed class PmWorkflowReposTests
         _settingsStorage.StoredJson = """{"capacity":12,"stallDays":5,"neglectDays":21,"excludedRepositories":[]}""";
 
         await using var ctx = CreateContext();
-        var cut = ctx.Render<PmWorkflowRepos>();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowRepos>();
 
         cut.WaitForAssertion(() =>
         {
@@ -88,7 +89,7 @@ public sealed class PmWorkflowReposTests
         ConfigureDefaults();
 
         await using var ctx = CreateContext();
-        var firstRender = ctx.Render<PmWorkflowRepos>();
+        var firstRender = ctx.RenderPmWorkflowPage<PmWorkflowRepos>();
 
         firstRender.WaitForAssertion(() => Assert.Contains("Repository participation", firstRender.Markup));
 
@@ -106,7 +107,7 @@ public sealed class PmWorkflowReposTests
         });
 
         await using var reloadContext = CreateContext();
-        var secondRender = reloadContext.Render<PmWorkflowRepos>();
+        var secondRender = reloadContext.RenderPmWorkflowPage<PmWorkflowRepos>();
 
         secondRender.WaitForAssertion(() =>
         {
@@ -141,6 +142,7 @@ public sealed class PmWorkflowReposTests
         ctx.Services.AddScoped<IPmSettingsService, PmSettingsService>();
         ctx.Services.AddScoped(_ => _repositoryService);
         ctx.Services.AddScoped(_ => _projectBoardDiscoveryService);
+        ctx.Services.AddScoped<PmWorkflowChromeCoordinator>();
         ctx.Services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
 
         ctx.Render<MudPopoverProvider>();

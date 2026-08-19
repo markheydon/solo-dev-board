@@ -37,6 +37,10 @@ public sealed class ProjectItemCatalogueServiceTests
                 StatusFieldId = "PVTF_status",
                 FocusOrderFieldId = "PVTF_focus",
             },
+            StatusOptions = [
+                new ProjectBoardStatusOption { OptionId = "option-up-next", Name = "Up Next" },
+                new ProjectBoardStatusOption { OptionId = "option-todo", Name = "Todo" },
+            ],
             Items = [
                 new ProjectBoardItem
                 {
@@ -72,6 +76,9 @@ public sealed class ProjectItemCatalogueServiceTests
         Assert.Single(result.Items);
         Assert.Equal("PVTI_item", result.Items[0].ProjectItemId);
         Assert.Equal("Up Next", result.Items[0].Status?.Name);
+        Assert.Equal(2, result.StatusOptions.Count);
+        Assert.Equal("option-up-next", result.StatusOptions[0].OptionId);
+        Assert.Equal("Todo", result.StatusOptions[1].Name);
         Assert.Equal(2, result.Items[0].FocusOrder);
         Assert.Equal(ProjectBoardItemContentTypeDto.Issue, result.Items[0].Content.ContentType);
         Assert.Equal(40, result.Items[0].Content.Number);

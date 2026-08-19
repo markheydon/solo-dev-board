@@ -1,19 +1,44 @@
 import { test, expect } from '@playwright/test';
 import { navigateViaDrawer } from '../fixtures/navigation';
 
-test.describe('PM Workflow Repo Management', () => {
-  test('drawer navigation opens the Repos tab shell', async ({ page }) => {
+test.describe('PM Workflow', () => {
+  test('drawer navigation opens the Daily Focus tab shell', async ({ page }) => {
     await page.goto('/');
 
     await navigateViaDrawer(page, 'PM Workflow');
 
-    await expect(page).toHaveURL(/\/pm-workflow\/repos$/);
-    await expect(page).toHaveTitle(/PM Workflow — Repos/);
+    await expect(page).toHaveURL(/\/pm-workflow\/daily-focus$/);
+    await expect(page).toHaveTitle(/PM Workflow — Daily Focus/);
     await expect(page.getByTestId('pm-workflow-shell')).toBeVisible();
     await expect(page.getByTestId('pm-workflow-tab-strip')).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Repos' })).toBeVisible();
-    await expect(page.getByTestId('pm-workflow-repos-page')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Repo Management' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Daily Focus' })).toBeVisible();
+    await expect(page.getByTestId('pm-workflow-daily-focus-page')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Daily Focus' })).toBeVisible();
+  });
+
+  test('daily focus shows occupancy region, empty copy, or a load error', async ({ page }) => {
+    await page.goto('/pm-workflow/daily-focus');
+
+    await expect(page.getByTestId('pm-workflow-shell')).toBeVisible();
+
+    const chromeError = page.getByTestId('pm-workflow-chrome-error');
+    const noBoardAlert = page.getByTestId('pm-workflow-daily-focus-no-board');
+    const occupancyRegion = page.getByTestId('pm-workflow-daily-focus-board-state');
+    const occupancyError = page.getByTestId('pm-workflow-daily-focus-error');
+
+    await expect(chromeError.or(noBoardAlert).or(occupancyRegion).or(occupancyError)).toBeVisible({
+      timeout: 15_000,
+    });
+
+    if (await chromeError.isVisible()) {
+      await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+      return;
+    }
+
+    if (await occupancyError.isVisible()) {
+      await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+      await expect(occupancyError).toContainText('Unable to load board occupancy');
+    }
   });
 
   test('repos tab shows threshold and exclusion regions or a chrome error', async ({ page }) => {

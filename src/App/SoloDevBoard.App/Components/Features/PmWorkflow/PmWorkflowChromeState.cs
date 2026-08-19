@@ -24,6 +24,9 @@ public sealed class PmWorkflowChromeState
     /// <summary>Gets or sets a value indicating whether chrome data is loading.</summary>
     public bool IsLoading { get; set; }
 
+    /// <summary>Gets or sets a value indicating whether chrome data is refreshing in the background.</summary>
+    public bool IsRefreshing { get; set; }
+
     /// <summary>Gets or sets the chrome load error message, if any.</summary>
     public string? LoadErrorMessage { get; set; }
 

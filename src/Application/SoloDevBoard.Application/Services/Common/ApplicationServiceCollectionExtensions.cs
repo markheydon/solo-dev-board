@@ -33,6 +33,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IProjectItemCatalogueService, ProjectItemCatalogueService>();
         services.AddScoped<IPmWorkItemCatalogueService, PmWorkItemCatalogueService>();
         services.AddScoped<IPmProjectBoardDiscoveryService, PmProjectBoardDiscoveryService>();
+        services.AddScoped<IDailyFocusBoardStateService, DailyFocusBoardStateService>();
 
         return services;
     }

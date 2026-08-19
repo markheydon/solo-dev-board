@@ -26,7 +26,7 @@ When you add or change an end-user feature, update the user guide, the relevant 
 | User guide / site page | App route(s) | Playwright spec (CI) | Docs-capture screenshot | CI tier | Notes |
 |------------|--------------|----------------------|-------------------------|---------|-------|
 | [Product landing](../../website/content/_index.md) (Hugo `/` only) | — | — (Hugo `hugo-build.yml` route check) | — | — | Short product-and-project landing (Learn more → About; icon tiles not docs links); not the Blazor app. |
-| [In-app home dashboard](../../website/content/docs/) | `/` | `smoke.spec.ts`, `navigation.spec.ts`, `accessibility.spec.ts` | `dashboard/home.png` | Tier 1 | In-app home lists seven feature cards; About and Appearance are reached via the app bar. |
+| [In-app home dashboard](../../website/content/docs/) | `/` | `smoke.spec.ts`, `navigation.spec.ts`, `accessibility.spec.ts` | `dashboard/home.png` | Tier 1 | In-app home lists eight feature cards; About and Appearance are reached via the app bar. |
 | [Audit Dashboard](../../website/content/docs/audit-dashboard.md) | `/audit-dashboard`, `/audit` | `audit-dashboard.spec.ts`, `accessibility.spec.ts` | `audit-dashboard/overview.png` | Tier 2 | Guide describes KPI cards, health sections, auto-refresh, and export; CI asserts shell, feedback region, and `/audit` alias with load failure. |
 | [Repositories](../../website/content/docs/repositories.md) | `/repositories` | `repositories.spec.ts`, `accessibility.spec.ts` | `repositories/overview.png` | Tier 2 | Guide describes command strip, search, and grid; CI asserts refresh, search, and error state with retry. |
 | [One-Click Migration](../../website/content/docs/one-click-migration.md) | `/migrate` | `migrate.spec.ts`, `accessibility.spec.ts` | `one-click-migration/overview.png` | Tier 2 | Guide describes preview/apply workflow and conflict strategies; CI asserts setup shell, disabled preview, and API failure feedback. |
@@ -36,7 +36,7 @@ When you add or change an end-user feature, update the user guide, the relevant 
 | [Workflow Templates](../../website/content/docs/workflow-templates.md) | `/workflows` | `workflows.spec.ts`, `accessibility.spec.ts` | `workflow-templates/overview.png` | Tier 2 | Guide describes browse, parameterise, apply, and drift; CI asserts built-in template browse/filter/select and repository error state. |
 | [Appearance](../../website/content/docs/appearance.md) | App bar (all shell pages) | `appearance.spec.ts`, `accessibility.spec.ts` | `appearance/theme-toggle.png` | Tier 1 | Guide describes Automatic → Light → Dark cycling and persistence; not a drawer route. |
 | [About (in-app)](../../website/content/docs/about.md) | `/about` | `about.spec.ts`, `accessibility.spec.ts` | `about/overview.png` | Tier 1 | Guide describes More options menu access (User Guide external link and About route) and metadata fields. Not the Hugo `/about/` narrative section. |
-| Cross-Repo PM Workflow (`draft: true`, partial) | `/pm-workflow`, `/pm-workflow/repos` | `pm-workflow.spec.ts`, `accessibility.spec.ts` | `pm-workflow/repos.png` (pending) | Tier 2 | Draft guide documents Repo Management only ([#287](https://github.com/markheydon/solo-dev-board/issues/287)); Daily Focus, Backlog, and Planning are placeholders. CI asserts shell, tab strip, and Repos regions or chrome error. |
+| Cross-Repo PM Workflow (`draft: true`, partial) | `/pm-workflow`, `/pm-workflow/daily-focus`, `/pm-workflow/repos` | `pm-workflow.spec.ts`, `accessibility.spec.ts` | `pm-workflow/daily-focus.png` and `pm-workflow/repos.png` (pending) | Tier 2 | Draft guide documents Daily Focus occupancy plus Repo Management ([#273](https://github.com/markheydon/solo-dev-board/issues/273), [#287](https://github.com/markheydon/solo-dev-board/issues/287)); Backlog and Planning remain placeholders. CI asserts shell, tab strip, Daily Focus occupancy region or empty/error copy, and Repos regions or chrome error. |
 
 ### Auth and entry journeys (operator docs, not user guide)
 
@@ -82,17 +82,18 @@ Use this when extending specs so assertions track documented workflows.
 | More options → About | `about.spec.ts` navigation |
 | Version, build, .NET, auth mode, login, repository link | `about.spec.ts` `data-testid` fields |
 
-### Cross-Repo PM Workflow (partial — Repo Management)
+### Cross-Repo PM Workflow (partial — Daily Focus occupancy and Repo Management)
 
 | Guide section | CI assertion | Loaded-state validation |
 |---------------|--------------|-------------------------|
-| Drawer → PM Workflow → Repos | `pm-workflow.spec.ts` URL, title, shell, tab strip | `docs-capture` (pending) |
+| Drawer or Home → PM Workflow → Daily Focus | `pm-workflow.spec.ts` URL, title, shell, tab strip | `docs-capture` (pending) |
 | Planning board selector, status line, and refresh | `pm-workflow.spec.ts` shared chrome `data-testid`s | `docs-capture` (pending) |
+| Occupancy chips, active load, empty board, or catalogue error | `pm-workflow-daily-focus-board-state` / empty or error copy, or chrome error | `docs-capture` (pending) |
 | Planning thresholds | `pm-workflow-thresholds-region`, capacity field, or chrome error | `docs-capture` (pending) |
 | Repository participation summary | `pm-workflow-participation-summary` | `docs-capture` (pending) |
 | Included repositories table or empty state | `pm-workflow-included-table` / `pm-workflow-no-included-text` | `docs-capture` (pending) |
 | Excluded repositories and quick exclude | `pm-workflow-exclusions-region`, exclude autocomplete | `docs-capture` (pending) |
-| Daily Focus, Backlog, Planning | — | Not shipped |
+| Daily Focus stall and recommendations, Backlog, Planning | — | Not shipped |
 
 ## Screenshot hygiene
 

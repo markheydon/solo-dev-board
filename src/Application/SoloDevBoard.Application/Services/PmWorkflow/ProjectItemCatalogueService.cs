@@ -80,11 +80,15 @@ public sealed class ProjectItemCatalogueService : IProjectItemCatalogueService
             catalogue.FieldIds.StatusFieldId,
             catalogue.FieldIds.FocusOrderFieldId);
 
+        var statusOptions = catalogue.StatusOptions
+            .Select(static option => new ProjectBoardStatusOptionDto(option.OptionId, option.Name))
+            .ToArray();
+
         var items = catalogue.Items
             .Select(MapItem)
             .ToArray();
 
-        return new ProjectBoardItemCatalogueDto(fieldIds, items);
+        return new ProjectBoardItemCatalogueDto(fieldIds, statusOptions, items);
     }
 
     private static ProjectBoardItemDto MapItem(ProjectBoardItem item)

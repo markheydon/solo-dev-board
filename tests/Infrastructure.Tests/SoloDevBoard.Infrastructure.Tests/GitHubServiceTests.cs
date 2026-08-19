@@ -1551,7 +1551,7 @@ public sealed class GitHubServiceTests
                     "node": {
                         "fields": {
                             "nodes": [
-                                { "id": "PVTF_status", "name": "Status", "dataType": "SINGLE_SELECT" },
+                                { "id": "PVTF_status", "name": "Status", "dataType": "SINGLE_SELECT", "options": [ { "id": "option-up-next", "name": "Up Next" }, { "id": "option-todo", "name": "Todo" } ] },
                                 { "id": "PVTF_focus", "name": "Focus Order", "dataType": "NUMBER" }
                             ]
                         },
@@ -1595,6 +1595,9 @@ public sealed class GitHubServiceTests
         // Assert
         Assert.Equal("PVTF_status", result.FieldIds.StatusFieldId);
         Assert.Equal("PVTF_focus", result.FieldIds.FocusOrderFieldId);
+        Assert.Equal(2, result.StatusOptions.Count);
+        Assert.Equal("option-up-next", result.StatusOptions[0].OptionId);
+        Assert.Equal("Todo", result.StatusOptions[1].Name);
         Assert.Single(result.Items);
         Assert.Equal("PVTI_item-one", result.Items[0].ProjectItemId);
         Assert.Equal("Up Next", result.Items[0].Status?.Name);

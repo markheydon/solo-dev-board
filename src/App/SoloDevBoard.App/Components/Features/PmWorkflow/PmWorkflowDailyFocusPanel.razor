@@ -1,0 +1,88 @@
+@using SoloDevBoard.App.Components.Features.PmWorkflow
+@using SoloDevBoard.Application.Services.PmWorkflow
+
+<MudStack Spacing="3" data-testid="pm-workflow-daily-focus-page">
+    <MudText Typo="Typo.h5">Daily Focus</MudText>
+    <MudText Typo="Typo.body1">
+        Morning board occupancy and active load for the selected planning board.
+        Stalled items and recommended work will appear here in later stories.
+    </MudText>
+
+    @if (ChromeState is null)
+    {
+        <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">PM Workflow chrome is unavailable.</MudAlert>
+    }
+    else if (!ChromeState.IsLoading && !string.IsNullOrWhiteSpace(ChromeState.LoadErrorMessage))
+    {
+        @* Chrome already shows the error and retry. *@
+    }
+    else if (ChromeState.IsLoading)
+    {
+        <MudText Typo="Typo.body2" data-testid="pm-workflow-daily-focus-loading">
+            Loading planning boards and occupancy.
+        </MudText>
+    }
+    else if (!ChromeState.HasPlanningBoardSelected)
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" data-testid="pm-workflow-daily-focus-no-board">
+            Select a planning board in the dropdown above to load Daily Focus occupancy.
+        </MudAlert>
+    }
+    else
+    {
+        @if (isLoadingBoardState)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="Loading Daily Focus board state" />
+        }
+
+        @if (!string.IsNullOrWhiteSpace(loadErrorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" data-testid="pm-workflow-daily-focus-error">
+                @loadErrorMessage
+                <MudButton Variant="Variant.Text"
+                           OnClick="RetryLoadBoardStateAsync"
+                           data-testid="pm-workflow-daily-focus-retry">Retry</MudButton>
+            </MudAlert>
+        }
+        else if (!isLoadingBoardState && boardState is not null)
+        {
+            <MudPaper Class="pa-4" Elevation="1" data-testid="pm-workflow-daily-focus-board-state">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.h6">Board state</MudText>
+                    @if (boardState.Occupancy.Count == 0)
+                    {
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" data-testid="pm-workflow-daily-focus-empty">
+                            This planning board has no Status options and no items yet.
+                        </MudAlert>
+                    }
+                    else
+                    {
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" aria-live="polite">
+                            @foreach (var chip in boardState.Occupancy)
+                            {
+                                <MudChip T="string"
+                                         Value="@chip.StatusName"
+                                         Variant="Variant.Outlined"
+                                         Color="Color.Default"
+                                         data-testid="pm-workflow-occupancy-chip">
+                                    @($"{chip.StatusName} {chip.Count}")
+                                </MudChip>
+                            }
+                        </MudStack>
+                    }
+
+                    <MudText Typo="Typo.body1" aria-live="polite" data-testid="pm-workflow-active-load">
+                        Active load: @boardState.ActiveLoad / @boardState.Capacity (Up Next + In Progress)
+                    </MudText>
+
+                    @if (boardState.ItemCount == 0 && boardState.Occupancy.Count > 0)
+                    {
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" data-testid="pm-workflow-daily-focus-empty-board">
+                            This planning board has no items.
+                        </MudAlert>
+                    }
+                </MudStack>
+            </MudPaper>
+        }
+    }
+</MudStack>

@@ -17,7 +17,7 @@ public sealed class DashboardTests : BunitContext
     }
 
     [Fact]
-    public void Dashboard_WhenRendered_DisplaysAllSevenFeaturePanels()
+    public void Dashboard_WhenRendered_DisplaysAllEightFeaturePanels()
     {
         // Arrange
 
@@ -32,6 +32,7 @@ public sealed class DashboardTests : BunitContext
         Assert.Contains("Board Rules Visualiser", cut.Markup);
         Assert.Contains("Triage UI", cut.Markup);
         Assert.Contains("Workflow Templates", cut.Markup);
+        Assert.Contains("PM Workflow", cut.Markup);
     }
 
     [Fact]
@@ -48,7 +49,7 @@ public sealed class DashboardTests : BunitContext
             .Where(href => !string.IsNullOrWhiteSpace(href))
             .ToList();
 
-        Assert.Equal(7, links.Count);
+        Assert.Equal(8, links.Count);
         Assert.Contains("/audit-dashboard", links);
         Assert.Contains("/repositories", links);
         Assert.Contains("/migrate", links);
@@ -56,5 +57,6 @@ public sealed class DashboardTests : BunitContext
         Assert.Contains("/board-rules", links);
         Assert.Contains("/triage", links);
         Assert.Contains("/workflows", links);
+        Assert.Contains("/pm-workflow", links);
     }
 }
