@@ -66,7 +66,6 @@ jobs:
   e2e-pat:
     name: End-to-End (Playwright, PAT mode)
     runs-on: ubuntu-latest
-    needs: build-and-test
     timeout-minutes: 15
 
     steps:
@@ -92,12 +91,6 @@ jobs:
           dotnet restore SoloDevBoard.slnx
           dotnet build src/App/SoloDevBoard.App/SoloDevBoard.App.csproj --no-restore
 
-      - name: Cache Playwright browsers
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('tests/E2E/package-lock.json') }}
-
       - name: Install npm packages
         working-directory: tests/E2E
         env:
@@ -108,7 +101,7 @@ jobs:
         working-directory: tests/E2E
         env:
           NODE_OPTIONS: --dns-result-order=ipv4first
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Run Playwright E2E tests (PAT mode)
         env:
@@ -160,7 +153,6 @@ jobs:
   e2e-hosted:
     name: End-to-End (Playwright, Hosted mode)
     runs-on: ubuntu-latest
-    needs: build-and-test
     timeout-minutes: 15
 
     steps:
@@ -186,12 +178,6 @@ jobs:
           dotnet restore SoloDevBoard.slnx
           dotnet build src/App/SoloDevBoard.App/SoloDevBoard.App.csproj --no-restore
 
-      - name: Cache Playwright browsers
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('tests/E2E/package-lock.json') }}
-
       - name: Install npm packages
         working-directory: tests/E2E
         env:
@@ -202,7 +188,7 @@ jobs:
         working-directory: tests/E2E
         env:
           NODE_OPTIONS: --dns-result-order=ipv4first
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Run Playwright E2E tests (Hosted mode)
         env:
