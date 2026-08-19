@@ -36,7 +36,7 @@ When you add or change an end-user feature, update the user guide, the relevant 
 | [Workflow Templates](../../website/content/docs/workflow-templates.md) | `/workflows` | `workflows.spec.ts`, `accessibility.spec.ts` | `workflow-templates/overview.png` | Tier 2 | Guide describes browse, parameterise, apply, and drift; CI asserts built-in template browse/filter/select and repository error state. |
 | [Appearance](../../website/content/docs/appearance.md) | App bar (all shell pages) | `appearance.spec.ts`, `accessibility.spec.ts` | `appearance/theme-toggle.png` | Tier 1 | Guide describes Automatic → Light → Dark cycling and persistence; not a drawer route. |
 | [About (in-app)](../../website/content/docs/about.md) | `/about` | `about.spec.ts`, `accessibility.spec.ts` | `about/overview.png` | Tier 1 | Guide describes More options menu access (User Guide external link and About route) and metadata fields. Not the Hugo `/about/` narrative section. |
-| Cross-Repo PM Workflow (`draft: true`, partial) | `/pm-workflow`, `/pm-workflow/daily-focus`, `/pm-workflow/repos` | `pm-workflow.spec.ts`, `accessibility.spec.ts` | `pm-workflow/daily-focus.png` and `pm-workflow/repos.png` (pending) | Tier 2 | Draft guide documents Daily Focus occupancy plus Repo Management ([#273](https://github.com/markheydon/solo-dev-board/issues/273), [#287](https://github.com/markheydon/solo-dev-board/issues/287)); Backlog and Planning remain placeholders. CI asserts shell, tab strip, Daily Focus occupancy region or empty/error copy, and Repos regions or chrome error. |
+| Cross-Repo PM Workflow (`draft: true`, partial) | `/pm-workflow`, `/pm-workflow/daily-focus`, `/pm-workflow/repos` | `pm-workflow.spec.ts`, `accessibility.spec.ts` | `pm-workflow/daily-focus.png` and `pm-workflow/repos.png` (pending) | Tier 2 | Draft guide documents Daily Focus occupancy and recommendations plus Repo Management ([#273](https://github.com/markheydon/solo-dev-board/issues/273), [#274](https://github.com/markheydon/solo-dev-board/issues/274), [#287](https://github.com/markheydon/solo-dev-board/issues/287)); Backlog and Planning remain placeholders. CI asserts shell, tab strip, Daily Focus occupancy and recommendation regions or empty/error/warning copy, and Repos regions or chrome error. |
 
 ### Auth and entry journeys (operator docs, not user guide)
 
@@ -82,18 +82,19 @@ Use this when extending specs so assertions track documented workflows.
 | More options → About | `about.spec.ts` navigation |
 | Version, build, .NET, auth mode, login, repository link | `about.spec.ts` `data-testid` fields |
 
-### Cross-Repo PM Workflow (partial — Daily Focus occupancy and Repo Management)
+### Cross-Repo PM Workflow (partial — Daily Focus occupancy, recommendations, and Repo Management)
 
 | Guide section | CI assertion | Loaded-state validation |
 |---------------|--------------|-------------------------|
 | Drawer or Home → PM Workflow → Daily Focus | `pm-workflow.spec.ts` URL, title, shell, tab strip | `docs-capture` (pending) |
 | Planning board selector, status line, and refresh | `pm-workflow.spec.ts` shared chrome `data-testid`s | `docs-capture` (pending) |
 | Occupancy chips, active load, empty board, or catalogue error | `pm-workflow-daily-focus-board-state` / empty or error copy, or chrome error | `docs-capture` (pending) |
+| Recommended today (all included repositories) list, empty copy, or catalogue error | `pm-workflow-daily-focus-recommendations` heading, empty or error copy when occupancy loaded | `docs-capture` (pending) |
 | Planning thresholds | `pm-workflow-thresholds-region`, capacity field, or chrome error | `docs-capture` (pending) |
 | Repository participation summary | `pm-workflow-participation-summary` | `docs-capture` (pending) |
 | Included repositories table or empty state | `pm-workflow-included-table` / `pm-workflow-no-included-text` | `docs-capture` (pending) |
 | Excluded repositories and quick exclude | `pm-workflow-exclusions-region`, exclude autocomplete | `docs-capture` (pending) |
-| Daily Focus stall and recommendations, Backlog, Planning | — | Not shipped |
+| Daily Focus stall, Backlog, Planning | — | Not shipped |
 
 ## Screenshot hygiene
 

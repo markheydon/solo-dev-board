@@ -87,6 +87,80 @@ public sealed class ProjectItemCatalogueServiceTests
     }
 
     [Fact]
+    public async Task GetCatalogueAsync_SameProjectTwice_FetchesGitHubOnce()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        _gitHubService
+            .GetProjectBoardItemsAsync("project-id", cancellationToken)
+            .Returns(CreateEmptyDomainCatalogue());
+
+        var sut = new ProjectItemCatalogueService(_gitHubService);
+
+        var first = await sut.GetCatalogueAsync("project-id", cancellationToken);
+        var second = await sut.GetCatalogueAsync("project-id", cancellationToken);
+
+        Assert.Same(first, second);
+        await _gitHubService.Received(1).GetProjectBoardItemsAsync("project-id", cancellationToken);
+    }
+
+    [Fact]
+    public async Task GetCatalogueAsync_ConcurrentSameProject_FetchesGitHubOnce()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var githubReady = new TaskCompletionSource<ProjectBoardItemCatalogue>();
+        _gitHubService
+            .GetProjectBoardItemsAsync("project-id", Arg.Any<CancellationToken>())
+            .Returns(_ => githubReady.Task);
+
+        var sut = new ProjectItemCatalogueService(_gitHubService);
+        var first = sut.GetCatalogueAsync("project-id", cancellationToken);
+        var second = sut.GetCatalogueAsync("project-id", cancellationToken);
+
+        githubReady.SetResult(CreateEmptyDomainCatalogue());
+        var results = await Task.WhenAll(first, second);
+
+        Assert.Same(results[0], results[1]);
+        await _gitHubService.Received(1).GetProjectBoardItemsAsync("project-id", Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetCatalogueAsync_FailedLoad_DoesNotCacheAndRetryFetchesAgain()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        _gitHubService
+            .GetProjectBoardItemsAsync("project-id", cancellationToken)
+            .Returns(
+                _ => throw new InvalidOperationException("GitHub unavailable"),
+                _ => CreateEmptyDomainCatalogue());
+
+        var sut = new ProjectItemCatalogueService(_gitHubService);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            sut.GetCatalogueAsync("project-id", cancellationToken));
+
+        var result = await sut.GetCatalogueAsync("project-id", cancellationToken);
+
+        Assert.Empty(result.Items);
+        await _gitHubService.Received(2).GetProjectBoardItemsAsync("project-id", cancellationToken);
+    }
+
+    [Fact]
+    public async Task UpdateFocusOrderAsync_AfterCatalogueLoad_InvalidatesCache()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        _gitHubService
+            .GetProjectBoardItemsAsync("project-id", cancellationToken)
+            .Returns(CreateEmptyDomainCatalogue(), CreateEmptyDomainCatalogue());
+
+        var sut = new ProjectItemCatalogueService(_gitHubService);
+        await sut.GetCatalogueAsync("project-id", cancellationToken);
+        await sut.UpdateFocusOrderAsync("project-id", "item-id", "focus-field-id", 3, cancellationToken);
+        await sut.GetCatalogueAsync("project-id", cancellationToken);
+
+        await _gitHubService.Received(2).GetProjectBoardItemsAsync("project-id", cancellationToken);
+    }
+
+    [Fact]
     public async Task GetCatalogueAsync_MissingFocusOrderFieldId_MapsNullFocusOrderFieldId()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
@@ -190,4 +264,15 @@ public sealed class ProjectItemCatalogueServiceTests
             "focus-field-id",
             cancellationToken);
     }
+
+    private static ProjectBoardItemCatalogue CreateEmptyDomainCatalogue() =>
+        new()
+        {
+            FieldIds = new ProjectBoardFieldIds
+            {
+                StatusFieldId = "PVTF_status",
+                FocusOrderFieldId = null,
+            },
+            Items = [],
+        };
 }
