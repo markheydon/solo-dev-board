@@ -209,6 +209,24 @@ public sealed class DailyFocusBoardStateMapperTests
     }
 
     [Fact]
+    public void Map_UpNextItemWithUnixEpochActivity_IsNotStalled()
+    {
+        var items = new[]
+        {
+            CreateItem(
+                "opt-up-next",
+                "Up Next",
+                DateTimeOffset.UnixEpoch,
+                usedFallback: true,
+                title: "Unknown stall clock"),
+        };
+
+        var result = Map(UpNextOptions(), items, capacity: 8);
+
+        Assert.Empty(result.StalledUpNextItems);
+    }
+
+    [Fact]
     public void Map_StalledItemWithUpdatedAtFallback_SetsFallbackFlag()
     {
         var items = new[]
@@ -254,6 +272,13 @@ public sealed class DailyFocusBoardStateMapperTests
     public void GetAgeInDays_Elapsed_ExpectedWholeDays(int daysFromNow, int expectedAge)
     {
         Assert.Equal(expectedAge, DailyFocusBoardStateMapper.GetAgeInDays(UtcNow.AddDays(daysFromNow), UtcNow));
+    }
+
+    [Fact]
+    public void GetAgeInDays_UnixEpoch_ReturnsZero()
+    {
+        Assert.Equal(0, DailyFocusBoardStateMapper.GetAgeInDays(DateTimeOffset.UnixEpoch, UtcNow));
+        Assert.False(DailyFocusBoardStateMapper.HasStallClock(DateTimeOffset.UnixEpoch));
     }
 
     private static DailyFocusBoardStateDto Map(

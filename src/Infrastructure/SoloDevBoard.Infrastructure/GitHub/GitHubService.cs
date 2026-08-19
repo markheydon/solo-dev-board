@@ -1164,10 +1164,12 @@ public sealed class GitHubService : IGitHubService
             };
         }
 
-        // Prefer Status field-updated time; fall back to item updatedAt, then Unix epoch when GitHub omits both.
+        // Prefer Status field-updated time; fall back to item updatedAt.
+        // Unix epoch is a last-resort sentinel for "unknown" — not a stall clock.
         var statusChangedAt = node.Status?.UpdatedAt;
-        var usedItemUpdatedAtFallback = statusChangedAt is null;
-        var activityTimestamp = statusChangedAt ?? node.UpdatedAt ?? DateTimeOffset.UnixEpoch;
+        var itemUpdatedAt = node.UpdatedAt;
+        var usedItemUpdatedAtFallback = statusChangedAt is null && itemUpdatedAt is not null;
+        var activityTimestamp = statusChangedAt ?? itemUpdatedAt ?? DateTimeOffset.UnixEpoch;
 
         return new ProjectBoardItem
         {

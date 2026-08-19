@@ -2198,7 +2198,7 @@ public sealed class GitHubServiceTests
     }
 
     [Fact]
-    public async Task GetProjectBoardItemsAsync_MissingUpdatedAt_UsesUnixEpochActivityTimestamp()
+    public async Task GetProjectBoardItemsAsync_MissingUpdatedAt_UsesUnixEpochSentinelWithoutUpdatedAtFallback()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         var handler = new QueueMessageHandler(
@@ -2246,7 +2246,7 @@ public sealed class GitHubServiceTests
 
         Assert.Single(result.Items);
         Assert.Equal(DateTimeOffset.UnixEpoch, result.Items[0].ActivityTimestamp);
-        Assert.True(result.Items[0].UsedItemUpdatedAtFallback);
+        Assert.False(result.Items[0].UsedItemUpdatedAtFallback);
     }
 
     [Fact]

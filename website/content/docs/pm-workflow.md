@@ -59,9 +59,9 @@ After a board is selected, Daily Focus shows:
 
 - **Status chips** — one chip per Status option discovered on that board (including empty columns), with the item count. Option identifiers are not hard-coded to any one GitHub project.
 - **Active load** — `Up Next` plus `In Progress` item counts over the persisted **Capacity limit** (default 8).
-- **Stalled Up Next** — items whose Status name is `Up Next` and whose stall clock is at or beyond the persisted **Stall days** threshold (default 3, inclusive). Each row shows the title, age in whole days, and an **Open** link to GitHub.
+- **Stalled Up Next** — items whose Status name is `Up Next` and whose stall clock is at or beyond the persisted **Stall days** threshold (default 3, inclusive). Each row shows the title, age in whole days, and an **Open** link to GitHub. The link text stays **Open**; each control has a distinct accessible name that includes the item title.
 
-Age prefers Status-changed-at. When that timestamp is missing, Daily Focus uses the item last-updated time and shows a footnote.
+Age prefers Status-changed-at. When that timestamp is missing, Daily Focus uses the item last-updated time and shows a footnote. Items with neither timestamp are omitted from the stalled list.
 
 If no Up Next items meet the threshold, the stalled section still appears with a short none-stalled sentence.
 

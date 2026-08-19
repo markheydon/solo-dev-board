@@ -51,6 +51,22 @@ public sealed class ApplicationServiceCollectionExtensionsTests
         AssertServiceRegistration<IPmWorkItemCatalogueService, PmWorkItemCatalogueService>(services, ServiceLifetime.Scoped);
         AssertServiceRegistration<IPmProjectBoardDiscoveryService, PmProjectBoardDiscoveryService>(services, ServiceLifetime.Scoped);
         AssertServiceRegistration<IDailyFocusBoardStateService, DailyFocusBoardStateService>(services, ServiceLifetime.Scoped);
+        var timeProvider = Assert.Single(services, d => d.ServiceType == typeof(TimeProvider));
+        Assert.Equal(ServiceLifetime.Singleton, timeProvider.Lifetime);
+        Assert.Same(TimeProvider.System, timeProvider.ImplementationInstance);
+    }
+
+    [Fact]
+    public void AddApplicationServices_ExistingTimeProvider_DoesNotReplaceRegistration()
+    {
+        var services = new ServiceCollection();
+        var existing = new FrozenTimeProvider(new DateTimeOffset(2026, 8, 19, 12, 0, 0, TimeSpan.Zero));
+        services.AddSingleton<TimeProvider>(existing);
+
+        services.AddApplicationServices();
+
+        var timeProvider = Assert.Single(services, d => d.ServiceType == typeof(TimeProvider));
+        Assert.Same(existing, timeProvider.ImplementationInstance);
     }
 
     private static void AssertServiceRegistration<TService, TImplementation>(
@@ -60,5 +76,14 @@ public sealed class ApplicationServiceCollectionExtensionsTests
         var descriptor = Assert.Single(services, d => d.ServiceType == typeof(TService));
         Assert.Equal(lifetime, descriptor.Lifetime);
         Assert.Equal(typeof(TImplementation), descriptor.ImplementationType);
+    }
+
+    private sealed class FrozenTimeProvider : TimeProvider
+    {
+        private readonly DateTimeOffset _utcNow;
+
+        public FrozenTimeProvider(DateTimeOffset utcNow) => _utcNow = utcNow;
+
+        public override DateTimeOffset GetUtcNow() => _utcNow;
     }
 }

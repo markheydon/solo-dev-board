@@ -114,6 +114,8 @@ public sealed class PmWorkflowDailyFocusTests
             Assert.Contains("Stalled story", cut.Markup);
             Assert.Contains("(4d)", cut.Markup);
             Assert.Contains("https://github.com/owner/repo/issues/42", cut.Markup);
+            Assert.Contains("Open Stalled story on GitHub", cut.Markup);
+            Assert.Contains("noopener", cut.Markup);
             Assert.DoesNotContain("Status-changed-at was not available", cut.Markup);
         });
     }

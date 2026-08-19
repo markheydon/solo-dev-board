@@ -54,7 +54,7 @@ public static class DailyFocusBoardStateMapper
 
         var activeLoad = items.Count(static item => IsActiveLoadStatus(item.Status?.Name));
         var stalledUpNextItems = items
-            .Where(item => IsUpNextStatus(item.Status?.Name))
+            .Where(item => IsUpNextStatus(item.Status?.Name) && HasStallClock(item.ActivityTimestamp))
             .Select(item => MapStalledCandidate(item, utcNow))
             .Where(item => item.AgeInDays >= resolvedStallDays)
             .OrderByDescending(item => item.AgeInDays)
@@ -79,12 +79,28 @@ public static class DailyFocusBoardStateMapper
             && statusName.Equals(UpNextStatusName, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Returns whether <paramref name="activityTimestamp"/> is a usable stall clock.
+    /// Unix epoch is the Infrastructure sentinel for a missing Status-changed-at and item last-updated time.
+    /// </summary>
+    /// <param name="activityTimestamp">The candidate stall-clock timestamp.</param>
+    /// <returns><see langword="true" /> when the timestamp may be used for stall age; otherwise, <see langword="false" />.</returns>
+    public static bool HasStallClock(DateTimeOffset activityTimestamp)
+    {
+        return activityTimestamp != DateTimeOffset.UnixEpoch;
+    }
+
     /// <summary>Returns the inclusive stall age in whole days for a timestamp.</summary>
     /// <param name="activityTimestamp">The stall-clock timestamp.</param>
     /// <param name="utcNow">The current UTC time.</param>
-    /// <returns>Floored whole days, or zero when the timestamp is in the future.</returns>
+    /// <returns>Floored whole days, or zero when the timestamp is unknown or in the future.</returns>
     public static int GetAgeInDays(DateTimeOffset activityTimestamp, DateTimeOffset utcNow)
     {
+        if (!HasStallClock(activityTimestamp))
+        {
+            return 0;
+        }
+
         var elapsed = utcNow - activityTimestamp;
         if (elapsed <= TimeSpan.Zero)
         {
