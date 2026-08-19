@@ -75,7 +75,7 @@ public sealed class DailyFocusRecommendationServiceTests
         };
 
         _workItemCatalogueService.GetCatalogueAsync(cancellationToken)
-            .Returns(new PmWorkItemCatalogueResultDto(workItems, []));
+            .Returns(new PmWorkItemCatalogueResultDto(workItems, [], []));
         _projectItemCatalogueService.GetCatalogueAsync("PVT_board", cancellationToken)
             .Returns(new ProjectBoardItemCatalogueDto(
                 new ProjectBoardFieldIdsDto("PVTF_status", null),
@@ -114,7 +114,8 @@ public sealed class DailyFocusRecommendationServiceTests
         _workItemCatalogueService.GetCatalogueAsync(cancellationToken)
             .Returns(new PmWorkItemCatalogueResultDto(
                 [],
-                [new PmRepositoryCatalogueFailureDto("owner/repo-a", "GitHub unavailable", 500)]));
+                [new PmRepositoryCatalogueFailureDto("owner/repo-a", "GitHub unavailable", 500)],
+                []));
         _projectItemCatalogueService.GetCatalogueAsync("PVT_board", cancellationToken)
             .Returns(new ProjectBoardItemCatalogueDto(
                 new ProjectBoardFieldIdsDto("PVTF_status", null),
@@ -160,7 +161,8 @@ public sealed class DailyFocusRecommendationServiceTests
                 [
                     new PmRepositoryCatalogueFailureDto("owner/repo-b", "Not found", 404),
                     new PmRepositoryCatalogueFailureDto("owner/repo-c", "Forbidden", 403),
-                ]));
+                ],
+                []));
         _projectItemCatalogueService.GetCatalogueAsync("PVT_board", cancellationToken)
             .Returns(new ProjectBoardItemCatalogueDto(
                 new ProjectBoardFieldIdsDto("PVTF_status", null),
