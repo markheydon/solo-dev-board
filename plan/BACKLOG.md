@@ -26,7 +26,7 @@ For historical backlog content (pre-migration), see [archive/BACKLOG-2026-07-18.
 
 The sole open milestone is **v1.1.0**. It includes deferred v1.0 slices ([#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#292](https://github.com/markheydon/solo-dev-board/issues/292)), Cross-Repo PM Workflow ([#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288)), and dogfood fixes as they are raised.
 
-**Unmilestoned backlog:** [#293](https://github.com/markheydon/solo-dev-board/issues/293) (platform-blocked private user-owned Projects v2 under hosted sign-in).
+**Unmilestoned backlog:** [#293](https://github.com/markheydon/solo-dev-board/issues/293) (platform-blocked private user-owned Projects v2 under hosted sign-in); [#397](https://github.com/markheydon/solo-dev-board/issues/397) (product branding including a logo — ice-box).
 
 Implementation phases in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) are historical sequencing for the v1.0 release only.
 

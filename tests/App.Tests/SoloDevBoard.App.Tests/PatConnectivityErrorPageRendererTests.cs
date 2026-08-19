@@ -24,5 +24,6 @@ public sealed class PatConnectivityErrorPageRendererTests
         Assert.Contains("personal access token", page.Html, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("not a hosted sign-in session problem", page.Html, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("data-testid=\"pat-connectivity-return-home\"", page.Html);
+        Assert.Contains("href=\"/favicon.svg\"", page.Html);
     }
 }

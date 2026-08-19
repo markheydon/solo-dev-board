@@ -26,7 +26,7 @@ test.describe('PM Workflow', () => {
     const occupancyRegion = page.getByTestId('pm-workflow-daily-focus-board-state');
     const occupancyError = page.getByTestId('pm-workflow-daily-focus-error');
 
-    await expect(chromeError.or(noBoardAlert).or(occupancyRegion).or(occupancyError)).toBeVisible({
+    await expect(chromeError.or(noBoardAlert).or(occupancyRegion).or(occupancyError).first()).toBeVisible({
       timeout: 15_000,
     });
 
@@ -50,7 +50,7 @@ test.describe('PM Workflow', () => {
     const thresholdsRegion = page.getByTestId('pm-workflow-thresholds-region');
     const exclusionsRegion = page.getByTestId('pm-workflow-exclusions-region');
 
-    await expect(chromeError.or(thresholdsRegion)).toBeVisible({ timeout: 15_000 });
+    await expect(chromeError.or(thresholdsRegion).first()).toBeVisible({ timeout: 15_000 });
 
     if (await chromeError.isVisible()) {
       await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
