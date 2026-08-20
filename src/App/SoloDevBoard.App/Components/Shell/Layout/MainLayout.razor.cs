@@ -65,6 +65,20 @@ public partial class MainLayout : IDisposable
 
     private void OnThemePreferenceChanged() => _ = InvokeAsync(StateHasChanged);
 
+    private string ConnectionChipText
+    {
+        get
+        {
+            if (_patConnectionStatus is { IsConnected: true } status
+                && !string.IsNullOrWhiteSpace(status.OwnerLogin))
+            {
+                return $"@{status.OwnerLogin}";
+            }
+
+            return _patConnectionStatus?.StatusMessage ?? string.Empty;
+        }
+    }
+
     private async Task LoadShellStateAsync()
     {
         if (GitHubAuthOptions.Value.HostedSignInEnabled)

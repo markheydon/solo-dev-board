@@ -62,7 +62,7 @@ You can apply a recommended label taxonomy to selected repositories using a prev
 
 1. Select one or more active repositories in the repository selector.
 2. Choose a recommended strategy.
-3. Select `Preview recommended taxonomy` to review proposed changes per repository.
+3. Select **Preview** to review proposed changes per repository.
 4. Confirm or cancel before any changes are applied.
 5. Review the per-repository summary after apply completes.
 

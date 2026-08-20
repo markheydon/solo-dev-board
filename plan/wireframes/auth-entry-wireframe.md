@@ -50,7 +50,7 @@
 
 ```
 +-------------------------------------------------------------+
-| App Bar: SoloDevBoard                    [ Connected as @login ] |
+| App Bar: SoloDevBoard                              [ @login ] |
 +-------------------------------------------------------------+
 |                                                             |
 | Home                                                        |
@@ -62,7 +62,7 @@
 
 - Shown only when `HostedSignInEnabled` is false (PAT mode).
 - The app bar chip is the single connectivity indicator; it is not duplicated on individual feature pages.
-- App bar chip shows `Connected as @login`.
+- App bar chip shows the GitHub handle (for example `@login`) with a link icon. The accessible name remains `Connected as @login`.
 - Copy references PAT configuration (Aspire `gh-pat`, user secrets) — not hosted sign-in.
 
 ## PAT Connectivity Recovery Page (`/auth/connectivity-error`)
@@ -123,6 +123,6 @@
 ### PAT connectivity (#314)
 
 1. Set `OwnerLogin` and an invalid `gh-pat` — expect startup failure with a clear PAT message.
-2. Set a valid PAT — expect the app bar chip showing `Connected as @login`.
+2. Set a valid PAT — expect the app bar chip showing `@login`.
 3. Revoke the PAT while the app is running, then open Repositories — expect redirect to `/auth/connectivity-error`, not a generic snackbar.
 4. Call `GET /health/github` — expect `Healthy` when PAT is valid, `Unhealthy` when not.

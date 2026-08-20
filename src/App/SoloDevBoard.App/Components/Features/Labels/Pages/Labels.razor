@@ -146,7 +146,7 @@
                     <MudText Typo="Typo.h6">Apply recommended taxonomy</MudText>
                     <MudText Typo="Typo.body2">Choose a strategy, preview changes, then confirm to apply labels across selected repositories.</MudText>
 
-                    <MudStack Row="true" Spacing="1" data-testid="taxonomy-action-strip">
+                    <MudStack Spacing="2" data-testid="taxonomy-action-strip">
                         <MudSelect T="string"
                                    Label="Recommended label set"
                                    Value="selectedStrategyId"
@@ -160,31 +160,35 @@
                             }
                         </MudSelect>
 
-                        <MudButton Variant="Variant.Outlined"
-                                   Color="Color.Secondary"
-                                   Disabled="@(!CanPreviewRecommendedTaxonomy)"
-                                   OnClick="PreviewRecommendedTaxonomyAsync"
-                                   data-testid="preview-taxonomy-button">
-                            Preview recommended taxonomy
-                        </MudButton>
-
-                        @if (showRecommendedPreview)
-                        {
-                            <MudButton Variant="Variant.Filled"
-                                       Color="Color.Primary"
-                                       Disabled="@(!CanApplyRecommendedTaxonomy)"
-                                       OnClick="ApplyRecommendedTaxonomyAsync"
-                                       data-testid="confirm-apply-taxonomy-button">
-                                Confirm apply taxonomy
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Secondary"
+                                       Disabled="@(!CanPreviewRecommendedTaxonomy)"
+                                       OnClick="PreviewRecommendedTaxonomyAsync"
+                                       aria-label="Preview recommended taxonomy"
+                                       data-testid="preview-taxonomy-button">
+                                Preview
                             </MudButton>
 
-                            <MudButton Variant="Variant.Text"
-                                       Color="Color.Default"
-                                       OnClick="CancelRecommendedPreview"
-                                       data-testid="cancel-apply-taxonomy-button">
-                                Cancel
-                            </MudButton>
-                        }
+                            @if (showRecommendedPreview)
+                            {
+                                <MudButton Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           Disabled="@(!CanApplyRecommendedTaxonomy)"
+                                           OnClick="ApplyRecommendedTaxonomyAsync"
+                                           aria-label="Confirm apply taxonomy"
+                                           data-testid="confirm-apply-taxonomy-button">
+                                    Confirm
+                                </MudButton>
+
+                                <MudButton Variant="Variant.Text"
+                                           Color="Color.Default"
+                                           OnClick="CancelRecommendedPreview"
+                                           data-testid="cancel-apply-taxonomy-button">
+                                    Cancel
+                                </MudButton>
+                            }
+                        </MudStack>
                     </MudStack>
 
                     @if (!string.IsNullOrWhiteSpace(SelectedStrategyDescription))
@@ -281,13 +285,14 @@
                             }
                         </MudStack>
 
-                        <MudStack Row="true" Spacing="1">
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
                             <MudButton Variant="Variant.Outlined"
                                        Color="Color.Secondary"
                                        Disabled="@(!CanPreviewLabelSynchronisation)"
                                        OnClick="PreviewLabelSynchronisationAsync"
+                                       aria-label="Preview synchronisation"
                                        data-testid="preview-sync-button">
-                                Preview synchronisation
+                                Preview
                             </MudButton>
 
                             @if (showSyncPreview)
@@ -296,8 +301,9 @@
                                            Color="Color.Primary"
                                            Disabled="@(!CanApplyLabelSynchronisation)"
                                            OnClick="ApplyLabelSynchronisationAsync"
+                                           aria-label="Confirm synchronisation"
                                            data-testid="confirm-sync-button">
-                                    Confirm synchronisation
+                                    Confirm
                                 </MudButton>
 
                                 <MudButton Variant="Variant.Text"

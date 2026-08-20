@@ -36,7 +36,7 @@ Parameters for the mode you are **not** using can be left unset (or set to `-` w
 | **Admission control** | Not applicable — anyone who can reach the app acts as the PAT owner | Operator allow-lists (`allowed-user-logins` / `allowed-org-logins`); deny-by-default |
 | **GitHub App required?** | No | Yes |
 | **Trust boundary** | Suitable only where you trust every person who can reach the deployment (localhost, private network, or a personal Azure instance you alone use) | Suitable for shared or public endpoints |
-| **Connectivity UX** | App-bar **Connected as @login** chip; recovery at `/auth/connectivity-error` — see [PAT Connectivity](pat-connectivity.md) | Session expiry and re-sign-in — see [Hosted Authentication](hosted-authentication.md) |
+| **Connectivity UX** | App-bar **@login** chip (accessible name **Connected as @login**); recovery at `/auth/connectivity-error` — see [PAT Connectivity](pat-connectivity.md) | Session expiry and re-sign-in — see [Hosted Authentication](hosted-authentication.md) |
 
 > **Security note:** PAT-only mode does **not** provide multi-user isolation. Do not expose a PAT-mode instance on a public URL that others can reach. For shared or public hosting, use hosted sign-in with admission control.
 
@@ -249,7 +249,7 @@ aspire secret set Parameters:gh-pat "<your-token>"
 aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 ```
 
-Your GitHub login is resolved automatically from the PAT at startup. You can also set the token via the Aspire dashboard **Parameters** tab on first run. After the app starts, confirm the shell shows **Connected as @login** — see [PAT Connectivity](pat-connectivity.md).
+Your GitHub login is resolved automatically from the PAT at startup. You can also set the token via the Aspire dashboard **Parameters** tab on first run. After the app starts, confirm the shell shows **@login** with a link icon — see [PAT Connectivity](pat-connectivity.md).
 
 #### Hosted sign-in mode setup
 

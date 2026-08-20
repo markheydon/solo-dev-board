@@ -295,7 +295,7 @@ public sealed class LabelsTests
             Assert.Contains("owner/repo-a", cut.Markup);
             Assert.Contains("Labels to create", cut.Markup);
             Assert.Contains("Labels to update", cut.Markup);
-            Assert.Contains("Confirm apply taxonomy", cut.Markup);
+            Assert.Contains("aria-label=\"Confirm apply taxonomy\"", cut.Markup);
         });
     }
 
@@ -503,7 +503,7 @@ public sealed class LabelsTests
             Assert.Contains("owner/repo-b", cut.Markup);
             Assert.Contains("Labels to create", cut.Markup);
             Assert.Contains("Labels to skip", cut.Markup);
-            Assert.Contains("Confirm synchronisation", cut.Markup);
+            Assert.Contains("aria-label=\"Confirm synchronisation\"", cut.Markup);
         });
     }
 
