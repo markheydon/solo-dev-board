@@ -108,6 +108,20 @@ Use this when extending specs so assertions track documented workflows.
 | Backlog Review filters, urgency panels, empty copy, warning, or catalogue error | `pm-workflow-backlog-filters` / `pm-workflow-backlog-panels` / empty or error copy, or chrome error | `docs-capture` (pending) |
 | Planning | — | Not shipped |
 
+### Daily Focus automated coverage ([#385](https://github.com/markheydon/solo-dev-board/issues/385))
+
+Issue [#385](https://github.com/markheydon/solo-dev-board/issues/385) closes the Daily Focus test slice for stories [#273](https://github.com/markheydon/solo-dev-board/issues/273)–[#276](https://github.com/markheydon/solo-dev-board/issues/276). When `website/content/docs/pm-workflow.md` is published, keep this mapping alongside the PM Workflow rows above.
+
+| Behaviour | Unit / component | Playwright (CI placeholder auth) |
+|-----------|------------------|----------------------------------|
+| Column counts and active load (Up Next + In Progress) | `DailyFocusBoardStateMapperTests`, `DailyFocusBoardStateServiceTests` | `pm-workflow.spec.ts` `Daily Focus` describe — occupancy region or empty/error copy |
+| Inclusive 3-day Up Next stall | `DailyFocusBoardStateMapperTests` | `pm-workflow.spec.ts` `PM Workflow` describe — `pm-workflow-daily-focus-stalled` when occupancy loads |
+| Top-three priority ranking | `DailyFocusRecommendationMapperTests`, `DailyFocusRecommendationServiceTests` | `pm-workflow.spec.ts` `PM Workflow` describe — recommendations region or error/warning |
+| Stalled review pull requests | `DailyFocusStalledReviewDetectorTests`, `DailyFocusStalledReviewServiceTests` | `pm-workflow.spec.ts` `PM Workflow` describe — `pm-workflow-daily-focus-stalled-reviews` or error |
+| Route shell, loading, empty board, GitHub retry, inaccessible-board warning | `PmWorkflowDailyFocusTests` | `pm-workflow.spec.ts` `Daily Focus` describe — route shell and no-board/empty/error copy |
+
+Defer full user-guide publish and docs-capture screenshots until the PM Workflow guide leaves `draft: true`.
+
 ## Screenshot hygiene
 
 - Use **light theme** at **1400×900** viewport with kebab-case PNG filenames under `website/static/images/<feature-slug>/`.

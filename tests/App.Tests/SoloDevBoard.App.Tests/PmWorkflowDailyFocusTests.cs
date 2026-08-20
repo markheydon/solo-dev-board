@@ -51,6 +51,30 @@ public sealed class PmWorkflowDailyFocusTests
     }
 
     [Fact]
+    public async Task PmWorkflowDailyFocus_RouteShell_ExposesPageTestIdAndHeading()
+    {
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
+            CreateRepository("owner", "repo-a"),
+        ]);
+        _projectBoardDiscoveryService.GetPlanningBoardOptionsForRepositoriesAsync(
+            Arg.Any<IReadOnlyList<RepositoryDto>>(),
+            Arg.Any<CancellationToken>()).Returns(
+            new PmProjectBoardDiscoveryDto([], 0, 0));
+
+        await using var ctx = CreateContext();
+        ctx.Services.GetRequiredService<NavigationManager>().NavigateTo("/pm-workflow/daily-focus");
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("data-testid=\"pm-workflow-daily-focus-page\"", cut.Markup);
+            Assert.Contains("Daily Focus", cut.Markup);
+            Assert.Contains("data-testid=\"pm-workflow-shell\"", cut.Markup);
+            Assert.Contains("data-testid=\"pm-workflow-tab-strip\"", cut.Markup);
+        });
+    }
+
+    [Fact]
     public async Task PmWorkflowDailyFocus_WhenNoBoardIsSelected_ShowsInstructionalAlert()
     {
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
