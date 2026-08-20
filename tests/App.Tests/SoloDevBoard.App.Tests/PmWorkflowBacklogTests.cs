@@ -121,9 +121,9 @@ public sealed class PmWorkflowBacklogTests
             Assert.Equal(Color.Info, issueChip.Instance.Color);
             Assert.Equal(Variant.Filled, issueChip.Instance.Variant);
             Assert.Equal(Color.Warning, pullRequestChip.Instance.Color);
-            Assert.Equal(Variant.Outlined, pullRequestChip.Instance.Variant);
+            Assert.Equal(Variant.Filled, pullRequestChip.Instance.Variant);
             Assert.NotEqual(issueChip.Instance.Color, pullRequestChip.Instance.Color);
-            Assert.NotEqual(issueChip.Instance.Variant, pullRequestChip.Instance.Variant);
+            Assert.Equal(issueChip.Instance.Variant, pullRequestChip.Instance.Variant);
 #pragma warning restore MUD0012
         });
     }

@@ -324,9 +324,6 @@ public partial class PmWorkflowBacklogPanel : ComponentBase
     private static Color FormatItemKindChipColor(PmWorkItemTypeDto itemType)
         => itemType == PmWorkItemTypeDto.PullRequest ? Color.Warning : Color.Info;
 
-    private static Variant FormatItemKindChipVariant(PmWorkItemTypeDto itemType)
-        => itemType == PmWorkItemTypeDto.PullRequest ? Variant.Outlined : Variant.Filled;
-
     private static string FormatPriority(string? priorityLabel)
         => string.IsNullOrWhiteSpace(priorityLabel) ? "Unlabelled" : priorityLabel;
 
