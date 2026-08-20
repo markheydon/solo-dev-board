@@ -5,7 +5,7 @@ weight: 110
 guideStatus: Partially Available
 ---
 
-> ⚠️ **Partial delivery** — Daily Focus, Backlog Review grouping, and Repo Management are available in the app under **PM Workflow**. Iteration Planning, awaiting-triage and neglected-repo backlog panels, and issue versus pull request chips are not shipped yet. This guide remains a draft until all four tabs match the wireframe; only the sections below describe current behaviour.
+> ⚠️ **Partial delivery** — Daily Focus, Backlog Review grouping, and Repo Management are available in the app under **PM Workflow**. Iteration Planning remains a placeholder. This guide remains a draft until all four tabs match the wireframe; only the sections below describe current behaviour.
 
 ---
 
@@ -23,7 +23,7 @@ The system is built around two modes of operation:
 | Tab | Route | Status |
 |-----|-------|--------|
 | **Daily Focus** | `/pm-workflow/daily-focus` | **Partial** — Status occupancy chips, active load, stalled Up Next, top-three recommendations, and pull requests awaiting review for the configured Stall days threshold. |
-| **Backlog** | `/pm-workflow/backlog` | **Partial** — search, type and repository filters, plus Urgent, Ready to start, and Blocked/deferred panels. Awaiting triage, near-complete epics, and neglected repositories are still planned. |
+| **Backlog** | `/pm-workflow/backlog` | **Partial** — search, type and repository filters, Urgent, Ready to start, Awaiting triage, Blocked/deferred, Epics near completion, and Neglected repositories panels. Issue and pull request kind chips appear on grouped rows. Urgent items are omitted from Ready to start. |
 | Planning | `/pm-workflow/planning` | Placeholder — story [#283](https://github.com/markheydon/solo-dev-board/issues/283). |
 | **Repos** | `/pm-workflow/repos` | **Available** — planning board selection, thresholds, repository exclusions, and per-repository open-work counts. |
 
@@ -123,14 +123,19 @@ Filters apply in the browser after the catalogue loads. They do not reload GitHu
 After a board is selected, expansion panels list:
 
 1. **Urgent** — items labelled `priority/high` or `priority/critical`.
-2. **Ready to start** — unblocked items (`status/blocked` and `status/ice-box` absent, board Status not Blocked or Ice Box) that are not already **Up Next** or **In Progress**.
-3. **Blocked / deferred** — items labelled `status/blocked` or `status/ice-box`, or whose joined board Status is **Blocked** or **Ice Box**.
+2. **Ready to start** — unblocked items (`status/blocked` and `status/ice-box` absent, board Status not Blocked or Ice Box) that are not already **Up Next** or **In Progress**. Items already listed under **Urgent** are omitted here.
+3. **Awaiting triage** — open issues or pull requests missing a `type/` or `priority/` label.
+4. **Blocked / deferred** — items labelled `status/blocked` or `status/ice-box`, or whose joined board Status is **Blocked** or **Ice Box**.
+5. **Epics near completion** — open epics or features whose sub-issues are all closed (requires GitHub sub-issue counts).
+6. **Neglected repositories** — included repositories with no open issue or pull request activity within the persisted **Neglect days** threshold (default 14).
+
+Each grouped row shows an **Issue** or **PR** chip, a `owner/name#number` link that opens GitHub in a new tab, the title, and the priority label when present.
 
 An item can appear in more than one panel (for example an urgent item that is also blocked). Each panel header includes a count. Empty panels say there are no items in that group.
 
-If there are no open issues or pull requests in included repositories, an informational alert says so. If the current filters hide every row, a separate alert says no items match. If every included repository fails to load, an error alert includes **Retry**. If some repositories fail but others succeed, grouping still proceeds and a warning lists the failed repositories with **Retry**.
+If there are no open issues or pull requests in included repositories, an informational alert says so. If the current filters hide every row, a separate alert says no items match. If every included repository fails to load, an error alert includes **Retry**. If some repositories fail but others succeed, grouping still proceeds and a warning lists the failed repositories with **Retry**. When GitHub does not return sub-issue counts, **Epics near completion** explains that near-complete parents cannot be listed.
 
-> **Scope note** — Awaiting triage (missing `type/` or `priority/`), near-complete epics, neglected repositories, and issue versus pull request chips are tracked on later stories and are not shown yet.
+> **Scope note** — Iteration Planning (adding items to **Up Next**) remains on story [#283](https://github.com/markheydon/solo-dev-board/issues/283).
 
 ---
 
@@ -227,10 +232,7 @@ A quick morning summary that will also answer stalled-work questions:
 
 The grouped view is shipped as described above. Still planned:
 
-- Neglected repositories (no issue or PR activity within the neglect threshold).
-- Items awaiting triage (missing `type/` or `priority/` labels).
-- Near-complete epics.
-- Issue versus pull request chips on every row.
+- Adding selected items to **Up Next** from Backlog Review (Iteration Planning tab).
 
 ### Iteration Planning
 
