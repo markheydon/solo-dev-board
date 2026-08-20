@@ -51,11 +51,11 @@ The following automation rules are configured on the board. These are documented
 
 ### Issue Created
 - **Trigger:** A new planned issue is created or explicitly added by an agent.
-- **Action:** Add to **Todo** and set the required board metadata (`Phase`, `Priority`). Do **not** assign the issue — assignment happens when the item reaches **Up Next** or **In Progress** (enforced by Roadmap Sync).
+- **Action:** Add to **Todo** and set the required board metadata (`Phase`, `Priority`, and assignee).
 
 ### Daily Queue Selected
 - **Trigger:** The user explicitly asks Copilot to populate today's working queue.
-- **Action:** Move the selected stories, enablers, and tests to **Up Next**, set **Focus Order** in the recommended sequence, and assign `markheydon` to each queued issue.
+- **Action:** Move the selected stories, enablers, or tests to **Up Next** and set **Focus Order** in the recommended sequence.
 
 ### Pull Request Opened
 - **Trigger:** A pull request linked to an issue is opened.
@@ -64,7 +64,7 @@ The following automation rules are configured on the board. These are documented
 
 ### Issue Started
 - **Trigger:** Delivery starts on a story, enabler, test, feature, or bug.
-- **Action:** Move the issue to **In Progress**, assign `markheydon`, set **Start Date** to the actual start date, and set **Target Date** using the size calibration in `.agents/skills/repo-github-project/SKILL.md`.
+- **Action:** Move the issue to **In Progress**, set **Start Date** to the actual start date, and set **Target Date** using the size calibration in `.agents/skills/repo-github-project/SKILL.md`.
 - **Board rule:** Leave untouched sibling items blank until they start; do not auto-forecast their dates during normal delivery.
 
 ### Pull Request Merged
