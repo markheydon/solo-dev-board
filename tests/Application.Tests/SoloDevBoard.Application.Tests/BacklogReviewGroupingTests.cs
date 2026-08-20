@@ -5,15 +5,19 @@ namespace SoloDevBoard.Application.Tests;
 /// <summary>Tests for <see cref="BacklogReviewGrouping"/> membership predicates.</summary>
 public sealed class BacklogReviewGroupingTests
 {
+    private static readonly DateTimeOffset ReferenceTime = DateTimeOffset.Parse("2026-08-20T12:00:00Z");
+
     [Fact]
     public void Group_NullArguments_ThrowsArgumentNullException()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            BacklogReviewGrouping.Group(null!, [], []));
+            BacklogReviewGrouping.Group(null!, [], [], [], 14, ReferenceTime));
         Assert.Throws<ArgumentNullException>(() =>
-            BacklogReviewGrouping.Group([], null!, []));
+            BacklogReviewGrouping.Group([], null!, [], [], 14, ReferenceTime));
         Assert.Throws<ArgumentNullException>(() =>
-            BacklogReviewGrouping.Group([], [], null!));
+            BacklogReviewGrouping.Group([], [], null!, [], 14, ReferenceTime));
+        Assert.Throws<ArgumentNullException>(() =>
+            BacklogReviewGrouping.Group([], [], [], null!, 14, ReferenceTime));
     }
 
     [Fact]
@@ -28,6 +32,17 @@ public sealed class BacklogReviewGroupingTests
         Assert.False(BacklogReviewGrouping.IsUrgent(medium));
     }
 
+    [Theory]
+    [InlineData(new[] { "type/story" }, true)]
+    [InlineData(new[] { "priority/high" }, true)]
+    [InlineData(new[] { "type/story", "priority/high" }, false)]
+    public void IsAwaitingTriage_VariousLabels_ReturnsExpected(string[] labels, bool expected)
+    {
+        var item = CreateWorkItem(4, "Triage candidate", labels);
+
+        Assert.Equal(expected, BacklogReviewGrouping.IsAwaitingTriage(item));
+    }
+
     [Fact]
     public void IsReadyToStart_UnblockedAndNotCommitted_ReturnsTrue()
     {
@@ -37,6 +52,22 @@ public sealed class BacklogReviewGroupingTests
         Assert.True(BacklogReviewGrouping.IsReadyToStart(item, "Todo"));
     }
 
+    [Fact]
+    public void IsReadyToStart_Urgent_ReturnsFalse()
+    {
+        var item = CreateWorkItem(11, "Urgent ready", ["priority/critical", "type/bug"]);
+
+        Assert.False(BacklogReviewGrouping.IsReadyToStart(item, boardStatusName: null));
+    }
+
+    [Fact]
+    public void IsReadyToStart_AwaitingTriage_ReturnsFalse()
+    {
+        var item = CreateWorkItem(12, "Missing priority", ["type/story"]);
+
+        Assert.False(BacklogReviewGrouping.IsReadyToStart(item, boardStatusName: null));
+    }
+
     [Theory]
     [InlineData("Up Next")]
     [InlineData("In Progress")]
@@ -44,7 +75,7 @@ public sealed class BacklogReviewGroupingTests
     [InlineData("Ice Box")]
     public void IsReadyToStart_CommittedOrParkedBoardStatus_ReturnsFalse(string boardStatus)
     {
-        var item = CreateWorkItem(11, "Not ready", ["type/story", "priority/high"]);
+        var item = CreateWorkItem(13, "Not ready", ["type/story", "priority/medium"]);
 
         Assert.False(BacklogReviewGrouping.IsReadyToStart(item, boardStatus));
     }
@@ -52,7 +83,7 @@ public sealed class BacklogReviewGroupingTests
     [Fact]
     public void IsReadyToStart_BlockedLabel_ReturnsFalse()
     {
-        var item = CreateWorkItem(12, "Blocked", ["type/story", "priority/medium", "status/blocked"]);
+        var item = CreateWorkItem(14, "Blocked", ["type/story", "priority/medium", "status/blocked"]);
 
         Assert.False(BacklogReviewGrouping.IsReadyToStart(item, boardStatusName: null));
     }
@@ -62,7 +93,7 @@ public sealed class BacklogReviewGroupingTests
     {
         var blocked = CreateWorkItem(20, "Label blocked", ["status/blocked"]);
         var iceBoxed = CreateWorkItem(21, "Label ice box", ["status/ice-box"]);
-        var unlabelled = CreateWorkItem(22, "Board parked", ["priority/low"]);
+        var unlabelled = CreateWorkItem(22, "Board parked", ["priority/low", "type/story"]);
 
         Assert.True(BacklogReviewGrouping.IsBlockedOrDeferred(blocked, boardStatusName: null));
         Assert.True(BacklogReviewGrouping.IsBlockedOrDeferred(iceBoxed, boardStatusName: null));
@@ -72,14 +103,14 @@ public sealed class BacklogReviewGroupingTests
     }
 
     [Fact]
-    public void Group_OverlappingUrgentAndReady_PlacesItemInBothLists()
+    public void Group_UrgentReadyItem_IsUrgentOnlyNotReady()
     {
         var item = CreateWorkItem(30, "Urgent ready", ["priority/critical", "type/bug"]);
 
-        var result = BacklogReviewGrouping.Group([item], [], []);
+        var result = BacklogReviewGrouping.Group([item], [], [], [], 14, ReferenceTime);
 
         Assert.Equal(30, Assert.Single(result.Urgent).Number);
-        Assert.Equal(30, Assert.Single(result.ReadyToStart).Number);
+        Assert.Empty(result.ReadyToStart);
         Assert.Empty(result.BlockedOrDeferred);
     }
 
@@ -92,7 +123,7 @@ public sealed class BacklogReviewGroupingTests
             CreateBoardItem(31, "Up Next", ProjectBoardItemContentTypeDto.Issue),
         };
 
-        var result = BacklogReviewGrouping.Group([item], boardItems, []);
+        var result = BacklogReviewGrouping.Group([item], boardItems, [], [], 14, ReferenceTime);
 
         Assert.Equal(31, Assert.Single(result.Urgent).Number);
         Assert.Empty(result.ReadyToStart);
@@ -100,20 +131,31 @@ public sealed class BacklogReviewGroupingTests
     }
 
     [Fact]
+    public void Group_MissingCoreLabels_GoesToAwaitingTriageNotReady()
+    {
+        var item = CreateWorkItem(32, "Needs labels", ["type/story"]);
+
+        var result = BacklogReviewGrouping.Group([item], [], [], [], 14, ReferenceTime);
+
+        Assert.Equal(32, Assert.Single(result.AwaitingTriage).Number);
+        Assert.Empty(result.ReadyToStart);
+    }
+
+    [Fact]
     public void Group_BoardIceBoxWithoutLabel_IsBlockedNotReady()
     {
-        var item = CreateWorkItem(32, "Parked", ["priority/medium", "type/story"]);
+        var item = CreateWorkItem(33, "Parked", ["priority/medium", "type/story"]);
         var boardItems = new[]
         {
-            CreateBoardItem(32, "Ice Box", ProjectBoardItemContentTypeDto.Issue),
+            CreateBoardItem(33, "Ice Box", ProjectBoardItemContentTypeDto.Issue),
         };
 
-        var result = BacklogReviewGrouping.Group([item], boardItems, []);
+        var result = BacklogReviewGrouping.Group([item], boardItems, [], [], 14, ReferenceTime);
 
         Assert.Empty(result.Urgent);
         Assert.Empty(result.ReadyToStart);
         var blocked = Assert.Single(result.BlockedOrDeferred);
-        Assert.Equal(32, blocked.Number);
+        Assert.Equal(33, blocked.Number);
         Assert.Equal("Ice Box", blocked.BoardStatusName);
     }
 
@@ -131,7 +173,7 @@ public sealed class BacklogReviewGroupingTests
             CreateBoardItem(8, "Blocked", ProjectBoardItemContentTypeDto.PullRequest),
         };
 
-        var result = BacklogReviewGrouping.Group([issue, pullRequest], boardItems, []);
+        var result = BacklogReviewGrouping.Group([issue, pullRequest], boardItems, [], [], 14, ReferenceTime);
 
         Assert.Equal(8, Assert.Single(result.Urgent).Number);
         Assert.Equal("PR parked", result.Urgent[0].Title);
@@ -144,14 +186,15 @@ public sealed class BacklogReviewGroupingTests
     {
         var items = new[]
         {
-            CreateWorkItem(2, "Second medium", ["priority/medium"], repositoryFullName: "owner/b"),
-            CreateWorkItem(1, "First medium", ["priority/medium"], repositoryFullName: "owner/a"),
-            CreateWorkItem(9, "Critical", ["priority/critical"], repositoryFullName: "owner/z"),
+            CreateWorkItem(2, "Second medium", ["priority/medium", "type/story"], repositoryFullName: "owner/b"),
+            CreateWorkItem(1, "First medium", ["priority/medium", "type/story"], repositoryFullName: "owner/a"),
+            CreateWorkItem(9, "Critical", ["priority/critical", "type/story"], repositoryFullName: "owner/z"),
         };
 
-        var result = BacklogReviewGrouping.Group(items, [], []);
+        var result = BacklogReviewGrouping.Group(items, [], [], [], 14, ReferenceTime);
 
-        Assert.Equal([9, 1, 2], result.ReadyToStart.Select(item => item.Number).ToArray());
+        Assert.Equal([9], result.Urgent.Select(item => item.Number).ToArray());
+        Assert.Equal([1, 2], result.ReadyToStart.Select(item => item.Number).ToArray());
     }
 
     [Fact]
@@ -164,7 +207,7 @@ public sealed class BacklogReviewGroupingTests
             CreateBoardItem(50, "Blocked", ProjectBoardItemContentTypeDto.Issue),
         };
 
-        var result = BacklogReviewGrouping.Group([item], boardItems, []);
+        var result = BacklogReviewGrouping.Group([item], boardItems, [], [], 14, ReferenceTime);
 
         Assert.Equal(50, Assert.Single(result.ReadyToStart).Number);
         Assert.Empty(result.BlockedOrDeferred);
@@ -178,9 +221,97 @@ public sealed class BacklogReviewGroupingTests
             new PmRepositoryCatalogueFailureDto("owner/failed", "Not found", 404),
         };
 
-        var result = BacklogReviewGrouping.Group([], [], failures);
+        var result = BacklogReviewGrouping.Group([], [], [], failures, 14, ReferenceTime);
 
         Assert.Same(failures, result.Failures);
+    }
+
+    [Theory]
+    [InlineData(13, false)]
+    [InlineData(14, true)]
+    [InlineData(15, true)]
+    public void IsNeglected_BoundaryDays_ReturnsExpected(int daysSinceActivity, bool expected)
+    {
+        var summary = new PmRepositorySummaryDto(
+            "owner/quiet",
+            0,
+            0,
+            ReferenceTime.AddDays(-daysSinceActivity),
+            IsIncluded: true);
+
+        Assert.Equal(expected, BacklogReviewGrouping.IsNeglected(summary, neglectDays: 14, ReferenceTime));
+    }
+
+    [Fact]
+    public void IsNeglected_NoRecordedActivity_ReturnsTrue()
+    {
+        var summary = new PmRepositorySummaryDto("owner/empty", 0, 0, default, IsIncluded: true);
+
+        Assert.True(BacklogReviewGrouping.IsNeglected(summary, neglectDays: 14, ReferenceTime));
+    }
+
+    [Fact]
+    public void Group_NeglectedRepositories_ListsInactiveIncludedRepos()
+    {
+        var summaries = new[]
+        {
+            new PmRepositorySummaryDto(
+                "owner/active",
+                2,
+                1,
+                ReferenceTime.AddDays(-3),
+                IsIncluded: true),
+            new PmRepositorySummaryDto(
+                "owner/quiet",
+                0,
+                0,
+                ReferenceTime.AddDays(-20),
+                IsIncluded: true),
+            new PmRepositorySummaryDto(
+                "owner/excluded",
+                0,
+                0,
+                ReferenceTime.AddDays(-30),
+                IsIncluded: false),
+        };
+
+        var result = BacklogReviewGrouping.Group([], [], summaries, [], 14, ReferenceTime);
+
+        var neglected = Assert.Single(result.NeglectedRepositories);
+        Assert.Equal("owner/quiet", neglected.FullName);
+        Assert.Equal(0, neglected.OpenIssueCount);
+        Assert.Equal(0, neglected.OpenPullRequestCount);
+        Assert.Equal(ReferenceTime.AddDays(-20), neglected.LastActivityAt);
+    }
+
+    [Fact]
+    public void Group_EpicNearComplete_IncludesCompletedParent()
+    {
+        var epic = CreateWorkItem(
+            60,
+            "Done epic",
+            ["type/epic", "priority/high"],
+            subIssueTotal: 3,
+            subIssueCompleted: 3);
+
+        var result = BacklogReviewGrouping.Group([epic], [], [], [], 14, ReferenceTime);
+
+        var nearComplete = Assert.Single(result.EpicsNearComplete);
+        Assert.Equal(60, nearComplete.Number);
+        Assert.Equal("type/epic", nearComplete.TypeLabel);
+        Assert.Equal(3, nearComplete.SubIssueTotal);
+        Assert.False(result.SubIssueCountsUnavailable);
+    }
+
+    [Fact]
+    public void Group_OpenEpicWithoutSubIssueCounts_SetsUnavailableFlag()
+    {
+        var epic = CreateWorkItem(61, "Unknown progress", ["type/epic", "priority/medium"]);
+
+        var result = BacklogReviewGrouping.Group([epic], [], [], [], 14, ReferenceTime);
+
+        Assert.Empty(result.EpicsNearComplete);
+        Assert.True(result.SubIssueCountsUnavailable);
     }
 
     private static PmWorkItemDto CreateWorkItem(
@@ -188,7 +319,9 @@ public sealed class BacklogReviewGroupingTests
         string title,
         IReadOnlyList<string> labels,
         PmWorkItemTypeDto itemType = PmWorkItemTypeDto.Issue,
-        string repositoryFullName = "owner/a")
+        string repositoryFullName = "owner/a",
+        int? subIssueTotal = null,
+        int? subIssueCompleted = null)
     {
         var path = itemType == PmWorkItemTypeDto.PullRequest ? "pull" : "issues";
         return new PmWorkItemDto(
@@ -204,8 +337,8 @@ public sealed class BacklogReviewGroupingTests
             UpdatedAt: DateTimeOffset.Parse("2026-08-18T00:00:00Z"),
             IsDraft: itemType == PmWorkItemTypeDto.PullRequest ? false : null,
             HasReviewPending: itemType == PmWorkItemTypeDto.PullRequest ? false : null,
-            SubIssueTotal: null,
-            SubIssueCompleted: null);
+            subIssueTotal,
+            subIssueCompleted);
     }
 
     private static ProjectBoardItemDto CreateBoardItem(

@@ -87,7 +87,7 @@ public sealed class PmWorkflowChromeCoordinatorTests
             new DailyFocusStalledReviewSnapshotDto([], UsedInReviewColumn: false),
             null,
             isLoading: false);
-        coordinator.SetBacklogReview("PVT_board", new BacklogReviewResultDto([], [], [], []), null, isLoading: false);
+        coordinator.SetBacklogReview("PVT_board", EmptyBacklogResult(), null, isLoading: false);
 
         await coordinator.RefreshAsync(forceReload: true);
 
@@ -112,7 +112,7 @@ public sealed class PmWorkflowChromeCoordinatorTests
             new DailyFocusStalledReviewSnapshotDto([], UsedInReviewColumn: false),
             null,
             isLoading: false);
-        coordinator.SetBacklogReview("PVT_board", new BacklogReviewResultDto([], [], [], []), null, isLoading: false);
+        coordinator.SetBacklogReview("PVT_board", EmptyBacklogResult(), null, isLoading: false);
 
         await coordinator.SaveSettingsAsync(PmSettingsDefaults.Create());
 
@@ -174,4 +174,7 @@ public sealed class PmWorkflowChromeCoordinatorTests
 
     private static RepositoryDto CreateRepository(string owner, string name) =>
         new(1, name, $"{owner}/{name}", string.Empty, $"https://github.com/{owner}/{name}", false, false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
+
+    private static BacklogReviewResultDto EmptyBacklogResult()
+        => new([], [], [], [], [], [], false, []);
 }
