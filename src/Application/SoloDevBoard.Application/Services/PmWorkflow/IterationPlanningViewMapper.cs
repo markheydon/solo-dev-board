@@ -10,12 +10,14 @@ public static class IterationPlanningViewMapper
     /// <param name="boardItems">Items currently on the selected planning board.</param>
     /// <param name="failures">Per-repository catalogue failures to carry through to the view.</param>
     /// <param name="hasFocusOrderField"><see langword="true" /> when the selected board exposes a Focus Order field.</param>
+    /// <param name="capacity">The persisted planning capacity from PM settings.</param>
     /// <returns>The planning view snapshot.</returns>
     public static IterationPlanningViewDto Map(
         IReadOnlyList<PmWorkItemDto> workItems,
         IReadOnlyList<ProjectBoardItemDto> boardItems,
         IReadOnlyList<PmRepositoryCatalogueFailureDto> failures,
-        bool hasFocusOrderField)
+        bool hasFocusOrderField,
+        int capacity)
     {
         ArgumentNullException.ThrowIfNull(workItems);
         ArgumentNullException.ThrowIfNull(boardItems);
@@ -45,12 +47,18 @@ public static class IterationPlanningViewMapper
             .ThenBy(static candidate => candidate.Number)
             .ToArray();
 
+        var activeLoad = PlanningCapacityEvaluator.CountActiveLoad(boardItems);
+        var resolvedCapacity = PlanningCapacityEvaluator.ResolveCapacity(capacity);
+
         return new IterationPlanningViewDto(
             upNextItems,
             candidates,
             failures,
             hasFocusOrderField,
-            nextStoryFocusOrder);
+            nextStoryFocusOrder,
+            activeLoad,
+            resolvedCapacity,
+            PlanningCapacityEvaluator.IsAtOrOverCapacity(activeLoad, capacity));
     }
 
     /// <summary>

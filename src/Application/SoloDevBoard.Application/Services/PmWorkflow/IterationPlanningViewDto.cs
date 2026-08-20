@@ -6,9 +6,15 @@ namespace SoloDevBoard.Application.Services.PmWorkflow;
 /// <param name="CatalogueFailures">Per-repository catalogue failures that did not prevent loading candidates.</param>
 /// <param name="HasFocusOrderField"><see langword="true" /> when the selected board exposes a Focus Order field.</param>
 /// <param name="NextStoryFocusOrder">The next sequential Focus Order value for story, enabler, and test cards.</param>
+/// <param name="ActiveLoad">The count of Up Next plus In Progress items on the board.</param>
+/// <param name="Capacity">The resolved planning capacity limit.</param>
+/// <param name="IsAtOrOverCapacity"><see langword="true" /> when <paramref name="ActiveLoad"/> is at or above <paramref name="Capacity"/>.</param>
 public sealed record IterationPlanningViewDto(
     IReadOnlyList<IterationPlanningUpNextItemDto> UpNextItems,
     IReadOnlyList<IterationPlanningCandidateDto> Candidates,
     IReadOnlyList<PmRepositoryCatalogueFailureDto> CatalogueFailures,
     bool HasFocusOrderField,
-    double NextStoryFocusOrder);
+    double NextStoryFocusOrder,
+    int ActiveLoad,
+    int Capacity,
+    bool IsAtOrOverCapacity);

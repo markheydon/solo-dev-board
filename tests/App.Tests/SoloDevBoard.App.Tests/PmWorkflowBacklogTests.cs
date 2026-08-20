@@ -67,8 +67,8 @@ public sealed class PmWorkflowBacklogTests
     {
         ConfigureDefaults();
         var planningService = Substitute.For<IIterationPlanningService>();
-        planningService.GetPlanningViewAsync("PVT_board", Arg.Any<CancellationToken>()).Returns(
-            new IterationPlanningViewDto([], [], [], true, 1));
+        planningService.GetPlanningViewAsync("PVT_board", 8, Arg.Any<CancellationToken>()).Returns(
+            new IterationPlanningViewDto([], [], [], true, 1, 0, 8, false));
 
         await using var ctx = CreateContext(planningService);
         var planning = ctx.RenderPmWorkflowPage<PmWorkflowPlanning>();
@@ -81,6 +81,7 @@ public sealed class PmWorkflowBacklogTests
 
         await planningService.Received(1).GetPlanningViewAsync(
             "PVT_board",
+            8,
             Arg.Any<CancellationToken>());
     }
 

@@ -32,6 +32,9 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
     [Inject]
     public ILogger<PmWorkflowPlanningPanel> Logger { get; set; } = default!;
 
+    [Inject]
+    public IDialogService DialogService { get; set; } = default!;
+
     private IterationPlanningViewDto? planningView;
     private bool isLoadingView;
     private bool isAddingToUpNext;
@@ -168,7 +171,7 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
         try
         {
             var view = await PlanningService
-                .GetPlanningViewAsync(boardId, cancellationToken)
+                .GetPlanningViewAsync(boardId, ChromeState!.Settings.Capacity, cancellationToken)
                 .ConfigureAwait(false);
 
             if (loadGeneration != viewLoadGeneration || cancellationToken.IsCancellationRequested)
@@ -234,6 +237,18 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
         if (ChromeState is null || !ChromeState.HasPlanningBoardSelected || isAddingToUpNext)
         {
             return;
+        }
+
+        if (planningView is not null
+            && PlanningCapacityEvaluator.WouldExceedCapacityAfterAdd(
+                planningView.ActiveLoad,
+                ChromeState.Settings.Capacity))
+        {
+            var confirmed = await ConfirmCapacityExceededAsync().ConfigureAwait(false);
+            if (!confirmed)
+            {
+                return;
+            }
         }
 
         var boardId = ChromeState.Settings.PlanningBoardNodeId!;
@@ -357,4 +372,29 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
         var noun = failures.Count == 1 ? "repository" : "repositories";
         return $"Loaded candidates from included repositories, but {failures.Count} {noun} failed: {repositories}.";
     }
+
+    private async Task<bool> ConfirmCapacityExceededAsync()
+    {
+        var result = await DialogService.ShowMessageBoxAsync(
+            "Exceed capacity limit?",
+            "Active load is already at or above your capacity limit. Add this item anyway?",
+            yesText: "Add anyway",
+            cancelText: "Cancel").ConfigureAwait(false);
+
+        return result == true;
+    }
+
+    private static double GetCapacityProgressValue(IterationPlanningViewDto view)
+    {
+        if (view.Capacity <= 0)
+        {
+            return 0;
+        }
+
+        var percentage = (double)view.ActiveLoad / view.Capacity * 100;
+        return Math.Min(percentage, 100);
+    }
+
+    private static string FormatCapacityProgressAriaLabel(IterationPlanningViewDto view) =>
+        $"Capacity progress: {view.ActiveLoad} of {view.Capacity}";
 }
