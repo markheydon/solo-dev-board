@@ -23,6 +23,7 @@ public sealed class PmWorkflowPlanningTests
     {
         StoredJson = """{"planningBoardNodeId":"PVT_board","capacity":8,"stallDays":3,"neglectDays":14,"excludedRepositories":[]}""",
     };
+    private IRenderedComponent<MudSnackbarProvider> _snackbarProvider = default!;
 
     [Fact]
     public async Task PmWorkflowPlanning_RouteShell_ExposesPageTestIdAndHeading()
@@ -320,6 +321,72 @@ public sealed class PmWorkflowPlanningTests
     }
 
     [Fact]
+    public async Task PmWorkflowPlanning_WhenAddToUpNextSucceeds_ShowsSuccessSnackbar()
+    {
+        ConfigureDefaults();
+        var initialView = CreatePlanningViewWithCandidate();
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+            initialView,
+            initialView);
+        _planningService.AddToUpNextAsync(
+            "PVT_board",
+            PmWorkItemTypeDto.Issue,
+            "owner/repo-a",
+            50,
+            Arg.Any<IReadOnlyList<string>>(),
+            3,
+            Arg.Any<CancellationToken>()).Returns(
+            new IterationPlanningAddToUpNextResultDto(
+                AddedBoardCard: false,
+                FocusOrderAssigned: 2,
+                FocusOrderSkipped: false));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowPlanning>();
+
+        cut.WaitForAssertion(() => Assert.Contains("data-testid=\"pm-workflow-planning-add-button\"", cut.Markup));
+
+        await cut.InvokeAsync(() => cut.Find("[data-testid='pm-workflow-planning-add-button']").Click());
+
+        cut.WaitForAssertion(() =>
+        {
+            var snackbar = _snackbarProvider.Find(".mud-snackbar");
+            Assert.Contains("Added owner/repo-a#50 to Up Next with Focus Order 2.", snackbar.TextContent, StringComparison.Ordinal);
+        });
+    }
+
+    [Fact]
+    public async Task PmWorkflowPlanning_WhenAddToUpNextFails_ShowsErrorSnackbar()
+    {
+        ConfigureDefaults();
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+            CreatePlanningViewWithCandidate());
+        _planningService.AddToUpNextAsync(
+            Arg.Any<string>(),
+            Arg.Any<PmWorkItemTypeDto>(),
+            Arg.Any<string>(),
+            Arg.Any<int>(),
+            Arg.Any<IReadOnlyList<string>>(),
+            Arg.Any<int>(),
+            Arg.Any<CancellationToken>()).Returns(
+            Task.FromException<IterationPlanningAddToUpNextResultDto>(
+                new InvalidOperationException("Resolve stalled Up Next items before adding new work.")));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowPlanning>();
+
+        cut.WaitForAssertion(() => Assert.Contains("data-testid=\"pm-workflow-planning-add-button\"", cut.Markup));
+
+        await cut.InvokeAsync(() => cut.Find("[data-testid='pm-workflow-planning-add-button']").Click());
+
+        cut.WaitForAssertion(() =>
+        {
+            var snackbar = _snackbarProvider.Find(".mud-snackbar");
+            Assert.Contains("Resolve stalled Up Next items before adding new work.", snackbar.TextContent, StringComparison.Ordinal);
+        });
+    }
+
+    [Fact]
     public async Task PmWorkflowPlanning_WhenBoardHasUpNextItems_ShowsBulkMilestoneControls()
     {
         ConfigureDefaults();
@@ -391,12 +458,18 @@ public sealed class PmWorkflowPlanningTests
 
         ctx.Render<MudPopoverProvider>();
         ctx.Render<MudDialogProvider>();
-        ctx.Render<MudSnackbarProvider>();
+        _snackbarProvider = ctx.Render<MudSnackbarProvider>();
 
         return ctx;
     }
 
     private static IterationPlanningViewDto CreateAtCapacityPlanningView() =>
+        CreatePlanningViewWithCandidate(activeLoad: 8, capacity: 8, isAtOrOverCapacity: true);
+
+    private static IterationPlanningViewDto CreatePlanningViewWithCandidate(
+        int activeLoad = 1,
+        int capacity = 8,
+        bool isAtOrOverCapacity = false) =>
         new(
             [],
             [
@@ -412,10 +485,10 @@ public sealed class PmWorkflowPlanningTests
             ],
             [],
             true,
-            1,
-            8,
-            8,
-            true,
+            2,
+            activeLoad,
+            capacity,
+            isAtOrOverCapacity,
             []);
 
     private static RepositoryDto CreateRepository(string owner, string name) =>
