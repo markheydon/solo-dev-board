@@ -243,7 +243,14 @@ test.describe('Repo Management', () => {
         .or(page.getByTestId('pm-workflow-repository-summary-partial-failure'))
         .or(page.getByTestId('pm-workflow-repository-summary-loading')),
     ).toBeVisible();
-    await expect(noBoardAlert.or(page.getByTestId('pm-workflow-board-select')).first()).toBeVisible();
+
+    if (await noBoardAlert.isVisible()) {
+      await expect(noBoardAlert).toContainText('Select a planning board');
+    } else if (await page.getByText(/Board:/).isVisible()) {
+      await expect(page.getByTestId('pm-workflow-shared-chrome')).toContainText('Board:');
+    } else {
+      await expect(page.getByRole('combobox', { name: 'Planning board' })).toBeAttached();
+    }
   });
 });
 
