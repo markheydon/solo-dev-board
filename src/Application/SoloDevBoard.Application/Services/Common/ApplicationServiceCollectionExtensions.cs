@@ -39,6 +39,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IDailyFocusStalledReviewService, DailyFocusStalledReviewService>();
         services.AddScoped<IDailyFocusRecommendationService, DailyFocusRecommendationService>();
         services.AddScoped<IBacklogReviewService, BacklogReviewService>();
+        services.AddScoped<IIterationPlanningService, IterationPlanningService>();
 
         return services;
     }
