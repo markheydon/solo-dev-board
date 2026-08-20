@@ -181,7 +181,9 @@
                              Items="repositorySummaries"
                              Hover="true"
                              Dense="true"
-                             SortMode="SortMode.Multiple">
+                             SortMode="SortMode.Multiple"
+                             Breakpoint="Breakpoint.Xs"
+                             Class="sdb-responsive-grid">
                     <Columns>
                         <TemplateColumn Title="Repository" SortBy="summary => summary.RepositoryFullName">
                             <CellTemplate>
@@ -220,7 +222,7 @@
                                 }
                                 else
                                 {
-                                    <MudTable T="IssueDto" Items="unlabelledIssues" Dense="true" Hover="true" data-testid="audit-unlabelled-table">
+                                    <MudTable T="IssueDto" Items="unlabelledIssues" Dense="true" Hover="true" Class="sdb-responsive-grid" data-testid="audit-unlabelled-table">
                                         <HeaderContent>
                                             <MudTh>Repository</MudTh>
                                             <MudTh>Issue</MudTh>
@@ -256,7 +258,7 @@
                                 }
                                 else
                                 {
-                                    <MudTable T="PullRequestDto" Items="stalePullRequests" Dense="true" Hover="true" data-testid="audit-stale-table">
+                                    <MudTable T="PullRequestDto" Items="stalePullRequests" Dense="true" Hover="true" Class="sdb-responsive-grid" data-testid="audit-stale-table">
                                         <HeaderContent>
                                             <MudTh>Repository</MudTh>
                                             <MudTh>Pull request</MudTh>
@@ -301,7 +303,7 @@
                                 }
                                 else
                                 {
-                                    <MudTable T="WorkflowRunDto" Items="failingWorkflowRuns" Dense="true" Hover="true" data-testid="audit-workflows-table">
+                                    <MudTable T="WorkflowRunDto" Items="failingWorkflowRuns" Dense="true" Hover="true" Class="sdb-responsive-grid" data-testid="audit-workflows-table">
                                         <HeaderContent>
                                             <MudTh>Repository</MudTh>
                                             <MudTh>Workflow</MudTh>

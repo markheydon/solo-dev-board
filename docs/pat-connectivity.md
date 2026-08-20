@@ -18,7 +18,7 @@ When `GitHubAuth:HostedSignInEnabled` is `false`, SoloDevBoard authenticates to 
 
 ## Shell status indicator
 
-- In PAT mode, the application shell shows a **Connected as @login** chip in the app bar.
+- In PAT mode, the application shell shows a **GitHub handle chip** (link icon plus `@login`) in the app bar. The accessible name remains **Connected as @login**.
 - This is the single connectivity indicator for the deployment; it is not repeated on individual feature pages.
 - The chip refreshes when you navigate between pages so runtime connectivity changes are reflected after recovery attempts.
 - This confirms GitHub connectivity before you open Repositories, Labels, or other feature pages.
@@ -42,7 +42,7 @@ Use `/health/github` when you want Container Apps or external monitoring to veri
 ### Manual verification (PAT connectivity)
 
 1. Configure `OwnerLogin` and an invalid `gh-pat` — expect startup to fail with a clear PAT message.
-2. Configure a valid PAT — expect the shell to show **Connected as @login**.
+2. Configure a valid PAT — expect the shell to show **@login** with a link icon.
 3. Revoke the PAT while the app is running, then open **Repositories** — expect redirect to `/auth/connectivity-error`, not a generic feature-page error.
 4. Call `GET /health/github` — expect `Healthy` when the PAT is valid.
 

@@ -94,6 +94,20 @@ public sealed class MainLayoutThemeTests : BunitContext
         await _themePreferenceService.Received(1).CycleAsync();
     }
 
+    [Fact]
+    public void MainLayout_WhenConnectedInPatMode_ShowsHandleWithoutConnectedAsPrefix()
+    {
+        var cut = Render<MainLayout>();
+
+        cut.WaitForAssertion(() =>
+        {
+            var chip = cut.Find("[data-testid='shell-github-connection-status']");
+            Assert.Equal("Connected as @markheydon.", chip.GetAttribute("aria-label"));
+            Assert.Contains("@markheydon", chip.TextContent, StringComparison.Ordinal);
+            Assert.DoesNotContain("Connected as", chip.TextContent, StringComparison.Ordinal);
+        });
+    }
+
     private sealed class UnauthenticatedAuthenticationStateProvider : AuthenticationStateProvider
     {
         public override Task<AuthenticationState> GetAuthenticationStateAsync() =>

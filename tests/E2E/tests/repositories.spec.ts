@@ -13,4 +13,18 @@ test.describe('Repositories shell', () => {
     await expect(page.getByText('Unable to load repositories')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
   });
+
+  test('phone-width viewport does not introduce horizontal overflow on the repositories shell', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/repositories');
+
+    await expect(page.getByTestId('repositories-loading-state')).toBeHidden({ timeout: 15_000 });
+    await expect(page.getByTestId('repositories-error-state')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Actions' })).toBeVisible();
+
+    const hasHorizontalOverflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+    );
+    expect(hasHorizontalOverflow).toBeFalsy();
+  });
 });
