@@ -167,9 +167,12 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Milestone:** v1.1.0 (sole open milestone; formerly planned as v1.2.0 — see [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy))
 
-**Status:** Planned (2026-08-18). Feature [#272](https://github.com/markheydon/solo-dev-board/issues/272) (no parent epic). Stories #273–#288 plus enablers and tests. Wireframe: `plan/wireframes/pm-workflow-wireframe.md`. Plan: `plan/cross-repo-pm-workflow-project-plan.md`. Decision: [DEC-029](DECISIONS.md#dec-029-cross-repo-pm-workflow-board-selection-and-local-settings).
+**Status:** Planned (2026-08-18). Feature [#272](https://github.com/markheydon/solo-dev-board/issues/272) (no parent epic). Stories #273–#288 plus enablers and tests. Wireframe: `plan/wireframes/pm-workflow-wireframe.md`. Plan: `plan/cross-repo-pm-workflow-project-plan.md`. Decision: [DEC-029](DECISIONS.md#dec-029-cross-repo-pm-workflow-board-selection-and-local-settings). Hardcoding audit: [#423](https://github.com/markheydon/solo-dev-board/issues/423) — [`HARDCODING_AUDIT_v1.1.md`](HARDCODING_AUDIT_v1.1.md).
 
 ### Key Tasks
+
+#### Hardcoding audit (v1.1 guardrail)
+- [x] Audit shipped `src/` and User Guide for maintainer identity / repo assumptions; classify acceptable vs must fix. _(#423; see [`HARDCODING_AUDIT_v1.1.md`](HARDCODING_AUDIT_v1.1.md).)_
 
 #### Daily Focus
 - [ ] Design `DailyFocusReport` and `BoardSnapshot` domain records
