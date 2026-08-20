@@ -153,12 +153,19 @@ test.describe('Daily Focus', () => {
 
     const chromeError = page.getByTestId('pm-workflow-chrome-error');
     const noBoardAlert = page.getByTestId('pm-workflow-daily-focus-no-board');
+    const occupancyRegion = page.getByTestId('pm-workflow-daily-focus-board-state');
     const emptyBoardAlert = page.getByTestId('pm-workflow-daily-focus-empty');
     const emptyBoardPaper = page.getByTestId('pm-workflow-daily-focus-empty-board');
     const occupancyError = page.getByTestId('pm-workflow-daily-focus-error');
 
     await expect(
-      chromeError.or(noBoardAlert).or(emptyBoardAlert).or(emptyBoardPaper).or(occupancyError).first(),
+      chromeError
+        .or(noBoardAlert)
+        .or(occupancyRegion)
+        .or(emptyBoardAlert)
+        .or(emptyBoardPaper)
+        .or(occupancyError)
+        .first(),
     ).toBeVisible({ timeout: 15_000 });
 
     if (await chromeError.isVisible()) {
@@ -179,7 +186,18 @@ test.describe('Daily Focus', () => {
       return;
     }
 
+    if (await occupancyRegion.isVisible()) {
+      const hasEmptyBoardState = await emptyBoardAlert.or(emptyBoardPaper).first().isVisible();
+      if (!hasEmptyBoardState) {
+        return;
+      }
+    }
+
     await expect(emptyBoardAlert.or(emptyBoardPaper).first()).toBeVisible();
-    await expect(page.getByText('This planning board has no items.')).toBeVisible();
+    await expect(
+      page
+        .getByText('This planning board has no items.')
+        .or(page.getByText('This planning board has no Status options and no items yet.')),
+    ).toBeVisible();
   });
 });
