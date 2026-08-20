@@ -1,6 +1,6 @@
 # Cross-Repo PM Workflow — issues checklist
 
-Parent: [#272](https://github.com/markheydon/solo-dev-board/issues/272). Milestone: **v1.1.0** (number 7). Assignee: `markheydon`. Status on new/updated children: `status/todo` (do not add an Up Next **label**).
+Parent: [#272](https://github.com/markheydon/solo-dev-board/issues/272). Milestone: **v1.1.0** (number 7). Do **not** assign new issues at creation — Roadmap Sync assigns `markheydon` when Status is **Up Next** or **In Progress**. Status on new/updated children: `status/todo` (do not add an Up Next **label**).
 
 Wireframe: `plan/wireframes/pm-workflow-wireframe.md`. Plan: `plan/cross-repo-pm-workflow-project-plan.md`. Decisions: DEC-027, DEC-028, DEC-029.
 

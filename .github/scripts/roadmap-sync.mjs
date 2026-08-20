@@ -1,10 +1,12 @@
 import { isIssueClosedLongEnoughToArchive } from './roadmap-sync-archive.mjs';
+import { resolveMaintainerAssignmentAction } from './roadmap-sync-assignee.mjs';
 import { githubJsonRequest, isTransientGitHubGraphQlError, withGitHubRetry } from './github-http.mjs';
 
 const apiBaseUrl = 'https://api.github.com';
 const graphqlUrl = `${apiBaseUrl}/graphql`;
 const owner = 'markheydon';
 const repo = 'solo-dev-board';
+const maintainerLogin = owner;
 const projectId = 'PVT_kwHOAJefG84BQ6bh';
 const archivedStates = ['ARCHIVED', 'NOT_ARCHIVED'];
 
@@ -278,6 +280,7 @@ async function syncIssueAsync(issue, issueItemsByContentId, timelineCache) {
     await syncSingleSelectFieldAsync(projectItem.id, fieldIds.status, projectItem.status?.optionId ?? null, statusOptions[desiredStatusName], `issue #${issue.number} status`);
     await syncSingleSelectFieldAsync(projectItem.id, fieldIds.phase, projectItem.phase?.optionId ?? null, desiredPhaseOptionId, `issue #${issue.number} phase`);
     await syncSingleSelectFieldAsync(projectItem.id, fieldIds.priority, projectItem.priority?.optionId ?? null, desiredPriorityOptionId, `issue #${issue.number} priority`);
+    await syncIssueAssigneeAsync(issue, desiredStatusName, `issue #${issue.number}`);
 
     if (desiredStatusName === 'Up Next') {
         await syncDateFieldAsync(projectItem.id, fieldIds.startDate, projectItem.startDate?.date ?? null, null, `issue #${issue.number} start date`);
@@ -373,6 +376,7 @@ async function syncParentIssuesAsync(issueItemsByContentId, issueByNumber, timel
         await syncDateFieldAsync(projectItem.id, fieldIds.startDate, projectItem.startDate?.date ?? null, desiredStartDate, `parent issue #${issue.number} start date`);
         await syncDateFieldAsync(projectItem.id, fieldIds.targetDate, projectItem.targetDate?.date ?? null, desiredTargetDate, `parent issue #${issue.number} target date`);
         await clearFieldAsync(projectItem.id, fieldIds.focusOrder, projectItem.focusOrder?.number ?? null, `parent issue #${issue.number} focus order`);
+        await syncIssueAssigneeAsync(parentIssue, desiredStatusName, `parent issue #${issue.number}`);
     }
 }
 
@@ -602,6 +606,28 @@ async function removeStrayPullRequestCardsAsync(pullRequestItems) {
     }
 }
 
+async function syncIssueAssigneeAsync(issue, desiredStatusName, label) {
+    const currentAssigneeLogins = getAssigneeLogins(issue);
+    const action = resolveMaintainerAssignmentAction(currentAssigneeLogins, desiredStatusName, maintainerLogin);
+
+    if (action === 'none') {
+        return;
+    }
+
+    if (action === 'assign') {
+        await restMutateAsync(
+            `/repos/${owner}/${repo}/issues/${issue.number}/assignees/${maintainerLogin}`,
+            'POST');
+        console.log(`Assigned ${maintainerLogin} to ${label}.`);
+        return;
+    }
+
+    await restMutateAsync(
+        `/repos/${owner}/${repo}/issues/${issue.number}/assignees/${maintainerLogin}`,
+        'DELETE');
+    console.log(`Unassigned ${maintainerLogin} from ${label}.`);
+}
+
 async function syncSingleSelectFieldAsync(itemId, fieldId, currentOptionId, desiredOptionId, label) {
     if (currentOptionId === desiredOptionId) {
         return;
@@ -778,6 +804,24 @@ async function restAsync(path) {
         userAgent: 'solo-dev-board-roadmap-sync',
         apiVersion: '2022-11-28',
     });
+}
+
+async function restMutateAsync(path, method) {
+    return githubJsonRequest({
+        url: `${apiBaseUrl}${path}`,
+        method,
+        token,
+        userAgent: 'solo-dev-board-roadmap-sync',
+        apiVersion: '2022-11-28',
+    });
+}
+
+function getAssigneeLogins(issue) {
+    if (!issue.assignees) {
+        return [];
+    }
+
+    return issue.assignees.map(assignee => assignee.login).filter(Boolean);
 }
 
 function getLabelNames(issue) {

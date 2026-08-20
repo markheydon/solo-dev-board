@@ -68,7 +68,7 @@ Invoke this when you need to:
   - **Feature plan doc:** path under `plan/` or `N/A`
 - For `type/enabler` issues, include an `## Implementation Notes` section (technical approach, layers affected, dependencies)
 - Assign to current milestone if applicable
-- **Assign to `markheydon`** — all issues must be assigned at creation (see repo-github-project skill Event 1)
+- **Do not assign issues at creation** — Roadmap Sync assigns `markheydon` only when Project #8 Status is **Up Next** or **In Progress** (see repo-github-project skill assignee rules)
 - Set parent/child sub-issue hierarchy (Epic→Feature→Story/Enabler/Test) and blocking relationships after creating issues. Use GitHub MCP `sub_issue_write` for parents and `gh api` REST issue-dependencies for blocking — see `repo-github-gh-cli` and `repo-github-issues`. Do **not** ask the user to click Relationships in the GitHub UI unless those APIs fail. Dedicated `gh issue` subcommands still do not exist ([cli/cli#10298](https://github.com/cli/cli/issues/10298), [cli/cli#11757](https://github.com/cli/cli/issues/11757)); the REST and MCP paths are the supported workaround.
 
 ### 5. Project Board Sync
