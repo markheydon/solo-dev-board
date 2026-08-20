@@ -242,7 +242,7 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
         if (planningView is not null
             && PlanningCapacityEvaluator.WouldExceedCapacityAfterAdd(
                 planningView.ActiveLoad,
-                ChromeState.Settings.Capacity))
+                planningView.Capacity))
         {
             var confirmed = await ConfirmCapacityExceededAsync().ConfigureAwait(false);
             if (!confirmed)
