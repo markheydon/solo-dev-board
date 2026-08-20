@@ -5,8 +5,7 @@
     <MudText Typo="Typo.h5">Backlog Review</MudText>
     <MudText Typo="Typo.body1">
         Open issues and pull requests from included repositories, grouped by urgency.
-        Adding items to Up Next happens on the Planning tab.
-        Awaiting triage, near-complete epics, and neglected repositories will appear in later stories.
+        Rows open GitHub in a new tab. Adding items to Up Next happens on the Planning tab.
     </MudText>
 
     @if (ChromeState is null)
@@ -109,7 +108,10 @@
             <MudExpansionPanels MultiExpansion="true" data-testid="pm-workflow-backlog-panels">
                 @RenderGroupPanel("Urgent", "pm-workflow-backlog-urgent", FilteredUrgent)
                 @RenderGroupPanel("Ready to start", "pm-workflow-backlog-ready", FilteredReady)
+                @RenderGroupPanel("Awaiting triage", "pm-workflow-backlog-awaiting-triage", FilteredAwaitingTriage)
                 @RenderGroupPanel("Blocked / deferred", "pm-workflow-backlog-blocked", FilteredBlocked)
+                @RenderEpicsPanel()
+                @RenderNeglectedPanel()
             </MudExpansionPanels>
         }
     }
@@ -145,7 +147,16 @@
                             @foreach (var item in items)
                             {
                                 <tr data-testid="@($"{testId}-row")">
-                                    <td>@FormatItemKind(item.ItemType)</td>
+                                    <td>
+                                        <MudChip T="string"
+                                                 Value="@FormatItemKindChip(item.ItemType)"
+                                                 Variant="Variant.Outlined"
+                                                 Color="Color.Default"
+                                                 Size="Size.Small"
+                                                 data-testid="pm-workflow-backlog-kind-chip">
+                                            @FormatItemKindChip(item.ItemType)
+                                        </MudChip>
+                                    </td>
                                     <td>
                                         <MudLink Href="@item.HtmlUrl"
                                                  Target="_blank"
@@ -156,6 +167,105 @@
                                     </td>
                                     <td>@item.Title</td>
                                     <td>@FormatPriority(item.PriorityLabel)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                }
+            </ChildContent>
+        </MudExpansionPanel>
+    };
+
+    private RenderFragment RenderEpicsPanel() => __builder =>
+    {
+        <MudExpansionPanel Expanded="true" data-testid="pm-workflow-backlog-epics">
+            <TitleContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <MudText Typo="Typo.subtitle1">Epics near completion</MudText>
+                    <MudBadge Color="Color.Primary" Content="@FilteredEpicsNearComplete.Count" Overlap="false" />
+                </MudStack>
+            </TitleContent>
+            <ChildContent>
+                @if (snapshot?.SubIssueCountsUnavailable == true)
+                {
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" data-testid="pm-workflow-backlog-epics-unavailable">
+                        Open epics or features were found, but GitHub did not return sub-issue counts. Near-completion parents cannot be listed without that data.
+                    </MudAlert>
+                }
+                else if (FilteredEpicsNearComplete.Count == 0)
+                {
+                    <MudText Typo="Typo.body2" data-testid="pm-workflow-backlog-epics-empty">No near-complete epics or features.</MudText>
+                }
+                else
+                {
+                    <MudSimpleTable Hover="true" Dense="true" data-testid="pm-workflow-backlog-epics-table">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Sub-issues</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var epic in FilteredEpicsNearComplete)
+                            {
+                                <tr data-testid="pm-workflow-backlog-epics-row">
+                                    <td>
+                                        <MudLink Href="@epic.HtmlUrl"
+                                                 Target="_blank"
+                                                 rel="noopener noreferrer"
+                                                 data-testid="pm-workflow-backlog-epic-link">
+                                            @($"{epic.RepositoryFullName}#{epic.Number}")
+                                        </MudLink>
+                                    </td>
+                                    <td>@epic.Title</td>
+                                    <td>@epic.TypeLabel</td>
+                                    <td>@($"{epic.SubIssueCompleted}/{epic.SubIssueTotal}")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                }
+            </ChildContent>
+        </MudExpansionPanel>
+    };
+
+    private RenderFragment RenderNeglectedPanel() => __builder =>
+    {
+        <MudExpansionPanel Expanded="true" data-testid="pm-workflow-backlog-neglected">
+            <TitleContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <MudText Typo="Typo.subtitle1">Neglected repositories</MudText>
+                    <MudBadge Color="Color.Primary" Content="@FilteredNeglectedRepositories.Count" Overlap="false" />
+                </MudStack>
+            </TitleContent>
+            <ChildContent>
+                @if (FilteredNeglectedRepositories.Count == 0)
+                {
+                    <MudText Typo="Typo.body2" data-testid="pm-workflow-backlog-neglected-empty">
+                        No included repositories have been inactive for @NeglectDaysThreshold or more days.
+                    </MudText>
+                }
+                else
+                {
+                    <MudSimpleTable Hover="true" Dense="true" data-testid="pm-workflow-backlog-neglected-table">
+                        <thead>
+                            <tr>
+                                <th>Repository</th>
+                                <th>Last activity</th>
+                                <th>Open issues</th>
+                                <th>Open PRs</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var repository in FilteredNeglectedRepositories)
+                            {
+                                <tr data-testid="pm-workflow-backlog-neglected-row">
+                                    <td>@repository.FullName</td>
+                                    <td>@FormatLastActivity(repository.LastActivityAt)</td>
+                                    <td>@repository.OpenIssueCount</td>
+                                    <td>@repository.OpenPullRequestCount</td>
                                 </tr>
                             }
                         </tbody>

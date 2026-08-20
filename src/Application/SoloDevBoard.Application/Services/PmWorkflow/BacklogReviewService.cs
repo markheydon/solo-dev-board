@@ -5,19 +5,24 @@ public sealed class BacklogReviewService : IBacklogReviewService
 {
     private readonly IPmWorkItemCatalogueService _workItemCatalogueService;
     private readonly IProjectItemCatalogueService _projectItemCatalogueService;
+    private readonly IPmSettingsService _pmSettingsService;
 
     /// <summary>Initialises a new instance of the <see cref="BacklogReviewService"/> class.</summary>
     /// <param name="workItemCatalogueService">The cross-repository work-item catalogue.</param>
     /// <param name="projectItemCatalogueService">The project board item catalogue.</param>
+    /// <param name="pmSettingsService">The PM settings service.</param>
     public BacklogReviewService(
         IPmWorkItemCatalogueService workItemCatalogueService,
-        IProjectItemCatalogueService projectItemCatalogueService)
+        IProjectItemCatalogueService projectItemCatalogueService,
+        IPmSettingsService pmSettingsService)
     {
         ArgumentNullException.ThrowIfNull(workItemCatalogueService);
         ArgumentNullException.ThrowIfNull(projectItemCatalogueService);
+        ArgumentNullException.ThrowIfNull(pmSettingsService);
 
         _workItemCatalogueService = workItemCatalogueService;
         _projectItemCatalogueService = projectItemCatalogueService;
+        _pmSettingsService = pmSettingsService;
     }
 
     /// <inheritdoc/>
@@ -34,6 +39,9 @@ public sealed class BacklogReviewService : IBacklogReviewService
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentException.ThrowIfNullOrWhiteSpace(projectId);
 
+        var settings = await _pmSettingsService.GetSettingsAsync().ConfigureAwait(false);
+        var neglectDays = settings.NeglectDays > 0 ? settings.NeglectDays : PmSettingsDefaults.NeglectDays;
+
         var workItemsTask = _workItemCatalogueService.GetCatalogueAsync(cancellationToken);
         var boardCatalogueTask = _projectItemCatalogueService.GetCatalogueAsync(projectId, cancellationToken);
         await Task.WhenAll(workItemsTask, boardCatalogueTask).ConfigureAwait(false);
@@ -46,7 +54,13 @@ public sealed class BacklogReviewService : IBacklogReviewService
             throw CreateCatalogueFailureException(workItems.Failures);
         }
 
-        return BacklogReviewGrouping.Group(workItems.Items, boardCatalogue.Items, workItems.Failures);
+        return BacklogReviewGrouping.Group(
+            workItems.Items,
+            boardCatalogue.Items,
+            workItems.RepositorySummaries,
+            workItems.Failures,
+            neglectDays,
+            DateTimeOffset.UtcNow);
     }
 
     private static InvalidOperationException CreateCatalogueFailureException(

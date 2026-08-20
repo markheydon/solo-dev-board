@@ -10,26 +10,39 @@ public sealed class BacklogReviewServiceTests
         Substitute.For<IPmWorkItemCatalogueService>();
     private readonly IProjectItemCatalogueService _projectItemCatalogueService =
         Substitute.For<IProjectItemCatalogueService>();
+    private readonly IPmSettingsService _pmSettingsService = Substitute.For<IPmSettingsService>();
+
+    public BacklogReviewServiceTests()
+    {
+        _pmSettingsService.GetSettingsAsync().Returns(PmSettingsDefaults.Create());
+    }
 
     [Fact]
     public void Constructor_WorkItemCatalogueIsNull_ThrowsArgumentNullException()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            _ = new BacklogReviewService(null!, _projectItemCatalogueService));
+            _ = new BacklogReviewService(null!, _projectItemCatalogueService, _pmSettingsService));
     }
 
     [Fact]
     public void Constructor_ProjectCatalogueIsNull_ThrowsArgumentNullException()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            _ = new BacklogReviewService(_workItemCatalogueService, null!));
+            _ = new BacklogReviewService(_workItemCatalogueService, null!, _pmSettingsService));
+    }
+
+    [Fact]
+    public void Constructor_SettingsServiceIsNull_ThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            _ = new BacklogReviewService(_workItemCatalogueService, _projectItemCatalogueService, null!));
     }
 
     [Fact]
     public async Task GetBacklogAsync_ProjectIdIsBlank_ThrowsArgumentException()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
-        var sut = new BacklogReviewService(_workItemCatalogueService, _projectItemCatalogueService);
+        var sut = new BacklogReviewService(_workItemCatalogueService, _projectItemCatalogueService, _pmSettingsService);
 
         await Assert.ThrowsAsync<ArgumentException>(() =>
             sut.GetBacklogAsync(" ", cancellationToken));
@@ -82,12 +95,12 @@ public sealed class BacklogReviewServiceTests
                 [],
                 []));
 
-        var sut = new BacklogReviewService(_workItemCatalogueService, _projectItemCatalogueService);
+        var sut = new BacklogReviewService(_workItemCatalogueService, _projectItemCatalogueService, _pmSettingsService);
 
         var result = await sut.GetBacklogAsync("PVT_board", cancellationToken);
 
         Assert.Equal(40, Assert.Single(result.Urgent).Number);
-        Assert.Equal(40, Assert.Single(result.ReadyToStart).Number);
+        Assert.Empty(result.ReadyToStart);
         Assert.Equal(41, Assert.Single(result.BlockedOrDeferred).Number);
         Assert.Empty(result.Failures);
     }
@@ -107,7 +120,7 @@ public sealed class BacklogReviewServiceTests
                 [],
                 []));
 
-        var sut = new BacklogReviewService(_workItemCatalogueService, _projectItemCatalogueService);
+        var sut = new BacklogReviewService(_workItemCatalogueService, _projectItemCatalogueService, _pmSettingsService);
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             sut.GetBacklogAsync("PVT_board", cancellationToken));
@@ -151,7 +164,7 @@ public sealed class BacklogReviewServiceTests
                 [],
                 []));
 
-        var sut = new BacklogReviewService(_workItemCatalogueService, _projectItemCatalogueService);
+        var sut = new BacklogReviewService(_workItemCatalogueService, _projectItemCatalogueService, _pmSettingsService);
 
         var result = await sut.GetBacklogAsync("PVT_board", cancellationToken);
 
