@@ -34,13 +34,13 @@ public static class DailyFocusRecommendationMapper
         {
             if (IsExcludedBoardStatus(boardItem.Status?.Name))
             {
-                excludedKeys.Add(BuildContentKey(boardItem));
+                excludedKeys.Add(PmWorkItemJoinKey.For(boardItem));
             }
         }
 
         return workItems
             .Where(item => PmLabelHelpers.IsUnblocked(item.Labels)
-                && !excludedKeys.Contains(BuildContentKey(item)))
+                && !excludedKeys.Contains(PmWorkItemJoinKey.For(item)))
             .OrderBy(static item => PmPriorityRanker.GetRank(PmLabelHelpers.ParsePriorityLabel(item.Labels)))
             .ThenByDescending(static item => item.UpdatedAt)
             .ThenBy(static item => item.RepositoryFullName, StringComparer.OrdinalIgnoreCase)
@@ -77,20 +77,4 @@ public static class DailyFocusRecommendationMapper
             item.Title,
             item.HtmlUrl,
             PmLabelHelpers.ParsePriorityLabel(item.Labels));
-
-    private static string BuildContentKey(PmWorkItemDto item)
-        => BuildContentKey(item.ItemType == PmWorkItemTypeDto.PullRequest, item.RepositoryFullName, item.Number);
-
-    private static string BuildContentKey(ProjectBoardItemDto item)
-    {
-        var repositoryFullName = $"{item.Content.RepositoryOwner}/{item.Content.RepositoryName}";
-        var isPullRequest = item.Content.ContentType == ProjectBoardItemContentTypeDto.PullRequest;
-        return BuildContentKey(isPullRequest, repositoryFullName, item.Content.Number);
-    }
-
-    private static string BuildContentKey(bool isPullRequest, string repositoryFullName, int number)
-    {
-        var kind = isPullRequest ? "pr" : "issue";
-        return $"{kind}:{repositoryFullName}#{number}";
-    }
 }

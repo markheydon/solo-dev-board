@@ -53,6 +53,7 @@ public sealed class ApplicationServiceCollectionExtensionsTests
         AssertServiceRegistration<IDailyFocusBoardStateService, DailyFocusBoardStateService>(services, ServiceLifetime.Scoped);
         AssertServiceRegistration<IDailyFocusStalledReviewService, DailyFocusStalledReviewService>(services, ServiceLifetime.Scoped);
         AssertServiceRegistration<IDailyFocusRecommendationService, DailyFocusRecommendationService>(services, ServiceLifetime.Scoped);
+        AssertServiceRegistration<IBacklogReviewService, BacklogReviewService>(services, ServiceLifetime.Scoped);
         var timeProvider = Assert.Single(services, d => d.ServiceType == typeof(TimeProvider));
         Assert.Equal(ServiceLifetime.Singleton, timeProvider.Lifetime);
         Assert.Same(TimeProvider.System, timeProvider.ImplementationInstance);

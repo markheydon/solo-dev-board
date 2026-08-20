@@ -1,0 +1,167 @@
+@using SoloDevBoard.App.Components.Features.PmWorkflow
+@using SoloDevBoard.Application.Services.PmWorkflow
+
+<MudStack Spacing="3" data-testid="pm-workflow-backlog-page">
+    <MudText Typo="Typo.h5">Backlog Review</MudText>
+    <MudText Typo="Typo.body1">
+        Open issues and pull requests from included repositories, grouped by urgency.
+        Adding items to Up Next happens on the Planning tab.
+        Awaiting triage, near-complete epics, and neglected repositories will appear in later stories.
+    </MudText>
+
+    @if (ChromeState is null)
+    {
+        <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">PM Workflow chrome is unavailable.</MudAlert>
+    }
+    else if (!ChromeState.IsLoading && !string.IsNullOrWhiteSpace(ChromeState.LoadErrorMessage))
+    {
+        @* Chrome already shows the error and retry. *@
+    }
+    else if (ChromeState.IsLoading)
+    {
+        <MudText Typo="Typo.body2" data-testid="pm-workflow-backlog-loading-chrome">
+            Loading planning boards before Backlog Review.
+        </MudText>
+    }
+    else if (!ChromeState.HasPlanningBoardSelected)
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" data-testid="pm-workflow-backlog-no-board">
+            Select a planning board in the dropdown above to load Backlog Review groups.
+        </MudAlert>
+    }
+    else
+    {
+        @if (isLoading)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="Loading Backlog Review" />
+        }
+
+        @if (!string.IsNullOrWhiteSpace(loadErrorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" data-testid="pm-workflow-backlog-error">
+                @loadErrorMessage
+                <MudButton Variant="Variant.Text"
+                           OnClick="RetryLoadAsync"
+                           data-testid="pm-workflow-backlog-retry">Retry</MudButton>
+            </MudAlert>
+        }
+        else if (!isLoading && snapshot is not null)
+        {
+            @if (!string.IsNullOrWhiteSpace(warningMessage))
+            {
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" data-testid="pm-workflow-backlog-warning">
+                    @warningMessage
+                    <MudButton Variant="Variant.Text"
+                               OnClick="RetryLoadAsync"
+                               data-testid="pm-workflow-backlog-retry">Retry</MudButton>
+                </MudAlert>
+            }
+
+            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.End" data-testid="pm-workflow-backlog-filters">
+                <MudSelect T="string"
+                           Label="Type"
+                           Variant="Variant.Outlined"
+                           Dense="true"
+                           Value="selectedTypeFilter"
+                           ValueChanged="OnTypeFilterChanged"
+                           data-testid="pm-workflow-backlog-type-filter">
+                    <MudSelectItem T="string" Value="@AllTypesFilter">All types</MudSelectItem>
+                    <MudSelectItem T="string" Value="@IssueTypeFilter">Issues</MudSelectItem>
+                    <MudSelectItem T="string" Value="@PullRequestTypeFilter">Pull requests</MudSelectItem>
+                </MudSelect>
+                <MudSelect T="string"
+                           Label="Repository"
+                           Variant="Variant.Outlined"
+                           Dense="true"
+                           Value="selectedRepositoryFilter"
+                           ValueChanged="OnRepositoryFilterChanged"
+                           data-testid="pm-workflow-backlog-repo-filter">
+                    <MudSelectItem T="string" Value="@AllRepositoriesFilter">All repositories</MudSelectItem>
+                    @foreach (var repository in RepositoryOptions)
+                    {
+                        <MudSelectItem T="string" Value="@repository">@repository</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudTextField T="string"
+                              Label="Search"
+                              Variant="Variant.Outlined"
+                              Immediate="true"
+                              DebounceInterval="200"
+                              Value="searchText"
+                              ValueChanged="OnSearchChanged"
+                              Clearable="true"
+                              data-testid="pm-workflow-backlog-search" />
+            </MudStack>
+
+            @if (IsCatalogueEmpty)
+            {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" data-testid="pm-workflow-backlog-empty">
+                    No open issues or pull requests in included repositories.
+                </MudAlert>
+            }
+            else if (HasNoFilteredItems)
+            {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" data-testid="pm-workflow-backlog-filter-empty">
+                    No items match the current filters.
+                </MudAlert>
+            }
+
+            <MudExpansionPanels MultiExpansion="true" data-testid="pm-workflow-backlog-panels">
+                @RenderGroupPanel("Urgent", "pm-workflow-backlog-urgent", FilteredUrgent)
+                @RenderGroupPanel("Ready to start", "pm-workflow-backlog-ready", FilteredReady)
+                @RenderGroupPanel("Blocked / deferred", "pm-workflow-backlog-blocked", FilteredBlocked)
+            </MudExpansionPanels>
+        }
+    }
+</MudStack>
+
+@code {
+    private RenderFragment RenderGroupPanel(string title, string testId, IReadOnlyList<BacklogReviewItemDto> items) => __builder =>
+    {
+        <MudExpansionPanel Expanded="true" data-testid="@testId">
+            <TitleContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <MudText Typo="Typo.subtitle1">@title</MudText>
+                    <MudBadge Color="Color.Primary" Content="@items.Count" Overlap="false" />
+                </MudStack>
+            </TitleContent>
+            <ChildContent>
+                @if (items.Count == 0)
+                {
+                    <MudText Typo="Typo.body2" data-testid="@($"{testId}-empty")">No items in this group.</MudText>
+                }
+                else
+                {
+                    <MudSimpleTable Hover="true" Dense="true" data-testid="@($"{testId}-table")">
+                        <thead>
+                            <tr>
+                                <th>Kind</th>
+                                <th>Item</th>
+                                <th>Title</th>
+                                <th>Priority</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in items)
+                            {
+                                <tr data-testid="@($"{testId}-row")">
+                                    <td>@FormatItemKind(item.ItemType)</td>
+                                    <td>
+                                        <MudLink Href="@item.HtmlUrl"
+                                                 Target="_blank"
+                                                 rel="noopener noreferrer"
+                                                 data-testid="pm-workflow-backlog-item-link">
+                                            @($"{item.RepositoryFullName}#{item.Number}")
+                                        </MudLink>
+                                    </td>
+                                    <td>@item.Title</td>
+                                    <td>@FormatPriority(item.PriorityLabel)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                }
+            </ChildContent>
+        </MudExpansionPanel>
+    };
+}

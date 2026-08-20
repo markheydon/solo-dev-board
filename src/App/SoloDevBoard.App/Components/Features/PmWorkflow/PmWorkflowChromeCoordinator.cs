@@ -53,6 +53,9 @@ public sealed class PmWorkflowChromeCoordinator
     /// <summary>Gets the cached Daily Focus recommendations for the current circuit, if any.</summary>
     public DailyFocusRecommendationsCacheEntry? DailyFocusRecommendations { get; private set; }
 
+    /// <summary>Gets the cached Backlog Review grouping for the current circuit, if any.</summary>
+    public BacklogReviewCacheEntry? BacklogReview { get; private set; }
+
     /// <summary>Loads chrome data when it has not been loaded yet for this circuit.</summary>
     /// <returns>A task that completes when the load attempt finishes or is skipped.</returns>
     public Task EnsureLoadedAsync() =>
@@ -75,6 +78,7 @@ public sealed class PmWorkflowChromeCoordinator
             ClearDailyFocusBoardState();
             ClearDailyFocusStalledReviews();
             ClearDailyFocusRecommendations();
+            ClearBacklogReview();
         }
 
         CancelPendingLoad();
@@ -93,6 +97,7 @@ public sealed class PmWorkflowChromeCoordinator
         State.Settings = await _pmSettingsService.GetSettingsAsync().ConfigureAwait(false);
         ClearDailyFocusStalledReviews();
         ClearDailyFocusRecommendations();
+        ClearBacklogReview();
         State.MarkDataChanged();
     }
 
@@ -176,6 +181,32 @@ public sealed class PmWorkflowChromeCoordinator
 
     /// <summary>Clears cached Daily Focus recommendations.</summary>
     public void ClearDailyFocusRecommendations() => DailyFocusRecommendations = null;
+
+    /// <summary>Stores Backlog Review grouping in the circuit cache.</summary>
+    /// <param name="boardId">The planning board node identifier.</param>
+    /// <param name="result">The grouped backlog, when successful.</param>
+    /// <param name="errorMessage">The load error message, when unsuccessful.</param>
+    /// <param name="isLoading"><see langword="true"/> when a load is currently in flight; otherwise, <see langword="false"/>.</param>
+    /// <param name="warningMessage">A partial-catalogue warning, when grouping proceeded without every repository.</param>
+    public void SetBacklogReview(
+        string boardId,
+        BacklogReviewResultDto? result,
+        string? errorMessage,
+        bool isLoading,
+        string? warningMessage = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(boardId);
+
+        BacklogReview = new BacklogReviewCacheEntry(
+            boardId,
+            result,
+            errorMessage,
+            isLoading,
+            warningMessage);
+    }
+
+    /// <summary>Clears cached Backlog Review grouping.</summary>
+    public void ClearBacklogReview() => BacklogReview = null;
 
     /// <summary>Cancels any in-flight chrome load, for example when leaving PM Workflow.</summary>
     public void CancelPendingLoad()
@@ -301,6 +332,19 @@ public sealed record DailyFocusStalledReviewsCacheEntry(
 public sealed record DailyFocusRecommendationsCacheEntry(
     string BoardId,
     IReadOnlyList<DailyFocusRecommendationDto>? Recommendations,
+    string? ErrorMessage,
+    bool IsLoading,
+    string? WarningMessage = null);
+
+/// <summary>Cached Backlog Review grouping for a planning board within the current circuit.</summary>
+/// <param name="BoardId">The planning board node identifier.</param>
+/// <param name="Result">The grouped backlog, when successful.</param>
+/// <param name="ErrorMessage">The load error message, when unsuccessful.</param>
+/// <param name="IsLoading">Whether a load is currently in flight.</param>
+/// <param name="WarningMessage">A partial-catalogue warning, when grouping proceeded without every repository.</param>
+public sealed record BacklogReviewCacheEntry(
+    string BoardId,
+    BacklogReviewResultDto? Result,
     string? ErrorMessage,
     bool IsLoading,
     string? WarningMessage = null);

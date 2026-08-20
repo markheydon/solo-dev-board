@@ -16,6 +16,7 @@ export const accessibilityRoutes = [
   { path: '/triage', name: 'Triage' },
   { path: '/workflows', name: 'Workflow Templates' },
   { path: '/pm-workflow/daily-focus', name: 'PM Workflow Daily Focus' },
+  { path: '/pm-workflow/backlog', name: 'PM Workflow Backlog Review' },
 ] as const;
 
 const wcagTags = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] as const;
@@ -107,7 +108,7 @@ export async function waitForAccessibilityScanReady(page: Page, path: string): P
     await expect(page.getByTestId('repositories-refresh-button')).toBeEnabled({ timeout: 15_000 });
   }
 
-  if (routePath === '/pm-workflow/daily-focus' || routePath === '/pm-workflow/repos') {
+  if (routePath === '/pm-workflow/daily-focus' || routePath === '/pm-workflow/backlog' || routePath === '/pm-workflow/repos') {
     await expect(page.getByTestId('pm-workflow-shell')).toBeVisible();
     await expect(page.locator('[aria-label="Loading PM Workflow"]')).toBeHidden({ timeout: 15_000 });
   }

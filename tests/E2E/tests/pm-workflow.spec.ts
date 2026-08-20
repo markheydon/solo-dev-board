@@ -96,4 +96,39 @@ test.describe('PM Workflow', () => {
         .or(page.getByTestId('pm-workflow-repository-summary-loading')),
     ).toBeVisible();
   });
+
+  test('backlog tab shows filters and urgency panels, empty copy, or a load error', async ({ page }) => {
+    await page.goto('/pm-workflow/backlog');
+
+    await expect(page.getByTestId('pm-workflow-shell')).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Backlog' })).toBeVisible();
+
+    const chromeError = page.getByTestId('pm-workflow-chrome-error');
+    const noBoardAlert = page.getByTestId('pm-workflow-backlog-no-board');
+    const filters = page.getByTestId('pm-workflow-backlog-filters');
+    const loadError = page.getByTestId('pm-workflow-backlog-error');
+
+    await expect(chromeError.or(noBoardAlert).or(filters).or(loadError).first()).toBeVisible({
+      timeout: 15_000,
+    });
+
+    if (await chromeError.isVisible()) {
+      await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+      return;
+    }
+
+    if (await loadError.isVisible()) {
+      await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+      await expect(loadError).toContainText('Unable to load the backlog');
+      return;
+    }
+
+    if (await filters.isVisible()) {
+      await expect(page.getByTestId('pm-workflow-backlog-panels')).toBeVisible();
+      await expect(page.getByTestId('pm-workflow-backlog-urgent')).toBeVisible();
+      await expect(page.getByTestId('pm-workflow-backlog-ready')).toBeVisible();
+      await expect(page.getByTestId('pm-workflow-backlog-blocked')).toBeVisible();
+      await expect(page.getByTestId('pm-workflow-backlog-search')).toBeVisible();
+    }
+  });
 });

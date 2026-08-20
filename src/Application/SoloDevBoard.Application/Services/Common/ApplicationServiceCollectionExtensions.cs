@@ -38,6 +38,7 @@ public static class ApplicationServiceCollectionExtensions
         services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<IDailyFocusStalledReviewService, DailyFocusStalledReviewService>();
         services.AddScoped<IDailyFocusRecommendationService, DailyFocusRecommendationService>();
+        services.AddScoped<IBacklogReviewService, BacklogReviewService>();
 
         return services;
     }
