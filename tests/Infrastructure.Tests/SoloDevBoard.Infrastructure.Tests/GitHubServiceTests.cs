@@ -1518,7 +1518,7 @@ public sealed class GitHubServiceTests
     }
 
     [Fact]
-    public async Task GetProjectBoardStatusStructureAsync_StatusFieldMissing_ThrowsInvalidResponseException()
+    public async Task GetProjectBoardStatusStructureAsync_StatusFieldMissing_ThrowsHttpRequestException()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         var handler = new QueueMessageHandler(
