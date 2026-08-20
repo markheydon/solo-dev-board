@@ -87,4 +87,26 @@ public interface IIterationPlanningService
         string projectId,
         IterationPlanningStalledItemDto item,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Loads the union of milestone titles available on the selected Up Next items' repositories.
+    /// </summary>
+    /// <param name="selectedItems">Checked Up Next items in the current batch.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>Deduplicated milestone options ordered by title.</returns>
+    Task<IReadOnlyList<IterationPlanningMilestoneOptionDto>> GetBulkMilestoneOptionsAsync(
+        IReadOnlyList<IterationPlanningUpNextItemDto> selectedItems,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Assigns a milestone title to the selected Up Next items, skipping repositories where it is missing.
+    /// </summary>
+    /// <param name="selectedItems">Checked Up Next items in the current batch.</param>
+    /// <param name="milestoneTitle">The milestone title to assign.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>The apply outcome, including repositories skipped.</returns>
+    Task<IterationPlanningBulkMilestoneResultDto> ApplyBulkMilestoneAsync(
+        IReadOnlyList<IterationPlanningUpNextItemDto> selectedItems,
+        string milestoneTitle,
+        CancellationToken cancellationToken = default);
 }
