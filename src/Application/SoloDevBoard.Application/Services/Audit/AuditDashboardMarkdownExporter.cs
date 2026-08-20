@@ -28,6 +28,7 @@ public sealed class AuditDashboardMarkdownExporter : IAuditDashboardMarkdownExpo
         AppendUnlabelledIssues(builder, request.UnlabelledIssues, generatedAtUtc);
         AppendStalePullRequests(builder, request.StalePullRequests, request.StalePullRequestDays, generatedAtUtc);
         AppendFailingWorkflows(builder, request.FailingWorkflowRuns);
+        AppendLabelConsistencyWarnings(builder, request.LabelConsistencyWarnings);
 
         return builder.ToString().TrimEnd();
     }
@@ -42,6 +43,7 @@ public sealed class AuditDashboardMarkdownExporter : IAuditDashboardMarkdownExpo
         builder.AppendLine($"| Total open pull requests | {request.TotalOpenPullRequests} |");
         builder.AppendLine($"| Unlabelled issues | {request.TotalUnlabelledIssues} |");
         builder.AppendLine($"| Failing workflows | {request.TotalFailingWorkflows} |");
+        builder.AppendLine($"| Label consistency warnings | {request.TotalLabelConsistencyWarnings} |");
         builder.AppendLine();
     }
 
@@ -142,6 +144,39 @@ public sealed class AuditDashboardMarkdownExporter : IAuditDashboardMarkdownExpo
 
         builder.AppendLine();
     }
+
+    private static void AppendLabelConsistencyWarnings(StringBuilder builder, IReadOnlyList<LabelConsistencyWarningDto> warnings)
+    {
+        builder.AppendLine("## Label consistency warnings");
+        builder.AppendLine();
+        builder.AppendLine("Compared against the SoloDevBoard canonical taxonomy. Extra repository labels are not reported.");
+        builder.AppendLine();
+
+        if (warnings.Count == 0)
+        {
+            builder.AppendLine("Labels match the SoloDevBoard taxonomy — great!");
+            builder.AppendLine();
+            return;
+        }
+
+        builder.AppendLine("| Repository | Label | Warning | Detail |");
+        builder.AppendLine("| --- | --- | --- | --- |");
+
+        foreach (var warning in warnings)
+        {
+            builder.AppendLine($"| {warning.RepositoryFullName} | {EscapeMarkdownTableCell(warning.LabelName)} | {FormatWarningKind(warning.Kind)} | {EscapeMarkdownTableCell(warning.Detail)} |");
+        }
+
+        builder.AppendLine();
+    }
+
+    private static string FormatWarningKind(LabelConsistencyWarningKind kind)
+        => kind switch
+        {
+            LabelConsistencyWarningKind.Missing => "Missing",
+            LabelConsistencyWarningKind.Divergent => "Divergent",
+            _ => kind.ToString(),
+        };
 
     private static int GetDaysBetween(DateTimeOffset value, DateTimeOffset referenceUtc)
     {

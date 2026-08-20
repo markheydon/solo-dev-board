@@ -4,6 +4,7 @@ using NSubstitute;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.Audit;
 using SoloDevBoard.Application.Services.GitHub;
+using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Domain.Entities.Labels;
 using SoloDevBoard.Domain.Entities.Repositories;
 using SoloDevBoard.Domain.Entities.Triage;
@@ -16,13 +17,14 @@ public sealed class AuditDashboardServiceTests
     private const string OpenItemState = "open";
 
     private readonly IGitHubService _gitHubService = Substitute.For<IGitHubService>();
+    private readonly ILabelRepository _labelRepository = Substitute.For<ILabelRepository>();
     private readonly ICurrentUserContext _currentUserContext = Substitute.For<ICurrentUserContext>();
     private readonly AuditDashboardService _sut;
 
     public AuditDashboardServiceTests()
     {
         _currentUserContext.OwnerLogin.Returns("owner");
-        _sut = new AuditDashboardService(_gitHubService, _currentUserContext, NullLogger<AuditDashboardService>.Instance);
+        _sut = new AuditDashboardService(_gitHubService, _labelRepository, _currentUserContext, NullLogger<AuditDashboardService>.Instance);
     }
 
     [Fact]
@@ -557,6 +559,71 @@ public sealed class AuditDashboardServiceTests
         var act = async () => await _sut.GetDashboardSnapshotAsync(repos, cancellationToken: cancellationToken);
 
         // Assert
+        await Assert.ThrowsAsync<ArgumentNullException>(act);
+    }
+
+    [Fact]
+    public async Task GetLabelConsistencyWarningsAsync_WhenTaxonomyLabelsAreMissingOrDivergent_ReturnsWarnings()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var expectedColour = RecommendedLabelTaxonomyCatalog.SoloDevBoard
+            .Single(label => label.Name == "type/bug")
+            .Colour;
+
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-one", cancellationToken)
+            .Returns(
+            [
+                new Label { Name = "type/bug", Colour = "ffffff", Description = "A bug or unexpected behaviour" },
+                new Label { Name = "custom/extra", Colour = "000000", Description = "Repo-specific" },
+            ]);
+
+        var result = await _sut.GetLabelConsistencyWarningsAsync(["owner/repo-one"], cancellationToken);
+
+        Assert.Contains(result, warning => warning.Kind == LabelConsistencyWarningKind.Missing && warning.LabelName == "type/story");
+        var divergent = Assert.Single(result, warning => warning.LabelName == "type/bug");
+        Assert.Equal(LabelConsistencyWarningKind.Divergent, divergent.Kind);
+        Assert.Contains(expectedColour, divergent.Detail, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(result, warning => warning.LabelName == "custom/extra");
+    }
+
+    [Fact]
+    public async Task GetLabelConsistencyWarningsAsync_WhenLabelsMatchTaxonomy_ReturnsNoWarnings()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var matchingLabels = RecommendedLabelTaxonomyCatalog.SoloDevBoard
+            .Select(label => new Label { Name = label.Name, Colour = "#" + label.Colour, Description = label.Description })
+            .ToArray();
+
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-one", cancellationToken)
+            .Returns(matchingLabels);
+
+        var result = await _sut.GetLabelConsistencyWarningsAsync(["repo-one"], cancellationToken);
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetLabelConsistencyWarningsAsync_WhenLabelsEndpointReturnsNotFound_SkipsRepository()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-one", cancellationToken)
+            .Returns<Task<IReadOnlyList<Label>>>(_ => throw new HttpRequestException("gone", null, HttpStatusCode.NotFound));
+
+        var result = await _sut.GetLabelConsistencyWarningsAsync(["owner/repo-one"], cancellationToken);
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetLabelConsistencyWarningsAsync_ReposIsNull_ThrowsArgumentNullException()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+
+        var act = async () => await _sut.GetLabelConsistencyWarningsAsync(null!, cancellationToken);
+
         await Assert.ThrowsAsync<ArgumentNullException>(act);
     }
 }

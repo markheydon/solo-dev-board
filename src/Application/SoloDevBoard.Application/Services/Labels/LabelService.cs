@@ -5,64 +5,6 @@ namespace SoloDevBoard.Application.Services.Labels;
 /// <summary>Default implementation of <see cref="ILabelManagerService"/>.</summary>
 public sealed class LabelService : ILabelManagerService
 {
-    private static readonly IReadOnlyList<LabelDto> SoloDevBoardRecommendedTaxonomy =
-    [
-        new("type/epic", "6f42c1", "A high-level grouping of related features (spans a full phase)", string.Empty),
-        new("type/feature", "0075ca", "A Feature - groups related stories within an epic", string.Empty),
-        new("type/story", "1d76db", "A user-facing Story delivering a discrete piece of value", string.Empty),
-        new("type/enabler", "e4e669", "An Enabler - technical prerequisite that unblocks stories", string.Empty),
-        new("type/test", "bfd4f2", "A Test issue - test coverage deliverable (unit, component, integration)", string.Empty),
-        new("type/bug", "d73a4a", "A bug or unexpected behaviour", string.Empty),
-        new("type/chore", "fef2c0", "Maintenance, dependency updates, or technical debt", string.Empty),
-        new("type/documentation", "0052cc", "Documentation additions or improvements", string.Empty),
-
-        new("priority/critical", "b60205", "Blocking - must be resolved immediately", string.Empty),
-        new("priority/high", "d93f0b", "Should be addressed in the current sprint or release", string.Empty),
-        new("priority/medium", "fbca04", "Should be addressed soon but is not blocking", string.Empty),
-        new("priority/low", "c2e0c6", "Nice to have; can be deferred", string.Empty),
-
-        new("status/todo", "ffffff", "Ready to be worked on; not yet started", string.Empty),
-        new("status/in-progress", "0e8a16", "Currently being worked on", string.Empty),
-        new("status/blocked", "e11d48", "Cannot proceed; waiting on something external", string.Empty),
-        new("status/ice-box", "8b949e", "Shelved for later; not in the active delivery queue", string.Empty),
-        new("status/in-review", "1d76db", "Pull request open; awaiting code review", string.Empty),
-        new("status/done", "cfd3d7", "Completed and closed", string.Empty),
-
-        new("area/dashboard", "bfd4f2", "Audit Dashboard feature", string.Empty),
-        new("area/migration", "d4c5f9", "One-Click Migration feature", string.Empty),
-        new("area/labels", "c5def5", "Label Manager feature", string.Empty),
-        new("area/board-rules", "fef2c0", "Board Rules Visualiser feature", string.Empty),
-        new("area/triage", "f9d0c4", "Triage UI feature", string.Empty),
-        new("area/workflows", "c5def5", "Workflow Templates feature", string.Empty),
-        new("area/infrastructure", "e4e669", "Azure infrastructure, CI/CD, deployment", string.Empty),
-        new("area/docs", "0052cc", "Documentation, user guides, ADRs, planning docs", string.Empty),
-
-        new("size/xs", "dde8c9", "Trivial - less than 1 hour (e.g. typo fix, config change)", string.Empty),
-        new("size/s", "c5def5", "Small - less than half a day", string.Empty),
-        new("size/m", "fef2c0", "Medium - half a day to one day", string.Empty),
-        new("size/l", "f9d0c4", "Large - two to three days", string.Empty),
-        new("size/xl", "d4c5f9", "Extra-large - more than three days; consider splitting", string.Empty),
-    ];
-
-    private static readonly IReadOnlyList<LabelDto> GitHubDefaultTaxonomy =
-    [
-        new("bug", "d73a4a", "Something is not working", string.Empty),
-        new("documentation", "0075ca", "Improvements or additions to documentation", string.Empty),
-        new("duplicate", "cfd3d7", "This issue or pull request already exists", string.Empty),
-        new("enhancement", "a2eeef", "New feature or request", string.Empty),
-        new("good first issue", "7057ff", "Good for newcomers", string.Empty),
-        new("help wanted", "008672", "Extra attention is needed", string.Empty),
-        new("invalid", "e4e669", "This does not appear to be valid", string.Empty),
-        new("question", "d876e3", "Further information is requested", string.Empty),
-        new("wontfix", "ffffff", "This will not be worked on", string.Empty),
-    ];
-
-    private static readonly IReadOnlyList<RecommendedLabelStrategyDto> RecommendedStrategies =
-        BuildRecommendedStrategies();
-
-    private static readonly IReadOnlyDictionary<string, IReadOnlyList<LabelDto>> RecommendedStrategyLabelsById =
-        BuildRecommendedStrategyLabelsById();
-
     private readonly ILabelRepository _labelRepository;
 
     /// <summary>Initialises a new instance of the <see cref="LabelService"/> class.</summary>
@@ -279,14 +221,14 @@ public sealed class LabelService : ILabelManagerService
     public Task<IReadOnlyList<LabelDto>> GetRecommendedTaxonomyAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return Task.FromResult<IReadOnlyList<LabelDto>>(SoloDevBoardRecommendedTaxonomy.ToArray());
+        return Task.FromResult<IReadOnlyList<LabelDto>>(RecommendedLabelTaxonomyCatalog.SoloDevBoard.ToArray());
     }
 
     /// <inheritdoc/>
     public Task<IReadOnlyList<RecommendedLabelStrategyDto>> GetRecommendedLabelStrategiesAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return Task.FromResult<IReadOnlyList<RecommendedLabelStrategyDto>>(RecommendedStrategies.ToArray());
+        return Task.FromResult<IReadOnlyList<RecommendedLabelStrategyDto>>(RecommendedLabelTaxonomyCatalog.Strategies.ToArray());
     }
 
     /// <inheritdoc/>
@@ -382,7 +324,7 @@ public sealed class LabelService : ILabelManagerService
     /// <exception cref="ArgumentException">Thrown when the strategy identifier is unsupported.</exception>
     private static IReadOnlyList<LabelDto> ResolveRecommendedStrategyLabels(string strategyId)
     {
-        if (RecommendedStrategyLabelsById.TryGetValue(strategyId, out var labels))
+        if (RecommendedLabelTaxonomyCatalog.TryGetLabels(strategyId, out var labels))
         {
             return labels;
         }
@@ -420,38 +362,6 @@ public sealed class LabelService : ILabelManagerService
             .ToArray();
 
         return new RecommendedTaxonomyRepositoryPreviewDto(repositoryFullName, toCreate, toUpdate, skipped);
-    }
-
-    /// <summary>Builds available recommended strategy descriptors.</summary>
-    /// <returns>A read-only list of recommended strategy descriptors.</returns>
-    private static IReadOnlyList<RecommendedLabelStrategyDto> BuildRecommendedStrategies()
-        =>
-        [
-            new("solodevboard", "SoloDevBoard", "The SoloDevBoard canonical taxonomy covering type, priority, status, area, and size labels."),
-            new("github-default", "GitHub default", "GitHub's default label set for new repositories."),
-        ];
-
-    /// <summary>Builds a strategy-to-label-set map keyed by strategy identifier.</summary>
-    /// <returns>A read-only dictionary from strategy identifier to strategy labels.</returns>
-    private static IReadOnlyDictionary<string, IReadOnlyList<LabelDto>> BuildRecommendedStrategyLabelsById()
-    {
-        var labelsById = new Dictionary<string, IReadOnlyList<LabelDto>>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["solodevboard"] = SoloDevBoardRecommendedTaxonomy,
-            ["github-default"] = GitHubDefaultTaxonomy,
-        };
-
-        var strategyIds = RecommendedStrategies.Select(strategy => strategy.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var unresolvedIds = strategyIds
-            .Where(strategyId => !labelsById.ContainsKey(strategyId))
-            .ToArray();
-
-        if (unresolvedIds.Length > 0)
-        {
-            throw new InvalidOperationException($"Missing label definitions for recommended strategies: {string.Join(", ", unresolvedIds)}.");
-        }
-
-        return labelsById;
     }
 
     /// <summary>Maps an application label DTO to a domain label record.</summary>

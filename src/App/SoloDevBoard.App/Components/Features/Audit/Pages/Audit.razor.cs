@@ -46,16 +46,19 @@ public partial class Audit : ComponentBase, IAsyncDisposable
     private IReadOnlyList<IssueDto> unlabelledIssues = [];
     private IReadOnlyList<PullRequestDto> stalePullRequests = [];
     private IReadOnlyList<WorkflowRunDto> failingWorkflowRuns = [];
+    private IReadOnlyList<LabelConsistencyWarningDto> labelConsistencyWarnings = [];
     private IReadOnlyList<string> repositoryOptions = [];
     private HashSet<string> selectedRepositories = new(StringComparer.OrdinalIgnoreCase);
     private int totalOpenIssues;
     private int totalOpenPullRequests;
     private int totalUnlabelledIssues;
     private int totalFailingWorkflows;
+    private int totalLabelConsistencyWarnings;
     private bool isLoadingRepositories = true;
     private bool isLoadingAuditData;
     private bool isRefreshingAuditData;
     private bool isLoadingWorkflowHealth;
+    private bool isLoadingLabelConsistency;
     private bool hasLoadedAuditSummary;
     private string? repositoryLoadErrorMessage;
     private string? auditLoadErrorMessage;
@@ -224,46 +227,18 @@ public partial class Audit : ComponentBase, IAsyncDisposable
             hasLoadedAuditSummary = true;
             isLoadingAuditData = false;
             isLoadingWorkflowHealth = true;
+            isLoadingLabelConsistency = true;
             await InvokeAsync(StateHasChanged);
 
-            try
-            {
-                var failingRuns = await AuditDashboardService.GetFailingWorkflowRunsAsync(selectedRepoNames);
-                failingWorkflowRuns = failingRuns
-                    .OrderBy(workflowRun => workflowRun.RepositoryFullName, StringComparer.OrdinalIgnoreCase)
-                    .ThenBy(workflowRun => workflowRun.WorkflowName, StringComparer.OrdinalIgnoreCase)
-                    .ToArray();
-                ApplyWorkflowCountsToSummaries();
-                totalFailingWorkflows = repositorySummaries.Sum(result => result.FailingWorkflowCount);
-            }
-            catch (HttpRequestException ex)
-            {
-                Logger.LogWarning(ex, "Failed to load workflow health for selected audit repositories.");
-                if (isBackgroundRefresh)
-                {
-                    Snackbar.Add($"Workflow health refresh failed. {ex.Message}", Severity.Warning);
-                }
-                else
-                {
-                    Snackbar.Add($"Workflow health could not be loaded. {ex.Message}", Severity.Warning);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.LogWarning(ex, "Failed to load workflow health for selected audit repositories.");
-                if (isBackgroundRefresh)
-                {
-                    Snackbar.Add("Workflow health refresh failed due to an unexpected error.", Severity.Warning);
-                }
-                else
-                {
-                    Snackbar.Add("Workflow health could not be loaded due to an unexpected error.", Severity.Warning);
-                }
-            }
-            finally
-            {
-                isLoadingWorkflowHealth = false;
-            }
+            var workflowHealthTask = FetchFailingWorkflowRunsAsync(selectedRepoNames, isBackgroundRefresh);
+            var labelConsistencyTask = FetchLabelConsistencyWarningsAsync(selectedRepoNames, isBackgroundRefresh);
+            await Task.WhenAll(workflowHealthTask, labelConsistencyTask);
+
+            failingWorkflowRuns = workflowHealthTask.Result;
+            labelConsistencyWarnings = labelConsistencyTask.Result;
+            ApplySecondaryHealthCountsToSummaries();
+            isLoadingWorkflowHealth = false;
+            isLoadingLabelConsistency = false;
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
@@ -309,7 +284,7 @@ public partial class Audit : ComponentBase, IAsyncDisposable
 
     private async Task ExportMarkdownSummaryAsync()
     {
-        if (!hasLoadedAuditSummary || isLoadingWorkflowHealth)
+        if (!hasLoadedAuditSummary || isLoadingWorkflowHealth || isLoadingLabelConsistency)
         {
             Snackbar.Add("Load an audit summary before exporting Markdown.", Severity.Warning);
             return;
@@ -345,11 +320,13 @@ public partial class Audit : ComponentBase, IAsyncDisposable
             unlabelledIssues,
             stalePullRequests,
             failingWorkflowRuns,
+            labelConsistencyWarnings,
             selectedRepositoryNames,
             totalOpenIssues,
             totalOpenPullRequests,
             totalUnlabelledIssues,
             totalFailingWorkflows,
+            totalLabelConsistencyWarnings,
             StalePullRequestDays,
             DateTimeOffset.UtcNow);
 
@@ -378,20 +355,93 @@ public partial class Audit : ComponentBase, IAsyncDisposable
         totalOpenPullRequests = repositorySummaries.Sum(result => result.OpenPullRequestCount);
         totalUnlabelledIssues = repositorySummaries.Sum(result => result.UnlabelledIssueCount);
         totalFailingWorkflows = repositorySummaries.Sum(result => result.FailingWorkflowCount);
+        totalLabelConsistencyWarnings = repositorySummaries.Sum(result => result.LabelConsistencyWarningCount);
     }
 
-    private void ApplyWorkflowCountsToSummaries()
+    private async Task<IReadOnlyList<WorkflowRunDto>> FetchFailingWorkflowRunsAsync(IReadOnlyList<string> selectedRepoNames, bool isBackgroundRefresh)
+    {
+        try
+        {
+            var failingRuns = await AuditDashboardService.GetFailingWorkflowRunsAsync(selectedRepoNames);
+            return failingRuns
+                .OrderBy(workflowRun => workflowRun.RepositoryFullName, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(workflowRun => workflowRun.WorkflowName, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+        catch (HttpRequestException ex)
+        {
+            Logger.LogWarning(ex, "Failed to load workflow health for selected audit repositories.");
+            Snackbar.Add(
+                isBackgroundRefresh
+                    ? $"Workflow health refresh failed. {ex.Message}"
+                    : $"Workflow health could not be loaded. {ex.Message}",
+                Severity.Warning);
+            return [];
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Failed to load workflow health for selected audit repositories.");
+            Snackbar.Add(
+                isBackgroundRefresh
+                    ? "Workflow health refresh failed due to an unexpected error."
+                    : "Workflow health could not be loaded due to an unexpected error.",
+                Severity.Warning);
+            return [];
+        }
+    }
+
+    private async Task<IReadOnlyList<LabelConsistencyWarningDto>> FetchLabelConsistencyWarningsAsync(IReadOnlyList<string> selectedRepoNames, bool isBackgroundRefresh)
+    {
+        try
+        {
+            var warnings = await AuditDashboardService.GetLabelConsistencyWarningsAsync(selectedRepoNames);
+            return warnings
+                .OrderBy(warning => warning.RepositoryFullName, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(warning => warning.LabelName, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+        catch (HttpRequestException ex)
+        {
+            Logger.LogWarning(ex, "Failed to load label consistency for selected audit repositories.");
+            Snackbar.Add(
+                isBackgroundRefresh
+                    ? $"Label consistency refresh failed. {ex.Message}"
+                    : $"Label consistency could not be loaded. {ex.Message}",
+                Severity.Warning);
+            return [];
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Failed to load label consistency for selected audit repositories.");
+            Snackbar.Add(
+                isBackgroundRefresh
+                    ? "Label consistency refresh failed due to an unexpected error."
+                    : "Label consistency could not be loaded due to an unexpected error.",
+                Severity.Warning);
+            return [];
+        }
+    }
+
+    private void ApplySecondaryHealthCountsToSummaries()
     {
         var failingWorkflowCountByRepository = failingWorkflowRuns
             .GroupBy(workflowRun => workflowRun.RepositoryFullName, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.Count(), StringComparer.OrdinalIgnoreCase);
+
+        var warningCountByRepository = labelConsistencyWarnings
+            .GroupBy(warning => warning.RepositoryFullName, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(group => group.Key, group => group.Count(), StringComparer.OrdinalIgnoreCase);
 
         repositorySummaries = repositorySummaries
             .Select(summary => summary with
             {
                 FailingWorkflowCount = failingWorkflowCountByRepository.GetValueOrDefault(summary.RepositoryFullName),
+                LabelConsistencyWarningCount = warningCountByRepository.GetValueOrDefault(summary.RepositoryFullName),
             })
             .ToArray();
+
+        totalFailingWorkflows = repositorySummaries.Sum(result => result.FailingWorkflowCount);
+        totalLabelConsistencyWarnings = repositorySummaries.Sum(result => result.LabelConsistencyWarningCount);
     }
 
     private async Task StartAutoRefreshAsync()
@@ -464,11 +514,21 @@ public partial class Audit : ComponentBase, IAsyncDisposable
         unlabelledIssues = [];
         stalePullRequests = [];
         failingWorkflowRuns = [];
+        labelConsistencyWarnings = [];
         totalOpenIssues = 0;
         totalOpenPullRequests = 0;
         totalUnlabelledIssues = 0;
         totalFailingWorkflows = 0;
+        totalLabelConsistencyWarnings = 0;
     }
+
+    private static string FormatWarningKind(LabelConsistencyWarningKind kind)
+        => kind switch
+        {
+            LabelConsistencyWarningKind.Missing => "Missing",
+            LabelConsistencyWarningKind.Divergent => "Divergent",
+            _ => kind.ToString(),
+        };
 
     private static int GetDaysBetween(DateTimeOffset value)
     {

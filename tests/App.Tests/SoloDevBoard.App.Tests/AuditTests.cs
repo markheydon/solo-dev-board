@@ -96,6 +96,7 @@ public sealed class AuditTests
             Assert.Contains("Total open pull requests", cut.Markup);
             Assert.Contains("Unlabelled issues", cut.Markup);
             Assert.Contains("Failing workflows", cut.Markup);
+            Assert.Contains("Label consistency warnings", cut.Markup);
             Assert.Contains(">5<", cut.Markup);
             Assert.Contains(">5<", cut.Markup);
 
@@ -194,6 +195,7 @@ public sealed class AuditTests
             Assert.Contains("Unlabelled Issues", cut.Markup);
             Assert.Contains("Stale Pull Requests", cut.Markup);
             Assert.Contains("Failing Workflows", cut.Markup);
+            Assert.Contains("Label Consistency", cut.Markup);
             Assert.Contains("Needs triage", cut.Markup);
             Assert.Contains("Update docs", cut.Markup);
             Assert.Contains("Open run", cut.Markup);
@@ -206,6 +208,41 @@ public sealed class AuditTests
             Assert.Contains("https://github.com/owner/repo-a/issues/12", links);
             Assert.Contains("https://github.com/owner/repo-a/pull/44", links);
             Assert.Contains("https://github.com/owner/repo-a/actions/runs/123", links);
+        });
+    }
+
+    [Fact]
+    public async Task Audit_WhenLabelConsistencyWarningsExist_ShowsWarningRowsAndLabelManagerLink()
+    {
+        var summary = new List<RepositoryAuditSummaryDto>
+        {
+            new("owner/repo-a", 1, 0, 0, 0, 0),
+        };
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
+        _auditDashboardService.GetDashboardSnapshotAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), false, Arg.Any<CancellationToken>()).Returns(CreateSnapshot(summary));
+
+        await using var ctx = CreateContext();
+        _auditDashboardService
+            .GetLabelConsistencyWarningsAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>())
+            .Returns(
+            [
+                new LabelConsistencyWarningDto("owner/repo-a", "type/bug", LabelConsistencyWarningKind.Missing, "Missing from the repository."),
+            ]);
+
+        var cut = ctx.Render<Audit>();
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-command-surface']")));
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo-a" }));
+        cut.Find("[data-testid='audit-load-selected-button']").Click();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='audit-label-consistency-section']"));
+            Assert.Single(cut.FindAll("[data-testid='audit-label-consistency-kpi-card']"));
+            Assert.Contains("type/bug", cut.Markup);
+            Assert.Contains("Missing from the repository.", cut.Markup);
+            Assert.Contains("href=\"/labels\"", cut.Markup);
         });
     }
 
@@ -278,6 +315,7 @@ public sealed class AuditTests
             Assert.Contains("No unlabelled issues — great!", cut.Markup);
             Assert.Contains("No stale pull requests — great!", cut.Markup);
             Assert.Contains("No failing workflows — great!", cut.Markup);
+            Assert.Contains("Labels match the SoloDevBoard taxonomy — great!", cut.Markup);
         });
     }
 
@@ -547,6 +585,9 @@ public sealed class AuditTests
         _auditDashboardService
             .GetFailingWorkflowRunsAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<WorkflowRunDto>());
+        _auditDashboardService
+            .GetLabelConsistencyWarningsAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<LabelConsistencyWarningDto>());
 
         ctx.Render<MudPopoverProvider>();
         ctx.Render<MudDialogProvider>();

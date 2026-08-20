@@ -56,7 +56,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Milestone:** v0.2.0
 
-**Status:** Complete. Core Label Manager and Audit Dashboard features are delivered, including Audit Dashboard auto-refresh ([#258](https://github.com/markheydon/solo-dev-board/issues/258)) and Markdown export ([#259](https://github.com/markheydon/solo-dev-board/issues/259)). Label consistency warnings remain deferred — see [#290](https://github.com/markheydon/solo-dev-board/issues/290).
+**Status:** Complete. Core Label Manager and Audit Dashboard features are delivered, including Audit Dashboard auto-refresh ([#258](https://github.com/markheydon/solo-dev-board/issues/258)), Markdown export ([#259](https://github.com/markheydon/solo-dev-board/issues/259)), and label consistency warnings ([#290](https://github.com/markheydon/solo-dev-board/issues/290)).
 
 ### Key Tasks
 
@@ -80,7 +80,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Implement `AuditDashboardService` in `Application` (aggregate data from multiple repositories)
 - [x] Build MudBlazor UI components for the Audit Dashboard
 - [x] Implement health indicators: unlabelled issues, stale PRs, failing workflows
-- [ ] Implement label consistency warnings _(deferred to v1.1.0 — [#290](https://github.com/markheydon/solo-dev-board/issues/290))_
+- [x] Implement label consistency warnings _(v1.1.0 — [#290](https://github.com/markheydon/solo-dev-board/issues/290))_
 - [x] Write unit tests for `AuditDashboardService`
 - [x] Update `website/content/docs/audit-dashboard.md`
 
