@@ -4,20 +4,27 @@ namespace SoloDevBoard.Application.Services.PmWorkflow;
 public static class BacklogReviewGrouping
 {
     /// <summary>
-    /// Groups work items into urgent, ready-to-start, and blocked or deferred lists.
-    /// An item may appear in more than one group.
+    /// Groups work items into urgent, ready-to-start, awaiting-triage, blocked or deferred, near-complete epics,
+    /// and neglected repositories.
     /// </summary>
     /// <param name="workItems">Open issues and pull requests from included repositories.</param>
     /// <param name="boardItems">Items currently on the selected planning board.</param>
+    /// <param name="repositorySummaries">Per-repository open-work summaries from the catalogue.</param>
     /// <param name="failures">Per-repository catalogue failures to carry through to the result.</param>
+    /// <param name="neglectDays">Inclusive days without issue or pull request activity before a repository is neglected.</param>
+    /// <param name="referenceTimeUtc">The UTC instant used for neglect-day comparisons.</param>
     /// <returns>The grouped Backlog Review snapshot.</returns>
     public static BacklogReviewResultDto Group(
         IReadOnlyList<PmWorkItemDto> workItems,
         IReadOnlyList<ProjectBoardItemDto> boardItems,
-        IReadOnlyList<PmRepositoryCatalogueFailureDto> failures)
+        IReadOnlyList<PmRepositorySummaryDto> repositorySummaries,
+        IReadOnlyList<PmRepositoryCatalogueFailureDto> failures,
+        int neglectDays,
+        DateTimeOffset referenceTimeUtc)
     {
         ArgumentNullException.ThrowIfNull(workItems);
         ArgumentNullException.ThrowIfNull(boardItems);
+        ArgumentNullException.ThrowIfNull(repositorySummaries);
         ArgumentNullException.ThrowIfNull(failures);
 
         var boardStatusByKey = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -35,7 +42,9 @@ public static class BacklogReviewGrouping
 
         var urgent = new List<BacklogReviewItemDto>();
         var ready = new List<BacklogReviewItemDto>();
+        var awaitingTriage = new List<BacklogReviewItemDto>();
         var blocked = new List<BacklogReviewItemDto>();
+        var epicsNearComplete = new List<BacklogEpicNearCompleteItemDto>();
 
         foreach (var workItem in workItems)
         {
@@ -47,7 +56,11 @@ public static class BacklogReviewGrouping
                 urgent.Add(row);
             }
 
-            if (IsReadyToStart(workItem, boardStatusName))
+            if (IsAwaitingTriage(workItem))
+            {
+                awaitingTriage.Add(row);
+            }
+            else if (IsReadyToStart(workItem, boardStatusName))
             {
                 ready.Add(row);
             }
@@ -56,12 +69,24 @@ public static class BacklogReviewGrouping
             {
                 blocked.Add(row);
             }
+
+            if (TryMapEpicNearComplete(workItem, out var epicNearComplete))
+            {
+                epicsNearComplete.Add(epicNearComplete);
+            }
         }
+
+        var neglectedRepositories = BuildNeglectedRepositories(repositorySummaries, neglectDays, referenceTimeUtc);
+        var subIssueCountsUnavailable = HasOpenEpicsWithoutSubIssueCounts(workItems);
 
         return new BacklogReviewResultDto(
             Sort(urgent),
             Sort(ready),
+            Sort(awaitingTriage),
             Sort(blocked),
+            SortEpics(epicsNearComplete),
+            neglectedRepositories,
+            subIssueCountsUnavailable,
             failures);
     }
 
@@ -74,9 +99,18 @@ public static class BacklogReviewGrouping
         return PmLabelHelpers.IsUrgent(item.Labels);
     }
 
+    /// <summary>Returns whether the item is missing a core <c>type/</c> or <c>priority/</c> label.</summary>
+    /// <param name="item">The catalogue work item.</param>
+    /// <returns><see langword="true"/> when either core label prefix is absent.</returns>
+    public static bool IsAwaitingTriage(PmWorkItemDto item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+        return PmLabelHelpers.IsAwaitingTriage(item.Labels);
+    }
+
     /// <summary>
-    /// Returns whether the item is ready to start: unblocked by labels and board Status,
-    /// and not already Up Next or In Progress.
+    /// Returns whether the item is ready to start: fully labelled, unblocked by labels and board Status,
+    /// not urgent, and not already Up Next or In Progress.
     /// </summary>
     /// <param name="item">The catalogue work item.</param>
     /// <param name="boardStatusName">The joined planning-board Status name, or <see langword="null"/> when unset.</param>
@@ -84,6 +118,11 @@ public static class BacklogReviewGrouping
     public static bool IsReadyToStart(PmWorkItemDto item, string? boardStatusName)
     {
         ArgumentNullException.ThrowIfNull(item);
+
+        if (IsAwaitingTriage(item) || IsUrgent(item))
+        {
+            return false;
+        }
 
         if (!PmLabelHelpers.IsUnblocked(item.Labels))
         {
@@ -103,6 +142,34 @@ public static class BacklogReviewGrouping
     {
         ArgumentNullException.ThrowIfNull(item);
         return PmLabelHelpers.IsBlockedOrDeferred(item.Labels) || IsParkedBoardStatus(boardStatusName);
+    }
+
+    /// <summary>
+    /// Returns whether a repository has had no issue or pull request activity within the neglect threshold.
+    /// </summary>
+    /// <param name="summary">The repository summary from the work-item catalogue.</param>
+    /// <param name="neglectDays">The inclusive neglect threshold in days.</param>
+    /// <param name="referenceTimeUtc">The UTC instant used for the comparison.</param>
+    /// <returns><see langword="true"/> when the repository is neglected; otherwise, <see langword="false"/>.</returns>
+    public static bool IsNeglected(
+        PmRepositorySummaryDto summary,
+        int neglectDays,
+        DateTimeOffset referenceTimeUtc)
+    {
+        ArgumentNullException.ThrowIfNull(summary);
+
+        if (neglectDays <= 0)
+        {
+            return false;
+        }
+
+        if (summary.LastActivityAt == default)
+        {
+            return true;
+        }
+
+        var daysSinceActivity = (referenceTimeUtc - summary.LastActivityAt).TotalDays;
+        return daysSinceActivity >= neglectDays;
     }
 
     /// <summary>Returns whether a board Status name is Blocked or Ice Box.</summary>
@@ -134,6 +201,59 @@ public static class BacklogReviewGrouping
         return DailyFocusBoardStateMapper.IsActiveLoadStatus(statusName) || IsParkedBoardStatus(statusName);
     }
 
+    private static bool TryMapEpicNearComplete(
+        PmWorkItemDto item,
+        out BacklogEpicNearCompleteItemDto epicNearComplete)
+    {
+        epicNearComplete = null!;
+
+        if (!PmLabelHelpers.IsEpicNearComplete(item.Labels, item.SubIssueTotal, item.SubIssueCompleted))
+        {
+            return false;
+        }
+
+        var typeLabel = PmLabelHelpers.ParseTypeLabel(item.Labels)!;
+        epicNearComplete = new BacklogEpicNearCompleteItemDto(
+            item.RepositoryFullName,
+            item.Number,
+            item.Title,
+            item.HtmlUrl,
+            typeLabel,
+            item.SubIssueTotal!.Value,
+            item.SubIssueCompleted!.Value);
+        return true;
+    }
+
+    private static bool HasOpenEpicsWithoutSubIssueCounts(IReadOnlyList<PmWorkItemDto> workItems)
+    {
+        var openEpicsOrFeatures = workItems
+            .Where(static item => item.ItemType == PmWorkItemTypeDto.Issue)
+            .Select(static item => (Item: item, TypeLabel: PmLabelHelpers.ParseTypeLabel(item.Labels)))
+            .Where(static pair => pair.TypeLabel is PmLabelHelpers.EpicTypeLabel or PmLabelHelpers.FeatureTypeLabel)
+            .ToArray();
+
+        if (openEpicsOrFeatures.Length == 0)
+        {
+            return false;
+        }
+
+        return openEpicsOrFeatures.All(static pair => pair.Item.SubIssueTotal is null);
+    }
+
+    private static IReadOnlyList<BacklogNeglectedRepositoryDto> BuildNeglectedRepositories(
+        IReadOnlyList<PmRepositorySummaryDto> repositorySummaries,
+        int neglectDays,
+        DateTimeOffset referenceTimeUtc)
+        => repositorySummaries
+            .Where(summary => summary.IsIncluded && IsNeglected(summary, neglectDays, referenceTimeUtc))
+            .Select(static summary => new BacklogNeglectedRepositoryDto(
+                summary.FullName,
+                summary.LastActivityAt == default ? null : summary.LastActivityAt,
+                summary.OpenIssueCount,
+                summary.OpenPullRequestCount))
+            .OrderBy(static repository => repository.FullName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
     private static BacklogReviewItemDto Map(PmWorkItemDto item, string? boardStatusName)
         => new(
             item.ItemType,
@@ -149,6 +269,13 @@ public static class BacklogReviewGrouping
         => items
             .OrderBy(static item => PmPriorityRanker.GetRank(item.PriorityLabel))
             .ThenBy(static item => item.RepositoryFullName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(static item => item.Number)
+            .ToArray();
+
+    private static IReadOnlyList<BacklogEpicNearCompleteItemDto> SortEpics(
+        IReadOnlyList<BacklogEpicNearCompleteItemDto> items)
+        => items
+            .OrderBy(static item => item.RepositoryFullName, StringComparer.OrdinalIgnoreCase)
             .ThenBy(static item => item.Number)
             .ToArray();
 }
