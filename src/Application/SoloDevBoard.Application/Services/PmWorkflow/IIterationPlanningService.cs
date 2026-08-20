@@ -7,6 +7,7 @@ public interface IIterationPlanningService
     /// Loads the current Up Next batch and cross-repository candidates for the selected planning board.
     /// </summary>
     /// <param name="projectId">The GitHub Project v2 node identifier.</param>
+    /// <param name="capacity">The persisted planning capacity from PM settings.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>The planning view snapshot.</returns>
     /// <exception cref="InvalidOperationException">
@@ -14,6 +15,7 @@ public interface IIterationPlanningService
     /// </exception>
     Task<IterationPlanningViewDto> GetPlanningViewAsync(
         string projectId,
+        int capacity,
         CancellationToken cancellationToken = default);
 
     /// <summary>

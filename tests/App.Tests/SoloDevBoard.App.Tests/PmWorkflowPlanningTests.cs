@@ -66,7 +66,7 @@ public sealed class PmWorkflowPlanningTests
     public async Task PmWorkflowPlanning_WhenBoardIsSelected_ShowsUpNextAndCandidates()
     {
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, Arg.Any<CancellationToken>()).Returns(
             new IterationPlanningViewDto(
                 [
                     new IterationPlanningUpNextItemDto(
@@ -92,7 +92,10 @@ public sealed class PmWorkflowPlanningTests
                 ],
                 [],
                 true,
-                2));
+                2,
+                1,
+                8,
+                false));
 
         await using var ctx = CreateContext();
         var cut = ctx.RenderPmWorkflowPage<PmWorkflowPlanning>();
@@ -117,7 +120,7 @@ public sealed class PmWorkflowPlanningTests
     public async Task PmWorkflowPlanning_WhenBoardHasNoFocusOrderField_ShowsWarning()
     {
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, Arg.Any<CancellationToken>()).Returns(
             new IterationPlanningViewDto(
                 [],
                 [
@@ -133,7 +136,10 @@ public sealed class PmWorkflowPlanningTests
                 ],
                 [],
                 false,
-                0));
+                0,
+                0,
+                8,
+                false));
 
         await using var ctx = CreateContext();
         var cut = ctx.RenderPmWorkflowPage<PmWorkflowPlanning>();
@@ -142,6 +148,120 @@ public sealed class PmWorkflowPlanningTests
         {
             Assert.Contains("data-testid=\"pm-workflow-planning-no-focus-order-field\"", cut.Markup);
             Assert.Contains("Unavailable on this board", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task PmWorkflowPlanning_WhenActiveLoadAtCapacity_ShowsCapacityWarning()
+    {
+        ConfigureDefaults();
+        _planningService.GetPlanningViewAsync("PVT_board", 8, Arg.Any<CancellationToken>()).Returns(
+            CreateAtCapacityPlanningView());
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowPlanning>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("data-testid=\"pm-workflow-planning-capacity\"", cut.Markup);
+            Assert.Contains("data-testid=\"pm-workflow-planning-active-load\"", cut.Markup);
+            Assert.Contains("8 / 8", cut.Markup);
+            Assert.Contains("data-testid=\"pm-workflow-planning-capacity-warning\"", cut.Markup);
+            Assert.Contains("At or above your capacity limit", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task PmWorkflowPlanning_WhenAtCapacityAndAddCancelled_DoesNotCallAddToUpNext()
+    {
+        var dialogService = Substitute.For<IDialogService>();
+        dialogService.ShowMessageBoxAsync(
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<DialogOptions>())
+            .Returns((bool?)null);
+
+        ConfigureDefaults();
+        _planningService.GetPlanningViewAsync("PVT_board", 8, Arg.Any<CancellationToken>()).Returns(
+            CreateAtCapacityPlanningView());
+
+        await using var ctx = CreateContext(dialogService);
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowPlanning>();
+
+        cut.WaitForAssertion(() => Assert.Contains("data-testid=\"pm-workflow-planning-add-button\"", cut.Markup));
+
+        await cut.InvokeAsync(() => cut.Find("[data-testid='pm-workflow-planning-add-button']").Click());
+
+        await dialogService.Received(1).ShowMessageBoxAsync(
+            "Exceed capacity limit?",
+            "Active load is already at or above your capacity limit. Add this item anyway?",
+            "Add anyway",
+            null,
+            "Cancel",
+            Arg.Any<DialogOptions>());
+
+        await _planningService.DidNotReceive().AddToUpNextAsync(
+            Arg.Any<string>(),
+            Arg.Any<PmWorkItemTypeDto>(),
+            Arg.Any<string>(),
+            Arg.Any<int>(),
+            Arg.Any<IReadOnlyList<string>>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task PmWorkflowPlanning_WhenAtCapacityAndAddConfirmed_CallsAddToUpNext()
+    {
+        var dialogService = Substitute.For<IDialogService>();
+        dialogService.ShowMessageBoxAsync(
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<DialogOptions>())
+            .Returns((bool?)true);
+
+        ConfigureDefaults();
+        _planningService.GetPlanningViewAsync("PVT_board", 8, Arg.Any<CancellationToken>()).Returns(
+            CreateAtCapacityPlanningView(),
+            CreateAtCapacityPlanningView());
+        _planningService.AddToUpNextAsync(
+            "PVT_board",
+            PmWorkItemTypeDto.Issue,
+            "owner/repo-a",
+            50,
+            Arg.Any<IReadOnlyList<string>>(),
+            Arg.Any<CancellationToken>()).Returns(
+            new IterationPlanningAddToUpNextResultDto(AddedBoardCard: false, FocusOrderAssigned: 2, FocusOrderSkipped: false));
+
+        await using var ctx = CreateContext(dialogService);
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowPlanning>();
+
+        cut.WaitForAssertion(() => Assert.Contains("data-testid=\"pm-workflow-planning-add-button\"", cut.Markup));
+
+        await cut.InvokeAsync(() => cut.Find("[data-testid='pm-workflow-planning-add-button']").Click());
+
+        await dialogService.Received(1).ShowMessageBoxAsync(
+            "Exceed capacity limit?",
+            "Active load is already at or above your capacity limit. Add this item anyway?",
+            "Add anyway",
+            null,
+            "Cancel",
+            Arg.Any<DialogOptions>());
+
+        cut.WaitForAssertion(() =>
+        {
+            _planningService.Received(1).AddToUpNextAsync(
+                "PVT_board",
+                PmWorkItemTypeDto.Issue,
+                "owner/repo-a",
+                50,
+                Arg.Any<IReadOnlyList<string>>(),
+                Arg.Any<CancellationToken>());
         });
     }
 
@@ -159,11 +279,15 @@ public sealed class PmWorkflowPlanningTests
                 0));
     }
 
-    private BunitContext CreateContext()
+    private BunitContext CreateContext(IDialogService? dialogService = null)
     {
         var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddMudServices();
+        if (dialogService is not null)
+        {
+            ctx.Services.AddSingleton(dialogService);
+        }
         ctx.Services.AddTestGitHubAuthenticationRecovery();
         ctx.Services.AddSingleton<IPmSettingsStorage>(_settingsStorage);
         ctx.Services.AddScoped<IPmSettingsService, PmSettingsService>();
@@ -179,6 +303,27 @@ public sealed class PmWorkflowPlanningTests
 
         return ctx;
     }
+
+    private static IterationPlanningViewDto CreateAtCapacityPlanningView() =>
+        new(
+            [],
+            [
+                new IterationPlanningCandidateDto(
+                    PmWorkItemTypeDto.Issue,
+                    50,
+                    "Candidate story",
+                    "https://github.com/owner/repo-a/issues/50",
+                    "owner/repo-a",
+                    ["type/story", "priority/high"],
+                    "Todo",
+                    "PVTI_candidate"),
+            ],
+            [],
+            true,
+            1,
+            8,
+            8,
+            true);
 
     private static RepositoryDto CreateRepository(string owner, string name) =>
         new(1, name, $"{owner}/{name}", string.Empty, $"https://github.com/{owner}/{name}", false, false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);

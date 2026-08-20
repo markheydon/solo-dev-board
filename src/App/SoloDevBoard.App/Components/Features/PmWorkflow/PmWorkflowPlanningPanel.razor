@@ -55,6 +55,32 @@
                 </MudAlert>
             }
 
+            <MudPaper Class="pa-4" Elevation="1" data-testid="pm-workflow-planning-capacity">
+                <MudStack Spacing="2">
+                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.h6">Capacity</MudText>
+                        <MudText Typo="Typo.body1"
+                                 aria-live="polite"
+                                 data-testid="pm-workflow-planning-active-load">
+                            @planningView.ActiveLoad / @planningView.Capacity
+                        </MudText>
+                        @if (planningView.IsAtOrOverCapacity)
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Warning" data-testid="pm-workflow-planning-capacity-warning">
+                                At or above your capacity limit
+                            </MudText>
+                        }
+                    </MudStack>
+                    <MudProgressLinear Value="@GetCapacityProgressValue(planningView)"
+                                       Color="@(planningView.IsAtOrOverCapacity ? Color.Warning : Color.Primary)"
+                                       aria-label="@FormatCapacityProgressAriaLabel(planningView)"
+                                       data-testid="pm-workflow-planning-capacity-bar" />
+                    <MudText Typo="Typo.caption">
+                        Active load is Up Next plus In Progress. Edit the capacity limit on the Repos tab.
+                    </MudText>
+                </MudStack>
+            </MudPaper>
+
             <MudPaper Class="pa-4" Elevation="1" data-testid="pm-workflow-planning-up-next">
                 <MudStack Spacing="2">
                     <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center">

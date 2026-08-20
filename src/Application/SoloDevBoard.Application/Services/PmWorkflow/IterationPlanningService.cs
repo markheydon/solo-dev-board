@@ -30,6 +30,7 @@ public sealed class IterationPlanningService : IIterationPlanningService
     /// <inheritdoc/>
     public async Task<IterationPlanningViewDto> GetPlanningViewAsync(
         string projectId,
+        int capacity,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -53,7 +54,8 @@ public sealed class IterationPlanningService : IIterationPlanningService
             workItems.Items,
             boardCatalogue.Items,
             workItems.Failures,
-            hasFocusOrderField);
+            hasFocusOrderField,
+            capacity);
     }
 
     /// <inheritdoc/>
