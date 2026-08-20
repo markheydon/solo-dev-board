@@ -132,3 +132,48 @@ test.describe('PM Workflow', () => {
     }
   });
 });
+
+test.describe('Repo Management', () => {
+  test('repos tab shows planning thresholds, exclusions, and per-repository summary shell', async ({ page }) => {
+    await page.goto('/pm-workflow/repos');
+
+    await expect(page).toHaveTitle(/PM Workflow — Repos/);
+    await expect(page.getByTestId('pm-workflow-shell')).toBeVisible();
+    await expect(page.getByTestId('pm-workflow-repos-page')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Repo Management' })).toBeVisible();
+
+    const chromeError = page.getByTestId('pm-workflow-chrome-error');
+    const thresholdsRegion = page.getByTestId('pm-workflow-thresholds-region');
+    const exclusionsRegion = page.getByTestId('pm-workflow-exclusions-region');
+    const noBoardAlert = page.getByTestId('pm-workflow-no-board-alert');
+
+    await expect(chromeError.or(thresholdsRegion).first()).toBeVisible({ timeout: 15_000 });
+
+    if (await chromeError.isVisible()) {
+      await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+      return;
+    }
+
+    await expect(thresholdsRegion).toBeVisible();
+    await expect(exclusionsRegion).toBeVisible();
+    await expect(page.getByTestId('pm-workflow-participation-summary')).toBeVisible();
+    await expect(
+      page.getByTestId('pm-workflow-included-table').or(page.getByTestId('pm-workflow-no-included-text')),
+    ).toBeVisible();
+    await expect(page.getByTestId('pm-workflow-capacity-field')).toBeVisible();
+    await expect(page.getByTestId('pm-workflow-stall-days-field')).toBeVisible();
+    await expect(page.getByTestId('pm-workflow-neglect-days-field')).toBeVisible();
+    await expect(page.getByTestId('pm-workflow-exclude-autocomplete')).toBeVisible();
+    await expect(page.getByTestId('pm-workflow-no-exclusions-text')).toBeVisible();
+    await expect(page.getByTestId('pm-workflow-repository-summary-region')).toBeVisible();
+    await expect(
+      page
+        .getByTestId('pm-workflow-repository-summary-table')
+        .or(page.getByTestId('pm-workflow-repository-summary-empty'))
+        .or(page.getByTestId('pm-workflow-repository-summary-error'))
+        .or(page.getByTestId('pm-workflow-repository-summary-partial-failure'))
+        .or(page.getByTestId('pm-workflow-repository-summary-loading')),
+    ).toBeVisible();
+    await expect(noBoardAlert.or(page.getByTestId('pm-workflow-board-select'))).toBeVisible();
+  });
+});

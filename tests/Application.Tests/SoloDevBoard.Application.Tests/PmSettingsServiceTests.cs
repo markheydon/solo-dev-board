@@ -221,6 +221,32 @@ public sealed class PmSettingsServiceTests
         Assert.Equal(expected.NeglectDays, actual.NeglectDays);
     }
 
+    [Fact]
+    public async Task SaveSettingsAsync_RemovingExcludedRepository_RoundTripsThroughStorage()
+    {
+        var storage = new FakePmSettingsStorage();
+        var service = CreateService(storage);
+
+        await service.SaveSettingsAsync(new PmSettingsDto(
+            "PVT_board123",
+            ["owner/dotfiles", "owner/personal-site"],
+            PmSettingsDefaults.Capacity,
+            PmSettingsDefaults.StallDays,
+            PmSettingsDefaults.NeglectDays));
+
+        await service.SaveSettingsAsync(new PmSettingsDto(
+            "PVT_board123",
+            ["owner/personal-site"],
+            PmSettingsDefaults.Capacity,
+            PmSettingsDefaults.StallDays,
+            PmSettingsDefaults.NeglectDays));
+
+        var settings = await service.GetSettingsAsync();
+
+        Assert.Equal(["owner/personal-site"], settings.ExcludedRepositories);
+        Assert.DoesNotContain("owner/dotfiles", settings.ExcludedRepositories);
+    }
+
     private static PmSettingsService CreateService(FakePmSettingsStorage storage) =>
         new(storage, NullLogger<PmSettingsService>.Instance);
 

@@ -28,6 +28,30 @@ public sealed class PmWorkflowReposTests
     }
 
     [Fact]
+    public async Task PmWorkflowRepos_OnFirstLoad_ShowsDefaultThresholdFields()
+    {
+        ConfigureDefaults();
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowRepos>();
+
+        cut.WaitForAssertion(() =>
+        {
+            var capacityField = cut.FindComponents<MudNumericField<int>>()
+                .First(component => component.Markup.Contains("Capacity limit", StringComparison.Ordinal));
+#pragma warning disable MUD0012
+            Assert.Equal(PmSettingsDefaults.Capacity, capacityField.Instance.Value);
+            var stallDaysField = cut.FindComponents<MudNumericField<int>>()
+                .First(component => component.Markup.Contains("Stall days", StringComparison.Ordinal));
+            Assert.Equal(PmSettingsDefaults.StallDays, stallDaysField.Instance.Value);
+            var neglectDaysField = cut.FindComponents<MudNumericField<int>>()
+                .First(component => component.Markup.Contains("Neglect days", StringComparison.Ordinal));
+            Assert.Equal(PmSettingsDefaults.NeglectDays, neglectDaysField.Instance.Value);
+#pragma warning restore MUD0012
+        });
+    }
+
+    [Fact]
     public async Task PmWorkflowRepos_WhenNoBoardIsSelected_ShowsInstructionalAlert()
     {
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
@@ -88,6 +112,39 @@ public sealed class PmWorkflowReposTests
                 .First(component => component.Markup.Contains("Neglect days", StringComparison.Ordinal));
             Assert.Equal(30, neglectDaysField.Instance.Value);
 #pragma warning restore MUD0012
+        });
+    }
+
+    [Fact]
+    public async Task PmWorkflowRepos_IncludeRepository_PersistsAfterReload()
+    {
+        ConfigureDefaults();
+        _settingsStorage.StoredJson = """{"excludedRepositories":["owner/repo-b"]}""";
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowRepos>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("owner/repo-b", cut.Markup);
+            Assert.Contains("Include again", cut.Markup);
+        });
+
+        cut.Find("[data-testid='pm-workflow-include-button']").Click();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("No repositories are excluded. All active repositories participate.", cut.Markup);
+            Assert.Contains("owner/repo-b", cut.Find("[data-testid='pm-workflow-included-table']").InnerHtml);
+        });
+
+        await using var reloadContext = CreateContext();
+        var reload = reloadContext.RenderPmWorkflowPage<PmWorkflowRepos>();
+
+        reload.WaitForAssertion(() =>
+        {
+            Assert.Contains("No repositories are excluded. All active repositories participate.", reload.Markup);
+            Assert.Contains("owner/repo-b", reload.Find("[data-testid='pm-workflow-included-table']").InnerHtml);
         });
     }
 
