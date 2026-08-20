@@ -10,10 +10,6 @@ Guides for using SoloDevBoard in the app. Developer and operator material (local
 
 {{< guide-feature-table >}}
 
-## Coming later
-
-- Cross-Repo PM Workflow — Daily Focus occupancy, recommendations, stalled Up Next alerts, stalled review pull requests, Backlog Review grouping, and Repo Management (including per-repository counts) are in the app; the user guide remains `draft: true` until Planning ships.
-
 ## Related repository docs
 
 These guides are for contributors, self-hosters, and operators (not published on this site):

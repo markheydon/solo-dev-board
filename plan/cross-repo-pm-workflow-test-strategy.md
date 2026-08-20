@@ -30,7 +30,7 @@ Do not test AppHost orchestration.
 | Excluded repo still in recommendations | Unit: catalogue filter; bUnit: summary table |
 | Planning write without resolving stall | bUnit: add button disabled |
 | Hosted inaccessible board | bUnit/E2E: warning text already used by Triage |
-| Guide published while draft behaviour remains | Keep `draft: true` until E2E mapping lands in the same PR as publish |
+| Guide published while behaviour is incomplete | Keep `draft: true` until the four tabs match the guide and E2E mapping lands in the same change set as publish |
 
 ## Coverage by area
 

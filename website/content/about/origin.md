@@ -14,7 +14,7 @@ The project was directly inspired by the AI-driven PM workflow in the companion 
 - **PM Mode** (weekly or fortnightly) — scan repositories, triage issues and pull requests, and curate a project board.
 - **Work Mode** (daily) — pick the next item from a pre-curated board and execute.
 
-SoloDevBoard's longer-term direction is to provide a visual interface for the same operating system: cross-repo backlog review, daily focus, and iteration planning. Intermediate releases deliver individual tooling features first; the Cross-Repo PM Workflow epic closes the loop in a later phase.
+SoloDevBoard provides a visual interface for the same operating system: cross-repo backlog review, daily focus, iteration planning, and repository participation. Individual tooling features (audit, labels, triage, and related pages) remain first-class; the Cross-Repo PM Workflow brings the two-mode loop into the app under **PM Workflow**.
 
 ## What ships today
 
