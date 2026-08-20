@@ -25,7 +25,7 @@ The system is built around two modes of operation:
 | **Daily Focus** | `/pm-workflow/daily-focus` | **Partial** — Status occupancy chips, active load, stalled Up Next, and top-three recommendations. |
 | Backlog | `/pm-workflow/backlog` | Placeholder — story [#277](https://github.com/markheydon/solo-dev-board/issues/277). |
 | Planning | `/pm-workflow/planning` | Placeholder — story [#283](https://github.com/markheydon/solo-dev-board/issues/283). |
-| **Repos** | `/pm-workflow/repos` | **Available** — planning board selection, thresholds, and repository exclusions. |
+| **Repos** | `/pm-workflow/repos` | **Available** — planning board selection, thresholds, repository exclusions, and per-repository open-work counts. |
 
 Open **PM Workflow** from the Home card or the navigation drawer. The hub redirects to **Daily Focus**.
 
@@ -143,7 +143,23 @@ Excluded repositories are omitted from Daily Focus recommendations, Backlog Revi
 
 Exclusions persist immediately in browser storage.
 
-> **Scope note** — Open issue and PR counts plus last-activity columns for each repository are tracked on story [#288](https://github.com/markheydon/solo-dev-board/issues/288) and are not shown yet. The included repositories table lists participation only today.
+### Per-repository summary
+
+The **Per-repository summary** table lists included repositories only:
+
+| Column | Meaning |
+|--------|---------|
+| **Repository** | Full `owner/name`. |
+| **Open issues** | Open issues in the PM work-item catalogue. |
+| **Open PRs** | Open pull requests in the same catalogue. |
+| **Last activity** | Latest catalogue item update, or the repository update time when there are no open items. |
+| **Included** | Always **Yes** in this table, because excluded repositories are omitted. |
+
+Counts are aggregated in memory from the Cross-Repo PM work-item catalogue (the same read model later Daily Focus and Backlog views use). There is no separate GitHub count or search endpoint. Opening Repo Management still loads that catalogue from GitHub (issues, pull requests, review metadata, and sub-issue summaries) when it runs. Daily Focus occupancy uses the project board catalogue, so this visit is often the first work-item catalogue load rather than a reuse of an already-fetched snapshot.
+
+If some repositories fail to load, a warning lists them. Failed repositories are omitted from the table so unavailable counts are not shown as zero open work. **Retry** reloads the catalogue. A complete load failure shows an error with **Retry**.
+
+Use this table to see load at a glance before excluding a repository or planning the next iteration.
 
 ---
 

@@ -21,8 +21,15 @@ public sealed class PmWorkflowDailyFocusTests
     private readonly IRepositoryService _repositoryService = Substitute.For<IRepositoryService>();
     private readonly IPmProjectBoardDiscoveryService _projectBoardDiscoveryService = Substitute.For<IPmProjectBoardDiscoveryService>();
     private readonly IDailyFocusBoardStateService _boardStateService = Substitute.For<IDailyFocusBoardStateService>();
+    private readonly IPmWorkItemCatalogueService _workItemCatalogueService = Substitute.For<IPmWorkItemCatalogueService>();
     private readonly IDailyFocusRecommendationService _recommendationService = Substitute.For<IDailyFocusRecommendationService>();
     private readonly FakePmSettingsStorage _settingsStorage = new();
+
+    public PmWorkflowDailyFocusTests()
+    {
+        _workItemCatalogueService.GetCatalogueAsync(Arg.Any<CancellationToken>())
+            .Returns(new PmWorkItemCatalogueResultDto([], [], []));
+    }
 
     [Fact]
     public void PmWorkflowLayout_UsesMainLayoutAsParent()
@@ -558,6 +565,7 @@ public sealed class PmWorkflowDailyFocusTests
         ctx.Services.AddScoped(_ => _repositoryService);
         ctx.Services.AddScoped(_ => _projectBoardDiscoveryService);
         ctx.Services.AddScoped(_ => _boardStateService);
+        ctx.Services.AddScoped(_ => _workItemCatalogueService);
         ctx.Services.AddScoped(_ => _recommendationService);
         ctx.Services.AddScoped<PmWorkflowChromeCoordinator>();
         ctx.Services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));

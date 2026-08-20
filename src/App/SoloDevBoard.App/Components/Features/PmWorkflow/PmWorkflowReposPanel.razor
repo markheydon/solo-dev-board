@@ -1,4 +1,6 @@
 @using SoloDevBoard.App.Components.Features.PmWorkflow
+@using SoloDevBoard.Application.Services.PmWorkflow
+@implements IDisposable
 
 <MudStack Spacing="3" data-testid="pm-workflow-repos-page">
     <MudText Typo="Typo.h5">Repo Management</MudText>
@@ -165,6 +167,88 @@
                         </MudStack>
                     }
                 </MudStack>
+            </MudStack>
+        </MudPaper>
+
+        <MudPaper Class="pa-4" Elevation="1" data-testid="pm-workflow-repository-summary-region">
+            <MudStack Spacing="3">
+                <MudText Typo="Typo.h6">Per-repository summary</MudText>
+                <MudText Typo="Typo.body2">
+                    Open issue and pull request counts come from the PM work-item catalogue.
+                    Excluded repositories are omitted. Included shows whether the repository currently participates in PM queries.
+                </MudText>
+
+                @if (isLoadingSummaries)
+                {
+                    <MudProgressLinear Indeterminate="true" data-testid="pm-workflow-repository-summary-loading" />
+                }
+                else if (!string.IsNullOrWhiteSpace(summaryErrorMessage))
+                {
+                    <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" data-testid="pm-workflow-repository-summary-error">
+                        <MudStack Spacing="2">
+                            <MudText>@summaryErrorMessage</MudText>
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       OnClick="RetryLoadSummariesAsync"
+                                       data-testid="pm-workflow-repository-summary-retry">
+                                Retry
+                            </MudButton>
+                        </MudStack>
+                    </MudAlert>
+                }
+                else
+                {
+                    @if (summaryFailures.Count > 0)
+                    {
+                        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" data-testid="pm-workflow-repository-summary-partial-failure">
+                            <MudStack Spacing="2">
+                                <MudText>
+                                    Counts are unavailable for @summaryFailures.Count
+                                    @(summaryFailures.Count == 1 ? "repository" : "repositories"):
+                                    @string.Join(", ", summaryFailures.Select(failure => failure.RepositoryFullName)).
+                                    Failed repositories are omitted from the table.
+                                </MudText>
+                                <MudButton Variant="Variant.Outlined"
+                                           Color="Color.Primary"
+                                           OnClick="RetryLoadSummariesAsync"
+                                           data-testid="pm-workflow-repository-summary-partial-retry">
+                                    Retry
+                                </MudButton>
+                            </MudStack>
+                        </MudAlert>
+                    }
+
+                    @if (repositorySummaries.Count == 0)
+                    {
+                        <MudText Typo="Typo.body2" data-testid="pm-workflow-repository-summary-empty">
+                            No included repositories are available to summarise.
+                        </MudText>
+                    }
+                    else
+                    {
+                        <MudTable T="PmRepositorySummaryDto"
+                                  Items="repositorySummaries"
+                                  Dense="true"
+                                  Hover="true"
+                                  Breakpoint="Breakpoint.Sm"
+                                  data-testid="pm-workflow-repository-summary-table">
+                            <HeaderContent>
+                                <MudTh>Repository</MudTh>
+                                <MudTh>Open issues</MudTh>
+                                <MudTh>Open PRs</MudTh>
+                                <MudTh>Last activity</MudTh>
+                                <MudTh>Included</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Repository">@context.FullName</MudTd>
+                                <MudTd DataLabel="Open issues">@context.OpenIssueCount</MudTd>
+                                <MudTd DataLabel="Open PRs">@context.OpenPullRequestCount</MudTd>
+                                <MudTd DataLabel="Last activity">@FormatLastActivity(context.LastActivityAt)</MudTd>
+                                <MudTd DataLabel="Included">@(context.IsIncluded ? "Yes" : "No")</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    }
+                }
             </MudStack>
         </MudPaper>
     }
