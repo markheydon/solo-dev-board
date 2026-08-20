@@ -206,6 +206,36 @@ public sealed class MigrationServiceTests
         await _milestoneRepository.DidNotReceive().DeleteMilestoneAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), cancellationToken);
     }
 
+    [Fact]
+    public async Task GetProjectBoardOptionsAsync_ReturnsSupportedBoardOptionsOrderedByTitle()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+
+        _projectBoardStructureRepository
+            .DiscoverBoardsAsync("owner", "source", cancellationToken)
+            .Returns(new ProjectBoardDiscovery
+            {
+                SupportedBoards =
+                [
+                    new ProjectBoardStatusStructure { ProjectId = "PVT_2", ProjectTitle = "Zeta board" },
+                    new ProjectBoardStatusStructure { ProjectId = "PVT_1", ProjectTitle = "Alpha board" },
+                ],
+                TotalLinkedProjectCount = 2,
+                InaccessibleLinkedProjectCount = 0,
+            });
+
+        var sut = CreateSubject();
+
+        var result = await sut.GetProjectBoardOptionsAsync("owner", "source", cancellationToken);
+
+        Assert.Equal(2, result.Options.Count);
+        Assert.Equal("Alpha board", result.Options[0].Title);
+        Assert.Equal("PVT_1", result.Options[0].Id);
+        Assert.Equal("Zeta board", result.Options[1].Title);
+        Assert.Equal(2, result.TotalLinkedProjectCount);
+        Assert.Equal(0, result.InaccessibleLinkedProjectCount);
+    }
+
     private MigrationService CreateSubject()
         => new(_labelRepository, _milestoneRepository, _projectBoardStructureRepository);
 

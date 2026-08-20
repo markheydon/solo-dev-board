@@ -18,6 +18,53 @@ public sealed class MigrationTests
     private readonly IMigrationService _migrationService = Substitute.For<IMigrationService>();
 
     [Fact]
+    public async Task Migration_ProjectBoardColumnsScopeSwitch_RendersInScopeCard()
+    {
+        // Arrange
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
+                CreateRepository("owner", "repo-a"),
+                CreateRepository("owner", "repo-b"),
+            ]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Migration>();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.NotNull(cut.Find("[data-testid='migration-scope-columns-switch']"));
+            Assert.Contains("Project board columns", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task Migration_OverwriteStrategy_RendersStatusOptionWarning()
+    {
+        // Arrange
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
+                CreateRepository("owner", "repo-a"),
+                CreateRepository("owner", "repo-b"),
+            ]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Migration>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='migration-repository-autocomplete']"));
+
+        var strategySelect = cut.FindComponents<MudSelect<MigrationConflictStrategy>>().Single();
+        await cut.InvokeAsync(() => strategySelect.Instance.ValueChanged.InvokeAsync(MigrationConflictStrategy.Overwrite));
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("unused Status options", cut.Markup);
+        });
+    }
+
+    [Fact]
     public async Task Migration_ConflictStrategyOptions_RenderExplanatoryText()
     {
         // Arrange

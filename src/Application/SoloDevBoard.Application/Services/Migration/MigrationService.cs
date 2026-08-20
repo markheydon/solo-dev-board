@@ -31,6 +31,30 @@ public sealed class MigrationService : IMigrationService
     }
 
     /// <inheritdoc/>
+    public async Task<MigrationProjectBoardDiscoveryDto> GetProjectBoardOptionsAsync(
+        string owner,
+        string repo,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+
+        var discovery = await _projectBoardStructureRepository
+            .DiscoverBoardsAsync(owner, repo, cancellationToken)
+            .ConfigureAwait(false);
+
+        var options = discovery.SupportedBoards
+            .Select(board => new MigrationProjectBoardOptionDto(board.ProjectId, board.ProjectTitle))
+            .OrderBy(board => board.Title, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        return new MigrationProjectBoardDiscoveryDto(
+            options,
+            discovery.TotalLinkedProjectCount,
+            discovery.InaccessibleLinkedProjectCount);
+    }
+
+    /// <inheritdoc/>
     public async Task<MigrationPreviewDto> PreviewMigrationAsync(
         string sourceRepositoryFullName,
         IReadOnlyList<string> targetRepositoryFullNames,

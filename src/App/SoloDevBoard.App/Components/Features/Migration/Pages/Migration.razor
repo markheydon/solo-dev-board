@@ -1,11 +1,12 @@
 @page "/migrate"
+@using SoloDevBoard.App.Components.Features.Migration.Components
 
 <PageTitle>One-Click Migration</PageTitle>
 
 <MudStack Spacing="3">
     <MudText Typo="Typo.h4">One-Click Migration</MudText>
-    <MudText Typo="Typo.body1">Run labels and milestones migration from one source repository to one or more target repositories.</MudText>
-    <MudText Typo="Typo.body2">This workflow covers the current delivery slice for labels and milestones only.</MudText>
+    <MudText Typo="Typo.body1">Run labels, milestones, and project board Status columns migration from one source repository to one or more target repositories.</MudText>
+    <MudText Typo="Typo.body2">Choose the migration scope that matches your repository setup transfer.</MudText>
 
     <MudPaper Class="pa-4" Elevation="1" data-testid="migration-workflow-controls-card">
         <MudStack Spacing="2">
@@ -124,13 +125,106 @@
                                                Disabled="IsBusy"
                                                Color="Color.Primary"
                                                data-testid="migration-scope-milestones-switch" />
+                                    <MudSwitch T="bool"
+                                               Value="migrateProjectBoardColumns"
+                                               ValueChanged="OnMigrateProjectBoardColumnsChangedAsync"
+                                               Label="Project board columns"
+                                               Disabled="IsBusy"
+                                               Color="Color.Primary"
+                                               data-testid="migration-scope-columns-switch" />
                                 </MudStack>
                             </MudPaper>
+
+                            @if (migrateProjectBoardColumns)
+                            {
+                                <MudPaper Class="pa-3" Outlined="true" data-testid="migration-board-selection-card">
+                                    <MudStack Spacing="2">
+                                        <MudText Typo="Typo.subtitle2">Project board selection</MudText>
+                                        <MudText Typo="Typo.body2">Choose the source board whose Status columns are copied, then choose a target board or create a new board for each target repository.</MudText>
+
+                                        @if (HasInaccessibleProjectBoardsWarning)
+                                        {
+                                            <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined" data-testid="migration-inaccessible-project-boards-warning">
+                                                @inaccessibleProjectBoardsWarning
+                                            </MudAlert>
+                                        }
+
+                                        @if (string.IsNullOrWhiteSpace(sourceRepositoryFullName))
+                                        {
+                                            <MudText Typo="Typo.body2" data-testid="migration-board-selection-prompt">Select a source repository to load supported project boards.</MudText>
+                                        }
+                                        else if (isLoadingSourceBoards)
+                                        {
+                                            <MudStack AlignItems="AlignItems.Center" Spacing="1" aria-live="polite" role="status" data-testid="migration-source-boards-loading-state">
+                                                <MudProgressCircular Indeterminate="true" Color="Color.Primary" aria-label="Loading source project boards" />
+                                                <MudText Typo="Typo.body2">Loading source project boards...</MudText>
+                                            </MudStack>
+                                        }
+                                        else
+                                        {
+                                            <MudSelect T="string"
+                                                       Label="Source project board"
+                                                       Value="sourceProjectBoardId"
+                                                       ValueChanged="OnSourceProjectBoardChangedAsync"
+                                                       Variant="Variant.Outlined"
+                                                       Disabled="@(IsBusy || GetSourceBoardOptions().Count == 0)"
+                                                       Required="true"
+                                                       data-testid="migration-source-board-select">
+                                                @foreach (var board in GetSourceBoardOptions())
+                                                {
+                                                    <MudSelectItem T="string" Value="@board.Id">@board.Title</MudSelectItem>
+                                                }
+                                            </MudSelect>
+
+                                            @if (GetSourceBoardOptions().Count == 0)
+                                            {
+                                                <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" data-testid="migration-source-boards-empty-state">
+                                                    No supported project boards with a Status field were found for the source repository.
+                                                </MudAlert>
+                                            }
+                                        }
+
+                                        @if (targetRepositoryFullNames.Count > 0)
+                                        {
+                                            @if (isLoadingTargetBoards)
+                                            {
+                                                <MudStack AlignItems="AlignItems.Center" Spacing="1" aria-live="polite" role="status" data-testid="migration-target-boards-loading-state">
+                                                    <MudProgressCircular Indeterminate="true" Color="Color.Primary" aria-label="Loading target project boards" />
+                                                    <MudText Typo="Typo.body2">Loading target project boards...</MudText>
+                                                </MudStack>
+                                            }
+
+                                            @foreach (var targetRepositoryFullName in orderedTargetRepositoryFullNames)
+                                            {
+                                                <MudPaper Class="pa-2" Outlined="true" data-testid="migration-target-board-selector">
+                                                    <MudStack Spacing="1">
+                                                        <MudText Typo="Typo.subtitle2">@targetRepositoryFullName</MudText>
+                                                        <MudSelect T="string"
+                                                                   Label="Target project board"
+                                                                   Value="@GetTargetBoardSelection(targetRepositoryFullName)"
+                                                                   ValueChanged="value => OnTargetProjectBoardChangedAsync(targetRepositoryFullName, value)"
+                                                                   Variant="Variant.Outlined"
+                                                                   Disabled="IsBusy"
+                                                                   Required="true"
+                                                                   data-testid="migration-target-board-select">
+                                                            @foreach (var board in GetTargetBoardOptions(targetRepositoryFullName))
+                                                            {
+                                                                <MudSelectItem T="string" Value="@board.Id">@board.Title</MudSelectItem>
+                                                            }
+                                                            <MudSelectItem T="string" Value="@CreateNewBoardOptionValue">Create a new board</MudSelectItem>
+                                                        </MudSelect>
+                                                    </MudStack>
+                                                </MudPaper>
+                                            }
+                                        }
+                                    </MudStack>
+                                </MudPaper>
+                            }
 
                             @if (conflictStrategy == MigrationConflictStrategy.Overwrite)
                             {
                                 <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined" data-testid="migration-overwrite-warning">
-                                    Overwrite can remove target labels and milestones that do not exist in the source repository.
+                                    Overwrite can remove target labels, milestones, and unused Status options that do not exist in the source repository.
                                 </MudAlert>
                             }
                         </MudStack>
@@ -187,6 +281,7 @@
                 {
                     var labelPreview = GetLabelPreview(repository);
                     var milestonePreview = GetMilestonePreview(repository);
+                    var statusPreview = GetStatusPreview(repository);
 
                     <MudPaper Class="pa-3" Outlined="true" data-testid="migration-preview-repository-card">
                         <MudText Typo="Typo.subtitle1">@repository</MudText>
@@ -231,7 +326,41 @@
                             }
                         }
 
-                        @if (!HasActionableChanges(labelPreview, milestonePreview))
+                        @if (migrateProjectBoardColumns)
+                        {
+                            <MudText Typo="Typo.body2">Status columns - Create: @statusPreview.ToCreate.Count, Update: @statusPreview.ToUpdate.Count, Delete: @statusPreview.ToDelete.Count, Skip: @statusPreview.Skipped.Count</MudText>
+
+                            @if (statusPreview.CreateNewBoard)
+                            {
+                                <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" data-testid="migration-status-create-board-info">
+                                    A new linked project board will be created for this target repository.
+                                </MudAlert>
+                            }
+
+                            @foreach (var warning in statusPreview.Warnings)
+                            {
+                                <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined" data-testid="migration-status-preview-warning">
+                                    @warning
+                                </MudAlert>
+                            }
+
+                            @if (statusPreview.ToCreate.Count > 0)
+                            {
+                                <StatusPreviewTable Heading="Status columns to create" StatusOptions="statusPreview.ToCreate" />
+                            }
+
+                            @if (statusPreview.ToUpdate.Count > 0)
+                            {
+                                <StatusPreviewTable Heading="Status columns to update" StatusOptions="statusPreview.ToUpdate" />
+                            }
+
+                            @if (statusPreview.ToDelete.Count > 0)
+                            {
+                                <StatusPreviewTable Heading="Status columns to delete" StatusOptions="statusPreview.ToDelete" />
+                            }
+                        }
+
+                        @if (!HasActionableChanges(labelPreview, milestonePreview, statusPreview))
                         {
                             <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" data-testid="migration-no-action-info">
                                 No create, update, or delete actions are required for this repository.
@@ -246,12 +375,12 @@
     {
         <MudPaper Class="pa-4" Elevation="1" data-testid="migration-preview-empty-state">
             <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined">
-                Select one source repository, one or more target repositories, and at least one migration scope to generate a preview.
+                @BoardSelectionRequirementsMessage
             </MudAlert>
         </MudPaper>
     }
 
-    @if (applyResult.LabelResults.Count > 0 || applyResult.MilestoneResults.Count > 0)
+    @if (applyResult.LabelResults.Count > 0 || applyResult.MilestoneResults.Count > 0 || applyResult.ProjectBoardStatusResults.Count > 0)
     {
         <MudPaper Class="pa-4" Elevation="1" data-testid="migration-summary-card">
             <MudStack Spacing="2">
@@ -261,13 +390,15 @@
                 {
                     var labelResult = GetLabelResult(repository);
                     var milestoneResult = GetMilestoneResult(repository);
+                    var statusResult = GetStatusResult(repository);
                     var showLabelSummary = migrateLabels && applyResult.LabelResults.Any(item => item.RepositoryFullName.Equals(repository, StringComparison.OrdinalIgnoreCase));
                     var showMilestoneSummary = migrateMilestones && applyResult.MilestoneResults.Any(item => item.RepositoryFullName.Equals(repository, StringComparison.OrdinalIgnoreCase));
+                    var showStatusSummary = migrateProjectBoardColumns && applyResult.ProjectBoardStatusResults.Any(item => item.RepositoryFullName.Equals(repository, StringComparison.OrdinalIgnoreCase));
 
                     <MudPaper Class="pa-3" Outlined="true">
                         <MudText Typo="Typo.subtitle1">@repository</MudText>
 
-                        @if ((showLabelSummary && labelResult.HasError) || (showMilestoneSummary && milestoneResult.HasError))
+                        @if ((showLabelSummary && labelResult.HasError) || (showMilestoneSummary && milestoneResult.HasError) || (showStatusSummary && statusResult.HasError))
                         {
                             @if (showLabelSummary && labelResult.HasError)
                             {
@@ -277,6 +408,11 @@
                             @if (showMilestoneSummary && milestoneResult.HasError)
                             {
                                 <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Outlined">Milestone migration failed. @milestoneResult.ErrorMessage</MudAlert>
+                            }
+
+                            @if (showStatusSummary && statusResult.HasError)
+                            {
+                                <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Outlined">Status column migration failed. @statusResult.ErrorMessage</MudAlert>
                             }
                         }
                         else
@@ -289,6 +425,18 @@
                             @if (showMilestoneSummary)
                             {
                                 <MudText Typo="Typo.body2">Milestones - Created: @milestoneResult.CreatedCount, Updated: @milestoneResult.UpdatedCount, Deleted: @milestoneResult.DeletedCount, Skipped: @milestoneResult.SkippedCount</MudText>
+                            }
+
+                            @if (showStatusSummary)
+                            {
+                                <MudText Typo="Typo.body2">Status columns - Created: @statusResult.CreatedCount, Updated: @statusResult.UpdatedCount, Deleted: @statusResult.DeletedCount, Skipped: @statusResult.SkippedCount</MudText>
+
+                                @foreach (var warning in statusResult.Warnings)
+                                {
+                                    <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined" data-testid="migration-status-result-warning">
+                                        @warning
+                                    </MudAlert>
+                                }
                             }
                         }
                     </MudPaper>
@@ -310,7 +458,7 @@
             else if (!CanPreview)
             {
                 <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" data-testid="migration-requirements-info">
-                    Select repositories and migration scope to unlock preview.
+                    @BoardSelectionRequirementsMessage
                 </MudAlert>
             }
             else if (showPreview && !HasActionablePreviewChanges)
