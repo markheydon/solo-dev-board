@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using SoloDevBoard.Application.Services.BoardRules;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Domain.Entities.Labels;
+using SoloDevBoard.Domain.Entities.Migration;
 using SoloDevBoard.Domain.Entities.Milestones;
 using SoloDevBoard.Domain.Entities.PmWorkflow;
 using SoloDevBoard.Domain.Entities.Repositories;
@@ -423,53 +424,15 @@ public sealed class GitHubService : IGitHubService
     /// <inheritdoc/>
     public async Task<RepositoryProjectBoardDiscoveryResult> GetProjectBoardsForRepositoryAsync(string owner, string repo, CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
-        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+        var discovery = await DiscoverRepositoryLinkedProjectBoardNodesAsync(owner, repo, cancellationToken).ConfigureAwait(false);
 
-        const string query = "query TriageProjectBoards($owner: String!, $repo: String!) { repository(owner: $owner, name: $repo) { projectsV2(first: 50) { nodes { id title public owner { ... on User { login } ... on Organization { login } } fields(first: 50) { nodes { ... on ProjectV2SingleSelectField { id name options { id name } } } } } } } }";
-
-        var client = CreateAuthenticatedClient();
-        var requestBody = new GraphQlRequestDto(
-            query,
-            new Dictionary<string, string>(StringComparer.Ordinal)
-            {
-                ["owner"] = owner,
-                ["repo"] = repo,
-            });
-
-        using var response = await client.PostAsJsonAsync("/graphql", requestBody, JsonOptions, cancellationToken).ConfigureAwait(false);
-        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
-
-        var payload = await response.Content.ReadFromJsonAsync<GetProjectBoardsResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
-            ?? throw CreateInvalidResponseException("GraphQL response body was empty.", "/graphql");
-
-        var rawNodes = payload.Data?.Repository?.ProjectsV2?.Nodes ?? [];
-        var accessibleNodes = rawNodes
-            .Where(static node => node is not null)
-            .Select(static node => node!)
-            .ToArray();
-
-        if (_docsCaptureOptions.Enabled)
+        if (discovery.Errors.Count > 0 && discovery.AccessibleNodes.Count == 0)
         {
-            accessibleNodes = accessibleNodes
-                .Where(static node => node.IsPublic)
-                .ToArray();
-        }
-
-        var totalLinkedProjectCount = _docsCaptureOptions.Enabled
-            ? accessibleNodes.Length
-            : rawNodes.Count;
-        var inaccessibleLinkedProjectCount = _docsCaptureOptions.Enabled
-            ? 0
-            : rawNodes.Count - accessibleNodes.Length;
-
-        if (payload.Errors.Count > 0 && accessibleNodes.Length == 0)
-        {
-            var combinedErrors = string.Join("; ", payload.Errors.Select(static error => error.Message));
+            var combinedErrors = string.Join("; ", discovery.Errors.Select(static error => error.Message));
             throw new HttpRequestException($"GitHub GraphQL request failed. Errors: {combinedErrors}");
         }
 
-        var supportedProjectBoards = accessibleNodes
+        var supportedProjectBoards = discovery.AccessibleNodes
             .Select(ToProjectBoardDomain)
             .Where(static projectBoard => projectBoard is not null)
             .Select(static projectBoard => projectBoard!)
@@ -478,8 +441,8 @@ public sealed class GitHubService : IGitHubService
 
         return new RepositoryProjectBoardDiscoveryResult(
             supportedProjectBoards,
-            totalLinkedProjectCount,
-            inaccessibleLinkedProjectCount);
+            discovery.TotalLinkedProjectCount,
+            discovery.InaccessibleLinkedProjectCount);
     }
 
     /// <inheritdoc/>
@@ -737,6 +700,200 @@ public sealed class GitHubService : IGitHubService
         {
             throw CreateInvalidResponseException("GraphQL response did not contain the cleared project item identifier.", "/graphql");
         }
+    }
+
+    /// <inheritdoc/>
+    public async Task<ProjectBoardDiscovery> DiscoverProjectBoardStatusStructuresAsync(string owner, string repo, CancellationToken cancellationToken = default)
+    {
+        var discovery = await DiscoverRepositoryLinkedProjectBoardNodesAsync(owner, repo, cancellationToken).ConfigureAwait(false);
+
+        if (discovery.Errors.Count > 0 && discovery.AccessibleNodes.Count == 0)
+        {
+            var combinedErrors = string.Join("; ", discovery.Errors.Select(static error => error.Message));
+            throw new HttpRequestException($"GitHub GraphQL request failed. Errors: {combinedErrors}");
+        }
+
+        var supportedBoards = discovery.AccessibleNodes
+            .Select(ToProjectBoardStatusStructureDomain)
+            .Where(static structure => structure is not null)
+            .Select(static structure => structure!)
+            .OrderBy(structure => structure.ProjectTitle, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        return new ProjectBoardDiscovery
+        {
+            SupportedBoards = supportedBoards,
+            TotalLinkedProjectCount = discovery.TotalLinkedProjectCount,
+            InaccessibleLinkedProjectCount = discovery.InaccessibleLinkedProjectCount,
+        };
+    }
+
+    /// <inheritdoc/>
+    public async Task<ProjectBoardStatusStructure> GetProjectBoardStatusStructureAsync(string projectId, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectId);
+
+        const string query = "query ProjectBoardStatusStructure($projectId: ID!) { node(id: $projectId) { ... on ProjectV2 { id title fields(first: 50) { nodes { ... on ProjectV2SingleSelectField { id name options { id name color description } } } } } } }";
+
+        var client = CreateAuthenticatedClient();
+        var variables = new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            ["projectId"] = projectId,
+        };
+
+        var payload = await PostGraphQlAsync<GetProjectBoardStatusStructureResponseDto>(client, query, variables, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (payload.Errors.Count > 0)
+        {
+            var combinedErrors = string.Join("; ", payload.Errors.Select(static error => error.Message));
+            throw new HttpRequestException($"GitHub GraphQL request failed. Errors: {combinedErrors}");
+        }
+
+        var structure = ToProjectBoardStatusStructureDomain(payload.Data?.Node);
+        if (structure is null)
+        {
+            throw CreateInvalidResponseException("GraphQL response did not contain a supported Status field structure.", "/graphql");
+        }
+
+        return structure;
+    }
+
+    /// <inheritdoc/>
+    public async Task<string> GetRepositoryNodeIdAsync(string owner, string repo, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+
+        const string query = "query RepositoryNodeId($owner: String!, $repo: String!) { repository(owner: $owner, name: $repo) { id } }";
+
+        var client = CreateAuthenticatedClient();
+        var variables = new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            ["owner"] = owner,
+            ["repo"] = repo,
+        };
+
+        var payload = await PostGraphQlAsync<GetRepositoryNodeIdResponseDto>(client, query, variables, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (payload.Errors.Count > 0)
+        {
+            var combinedErrors = string.Join("; ", payload.Errors.Select(static error => error.Message));
+            throw new HttpRequestException($"GitHub GraphQL request failed. Errors: {combinedErrors}");
+        }
+
+        var repositoryId = payload.Data?.Repository?.Id;
+        if (string.IsNullOrWhiteSpace(repositoryId))
+        {
+            throw CreateInvalidResponseException("GraphQL response did not contain the repository node identifier.", "/graphql");
+        }
+
+        return repositoryId;
+    }
+
+    /// <inheritdoc/>
+    public async Task<ProjectBoardStatusStructure> CreateRepositoryLinkedProjectAsync(string owner, string repo, string title, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+        ArgumentException.ThrowIfNullOrWhiteSpace(title);
+
+        var repositoryId = await GetRepositoryNodeIdAsync(owner, repo, cancellationToken).ConfigureAwait(false);
+
+        const string mutation = "mutation CreateRepositoryLinkedProject($title: String!, $repositoryId: ID!) { createProjectV2(input: { title: $title, repositoryId: $repositoryId }) { projectV2 { id title fields(first: 50) { nodes { ... on ProjectV2SingleSelectField { id name options { id name color description } } } } } } }";
+
+        var client = CreateAuthenticatedClient();
+        var variables = new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            ["title"] = title,
+            ["repositoryId"] = repositoryId,
+        };
+
+        var payload = await PostGraphQlAsync<CreateRepositoryLinkedProjectResponseDto>(client, mutation, variables, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (payload.Errors.Count > 0)
+        {
+            var combinedErrors = string.Join("; ", payload.Errors.Select(static error => error.Message));
+            throw new HttpRequestException($"GitHub GraphQL request failed. Errors: {combinedErrors}");
+        }
+
+        var structure = ToProjectBoardStatusStructureDomain(payload.Data?.CreateProjectV2?.ProjectV2);
+        if (structure is null)
+        {
+            throw CreateInvalidResponseException("GraphQL response did not contain a supported Status field structure.", "/graphql");
+        }
+
+        return structure;
+    }
+
+    /// <inheritdoc/>
+    public async Task<ProjectBoardStatusStructure> UpdateProjectBoardStatusOptionsAsync(
+        string projectId,
+        string statusFieldId,
+        IReadOnlyList<ProjectBoardStatusStructureOption> options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(statusFieldId);
+        ArgumentNullException.ThrowIfNull(options);
+
+        if (options.Count == 0)
+        {
+            throw new ArgumentException("At least one Status option must be provided.", nameof(options));
+        }
+
+        const string mutation = "mutation UpdateProjectBoardStatusField($fieldId: ID!, $options: [ProjectV2SingleSelectFieldOptionInput!]!) { updateProjectV2Field(input: { fieldId: $fieldId, singleSelectOptions: $options }) { projectV2Field { ... on ProjectV2SingleSelectField { id name options { id name color description } } } } }";
+
+        var optionInputs = options
+            .Select(option =>
+            {
+                var input = new Dictionary<string, object?>(StringComparer.Ordinal)
+                {
+                    ["name"] = option.Name,
+                    ["color"] = option.Colour,
+                    ["description"] = option.Description ?? string.Empty,
+                };
+
+                if (!string.IsNullOrWhiteSpace(option.Id))
+                {
+                    input["id"] = option.Id;
+                }
+
+                return input;
+            })
+            .ToArray();
+
+        var client = CreateAuthenticatedClient();
+        var variables = new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            ["fieldId"] = statusFieldId,
+            ["options"] = optionInputs,
+        };
+
+        var payload = await PostGraphQlAsync<UpdateProjectBoardStatusFieldResponseDto>(client, mutation, variables, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (payload.Errors.Count > 0)
+        {
+            var combinedErrors = string.Join("; ", payload.Errors.Select(static error => error.Message));
+            throw new HttpRequestException($"GitHub GraphQL request failed. Errors: {combinedErrors}");
+        }
+
+        var updatedField = payload.Data?.UpdateProjectV2Field?.ProjectV2Field;
+        if (updatedField is null || string.IsNullOrWhiteSpace(updatedField.Id))
+        {
+            throw CreateInvalidResponseException("GraphQL response did not contain the updated Status field.", "/graphql");
+        }
+
+        return new ProjectBoardStatusStructure
+        {
+            ProjectId = projectId,
+            ProjectTitle = string.Empty,
+            StatusFieldId = updatedField.Id,
+            Options = MapStatusStructureOptions(updatedField.Options),
+        };
     }
 
     /// <inheritdoc/>
@@ -1051,6 +1208,72 @@ public sealed class GitHubService : IGitHubService
             response.StatusCode);
     }
 
+    private const string RepositoryLinkedProjectBoardDiscoveryQuery =
+        "query RepositoryLinkedProjectBoardDiscovery($owner: String!, $repo: String!) { repository(owner: $owner, name: $repo) { projectsV2(first: 50) { nodes { id title public owner { ... on User { login } ... on Organization { login } } fields(first: 50) { nodes { ... on ProjectV2SingleSelectField { id name options { id name color description } } } } } } } }";
+
+    private sealed record RepositoryLinkedProjectBoardNodesDiscovery(
+        IReadOnlyList<ProjectBoardNodeDto> AccessibleNodes,
+        int TotalLinkedProjectCount,
+        int InaccessibleLinkedProjectCount,
+        IReadOnlyList<GraphQlErrorDto> Errors);
+
+    private async Task<RepositoryLinkedProjectBoardNodesDiscovery> DiscoverRepositoryLinkedProjectBoardNodesAsync(
+        string owner,
+        string repo,
+        CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+
+        var client = CreateAuthenticatedClient();
+        var variables = new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            ["owner"] = owner,
+            ["repo"] = repo,
+        };
+
+        var requestBody = new GraphQlObjectVariablesRequestDto(RepositoryLinkedProjectBoardDiscoveryQuery, variables);
+        using var response = await client.PostAsJsonAsync("/graphql", requestBody, JsonOptions, cancellationToken).ConfigureAwait(false);
+        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
+
+        var payload = await response.Content.ReadFromJsonAsync<GetProjectBoardsResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
+            ?? throw CreateInvalidResponseException("GraphQL response body was empty.", "/graphql");
+
+        return ResolveRepositoryLinkedProjectBoardNodesDiscovery(
+            payload.Data?.Repository?.ProjectsV2?.Nodes ?? [],
+            payload.Errors);
+    }
+
+    private RepositoryLinkedProjectBoardNodesDiscovery ResolveRepositoryLinkedProjectBoardNodesDiscovery(
+        IReadOnlyList<ProjectBoardNodeDto> rawNodes,
+        IReadOnlyList<GraphQlErrorDto> errors)
+    {
+        var accessibleNodes = rawNodes
+            .Where(static node => node is not null)
+            .Select(static node => node!)
+            .ToArray();
+
+        if (_docsCaptureOptions.Enabled)
+        {
+            accessibleNodes = accessibleNodes
+                .Where(static node => node.IsPublic)
+                .ToArray();
+        }
+
+        var totalLinkedProjectCount = _docsCaptureOptions.Enabled
+            ? accessibleNodes.Length
+            : rawNodes.Count;
+        var inaccessibleLinkedProjectCount = _docsCaptureOptions.Enabled
+            ? 0
+            : rawNodes.Count - accessibleNodes.Length;
+
+        return new RepositoryLinkedProjectBoardNodesDiscovery(
+            accessibleNodes,
+            totalLinkedProjectCount,
+            inaccessibleLinkedProjectCount,
+            errors);
+    }
+
     private static TriageProjectBoard? ToProjectBoardDomain(ProjectBoardNodeDto? node)
     {
         if (node is null || string.IsNullOrWhiteSpace(node.Id) || string.IsNullOrWhiteSpace(node.Title))
@@ -1090,6 +1313,64 @@ public sealed class GitHubService : IGitHubService
             StatusFieldId = statusField.Id,
             StatusOptions = statusOptions,
         };
+    }
+
+    private static ProjectBoardStatusStructure? ToProjectBoardStatusStructureDomain(ProjectBoardNodeDto? node)
+    {
+        if (node is null || string.IsNullOrWhiteSpace(node.Id) || string.IsNullOrWhiteSpace(node.Title))
+        {
+            return null;
+        }
+
+        var statusField = node.Fields?.Nodes
+            .FirstOrDefault(field =>
+                !string.IsNullOrWhiteSpace(field.Id)
+                && field.Name.Equals("Status", StringComparison.OrdinalIgnoreCase));
+
+        if (statusField is null || string.IsNullOrWhiteSpace(statusField.Id))
+        {
+            return null;
+        }
+
+        var options = MapStatusStructureOptions(statusField.Options);
+        if (options.Count == 0)
+        {
+            return null;
+        }
+
+        return new ProjectBoardStatusStructure
+        {
+            ProjectId = node.Id,
+            ProjectTitle = node.Title,
+            StatusFieldId = statusField.Id,
+            Options = options,
+        };
+    }
+
+    private static IReadOnlyList<ProjectBoardStatusStructureOption> MapStatusStructureOptions(
+        IReadOnlyList<ProjectBoardSingleSelectOptionDto> options)
+    {
+        var mapped = new List<ProjectBoardStatusStructureOption>();
+        var order = 0;
+
+        foreach (var option in options)
+        {
+            if (string.IsNullOrWhiteSpace(option.Name))
+            {
+                continue;
+            }
+
+            mapped.Add(new ProjectBoardStatusStructureOption
+            {
+                Id = option.Id,
+                Name = option.Name,
+                Colour = string.IsNullOrWhiteSpace(option.Color) ? "GRAY" : option.Color,
+                Description = option.Description ?? string.Empty,
+                Order = order++,
+            });
+        }
+
+        return mapped;
     }
 
     private static ProjectBoardFieldIds ToProjectBoardFieldIds(IReadOnlyList<ProjectBoardCatalogueFieldDto> fields)
@@ -2147,9 +2428,104 @@ public sealed class GitHubService : IGitHubService
 
         [JsonPropertyName("name")]
         public string Name { get; init; } = string.Empty;
+
+        [JsonPropertyName("color")]
+        public string Color { get; init; } = string.Empty;
+
+        [JsonPropertyName("description")]
+        public string? Description { get; init; }
     }
 
-    /// <summary>DTO wrapper for GraphQL update-project-item-focus-order responses.</summary>
+    /// <summary>DTO wrapper for GraphQL project-board status-structure responses.</summary>
+    private sealed record GetProjectBoardStatusStructureResponseDto
+    {
+        [JsonPropertyName("data")]
+        public GetProjectBoardStatusStructureDataDto? Data { get; init; }
+
+        [JsonPropertyName("errors")]
+        public IReadOnlyList<GraphQlErrorDto> Errors { get; init; } = [];
+    }
+
+    /// <summary>DTO for project-board status-structure GraphQL data payload.</summary>
+    private sealed record GetProjectBoardStatusStructureDataDto
+    {
+        [JsonPropertyName("node")]
+        public ProjectBoardNodeDto? Node { get; init; }
+    }
+
+    /// <summary>DTO wrapper for GraphQL repository node-id responses.</summary>
+    private sealed record GetRepositoryNodeIdResponseDto
+    {
+        [JsonPropertyName("data")]
+        public GetRepositoryNodeIdDataDto? Data { get; init; }
+
+        [JsonPropertyName("errors")]
+        public IReadOnlyList<GraphQlErrorDto> Errors { get; init; } = [];
+    }
+
+    /// <summary>DTO for repository node-id GraphQL data payload.</summary>
+    private sealed record GetRepositoryNodeIdDataDto
+    {
+        [JsonPropertyName("repository")]
+        public RepositoryNodeIdDto? Repository { get; init; }
+    }
+
+    /// <summary>DTO for repository node identifiers.</summary>
+    private sealed record RepositoryNodeIdDto
+    {
+        [JsonPropertyName("id")]
+        public string Id { get; init; } = string.Empty;
+    }
+
+    /// <summary>DTO wrapper for GraphQL create-project responses.</summary>
+    private sealed record CreateRepositoryLinkedProjectResponseDto
+    {
+        [JsonPropertyName("data")]
+        public CreateRepositoryLinkedProjectDataDto? Data { get; init; }
+
+        [JsonPropertyName("errors")]
+        public IReadOnlyList<GraphQlErrorDto> Errors { get; init; } = [];
+    }
+
+    /// <summary>DTO for create-project GraphQL data payload.</summary>
+    private sealed record CreateRepositoryLinkedProjectDataDto
+    {
+        [JsonPropertyName("createProjectV2")]
+        public CreateRepositoryLinkedProjectPayloadDto? CreateProjectV2 { get; init; }
+    }
+
+    /// <summary>DTO for create-project GraphQL payload.</summary>
+    private sealed record CreateRepositoryLinkedProjectPayloadDto
+    {
+        [JsonPropertyName("projectV2")]
+        public ProjectBoardNodeDto? ProjectV2 { get; init; }
+    }
+
+    /// <summary>DTO wrapper for GraphQL update-status-field responses.</summary>
+    private sealed record UpdateProjectBoardStatusFieldResponseDto
+    {
+        [JsonPropertyName("data")]
+        public UpdateProjectBoardStatusFieldDataDto? Data { get; init; }
+
+        [JsonPropertyName("errors")]
+        public IReadOnlyList<GraphQlErrorDto> Errors { get; init; } = [];
+    }
+
+    /// <summary>DTO for update-status-field GraphQL data payload.</summary>
+    private sealed record UpdateProjectBoardStatusFieldDataDto
+    {
+        [JsonPropertyName("updateProjectV2Field")]
+        public UpdateProjectBoardStatusFieldPayloadDto? UpdateProjectV2Field { get; init; }
+    }
+
+    /// <summary>DTO for update-status-field GraphQL payload.</summary>
+    private sealed record UpdateProjectBoardStatusFieldPayloadDto
+    {
+        [JsonPropertyName("projectV2Field")]
+        public ProjectBoardSingleSelectFieldDto? ProjectV2Field { get; init; }
+    }
+
+    /// <summary>DTO for update-project-item-focus-order GraphQL responses.</summary>
     private sealed record UpdateProjectBoardItemFocusOrderResponseDto
     {
         [JsonPropertyName("data")]

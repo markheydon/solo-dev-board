@@ -1,5 +1,6 @@
 using SoloDevBoard.Application.Services.BoardRules;
 using SoloDevBoard.Domain.Entities.Labels;
+using SoloDevBoard.Domain.Entities.Migration;
 using SoloDevBoard.Domain.Entities.Milestones;
 using SoloDevBoard.Domain.Entities.PmWorkflow;
 using SoloDevBoard.Domain.Entities.Repositories;
@@ -195,6 +196,46 @@ public interface IGitHubService
         string projectId,
         string projectItemId,
         string focusOrderFieldId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Discovers linked project boards with full Status field structure for migration.</summary>
+    /// <param name="owner">The GitHub account owner login.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>Supported boards with Status options and linked-project visibility metadata.</returns>
+    Task<ProjectBoardDiscovery> DiscoverProjectBoardStatusStructuresAsync(string owner, string repo, CancellationToken cancellationToken = default);
+
+    /// <summary>Retrieves the Status field structure for a project board.</summary>
+    /// <param name="projectId">The GitHub Project v2 node identifier.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>The Status field structure for the project board.</returns>
+    Task<ProjectBoardStatusStructure> GetProjectBoardStatusStructureAsync(string projectId, CancellationToken cancellationToken = default);
+
+    /// <summary>Retrieves the GitHub node identifier for a repository.</summary>
+    /// <param name="owner">The GitHub account owner login.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>The repository node identifier.</returns>
+    Task<string> GetRepositoryNodeIdAsync(string owner, string repo, CancellationToken cancellationToken = default);
+
+    /// <summary>Creates a repository-linked Projects v2 board.</summary>
+    /// <param name="owner">The GitHub account owner login.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="title">The title for the new project board.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>The Status field structure for the newly created board.</returns>
+    Task<ProjectBoardStatusStructure> CreateRepositoryLinkedProjectAsync(string owner, string repo, string title, CancellationToken cancellationToken = default);
+
+    /// <summary>Replaces the Status field options on a project board.</summary>
+    /// <param name="projectId">The GitHub Project v2 node identifier.</param>
+    /// <param name="statusFieldId">The Status field node identifier.</param>
+    /// <param name="options">The complete Status option list to persist.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>The updated Status field structure.</returns>
+    Task<ProjectBoardStatusStructure> UpdateProjectBoardStatusOptionsAsync(
+        string projectId,
+        string statusFieldId,
+        IReadOnlyList<ProjectBoardStatusStructureOption> options,
         CancellationToken cancellationToken = default);
 
     /// <summary>Closes a triage item as duplicate and records a duplicate reference comment.</summary>

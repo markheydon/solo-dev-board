@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using NSubstitute;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Domain.Entities.Labels;
+using SoloDevBoard.Domain.Entities.Migration;
 using SoloDevBoard.Domain.Entities.Triage;
 using SoloDevBoard.Infrastructure.GitHub;
 
@@ -1465,6 +1466,152 @@ public sealed class GitHubServiceTests
         Assert.Empty(result.SupportedProjectBoards);
         Assert.Equal(1, result.TotalLinkedProjectCount);
         Assert.Equal(0, result.InaccessibleLinkedProjectCount);
+    }
+
+    [Fact]
+    public async Task DiscoverProjectBoardStatusStructuresAsync_StatusFieldPresent_ReturnsColourAndDescription()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "repository": {
+                        "projectsV2": {
+                            "nodes": [
+                                {
+                                    "id": "PVT_kwHOAJefG84BQ6bh",
+                                    "title": "Roadmap",
+                                    "public": true,
+                                    "owner": { "login": "owner" },
+                                    "fields": {
+                                        "nodes": [
+                                            {
+                                                "id": "PVTF_status",
+                                                "name": "Status",
+                                                "options": [
+                                                    { "id": "option-one", "name": "In Progress", "color": "YELLOW", "description": "Active work" },
+                                                    { "id": "option-two", "name": "Done", "color": "GREEN", "description": "Complete" }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                },
+                "errors": []
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        var result = await sut.DiscoverProjectBoardStatusStructuresAsync("owner", "repo", cancellationToken);
+
+        Assert.Single(result.SupportedBoards);
+        Assert.Equal(2, result.SupportedBoards[0].Options.Count);
+        Assert.Equal("YELLOW", result.SupportedBoards[0].Options[0].Colour, StringComparer.OrdinalIgnoreCase);
+        Assert.Equal("Active work", result.SupportedBoards[0].Options[0].Description);
+    }
+
+    [Fact]
+    public async Task CreateRepositoryLinkedProjectAsync_ValidResponse_ReturnsDefaultStatusStructure()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "repository": {
+                        "id": "R_kgDOExample"
+                    }
+                },
+                "errors": []
+            }
+            """),
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "createProjectV2": {
+                        "projectV2": {
+                            "id": "PVT_created",
+                            "title": "Imported board",
+                            "fields": {
+                                "nodes": [
+                                    {
+                                        "id": "PVTF_created_status",
+                                        "name": "Status",
+                                        "options": [
+                                            { "id": "opt-todo", "name": "Todo", "color": "GRAY", "description": "" },
+                                            { "id": "opt-done", "name": "Done", "color": "GREEN", "description": "" }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "errors": []
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        var result = await sut.CreateRepositoryLinkedProjectAsync("owner", "repo", "Imported board", cancellationToken);
+
+        Assert.Equal("PVT_created", result.ProjectId);
+        Assert.Equal("PVTF_created_status", result.StatusFieldId);
+        Assert.Equal(2, result.Options.Count);
+        Assert.Equal(2, handler.Requests.Count);
+    }
+
+    [Fact]
+    public async Task UpdateProjectBoardStatusOptionsAsync_NameMatchedOptionsIncludeExistingIds()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "updateProjectV2Field": {
+                        "projectV2Field": {
+                            "id": "PVTF_status",
+                            "name": "Status",
+                            "options": [
+                                { "id": "option-one", "name": "In Progress", "color": "YELLOW", "description": "Active" },
+                                { "id": "option-new", "name": "Done", "color": "GREEN", "description": "Complete" }
+                            ]
+                        }
+                    }
+                },
+                "errors": []
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+        var options = new List<ProjectBoardStatusStructureOption>
+        {
+            new() { Id = "option-one", Name = "In Progress", Colour = "YELLOW", Description = "Active", Order = 0 },
+            new() { Id = string.Empty, Name = "Done", Colour = "GREEN", Description = "Complete", Order = 1 },
+        };
+
+        await sut.UpdateProjectBoardStatusOptionsAsync("project-id", "PVTF_status", options, cancellationToken);
+
+        Assert.Single(handler.Requests);
+        var payload = await handler.Requests[0].Content!.ReadAsStringAsync(cancellationToken);
+        using var document = JsonDocument.Parse(payload);
+        var optionInputs = document.RootElement.GetProperty("variables").GetProperty("options");
+        Assert.Equal(2, optionInputs.GetArrayLength());
+        Assert.Equal("option-one", optionInputs[0].GetProperty("id").GetString());
+        Assert.False(optionInputs[1].TryGetProperty("id", out _));
+        Assert.Equal("YELLOW", optionInputs[0].GetProperty("color").GetString());
     }
 
     [Fact]

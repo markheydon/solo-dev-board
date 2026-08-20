@@ -1,5 +1,6 @@
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Domain.Entities.Labels;
+using SoloDevBoard.Domain.Entities.Migration;
 using SoloDevBoard.Domain.Entities.Milestones;
 
 namespace SoloDevBoard.Application.Services.Migration;
@@ -9,17 +10,24 @@ public sealed class MigrationService : IMigrationService
 {
     private readonly ILabelRepository _labelRepository;
     private readonly IMilestoneRepository _milestoneRepository;
+    private readonly IProjectBoardStructureRepository _projectBoardStructureRepository;
 
     /// <summary>Initialises a new instance of the <see cref="MigrationService"/> class.</summary>
     /// <param name="labelRepository">The label repository used for migration operations.</param>
     /// <param name="milestoneRepository">The milestone repository used for migration operations.</param>
-    public MigrationService(ILabelRepository labelRepository, IMilestoneRepository milestoneRepository)
+    /// <param name="projectBoardStructureRepository">The project board structure repository used for Status column migration.</param>
+    public MigrationService(
+        ILabelRepository labelRepository,
+        IMilestoneRepository milestoneRepository,
+        IProjectBoardStructureRepository projectBoardStructureRepository)
     {
         ArgumentNullException.ThrowIfNull(labelRepository);
         ArgumentNullException.ThrowIfNull(milestoneRepository);
+        ArgumentNullException.ThrowIfNull(projectBoardStructureRepository);
 
         _labelRepository = labelRepository;
         _milestoneRepository = milestoneRepository;
+        _projectBoardStructureRepository = projectBoardStructureRepository;
     }
 
     /// <inheritdoc/>
@@ -28,11 +36,13 @@ public sealed class MigrationService : IMigrationService
         IReadOnlyList<string> targetRepositoryFullNames,
         MigrationScopeDto scope,
         MigrationConflictStrategy conflictStrategy,
+        MigrationBoardSelectionDto? boardSelection = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceRepositoryFullName);
         ArgumentNullException.ThrowIfNull(scope);
         EnsureAtLeastOneScopeSelected(scope);
+        EnsureBoardSelectionWhenRequired(scope, boardSelection);
 
         var source = SplitRepositoryFullName(sourceRepositoryFullName);
         var normalisedTargets = NormaliseTargetRepositories(targetRepositoryFullNames, sourceRepositoryFullName);
@@ -44,8 +54,17 @@ public sealed class MigrationService : IMigrationService
             ? await _milestoneRepository.GetMilestonesAsync(source.Owner, source.Name, cancellationToken).ConfigureAwait(false)
             : [];
 
+        ProjectBoardStatusStructure? sourceStatusStructure = null;
+        if (scope.IncludeProjectBoardColumns)
+        {
+            sourceStatusStructure = await _projectBoardStructureRepository
+                .GetStatusStructureAsync(boardSelection!.SourceProjectId, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
         var labelPreviews = new List<LabelSyncRepositoryPreviewDto>();
         var milestonePreviews = new List<MilestoneSyncRepositoryPreviewDto>();
+        var statusPreviews = new List<ProjectBoardStatusSyncRepositoryPreviewDto>();
 
         foreach (var targetRepositoryFullName in normalisedTargets)
         {
@@ -55,22 +74,51 @@ public sealed class MigrationService : IMigrationService
             if (scope.IncludeLabels)
             {
                 var targetLabels = await _labelRepository.GetLabelsAsync(target.Owner, target.Name, cancellationToken).ConfigureAwait(false);
-                var labelPreview = BuildLabelPreview(targetRepositoryFullName, sourceLabels, targetLabels, conflictStrategy);
-                labelPreviews.Add(labelPreview);
+                labelPreviews.Add(BuildLabelPreview(targetRepositoryFullName, sourceLabels, targetLabels, conflictStrategy));
             }
 
             if (scope.IncludeMilestones)
             {
                 var targetMilestones = await _milestoneRepository.GetMilestonesAsync(target.Owner, target.Name, cancellationToken).ConfigureAwait(false);
-                var milestonePreview = BuildMilestonePreview(targetRepositoryFullName, sourceMilestones, targetMilestones, conflictStrategy);
-                milestonePreviews.Add(milestonePreview);
+                milestonePreviews.Add(BuildMilestonePreview(targetRepositoryFullName, sourceMilestones, targetMilestones, conflictStrategy));
+            }
+
+            if (scope.IncludeProjectBoardColumns)
+            {
+                var targetSelection = ResolveTargetBoardSelection(boardSelection!, targetRepositoryFullName);
+                var discovery = await _projectBoardStructureRepository
+                    .DiscoverBoardsAsync(target.Owner, target.Name, cancellationToken)
+                    .ConfigureAwait(false);
+
+                IReadOnlySet<string> optionIdsInUse = EmptyOptionIdSet;
+                ProjectBoardStatusStructure? targetStatusStructure = null;
+                if (!string.IsNullOrWhiteSpace(targetSelection.TargetProjectId))
+                {
+                    targetStatusStructure = await _projectBoardStructureRepository
+                        .GetStatusStructureAsync(targetSelection.TargetProjectId, cancellationToken)
+                        .ConfigureAwait(false);
+                    optionIdsInUse = await _projectBoardStructureRepository
+                        .GetStatusOptionIdsInUseAsync(targetSelection.TargetProjectId, cancellationToken)
+                        .ConfigureAwait(false);
+                }
+
+                statusPreviews.Add(BuildStatusPreview(
+                    targetRepositoryFullName,
+                    sourceStatusStructure!,
+                    targetStatusStructure,
+                    targetSelection,
+                    discovery.TotalLinkedProjectCount,
+                    discovery.InaccessibleLinkedProjectCount,
+                    optionIdsInUse,
+                    conflictStrategy));
             }
         }
 
         return new MigrationPreviewDto(
             conflictStrategy,
             labelPreviews.OrderBy(preview => preview.RepositoryFullName, StringComparer.OrdinalIgnoreCase).ToArray(),
-            milestonePreviews.OrderBy(preview => preview.RepositoryFullName, StringComparer.OrdinalIgnoreCase).ToArray());
+            milestonePreviews.OrderBy(preview => preview.RepositoryFullName, StringComparer.OrdinalIgnoreCase).ToArray(),
+            statusPreviews.OrderBy(preview => preview.RepositoryFullName, StringComparer.OrdinalIgnoreCase).ToArray());
     }
 
     /// <inheritdoc/>
@@ -79,11 +127,13 @@ public sealed class MigrationService : IMigrationService
         IReadOnlyList<string> targetRepositoryFullNames,
         MigrationScopeDto scope,
         MigrationConflictStrategy conflictStrategy,
+        MigrationBoardSelectionDto? boardSelection = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceRepositoryFullName);
         ArgumentNullException.ThrowIfNull(scope);
         EnsureAtLeastOneScopeSelected(scope);
+        EnsureBoardSelectionWhenRequired(scope, boardSelection);
 
         var source = SplitRepositoryFullName(sourceRepositoryFullName);
         var normalisedTargets = NormaliseTargetRepositories(targetRepositoryFullNames, sourceRepositoryFullName);
@@ -95,8 +145,17 @@ public sealed class MigrationService : IMigrationService
             ? await _milestoneRepository.GetMilestonesAsync(source.Owner, source.Name, cancellationToken).ConfigureAwait(false)
             : [];
 
+        ProjectBoardStatusStructure? sourceStatusStructure = null;
+        if (scope.IncludeProjectBoardColumns)
+        {
+            sourceStatusStructure = await _projectBoardStructureRepository
+                .GetStatusStructureAsync(boardSelection!.SourceProjectId, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
         var labelResults = new List<LabelSyncRepositoryResultDto>();
         var milestoneResults = new List<MilestoneSyncRepositoryResultDto>();
+        var statusResults = new List<ProjectBoardStatusSyncRepositoryResultDto>();
 
         foreach (var targetRepositoryFullName in normalisedTargets)
         {
@@ -112,12 +171,335 @@ public sealed class MigrationService : IMigrationService
             {
                 milestoneResults.Add(await ApplyMilestoneMigrationAsync(targetRepositoryFullName, target.Owner, target.Name, sourceMilestones, conflictStrategy, cancellationToken).ConfigureAwait(false));
             }
+
+            if (scope.IncludeProjectBoardColumns)
+            {
+                var targetSelection = ResolveTargetBoardSelection(boardSelection!, targetRepositoryFullName);
+                statusResults.Add(await ApplyStatusMigrationAsync(
+                    targetRepositoryFullName,
+                    target.Owner,
+                    target.Name,
+                    sourceStatusStructure!,
+                    targetSelection,
+                    conflictStrategy,
+                    cancellationToken).ConfigureAwait(false));
+            }
         }
 
         return new MigrationResultDto(
             conflictStrategy,
             labelResults.OrderBy(result => result.RepositoryFullName, StringComparer.OrdinalIgnoreCase).ToArray(),
-            milestoneResults.OrderBy(result => result.RepositoryFullName, StringComparer.OrdinalIgnoreCase).ToArray());
+            milestoneResults.OrderBy(result => result.RepositoryFullName, StringComparer.OrdinalIgnoreCase).ToArray(),
+            statusResults.OrderBy(result => result.RepositoryFullName, StringComparer.OrdinalIgnoreCase).ToArray());
+    }
+
+    private async Task<ProjectBoardStatusSyncRepositoryResultDto> ApplyStatusMigrationAsync(
+        string targetRepositoryFullName,
+        string targetOwner,
+        string targetRepo,
+        ProjectBoardStatusStructure sourceStatusStructure,
+        MigrationTargetBoardSelectionDto targetSelection,
+        MigrationConflictStrategy conflictStrategy,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var preview = await BuildStatusPreviewForApplyAsync(
+                targetRepositoryFullName,
+                targetOwner,
+                targetRepo,
+                sourceStatusStructure,
+                targetSelection,
+                conflictStrategy,
+                cancellationToken).ConfigureAwait(false);
+
+            if (preview.CreateNewBoard)
+            {
+                var title = string.IsNullOrWhiteSpace(targetSelection.NewBoardTitle)
+                    ? $"{targetRepo} board"
+                    : targetSelection.NewBoardTitle.Trim();
+                var createdBoard = await _projectBoardStructureRepository
+                    .CreateLinkedProjectAsync(targetOwner, targetRepo, title, cancellationToken)
+                    .ConfigureAwait(false);
+
+                var finalOptions = BuildFinalStatusOptionsForApply(
+                    sourceStatusStructure.Options,
+                    createdBoard.Options,
+                    conflictStrategy,
+                    EmptyOptionIdSet);
+
+                await _projectBoardStructureRepository
+                    .UpdateStatusOptionsAsync(createdBoard.ProjectId, createdBoard.StatusFieldId, finalOptions, cancellationToken)
+                    .ConfigureAwait(false);
+
+                var discovery = await _projectBoardStructureRepository
+                    .DiscoverBoardsAsync(targetOwner, targetRepo, cancellationToken)
+                    .ConfigureAwait(false);
+                var accuratePreview = BuildStatusPreview(
+                    targetRepositoryFullName,
+                    sourceStatusStructure,
+                    createdBoard,
+                    new MigrationTargetBoardSelectionDto(targetRepositoryFullName, createdBoard.ProjectId, targetSelection.NewBoardTitle),
+                    discovery.TotalLinkedProjectCount,
+                    discovery.InaccessibleLinkedProjectCount,
+                    EmptyOptionIdSet,
+                    conflictStrategy);
+
+                return new ProjectBoardStatusSyncRepositoryResultDto(
+                    targetRepositoryFullName,
+                    accuratePreview.ToCreate.Count,
+                    accuratePreview.ToUpdate.Count,
+                    accuratePreview.ToDelete.Count,
+                    accuratePreview.Skipped.Count,
+                    createdBoard.ProjectId,
+                    accuratePreview.Warnings,
+                    null);
+            }
+
+            var targetProjectId = targetSelection.TargetProjectId
+                ?? throw new InvalidOperationException("A target project board must be selected before applying Status column migration.");
+
+            var targetStatusStructure = await _projectBoardStructureRepository
+                .GetStatusStructureAsync(targetProjectId, cancellationToken)
+                .ConfigureAwait(false);
+            var optionIdsInUse = await _projectBoardStructureRepository
+                .GetStatusOptionIdsInUseAsync(targetProjectId, cancellationToken)
+                .ConfigureAwait(false);
+
+            var optionsToPersist = BuildFinalStatusOptionsForApply(
+                sourceStatusStructure.Options,
+                targetStatusStructure.Options,
+                conflictStrategy,
+                optionIdsInUse);
+
+            await _projectBoardStructureRepository
+                .UpdateStatusOptionsAsync(targetProjectId, targetStatusStructure.StatusFieldId, optionsToPersist, cancellationToken)
+                .ConfigureAwait(false);
+
+            return new ProjectBoardStatusSyncRepositoryResultDto(
+                targetRepositoryFullName,
+                preview.ToCreate.Count,
+                preview.ToUpdate.Count,
+                preview.ToDelete.Count,
+                preview.Skipped.Count,
+                null,
+                preview.Warnings,
+                null);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or KeyNotFoundException or ArgumentException or InvalidOperationException)
+        {
+            return new ProjectBoardStatusSyncRepositoryResultDto(
+                targetRepositoryFullName,
+                0,
+                0,
+                0,
+                0,
+                null,
+                [],
+                ex.Message);
+        }
+    }
+
+    private async Task<ProjectBoardStatusSyncRepositoryPreviewDto> BuildStatusPreviewForApplyAsync(
+        string targetRepositoryFullName,
+        string targetOwner,
+        string targetRepo,
+        ProjectBoardStatusStructure sourceStatusStructure,
+        MigrationTargetBoardSelectionDto targetSelection,
+        MigrationConflictStrategy conflictStrategy,
+        CancellationToken cancellationToken)
+    {
+        var discovery = await _projectBoardStructureRepository
+            .DiscoverBoardsAsync(targetOwner, targetRepo, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (targetSelection.TargetProjectId is null)
+        {
+            return BuildStatusPreview(
+                targetRepositoryFullName,
+                sourceStatusStructure,
+                null,
+                targetSelection,
+                discovery.TotalLinkedProjectCount,
+                discovery.InaccessibleLinkedProjectCount,
+                EmptyOptionIdSet,
+                conflictStrategy);
+        }
+
+        var targetStatusStructure = await _projectBoardStructureRepository
+            .GetStatusStructureAsync(targetSelection.TargetProjectId, cancellationToken)
+            .ConfigureAwait(false);
+        var optionIdsInUse = await _projectBoardStructureRepository
+            .GetStatusOptionIdsInUseAsync(targetSelection.TargetProjectId, cancellationToken)
+            .ConfigureAwait(false);
+
+        return BuildStatusPreview(
+            targetRepositoryFullName,
+            sourceStatusStructure,
+            targetStatusStructure,
+            targetSelection,
+            discovery.TotalLinkedProjectCount,
+            discovery.InaccessibleLinkedProjectCount,
+            optionIdsInUse,
+            conflictStrategy);
+    }
+
+    private static ProjectBoardStatusSyncRepositoryPreviewDto BuildStatusPreview(
+        string targetRepositoryFullName,
+        ProjectBoardStatusStructure sourceStatusStructure,
+        ProjectBoardStatusStructure? targetStatusStructure,
+        MigrationTargetBoardSelectionDto targetSelection,
+        int totalLinkedProjectCount,
+        int inaccessibleLinkedProjectCount,
+        IReadOnlySet<string> optionIdsInUse,
+        MigrationConflictStrategy conflictStrategy)
+    {
+        var createNewBoard = string.IsNullOrWhiteSpace(targetSelection.TargetProjectId);
+        if (createNewBoard || targetStatusStructure is null)
+        {
+            var createOptions = sourceStatusStructure.Options
+                .Select(MapToStatusOptionDto)
+                .OrderBy(option => option.Order)
+                .ToArray();
+            var createNewBoardWarnings = createNewBoard
+                ? BuildCreateNewBoardPreviewWarnings(conflictStrategy)
+                : [];
+
+            return new ProjectBoardStatusSyncRepositoryPreviewDto(
+                targetRepositoryFullName,
+                targetSelection.TargetProjectId,
+                createNewBoard,
+                createOptions,
+                [],
+                [],
+                [],
+                createNewBoardWarnings,
+                totalLinkedProjectCount,
+                inaccessibleLinkedProjectCount);
+        }
+
+        var sourceByName = sourceStatusStructure.Options.ToDictionary(option => option.Name, StringComparer.OrdinalIgnoreCase);
+        var targetByName = targetStatusStructure.Options.ToDictionary(option => option.Name, StringComparer.OrdinalIgnoreCase);
+
+        var toCreate = sourceStatusStructure.Options
+            .Where(source => !targetByName.ContainsKey(source.Name))
+            .Select(MapToStatusOptionDto)
+            .OrderBy(option => option.Order)
+            .ToArray();
+
+        var toUpdate = conflictStrategy switch
+        {
+            MigrationConflictStrategy.Skip => Array.Empty<ProjectBoardStatusOptionDto>(),
+            _ => sourceStatusStructure.Options
+                .Where(source => targetByName.TryGetValue(source.Name, out var target) && !HasSameStatusValues(source, target))
+                .Select(source =>
+                {
+                    var targetOption = targetByName[source.Name];
+                    return MapToStatusOptionDto(source with { Id = targetOption.Id });
+                })
+                .OrderBy(option => option.Name, StringComparer.OrdinalIgnoreCase)
+                .ToArray(),
+        };
+
+        var warnings = new List<string>();
+        var toDelete = new List<ProjectBoardStatusOptionDto>();
+        if (conflictStrategy == MigrationConflictStrategy.Overwrite)
+        {
+            foreach (var target in targetStatusStructure.Options.Where(target => !sourceByName.ContainsKey(target.Name)))
+            {
+                if (optionIdsInUse.Contains(target.Id))
+                {
+                    warnings.Add($"Status option '{target.Name}' was not removed because board items still use it.");
+                    continue;
+                }
+
+                toDelete.Add(MapToStatusOptionDto(target));
+            }
+        }
+
+        var skipped = BuildSkippedStatusItems(sourceStatusStructure.Options, targetByName, conflictStrategy);
+
+        return new ProjectBoardStatusSyncRepositoryPreviewDto(
+            targetRepositoryFullName,
+            targetSelection.TargetProjectId,
+            false,
+            toCreate,
+            toUpdate,
+            toDelete.OrderBy(option => option.Name, StringComparer.OrdinalIgnoreCase).ToArray(),
+            skipped,
+            warnings,
+            totalLinkedProjectCount,
+            inaccessibleLinkedProjectCount);
+    }
+
+    private static IReadOnlyList<ProjectBoardStatusOptionDto> BuildSkippedStatusItems(
+        IReadOnlyList<ProjectBoardStatusStructureOption> sourceOptions,
+        IReadOnlyDictionary<string, ProjectBoardStatusStructureOption> targetByName,
+        MigrationConflictStrategy conflictStrategy)
+    {
+        return sourceOptions
+            .Where(source => targetByName.TryGetValue(source.Name, out var target)
+                && (conflictStrategy == MigrationConflictStrategy.Skip || HasSameStatusValues(source, target)))
+            .Select(source =>
+            {
+                var targetOption = targetByName[source.Name];
+                return MapToStatusOptionDto(targetOption);
+            })
+            .OrderBy(option => option.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private static IReadOnlyList<ProjectBoardStatusStructureOption> BuildFinalStatusOptionsForApply(
+        IReadOnlyList<ProjectBoardStatusStructureOption> sourceOptions,
+        IReadOnlyList<ProjectBoardStatusStructureOption> targetOptions,
+        MigrationConflictStrategy conflictStrategy,
+        IReadOnlySet<string> optionIdsInUse)
+    {
+        var targetByName = targetOptions.ToDictionary(option => option.Name, StringComparer.OrdinalIgnoreCase);
+        var sourceByName = sourceOptions.ToDictionary(option => option.Name, StringComparer.OrdinalIgnoreCase);
+        var result = new List<ProjectBoardStatusStructureOption>();
+
+        foreach (var source in sourceOptions.OrderBy(option => option.Order))
+        {
+            if (targetByName.TryGetValue(source.Name, out var target))
+            {
+                if (conflictStrategy == MigrationConflictStrategy.Skip)
+                {
+                    result.Add(target with { Order = result.Count });
+                }
+                else
+                {
+                    result.Add(source with { Id = target.Id, Order = result.Count });
+                }
+            }
+            else
+            {
+                result.Add(source with { Id = string.Empty, Order = result.Count });
+            }
+        }
+
+        if (conflictStrategy != MigrationConflictStrategy.Overwrite)
+        {
+            foreach (var target in targetOptions.OrderBy(option => option.Order))
+            {
+                if (!sourceByName.ContainsKey(target.Name))
+                {
+                    result.Add(target with { Order = result.Count });
+                }
+            }
+
+            return result;
+        }
+
+        foreach (var target in targetOptions.OrderBy(option => option.Order))
+        {
+            if (!sourceByName.ContainsKey(target.Name) && optionIdsInUse.Contains(target.Id))
+            {
+                result.Add(target with { Order = result.Count });
+            }
+        }
+
+        return result;
     }
 
     private async Task<LabelSyncRepositoryResultDto> ApplyLabelMigrationAsync(
@@ -320,6 +702,42 @@ public sealed class MigrationService : IMigrationService
             .ToArray();
     }
 
+    private static MigrationTargetBoardSelectionDto ResolveTargetBoardSelection(
+        MigrationBoardSelectionDto boardSelection,
+        string targetRepositoryFullName)
+    {
+        var selection = boardSelection.TargetSelections
+            .FirstOrDefault(target => target.RepositoryFullName.Equals(targetRepositoryFullName, StringComparison.OrdinalIgnoreCase));
+
+        if (selection is null)
+        {
+            throw new ArgumentException(
+                $"Board selection is missing for target repository '{targetRepositoryFullName}'.",
+                nameof(boardSelection));
+        }
+
+        return selection;
+    }
+
+    private static ProjectBoardStatusOptionDto MapToStatusOptionDto(ProjectBoardStatusStructureOption option)
+        => new(option.Id, option.Name, option.Colour, option.Description, option.Order);
+
+    private static bool HasSameStatusValues(ProjectBoardStatusStructureOption left, ProjectBoardStatusStructureOption right)
+        => string.Equals(left.Name, right.Name, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(left.Colour, right.Colour, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(left.Description, right.Description, StringComparison.Ordinal)
+            && left.Order == right.Order;
+
+    private static IReadOnlyList<string> BuildCreateNewBoardPreviewWarnings(MigrationConflictStrategy conflictStrategy)
+    {
+        if (conflictStrategy == MigrationConflictStrategy.Overwrite)
+        {
+            return ["A new linked board will be created. GitHub default Status options that are not in the source will be removed after the board is created."];
+        }
+
+        return ["A new linked board will be created. GitHub default Status options whose names do not match the source may remain on the board."];
+    }
+
     private static LabelDto MapToLabelDto(Label label, string repositoryFullName)
         => new(label.Name, label.Colour, label.Description, repositoryFullName);
 
@@ -405,11 +823,33 @@ public sealed class MigrationService : IMigrationService
 
     private static void EnsureAtLeastOneScopeSelected(MigrationScopeDto scope)
     {
-        if (!scope.IncludeLabels && !scope.IncludeMilestones)
+        if (!scope.IncludeLabels && !scope.IncludeMilestones && !scope.IncludeProjectBoardColumns)
         {
             throw new ArgumentException("At least one migration item type must be selected.", nameof(scope));
         }
     }
+
+    private static void EnsureBoardSelectionWhenRequired(MigrationScopeDto scope, MigrationBoardSelectionDto? boardSelection)
+    {
+        if (!scope.IncludeProjectBoardColumns)
+        {
+            return;
+        }
+
+        ArgumentNullException.ThrowIfNull(boardSelection);
+
+        if (string.IsNullOrWhiteSpace(boardSelection.SourceProjectId))
+        {
+            throw new ArgumentException("A source project board must be selected when project board columns are included.", nameof(boardSelection));
+        }
+
+        if (boardSelection.TargetSelections.Count == 0)
+        {
+            throw new ArgumentException("At least one target board selection must be provided.", nameof(boardSelection));
+        }
+    }
+
+    private static readonly IReadOnlySet<string> EmptyOptionIdSet = new HashSet<string>(StringComparer.Ordinal);
 
     private sealed record RepositoryCoordinates(string Owner, string Name);
 }
