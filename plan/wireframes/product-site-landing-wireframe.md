@@ -44,7 +44,7 @@
 | Feature grid (3 columns; 7 tiles; icon + name + one-liner)             |
 | Hextra `hextra-feature-card` layout (`cols="3"`). No screenshots yet |
 | — current captures show the expanded nav and obscure feature content.|
-| Tiles are not links.                                                   |
+| Tiles are whole-card links to User Guide pages.                        |
 +------------------------------------------------------------------+
 | Footer: copyright, MIT licence and repo docs/, release, Hugo     |
 +------------------------------------------------------------------+
@@ -55,7 +55,7 @@
 - Layout: `hextra-home`.
 - Hero badge shows release tag from `params.releaseVersion` (injected on tag deploy).
 - Single on-page CTA: Learn more about the project (`/about/`).
-- Feature tiles are **not** links. Titles, one-liners, and icons come from guide front matter (`landing: true`, `landingSubtitle`, `landingIcon`) so claims stay aligned with published guides (DEC-023). Layout follows Hextra feature cards (`cols="3"`). Landing screenshots are deferred until docs-capture uses collapsed navigation so the feature content is visible.
+- Feature tiles are whole-card links to the matching User Guide page. Titles, one-liners, and icons come from guide front matter (`landing: true`, `landingSubtitle`, `landingIcon`) so claims stay aligned with published guides (DEC-023). Layout follows Hextra feature cards (`cols="3"`). Landing screenshots are deferred until docs-capture uses collapsed navigation so the feature content is visible.
 - Do not list in-app About or Appearance as landing pillars.
 - Do not advertise paid tiers, Marketplace, or a public hosted URL.
 - Do not invent filler cards to force a 3×3 or 4×4 cell count.
@@ -63,7 +63,7 @@
 ### Accessibility
 
 - CTA is a real link with visible text.
-- Feature icons are `aria-hidden`; the heading is the accessible name.
+- Each feature tile is a single focusable link; icons are `aria-hidden` and the heading text is the accessible name.
 - Colour contrast follows Hextra theme defaults.
 
 ### Responsive behaviour

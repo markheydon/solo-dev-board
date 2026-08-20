@@ -1,10 +1,11 @@
 ---
 title: Cross-Repo PM Workflow
-weight: 110
+weight: 80
 landing: true
 landingIcon: view_week
 landingSubtitle: "Plan and execute work across repositories with Daily Focus, Backlog Review, Iteration Planning, and Repo Management."
 guideStatus: Available
+next: /docs/appearance
 ---
 
 ## Overview
@@ -59,7 +60,9 @@ Shared chrome on every PM Workflow tab includes:
 - **Status line** — `Repos: N included`, selected board title (when chosen), last refreshed time, and a **Refresh** control to reload board options and the repository catalogue.
 - **Tab strip** — Daily Focus, Backlog, Planning, and Repos.
 
-If GitHub reports linked project boards that cannot be read with your current sign-in (common for private user-owned boards under GitHub App sign-in), a warning appears at the top of the page. See [plan/GITHUB_PROJECTS_V2_ACCESS.md](https://github.com/markheydon/solo-dev-board/blob/main/plan/GITHUB_PROJECTS_V2_ACCESS.md) in the repository.
+If GitHub reports linked project boards that cannot be read with your current sign-in, a warning appears at the top of the page. This is common for **private user-owned** Projects v2 boards when you use hosted GitHub App sign-in: GitHub can list the board as linked to a repository while the App token cannot read it (`Resource not accessible by integration`). Public linked boards still load normally.
+
+To work with private boards today, switch to PAT mode with the `read:project` scope, or make the project public so hosted sign-in can read it.
 
 Until a board is selected, an informational alert points at the **Planning board** dropdown. Occupancy, stalled Up Next items, and recommendations load as soon as you open Daily Focus when a board is already stored, or as soon as you choose one. Backlog Review and Iteration Planning use the same board selection. Use the **Repos** tab to edit exclusions and thresholds.
 
@@ -113,6 +116,8 @@ If no pull requests meet the threshold, an informational alert says so. If the l
 
 Backlog Review is a read-only weekly PM pass across included repositories. It groups open issues and pull requests into urgency panels. Rows open GitHub in a new tab. Adding work to **Up Next** happens on the **Planning** tab.
 
+![PM Workflow Backlog Review with urgency panels for SoloDevBoard Roadmap](/images/pm-workflow/backlog.png)
+
 ### Accessing
 
 1. Open **PM Workflow**.
@@ -152,6 +157,8 @@ If there are no open issues or pull requests in included repositories, an inform
 ## Iteration Planning
 
 Iteration Planning populates the selected planning board's **Up Next** column from open work across included repositories. It also shows capacity against your limit, blocks new adds while stalled Up Next items remain, and can assign a shared milestone to selected batch items.
+
+![PM Workflow Iteration Planning with capacity, Up Next batch, and candidates](/images/pm-workflow/planning.png)
 
 ### Accessing
 
@@ -318,11 +325,3 @@ Persisted fields:
 Clearing site data for SoloDevBoard resets PM settings to defaults. Settings do not sync across browsers or devices.
 
 There are no `appsettings.json` entries for PM Workflow user preferences.
-
----
-
-## Related documentation
-
-- Wireframe: [`plan/wireframes/pm-workflow-wireframe.md`](https://github.com/markheydon/solo-dev-board/blob/main/plan/wireframes/pm-workflow-wireframe.md)
-- Decision: [DEC-029](https://github.com/markheydon/solo-dev-board/blob/main/plan/DECISIONS.md#dec-029-cross-repo-pm-workflow-board-selection-and-local-settings) (board selection and local settings)
-- Hardcoding audit: [`plan/HARDCODING_AUDIT_v1.1.md`](https://github.com/markheydon/solo-dev-board/blob/main/plan/HARDCODING_AUDIT_v1.1.md) (issue [#423](https://github.com/markheydon/solo-dev-board/issues/423))

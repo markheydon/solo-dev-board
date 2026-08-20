@@ -8,7 +8,16 @@ Guides for using SoloDevBoard in the app. Developer and operator material (local
 
 ## Features
 
+Feature guides follow the same order as the application navigation drawer (Audit Dashboard through PM Workflow).
+
 {{< guide-feature-table >}}
+
+## App shell
+
+Appearance and About are reached from the app bar (theme control and **More options**), not from the navigation drawer.
+
+- [Appearance](appearance/) — theme modes (Automatic, Light, and Dark).
+- [About](about/) — version, runtime, and authentication details.
 
 ## Related repository docs
 

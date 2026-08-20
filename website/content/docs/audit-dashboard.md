@@ -1,5 +1,5 @@
 ---
-weight: 30
+weight: 10
 title: Audit Dashboard
 landing: true
 landingIcon: analytics

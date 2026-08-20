@@ -1,5 +1,5 @@
 ---
-weight: 80
+weight: 60
 title: Triage UI
 landing: true
 landingIcon: inbox
@@ -73,7 +73,9 @@ The Triage UI allows you to add issues to a GitHub project board and set their s
 
 If the issue is already on the selected board, you can update its status column directly. Any errors encountered during project board placement will be surfaced with actionable feedback.
 
-If GitHub reports linked project boards that cannot be loaded (commonly private user-owned projects under GitHub App sign-in), a warning appears above the project board selector. See [Hosted Authentication — Projects v2 access](https://github.com/markheydon/solo-dev-board/blob/main/docs/hosted-authentication.md#projects-v2-access-under-hosted-sign-in).
+If GitHub reports linked project boards that cannot be loaded, a warning appears above the project board selector. This commonly happens for **private user-owned** Projects v2 boards under hosted GitHub App sign-in: GitHub may list the board as linked while the App token cannot read it. Public linked boards still appear in the selector.
+
+To access private boards, use PAT mode with the `read:project` scope, or make the project public.
 
 ## Session Completion Summary and Skip/Revisit Workflow
 

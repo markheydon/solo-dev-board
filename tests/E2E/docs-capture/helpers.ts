@@ -225,12 +225,18 @@ export async function prepareMigrationForCapture(page: Page): Promise<void> {
 }
 
 /**
- * Prepares PM Workflow Daily Focus with the SoloDevBoard Roadmap board selected when available.
+ * Prepares a PM Workflow tab with SoloDevBoard Roadmap selected when available.
  * @param page Playwright page.
+ * @param route Absolute PM Workflow route (for example `/pm-workflow/backlog`).
+ * @param readyLocatorTestIds Test ids that indicate the tab has settled (any one is enough).
  */
-export async function preparePmWorkflowDailyFocusForCapture(page: Page): Promise<void> {
+async function preparePmWorkflowTabForCapture(
+  page: Page,
+  route: string,
+  readyLocatorTestIds: readonly string[],
+): Promise<void> {
   await clearPmWorkflowLocalSettings(page);
-  await openFeatureForCapture(page, '/pm-workflow/daily-focus');
+  await openFeatureForCapture(page, route);
   await page.evaluate(() => {
     window.localStorage.removeItem('solo-dev-board.pm-settings');
   });
@@ -239,27 +245,65 @@ export async function preparePmWorkflowDailyFocusForCapture(page: Page): Promise
   await expect(page.getByTestId('pm-workflow-shared-chrome')).toBeVisible({ timeout: 30_000 });
 
   const chromeError = page.getByTestId('pm-workflow-chrome-error');
-  const noBoardAlert = page.getByTestId('pm-workflow-daily-focus-no-board');
-  const occupancy = page.getByTestId('pm-workflow-daily-focus-board-state');
-  const occupancyError = page.getByTestId('pm-workflow-daily-focus-error');
-  const emptyBoard = page.getByTestId('pm-workflow-daily-focus-empty');
+  const readyLocators = readyLocatorTestIds.map((id) => page.getByTestId(id));
+  let ready = chromeError;
+  for (const locator of readyLocators) {
+    ready = ready.or(locator);
+  }
 
-  await expect(
-    chromeError.or(noBoardAlert).or(occupancy).or(occupancyError).or(emptyBoard).first(),
-  ).toBeVisible({ timeout: 90_000 });
-
+  await expect(ready.first()).toBeVisible({ timeout: 90_000 });
   if (await chromeError.isVisible()) {
     return;
   }
 
   const selected = await selectPlanningBoardByTitle(page);
   if (selected) {
-    await expect(occupancy.or(occupancyError).or(emptyBoard).first()).toBeVisible({
-      timeout: 90_000,
-    });
+    await expect(ready.first()).toBeVisible({ timeout: 90_000 });
   }
 
   await page.waitForTimeout(1_000);
+}
+
+/**
+ * Prepares PM Workflow Daily Focus with the SoloDevBoard Roadmap board selected when available.
+ * @param page Playwright page.
+ */
+export async function preparePmWorkflowDailyFocusForCapture(page: Page): Promise<void> {
+  await preparePmWorkflowTabForCapture(page, '/pm-workflow/daily-focus', [
+    'pm-workflow-daily-focus-no-board',
+    'pm-workflow-daily-focus-board-state',
+    'pm-workflow-daily-focus-error',
+    'pm-workflow-daily-focus-empty',
+  ]);
+}
+
+/**
+ * Prepares PM Workflow Backlog Review with the SoloDevBoard Roadmap board selected when available.
+ * @param page Playwright page.
+ */
+export async function preparePmWorkflowBacklogForCapture(page: Page): Promise<void> {
+  await preparePmWorkflowTabForCapture(page, '/pm-workflow/backlog', [
+    'pm-workflow-backlog-no-board',
+    'pm-workflow-backlog-filters',
+    'pm-workflow-backlog-panels',
+    'pm-workflow-backlog-error',
+  ]);
+}
+
+/**
+ * Prepares PM Workflow Iteration Planning with the SoloDevBoard Roadmap board selected when available.
+ * @param page Playwright page.
+ */
+export async function preparePmWorkflowPlanningForCapture(page: Page): Promise<void> {
+  await preparePmWorkflowTabForCapture(page, '/pm-workflow/planning', [
+    'pm-workflow-planning-no-board',
+    'pm-workflow-planning-up-next',
+    'pm-workflow-planning-candidates',
+    'pm-workflow-planning-up-next-empty',
+    'pm-workflow-planning-candidates-empty',
+    'pm-workflow-planning-error',
+    'pm-workflow-planning-partial-failure',
+  ]);
 }
 
 /**

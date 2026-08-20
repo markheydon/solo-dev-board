@@ -6,7 +6,9 @@ import {
   prepareBoardRulesForCapture,
   prepareLabelManagerForCapture,
   prepareMigrationForCapture,
+  preparePmWorkflowBacklogForCapture,
   preparePmWorkflowDailyFocusForCapture,
+  preparePmWorkflowPlanningForCapture,
   preparePmWorkflowReposForCapture,
   prepareRepositoriesForCapture,
   prepareTriageForCapture,
@@ -75,6 +77,18 @@ const loadedStateCaptures: ReadonlyArray<{
     slug: 'pm-workflow',
     file: 'daily-focus.png',
     prepare: preparePmWorkflowDailyFocusForCapture,
+  },
+  {
+    title: 'PM Workflow Backlog Review with urgency panels',
+    slug: 'pm-workflow',
+    file: 'backlog.png',
+    prepare: preparePmWorkflowBacklogForCapture,
+  },
+  {
+    title: 'PM Workflow Iteration Planning with Up Next and candidates',
+    slug: 'pm-workflow',
+    file: 'planning.png',
+    prepare: preparePmWorkflowPlanningForCapture,
   },
   {
     title: 'PM Workflow Repo Management thresholds and participation',

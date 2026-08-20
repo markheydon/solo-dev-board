@@ -1,7 +1,9 @@
 ---
-weight: 10
+weight: 90
 title: Appearance
 landingIcon: brightness_auto
+prev: /docs/pm-workflow
+next: /docs/about
 ---
 
 SoloDevBoard supports three theme modes so you can match your operating system preference or choose a fixed light or dark appearance.

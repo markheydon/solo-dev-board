@@ -1,5 +1,5 @@
 ---
-weight: 90
+weight: 70
 title: Workflow Templates
 landing: true
 landingIcon: account_tree

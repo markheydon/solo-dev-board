@@ -28,6 +28,17 @@
     font-size: 1.5rem;
   }
 
+  /* Whole-card links on the product landing; keep Hextra card look without underline noise. */
+  a.landing-feature-card {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  a.landing-feature-card:focus-visible {
+    outline: 2px solid var(--color-primary-500, #3b82f6);
+    outline-offset: 2px;
+  }
+
   .guide-feature-link {
     display: inline-flex;
     align-items: center;

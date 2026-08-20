@@ -1,5 +1,5 @@
 ---
-weight: 60
+weight: 30
 title: One-Click Migration
 landing: true
 landingIcon: swap_horiz
