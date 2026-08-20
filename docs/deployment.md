@@ -48,7 +48,7 @@ Use this path when you want a **personal** SoloDevBoard instance on your own Azu
 ### What you need
 
 1. An Azure subscription and a resource group (step 1 under [One-time Azure setup](#one-time-azure-setup)).
-2. A GitHub PAT with scopes `repo`, `read:org`, `workflow`, and `read:project` (same as local development).
+2. A GitHub PAT with scopes `repo`, `read:org`, `workflow`, `read:project`, and `project` when applying One-Click Migration project board columns (same as local development).
 3. **Local `aspire deploy`** (no GitHub Actions OIDC required).
 
 ### Deploy locally with `aspire deploy` (recommended for personal instances)

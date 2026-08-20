@@ -34,4 +34,14 @@ public interface IMigrationService
         MigrationConflictStrategy conflictStrategy,
         MigrationBoardSelectionDto? boardSelection = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Discovers supported project boards for column migration on a repository.</summary>
+    /// <param name="owner">The GitHub account owner login.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>Supported boards and linked-project visibility metadata.</returns>
+    Task<MigrationProjectBoardDiscoveryDto> GetProjectBoardOptionsAsync(
+        string owner,
+        string repo,
+        CancellationToken cancellationToken = default);
 }

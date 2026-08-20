@@ -49,7 +49,8 @@ Create a PAT at [GitHub → Settings → Developer settings → Personal access 
 - `repo` (full control of private repositories)
 - `read:org` (read-only access to organisation data, if applicable)
 - `workflow` (to manage GitHub Actions workflows)
-- `read:project` (read-only access to GitHub Projects; required for the Triage UI project board feature)
+- `read:project` (read-only access to GitHub Projects; required for Triage and Migration board discovery)
+- `project` (write access to GitHub Projects; required when applying One-Click Migration **Project board columns** scope in PAT mode)
 
 **Quick local setup (Aspire):**
 
@@ -224,7 +225,7 @@ Your GitHub login is resolved automatically from the PAT when the app starts. Pa
 
 **`hosted-sign-in-enabled`** — Selects the authentication mode. When `false` (the default), SoloDevBoard runs in PAT mode: a single configured token is used for all GitHub API calls and your login is resolved automatically from that token. When `true`, SoloDevBoard uses GitHub App OAuth sign-in at `/auth/sign-in`; each user authenticates with their own GitHub identity and session.
 
-**`gh-pat`** — Your GitHub personal access token for PAT mode. Set to `-` for hosted sign-in. SoloDevBoard uses this for every GitHub API request on your behalf in PAT mode. Required scopes: `repo`, `read:org`, `workflow`, and `read:project`. Your login is resolved automatically from the token.
+**`gh-pat`** — Your GitHub personal access token for PAT mode. Set to `-` for hosted sign-in. SoloDevBoard uses this for every GitHub API request on your behalf in PAT mode. Required scopes: `repo`, `read:org`, `workflow`, `read:project`, and `project` when you apply One-Click Migration project board columns. Your login is resolved automatically from the token.
 
 **`gh-app-client-id`** — The OAuth Client ID from your GitHub App settings. Set to `-` for PAT mode. Required for hosted sign-in.
 

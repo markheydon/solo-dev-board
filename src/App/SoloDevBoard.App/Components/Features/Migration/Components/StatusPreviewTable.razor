@@ -1,0 +1,22 @@
+@using SoloDevBoard.Application.Services.Migration
+
+@if (StatusOptions.Count > 0)
+{
+    <MudStack Spacing="1">
+        <MudText Typo="Typo.subtitle2">@Heading</MudText>
+        <MudTable T="ProjectBoardStatusOptionDto" Items="StatusOptions" Dense="true" Hover="true" Class="sdb-responsive-grid">
+            <HeaderContent>
+                <MudTh>Name</MudTh>
+                <MudTh>Colour</MudTh>
+                <MudTh>Description</MudTh>
+                <MudTh>Order</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Name">@context.Name</MudTd>
+                <MudTd DataLabel="Colour">@context.Colour</MudTd>
+                <MudTd DataLabel="Description">@(string.IsNullOrWhiteSpace(context.Description) ? "No description" : context.Description)</MudTd>
+                <MudTd DataLabel="Order">@context.Order</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudStack>
+}

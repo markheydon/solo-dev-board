@@ -18,6 +18,134 @@ public sealed class MigrationTests
     private readonly IMigrationService _migrationService = Substitute.For<IMigrationService>();
 
     [Fact]
+    public async Task Migration_ProjectBoardColumnsScopeSwitch_RendersInScopeCard()
+    {
+        // Arrange
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
+                CreateRepository("owner", "repo-a"),
+                CreateRepository("owner", "repo-b"),
+            ]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Migration>();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.NotNull(cut.Find("[data-testid='migration-scope-columns-switch']"));
+            Assert.Contains("Project board columns", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task Migration_RapidSourceRepositoryChange_IgnoresStaleProjectBoardResponse()
+    {
+        // Arrange
+        var repositoryA = CreateRepository("owner", "repo-a");
+        var repositoryB = CreateRepository("owner", "repo-b");
+        var repositoryC = CreateRepository("owner", "repo-c");
+        var repositoryADiscoveryTask = new TaskCompletionSource<MigrationProjectBoardDiscoveryDto>();
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repositoryA, repositoryB, repositoryC]);
+
+        _migrationService.GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>()).Returns(repositoryADiscoveryTask.Task);
+
+        _migrationService.GetProjectBoardOptionsAsync("owner", "repo-b", Arg.Any<CancellationToken>()).Returns(
+            new MigrationProjectBoardDiscoveryDto(
+                [new MigrationProjectBoardOptionDto("PVT_beta", "Beta Board")],
+                1,
+                0));
+
+        _migrationService.GetProjectBoardOptionsAsync("owner", "repo-c", Arg.Any<CancellationToken>()).Returns(
+            new MigrationProjectBoardDiscoveryDto([], 0, 0));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Migration>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='migration-repository-autocomplete']"));
+
+        await SelectRepositoriesAsync(cut, repositoryA, repositoryB, repositoryC);
+        await EnableProjectBoardColumnsScopeAsync(cut);
+
+        await ChangeSourceRepositoryAsync(cut, repositoryB.FullName);
+        cut.WaitForAssertion(() => Assert.Contains("Beta Board", cut.Markup));
+
+        repositoryADiscoveryTask.SetResult(new MigrationProjectBoardDiscoveryDto(
+            [new MigrationProjectBoardOptionDto("PVT_alpha", "Alpha Board")],
+            1,
+            0));
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Beta Board", cut.Markup);
+            Assert.DoesNotContain("Alpha Board", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task Migration_TargetBoardsLoading_HidesTargetSelectors()
+    {
+        // Arrange
+        var sourceRepository = CreateRepository("owner", "repo-a");
+        var targetRepository = CreateRepository("owner", "repo-b");
+        var targetBoardsTask = new TaskCompletionSource<MigrationProjectBoardDiscoveryDto>();
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([sourceRepository, targetRepository]);
+
+        _migrationService.GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>()).Returns(
+            new MigrationProjectBoardDiscoveryDto([], 0, 0));
+
+        _migrationService.GetProjectBoardOptionsAsync("owner", "repo-b", Arg.Any<CancellationToken>()).Returns(targetBoardsTask.Task);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Migration>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='migration-repository-autocomplete']"));
+
+        await SelectRepositoriesAsync(cut, sourceRepository, targetRepository);
+        await EnableProjectBoardColumnsScopeAsync(cut);
+        var enableTargetTask = EnableTargetRepositoryAsync(cut, targetRepository);
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.NotNull(cut.Find("[data-testid='migration-target-boards-loading-state']"));
+            Assert.Empty(cut.FindAll("[data-testid='migration-target-board-selector']"));
+        });
+
+        targetBoardsTask.SetResult(new MigrationProjectBoardDiscoveryDto([], 0, 0));
+        await enableTargetTask;
+
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='migration-target-board-selector']")));
+    }
+
+    [Fact]
+    public async Task Migration_OverwriteStrategy_RendersStatusOptionWarning()
+    {
+        // Arrange
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
+                CreateRepository("owner", "repo-a"),
+                CreateRepository("owner", "repo-b"),
+            ]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Migration>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='migration-repository-autocomplete']"));
+
+        var strategySelect = cut.FindComponents<MudSelect<MigrationConflictStrategy>>().Single();
+        await cut.InvokeAsync(() => strategySelect.Instance.ValueChanged.InvokeAsync(MigrationConflictStrategy.Overwrite));
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("unused Status options", cut.Markup);
+        });
+    }
+
+    [Fact]
     public async Task Migration_ConflictStrategyOptions_RenderExplanatoryText()
     {
         // Arrange
@@ -401,6 +529,28 @@ public sealed class MigrationTests
         var selectedFullNames = repositories.Select(repository => repository.FullName).ToArray();
 
         await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(selectedFullNames));
+    }
+
+    private static async Task EnableProjectBoardColumnsScopeAsync(IRenderedComponent<Migration> cut)
+    {
+        cut.Find("[data-testid='migration-scope-columns-switch']").Change(true);
+        await cut.InvokeAsync(() => { });
+    }
+
+    private static Task EnableTargetRepositoryAsync(IRenderedComponent<Migration> cut, RepositoryDto repository)
+    {
+        var targetCheckbox = cut.FindComponents<MudCheckBox<bool>>()
+            .Single(checkbox => string.Equals(checkbox.Instance.Label, repository.FullName, StringComparison.Ordinal));
+
+        return cut.InvokeAsync(() => targetCheckbox.Instance.ValueChanged.InvokeAsync(true));
+    }
+
+    private static async Task ChangeSourceRepositoryAsync(IRenderedComponent<Migration> cut, string repositoryFullName)
+    {
+        var sourceSelect = cut.FindComponents<MudSelect<string>>()
+            .Single(select => string.Equals(select.Instance.Label, "Source repository", StringComparison.Ordinal));
+
+        await cut.InvokeAsync(() => sourceSelect.Instance.ValueChanged.InvokeAsync(repositoryFullName));
     }
 
     private static RepositoryDto CreateRepository(string owner, string name)
