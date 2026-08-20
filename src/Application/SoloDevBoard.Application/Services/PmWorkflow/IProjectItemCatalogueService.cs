@@ -13,6 +13,10 @@ public interface IProjectItemCatalogueService
     /// </remarks>
     Task<ProjectBoardItemCatalogueDto> GetCatalogueAsync(string projectId, CancellationToken cancellationToken = default);
 
+    /// <summary>Drops any cached catalogue for the project so the next load fetches fresh board data.</summary>
+    /// <param name="projectId">The GitHub Project v2 node identifier.</param>
+    void InvalidateCatalogue(string projectId);
+
     /// <summary>Sets the Focus Order number on a project board item.</summary>
     /// <param name="projectId">The GitHub Project v2 node identifier.</param>
     /// <param name="projectItemId">The project-item node identifier.</param>

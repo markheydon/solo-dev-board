@@ -254,6 +254,83 @@ test.describe('Repo Management', () => {
   });
 });
 
+test.describe('Iteration Planning', () => {
+  test('direct navigation opens the Planning route shell', async ({ page }) => {
+    await page.goto('/pm-workflow/planning');
+
+    await expect(page).toHaveURL(/\/pm-workflow\/planning$/);
+    await expect(page).toHaveTitle(/PM Workflow — Planning/);
+    await expect(page.getByTestId('pm-workflow-shell')).toBeVisible();
+    await expect(page.getByTestId('pm-workflow-tab-strip')).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Planning' })).toBeVisible();
+    await expect(page.getByTestId('pm-workflow-planning-page')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Iteration Planning' })).toBeVisible();
+  });
+
+  test('shows no-board instructional copy, Up Next and candidates, empty copy, or load error', async ({ page }) => {
+    await page.goto('/pm-workflow/planning');
+
+    await expect(page.getByTestId('pm-workflow-shell')).toBeVisible();
+
+    const chromeError = page.getByTestId('pm-workflow-chrome-error');
+    const noBoardAlert = page.getByTestId('pm-workflow-planning-no-board');
+    const upNextRegion = page.getByTestId('pm-workflow-planning-up-next');
+    const candidatesRegion = page.getByTestId('pm-workflow-planning-candidates');
+    const upNextEmpty = page.getByTestId('pm-workflow-planning-up-next-empty');
+    const candidatesEmpty = page.getByTestId('pm-workflow-planning-candidates-empty');
+    const loadError = page.getByTestId('pm-workflow-planning-error');
+    const partialFailure = page.getByTestId('pm-workflow-planning-partial-failure');
+
+    await expect(
+      chromeError
+        .or(noBoardAlert)
+        .or(upNextRegion)
+        .or(candidatesRegion)
+        .or(upNextEmpty)
+        .or(candidatesEmpty)
+        .or(loadError)
+        .or(partialFailure)
+        .first(),
+    ).toBeVisible({ timeout: 15_000 });
+
+    if (await chromeError.isVisible()) {
+      await expect(chromeError.getByRole('button', { name: 'Retry' })).toBeVisible();
+      return;
+    }
+
+    if (await loadError.isVisible()) {
+      await expect(loadError.getByRole('button', { name: 'Retry' })).toBeVisible();
+      return;
+    }
+
+    if (await noBoardAlert.isVisible()) {
+      await expect(noBoardAlert).toContainText(
+        'Select a planning board in the dropdown above to load Up Next and candidate work items.',
+      );
+      return;
+    }
+
+    if (await partialFailure.isVisible()) {
+      await expect(partialFailure).toContainText('failed');
+    }
+
+    if (await upNextRegion.isVisible()) {
+      await expect(page.getByRole('heading', { name: 'This batch (Up Next)' })).toBeVisible();
+      await expect(upNextEmpty.or(page.getByTestId('pm-workflow-planning-up-next-row')).first()).toBeVisible();
+    }
+
+    if (await candidatesRegion.isVisible()) {
+      await expect(page.getByRole('heading', { name: 'Candidate picker' })).toBeVisible();
+      await expect(page.getByTestId('pm-workflow-planning-search')).toBeVisible();
+      await expect(page.getByTestId('pm-workflow-planning-show-issues')).toBeVisible();
+      await expect(page.getByTestId('pm-workflow-planning-show-prs')).toBeVisible();
+      await expect(
+        candidatesEmpty.or(page.getByTestId('pm-workflow-planning-add-button')).first(),
+      ).toBeVisible();
+    }
+  });
+});
+
 test.describe('Backlog Review', () => {
   test('direct navigation opens the Backlog Review route shell', async ({ page }) => {
     await page.goto('/pm-workflow/backlog');

@@ -65,6 +65,13 @@ public sealed class ProjectItemCatalogueService : IProjectItemCatalogueService
     }
 
     /// <inheritdoc/>
+    public void InvalidateCatalogue(string projectId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectId);
+        _catalogueByProjectId.TryRemove(projectId, out _);
+    }
+
+    /// <inheritdoc/>
     public async Task UpdateFocusOrderAsync(
         string projectId,
         string projectItemId,
