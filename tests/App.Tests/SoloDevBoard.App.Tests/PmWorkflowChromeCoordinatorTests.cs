@@ -79,11 +79,19 @@ public sealed class PmWorkflowChromeCoordinatorTests
             isLoading: false);
 
         coordinator.SetDailyFocusRecommendations("PVT_board", [], null, isLoading: false);
+        coordinator.SetDailyFocusStalledReviews(
+            "PVT_board",
+            3,
+            [],
+            new DailyFocusStalledReviewSnapshotDto([], UsedInReviewColumn: false),
+            null,
+            isLoading: false);
 
         await coordinator.RefreshAsync(forceReload: true);
 
         Assert.Null(coordinator.DailyFocusBoardState);
         Assert.Null(coordinator.DailyFocusRecommendations);
+        Assert.Null(coordinator.DailyFocusStalledReviews);
     }
 
     [Fact]
@@ -94,10 +102,18 @@ public sealed class PmWorkflowChromeCoordinatorTests
         var coordinator = CreateCoordinator();
         await coordinator.EnsureLoadedAsync();
         coordinator.SetDailyFocusRecommendations("PVT_board", [], null, isLoading: false);
+        coordinator.SetDailyFocusStalledReviews(
+            "PVT_board",
+            3,
+            [],
+            new DailyFocusStalledReviewSnapshotDto([], UsedInReviewColumn: false),
+            null,
+            isLoading: false);
 
         await coordinator.SaveSettingsAsync(PmSettingsDefaults.Create());
 
         Assert.Null(coordinator.DailyFocusRecommendations);
+        Assert.Null(coordinator.DailyFocusStalledReviews);
     }
 
     [Fact]

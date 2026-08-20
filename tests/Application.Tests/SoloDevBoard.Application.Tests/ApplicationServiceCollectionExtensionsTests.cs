@@ -51,6 +51,7 @@ public sealed class ApplicationServiceCollectionExtensionsTests
         AssertServiceRegistration<IPmWorkItemCatalogueService, PmWorkItemCatalogueService>(services, ServiceLifetime.Scoped);
         AssertServiceRegistration<IPmProjectBoardDiscoveryService, PmProjectBoardDiscoveryService>(services, ServiceLifetime.Scoped);
         AssertServiceRegistration<IDailyFocusBoardStateService, DailyFocusBoardStateService>(services, ServiceLifetime.Scoped);
+        AssertServiceRegistration<IDailyFocusStalledReviewService, DailyFocusStalledReviewService>(services, ServiceLifetime.Scoped);
         AssertServiceRegistration<IDailyFocusRecommendationService, DailyFocusRecommendationService>(services, ServiceLifetime.Scoped);
     }
 
