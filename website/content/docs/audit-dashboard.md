@@ -3,13 +3,11 @@ weight: 30
 title: Audit Dashboard
 landing: true
 landingIcon: analytics
-landingSubtitle: "Consolidated view of issues, open PRs, and workflow health across selected repositories."
+landingSubtitle: "Consolidated view of issues, open PRs, workflow health, and label consistency across selected repositories."
 guideStatus: Available
 ---
 
 The Audit Dashboard summarises open issues, open pull requests, and repository health across the repositories you select.
-
-> **Scope note** — Label consistency warnings are not part of v1.0.0. They are tracked for v1.1.0 as [#290](https://github.com/markheydon/solo-dev-board/issues/290).
 
 ![Audit Dashboard showing KPI summary and health indicators for markheydon/solo-dev-board](/images/audit-dashboard/overview.png)
 
@@ -22,8 +20,8 @@ The Audit Dashboard summarises open issues, open pull requests, and repository h
 
 - Choose one or more active repositories with the repository selector before loading data.
 - Review a sortable summary grid with repository name (linked to GitHub), open issue count, and open pull request count.
-- KPI summary cards show total open issues, total open pull requests, unlabelled issues, and failing workflows for the selection.
-- Health sections cover unlabelled issues, stale pull requests, and failing workflows, each with a badge count and expandable detail.
+- KPI summary cards show total open issues, total open pull requests, unlabelled issues, failing workflows, and label consistency warnings for the selection.
+- Health sections cover unlabelled issues, stale pull requests, failing workflows, and label consistency, each with a badge count and expandable detail.
 - Loading, empty, error, and prompt states appear in a consistent feedback region.
 - Auto-refresh can be set to off, every 1 minute, every 5 minutes, or every 15 minutes (default: every 5 minutes).
 - **Export Markdown** copies the current audit summary to the clipboard, respecting the selected repository filter.
@@ -36,10 +34,19 @@ The Audit Dashboard summarises open issues, open pull requests, and repository h
 3. Use **Select all** to include every active repository, or **Clear** to reset the selection.
 4. Click **Load selected repositories** to fetch audit data.
 5. Review the summary grid and KPI cards.
-6. Expand health sections for unlabelled issues, stale pull requests, and failing workflows.
+6. Expand health sections for unlabelled issues, stale pull requests, failing workflows, and label consistency.
 7. Optionally set **Auto-refresh** to keep the summary up to date.
 8. Click **Export Markdown** to copy the current summary for planning notes.
 9. To change the repository set, adjust the selector and load again.
+
+## Label consistency
+
+Label consistency compares each selected repository against the SoloDevBoard canonical taxonomy used by Label Manager:
+
+- **Missing** — a taxonomy label is not present in the repository.
+- **Divergent** — the label exists but its colour or description differs from the taxonomy.
+
+Extra labels that exist only in the repository are not reported. Use **Label Manager** to apply the taxonomy.
 
 ## Empty states
 
@@ -48,3 +55,4 @@ When a health category has no items, the dashboard shows a positive empty-state 
 - "No unlabelled issues — great."
 - "No stale pull requests — great."
 - "No failing workflows — great."
+- "Labels match the SoloDevBoard taxonomy — great."

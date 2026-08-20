@@ -2,6 +2,7 @@ using System.Net;
 using Microsoft.Extensions.Logging;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.GitHub;
+using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Domain.Entities.Triage;
 using SoloDevBoard.Domain.Entities.Workflows;
 
@@ -14,23 +15,28 @@ public sealed class AuditDashboardService : IAuditDashboardService
     private const string OpenItemState = "open";
 
     private readonly IGitHubService _gitHubService;
+    private readonly ILabelRepository _labelRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<AuditDashboardService> _logger;
 
     /// <summary>Initialises a new instance of the <see cref="AuditDashboardService"/> class.</summary>
     /// <param name="gitHubService">The GitHub service used for repository data retrieval.</param>
+    /// <param name="labelRepository">The repository used to retrieve GitHub labels for consistency analysis.</param>
     /// <param name="currentUserContext">The current user context used to resolve the owner login.</param>
     /// <param name="logger">The logger used for audit dashboard diagnostics.</param>
     public AuditDashboardService(
         IGitHubService gitHubService,
+        ILabelRepository labelRepository,
         ICurrentUserContext currentUserContext,
         ILogger<AuditDashboardService> logger)
     {
         ArgumentNullException.ThrowIfNull(gitHubService);
+        ArgumentNullException.ThrowIfNull(labelRepository);
         ArgumentNullException.ThrowIfNull(currentUserContext);
         ArgumentNullException.ThrowIfNull(logger);
 
         _gitHubService = gitHubService;
+        _labelRepository = labelRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -183,6 +189,24 @@ public sealed class AuditDashboardService : IAuditDashboardService
         return workflowRunsByRepository.SelectMany(static workflowRuns => workflowRuns).ToArray();
     }
 
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<LabelConsistencyWarningDto>> GetLabelConsistencyWarningsAsync(IReadOnlyList<string> repos, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(repos);
+
+        var repositoryReferences = GetRepositoryReferences(repos);
+        var taxonomyLabels = RecommendedLabelTaxonomyCatalog.SoloDevBoard;
+        var warningTasks = repositoryReferences.Select(repositoryReference =>
+            BuildLabelConsistencyWarningsAsync(repositoryReference, taxonomyLabels, cancellationToken));
+        var warningsByRepository = await Task.WhenAll(warningTasks).ConfigureAwait(false);
+
+        return warningsByRepository
+            .SelectMany(static warnings => warnings)
+            .OrderBy(static warning => warning.RepositoryFullName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(static warning => warning.LabelName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
     private static IssueDto MapIssue(Issue issue, string repositoryFullName)
         => new(
             issue.Number,
@@ -313,6 +337,31 @@ public sealed class AuditDashboardService : IAuditDashboardService
 
     private static bool IsSkippableGitHubStatus(HttpStatusCode? statusCode)
         => statusCode is HttpStatusCode.NotFound or HttpStatusCode.Forbidden or HttpStatusCode.Gone;
+
+    private async Task<IReadOnlyList<LabelConsistencyWarningDto>> BuildLabelConsistencyWarningsAsync(
+        RepositoryReference repositoryReference,
+        IReadOnlyList<LabelDto> taxonomyLabels,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var labels = await _labelRepository
+                .GetLabelsAsync(repositoryReference.Owner, repositoryReference.RepoName, cancellationToken)
+                .ConfigureAwait(false);
+
+            return LabelConsistencyAnalyser.Analyse(repositoryReference.FullName, labels, taxonomyLabels);
+        }
+        catch (HttpRequestException ex) when (IsSkippableGitHubStatus(ex.StatusCode))
+        {
+            _logger.LogWarning(
+                ex,
+                "Skipping {ResourceName} for {RepositoryFullName} because the GitHub API returned {StatusCode}.",
+                "labels",
+                repositoryReference.FullName,
+                ex.StatusCode);
+            return [];
+        }
+    }
 
     private async Task<RepositoryAuditSummaryDto> BuildRepositoryAuditSummaryAsync(string owner, string repoName, CancellationToken cancellationToken)
     {
