@@ -8,6 +8,8 @@ test.describe('One-Click Migration shell', () => {
     await expect(page.getByRole('heading', { name: 'One-Click Migration' })).toBeVisible();
     await expect(page.getByTestId('migration-workflow-controls-card')).toBeVisible();
     await expect(page.getByTestId('migration-workflow-controls-heading')).toHaveText('Migration setup');
+    await expect(page.getByTestId('migration-scope-columns-switch')).toBeVisible();
+    await expect(page.getByText('Project board columns')).toBeVisible();
     await expect(page.getByTestId('migration-preview-button')).toBeDisabled();
     await expect(page.getByTestId('migration-preview-empty-state')).toBeVisible();
   });

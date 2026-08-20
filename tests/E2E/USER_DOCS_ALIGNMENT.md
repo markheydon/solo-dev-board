@@ -29,7 +29,7 @@ When you add or change an end-user feature, update the user guide, the relevant 
 | [In-app home dashboard](../../website/content/docs/) | `/` | `smoke.spec.ts`, `navigation.spec.ts`, `accessibility.spec.ts` | `dashboard/home.png` | Tier 1 | In-app home lists eight feature cards; About and Appearance are reached via the app bar. |
 | [Audit Dashboard](../../website/content/docs/audit-dashboard.md) | `/audit-dashboard`, `/audit` | `audit-dashboard.spec.ts`, `accessibility.spec.ts` | `audit-dashboard/overview.png` | Tier 2 | Guide describes KPI cards, health sections (including label consistency), auto-refresh, and export; CI asserts shell, feedback region, and `/audit` alias with load failure. |
 | [Repositories](../../website/content/docs/repositories.md) | `/repositories` | `repositories.spec.ts`, `accessibility.spec.ts` | `repositories/overview.png` | Tier 2 | Guide describes command strip, search, and a phone-safe stacked grid; CI asserts refresh, search, error-state retry, and no horizontal overflow at 390px. |
-| [One-Click Migration](../../website/content/docs/one-click-migration.md) | `/migrate` | `migrate.spec.ts`, `accessibility.spec.ts` | `one-click-migration/overview.png` | Tier 2 | Guide describes preview/apply workflow and conflict strategies; CI asserts setup shell, disabled preview, and API failure feedback. |
+| [One-Click Migration](../../website/content/docs/one-click-migration.md) | `/migrate` | `migrate.spec.ts`, `accessibility.spec.ts` | `one-click-migration/overview.png` | Tier 2 | Guide describes labels, milestones, and Projects v2 Status column migration with board selectors and conflict strategies; CI asserts setup shell, columns scope control, disabled preview, and API failure feedback. |
 | [Label Manager](../../website/content/docs/label-manager.md) | `/labels` | `labels.spec.ts`, `accessibility.spec.ts` | `label-manager/overview.png` | Tier 2 | Guide describes three tabs and taxonomy workflows; CI asserts tab strip, disabled actions, and no-repositories message. |
 | [Board Rules Visualiser](../../website/content/docs/board-rules-visualiser.md) | `/board-rules` | `board-rules.spec.ts`, `accessibility.spec.ts` | `board-rules-visualiser/overview.png` | Tier 2 | Guide describes compare mode and board selection; CI asserts selector region, compare toggle, and load failure. |
 | [Triage UI](../../website/content/docs/triage-ui.md) | `/triage` | `triage.spec.ts`, `accessibility.spec.ts` | `triage-ui/overview.png` | Tier 2 | Guide describes session queue, shortcuts, milestones, and project board actions; CI asserts not-started region and no-repositories alert. |
@@ -73,6 +73,33 @@ Use this when extending specs so assertions track documented workflows.
 | Accessing (`/repositories`) | `repositories.spec.ts` URL and title | `docs-capture` |
 | Command strip, search, and load failure | Refresh control, search field, error state with retry | `prepareRepositoriesForCapture` |
 | Phone-width stacked grid without horizontal overflow | `repositories.spec.ts` 390×844 viewport overflow check (error-state shell in CI) | `docs-capture` plus component tests for long names and chips |
+
+### One-Click Migration
+
+| Guide section | CI assertion | Loaded-state validation |
+|---------------|--------------|-------------------------|
+| Accessing (`/migrate`) | `migrate.spec.ts` URL and title | `docs-capture` |
+| Migration setup shell and disabled preview | Workflow controls card, columns scope switch, disabled preview button | `docs-capture` |
+| Repository load failure | Feedback region and GitHub API failure message | — |
+| Project board columns scope, board selectors, preview lock, inaccessible-board warning | `MigrationTests` (bUnit) | `docs-capture` |
+| Conflict strategies and Status overwrite warning | `MigrationTests` (bUnit) | `docs-capture` |
+| Preview tables and apply summary for Status columns | — | `docs-capture` + Application tests |
+
+### Project board column migration automated coverage ([#415](https://github.com/markheydon/solo-dev-board/issues/415))
+
+Issue [#415](https://github.com/markheydon/solo-dev-board/issues/415) closes the test slice for feature [#291](https://github.com/markheydon/solo-dev-board/issues/291) (parent feature for Projects v2 Status column migration). Keep this mapping aligned with [one-click-migration.md](../../website/content/docs/one-click-migration.md).
+
+| Behaviour | Unit / component | Playwright (CI placeholder auth) |
+|-----------|------------------|----------------------------------|
+| Skip / Merge / Overwrite conflict matrix for Status options | `MigrationServiceTests` | — |
+| Create-new board path and preserve target option ids on name match | `MigrationServiceTests` | — |
+| Overwrite does not delete options still referenced by items | `MigrationServiceTests` | — |
+| Missing Status field and inaccessible boards | `MigrationServiceTests`, `GitHubServiceTests` | — |
+| GraphQL discovery, `createProjectV2`, and update payload retains existing option ids | `GitHubServiceTests` | — |
+| Columns scope switch, board selectors, preview locked until boards chosen | `MigrationTests` | `migrate.spec.ts` columns scope switch |
+| Overwrite warning copy and inaccessible-board alert | `MigrationTests` | — |
+| Setup shell, disabled preview, API failure feedback | — | `migrate.spec.ts` |
+| Migration overview screenshot with board selectors | — | `docs-capture` (`one-click-migration/overview.png`) |
 
 ### Appearance
 

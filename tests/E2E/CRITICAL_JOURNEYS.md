@@ -38,7 +38,7 @@ For data-driven journeys against a real GitHub account, run the PAT suite locall
 |---------|------|-------------------|
 | Audit Dashboard repository selector failure | `audit-dashboard.spec.ts` | Feedback region and unable-to-load message; `/audit` alias. |
 | Repositories command strip and load failure | `repositories.spec.ts` | Refresh control, search field, error state with retry, and no horizontal overflow at an iPhone 12 viewport. |
-| One-Click Migration setup shell | `migrate.spec.ts` | Workflow controls, disabled preview, and API failure feedback. |
+| One-Click Migration setup shell | `migrate.spec.ts` | Workflow controls, columns scope switch, disabled preview, and API failure feedback. |
 | Board Rules selector and compare mode | `board-rules.spec.ts` | Selector region, compare toggle, and repository load failure. |
 | Label Manager taxonomy tabs and empty repository state | `labels.spec.ts` | Tab strip, disabled actions, and no-repositories message. |
 | Workflow template browse, filter, and select | `workflows.spec.ts` | Built-in templates load; repository selector shows error. |

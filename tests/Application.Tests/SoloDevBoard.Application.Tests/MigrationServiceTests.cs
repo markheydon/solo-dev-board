@@ -635,6 +635,32 @@ public sealed class MigrationServiceTests
     }
 
     [Fact]
+    public async Task ApplyMigrationAsync_StatusColumnsMissingStatusField_ReturnsErrorResult()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        SetupStatusColumnData();
+        var sut = CreateSubject();
+        var boardSelection = CreateBoardSelection("source-project", "owner/target", "target-project");
+
+        _projectBoardStructureRepository
+            .GetStatusStructureAsync("target-project", cancellationToken)
+            .Returns(Task.FromException<ProjectBoardStatusStructure>(
+                new HttpRequestException("GraphQL response did not contain a supported Status field structure.")));
+
+        var result = await sut.ApplyMigrationAsync(
+            "owner/source",
+            ["owner/target"],
+            new MigrationScopeDto(false, false, true),
+            MigrationConflictStrategy.Merge,
+            boardSelection,
+            cancellationToken);
+
+        var statusResult = Assert.Single(result.ProjectBoardStatusResults);
+        Assert.True(statusResult.HasError);
+        Assert.Contains("Status field structure", statusResult.ErrorMessage, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task ApplyMigrationAsync_CreateNewBoardOverwrite_RemovesDefaultOptionsNotInSource()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;

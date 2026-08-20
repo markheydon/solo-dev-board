@@ -1518,6 +1518,44 @@ public sealed class GitHubServiceTests
     }
 
     [Fact]
+    public async Task GetProjectBoardStatusStructureAsync_StatusFieldMissing_ThrowsHttpRequestException()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "node": {
+                        "id": "PVT_no_status",
+                        "title": "Unsupported Board",
+                        "fields": {
+                            "nodes": [
+                                {
+                                    "id": "PVTF_priority",
+                                    "name": "Priority",
+                                    "options": [
+                                        { "id": "option-one", "name": "High", "color": "RED", "description": "" }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                },
+                "errors": []
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        var action = async () => await sut.GetProjectBoardStatusStructureAsync("PVT_no_status", cancellationToken);
+
+        var exception = await Assert.ThrowsAsync<HttpRequestException>(action);
+        Assert.Contains("Status field structure", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task CreateRepositoryLinkedProjectAsync_ValidResponse_ReturnsDefaultStatusStructure()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;

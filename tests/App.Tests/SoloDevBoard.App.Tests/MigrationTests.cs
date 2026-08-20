@@ -121,6 +121,90 @@ public sealed class MigrationTests
     }
 
     [Fact]
+    public async Task Migration_ProjectBoardColumnsEnabled_PreviewLockedUntilBoardsChosen()
+    {
+        // Arrange
+        var sourceRepository = CreateRepository("owner", "repo-a");
+        var targetRepository = CreateRepository("owner", "repo-b");
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([sourceRepository, targetRepository]);
+
+        _migrationService.GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>()).Returns(
+            new MigrationProjectBoardDiscoveryDto(
+                [
+                    new MigrationProjectBoardOptionDto("PVT_alpha", "Alpha Board"),
+                    new MigrationProjectBoardOptionDto("PVT_beta", "Beta Board"),
+                ],
+                2,
+                0));
+
+        _migrationService.GetProjectBoardOptionsAsync("owner", "repo-b", Arg.Any<CancellationToken>()).Returns(
+            new MigrationProjectBoardDiscoveryDto(
+                [new MigrationProjectBoardOptionDto("PVT_target", "Target Board")],
+                1,
+                0));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Migration>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='migration-repository-autocomplete']"));
+
+        await SelectRepositoriesAsync(cut, sourceRepository, targetRepository);
+        await DisableLabelsAndMilestonesScopeAsync(cut);
+        await EnableProjectBoardColumnsScopeAsync(cut);
+        await EnableTargetRepositoryAsync(cut, targetRepository);
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("unlock preview", cut.Markup, StringComparison.OrdinalIgnoreCase);
+            Assert.True(cut.Find("[data-testid='migration-preview-button']").HasAttribute("disabled"));
+        });
+
+        await _migrationService.DidNotReceive().PreviewMigrationAsync(
+            Arg.Any<string>(),
+            Arg.Any<IReadOnlyList<string>>(),
+            Arg.Any<MigrationScopeDto>(),
+            Arg.Any<MigrationConflictStrategy>(),
+            Arg.Any<MigrationBoardSelectionDto?>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Migration_InaccessibleLinkedProjectBoards_ShowsWarning()
+    {
+        // Arrange
+        var sourceRepository = CreateRepository("owner", "repo-a");
+        var targetRepository = CreateRepository("owner", "repo-b");
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([sourceRepository, targetRepository]);
+
+        _migrationService.GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>()).Returns(
+            new MigrationProjectBoardDiscoveryDto(
+                [new MigrationProjectBoardOptionDto("PVT_public", "Public Board")],
+                2,
+                1));
+
+        _migrationService.GetProjectBoardOptionsAsync("owner", "repo-b", Arg.Any<CancellationToken>()).Returns(
+            new MigrationProjectBoardDiscoveryDto([], 0, 0));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Migration>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='migration-repository-autocomplete']"));
+
+        await SelectRepositoriesAsync(cut, sourceRepository, targetRepository);
+        await EnableProjectBoardColumnsScopeAsync(cut);
+        await EnableTargetRepositoryAsync(cut, targetRepository);
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("2 linked project boards", cut.Markup, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("1 board could not be loaded", cut.Markup, StringComparison.OrdinalIgnoreCase);
+            Assert.Single(cut.FindAll("[data-testid='migration-inaccessible-project-boards-warning']"));
+        });
+    }
+
+    [Fact]
     public async Task Migration_OverwriteStrategy_RendersStatusOptionWarning()
     {
         // Arrange
@@ -534,6 +618,13 @@ public sealed class MigrationTests
     private static async Task EnableProjectBoardColumnsScopeAsync(IRenderedComponent<Migration> cut)
     {
         cut.Find("[data-testid='migration-scope-columns-switch']").Change(true);
+        await cut.InvokeAsync(() => { });
+    }
+
+    private static async Task DisableLabelsAndMilestonesScopeAsync(IRenderedComponent<Migration> cut)
+    {
+        cut.Find("[data-testid='migration-scope-labels-switch']").Change(false);
+        cut.Find("[data-testid='migration-scope-milestones-switch']").Change(false);
         await cut.InvokeAsync(() => { });
     }
 
