@@ -120,29 +120,33 @@
                 <Columns>
                     <TemplateColumn Title="Repository name" SortBy="repository => repository.Name" Sortable="true">
                         <CellTemplate>
-                            <MudText Typo="Typo.body2" Title="@context.Item.Name">@context.Item.Name</MudText>
+                            <MudTooltip Text="@context.Item.Name">
+                                <MudText Typo="Typo.body2">@context.Item.Name</MudText>
+                            </MudTooltip>
                         </CellTemplate>
                     </TemplateColumn>
                     <TemplateColumn Title="Status">
                         <CellTemplate>
-                            <MudChip T="string"
-                                     Color="@GetRepositoryStatusColour(context.Item)"
-                                     Variant="Variant.Outlined"
-                                     Size="Size.Small"
-                                     Title="@GetRepositoryStatusText(context.Item)">
-                                @GetRepositoryStatusText(context.Item)
-                            </MudChip>
+                            <MudTooltip Text="@GetRepositoryStatusText(context.Item)">
+                                <MudChip T="string"
+                                         Color="@GetRepositoryStatusColour(context.Item)"
+                                         Variant="Variant.Outlined"
+                                         Size="Size.Small">
+                                    @GetRepositoryStatusText(context.Item)
+                                </MudChip>
+                            </MudTooltip>
                         </CellTemplate>
                     </TemplateColumn>
                     <TemplateColumn Title="Type">
                         <CellTemplate>
-                            <MudChip T="string"
-                                     Color="@(context.Item.IsPrivate ? Color.Warning : Color.Success)"
-                                     Variant="Variant.Outlined"
-                                     Size="Size.Small"
-                                     Title="@(context.Item.IsPrivate ? "Private" : "Public")">
-                                @(context.Item.IsPrivate ? "Private" : "Public")
-                            </MudChip>
+                            <MudTooltip Text="@(context.Item.IsPrivate ? "Private" : "Public")">
+                                <MudChip T="string"
+                                         Color="@(context.Item.IsPrivate ? Color.Warning : Color.Success)"
+                                         Variant="Variant.Outlined"
+                                         Size="Size.Small">
+                                    @(context.Item.IsPrivate ? "Private" : "Public")
+                                </MudChip>
+                            </MudTooltip>
                         </CellTemplate>
                     </TemplateColumn>
                     <TemplateColumn Title="Actions">

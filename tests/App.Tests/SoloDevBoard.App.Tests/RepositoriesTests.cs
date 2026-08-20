@@ -169,9 +169,8 @@ public sealed class RepositoriesTests
         {
             Assert.Contains("sdb-responsive-grid", cut.Markup);
             Assert.Contains("mhcg-cs-mhcgintegration-platform-service", cut.Markup);
-            Assert.Contains("title=\"mhcg-cs-mhcgintegration-platform-service\"", cut.Markup);
-            Assert.Contains("title=\"Connected\"", cut.Markup);
-            Assert.Contains("title=\"Public\"", cut.Markup);
+            Assert.Contains("Connected", cut.Markup);
+            Assert.Contains("Public", cut.Markup);
             Assert.Contains("Edit repository", cut.Markup);
         });
     }
