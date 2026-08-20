@@ -45,7 +45,7 @@
 ### Interaction notes
 
 - Use Hextra docs section layout (not `hextra-home`).
-- Distinct from in-app **About** page documented at `/docs/about/` (app version metadata).
+- Distinct from in-app **About** page documented at `/docs/app-shell/about/` (app version metadata).
 - No claims about paid features, donations, staging-for-donation, or Marketplace.
 - Link to GitHub repo for contribution; operator setup stays in repo `docs/`.
 

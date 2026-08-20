@@ -11,6 +11,12 @@ SoloDevBoard exists to reduce context-switching for solo developers who maintain
 
 The project was directly inspired by the AI-driven PM workflow in the companion repository [markheydon/github-workflows](https://github.com/markheydon/github-workflows). That system uses structured prompts and automation around two operating modes:
 
+```mermaid
+flowchart LR
+  PM["PM Mode<br/>weekly / fortnightly"] --> Work["Work Mode<br/>daily"]
+  Work --> PM
+```
+
 - **PM Mode** (weekly or fortnightly) — scan repositories, triage issues and pull requests, and curate a project board.
 - **Work Mode** (daily) — pick the next item from a pre-curated board and execute.
 

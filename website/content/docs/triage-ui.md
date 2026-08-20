@@ -24,13 +24,28 @@ Key features:
 
 ## How to Use
 
-1. Select a repository to start a triage session.
-2. The Triage UI queues all unlabelled issues for that repository. If pull request inclusion is enabled, unlabelled pull requests are also included in the queue.
-3. Review each item in turn, then either:
-   - Search for a label in the **Quick Label** field and click **Apply + next** to label the item and advance, or
-   - Click **Next** to advance to the next item without applying a label.
-4. The session completes once all queued items have been processed.
-5. Use the progress indicator and session context to track your position and the number of remaining items.
+{{% steps %}}
+
+### Start a session
+
+Select a repository to start a triage session.
+
+### Work the queue
+
+The Triage UI queues all unlabelled issues for that repository. If pull request inclusion is enabled, unlabelled pull requests are also included in the queue.
+
+### Act on each item
+
+Review each item in turn, then either:
+
+- Search for a label in the **Quick Label** field and click **Apply + next** to label the item and advance, or
+- Click **Next** to advance to the next item without applying a label.
+
+### Complete the session
+
+The session completes once all queued items have been processed. Use the progress indicator and session context to track your position and the number of remaining items.
+
+{{% /steps %}}
 
 When both issues and pull requests are present, the queue operates in a mixed mode, but you still triage one item at a time using the same action surface. Where supported by GitHub, all actions are available for both item types.
 
@@ -75,7 +90,9 @@ If the issue is already on the selected board, you can update its status column 
 
 If GitHub reports linked project boards that cannot be loaded, a warning appears above the project board selector. This commonly happens for **private user-owned** Projects v2 boards under hosted GitHub App sign-in: GitHub may list the board as linked while the App token cannot read it. Public linked boards still appear in the selector.
 
+{{< callout type="important" >}}
 To access private boards, use PAT mode with the `read:project` scope, or make the project public.
+{{< /callout >}}
 
 ## Session Completion Summary and Skip/Revisit Workflow
 

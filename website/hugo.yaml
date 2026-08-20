@@ -8,8 +8,8 @@ enableGitInfo: true
 
 outputs:
   home: [html]
-  page: [html]
-  section: [html, rss]
+  page: [html, markdown]
+  section: [html, rss, markdown]
 
 module:
   hugoVersion:
@@ -84,6 +84,11 @@ params:
 
   page:
     width: normal
+    contextMenu:
+      enable: true
+
+  imageZoom:
+    enable: true
 
   toc:
     displayTags: false

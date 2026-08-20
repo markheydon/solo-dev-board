@@ -26,7 +26,7 @@ For data-driven journeys against a real GitHub account, run the PAT suite locall
 | Health endpoint responds before browser tests run | `smoke.spec.ts` | `GET /health` returns `Healthy`. |
 | Home dashboard renders and lists all feature entry points | `navigation.spec.ts`, `smoke.spec.ts` | Title, navigation shell, and all eight feature cards. |
 | Drawer navigation reaches every primary feature route | `navigation.spec.ts` | URL and page title for each route in `fixtures/navigation.ts`. |
-| Appearance theme control cycles modes and persists preference | `appearance.spec.ts` | Automatic → Light → Dark cycle and browser storage persistence per [Appearance](../../website/content/docs/appearance.md). |
+| Appearance theme control cycles modes and persists preference | `appearance.spec.ts` | Automatic → Light → Dark cycle and browser storage persistence per [Appearance](../../website/content/docs/app-shell/appearance.md). |
 | About page shows deployment metadata | `about.spec.ts` | Version, auth mode, and repository link from the shell menu. |
 | PAT-mode welcome redirect and connectivity error page | `auth-entry.spec.ts` | `/welcome` redirects to home; connectivity error page renders guidance. |
 | Hosted sign-in login gate (unauthenticated redirect and welcome landing) | `auth-entry-hosted.spec.ts` | `/` and protected routes redirect to `/welcome`; sign-in CTA visible; Blazor negotiate succeeds. |

@@ -1,8 +1,7 @@
 ---
-weight: 100
+weight: 20
 title: About
 landingIcon: info
-prev: /docs/appearance
 ---
 
 The About page provides essential information about the SoloDevBoard application, including its version, runtime environment, and repository link.
@@ -19,7 +18,22 @@ The About page provides essential information about the SoloDevBoard application
 - Current GitHub identity (`@login`) for the active authentication mode.
 - Link to the SoloDevBoard GitHub repository.
 
+{{< callout type="important" >}}
+Authentication details reflect the **active** mode for this session (hosted sign-in or PAT). Switching mode requires signing out or changing local configuration — the About page does not change credentials by itself.
+{{< /callout >}}
+
 ## How to access
 
-- Click the **More options** (three dots) menu in the app bar, then select **User Guide** (opens the published documentation at [solodevboard.com/docs/](https://solodevboard.com/docs/)) or **About**.
-- Visit the `/about` route directly in your browser.
+{{% steps %}}
+
+### Open More options
+
+Click the **More options** (three dots) menu in the app bar.
+
+### Choose About
+
+Select **About**, or choose **User Guide** to open the published documentation at [solodevboard.com/docs/](https://solodevboard.com/docs/).
+
+{{% /steps %}}
+
+You can also visit the `/about` route directly in your browser.

@@ -7,9 +7,9 @@ landingSubtitle: "View and manage repositories accessible to your GitHub account
 guideStatus: Partially Available
 ---
 
-> **Scope note** — Viewing, searching, and refreshing the GitHub repository catalogue are available now. Add, Remove, Bulk actions, Edit, and More row actions are visible in the UI but not yet implemented; they show a future-milestone message when used.
-
----
+{{< callout type="info" >}}
+**Scope note** — Viewing, searching, and refreshing the GitHub repository catalogue are available now. Add, Remove, Bulk actions, Edit, and More row actions are visible in the UI but not yet implemented; they show a future-milestone message when used.
+{{< /callout >}}
 
 ## Overview
 
@@ -25,6 +25,8 @@ Key goals of the Repositories page:
 ---
 
 ## How to Use
+
+{{% steps %}}
 
 ### View and search repositories
 
@@ -50,6 +52,8 @@ Key goals of the Repositories page:
 - **More** (row action) — overflow menu for additional per-repository management.
 
 Until those ship, each control opens an informational snackbar and feedback message stating that the action will be available in a future milestone.
+
+{{% /steps %}}
 
 ### Page layout
 

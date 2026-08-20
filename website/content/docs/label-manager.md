@@ -41,13 +41,12 @@ One-Click Migration covers labels, milestones, and Projects v2 Status columns in
 
 ## How to Use
 
-The Label Manager page now uses a tabbed layout to organise label management workflows. The repository selector is positioned above the tabs, allowing you to choose one or more repositories before switching between workflows.
+The Label Manager page uses a tabbed layout to organise label management workflows. The repository selector is positioned above the tabs, allowing you to choose one or more repositories before switching between workflows.
 
-The three available tabs are:
+{{< tabs >}}
 
-1. **Labels** — View, create, edit, and delete labels across the selected repositories. Use the consolidated label view and bulk CRUD operations here. Filter by label name, and use the `New label` button to add labels. Row-level actions allow editing and deleting existing labels.
-2. **Recommended taxonomy** — Apply a recommended label taxonomy to the selected repositories. Preview proposed changes, confirm before applying, and review a per-repository summary after completion.
-3. **Synchronise** — Synchronise labels from a source repository to one or more target repositories. Preview all changes before applying, and receive a summary of the synchronisation outcome for each target repository.
+  {{< tab name="Labels" >}}
+View, create, edit, and delete labels across the selected repositories. Use the consolidated label view and bulk CRUD operations here. Filter by label name, and use the `New label` button to add labels. Row-level actions allow editing and deleting existing labels.
 
 The create and edit dialogs include:
 
@@ -55,17 +54,50 @@ The create and edit dialogs include:
 - Colour picker for choosing a valid hexadecimal colour value.
 - Optional description input.
 - Repository selection controls scoped to valid repositories.
+  {{< /tab >}}
+
+  {{< tab name="Recommended taxonomy" >}}
+Apply a recommended label taxonomy to the selected repositories. Preview proposed changes, confirm before applying, and review a per-repository summary after completion.
+
+Current built-in strategies:
+
+- `SoloDevBoard` strategy.
+- `GitHub default` strategy.
+  {{< /tab >}}
+
+  {{< tab name="Synchronise" >}}
+Synchronise labels from a source repository to one or more target repositories. Preview all changes before applying, and receive a summary of the synchronisation outcome for each target repository.
+  {{< /tab >}}
+
+{{< /tabs >}}
 
 ## Applying recommended taxonomy
 
 You can apply a recommended label taxonomy to selected repositories using a preview and confirm workflow.
 
-1. Select one or more active repositories in the repository selector.
-2. Choose a recommended strategy.
-3. Optionally enable **Remove labels outside taxonomy** (off by default) when you want a strict clean-up.
-4. Select **Preview** to review proposed changes per repository.
-5. Confirm or cancel before any changes are applied.
-6. Review the per-repository summary after apply completes.
+{{% steps %}}
+
+### Select repositories
+
+Select one or more active repositories in the repository selector.
+
+### Choose a strategy
+
+Choose a recommended strategy.
+
+### Optional strict clean-up
+
+Optionally enable **Remove labels outside taxonomy** (off by default) when you want a strict clean-up.
+
+### Preview and confirm
+
+Select **Preview** to review proposed changes per repository. Confirm or cancel before any changes are applied.
+
+### Review the summary
+
+Review the per-repository summary after apply completes.
+
+{{% /steps %}}
 
 Current built-in strategies:
 
@@ -76,12 +108,15 @@ Current built-in strategies:
 
 By default, recommended taxonomy apply only creates and updates labels so existing repository labels are left alone. Turn on **Remove labels outside taxonomy** when you want preview and apply to also delete every label whose name is not in the selected strategy (case-insensitive match).
 
+{{< callout type="warning" >}}
+There is no protected allow-list: GitHub defaults (`bug`, `enhancement`, and similar), Dependabot labels such as `dependencies`, and any other non-strategy label are removed when listed. Preview first.
+{{< /callout >}}
+
 When the option is on:
 
 - Preview summary counts include **Delete**, alongside Create, Update, and Skip.
 - Preview lists **Labels to delete** for each repository.
 - Apply removes those labels after you confirm, then reports a deleted count per repository.
-- There is no protected allow-list: GitHub defaults (`bug`, `enhancement`, and similar), Dependabot labels such as `dependencies`, and any other non-strategy label are removed when listed.
 - If a label cannot be deleted (for example it is still applied to open issues or pull requests), SoloDevBoard shows a clear per-label error and continues with the rest of the batch.
 
 Leave the option off for routine taxonomy rollout when you only want to add or correct canonical labels.

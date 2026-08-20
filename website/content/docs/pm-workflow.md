@@ -5,7 +5,6 @@ landing: true
 landingIcon: view_week
 landingSubtitle: "Plan and execute work across repositories with Daily Focus, Backlog Review, Iteration Planning, and Repo Management."
 guideStatus: Available
-next: /docs/appearance
 ---
 
 ## Overview
@@ -62,7 +61,9 @@ Shared chrome on every PM Workflow tab includes:
 
 If GitHub reports linked project boards that cannot be read with your current sign-in, a warning appears at the top of the page. This is common for **private user-owned** Projects v2 boards when you use hosted GitHub App sign-in: GitHub can list the board as linked to a repository while the App token cannot read it (`Resource not accessible by integration`). Public linked boards still load normally.
 
+{{< callout type="important" >}}
 To work with private boards today, switch to PAT mode with the `read:project` scope, or make the project public so hosted sign-in can read it.
+{{< /callout >}}
 
 Until a board is selected, an informational alert points at the **Planning board** dropdown. Occupancy, stalled Up Next items, and recommendations load as soon as you open Daily Focus when a board is already stored, or as soon as you choose one. Backlog Review and Iteration Planning use the same board selection. Use the **Repos** tab to edit exclusions and thresholds.
 

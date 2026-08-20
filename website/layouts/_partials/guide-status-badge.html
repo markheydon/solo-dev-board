@@ -1,0 +1,9 @@
+{{- /* Renders Available / Partially Available status from guideStatus front matter. */ -}}
+{{- with .Params.guideStatus -}}
+  {{- $status := . -}}
+  {{- $color := "green" -}}
+  {{- if eq $status "Partially Available" -}}
+    {{- $color = "amber" -}}
+  {{- end -}}
+  {{- partial "shortcodes/badge.html" (dict "content" $status "color" $color "border" true) -}}
+{{- end -}}
