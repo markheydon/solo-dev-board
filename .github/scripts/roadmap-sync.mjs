@@ -4,6 +4,8 @@ import { githubJsonRequest, isTransientGitHubGraphQlError, withGitHubRetry } fro
 
 const apiBaseUrl = 'https://api.github.com';
 const graphqlUrl = `${apiBaseUrl}/graphql`;
+// Maintainer login for markheydon/solo-dev-board repository automation only (Roadmap Sync).
+// Not used by the SoloDevBoard application — end users manage their own GitHub accounts and boards.
 const owner = 'markheydon';
 const repo = 'solo-dev-board';
 const maintainerLogin = owner;
@@ -606,6 +608,7 @@ async function removeStrayPullRequestCardsAsync(pullRequestItems) {
     }
 }
 
+/** Syncs maintainer assignee on markheydon/solo-dev-board issues from Project #8 Status (repo automation only). */
 async function syncIssueAssigneeAsync(issue, desiredStatusName, label) {
     const currentAssigneeLogins = getAssigneeLogins(issue);
     const action = resolveMaintainerAssignmentAction(currentAssigneeLogins, desiredStatusName, maintainerLogin);

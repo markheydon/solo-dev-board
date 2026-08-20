@@ -1,3 +1,7 @@
+/**
+ * Issue assignee rules for markheydon/solo-dev-board Roadmap Sync (`.github/scripts/roadmap-sync.mjs`).
+ * Repository-internal PM automation only — not SoloDevBoard application behaviour.
+ */
 /** Project #8 statuses that should assign the maintainer to the linked issue. */
 export const issueAssignmentStatuses = new Set(['Up Next', 'In Progress']);
 
