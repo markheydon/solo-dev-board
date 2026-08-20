@@ -20,6 +20,9 @@ This runbook orchestrates [`.agents/contracts/`](../.agents/contracts/) and [`.a
 | Address PR review comments               | "Address PR review comments on PR #N" or `/address-pr-review-comments` | PR fixes + thread replies + resolved comments |
 | Progress review (since last update)      | "Run the PM progress review" or `/pm-progress-review`        | Executive summary + next-session priorities   |
 | End-to-end feature delivery              | `.agents/skills/repo-pm-feature-workflow/SKILL.md`         | Full workflow from backlog to closure         |
+| Start a Cloud Agent from GitHub          | Comment `@cursor implement this issue` (or another phrase in [workflow README](../.agents/workflows/README.md#github-comment-invocation)) | Same as the matching workflow; `N` is the thread |
+
+**GitHub comments:** Put `@cursor` or `@cursoragent` at the start of the comment. On an issue, "this issue" is that issue. Informal "implement this issue" runs **deliver** (code + PR), not implement-only. See [DEC-031](DECISIONS.md#dec-031-github-comment-workflow-invocation).
 
 ---
 

@@ -14,4 +14,11 @@
 
 ## Invocation
 
-Natural language: "Verify issue #N" or "Create PR for issue #N"
+**Chat:** "Verify issue #N" or "Create PR for issue #N".
+**Slash command:** `/verify-and-create-pr [number]`.
+**GitHub Issue comment** (mention at the start; `N` is this issue):
+- `@cursor verify this issue`
+- `@cursor create a PR for this`
+- `@cursor open a pull request`
+
+Do not run this from a Pull Request comment to open a second PR. If the PR already exists, stay on that branch.

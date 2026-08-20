@@ -1,7 +1,7 @@
 ---
 role: Delivery
 description: Runs implementation preflight and implements planned GitHub issues, creates tests, updates documentation, prepares work for review, and addresses pull request review feedback.
-triggers: Implement issue #N; preflight issue #N; build feature X; fix bug #N; address PR review comments on PR #N
+triggers: Implement issue #N; preflight issue #N; build feature X; fix bug #N; address PR review comments on PR #N; GitHub Issue "@cursor implement this issue" is deliver-issue (orchestrated with Verify), not this contract alone
 ---
 
 # Delivery Agent

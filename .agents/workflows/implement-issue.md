@@ -18,6 +18,7 @@
 - Do not implement issues with `status/blocked` or `status/ice-box` — escalate or re-queue first.
 - Do not set `status/in-progress` during standalone `/preflight-issue`.
 - Consult other skills when relevant — do not require reading every skill up front, except the required Aspire skills above.
+- If this session started from a GitHub Issue comment that only says implement / fix / do **this issue**, follow [deliver-issue](deliver-issue.md) instead (open a PR). Use this split workflow only from chat `/implement-issue`, or when the comment explicitly says not to open a pull request.
 
 ### Area label → codebase hints
 
@@ -34,4 +35,10 @@
 
 ## Invocation
 
-Natural language: "Implement issue #N"
+**Chat:** "Implement issue #N".
+**Slash command:** `/implement-issue [number]`.
+**GitHub Issue comment** (mention at the start; `N` is this issue):
+- `@cursor implement this issue without opening a PR`
+- `@cursor implement only — do not create a pull request`
+
+Bare `@cursor implement this issue` is **not** this workflow. Route it to [deliver-issue](deliver-issue.md).

@@ -45,7 +45,7 @@ SoloDevBoard defines specialised role contracts for PM workflows. These orchestr
 
 **Role contracts:** `.agents/contracts/*.md`  
 **Workflow entry points:** `.agents/workflows/*.md` (canonical)  
-**Invocation:** Natural language, [`.github/prompts/`](../../.github/prompts/) (Copilot), [`.cursor/commands/`](../../.cursor/commands/) (Cursor) — all thin mirrors pointing to `.agents/workflows/`  
+**Invocation:** Natural language, GitHub Issue/PR comments (`@cursor` / `@cursoragent` — see [workflow README](../../.agents/workflows/README.md#github-comment-invocation)), [`.github/prompts/`](../../.github/prompts/) (Copilot), [`.cursor/commands/`](../../.cursor/commands/) (Cursor) — all thin mirrors pointing to `.agents/workflows/`  
 **Orchestration:** `plan/PM_RUNBOOK.md` (session and progress-review workflow guide)
 
 ## Workflow Library

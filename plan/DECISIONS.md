@@ -299,6 +299,16 @@ Test coverage expectations for cache-hit, cache-miss, invalidation, TTL expiry, 
 
 ---
 
+### DEC-031: GitHub comment workflow invocation
+
+**Status:** Active  
+**Date:** 2026-08-20  
+**Constitution:** [AGENTS.md — Skills and Workflow](../AGENTS.md#skills-and-workflow)  
+**Related:** [`.agents/workflows/README.md`](../.agents/workflows/README.md)  
+**Summary:** Cursor Cloud Agents started from a GitHub Issue or Pull Request comment (`@cursor` or `@cursoragent` at the start of the comment) must bind "this issue" / "this PR" to that thread and route human-friendly phrasing through the workflow Invocation tables. Informal implement / fix / do / work on **this issue** on an Issue comment is **`deliver-issue`** (implement, verify, and open a PR). Chat `/implement-issue` remains the split path that does not open a PR. Reject treating GitHub "implement this issue" as implement-only, asking for an issue number the thread already implies, or using bare "review this issue" as code review.
+
+---
+
 ## Superseded legacy (archive only)
 
 | Legacy ADR | Superseded by | Notes |
