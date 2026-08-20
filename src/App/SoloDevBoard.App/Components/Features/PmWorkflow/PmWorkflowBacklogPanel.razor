@@ -122,7 +122,7 @@
     {
         <MudExpansionPanel Expanded="true" data-testid="@testId">
             <TitleContent>
-                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                     <MudText Typo="Typo.subtitle1">@title</MudText>
                     <MudBadge Color="Color.Primary" Content="@items.Count" Overlap="false" />
                 </MudStack>
@@ -151,7 +151,7 @@
                                         <MudChip T="string"
                                                  Value="@FormatItemKindChip(item.ItemType)"
                                                  Variant="Variant.Outlined"
-                                                 Color="Color.Default"
+                                                 Color="@FormatItemKindChipColor(item.ItemType)"
                                                  Size="Size.Small"
                                                  data-testid="pm-workflow-backlog-kind-chip">
                                             @FormatItemKindChip(item.ItemType)
@@ -180,7 +180,7 @@
     {
         <MudExpansionPanel Expanded="true" data-testid="pm-workflow-backlog-epics">
             <TitleContent>
-                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                     <MudText Typo="Typo.subtitle1">Epics near completion</MudText>
                     <MudBadge Color="Color.Primary" Content="@FilteredEpicsNearComplete.Count" Overlap="false" />
                 </MudStack>
@@ -235,7 +235,7 @@
     {
         <MudExpansionPanel Expanded="true" data-testid="pm-workflow-backlog-neglected">
             <TitleContent>
-                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                     <MudText Typo="Typo.subtitle1">Neglected repositories</MudText>
                     <MudBadge Color="Color.Primary" Content="@FilteredNeglectedRepositories.Count" Overlap="false" />
                 </MudStack>

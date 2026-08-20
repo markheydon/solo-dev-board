@@ -22,12 +22,15 @@ public sealed class PmWorkflowBacklogTests
     private readonly IPmProjectBoardDiscoveryService _projectBoardDiscoveryService =
         Substitute.For<IPmProjectBoardDiscoveryService>();
     private readonly IBacklogReviewService _backlogReviewService = Substitute.For<IBacklogReviewService>();
+    private readonly IPmWorkItemCatalogueService _workItemCatalogueService = Substitute.For<IPmWorkItemCatalogueService>();
     private readonly FakePmSettingsStorage _settingsStorage = new();
 
     public PmWorkflowBacklogTests()
     {
         _backlogReviewService.GetBacklogAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(EmptyBacklogResult());
+        _workItemCatalogueService.GetCatalogueAsync(Arg.Any<CancellationToken>())
+            .Returns(new PmWorkItemCatalogueResultDto([], [], []));
     }
 
     [Fact]
@@ -60,6 +63,64 @@ public sealed class PmWorkflowBacklogTests
         {
             Assert.Contains("Backlog Review", cut.Markup);
             Assert.Contains("Select a planning board in the dropdown above to load Backlog Review groups.", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task PmWorkflowTabSwitch_WhenReturningToBacklog_DoesNotReloadGroups()
+    {
+        ConfigureDefaults();
+        _backlogReviewService.GetBacklogAsync("PVT_board", Arg.Any<CancellationToken>())
+            .Returns(new BacklogReviewResultDto(
+                [CreateItem(PmWorkItemTypeDto.Issue, "owner/repo-a", 10, "Fix auth", ["priority/high"])],
+                [],
+                [],
+                [],
+                [],
+                [],
+                false,
+                []));
+
+        await using var ctx = CreateContext();
+        var backlog = ctx.RenderPmWorkflowPage<PmWorkflowBacklog>();
+
+        backlog.WaitForAssertion(() => Assert.Contains("Fix auth", backlog.Markup));
+
+        ctx.RenderPmWorkflowPage<PmWorkflowRepos>();
+        ctx.RenderPmWorkflowPage<PmWorkflowBacklog>();
+
+        await _backlogReviewService.Received(1).GetBacklogAsync("PVT_board", Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task PmWorkflowBacklog_WhenGroupsHaveItems_ShowsDistinctKindChipColours()
+    {
+        ConfigureDefaults();
+        _backlogReviewService.GetBacklogAsync("PVT_board", Arg.Any<CancellationToken>())
+            .Returns(new BacklogReviewResultDto(
+                [CreateItem(PmWorkItemTypeDto.Issue, "owner/repo-a", 10, "Fix auth", ["priority/high"])],
+                [],
+                [],
+                [CreateItem(PmWorkItemTypeDto.PullRequest, "owner/repo-b", 12, "Parked PR", ["status/blocked"])],
+                [],
+                [],
+                false,
+                []));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowBacklog>();
+
+        cut.WaitForAssertion(() =>
+        {
+#pragma warning disable MUD0012
+            var issueChip = cut.FindComponents<MudChip<string>>()
+                .First(component => component.Markup.Contains("Issue", StringComparison.Ordinal));
+            Assert.Equal(Color.Info, issueChip.Instance.Color);
+
+            var pullRequestChip = cut.FindComponents<MudChip<string>>()
+                .First(component => component.Markup.Contains("Pull request", StringComparison.Ordinal));
+            Assert.Equal(Color.Secondary, pullRequestChip.Instance.Color);
+#pragma warning restore MUD0012
         });
     }
 
@@ -292,6 +353,7 @@ public sealed class PmWorkflowBacklogTests
         ctx.Services.AddScoped(_ => _repositoryService);
         ctx.Services.AddScoped(_ => _projectBoardDiscoveryService);
         ctx.Services.AddScoped(_ => _backlogReviewService);
+        ctx.Services.AddScoped(_ => _workItemCatalogueService);
         ctx.Services.AddScoped<PmWorkflowChromeCoordinator>();
         ctx.Services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
 

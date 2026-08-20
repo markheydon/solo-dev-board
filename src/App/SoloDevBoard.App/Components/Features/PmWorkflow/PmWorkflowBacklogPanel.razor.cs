@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using MudBlazor;
 using SoloDevBoard.Application.Services.PmWorkflow;
 
 namespace SoloDevBoard.App.Components.Features.PmWorkflow;
@@ -34,7 +35,6 @@ public partial class PmWorkflowBacklogPanel : ComponentBase
     private string selectedRepositoryFilter = AllRepositoriesFilter;
     private string searchText = string.Empty;
     private int loadGeneration;
-    private int loadedRevision = -1;
 
     private int NeglectDaysThreshold
         => ChromeState?.Settings.NeglectDays > 0
@@ -54,12 +54,11 @@ public partial class PmWorkflowBacklogPanel : ComponentBase
             snapshot = null;
             loadErrorMessage = null;
             warningMessage = null;
-            loadedRevision = -1;
             return Task.CompletedTask;
         }
 
         var boardId = ChromeState.Settings.PlanningBoardNodeId!;
-        if (loadedRevision == DataRevision && TryApplyCachedResult(boardId))
+        if (TryApplyCachedResult(boardId))
         {
             return Task.CompletedTask;
         }
@@ -136,14 +135,13 @@ public partial class PmWorkflowBacklogPanel : ComponentBase
             return Task.CompletedTask;
         }
 
-        loadedRevision = -1;
         ChromeCoordinator.ClearBacklogReview();
         return LoadAsync(ChromeState.Settings.PlanningBoardNodeId);
     }
 
     private async Task LoadAsync(string boardId)
     {
-        if (loadedRevision == DataRevision && TryApplyCachedResult(boardId))
+        if (TryApplyCachedResult(boardId))
         {
             return;
         }
@@ -165,7 +163,6 @@ public partial class PmWorkflowBacklogPanel : ComponentBase
 
             snapshot = result;
             warningMessage = FormatPartialFailureWarning(result.Failures);
-            loadedRevision = DataRevision;
             ChromeCoordinator.SetBacklogReview(boardId, result, null, isLoading: false, warningMessage);
         }
         catch (Exception exception)
@@ -323,6 +320,9 @@ public partial class PmWorkflowBacklogPanel : ComponentBase
 
     private static string FormatItemKindChip(PmWorkItemTypeDto itemType)
         => itemType == PmWorkItemTypeDto.PullRequest ? "Pull request" : "Issue";
+
+    private static Color FormatItemKindChipColor(PmWorkItemTypeDto itemType)
+        => itemType == PmWorkItemTypeDto.PullRequest ? Color.Secondary : Color.Info;
 
     private static string FormatPriority(string? priorityLabel)
         => string.IsNullOrWhiteSpace(priorityLabel) ? "Unlabelled" : priorityLabel;
