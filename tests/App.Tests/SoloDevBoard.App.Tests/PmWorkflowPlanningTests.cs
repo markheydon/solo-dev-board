@@ -23,6 +23,7 @@ public sealed class PmWorkflowPlanningTests
     {
         StoredJson = """{"planningBoardNodeId":"PVT_board","capacity":8,"stallDays":3,"neglectDays":14,"excludedRepositories":[]}""",
     };
+    private IRenderedComponent<MudSnackbarProvider> _snackbarProvider = default!;
 
     [Fact]
     public async Task PmWorkflowPlanning_RouteShell_ExposesPageTestIdAndHeading()
@@ -341,7 +342,6 @@ public sealed class PmWorkflowPlanningTests
                 FocusOrderSkipped: false));
 
         await using var ctx = CreateContext();
-        var snackbarProvider = ctx.Render<MudSnackbarProvider>();
         var cut = ctx.RenderPmWorkflowPage<PmWorkflowPlanning>();
 
         cut.WaitForAssertion(() => Assert.Contains("data-testid=\"pm-workflow-planning-add-button\"", cut.Markup));
@@ -350,7 +350,7 @@ public sealed class PmWorkflowPlanningTests
 
         cut.WaitForAssertion(() =>
         {
-            var snackbar = snackbarProvider.Find(".mud-snackbar");
+            var snackbar = _snackbarProvider.Find(".mud-snackbar");
             Assert.Contains("Added owner/repo-a#50 to Up Next with Focus Order 2.", snackbar.TextContent, StringComparison.Ordinal);
         });
     }
@@ -373,7 +373,6 @@ public sealed class PmWorkflowPlanningTests
                 new InvalidOperationException("Resolve stalled Up Next items before adding new work.")));
 
         await using var ctx = CreateContext();
-        var snackbarProvider = ctx.Render<MudSnackbarProvider>();
         var cut = ctx.RenderPmWorkflowPage<PmWorkflowPlanning>();
 
         cut.WaitForAssertion(() => Assert.Contains("data-testid=\"pm-workflow-planning-add-button\"", cut.Markup));
@@ -382,7 +381,7 @@ public sealed class PmWorkflowPlanningTests
 
         cut.WaitForAssertion(() =>
         {
-            var snackbar = snackbarProvider.Find(".mud-snackbar");
+            var snackbar = _snackbarProvider.Find(".mud-snackbar");
             Assert.Contains("Resolve stalled Up Next items before adding new work.", snackbar.TextContent, StringComparison.Ordinal);
         });
     }
@@ -459,6 +458,7 @@ public sealed class PmWorkflowPlanningTests
 
         ctx.Render<MudPopoverProvider>();
         ctx.Render<MudDialogProvider>();
+        _snackbarProvider = ctx.Render<MudSnackbarProvider>();
 
         return ctx;
     }
