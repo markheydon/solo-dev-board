@@ -64,6 +64,11 @@ When a template and repositories are selected, the detail panel shows workflow s
 
 Drift detection is informational and does not block browsing or previewing templates. Review drift warnings before applying if you need to preserve local customisations.
 
+### What is coming later
+
+- Custom template repositories so you can maintain organisation-specific templates outside the built-in catalogue.
+- Persisted default parameter profiles so common values can be reused across apply runs without re-entering them each time.
+
 ---
 
 ## Configuration
