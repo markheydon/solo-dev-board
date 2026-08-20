@@ -1,0 +1,80 @@
+/* Stacked MudBlazor tables use flex + space-between without a min-width
+ * constraint, so long names and chips overflow phone viewports (issue #408).
+ * MudBlazor has no parameter for stacked-cell overflow, so this global
+ * override is required. Apply Class="sdb-responsive-grid" on the grid or table. */
+.sdb-responsive-grid .mud-table-container,
+.sdb-responsive-grid .mud-table-root {
+    max-width: 100%;
+}
+
+@media (max-width: 600px) {
+    .sdb-responsive-grid.mud-xs-table .mud-table-cell,
+    .sdb-responsive-grid .mud-xs-table .mud-table-cell {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        align-items: flex-start;
+        column-gap: 0.75rem;
+        row-gap: 0.25rem;
+        min-width: 0;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        box-sizing: border-box;
+    }
+
+    .sdb-responsive-grid.mud-xs-table .mud-table-cell::before,
+    .sdb-responsive-grid .mud-xs-table .mud-table-cell::before {
+        flex: 0 1 auto;
+        max-width: 100%;
+        margin-right: 0;
+        padding-inline-end: 0.75rem;
+    }
+
+    .sdb-responsive-grid.mud-xs-table .mud-table-cell > *,
+    .sdb-responsive-grid .mud-xs-table .mud-table-cell > * {
+        flex: 1 1 8rem;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .sdb-responsive-grid.mud-xs-table .mud-chip,
+    .sdb-responsive-grid .mud-xs-table .mud-chip {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 960px) {
+    .sdb-responsive-grid.mud-sm-table .mud-table-cell,
+    .sdb-responsive-grid .mud-sm-table .mud-table-cell {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        align-items: flex-start;
+        column-gap: 0.75rem;
+        row-gap: 0.25rem;
+        min-width: 0;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        box-sizing: border-box;
+    }
+
+    .sdb-responsive-grid.mud-sm-table .mud-table-cell::before,
+    .sdb-responsive-grid .mud-sm-table .mud-table-cell::before {
+        flex: 0 1 auto;
+        max-width: 100%;
+        margin-right: 0;
+        padding-inline-end: 0.75rem;
+    }
+
+    .sdb-responsive-grid.mud-sm-table .mud-table-cell > *,
+    .sdb-responsive-grid .mud-sm-table .mud-table-cell > * {
+        flex: 1 1 8rem;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .sdb-responsive-grid.mud-sm-table .mud-chip,
+    .sdb-responsive-grid .mud-sm-table .mud-chip {
+        max-width: 100%;
+    }
+}

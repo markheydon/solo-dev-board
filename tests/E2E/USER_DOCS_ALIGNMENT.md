@@ -28,7 +28,7 @@ When you add or change an end-user feature, update the user guide, the relevant 
 | [Product landing](../../website/content/_index.md) (Hugo `/` only) | — | — (Hugo `hugo-build.yml` route check) | — | — | Short product-and-project landing (Learn more → About; icon tiles not docs links); not the Blazor app. |
 | [In-app home dashboard](../../website/content/docs/) | `/` | `smoke.spec.ts`, `navigation.spec.ts`, `accessibility.spec.ts` | `dashboard/home.png` | Tier 1 | In-app home lists eight feature cards; About and Appearance are reached via the app bar. |
 | [Audit Dashboard](../../website/content/docs/audit-dashboard.md) | `/audit-dashboard`, `/audit` | `audit-dashboard.spec.ts`, `accessibility.spec.ts` | `audit-dashboard/overview.png` | Tier 2 | Guide describes KPI cards, health sections, auto-refresh, and export; CI asserts shell, feedback region, and `/audit` alias with load failure. |
-| [Repositories](../../website/content/docs/repositories.md) | `/repositories` | `repositories.spec.ts`, `accessibility.spec.ts` | `repositories/overview.png` | Tier 2 | Guide describes command strip, search, and grid; CI asserts refresh, search, and error state with retry. |
+| [Repositories](../../website/content/docs/repositories.md) | `/repositories` | `repositories.spec.ts`, `accessibility.spec.ts` | `repositories/overview.png` | Tier 2 | Guide describes command strip, search, and a phone-safe stacked grid; CI asserts refresh, search, error-state retry, and no horizontal overflow at 390px. |
 | [One-Click Migration](../../website/content/docs/one-click-migration.md) | `/migrate` | `migrate.spec.ts`, `accessibility.spec.ts` | `one-click-migration/overview.png` | Tier 2 | Guide describes preview/apply workflow and conflict strategies; CI asserts setup shell, disabled preview, and API failure feedback. |
 | [Label Manager](../../website/content/docs/label-manager.md) | `/labels` | `labels.spec.ts`, `accessibility.spec.ts` | `label-manager/overview.png` | Tier 2 | Guide describes three tabs and taxonomy workflows; CI asserts tab strip, disabled actions, and no-repositories message. |
 | [Board Rules Visualiser](../../website/content/docs/board-rules-visualiser.md) | `/board-rules` | `board-rules.spec.ts`, `accessibility.spec.ts` | `board-rules-visualiser/overview.png` | Tier 2 | Guide describes compare mode and board selection; CI asserts selector region, compare toggle, and load failure. |
@@ -65,6 +65,14 @@ Use this when extending specs so assertions track documented workflows.
 |---------------|--------------|-------------------------|
 | Three tabs (Labels, Recommended taxonomy, Synchronise) | Tab strip and headings | `docs-capture` |
 | No repositories message | Empty-state text | — |
+
+### Repositories
+
+| Guide section | CI assertion | Loaded-state validation |
+|---------------|--------------|-------------------------|
+| Accessing (`/repositories`) | `repositories.spec.ts` URL and title | `docs-capture` |
+| Command strip, search, and load failure | Refresh control, search field, error state with retry | `prepareRepositoriesForCapture` |
+| Phone-width stacked grid without horizontal overflow | `repositories.spec.ts` 390×844 viewport overflow check (error-state shell in CI) | `docs-capture` plus component tests for long names and chips |
 
 ### Appearance
 

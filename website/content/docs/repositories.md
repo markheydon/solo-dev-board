@@ -25,7 +25,7 @@ From this page you can:
 
 - **Command strip** — Refresh, Add, Remove, and Bulk actions. On mobile these are grouped into a compact actions menu.
 - **Search field** — Filter repositories by name.
-- **Data grid** — Repository name, status chips, and row actions.
+- **Data grid** — Repository name, status chips, visibility chips, and row actions. On phone-width viewports the grid stacks each field so names wrap, chips stay fully visible, and row actions remain tappable without horizontal overflow.
 - **Feedback region** — Loading, empty, success, and error messages.
 
 ## How to use

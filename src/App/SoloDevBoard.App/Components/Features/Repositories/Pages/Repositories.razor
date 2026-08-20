@@ -108,36 +108,46 @@
     }
     else
     {
-        <MudPaper Class="pa-2" Elevation="1" data-testid="repositories-grid">
+        <MudPaper Class="pa-2 overflow-hidden" Elevation="1" data-testid="repositories-grid">
             <MudDataGrid T="RepositoryDto"
                          Items="FilteredRepositories"
                          Hover="true"
                          Dense="true"
                          SortMode="SortMode.Multiple"
-                         Striped="true">
+                         Striped="true"
+                         Breakpoint="Breakpoint.Xs"
+                         Class="sdb-responsive-grid">
                 <Columns>
-                    <PropertyColumn Property="repository => repository.Name" Title="Repository name" Sortable="true" />
+                    <TemplateColumn Title="Repository name" SortBy="repository => repository.Name" Sortable="true">
+                        <CellTemplate>
+                            <MudText Typo="Typo.body2" Title="@context.Item.Name">@context.Item.Name</MudText>
+                        </CellTemplate>
+                    </TemplateColumn>
                     <TemplateColumn Title="Status">
                         <CellTemplate>
-                            <MudChip Color="@GetRepositoryStatusColour(context.Item)"
+                            <MudChip T="string"
+                                     Color="@GetRepositoryStatusColour(context.Item)"
                                      Variant="Variant.Outlined"
-                                     Size="Size.Small">
+                                     Size="Size.Small"
+                                     Title="@GetRepositoryStatusText(context.Item)">
                                 @GetRepositoryStatusText(context.Item)
                             </MudChip>
                         </CellTemplate>
                     </TemplateColumn>
                     <TemplateColumn Title="Type">
                         <CellTemplate>
-                            <MudChip Color="@(context.Item.IsPrivate ? Color.Warning : Color.Success)"
+                            <MudChip T="string"
+                                     Color="@(context.Item.IsPrivate ? Color.Warning : Color.Success)"
                                      Variant="Variant.Outlined"
-                                     Size="Size.Small">
+                                     Size="Size.Small"
+                                     Title="@(context.Item.IsPrivate ? "Private" : "Public")">
                                 @(context.Item.IsPrivate ? "Private" : "Public")
                             </MudChip>
                         </CellTemplate>
                     </TemplateColumn>
                     <TemplateColumn Title="Actions">
                         <CellTemplate>
-                            <MudStack Row="true" Justify="Justify.FlexEnd" AlignItems="AlignItems.Center" Spacing="0">
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Justify="Justify.FlexEnd" AlignItems="AlignItems.Center" Spacing="0">
                                 <MudTooltip Text="Edit repository">
                                     <MudIconButton Icon="@Icons.Material.Filled.Edit"
                                                    Color="Color.Primary"

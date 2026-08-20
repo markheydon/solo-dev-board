@@ -142,6 +142,40 @@ public sealed class RepositoriesTests
         });
     }
 
+    [Fact]
+    public async Task Repositories_ServiceReturnsLongRepositoryName_KeepsFullNameAccessibleInStackedGrid()
+    {
+        var repositories = new List<RepositoryDto>
+        {
+            new(
+                1,
+                "mhcg-cs-mhcgintegration-platform-service",
+                "owner/mhcg-cs-mhcgintegration-platform-service",
+                string.Empty,
+                string.Empty,
+                false,
+                false,
+                DateTimeOffset.UnixEpoch,
+                new DateTimeOffset(2026, 1, 15, 12, 0, 0, TimeSpan.Zero)),
+        };
+
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(repositories);
+
+        await using var ctx = CreateContext();
+
+        var cut = ctx.Render<Repositories>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("sdb-responsive-grid", cut.Markup);
+            Assert.Contains("mhcg-cs-mhcgintegration-platform-service", cut.Markup);
+            Assert.Contains("title=\"mhcg-cs-mhcgintegration-platform-service\"", cut.Markup);
+            Assert.Contains("title=\"Connected\"", cut.Markup);
+            Assert.Contains("title=\"Public\"", cut.Markup);
+            Assert.Contains("Edit repository", cut.Markup);
+        });
+    }
+
     private BunitContext CreateContext()
     {
         var ctx = new BunitContext();

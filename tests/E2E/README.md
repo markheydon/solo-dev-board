@@ -17,7 +17,7 @@ Published user guides must stay aligned with these tests like-for-like. See [USE
 | `auth-entry.spec.ts` | PAT-mode welcome redirect and connectivity error page |
 | `auth-entry-hosted.spec.ts` | Hosted-mode login gate, welcome landing, and Blazor negotiate |
 | `audit-dashboard.spec.ts` | Audit Dashboard shell and repository load failure; `/audit` alias |
-| `repositories.spec.ts` | Repositories command strip and load failure handling |
+| `repositories.spec.ts` | Repositories command strip, load failure handling, and phone-width overflow guard |
 | `migrate.spec.ts` | One-Click Migration setup shell and API failure feedback |
 | `board-rules.spec.ts` | Board Rules selector region, compare mode, and load failure |
 | `labels.spec.ts` | Label Manager shell, tabs, and empty-repository state |
