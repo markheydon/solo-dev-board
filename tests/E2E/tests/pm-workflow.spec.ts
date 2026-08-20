@@ -31,12 +31,12 @@ test.describe('PM Workflow', () => {
     });
 
     if (await chromeError.isVisible()) {
-      await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+      await expect(chromeError.getByRole('button', { name: 'Retry' })).toBeVisible();
       return;
     }
 
     if (await occupancyError.isVisible()) {
-      await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+      await expect(occupancyError.getByRole('button', { name: 'Retry' })).toBeVisible();
       await expect(occupancyError).toContainText('Unable to load board occupancy');
       return;
     }
@@ -73,7 +73,7 @@ test.describe('PM Workflow', () => {
     await expect(chromeError.or(thresholdsRegion).first()).toBeVisible({ timeout: 15_000 });
 
     if (await chromeError.isVisible()) {
-      await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+      await expect(chromeError.getByRole('button', { name: 'Retry' })).toBeVisible();
       return;
     }
 
@@ -113,12 +113,12 @@ test.describe('PM Workflow', () => {
     });
 
     if (await chromeError.isVisible()) {
-      await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+      await expect(chromeError.getByRole('button', { name: 'Retry' })).toBeVisible();
       return;
     }
 
     if (await loadError.isVisible()) {
-      await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+      await expect(loadError.getByRole('button', { name: 'Retry' })).toBeVisible();
       await expect(loadError).toContainText('Unable to load the backlog');
       return;
     }
@@ -169,12 +169,12 @@ test.describe('Daily Focus', () => {
     ).toBeVisible({ timeout: 15_000 });
 
     if (await chromeError.isVisible()) {
-      await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+      await expect(chromeError.getByRole('button', { name: 'Retry' })).toBeVisible();
       return;
     }
 
     if (await occupancyError.isVisible()) {
-      await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+      await expect(occupancyError.getByRole('button', { name: 'Retry' })).toBeVisible();
       await expect(occupancyError).toContainText('Unable to load board occupancy');
       return;
     }
@@ -219,7 +219,7 @@ test.describe('Repo Management', () => {
     await expect(chromeError.or(thresholdsRegion).first()).toBeVisible({ timeout: 15_000 });
 
     if (await chromeError.isVisible()) {
-      await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+      await expect(chromeError.getByRole('button', { name: 'Retry' })).toBeVisible();
       return;
     }
 
@@ -293,12 +293,12 @@ test.describe('Backlog Review', () => {
     ).toBeVisible({ timeout: 15_000 });
 
     if (await chromeError.isVisible()) {
-      await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+      await expect(chromeError.getByRole('button', { name: 'Retry' })).toBeVisible();
       return;
     }
 
     if (await loadError.isVisible()) {
-      await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+      await expect(loadError.getByRole('button', { name: 'Retry' })).toBeVisible();
       await expect(loadError).toContainText('Unable to load the backlog');
       return;
     }
