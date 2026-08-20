@@ -634,7 +634,7 @@ public sealed class LabelServiceTests
         var sut = new LabelService(_labelRepository);
 
         // Act
-        var result = await sut.PreviewRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], cancellationToken);
+        var result = await sut.PreviewRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], cancellationToken: cancellationToken);
 
         // Assert
         var preview = Assert.Single(result);
@@ -642,6 +642,116 @@ public sealed class LabelServiceTests
         Assert.Contains(preview.ToCreate, label => label.Name == "enhancement");
         Assert.Contains(preview.ToUpdate, label => label.Name == "bug");
         Assert.Contains(preview.Skipped, label => label.Name == "documentation");
+        Assert.Empty(preview.ToDelete);
+    }
+
+    [Fact]
+    public async Task PreviewRecommendedTaxonomyAsync_WhenRemoveOutsideTaxonomyEnabled_ReturnsLabelsToDelete()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-a", cancellationToken)
+            .Returns([
+                new Label { Name = "bug", Colour = "d73a4a", Description = "Something is not working", RepositoryName = "repo-a" },
+                new Label { Name = "dependencies", Colour = "0366d6", Description = "Pull requests that update a dependency", RepositoryName = "repo-a" },
+                new Label { Name = "epic", Colour = "5319e7", Description = "Legacy epic label", RepositoryName = "repo-a" },
+            ]);
+
+        var sut = new LabelService(_labelRepository);
+
+        // Act
+        var result = await sut.PreviewRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, cancellationToken);
+
+        // Assert
+        var preview = Assert.Single(result);
+        Assert.Contains(preview.ToDelete, label => label.Name == "dependencies");
+        Assert.Contains(preview.ToDelete, label => label.Name == "epic");
+        Assert.DoesNotContain(preview.ToDelete, label => label.Name == "bug");
+    }
+
+    [Fact]
+    public async Task ApplyRecommendedTaxonomyAsync_WhenRemoveOutsideTaxonomyEnabled_DeletesExtraneousLabels()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-a", cancellationToken)
+            .Returns([
+                new Label { Name = "bug", Colour = "d73a4a", Description = "Something is not working", RepositoryName = "repo-a" },
+                new Label { Name = "dependencies", Colour = "0366d6", Description = "Pull requests that update a dependency", RepositoryName = "repo-a" },
+                new Label { Name = "documentation", Colour = "0075ca", Description = "Improvements or additions to documentation", RepositoryName = "repo-a" },
+                new Label { Name = "duplicate", Colour = "cfd3d7", Description = "This issue or pull request already exists", RepositoryName = "repo-a" },
+                new Label { Name = "enhancement", Colour = "a2eeef", Description = "New feature or request", RepositoryName = "repo-a" },
+                new Label { Name = "good first issue", Colour = "7057ff", Description = "Good for newcomers", RepositoryName = "repo-a" },
+                new Label { Name = "help wanted", Colour = "008672", Description = "Extra attention is needed", RepositoryName = "repo-a" },
+                new Label { Name = "invalid", Colour = "e4e669", Description = "This does not appear to be valid", RepositoryName = "repo-a" },
+                new Label { Name = "question", Colour = "d876e3", Description = "Further information is requested", RepositoryName = "repo-a" },
+                new Label { Name = "wontfix", Colour = "ffffff", Description = "This will not be worked on", RepositoryName = "repo-a" },
+                new Label { Name = "epic", Colour = "5319e7", Description = "Legacy epic label", RepositoryName = "repo-a" },
+            ]);
+
+        _labelRepository
+            .DeleteLabelAsync("owner", "repo-a", Arg.Any<string>(), cancellationToken)
+            .Returns(Task.CompletedTask);
+
+        var sut = new LabelService(_labelRepository);
+
+        // Act
+        var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, cancellationToken);
+
+        // Assert
+        var summary = Assert.Single(result);
+        Assert.Equal(2, summary.DeletedCount);
+        Assert.Empty(summary.DeleteErrors);
+        Assert.False(summary.HasError);
+        await _labelRepository.Received(1).DeleteLabelAsync("owner", "repo-a", "dependencies", cancellationToken);
+        await _labelRepository.Received(1).DeleteLabelAsync("owner", "repo-a", "epic", cancellationToken);
+        await _labelRepository.DidNotReceive().DeleteLabelAsync("owner", "repo-a", "bug", cancellationToken);
+    }
+
+    [Fact]
+    public async Task ApplyRecommendedTaxonomyAsync_WhenDeleteFails_RecordsPerLabelErrorAndContinues()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-a", cancellationToken)
+            .Returns([
+                new Label { Name = "bug", Colour = "d73a4a", Description = "Something is not working", RepositoryName = "repo-a" },
+                new Label { Name = "documentation", Colour = "0075ca", Description = "Improvements or additions to documentation", RepositoryName = "repo-a" },
+                new Label { Name = "duplicate", Colour = "cfd3d7", Description = "This issue or pull request already exists", RepositoryName = "repo-a" },
+                new Label { Name = "enhancement", Colour = "a2eeef", Description = "New feature or request", RepositoryName = "repo-a" },
+                new Label { Name = "good first issue", Colour = "7057ff", Description = "Good for newcomers", RepositoryName = "repo-a" },
+                new Label { Name = "help wanted", Colour = "008672", Description = "Extra attention is needed", RepositoryName = "repo-a" },
+                new Label { Name = "invalid", Colour = "e4e669", Description = "This does not appear to be valid", RepositoryName = "repo-a" },
+                new Label { Name = "question", Colour = "d876e3", Description = "Further information is requested", RepositoryName = "repo-a" },
+                new Label { Name = "wontfix", Colour = "ffffff", Description = "This will not be worked on", RepositoryName = "repo-a" },
+                new Label { Name = "epic", Colour = "5319e7", Description = "Legacy epic label", RepositoryName = "repo-a" },
+                new Label { Name = "story", Colour = "1d76db", Description = "Legacy story label", RepositoryName = "repo-a" },
+            ]);
+
+        _labelRepository
+            .DeleteLabelAsync("owner", "repo-a", "epic", cancellationToken)
+            .Returns(Task.FromException(new HttpRequestException("Label is still in use")));
+
+        _labelRepository
+            .DeleteLabelAsync("owner", "repo-a", "story", cancellationToken)
+            .Returns(Task.CompletedTask);
+
+        var sut = new LabelService(_labelRepository);
+
+        // Act
+        var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, cancellationToken);
+
+        // Assert
+        var summary = Assert.Single(result);
+        Assert.Equal(1, summary.DeletedCount);
+        Assert.True(summary.HasError);
+        var deleteError = Assert.Single(summary.DeleteErrors);
+        Assert.Equal("epic", deleteError.LabelName);
+        Assert.Equal("Label is still in use", deleteError.ErrorMessage);
+        await _labelRepository.Received(1).DeleteLabelAsync("owner", "repo-a", "story", cancellationToken);
     }
 
     [Fact]
@@ -666,16 +776,19 @@ public sealed class LabelServiceTests
         var sut = new LabelService(_labelRepository);
 
         // Act
-        var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], cancellationToken);
+        var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], cancellationToken: cancellationToken);
 
         // Assert
         var summary = Assert.Single(result);
         Assert.Equal(0, summary.CreatedCount);
         Assert.Equal(0, summary.UpdatedCount);
+        Assert.Equal(0, summary.DeletedCount);
         Assert.Equal(9, summary.SkippedCount);
+        Assert.Empty(summary.DeleteErrors);
         Assert.False(summary.HasError);
         await _labelRepository.DidNotReceive().CreateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), cancellationToken);
         await _labelRepository.DidNotReceive().UpdateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), cancellationToken);
+        await _labelRepository.DidNotReceive().DeleteLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), cancellationToken);
     }
 
     [Fact]
@@ -703,7 +816,7 @@ public sealed class LabelServiceTests
         var sut = new LabelService(_labelRepository);
 
         // Act
-        var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a", "owner/repo-b"], cancellationToken);
+        var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a", "owner/repo-b"], cancellationToken: cancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -732,7 +845,7 @@ public sealed class LabelServiceTests
         var sut = new LabelService(_labelRepository);
 
         // Act
-        var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a", "invalid-format"], cancellationToken);
+        var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a", "invalid-format"], cancellationToken: cancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);

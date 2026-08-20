@@ -232,7 +232,7 @@ public sealed class LabelService : ILabelManagerService
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto>> PreviewRecommendedTaxonomyAsync(string strategyId, IReadOnlyList<string> repositories, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto>> PreviewRecommendedTaxonomyAsync(string strategyId, IReadOnlyList<string> repositories, bool removeLabelsOutsideTaxonomy = false, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(strategyId);
         var normalisedRepositories = NormaliseRepositories(repositories);
@@ -245,7 +245,7 @@ public sealed class LabelService : ILabelManagerService
             cancellationToken.ThrowIfCancellationRequested();
             var repository = SplitRepositoryFullName(repositoryFullName);
             var existing = await _labelRepository.GetLabelsAsync(repository.Owner, repository.Name, cancellationToken).ConfigureAwait(false);
-            previews.Add(BuildRepositoryPreview(repositoryFullName, strategyLabels, existing));
+            previews.Add(BuildRepositoryPreview(repositoryFullName, strategyLabels, existing, removeLabelsOutsideTaxonomy));
         }
 
         return previews
@@ -254,7 +254,7 @@ public sealed class LabelService : ILabelManagerService
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<RecommendedTaxonomyRepositoryResultDto>> ApplyRecommendedTaxonomyAsync(string strategyId, IReadOnlyList<string> repositories, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<RecommendedTaxonomyRepositoryResultDto>> ApplyRecommendedTaxonomyAsync(string strategyId, IReadOnlyList<string> repositories, bool removeLabelsOutsideTaxonomy = false, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(strategyId);
         var normalisedRepositories = NormaliseRepositories(repositories);
@@ -266,11 +266,16 @@ public sealed class LabelService : ILabelManagerService
         {
             cancellationToken.ThrowIfCancellationRequested();
 
+            var createdCount = 0;
+            var updatedCount = 0;
+            var deletedCount = 0;
+            var deleteErrors = new List<RecommendedTaxonomyLabelDeleteErrorDto>();
+
             try
             {
                 var repository = SplitRepositoryFullName(repositoryFullName);
                 var existing = await _labelRepository.GetLabelsAsync(repository.Owner, repository.Name, cancellationToken).ConfigureAwait(false);
-                var preview = BuildRepositoryPreview(repositoryFullName, strategyLabels, existing);
+                var preview = BuildRepositoryPreview(repositoryFullName, strategyLabels, existing, removeLabelsOutsideTaxonomy);
 
                 foreach (var labelToCreate in preview.ToCreate)
                 {
@@ -278,6 +283,7 @@ public sealed class LabelService : ILabelManagerService
                     await _labelRepository
                         .CreateLabelAsync(repository.Owner, repository.Name, MapToDomain(labelToCreate, repository.Name), cancellationToken)
                         .ConfigureAwait(false);
+                    createdCount++;
                 }
 
                 foreach (var labelToUpdate in preview.ToUpdate)
@@ -286,22 +292,44 @@ public sealed class LabelService : ILabelManagerService
                     await _labelRepository
                         .UpdateLabelAsync(repository.Owner, repository.Name, labelToUpdate.Name, MapToDomain(labelToUpdate, repository.Name), cancellationToken)
                         .ConfigureAwait(false);
+                    updatedCount++;
+                }
+
+                foreach (var labelToDelete in preview.ToDelete)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    try
+                    {
+                        await _labelRepository
+                            .DeleteLabelAsync(repository.Owner, repository.Name, labelToDelete.Name, cancellationToken)
+                            .ConfigureAwait(false);
+                        deletedCount++;
+                    }
+                    catch (Exception ex) when (ex is HttpRequestException or KeyNotFoundException or ArgumentException)
+                    {
+                        deleteErrors.Add(new RecommendedTaxonomyLabelDeleteErrorDto(labelToDelete.Name, ex.Message));
+                    }
                 }
 
                 results.Add(new RecommendedTaxonomyRepositoryResultDto(
                     repositoryFullName,
-                    preview.ToCreate.Count,
-                    preview.ToUpdate.Count,
+                    createdCount,
+                    updatedCount,
+                    deletedCount,
                     preview.Skipped.Count,
+                    deleteErrors,
                     null));
             }
             catch (Exception ex) when (ex is HttpRequestException or KeyNotFoundException or ArgumentException)
             {
                 results.Add(new RecommendedTaxonomyRepositoryResultDto(
                     repositoryFullName,
+                    createdCount,
+                    updatedCount,
+                    deletedCount,
                     0,
-                    0,
-                    0,
+                    deleteErrors,
                     ex.Message));
             }
         }
@@ -336,10 +364,16 @@ public sealed class LabelService : ILabelManagerService
     /// <param name="repositoryFullName">The owner/repository full name.</param>
     /// <param name="strategyLabels">The strategy labels to compare against.</param>
     /// <param name="existingLabels">The labels currently present in the repository.</param>
-    /// <returns>A repository preview showing create, update, and skip actions.</returns>
-    private static RecommendedTaxonomyRepositoryPreviewDto BuildRepositoryPreview(string repositoryFullName, IReadOnlyList<LabelDto> strategyLabels, IReadOnlyList<Label> existingLabels)
+    /// <param name="removeLabelsOutsideTaxonomy">When <see langword="true" />, includes labels to delete that are not in the strategy set.</param>
+    /// <returns>A repository preview showing create, update, delete, and skip actions.</returns>
+    private static RecommendedTaxonomyRepositoryPreviewDto BuildRepositoryPreview(
+        string repositoryFullName,
+        IReadOnlyList<LabelDto> strategyLabels,
+        IReadOnlyList<Label> existingLabels,
+        bool removeLabelsOutsideTaxonomy)
     {
         var existingByName = existingLabels.ToDictionary(label => label.Name, StringComparer.OrdinalIgnoreCase);
+        var strategyByName = strategyLabels.ToDictionary(label => label.Name, StringComparer.OrdinalIgnoreCase);
 
         var toCreate = strategyLabels
             .Where(label => !existingByName.ContainsKey(label.Name))
@@ -361,7 +395,15 @@ public sealed class LabelService : ILabelManagerService
             .OrderBy(label => label.Name, StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
-        return new RecommendedTaxonomyRepositoryPreviewDto(repositoryFullName, toCreate, toUpdate, skipped);
+        var toDelete = removeLabelsOutsideTaxonomy
+            ? existingLabels
+                .Where(label => !strategyByName.ContainsKey(label.Name))
+                .Select(label => MapToDto(label, repositoryFullName))
+                .OrderBy(label => label.Name, StringComparer.OrdinalIgnoreCase)
+                .ToArray()
+            : [];
+
+        return new RecommendedTaxonomyRepositoryPreviewDto(repositoryFullName, toCreate, toUpdate, toDelete, skipped);
     }
 
     /// <summary>Maps an application label DTO to a domain label record.</summary>

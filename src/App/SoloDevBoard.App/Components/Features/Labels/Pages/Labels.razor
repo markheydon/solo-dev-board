@@ -160,6 +160,14 @@
                             }
                         </MudSelect>
 
+                        <MudCheckBox T="bool"
+                                     Value="removeLabelsOutsideTaxonomy"
+                                     ValueChanged="OnRemoveLabelsOutsideTaxonomyChanged"
+                                     Label="Remove labels outside taxonomy"
+                                     Disabled="@(ShowLoadingState || !selectedRepositories.Any() || recommendedStrategies.Count == 0)"
+                                     data-testid="remove-labels-outside-taxonomy-checkbox" />
+                        <MudText Typo="Typo.caption">When enabled, deletes every label not in the selected strategy, including GitHub defaults and automation labels such as <code>dependencies</code>.</MudText>
+
                         <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
                             <MudButton Variant="Variant.Outlined"
                                        Color="Color.Secondary"
@@ -207,7 +215,7 @@
                                 {
                                     <MudPaper Class="pa-3" Outlined="true">
                                         <MudText Typo="Typo.subtitle1">@preview.RepositoryFullName</MudText>
-                                        <MudText Typo="Typo.body2">Create: @preview.ToCreate.Count, Update: @preview.ToUpdate.Count, Skip: @preview.Skipped.Count</MudText>
+                                        <MudText Typo="Typo.body2">Create: @preview.ToCreate.Count, Update: @preview.ToUpdate.Count, Delete: @preview.ToDelete.Count, Skip: @preview.Skipped.Count</MudText>
 
                                         @if (preview.ToCreate.Count > 0)
                                         {
@@ -217,6 +225,11 @@
                                         @if (preview.ToUpdate.Count > 0)
                                         {
                                             <LabelPreviewTable Heading="Labels to update" Labels="preview.ToUpdate" />
+                                        }
+
+                                        @if (preview.ToDelete.Count > 0)
+                                        {
+                                            <LabelPreviewTable Heading="Labels to delete" Labels="preview.ToDelete" />
                                         }
                                     </MudPaper>
                                 }
@@ -232,11 +245,24 @@
                                         <MudText Typo="Typo.subtitle1">@result.RepositoryFullName</MudText>
                                         @if (result.HasError)
                                         {
-                                            <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Outlined">@result.ErrorMessage</MudAlert>
+                                            @if (!string.IsNullOrWhiteSpace(result.ErrorMessage))
+                                            {
+                                                <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Outlined">@result.ErrorMessage</MudAlert>
+                                            }
+
+                                            @foreach (var deleteError in result.DeleteErrors)
+                                            {
+                                                <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Outlined">Failed to delete '@deleteError.LabelName': @deleteError.ErrorMessage</MudAlert>
+                                            }
+
+                                            @if (result.CreatedCount > 0 || result.UpdatedCount > 0 || result.DeletedCount > 0 || result.SkippedCount > 0)
+                                            {
+                                                <MudText Typo="Typo.body2">Created: @result.CreatedCount, Updated: @result.UpdatedCount, Deleted: @result.DeletedCount, Skipped: @result.SkippedCount</MudText>
+                                            }
                                         }
                                         else
                                         {
-                                            <MudText Typo="Typo.body2">Created: @result.CreatedCount, Updated: @result.UpdatedCount, Skipped: @result.SkippedCount</MudText>
+                                            <MudText Typo="Typo.body2">Created: @result.CreatedCount, Updated: @result.UpdatedCount, Deleted: @result.DeletedCount, Skipped: @result.SkippedCount</MudText>
                                         }
                                     </MudPaper>
                                 }

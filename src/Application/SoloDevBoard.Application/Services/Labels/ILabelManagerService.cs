@@ -79,14 +79,16 @@ public interface ILabelManagerService
     /// <summary>Builds a preview for applying a recommended taxonomy to repositories.</summary>
     /// <param name="strategyId">The recommended strategy identifier.</param>
     /// <param name="repositories">The target repositories in owner/repository format.</param>
+    /// <param name="removeLabelsOutsideTaxonomy">When <see langword="true" />, includes labels to delete that are not in the strategy set.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
-    /// <returns>A read-only list of repository previews showing create, update, and skip actions.</returns>
-    Task<IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto>> PreviewRecommendedTaxonomyAsync(string strategyId, IReadOnlyList<string> repositories, CancellationToken cancellationToken = default);
+    /// <returns>A read-only list of repository previews showing create, update, delete, and skip actions.</returns>
+    Task<IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto>> PreviewRecommendedTaxonomyAsync(string strategyId, IReadOnlyList<string> repositories, bool removeLabelsOutsideTaxonomy = false, CancellationToken cancellationToken = default);
 
     /// <summary>Applies a recommended taxonomy to repositories and returns per-repository summaries.</summary>
     /// <param name="strategyId">The recommended strategy identifier.</param>
     /// <param name="repositories">The target repositories in owner/repository format.</param>
+    /// <param name="removeLabelsOutsideTaxonomy">When <see langword="true" />, deletes labels not in the strategy set after create and update.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>A read-only list of per-repository results.</returns>
-    Task<IReadOnlyList<RecommendedTaxonomyRepositoryResultDto>> ApplyRecommendedTaxonomyAsync(string strategyId, IReadOnlyList<string> repositories, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<RecommendedTaxonomyRepositoryResultDto>> ApplyRecommendedTaxonomyAsync(string strategyId, IReadOnlyList<string> repositories, bool removeLabelsOutsideTaxonomy = false, CancellationToken cancellationToken = default);
 }
