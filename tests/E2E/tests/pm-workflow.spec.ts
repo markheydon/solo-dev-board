@@ -174,6 +174,6 @@ test.describe('Repo Management', () => {
         .or(page.getByTestId('pm-workflow-repository-summary-partial-failure'))
         .or(page.getByTestId('pm-workflow-repository-summary-loading')),
     ).toBeVisible();
-    await expect(noBoardAlert.or(page.getByTestId('pm-workflow-board-select'))).toBeVisible();
+    await expect(noBoardAlert.or(page.getByTestId('pm-workflow-board-select')).first()).toBeVisible();
   });
 });

@@ -16,21 +16,4 @@ public sealed class PmSettingsDefaultsTests
         Assert.Equal(3, settings.StallDays);
         Assert.Equal(14, settings.NeglectDays);
     }
-
-    [Theory]
-    [InlineData(nameof(PmSettingsDefaults.Capacity), 8)]
-    [InlineData(nameof(PmSettingsDefaults.StallDays), 3)]
-    [InlineData(nameof(PmSettingsDefaults.NeglectDays), 14)]
-    public void DefaultConstants_MatchWireframeThresholds(string constantName, int expectedValue)
-    {
-        var actualValue = constantName switch
-        {
-            nameof(PmSettingsDefaults.Capacity) => PmSettingsDefaults.Capacity,
-            nameof(PmSettingsDefaults.StallDays) => PmSettingsDefaults.StallDays,
-            nameof(PmSettingsDefaults.NeglectDays) => PmSettingsDefaults.NeglectDays,
-            _ => throw new ArgumentOutOfRangeException(nameof(constantName), constantName, "Unexpected PM settings default constant."),
-        };
-
-        Assert.Equal(expectedValue, actualValue);
-    }
 }
