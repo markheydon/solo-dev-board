@@ -25,6 +25,16 @@ public sealed class PlanningFocusOrderSequencerTests
         Assert.Null(result);
     }
 
+    [Fact]
+    public void DescribeFocusOrderSkipReason_StoryLabelWithoutFocusOrderField_ReturnsUnavailableMessage()
+    {
+        var result = PlanningFocusOrderSequencer.DescribeFocusOrderSkipReason(
+            [PlanningFocusOrderSequencer.StoryTypeLabel],
+            hasFocusOrderField: false);
+
+        Assert.Equal(PlanningFocusOrderSequencer.FocusOrderUnavailableMessage, result);
+    }
+
     [Theory]
     [InlineData("type/story", true)]
     [InlineData("type/enabler", true)]

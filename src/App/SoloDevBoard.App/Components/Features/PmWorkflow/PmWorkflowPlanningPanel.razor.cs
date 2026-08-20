@@ -260,7 +260,7 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
                 .ConfigureAwait(false);
 
             Snackbar.Add(
-                FormatAddToUpNextMessage(candidate, result),
+                FormatAddToUpNextMessage(candidate, result, planningView?.HasFocusOrderField ?? true),
                 Severity.Success,
                 configure: config => config.VisibleStateDuration = 5000);
 
@@ -329,7 +329,8 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
 
     private static string FormatAddToUpNextMessage(
         IterationPlanningCandidateDto candidate,
-        IterationPlanningAddToUpNextResultDto result)
+        IterationPlanningAddToUpNextResultDto result,
+        bool hasFocusOrderField)
     {
         var itemReference = FormatItemReference(candidate.RepositoryFullName, candidate.Number);
 
@@ -340,7 +341,9 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
 
         if (result.FocusOrderSkipped)
         {
-            var skipReason = PlanningFocusOrderSequencer.DescribeFocusOrderSkipReason(candidate.Labels)
+            var skipReason = PlanningFocusOrderSequencer.DescribeFocusOrderSkipReason(
+                candidate.Labels,
+                hasFocusOrderField)
                 ?? "Focus Order was not assigned.";
             return $"Added {itemReference} to Up Next. {skipReason}.";
         }

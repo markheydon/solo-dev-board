@@ -131,7 +131,9 @@
                                             }
                                             else
                                             {
-                                                var skipReason = PlanningFocusOrderSequencer.DescribeFocusOrderSkipReason(item.Labels);
+                                                var skipReason = PlanningFocusOrderSequencer.DescribeFocusOrderSkipReason(
+                                                    item.Labels,
+                                                    planningView.HasFocusOrderField);
                                                 if (skipReason is not null)
                                                 {
                                                     <MudText Typo="Typo.caption" data-testid="pm-workflow-planning-focus-order-skipped">
@@ -230,7 +232,9 @@
                                             }
                                             else
                                             {
-                                                var skipReason = PlanningFocusOrderSequencer.DescribeFocusOrderSkipReason(candidate.Labels);
+                                                var skipReason = PlanningFocusOrderSequencer.DescribeFocusOrderSkipReason(
+                                                    candidate.Labels,
+                                                    planningView.HasFocusOrderField);
                                                 if (skipReason is not null)
                                                 {
                                                     <MudText Typo="Typo.caption" data-testid="pm-workflow-planning-candidate-focus-order-skipped">

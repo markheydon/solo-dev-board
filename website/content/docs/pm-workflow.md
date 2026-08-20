@@ -171,14 +171,14 @@ If the column is empty, an informational sentence explains that no items are in 
 Below the batch, a searchable list shows open issues and pull requests from included repositories that are not already **Up Next** or **In Progress** on the board (and not parked in **Blocked** or **Ice Box**).
 
 - **Search** matches title, repository name, or item number.
-- **Issues** and **Pull requests** checkboxes filter the list.
+- The **Type** dropdown filters the list (`All types`, **Issues**, or **Pull requests**).
 - Each row shows an **Issue** or **PR** chip, `owner/name#number`, the title, the current board Status when the item is already on the board, and **Add to Up Next**.
 
 Choosing **Add to Up Next**:
 
 1. Adds the item to the board when it is not already a card (same add-item flow as Triage).
 2. Sets board Status to **Up Next** (matched by option name, case-insensitive).
-3. Assigns the next sequential Focus Order when the item has a `type/story`, `type/enabler`, or `type/test` label. Feature and Epic cards skip Focus Order.
+3. Assigns the next sequential Focus Order when the item has a `type/story`, `type/enabler`, or `type/test` label and the board exposes a Focus Order field. Feature and Epic cards skip Focus Order; story, enabler, and test cards still move to Up Next when the field is unavailable.
 
 A success snackbar confirms the add. Failure snackbars cover GitHub API errors and missing board fields. If some repository catalogues fail but others succeed, a warning lists the failed repositories while candidates from the rest still load.
 
@@ -205,7 +205,7 @@ The same shared chrome described under Daily Focus appears on this tab.
 
 Until a board is selected, an informational alert explains that other tabs need a board. You can still edit Repo Management settings below.
 
-Board occupancy on Daily Focus counts mapped Issue and Pull Request cards. Recommendations, stalled Up Next items, stalled review pull requests, and Backlog Review honour repository exclusions. Planning candidates will also honour exclusions when that panel ships.
+Board occupancy on Daily Focus counts mapped Issue and Pull Request cards. Recommendations, stalled Up Next items, stalled review pull requests, Backlog Review, and Planning candidates honour repository exclusions.
 
 ### Set planning thresholds
 
@@ -224,7 +224,7 @@ Under **Planning thresholds**:
 
 The **Repository participation** section shows how many repositories are included and excluded. Every active repository participates in PM queries by default. Archived repositories are never offered.
 
-Excluded repositories are omitted from Daily Focus recommendations, stalled Up Next, stalled review pull requests, and Backlog Review, and, when it ships, Planning candidates.
+Excluded repositories are omitted from Daily Focus recommendations, stalled Up Next, stalled review pull requests, Backlog Review, and Planning candidates.
 
 **Included repositories** lists active `owner/name` values that currently participate:
 

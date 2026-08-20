@@ -111,14 +111,14 @@ public sealed class IterationPlanningService : IIterationPlanningService
         _projectItemCatalogueService.InvalidateCatalogue(projectId);
 
         var assignsFocusOrder = PlanningFocusOrderSequencer.ShouldAssignFocusOrder(labels);
+        var hasFocusOrderField = !string.IsNullOrWhiteSpace(catalogue.FieldIds.FocusOrderFieldId);
         double? focusOrderAssigned = null;
+        var focusOrderSkipped = !assignsFocusOrder || !hasFocusOrderField;
 
-        if (assignsFocusOrder)
+        if (assignsFocusOrder && hasFocusOrderField)
         {
-            if (string.IsNullOrWhiteSpace(catalogue.FieldIds.FocusOrderFieldId))
-            {
-                throw new InvalidOperationException("The project board does not expose a Focus Order field.");
-            }
+            var focusOrderFieldId = catalogue.FieldIds.FocusOrderFieldId;
+            ArgumentException.ThrowIfNullOrWhiteSpace(focusOrderFieldId);
 
             var refreshedCatalogue = await _projectItemCatalogueService
                 .GetCatalogueAsync(projectId, cancellationToken)
@@ -129,12 +129,13 @@ public sealed class IterationPlanningService : IIterationPlanningService
                 .Where(item => !item.ProjectItemId.Equals(projectItemId, StringComparison.Ordinal))
                 .ToArray();
             focusOrderAssigned = PlanningFocusOrderSequencer.GetNextFocusOrder(upNextItems);
+            focusOrderSkipped = false;
 
             await _projectItemCatalogueService
                 .UpdateFocusOrderAsync(
                     projectId,
                     projectItemId,
-                    catalogue.FieldIds.FocusOrderFieldId,
+                    focusOrderFieldId,
                     focusOrderAssigned.Value,
                     cancellationToken)
                 .ConfigureAwait(false);
@@ -143,7 +144,7 @@ public sealed class IterationPlanningService : IIterationPlanningService
         return new IterationPlanningAddToUpNextResultDto(
             addedBoardCard,
             focusOrderAssigned,
-            FocusOrderSkipped: !assignsFocusOrder);
+            focusOrderSkipped);
     }
 
     private static ProjectBoardStatusOptionDto ResolveUpNextStatusOption(

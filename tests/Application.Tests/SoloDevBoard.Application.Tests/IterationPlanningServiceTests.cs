@@ -133,6 +133,52 @@ public sealed class IterationPlanningServiceTests
     }
 
     [Fact]
+    public async Task AddToUpNextAsync_StoryLabelWithoutFocusOrderField_SetsStatusAndSkipsFocusOrder()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var catalogue = CreateCatalogue(existingItem: null, includeFocusOrderField: false);
+        _projectItemCatalogueService
+            .GetCatalogueAsync("project-id", cancellationToken)
+            .Returns(catalogue);
+        _gitHubService
+            .AddTriageItemToProjectBoardAsync("owner", "repo", 54, "project-id", cancellationToken)
+            .Returns("PVTI_story");
+
+        var sut = CreateSut();
+        var labels = new[] { PlanningFocusOrderSequencer.StoryTypeLabel, "priority/medium" };
+
+        var result = await sut.AddToUpNextAsync(
+            "project-id",
+            PmWorkItemTypeDto.Issue,
+            "owner/repo",
+            54,
+            labels,
+            cancellationToken);
+
+        Assert.True(result.AddedBoardCard);
+        Assert.Null(result.FocusOrderAssigned);
+        Assert.True(result.FocusOrderSkipped);
+
+        await _gitHubService.Received(1)
+            .UpdateProjectBoardItemStatusAsync(
+                "project-id",
+                "PVTI_story",
+                "PVTF_status",
+                "opt-up-next",
+                cancellationToken);
+        await _projectItemCatalogueService.Received(1)
+            .GetCatalogueAsync("project-id", cancellationToken);
+        await _projectItemCatalogueService.DidNotReceive()
+            .UpdateFocusOrderAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<double>(),
+                Arg.Any<CancellationToken>());
+        _projectItemCatalogueService.Received(1).InvalidateCatalogue("project-id");
+    }
+
+    [Fact]
     public async Task AddToUpNextAsync_MissingUpNextStatus_ThrowsInvalidOperationException()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
@@ -160,7 +206,8 @@ public sealed class IterationPlanningServiceTests
 
     private static ProjectBoardItemCatalogueDto CreateCatalogue(
         ProjectBoardItemDto? existingItem,
-        bool includeUpNextOption = true)
+        bool includeUpNextOption = true,
+        bool includeFocusOrderField = true)
     {
         var statusOptions = new List<ProjectBoardStatusOptionDto>
         {
@@ -184,7 +231,9 @@ public sealed class IterationPlanningServiceTests
         }
 
         return new ProjectBoardItemCatalogueDto(
-            new ProjectBoardFieldIdsDto("PVTF_status", "PVTF_focus"),
+            new ProjectBoardFieldIdsDto(
+                "PVTF_status",
+                includeFocusOrderField ? "PVTF_focus" : string.Empty),
             statusOptions,
             items);
     }
