@@ -1,4 +1,5 @@
 {{ define "main" }}
+  {{- .Store.Set "reversePagination" (.Params.reversePagination | default false) -}}
   <div class='hx:mx-auto hx:flex hextra-max-page-width'>
     {{ partial "sidebar.html" (dict "context" .) }}
     {{ partial "toc.html" . }}
@@ -12,7 +13,10 @@
               {{ partial "feature-icon.html" (dict "page" .) }}
               <span>{{ .Title }}</span>
             </h1>
-            {{ partial "components/page-context-menu" . }}
+            <div class="hx:flex hx:flex-wrap hx:items-center hx:gap-2">
+              {{ partial "guide-status-badge.html" . }}
+              {{ partial "components/page-context-menu" . }}
+            </div>
           </div>
           {{ end }}
           {{ .Content }}

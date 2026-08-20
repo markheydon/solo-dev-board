@@ -241,7 +241,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Enable CD pipeline with production environment gate (`.github/workflows/cd.yml` via `aspire deploy`). _(#251)_
 - [x] Write end-to-end tests for critical user journeys. _(#255; see tests/E2E/CRITICAL_JOURNEYS.md.)_
 - [x] Update hosted-authentication documentation for GitHub App-first hosted sign-in, admission-control allow-lists, PAT-only local trusted mode, and fallback boundaries. _(#119; completed on 2026-03-16; see docs/getting-started.md, docs/hosted-authentication.md, and website/content/_index.md.)_
-- [x] Write comprehensive end-user documentation for all shipped features under `website/`. _(#256; Hugo site + screenshots; `pm-workflow.md` remains draft until Cross-Repo PM Workflow ships in v1.1.0)_
+- [x] Write comprehensive end-user documentation for all shipped features under `website/`. _(#256; Hugo site + screenshots; Cross-Repo PM Workflow guide published with v1.1.0 four-tab behaviour)_
 - [x] Public product site: landing, User Guide IA, About narrative, `website/` rename, canonical `solodevboard.com`. _(#358; see plan/product-site-project-plan.md and DEC-023.)_
 - [x] Optional shared Azure Container Registry for CD (opt-in `acr-name` / `acr-resource-group`; default Aspire registry unchanged). _(#372)_
 - [x] Tag v1.0.0 release on GitHub with release notes. _(#257)_

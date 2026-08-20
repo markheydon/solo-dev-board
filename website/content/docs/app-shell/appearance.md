@@ -18,9 +18,21 @@ SoloDevBoard supports three theme modes so you can match your operating system p
 
 ## Changing the theme
 
-1. Open any page that uses the main application shell (for example, Repositories or Audit Dashboard).
-2. Click the **theme** button in the app bar (the icon changes to reflect the current mode).
-3. Each click cycles through **Automatic → Light → Dark → Automatic**.
+{{% steps %}}
+
+### Open the application shell
+
+Open any page that uses the main application shell (for example, Repositories or Audit Dashboard).
+
+### Use the theme button
+
+Click the **theme** button in the app bar (the icon changes to reflect the current mode).
+
+### Cycle modes
+
+Each click cycles through **Automatic → Light → Dark → Automatic**.
+
+{{% /steps %}}
 
 The button's accessible name describes the current mode and the mode that will be activated next (for example, `Theme: light. Activate dark mode.`).
 

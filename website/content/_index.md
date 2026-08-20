@@ -22,7 +22,7 @@ title: SoloDevBoard
 </p>
 
 <p class="hx:text-base hx:leading-7 hx:text-gray-700 hx:dark:text-gray-300 hx:mb-4">
-  The project grew out of the AI-driven PM workflow in <a href="https://github.com/markheydon/github-workflows">markheydon/github-workflows</a>: a weekly or fortnightly <strong>PM Mode</strong> to scan and curate work, and a daily <strong>Work Mode</strong> to pick the next item and execute. SoloDevBoard is the visual interface for that operating system, delivered as individual tools first.
+  The project grew out of the AI-driven PM workflow in <a href="https://github.com/markheydon/github-workflows">markheydon/github-workflows</a>: a weekly or fortnightly <strong>PM Mode</strong> to scan and curate work, and a daily <strong>Work Mode</strong> to pick the next item and execute. SoloDevBoard is the visual interface for that operating system — including Cross-Repo PM Workflow alongside audit, labels, triage, and related tools.
 </p>
 
 <p class="hx:text-base hx:leading-7 hx:text-gray-700 hx:dark:text-gray-300 hx:mb-8">

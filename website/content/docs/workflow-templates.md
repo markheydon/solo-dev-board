@@ -1,5 +1,5 @@
 ---
-weight: 90
+weight: 70
 title: Workflow Templates
 landing: true
 landingIcon: account_tree
@@ -21,6 +21,8 @@ Key goals of Workflow Templates:
 ---
 
 ## How to Use
+
+{{% steps %}}
 
 ### Browse built-in templates
 
@@ -64,11 +66,20 @@ When a template and repositories are selected, the detail panel shows workflow s
 
 Drift detection is informational and does not block browsing or previewing templates. Review drift warnings before applying if you need to preserve local customisations.
 
+{{% /steps %}}
+
+### What is coming later
+
+- Custom template repositories so you can maintain organisation-specific templates outside the built-in catalogue.
+- Persisted default parameter profiles so common values can be reused across apply runs without re-entering them each time.
+
 ---
 
 ## Configuration
 
-> **Scope note** — Built-in templates, parameterisation, apply, and drift detection are available now. Custom template repositories and persisted default parameter profiles are planned for a later release.
+{{< callout type="info" >}}
+**Scope note** — Built-in templates, parameterisation, apply, and drift detection are available now. Custom template repositories and persisted default parameter profiles are planned for a later release.
+{{< /callout >}}
 
 Current behaviour:
 

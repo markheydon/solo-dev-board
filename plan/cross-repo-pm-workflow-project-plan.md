@@ -15,7 +15,7 @@ The sixteen child stories (#273–#288) were created as one-line stubs. This pla
 - Backlog Review groups cross-repo issues and PRs by urgency, flags missing `type/` or `priority/` labels, near-complete epics, and neglected repositories.
 - Iteration Planning moves selected items to Up Next with Focus Order, enforces a soft capacity limit, and requires stalled Up Next resolution first.
 - Excluded repositories persist in the browser and are omitted from PM queries (except raw board occupancy).
-- User guide `website/content/docs/pm-workflow.md` can drop `draft: true` only when the four pages match the guide; Playwright maps the published page.
+- User guide `website/content/docs/pm-workflow.md` is published when the four pages match the guide; Playwright maps the published page.
 
 ### Key milestones (no calendar dates)
 
@@ -87,7 +87,7 @@ See [cross-repo-pm-workflow-issues-checklist.md](cross-repo-pm-workflow-issues-c
 - [ ] All child stories, enablers, and tests closed or explicitly deferred.
 - [ ] Wireframe behaviour present on the four routes.
 - [ ] Unit tests for services; bUnit for page shells; Playwright spec for `/pm-workflow` empty/error/nav.
-- [ ] `website/content/docs/pm-workflow.md` published (not draft) and `tests/E2E/USER_DOCS_ALIGNMENT.md` updated.
+- [x] `website/content/docs/pm-workflow.md` published (not draft) and `tests/E2E/USER_DOCS_ALIGNMENT.md` updated.
 - [ ] No secrets in localStorage.
 
 ## Priority and value

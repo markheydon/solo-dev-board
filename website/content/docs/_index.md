@@ -2,17 +2,27 @@
 title: User Guide
 linkTitle: User Guide
 weight: 1
+cascade:
+  params:
+    reversePagination: false
 ---
 
 Guides for using SoloDevBoard in the app. Developer and operator material (local setup, deployment, hosted authentication, observability, and related topics) lives in the repository [`docs/`](https://github.com/markheydon/solo-dev-board/tree/main/docs) folder and is not published on this site.
 
 ## Features
 
+Feature guides follow the same order as the application navigation drawer (Audit Dashboard through PM Workflow). Prev/next links walk this feature set only.
+
 {{< guide-feature-table >}}
 
-## Coming later
+## App shell
 
-- Cross-Repo PM Workflow — Daily Focus occupancy, recommendations, stalled Up Next alerts, stalled review pull requests, Backlog Review grouping, and Repo Management (including per-repository counts) are in the app; the user guide remains `draft: true` until Planning ships.
+Appearance and About are reached from the app bar (theme control and **More options**), not from the navigation drawer. They form a separate sidebar section with their own prev/next chain.
+
+{{< cards cols="2" >}}
+  {{< card link="app-shell/appearance/" title="Appearance" icon="sun" subtitle="Theme modes (Automatic, Light, and Dark)." >}}
+  {{< card link="app-shell/about/" title="About" icon="information-circle" subtitle="Version, runtime, and authentication details." >}}
+{{< /cards >}}
 
 ## Related repository docs
 

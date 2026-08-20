@@ -6,17 +6,18 @@
 >
 {{- range $pages }}
   {{- $title := .Title -}}
-  <div
-    class="hextra-feature-card not-prose hx:block hx:relative hx:overflow-hidden hx:rounded-3xl hx:border hx:border-gray-200 hx:dark:border-neutral-800 hx:before:pointer-events-none hx:before:absolute hx:before:inset-0 hx:before:bg-glass-gradient"
+  <a
+    href="{{ .RelPermalink }}"
+    class="hextra-feature-card landing-feature-card not-prose hx:block hx:relative hx:overflow-hidden hx:rounded-3xl hx:border hx:border-gray-200 hx:dark:border-neutral-800 hx:before:pointer-events-none hx:before:absolute hx:before:inset-0 hx:before:bg-glass-gradient hx:no-underline hx:transition-colors hx:hover:border-primary-300 hx:dark:hover:border-primary-700"
     style="background: radial-gradient(ellipse at 50% 80%, rgba(59, 130, 246, 0.08), hsla(0, 0%, 100%, 0));"
   >
     <div class="hx:relative hx:w-full hx:p-6">
-      <h3 class="hx:text-2xl hx:font-medium hx:leading-6 hx:mb-2 landing-feature-heading">
+      <h3 class="hx:text-2xl hx:font-medium hx:leading-6 hx:mb-2 landing-feature-heading hx:text-gray-900 hx:dark:text-gray-50">
         {{ partial "feature-icon.html" (dict "page" .) }}
         <span>{{ $title }}</span>
       </h3>
       <p class="hx:text-gray-500 hx:dark:text-gray-400 hx:text-sm hx:leading-6">{{ .Params.landingSubtitle }}</p>
     </div>
-  </div>
+  </a>
 {{- end }}
 </div>

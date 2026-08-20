@@ -1,31 +1,31 @@
 ---
 title: Cross-Repo PM Workflow
-draft: true
-weight: 110
-guideStatus: Partially Available
----
-
-> ⚠️ **Partial delivery** — Daily Focus, Backlog Review grouping, Iteration Planning, and Repo Management are available in the app under **PM Workflow**. Capacity guidance, stalled Up Next gates, and bulk milestone assignment remain planned. This guide remains a draft until all four tabs match the wireframe; only the sections below describe current behaviour.
-
+weight: 80
+landing: true
+landingIcon: view_week
+landingSubtitle: "Plan and execute work across repositories with Daily Focus, Backlog Review, Iteration Planning, and Repo Management."
+guideStatus: Available
 ---
 
 ## Overview
 
 The Cross-Repo PM Workflow brings a structured, two-mode operating system into SoloDevBoard so you can plan and execute work across your own GitHub repositories from one visual interface.
 
+![PM Workflow Daily Focus with SoloDevBoard Roadmap occupancy and recommendations](/images/pm-workflow/daily-focus.png)
+
 The system is built around two modes of operation:
 
 - **PM Mode** (weekly or fortnightly) — Active curation: review your backlog across all repositories, resolve stalled work, and populate your project board with a realistic set of committed items for the next few days.
-- **Work Mode** (daily) — Execution: the project board is the single pane of glass. Open it, pick the next item, and get things done. Daily Focus currently shows occupancy and active load for the selected planning board, stalled Up Next items, the top three unblocked items from all included repositories, and pull requests that have been waiting on review for the configured **Stall days** threshold (default 3).
+- **Work Mode** (daily) — Execution: the project board is the single pane of glass. Open it, pick the next item, and get things done. Daily Focus shows occupancy and active load for the selected planning board, stalled Up Next items, the top three unblocked items from all included repositories, and pull requests that have been waiting on review for the configured **Stall days** threshold (default 3).
 
-### What is available now
+### Tabs
 
-| Tab | Route | Status |
-|-----|-------|--------|
-| **Daily Focus** | `/pm-workflow/daily-focus` | **Partial** — Status occupancy chips, active load, stalled Up Next, top-three recommendations, and pull requests awaiting review for the configured Stall days threshold. |
-| **Backlog** | `/pm-workflow/backlog` | **Partial** — search, type and repository filters, Urgent, Ready to start, Awaiting triage, Blocked/deferred, Epics near completion, and Neglected repositories panels. Issue and pull request kind chips appear on grouped rows. Urgent items are omitted from Ready to start. |
-| **Planning** | `/pm-workflow/planning` | **Partial** — Up Next batch list, searchable candidate picker across included repositories, and **Add to Up Next** writes with sequential Focus Order for stories, enablers, and tests. Feature and Epic cards skip Focus Order. |
-| **Repos** | `/pm-workflow/repos` | **Available** — planning board selection, thresholds, repository exclusions, and per-repository open-work counts. |
+| Tab | Route | What it does |
+|-----|-------|--------------|
+| **Daily Focus** | `/pm-workflow/daily-focus` | Status occupancy chips, active load, stalled Up Next, top-three recommendations, and pull requests awaiting review for the configured Stall days threshold. |
+| **Backlog** | `/pm-workflow/backlog` | Search, type and repository filters, plus Urgent, Ready to start, Awaiting triage, Blocked/deferred, Epics near completion, and Neglected repositories panels. Issue and pull request kind chips appear on grouped rows. Urgent items are omitted from Ready to start. |
+| **Planning** | `/pm-workflow/planning` | Capacity guidance, stalled Up Next resolution gate, Up Next batch list with optional bulk milestone assignment, searchable candidate picker, and **Add to Up Next** with sequential Focus Order for stories, enablers, and tests. Feature and Epic cards skip Focus Order. |
+| **Repos** | `/pm-workflow/repos` | Planning board selection, thresholds, repository exclusions, and per-repository open-work counts. |
 
 Open **PM Workflow** from the Home card or the navigation drawer. The hub redirects to **Daily Focus**.
 
@@ -43,7 +43,7 @@ These conventions are product behaviour, not upstream dogfood. They mirror the p
 
 ---
 
-## Daily Focus (partial)
+## Daily Focus
 
 Daily Focus is a read-only morning snapshot. Occupancy and active load describe the selected planning board. Stalled Up Next items surface when the stall threshold is reached. **Recommended today** lists the top three unblocked items from all included repositories, not only cards on that board. Stalled review pull requests show which PRs have been waiting on review for too long.
 
@@ -59,9 +59,13 @@ Shared chrome on every PM Workflow tab includes:
 - **Status line** — `Repos: N included`, selected board title (when chosen), last refreshed time, and a **Refresh** control to reload board options and the repository catalogue.
 - **Tab strip** — Daily Focus, Backlog, Planning, and Repos.
 
-If GitHub reports linked project boards that cannot be read with your current sign-in (common for private user-owned boards under GitHub App sign-in), a warning appears at the top of the page. See [plan/GITHUB_PROJECTS_V2_ACCESS.md](https://github.com/markheydon/solo-dev-board/blob/main/plan/GITHUB_PROJECTS_V2_ACCESS.md) in the repository.
+If GitHub reports linked project boards that cannot be read with your current sign-in, a warning appears at the top of the page. This is common for **private user-owned** Projects v2 boards when you use hosted GitHub App sign-in: GitHub can list the board as linked to a repository while the App token cannot read it (`Resource not accessible by integration`). Public linked boards still load normally.
 
-Until a board is selected, an informational alert points at the **Planning board** dropdown. Occupancy, stalled Up Next items, and recommendations load as soon as you open Daily Focus when a board is already stored, or as soon as you choose one. Backlog Review uses the same board selection. Use the **Repos** tab to edit exclusions and thresholds.
+{{< callout type="important" >}}
+To work with private boards today, switch to PAT mode with the `read:project` scope, or make the project public so hosted sign-in can read it.
+{{< /callout >}}
+
+Until a board is selected, an informational alert points at the **Planning board** dropdown. Occupancy, stalled Up Next items, and recommendations load as soon as you open Daily Focus when a board is already stored, or as soon as you choose one. Backlog Review and Iteration Planning use the same board selection. Use the **Repos** tab to edit exclusions and thresholds.
 
 A progress bar at the top of the page shows while planning boards are discovered. Switching tabs does not restart that load.
 
@@ -109,9 +113,11 @@ If no pull requests meet the threshold, an informational alert says so. If the l
 
 ---
 
-## Backlog Review (partial)
+## Backlog Review
 
-Backlog Review is a read-only weekly PM pass across included repositories. It groups open issues and pull requests into urgency panels. Rows open GitHub in a new tab. Adding work to **Up Next** remains on the Planning tab.
+Backlog Review is a read-only weekly PM pass across included repositories. It groups open issues and pull requests into urgency panels. Rows open GitHub in a new tab. Adding work to **Up Next** happens on the **Planning** tab.
+
+![PM Workflow Backlog Review with urgency panels for SoloDevBoard Roadmap](/images/pm-workflow/backlog.png)
 
 ### Accessing
 
@@ -149,9 +155,11 @@ If there are no open issues or pull requests in included repositories, an inform
 
 ---
 
-## Iteration Planning (partial)
+## Iteration Planning
 
-Iteration Planning populates the selected planning board's **Up Next** column from open work across included repositories.
+Iteration Planning populates the selected planning board's **Up Next** column from open work across included repositories. It also shows capacity against your limit, blocks new adds while stalled Up Next items remain, and can assign a shared milestone to selected batch items.
+
+![PM Workflow Iteration Planning with capacity, Up Next batch, and candidates](/images/pm-workflow/planning.png)
 
 ### Accessing
 
@@ -160,11 +168,48 @@ Iteration Planning populates the selected planning board's **Up Next** column fr
 
 The same shared chrome described under Daily Focus appears on this tab. Until a board is selected, an informational alert points at the **Planning board** dropdown.
 
+### Capacity
+
+When a board is selected, Planning shows **Capacity** as active load over the persisted **Capacity limit** (default 8), with a progress bar.
+
+- **Active load** is **Up Next** plus **In Progress** on the selected board (same definition as Daily Focus).
+- When load is at or above the limit, a warning caption appears and the bar uses a warning colour.
+- Edit the limit on the **Repos** tab under **Planning thresholds**.
+
+Capacity is a soft ceiling. Choosing **Add to Up Next** when the next item would exceed the limit opens a confirmation dialog (**Exceed capacity limit?**). **Add anyway** continues; **Cancel** leaves the board unchanged.
+
+### Resolve stalled Up Next before adding
+
+If any Up Next item is stalled for the configured **Stall days** threshold (same inclusive clock as Daily Focus), Planning shows a warning and a **Resolve stalled Up Next before adding** table. **Add to Up Next** stays disabled until every stalled item is handled.
+
+Each stalled row shows `owner/name#number`, title, age, and four actions:
+
+| Action | Effect |
+|--------|--------|
+| **Re-commit** | Clears the stall clock by refreshing the item's Status touch so the stall age restarts while the item stays in Up Next. |
+| **Mark Blocked** | Moves the card to **Blocked** and applies the `status/blocked` label where appropriate. |
+| **Ice Box** | Moves the card to **Ice Box** and applies the `status/ice-box` label where appropriate. |
+| **Remove** | Returns the item from Up Next (clears Focus Order when present). |
+
+Success and failure snackbars confirm each resolution. After a successful action, Planning reloads so occupancy and the gate update together.
+
 ### This batch (Up Next)
 
-When a board is selected, the page lists items whose board Status is **Up Next**, ordered by Focus Order then title. Each row shows `owner/name#number`, the title, an optional **Focus Order** chip, and an **Open** link to GitHub.
+When a board is selected, the page lists items whose board Status is **Up Next**, ordered by Focus Order then title. Each row shows a selection checkbox, an **Issue** or **PR** chip, `owner/name#number`, the title, and an optional **Focus Order** chip (or a short skip reason for Feature and Epic cards).
+
+If the board exposes Focus Order, a **Next story Focus Order** hint appears above the table. If the field is missing, a warning explains that story, enabler, and test cards can still move to Up Next without Focus Order.
 
 If the column is empty, an informational sentence explains that no items are in Up Next yet.
+
+### Assign milestone to selected
+
+Below the Up Next table, **Assign milestone to selected** lists milestones that exist on every repository represented by the checked batch items.
+
+1. Select one or more Up Next rows.
+2. Choose a milestone title from the dropdown (or see **No shared milestones on selected repos** when none overlap).
+3. Select **Apply**.
+
+Assignment skips repositories that do not have that milestone title and summarises applied, skipped, and failed items in a snackbar. Bulk milestone is optional; you can plan without assigning one.
 
 ### Candidate picker
 
@@ -172,23 +217,24 @@ Below the batch, a searchable list shows open issues and pull requests from incl
 
 - **Search** matches title, repository name, or item number.
 - The **Type** dropdown filters the list (`All types`, **Issues**, or **Pull requests**).
-- Each row shows an **Issue** or **PR** chip, `owner/name#number`, the title, the current board Status when the item is already on the board, and **Add to Up Next**.
+- Each row shows an **Issue** or **PR** chip, `owner/name#number`, the title, the current board Status when the item is already on the board, the expected Focus Order outcome, and **Add to Up Next**.
 
 Choosing **Add to Up Next**:
 
-1. Adds the item to the board when it is not already a card (same add-item flow as Triage).
-2. Sets board Status to **Up Next** (matched by option name, case-insensitive).
-3. Assigns the next sequential Focus Order when the item has a `type/story`, `type/enabler`, or `type/test` label and the board exposes a Focus Order field. Feature and Epic cards skip Focus Order; story, enabler, and test cards still move to Up Next when the field is unavailable.
+1. Confirms if the add would exceed capacity (see [Capacity](#capacity)).
+2. Adds the item to the board when it is not already a card (same add-item flow as Triage).
+3. Sets board Status to **Up Next** (matched by option name, case-insensitive).
+4. Assigns the next sequential Focus Order when the item has a `type/story`, `type/enabler`, or `type/test` label and the board exposes a Focus Order field. Feature and Epic cards skip Focus Order; story, enabler, and test cards still move to Up Next when the field is unavailable.
 
 A success snackbar confirms the add. Failure snackbars cover GitHub API errors and missing board fields. If some repository catalogues fail but others succeed, a warning lists the failed repositories while candidates from the rest still load.
 
-> **Scope note** — Capacity soft cap, stalled Up Next gate before adding work, and bulk milestone assignment remain on stories [#284](https://github.com/markheydon/solo-dev-board/issues/284)–[#286](https://github.com/markheydon/solo-dev-board/issues/286).
-
 ---
 
-## Repo Management (available)
+## Repo Management
 
 Repo Management controls which repositories and which Projects v2 board participate in PM operations. Settings persist in your browser (see [Configuration](#configuration)).
+
+![PM Workflow Repo Management with SoloDevBoard Roadmap, thresholds, and filtered participation](/images/pm-workflow/repos.png)
 
 ### Accessing
 
@@ -213,9 +259,9 @@ Under **Planning thresholds**:
 
 | Field | Default | Purpose |
 |-------|---------|---------|
-| **Capacity limit** | 8 | Denominator for Daily Focus active load, and the planned ceiling for Planning warnings. |
-| **Stall days** | 3 | Inclusive days before Daily Focus treats an Up Next item or pull request awaiting review as stalled. |
-| **Neglect days** | 14 | Days before a repository is treated as neglected in backlog views. |
+| **Capacity limit** | 8 | Denominator for Daily Focus and Planning active load, and the soft ceiling for the Planning capacity confirmation. |
+| **Stall days** | 3 | Inclusive days before Daily Focus and Planning treat an Up Next item as stalled, and before Daily Focus treats a pull request awaiting review as stalled. |
+| **Neglect days** | 14 | Days before a repository is treated as neglected in Backlog Review. |
 
 1. Adjust the numeric fields.
 2. Select **Save thresholds**.
@@ -224,7 +270,7 @@ Under **Planning thresholds**:
 
 The **Repository participation** section shows how many repositories are included and excluded. Every active repository participates in PM queries by default. Archived repositories are never offered.
 
-Excluded repositories are omitted from Daily Focus recommendations, stalled Up Next, stalled review pull requests, Backlog Review, and Planning candidates.
+Excluded repositories are omitted from Daily Focus recommendations, stalled review pull requests, Backlog Review, and Planning candidates. Board occupancy and stalled Up Next counts on the selected planning board still include cards from excluded repositories when those cards are on the board.
 
 **Included repositories** lists active `owner/name` values that currently participate:
 
@@ -255,40 +301,11 @@ The **Per-repository summary** table lists included repositories only:
 | **Last activity** | Latest catalogue item update, or the repository update time when there are no open items. |
 | **Included** | Always **Yes** in this table, because excluded repositories are omitted. |
 
-Counts are aggregated in memory from the Cross-Repo PM work-item catalogue (the same read model later Daily Focus and Backlog views use). There is no separate GitHub count or search endpoint. Opening Repo Management still loads that catalogue from GitHub (issues, pull requests, review metadata, and sub-issue summaries) when it runs. Daily Focus occupancy uses the project board catalogue, so this visit is often the first work-item catalogue load rather than a reuse of an already-fetched snapshot.
+Counts are aggregated in memory from the Cross-Repo PM work-item catalogue (the same read model Daily Focus recommendations and Backlog Review use). There is no separate GitHub count or search endpoint. Opening Repo Management still loads that catalogue from GitHub (issues, pull requests, review metadata, and sub-issue summaries) when it runs. Daily Focus occupancy uses the project board catalogue, so this visit is often the first work-item catalogue load rather than a reuse of an already-fetched snapshot.
 
 If some repositories fail to load, a warning lists them. Failed repositories are omitted from the table so unavailable counts are not shown as zero open work. **Retry** reloads the catalogue. A complete load failure shows an error with **Retry**.
 
 Use this table to see load at a glance before excluding a repository or planning the next iteration.
-
----
-
-## Key Capabilities (planned)
-
-The following sections describe the full v1.1.0 feature set. They are **not** available in the app yet.
-
-### Daily Focus (remaining)
-
-A quick morning summary that will also answer stalled-work questions:
-
-- Stalled items: anything in your Up Next column for three or more days (shipped on Daily Focus as described above).
-- Stalled PR reviews: shipped on Daily Focus as described above.
-- Top three recommended work items: shipped on Daily Focus as described above.
-
-### Backlog Review (remaining)
-
-The grouped view is shipped as described above. Still planned:
-
-- Adding selected items to **Up Next** directly from Backlog Review rows (use the **Planning** tab today).
-
-### Iteration Planning (remaining)
-
-The Up Next batch and candidate picker are shipped as described above. Still planned:
-
-- Capacity guidance using the persisted **Capacity limit**.
-- Stalled Up Next gate before adding new work.
-- Bulk milestone assignment for planned items.
-- Confirmation dialog when active load would exceed the capacity limit.
 
 ---
 
@@ -302,18 +319,10 @@ Persisted fields:
 |---------|-------------|
 | Planning board node id | GitHub GraphQL node id for the selected Projects v2 board. |
 | Excluded repositories | `owner/name` values omitted from PM queries. |
-| Capacity limit | Active load ceiling for planning (default 8). |
-| Stall days | Stall threshold for Up Next and review pull requests on Daily Focus (default 3). |
-| Neglect days | Repository neglect threshold (default 14). |
+| Capacity limit | Active load ceiling for Daily Focus and Planning (default 8). |
+| Stall days | Stall threshold for Up Next and review pull requests (default 3). |
+| Neglect days | Repository neglect threshold for Backlog Review (default 14). |
 
 Clearing site data for SoloDevBoard resets PM settings to defaults. Settings do not sync across browsers or devices.
 
 There are no `appsettings.json` entries for PM Workflow user preferences.
-
----
-
-## Related documentation
-
-- Wireframe: [`plan/wireframes/pm-workflow-wireframe.md`](https://github.com/markheydon/solo-dev-board/blob/main/plan/wireframes/pm-workflow-wireframe.md)
-- Decision: [DEC-029](https://github.com/markheydon/solo-dev-board/blob/main/plan/DECISIONS.md#dec-029-cross-repo-pm-workflow-board-selection-and-local-settings) (board selection and local settings)
-- Hardcoding audit: [`plan/HARDCODING_AUDIT_v1.1.md`](https://github.com/markheydon/solo-dev-board/blob/main/plan/HARDCODING_AUDIT_v1.1.md) (issue [#423](https://github.com/markheydon/solo-dev-board/issues/423))

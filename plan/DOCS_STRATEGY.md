@@ -110,6 +110,7 @@ Prefer screenshots that show a feature **in a useful, populated state**, not jus
 
 - Where a page offers a **Load** (or equivalent read-only fetch) action after repository selection, capture **after** selecting the example repository and loading data — not the pre-selection empty state.
 - Use **`markheydon/solo-dev-board`** as the canonical example repository wherever a repository name is required. This public repository is always available under docs capture mode and keeps screenshots consistent.
+- For PM Workflow and Board Rules captures that need a Projects v2 board, prefer the public **SoloDevBoard Roadmap** board linked to that repository rather than other public personal boards.
 - Favour **read-only** interactions: load audit summaries, browse labels, inspect board rules, start a triage session (without applying labels or closing issues), or select a workflow template. Do **not** apply migrations, synchronise labels, apply taxonomy, close issues, or write workflow files for documentation screenshots.
 - Static pages (Home, About, Appearance) may remain as opening-state captures when no repository-scoped load action exists.
 - The Repositories page loads its grid automatically; capture it with the repository list populated (optionally filtered to the example repository).

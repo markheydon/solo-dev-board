@@ -1,5 +1,5 @@
 ---
-weight: 30
+weight: 10
 title: Audit Dashboard
 landing: true
 landingIcon: analytics
@@ -29,15 +29,33 @@ The Audit Dashboard summarises open issues, open pull requests, and repository h
 
 ## How to use
 
-1. Open the Audit Dashboard from the app home page or navigation menu.
-2. Search and select the repositories you want to audit.
-3. Use **Select all** to include every active repository, or **Clear** to reset the selection.
-4. Click **Load selected repositories** to fetch audit data.
-5. Review the summary grid and KPI cards.
-6. Expand health sections for unlabelled issues, stale pull requests, failing workflows, and label consistency.
-7. Optionally set **Auto-refresh** to keep the summary up to date.
-8. Click **Export Markdown** to copy the current summary for planning notes.
-9. To change the repository set, adjust the selector and load again.
+{{% steps %}}
+
+### Open the dashboard
+
+Open the Audit Dashboard from the app home page or navigation menu.
+
+### Select repositories
+
+Search and select the repositories you want to audit. Use **Select all** to include every active repository, or **Clear** to reset the selection.
+
+### Load audit data
+
+Click **Load selected repositories** to fetch audit data.
+
+### Review summary and health
+
+Review the summary grid and KPI cards. Expand health sections for unlabelled issues, stale pull requests, failing workflows, and label consistency.
+
+### Optional refresh and export
+
+Optionally set **Auto-refresh** to keep the summary up to date. Click **Export Markdown** to copy the current summary for planning notes.
+
+### Change the selection
+
+To change the repository set, adjust the selector and load again.
+
+{{% /steps %}}
 
 ## Label consistency
 

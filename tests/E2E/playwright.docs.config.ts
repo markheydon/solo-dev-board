@@ -12,9 +12,10 @@ export default defineConfig({
   retries: 0,
   workers: 1,
   reporter: 'list',
-  timeout: 60_000,
+  timeout: 120_000,
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:5080',
+    ignoreHTTPSErrors: true,
     trace: 'off',
     viewport: { width: 1400, height: 900 },
     colorScheme: 'light',
