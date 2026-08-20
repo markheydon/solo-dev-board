@@ -42,8 +42,15 @@ public sealed class PmWorkItemCatalogueService(
             .Where(static failure => failure is not null)
             .Select(static failure => failure!)
             .ToArray();
+        var failedRepositories = new HashSet<string>(
+            failures.Select(static failure => failure.RepositoryFullName),
+            StringComparer.OrdinalIgnoreCase);
+        var summarisedRepositories = includedRepositories
+            .Where(repository => !failedRepositories.Contains(repository.FullName))
+            .ToArray();
+        var summaries = BuildRepositorySummaries(summarisedRepositories, items);
 
-        return new PmWorkItemCatalogueResultDto(items, failures);
+        return new PmWorkItemCatalogueResultDto(items, failures, summaries);
     }
 
     private async Task<RepositoryCatalogueLoadResult> LoadRepositoryCatalogueAsync(
@@ -271,6 +278,33 @@ public sealed class PmWorkItemCatalogueService(
             reviewMetadata?.HasReviewPending,
             SubIssueTotal: null,
             SubIssueCompleted: null);
+
+    private static IReadOnlyList<PmRepositorySummaryDto> BuildRepositorySummaries(
+        IReadOnlyList<Repository> includedRepositories,
+        IReadOnlyList<PmWorkItemDto> items)
+    {
+        var itemsByRepository = items.ToLookup(
+            static item => item.RepositoryFullName,
+            StringComparer.OrdinalIgnoreCase);
+
+        return includedRepositories
+            .OrderBy(static repository => repository.FullName, StringComparer.OrdinalIgnoreCase)
+            .Select(repository =>
+            {
+                var repositoryItems = itemsByRepository[repository.FullName].ToArray();
+                var lastActivity = repositoryItems.Length == 0
+                    ? repository.UpdatedAt
+                    : repositoryItems.Max(static item => item.UpdatedAt);
+
+                return new PmRepositorySummaryDto(
+                    repository.FullName,
+                    repositoryItems.Count(static item => item.ItemType == PmWorkItemTypeDto.Issue),
+                    repositoryItems.Count(static item => item.ItemType == PmWorkItemTypeDto.PullRequest),
+                    lastActivity,
+                    IsIncluded: true);
+            })
+            .ToArray();
+    }
 
     private static bool IsOpenState(string state)
         => state.Equals(OpenItemState, StringComparison.OrdinalIgnoreCase);

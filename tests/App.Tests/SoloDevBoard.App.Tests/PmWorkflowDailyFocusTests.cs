@@ -22,6 +22,7 @@ public sealed class PmWorkflowDailyFocusTests
     private readonly IPmProjectBoardDiscoveryService _projectBoardDiscoveryService = Substitute.For<IPmProjectBoardDiscoveryService>();
     private readonly IDailyFocusBoardStateService _boardStateService = Substitute.For<IDailyFocusBoardStateService>();
     private readonly IDailyFocusStalledReviewService _stalledReviewService = Substitute.For<IDailyFocusStalledReviewService>();
+    private readonly IPmWorkItemCatalogueService _workItemCatalogueService = Substitute.For<IPmWorkItemCatalogueService>();
     private readonly IDailyFocusRecommendationService _recommendationService = Substitute.For<IDailyFocusRecommendationService>();
     private readonly FakePmSettingsStorage _settingsStorage = new();
 
@@ -33,6 +34,8 @@ public sealed class PmWorkflowDailyFocusTests
                 Arg.Any<IReadOnlyList<string>>(),
                 Arg.Any<CancellationToken>())
             .Returns(new DailyFocusStalledReviewSnapshotDto([], UsedInReviewColumn: false));
+        _workItemCatalogueService.GetCatalogueAsync(Arg.Any<CancellationToken>())
+            .Returns(new PmWorkItemCatalogueResultDto([], [], []));
     }
 
     [Fact]
@@ -676,6 +679,7 @@ public sealed class PmWorkflowDailyFocusTests
         ctx.Services.AddScoped(_ => _projectBoardDiscoveryService);
         ctx.Services.AddScoped(_ => _boardStateService);
         ctx.Services.AddScoped(_ => _stalledReviewService);
+        ctx.Services.AddScoped(_ => _workItemCatalogueService);
         ctx.Services.AddScoped(_ => _recommendationService);
         ctx.Services.AddScoped<PmWorkflowChromeCoordinator>();
         ctx.Services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
