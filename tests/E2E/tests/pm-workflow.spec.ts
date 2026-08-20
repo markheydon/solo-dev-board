@@ -296,6 +296,11 @@ test.describe('Backlog Review', () => {
       return;
     }
 
+    if (await warning.isVisible()) {
+      await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+      await expect(warning).toContainText('failed to load');
+    }
+
     if (await noBoardAlert.isVisible()) {
       await expect(noBoardAlert).toContainText(
         'Select a planning board in the dropdown above to load Backlog Review groups.',

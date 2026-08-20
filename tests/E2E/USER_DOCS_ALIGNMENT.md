@@ -106,7 +106,7 @@ Use this when extending specs so assertions track documented workflows.
 | Excluded repositories and quick exclude | `pm-workflow-exclusions-region`, exclude autocomplete | `docs-capture` (pending) |
 | Per-repository summary table, empty state, load error, or partial failure | `pm-workflow-repository-summary-table` / `pm-workflow-repository-summary-empty` / `pm-workflow-repository-summary-error` / `pm-workflow-repository-summary-partial-failure` | `docs-capture` (pending) |
 | Backlog Review filters, urgency panels, empty copy, warning, or catalogue error | `pm-workflow.spec.ts` `PM Workflow` describe — `pm-workflow-backlog-filters` / `pm-workflow-backlog-panels` / empty or error copy, or chrome error | `docs-capture` (pending) |
-| Awaiting triage, epics near completion, neglected repositories, and issue/PR kind chips | `pm-workflow.spec.ts` `Backlog Review` describe — `pm-workflow-backlog-awaiting-triage`, `pm-workflow-backlog-epics`, `pm-workflow-backlog-neglected`, and `pm-workflow-backlog-kind-chip` when panels load | `docs-capture` (pending) |
+| Awaiting triage, epics near completion, and neglected repositories | `pm-workflow.spec.ts` `Backlog Review` describe — `pm-workflow-backlog-awaiting-triage`, `pm-workflow-backlog-epics`, and `pm-workflow-backlog-neglected` when panels load | `docs-capture` (pending) |
 | Planning | — | Not shipped |
 
 ### Daily Focus automated coverage ([#385](https://github.com/markheydon/solo-dev-board/issues/385))
@@ -134,16 +134,16 @@ Issue [#388](https://github.com/markheydon/solo-dev-board/issues/388) closes the
 | Per-repository summary table, empty state, load error, or partial failure | `PmWorkflowReposTests` | `pm-workflow.spec.ts` `Repo Management` and `PM Workflow` describes — summary region or error/empty/loading |
 | Route shell and no-board instructional copy | `PmWorkflowReposTests` | `pm-workflow.spec.ts` `Repo Management` describe — route shell and board selector alert |
 
-### Backlog Review automated coverage ([#419](https://github.com/markheydon/solo-dev-board/pull/419), issues [#280](https://github.com/markheydon/solo-dev-board/issues/280)–[#279](https://github.com/markheydon/solo-dev-board/issues/279))
+### Backlog Review automated coverage ([#386](https://github.com/markheydon/solo-dev-board/issues/386))
 
-PR [#419](https://github.com/markheydon/solo-dev-board/pull/419) shipped the Backlog Review grouping stack. Issue [#277](https://github.com/markheydon/solo-dev-board/issues/277) remains the parent feature; child stories [#280](https://github.com/markheydon/solo-dev-board/issues/280) (issue/PR chips), [#278](https://github.com/markheydon/solo-dev-board/issues/278) (awaiting triage), [#282](https://github.com/markheydon/solo-dev-board/issues/282) (urgent deduplication), [#281](https://github.com/markheydon/solo-dev-board/issues/281) (neglected repositories), and [#279](https://github.com/markheydon/solo-dev-board/issues/279) (epics near completion) are covered by this delivery.
+Issue [#386](https://github.com/markheydon/solo-dev-board/issues/386) closes the Backlog Review test slice for stories [#280](https://github.com/markheydon/solo-dev-board/issues/280)–[#279](https://github.com/markheydon/solo-dev-board/issues/279) (parent feature [#277](https://github.com/markheydon/solo-dev-board/issues/277), delivered in PR [#419](https://github.com/markheydon/solo-dev-board/pull/419)). When `website/content/docs/pm-workflow.md` is published, keep this mapping alongside the PM Workflow rows above.
 
 | Behaviour | Unit / component | Playwright (CI placeholder auth) |
 |-----------|------------------|----------------------------------|
 | Urgent, Ready to start, and Blocked/deferred panels | `BacklogReviewGroupingTests`, `BacklogReviewServiceTests` | `pm-workflow.spec.ts` `PM Workflow` and `Backlog Review` describes — urgency panel `data-testid`s |
 | Awaiting triage (missing `type/` or `priority/`) | `BacklogReviewGroupingTests` | `pm-workflow.spec.ts` `Backlog Review` describe — `pm-workflow-backlog-awaiting-triage` |
 | Urgent items deduplicated from Ready to start | `BacklogReviewGroupingTests` | Unit/component only (row membership) |
-| Issue versus pull request kind chips | `PmWorkflowBacklogTests` | `pm-workflow.spec.ts` `Backlog Review` describe — `pm-workflow-backlog-kind-chip` when table rows render |
+| Issue versus pull request kind chips | `PmWorkflowBacklogTests` | Unit/component only (row chips); `docs-capture` when table rows render |
 | Epics near completion | `BacklogReviewGroupingTests`, `PmWorkflowBacklogTests` | `pm-workflow.spec.ts` `Backlog Review` describe — `pm-workflow-backlog-epics` panel or empty/unavailable copy |
 | Neglected repositories | `BacklogReviewGroupingTests`, `PmWorkflowBacklogTests` | `pm-workflow.spec.ts` `Backlog Review` describe — `pm-workflow-backlog-neglected` panel or empty copy |
 | Route shell, no-board copy, catalogue empty, filter empty, GitHub retry | `PmWorkflowBacklogTests` | `pm-workflow.spec.ts` `Backlog Review` describe — route shell and no-board/empty/error copy |
