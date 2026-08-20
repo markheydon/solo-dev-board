@@ -495,6 +495,8 @@ public sealed class MigrationServiceTests
         Assert.Equal(3, preview.ToCreate.Count);
         Assert.Empty(preview.ToUpdate);
         Assert.Empty(preview.ToDelete);
+        Assert.Single(preview.Warnings);
+        Assert.Contains("GitHub default Status options", preview.Warnings[0], StringComparison.Ordinal);
     }
 
     [Fact]
@@ -600,6 +602,76 @@ public sealed class MigrationServiceTests
             "created-status-field",
             Arg.Any<IReadOnlyList<ProjectBoardStatusStructureOption>>(),
             cancellationToken);
+    }
+
+    [Fact]
+    public async Task ApplyMigrationAsync_CreateNewBoardOverwrite_RemovesDefaultOptionsNotInSource()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        SetupStatusColumnData();
+        var sut = CreateSubject();
+        var boardSelection = new MigrationBoardSelectionDto(
+            "source-project",
+            [new MigrationTargetBoardSelectionDto("owner/target", null, "Imported board")]);
+
+        _projectBoardStructureRepository
+            .CreateLinkedProjectAsync("owner", "target", "Imported board", cancellationToken)
+            .Returns(new ProjectBoardStatusStructure
+            {
+                ProjectId = "created-project",
+                ProjectTitle = "Imported board",
+                StatusFieldId = "created-status-field",
+                Options =
+                [
+                    new ProjectBoardStatusStructureOption { Id = "default-todo", Name = "Todo", Colour = "GRAY", Description = string.Empty, Order = 0 },
+                    new ProjectBoardStatusStructureOption { Id = "default-done", Name = "Done", Colour = "GREEN", Description = string.Empty, Order = 1 },
+                ],
+            });
+
+        IReadOnlyList<ProjectBoardStatusStructureOption>? capturedOptions = null;
+        _projectBoardStructureRepository
+            .UpdateStatusOptionsAsync("created-project", "created-status-field", Arg.Any<IReadOnlyList<ProjectBoardStatusStructureOption>>(), cancellationToken)
+            .Returns(callInfo =>
+            {
+                capturedOptions = callInfo.ArgAt<IReadOnlyList<ProjectBoardStatusStructureOption>>(2);
+                return new ProjectBoardStatusStructure
+                {
+                    ProjectId = "created-project",
+                    StatusFieldId = "created-status-field",
+                    Options = capturedOptions!,
+                };
+            });
+
+        var result = await sut.ApplyMigrationAsync(
+            "owner/source",
+            ["owner/target"],
+            new MigrationScopeDto(false, false, true),
+            MigrationConflictStrategy.Overwrite,
+            boardSelection,
+            cancellationToken);
+
+        var statusResult = Assert.Single(result.ProjectBoardStatusResults);
+        Assert.Null(statusResult.ErrorMessage);
+        Assert.NotNull(capturedOptions);
+        Assert.DoesNotContain(capturedOptions!, option => option.Name.Equals("Todo", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(capturedOptions!, option => option.Name.Equals("Done", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(3, capturedOptions!.Count);
+    }
+
+    [Fact]
+    public void ProjectBoardStatusSyncRepositoryResultDto_ErrorMessagePresent_HasErrorIsTrue()
+    {
+        var result = new ProjectBoardStatusSyncRepositoryResultDto(
+            "owner/target",
+            0,
+            0,
+            0,
+            0,
+            null,
+            [],
+            "GitHub API failed");
+
+        Assert.True(result.HasError);
     }
 
     private static MigrationBoardSelectionDto CreateBoardSelection(

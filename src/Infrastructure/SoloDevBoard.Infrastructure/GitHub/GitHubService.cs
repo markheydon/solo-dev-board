@@ -424,53 +424,15 @@ public sealed class GitHubService : IGitHubService
     /// <inheritdoc/>
     public async Task<RepositoryProjectBoardDiscoveryResult> GetProjectBoardsForRepositoryAsync(string owner, string repo, CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
-        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+        var discovery = await DiscoverRepositoryLinkedProjectBoardNodesAsync(owner, repo, cancellationToken).ConfigureAwait(false);
 
-        const string query = "query TriageProjectBoards($owner: String!, $repo: String!) { repository(owner: $owner, name: $repo) { projectsV2(first: 50) { nodes { id title public owner { ... on User { login } ... on Organization { login } } fields(first: 50) { nodes { ... on ProjectV2SingleSelectField { id name options { id name } } } } } } } }";
-
-        var client = CreateAuthenticatedClient();
-        var requestBody = new GraphQlRequestDto(
-            query,
-            new Dictionary<string, string>(StringComparer.Ordinal)
-            {
-                ["owner"] = owner,
-                ["repo"] = repo,
-            });
-
-        using var response = await client.PostAsJsonAsync("/graphql", requestBody, JsonOptions, cancellationToken).ConfigureAwait(false);
-        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
-
-        var payload = await response.Content.ReadFromJsonAsync<GetProjectBoardsResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
-            ?? throw CreateInvalidResponseException("GraphQL response body was empty.", "/graphql");
-
-        var rawNodes = payload.Data?.Repository?.ProjectsV2?.Nodes ?? [];
-        var accessibleNodes = rawNodes
-            .Where(static node => node is not null)
-            .Select(static node => node!)
-            .ToArray();
-
-        if (_docsCaptureOptions.Enabled)
+        if (discovery.Errors.Count > 0 && discovery.AccessibleNodes.Count == 0)
         {
-            accessibleNodes = accessibleNodes
-                .Where(static node => node.IsPublic)
-                .ToArray();
-        }
-
-        var totalLinkedProjectCount = _docsCaptureOptions.Enabled
-            ? accessibleNodes.Length
-            : rawNodes.Count;
-        var inaccessibleLinkedProjectCount = _docsCaptureOptions.Enabled
-            ? 0
-            : rawNodes.Count - accessibleNodes.Length;
-
-        if (payload.Errors.Count > 0 && accessibleNodes.Length == 0)
-        {
-            var combinedErrors = string.Join("; ", payload.Errors.Select(static error => error.Message));
+            var combinedErrors = string.Join("; ", discovery.Errors.Select(static error => error.Message));
             throw new HttpRequestException($"GitHub GraphQL request failed. Errors: {combinedErrors}");
         }
 
-        var supportedProjectBoards = accessibleNodes
+        var supportedProjectBoards = discovery.AccessibleNodes
             .Select(ToProjectBoardDomain)
             .Where(static projectBoard => projectBoard is not null)
             .Select(static projectBoard => projectBoard!)
@@ -479,8 +441,8 @@ public sealed class GitHubService : IGitHubService
 
         return new RepositoryProjectBoardDiscoveryResult(
             supportedProjectBoards,
-            totalLinkedProjectCount,
-            inaccessibleLinkedProjectCount);
+            discovery.TotalLinkedProjectCount,
+            discovery.InaccessibleLinkedProjectCount);
     }
 
     /// <inheritdoc/>
@@ -743,48 +705,15 @@ public sealed class GitHubService : IGitHubService
     /// <inheritdoc/>
     public async Task<ProjectBoardDiscovery> DiscoverProjectBoardStatusStructuresAsync(string owner, string repo, CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
-        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+        var discovery = await DiscoverRepositoryLinkedProjectBoardNodesAsync(owner, repo, cancellationToken).ConfigureAwait(false);
 
-        const string query = "query MigrationProjectBoardDiscovery($owner: String!, $repo: String!) { repository(owner: $owner, name: $repo) { projectsV2(first: 50) { nodes { id title public owner { ... on User { login } ... on Organization { login } } fields(first: 50) { nodes { ... on ProjectV2SingleSelectField { id name options { id name color description } } } } } } } }";
-
-        var client = CreateAuthenticatedClient();
-        var variables = new Dictionary<string, object?>(StringComparer.Ordinal)
+        if (discovery.Errors.Count > 0 && discovery.AccessibleNodes.Count == 0)
         {
-            ["owner"] = owner,
-            ["repo"] = repo,
-        };
-
-        var payload = await PostGraphQlAsync<GetProjectBoardsResponseDto>(client, query, variables, cancellationToken)
-            .ConfigureAwait(false);
-
-        var rawNodes = payload.Data?.Repository?.ProjectsV2?.Nodes ?? [];
-        var accessibleNodes = rawNodes
-            .Where(static node => node is not null)
-            .Select(static node => node!)
-            .ToArray();
-
-        if (_docsCaptureOptions.Enabled)
-        {
-            accessibleNodes = accessibleNodes
-                .Where(static node => node.IsPublic)
-                .ToArray();
-        }
-
-        var totalLinkedProjectCount = _docsCaptureOptions.Enabled
-            ? accessibleNodes.Length
-            : rawNodes.Count;
-        var inaccessibleLinkedProjectCount = _docsCaptureOptions.Enabled
-            ? 0
-            : rawNodes.Count - accessibleNodes.Length;
-
-        if (payload.Errors.Count > 0 && accessibleNodes.Length == 0)
-        {
-            var combinedErrors = string.Join("; ", payload.Errors.Select(static error => error.Message));
+            var combinedErrors = string.Join("; ", discovery.Errors.Select(static error => error.Message));
             throw new HttpRequestException($"GitHub GraphQL request failed. Errors: {combinedErrors}");
         }
 
-        var supportedBoards = accessibleNodes
+        var supportedBoards = discovery.AccessibleNodes
             .Select(ToProjectBoardStatusStructureDomain)
             .Where(static structure => structure is not null)
             .Select(static structure => structure!)
@@ -794,8 +723,8 @@ public sealed class GitHubService : IGitHubService
         return new ProjectBoardDiscovery
         {
             SupportedBoards = supportedBoards,
-            TotalLinkedProjectCount = totalLinkedProjectCount,
-            InaccessibleLinkedProjectCount = inaccessibleLinkedProjectCount,
+            TotalLinkedProjectCount = discovery.TotalLinkedProjectCount,
+            InaccessibleLinkedProjectCount = discovery.InaccessibleLinkedProjectCount,
         };
     }
 
@@ -1277,6 +1206,72 @@ public sealed class GitHubService : IGitHubService
             $"GitHub API request failed with status code {(int)response.StatusCode} ({response.StatusCode}). Response body: {responseBody}",
             null,
             response.StatusCode);
+    }
+
+    private const string RepositoryLinkedProjectBoardDiscoveryQuery =
+        "query RepositoryLinkedProjectBoardDiscovery($owner: String!, $repo: String!) { repository(owner: $owner, name: $repo) { projectsV2(first: 50) { nodes { id title public owner { ... on User { login } ... on Organization { login } } fields(first: 50) { nodes { ... on ProjectV2SingleSelectField { id name options { id name color description } } } } } } } }";
+
+    private sealed record RepositoryLinkedProjectBoardNodesDiscovery(
+        IReadOnlyList<ProjectBoardNodeDto> AccessibleNodes,
+        int TotalLinkedProjectCount,
+        int InaccessibleLinkedProjectCount,
+        IReadOnlyList<GraphQlErrorDto> Errors);
+
+    private async Task<RepositoryLinkedProjectBoardNodesDiscovery> DiscoverRepositoryLinkedProjectBoardNodesAsync(
+        string owner,
+        string repo,
+        CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+
+        var client = CreateAuthenticatedClient();
+        var variables = new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            ["owner"] = owner,
+            ["repo"] = repo,
+        };
+
+        var requestBody = new GraphQlObjectVariablesRequestDto(RepositoryLinkedProjectBoardDiscoveryQuery, variables);
+        using var response = await client.PostAsJsonAsync("/graphql", requestBody, JsonOptions, cancellationToken).ConfigureAwait(false);
+        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
+
+        var payload = await response.Content.ReadFromJsonAsync<GetProjectBoardsResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
+            ?? throw CreateInvalidResponseException("GraphQL response body was empty.", "/graphql");
+
+        return ResolveRepositoryLinkedProjectBoardNodesDiscovery(
+            payload.Data?.Repository?.ProjectsV2?.Nodes ?? [],
+            payload.Errors);
+    }
+
+    private RepositoryLinkedProjectBoardNodesDiscovery ResolveRepositoryLinkedProjectBoardNodesDiscovery(
+        IReadOnlyList<ProjectBoardNodeDto> rawNodes,
+        IReadOnlyList<GraphQlErrorDto> errors)
+    {
+        var accessibleNodes = rawNodes
+            .Where(static node => node is not null)
+            .Select(static node => node!)
+            .ToArray();
+
+        if (_docsCaptureOptions.Enabled)
+        {
+            accessibleNodes = accessibleNodes
+                .Where(static node => node.IsPublic)
+                .ToArray();
+        }
+
+        var totalLinkedProjectCount = _docsCaptureOptions.Enabled
+            ? accessibleNodes.Length
+            : rawNodes.Count;
+        var inaccessibleLinkedProjectCount = _docsCaptureOptions.Enabled
+            ? 0
+            : rawNodes.Count - accessibleNodes.Length;
+
+        return new RepositoryLinkedProjectBoardNodesDiscovery(
+            accessibleNodes,
+            totalLinkedProjectCount,
+            inaccessibleLinkedProjectCount,
+            errors);
     }
 
     private static TriageProjectBoard? ToProjectBoardDomain(ProjectBoardNodeDto? node)

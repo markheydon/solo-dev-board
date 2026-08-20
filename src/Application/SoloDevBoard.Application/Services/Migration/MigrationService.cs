@@ -225,21 +225,34 @@ public sealed class MigrationService : IMigrationService
                 var finalOptions = BuildFinalStatusOptionsForApply(
                     sourceStatusStructure.Options,
                     createdBoard.Options,
-                    MigrationConflictStrategy.Merge,
+                    conflictStrategy,
                     EmptyOptionIdSet);
 
                 await _projectBoardStructureRepository
                     .UpdateStatusOptionsAsync(createdBoard.ProjectId, createdBoard.StatusFieldId, finalOptions, cancellationToken)
                     .ConfigureAwait(false);
 
+                var discovery = await _projectBoardStructureRepository
+                    .DiscoverBoardsAsync(targetOwner, targetRepo, cancellationToken)
+                    .ConfigureAwait(false);
+                var accuratePreview = BuildStatusPreview(
+                    targetRepositoryFullName,
+                    sourceStatusStructure,
+                    createdBoard,
+                    new MigrationTargetBoardSelectionDto(targetRepositoryFullName, createdBoard.ProjectId, targetSelection.NewBoardTitle),
+                    discovery.TotalLinkedProjectCount,
+                    discovery.InaccessibleLinkedProjectCount,
+                    EmptyOptionIdSet,
+                    conflictStrategy);
+
                 return new ProjectBoardStatusSyncRepositoryResultDto(
                     targetRepositoryFullName,
-                    preview.ToCreate.Count,
-                    preview.ToUpdate.Count,
-                    preview.ToDelete.Count,
-                    preview.Skipped.Count,
+                    accuratePreview.ToCreate.Count,
+                    accuratePreview.ToUpdate.Count,
+                    accuratePreview.ToDelete.Count,
+                    accuratePreview.Skipped.Count,
                     createdBoard.ProjectId,
-                    preview.Warnings,
+                    accuratePreview.Warnings,
                     null);
             }
 
@@ -348,16 +361,19 @@ public sealed class MigrationService : IMigrationService
                 .Select(MapToStatusOptionDto)
                 .OrderBy(option => option.Order)
                 .ToArray();
+            var createNewBoardWarnings = createNewBoard
+                ? BuildCreateNewBoardPreviewWarnings(conflictStrategy)
+                : [];
 
             return new ProjectBoardStatusSyncRepositoryPreviewDto(
                 targetRepositoryFullName,
                 targetSelection.TargetProjectId,
-                true,
+                createNewBoard,
                 createOptions,
                 [],
                 [],
                 [],
-                [],
+                createNewBoardWarnings,
                 totalLinkedProjectCount,
                 inaccessibleLinkedProjectCount);
         }
@@ -711,6 +727,16 @@ public sealed class MigrationService : IMigrationService
             && string.Equals(left.Colour, right.Colour, StringComparison.OrdinalIgnoreCase)
             && string.Equals(left.Description, right.Description, StringComparison.Ordinal)
             && left.Order == right.Order;
+
+    private static IReadOnlyList<string> BuildCreateNewBoardPreviewWarnings(MigrationConflictStrategy conflictStrategy)
+    {
+        if (conflictStrategy == MigrationConflictStrategy.Overwrite)
+        {
+            return ["A new linked board will be created. GitHub default Status options that are not in the source will be removed after the board is created."];
+        }
+
+        return ["A new linked board will be created. GitHub default Status options whose names do not match the source may remain on the board."];
+    }
 
     private static LabelDto MapToLabelDto(Label label, string repositoryFullName)
         => new(label.Name, label.Colour, label.Description, repositoryFullName);

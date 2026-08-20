@@ -17,4 +17,8 @@ public sealed record ProjectBoardStatusSyncRepositoryResultDto(
     int SkippedCount,
     string? CreatedProjectId,
     IReadOnlyList<string> Warnings,
-    string? ErrorMessage);
+    string? ErrorMessage)
+{
+    /// <summary>Gets a value indicating whether the synchronisation failed for this repository.</summary>
+    public bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
+}
