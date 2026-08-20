@@ -33,4 +33,8 @@ Canonical `status/*` labels are defined in [`plan/LABEL_STRATEGY.md`](../../plan
 
 ## Invocation
 
-Natural language: "Clean up status labels", "Fix status/done drift on closed issues", `/sync-status-labels`
+**Chat:** "Clean up status labels" or "Fix status/done drift on closed issues".
+**Slash command:** `/sync-status-labels`.
+**GitHub Issue comment** (mention at the start; repo-wide dry-run first):
+- `@cursor clean up status labels`
+- `@cursor fix status/done drift on closed issues`

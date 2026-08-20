@@ -6,4 +6,5 @@ public sealed record ProjectBoardItemDto(
     ProjectBoardItemStatusDto? Status,
     double? FocusOrder,
     ProjectBoardItemContentDto Content,
-    DateTimeOffset ActivityTimestamp);
+    DateTimeOffset ActivityTimestamp,
+    bool UsedItemUpdatedAtFallback);

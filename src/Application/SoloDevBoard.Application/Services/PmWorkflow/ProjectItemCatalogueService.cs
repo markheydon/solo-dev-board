@@ -153,6 +153,7 @@ public sealed class ProjectItemCatalogueService : IProjectItemCatalogueService
             status,
             item.FocusOrder,
             content,
-            item.ActivityTimestamp);
+            item.ActivityTimestamp,
+            item.UsedItemUpdatedAtFallback);
     }
 }

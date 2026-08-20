@@ -217,5 +217,6 @@ public sealed class DailyFocusRecommendationMapperTests
                 "a",
                 "Board title",
                 "https://github.com/owner/a/issues/1"),
-            DateTimeOffset.UnixEpoch);
+            DateTimeOffset.UnixEpoch,
+            false);
 }

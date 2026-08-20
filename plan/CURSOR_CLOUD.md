@@ -70,6 +70,16 @@ Cursor Cloud agents often default to **draft** PRs, `cursor/…` branch names, a
 
 ---
 
+## Starting a Cloud Agent from GitHub
+
+Comment `@cursor` or `@cursoragent` at the **start** of a GitHub Issue or Pull Request comment. The agent binds "this issue" / "this PR" to that thread.
+
+Informal **implement this issue** on an issue is the delivery happy path (code, verify, pull request). Chat `/implement-issue` remains the split path that does not open a PR. Phrase tables live in [`.agents/workflows/README.md`](../.agents/workflows/README.md#github-comment-invocation) ([DEC-031](DECISIONS.md#dec-031-github-comment-workflow-invocation)).
+
+Each `@cursor` mention on an **issue** starts a new session. Follow-ups that should stay on an existing PR belong on the **pull request** thread (`address the review comments`, `code review this PR`, `fix CI`).
+
+---
+
 ## GitHub authentication caveat (important)
 
 - In the default PAT mode the app **fails fast at startup** unless a token is configured, and it resolves your login from the token via `/user` unless `GitHubAuth:OwnerLogin` is set.

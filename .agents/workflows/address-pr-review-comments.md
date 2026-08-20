@@ -23,4 +23,11 @@
 
 ## Invocation
 
-Natural language: "Address PR review comments on PR #N"
+**Chat:** "Address PR review comments on PR #N".
+**Slash command:** `/address-pr-review-comments [number]`.
+**GitHub Pull Request comment** (mention at the start; `N` is this PR):
+- `@cursor address the review comments`
+- `@cursor fix the review threads`
+- `@cursor address Copilot comments`
+
+Prefer commenting on the PR, not on the linked issue. Each issue `@cursor` mention starts a new session and will not automatically check out the existing PR branch.

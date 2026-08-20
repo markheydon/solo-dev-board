@@ -157,6 +157,8 @@ Deliver a concise chat summary with:
 
 ## Invocation
 
-Natural language: "Run the PM progress review" or "Run a progress review since the last update"
-
-Slash command: `/pm-progress-review`
+**Chat:** "Run the PM progress review" or "Run a progress review since the last update".
+**Slash command:** `/pm-progress-review`.
+**GitHub Issue comment** (mention at the start; repo-wide, not limited to this issue):
+- `@cursor run a progress review`
+- `@cursor run the PM progress review`

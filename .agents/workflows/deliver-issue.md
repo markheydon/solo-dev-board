@@ -19,11 +19,20 @@ Orchestrate the delivery happy path in one session: preflight (when required), i
 - When Delivery reports **Implementation Complete**, run [`.agents/workflows/verify-and-create-pr.md`](verify-and-create-pr.md).
 - Stop after verify. Do not continue into `/code-review` in this session.
 - Keep `/preflight-issue`, `/implement-issue`, and `/verify-and-create-pr` available for split workflows.
+- A GitHub Issue comment that says implement / fix / do / work on **this issue** is this workflow (open a PR), not the split `implement-issue` path. See [GitHub comment invocation](README.md#github-comment-invocation).
 
 ## Invocation
 
-Natural language: "Deliver issue #N"
-Slash command: `/deliver-issue [number]`
+**Chat:** "Deliver issue #N".
+**Slash command:** `/deliver-issue [number]`.
+**GitHub Issue comment** (mention at the start; `N` is this issue):
+- `@cursor implement this issue`
+- `@cursoragent implement this issue`
+- `@cursor fix this`
+- `@cursor deliver this issue`
+- `@cursor work on this`
+
+Do not use this workflow for "implement without a PR". That is `implement-issue`.
 
 ## Handoff
 

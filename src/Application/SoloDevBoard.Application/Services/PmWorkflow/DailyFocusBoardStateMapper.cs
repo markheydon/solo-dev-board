@@ -1,6 +1,6 @@
 namespace SoloDevBoard.Application.Services.PmWorkflow;
 
-/// <summary>Maps a project board item catalogue to Daily Focus occupancy and active-load figures.</summary>
+/// <summary>Maps a project board item catalogue to Daily Focus occupancy, active load, and stalled Up Next items.</summary>
 public static class DailyFocusBoardStateMapper
 {
     /// <summary>Status option name for committed work that has not started.</summary>
@@ -15,22 +15,27 @@ public static class DailyFocusBoardStateMapper
     public const string NoStatusChipName = "No status";
 
     /// <summary>
-    /// Builds occupancy chips from discovered Status options and computes active load as
-    /// <see cref="UpNextStatusName"/> plus <see cref="InProgressStatusName"/>.
+    /// Builds occupancy chips from discovered Status options, computes active load as
+    /// <see cref="UpNextStatusName"/> plus <see cref="InProgressStatusName"/>, and lists stalled Up Next items.
     /// </summary>
     /// <param name="statusOptions">Status options discovered on the selected board.</param>
     /// <param name="items">Items currently on the selected board.</param>
     /// <param name="capacity">The persisted planning capacity; values less than 1 fall back to the default.</param>
+    /// <param name="stallDays">The inclusive stall threshold in days; values less than 1 fall back to the default.</param>
+    /// <param name="utcNow">The current UTC time used to compute stall age.</param>
     /// <returns>The Daily Focus board snapshot.</returns>
     public static DailyFocusBoardStateDto Map(
         IReadOnlyList<ProjectBoardStatusOptionDto> statusOptions,
         IReadOnlyList<ProjectBoardItemDto> items,
-        int capacity)
+        int capacity,
+        int stallDays,
+        DateTimeOffset utcNow)
     {
         ArgumentNullException.ThrowIfNull(statusOptions);
         ArgumentNullException.ThrowIfNull(items);
 
         var resolvedCapacity = capacity > 0 ? capacity : PmSettingsDefaults.Capacity;
+        var resolvedStallDays = stallDays > 0 ? stallDays : PmSettingsDefaults.StallDays;
         var occupancyOptions = statusOptions.Count > 0
             ? statusOptions
             : DeriveStatusOptionsFromItems(items);
@@ -48,8 +53,61 @@ public static class DailyFocusBoardStateMapper
         }
 
         var activeLoad = items.Count(static item => IsActiveLoadStatus(item.Status?.Name));
+        var stalledUpNextItems = items
+            .Where(item => IsUpNextStatus(item.Status?.Name) && HasStallClock(item.ActivityTimestamp))
+            .Select(item => MapStalledCandidate(item, utcNow))
+            .Where(item => item.AgeInDays >= resolvedStallDays)
+            .OrderByDescending(item => item.AgeInDays)
+            .ThenBy(item => item.Title, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
 
-        return new DailyFocusBoardStateDto(occupancy, activeLoad, resolvedCapacity, items.Count);
+        return new DailyFocusBoardStateDto(
+            occupancy,
+            activeLoad,
+            resolvedCapacity,
+            items.Count,
+            stalledUpNextItems,
+            resolvedStallDays);
+    }
+
+    /// <summary>Returns whether the Status name is Up Next.</summary>
+    /// <param name="statusName">The Status option display name, or <see langword="null"/> when unset.</param>
+    /// <returns><see langword="true" /> when the name is Up Next; otherwise, <see langword="false" />.</returns>
+    public static bool IsUpNextStatus(string? statusName)
+    {
+        return !string.IsNullOrWhiteSpace(statusName)
+            && statusName.Equals(UpNextStatusName, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Returns whether <paramref name="activityTimestamp"/> is a usable stall clock.
+    /// Unix epoch is the Infrastructure sentinel for a missing Status-changed-at and item last-updated time.
+    /// </summary>
+    /// <param name="activityTimestamp">The candidate stall-clock timestamp.</param>
+    /// <returns><see langword="true" /> when the timestamp may be used for stall age; otherwise, <see langword="false" />.</returns>
+    public static bool HasStallClock(DateTimeOffset activityTimestamp)
+    {
+        return activityTimestamp != DateTimeOffset.UnixEpoch;
+    }
+
+    /// <summary>Returns the inclusive stall age in whole days for a timestamp.</summary>
+    /// <param name="activityTimestamp">The stall-clock timestamp.</param>
+    /// <param name="utcNow">The current UTC time.</param>
+    /// <returns>Floored whole days, or zero when the timestamp is unknown or in the future.</returns>
+    public static int GetAgeInDays(DateTimeOffset activityTimestamp, DateTimeOffset utcNow)
+    {
+        if (!HasStallClock(activityTimestamp))
+        {
+            return 0;
+        }
+
+        var elapsed = utcNow - activityTimestamp;
+        if (elapsed <= TimeSpan.Zero)
+        {
+            return 0;
+        }
+
+        return (int)Math.Floor(elapsed.TotalDays);
     }
 
     /// <summary>
@@ -64,8 +122,21 @@ public static class DailyFocusBoardStateMapper
             return false;
         }
 
-        return statusName.Equals(UpNextStatusName, StringComparison.OrdinalIgnoreCase)
+        return IsUpNextStatus(statusName)
             || statusName.Equals(InProgressStatusName, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Maps an Up Next item to a stall candidate with its current age.</summary>
+    /// <param name="item">The Up Next board item.</param>
+    /// <param name="utcNow">The current UTC time.</param>
+    /// <returns>The stall candidate row.</returns>
+    private static DailyFocusStalledItemDto MapStalledCandidate(ProjectBoardItemDto item, DateTimeOffset utcNow)
+    {
+        return new DailyFocusStalledItemDto(
+            item.Content.Title,
+            GetAgeInDays(item.ActivityTimestamp, utcNow),
+            item.Content.Url,
+            item.UsedItemUpdatedAtFallback);
     }
 
     /// <summary>Builds occupancy chips from item Status names when the board did not return option metadata.</summary>

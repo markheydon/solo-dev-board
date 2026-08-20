@@ -264,7 +264,8 @@ public sealed class DailyFocusStalledReviewDetectorTests
             new ProjectBoardItemStatusDto("opt-review", statusName),
             FocusOrder: null,
             new ProjectBoardItemContentDto(contentType, number, owner, repo, $"PR {number}", url),
-            activityTimestamp);
+            activityTimestamp,
+            false);
 
     private static PmWorkItemDto CreateWorkItem(
         int number,

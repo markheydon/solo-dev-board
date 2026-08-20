@@ -1164,8 +1164,12 @@ public sealed class GitHubService : IGitHubService
             };
         }
 
-        // Prefer Status field-updated time; fall back to item updatedAt, then Unix epoch when GitHub omits both.
-        var activityTimestamp = node.Status?.UpdatedAt ?? node.UpdatedAt ?? DateTimeOffset.UnixEpoch;
+        // Prefer Status field-updated time; fall back to item updatedAt.
+        // Unix epoch is a last-resort sentinel for "unknown" — not a stall clock.
+        var statusChangedAt = node.Status?.UpdatedAt;
+        var itemUpdatedAt = node.UpdatedAt;
+        var usedItemUpdatedAtFallback = statusChangedAt is null && itemUpdatedAt is not null;
+        var activityTimestamp = statusChangedAt ?? itemUpdatedAt ?? DateTimeOffset.UnixEpoch;
 
         return new ProjectBoardItem
         {
@@ -1174,6 +1178,7 @@ public sealed class GitHubService : IGitHubService
             FocusOrder = node.FocusOrder?.Number,
             Content = content,
             ActivityTimestamp = activityTimestamp,
+            UsedItemUpdatedAtFallback = usedItemUpdatedAtFallback,
         };
     }
 
@@ -1968,7 +1973,7 @@ public sealed class GitHubService : IGitHubService
         public string Name { get; init; } = string.Empty;
 
         [JsonPropertyName("updatedAt")]
-        public DateTimeOffset UpdatedAt { get; init; }
+        public DateTimeOffset? UpdatedAt { get; init; }
     }
 
     /// <summary>DTO for Focus Order field values on project board items.</summary>

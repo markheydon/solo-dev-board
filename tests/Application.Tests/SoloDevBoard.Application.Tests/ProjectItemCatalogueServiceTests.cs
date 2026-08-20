@@ -57,6 +57,7 @@ public sealed class ProjectItemCatalogueServiceTests
                         Url = "https://github.com/markheydon/solo-dev-board/issues/40",
                     },
                     ActivityTimestamp = activityTimestamp,
+                    UsedItemUpdatedAtFallback = false,
                 },
             ],
         };
@@ -83,6 +84,7 @@ public sealed class ProjectItemCatalogueServiceTests
         Assert.Equal(ProjectBoardItemContentTypeDto.Issue, result.Items[0].Content.ContentType);
         Assert.Equal(40, result.Items[0].Content.Number);
         Assert.Equal(activityTimestamp, result.Items[0].ActivityTimestamp);
+        Assert.False(result.Items[0].UsedItemUpdatedAtFallback);
         await _gitHubService.Received(1).GetProjectBoardItemsAsync("project-id", cancellationToken);
     }
 

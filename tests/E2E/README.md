@@ -23,7 +23,7 @@ Published user guides must stay aligned with these tests like-for-like. See [USE
 | `labels.spec.ts` | Label Manager shell, tabs, and empty-repository state |
 | `workflows.spec.ts` | Built-in template browse/filter/select and repository error state |
 | `triage.spec.ts` | Triage shell and no-repositories alert without a live GitHub connection |
-| `pm-workflow.spec.ts` | PM Workflow Daily Focus occupancy, recommendations, and stalled-review shell and Repos tab threshold, exclusion, and summary regions or chrome error |
+| `pm-workflow.spec.ts` | PM Workflow Daily Focus occupancy, recommendations, stalled Up Next, and stalled-review shell and Repos tab threshold, exclusion, and summary regions or chrome error |
 | `accessibility.spec.ts` | WCAG 2.1 AA axe-core scan of Tier 1–2 journeys in light and dark mode; labelled shell controls; isolated snackbar contrast scan |
 
 Tests are designed to pass in CI with placeholder auth. The PAT job uses `GitHubAuth__PersonalAccessToken=ci-e2e-placeholder`. The hosted job uses placeholder GitHub App credentials and asserts the login gate without live OAuth. Repository-dependent features assert empty or error states rather than live GitHub data.

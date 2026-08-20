@@ -92,7 +92,8 @@ public sealed class DailyFocusRecommendationServiceTests
                             "repo",
                             "In flight",
                             "https://github.com/owner/repo/issues/41"),
-                        DateTimeOffset.UnixEpoch),
+                        DateTimeOffset.UnixEpoch,
+                        false),
                 ]));
 
         var sut = new DailyFocusRecommendationService(_workItemCatalogueService, _projectItemCatalogueService);
