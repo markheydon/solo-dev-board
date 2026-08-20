@@ -319,6 +319,44 @@ public sealed class PmWorkflowPlanningTests
         });
     }
 
+    [Fact]
+    public async Task PmWorkflowPlanning_WhenBoardHasUpNextItems_ShowsBulkMilestoneControls()
+    {
+        ConfigureDefaults();
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+            new IterationPlanningViewDto(
+                [
+                    new IterationPlanningUpNextItemDto(
+                        "PVTI_one",
+                        PmWorkItemTypeDto.Issue,
+                        40,
+                        "Existing Up Next",
+                        "https://github.com/owner/repo-a/issues/40",
+                        "owner/repo-a",
+                        1,
+                        ["type/story", "priority/medium"]),
+                ],
+                [],
+                [],
+                true,
+                2,
+                1,
+                8,
+                false,
+                []));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowPlanning>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("data-testid=\"pm-workflow-planning-bulk-milestone\"", cut.Markup);
+            Assert.Contains("data-testid=\"pm-workflow-planning-milestone-select\"", cut.Markup);
+            Assert.Contains("data-testid=\"pm-workflow-planning-milestone-apply\"", cut.Markup);
+            Assert.Contains("data-testid=\"pm-workflow-planning-up-next-checkbox\"", cut.Markup);
+        });
+    }
+
     private void ConfigureDefaults()
     {
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([

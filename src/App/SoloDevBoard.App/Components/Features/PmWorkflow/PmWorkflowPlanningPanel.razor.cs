@@ -616,10 +616,10 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
 
             Snackbar.Add(
                 FormatBulkMilestoneMessage(result, selectedMilestoneTitle),
-                result.AppliedCount > 0 ? Severity.Success : Severity.Warning,
+                ResolveBulkMilestoneSnackbarSeverity(result),
                 configure: config => config.VisibleStateDuration = 6000);
 
-            if (result.AppliedCount > 0 && ChromeState?.Settings.PlanningBoardNodeId is { } boardId)
+            if ((result.AppliedCount > 0 || result.Failures.Count > 0) && ChromeState?.Settings.PlanningBoardNodeId is { } boardId)
             {
                 ChromeCoordinator.ClearBacklogReview();
                 await ReloadPlanningDataAsync(boardId).ConfigureAwait(false);
@@ -660,21 +660,45 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
         }
     }
 
+    private static Severity ResolveBulkMilestoneSnackbarSeverity(IterationPlanningBulkMilestoneResultDto result)
+    {
+        if (result.Failures.Count > 0)
+        {
+            return result.AppliedCount > 0 ? Severity.Warning : Severity.Error;
+        }
+
+        return result.AppliedCount > 0 ? Severity.Success : Severity.Warning;
+    }
+
     private static string FormatBulkMilestoneMessage(
         IterationPlanningBulkMilestoneResultDto result,
         string milestoneTitle)
     {
-        if (result.AppliedCount == 0 && result.SkippedRepositories.Count == 0)
+        if (result.AppliedCount == 0 && result.SkippedRepositories.Count == 0 && result.Failures.Count == 0)
         {
             return $"No batch items received milestone '{milestoneTitle}'.";
         }
 
-        if (result.SkippedRepositories.Count == 0)
+        var message = result.AppliedCount > 0
+            ? $"Assigned milestone '{milestoneTitle}' to {result.AppliedCount} batch item(s)."
+            : $"No batch items received milestone '{milestoneTitle}'.";
+
+        if (result.SkippedRepositories.Count > 0)
         {
-            return $"Assigned milestone '{milestoneTitle}' to {result.AppliedCount} batch item(s).";
+            var skipped = string.Join(", ", result.SkippedRepositories);
+            message += $" Skipped repositories without that milestone: {skipped}.";
         }
 
-        var skipped = string.Join(", ", result.SkippedRepositories);
-        return $"Assigned milestone '{milestoneTitle}' to {result.AppliedCount} batch item(s). Skipped repositories without that milestone: {skipped}.";
+        if (result.Failures.Count > 0)
+        {
+            var failedItems = string.Join(
+                ", ",
+                result.Failures.Select(static failure => $"{failure.RepositoryFullName}#{failure.Number}"));
+            message += result.AppliedCount > 0
+                ? $" Failed on: {failedItems}."
+                : $" Failed items: {failedItems}.";
+        }
+
+        return message;
     }
 }

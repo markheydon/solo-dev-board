@@ -1,6 +1,7 @@
 using NSubstitute;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Application.Services.PmWorkflow;
+using SoloDevBoard.Domain.Entities.Milestones;
 
 namespace SoloDevBoard.Application.Tests;
 
@@ -429,6 +430,63 @@ public sealed class IterationPlanningServiceTests
             .ClearFocusOrderAsync("project-id", "PVTI_one", "PVTF_focus", cancellationToken);
     }
 
+    [Fact]
+    public async Task ApplyBulkMilestoneAsync_ValidSelection_AssignsMilestoneToEachItem()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var selectedItems = new[]
+        {
+            CreateUpNextItem("owner/repo-a", 10),
+            CreateUpNextItem("owner/repo-a", 11),
+        };
+        _gitHubService
+            .GetMilestonesAsync("owner", "repo-a", cancellationToken)
+            .Returns([CreateMilestone("v1.0.0", 5)]);
+
+        var sut = CreateSut();
+
+        var result = await sut.ApplyBulkMilestoneAsync(selectedItems, "v1.0.0", cancellationToken);
+
+        Assert.Equal(2, result.AppliedCount);
+        Assert.Empty(result.SkippedRepositories);
+        Assert.Empty(result.Failures);
+        await _gitHubService.Received(1)
+            .AssignMilestoneToTriageItemAsync("owner", "repo-a", 10, 5, cancellationToken);
+        await _gitHubService.Received(1)
+            .AssignMilestoneToTriageItemAsync("owner", "repo-a", 11, 5, cancellationToken);
+    }
+
+    [Fact]
+    public async Task ApplyBulkMilestoneAsync_WhenSecondAssignmentFails_ReturnsPartialResult()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var selectedItems = new[]
+        {
+            CreateUpNextItem("owner/repo-a", 10),
+            CreateUpNextItem("owner/repo-a", 11),
+        };
+        _gitHubService
+            .GetMilestonesAsync("owner", "repo-a", cancellationToken)
+            .Returns([CreateMilestone("v1.0.0", 5)]);
+        _gitHubService
+            .AssignMilestoneToTriageItemAsync("owner", "repo-a", 10, 5, cancellationToken)
+            .Returns(Task.CompletedTask);
+        _gitHubService
+            .AssignMilestoneToTriageItemAsync("owner", "repo-a", 11, 5, cancellationToken)
+            .Returns(_ => throw new HttpRequestException("GitHub unavailable"));
+
+        var sut = CreateSut();
+
+        var result = await sut.ApplyBulkMilestoneAsync(selectedItems, "v1.0.0", cancellationToken);
+
+        Assert.Equal(1, result.AppliedCount);
+        Assert.Empty(result.SkippedRepositories);
+        var failure = Assert.Single(result.Failures);
+        Assert.Equal("owner/repo-a", failure.RepositoryFullName);
+        Assert.Equal(11, failure.Number);
+        Assert.Contains("GitHub unavailable", failure.Message, StringComparison.Ordinal);
+    }
+
     private IterationPlanningService CreateSut() =>
         new(_workItemCatalogueService, _projectItemCatalogueService, _gitHubService, TimeProvider.System);
 
@@ -487,4 +545,23 @@ public sealed class IterationPlanningServiceTests
                 $"https://github.com/owner/repo/issues/{number}"),
             activityTimestamp ?? DateTimeOffset.UtcNow,
             UsedItemUpdatedAtFallback: false);
+
+    private static IterationPlanningUpNextItemDto CreateUpNextItem(string repositoryFullName, int number) =>
+        new(
+            $"PVTI_{number}",
+            PmWorkItemTypeDto.Issue,
+            number,
+            $"Title {number}",
+            $"https://github.com/{repositoryFullName}/issues/{number}",
+            repositoryFullName,
+            1,
+            ["type/story"]);
+
+    private static Milestone CreateMilestone(string title, int number) =>
+        new()
+        {
+            Title = title,
+            Number = number,
+            State = "open",
+        };
 }

@@ -353,7 +353,7 @@ public sealed class IterationPlanningService : IIterationPlanningService
 
         if (selectedItems.Count == 0)
         {
-            return new IterationPlanningBulkMilestoneResultDto(0, []);
+            return new IterationPlanningBulkMilestoneResultDto(0, [], []);
         }
 
         var milestonesByRepository = await LoadMilestonesByRepositoryAsync(selectedItems, cancellationToken)
@@ -364,6 +364,7 @@ public sealed class IterationPlanningService : IIterationPlanningService
             milestoneTitle);
         var skippedSet = skippedRepositories.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var appliedCount = 0;
+        var failures = new List<IterationPlanningBulkMilestoneFailureDto>();
 
         foreach (var item in selectedItems)
         {
@@ -390,13 +391,23 @@ public sealed class IterationPlanningService : IIterationPlanningService
                 continue;
             }
 
-            await _gitHubService
-                .AssignMilestoneToTriageItemAsync(owner, repo, item.Number, milestoneNumber, cancellationToken)
-                .ConfigureAwait(false);
-            appliedCount++;
+            try
+            {
+                await _gitHubService
+                    .AssignMilestoneToTriageItemAsync(owner, repo, item.Number, milestoneNumber.Value, cancellationToken)
+                    .ConfigureAwait(false);
+                appliedCount++;
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                failures.Add(new IterationPlanningBulkMilestoneFailureDto(
+                    item.RepositoryFullName,
+                    item.Number,
+                    ex.Message));
+            }
         }
 
-        return new IterationPlanningBulkMilestoneResultDto(appliedCount, skippedRepositories);
+        return new IterationPlanningBulkMilestoneResultDto(appliedCount, skippedRepositories, failures);
     }
 
     private async Task<Dictionary<string, IReadOnlyList<Milestone>>> LoadMilestonesByRepositoryAsync(
