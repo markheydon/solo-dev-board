@@ -8,6 +8,7 @@ public interface IIterationPlanningService
     /// </summary>
     /// <param name="projectId">The GitHub Project v2 node identifier.</param>
     /// <param name="capacity">The persisted planning capacity from PM settings.</param>
+    /// <param name="stallDays">The inclusive stall threshold in days from PM settings.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>The planning view snapshot.</returns>
     /// <exception cref="InvalidOperationException">
@@ -16,6 +17,7 @@ public interface IIterationPlanningService
     Task<IterationPlanningViewDto> GetPlanningViewAsync(
         string projectId,
         int capacity,
+        int stallDays,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -34,5 +36,53 @@ public interface IIterationPlanningService
         string repositoryFullName,
         int number,
         IReadOnlyList<string> labels,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Restarts the stall clock for a stalled Up Next item by moving it away from Up Next and back.
+    /// </summary>
+    /// <param name="projectId">The GitHub Project v2 node identifier.</param>
+    /// <param name="projectItemId">The project-item node identifier.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous update operation.</returns>
+    Task ReCommitStalledUpNextItemAsync(
+        string projectId,
+        string projectItemId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Marks a stalled Up Next item as blocked on the board and applies <c>status/blocked</c> on the work item.
+    /// </summary>
+    /// <param name="projectId">The GitHub Project v2 node identifier.</param>
+    /// <param name="item">The stalled Up Next item to update.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous update operation.</returns>
+    Task MarkStalledUpNextItemBlockedAsync(
+        string projectId,
+        IterationPlanningStalledItemDto item,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Moves a stalled Up Next item to Ice Box on the board, applies <c>status/ice-box</c>, and clears Focus Order.
+    /// </summary>
+    /// <param name="projectId">The GitHub Project v2 node identifier.</param>
+    /// <param name="item">The stalled Up Next item to update.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous update operation.</returns>
+    Task MoveStalledUpNextItemToIceBoxAsync(
+        string projectId,
+        IterationPlanningStalledItemDto item,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns a stalled Up Next item to Todo on the board and clears Focus Order.
+    /// </summary>
+    /// <param name="projectId">The GitHub Project v2 node identifier.</param>
+    /// <param name="item">The stalled Up Next item to remove from the batch.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous update operation.</returns>
+    Task RemoveStalledUpNextItemAsync(
+        string projectId,
+        IterationPlanningStalledItemDto item,
         CancellationToken cancellationToken = default);
 }

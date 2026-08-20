@@ -9,6 +9,7 @@ namespace SoloDevBoard.Application.Services.PmWorkflow;
 /// <param name="ActiveLoad">The count of Up Next plus In Progress items on the board.</param>
 /// <param name="Capacity">The resolved planning capacity limit.</param>
 /// <param name="IsAtOrOverCapacity"><see langword="true" /> when <paramref name="ActiveLoad"/> is at or above <paramref name="Capacity"/>.</param>
+/// <param name="StalledUpNextItems">Up Next items that have exceeded the stall threshold.</param>
 public sealed record IterationPlanningViewDto(
     IReadOnlyList<IterationPlanningUpNextItemDto> UpNextItems,
     IReadOnlyList<IterationPlanningCandidateDto> Candidates,
@@ -17,4 +18,5 @@ public sealed record IterationPlanningViewDto(
     double NextStoryFocusOrder,
     int ActiveLoad,
     int Capacity,
-    bool IsAtOrOverCapacity);
+    bool IsAtOrOverCapacity,
+    IReadOnlyList<IterationPlanningStalledItemDto> StalledUpNextItems);

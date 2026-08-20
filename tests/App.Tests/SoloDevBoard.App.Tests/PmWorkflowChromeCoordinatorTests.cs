@@ -90,7 +90,7 @@ public sealed class PmWorkflowChromeCoordinatorTests
         coordinator.SetBacklogReview("PVT_board", EmptyBacklogResult(), null, isLoading: false);
         coordinator.SetIterationPlanning(
             "PVT_board",
-            new IterationPlanningViewDto([], [], [], true, 1, 0, 8, false),
+            new IterationPlanningViewDto([], [], [], true, 1, 0, 8, false, []),
             null,
             isLoading: false);
 

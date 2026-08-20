@@ -5,6 +5,7 @@ namespace SoloDevBoard.Application.Tests;
 /// <summary>Tests for <see cref="IterationPlanningViewMapper"/>.</summary>
 public sealed class IterationPlanningViewMapperTests
 {
+    private static readonly DateTimeOffset UtcNow = new(2026, 8, 20, 12, 0, 0, TimeSpan.Zero);
     [Fact]
     public void Map_UpNextItems_SortedByFocusOrderThenTitle()
     {
@@ -15,7 +16,7 @@ public sealed class IterationPlanningViewMapperTests
             CreateBoardItem("PVTI_todo", "Todo", null, "Later"),
         };
 
-        var result = IterationPlanningViewMapper.Map([], boardItems, [], hasFocusOrderField: true, capacity: 8);
+        var result = Map([], boardItems, [], hasFocusOrderField: true, capacity: 8);
 
         Assert.Equal(2, result.UpNextItems.Count);
         Assert.Equal("Alpha", result.UpNextItems[0].Title);
@@ -40,7 +41,7 @@ public sealed class IterationPlanningViewMapperTests
             CreateBoardItem("PVTI_in-progress", "In Progress", null, "In Progress item", 12),
         };
 
-        var result = IterationPlanningViewMapper.Map(workItems, boardItems, [], hasFocusOrderField: true, capacity: 8);
+        var result = Map(workItems, boardItems, [], hasFocusOrderField: true, capacity: 8);
 
         Assert.Single(result.Candidates);
         Assert.Equal(10, result.Candidates[0].Number);
@@ -55,7 +56,7 @@ public sealed class IterationPlanningViewMapperTests
             CreateBoardItem("PVTI_b", "Up Next", 3, "Beta"),
         };
 
-        var result = IterationPlanningViewMapper.Map([], boardItems, [], hasFocusOrderField: true, capacity: 8);
+        var result = Map([], boardItems, [], hasFocusOrderField: true, capacity: 8);
 
         Assert.True(result.HasFocusOrderField);
         Assert.Equal(4, result.NextStoryFocusOrder);
@@ -69,7 +70,7 @@ public sealed class IterationPlanningViewMapperTests
             CreateBoardItem("PVTI_a", "Up Next", 1, "Alpha"),
         };
 
-        var result = IterationPlanningViewMapper.Map([], boardItems, [], hasFocusOrderField: false, capacity: 8);
+        var result = Map([], boardItems, [], hasFocusOrderField: false, capacity: 8);
 
         Assert.False(result.HasFocusOrderField);
         Assert.Equal(0, result.NextStoryFocusOrder);
@@ -85,7 +86,7 @@ public sealed class IterationPlanningViewMapperTests
             CreateBoardItem("PVTI_todo", "Todo", null, "Later"),
         };
 
-        var result = IterationPlanningViewMapper.Map([], boardItems, [], hasFocusOrderField: true, capacity: 8);
+        var result = Map([], boardItems, [], hasFocusOrderField: true, capacity: 8);
 
         Assert.Equal(2, result.ActiveLoad);
         Assert.Equal(8, result.Capacity);
@@ -107,10 +108,49 @@ public sealed class IterationPlanningViewMapperTests
             CreateBoardItem("PVTI_h", "In Progress", null, "Eight"),
         };
 
-        var result = IterationPlanningViewMapper.Map([], boardItems, [], hasFocusOrderField: true, capacity: 8);
+        var result = Map([], boardItems, [], hasFocusOrderField: true, capacity: 8);
 
         Assert.Equal(8, result.ActiveLoad);
         Assert.True(result.IsAtOrOverCapacity);
+    }
+
+    [Fact]
+    public void Map_UpNextItemAgedThreeDays_IsStalled()
+    {
+        var boardItems = new[]
+        {
+            CreateBoardItem(
+                "PVTI_stalled",
+                "Up Next",
+                1,
+                "Stalled story",
+                activityTimestamp: UtcNow.AddDays(-3)),
+        };
+
+        var result = Map([], boardItems, [], hasFocusOrderField: true, capacity: 8, stallDays: 3);
+
+        var stalled = Assert.Single(result.StalledUpNextItems);
+        Assert.Equal("Stalled story", stalled.Title);
+        Assert.Equal(3, stalled.AgeInDays);
+        Assert.Equal(1, stalled.Number);
+    }
+
+    [Fact]
+    public void Map_UpNextItemAgedTwoDays_IsNotStalled()
+    {
+        var boardItems = new[]
+        {
+            CreateBoardItem(
+                "PVTI_fresh",
+                "Up Next",
+                1,
+                "Fresh story",
+                activityTimestamp: UtcNow.AddDays(-2)),
+        };
+
+        var result = Map([], boardItems, [], hasFocusOrderField: true, capacity: 8, stallDays: 3);
+
+        Assert.Empty(result.StalledUpNextItems);
     }
 
     [Theory]
@@ -144,12 +184,29 @@ public sealed class IterationPlanningViewMapperTests
             null,
             null);
 
+    private static IterationPlanningViewDto Map(
+        IReadOnlyList<PmWorkItemDto> workItems,
+        IReadOnlyList<ProjectBoardItemDto> boardItems,
+        IReadOnlyList<PmRepositoryCatalogueFailureDto> failures,
+        bool hasFocusOrderField,
+        int capacity,
+        int stallDays = PmSettingsDefaults.StallDays) =>
+        IterationPlanningViewMapper.Map(
+            workItems,
+            boardItems,
+            failures,
+            hasFocusOrderField,
+            capacity,
+            stallDays,
+            UtcNow);
+
     private static ProjectBoardItemDto CreateBoardItem(
         string projectItemId,
         string statusName,
         double? focusOrder,
         string title,
-        int number = 1) =>
+        int number = 1,
+        DateTimeOffset? activityTimestamp = null) =>
         new(
             projectItemId,
             new ProjectBoardItemStatusDto($"opt-{statusName.Replace(' ', '-').ToLowerInvariant()}", statusName),
@@ -161,6 +218,6 @@ public sealed class IterationPlanningViewMapperTests
                 "repo",
                 title,
                 $"https://github.com/owner/repo/issues/{number}"),
-            DateTimeOffset.UtcNow,
+            activityTimestamp ?? UtcNow,
             UsedItemUpdatedAtFallback: false);
 }

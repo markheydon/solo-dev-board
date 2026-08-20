@@ -201,8 +201,114 @@ public sealed class IterationPlanningServiceTests
         Assert.Contains("Up Next", exception.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task ReCommitStalledUpNextItemAsync_ValidItem_MovesTodoThenUpNext()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var catalogue = CreateCatalogue(existingItem: null);
+        _projectItemCatalogueService
+            .GetCatalogueAsync("project-id", cancellationToken)
+            .Returns(catalogue);
+
+        var sut = CreateSut();
+
+        await sut.ReCommitStalledUpNextItemAsync("project-id", "PVTI_one", cancellationToken);
+
+        await _gitHubService.Received(1)
+            .UpdateProjectBoardItemStatusAsync(
+                "project-id",
+                "PVTI_one",
+                "PVTF_status",
+                "opt-todo",
+                cancellationToken);
+        await _gitHubService.Received(1)
+            .UpdateProjectBoardItemStatusAsync(
+                "project-id",
+                "PVTI_one",
+                "PVTF_status",
+                "opt-up-next",
+                cancellationToken);
+        _projectItemCatalogueService.Received(1).InvalidateCatalogue("project-id");
+    }
+
+    [Fact]
+    public async Task MarkStalledUpNextItemBlockedAsync_ValidItem_UpdatesStatusAndLabels()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var catalogue = CreateCatalogue(existingItem: null);
+        _projectItemCatalogueService
+            .GetCatalogueAsync("project-id", cancellationToken)
+            .Returns(catalogue);
+
+        var sut = CreateSut();
+        var item = new IterationPlanningStalledItemDto(
+            "PVTI_one",
+            PmWorkItemTypeDto.Issue,
+            40,
+            "Blocked story",
+            "https://github.com/owner/repo/issues/40",
+            "owner/repo",
+            4,
+            false,
+            ["type/story", "priority/medium"]);
+
+        await sut.MarkStalledUpNextItemBlockedAsync("project-id", item, cancellationToken);
+
+        await _gitHubService.Received(1)
+            .UpdateProjectBoardItemStatusAsync(
+                "project-id",
+                "PVTI_one",
+                "PVTF_status",
+                "opt-blocked",
+                cancellationToken);
+        await _gitHubService.Received(1)
+            .ApplyLabelsToTriageItemAsync(
+                "owner",
+                "repo",
+                40,
+                Arg.Is<IReadOnlyList<string>>(labels =>
+                    labels.Contains("type/story")
+                    && labels.Contains("priority/medium")
+                    && labels.Contains(PmLabelHelpers.BlockedStatusLabel)),
+                cancellationToken);
+    }
+
+    [Fact]
+    public async Task RemoveStalledUpNextItemAsync_ValidItem_MovesToTodoAndClearsFocusOrder()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var catalogue = CreateCatalogue(existingItem: null);
+        _projectItemCatalogueService
+            .GetCatalogueAsync("project-id", cancellationToken)
+            .Returns(catalogue);
+
+        var sut = CreateSut();
+        var item = new IterationPlanningStalledItemDto(
+            "PVTI_one",
+            PmWorkItemTypeDto.Issue,
+            40,
+            "Remove me",
+            "https://github.com/owner/repo/issues/40",
+            "owner/repo",
+            5,
+            false,
+            ["type/story"]);
+
+        await sut.RemoveStalledUpNextItemAsync("project-id", item, cancellationToken);
+
+        await _gitHubService.Received(1)
+            .UpdateProjectBoardItemStatusAsync(
+                "project-id",
+                "PVTI_one",
+                "PVTF_status",
+                "opt-todo",
+                cancellationToken);
+        await _projectItemCatalogueService.Received(1)
+            .ClearFocusOrderAsync("project-id", "PVTI_one", "PVTF_focus", cancellationToken);
+    }
+
     private IterationPlanningService CreateSut() =>
-        new(_workItemCatalogueService, _projectItemCatalogueService, _gitHubService);
+        new(_workItemCatalogueService, _projectItemCatalogueService, _gitHubService, TimeProvider.System);
 
     private static ProjectBoardItemCatalogueDto CreateCatalogue(
         ProjectBoardItemDto? existingItem,
@@ -217,6 +323,8 @@ public sealed class IterationPlanningServiceTests
         if (includeUpNextOption)
         {
             statusOptions.Add(new ProjectBoardStatusOptionDto("opt-up-next", "Up Next"));
+            statusOptions.Add(new ProjectBoardStatusOptionDto("opt-blocked", "Blocked"));
+            statusOptions.Add(new ProjectBoardStatusOptionDto("opt-ice-box", "Ice Box"));
         }
 
         var items = new List<ProjectBoardItemDto>
