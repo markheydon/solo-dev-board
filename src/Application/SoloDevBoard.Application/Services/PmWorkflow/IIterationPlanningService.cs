@@ -28,6 +28,7 @@ public interface IIterationPlanningService
     /// <param name="repositoryFullName">The repository in <c>owner/name</c> form.</param>
     /// <param name="number">The repository-scoped item number.</param>
     /// <param name="labels">Label names on the work item, used to decide Focus Order assignment.</param>
+    /// <param name="stallDays">The inclusive stall threshold in days from PM settings.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>The add outcome, including any Focus Order assigned.</returns>
     Task<IterationPlanningAddToUpNextResultDto> AddToUpNextAsync(
@@ -36,6 +37,7 @@ public interface IIterationPlanningService
         string repositoryFullName,
         int number,
         IReadOnlyList<string> labels,
+        int stallDays,
         CancellationToken cancellationToken = default);
 
     /// <summary>

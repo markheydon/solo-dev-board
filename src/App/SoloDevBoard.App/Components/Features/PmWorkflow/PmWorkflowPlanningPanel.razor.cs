@@ -245,7 +245,7 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
 
     private async Task AddToUpNextAsync(IterationPlanningCandidateDto candidate)
     {
-        if (ChromeState is null || !ChromeState.HasPlanningBoardSelected || isAddingToUpNext)
+        if (ChromeState is null || !ChromeState.HasPlanningBoardSelected || isAddingToUpNext || IsAddToUpNextDisabled)
         {
             return;
         }
@@ -282,6 +282,7 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
                     candidate.RepositoryFullName,
                     candidate.Number,
                     candidate.Labels,
+                    ChromeState.Settings.StallDays,
                     cancellationToken)
                 .ConfigureAwait(false);
 

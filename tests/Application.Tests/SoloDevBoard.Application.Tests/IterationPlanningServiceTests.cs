@@ -32,6 +32,7 @@ public sealed class IterationPlanningServiceTests
             "owner/repo",
             50,
             labels,
+            3,
             cancellationToken);
 
         Assert.True(result.AddedBoardCard);
@@ -73,6 +74,7 @@ public sealed class IterationPlanningServiceTests
             "owner/repo",
             51,
             labels,
+            3,
             cancellationToken);
 
         Assert.False(result.AddedBoardCard);
@@ -116,6 +118,7 @@ public sealed class IterationPlanningServiceTests
             "owner/repo",
             52,
             labels,
+            3,
             cancellationToken);
 
         Assert.True(result.AddedBoardCard);
@@ -153,6 +156,7 @@ public sealed class IterationPlanningServiceTests
             "owner/repo",
             54,
             labels,
+            3,
             cancellationToken);
 
         Assert.True(result.AddedBoardCard);
@@ -195,10 +199,43 @@ public sealed class IterationPlanningServiceTests
             "owner/repo",
             53,
             ["type/story"],
+            3,
             cancellationToken);
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(action);
         Assert.Contains("Up Next", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AddToUpNextAsync_WhenStalledUpNextItemsRemain_ThrowsInvalidOperationException()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var stalledItem = CreateBoardItem(
+            "PVTI_stalled",
+            "Up Next",
+            focusOrder: 1,
+            number: 99,
+            activityTimestamp: DateTimeOffset.UtcNow.AddDays(-5));
+        var catalogue = CreateCatalogue(stalledItem);
+        _projectItemCatalogueService
+            .GetCatalogueAsync("project-id", cancellationToken)
+            .Returns(catalogue);
+
+        var sut = CreateSut();
+
+        var action = async () => await sut.AddToUpNextAsync(
+            "project-id",
+            PmWorkItemTypeDto.Issue,
+            "owner/repo",
+            53,
+            ["type/story"],
+            3,
+            cancellationToken);
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(action);
+        Assert.Contains("Resolve stalled Up Next items", exception.Message, StringComparison.Ordinal);
+        await _gitHubService.DidNotReceive()
+            .AddTriageItemToProjectBoardAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -229,6 +266,47 @@ public sealed class IterationPlanningServiceTests
                 "opt-up-next",
                 cancellationToken);
         _projectItemCatalogueService.Received(1).InvalidateCatalogue("project-id");
+    }
+
+    [Fact]
+    public async Task ReCommitStalledUpNextItemAsync_WhenUpNextUpdateFails_RestoresUpNextAndThrows()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var catalogue = CreateCatalogue(existingItem: null);
+        _projectItemCatalogueService
+            .GetCatalogueAsync("project-id", cancellationToken)
+            .Returns(catalogue);
+        _gitHubService
+            .UpdateProjectBoardItemStatusAsync(
+                Arg.Any<string>(),
+                "PVTI_one",
+                "PVTF_status",
+                "opt-up-next",
+                cancellationToken)
+            .Returns(
+                _ => throw new HttpRequestException("GitHub unavailable"),
+                _ => Task.CompletedTask);
+
+        var sut = CreateSut();
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            sut.ReCommitStalledUpNextItemAsync("project-id", "PVTI_one", cancellationToken));
+
+        Assert.Contains("restored to Up Next", exception.Message, StringComparison.Ordinal);
+        await _gitHubService.Received(1)
+            .UpdateProjectBoardItemStatusAsync(
+                "project-id",
+                "PVTI_one",
+                "PVTF_status",
+                "opt-todo",
+                cancellationToken);
+        await _gitHubService.Received(2)
+            .UpdateProjectBoardItemStatusAsync(
+                "project-id",
+                "PVTI_one",
+                "PVTF_status",
+                "opt-up-next",
+                cancellationToken);
     }
 
     [Fact]
@@ -270,6 +348,50 @@ public sealed class IterationPlanningServiceTests
                     labels.Contains("type/story")
                     && labels.Contains("priority/medium")
                     && labels.Contains(PmLabelHelpers.BlockedStatusLabel)),
+                cancellationToken);
+    }
+
+    [Fact]
+    public async Task MoveStalledUpNextItemToIceBoxAsync_ValidItem_UpdatesStatusClearsFocusOrderAndLabels()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var catalogue = CreateCatalogue(existingItem: null);
+        _projectItemCatalogueService
+            .GetCatalogueAsync("project-id", cancellationToken)
+            .Returns(catalogue);
+
+        var sut = CreateSut();
+        var item = new IterationPlanningStalledItemDto(
+            "PVTI_one",
+            PmWorkItemTypeDto.Issue,
+            40,
+            "Ice box story",
+            "https://github.com/owner/repo/issues/40",
+            "owner/repo",
+            4,
+            false,
+            ["type/story", "priority/medium"]);
+
+        await sut.MoveStalledUpNextItemToIceBoxAsync("project-id", item, cancellationToken);
+
+        await _gitHubService.Received(1)
+            .UpdateProjectBoardItemStatusAsync(
+                "project-id",
+                "PVTI_one",
+                "PVTF_status",
+                "opt-ice-box",
+                cancellationToken);
+        await _projectItemCatalogueService.Received(1)
+            .ClearFocusOrderAsync("project-id", "PVTI_one", "PVTF_focus", cancellationToken);
+        await _gitHubService.Received(1)
+            .ApplyLabelsToTriageItemAsync(
+                "owner",
+                "repo",
+                40,
+                Arg.Is<IReadOnlyList<string>>(labels =>
+                    labels.Contains("type/story")
+                    && labels.Contains("priority/medium")
+                    && labels.Contains(PmLabelHelpers.IceBoxStatusLabel)),
                 cancellationToken);
     }
 
@@ -350,7 +472,8 @@ public sealed class IterationPlanningServiceTests
         string projectItemId,
         string statusName,
         double? focusOrder,
-        int number) =>
+        int number,
+        DateTimeOffset? activityTimestamp = null) =>
         new(
             projectItemId,
             new ProjectBoardItemStatusDto($"opt-{statusName.Replace(' ', '-').ToLowerInvariant()}", statusName),
@@ -362,6 +485,6 @@ public sealed class IterationPlanningServiceTests
                 "repo",
                 $"Title {number}",
                 $"https://github.com/owner/repo/issues/{number}"),
-            DateTimeOffset.UtcNow,
+            activityTimestamp ?? DateTimeOffset.UtcNow,
             UsedItemUpdatedAtFallback: false);
 }

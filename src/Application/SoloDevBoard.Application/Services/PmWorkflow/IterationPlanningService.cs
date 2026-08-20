@@ -73,6 +73,7 @@ public sealed class IterationPlanningService : IIterationPlanningService
         string repositoryFullName,
         int number,
         IReadOnlyList<string> labels,
+        int stallDays,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -95,6 +96,8 @@ public sealed class IterationPlanningService : IIterationPlanningService
         var catalogue = await _projectItemCatalogueService
             .GetCatalogueAsync(projectId, cancellationToken)
             .ConfigureAwait(false);
+
+        EnsureNoStalledUpNextItemsRemain(catalogue.Items, stallDays, _timeProvider.GetUtcNow());
 
         var upNextOption = PlanningBoardStatusResolver.ResolveStatusOption(
             catalogue.StatusOptions,
@@ -190,14 +193,41 @@ public sealed class IterationPlanningService : IIterationPlanningService
                 cancellationToken)
             .ConfigureAwait(false);
 
-        await _gitHubService
-            .UpdateProjectBoardItemStatusAsync(
-                projectId,
-                projectItemId,
-                catalogue.FieldIds.StatusFieldId,
-                upNextOption.OptionId,
-                cancellationToken)
-            .ConfigureAwait(false);
+        try
+        {
+            await _gitHubService
+                .UpdateProjectBoardItemStatusAsync(
+                    projectId,
+                    projectItemId,
+                    catalogue.FieldIds.StatusFieldId,
+                    upNextOption.OptionId,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            try
+            {
+                await _gitHubService
+                    .UpdateProjectBoardItemStatusAsync(
+                        projectId,
+                        projectItemId,
+                        catalogue.FieldIds.StatusFieldId,
+                        upNextOption.OptionId,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (Exception rollbackEx) when (rollbackEx is not OperationCanceledException)
+            {
+                throw new InvalidOperationException(
+                    "Re-commit moved the item to Todo but failed to return it to Up Next. Refresh Iteration Planning and use Re-commit again, or set the item status to Up Next manually on the board.",
+                    ex);
+            }
+
+            throw new InvalidOperationException(
+                "Re-commit moved the item to Todo but failed to return it to Up Next. The item has been restored to Up Next; refresh Iteration Planning and try Re-commit again.",
+                ex);
+        }
 
         _projectItemCatalogueService.InvalidateCatalogue(projectId);
     }
@@ -375,6 +405,27 @@ public sealed class IterationPlanningService : IIterationPlanningService
             .Select(static label => label.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
+    }
+
+    private static void EnsureNoStalledUpNextItemsRemain(
+        IReadOnlyList<ProjectBoardItemDto> boardItems,
+        int stallDays,
+        DateTimeOffset utcNow)
+    {
+        ArgumentNullException.ThrowIfNull(boardItems);
+
+        var resolvedStallDays = stallDays > 0 ? stallDays : PmSettingsDefaults.StallDays;
+
+        var hasStalledUpNextItems = boardItems.Any(item =>
+            DailyFocusBoardStateMapper.IsUpNextStatus(item.Status?.Name)
+            && DailyFocusBoardStateMapper.HasStallClock(item.ActivityTimestamp)
+            && DailyFocusBoardStateMapper.GetAgeInDays(item.ActivityTimestamp, utcNow) >= resolvedStallDays);
+
+        if (hasStalledUpNextItems)
+        {
+            throw new InvalidOperationException(
+                "Resolve stalled Up Next items before adding new work.");
+        }
     }
 
     private static void ValidateStatusField(string statusFieldId)
