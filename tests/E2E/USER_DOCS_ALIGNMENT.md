@@ -146,7 +146,7 @@ Issue [#386](https://github.com/markheydon/solo-dev-board/issues/386) closes the
 | Issue versus pull request kind chips | `PmWorkflowBacklogTests` | Unit/component only (row chips); `docs-capture` when table rows render |
 | Epics near completion | `BacklogReviewGroupingTests`, `PmWorkflowBacklogTests` | `pm-workflow.spec.ts` `Backlog Review` describe — `pm-workflow-backlog-epics` panel or empty/unavailable copy |
 | Neglected repositories | `BacklogReviewGroupingTests`, `PmWorkflowBacklogTests` | `pm-workflow.spec.ts` `Backlog Review` describe — `pm-workflow-backlog-neglected` panel or empty copy |
-| Route shell, no-board copy, catalogue empty, filter empty, GitHub retry | `PmWorkflowBacklogTests` | `pm-workflow.spec.ts` `Backlog Review` describe — route shell and no-board/empty/error copy |
+| Route shell, no-board copy, catalogue empty, filter empty, partial-failure warning, GitHub retry | `PmWorkflowBacklogTests` | `pm-workflow.spec.ts` `Backlog Review` describe — route shell and no-board/empty/error/warning copy |
 
 See [CRITICAL_JOURNEYS.md](CRITICAL_JOURNEYS.md) Tier 2 — PM Workflow row — for the journey-level summary.
 

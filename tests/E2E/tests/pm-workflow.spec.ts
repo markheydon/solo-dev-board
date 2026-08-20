@@ -297,8 +297,8 @@ test.describe('Backlog Review', () => {
     }
 
     if (await warning.isVisible()) {
-      await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
       await expect(warning).toContainText('failed to load');
+      await expect(page.getByTestId('pm-workflow-backlog-retry')).toBeVisible();
     }
 
     if (await noBoardAlert.isVisible()) {
