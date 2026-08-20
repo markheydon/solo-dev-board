@@ -11,7 +11,7 @@ guideStatus: Partially Available
 
 ## Overview
 
-The Cross-Repo PM Workflow brings a structured, two-mode operating system into SoloDevBoard, replacing the manual AI prompts and scripts in [markheydon/github-workflows](https://github.com/markheydon/github-workflows) with a visual interface.
+The Cross-Repo PM Workflow brings a structured, two-mode operating system into SoloDevBoard so you can plan and execute work across your own GitHub repositories from one visual interface.
 
 The system is built around two modes of operation:
 
@@ -28,6 +28,18 @@ The system is built around two modes of operation:
 | **Repos** | `/pm-workflow/repos` | **Available** — planning board selection, thresholds, repository exclusions, and per-repository open-work counts. |
 
 Open **PM Workflow** from the Home card or the navigation drawer. The hub redirects to **Daily Focus**.
+
+### Opinionated conventions
+
+PM Workflow is intentionally opinionated about **how** work is labelled and how a planning board is shaped. You choose which repositories and which Projects v2 board to use; SoloDevBoard does not hard-code a maintainer project or repository.
+
+For best results, align your board and labels with these product conventions:
+
+- **SoloDevBoard label taxonomy** — prefixes such as `type/`, `priority/`, and `status/` (including `status/blocked` and `status/ice-box`). The Label Manager **SoloDevBoard** recommended strategy applies this set.
+- **Status display names** — columns matched by name, including `Up Next`, `In Progress`, `Blocked`, and `Ice Box` (plus review-equivalent names where Daily Focus looks for stalled reviews).
+- **Focus Order** — optional Projects v2 number field used when Iteration Planning writes ordered Up Next items.
+
+These conventions are product behaviour, not upstream dogfood. They mirror the published labelling guidance for this project but apply to any GitHub user who adopts the same taxonomy on their own boards.
 
 ---
 
@@ -304,3 +316,4 @@ There are no `appsettings.json` entries for PM Workflow user preferences.
 
 - Wireframe: [`plan/wireframes/pm-workflow-wireframe.md`](https://github.com/markheydon/solo-dev-board/blob/main/plan/wireframes/pm-workflow-wireframe.md)
 - Decision: [DEC-029](https://github.com/markheydon/solo-dev-board/blob/main/plan/DECISIONS.md#dec-029-cross-repo-pm-workflow-board-selection-and-local-settings) (board selection and local settings)
+- Hardcoding audit: [`plan/HARDCODING_AUDIT_v1.1.md`](https://github.com/markheydon/solo-dev-board/blob/main/plan/HARDCODING_AUDIT_v1.1.md) (issue [#423](https://github.com/markheydon/solo-dev-board/issues/423))
