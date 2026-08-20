@@ -115,11 +115,15 @@ public sealed class PmWorkflowBacklogTests
 #pragma warning disable MUD0012
             var issueChip = cut.FindComponents<MudChip<string>>()
                 .First(component => component.Markup.Contains("Issue", StringComparison.Ordinal));
-            Assert.Equal(Color.Info, issueChip.Instance.Color);
-
             var pullRequestChip = cut.FindComponents<MudChip<string>>()
                 .First(component => component.Markup.Contains("Pull request", StringComparison.Ordinal));
-            Assert.Equal(Color.Secondary, pullRequestChip.Instance.Color);
+
+            Assert.Equal(Color.Info, issueChip.Instance.Color);
+            Assert.Equal(Variant.Filled, issueChip.Instance.Variant);
+            Assert.Equal(Color.Warning, pullRequestChip.Instance.Color);
+            Assert.Equal(Variant.Outlined, pullRequestChip.Instance.Variant);
+            Assert.NotEqual(issueChip.Instance.Color, pullRequestChip.Instance.Color);
+            Assert.NotEqual(issueChip.Instance.Variant, pullRequestChip.Instance.Variant);
 #pragma warning restore MUD0012
         });
     }
