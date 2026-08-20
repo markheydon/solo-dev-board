@@ -1,4 +1,5 @@
 using SoloDevBoard.Application.Services.GitHub;
+using SoloDevBoard.Domain.Entities.Milestones;
 
 namespace SoloDevBoard.Application.Services.PmWorkflow;
 
@@ -324,6 +325,118 @@ public sealed class IterationPlanningService : IIterationPlanningService
             .ConfigureAwait(false);
 
         _projectItemCatalogueService.InvalidateCatalogue(projectId);
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<IterationPlanningMilestoneOptionDto>> GetBulkMilestoneOptionsAsync(
+        IReadOnlyList<IterationPlanningUpNextItemDto> selectedItems,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(selectedItems);
+
+        var milestonesByRepository = await LoadMilestonesByRepositoryAsync(selectedItems, cancellationToken)
+            .ConfigureAwait(false);
+
+        return PlanningBulkMilestoneAssigner.BuildMilestoneOptions(selectedItems, milestonesByRepository);
+    }
+
+    /// <inheritdoc/>
+    public async Task<IterationPlanningBulkMilestoneResultDto> ApplyBulkMilestoneAsync(
+        IReadOnlyList<IterationPlanningUpNextItemDto> selectedItems,
+        string milestoneTitle,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(selectedItems);
+        ArgumentException.ThrowIfNullOrWhiteSpace(milestoneTitle);
+
+        if (selectedItems.Count == 0)
+        {
+            return new IterationPlanningBulkMilestoneResultDto(0, [], []);
+        }
+
+        var milestonesByRepository = await LoadMilestonesByRepositoryAsync(selectedItems, cancellationToken)
+            .ConfigureAwait(false);
+        var skippedRepositories = PlanningBulkMilestoneAssigner.BuildSkipList(
+            selectedItems,
+            milestonesByRepository,
+            milestoneTitle);
+        var skippedSet = skippedRepositories.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var appliedCount = 0;
+        var failures = new List<IterationPlanningBulkMilestoneFailureDto>();
+
+        foreach (var item in selectedItems)
+        {
+            if (skippedSet.Contains(item.RepositoryFullName))
+            {
+                continue;
+            }
+
+            if (!TryParseRepositoryFullName(item.RepositoryFullName, out var owner, out var repo))
+            {
+                throw new ArgumentException(
+                    $"Repository scope '{item.RepositoryFullName}' must be in owner/repository format.",
+                    nameof(selectedItems));
+            }
+
+            if (!milestonesByRepository.TryGetValue(item.RepositoryFullName, out var milestones))
+            {
+                continue;
+            }
+
+            var milestoneNumber = PlanningBulkMilestoneAssigner.ResolveMilestoneNumber(milestones, milestoneTitle);
+            if (milestoneNumber is null)
+            {
+                continue;
+            }
+
+            try
+            {
+                await _gitHubService
+                    .AssignMilestoneToTriageItemAsync(owner, repo, item.Number, milestoneNumber.Value, cancellationToken)
+                    .ConfigureAwait(false);
+                appliedCount++;
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                failures.Add(new IterationPlanningBulkMilestoneFailureDto(
+                    item.RepositoryFullName,
+                    item.Number,
+                    ex.Message));
+            }
+        }
+
+        return new IterationPlanningBulkMilestoneResultDto(appliedCount, skippedRepositories, failures);
+    }
+
+    private async Task<Dictionary<string, IReadOnlyList<Milestone>>> LoadMilestonesByRepositoryAsync(
+        IReadOnlyList<IterationPlanningUpNextItemDto> selectedItems,
+        CancellationToken cancellationToken)
+    {
+        var repositories = selectedItems
+            .Select(static item => item.RepositoryFullName)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var milestonesByRepository = new Dictionary<string, IReadOnlyList<Milestone>>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var repositoryFullName in repositories)
+        {
+            if (!TryParseRepositoryFullName(repositoryFullName, out var owner, out var repo))
+            {
+                throw new ArgumentException(
+                    $"Repository scope '{repositoryFullName}' must be in owner/repository format.",
+                    nameof(selectedItems));
+            }
+
+            var milestones = await _gitHubService
+                .GetMilestonesAsync(owner, repo, cancellationToken)
+                .ConfigureAwait(false);
+            milestonesByRepository[repositoryFullName] = milestones;
+        }
+
+        return milestonesByRepository;
     }
 
     private async Task<ProjectBoardItemCatalogueDto> LoadCatalogueForStalledItemUpdateAsync(

@@ -43,6 +43,11 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
     private string selectedTypeFilter = PmWorkflowItemKindFormatting.AllTypesFilter;
     private string? addingCandidateKey;
     private string? resolvingStalledItemId;
+    private readonly HashSet<string> selectedUpNextItemIds = new(StringComparer.Ordinal);
+    private IReadOnlyList<IterationPlanningMilestoneOptionDto> milestoneOptions = [];
+    private string? selectedMilestoneTitle;
+    private bool isLoadingMilestoneOptions;
+    private bool isApplyingBulkMilestone;
     private int viewLoadGeneration;
     private CancellationTokenSource? viewLoadCts;
     private CancellationTokenSource? addToUpNextCts;
@@ -50,6 +55,18 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
 
     private bool IsAddToUpNextDisabled =>
         planningView is not null && planningView.StalledUpNextItems.Count > 0;
+
+    private IReadOnlyList<IterationPlanningUpNextItemDto> SelectedUpNextItems =>
+        planningView?.UpNextItems
+            .Where(item => selectedUpNextItemIds.Contains(item.ProjectItemId))
+            .ToArray()
+        ?? [];
+
+    private bool CanApplyBulkMilestone =>
+        SelectedUpNextItems.Count > 0
+        && !string.IsNullOrWhiteSpace(selectedMilestoneTitle)
+        && !isApplyingBulkMilestone
+        && !isLoadingMilestoneOptions;
 
     private IEnumerable<IterationPlanningCandidateDto> FilteredCandidates
     {
@@ -192,6 +209,9 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
 
             planningView = view;
             ChromeCoordinator.SetIterationPlanning(boardId, view, null, isLoading: false);
+            selectedUpNextItemIds.Clear();
+            selectedMilestoneTitle = null;
+            milestoneOptions = [];
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -519,4 +539,166 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
 
     private static string FormatStallAge(int ageInDays) =>
         ageInDays == 1 ? "1 day" : $"{ageInDays} days";
+
+    private bool IsUpNextItemSelected(IterationPlanningUpNextItemDto item) =>
+        selectedUpNextItemIds.Contains(item.ProjectItemId);
+
+    private async Task OnUpNextItemSelectionChanged(IterationPlanningUpNextItemDto item, bool isSelected)
+    {
+        if (isSelected)
+        {
+            selectedUpNextItemIds.Add(item.ProjectItemId);
+        }
+        else
+        {
+            selectedUpNextItemIds.Remove(item.ProjectItemId);
+        }
+
+        selectedMilestoneTitle = null;
+        await LoadBulkMilestoneOptionsAsync().ConfigureAwait(false);
+        await InvokeAsync(StateHasChanged).ConfigureAwait(false);
+    }
+
+    private Task OnBulkMilestoneSelectionChanged(string? value)
+    {
+        selectedMilestoneTitle = string.IsNullOrWhiteSpace(value) ? null : value;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private async Task LoadBulkMilestoneOptionsAsync()
+    {
+        if (SelectedUpNextItems.Count == 0)
+        {
+            milestoneOptions = [];
+            return;
+        }
+
+        isLoadingMilestoneOptions = true;
+        await InvokeAsync(StateHasChanged).ConfigureAwait(false);
+
+        try
+        {
+            milestoneOptions = await PlanningService
+                .GetBulkMilestoneOptionsAsync(SelectedUpNextItems)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load bulk milestone options for selected Up Next items.");
+            milestoneOptions = [];
+            Snackbar.Add(
+                "Unable to load milestone options for the selected batch items.",
+                Severity.Error,
+                configure: config => config.VisibleStateDuration = 6000);
+        }
+        finally
+        {
+            isLoadingMilestoneOptions = false;
+        }
+    }
+
+    private async Task ApplyBulkMilestoneAsync()
+    {
+        if (!CanApplyBulkMilestone || string.IsNullOrWhiteSpace(selectedMilestoneTitle))
+        {
+            return;
+        }
+
+        isApplyingBulkMilestone = true;
+        await InvokeAsync(StateHasChanged).ConfigureAwait(false);
+
+        try
+        {
+            var result = await PlanningService
+                .ApplyBulkMilestoneAsync(SelectedUpNextItems, selectedMilestoneTitle)
+                .ConfigureAwait(false);
+
+            Snackbar.Add(
+                FormatBulkMilestoneMessage(result, selectedMilestoneTitle),
+                ResolveBulkMilestoneSnackbarSeverity(result),
+                configure: config => config.VisibleStateDuration = 6000);
+
+            if ((result.AppliedCount > 0 || result.Failures.Count > 0) && ChromeState?.Settings.PlanningBoardNodeId is { } boardId)
+            {
+                ChromeCoordinator.ClearBacklogReview();
+                await ReloadPlanningDataAsync(boardId).ConfigureAwait(false);
+            }
+        }
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
+        {
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            Logger.LogError(ex, "GitHub API request failed while applying bulk milestone.");
+            Snackbar.Add(
+                $"GitHub API request failed while assigning the milestone. {ex.Message}",
+                Severity.Error,
+                configure: config => config.VisibleStateDuration = 6000);
+        }
+        catch (InvalidOperationException ex)
+        {
+            Logger.LogError(ex, "Unable to apply bulk milestone.");
+            Snackbar.Add(ex.Message, Severity.Error, configure: config => config.VisibleStateDuration = 6000);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unexpected error while applying bulk milestone.");
+            Snackbar.Add(
+                "An unexpected error occurred while assigning the milestone.",
+                Severity.Error,
+                configure: config => config.VisibleStateDuration = 6000);
+        }
+        finally
+        {
+            isApplyingBulkMilestone = false;
+            await InvokeAsync(StateHasChanged).ConfigureAwait(false);
+        }
+    }
+
+    private static Severity ResolveBulkMilestoneSnackbarSeverity(IterationPlanningBulkMilestoneResultDto result)
+    {
+        if (result.Failures.Count > 0)
+        {
+            return result.AppliedCount > 0 ? Severity.Warning : Severity.Error;
+        }
+
+        return result.AppliedCount > 0 ? Severity.Success : Severity.Warning;
+    }
+
+    private static string FormatBulkMilestoneMessage(
+        IterationPlanningBulkMilestoneResultDto result,
+        string milestoneTitle)
+    {
+        if (result.AppliedCount == 0 && result.SkippedRepositories.Count == 0 && result.Failures.Count == 0)
+        {
+            return $"No batch items received milestone '{milestoneTitle}'.";
+        }
+
+        var message = result.AppliedCount > 0
+            ? $"Assigned milestone '{milestoneTitle}' to {result.AppliedCount} batch item(s)."
+            : $"No batch items received milestone '{milestoneTitle}'.";
+
+        if (result.SkippedRepositories.Count > 0)
+        {
+            var skipped = string.Join(", ", result.SkippedRepositories);
+            message += $" Skipped repositories without that milestone: {skipped}.";
+        }
+
+        if (result.Failures.Count > 0)
+        {
+            var failedItems = string.Join(
+                ", ",
+                result.Failures.Select(static failure => $"{failure.RepositoryFullName}#{failure.Number}"));
+            message += result.AppliedCount > 0
+                ? $" Failed on: {failedItems}."
+                : $" Failed items: {failedItems}.";
+        }
+
+        return message;
+    }
 }
