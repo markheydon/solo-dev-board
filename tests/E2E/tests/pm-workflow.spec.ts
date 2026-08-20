@@ -78,5 +78,14 @@ test.describe('PM Workflow', () => {
     await expect(page.getByTestId('pm-workflow-capacity-field')).toBeVisible();
     await expect(page.getByTestId('pm-workflow-exclude-autocomplete')).toBeVisible();
     await expect(page.getByTestId('pm-workflow-no-exclusions-text')).toBeVisible();
+    await expect(page.getByTestId('pm-workflow-repository-summary-region')).toBeVisible();
+    await expect(
+      page
+        .getByTestId('pm-workflow-repository-summary-table')
+        .or(page.getByTestId('pm-workflow-repository-summary-empty'))
+        .or(page.getByTestId('pm-workflow-repository-summary-error'))
+        .or(page.getByTestId('pm-workflow-repository-summary-partial-failure'))
+        .or(page.getByTestId('pm-workflow-repository-summary-loading')),
+    ).toBeVisible();
   });
 });

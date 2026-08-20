@@ -5,7 +5,7 @@ using SoloDevBoard.Application.Services.PmWorkflow;
 namespace SoloDevBoard.App.Components.Features.PmWorkflow;
 
 /// <summary>Repo Management panel rendered inside <see cref="PmWorkflowShell"/>.</summary>
-public partial class PmWorkflowReposPanel : ComponentBase
+public partial class PmWorkflowReposPanel : ComponentBase, IDisposable
 {
     [CascadingParameter]
     public PmWorkflowChromeState? ChromeState { get; set; }
@@ -16,6 +16,12 @@ public partial class PmWorkflowReposPanel : ComponentBase
     [Inject]
     public ISnackbar Snackbar { get; set; } = default!;
 
+    [Inject]
+    public IPmWorkItemCatalogueService WorkItemCatalogueService { get; set; } = default!;
+
+    [Inject]
+    public ILogger<PmWorkflowReposPanel> Logger { get; set; } = default!;
+
     private int capacity = PmSettingsDefaults.Capacity;
     private int stallDays = PmSettingsDefaults.StallDays;
     private int neglectDays = PmSettingsDefaults.NeglectDays;
@@ -23,6 +29,13 @@ public partial class PmWorkflowReposPanel : ComponentBase
     private IReadOnlyList<string> excludedRepositories = [];
     private string? repositoryToExclude;
     private string includedRepositoryFilter = string.Empty;
+    private IReadOnlyList<PmRepositorySummaryDto> repositorySummaries = [];
+    private IReadOnlyList<PmRepositoryCatalogueFailureDto> summaryFailures = [];
+    private bool isLoadingSummaries;
+    private string? summaryErrorMessage;
+    private int loadedSummaryRevision = -1;
+    private int summaryLoadGeneration;
+    private CancellationTokenSource? summaryLoadCts;
 
     private int IncludedRepositoryCount => includedRepositoryOptions.Count;
 
@@ -42,7 +55,34 @@ public partial class PmWorkflowReposPanel : ComponentBase
     }
 
     /// <inheritdoc/>
-    protected override void OnParametersSet()
+    protected override void OnParametersSet() => SyncChromeFields();
+
+    /// <inheritdoc/>
+    protected override async Task OnParametersSetAsync()
+    {
+        SyncChromeFields();
+
+        if (ChromeState is null || ChromeState.IsLoading)
+        {
+            return;
+        }
+
+        if (loadedSummaryRevision == DataRevision)
+        {
+            return;
+        }
+
+        await LoadSummariesAsync();
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        CancelSummaryLoad();
+        GC.SuppressFinalize(this);
+    }
+
+    private void SyncChromeFields()
     {
         if (ChromeState is null)
         {
@@ -58,6 +98,98 @@ public partial class PmWorkflowReposPanel : ComponentBase
             .Where(fullName => !ChromeState.IsRepositoryExcluded(fullName))
             .OrderBy(fullName => fullName, StringComparer.OrdinalIgnoreCase)
             .ToArray();
+    }
+
+    private Task RetryLoadSummariesAsync()
+    {
+        loadedSummaryRevision = -1;
+        return LoadSummariesAsync();
+    }
+
+    private async Task LoadSummariesAsync()
+    {
+        var revision = DataRevision;
+        var loadCts = BeginSummaryLoad();
+        var generation = summaryLoadGeneration;
+        loadedSummaryRevision = revision;
+        isLoadingSummaries = true;
+        summaryErrorMessage = null;
+
+        try
+        {
+            var catalogue = await WorkItemCatalogueService.GetCatalogueAsync(loadCts.Token);
+            if (IsStaleSummaryLoad(loadCts, generation))
+            {
+                return;
+            }
+
+            repositorySummaries = catalogue.RepositorySummaries;
+            summaryFailures = catalogue.Failures;
+        }
+        catch (OperationCanceledException) when (loadCts.IsCancellationRequested)
+        {
+            Logger.LogDebug("PM repository summary load cancelled.");
+        }
+        catch (Exception exception)
+        {
+            if (IsStaleSummaryLoad(loadCts, generation))
+            {
+                return;
+            }
+
+            Logger.LogError(exception, "Failed to load PM repository summaries.");
+            repositorySummaries = [];
+            summaryFailures = [];
+            summaryErrorMessage =
+                "Unable to load per-repository issue and pull request counts. Check your GitHub connection and try again.";
+        }
+        finally
+        {
+            if (!IsStaleSummaryLoad(loadCts, generation))
+            {
+                isLoadingSummaries = false;
+            }
+        }
+    }
+
+    private CancellationTokenSource BeginSummaryLoad()
+    {
+        CancelSummaryLoad();
+        summaryLoadCts = new CancellationTokenSource();
+        summaryLoadGeneration++;
+        return summaryLoadCts;
+    }
+
+    private void CancelSummaryLoad()
+    {
+        if (summaryLoadCts is null)
+        {
+            return;
+        }
+
+        summaryLoadCts.Cancel();
+        summaryLoadCts.Dispose();
+        summaryLoadCts = null;
+    }
+
+    private bool IsStaleSummaryLoad(CancellationTokenSource loadCts, int generation)
+        => generation != summaryLoadGeneration
+            || !ReferenceEquals(summaryLoadCts, loadCts);
+
+    private static string FormatLastActivity(DateTimeOffset lastActivityAt)
+    {
+        if (lastActivityAt == default)
+        {
+            return "No recorded activity";
+        }
+
+        var days = Math.Max(0, (int)Math.Floor((DateTimeOffset.UtcNow - lastActivityAt).TotalDays));
+        return days switch
+        {
+            0 => "Today",
+            1 => "1 day ago",
+            _ => $"{days} days ago",
+        };
     }
 
     private async Task SaveThresholdsAsync()
@@ -93,7 +225,7 @@ public partial class PmWorkflowReposPanel : ComponentBase
         await ChromeState.SaveSettingsAsync(ChromeState.Settings with { ExcludedRepositories = exclusions });
         repositoryToExclude = null;
         Snackbar.Add($"'{repositoryFullName.Trim()}' excluded from PM queries.", Severity.Success);
-        OnParametersSet();
+        SyncChromeFields();
     }
 
     private async Task IncludeRepositoryAsync(string repositoryFullName)
@@ -109,7 +241,7 @@ public partial class PmWorkflowReposPanel : ComponentBase
 
         await ChromeState.SaveSettingsAsync(ChromeState.Settings with { ExcludedRepositories = exclusions });
         Snackbar.Add($"'{repositoryFullName}' included in PM queries again.", Severity.Success);
-        OnParametersSet();
+        SyncChromeFields();
     }
 
     private Task<IEnumerable<string>> SearchIncludedRepositoriesAsync(string? value, CancellationToken cancellationToken)
