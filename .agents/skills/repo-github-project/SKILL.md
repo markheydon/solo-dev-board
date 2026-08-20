@@ -176,6 +176,9 @@ gh project item-edit \
     --project-id "PVT_kwHOAJefG84BQ6bh" \
     --field-id "PVTF_lAHOAJefG84BQ6bhzg_Lx34" \
     --number "$focusOrder"
+
+# Step 4: Assign the issue to markheydon (active queue ownership).
+gh issue edit "$issueNumber" --repo markheydon/solo-dev-board --add-assignee markheydon
 ```
 
 ### Event 1: Issue Created (PM Orchestrator responsibility)
@@ -209,9 +212,7 @@ gh project item-edit \
     --field-id "PVTSSF_lAHOAJefG84BQ6bhzg-5WMc" \
     --single-select-option-id "$priority_option_id"
 
-# Step 6: Assign the issue to markheydon.
-gh issue edit "$issueNumber" --repo markheydon/solo-dev-board --add-assignee markheydon
-
+# NOTE: Do not assign the issue at creation. Roadmap Sync assigns markheydon only when Status is Up Next or In Progress.
 # NOTE: Start Date and Target Date are intentionally left blank at this stage.
 # They are set when work begins (Event 2), calculated from the actual start date
 # and the issue's size label per the Size-to-Effort Calibration table above.
@@ -358,6 +359,7 @@ This repository also carries `.github/workflows/roadmap-sync.yml`, which exists 
 - Status / Phase / Priority field drift,
 - Start Date / Target Date drift,
 - parent Feature / Epic roll-up dates,
+- issue assignee ownership for **Up Next** and **In Progress** items (and unassignment elsewhere),
 - stray standalone pull request cards, and
 - archiving closed non-duplicate issues 14 days after `closed_at` (and unarchiving if reopened).
 
@@ -392,3 +394,9 @@ Map `priority/` labels to project Priority option IDs:
 - If an issue is split into sub-issues, add all sub-issues to the project as well.
 - The **Sub-issues progress** field updates automatically from GitHub's sub-issue tracking.
 - Leave untouched **Todo** siblings blank unless the user explicitly asks for a forecasting exercise; the normal workflow records actual starts, active forecasts, and actual finishes only.
+
+### Issue assignee rules
+
+- **Issues:** Assign `markheydon` only when Project #8 **Status** is **Up Next** or **In Progress**. Leave issues unassigned in **Todo**, **Ice Box**, **Blocked**, **Done**, and other non-active states. Roadmap Sync (`.github/scripts/roadmap-sync.mjs`) enforces this on issue events and the nightly schedule.
+- **Pull requests:** Follow [`plan/PULL_REQUEST_POLICY.md`](../../plan/PULL_REQUEST_POLICY.md) — assign `markheydon` when opening a PR; do not change PR assignment from Roadmap Sync.
+- **Manual Up Next moves:** When populating the daily queue (Event 1a), assign the issue after setting Status to **Up Next** so ownership is visible before the next sync run.
