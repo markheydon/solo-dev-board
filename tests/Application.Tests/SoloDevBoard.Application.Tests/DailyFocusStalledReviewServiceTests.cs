@@ -104,7 +104,7 @@ public sealed class DailyFocusStalledReviewServiceTests
             SubIssueTotal: null,
             SubIssueCompleted: null);
         _workCatalogue.GetCatalogueAsync(cancellationToken)
-            .Returns(new PmWorkItemCatalogueResultDto([workItem], []));
+            .Returns(new PmWorkItemCatalogueResultDto([workItem], [], []));
 
         var sut = new DailyFocusStalledReviewService(_projectCatalogue, _workCatalogue);
 
@@ -142,7 +142,7 @@ public sealed class DailyFocusStalledReviewServiceTests
             SubIssueTotal: null,
             SubIssueCompleted: null);
         _workCatalogue.GetCatalogueAsync(cancellationToken)
-            .Returns(new PmWorkItemCatalogueResultDto([excludedItem], []));
+            .Returns(new PmWorkItemCatalogueResultDto([excludedItem], [], []));
 
         var sut = new DailyFocusStalledReviewService(_projectCatalogue, _workCatalogue);
 
@@ -168,7 +168,8 @@ public sealed class DailyFocusStalledReviewServiceTests
         _workCatalogue.GetCatalogueAsync(cancellationToken)
             .Returns(new PmWorkItemCatalogueResultDto(
                 [],
-                [new PmRepositoryCatalogueFailureDto("owner/repo", "GitHub unavailable", 502)]));
+                [new PmRepositoryCatalogueFailureDto("owner/repo", "GitHub unavailable", 502)],
+                []));
 
         var sut = new DailyFocusStalledReviewService(_projectCatalogue, _workCatalogue);
 
