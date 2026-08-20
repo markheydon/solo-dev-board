@@ -155,6 +155,22 @@ public sealed class BacklogReviewGroupingTests
     }
 
     [Fact]
+    public void Group_DuplicateBoardJoinKeys_KeepsFirstStatus()
+    {
+        var item = CreateWorkItem(50, "Duplicate key item", ["priority/medium", "type/story"]);
+        var boardItems = new[]
+        {
+            CreateBoardItem(50, "Todo", ProjectBoardItemContentTypeDto.Issue),
+            CreateBoardItem(50, "Blocked", ProjectBoardItemContentTypeDto.Issue),
+        };
+
+        var result = BacklogReviewGrouping.Group([item], boardItems, []);
+
+        Assert.Equal(50, Assert.Single(result.ReadyToStart).Number);
+        Assert.Empty(result.BlockedOrDeferred);
+    }
+
+    [Fact]
     public void Group_CarriesFailuresThrough()
     {
         var failures = new[]

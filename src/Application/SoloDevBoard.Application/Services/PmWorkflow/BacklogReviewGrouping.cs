@@ -29,7 +29,8 @@ public static class BacklogReviewGrouping
                 continue;
             }
 
-            boardStatusByKey[PmWorkItemJoinKey.For(boardItem)] = statusName;
+            // Duplicate join keys are unlikely; keep the first board status encountered.
+            boardStatusByKey.TryAdd(PmWorkItemJoinKey.For(boardItem), statusName);
         }
 
         var urgent = new List<BacklogReviewItemDto>();

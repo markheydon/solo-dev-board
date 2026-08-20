@@ -34,6 +34,7 @@ public partial class PmWorkflowBacklogPanel : ComponentBase
     private string selectedRepositoryFilter = AllRepositoriesFilter;
     private string searchText = string.Empty;
     private int loadGeneration;
+    private int loadedRevision = -1;
 
     /// <inheritdoc/>
     protected override Task OnParametersSetAsync()
@@ -48,11 +49,12 @@ public partial class PmWorkflowBacklogPanel : ComponentBase
             snapshot = null;
             loadErrorMessage = null;
             warningMessage = null;
+            loadedRevision = -1;
             return Task.CompletedTask;
         }
 
         var boardId = ChromeState.Settings.PlanningBoardNodeId!;
-        if (TryApplyCachedResult(boardId))
+        if (loadedRevision == DataRevision && TryApplyCachedResult(boardId))
         {
             return Task.CompletedTask;
         }
@@ -114,13 +116,14 @@ public partial class PmWorkflowBacklogPanel : ComponentBase
             return Task.CompletedTask;
         }
 
+        loadedRevision = -1;
         ChromeCoordinator.ClearBacklogReview();
         return LoadAsync(ChromeState.Settings.PlanningBoardNodeId);
     }
 
     private async Task LoadAsync(string boardId)
     {
-        if (TryApplyCachedResult(boardId))
+        if (loadedRevision == DataRevision && TryApplyCachedResult(boardId))
         {
             return;
         }
@@ -142,6 +145,7 @@ public partial class PmWorkflowBacklogPanel : ComponentBase
 
             snapshot = result;
             warningMessage = FormatPartialFailureWarning(result.Failures);
+            loadedRevision = DataRevision;
             ChromeCoordinator.SetBacklogReview(boardId, result, null, isLoading: false, warningMessage);
         }
         catch (Exception exception)
