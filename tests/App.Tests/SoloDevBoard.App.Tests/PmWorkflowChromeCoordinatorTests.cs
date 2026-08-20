@@ -88,6 +88,11 @@ public sealed class PmWorkflowChromeCoordinatorTests
             null,
             isLoading: false);
         coordinator.SetBacklogReview("PVT_board", EmptyBacklogResult(), null, isLoading: false);
+        coordinator.SetIterationPlanning(
+            "PVT_board",
+            new IterationPlanningViewDto([], [], [], true, 1),
+            null,
+            isLoading: false);
 
         await coordinator.RefreshAsync(forceReload: true);
 
@@ -95,6 +100,7 @@ public sealed class PmWorkflowChromeCoordinatorTests
         Assert.Null(coordinator.DailyFocusRecommendations);
         Assert.Null(coordinator.DailyFocusStalledReviews);
         Assert.Null(coordinator.BacklogReview);
+        Assert.Null(coordinator.IterationPlanning);
     }
 
     [Fact]

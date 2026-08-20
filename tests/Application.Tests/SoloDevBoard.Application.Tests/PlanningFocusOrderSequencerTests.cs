@@ -6,6 +6,26 @@ namespace SoloDevBoard.Application.Tests;
 public sealed class PlanningFocusOrderSequencerTests
 {
     [Theory]
+    [InlineData("type/feature", "Skipped for Feature/Epic")]
+    [InlineData("type/epic", "Skipped for Feature/Epic")]
+    [InlineData("type/bug", "Skipped (story, enabler, or test only)")]
+    public void DescribeFocusOrderSkipReason_TypeLabel_ReturnsExpectedMessage(string typeLabel, string expected)
+    {
+        var result = PlanningFocusOrderSequencer.DescribeFocusOrderSkipReason([typeLabel]);
+
+        Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public void DescribeFocusOrderSkipReason_StoryLabel_ReturnsNull()
+    {
+        var result = PlanningFocusOrderSequencer.DescribeFocusOrderSkipReason(
+            [PlanningFocusOrderSequencer.StoryTypeLabel]);
+
+        Assert.Null(result);
+    }
+
+    [Theory]
     [InlineData("type/story", true)]
     [InlineData("type/enabler", true)]
     [InlineData("type/test", true)]

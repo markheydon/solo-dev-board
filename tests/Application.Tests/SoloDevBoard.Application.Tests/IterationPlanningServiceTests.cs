@@ -26,13 +26,17 @@ public sealed class IterationPlanningServiceTests
         var sut = CreateSut();
         var labels = new[] { PlanningFocusOrderSequencer.StoryTypeLabel, "priority/medium" };
 
-        await sut.AddToUpNextAsync(
+        var result = await sut.AddToUpNextAsync(
             "project-id",
             PmWorkItemTypeDto.Issue,
             "owner/repo",
             50,
             labels,
             cancellationToken);
+
+        Assert.True(result.AddedBoardCard);
+        Assert.Equal(3, result.FocusOrderAssigned);
+        Assert.False(result.FocusOrderSkipped);
 
         await _gitHubService.Received(1)
             .AddTriageItemToProjectBoardAsync("owner", "repo", 50, "project-id", cancellationToken);
@@ -43,6 +47,8 @@ public sealed class IterationPlanningServiceTests
                 "PVTF_status",
                 "opt-up-next",
                 cancellationToken);
+        await _projectItemCatalogueService.Received(2)
+            .GetCatalogueAsync("project-id", cancellationToken);
         await _projectItemCatalogueService.Received(1)
             .UpdateFocusOrderAsync("project-id", "PVTI_new", "PVTF_focus", 3, cancellationToken);
         _projectItemCatalogueService.Received(1).InvalidateCatalogue("project-id");
@@ -61,13 +67,17 @@ public sealed class IterationPlanningServiceTests
         var sut = CreateSut();
         var labels = new[] { PlanningFocusOrderSequencer.EnablerTypeLabel };
 
-        await sut.AddToUpNextAsync(
+        var result = await sut.AddToUpNextAsync(
             "project-id",
             PmWorkItemTypeDto.Issue,
             "owner/repo",
             51,
             labels,
             cancellationToken);
+
+        Assert.False(result.AddedBoardCard);
+        Assert.Equal(3, result.FocusOrderAssigned);
+        Assert.False(result.FocusOrderSkipped);
 
         await _gitHubService.DidNotReceive()
             .AddTriageItemToProjectBoardAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
@@ -78,6 +88,8 @@ public sealed class IterationPlanningServiceTests
                 "PVTF_status",
                 "opt-up-next",
                 cancellationToken);
+        await _projectItemCatalogueService.Received(2)
+            .GetCatalogueAsync("project-id", cancellationToken);
         await _projectItemCatalogueService.Received(1)
             .UpdateFocusOrderAsync("project-id", "PVTI_existing", "PVTF_focus", 3, cancellationToken);
         _projectItemCatalogueService.Received(1).InvalidateCatalogue("project-id");
@@ -98,13 +110,17 @@ public sealed class IterationPlanningServiceTests
         var sut = CreateSut();
         var labels = new[] { PmLabelHelpers.FeatureTypeLabel };
 
-        await sut.AddToUpNextAsync(
+        var result = await sut.AddToUpNextAsync(
             "project-id",
             PmWorkItemTypeDto.Issue,
             "owner/repo",
             52,
             labels,
             cancellationToken);
+
+        Assert.True(result.AddedBoardCard);
+        Assert.Null(result.FocusOrderAssigned);
+        Assert.True(result.FocusOrderSkipped);
 
         await _projectItemCatalogueService.DidNotReceive()
             .UpdateFocusOrderAsync(

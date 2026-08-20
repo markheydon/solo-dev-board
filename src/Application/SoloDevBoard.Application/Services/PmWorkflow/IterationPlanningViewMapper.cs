@@ -9,11 +9,13 @@ public static class IterationPlanningViewMapper
     /// <param name="workItems">Open issues and pull requests from included repositories.</param>
     /// <param name="boardItems">Items currently on the selected planning board.</param>
     /// <param name="failures">Per-repository catalogue failures to carry through to the view.</param>
+    /// <param name="hasFocusOrderField"><see langword="true" /> when the selected board exposes a Focus Order field.</param>
     /// <returns>The planning view snapshot.</returns>
     public static IterationPlanningViewDto Map(
         IReadOnlyList<PmWorkItemDto> workItems,
         IReadOnlyList<ProjectBoardItemDto> boardItems,
-        IReadOnlyList<PmRepositoryCatalogueFailureDto> failures)
+        IReadOnlyList<PmRepositoryCatalogueFailureDto> failures,
+        bool hasFocusOrderField)
     {
         ArgumentNullException.ThrowIfNull(workItems);
         ArgumentNullException.ThrowIfNull(boardItems);
@@ -22,12 +24,19 @@ public static class IterationPlanningViewMapper
         var boardItemsByKey = BuildBoardItemsByKey(boardItems);
         var labelsByKey = BuildLabelsByKey(workItems);
 
-        var upNextItems = boardItems
+        var upNextBoardItems = boardItems
             .Where(static item => DailyFocusBoardStateMapper.IsUpNextStatus(item.Status?.Name))
+            .ToArray();
+
+        var upNextItems = upNextBoardItems
             .OrderBy(static item => item.FocusOrder ?? double.MaxValue)
             .ThenBy(static item => item.Content.Title, StringComparer.OrdinalIgnoreCase)
             .Select(item => MapUpNextItem(item, labelsByKey))
             .ToArray();
+
+        var nextStoryFocusOrder = hasFocusOrderField
+            ? PlanningFocusOrderSequencer.GetNextFocusOrder(upNextBoardItems)
+            : 0;
 
         var candidates = workItems
             .Where(workItem => IsCandidate(workItem, boardItemsByKey))
@@ -36,7 +45,12 @@ public static class IterationPlanningViewMapper
             .ThenBy(static candidate => candidate.Number)
             .ToArray();
 
-        return new IterationPlanningViewDto(upNextItems, candidates, failures);
+        return new IterationPlanningViewDto(
+            upNextItems,
+            candidates,
+            failures,
+            hasFocusOrderField,
+            nextStoryFocusOrder);
     }
 
     /// <summary>

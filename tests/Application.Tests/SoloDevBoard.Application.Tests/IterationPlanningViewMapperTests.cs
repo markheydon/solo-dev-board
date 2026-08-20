@@ -15,7 +15,7 @@ public sealed class IterationPlanningViewMapperTests
             CreateBoardItem("PVTI_todo", "Todo", null, "Later"),
         };
 
-        var result = IterationPlanningViewMapper.Map([], boardItems, []);
+        var result = IterationPlanningViewMapper.Map([], boardItems, [], hasFocusOrderField: true);
 
         Assert.Equal(2, result.UpNextItems.Count);
         Assert.Equal("Alpha", result.UpNextItems[0].Title);
@@ -40,10 +40,39 @@ public sealed class IterationPlanningViewMapperTests
             CreateBoardItem("PVTI_in-progress", "In Progress", null, "In Progress item", 12),
         };
 
-        var result = IterationPlanningViewMapper.Map(workItems, boardItems, []);
+        var result = IterationPlanningViewMapper.Map(workItems, boardItems, [], hasFocusOrderField: true);
 
         Assert.Single(result.Candidates);
         Assert.Equal(10, result.Candidates[0].Number);
+    }
+
+    [Fact]
+    public void Map_WhenFocusOrderFieldExists_ComputesNextStoryFocusOrder()
+    {
+        var boardItems = new[]
+        {
+            CreateBoardItem("PVTI_a", "Up Next", 1, "Alpha"),
+            CreateBoardItem("PVTI_b", "Up Next", 3, "Beta"),
+        };
+
+        var result = IterationPlanningViewMapper.Map([], boardItems, [], hasFocusOrderField: true);
+
+        Assert.True(result.HasFocusOrderField);
+        Assert.Equal(4, result.NextStoryFocusOrder);
+    }
+
+    [Fact]
+    public void Map_WhenFocusOrderFieldMissing_DoesNotComputeNextStoryFocusOrder()
+    {
+        var boardItems = new[]
+        {
+            CreateBoardItem("PVTI_a", "Up Next", 1, "Alpha"),
+        };
+
+        var result = IterationPlanningViewMapper.Map([], boardItems, [], hasFocusOrderField: false);
+
+        Assert.False(result.HasFocusOrderField);
+        Assert.Equal(0, result.NextStoryFocusOrder);
     }
 
     [Theory]

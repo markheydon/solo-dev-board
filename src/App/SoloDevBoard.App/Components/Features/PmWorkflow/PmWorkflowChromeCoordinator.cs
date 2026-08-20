@@ -56,6 +56,9 @@ public sealed class PmWorkflowChromeCoordinator
     /// <summary>Gets the cached Backlog Review grouping for the current circuit, if any.</summary>
     public BacklogReviewCacheEntry? BacklogReview { get; private set; }
 
+    /// <summary>Gets the cached Iteration Planning view for the current circuit, if any.</summary>
+    public IterationPlanningCacheEntry? IterationPlanning { get; private set; }
+
     /// <summary>Loads chrome data when it has not been loaded yet for this circuit.</summary>
     /// <returns>A task that completes when the load attempt finishes or is skipped.</returns>
     public Task EnsureLoadedAsync() =>
@@ -79,6 +82,7 @@ public sealed class PmWorkflowChromeCoordinator
             ClearDailyFocusStalledReviews();
             ClearDailyFocusRecommendations();
             ClearBacklogReview();
+            ClearIterationPlanning();
         }
 
         CancelPendingLoad();
@@ -98,6 +102,7 @@ public sealed class PmWorkflowChromeCoordinator
         ClearDailyFocusStalledReviews();
         ClearDailyFocusRecommendations();
         ClearBacklogReview();
+        ClearIterationPlanning();
         State.MarkDataChanged();
     }
 
@@ -207,6 +212,25 @@ public sealed class PmWorkflowChromeCoordinator
 
     /// <summary>Clears cached Backlog Review grouping.</summary>
     public void ClearBacklogReview() => BacklogReview = null;
+
+    /// <summary>Stores Iteration Planning view data in the circuit cache.</summary>
+    /// <param name="boardId">The planning board node identifier.</param>
+    /// <param name="view">The loaded planning view, when successful.</param>
+    /// <param name="errorMessage">The load error message, when unsuccessful.</param>
+    /// <param name="isLoading"><see langword="true"/> when a load is currently in flight; otherwise, <see langword="false"/>.</param>
+    public void SetIterationPlanning(
+        string boardId,
+        IterationPlanningViewDto? view,
+        string? errorMessage,
+        bool isLoading)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(boardId);
+
+        IterationPlanning = new IterationPlanningCacheEntry(boardId, view, errorMessage, isLoading);
+    }
+
+    /// <summary>Clears cached Iteration Planning view data.</summary>
+    public void ClearIterationPlanning() => IterationPlanning = null;
 
     /// <summary>Cancels any in-flight chrome load, for example when leaving PM Workflow.</summary>
     public void CancelPendingLoad()
@@ -348,3 +372,14 @@ public sealed record BacklogReviewCacheEntry(
     string? ErrorMessage,
     bool IsLoading,
     string? WarningMessage = null);
+
+/// <summary>Cached Iteration Planning view for a planning board within the current circuit.</summary>
+/// <param name="BoardId">The planning board node identifier.</param>
+/// <param name="View">The loaded planning view, when successful.</param>
+/// <param name="ErrorMessage">The load error message, when unsuccessful.</param>
+/// <param name="IsLoading">Whether a load is currently in flight.</param>
+public sealed record IterationPlanningCacheEntry(
+    string BoardId,
+    IterationPlanningViewDto? View,
+    string? ErrorMessage,
+    bool IsLoading);

@@ -37,10 +37,8 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
     private bool isAddingToUpNext;
     private string? loadErrorMessage;
     private string candidateSearch = string.Empty;
-    private bool showIssues = true;
-    private bool showPullRequests = true;
+    private string selectedTypeFilter = PmWorkflowItemKindFormatting.AllTypesFilter;
     private string? addingCandidateKey;
-    private int loadedDataRevision = -1;
     private int viewLoadGeneration;
     private CancellationTokenSource? viewLoadCts;
     private CancellationTokenSource? addToUpNextCts;
@@ -56,15 +54,8 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
 
             IEnumerable<IterationPlanningCandidateDto> candidates = planningView.Candidates;
 
-            if (!showIssues)
-            {
-                candidates = candidates.Where(static candidate => candidate.ItemType != PmWorkItemTypeDto.Issue);
-            }
-
-            if (!showPullRequests)
-            {
-                candidates = candidates.Where(static candidate => candidate.ItemType != PmWorkItemTypeDto.PullRequest);
-            }
+            candidates = candidates.Where(candidate =>
+                PmWorkflowItemKindFormatting.MatchesTypeFilter(candidate.ItemType, selectedTypeFilter));
 
             if (string.IsNullOrWhiteSpace(candidateSearch))
             {
@@ -75,7 +66,8 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
             return candidates.Where(candidate =>
                 candidate.Title.Contains(filter, StringComparison.OrdinalIgnoreCase)
                 || candidate.RepositoryFullName.Contains(filter, StringComparison.OrdinalIgnoreCase)
-                || candidate.Number.ToString(System.Globalization.CultureInfo.InvariantCulture).Contains(filter, StringComparison.OrdinalIgnoreCase));
+                || candidate.Number.ToString(System.Globalization.CultureInfo.InvariantCulture).Contains(filter, StringComparison.OrdinalIgnoreCase)
+                || $"{candidate.RepositoryFullName}#{candidate.Number}".Contains(filter, StringComparison.OrdinalIgnoreCase));
         }
     }
 
@@ -91,16 +83,17 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
         {
             planningView = null;
             loadErrorMessage = null;
-            loadedDataRevision = DataRevision;
             return Task.CompletedTask;
         }
 
-        if (loadedDataRevision == DataRevision && planningView is not null)
+        var boardId = ChromeState.Settings.PlanningBoardNodeId!;
+        if (TryApplyCachedView(boardId))
         {
             return Task.CompletedTask;
         }
 
-        return LoadPlanningViewAsync();
+        _ = LoadPlanningViewAsync(boardId);
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc/>
@@ -112,16 +105,50 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
         addToUpNextCts?.Dispose();
     }
 
-    private Task RetryLoadAsync() => LoadPlanningViewAsync(forceReload: true);
-
-    private async Task LoadPlanningViewAsync(bool forceReload = false)
+    private Task RetryLoadAsync()
     {
-        if (ChromeState is null || !ChromeState.HasPlanningBoardSelected)
+        if (ChromeState is null || string.IsNullOrWhiteSpace(ChromeState.Settings.PlanningBoardNodeId))
         {
-            return;
+            return Task.CompletedTask;
         }
 
-        if (!forceReload && loadedDataRevision == DataRevision && planningView is not null)
+        ChromeCoordinator.ClearIterationPlanning();
+        return LoadPlanningViewAsync(ChromeState.Settings.PlanningBoardNodeId, forceReload: true);
+    }
+
+    private Task OnTypeFilterChanged(string value)
+    {
+        selectedTypeFilter = value ?? PmWorkflowItemKindFormatting.AllTypesFilter;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private Task OnSearchChanged(string value)
+    {
+        candidateSearch = value ?? string.Empty;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private bool TryApplyCachedView(string boardId)
+    {
+        var cached = ChromeCoordinator.IterationPlanning;
+        if (cached is null || !cached.BoardId.Equals(boardId, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        isLoadingView = cached.IsLoading;
+        planningView = cached.View;
+        loadErrorMessage = cached.ErrorMessage;
+        return cached.IsLoading
+            || cached.View is not null
+            || !string.IsNullOrWhiteSpace(cached.ErrorMessage);
+    }
+
+    private async Task LoadPlanningViewAsync(string boardId, bool forceReload = false)
+    {
+        if (!forceReload && TryApplyCachedView(boardId))
         {
             return;
         }
@@ -131,10 +158,11 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
         viewLoadCts = new CancellationTokenSource();
         var cancellationToken = viewLoadCts.Token;
         var loadGeneration = ++viewLoadGeneration;
-        var boardId = ChromeState.Settings.PlanningBoardNodeId!;
 
         isLoadingView = true;
         loadErrorMessage = null;
+        planningView = null;
+        ChromeCoordinator.SetIterationPlanning(boardId, null, null, isLoading: true);
         await InvokeAsync(StateHasChanged).ConfigureAwait(false);
 
         try
@@ -149,7 +177,7 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
             }
 
             planningView = view;
-            loadedDataRevision = DataRevision;
+            ChromeCoordinator.SetIterationPlanning(boardId, view, null, isLoading: false);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -165,6 +193,7 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
             Logger.LogError(ex, "Failed to load Iteration Planning view for board {BoardId}.", boardId);
             planningView = null;
             loadErrorMessage = ex.Message;
+            ChromeCoordinator.SetIterationPlanning(boardId, null, loadErrorMessage, isLoading: false);
         }
         catch (Exception ex)
         {
@@ -176,12 +205,25 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
             Logger.LogError(ex, "Unexpected error while loading Iteration Planning for board {BoardId}.", boardId);
             planningView = null;
             loadErrorMessage = "An unexpected error occurred while loading Iteration Planning.";
+            ChromeCoordinator.SetIterationPlanning(boardId, null, loadErrorMessage, isLoading: false);
         }
         finally
         {
             if (loadGeneration == viewLoadGeneration)
             {
                 isLoadingView = false;
+                var cached = ChromeCoordinator.IterationPlanning;
+                if (cached is not null
+                    && cached.BoardId.Equals(boardId, StringComparison.Ordinal)
+                    && cached.IsLoading)
+                {
+                    ChromeCoordinator.SetIterationPlanning(
+                        boardId,
+                        cached.View,
+                        cached.ErrorMessage,
+                        isLoading: false);
+                }
+
                 await InvokeAsync(StateHasChanged).ConfigureAwait(false);
             }
         }
@@ -207,7 +249,7 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
 
         try
         {
-            await PlanningService
+            var result = await PlanningService
                 .AddToUpNextAsync(
                     boardId,
                     candidate.ItemType,
@@ -218,17 +260,17 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
                 .ConfigureAwait(false);
 
             Snackbar.Add(
-                $"Added {FormatItemReference(candidate.RepositoryFullName, candidate.Number)} to Up Next.",
+                FormatAddToUpNextMessage(candidate, result),
                 Severity.Success,
-                configure: config => config.VisibleStateDuration = 4000);
+                configure: config => config.VisibleStateDuration = 5000);
 
             ChromeCoordinator.ClearDailyFocusBoardState();
             ChromeCoordinator.ClearDailyFocusRecommendations();
             ChromeCoordinator.ClearBacklogReview();
+            ChromeCoordinator.ClearIterationPlanning();
             ChromeState.MarkDataChanged();
 
-            loadedDataRevision = -1;
-            await LoadPlanningViewAsync(forceReload: true).ConfigureAwait(false);
+            await LoadPlanningViewAsync(boardId, forceReload: true).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -282,11 +324,29 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
     private static string FormatItemReference(string repositoryFullName, int number) =>
         $"{repositoryFullName}#{number}";
 
-    private static string FormatItemType(PmWorkItemTypeDto itemType) =>
-        itemType == PmWorkItemTypeDto.PullRequest ? "PR" : "Issue";
-
     private static string FormatFocusOrder(double? focusOrder) =>
         focusOrder?.ToString("0", System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty;
+
+    private static string FormatAddToUpNextMessage(
+        IterationPlanningCandidateDto candidate,
+        IterationPlanningAddToUpNextResultDto result)
+    {
+        var itemReference = FormatItemReference(candidate.RepositoryFullName, candidate.Number);
+
+        if (result.FocusOrderAssigned.HasValue)
+        {
+            return $"Added {itemReference} to Up Next with Focus Order {FormatFocusOrder(result.FocusOrderAssigned)}.";
+        }
+
+        if (result.FocusOrderSkipped)
+        {
+            var skipReason = PlanningFocusOrderSequencer.DescribeFocusOrderSkipReason(candidate.Labels)
+                ?? "Focus Order was not assigned.";
+            return $"Added {itemReference} to Up Next. {skipReason}.";
+        }
+
+        return $"Added {itemReference} to Up Next.";
+    }
 
     private static string FormatPartialFailureMessage(IReadOnlyList<PmRepositoryCatalogueFailureDto> failures)
     {

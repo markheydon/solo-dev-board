@@ -47,14 +47,17 @@ public sealed class IterationPlanningService : IIterationPlanningService
             throw CreateCatalogueFailureException(workItems.Failures);
         }
 
+        var hasFocusOrderField = !string.IsNullOrWhiteSpace(boardCatalogue.FieldIds.FocusOrderFieldId);
+
         return IterationPlanningViewMapper.Map(
             workItems.Items,
             boardCatalogue.Items,
-            workItems.Failures);
+            workItems.Failures,
+            hasFocusOrderField);
     }
 
     /// <inheritdoc/>
-    public async Task AddToUpNextAsync(
+    public async Task<IterationPlanningAddToUpNextResultDto> AddToUpNextAsync(
         string projectId,
         PmWorkItemTypeDto itemType,
         string repositoryFullName,
@@ -90,6 +93,7 @@ public sealed class IterationPlanningService : IIterationPlanningService
         var existingItem = catalogue.Items.FirstOrDefault(item =>
             PmWorkItemJoinKey.For(item).Equals(joinKey, StringComparison.OrdinalIgnoreCase));
 
+        var addedBoardCard = existingItem is null;
         var projectItemId = existingItem?.ProjectItemId
             ?? await _gitHubService
                 .AddTriageItemToProjectBoardAsync(owner, repo, number, projectId, cancellationToken)
@@ -106,27 +110,40 @@ public sealed class IterationPlanningService : IIterationPlanningService
 
         _projectItemCatalogueService.InvalidateCatalogue(projectId);
 
-        if (PlanningFocusOrderSequencer.ShouldAssignFocusOrder(labels))
+        var assignsFocusOrder = PlanningFocusOrderSequencer.ShouldAssignFocusOrder(labels);
+        double? focusOrderAssigned = null;
+
+        if (assignsFocusOrder)
         {
             if (string.IsNullOrWhiteSpace(catalogue.FieldIds.FocusOrderFieldId))
             {
                 throw new InvalidOperationException("The project board does not expose a Focus Order field.");
             }
 
-            var upNextItems = catalogue.Items
+            var refreshedCatalogue = await _projectItemCatalogueService
+                .GetCatalogueAsync(projectId, cancellationToken)
+                .ConfigureAwait(false);
+
+            var upNextItems = refreshedCatalogue.Items
                 .Where(item => DailyFocusBoardStateMapper.IsUpNextStatus(item.Status?.Name))
+                .Where(item => !item.ProjectItemId.Equals(projectItemId, StringComparison.Ordinal))
                 .ToArray();
-            var nextFocusOrder = PlanningFocusOrderSequencer.GetNextFocusOrder(upNextItems);
+            focusOrderAssigned = PlanningFocusOrderSequencer.GetNextFocusOrder(upNextItems);
 
             await _projectItemCatalogueService
                 .UpdateFocusOrderAsync(
                     projectId,
                     projectItemId,
                     catalogue.FieldIds.FocusOrderFieldId,
-                    nextFocusOrder,
+                    focusOrderAssigned.Value,
                     cancellationToken)
                 .ConfigureAwait(false);
         }
+
+        return new IterationPlanningAddToUpNextResultDto(
+            addedBoardCard,
+            focusOrderAssigned,
+            FocusOrderSkipped: !assignsFocusOrder);
     }
 
     private static ProjectBoardStatusOptionDto ResolveUpNextStatusOption(

@@ -43,4 +43,20 @@ public static class PlanningFocusOrderSequencer
 
         return maxExisting + 1;
     }
+
+    /// <summary>Returns a short UI label explaining why Focus Order was not assigned.</summary>
+    /// <param name="labels">Label names on the work item.</param>
+    /// <returns>A user-facing skip reason, or <see langword="null"/> when Focus Order would be assigned.</returns>
+    public static string? DescribeFocusOrderSkipReason(IReadOnlyList<string> labels)
+    {
+        if (ShouldAssignFocusOrder(labels))
+        {
+            return null;
+        }
+
+        var typeLabel = PmLabelHelpers.ParseTypeLabel(labels);
+        return typeLabel is PmLabelHelpers.FeatureTypeLabel or PmLabelHelpers.EpicTypeLabel
+            ? "Skipped for Feature/Epic"
+            : "Skipped (story, enabler, or test only)";
+    }
 }

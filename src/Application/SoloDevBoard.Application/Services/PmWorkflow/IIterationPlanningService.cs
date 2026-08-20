@@ -25,8 +25,8 @@ public interface IIterationPlanningService
     /// <param name="number">The repository-scoped item number.</param>
     /// <param name="labels">Label names on the work item, used to decide Focus Order assignment.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
-    /// <returns>A task that represents the asynchronous update operation.</returns>
-    Task AddToUpNextAsync(
+    /// <returns>The add outcome, including any Focus Order assigned.</returns>
+    Task<IterationPlanningAddToUpNextResultDto> AddToUpNextAsync(
         string projectId,
         PmWorkItemTypeDto itemType,
         string repositoryFullName,

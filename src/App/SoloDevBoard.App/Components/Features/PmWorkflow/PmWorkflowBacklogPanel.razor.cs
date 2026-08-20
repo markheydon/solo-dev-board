@@ -7,9 +7,9 @@ namespace SoloDevBoard.App.Components.Features.PmWorkflow;
 /// <summary>Backlog Review grouping panel rendered inside <see cref="PmWorkflowShell"/>.</summary>
 public partial class PmWorkflowBacklogPanel : ComponentBase
 {
-    internal const string AllTypesFilter = "";
-    internal const string IssueTypeFilter = "issue";
-    internal const string PullRequestTypeFilter = "pr";
+    internal const string AllTypesFilter = PmWorkflowItemKindFormatting.AllTypesFilter;
+    internal const string IssueTypeFilter = PmWorkflowItemKindFormatting.IssueTypeFilter;
+    internal const string PullRequestTypeFilter = PmWorkflowItemKindFormatting.PullRequestTypeFilter;
     internal const string AllRepositoriesFilter = "";
 
     [CascadingParameter]
@@ -136,12 +136,12 @@ public partial class PmWorkflowBacklogPanel : ComponentBase
         }
 
         ChromeCoordinator.ClearBacklogReview();
-        return LoadAsync(ChromeState.Settings.PlanningBoardNodeId);
+        return LoadAsync(ChromeState.Settings.PlanningBoardNodeId, forceReload: true);
     }
 
-    private async Task LoadAsync(string boardId)
+    private async Task LoadAsync(string boardId, bool forceReload = false)
     {
-        if (TryApplyCachedResult(boardId))
+        if (!forceReload && TryApplyCachedResult(boardId))
         {
             return;
         }
@@ -183,6 +183,19 @@ public partial class PmWorkflowBacklogPanel : ComponentBase
             if (generation == loadGeneration)
             {
                 isLoading = false;
+                var cached = ChromeCoordinator.BacklogReview;
+                if (cached is not null
+                    && cached.BoardId.Equals(boardId, StringComparison.Ordinal)
+                    && cached.IsLoading)
+                {
+                    ChromeCoordinator.SetBacklogReview(
+                        boardId,
+                        cached.Result,
+                        cached.ErrorMessage,
+                        isLoading: false,
+                        cached.WarningMessage);
+                }
+
                 await InvokeAsync(StateHasChanged).ConfigureAwait(false);
             }
         }
@@ -270,12 +283,7 @@ public partial class PmWorkflowBacklogPanel : ComponentBase
 
     private bool MatchesFilters(BacklogReviewItemDto item)
     {
-        if (selectedTypeFilter == IssueTypeFilter && item.ItemType != PmWorkItemTypeDto.Issue)
-        {
-            return false;
-        }
-
-        if (selectedTypeFilter == PullRequestTypeFilter && item.ItemType != PmWorkItemTypeDto.PullRequest)
+        if (!PmWorkflowItemKindFormatting.MatchesTypeFilter(item.ItemType, selectedTypeFilter))
         {
             return false;
         }
@@ -319,10 +327,10 @@ public partial class PmWorkflowBacklogPanel : ComponentBase
     }
 
     private static string FormatItemKindChip(PmWorkItemTypeDto itemType)
-        => itemType == PmWorkItemTypeDto.PullRequest ? "Pull request" : "Issue";
+        => PmWorkflowItemKindFormatting.FormatLabel(itemType);
 
     private static Color FormatItemKindChipColor(PmWorkItemTypeDto itemType)
-        => itemType == PmWorkItemTypeDto.PullRequest ? Color.Warning : Color.Info;
+        => PmWorkflowItemKindFormatting.FormatChipColor(itemType);
 
     private static string FormatPriority(string? priorityLabel)
         => string.IsNullOrWhiteSpace(priorityLabel) ? "Unlabelled" : priorityLabel;

@@ -57,7 +57,24 @@
 
             <MudPaper Class="pa-4" Elevation="1" data-testid="pm-workflow-planning-up-next">
                 <MudStack Spacing="2">
-                    <MudText Typo="Typo.h6">This batch (Up Next)</MudText>
+                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.h6">This batch (Up Next)</MudText>
+                        @if (planningView.HasFocusOrderField && planningView.NextStoryFocusOrder > 0)
+                        {
+                            <MudText Typo="Typo.body2" data-testid="pm-workflow-planning-next-focus-order">
+                                Next story Focus Order: @FormatFocusOrder(planningView.NextStoryFocusOrder)
+                            </MudText>
+                        }
+                    </MudStack>
+                    @if (!planningView.HasFocusOrderField)
+                    {
+                        <MudAlert Severity="Severity.Warning"
+                                  Variant="Variant.Outlined"
+                                  Dense="true"
+                                  data-testid="pm-workflow-planning-no-focus-order-field">
+                            This planning board does not expose a Focus Order field. Story, enabler, and test cards can still move to Up Next, but Focus Order cannot be assigned.
+                        </MudAlert>
+                    }
                     @if (planningView.UpNextItems.Count == 0)
                     {
                         <MudText Typo="Typo.body2" data-testid="pm-workflow-planning-up-next-empty">
@@ -66,36 +83,71 @@
                     }
                     else
                     {
-                        <MudStack Spacing="1" aria-live="polite">
-                            @foreach (var (item, index) in planningView.UpNextItems.Select((item, index) => (item, index + 1)))
-                            {
-                                <MudStack Row="true"
-                                          Wrap="Wrap.Wrap"
-                                          AlignItems="AlignItems.Center"
-                                          Spacing="2"
-                                          data-testid="pm-workflow-planning-up-next-row">
-                                    <MudText Typo="Typo.body1">@($"{index}. {FormatItemReference(item.RepositoryFullName, item.Number)}")</MudText>
-                                    @if (item.FocusOrder.HasValue)
-                                    {
-                                        <MudChip T="string"
-                                                 Value="@FormatFocusOrder(item.FocusOrder)"
-                                                 Variant="Variant.Outlined"
-                                                 Color="Color.Primary"
-                                                 data-testid="pm-workflow-planning-focus-order-chip">
-                                            Focus Order @FormatFocusOrder(item.FocusOrder)
-                                        </MudChip>
-                                    }
-                                    <MudText Typo="Typo.body2">@item.Title</MudText>
-                                    <MudLink Href="@item.HtmlUrl"
-                                             Target="_blank"
-                                             rel="noopener noreferrer"
-                                             aria-label="@($"Open {item.Title} on GitHub")"
-                                             data-testid="pm-workflow-planning-up-next-github-link">
-                                        Open
-                                    </MudLink>
-                                </MudStack>
-                            }
-                        </MudStack>
+                        <MudSimpleTable Hover="true" Dense="true" data-testid="pm-workflow-planning-up-next-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Kind</th>
+                                    <th>Item</th>
+                                    <th>Title</th>
+                                    <th>Focus Order</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var (item, index) in planningView.UpNextItems.Select((item, index) => (item, index + 1)))
+                                {
+                                    <tr data-testid="pm-workflow-planning-up-next-row">
+                                        <td>@index</td>
+                                        <td>
+                                            <MudChip T="string"
+                                                     Value="@PmWorkflowItemKindFormatting.FormatLabel(item.ItemType)"
+                                                     Variant="Variant.Filled"
+                                                     Color="@PmWorkflowItemKindFormatting.FormatChipColor(item.ItemType)"
+                                                     Size="Size.Small"
+                                                     data-testid="pm-workflow-planning-kind-chip">
+                                                @PmWorkflowItemKindFormatting.FormatLabel(item.ItemType)
+                                            </MudChip>
+                                        </td>
+                                        <td>
+                                            <MudLink Href="@item.HtmlUrl"
+                                                     Target="_blank"
+                                                     rel="noopener noreferrer"
+                                                     data-testid="pm-workflow-planning-up-next-github-link">
+                                                @FormatItemReference(item.RepositoryFullName, item.Number)
+                                            </MudLink>
+                                        </td>
+                                        <td>@item.Title</td>
+                                        <td>
+                                            @if (item.FocusOrder.HasValue)
+                                            {
+                                                <MudChip T="string"
+                                                         Value="@FormatFocusOrder(item.FocusOrder)"
+                                                         Variant="Variant.Filled"
+                                                         Color="Color.Primary"
+                                                         Size="Size.Small"
+                                                         data-testid="pm-workflow-planning-focus-order-chip">
+                                                    @FormatFocusOrder(item.FocusOrder)
+                                                </MudChip>
+                                            }
+                                            else
+                                            {
+                                                var skipReason = PlanningFocusOrderSequencer.DescribeFocusOrderSkipReason(item.Labels);
+                                                if (skipReason is not null)
+                                                {
+                                                    <MudText Typo="Typo.caption" data-testid="pm-workflow-planning-focus-order-skipped">
+                                                        @skipReason
+                                                    </MudText>
+                                                }
+                                                else
+                                                {
+                                                    <MudText Typo="Typo.caption">—</MudText>
+                                                }
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
                     }
                 </MudStack>
             </MudPaper>
@@ -103,20 +155,27 @@
             <MudPaper Class="pa-4" Elevation="1" data-testid="pm-workflow-planning-candidates">
                 <MudStack Spacing="2">
                     <MudText Typo="Typo.h6">Candidate picker</MudText>
-                    <MudStack Row="true" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Spacing="2">
-                        <MudTextField @bind-Value="candidateSearch"
+                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.End" data-testid="pm-workflow-planning-filters">
+                        <MudSelect T="string"
+                                   Label="Type"
+                                   Variant="Variant.Outlined"
+                                   Dense="true"
+                                   Value="selectedTypeFilter"
+                                   ValueChanged="OnTypeFilterChanged"
+                                   data-testid="pm-workflow-planning-type-filter">
+                            <MudSelectItem T="string" Value="@PmWorkflowItemKindFormatting.AllTypesFilter">All types</MudSelectItem>
+                            <MudSelectItem T="string" Value="@PmWorkflowItemKindFormatting.IssueTypeFilter">Issues</MudSelectItem>
+                            <MudSelectItem T="string" Value="@PmWorkflowItemKindFormatting.PullRequestTypeFilter">Pull requests</MudSelectItem>
+                        </MudSelect>
+                        <MudTextField T="string"
                                       Label="Search across included repos"
                                       Variant="Variant.Outlined"
                                       Immediate="true"
+                                      DebounceInterval="200"
+                                      Value="candidateSearch"
+                                      ValueChanged="OnSearchChanged"
+                                      Clearable="true"
                                       data-testid="pm-workflow-planning-search" />
-                        <MudCheckBox @bind-Value="showIssues"
-                                     Label="Issues"
-                                     Color="Color.Primary"
-                                     data-testid="pm-workflow-planning-show-issues" />
-                        <MudCheckBox @bind-Value="showPullRequests"
-                                     Label="Pull requests"
-                                     Color="Color.Primary"
-                                     data-testid="pm-workflow-planning-show-prs" />
                     </MudStack>
 
                     @if (!FilteredCandidates.Any())
@@ -127,40 +186,78 @@
                     }
                     else
                     {
-                        <MudStack Spacing="1">
-                            @foreach (var candidate in FilteredCandidates)
-                            {
-                                <MudStack Row="true"
-                                          Wrap="Wrap.Wrap"
-                                          AlignItems="AlignItems.Center"
-                                          Justify="Justify.SpaceBetween"
-                                          Spacing="2"
-                                          data-testid="pm-workflow-planning-candidate-row">
-                                    <MudStack Row="true" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Spacing="2">
-                                        <MudChip T="string"
-                                                 Value="@FormatItemType(candidate.ItemType)"
-                                                 Variant="Variant.Outlined"
-                                                 Color="Color.Default">
-                                            @FormatItemType(candidate.ItemType)
-                                        </MudChip>
-                                        <MudText Typo="Typo.body1">
-                                            @($"{FormatItemReference(candidate.RepositoryFullName, candidate.Number)}  {candidate.Title}")
-                                        </MudText>
-                                        @if (!string.IsNullOrWhiteSpace(candidate.BoardStatusName))
-                                        {
-                                            <MudText Typo="Typo.caption">Board: @candidate.BoardStatusName</MudText>
-                                        }
-                                    </MudStack>
-                                    <MudButton Variant="Variant.Outlined"
-                                               Color="Color.Primary"
-                                               Disabled="@(isAddingToUpNext || IsAddingCandidate(candidate))"
-                                               OnClick="@(() => AddToUpNextAsync(candidate))"
-                                               data-testid="pm-workflow-planning-add-button">
-                                        Add to Up Next
-                                    </MudButton>
-                                </MudStack>
-                            }
-                        </MudStack>
+                        <MudSimpleTable Hover="true" Dense="true" data-testid="pm-workflow-planning-candidates-table">
+                            <thead>
+                                <tr>
+                                    <th>Kind</th>
+                                    <th>Item</th>
+                                    <th>Title</th>
+                                    <th>Board Status</th>
+                                    <th>Focus Order</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var candidate in FilteredCandidates)
+                                {
+                                    <tr data-testid="pm-workflow-planning-candidate-row">
+                                        <td>
+                                            <MudChip T="string"
+                                                     Value="@PmWorkflowItemKindFormatting.FormatLabel(candidate.ItemType)"
+                                                     Variant="Variant.Filled"
+                                                     Color="@PmWorkflowItemKindFormatting.FormatChipColor(candidate.ItemType)"
+                                                     Size="Size.Small"
+                                                     data-testid="pm-workflow-planning-kind-chip">
+                                                @PmWorkflowItemKindFormatting.FormatLabel(candidate.ItemType)
+                                            </MudChip>
+                                        </td>
+                                        <td>
+                                            <MudLink Href="@candidate.HtmlUrl"
+                                                     Target="_blank"
+                                                     rel="noopener noreferrer"
+                                                     data-testid="pm-workflow-planning-candidate-link">
+                                                @FormatItemReference(candidate.RepositoryFullName, candidate.Number)
+                                            </MudLink>
+                                        </td>
+                                        <td>@candidate.Title</td>
+                                        <td>@(string.IsNullOrWhiteSpace(candidate.BoardStatusName) ? "—" : candidate.BoardStatusName)</td>
+                                        <td>
+                                            @if (!planningView.HasFocusOrderField)
+                                            {
+                                                <MudText Typo="Typo.caption" data-testid="pm-workflow-planning-candidate-focus-order-unavailable">
+                                                    Unavailable on this board
+                                                </MudText>
+                                            }
+                                            else
+                                            {
+                                                var skipReason = PlanningFocusOrderSequencer.DescribeFocusOrderSkipReason(candidate.Labels);
+                                                if (skipReason is not null)
+                                                {
+                                                    <MudText Typo="Typo.caption" data-testid="pm-workflow-planning-candidate-focus-order-skipped">
+                                                        @skipReason
+                                                    </MudText>
+                                                }
+                                                else
+                                                {
+                                                    <MudText Typo="Typo.caption" data-testid="pm-workflow-planning-candidate-focus-order-next">
+                                                        Will assign @FormatFocusOrder(planningView.NextStoryFocusOrder)
+                                                    </MudText>
+                                                }
+                                            }
+                                        </td>
+                                        <td>
+                                            <MudButton Variant="Variant.Outlined"
+                                                       Color="Color.Primary"
+                                                       Disabled="@(isAddingToUpNext || IsAddingCandidate(candidate))"
+                                                       OnClick="@(() => AddToUpNextAsync(candidate))"
+                                                       data-testid="pm-workflow-planning-add-button">
+                                                Add to Up Next
+                                            </MudButton>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
                     }
                 </MudStack>
             </MudPaper>

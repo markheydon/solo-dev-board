@@ -90,7 +90,9 @@ public sealed class PmWorkflowPlanningTests
                         "Todo",
                         "PVTI_candidate"),
                 ],
-                []));
+                [],
+                true,
+                2));
 
         await using var ctx = CreateContext();
         var cut = ctx.RenderPmWorkflowPage<PmWorkflowPlanning>();
@@ -102,6 +104,44 @@ public sealed class PmWorkflowPlanningTests
             Assert.Contains("data-testid=\"pm-workflow-planning-candidates\"", cut.Markup);
             Assert.Contains("owner/repo-a#50", cut.Markup);
             Assert.Contains("data-testid=\"pm-workflow-planning-add-button\"", cut.Markup);
+            Assert.Contains(">Issue<", cut.Markup);
+            Assert.Contains("pm-workflow-planning-kind-chip", cut.Markup);
+            Assert.Contains("data-testid=\"pm-workflow-planning-next-focus-order\"", cut.Markup);
+            Assert.Contains("Next story Focus Order: 2", cut.Markup);
+            Assert.Contains("data-testid=\"pm-workflow-planning-focus-order-chip\"", cut.Markup);
+            Assert.Contains("Will assign 2", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task PmWorkflowPlanning_WhenBoardHasNoFocusOrderField_ShowsWarning()
+    {
+        ConfigureDefaults();
+        _planningService.GetPlanningViewAsync("PVT_board", Arg.Any<CancellationToken>()).Returns(
+            new IterationPlanningViewDto(
+                [],
+                [
+                    new IterationPlanningCandidateDto(
+                        PmWorkItemTypeDto.Issue,
+                        50,
+                        "Candidate story",
+                        "https://github.com/owner/repo-a/issues/50",
+                        "owner/repo-a",
+                        ["type/story", "priority/high"],
+                        "Todo",
+                        "PVTI_candidate"),
+                ],
+                [],
+                false,
+                0));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowPlanning>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("data-testid=\"pm-workflow-planning-no-focus-order-field\"", cut.Markup);
+            Assert.Contains("Unavailable on this board", cut.Markup);
         });
     }
 
