@@ -47,6 +47,8 @@ public partial class Migration : ComponentBase
     private Dictionary<string, MigrationProjectBoardDiscoveryDto> targetBoardDiscoveries = new(StringComparer.OrdinalIgnoreCase);
     private bool isLoadingSourceBoards;
     private bool isLoadingTargetBoards;
+    private CancellationTokenSource? _sourceProjectBoardsLoadCts;
+    private CancellationTokenSource? _targetProjectBoardsLoadCts;
     private MigrationConflictStrategy conflictStrategy = MigrationConflictStrategy.Skip;
     private MigrationPreviewDto previewResult = new(MigrationConflictStrategy.Skip, [], [], []);
     private MigrationResultDto applyResult = new(MigrationConflictStrategy.Skip, [], [], []);
@@ -224,48 +226,76 @@ public partial class Migration : ComponentBase
             .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
+        var targetLoadCts = BeginTargetProjectBoardsLoad();
+        var targetCancellationToken = targetLoadCts.Token;
         isLoadingTargetBoards = targetNames.Length > 0;
+
         try
         {
             foreach (var targetRepositoryFullName in targetNames)
             {
-                await LoadTargetBoardOptionsAsync(targetRepositoryFullName);
+                await LoadTargetBoardOptionsAsync(targetRepositoryFullName, targetLoadCts, targetCancellationToken);
             }
         }
         finally
         {
-            isLoadingTargetBoards = false;
+            if (ReferenceEquals(_targetProjectBoardsLoadCts, targetLoadCts))
+            {
+                isLoadingTargetBoards = false;
+            }
         }
 
-        UpdateInaccessibleProjectBoardsWarning();
+        if (!IsStaleTargetProjectBoardsBatch(targetLoadCts))
+        {
+            UpdateInaccessibleProjectBoardsWarning();
+        }
     }
 
     private async Task LoadSourceBoardOptionsAsync()
     {
         if (!migrateProjectBoardColumns || string.IsNullOrWhiteSpace(sourceRepositoryFullName))
         {
+            CancelBoardLoads();
             sourceBoardDiscovery = null;
             sourceProjectBoardId = string.Empty;
+            isLoadingSourceBoards = false;
             return;
         }
 
-        var coordinates = SplitRepositoryFullName(sourceRepositoryFullName);
+        var expectedSourceRepositoryFullName = sourceRepositoryFullName;
+        var coordinates = SplitRepositoryFullName(expectedSourceRepositoryFullName);
+        var loadCts = BeginSourceProjectBoardsLoad();
+        var cancellationToken = loadCts.Token;
+
         isLoadingSourceBoards = true;
+        sourceBoardDiscovery = null;
+        inaccessibleProjectBoardsWarning = null;
 
         try
         {
-            sourceBoardDiscovery = await MigrationService.GetProjectBoardOptionsAsync(
-                coordinates.Owner,
-                coordinates.Name);
+            var discovery = await MigrationService
+                .GetProjectBoardOptionsAsync(coordinates.Owner, coordinates.Name, cancellationToken)
+                .ConfigureAwait(false);
 
-            if (sourceBoardDiscovery.Options.Count == 1)
+            if (IsStaleSourceProjectBoardsLoad(loadCts, expectedSourceRepositoryFullName))
             {
-                sourceProjectBoardId = sourceBoardDiscovery.Options[0].Id;
+                return;
             }
-            else if (!sourceBoardDiscovery.Options.Any(option => option.Id.Equals(sourceProjectBoardId, StringComparison.Ordinal)))
+
+            sourceBoardDiscovery = discovery;
+
+            if (discovery.Options.Count == 1)
+            {
+                sourceProjectBoardId = discovery.Options[0].Id;
+            }
+            else if (!discovery.Options.Any(option => option.Id.Equals(sourceProjectBoardId, StringComparison.Ordinal)))
             {
                 sourceProjectBoardId = string.Empty;
             }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return;
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
@@ -276,7 +306,12 @@ public partial class Migration : ComponentBase
         }
         catch (HttpRequestException ex)
         {
-            Logger.LogError(ex, "GitHub API request failed while loading source project boards for {SourceRepository}.", sourceRepositoryFullName);
+            if (IsStaleSourceProjectBoardsLoad(loadCts, expectedSourceRepositoryFullName))
+            {
+                return;
+            }
+
+            Logger.LogError(ex, "GitHub API request failed while loading source project boards for {SourceRepository}.", expectedSourceRepositoryFullName);
             operationSeverity = Severity.Error;
             operationMessage = $"GitHub API request failed while loading source project boards. {ex.Message}";
             sourceBoardDiscovery = null;
@@ -284,7 +319,12 @@ public partial class Migration : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to load source project boards for {SourceRepository}.", sourceRepositoryFullName);
+            if (IsStaleSourceProjectBoardsLoad(loadCts, expectedSourceRepositoryFullName))
+            {
+                return;
+            }
+
+            Logger.LogError(ex, "Failed to load source project boards for {SourceRepository}.", expectedSourceRepositoryFullName);
             operationSeverity = Severity.Error;
             operationMessage = "An unexpected error occurred while loading source project boards.";
             sourceBoardDiscovery = null;
@@ -292,19 +332,35 @@ public partial class Migration : ComponentBase
         }
         finally
         {
-            isLoadingSourceBoards = false;
+            if (ReferenceEquals(_sourceProjectBoardsLoadCts, loadCts))
+            {
+                isLoadingSourceBoards = false;
+            }
         }
     }
 
-    private async Task LoadTargetBoardOptionsAsync(string targetRepositoryFullName)
+    private async Task LoadTargetBoardOptionsAsync(
+        string targetRepositoryFullName,
+        CancellationTokenSource loadCts,
+        CancellationToken cancellationToken)
     {
+        if (IsStaleTargetProjectBoardsLoad(loadCts, targetRepositoryFullName))
+        {
+            return;
+        }
+
         var coordinates = SplitRepositoryFullName(targetRepositoryFullName);
 
         try
         {
-            var discovery = await MigrationService.GetProjectBoardOptionsAsync(
-                coordinates.Owner,
-                coordinates.Name);
+            var discovery = await MigrationService
+                .GetProjectBoardOptionsAsync(coordinates.Owner, coordinates.Name, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (IsStaleTargetProjectBoardsLoad(loadCts, targetRepositoryFullName))
+            {
+                return;
+            }
 
             targetBoardDiscoveries[targetRepositoryFullName] = discovery;
 
@@ -323,6 +379,10 @@ public partial class Migration : ComponentBase
                 targetProjectBoardSelections[targetRepositoryFullName] = string.Empty;
             }
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
             if (GitHubAuthRecovery.TryInitiateRecovery(ex))
@@ -332,6 +392,11 @@ public partial class Migration : ComponentBase
         }
         catch (HttpRequestException ex)
         {
+            if (IsStaleTargetProjectBoardsLoad(loadCts, targetRepositoryFullName))
+            {
+                return;
+            }
+
             Logger.LogError(ex, "GitHub API request failed while loading target project boards for {TargetRepository}.", targetRepositoryFullName);
             operationSeverity = Severity.Error;
             operationMessage = $"GitHub API request failed while loading target project boards. {ex.Message}";
@@ -340,6 +405,11 @@ public partial class Migration : ComponentBase
         }
         catch (Exception ex)
         {
+            if (IsStaleTargetProjectBoardsLoad(loadCts, targetRepositoryFullName))
+            {
+                return;
+            }
+
             Logger.LogError(ex, "Failed to load target project boards for {TargetRepository}.", targetRepositoryFullName);
             operationSeverity = Severity.Error;
             operationMessage = "An unexpected error occurred while loading target project boards.";
@@ -649,6 +719,7 @@ public partial class Migration : ComponentBase
 
     private void ClearBoardSelectionState()
     {
+        CancelBoardLoads();
         sourceProjectBoardId = string.Empty;
         sourceBoardDiscovery = null;
         targetProjectBoardSelections = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -759,6 +830,54 @@ public partial class Migration : ComponentBase
 
         return new RepositoryCoordinates(parts[0], parts[1]);
     }
+
+    private CancellationTokenSource BeginSourceProjectBoardsLoad()
+    {
+        CancelTargetProjectBoardsLoad();
+        CancelSourceProjectBoardsLoad();
+        _sourceProjectBoardsLoadCts = new CancellationTokenSource();
+        return _sourceProjectBoardsLoadCts;
+    }
+
+    private CancellationTokenSource BeginTargetProjectBoardsLoad()
+    {
+        CancelTargetProjectBoardsLoad();
+        _targetProjectBoardsLoadCts = new CancellationTokenSource();
+        return _targetProjectBoardsLoadCts;
+    }
+
+    private void CancelBoardLoads()
+    {
+        CancelSourceProjectBoardsLoad();
+        CancelTargetProjectBoardsLoad();
+    }
+
+    private void CancelSourceProjectBoardsLoad()
+    {
+        _sourceProjectBoardsLoadCts?.Cancel();
+        _sourceProjectBoardsLoadCts?.Dispose();
+        _sourceProjectBoardsLoadCts = null;
+    }
+
+    private void CancelTargetProjectBoardsLoad()
+    {
+        _targetProjectBoardsLoadCts?.Cancel();
+        _targetProjectBoardsLoadCts?.Dispose();
+        _targetProjectBoardsLoadCts = null;
+    }
+
+    private bool IsStaleSourceProjectBoardsLoad(CancellationTokenSource loadCts, string expectedSourceRepositoryFullName)
+        => loadCts.IsCancellationRequested
+            || !ReferenceEquals(_sourceProjectBoardsLoadCts, loadCts)
+            || !string.Equals(sourceRepositoryFullName, expectedSourceRepositoryFullName, StringComparison.OrdinalIgnoreCase);
+
+    private bool IsStaleTargetProjectBoardsLoad(CancellationTokenSource loadCts, string targetRepositoryFullName)
+        => loadCts.IsCancellationRequested
+            || !ReferenceEquals(_targetProjectBoardsLoadCts, loadCts)
+            || !targetRepositoryFullNames.Contains(targetRepositoryFullName);
+
+    private bool IsStaleTargetProjectBoardsBatch(CancellationTokenSource loadCts)
+        => loadCts.IsCancellationRequested || !ReferenceEquals(_targetProjectBoardsLoadCts, loadCts);
 
     private sealed record ConflictOption(MigrationConflictStrategy Value, string Label, string Description);
 

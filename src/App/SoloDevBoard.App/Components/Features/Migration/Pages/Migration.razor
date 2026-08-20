@@ -193,28 +193,30 @@
                                                     <MudText Typo="Typo.body2">Loading target project boards...</MudText>
                                                 </MudStack>
                                             }
-
-                                            @foreach (var targetRepositoryFullName in orderedTargetRepositoryFullNames)
+                                            else
                                             {
-                                                <MudPaper Class="pa-2" Outlined="true" data-testid="migration-target-board-selector">
-                                                    <MudStack Spacing="1">
-                                                        <MudText Typo="Typo.subtitle2">@targetRepositoryFullName</MudText>
-                                                        <MudSelect T="string"
-                                                                   Label="Target project board"
-                                                                   Value="@GetTargetBoardSelection(targetRepositoryFullName)"
-                                                                   ValueChanged="value => OnTargetProjectBoardChangedAsync(targetRepositoryFullName, value)"
-                                                                   Variant="Variant.Outlined"
-                                                                   Disabled="IsBusy"
-                                                                   Required="true"
-                                                                   data-testid="migration-target-board-select">
-                                                            @foreach (var board in GetTargetBoardOptions(targetRepositoryFullName))
-                                                            {
-                                                                <MudSelectItem T="string" Value="@board.Id">@board.Title</MudSelectItem>
-                                                            }
-                                                            <MudSelectItem T="string" Value="@CreateNewBoardOptionValue">Create a new board</MudSelectItem>
-                                                        </MudSelect>
-                                                    </MudStack>
-                                                </MudPaper>
+                                                @foreach (var targetRepositoryFullName in orderedTargetRepositoryFullNames)
+                                                {
+                                                    <MudPaper Class="pa-2" Outlined="true" data-testid="migration-target-board-selector">
+                                                        <MudStack Spacing="1">
+                                                            <MudText Typo="Typo.subtitle2">@targetRepositoryFullName</MudText>
+                                                            <MudSelect T="string"
+                                                                       Label="Target project board"
+                                                                       Value="@GetTargetBoardSelection(targetRepositoryFullName)"
+                                                                       ValueChanged="value => OnTargetProjectBoardChangedAsync(targetRepositoryFullName, value)"
+                                                                       Variant="Variant.Outlined"
+                                                                       Disabled="IsBusy"
+                                                                       Required="true"
+                                                                       data-testid="migration-target-board-select">
+                                                                @foreach (var board in GetTargetBoardOptions(targetRepositoryFullName))
+                                                                {
+                                                                    <MudSelectItem T="string" Value="@board.Id">@board.Title</MudSelectItem>
+                                                                }
+                                                                <MudSelectItem T="string" Value="@CreateNewBoardOptionValue">Create a new board</MudSelectItem>
+                                                            </MudSelect>
+                                                        </MudStack>
+                                                    </MudPaper>
+                                                }
                                             }
                                         }
                                     </MudStack>
