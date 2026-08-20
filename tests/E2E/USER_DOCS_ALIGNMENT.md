@@ -157,6 +157,11 @@ Issue [#387](https://github.com/markheydon/solo-dev-board/issues/387) tracks the
 | Focus Order sequencing for story, enabler, and test labels | `PlanningFocusOrderSequencerTests` | Unit/component only |
 | Up Next and candidate mapping | `IterationPlanningViewMapperTests` | Unit/component only |
 | Add to Up Next writes (status, triage add, Focus Order) | `IterationPlanningServiceTests` | Unit/component only |
+| Active load capacity flag and at-capacity warning | `IterationPlanningViewMapperTests`, `PmWorkflowPlanningTests` | Unit/component only |
+| Capacity exceeded confirmation dialog before add | `PmWorkflowPlanningTests` | Unit/component only |
+| Stalled Up Next gate disables add | `PmWorkflowPlanningTests` | Unit/component only |
+| Bulk milestone skip when milestone missing on a repository | `PlanningBulkMilestoneAssignerTests`, `IterationPlanningServiceTests` | Unit/component only |
+| Add to Up Next success and failure snackbars | `PmWorkflowPlanningTests` | Unit/component only |
 | Route shell, no-board copy, Up Next and candidate regions, empty copy, load error, partial failure | `PmWorkflowPlanningTests` | `pm-workflow.spec.ts` `Iteration Planning` describe — route shell and no-board/empty/error/warning copy |
 
 See [CRITICAL_JOURNEYS.md](CRITICAL_JOURNEYS.md) Tier 2 — PM Workflow row — for the journey-level summary.
