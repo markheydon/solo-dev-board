@@ -8,29 +8,35 @@ public sealed class IterationPlanningService : IIterationPlanningService
     private readonly IPmWorkItemCatalogueService _workItemCatalogueService;
     private readonly IProjectItemCatalogueService _projectItemCatalogueService;
     private readonly IGitHubService _gitHubService;
+    private readonly TimeProvider _timeProvider;
 
     /// <summary>Initialises a new instance of the <see cref="IterationPlanningService"/> class.</summary>
     /// <param name="workItemCatalogueService">The cross-repository work-item catalogue.</param>
     /// <param name="projectItemCatalogueService">The project board item catalogue.</param>
     /// <param name="gitHubService">The GitHub service used to add items and update board fields.</param>
+    /// <param name="timeProvider">The time provider used to compute stall age.</param>
     public IterationPlanningService(
         IPmWorkItemCatalogueService workItemCatalogueService,
         IProjectItemCatalogueService projectItemCatalogueService,
-        IGitHubService gitHubService)
+        IGitHubService gitHubService,
+        TimeProvider timeProvider)
     {
         ArgumentNullException.ThrowIfNull(workItemCatalogueService);
         ArgumentNullException.ThrowIfNull(projectItemCatalogueService);
         ArgumentNullException.ThrowIfNull(gitHubService);
+        ArgumentNullException.ThrowIfNull(timeProvider);
 
         _workItemCatalogueService = workItemCatalogueService;
         _projectItemCatalogueService = projectItemCatalogueService;
         _gitHubService = gitHubService;
+        _timeProvider = timeProvider;
     }
 
     /// <inheritdoc/>
     public async Task<IterationPlanningViewDto> GetPlanningViewAsync(
         string projectId,
         int capacity,
+        int stallDays,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -55,7 +61,9 @@ public sealed class IterationPlanningService : IIterationPlanningService
             boardCatalogue.Items,
             workItems.Failures,
             hasFocusOrderField,
-            capacity);
+            capacity,
+            stallDays,
+            _timeProvider.GetUtcNow());
     }
 
     /// <inheritdoc/>
@@ -65,6 +73,7 @@ public sealed class IterationPlanningService : IIterationPlanningService
         string repositoryFullName,
         int number,
         IReadOnlyList<string> labels,
+        int stallDays,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -88,7 +97,11 @@ public sealed class IterationPlanningService : IIterationPlanningService
             .GetCatalogueAsync(projectId, cancellationToken)
             .ConfigureAwait(false);
 
-        var upNextOption = ResolveUpNextStatusOption(catalogue.StatusOptions);
+        EnsureNoStalledUpNextItemsRemain(catalogue.Items, stallDays, _timeProvider.GetUtcNow());
+
+        var upNextOption = PlanningBoardStatusResolver.ResolveStatusOption(
+            catalogue.StatusOptions,
+            DailyFocusBoardStateMapper.UpNextStatusName);
         ValidateStatusField(catalogue.FieldIds.StatusFieldId);
 
         var joinKey = PmWorkItemJoinKey.For(itemType == PmWorkItemTypeDto.PullRequest, repositoryFullName, number);
@@ -149,21 +162,270 @@ public sealed class IterationPlanningService : IIterationPlanningService
             focusOrderSkipped);
     }
 
-    private static ProjectBoardStatusOptionDto ResolveUpNextStatusOption(
-        IReadOnlyList<ProjectBoardStatusOptionDto> statusOptions)
+    /// <inheritdoc/>
+    public async Task ReCommitStalledUpNextItemAsync(
+        string projectId,
+        string projectItemId,
+        CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(statusOptions);
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectItemId);
 
-        var upNextOption = statusOptions.FirstOrDefault(option =>
-            option.Name.Equals(DailyFocusBoardStateMapper.UpNextStatusName, StringComparison.OrdinalIgnoreCase));
+        var catalogue = await _projectItemCatalogueService
+            .GetCatalogueAsync(projectId, cancellationToken)
+            .ConfigureAwait(false);
 
-        if (upNextOption is null)
+        ValidateStatusField(catalogue.FieldIds.StatusFieldId);
+        var todoOption = PlanningBoardStatusResolver.ResolveStatusOption(
+            catalogue.StatusOptions,
+            PlanningBoardStatusResolver.TodoStatusName);
+        var upNextOption = PlanningBoardStatusResolver.ResolveStatusOption(
+            catalogue.StatusOptions,
+            DailyFocusBoardStateMapper.UpNextStatusName);
+
+        await _gitHubService
+            .UpdateProjectBoardItemStatusAsync(
+                projectId,
+                projectItemId,
+                catalogue.FieldIds.StatusFieldId,
+                todoOption.OptionId,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        try
         {
+            await _gitHubService
+                .UpdateProjectBoardItemStatusAsync(
+                    projectId,
+                    projectItemId,
+                    catalogue.FieldIds.StatusFieldId,
+                    upNextOption.OptionId,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            try
+            {
+                await _gitHubService
+                    .UpdateProjectBoardItemStatusAsync(
+                        projectId,
+                        projectItemId,
+                        catalogue.FieldIds.StatusFieldId,
+                        upNextOption.OptionId,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (Exception rollbackEx) when (rollbackEx is not OperationCanceledException)
+            {
+                throw new InvalidOperationException(
+                    "Re-commit moved the item to Todo but failed to return it to Up Next. Refresh Iteration Planning and use Re-commit again, or set the item status to Up Next manually on the board.",
+                    ex);
+            }
+
             throw new InvalidOperationException(
-                "The planning board does not expose an Up Next Status option.");
+                "Re-commit moved the item to Todo but failed to return it to Up Next. The item has been restored to Up Next; refresh Iteration Planning and try Re-commit again.",
+                ex);
         }
 
-        return upNextOption;
+        _projectItemCatalogueService.InvalidateCatalogue(projectId);
+    }
+
+    /// <inheritdoc/>
+    public async Task MarkStalledUpNextItemBlockedAsync(
+        string projectId,
+        IterationPlanningStalledItemDto item,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectId);
+        ArgumentNullException.ThrowIfNull(item);
+
+        var catalogue = await LoadCatalogueForStalledItemUpdateAsync(projectId, item, cancellationToken)
+            .ConfigureAwait(false);
+        var blockedOption = PlanningBoardStatusResolver.ResolveStatusOption(
+            catalogue.StatusOptions,
+            DailyFocusRecommendationMapper.BlockedStatusName);
+
+        await UpdateBoardStatusAsync(
+            projectId,
+            item.ProjectItemId,
+            catalogue.FieldIds.StatusFieldId,
+            blockedOption.OptionId,
+            cancellationToken).ConfigureAwait(false);
+
+        await ApplyWorkItemLabelsAsync(
+            item,
+            MergeStatusLabel(item.Labels, PmLabelHelpers.BlockedStatusLabel, PmLabelHelpers.IceBoxStatusLabel),
+            cancellationToken).ConfigureAwait(false);
+
+        _projectItemCatalogueService.InvalidateCatalogue(projectId);
+    }
+
+    /// <inheritdoc/>
+    public async Task MoveStalledUpNextItemToIceBoxAsync(
+        string projectId,
+        IterationPlanningStalledItemDto item,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectId);
+        ArgumentNullException.ThrowIfNull(item);
+
+        var catalogue = await LoadCatalogueForStalledItemUpdateAsync(projectId, item, cancellationToken)
+            .ConfigureAwait(false);
+        var iceBoxOption = PlanningBoardStatusResolver.ResolveStatusOption(
+            catalogue.StatusOptions,
+            DailyFocusRecommendationMapper.IceBoxStatusName);
+
+        await UpdateBoardStatusAsync(
+            projectId,
+            item.ProjectItemId,
+            catalogue.FieldIds.StatusFieldId,
+            iceBoxOption.OptionId,
+            cancellationToken).ConfigureAwait(false);
+
+        await ClearFocusOrderWhenPresentAsync(projectId, item.ProjectItemId, catalogue, cancellationToken)
+            .ConfigureAwait(false);
+
+        await ApplyWorkItemLabelsAsync(
+            item,
+            MergeStatusLabel(item.Labels, PmLabelHelpers.IceBoxStatusLabel, PmLabelHelpers.BlockedStatusLabel),
+            cancellationToken).ConfigureAwait(false);
+
+        _projectItemCatalogueService.InvalidateCatalogue(projectId);
+    }
+
+    /// <inheritdoc/>
+    public async Task RemoveStalledUpNextItemAsync(
+        string projectId,
+        IterationPlanningStalledItemDto item,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectId);
+        ArgumentNullException.ThrowIfNull(item);
+
+        var catalogue = await LoadCatalogueForStalledItemUpdateAsync(projectId, item, cancellationToken)
+            .ConfigureAwait(false);
+        var todoOption = PlanningBoardStatusResolver.ResolveStatusOption(
+            catalogue.StatusOptions,
+            PlanningBoardStatusResolver.TodoStatusName);
+
+        await UpdateBoardStatusAsync(
+            projectId,
+            item.ProjectItemId,
+            catalogue.FieldIds.StatusFieldId,
+            todoOption.OptionId,
+            cancellationToken).ConfigureAwait(false);
+
+        await ClearFocusOrderWhenPresentAsync(projectId, item.ProjectItemId, catalogue, cancellationToken)
+            .ConfigureAwait(false);
+
+        _projectItemCatalogueService.InvalidateCatalogue(projectId);
+    }
+
+    private async Task<ProjectBoardItemCatalogueDto> LoadCatalogueForStalledItemUpdateAsync(
+        string projectId,
+        IterationPlanningStalledItemDto item,
+        CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(item.ProjectItemId);
+
+        var catalogue = await _projectItemCatalogueService
+            .GetCatalogueAsync(projectId, cancellationToken)
+            .ConfigureAwait(false);
+
+        ValidateStatusField(catalogue.FieldIds.StatusFieldId);
+        return catalogue;
+    }
+
+    private Task UpdateBoardStatusAsync(
+        string projectId,
+        string projectItemId,
+        string statusFieldId,
+        string statusOptionId,
+        CancellationToken cancellationToken) =>
+        _gitHubService.UpdateProjectBoardItemStatusAsync(
+            projectId,
+            projectItemId,
+            statusFieldId,
+            statusOptionId,
+            cancellationToken);
+
+    private async Task ClearFocusOrderWhenPresentAsync(
+        string projectId,
+        string projectItemId,
+        ProjectBoardItemCatalogueDto catalogue,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(catalogue.FieldIds.FocusOrderFieldId))
+        {
+            return;
+        }
+
+        await _projectItemCatalogueService
+            .ClearFocusOrderAsync(
+                projectId,
+                projectItemId,
+                catalogue.FieldIds.FocusOrderFieldId,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    private async Task ApplyWorkItemLabelsAsync(
+        IterationPlanningStalledItemDto item,
+        IReadOnlyList<string> labelNames,
+        CancellationToken cancellationToken)
+    {
+        if (!TryParseRepositoryFullName(item.RepositoryFullName, out var owner, out var repo))
+        {
+            throw new ArgumentException(
+                $"Repository scope '{item.RepositoryFullName}' must be in owner/repository format.",
+                nameof(item));
+        }
+
+        await _gitHubService
+            .ApplyLabelsToTriageItemAsync(owner, repo, item.Number, labelNames, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    private static IReadOnlyList<string> MergeStatusLabel(
+        IReadOnlyList<string> currentLabels,
+        string labelToAdd,
+        string labelToRemove)
+    {
+        ArgumentNullException.ThrowIfNull(currentLabels);
+
+        return currentLabels
+            .Where(label => !label.Equals(labelToRemove, StringComparison.OrdinalIgnoreCase))
+            .Concat([labelToAdd])
+            .Where(static label => !string.IsNullOrWhiteSpace(label))
+            .Select(static label => label.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private static void EnsureNoStalledUpNextItemsRemain(
+        IReadOnlyList<ProjectBoardItemDto> boardItems,
+        int stallDays,
+        DateTimeOffset utcNow)
+    {
+        ArgumentNullException.ThrowIfNull(boardItems);
+
+        var resolvedStallDays = stallDays > 0 ? stallDays : PmSettingsDefaults.StallDays;
+
+        var hasStalledUpNextItems = boardItems.Any(item =>
+            DailyFocusBoardStateMapper.IsUpNextStatus(item.Status?.Name)
+            && DailyFocusBoardStateMapper.HasStallClock(item.ActivityTimestamp)
+            && DailyFocusBoardStateMapper.GetAgeInDays(item.ActivityTimestamp, utcNow) >= resolvedStallDays);
+
+        if (hasStalledUpNextItems)
+        {
+            throw new InvalidOperationException(
+                "Resolve stalled Up Next items before adding new work.");
+        }
     }
 
     private static void ValidateStatusField(string statusFieldId)

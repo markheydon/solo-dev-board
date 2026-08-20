@@ -42,9 +42,14 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
     private string candidateSearch = string.Empty;
     private string selectedTypeFilter = PmWorkflowItemKindFormatting.AllTypesFilter;
     private string? addingCandidateKey;
+    private string? resolvingStalledItemId;
     private int viewLoadGeneration;
     private CancellationTokenSource? viewLoadCts;
     private CancellationTokenSource? addToUpNextCts;
+    private CancellationTokenSource? resolveStalledCts;
+
+    private bool IsAddToUpNextDisabled =>
+        planningView is not null && planningView.StalledUpNextItems.Count > 0;
 
     private IEnumerable<IterationPlanningCandidateDto> FilteredCandidates
     {
@@ -106,6 +111,8 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
         viewLoadCts?.Dispose();
         addToUpNextCts?.Cancel();
         addToUpNextCts?.Dispose();
+        resolveStalledCts?.Cancel();
+        resolveStalledCts?.Dispose();
     }
 
     private Task RetryLoadAsync()
@@ -171,7 +178,11 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
         try
         {
             var view = await PlanningService
-                .GetPlanningViewAsync(boardId, ChromeState!.Settings.Capacity, cancellationToken)
+                .GetPlanningViewAsync(
+                    boardId,
+                    ChromeState!.Settings.Capacity,
+                    ChromeState.Settings.StallDays,
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             if (loadGeneration != viewLoadGeneration || cancellationToken.IsCancellationRequested)
@@ -234,7 +245,7 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
 
     private async Task AddToUpNextAsync(IterationPlanningCandidateDto candidate)
     {
-        if (ChromeState is null || !ChromeState.HasPlanningBoardSelected || isAddingToUpNext)
+        if (ChromeState is null || !ChromeState.HasPlanningBoardSelected || isAddingToUpNext || IsAddToUpNextDisabled)
         {
             return;
         }
@@ -271,6 +282,7 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
                     candidate.RepositoryFullName,
                     candidate.Number,
                     candidate.Labels,
+                    ChromeState.Settings.StallDays,
                     cancellationToken)
                 .ConfigureAwait(false);
 
@@ -329,6 +341,113 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
 
     private bool IsAddingCandidate(IterationPlanningCandidateDto candidate) =>
         isAddingToUpNext && addingCandidateKey == BuildCandidateKey(candidate);
+
+    private bool IsResolvingStalledItem(IterationPlanningStalledItemDto item) =>
+        !string.IsNullOrWhiteSpace(resolvingStalledItemId)
+        && resolvingStalledItemId.Equals(item.ProjectItemId, StringComparison.Ordinal);
+
+    private Task ReCommitStalledItemAsync(IterationPlanningStalledItemDto item) =>
+        ResolveStalledItemAsync(
+            item,
+            (projectId, cancellationToken) =>
+                PlanningService.ReCommitStalledUpNextItemAsync(projectId, item.ProjectItemId, cancellationToken),
+            $"Re-committed {FormatItemReference(item.RepositoryFullName, item.Number)} to Up Next.");
+
+    private Task MarkStalledItemBlockedAsync(IterationPlanningStalledItemDto item) =>
+        ResolveStalledItemAsync(
+            item,
+            (projectId, cancellationToken) =>
+                PlanningService.MarkStalledUpNextItemBlockedAsync(projectId, item, cancellationToken),
+            $"Marked {FormatItemReference(item.RepositoryFullName, item.Number)} as blocked.");
+
+    private Task MoveStalledItemToIceBoxAsync(IterationPlanningStalledItemDto item) =>
+        ResolveStalledItemAsync(
+            item,
+            (projectId, cancellationToken) =>
+                PlanningService.MoveStalledUpNextItemToIceBoxAsync(projectId, item, cancellationToken),
+            $"Moved {FormatItemReference(item.RepositoryFullName, item.Number)} to Ice Box.");
+
+    private Task RemoveStalledItemAsync(IterationPlanningStalledItemDto item) =>
+        ResolveStalledItemAsync(
+            item,
+            (projectId, cancellationToken) =>
+                PlanningService.RemoveStalledUpNextItemAsync(projectId, item, cancellationToken),
+            $"Removed {FormatItemReference(item.RepositoryFullName, item.Number)} from Up Next.");
+
+    private async Task ResolveStalledItemAsync(
+        IterationPlanningStalledItemDto item,
+        Func<string, CancellationToken, Task> action,
+        string successMessage)
+    {
+        if (ChromeState is null || !ChromeState.HasPlanningBoardSelected || IsResolvingStalledItem(item))
+        {
+            return;
+        }
+
+        var boardId = ChromeState.Settings.PlanningBoardNodeId!;
+        resolveStalledCts?.Cancel();
+        resolveStalledCts?.Dispose();
+        resolveStalledCts = new CancellationTokenSource();
+        var cancellationToken = resolveStalledCts.Token;
+
+        resolvingStalledItemId = item.ProjectItemId;
+        await InvokeAsync(StateHasChanged).ConfigureAwait(false);
+
+        try
+        {
+            await action(boardId, cancellationToken).ConfigureAwait(false);
+
+            Snackbar.Add(successMessage, Severity.Success, configure: config => config.VisibleStateDuration = 5000);
+            await ReloadPlanningDataAsync(boardId).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
+        {
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            Logger.LogError(ex, "GitHub API request failed while resolving stalled item {ProjectItemId}.", item.ProjectItemId);
+            Snackbar.Add(
+                $"GitHub API request failed while resolving the stalled item. {ex.Message}",
+                Severity.Error,
+                configure: config => config.VisibleStateDuration = 6000);
+        }
+        catch (InvalidOperationException ex)
+        {
+            Logger.LogError(ex, "Unable to resolve stalled item {ProjectItemId}.", item.ProjectItemId);
+            Snackbar.Add(ex.Message, Severity.Error, configure: config => config.VisibleStateDuration = 6000);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unexpected error while resolving stalled item {ProjectItemId}.", item.ProjectItemId);
+            Snackbar.Add(
+                "An unexpected error occurred while resolving the stalled item.",
+                Severity.Error,
+                configure: config => config.VisibleStateDuration = 6000);
+        }
+        finally
+        {
+            resolvingStalledItemId = null;
+            await InvokeAsync(StateHasChanged).ConfigureAwait(false);
+        }
+    }
+
+    private async Task ReloadPlanningDataAsync(string boardId)
+    {
+        ChromeCoordinator.ClearDailyFocusBoardState();
+        ChromeCoordinator.ClearDailyFocusRecommendations();
+        ChromeCoordinator.ClearBacklogReview();
+        ChromeCoordinator.ClearIterationPlanning();
+        ChromeState?.MarkDataChanged();
+        await LoadPlanningViewAsync(boardId, forceReload: true).ConfigureAwait(false);
+    }
 
     private static string BuildCandidateKey(IterationPlanningCandidateDto candidate) =>
         PmWorkItemJoinKey.For(
@@ -397,4 +516,7 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
 
     private static string FormatCapacityProgressAriaLabel(IterationPlanningViewDto view) =>
         $"Capacity progress: {view.ActiveLoad} of {view.Capacity}";
+
+    private static string FormatStallAge(int ageInDays) =>
+        ageInDays == 1 ? "1 day" : $"{ageInDays} days";
 }

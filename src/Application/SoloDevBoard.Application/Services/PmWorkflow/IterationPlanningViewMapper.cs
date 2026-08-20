@@ -11,13 +11,17 @@ public static class IterationPlanningViewMapper
     /// <param name="failures">Per-repository catalogue failures to carry through to the view.</param>
     /// <param name="hasFocusOrderField"><see langword="true" /> when the selected board exposes a Focus Order field.</param>
     /// <param name="capacity">The persisted planning capacity from PM settings.</param>
+    /// <param name="stallDays">The inclusive stall threshold in days from PM settings.</param>
+    /// <param name="utcNow">The current UTC time used to compute stall age.</param>
     /// <returns>The planning view snapshot.</returns>
     public static IterationPlanningViewDto Map(
         IReadOnlyList<PmWorkItemDto> workItems,
         IReadOnlyList<ProjectBoardItemDto> boardItems,
         IReadOnlyList<PmRepositoryCatalogueFailureDto> failures,
         bool hasFocusOrderField,
-        int capacity)
+        int capacity,
+        int stallDays,
+        DateTimeOffset utcNow)
     {
         ArgumentNullException.ThrowIfNull(workItems);
         ArgumentNullException.ThrowIfNull(boardItems);
@@ -49,6 +53,8 @@ public static class IterationPlanningViewMapper
 
         var activeLoad = PlanningCapacityEvaluator.CountActiveLoad(boardItems);
         var resolvedCapacity = PlanningCapacityEvaluator.ResolveCapacity(capacity);
+        var resolvedStallDays = stallDays > 0 ? stallDays : PmSettingsDefaults.StallDays;
+        var stalledUpNextItems = MapStalledUpNextItems(upNextBoardItems, labelsByKey, resolvedStallDays, utcNow);
 
         return new IterationPlanningViewDto(
             upNextItems,
@@ -58,7 +64,44 @@ public static class IterationPlanningViewMapper
             nextStoryFocusOrder,
             activeLoad,
             resolvedCapacity,
-            PlanningCapacityEvaluator.IsAtOrOverCapacity(activeLoad, capacity));
+            PlanningCapacityEvaluator.IsAtOrOverCapacity(activeLoad, capacity),
+            stalledUpNextItems);
+    }
+
+    private static IReadOnlyList<IterationPlanningStalledItemDto> MapStalledUpNextItems(
+        IReadOnlyList<ProjectBoardItemDto> upNextBoardItems,
+        IReadOnlyDictionary<string, IReadOnlyList<string>> labelsByKey,
+        int stallDays,
+        DateTimeOffset utcNow)
+    {
+        return upNextBoardItems
+            .Where(item => DailyFocusBoardStateMapper.HasStallClock(item.ActivityTimestamp))
+            .Select(item => MapStalledUpNextItem(item, labelsByKey, utcNow))
+            .Where(item => item.AgeInDays >= stallDays)
+            .OrderByDescending(item => item.AgeInDays)
+            .ThenBy(item => item.Title, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private static IterationPlanningStalledItemDto MapStalledUpNextItem(
+        ProjectBoardItemDto boardItem,
+        IReadOnlyDictionary<string, IReadOnlyList<string>> labelsByKey,
+        DateTimeOffset utcNow)
+    {
+        labelsByKey.TryGetValue(PmWorkItemJoinKey.For(boardItem), out var labels);
+
+        return new IterationPlanningStalledItemDto(
+            boardItem.ProjectItemId,
+            boardItem.Content.ContentType == ProjectBoardItemContentTypeDto.PullRequest
+                ? PmWorkItemTypeDto.PullRequest
+                : PmWorkItemTypeDto.Issue,
+            boardItem.Content.Number,
+            boardItem.Content.Title,
+            boardItem.Content.Url,
+            $"{boardItem.Content.RepositoryOwner}/{boardItem.Content.RepositoryName}",
+            DailyFocusBoardStateMapper.GetAgeInDays(boardItem.ActivityTimestamp, utcNow),
+            boardItem.UsedItemUpdatedAtFallback,
+            labels ?? []);
     }
 
     /// <summary>

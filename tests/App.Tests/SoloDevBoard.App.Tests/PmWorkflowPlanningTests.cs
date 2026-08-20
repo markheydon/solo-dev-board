@@ -66,7 +66,7 @@ public sealed class PmWorkflowPlanningTests
     public async Task PmWorkflowPlanning_WhenBoardIsSelected_ShowsUpNextAndCandidates()
     {
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
             new IterationPlanningViewDto(
                 [
                     new IterationPlanningUpNextItemDto(
@@ -95,7 +95,8 @@ public sealed class PmWorkflowPlanningTests
                 2,
                 1,
                 8,
-                false));
+                false,
+                []));
 
         await using var ctx = CreateContext();
         var cut = ctx.RenderPmWorkflowPage<PmWorkflowPlanning>();
@@ -120,7 +121,7 @@ public sealed class PmWorkflowPlanningTests
     public async Task PmWorkflowPlanning_WhenBoardHasNoFocusOrderField_ShowsWarning()
     {
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
             new IterationPlanningViewDto(
                 [],
                 [
@@ -139,7 +140,8 @@ public sealed class PmWorkflowPlanningTests
                 0,
                 0,
                 8,
-                false));
+                false,
+                []));
 
         await using var ctx = CreateContext();
         var cut = ctx.RenderPmWorkflowPage<PmWorkflowPlanning>();
@@ -155,7 +157,7 @@ public sealed class PmWorkflowPlanningTests
     public async Task PmWorkflowPlanning_WhenActiveLoadAtCapacity_ShowsCapacityWarning()
     {
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
             CreateAtCapacityPlanningView());
 
         await using var ctx = CreateContext();
@@ -185,7 +187,7 @@ public sealed class PmWorkflowPlanningTests
             .Returns((bool?)null);
 
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
             CreateAtCapacityPlanningView());
 
         await using var ctx = CreateContext(dialogService);
@@ -209,6 +211,7 @@ public sealed class PmWorkflowPlanningTests
             Arg.Any<string>(),
             Arg.Any<int>(),
             Arg.Any<IReadOnlyList<string>>(),
+            Arg.Any<int>(),
             Arg.Any<CancellationToken>());
     }
 
@@ -226,7 +229,7 @@ public sealed class PmWorkflowPlanningTests
             .Returns((bool?)true);
 
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
             CreateAtCapacityPlanningView(),
             CreateAtCapacityPlanningView());
         _planningService.AddToUpNextAsync(
@@ -235,6 +238,7 @@ public sealed class PmWorkflowPlanningTests
             "owner/repo-a",
             50,
             Arg.Any<IReadOnlyList<string>>(),
+            3,
             Arg.Any<CancellationToken>()).Returns(
             new IterationPlanningAddToUpNextResultDto(AddedBoardCard: false, FocusOrderAssigned: 2, FocusOrderSkipped: false));
 
@@ -261,7 +265,57 @@ public sealed class PmWorkflowPlanningTests
                 "owner/repo-a",
                 50,
                 Arg.Any<IReadOnlyList<string>>(),
+                3,
                 Arg.Any<CancellationToken>());
+        });
+    }
+
+    [Fact]
+    public async Task PmWorkflowPlanning_WhenStalledUpNextItemsExist_DisablesAddToUpNext()
+    {
+        ConfigureDefaults();
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+            new IterationPlanningViewDto(
+                [],
+                [
+                    new IterationPlanningCandidateDto(
+                        PmWorkItemTypeDto.Issue,
+                        50,
+                        "Candidate story",
+                        "https://github.com/owner/repo-a/issues/50",
+                        "owner/repo-a",
+                        ["type/story", "priority/high"],
+                        "Todo",
+                        "PVTI_candidate"),
+                ],
+                [],
+                true,
+                1,
+                1,
+                8,
+                false,
+                [
+                    new IterationPlanningStalledItemDto(
+                        "PVTI_stalled",
+                        PmWorkItemTypeDto.Issue,
+                        275,
+                        "Stalled story",
+                        "https://github.com/owner/repo-a/issues/275",
+                        "owner/repo-a",
+                        4,
+                        false,
+                        ["type/story"]),
+                ]));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowPlanning>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("data-testid=\"pm-workflow-planning-stall-gate-alert\"", cut.Markup);
+            Assert.Contains("Resolve stalled Up Next items before adding new work", cut.Markup);
+            var addButton = cut.Find("[data-testid=\"pm-workflow-planning-add-button\"]");
+            Assert.True(addButton.HasAttribute("disabled"));
         });
     }
 
@@ -323,7 +377,8 @@ public sealed class PmWorkflowPlanningTests
             1,
             8,
             8,
-            true);
+            true,
+            []);
 
     private static RepositoryDto CreateRepository(string owner, string name) =>
         new(1, name, $"{owner}/{name}", string.Empty, $"https://github.com/{owner}/{name}", false, false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
