@@ -27,7 +27,8 @@ public sealed class AuditDashboardMarkdownExporter : IAuditDashboardMarkdownExpo
         AppendRepositorySummary(builder, request.RepositorySummaries);
         AppendUnlabelledIssues(builder, request.UnlabelledIssues, generatedAtUtc);
         AppendStalePullRequests(builder, request.StalePullRequests, request.StalePullRequestDays, generatedAtUtc);
-        AppendFailingWorkflows(builder, request.FailingWorkflowRuns);
+        AppendFailingWorkflows(builder, request.FailingWorkflowRuns, request.WorkflowHealthLoadFailed);
+        AppendLabelConsistencyWarnings(builder, request.LabelConsistencyWarnings, request.LabelConsistencyLoadFailed);
 
         return builder.ToString().TrimEnd();
     }
@@ -42,6 +43,7 @@ public sealed class AuditDashboardMarkdownExporter : IAuditDashboardMarkdownExpo
         builder.AppendLine($"| Total open pull requests | {request.TotalOpenPullRequests} |");
         builder.AppendLine($"| Unlabelled issues | {request.TotalUnlabelledIssues} |");
         builder.AppendLine($"| Failing workflows | {request.TotalFailingWorkflows} |");
+        builder.AppendLine($"| Label consistency warnings | {request.TotalLabelConsistencyWarnings} |");
         builder.AppendLine();
     }
 
@@ -120,10 +122,20 @@ public sealed class AuditDashboardMarkdownExporter : IAuditDashboardMarkdownExpo
         builder.AppendLine();
     }
 
-    private static void AppendFailingWorkflows(StringBuilder builder, IReadOnlyList<WorkflowRunDto> failingWorkflowRuns)
+    private static void AppendFailingWorkflows(
+        StringBuilder builder,
+        IReadOnlyList<WorkflowRunDto> failingWorkflowRuns,
+        bool workflowHealthLoadFailed)
     {
         builder.AppendLine("## Failing workflows");
         builder.AppendLine();
+
+        if (workflowHealthLoadFailed)
+        {
+            builder.AppendLine("Workflow health could not be loaded for this export.");
+            builder.AppendLine();
+            return;
+        }
 
         if (failingWorkflowRuns.Count == 0)
         {
@@ -142,6 +154,49 @@ public sealed class AuditDashboardMarkdownExporter : IAuditDashboardMarkdownExpo
 
         builder.AppendLine();
     }
+
+    private static void AppendLabelConsistencyWarnings(
+        StringBuilder builder,
+        IReadOnlyList<LabelConsistencyWarningDto> warnings,
+        bool labelConsistencyLoadFailed)
+    {
+        builder.AppendLine("## Label consistency warnings");
+        builder.AppendLine();
+        builder.AppendLine("Compared against the SoloDevBoard canonical taxonomy. Extra repository labels are not reported.");
+        builder.AppendLine();
+
+        if (labelConsistencyLoadFailed)
+        {
+            builder.AppendLine("Label consistency could not be loaded for this export.");
+            builder.AppendLine();
+            return;
+        }
+
+        if (warnings.Count == 0)
+        {
+            builder.AppendLine("Labels match the SoloDevBoard taxonomy — great!");
+            builder.AppendLine();
+            return;
+        }
+
+        builder.AppendLine("| Repository | Label | Warning | Detail |");
+        builder.AppendLine("| --- | --- | --- | --- |");
+
+        foreach (var warning in warnings)
+        {
+            builder.AppendLine($"| {warning.RepositoryFullName} | {EscapeMarkdownTableCell(warning.LabelName)} | {FormatWarningKind(warning.Kind)} | {EscapeMarkdownTableCell(warning.Detail)} |");
+        }
+
+        builder.AppendLine();
+    }
+
+    private static string FormatWarningKind(LabelConsistencyWarningKind kind)
+        => kind switch
+        {
+            LabelConsistencyWarningKind.Missing => "Missing",
+            LabelConsistencyWarningKind.Divergent => "Divergent",
+            _ => kind.ToString(),
+        };
 
     private static int GetDaysBetween(DateTimeOffset value, DateTimeOffset referenceUtc)
     {

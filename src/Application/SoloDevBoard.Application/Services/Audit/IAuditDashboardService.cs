@@ -53,4 +53,13 @@ public interface IAuditDashboardService
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>A read-only list of failing or cancelled workflow runs.</returns>
     Task<IReadOnlyList<WorkflowRunDto>> GetFailingWorkflowRunsAsync(IReadOnlyList<string> repos, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves label consistency warnings for the specified repositories against the SoloDevBoard canonical taxonomy.
+    /// Extra repository labels that are not in the taxonomy are not reported.
+    /// </summary>
+    /// <param name="repos">A read-only list of repository names.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A read-only list of missing or divergent taxonomy labels.</returns>
+    Task<IReadOnlyList<LabelConsistencyWarningDto>> GetLabelConsistencyWarningsAsync(IReadOnlyList<string> repos, CancellationToken cancellationToken = default);
 }

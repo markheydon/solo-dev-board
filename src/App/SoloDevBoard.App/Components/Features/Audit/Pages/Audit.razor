@@ -83,7 +83,7 @@
                     <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
                         <MudButton Variant="Variant.Outlined"
                                    Color="Color.Primary"
-                                   Disabled="@(!hasLoadedAuditSummary || isLoadingAuditData || isRefreshingAuditData || isLoadingWorkflowHealth)"
+                                   Disabled="@(!hasLoadedAuditSummary || isLoadingAuditData || isRefreshingAuditData || isLoadingWorkflowHealth || isLoadingLabelConsistency || workflowHealthLoadFailed || labelConsistencyLoadFailed)"
                                    OnClick="ExportMarkdownSummaryAsync"
                                    data-testid="audit-export-markdown-button">
                             Export Markdown
@@ -141,25 +141,25 @@
                 <MudStack Spacing="2">
                     <MudText Typo="Typo.h6">KPI summary</MudText>
                     <MudGrid>
-                        <MudItem xs="12" sm="6" md="3">
+                        <MudItem xs="12" sm="6" md="4">
                             <MudPaper Class="pa-3" Outlined="true" data-testid="audit-total-issues-card">
                                 <MudText Typo="Typo.caption">Total open issues</MudText>
                                 <MudText Typo="Typo.h5">@totalOpenIssues</MudText>
                             </MudPaper>
                         </MudItem>
-                        <MudItem xs="12" sm="6" md="3">
+                        <MudItem xs="12" sm="6" md="4">
                             <MudPaper Class="pa-3" Outlined="true" data-testid="audit-total-prs-card">
                                 <MudText Typo="Typo.caption">Total open pull requests</MudText>
                                 <MudText Typo="Typo.h5">@totalOpenPullRequests</MudText>
                             </MudPaper>
                         </MudItem>
-                        <MudItem xs="12" sm="6" md="3">
+                        <MudItem xs="12" sm="6" md="4">
                             <MudPaper Class="pa-3" Outlined="true" data-testid="audit-unlabelled-kpi-card">
                                 <MudText Typo="Typo.caption">Unlabelled issues</MudText>
                                 <MudText Typo="Typo.h5">@totalUnlabelledIssues</MudText>
                             </MudPaper>
                         </MudItem>
-                        <MudItem xs="12" sm="6" md="3">
+                        <MudItem xs="12" sm="6" md="4">
                             <MudPaper Class="pa-3" Outlined="true" data-testid="audit-failing-workflows-kpi-card">
                                 <MudText Typo="Typo.caption">Failing workflows</MudText>
                                 @if (isLoadingWorkflowHealth)
@@ -169,6 +169,19 @@
                                 else
                                 {
                                     <MudText Typo="Typo.h5">@totalFailingWorkflows</MudText>
+                                }
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudPaper Class="pa-3" Outlined="true" data-testid="audit-label-consistency-kpi-card">
+                                <MudText Typo="Typo.caption">Label consistency warnings</MudText>
+                                @if (isLoadingLabelConsistency)
+                                {
+                                    <MudSkeleton Height="32px" Width="48px" Animation="Animation.Wave" />
+                                }
+                                else
+                                {
+                                    <MudText Typo="Typo.h5">@totalLabelConsistencyWarnings</MudText>
                                 }
                             </MudPaper>
                         </MudItem>
@@ -319,6 +332,51 @@
                                                     Open run
                                                 </MudLink>
                                             </MudTd>
+                                        </RowTemplate>
+                                    </MudTable>
+                                }
+                            </ChildContent>
+                        </MudExpansionPanel>
+
+                        <MudExpansionPanel Expanded="true" data-testid="audit-label-consistency-section">
+                            <TitleContent>
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudText Typo="Typo.subtitle1">Label Consistency</MudText>
+                                    <MudBadge Color="Color.Warning" Content="@labelConsistencyWarnings.Count" />
+                                </MudStack>
+                            </TitleContent>
+                            <ChildContent>
+                                <MudText Typo="Typo.body2" Class="mb-2">
+                                    Compared with the SoloDevBoard canonical taxonomy. Extra repository labels are not reported.
+                                    Use
+                                    <MudLink Href="/labels">Label Manager</MudLink>
+                                    to apply the taxonomy.
+                                </MudText>
+                                @if (isLoadingLabelConsistency)
+                                {
+                                    <MudStack Spacing="1" data-testid="audit-label-consistency-loading">
+                                        <MudText Typo="Typo.body2">Loading label consistency...</MudText>
+                                        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                                    </MudStack>
+                                }
+                                else if (labelConsistencyWarnings.Count == 0)
+                                {
+                                    <MudText Typo="Typo.body2" data-testid="audit-label-consistency-empty">Labels match the SoloDevBoard taxonomy — great!</MudText>
+                                }
+                                else
+                                {
+                                    <MudTable T="LabelConsistencyWarningDto" Items="labelConsistencyWarnings" Dense="true" Hover="true" Class="sdb-responsive-grid" data-testid="audit-label-consistency-table">
+                                        <HeaderContent>
+                                            <MudTh>Repository</MudTh>
+                                            <MudTh>Label</MudTh>
+                                            <MudTh>Warning</MudTh>
+                                            <MudTh>Detail</MudTh>
+                                        </HeaderContent>
+                                        <RowTemplate>
+                                            <MudTd DataLabel="Repository">@context.RepositoryFullName</MudTd>
+                                            <MudTd DataLabel="Label">@context.LabelName</MudTd>
+                                            <MudTd DataLabel="Warning">@FormatWarningKind(context.Kind)</MudTd>
+                                            <MudTd DataLabel="Detail">@context.Detail</MudTd>
                                         </RowTemplate>
                                     </MudTable>
                                 }

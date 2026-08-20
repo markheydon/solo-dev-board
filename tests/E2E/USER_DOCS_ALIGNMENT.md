@@ -27,7 +27,7 @@ When you add or change an end-user feature, update the user guide, the relevant 
 |------------|--------------|----------------------|-------------------------|---------|-------|
 | [Product landing](../../website/content/_index.md) (Hugo `/` only) | — | — (Hugo `hugo-build.yml` route check) | — | — | Short product-and-project landing (Learn more → About; icon tiles not docs links); not the Blazor app. |
 | [In-app home dashboard](../../website/content/docs/) | `/` | `smoke.spec.ts`, `navigation.spec.ts`, `accessibility.spec.ts` | `dashboard/home.png` | Tier 1 | In-app home lists eight feature cards; About and Appearance are reached via the app bar. |
-| [Audit Dashboard](../../website/content/docs/audit-dashboard.md) | `/audit-dashboard`, `/audit` | `audit-dashboard.spec.ts`, `accessibility.spec.ts` | `audit-dashboard/overview.png` | Tier 2 | Guide describes KPI cards, health sections, auto-refresh, and export; CI asserts shell, feedback region, and `/audit` alias with load failure. |
+| [Audit Dashboard](../../website/content/docs/audit-dashboard.md) | `/audit-dashboard`, `/audit` | `audit-dashboard.spec.ts`, `accessibility.spec.ts` | `audit-dashboard/overview.png` | Tier 2 | Guide describes KPI cards, health sections (including label consistency), auto-refresh, and export; CI asserts shell, feedback region, and `/audit` alias with load failure. |
 | [Repositories](../../website/content/docs/repositories.md) | `/repositories` | `repositories.spec.ts`, `accessibility.spec.ts` | `repositories/overview.png` | Tier 2 | Guide describes command strip, search, and a phone-safe stacked grid; CI asserts refresh, search, error-state retry, and no horizontal overflow at 390px. |
 | [One-Click Migration](../../website/content/docs/one-click-migration.md) | `/migrate` | `migrate.spec.ts`, `accessibility.spec.ts` | `one-click-migration/overview.png` | Tier 2 | Guide describes preview/apply workflow and conflict strategies; CI asserts setup shell, disabled preview, and API failure feedback. |
 | [Label Manager](../../website/content/docs/label-manager.md) | `/labels` | `labels.spec.ts`, `accessibility.spec.ts` | `label-manager/overview.png` | Tier 2 | Guide describes three tabs and taxonomy workflows; CI asserts tab strip, disabled actions, and no-repositories message. |
@@ -57,7 +57,7 @@ Use this when extending specs so assertions track documented workflows.
 |---------------|--------------|-------------------------|
 | Accessing (`/audit-dashboard`, `/audit`) | `audit-dashboard.spec.ts` URL and title | `docs-capture` |
 | Repository selector and load failure | Feedback region, "Unable to load repositories" | `prepareAuditDashboardForCapture` |
-| KPI cards, health sections, auto-refresh, export | — | `docs-capture` + unit/component tests |
+| KPI cards, health sections (including label consistency), auto-refresh, export | — | `docs-capture` + unit/component tests |
 
 ### Label Manager
 

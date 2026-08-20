@@ -30,11 +30,16 @@ public sealed class AuditDashboardMarkdownExporterTests
             [
                 new WorkflowRunDto("build", "completed", "failure", "https://github.com/owner/repo-a/actions/runs/123", "owner/repo-a", "main"),
             ],
+            LabelConsistencyWarnings:
+            [
+                new LabelConsistencyWarningDto("owner/repo-a", "type/bug", LabelConsistencyWarningKind.Missing, "Missing from the repository."),
+            ],
             SelectedRepositories: ["owner/repo-a", "owner/repo-b"],
             TotalOpenIssues: 5,
             TotalOpenPullRequests: 3,
             TotalUnlabelledIssues: 1,
             TotalFailingWorkflows: 1,
+            TotalLabelConsistencyWarnings: 1,
             StalePullRequestDays: 14,
             GeneratedAtUtc: GeneratedAt);
 
@@ -53,6 +58,9 @@ public sealed class AuditDashboardMarkdownExporterTests
         Assert.Contains("[#44](https://github.com/owner/repo-a/pull/44)", markdown);
         Assert.Contains("| owner/repo-a | [#44](https://github.com/owner/repo-a/pull/44) | Update docs | mark | 20 |", markdown);
         Assert.Contains("[Open run](https://github.com/owner/repo-a/actions/runs/123)", markdown);
+        Assert.Contains("| Label consistency warnings | 1 |", markdown);
+        Assert.Contains("## Label consistency warnings", markdown);
+        Assert.Contains("| owner/repo-a | type/bug | Missing | Missing from the repository. |", markdown);
     }
 
     [Fact]
@@ -64,11 +72,13 @@ public sealed class AuditDashboardMarkdownExporterTests
             UnlabelledIssues: [],
             StalePullRequests: [],
             FailingWorkflowRuns: [],
+            LabelConsistencyWarnings: [],
             SelectedRepositories: ["owner/repo-a"],
             TotalOpenIssues: 1,
             TotalOpenPullRequests: 1,
             TotalUnlabelledIssues: 0,
             TotalFailingWorkflows: 0,
+            TotalLabelConsistencyWarnings: 0,
             StalePullRequestDays: 14,
             GeneratedAtUtc: GeneratedAt);
 
@@ -79,6 +89,38 @@ public sealed class AuditDashboardMarkdownExporterTests
         Assert.Contains("No unlabelled issues — great!", markdown);
         Assert.Contains("No stale pull requests — great!", markdown);
         Assert.Contains("No failing workflows — great!", markdown);
+        Assert.Contains("Labels match the SoloDevBoard taxonomy — great!", markdown);
+    }
+
+    [Fact]
+    public void GenerateSummaryMarkdown_WhenSecondaryHealthLoadsFailed_IncludesUnavailableMessages()
+    {
+        // Arrange
+        var request = new AuditDashboardMarkdownExportRequest(
+            RepositorySummaries: [new RepositoryAuditSummaryDto("owner/repo-a", 1, 1, 0, 0, 0)],
+            UnlabelledIssues: [],
+            StalePullRequests: [],
+            FailingWorkflowRuns: [],
+            LabelConsistencyWarnings: [],
+            SelectedRepositories: ["owner/repo-a"],
+            TotalOpenIssues: 1,
+            TotalOpenPullRequests: 1,
+            TotalUnlabelledIssues: 0,
+            TotalFailingWorkflows: 0,
+            TotalLabelConsistencyWarnings: 0,
+            StalePullRequestDays: 14,
+            GeneratedAtUtc: GeneratedAt,
+            WorkflowHealthLoadFailed: true,
+            LabelConsistencyLoadFailed: true);
+
+        // Act
+        var markdown = _sut.GenerateSummaryMarkdown(request);
+
+        // Assert
+        Assert.Contains("Workflow health could not be loaded for this export.", markdown);
+        Assert.Contains("Label consistency could not be loaded for this export.", markdown);
+        Assert.DoesNotContain("No failing workflows — great!", markdown);
+        Assert.DoesNotContain("Labels match the SoloDevBoard taxonomy — great!", markdown);
     }
 
     [Fact]

@@ -7,10 +7,12 @@ namespace SoloDevBoard.Application.Services.Audit;
 /// <param name="UnlabelledIssueCount">The number of open issues with no labels.</param>
 /// <param name="StalePullRequestCount">The number of stale open pull requests.</param>
 /// <param name="FailingWorkflowCount">The number of workflows whose most recent run is failing or cancelled.</param>
+/// <param name="LabelConsistencyWarningCount">The number of missing or divergent SoloDevBoard taxonomy labels.</param>
 public sealed record RepositoryAuditSummaryDto(
     string RepositoryFullName,
     int OpenIssueCount,
     int OpenPullRequestCount,
     int UnlabelledIssueCount,
     int StalePullRequestCount,
-    int FailingWorkflowCount);
+    int FailingWorkflowCount,
+    int LabelConsistencyWarningCount = 0);
