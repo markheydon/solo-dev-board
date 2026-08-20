@@ -7,6 +7,7 @@ public sealed class PmWorkflowLayoutTests
 {
     [Theory]
     [InlineData("https://localhost/pm-workflow/daily-focus", true)]
+    [InlineData("https://localhost/pm-workflow/backlog", true)]
     [InlineData("https://localhost/pm-workflow/repos", true)]
     [InlineData("https://localhost/pm-workflow", true)]
     [InlineData("https://localhost/", false)]

@@ -87,12 +87,14 @@ public sealed class PmWorkflowChromeCoordinatorTests
             new DailyFocusStalledReviewSnapshotDto([], UsedInReviewColumn: false),
             null,
             isLoading: false);
+        coordinator.SetBacklogReview("PVT_board", new BacklogReviewResultDto([], [], [], []), null, isLoading: false);
 
         await coordinator.RefreshAsync(forceReload: true);
 
         Assert.Null(coordinator.DailyFocusBoardState);
         Assert.Null(coordinator.DailyFocusRecommendations);
         Assert.Null(coordinator.DailyFocusStalledReviews);
+        Assert.Null(coordinator.BacklogReview);
     }
 
     [Fact]
@@ -110,11 +112,13 @@ public sealed class PmWorkflowChromeCoordinatorTests
             new DailyFocusStalledReviewSnapshotDto([], UsedInReviewColumn: false),
             null,
             isLoading: false);
+        coordinator.SetBacklogReview("PVT_board", new BacklogReviewResultDto([], [], [], []), null, isLoading: false);
 
         await coordinator.SaveSettingsAsync(PmSettingsDefaults.Create());
 
         Assert.Null(coordinator.DailyFocusRecommendations);
         Assert.Null(coordinator.DailyFocusStalledReviews);
+        Assert.Null(coordinator.BacklogReview);
     }
 
     [Fact]
