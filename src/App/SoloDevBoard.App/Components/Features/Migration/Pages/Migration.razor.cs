@@ -38,8 +38,8 @@ public partial class Migration : ComponentBase
     private bool migrateLabels = true;
     private bool migrateMilestones = true;
     private MigrationConflictStrategy conflictStrategy = MigrationConflictStrategy.Skip;
-    private MigrationPreviewDto previewResult = new(MigrationConflictStrategy.Skip, [], []);
-    private MigrationResultDto applyResult = new(MigrationConflictStrategy.Skip, [], []);
+    private MigrationPreviewDto previewResult = new(MigrationConflictStrategy.Skip, [], [], []);
+    private MigrationResultDto applyResult = new(MigrationConflictStrategy.Skip, [], [], []);
     private bool isLoadingRepositories = true;
     private bool isPreviewing;
     private bool isApplying;
@@ -189,7 +189,7 @@ public partial class Migration : ComponentBase
                 conflictStrategy);
 
             showPreview = true;
-            applyResult = new MigrationResultDto(conflictStrategy, [], []);
+            applyResult = new MigrationResultDto(conflictStrategy, [], [], []);
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
@@ -204,7 +204,7 @@ public partial class Migration : ComponentBase
             operationSeverity = Severity.Error;
             operationMessage = $"GitHub API request failed while previewing migration. {ex.Message}";
             showPreview = false;
-            previewResult = new MigrationPreviewDto(conflictStrategy, [], []);
+            previewResult = new MigrationPreviewDto(conflictStrategy, [], [], []);
         }
         catch (Exception ex)
         {
@@ -212,7 +212,7 @@ public partial class Migration : ComponentBase
             operationSeverity = Severity.Error;
             operationMessage = "An unexpected error occurred while previewing migration.";
             showPreview = false;
-            previewResult = new MigrationPreviewDto(conflictStrategy, [], []);
+            previewResult = new MigrationPreviewDto(conflictStrategy, [], [], []);
         }
         finally
         {
@@ -223,7 +223,7 @@ public partial class Migration : ComponentBase
     private void CancelPreview()
     {
         showPreview = false;
-        previewResult = new MigrationPreviewDto(conflictStrategy, [], []);
+        previewResult = new MigrationPreviewDto(conflictStrategy, [], [], []);
         operationSeverity = Severity.Info;
         operationMessage = "Migration preview was cancelled. No changes were applied.";
     }
@@ -248,7 +248,7 @@ public partial class Migration : ComponentBase
                 conflictStrategy);
 
             showPreview = false;
-            previewResult = new MigrationPreviewDto(conflictStrategy, [], []);
+            previewResult = new MigrationPreviewDto(conflictStrategy, [], [], []);
 
             var labelFailures = applyResult.LabelResults.Count(result => result.HasError);
             var milestoneFailures = applyResult.MilestoneResults.Count(result => result.HasError);
@@ -369,8 +369,8 @@ public partial class Migration : ComponentBase
     private void ResetPreviewAndResults()
     {
         showPreview = false;
-        previewResult = new MigrationPreviewDto(conflictStrategy, [], []);
-        applyResult = new MigrationResultDto(conflictStrategy, [], []);
+        previewResult = new MigrationPreviewDto(conflictStrategy, [], [], []);
+        applyResult = new MigrationResultDto(conflictStrategy, [], [], []);
         operationMessage = null;
     }
 
