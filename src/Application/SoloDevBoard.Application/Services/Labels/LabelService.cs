@@ -490,9 +490,7 @@ public sealed class LabelService : ILabelManagerService
     /// <param name="right">The second label to compare.</param>
     /// <returns><see langword="true" /> if labels are equivalent; otherwise, <see langword="false" />.</returns>
     private static bool HasSameValues(Label left, Label right)
-        => string.Equals(left.Name, right.Name, StringComparison.OrdinalIgnoreCase)
-            && string.Equals(left.Colour, right.Colour, StringComparison.OrdinalIgnoreCase)
-            && string.Equals(left.Description, right.Description, StringComparison.Ordinal);
+        => LabelValueComparer.HaveSameValues(left, right);
 
     /// <summary>Represents split owner/repository coordinates.</summary>
     private sealed record RepositoryCoordinates(string Owner, string Name);

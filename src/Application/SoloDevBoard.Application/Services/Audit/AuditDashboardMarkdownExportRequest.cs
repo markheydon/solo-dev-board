@@ -14,6 +14,8 @@ namespace SoloDevBoard.Application.Services.Audit;
 /// <param name="TotalLabelConsistencyWarnings">The total number of label consistency warnings across selected repositories.</param>
 /// <param name="StalePullRequestDays">The number of days after which a pull request is considered stale.</param>
 /// <param name="GeneratedAtUtc">The UTC timestamp when the export was generated.</param>
+/// <param name="WorkflowHealthLoadFailed">Indicates whether workflow health data could not be loaded for the export.</param>
+/// <param name="LabelConsistencyLoadFailed">Indicates whether label consistency data could not be loaded for the export.</param>
 public sealed record AuditDashboardMarkdownExportRequest(
     IReadOnlyList<RepositoryAuditSummaryDto> RepositorySummaries,
     IReadOnlyList<IssueDto> UnlabelledIssues,
@@ -27,4 +29,6 @@ public sealed record AuditDashboardMarkdownExportRequest(
     int TotalFailingWorkflows,
     int TotalLabelConsistencyWarnings,
     int StalePullRequestDays,
-    DateTimeOffset GeneratedAtUtc);
+    DateTimeOffset GeneratedAtUtc,
+    bool WorkflowHealthLoadFailed = false,
+    bool LabelConsistencyLoadFailed = false);

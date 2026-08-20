@@ -27,8 +27,8 @@ public sealed class AuditDashboardMarkdownExporter : IAuditDashboardMarkdownExpo
         AppendRepositorySummary(builder, request.RepositorySummaries);
         AppendUnlabelledIssues(builder, request.UnlabelledIssues, generatedAtUtc);
         AppendStalePullRequests(builder, request.StalePullRequests, request.StalePullRequestDays, generatedAtUtc);
-        AppendFailingWorkflows(builder, request.FailingWorkflowRuns);
-        AppendLabelConsistencyWarnings(builder, request.LabelConsistencyWarnings);
+        AppendFailingWorkflows(builder, request.FailingWorkflowRuns, request.WorkflowHealthLoadFailed);
+        AppendLabelConsistencyWarnings(builder, request.LabelConsistencyWarnings, request.LabelConsistencyLoadFailed);
 
         return builder.ToString().TrimEnd();
     }
@@ -122,10 +122,20 @@ public sealed class AuditDashboardMarkdownExporter : IAuditDashboardMarkdownExpo
         builder.AppendLine();
     }
 
-    private static void AppendFailingWorkflows(StringBuilder builder, IReadOnlyList<WorkflowRunDto> failingWorkflowRuns)
+    private static void AppendFailingWorkflows(
+        StringBuilder builder,
+        IReadOnlyList<WorkflowRunDto> failingWorkflowRuns,
+        bool workflowHealthLoadFailed)
     {
         builder.AppendLine("## Failing workflows");
         builder.AppendLine();
+
+        if (workflowHealthLoadFailed)
+        {
+            builder.AppendLine("Workflow health could not be loaded for this export.");
+            builder.AppendLine();
+            return;
+        }
 
         if (failingWorkflowRuns.Count == 0)
         {
@@ -145,12 +155,22 @@ public sealed class AuditDashboardMarkdownExporter : IAuditDashboardMarkdownExpo
         builder.AppendLine();
     }
 
-    private static void AppendLabelConsistencyWarnings(StringBuilder builder, IReadOnlyList<LabelConsistencyWarningDto> warnings)
+    private static void AppendLabelConsistencyWarnings(
+        StringBuilder builder,
+        IReadOnlyList<LabelConsistencyWarningDto> warnings,
+        bool labelConsistencyLoadFailed)
     {
         builder.AppendLine("## Label consistency warnings");
         builder.AppendLine();
         builder.AppendLine("Compared against the SoloDevBoard canonical taxonomy. Extra repository labels are not reported.");
         builder.AppendLine();
+
+        if (labelConsistencyLoadFailed)
+        {
+            builder.AppendLine("Label consistency could not be loaded for this export.");
+            builder.AppendLine();
+            return;
+        }
 
         if (warnings.Count == 0)
         {

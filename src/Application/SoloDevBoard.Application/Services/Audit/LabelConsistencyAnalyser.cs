@@ -38,11 +38,8 @@ public static class LabelConsistencyAnalyser
                 continue;
             }
 
-            var colourMatches = ColoursMatch(taxonomyLabel.Colour, existing.Colour);
-            var descriptionMatches = string.Equals(
-                taxonomyLabel.Description ?? string.Empty,
-                existing.Description ?? string.Empty,
-                StringComparison.Ordinal);
+            var colourMatches = LabelValueComparer.ColoursMatch(taxonomyLabel.Colour, existing.Colour);
+            var descriptionMatches = LabelValueComparer.DescriptionsMatch(taxonomyLabel.Description, existing.Description);
 
             if (colourMatches && descriptionMatches)
             {
@@ -69,28 +66,14 @@ public static class LabelConsistencyAnalyser
     {
         if (!colourMatches && !descriptionMatches)
         {
-            return $"Colour and description differ (expected #{NormaliseColour(taxonomyLabel.Colour)}, found #{NormaliseColour(existing.Colour)}).";
+            return $"Colour and description differ (expected #{LabelValueComparer.NormaliseColour(taxonomyLabel.Colour)}, found #{LabelValueComparer.NormaliseColour(existing.Colour)}).";
         }
 
         if (!colourMatches)
         {
-            return $"Colour differs (expected #{NormaliseColour(taxonomyLabel.Colour)}, found #{NormaliseColour(existing.Colour)}).";
+            return $"Colour differs (expected #{LabelValueComparer.NormaliseColour(taxonomyLabel.Colour)}, found #{LabelValueComparer.NormaliseColour(existing.Colour)}).";
         }
 
         return "Description differs from the taxonomy.";
-    }
-
-    private static bool ColoursMatch(string left, string right)
-        => string.Equals(NormaliseColour(left), NormaliseColour(right), StringComparison.OrdinalIgnoreCase);
-
-    private static string NormaliseColour(string colour)
-    {
-        var trimmed = colour.Trim();
-        if (trimmed.StartsWith('#'))
-        {
-            return trimmed[1..];
-        }
-
-        return trimmed;
     }
 }

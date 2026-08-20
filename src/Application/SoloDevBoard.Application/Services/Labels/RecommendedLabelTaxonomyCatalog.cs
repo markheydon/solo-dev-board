@@ -12,7 +12,7 @@ public static class RecommendedLabelTaxonomyCatalog
     /// <summary>Gets the SoloDevBoard canonical taxonomy labels.</summary>
     public static IReadOnlyList<LabelDto> SoloDevBoard { get; } =
     [
-        new("type/epic", "6f42c1", "A high-level grouping of related features (spans a full phase)", string.Empty),
+        new("type/epic", "6f42c1", "A named product theme spanning multiple features or a major increment - not a milestone bucket", string.Empty),
         new("type/feature", "0075ca", "A Feature - groups related stories within an epic", string.Empty),
         new("type/story", "1d76db", "A user-facing Story delivering a discrete piece of value", string.Empty),
         new("type/enabler", "e4e669", "An Enabler - technical prerequisite that unblocks stories", string.Empty),
