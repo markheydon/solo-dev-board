@@ -45,6 +45,7 @@ public sealed class IterationPlanningServiceTests
                 cancellationToken);
         await _projectItemCatalogueService.Received(1)
             .UpdateFocusOrderAsync("project-id", "PVTI_new", "PVTF_focus", 3, cancellationToken);
+        _projectItemCatalogueService.Received(1).InvalidateCatalogue("project-id");
     }
 
     [Fact]
@@ -79,6 +80,7 @@ public sealed class IterationPlanningServiceTests
                 cancellationToken);
         await _projectItemCatalogueService.Received(1)
             .UpdateFocusOrderAsync("project-id", "PVTI_existing", "PVTF_focus", 3, cancellationToken);
+        _projectItemCatalogueService.Received(1).InvalidateCatalogue("project-id");
     }
 
     [Fact]
@@ -111,6 +113,7 @@ public sealed class IterationPlanningServiceTests
                 Arg.Any<string>(),
                 Arg.Any<double>(),
                 Arg.Any<CancellationToken>());
+        _projectItemCatalogueService.Received(1).InvalidateCatalogue("project-id");
     }
 
     [Fact]

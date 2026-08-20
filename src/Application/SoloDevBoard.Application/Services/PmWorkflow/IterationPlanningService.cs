@@ -104,6 +104,8 @@ public sealed class IterationPlanningService : IIterationPlanningService
                 cancellationToken)
             .ConfigureAwait(false);
 
+        _projectItemCatalogueService.InvalidateCatalogue(projectId);
+
         if (PlanningFocusOrderSequencer.ShouldAssignFocusOrder(labels))
         {
             if (string.IsNullOrWhiteSpace(catalogue.FieldIds.FocusOrderFieldId))

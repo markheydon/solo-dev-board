@@ -163,6 +163,30 @@ public sealed class ProjectItemCatalogueServiceTests
     }
 
     [Fact]
+    public async Task InvalidateCatalogue_AfterCatalogueLoad_ForcesRefetchOnNextGet()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        _gitHubService
+            .GetProjectBoardItemsAsync("project-id", cancellationToken)
+            .Returns(CreateEmptyDomainCatalogue(), CreateEmptyDomainCatalogue());
+
+        var sut = new ProjectItemCatalogueService(_gitHubService);
+        await sut.GetCatalogueAsync("project-id", cancellationToken);
+        sut.InvalidateCatalogue("project-id");
+        await sut.GetCatalogueAsync("project-id", cancellationToken);
+
+        await _gitHubService.Received(2).GetProjectBoardItemsAsync("project-id", cancellationToken);
+    }
+
+    [Fact]
+    public void InvalidateCatalogue_ProjectIdIsWhitespace_ThrowsArgumentException()
+    {
+        var sut = new ProjectItemCatalogueService(_gitHubService);
+
+        Assert.Throws<ArgumentException>(() => sut.InvalidateCatalogue(" "));
+    }
+
+    [Fact]
     public async Task GetCatalogueAsync_MissingFocusOrderFieldId_MapsNullFocusOrderFieldId()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;

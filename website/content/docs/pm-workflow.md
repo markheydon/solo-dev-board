@@ -5,7 +5,7 @@ weight: 110
 guideStatus: Partially Available
 ---
 
-> ⚠️ **Partial delivery** — Daily Focus, Backlog Review grouping, and Repo Management are available in the app under **PM Workflow**. Iteration Planning remains a placeholder. This guide remains a draft until all four tabs match the wireframe; only the sections below describe current behaviour.
+> ⚠️ **Partial delivery** — Daily Focus, Backlog Review grouping, Iteration Planning, and Repo Management are available in the app under **PM Workflow**. Capacity guidance, stalled Up Next gates, and bulk milestone assignment remain planned. This guide remains a draft until all four tabs match the wireframe; only the sections below describe current behaviour.
 
 ---
 
@@ -24,7 +24,7 @@ The system is built around two modes of operation:
 |-----|-------|--------|
 | **Daily Focus** | `/pm-workflow/daily-focus` | **Partial** — Status occupancy chips, active load, stalled Up Next, top-three recommendations, and pull requests awaiting review for the configured Stall days threshold. |
 | **Backlog** | `/pm-workflow/backlog` | **Partial** — search, type and repository filters, Urgent, Ready to start, Awaiting triage, Blocked/deferred, Epics near completion, and Neglected repositories panels. Issue and pull request kind chips appear on grouped rows. Urgent items are omitted from Ready to start. |
-| Planning | `/pm-workflow/planning` | Placeholder — story [#283](https://github.com/markheydon/solo-dev-board/issues/283). |
+| **Planning** | `/pm-workflow/planning` | **Partial** — Up Next batch list, searchable candidate picker across included repositories, and **Add to Up Next** writes with sequential Focus Order for stories, enablers, and tests. Feature and Epic cards skip Focus Order. |
 | **Repos** | `/pm-workflow/repos` | **Available** — planning board selection, thresholds, repository exclusions, and per-repository open-work counts. |
 
 Open **PM Workflow** from the Home card or the navigation drawer. The hub redirects to **Daily Focus**.
@@ -135,7 +135,42 @@ An item can appear in more than one panel (for example an urgent item that is al
 
 If there are no open issues or pull requests in included repositories, an informational alert says so. If the current filters hide every row, a separate alert says no items match. If every included repository fails to load, an error alert includes **Retry**. If some repositories fail but others succeed, grouping still proceeds and a warning lists the failed repositories with **Retry**. When GitHub does not return sub-issue counts, **Epics near completion** explains that near-complete parents cannot be listed.
 
-> **Scope note** — Iteration Planning (adding items to **Up Next**) remains on story [#283](https://github.com/markheydon/solo-dev-board/issues/283).
+---
+
+## Iteration Planning (partial)
+
+Iteration Planning populates the selected planning board's **Up Next** column from open work across included repositories.
+
+### Accessing
+
+1. Open **PM Workflow**.
+2. Select the **Planning** tab (`/pm-workflow/planning`).
+
+The same shared chrome described under Daily Focus appears on this tab. Until a board is selected, an informational alert points at the **Planning board** dropdown.
+
+### This batch (Up Next)
+
+When a board is selected, the page lists items whose board Status is **Up Next**, ordered by Focus Order then title. Each row shows `owner/name#number`, the title, an optional **Focus Order** chip, and an **Open** link to GitHub.
+
+If the column is empty, an informational sentence explains that no items are in Up Next yet.
+
+### Candidate picker
+
+Below the batch, a searchable list shows open issues and pull requests from included repositories that are not already **Up Next** or **In Progress** on the board (and not parked in **Blocked** or **Ice Box**).
+
+- **Search** matches title, repository name, or item number.
+- **Issues** and **Pull requests** checkboxes filter the list.
+- Each row shows an **Issue** or **PR** chip, `owner/name#number`, the title, the current board Status when the item is already on the board, and **Add to Up Next**.
+
+Choosing **Add to Up Next**:
+
+1. Adds the item to the board when it is not already a card (same add-item flow as Triage).
+2. Sets board Status to **Up Next** (matched by option name, case-insensitive).
+3. Assigns the next sequential Focus Order when the item has a `type/story`, `type/enabler`, or `type/test` label. Feature and Epic cards skip Focus Order.
+
+A success snackbar confirms the add. Failure snackbars cover GitHub API errors and missing board fields. If some repository catalogues fail but others succeed, a warning lists the failed repositories while candidates from the rest still load.
+
+> **Scope note** — Capacity soft cap, stalled Up Next gate before adding work, and bulk milestone assignment remain on stories [#284](https://github.com/markheydon/solo-dev-board/issues/284)–[#286](https://github.com/markheydon/solo-dev-board/issues/286).
 
 ---
 
@@ -232,17 +267,16 @@ A quick morning summary that will also answer stalled-work questions:
 
 The grouped view is shipped as described above. Still planned:
 
-- Adding selected items to **Up Next** from Backlog Review (Iteration Planning tab).
+- Adding selected items to **Up Next** directly from Backlog Review rows (use the **Planning** tab today).
 
-### Iteration Planning
+### Iteration Planning (remaining)
 
-A guided planning session that populates your project board's Up Next column:
+The Up Next batch and candidate picker are shipped as described above. Still planned:
 
-- Shows current board capacity (Up Next + In Progress combined).
-- Surfaces stalled Up Next items and asks you to resolve them before adding new work.
-- Lets you select issues and pull requests from across included repositories.
-- Optionally assigns a milestone to planned items in a single step.
-- Configurable capacity limit with a confirmation dialog when exceeded.
+- Capacity guidance using the persisted **Capacity limit**.
+- Stalled Up Next gate before adding new work.
+- Bulk milestone assignment for planned items.
+- Confirmation dialog when active load would exceed the capacity limit.
 
 ---
 

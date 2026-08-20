@@ -43,6 +43,7 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
     private int loadedDataRevision = -1;
     private int viewLoadGeneration;
     private CancellationTokenSource? viewLoadCts;
+    private CancellationTokenSource? addToUpNextCts;
 
     private IEnumerable<IterationPlanningCandidateDto> FilteredCandidates
     {
@@ -107,6 +108,8 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
     {
         viewLoadCts?.Cancel();
         viewLoadCts?.Dispose();
+        addToUpNextCts?.Cancel();
+        addToUpNextCts?.Dispose();
     }
 
     private Task RetryLoadAsync() => LoadPlanningViewAsync(forceReload: true);
@@ -193,6 +196,11 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
 
         var boardId = ChromeState.Settings.PlanningBoardNodeId!;
         var candidateKey = BuildCandidateKey(candidate);
+        addToUpNextCts?.Cancel();
+        addToUpNextCts?.Dispose();
+        addToUpNextCts = new CancellationTokenSource();
+        var cancellationToken = addToUpNextCts.Token;
+
         isAddingToUpNext = true;
         addingCandidateKey = candidateKey;
         await InvokeAsync(StateHasChanged).ConfigureAwait(false);
@@ -206,7 +214,7 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
                     candidate.RepositoryFullName,
                     candidate.Number,
                     candidate.Labels,
-                    CancellationToken.None)
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             Snackbar.Add(
@@ -221,6 +229,10 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
 
             loadedDataRevision = -1;
             await LoadPlanningViewAsync(forceReload: true).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return;
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
