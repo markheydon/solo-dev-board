@@ -16,4 +16,9 @@
 
 ## Invocation
 
-Natural language: "Preflight issue #N"
+**Chat:** "Preflight issue #N".
+**Slash command:** `/preflight-issue [number]`.
+**GitHub Issue comment** (mention at the start; `N` is this issue):
+- `@cursor preflight this issue`
+- `@cursor scout this — do not write code yet`
+- `@cursor discover the codebase for this issue`

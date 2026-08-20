@@ -12,4 +12,10 @@
 
 ## Invocation
 
-Natural language: "Code review PR #N" or "Code review branch feature/X"
+**Chat:** "Code review PR #N" or "Code review branch feature/X".
+**Slash command:** `/code-review [number]`.
+**GitHub Pull Request comment** (mention at the start; `N` is this PR):
+- `@cursor code review this PR`
+- `@cursor review this PR for conventions`
+
+Do not treat "review this issue" on an Issue comment as this workflow.

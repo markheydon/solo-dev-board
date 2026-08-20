@@ -1,7 +1,7 @@
 ---
 role: Verify
 description: Validates completed work (build, tests, docs) and creates a pull request.
-triggers: Verify issue #N; Create PR for issue #N
+triggers: Verify issue #N; Create PR for issue #N; GitHub Issue "@cursor create a PR for this"
 ---
 
 # Verify Agent

@@ -16,6 +16,10 @@ Read-only orientation at the **start of a working session** — not tied to a ca
 
 ## Invocation
 
-Natural language: "Run the daily start workflow"
+**Chat:** "Run the daily start workflow".
+**Slash command:** `/daily-start`.
+**GitHub Issue comment** (mention at the start; the current issue is context only, not the work item to implement):
+- `@cursor run daily start`
+- `@cursor what's next from the board`
 
-Slash command: `/daily-start`
+Do not treat this as "implement this issue".

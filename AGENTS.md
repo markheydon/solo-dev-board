@@ -244,6 +244,8 @@ This repository is a **.NET Aspire** distributed application (`src/SoloDevBoard.
 
 Consult the workflow or contract index when entering a PM or delivery mode. Do not load every skill up front for PM-only work. Delivery must still load Aspire skills as above.
 
+Cloud Agents started from a GitHub Issue or Pull Request comment (`@cursor` or `@cursoragent`) follow **GitHub comment invocation** in [`.agents/workflows/README.md`](.agents/workflows/README.md) ([DEC-031](plan/DECISIONS.md#dec-031-github-comment-workflow-invocation)). Informal "implement this issue" on an issue comment is `deliver-issue`, not the split `implement-issue` path.
+
 ---
 
 ## Environment-specific guidance
