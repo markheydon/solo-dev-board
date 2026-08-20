@@ -1,6 +1,10 @@
+import { appendFileSync } from 'node:fs';
+
 import { isIssueClosedLongEnoughToArchive } from './roadmap-sync-archive.mjs';
 import { resolveMaintainerAssignmentAction } from './roadmap-sync-assignee.mjs';
 import { githubJsonRequest, isTransientGitHubGraphQlError, withGitHubRetry } from './github-http.mjs';
+
+const debugLogPath = '/home/markheydon/repos/markheydon/solo-dev-board/.cursor/debug-b6fe91.log';
 
 const apiBaseUrl = 'https://api.github.com';
 const graphqlUrl = `${apiBaseUrl}/graphql`;
@@ -617,18 +621,23 @@ async function syncIssueAssigneeAsync(issue, desiredStatusName, label) {
         return;
     }
 
-    if (action === 'assign') {
-        await restMutateAsync(
-            `/repos/${owner}/${repo}/issues/${issue.number}/assignees/${maintainerLogin}`,
-            'POST');
-        console.log(`Assigned ${maintainerLogin} to ${label}.`);
-        return;
-    }
+    const assigneesPath = `/repos/${owner}/${repo}/issues/${issue.number}/assignees`;
+    const requestBody = JSON.stringify({ assignees: [maintainerLogin] });
+    const method = action === 'assign' ? 'POST' : 'DELETE';
 
-    await restMutateAsync(
-        `/repos/${owner}/${repo}/issues/${issue.number}/assignees/${maintainerLogin}`,
-        'DELETE');
-    console.log(`Unassigned ${maintainerLogin} from ${label}.`);
+    // #region agent log
+    writeDebugLog('roadmap-sync.mjs:syncIssueAssigneeAsync', 'Issue assignee sync request', {
+        hypothesisId: 'A',
+        issueNumber: issue.number,
+        action,
+        method,
+        path: assigneesPath,
+        desiredStatusName,
+    });
+    // #endregion
+
+    await restMutateAsync(assigneesPath, method, requestBody);
+    console.log(`${action === 'assign' ? 'Assigned' : 'Unassigned'} ${maintainerLogin} ${action === 'assign' ? 'to' : 'from'} ${label}.`);
 }
 
 async function syncSingleSelectFieldAsync(itemId, fieldId, currentOptionId, desiredOptionId, label) {
@@ -809,14 +818,32 @@ async function restAsync(path) {
     });
 }
 
-async function restMutateAsync(path, method) {
+async function restMutateAsync(path, method, body) {
     return githubJsonRequest({
         url: `${apiBaseUrl}${path}`,
         method,
+        body,
         token,
         userAgent: 'solo-dev-board-roadmap-sync',
         apiVersion: '2022-11-28',
     });
+}
+
+function writeDebugLog(location, message, data) {
+    const payload = {
+        sessionId: 'b6fe91',
+        runId: process.env.DEBUG_RUN_ID ?? 'pre-fix',
+        timestamp: Date.now(),
+        location,
+        message,
+        data,
+    };
+
+    try {
+        appendFileSync(debugLogPath, `${JSON.stringify(payload)}\n`);
+    } catch {
+        // Debug logging must not break roadmap sync.
+    }
 }
 
 function getAssigneeLogins(issue) {

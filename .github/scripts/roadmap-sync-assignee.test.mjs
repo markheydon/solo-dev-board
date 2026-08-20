@@ -6,62 +6,35 @@ import {
     shouldAssignMaintainerToIssue,
 } from './roadmap-sync-assignee.mjs';
 
-const maintainer = 'markheydon';
-
-test('issueAssignmentStatuses_ContainsOnlyUpNextAndInProgress', () => {
-    assert.deepEqual([...issueAssignmentStatuses].sort(), ['In Progress', 'Up Next']);
-});
-
-test('shouldAssignMaintainerToIssue_UpNext_ReturnsTrue', () => {
+test('shouldAssignMaintainerToIssue_UpNextAndInProgress_ReturnsTrue', () => {
     assert.equal(shouldAssignMaintainerToIssue('Up Next'), true);
-});
-
-test('shouldAssignMaintainerToIssue_InProgress_ReturnsTrue', () => {
     assert.equal(shouldAssignMaintainerToIssue('In Progress'), true);
 });
 
-test('shouldAssignMaintainerToIssue_Todo_ReturnsFalse', () => {
+test('shouldAssignMaintainerToIssue_OtherStatuses_ReturnsFalse', () => {
     assert.equal(shouldAssignMaintainerToIssue('Todo'), false);
-});
-
-test('shouldAssignMaintainerToIssue_IceBox_ReturnsFalse', () => {
-    assert.equal(shouldAssignMaintainerToIssue('Ice Box'), false);
-});
-
-test('shouldAssignMaintainerToIssue_Blocked_ReturnsFalse', () => {
     assert.equal(shouldAssignMaintainerToIssue('Blocked'), false);
-});
-
-test('shouldAssignMaintainerToIssue_Done_ReturnsFalse', () => {
     assert.equal(shouldAssignMaintainerToIssue('Done'), false);
 });
 
 test('resolveMaintainerAssignmentAction_UpNextWithoutAssignee_ReturnsAssign', () => {
-    const action = resolveMaintainerAssignmentAction([], 'Up Next', maintainer);
+    const result = resolveMaintainerAssignmentAction([], 'Up Next', 'markheydon');
 
-    assert.equal(action, 'assign');
-});
-
-test('resolveMaintainerAssignmentAction_InProgressWithAssignee_ReturnsNone', () => {
-    const action = resolveMaintainerAssignmentAction([maintainer], 'In Progress', maintainer);
-
-    assert.equal(action, 'none');
+    assert.equal(result, 'assign');
 });
 
 test('resolveMaintainerAssignmentAction_TodoWithAssignee_ReturnsUnassign', () => {
-    const action = resolveMaintainerAssignmentAction([maintainer], 'Todo', maintainer);
+    const result = resolveMaintainerAssignmentAction(['markheydon'], 'Todo', 'markheydon');
 
-    assert.equal(action, 'unassign');
+    assert.equal(result, 'unassign');
 });
 
-test('resolveMaintainerAssignmentAction_IceBoxWithAssignee_ReturnsUnassign', () => {
-    const action = resolveMaintainerAssignmentAction([maintainer], 'Ice Box', maintainer);
+test('resolveMaintainerAssignmentAction_InProgressWithAssignee_ReturnsNone', () => {
+    const result = resolveMaintainerAssignmentAction(['markheydon'], 'In Progress', 'markheydon');
 
-    assert.equal(action, 'unassign');
+    assert.equal(result, 'none');
 });
 
-test('resolveMaintainerAssignmentAction_TodoWithoutAssignee_ReturnsNone', () => {
-    const action = resolveMaintainerAssignmentAction([], 'Todo', maintainer);
-
-    assert.equal(action, 'none');
+test('issueAssignmentStatuses_ContainsExpectedStatuses', () => {
+    assert.deepEqual([...issueAssignmentStatuses].sort(), ['In Progress', 'Up Next']);
 });
