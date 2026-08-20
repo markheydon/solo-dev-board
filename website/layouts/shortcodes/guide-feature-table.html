@@ -21,10 +21,13 @@
       <td>
         {{- $status := .Params.guideStatus | default "Available" -}}
         {{- $color := "green" -}}
+        {{- $label := $status -}}
         {{- if eq $status "Partially Available" -}}
           {{- $color = "amber" -}}
+          {{- /* Shorter label on the index table so the badge stays on one line. */ -}}
+          {{- $label = "Partial" -}}
         {{- end -}}
-        {{- partial "shortcodes/badge.html" (dict "content" $status "color" $color "border" true) -}}
+        {{- partial "shortcodes/badge.html" (dict "content" $label "color" $color "border" true) -}}
       </td>
     </tr>
 {{- end }}
