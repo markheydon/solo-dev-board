@@ -270,11 +270,12 @@ public sealed class LabelsTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
 
-        _labelManagerService.PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
+        _labelManagerService.PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns([
                 new RecommendedTaxonomyRepositoryPreviewDto(
                     "owner/repo-a",
                     [new LabelDto("type/story", "1d76db", "Story", "owner/repo-a")],
                     [new LabelDto("priority/high", "d93f0b", "High", "owner/repo-a")],
+                    [],
                     [new LabelDto("status/todo", "ffffff", "Ready", "owner/repo-a")]),
             ]);
 
@@ -307,16 +308,17 @@ public sealed class LabelsTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
 
-        _labelManagerService.PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
+        _labelManagerService.PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns([
                 new RecommendedTaxonomyRepositoryPreviewDto(
                     "owner/repo-a",
                     [new LabelDto("type/story", "1d76db", "Story", "owner/repo-a")],
                     [],
+                    [],
                     []),
             ]);
 
-        _labelManagerService.ApplyRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
-                new RecommendedTaxonomyRepositoryResultDto("owner/repo-a", 1, 0, 0, null),
+        _labelManagerService.ApplyRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns([
+                new RecommendedTaxonomyRepositoryResultDto("owner/repo-a", 1, 0, 0, 0, [], null),
             ]);
 
         _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<LabelDto>());
@@ -338,11 +340,11 @@ public sealed class LabelsTests
         cut.WaitForAssertion(() =>
         {
             Assert.Contains("Apply summary", cut.Markup);
-            Assert.Contains("Created: 1, Updated: 0, Skipped: 0", cut.Markup);
-            Assert.Contains("Applied taxonomy successfully", cut.Markup);
+            Assert.Contains("Created: 1, Updated: 0, Deleted: 0, Skipped: 0", cut.Markup);
+            Assert.Contains("Applied taxonomy successfully. Created 1, updated 0, deleted 0, skipped 0.", cut.Markup);
         });
 
-        await _labelManagerService.Received(1).ApplyRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
+        await _labelManagerService.Received(1).ApplyRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), false, Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -353,8 +355,8 @@ public sealed class LabelsTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
 
-        _labelManagerService.PreviewRecommendedTaxonomyAsync("solodevboard", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
-                new RecommendedTaxonomyRepositoryPreviewDto("owner/repo-a", [], [], []),
+        _labelManagerService.PreviewRecommendedTaxonomyAsync("solodevboard", Arg.Any<IReadOnlyList<string>>(), false, Arg.Any<CancellationToken>()).Returns([
+                new RecommendedTaxonomyRepositoryPreviewDto("owner/repo-a", [], [], [], []),
             ]);
 
         await using var ctx = CreateContext();
@@ -367,7 +369,7 @@ public sealed class LabelsTests
         cut.Find("[data-testid='preview-taxonomy-button']").Click();
 
         // Assert
-        await _labelManagerService.Received(1).PreviewRecommendedTaxonomyAsync("solodevboard", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
+        await _labelManagerService.Received(1).PreviewRecommendedTaxonomyAsync("solodevboard", Arg.Any<IReadOnlyList<string>>(), false, Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -379,7 +381,7 @@ public sealed class LabelsTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
 
-        _labelManagerService.PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(previewTask.Task);
+        _labelManagerService.PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(previewTask.Task);
 
         await using var ctx = CreateContext();
 
@@ -394,13 +396,100 @@ public sealed class LabelsTests
         previewButton.Click();
 
         await cut.InvokeAsync(() => previewTask.SetResult([
-            new RecommendedTaxonomyRepositoryPreviewDto("owner/repo-a", [], [], []),
+            new RecommendedTaxonomyRepositoryPreviewDto("owner/repo-a", [], [], [], []),
         ]));
 
         cut.WaitForAssertion(() => Assert.Contains("Taxonomy preview", cut.Markup));
 
         // Assert
-        await _labelManagerService.Received(1).PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
+        await _labelManagerService.Received(1).PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Labels_RecommendedTaxonomy_RemoveOutsideTaxonomyCheckbox_IsUncheckedByDefault()
+    {
+        // Arrange
+        var repoA = CreateRepository("owner", "repo-a");
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
+        await SelectRepositoriesAsync(cut, repoA);
+        await ActivateTabAsync(cut, "Recommended taxonomy");
+
+        // Assert
+        var checkbox = cut.Find("[data-testid='remove-labels-outside-taxonomy-checkbox']");
+        Assert.False(checkbox.HasAttribute("checked"));
+        Assert.Contains("Remove labels outside taxonomy", cut.Markup);
+    }
+
+    [Fact]
+    public async Task Labels_PreviewRecommendedTaxonomy_WhenRemoveOutsideTaxonomyEnabled_PassesStrictModeToService()
+    {
+        // Arrange
+        var repoA = CreateRepository("owner", "repo-a");
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
+
+        _labelManagerService.PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), true, Arg.Any<CancellationToken>()).Returns([
+                new RecommendedTaxonomyRepositoryPreviewDto(
+                    "owner/repo-a",
+                    [],
+                    [],
+                    [new LabelDto("dependencies", "0366d6", "Dependencies", "owner/repo-a")],
+                    []),
+            ]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
+        await SelectRepositoriesAsync(cut, repoA);
+        await ActivateTabAsync(cut, "Recommended taxonomy");
+
+        var checkbox = cut.FindComponent<MudCheckBox<bool>>();
+        await cut.InvokeAsync(() => checkbox.Instance.ValueChanged.InvokeAsync(true));
+        cut.Find("[data-testid='preview-taxonomy-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Delete: 1", cut.Markup);
+            Assert.Contains("Labels to delete", cut.Markup);
+            Assert.Contains("dependencies", cut.Markup);
+        });
+
+        await _labelManagerService.Received(1).PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), true, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Labels_PreviewRecommendedTaxonomy_WhenRemoveOutsideTaxonomyDisabled_PassesFalseToService()
+    {
+        // Arrange
+        var repoA = CreateRepository("owner", "repo-a");
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
+
+        _labelManagerService.PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), false, Arg.Any<CancellationToken>()).Returns([
+                new RecommendedTaxonomyRepositoryPreviewDto("owner/repo-a", [], [], [], []),
+            ]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
+        await SelectRepositoriesAsync(cut, repoA);
+        await ActivateTabAsync(cut, "Recommended taxonomy");
+        cut.Find("[data-testid='preview-taxonomy-button']").Click();
+
+        // Assert
+        await _labelManagerService.Received(1).PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), false, Arg.Any<CancellationToken>());
     }
 
     [Fact]

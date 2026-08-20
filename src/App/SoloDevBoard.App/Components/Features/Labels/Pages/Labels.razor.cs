@@ -52,6 +52,7 @@ public partial class Labels : ComponentBase
     private IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto> recommendedPreview = [];
     private IReadOnlyList<RecommendedTaxonomyRepositoryResultDto> recommendedApplyResults = [];
     private bool showRecommendedPreview;
+    private bool removeLabelsOutsideTaxonomy;
     private bool isPreviewingRecommendedTaxonomy;
     private bool isApplyingRecommendedTaxonomy;
     private string? taxonomyOperationMessage;
@@ -110,6 +111,16 @@ public partial class Labels : ComponentBase
     private Task OnStrategySelectedAsync(string strategyId)
     {
         selectedStrategyId = strategyId;
+        recommendedPreview = [];
+        showRecommendedPreview = false;
+        recommendedApplyResults = [];
+        taxonomyOperationMessage = null;
+        return Task.CompletedTask;
+    }
+
+    private Task OnRemoveLabelsOutsideTaxonomyChanged(bool value)
+    {
+        removeLabelsOutsideTaxonomy = value;
         recommendedPreview = [];
         showRecommendedPreview = false;
         recommendedApplyResults = [];
@@ -242,7 +253,7 @@ public partial class Labels : ComponentBase
         {
             taxonomyOperationMessage = null;
             recommendedApplyResults = [];
-            recommendedPreview = await LabelManagerService.PreviewRecommendedTaxonomyAsync(selectedStrategyId, selectedFullNames);
+            recommendedPreview = await LabelManagerService.PreviewRecommendedTaxonomyAsync(selectedStrategyId, selectedFullNames, removeLabelsOutsideTaxonomy);
             showRecommendedPreview = true;
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
@@ -299,24 +310,25 @@ public partial class Labels : ComponentBase
         isApplyingRecommendedTaxonomy = true;
         try
         {
-            recommendedApplyResults = await LabelManagerService.ApplyRecommendedTaxonomyAsync(selectedStrategyId, selectedFullNames);
+            recommendedApplyResults = await LabelManagerService.ApplyRecommendedTaxonomyAsync(selectedStrategyId, selectedFullNames, removeLabelsOutsideTaxonomy);
             showRecommendedPreview = false;
             recommendedPreview = [];
 
             var failedCount = recommendedApplyResults.Count(result => result.HasError);
             var createdCount = recommendedApplyResults.Sum(result => result.CreatedCount);
             var updatedCount = recommendedApplyResults.Sum(result => result.UpdatedCount);
+            var deletedCount = recommendedApplyResults.Sum(result => result.DeletedCount);
             var skippedCount = recommendedApplyResults.Sum(result => result.SkippedCount);
 
             if (failedCount == 0)
             {
                 taxonomyOperationSeverity = Severity.Success;
-                taxonomyOperationMessage = $"Applied taxonomy successfully. Created {createdCount}, updated {updatedCount}, skipped {skippedCount}.";
+                taxonomyOperationMessage = $"Applied taxonomy successfully. Created {createdCount}, updated {updatedCount}, deleted {deletedCount}, skipped {skippedCount}.";
             }
             else
             {
                 taxonomyOperationSeverity = Severity.Warning;
-                taxonomyOperationMessage = $"Applied taxonomy with {failedCount} repository errors. Created {createdCount}, updated {updatedCount}, skipped {skippedCount}.";
+                taxonomyOperationMessage = $"Applied taxonomy with {failedCount} repository errors. Created {createdCount}, updated {updatedCount}, deleted {deletedCount}, skipped {skippedCount}.";
             }
 
             await LoadLabelsForSelectionAsync();
