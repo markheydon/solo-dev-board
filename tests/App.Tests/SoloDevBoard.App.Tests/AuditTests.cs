@@ -97,8 +97,8 @@ public sealed class AuditTests
             Assert.Contains("Unlabelled issues", cut.Markup);
             Assert.Contains("Failing workflows", cut.Markup);
             Assert.Contains("Label consistency warnings", cut.Markup);
-            Assert.Contains(">5<", cut.Markup);
-            Assert.Contains(">5<", cut.Markup);
+            Assert.Contains("audit-total-issues-card", cut.Markup);
+            Assert.Contains("audit-total-prs-card", cut.Markup);
 
             var links = cut.FindAll("a")
                 .Select(link => link.GetAttribute("href"))
@@ -147,6 +147,39 @@ public sealed class AuditTests
 
         await cut.InvokeAsync(() => snapshotCompletionSource.SetResult(CreateSnapshot([new RepositoryAuditSummaryDto("owner/repo-a", 1, 1, 0, 0, 0)])));
         cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-summary-table']")));
+    }
+
+    [Fact]
+    public async Task Audit_WhenLabelConsistencyIsLoading_ShowsKpiSkeleton()
+    {
+        // Arrange
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
+        _auditDashboardService
+            .GetDashboardSnapshotAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), false, Arg.Any<CancellationToken>())
+            .Returns(CreateSnapshot([new RepositoryAuditSummaryDto("owner/repo-a", 1, 1, 0, 0, 0)]));
+
+        var labelConsistencyCompletionSource = new TaskCompletionSource<IReadOnlyList<LabelConsistencyWarningDto>>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        await using var ctx = CreateContext();
+        _auditDashboardService
+            .GetLabelConsistencyWarningsAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>())
+            .Returns(labelConsistencyCompletionSource.Task);
+
+        // Act
+        var cut = ctx.Render<Audit>();
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-command-surface']")));
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo-a" }));
+        cut.Find("[data-testid='audit-load-selected-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='audit-label-consistency-kpi-card'] .mud-skeleton"));
+        });
+
+        await cut.InvokeAsync(() => labelConsistencyCompletionSource.SetResult([]));
+        cut.WaitForAssertion(() => Assert.Empty(cut.FindAll("[data-testid='audit-label-consistency-kpi-card'] .mud-skeleton")));
     }
 
     [Fact]
@@ -264,11 +297,11 @@ public sealed class AuditTests
         _auditDashboardService
             .GetDashboardSnapshotAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), false, Arg.Any<CancellationToken>())
             .Returns(CreateSnapshot(summary, issues));
+
+        await using var ctx = CreateContext();
         _auditDashboardService
             .GetFailingWorkflowRunsAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>())
             .Returns<Task<IReadOnlyList<WorkflowRunDto>>>(_ => throw new HttpRequestException("GitHub API request failed."));
-
-        await using var ctx = CreateContext();
 
         // Act
         var cut = ctx.Render<Audit>();
@@ -284,6 +317,55 @@ public sealed class AuditTests
             Assert.Contains("Needs triage", cut.Markup);
             Assert.DoesNotContain("Unable to load audit summary", cut.Markup);
             Assert.Contains("No failing workflows — great!", cut.Markup);
+            var workflowHealthLoadFailed = (bool)typeof(Audit)
+                .GetField("workflowHealthLoadFailed", BindingFlags.Instance | BindingFlags.NonPublic)!
+                .GetValue(cut.Instance)!;
+            Assert.True(workflowHealthLoadFailed);
+        });
+    }
+
+    [Fact]
+    public async Task Audit_WhenLabelConsistencyFails_KeepsCoreAuditDataVisibleAndDisablesExport()
+    {
+        // Arrange
+        var summary = new List<RepositoryAuditSummaryDto>
+        {
+            new("owner/repo-a", 2, 1, 1, 0, 0),
+        };
+
+        var issues = new List<IssueDto>
+        {
+            new(12, "Needs triage", "https://github.com/owner/repo-a/issues/12", "owner/repo-a", DateTimeOffset.UtcNow.AddDays(-5), DateTimeOffset.UtcNow.AddDays(-2)),
+        };
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
+        _auditDashboardService
+            .GetDashboardSnapshotAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), false, Arg.Any<CancellationToken>())
+            .Returns(CreateSnapshot(summary, issues));
+
+        await using var ctx = CreateContext();
+        _auditDashboardService
+            .GetLabelConsistencyWarningsAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>())
+            .Returns<Task<IReadOnlyList<LabelConsistencyWarningDto>>>(_ => throw new HttpRequestException("GitHub API request failed."));
+
+        // Act
+        var cut = ctx.Render<Audit>();
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-command-surface']")));
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo-a" }));
+        cut.Find("[data-testid='audit-load-selected-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='audit-summary-table']"));
+            Assert.Contains("Needs triage", cut.Markup);
+            Assert.DoesNotContain("Unable to load audit summary", cut.Markup);
+            Assert.Contains("Labels match the SoloDevBoard taxonomy — great!", cut.Markup);
+            var labelConsistencyLoadFailed = (bool)typeof(Audit)
+                .GetField("labelConsistencyLoadFailed", BindingFlags.Instance | BindingFlags.NonPublic)!
+                .GetValue(cut.Instance)!;
+            Assert.True(labelConsistencyLoadFailed);
         });
     }
 

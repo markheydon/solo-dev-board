@@ -93,6 +93,37 @@ public sealed class AuditDashboardMarkdownExporterTests
     }
 
     [Fact]
+    public void GenerateSummaryMarkdown_WhenSecondaryHealthLoadsFailed_IncludesUnavailableMessages()
+    {
+        // Arrange
+        var request = new AuditDashboardMarkdownExportRequest(
+            RepositorySummaries: [new RepositoryAuditSummaryDto("owner/repo-a", 1, 1, 0, 0, 0)],
+            UnlabelledIssues: [],
+            StalePullRequests: [],
+            FailingWorkflowRuns: [],
+            LabelConsistencyWarnings: [],
+            SelectedRepositories: ["owner/repo-a"],
+            TotalOpenIssues: 1,
+            TotalOpenPullRequests: 1,
+            TotalUnlabelledIssues: 0,
+            TotalFailingWorkflows: 0,
+            TotalLabelConsistencyWarnings: 0,
+            StalePullRequestDays: 14,
+            GeneratedAtUtc: GeneratedAt,
+            WorkflowHealthLoadFailed: true,
+            LabelConsistencyLoadFailed: true);
+
+        // Act
+        var markdown = _sut.GenerateSummaryMarkdown(request);
+
+        // Assert
+        Assert.Contains("Workflow health could not be loaded for this export.", markdown);
+        Assert.Contains("Label consistency could not be loaded for this export.", markdown);
+        Assert.DoesNotContain("No failing workflows — great!", markdown);
+        Assert.DoesNotContain("Labels match the SoloDevBoard taxonomy — great!", markdown);
+    }
+
+    [Fact]
     public void GenerateSummaryMarkdown_WhenRequestIsNull_ThrowsArgumentNullException()
     {
         // Act

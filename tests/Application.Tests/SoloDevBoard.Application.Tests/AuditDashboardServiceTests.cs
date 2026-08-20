@@ -617,6 +617,21 @@ public sealed class AuditDashboardServiceTests
         Assert.Empty(result);
     }
 
+    [Theory]
+    [InlineData(HttpStatusCode.Forbidden)]
+    [InlineData(HttpStatusCode.Gone)]
+    public async Task GetLabelConsistencyWarningsAsync_WhenLabelsEndpointReturnsSkippableStatus_SkipsRepository(HttpStatusCode statusCode)
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-one", cancellationToken)
+            .Returns<Task<IReadOnlyList<Label>>>(_ => throw new HttpRequestException("unavailable", null, statusCode));
+
+        var result = await _sut.GetLabelConsistencyWarningsAsync(["owner/repo-one"], cancellationToken);
+
+        Assert.Empty(result);
+    }
+
     [Fact]
     public async Task GetLabelConsistencyWarningsAsync_ReposIsNull_ThrowsArgumentNullException()
     {

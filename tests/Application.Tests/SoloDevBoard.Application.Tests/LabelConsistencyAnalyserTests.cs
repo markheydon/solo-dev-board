@@ -42,6 +42,44 @@ public sealed class LabelConsistencyAnalyserTests
     }
 
     [Fact]
+    public void Analyse_WhenColourDiffers_ReturnsDivergentWarningWithColourDetail()
+    {
+        var taxonomy = new[]
+        {
+            new LabelDto("type/bug", "d73a4a", "A bug or unexpected behaviour", string.Empty),
+        };
+        var existing = new[]
+        {
+            new Label { Name = "type/bug", Colour = "ffffff", Description = "A bug or unexpected behaviour" },
+        };
+
+        var warnings = LabelConsistencyAnalyser.Analyse("owner/repo", existing, taxonomy);
+
+        var warning = Assert.Single(warnings);
+        Assert.Equal(LabelConsistencyWarningKind.Divergent, warning.Kind);
+        Assert.Equal("Colour differs (expected #d73a4a, found #ffffff).", warning.Detail);
+    }
+
+    [Fact]
+    public void Analyse_WhenColourAndDescriptionDiffer_ReturnsCombinedDivergentDetail()
+    {
+        var taxonomy = new[]
+        {
+            new LabelDto("type/bug", "d73a4a", "A bug or unexpected behaviour", string.Empty),
+        };
+        var existing = new[]
+        {
+            new Label { Name = "type/bug", Colour = "ffffff", Description = "Something else" },
+        };
+
+        var warnings = LabelConsistencyAnalyser.Analyse("owner/repo", existing, taxonomy);
+
+        var warning = Assert.Single(warnings);
+        Assert.Equal(LabelConsistencyWarningKind.Divergent, warning.Kind);
+        Assert.Equal("Colour and description differ (expected #d73a4a, found #ffffff).", warning.Detail);
+    }
+
+    [Fact]
     public void Analyse_WhenDescriptionDiffers_ReturnsDivergentWarning()
     {
         var taxonomy = new[]
