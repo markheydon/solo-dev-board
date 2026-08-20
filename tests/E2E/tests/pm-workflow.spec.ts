@@ -246,3 +246,84 @@ test.describe('Repo Management', () => {
     await expect(noBoardAlert.or(page.getByTestId('pm-workflow-board-select')).first()).toBeVisible();
   });
 });
+
+test.describe('Backlog Review', () => {
+  test('direct navigation opens the Backlog Review route shell', async ({ page }) => {
+    await page.goto('/pm-workflow/backlog');
+
+    await expect(page).toHaveURL(/\/pm-workflow\/backlog$/);
+    await expect(page).toHaveTitle(/PM Workflow — Backlog/);
+    await expect(page.getByTestId('pm-workflow-shell')).toBeVisible();
+    await expect(page.getByTestId('pm-workflow-tab-strip')).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Backlog' })).toBeVisible();
+    await expect(page.getByTestId('pm-workflow-backlog-page')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Backlog Review' })).toBeVisible();
+  });
+
+  test('shows no-board instructional copy, grouping panels, empty catalogue, or load error', async ({ page }) => {
+    await page.goto('/pm-workflow/backlog');
+
+    await expect(page.getByTestId('pm-workflow-shell')).toBeVisible();
+
+    const chromeError = page.getByTestId('pm-workflow-chrome-error');
+    const noBoardAlert = page.getByTestId('pm-workflow-backlog-no-board');
+    const filters = page.getByTestId('pm-workflow-backlog-filters');
+    const panels = page.getByTestId('pm-workflow-backlog-panels');
+    const catalogueEmpty = page.getByTestId('pm-workflow-backlog-empty');
+    const filterEmpty = page.getByTestId('pm-workflow-backlog-filter-empty');
+    const loadError = page.getByTestId('pm-workflow-backlog-error');
+    const warning = page.getByTestId('pm-workflow-backlog-warning');
+
+    await expect(
+      chromeError
+        .or(noBoardAlert)
+        .or(filters)
+        .or(catalogueEmpty)
+        .or(filterEmpty)
+        .or(loadError)
+        .or(warning)
+        .first(),
+    ).toBeVisible({ timeout: 15_000 });
+
+    if (await chromeError.isVisible()) {
+      await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+      return;
+    }
+
+    if (await loadError.isVisible()) {
+      await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+      await expect(loadError).toContainText('Unable to load the backlog');
+      return;
+    }
+
+    if (await noBoardAlert.isVisible()) {
+      await expect(noBoardAlert).toContainText(
+        'Select a planning board in the dropdown above to load Backlog Review groups.',
+      );
+      return;
+    }
+
+    if (await catalogueEmpty.isVisible()) {
+      await expect(catalogueEmpty).toContainText('No open issues or pull requests in included repositories.');
+      return;
+    }
+
+    if (await filterEmpty.isVisible()) {
+      await expect(filterEmpty).toContainText('No items match the current filters.');
+      return;
+    }
+
+    if (await filters.isVisible()) {
+      await expect(panels).toBeVisible();
+      await expect(page.getByTestId('pm-workflow-backlog-urgent')).toBeVisible();
+      await expect(page.getByTestId('pm-workflow-backlog-ready')).toBeVisible();
+      await expect(page.getByTestId('pm-workflow-backlog-awaiting-triage')).toBeVisible();
+      await expect(page.getByTestId('pm-workflow-backlog-blocked')).toBeVisible();
+      await expect(page.getByTestId('pm-workflow-backlog-epics')).toBeVisible();
+      await expect(page.getByTestId('pm-workflow-backlog-neglected')).toBeVisible();
+      await expect(page.getByTestId('pm-workflow-backlog-search')).toBeVisible();
+      await expect(page.getByTestId('pm-workflow-backlog-type-filter')).toBeVisible();
+      await expect(page.getByTestId('pm-workflow-backlog-repo-filter')).toBeVisible();
+    }
+  });
+});

@@ -36,7 +36,7 @@ When you add or change an end-user feature, update the user guide, the relevant 
 | [Workflow Templates](../../website/content/docs/workflow-templates.md) | `/workflows` | `workflows.spec.ts`, `accessibility.spec.ts` | `workflow-templates/overview.png` | Tier 2 | Guide describes browse, parameterise, apply, and drift; CI asserts built-in template browse/filter/select and repository error state. |
 | [Appearance](../../website/content/docs/appearance.md) | App bar (all shell pages) | `appearance.spec.ts`, `accessibility.spec.ts` | `appearance/theme-toggle.png` | Tier 1 | Guide describes Automatic → Light → Dark cycling and persistence; not a drawer route. |
 | [About (in-app)](../../website/content/docs/about.md) | `/about` | `about.spec.ts`, `accessibility.spec.ts` | `about/overview.png` | Tier 1 | Guide describes More options menu access (User Guide external link and About route) and metadata fields. Not the Hugo `/about/` narrative section. |
-| Cross-Repo PM Workflow (`draft: true`, partial) | `/pm-workflow`, `/pm-workflow/daily-focus`, `/pm-workflow/backlog`, `/pm-workflow/repos` | `pm-workflow.spec.ts`, `accessibility.spec.ts` | `pm-workflow/daily-focus.png` and `pm-workflow/repos.png` (pending) | Tier 2 | Draft guide documents Daily Focus occupancy, recommendations, stalled Up Next alerts, stalled review pull requests, Backlog Review grouping ([#277](https://github.com/markheydon/solo-dev-board/issues/277)), and Repo Management ([#273](https://github.com/markheydon/solo-dev-board/issues/273), [#274](https://github.com/markheydon/solo-dev-board/issues/274), [#275](https://github.com/markheydon/solo-dev-board/issues/275), [#276](https://github.com/markheydon/solo-dev-board/issues/276), [#287](https://github.com/markheydon/solo-dev-board/issues/287), [#288](https://github.com/markheydon/solo-dev-board/issues/288)); Planning remains a placeholder. CI asserts shell, tab strip, Daily Focus occupancy, recommendation, stalled Up Next, and stalled-review regions or empty/error/warning copy, Backlog filters and urgency panels or empty/error/warning copy, and Repos regions (including per-repository summary) or chrome error. |
+| Cross-Repo PM Workflow (`draft: true`, partial) | `/pm-workflow`, `/pm-workflow/daily-focus`, `/pm-workflow/backlog`, `/pm-workflow/repos` | `pm-workflow.spec.ts`, `accessibility.spec.ts` | `pm-workflow/daily-focus.png` and `pm-workflow/repos.png` (pending) | Tier 2 | Draft guide documents Daily Focus occupancy, recommendations, stalled Up Next alerts, stalled review pull requests, Backlog Review grouping ([#277](https://github.com/markheydon/solo-dev-board/issues/277), [#280](https://github.com/markheydon/solo-dev-board/issues/280)–[#279](https://github.com/markheydon/solo-dev-board/issues/279)), and Repo Management ([#273](https://github.com/markheydon/solo-dev-board/issues/273), [#274](https://github.com/markheydon/solo-dev-board/issues/274), [#275](https://github.com/markheydon/solo-dev-board/issues/275), [#276](https://github.com/markheydon/solo-dev-board/issues/276), [#287](https://github.com/markheydon/solo-dev-board/issues/287), [#288](https://github.com/markheydon/solo-dev-board/issues/288)); Planning remains a placeholder. CI asserts shell, tab strip, Daily Focus occupancy, recommendation, stalled Up Next, and stalled-review regions or empty/error/warning copy, Backlog filters and all grouping panels (including awaiting triage, epics near completion, and neglected repositories) or empty/error/warning copy, and Repos regions (including per-repository summary) or chrome error. |
 
 ### Auth and entry journeys (operator docs, not user guide)
 
@@ -105,7 +105,8 @@ Use this when extending specs so assertions track documented workflows.
 | Included repositories table or empty state | `pm-workflow-included-table` / `pm-workflow-no-included-text` | `docs-capture` (pending) |
 | Excluded repositories and quick exclude | `pm-workflow-exclusions-region`, exclude autocomplete | `docs-capture` (pending) |
 | Per-repository summary table, empty state, load error, or partial failure | `pm-workflow-repository-summary-table` / `pm-workflow-repository-summary-empty` / `pm-workflow-repository-summary-error` / `pm-workflow-repository-summary-partial-failure` | `docs-capture` (pending) |
-| Backlog Review filters, urgency panels, empty copy, warning, or catalogue error | `pm-workflow-backlog-filters` / `pm-workflow-backlog-panels` / empty or error copy, or chrome error | `docs-capture` (pending) |
+| Backlog Review filters, urgency panels, empty copy, warning, or catalogue error | `pm-workflow.spec.ts` `PM Workflow` describe — `pm-workflow-backlog-filters` / `pm-workflow-backlog-panels` / empty or error copy, or chrome error | `docs-capture` (pending) |
+| Awaiting triage, epics near completion, neglected repositories, and issue/PR kind chips | `pm-workflow.spec.ts` `Backlog Review` describe — `pm-workflow-backlog-awaiting-triage`, `pm-workflow-backlog-epics`, `pm-workflow-backlog-neglected`, and `pm-workflow-backlog-kind-chip` when panels load | `docs-capture` (pending) |
 | Planning | — | Not shipped |
 
 ### Daily Focus automated coverage ([#385](https://github.com/markheydon/solo-dev-board/issues/385))
@@ -121,6 +122,33 @@ Issue [#385](https://github.com/markheydon/solo-dev-board/issues/385) closes the
 | Route shell, loading, empty board, GitHub retry, inaccessible-board warning | `PmWorkflowDailyFocusTests` | `pm-workflow.spec.ts` `Daily Focus` describe — route shell and no-board/empty/error copy |
 
 Defer full user-guide publish and docs-capture screenshots until the PM Workflow guide leaves `draft: true`.
+
+### Repo Management automated coverage ([#388](https://github.com/markheydon/solo-dev-board/issues/388))
+
+Issue [#388](https://github.com/markheydon/solo-dev-board/issues/388) closes the Repo Management test slice for stories [#287](https://github.com/markheydon/solo-dev-board/issues/287) and [#288](https://github.com/markheydon/solo-dev-board/issues/288). When `website/content/docs/pm-workflow.md` is published, keep this mapping alongside the PM Workflow rows above.
+
+| Behaviour | Unit / component | Playwright (CI placeholder auth) |
+|-----------|------------------|----------------------------------|
+| Planning thresholds (capacity, stall days, neglect days) | `PmSettingsDefaultsTests`, `PmSettingsServiceTests` | `pm-workflow.spec.ts` `Repo Management` describe — threshold fields and regions |
+| Repository participation and exclusions | `PmWorkflowReposTests` | `pm-workflow.spec.ts` `Repo Management` describe — participation summary, included table, exclusions |
+| Per-repository summary table, empty state, load error, or partial failure | `PmWorkflowReposTests` | `pm-workflow.spec.ts` `Repo Management` and `PM Workflow` describes — summary region or error/empty/loading |
+| Route shell and no-board instructional copy | `PmWorkflowReposTests` | `pm-workflow.spec.ts` `Repo Management` describe — route shell and board selector alert |
+
+### Backlog Review automated coverage ([#419](https://github.com/markheydon/solo-dev-board/pull/419), issues [#280](https://github.com/markheydon/solo-dev-board/issues/280)–[#279](https://github.com/markheydon/solo-dev-board/issues/279))
+
+PR [#419](https://github.com/markheydon/solo-dev-board/pull/419) shipped the Backlog Review grouping stack. Issue [#277](https://github.com/markheydon/solo-dev-board/issues/277) remains the parent feature; child stories [#280](https://github.com/markheydon/solo-dev-board/issues/280) (issue/PR chips), [#278](https://github.com/markheydon/solo-dev-board/issues/278) (awaiting triage), [#282](https://github.com/markheydon/solo-dev-board/issues/282) (urgent deduplication), [#281](https://github.com/markheydon/solo-dev-board/issues/281) (neglected repositories), and [#279](https://github.com/markheydon/solo-dev-board/issues/279) (epics near completion) are covered by this delivery.
+
+| Behaviour | Unit / component | Playwright (CI placeholder auth) |
+|-----------|------------------|----------------------------------|
+| Urgent, Ready to start, and Blocked/deferred panels | `BacklogReviewGroupingTests`, `BacklogReviewServiceTests` | `pm-workflow.spec.ts` `PM Workflow` and `Backlog Review` describes — urgency panel `data-testid`s |
+| Awaiting triage (missing `type/` or `priority/`) | `BacklogReviewGroupingTests` | `pm-workflow.spec.ts` `Backlog Review` describe — `pm-workflow-backlog-awaiting-triage` |
+| Urgent items deduplicated from Ready to start | `BacklogReviewGroupingTests` | Unit/component only (row membership) |
+| Issue versus pull request kind chips | `PmWorkflowBacklogTests` | `pm-workflow.spec.ts` `Backlog Review` describe — `pm-workflow-backlog-kind-chip` when table rows render |
+| Epics near completion | `BacklogReviewGroupingTests`, `PmWorkflowBacklogTests` | `pm-workflow.spec.ts` `Backlog Review` describe — `pm-workflow-backlog-epics` panel or empty/unavailable copy |
+| Neglected repositories | `BacklogReviewGroupingTests`, `PmWorkflowBacklogTests` | `pm-workflow.spec.ts` `Backlog Review` describe — `pm-workflow-backlog-neglected` panel or empty copy |
+| Route shell, no-board copy, catalogue empty, filter empty, GitHub retry | `PmWorkflowBacklogTests` | `pm-workflow.spec.ts` `Backlog Review` describe — route shell and no-board/empty/error copy |
+
+See [CRITICAL_JOURNEYS.md](CRITICAL_JOURNEYS.md) Tier 2 — PM Workflow row — for the journey-level summary.
 
 ## Screenshot hygiene
 
