@@ -132,3 +132,54 @@ test.describe('PM Workflow', () => {
     }
   });
 });
+
+test.describe('Daily Focus', () => {
+  test('direct navigation opens the Daily Focus route shell', async ({ page }) => {
+    await page.goto('/pm-workflow/daily-focus');
+
+    await expect(page).toHaveURL(/\/pm-workflow\/daily-focus$/);
+    await expect(page).toHaveTitle(/PM Workflow — Daily Focus/);
+    await expect(page.getByTestId('pm-workflow-shell')).toBeVisible();
+    await expect(page.getByTestId('pm-workflow-tab-strip')).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Daily Focus' })).toBeVisible();
+    await expect(page.getByTestId('pm-workflow-daily-focus-page')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Daily Focus' })).toBeVisible();
+  });
+
+  test('shows no-board instructional copy, empty board, or occupancy error', async ({ page }) => {
+    await page.goto('/pm-workflow/daily-focus');
+
+    await expect(page.getByTestId('pm-workflow-shell')).toBeVisible();
+
+    const chromeError = page.getByTestId('pm-workflow-chrome-error');
+    const noBoardAlert = page.getByTestId('pm-workflow-daily-focus-no-board');
+    const emptyBoardAlert = page.getByTestId('pm-workflow-daily-focus-empty');
+    const emptyBoardPaper = page.getByTestId('pm-workflow-daily-focus-empty-board');
+    const occupancyError = page.getByTestId('pm-workflow-daily-focus-error');
+
+    await expect(
+      chromeError.or(noBoardAlert).or(emptyBoardAlert).or(emptyBoardPaper).or(occupancyError).first(),
+    ).toBeVisible({ timeout: 15_000 });
+
+    if (await chromeError.isVisible()) {
+      await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+      return;
+    }
+
+    if (await occupancyError.isVisible()) {
+      await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+      await expect(occupancyError).toContainText('Unable to load board occupancy');
+      return;
+    }
+
+    if (await noBoardAlert.isVisible()) {
+      await expect(noBoardAlert).toContainText(
+        'Select a planning board in the dropdown above to load Daily Focus occupancy and recommendations.',
+      );
+      return;
+    }
+
+    await expect(emptyBoardAlert.or(emptyBoardPaper).first()).toBeVisible();
+    await expect(page.getByText('This planning board has no items.')).toBeVisible();
+  });
+});
