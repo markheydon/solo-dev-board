@@ -5,7 +5,7 @@
     <MudText Typo="Typo.h5">Daily Focus</MudText>
     <MudText Typo="Typo.body1">
         Occupancy and active load are for the selected planning board. Recommended today is the top three unblocked items from all included repositories.
-        Stalled Up Next items will appear here in later stories. Pull requests awaiting review for @stallDaysThreshold or more days are listed below.
+        Stalled Up Next items are shown when they exceed the stall threshold. Pull requests awaiting review for @stallDaysThreshold or more days are listed below.
     </MudText>
 
     @if (ChromeState is null)
@@ -74,6 +74,47 @@
                     <MudText Typo="Typo.body1" aria-live="polite" data-testid="pm-workflow-active-load">
                         Active load: @boardState.ActiveLoad / @boardState.Capacity (Up Next + In Progress)
                     </MudText>
+
+                    <MudStack Spacing="2" data-testid="pm-workflow-daily-focus-stalled">
+                        <MudText Typo="Typo.h6">Stalled</MudText>
+                        <MudText Typo="Typo.body2">Up Next @boardState.StallDays+ days</MudText>
+                        @if (boardState.StalledUpNextItems.Count == 0)
+                        {
+                            <MudText Typo="Typo.body2" data-testid="pm-workflow-daily-focus-none-stalled">
+                                No Up Next items have been stalled for @boardState.StallDays or more days.
+                            </MudText>
+                        }
+                        else
+                        {
+                            <MudStack Spacing="1" aria-live="polite">
+                                @foreach (var stalled in boardState.StalledUpNextItems)
+                                {
+                                    <MudStack Row="true"
+                                              Wrap="Wrap.Wrap"
+                                              AlignItems="AlignItems.Center"
+                                              Spacing="2"
+                                              data-testid="pm-workflow-stalled-row">
+                                        <MudText Typo="Typo.body1">@stalled.Title</MudText>
+                                        <MudText Typo="Typo.body2">@($"({stalled.AgeInDays}d)")</MudText>
+                                        <MudLink Href="@stalled.Url"
+                                                 Target="_blank"
+                                                 rel="noopener noreferrer"
+                                                 aria-label="@($"Open {stalled.Title} on GitHub")"
+                                                 data-testid="pm-workflow-stalled-github-link">
+                                            Open
+                                        </MudLink>
+                                    </MudStack>
+                                }
+                            </MudStack>
+                        }
+
+                        @if (boardState.StalledUpNextItems.Any(static item => item.UsedUpdatedAtFallback))
+                        {
+                            <MudText Typo="Typo.caption" data-testid="pm-workflow-stalled-footnote">
+                                Age uses the item last-updated time because Status-changed-at was not available.
+                            </MudText>
+                        }
+                    </MudStack>
 
                     @if (boardState.ItemCount == 0 && boardState.Occupancy.Count > 0)
                     {

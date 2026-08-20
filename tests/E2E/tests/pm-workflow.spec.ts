@@ -42,9 +42,10 @@ test.describe('PM Workflow', () => {
     }
 
     if (await occupancyRegion.isVisible()) {
-      const stalledRegion = page.getByTestId('pm-workflow-daily-focus-stalled-reviews');
-      const stalledError = page.getByTestId('pm-workflow-daily-focus-stalled-reviews-error');
-      await expect(stalledRegion.or(stalledError).first()).toBeVisible();
+      await expect(page.getByTestId('pm-workflow-daily-focus-stalled')).toBeVisible();
+      const stalledReviewsRegion = page.getByTestId('pm-workflow-daily-focus-stalled-reviews');
+      const stalledReviewsError = page.getByTestId('pm-workflow-daily-focus-stalled-reviews-error');
+      await expect(stalledReviewsRegion.or(stalledReviewsError).first()).toBeVisible();
     }
 
     if (await occupancyRegion.isVisible()) {

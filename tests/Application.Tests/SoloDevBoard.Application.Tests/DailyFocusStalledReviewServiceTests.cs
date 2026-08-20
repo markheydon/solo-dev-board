@@ -63,7 +63,8 @@ public sealed class DailyFocusStalledReviewServiceTests
                         "repo",
                         "Stalled PR",
                         "https://github.com/owner/repo/pull/12"),
-                    UtcNow.AddDays(-5)),
+                    UtcNow.AddDays(-5),
+                    false),
             ]);
         _projectCatalogue.GetCatalogueAsync("project-id", cancellationToken).Returns(catalogue);
 

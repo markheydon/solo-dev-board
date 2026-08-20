@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using SoloDevBoard.Application.Services.Audit;
 using SoloDevBoard.Application.Services.BoardRules;
 using SoloDevBoard.Application.Services.Labels;
@@ -34,6 +35,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IPmWorkItemCatalogueService, PmWorkItemCatalogueService>();
         services.AddScoped<IPmProjectBoardDiscoveryService, PmProjectBoardDiscoveryService>();
         services.AddScoped<IDailyFocusBoardStateService, DailyFocusBoardStateService>();
+        services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<IDailyFocusStalledReviewService, DailyFocusStalledReviewService>();
         services.AddScoped<IDailyFocusRecommendationService, DailyFocusRecommendationService>();
 

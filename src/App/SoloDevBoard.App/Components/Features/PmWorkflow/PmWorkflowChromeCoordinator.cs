@@ -99,12 +99,14 @@ public sealed class PmWorkflowChromeCoordinator
     /// <summary>Stores Daily Focus board state in the circuit cache.</summary>
     /// <param name="boardId">The planning board node identifier.</param>
     /// <param name="capacity">The active-load capacity denominator.</param>
+    /// <param name="stallDays">The inclusive Up Next stall threshold in days.</param>
     /// <param name="state">The loaded board state, when successful.</param>
     /// <param name="errorMessage">The load error message, when unsuccessful.</param>
     /// <param name="isLoading">Whether a load is currently in flight.</param>
     public void SetDailyFocusBoardState(
         string boardId,
         int capacity,
+        int stallDays,
         DailyFocusBoardStateDto? state,
         string? errorMessage,
         bool isLoading)
@@ -112,6 +114,7 @@ public sealed class PmWorkflowChromeCoordinator
         DailyFocusBoardState = new DailyFocusBoardStateCacheEntry(
             boardId,
             capacity,
+            stallDays,
             state,
             errorMessage,
             isLoading);
@@ -262,12 +265,14 @@ public sealed class PmWorkflowChromeCoordinator
 /// <summary>Cached Daily Focus board state for a planning board within the current circuit.</summary>
 /// <param name="BoardId">The planning board node identifier.</param>
 /// <param name="Capacity">The active-load capacity denominator.</param>
+/// <param name="StallDays">The inclusive Up Next stall threshold in days.</param>
 /// <param name="State">The loaded board state, when successful.</param>
 /// <param name="ErrorMessage">The load error message, when unsuccessful.</param>
 /// <param name="IsLoading">Whether a load is currently in flight.</param>
 public sealed record DailyFocusBoardStateCacheEntry(
     string BoardId,
     int Capacity,
+    int StallDays,
     DailyFocusBoardStateDto? State,
     string? ErrorMessage,
     bool IsLoading);

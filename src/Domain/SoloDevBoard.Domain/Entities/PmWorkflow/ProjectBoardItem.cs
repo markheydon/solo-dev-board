@@ -18,6 +18,13 @@ public sealed record ProjectBoardItem
     /// <summary>
     /// Gets the timestamp used for stall detection.
     /// Prefer the Status field-updated time when available; otherwise fall back to the item <c>updatedAt</c> value.
+    /// <see cref="DateTimeOffset.UnixEpoch"/> means both timestamps were missing and must not be treated as elapsed time.
     /// </summary>
     public DateTimeOffset ActivityTimestamp { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether <see cref="ActivityTimestamp"/> used the item <c>updatedAt</c>
+    /// because Status-changed-at was unavailable.
+    /// </summary>
+    public bool UsedItemUpdatedAtFallback { get; init; }
 }

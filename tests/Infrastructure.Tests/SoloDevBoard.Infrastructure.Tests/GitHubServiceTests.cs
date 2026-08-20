@@ -1606,7 +1606,64 @@ public sealed class GitHubServiceTests
         Assert.Equal(TriageItemType.Issue, result.Items[0].Content.ContentType);
         Assert.Equal(40, result.Items[0].Content.Number);
         Assert.Equal(new DateTimeOffset(2026, 3, 5, 12, 0, 0, TimeSpan.Zero), result.Items[0].ActivityTimestamp);
+        Assert.False(result.Items[0].UsedItemUpdatedAtFallback);
         Assert.Single(handler.Requests);
+    }
+
+    [Fact]
+    public async Task GetProjectBoardItemsAsync_StatusMissingUpdatedAt_UsesItemUpdatedAtFallback()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(HttpStatusCode.OK, """
+            {
+                "data": {
+                    "node": {
+                        "fields": {
+                            "nodes": [
+                                { "id": "PVTF_status", "name": "Status", "dataType": "SINGLE_SELECT", "options": [ { "id": "option-up-next", "name": "Up Next" } ] }
+                            ]
+                        },
+                        "items": {
+                            "pageInfo": { "hasNextPage": false, "endCursor": null },
+                            "nodes": [
+                                {
+                                    "id": "PVTI_item-one",
+                                    "updatedAt": "2026-03-01T10:00:00Z",
+                                    "content": {
+                                        "__typename": "Issue",
+                                        "number": 40,
+                                        "title": "Daily Focus",
+                                        "url": "https://github.com/markheydon/solo-dev-board/issues/40",
+                                        "repository": {
+                                            "name": "solo-dev-board",
+                                            "owner": { "login": "markheydon" }
+                                        }
+                                    },
+                                    "status": {
+                                        "optionId": "option-up-next",
+                                        "name": "Up Next"
+                                    },
+                                    "focusOrder": null
+                                }
+                            ]
+                        }
+                    }
+                },
+                "errors": []
+            }
+            """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        var result = await sut.GetProjectBoardItemsAsync("project-id", cancellationToken);
+
+        Assert.Single(result.Items);
+        Assert.Equal("Up Next", result.Items[0].Status?.Name);
+        Assert.Equal(new DateTimeOffset(2026, 3, 1, 10, 0, 0, TimeSpan.Zero), result.Items[0].ActivityTimestamp);
+        Assert.True(result.Items[0].UsedItemUpdatedAtFallback);
     }
 
     [Fact]
@@ -1666,6 +1723,7 @@ public sealed class GitHubServiceTests
         Assert.Null(result.Items[0].FocusOrder);
         Assert.Equal(TriageItemType.PullRequest, result.Items[0].Content.ContentType);
         Assert.Equal(new DateTimeOffset(2026, 3, 1, 10, 0, 0, TimeSpan.Zero), result.Items[0].ActivityTimestamp);
+        Assert.True(result.Items[0].UsedItemUpdatedAtFallback);
     }
 
     [Fact]
@@ -2140,7 +2198,7 @@ public sealed class GitHubServiceTests
     }
 
     [Fact]
-    public async Task GetProjectBoardItemsAsync_MissingUpdatedAt_UsesUnixEpochActivityTimestamp()
+    public async Task GetProjectBoardItemsAsync_MissingUpdatedAt_UsesUnixEpochSentinelWithoutUpdatedAtFallback()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         var handler = new QueueMessageHandler(
@@ -2188,6 +2246,7 @@ public sealed class GitHubServiceTests
 
         Assert.Single(result.Items);
         Assert.Equal(DateTimeOffset.UnixEpoch, result.Items[0].ActivityTimestamp);
+        Assert.False(result.Items[0].UsedItemUpdatedAtFallback);
     }
 
     [Fact]

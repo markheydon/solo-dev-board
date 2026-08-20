@@ -74,7 +74,8 @@ public sealed class PmWorkflowChromeCoordinatorTests
         coordinator.SetDailyFocusBoardState(
             "PVT_board",
             8,
-            new DailyFocusBoardStateDto([], 0, 8, 0),
+            3,
+            new DailyFocusBoardStateDto([], 0, 8, 0, [], 3),
             null,
             isLoading: false);
 
