@@ -282,6 +282,34 @@ public sealed class RepositoriesTests
     }
 
     [Fact]
+    public async Task Repositories_OpenSourceFilterWithSearchEmpty_ShowsCombinedEmptyMessage()
+    {
+        var repositories = new List<RepositoryDto>
+        {
+            new(1, "oss-alpha", "owner/oss-alpha", string.Empty, string.Empty, false, false, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, ["open-source"], true),
+            new(2, "oss-beta", "owner/oss-beta", string.Empty, string.Empty, false, false, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, ["open-source"], true),
+        };
+
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(repositories);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Repositories>();
+
+        cut.WaitForAssertion(() => Assert.Contains("oss-alpha", cut.Markup));
+
+        cut.Find("[data-testid='repositories-catalogue-filter-open-source']").Click();
+        cut.Find("input").Input("missing-name");
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("No repositories match this filter", cut.Markup);
+            Assert.Contains("No repositories match your search and filter.", cut.Markup);
+            Assert.DoesNotContain("oss-alpha", cut.Markup);
+            Assert.DoesNotContain("oss-beta", cut.Markup);
+        });
+    }
+
+    [Fact]
     public async Task Repositories_NotOpenSourceFilterEmpty_ShowsComplementEmptyMessage()
     {
         var repositories = new List<RepositoryDto>

@@ -95,7 +95,13 @@ public partial class Repositories : ComponentBase
         => repository.IsArchived ? Color.Warning : Color.Success;
 
     private string GetFilterEmptyMessage()
-        => catalogueFilter switch
+    {
+        if (!string.IsNullOrWhiteSpace(repositorySearchTerm))
+        {
+            return "No repositories match your search and filter.";
+        }
+
+        return catalogueFilter switch
         {
             RepositoryCatalogueFilter.OpenSource =>
                 "No catalogue repositories currently have the open-source topic.",
@@ -103,6 +109,7 @@ public partial class Repositories : ComponentBase
                 "Every catalogue repository currently has the open-source topic.",
             _ => "No repositories match the current filter.",
         };
+    }
 
     private void SetFeedback(string message, Severity severity)
     {

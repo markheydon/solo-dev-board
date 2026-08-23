@@ -62,6 +62,7 @@ Describes which feature area the issue relates to.
 | Label | Colour | Description |
 |-------|--------|-------------|
 | `area/dashboard` | `#bfd4f2` | Audit Dashboard feature |
+| `area/repositories` | `#c5def5` | Repositories catalogue feature |
 | `area/migration` | `#d4c5f9` | One-Click Migration feature |
 | `area/labels` | `#c5def5` | Label Manager feature |
 | `area/board-rules` | `#fef2c0` | Board Rules Visualiser feature |

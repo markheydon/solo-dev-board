@@ -77,7 +77,7 @@ Until those ship, each control opens an informational snackbar and feedback mess
 ### Empty and error states
 
 - **No repositories found:** The page explains that none were returned for your account.
-- **No repositories match this filter:** When the catalogue has rows but the selected filter excludes them all, the page explains whether no repositories have the `open-source` topic or whether every repository already has it.
+- **No repositories match this filter:** When the catalogue has rows but the selected filter excludes them all, the page explains whether no repositories have the `open-source` topic or whether every repository already has it. When a name search is also active, the page explains that nothing matched both the search and the filter.
 - **Loading:** A progress indicator appears while repositories load.
 - **Errors:** If GitHub cannot be reached, an error message appears with a retry action.
 
