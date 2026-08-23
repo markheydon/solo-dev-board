@@ -301,11 +301,11 @@ public sealed class PmWorkflowChromeCoordinator
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            _logger.LogDebug("PM Workflow chrome load cancelled.");
+            _logger.LogDebug("Planning chrome load cancelled.");
         }
         catch (Exception exception)
         {
-            _logger.LogError(exception, "Failed to load PM Workflow chrome data.");
+            _logger.LogError(exception, "Failed to load Planning chrome data.");
             State.LoadErrorMessage =
                 "Unable to load Planning settings. Check your GitHub connection and try again.";
         }

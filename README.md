@@ -17,7 +17,8 @@
 | **One-Click Migration** | Migrate labels and milestones from one repository to another in a single action. Project board migration is planned for v1.1.0. | Partially Available |
 | **Board Rules Visualiser** | Visualise supported board states and transitions for GitHub Project v2 boards. | Partially Available |
 | **Triage UI** | Keyboard-friendly interface for triaging incoming issues quickly. | Available |
-| **Workflow Templates** | Browse, customise, and apply built-in GitHub Actions workflow templates across repositories. Custom template repositories are planned for v1.1.0. | Partially Available |
+| **Actions Templates** | Browse, customise, and apply built-in GitHub Actions workflow templates across repositories. Custom template repositories are planned for v1.1.0. | Partially Available |
+| **Planning** | Daily Focus, backlog review, iteration planning, and repository participation for your project board. | Available |
 
 
 ## Tech Stack
