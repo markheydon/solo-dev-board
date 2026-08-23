@@ -74,8 +74,24 @@ Use this when extending specs so assertions track documented workflows.
 |---------------|--------------|-------------------------|
 | Accessing (`/repositories`) | `repositories.spec.ts` URL and title | `docs-capture` |
 | Command strip, search, catalogue filter, and load failure | Refresh control, search field, catalogue filter toggle group, error state with retry | `prepareRepositoriesForCapture` |
+| Filter open-source project repositories (All / Open source / Not open source) | `repositories.spec.ts` catalogue filter `data-testid`s on the shell | `RepositoriesTests` (bUnit) for filtered rows and search AND filter |
+| Empty and error states (filter-empty copy) | — | `RepositoriesTests` (bUnit) for Open source, Not open source, and combined search empty messages |
 | Stub Add / Remove / Bulk actions / Edit / More | `accessibility.spec.ts` placeholder snackbar on Add | — (tracked by [#435](https://github.com/markheydon/solo-dev-board/issues/435)) |
 | Phone-width stacked grid without horizontal overflow | `repositories.spec.ts` 390×844 viewport overflow check (error-state shell in CI) | `docs-capture` plus component tests for long names and chips |
+
+### OSS catalogue identification automated coverage ([#443](https://github.com/markheydon/solo-dev-board/issues/443))
+
+Issue [#443](https://github.com/markheydon/solo-dev-board/issues/443) closes the test slice for feature [#440](https://github.com/markheydon/solo-dev-board/issues/440) (parent feature for open-source catalogue classification and Repositories filters). Keep this mapping aligned with [repositories.md](../../website/content/docs/repositories.md).
+
+| Behaviour | Unit / component | Playwright (CI placeholder auth) |
+|-----------|------------------|----------------------------------|
+| Canonical `open-source` topic matcher (case-insensitive; `oss` alone does not match) | `OpenSourceTopicTests` | — |
+| GitHub list-repos `topics` mapped onto domain `Repository` | `GitHubServiceTests` | — |
+| `RepositoryDto.IsOpenSource` and catalogue filter helpers | `RepositoryServiceTests`, `RepositoryCatalogueFiltersTests` | — |
+| Default All list unchanged; Open source and Not open source filters | `RepositoriesTests` | `repositories.spec.ts` catalogue filter controls visible on shell |
+| Filter combined with name search | `RepositoriesTests` | — |
+| Filter-empty and combined search-and-filter empty copy | `RepositoriesTests` | — |
+| Repositories overview screenshot (catalogue filter strip visible) | — | `docs-capture` (`repositories/overview.png`; refresh manually when the filter strip changes materially) |
 
 ### One-Click Migration
 

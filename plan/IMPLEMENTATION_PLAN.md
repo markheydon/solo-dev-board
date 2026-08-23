@@ -212,14 +212,14 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Milestone:** v1.1.0
 
-**Status:** Planned (2026-08-23). Feature [#440](https://github.com/markheydon/solo-dev-board/issues/440) (no parent epic). Wireframe: `plan/wireframes/repositories-wireframe.md`. Plan: `plan/oss-catalogue-identification-project-plan.md`. Decision: [DEC-032](DECISIONS.md#dec-032-oss-catalogue-identification-from-the-github-open-source-topic).
+**Status:** Complete (2026-08-23, in review via [#452](https://github.com/markheydon/solo-dev-board/pull/452)). Feature [#440](https://github.com/markheydon/solo-dev-board/issues/440) (no parent epic). Wireframe: `plan/wireframes/repositories-wireframe.md`. Plan: `plan/oss-catalogue-identification-project-plan.md`. Decision: [DEC-032](DECISIONS.md#dec-032-oss-catalogue-identification-from-the-github-open-source-topic).
 
 ### Key Tasks
 
-- [ ] Map GitHub repository `topics` through Infrastructure → Domain → `RepositoryDto`.
-- [ ] Implement a single Application-layer OSS classifier (`open-source` topic; public visibility is not sufficient).
-- [ ] Add exclusive **All** / **Open source** / **Not open source** filters on the Repositories page (`MudToggleGroup`).
-- [ ] Unit, bUnit, and Playwright shell coverage; update `website/content/docs/repositories.md` and E2E alignment docs.
+- [x] Map GitHub repository `topics` through Infrastructure → Domain → `RepositoryDto`.
+- [x] Implement a single Application-layer OSS classifier (`open-source` topic; public visibility is not sufficient).
+- [x] Add exclusive **All** / **Open source** / **Not open source** filters on the Repositories page (`MudToggleGroup`).
+- [x] Unit, bUnit, and Playwright shell coverage; update `website/content/docs/repositories.md` and E2E alignment docs.
 
 ### Dependencies
 

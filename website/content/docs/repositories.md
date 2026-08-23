@@ -15,7 +15,7 @@ guideStatus: Partially Available
 
 The Repositories page provides a central view of all repositories available to your authenticated GitHub account.
 
-![Repositories page filtered to markheydon/solo-dev-board in the data grid](/images/repositories/overview.png)
+![Repositories page showing the catalogue filter strip and a name search for markheydon/solo-dev-board](/images/repositories/overview.png)
 
 Key goals of the Repositories page:
 - Make accessible repositories visible in one responsive catalogue.
