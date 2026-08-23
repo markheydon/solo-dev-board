@@ -375,7 +375,7 @@ After a successful deploy:
    - Sign in with an allow-listed GitHub account completes and returns to the app.
    - One feature page (for example **Repositories**) loads GitHub data without errors.
    - Sign out returns to `/welcome`.
-5. **Deployment version check:** open **More options → About**. Staging should show a version with a `staging` pre-release suffix (for example `1.0.1-staging.0.42`); production should show a clean SemVer matching the release tag (for example `1.0.0`). The **Build** line links to the deployed commit — compare it with the commit SHA from the GitHub Actions deploy run or the tip of the deployed branch/tag.
+5. **Deployment version check:** open **More options → About**. Staging should show a version with a `staging` pre-release suffix (for example `1.0.1-staging.0.42`) and a **Built** timestamp in UK local time (for example `23 Aug 26 @ 15:11 BST`); production should show a clean SemVer matching the release tag (for example `1.0.0`) with no **Built** line. The **Build** line links to the deployed commit — compare it with the commit SHA from the GitHub Actions deploy run or the tip of the deployed branch/tag.
 6. **Container App environment verification:** confirm `GitHubAuth__HostedGitHubAppClientId` and `HostedAdmissionControl__AllowedUserLogins` on the active revision show real values (not `-` placeholders). If they still show `-`, the GitHub Environment variables were not applied — see [Fork and independent operators](#fork-and-independent-operators).
 
 ## Deploy locally (operator testing)

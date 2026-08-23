@@ -12,6 +12,7 @@ The About page provides essential information about the SoloDevBoard application
 
 - Application name and branding.
 - Application version (SemVer from git tags via MinVer at build time).
+- Build timestamp (pre-release builds only), shown in UK local time so you can tell whether a staging or local deploy is newer than the last one you checked.
 - Build commit SHA (when available), linked to the source repository for verification.
 - .NET runtime version currently in use.
 - GitHub authentication mode (hosted sign-in or PAT-only local trusted mode).

@@ -16,41 +16,74 @@ public sealed class AppVersionMetadataParserTests
         string expectedVersion,
         string expectedBuildMetadata)
     {
-        // Arrange
-        var assembly = CreateAssemblyWithInformationalVersion(informationalVersion);
+        var assembly = CreateAssembly(informationalVersion);
 
-        // Act
         var metadata = AppVersionMetadataParser.Parse(assembly);
 
-        // Assert
         Assert.Equal(expectedVersion, metadata.Version);
         Assert.Equal(expectedBuildMetadata, metadata.BuildMetadata);
+        Assert.Null(metadata.BuildTimestampUtc);
+    }
+
+    [Fact]
+    public void Parse_BuildTimestampMetadataPresent_ReturnsParsedUtcTimestamp()
+    {
+        var assembly = CreateAssembly(
+            "1.0.1-staging.0.49+abc1234",
+            buildTimestampUtc: "2026-08-23T14:11:00.0000000Z");
+
+        var metadata = AppVersionMetadataParser.Parse(assembly);
+
+        Assert.Equal("1.0.1-staging.0.49", metadata.Version);
+        Assert.Equal("abc1234", metadata.BuildMetadata);
+        Assert.Equal(new DateTimeOffset(2026, 8, 23, 14, 11, 0, TimeSpan.Zero), metadata.BuildTimestampUtc);
+    }
+
+    [Fact]
+    public void Parse_InvalidBuildTimestampMetadata_ReturnsNullTimestamp()
+    {
+        var assembly = CreateAssembly(
+            "1.0.1-staging.0.49+abc1234",
+            buildTimestampUtc: "not-a-timestamp");
+
+        var metadata = AppVersionMetadataParser.Parse(assembly);
+
+        Assert.Null(metadata.BuildTimestampUtc);
     }
 
     [Fact]
     public void Parse_AssemblyVersionOnly_ReturnsNonEmptyVersion()
     {
-        // Arrange
         var assembly = typeof(AppVersionMetadataParserTests).Assembly;
 
-        // Act
         var metadata = AppVersionMetadataParser.Parse(assembly);
 
-        // Assert
         Assert.False(string.IsNullOrWhiteSpace(metadata.Version));
     }
 
-    private static Assembly CreateAssemblyWithInformationalVersion(string informationalVersion)
+    private static Assembly CreateAssembly(
+        string informationalVersion,
+        string? buildTimestampUtc = null)
     {
         var assemblyName = new AssemblyName(Guid.NewGuid().ToString("N"));
         var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(
             assemblyName,
             AssemblyBuilderAccess.Run);
         assemblyBuilder.DefineDynamicModule("TestModule");
-        var attributeBuilder = new CustomAttributeBuilder(
+
+        var informationalVersionAttributeBuilder = new CustomAttributeBuilder(
             typeof(AssemblyInformationalVersionAttribute).GetConstructor([typeof(string)])!,
             [informationalVersion]);
-        assemblyBuilder.SetCustomAttribute(attributeBuilder);
+        assemblyBuilder.SetCustomAttribute(informationalVersionAttributeBuilder);
+
+        if (!string.IsNullOrWhiteSpace(buildTimestampUtc))
+        {
+            var buildTimestampAttributeBuilder = new CustomAttributeBuilder(
+                typeof(AssemblyMetadataAttribute).GetConstructor([typeof(string), typeof(string)])!,
+                ["BuildTimestampUtc", buildTimestampUtc]);
+            assemblyBuilder.SetCustomAttribute(buildTimestampAttributeBuilder);
+        }
+
         return assemblyBuilder;
     }
 }

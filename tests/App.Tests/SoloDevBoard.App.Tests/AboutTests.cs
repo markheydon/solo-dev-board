@@ -13,6 +13,7 @@ public sealed class AboutTests : BunitContext
 {
     private const string TestVersion = "1.2.3";
     private const string TestBuildMetadata = "abc1234";
+    private const string TestBuiltAtDisplay = "23 Aug 26 @ 15:11 BST";
     private readonly IAppVersionService _appVersionService = Substitute.For<IAppVersionService>();
     private readonly IGitHubAuthenticationSummaryService _authenticationSummaryService = Substitute.For<IGitHubAuthenticationSummaryService>();
 
@@ -31,6 +32,7 @@ public sealed class AboutTests : BunitContext
     {
         _appVersionService.Version.Returns(TestVersion);
         _appVersionService.BuildMetadata.Returns(TestBuildMetadata);
+        _appVersionService.BuiltAtDisplay.Returns(string.Empty);
         _appVersionService.UserAgent.Returns($"SoloDevBoard/{TestVersion}");
     }
 
@@ -89,6 +91,30 @@ public sealed class AboutTests : BunitContext
 
         // Assert
         Assert.Empty(cut.FindAll("[data-testid='about-build']"));
+    }
+
+    [Fact]
+    public void AboutPage_RenderedWithBuiltAtDisplay_DisplaysBuiltRow()
+    {
+        // Arrange
+        _appVersionService.BuiltAtDisplay.Returns(TestBuiltAtDisplay);
+
+        // Act
+        var cut = Render<About>();
+
+        // Assert
+        var builtAt = cut.Find("[data-testid='about-built-at']");
+        Assert.Equal(TestBuiltAtDisplay, builtAt.TextContent.Trim());
+    }
+
+    [Fact]
+    public void AboutPage_RenderedWithoutBuiltAtDisplay_HidesBuiltRow()
+    {
+        // Act
+        var cut = Render<About>();
+
+        // Assert
+        Assert.Empty(cut.FindAll("[data-testid='about-built-at']"));
     }
 
     [Fact]

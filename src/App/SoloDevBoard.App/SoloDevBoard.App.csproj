@@ -11,6 +11,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<AssemblyMetadata Include="BuildTimestampUtc" Value="$([System.DateTime]::UtcNow.ToString('o'))" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="Markdig" />
 		<PackageReference Include="MinVer">
 			<PrivateAssets>all</PrivateAssets>
