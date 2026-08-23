@@ -13,6 +13,7 @@ public sealed class AppVersionService : IAppVersionService
         var metadata = ResolveMetadata();
         Version = metadata.Version;
         BuildMetadata = metadata.BuildMetadata;
+        BuiltAtDisplay = AppVersionBuiltAtFormatter.FormatDisplay(metadata.Version, metadata.BuildTimestampUtc);
     }
 
     /// <inheritdoc/>
@@ -20,6 +21,9 @@ public sealed class AppVersionService : IAppVersionService
 
     /// <inheritdoc/>
     public string BuildMetadata { get; }
+
+    /// <inheritdoc/>
+    public string BuiltAtDisplay { get; }
 
     /// <inheritdoc/>
     public string UserAgent => $"{ApplicationName}/{Version}";

@@ -15,6 +15,14 @@
                 <MudText Typo="Typo.body2" data-testid="about-version">@Version</MudText>
             </MudStack>
 
+            @if (!string.IsNullOrWhiteSpace(BuiltAtDisplay))
+            {
+                <MudStack Row="true" Spacing="1">
+                    <MudText Typo="Typo.subtitle2">Built:</MudText>
+                    <MudText Typo="Typo.body2" data-testid="about-built-at">@BuiltAtDisplay</MudText>
+                </MudStack>
+            }
+
             @if (!string.IsNullOrWhiteSpace(BuildMetadata))
             {
                 <MudStack Row="true" Spacing="1">

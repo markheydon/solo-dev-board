@@ -24,6 +24,8 @@ public partial class About : ComponentBase
 
     private string Version => AppVersionService.Version;
 
+    private string BuiltAtDisplay => AppVersionService.BuiltAtDisplay;
+
     private string BuildMetadata => AppVersionService.BuildMetadata;
 
     private string? BuildCommitUrl =>
