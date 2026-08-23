@@ -126,7 +126,9 @@ Always apply at least one `type/` and one `priority/` label.
 | `type/` | `type/epic`, `type/feature`, `type/story`, `type/enabler`, `type/test`, `type/bug`, `type/chore`, `type/documentation` |
 | `priority/` | `priority/critical`, `priority/high`, `priority/medium`, `priority/low` |
 | `status/` | `status/todo`, `status/in-progress`, `status/blocked`, `status/ice-box`, `status/in-review`, `status/done` |
-| `area/` | `area/dashboard`, `area/migration`, `area/labels`, `area/board-rules`, `area/triage`, `area/workflows`, `area/infrastructure`, `area/docs` |
+| `area/` | `area/dashboard`, `area/repositories`, `area/migration`, `area/labels`, `area/board-rules`, `area/triage`, `area/workflows`, `area/infrastructure`, `area/docs` |
+
+Use `area/repositories` for the Repositories catalogue (`/repositories`), not `area/dashboard`. See `plan/LABEL_STRATEGY.md` for the full `area/` guidance. `area/*` labels are for this repository's triage only; they are not exported via Label Manager's recommended catalogue ([#446](https://github.com/markheydon/solo-dev-board/issues/446)).
 | `size/` | `size/xs`, `size/s`, `size/m`, `size/l`, `size/xl` |
 
 ## Issue relationships (agents must set these)
