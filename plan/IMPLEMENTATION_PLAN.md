@@ -11,7 +11,7 @@ Phases in this document are **historical sequencing for the v1.0 release**. Post
 **Current roadmap status (2026-08-18):**
 - Phases 1–4 are complete. All six core feature areas are delivered (Label Manager, Audit Dashboard, One-Click Migration, Triage UI, Board Rules Visualiser, Workflow Templates).
 - Phase 6 (Production Ready, v1.0.0) is complete. Public release [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) tagged on 2026-08-18.
-- **v1.1.0** is the sole open milestone: deferred slices [#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#292](https://github.com/markheydon/solo-dev-board/issues/292), Cross-Repo PM Workflow [#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288), and dogfood fixes.
+- **v1.1.0** is the sole open milestone: deferred slices [#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#292](https://github.com/markheydon/solo-dev-board/issues/292), Cross-Repo PM Workflow [#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288), OSS catalogue identification [#440](https://github.com/markheydon/solo-dev-board/issues/440), and dogfood fixes.
 - [#293](https://github.com/markheydon/solo-dev-board/issues/293) (hosted private Projects v2) is unmilestoned platform-blocked backlog.
 
 For the full feature scope, see [SCOPE.md](SCOPE.md). For open work, see [GitHub Issues](https://github.com/markheydon/solo-dev-board/issues) and [Project #8](https://github.com/users/markheydon/projects/8). The backlog index is at [BACKLOG.md](BACKLOG.md).
@@ -203,6 +203,28 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 ### Dependencies
 
 - Intended sequence: begin after Phases 1–4 are complete (repository selection, label management, board API integration, GitHub Projects v2 GraphQL client).
+
+---
+
+## v1.1.0 — OSS catalogue identification
+
+**Goal:** Classify which catalogue repositories are open-source project repos from the GitHub topic `open-source`, and expose that as built-in Repositories page filters.
+
+**Milestone:** v1.1.0
+
+**Status:** Planned (2026-08-23). Feature [#440](https://github.com/markheydon/solo-dev-board/issues/440) (no parent epic). Wireframe: `plan/wireframes/repositories-wireframe.md`. Plan: `plan/oss-catalogue-identification-project-plan.md`. Decision: [DEC-032](DECISIONS.md#dec-032-oss-catalogue-identification-from-the-github-open-source-topic).
+
+### Key Tasks
+
+- [ ] Map GitHub repository `topics` through Infrastructure → Domain → `RepositoryDto`.
+- [ ] Implement a single Application-layer OSS classifier (`open-source` topic; public visibility is not sufficient).
+- [ ] Add exclusive **All** / **Open source** / **Not open source** filters on the Repositories page (`MudToggleGroup`).
+- [ ] Unit, bUnit, and Playwright shell coverage; update `website/content/docs/repositories.md` and E2E alignment docs.
+
+### Dependencies
+
+- Independent of repository groups ([#381](https://github.com/markheydon/solo-dev-board/issues/381)).
+- Unblocks scan scope for Community Standards ([#438](https://github.com/markheydon/solo-dev-board/issues/438)) and FUNDING hygiene ([#439](https://github.com/markheydon/solo-dev-board/issues/439)).
 
 ---
 

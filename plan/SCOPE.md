@@ -59,6 +59,10 @@ A UI-based implementation of the two-mode PM operating system from [markheydon/g
 
 The Hugo/Hextra site in `website/` (published at `https://solodevboard.com/`) serves as the public product front door: marketing landing (product and project), narrative About pages, and User Guide at `/docs/`. Developer and operator documentation remains in `docs/` and is not published on the product domain (DEC-019, DEC-023).
 
+### 9. Repositories catalogue and OSS identification
+
+The Repositories page lists GitHub repositories available to the authenticated account (search, refresh, visibility and status chips). **v1.1.0** adds first-class open-source identification from the GitHub topic `open-source`, with built-in **Open source** and **Not open source** filters on that page ([#440](https://github.com/markheydon/solo-dev-board/issues/440), [DEC-032](DECISIONS.md#dec-032-oss-catalogue-identification-from-the-github-open-source-topic)). Repository groups ([#381](https://github.com/markheydon/solo-dev-board/issues/381)) and overnight OSS hygiene views ([#438](https://github.com/markheydon/solo-dev-board/issues/438), [#439](https://github.com/markheydon/solo-dev-board/issues/439)) consume that classification later; they are not prerequisites.
+
 ---
 
 ## Out of Scope
@@ -122,4 +126,5 @@ The following are explicitly **not** in scope for the current version of SoloDev
 | 2026-07-25 | PAT-only local trusted mode and self-hoster PAT Azure deploy path formalised in docs (#247, #248; PR #324). Scope bullet now links to getting-started and deployment guides. | Solo developer |
 | 2026-08-16 | Public product site on GitHub Pages: landing, User Guide, About narrative, canonical `solodevboard.com`, source tree `website/` (DEC-023). | Solo developer |
 | 2026-08-20 | Label consistency warnings delivered on the Audit Dashboard ([#290](https://github.com/markheydon/solo-dev-board/issues/290)). | Solo developer |
+| 2026-08-23 | Repositories catalogue OSS identification in scope for v1.1.0: GitHub topic `open-source` plus built-in Open source / Not open source filters ([#440](https://github.com/markheydon/solo-dev-board/issues/440), DEC-032). Groups (#381) remain a later increment. | Solo developer |
 

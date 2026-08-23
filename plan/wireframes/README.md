@@ -8,7 +8,7 @@ This directory contains planning-only wireframe references for key SoloDevBoard 
 - Reference the ASCII wireframes and interaction notes during implementation planning.
 
 ## Wireframes
-- [repositories-wireframe.md](repositories-wireframe.md): Repositories page wireframe and interaction notes.
+- [repositories-wireframe.md](repositories-wireframe.md): Repositories page wireframe, command strip, and built-in Open source / Not open source catalogue filters (#440).
 - [label-manager-wireframe.md](label-manager-wireframe.md): Label Manager page wireframe, mode separation rationale, and tabbed IA.
 - [audit-dashboard-wireframe.md](audit-dashboard-wireframe.md): Audit Dashboard wireframe, KPI cards, health indicators, and filter surface.
 - [one-click-migration-wireframe.md](one-click-migration-wireframe.md): One-Click Migration page wireframe, workflow-first layout, preview-first review flow, and post-migration summary states.
