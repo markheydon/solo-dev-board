@@ -10,6 +10,8 @@ namespace SoloDevBoard.Application.Services.Repositories;
 /// <param name="IsArchived"><see langword="true"/> if the repository is archived; otherwise <see langword="false"/>.</param>
 /// <param name="CreatedAt">The date and time when the repository was created.</param>
 /// <param name="UpdatedAt">The date and time when the repository was last updated.</param>
+/// <param name="Topics">The GitHub repository topics returned by the catalogue list endpoints.</param>
+/// <param name="IsOpenSource"><see langword="true"/> when the repository has the canonical open-source topic; otherwise <see langword="false"/>.</param>
 public sealed record RepositoryDto(
     int Id,
     string Name,
@@ -19,4 +21,6 @@ public sealed record RepositoryDto(
     bool IsPrivate,
     bool IsArchived,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    IReadOnlyList<string> Topics,
+    bool IsOpenSource);

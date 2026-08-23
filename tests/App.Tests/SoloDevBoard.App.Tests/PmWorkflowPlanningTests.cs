@@ -492,7 +492,7 @@ public sealed class PmWorkflowPlanningTests
             []);
 
     private static RepositoryDto CreateRepository(string owner, string name) =>
-        new(1, name, $"{owner}/{name}", string.Empty, $"https://github.com/{owner}/{name}", false, false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
+        new(1, name, $"{owner}/{name}", string.Empty, $"https://github.com/{owner}/{name}", false, false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, [], false);
 
     private sealed class FakePmSettingsStorage : IPmSettingsStorage
     {

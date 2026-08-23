@@ -43,5 +43,7 @@ public sealed class RepositoryService : IRepositoryService
             repository.IsPrivate,
             repository.IsArchived,
             repository.CreatedAt,
-            repository.UpdatedAt);
+            repository.UpdatedAt,
+            repository.Topics,
+            OpenSourceTopic.IsOpenSource(repository.Topics));
 }

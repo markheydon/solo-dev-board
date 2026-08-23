@@ -66,6 +66,23 @@
                           Clearable="true"
                           Disabled="isLoading" />
         </MudStack>
+
+        <MudToggleGroup @bind-Value="catalogueFilter"
+                        T="RepositoryCatalogueFilter"
+                        Color="Color.Primary"
+                        Class="mt-3"
+                        aria-label="Catalogue filter"
+                        data-testid="repositories-catalogue-filter">
+            <MudToggleItem Value="RepositoryCatalogueFilter.All"
+                           Text="All"
+                           data-testid="repositories-catalogue-filter-all" />
+            <MudToggleItem Value="RepositoryCatalogueFilter.OpenSource"
+                           Text="Open source"
+                           data-testid="repositories-catalogue-filter-open-source" />
+            <MudToggleItem Value="RepositoryCatalogueFilter.NotOpenSource"
+                           Text="Not open source"
+                           data-testid="repositories-catalogue-filter-not-open-source" />
+        </MudToggleGroup>
     </MudPaper>
 
     <MudPaper Class="pa-3" Elevation="0" Outlined="true" aria-live="polite" role="status">
@@ -102,6 +119,17 @@
                 <MudStack Spacing="1">
                     <MudText Typo="Typo.h6">No repositories found</MudText>
                     <MudText Typo="Typo.body2">No repositories were returned for your account.</MudText>
+                </MudStack>
+            </MudAlert>
+        </MudPaper>
+    }
+    else if (FilteredRepositories.Count == 0)
+    {
+        <MudPaper Class="pa-4" Elevation="1" aria-live="polite" data-testid="repositories-filter-empty-state">
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                <MudStack Spacing="1">
+                    <MudText Typo="Typo.h6">No repositories match this filter</MudText>
+                    <MudText Typo="Typo.body2">@GetFilterEmptyMessage()</MudText>
                 </MudStack>
             </MudAlert>
         </MudPaper>

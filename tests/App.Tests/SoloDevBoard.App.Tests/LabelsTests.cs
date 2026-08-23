@@ -804,5 +804,7 @@ public sealed class LabelsTests
             IsPrivate: isPrivate,
             IsArchived: isArchived,
             CreatedAt: DateTimeOffset.UnixEpoch,
-            UpdatedAt: DateTimeOffset.UnixEpoch);
+            UpdatedAt: DateTimeOffset.UnixEpoch,
+            Topics: [],
+            IsOpenSource: false);
 }

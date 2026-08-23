@@ -307,8 +307,8 @@ public sealed class WorkflowsTests
     private static IReadOnlyList<RepositoryDto> CreateRepositories()
         =>
         [
-            new(1, "repo-a", "owner/repo-a", "Repository A", "https://github.com/owner/repo-a", false, false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow),
-            new(2, "repo-b", "owner/repo-b", "Repository B", "https://github.com/owner/repo-b", false, false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow),
+            new(1, "repo-a", "owner/repo-a", "Repository A", "https://github.com/owner/repo-a", false, false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, [], false),
+            new(2, "repo-b", "owner/repo-b", "Repository B", "https://github.com/owner/repo-b", false, false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, [], false),
         ];
 
     private static WorkflowTemplateDetailDto CreateTemplateDetail()

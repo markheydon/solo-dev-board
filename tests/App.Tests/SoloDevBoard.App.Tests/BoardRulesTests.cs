@@ -830,5 +830,7 @@ public sealed class BoardRulesTests
             IsPrivate: false,
             IsArchived: false,
             CreatedAt: DateTimeOffset.UnixEpoch,
-            UpdatedAt: DateTimeOffset.UnixEpoch);
+            UpdatedAt: DateTimeOffset.UnixEpoch,
+            Topics: [],
+            IsOpenSource: false);
 }

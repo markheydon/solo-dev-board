@@ -29,4 +29,7 @@ public sealed record Repository : IAggregate
 
     /// <summary>Gets the date and time when the repository was last updated.</summary>
     public DateTimeOffset UpdatedAt { get; init; }
+
+    /// <summary>Gets the GitHub repository topics returned by the catalogue list endpoints.</summary>
+    public IReadOnlyList<string> Topics { get; init; } = [];
 }

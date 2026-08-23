@@ -1295,7 +1295,9 @@ public sealed class TriageTests
             IsPrivate: false,
             IsArchived: false,
             CreatedAt: DateTimeOffset.UtcNow.AddDays(-30),
-            UpdatedAt: DateTimeOffset.UtcNow.AddDays(-1));
+            UpdatedAt: DateTimeOffset.UtcNow.AddDays(-1),
+            Topics: [],
+            IsOpenSource: false);
 
     private static TriageItemDto CreateItem(int number, string title, string repositoryFullName)
         => new(

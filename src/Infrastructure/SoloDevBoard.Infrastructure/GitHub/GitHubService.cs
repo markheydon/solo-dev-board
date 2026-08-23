@@ -1777,6 +1777,9 @@ public sealed class GitHubService : IGitHubService
         [JsonPropertyName("updated_at")]
         public DateTimeOffset UpdatedAt { get; init; }
 
+        [JsonPropertyName("topics")]
+        public List<string> Topics { get; init; } = [];
+
         public Repository ToDomain() => new()
         {
             Id = ConvertGitHubIdToInt(Id),
@@ -1788,6 +1791,7 @@ public sealed class GitHubService : IGitHubService
             IsArchived = IsArchived,
             CreatedAt = CreatedAt,
             UpdatedAt = UpdatedAt,
+            Topics = Topics,
         };
     }
 

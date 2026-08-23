@@ -53,6 +53,40 @@ public sealed class GitHubServiceTests
     }
 
     [Fact]
+    public async Task GetRepositoriesAsync_ResponseIncludesTopics_MapsTopicsOntoRepository()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                [
+                  {
+                    "id": 9,
+                    "name": "turpinverse",
+                    "full_name": "markheydon/turpinverse",
+                    "description": "OSS repo",
+                    "html_url": "https://github.com/markheydon/turpinverse",
+                    "private": false,
+                    "archived": false,
+                    "created_at": "2026-03-01T10:00:00Z",
+                    "updated_at": "2026-03-02T11:00:00Z",
+                    "topics": ["open-source", "dotnet"]
+                  }
+                ]
+                """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        var result = await sut.GetRepositoriesAsync(cancellationToken);
+
+        var repository = Assert.Single(result);
+        Assert.Equal(["open-source", "dotnet"], repository.Topics);
+    }
+
+    [Fact]
     public async Task GetRepositoriesAsync_EmptyResponse_ReturnsEmptyList()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
