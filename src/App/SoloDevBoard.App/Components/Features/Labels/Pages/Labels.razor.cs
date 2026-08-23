@@ -249,9 +249,11 @@ public partial class Labels : ComponentBase
         }
 
         isPreviewingRecommendedTaxonomy = true;
+        taxonomyOperationMessage = null;
+        await InvokeAsync(StateHasChanged);
+
         try
         {
-            taxonomyOperationMessage = null;
             recommendedApplyResults = [];
             recommendedPreview = await LabelManagerService.PreviewRecommendedTaxonomyAsync(selectedStrategyId, selectedFullNames, removeLabelsOutsideTaxonomy);
             showRecommendedPreview = true;
@@ -295,6 +297,11 @@ public partial class Labels : ComponentBase
 
     private async Task ApplyRecommendedTaxonomyAsync()
     {
+        if (isApplyingRecommendedTaxonomy)
+        {
+            return;
+        }
+
         if (!TryGetSelectedRepositoryFullNames(out var selectedFullNames))
         {
             Snackbar.Add("Select at least one repository before applying taxonomy changes.", Severity.Warning);
@@ -308,6 +315,10 @@ public partial class Labels : ComponentBase
         }
 
         isApplyingRecommendedTaxonomy = true;
+        taxonomyOperationSeverity = Severity.Info;
+        taxonomyOperationMessage = "Applying taxonomy changes...";
+        await InvokeAsync(StateHasChanged);
+
         try
         {
             recommendedApplyResults = await LabelManagerService.ApplyRecommendedTaxonomyAsync(selectedStrategyId, selectedFullNames, removeLabelsOutsideTaxonomy);
@@ -448,9 +459,11 @@ public partial class Labels : ComponentBase
         }
 
         isPreviewingSync = true;
+        syncOperationMessage = null;
+        await InvokeAsync(StateHasChanged);
+
         try
         {
-            syncOperationMessage = null;
             syncApplyResults = [];
             syncPreviewResults = await LabelManagerService.PreviewLabelSynchronisationAsync(syncSourceRepositoryFullName, targets);
             showSyncPreview = true;
@@ -494,6 +507,11 @@ public partial class Labels : ComponentBase
 
     private async Task ApplyLabelSynchronisationAsync()
     {
+        if (isApplyingSync)
+        {
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(syncSourceRepositoryFullName))
         {
             Snackbar.Add("Select a source repository before applying label synchronisation.", Severity.Warning);
@@ -512,6 +530,10 @@ public partial class Labels : ComponentBase
         }
 
         isApplyingSync = true;
+        syncOperationSeverity = Severity.Info;
+        syncOperationMessage = "Applying synchronisation changes...";
+        await InvokeAsync(StateHasChanged);
+
         try
         {
             syncApplyResults = await LabelManagerService.ApplyLabelSynchronisationAsync(syncSourceRepositoryFullName, targets);
@@ -916,9 +938,28 @@ public partial class Labels : ComponentBase
 
     private bool ShowLoadingState => isLoadingRepositories || isLoadingLabels;
 
+    private bool IsRecommendedTaxonomyBusy => isPreviewingRecommendedTaxonomy || isApplyingRecommendedTaxonomy;
+
+    private bool IsSynchronisationBusy => isPreviewingSync || isApplyingSync;
+
+    private string TaxonomyProgressAriaLabel => isApplyingRecommendedTaxonomy
+        ? "Applying taxonomy changes"
+        : "Previewing taxonomy changes";
+
+    private string TaxonomyProgressMessage => isApplyingRecommendedTaxonomy
+        ? "Applying taxonomy changes. Duplicate submissions are disabled."
+        : "Previewing taxonomy changes...";
+
+    private string SyncProgressAriaLabel => isApplyingSync
+        ? "Applying synchronisation changes"
+        : "Previewing synchronisation";
+
+    private string SyncProgressMessage => isApplyingSync
+        ? "Applying synchronisation changes. Duplicate submissions are disabled."
+        : "Previewing synchronisation...";
+
     private bool CanPreviewRecommendedTaxonomy => !ShowLoadingState
-        && !isPreviewingRecommendedTaxonomy
-        && !isApplyingRecommendedTaxonomy
+        && !IsRecommendedTaxonomyBusy
         && selectedRepositories.Count > 0
         && !string.IsNullOrWhiteSpace(selectedStrategyId);
 
@@ -927,8 +968,7 @@ public partial class Labels : ComponentBase
         && !isApplyingRecommendedTaxonomy;
 
     private bool CanPreviewLabelSynchronisation => !ShowLoadingState
-        && !isPreviewingSync
-        && !isApplyingSync
+        && !IsSynchronisationBusy
         && !string.IsNullOrWhiteSpace(syncSourceRepositoryFullName)
         && syncTargetRepositoryFullNames.Count > 0;
 

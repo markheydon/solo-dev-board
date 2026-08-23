@@ -152,7 +152,7 @@
                                    Value="selectedStrategyId"
                                    ValueChanged="OnStrategySelectedAsync"
                                    Variant="Variant.Outlined"
-                                   Disabled="@(ShowLoadingState || !selectedRepositories.Any() || recommendedStrategies.Count == 0)"
+                                   Disabled="@(ShowLoadingState || IsRecommendedTaxonomyBusy || !selectedRepositories.Any() || recommendedStrategies.Count == 0)"
                                    data-testid="taxonomy-strategy-select">
                             @foreach (var strategy in recommendedStrategies)
                             {
@@ -164,7 +164,7 @@
                                      Value="removeLabelsOutsideTaxonomy"
                                      ValueChanged="OnRemoveLabelsOutsideTaxonomyChanged"
                                      Label="Remove labels outside taxonomy"
-                                     Disabled="@(ShowLoadingState || !selectedRepositories.Any() || recommendedStrategies.Count == 0)"
+                                     Disabled="@(ShowLoadingState || IsRecommendedTaxonomyBusy || !selectedRepositories.Any() || recommendedStrategies.Count == 0)"
                                      data-testid="remove-labels-outside-taxonomy-checkbox" />
                         <MudText Typo="Typo.caption">When enabled, deletes every label not in the selected strategy, including GitHub defaults and automation labels such as <code>dependencies</code>.</MudText>
 
@@ -186,11 +186,20 @@
                                            OnClick="ApplyRecommendedTaxonomyAsync"
                                            aria-label="Confirm apply taxonomy"
                                            data-testid="confirm-apply-taxonomy-button">
-                                    Confirm
+                                    @if (isApplyingRecommendedTaxonomy)
+                                    {
+                                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" aria-hidden="true" />
+                                        <MudText Class="ms-2">Applying...</MudText>
+                                    }
+                                    else
+                                    {
+                                        <MudText>Confirm</MudText>
+                                    }
                                 </MudButton>
 
                                 <MudButton Variant="Variant.Text"
                                            Color="Color.Default"
+                                           Disabled="@isApplyingRecommendedTaxonomy"
                                            OnClick="CancelRecommendedPreview"
                                            data-testid="cancel-apply-taxonomy-button">
                                     Cancel
@@ -198,6 +207,12 @@
                             }
                         </MudStack>
                     </MudStack>
+
+                    @if (IsRecommendedTaxonomyBusy)
+                    {
+                        <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="@TaxonomyProgressAriaLabel" data-testid="taxonomy-progress-indicator" />
+                        <MudText Typo="Typo.body2" aria-live="polite" role="status">@TaxonomyProgressMessage</MudText>
+                    }
 
                     @if (!string.IsNullOrWhiteSpace(SelectedStrategyDescription))
                     {
@@ -287,7 +302,7 @@
                                    Value="syncSourceRepositoryFullName"
                                    ValueChanged="OnSyncSourceRepositoryChangedAsync"
                                    Variant="Variant.Outlined"
-                                   Disabled="@(ShowLoadingState || selectedRepositories.Count < 2)"
+                                   Disabled="@(ShowLoadingState || IsSynchronisationBusy || selectedRepositories.Count < 2)"
                                    data-testid="sync-source-select">
                             @foreach (var repository in selectedRepositories.OrderBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase))
                             {
@@ -305,7 +320,7 @@
                                 <MudCheckBox T="bool"
                                              Value="syncTargetRepositoryFullNames.Contains(repository.FullName)"
                                              ValueChanged="isChecked => OnSyncTargetRepositoryChangedAsync(repository.FullName, isChecked)"
-                                             Disabled="@isSourceRepository"
+                                             Disabled="@(isSourceRepository || IsSynchronisationBusy)"
                                              Label="@repository.FullName"
                                              data-testid="sync-target-checkbox" />
                             }
@@ -329,11 +344,20 @@
                                            OnClick="ApplyLabelSynchronisationAsync"
                                            aria-label="Confirm synchronisation"
                                            data-testid="confirm-sync-button">
-                                    Confirm
+                                    @if (isApplyingSync)
+                                    {
+                                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" aria-hidden="true" />
+                                        <MudText Class="ms-2">Applying...</MudText>
+                                    }
+                                    else
+                                    {
+                                        <MudText>Confirm</MudText>
+                                    }
                                 </MudButton>
 
                                 <MudButton Variant="Variant.Text"
                                            Color="Color.Default"
+                                           Disabled="@isApplyingSync"
                                            OnClick="CancelLabelSynchronisationPreview"
                                            data-testid="cancel-sync-button">
                                     Cancel
@@ -342,10 +366,10 @@
                         </MudStack>
                     </MudStack>
 
-                    @if (isPreviewingSync || isApplyingSync)
+                    @if (IsSynchronisationBusy)
                     {
-                        <MudProgressLinear Indeterminate="true" Color="Color.Primary" data-testid="sync-progress-indicator" />
-                        <MudText Typo="Typo.body2">Synchronisation is in progress. Duplicate submissions are disabled.</MudText>
+                        <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="@SyncProgressAriaLabel" data-testid="sync-progress-indicator" />
+                        <MudText Typo="Typo.body2" aria-live="polite" role="status">@SyncProgressMessage</MudText>
                     }
 
                     <MudPaper Class="pa-4" Outlined="true" aria-label="Synchronisation results" data-testid="sync-results-region">
