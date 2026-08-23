@@ -265,7 +265,7 @@ internal sealed class HostedGitHubAuthGateway(
     {
         var request = new HttpRequestMessage(method, path);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(GitHubApiHeaders.JsonAcceptMediaType));
 
         return request;
     }

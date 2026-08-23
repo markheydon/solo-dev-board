@@ -27,7 +27,6 @@ public sealed class GitHubPatOwnerLoginResolver(
         using var request = new HttpRequestMessage(HttpMethod.Get, "/user");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", personalAccessToken);
         request.Headers.UserAgent.ParseAdd(_appVersionService.UserAgent);
-        request.Headers.Accept.ParseAdd("application/vnd.github+json");
 
         using var response = await client.SendAsync(request, cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)

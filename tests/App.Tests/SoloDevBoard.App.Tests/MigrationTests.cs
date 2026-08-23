@@ -654,5 +654,7 @@ public sealed class MigrationTests
             IsPrivate: false,
             IsArchived: false,
             CreatedAt: DateTimeOffset.UnixEpoch,
-            UpdatedAt: DateTimeOffset.UnixEpoch);
+            UpdatedAt: DateTimeOffset.UnixEpoch,
+            Topics: [],
+            IsOpenSource: false);
 }

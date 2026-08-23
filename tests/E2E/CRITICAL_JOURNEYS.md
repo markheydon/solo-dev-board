@@ -37,7 +37,7 @@ For data-driven journeys against a real GitHub account, run the PAT suite locall
 | Journey | Spec | What CI validates |
 |---------|------|-------------------|
 | Audit Dashboard repository selector failure | `audit-dashboard.spec.ts` | Feedback region and unable-to-load message; `/audit` alias. |
-| Repositories command strip and load failure | `repositories.spec.ts` | Refresh control, search field, error state with retry, and no horizontal overflow at an iPhone 12 viewport. |
+| Repositories | `repositories.spec.ts` | Refresh control, search field, catalogue filter toggle group, error state with retry, and no horizontal overflow at 390px. |
 | One-Click Migration setup shell | `migrate.spec.ts` | Workflow controls, columns scope switch, disabled preview, and API failure feedback. |
 | Board Rules selector and compare mode | `board-rules.spec.ts` | Selector region, compare toggle, and repository load failure. |
 | Label Manager taxonomy tabs and empty repository state | `labels.spec.ts` | Tab strip, disabled actions, and no-repositories message. |

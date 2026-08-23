@@ -58,6 +58,7 @@ public sealed class RepositoryServiceTests
                     IsArchived = false,
                     CreatedAt = createdAt,
                     UpdatedAt = updatedAt,
+                    Topics = ["open-source", "dotnet"],
                 },
             ]);
 
@@ -77,6 +78,35 @@ public sealed class RepositoryServiceTests
         Assert.False(dto.IsArchived);
         Assert.Equal(createdAt, dto.CreatedAt);
         Assert.Equal(updatedAt, dto.UpdatedAt);
+        Assert.Equal(["open-source", "dotnet"], dto.Topics);
+        Assert.True(dto.IsOpenSource);
+    }
+
+    [Fact]
+    public async Task GetRepositoriesAsync_GitHubServiceReturnsRepositoryWithoutOpenSourceTopic_SetsIsOpenSourceFalse()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+
+        _gitHubService
+            .GetRepositoriesAsync(cancellationToken)
+            .Returns([
+                new Repository
+                {
+                    Id = 7,
+                    Name = "customer-repo",
+                    FullName = "owner/customer-repo",
+                    Topics = ["customer"],
+                    IsPrivate = false,
+                },
+            ]);
+
+        var sut = new RepositoryService(_gitHubService);
+
+        var result = await sut.GetRepositoriesAsync(cancellationToken);
+
+        var dto = Assert.Single(result);
+        Assert.False(dto.IsOpenSource);
+        Assert.Equal(["customer"], dto.Topics);
     }
 
     [Fact]

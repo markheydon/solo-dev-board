@@ -101,6 +101,34 @@ public sealed class InfrastructureServiceExtensionsTests
     }
 
     [Fact]
+    public void AddInfrastructureServices_RegistersGitHubApiClientWithRestHeaders()
+    {
+        var configuration = new ConfigurationBuilder().Build();
+        var services = new ServiceCollection();
+        services.AddSingleton<IAppVersionService>(new TestAppVersionService());
+        services.AddInfrastructureServices(configuration);
+        using var serviceProvider = services.BuildServiceProvider();
+        var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+
+        var apiClient = httpClientFactory.CreateClient(GitHubService.GitHubApiClientName);
+        var patResolverClient = httpClientFactory.CreateClient(GitHubPatOwnerLoginResolver.HttpClientName);
+
+        Assert.Contains(
+            apiClient.DefaultRequestHeaders.Accept,
+            header => header.MediaType == GitHubApiHeaders.JsonAcceptMediaType);
+        Assert.Equal(
+            GitHubApiHeaders.ApiVersion,
+            apiClient.DefaultRequestHeaders.GetValues("X-GitHub-Api-Version").Single());
+
+        Assert.Contains(
+            patResolverClient.DefaultRequestHeaders.Accept,
+            header => header.MediaType == GitHubApiHeaders.JsonAcceptMediaType);
+        Assert.Equal(
+            GitHubApiHeaders.ApiVersion,
+            patResolverClient.DefaultRequestHeaders.GetValues("X-GitHub-Api-Version").Single());
+    }
+
+    [Fact]
     public void AddInfrastructureServices_InvalidGitHubPaginationOptions_ThrowsOnStartup()
     {
         // Arrange

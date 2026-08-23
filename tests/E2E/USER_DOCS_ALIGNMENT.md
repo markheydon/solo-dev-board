@@ -28,7 +28,7 @@ When you add or change an end-user feature, update the user guide, the relevant 
 | [Product landing](../../website/content/_index.md) (Hugo `/` only) | — | — (Hugo `hugo-build.yml` route check) | — | — | Short product-and-project landing (Learn more → About; whole-card feature tiles link to User Guide pages); not the Blazor app. |
 | [In-app home dashboard](../../website/content/docs/) | `/` | `smoke.spec.ts`, `navigation.spec.ts`, `accessibility.spec.ts` | `dashboard/home.png` | Tier 1 | In-app home lists eight feature cards; About and Appearance are reached via the app bar. |
 | [Audit Dashboard](../../website/content/docs/audit-dashboard.md) | `/audit-dashboard`, `/audit` | `audit-dashboard.spec.ts`, `accessibility.spec.ts` | `audit-dashboard/overview.png` | Tier 2 | Guide describes KPI cards, health sections (including label consistency), auto-refresh, and export; CI asserts shell, feedback region, and `/audit` alias with load failure. |
-| [Repositories](../../website/content/docs/repositories.md) | `/repositories` | `repositories.spec.ts`, `accessibility.spec.ts` | `repositories/overview.png` | Tier 2 | Guide is Partially Available: live catalogue view/search/refresh only; Add, Remove, Bulk actions, Edit, and More remain stubs ([#435](https://github.com/markheydon/solo-dev-board/issues/435)). CI asserts refresh, search, error-state retry, placeholder snackbar a11y, and no horizontal overflow at 390px. |
+| [Repositories](../../website/content/docs/repositories.md) | `/repositories` | `repositories.spec.ts`, `accessibility.spec.ts` | `repositories/overview.png` | Tier 2 | Guide is Partially Available: live catalogue view/search/refresh and Open source / Not open source filters; Add, Remove, Bulk actions, Edit, and More remain stubs ([#435](https://github.com/markheydon/solo-dev-board/issues/435)). CI asserts refresh, search, catalogue filter controls, error-state retry, placeholder snackbar a11y, and no horizontal overflow at 390px. |
 | [One-Click Migration](../../website/content/docs/one-click-migration.md) | `/migrate` | `migrate.spec.ts`, `accessibility.spec.ts` | `one-click-migration/overview.png` | Tier 2 | Guide describes labels, milestones, and Projects v2 Status column migration with board selectors and conflict strategies; CI asserts setup shell, columns scope control, disabled preview, and API failure feedback. |
 | [Label Manager](../../website/content/docs/label-manager.md) | `/labels` | `labels.spec.ts`, `accessibility.spec.ts` | `label-manager/overview.png` | Tier 2 | Guide describes three tabs, taxonomy workflows, and optional **Remove labels outside taxonomy** strict delete ([#380](https://github.com/markheydon/solo-dev-board/issues/380)); CI asserts tab strip, disabled actions, and no-repositories message. |
 | [Board Rules Visualiser](../../website/content/docs/board-rules-visualiser.md) | `/board-rules` | `board-rules.spec.ts`, `accessibility.spec.ts` | `board-rules-visualiser/overview.png` | Tier 2 | Guide is Partially Available: compare mode and board selection now; full GitHub automation-rule retrieval later ([#437](https://github.com/markheydon/solo-dev-board/issues/437)). CI asserts selector region, compare toggle, and load failure. |
@@ -73,9 +73,25 @@ Use this when extending specs so assertions track documented workflows.
 | Guide section | CI assertion | Loaded-state validation |
 |---------------|--------------|-------------------------|
 | Accessing (`/repositories`) | `repositories.spec.ts` URL and title | `docs-capture` |
-| Command strip, search, and load failure | Refresh control, search field, error state with retry | `prepareRepositoriesForCapture` |
+| Command strip, search, catalogue filter, and load failure | Refresh control, search field, catalogue filter toggle group, error state with retry | `prepareRepositoriesForCapture` |
+| Filter open-source project repositories (All / Open source / Not open source) | `repositories.spec.ts` catalogue filter `data-testid`s on the shell | `RepositoriesTests` (bUnit) for filtered rows and search AND filter |
+| Empty and error states (filter-empty copy) | — | `RepositoriesTests` (bUnit) for Open source, Not open source, and combined search empty messages |
 | Stub Add / Remove / Bulk actions / Edit / More | `accessibility.spec.ts` placeholder snackbar on Add | — (tracked by [#435](https://github.com/markheydon/solo-dev-board/issues/435)) |
 | Phone-width stacked grid without horizontal overflow | `repositories.spec.ts` 390×844 viewport overflow check (error-state shell in CI) | `docs-capture` plus component tests for long names and chips |
+
+### OSS catalogue identification automated coverage ([#443](https://github.com/markheydon/solo-dev-board/issues/443))
+
+Issue [#443](https://github.com/markheydon/solo-dev-board/issues/443) closes the test slice for feature [#440](https://github.com/markheydon/solo-dev-board/issues/440) (parent feature for open-source catalogue classification and Repositories filters). Keep this mapping aligned with [repositories.md](../../website/content/docs/repositories.md).
+
+| Behaviour | Unit / component | Playwright (CI placeholder auth) |
+|-----------|------------------|----------------------------------|
+| Canonical `open-source` topic matcher (case-insensitive; `oss` alone does not match) | `OpenSourceTopicTests` | — |
+| GitHub list-repos `topics` mapped onto domain `Repository` | `GitHubServiceTests` | — |
+| `RepositoryDto.IsOpenSource` and catalogue filter helpers | `RepositoryServiceTests`, `RepositoryCatalogueFiltersTests` | — |
+| Default All list unchanged; Open source and Not open source filters | `RepositoriesTests` | `repositories.spec.ts` catalogue filter controls visible on shell |
+| Filter combined with name search | `RepositoriesTests` | — |
+| Filter-empty and combined search-and-filter empty copy | `RepositoriesTests` | — |
+| Repositories overview screenshot (catalogue filter strip visible) | — | `docs-capture` (`repositories/overview.png`; refresh manually when the filter strip changes materially) |
 
 ### One-Click Migration
 

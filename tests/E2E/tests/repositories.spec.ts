@@ -8,6 +8,10 @@ test.describe('Repositories shell', () => {
     await expect(page.getByRole('heading', { name: 'Repositories', exact: true })).toBeVisible();
     await expect(page.getByTestId('repositories-refresh-button')).toBeVisible();
     await expect(page.getByLabel('Search repositories')).toBeVisible();
+    await expect(page.getByTestId('repositories-catalogue-filter')).toBeVisible();
+    await expect(page.getByTestId('repositories-catalogue-filter-all')).toBeVisible();
+    await expect(page.getByTestId('repositories-catalogue-filter-open-source')).toBeVisible();
+    await expect(page.getByTestId('repositories-catalogue-filter-not-open-source')).toBeVisible();
     await expect(page.getByTestId('repositories-loading-state')).toBeHidden({ timeout: 15_000 });
     await expect(page.getByTestId('repositories-error-state')).toBeVisible();
     await expect(page.getByText('Unable to load repositories')).toBeVisible();

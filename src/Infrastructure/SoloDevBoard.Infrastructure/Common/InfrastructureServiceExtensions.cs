@@ -82,6 +82,7 @@ public static class InfrastructureServiceExtensions
             var appVersionService = serviceProvider.GetRequiredService<IAppVersionService>();
             client.BaseAddress = new Uri("https://api.github.com");
             client.DefaultRequestHeaders.UserAgent.ParseAdd(appVersionService.UserAgent);
+            GitHubApiHeaders.ApplyRestDefaults(client);
         });
         services.AddHttpContextAccessor();
         services.AddScoped<SingleUserCurrentUserContext>();
@@ -108,6 +109,7 @@ public static class InfrastructureServiceExtensions
                 var appVersionService = serviceProvider.GetRequiredService<IAppVersionService>();
                 client.BaseAddress = new Uri("https://api.github.com");
                 client.DefaultRequestHeaders.UserAgent.ParseAdd(appVersionService.UserAgent);
+                GitHubApiHeaders.ApplyRestDefaults(client);
             })
             .AddHttpMessageHandler<GitHubAuthHandler>();
 

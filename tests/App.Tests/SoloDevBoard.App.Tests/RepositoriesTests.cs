@@ -32,6 +32,9 @@ public sealed class RepositoriesTests
             cut.Markup.Contains("Bulk actions", StringComparison.Ordinal) ||
             cut.Markup.Contains("Actions", StringComparison.Ordinal));
         Assert.Contains("Search repositories", cut.Markup);
+        Assert.Contains("Catalogue filter", cut.Markup);
+        Assert.Contains("Open source", cut.Markup);
+        Assert.Contains("Not open source", cut.Markup);
     }
 
     [Fact]
@@ -116,8 +119,8 @@ public sealed class RepositoriesTests
         // Arrange
         var repositories = new List<RepositoryDto>
         {
-            new(1, "my-first-repo", "owner/my-first-repo", string.Empty, string.Empty, false, false, DateTimeOffset.UnixEpoch, new DateTimeOffset(2026, 1, 15, 12, 0, 0, TimeSpan.Zero)),
-            new(2, "my-private-repo", "owner/my-private-repo", string.Empty, string.Empty, true, false, DateTimeOffset.UnixEpoch, new DateTimeOffset(2026, 2, 20, 12, 0, 0, TimeSpan.Zero)),
+            new(1, "my-first-repo", "owner/my-first-repo", string.Empty, string.Empty, false, false, DateTimeOffset.UnixEpoch, new DateTimeOffset(2026, 1, 15, 12, 0, 0, TimeSpan.Zero), ["open-source"], true),
+            new(2, "my-private-repo", "owner/my-private-repo", string.Empty, string.Empty, true, false, DateTimeOffset.UnixEpoch, new DateTimeOffset(2026, 2, 20, 12, 0, 0, TimeSpan.Zero), [], false),
         };
 
         _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(repositories);
@@ -156,7 +159,9 @@ public sealed class RepositoriesTests
                 false,
                 false,
                 DateTimeOffset.UnixEpoch,
-                new DateTimeOffset(2026, 1, 15, 12, 0, 0, TimeSpan.Zero)),
+                new DateTimeOffset(2026, 1, 15, 12, 0, 0, TimeSpan.Zero),
+                [],
+                false),
         };
 
         _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(repositories);
@@ -172,6 +177,159 @@ public sealed class RepositoriesTests
             Assert.Contains("Connected", cut.Markup);
             Assert.Contains("Public", cut.Markup);
             Assert.Contains("Edit repository", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task Repositories_OpenSourceFilter_ShowsOnlyOpenSourceRepositories()
+    {
+        var repositories = new List<RepositoryDto>
+        {
+            new(1, "oss-repo", "owner/oss-repo", string.Empty, string.Empty, false, false, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, ["open-source"], true),
+            new(2, "customer-repo", "owner/customer-repo", string.Empty, string.Empty, false, false, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, [], false),
+        };
+
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(repositories);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Repositories>();
+
+        cut.WaitForAssertion(() => Assert.Contains("oss-repo", cut.Markup));
+
+        cut.Find("[data-testid='repositories-catalogue-filter-open-source']").Click();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("oss-repo", cut.Markup);
+            Assert.DoesNotContain("customer-repo", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task Repositories_NotOpenSourceFilter_ShowsComplementRepositories()
+    {
+        var repositories = new List<RepositoryDto>
+        {
+            new(1, "oss-repo", "owner/oss-repo", string.Empty, string.Empty, false, false, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, ["open-source"], true),
+            new(2, "customer-repo", "owner/customer-repo", string.Empty, string.Empty, false, false, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, [], false),
+        };
+
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(repositories);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Repositories>();
+
+        cut.WaitForAssertion(() => Assert.Contains("customer-repo", cut.Markup));
+
+        cut.Find("[data-testid='repositories-catalogue-filter-not-open-source']").Click();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("customer-repo", cut.Markup);
+            Assert.DoesNotContain("oss-repo", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task Repositories_OpenSourceFilterWithSearch_AppliesBothConstraints()
+    {
+        var repositories = new List<RepositoryDto>
+        {
+            new(1, "oss-alpha", "owner/oss-alpha", string.Empty, string.Empty, false, false, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, ["open-source"], true),
+            new(2, "oss-beta", "owner/oss-beta", string.Empty, string.Empty, false, false, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, ["open-source"], true),
+        };
+
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(repositories);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Repositories>();
+
+        cut.WaitForAssertion(() => Assert.Contains("oss-alpha", cut.Markup));
+
+        cut.Find("[data-testid='repositories-catalogue-filter-open-source']").Click();
+        cut.Find("input").Input("alpha");
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("oss-alpha", cut.Markup);
+            Assert.DoesNotContain("oss-beta", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task Repositories_OpenSourceFilterEmpty_ShowsFilterEmptyMessage()
+    {
+        var repositories = new List<RepositoryDto>
+        {
+            new(1, "customer-repo", "owner/customer-repo", string.Empty, string.Empty, false, false, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, [], false),
+        };
+
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(repositories);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Repositories>();
+
+        cut.WaitForAssertion(() => Assert.Contains("customer-repo", cut.Markup));
+
+        cut.Find("[data-testid='repositories-catalogue-filter-open-source']").Click();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("No repositories match this filter", cut.Markup);
+            Assert.Contains("No catalogue repositories currently have the open-source topic.", cut.Markup);
+            Assert.DoesNotContain("customer-repo", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task Repositories_OpenSourceFilterWithSearchEmpty_ShowsCombinedEmptyMessage()
+    {
+        var repositories = new List<RepositoryDto>
+        {
+            new(1, "oss-alpha", "owner/oss-alpha", string.Empty, string.Empty, false, false, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, ["open-source"], true),
+            new(2, "oss-beta", "owner/oss-beta", string.Empty, string.Empty, false, false, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, ["open-source"], true),
+        };
+
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(repositories);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Repositories>();
+
+        cut.WaitForAssertion(() => Assert.Contains("oss-alpha", cut.Markup));
+
+        cut.Find("[data-testid='repositories-catalogue-filter-open-source']").Click();
+        cut.Find("input").Input("missing-name");
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("No repositories match this filter", cut.Markup);
+            Assert.Contains("No repositories match your search and filter.", cut.Markup);
+            Assert.DoesNotContain("oss-alpha", cut.Markup);
+            Assert.DoesNotContain("oss-beta", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task Repositories_NotOpenSourceFilterEmpty_ShowsComplementEmptyMessage()
+    {
+        var repositories = new List<RepositoryDto>
+        {
+            new(1, "oss-repo", "owner/oss-repo", string.Empty, string.Empty, false, false, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, ["open-source"], true),
+        };
+
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(repositories);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Repositories>();
+
+        cut.WaitForAssertion(() => Assert.Contains("oss-repo", cut.Markup));
+
+        cut.Find("[data-testid='repositories-catalogue-filter-not-open-source']").Click();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Every catalogue repository currently has the open-source topic.", cut.Markup);
+            Assert.DoesNotContain("oss-repo", cut.Markup);
         });
     }
 

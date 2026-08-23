@@ -31,15 +31,26 @@ public partial class Repositories : ComponentBase
     private string feedbackMessage = "Loading repositories...";
     private Severity feedbackSeverity = Severity.Info;
     private string? repositorySearchTerm;
+    private RepositoryCatalogueFilter catalogueFilter = RepositoryCatalogueFilter.All;
 
-    private IReadOnlyList<RepositoryDto> FilteredRepositories =>
-        string.IsNullOrWhiteSpace(repositorySearchTerm)
-            ? repositories
-            : repositories
+    private IReadOnlyList<RepositoryDto> FilteredRepositories
+    {
+        get
+        {
+            var filtered = RepositoryCatalogueFilters.Apply(repositories, catalogueFilter);
+
+            if (string.IsNullOrWhiteSpace(repositorySearchTerm))
+            {
+                return filtered;
+            }
+
+            return filtered
                 .Where(repository =>
                     repository.Name.Contains(repositorySearchTerm, StringComparison.OrdinalIgnoreCase) ||
                     repository.FullName.Contains(repositorySearchTerm, StringComparison.OrdinalIgnoreCase))
                 .ToList();
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -82,6 +93,23 @@ public partial class Repositories : ComponentBase
 
     private static Color GetRepositoryStatusColour(RepositoryDto repository)
         => repository.IsArchived ? Color.Warning : Color.Success;
+
+    private string GetFilterEmptyMessage()
+    {
+        if (!string.IsNullOrWhiteSpace(repositorySearchTerm))
+        {
+            return "No repositories match your search and filter.";
+        }
+
+        return catalogueFilter switch
+        {
+            RepositoryCatalogueFilter.OpenSource =>
+                "No catalogue repositories currently have the open-source topic.",
+            RepositoryCatalogueFilter.NotOpenSource =>
+                "Every catalogue repository currently has the open-source topic.",
+            _ => "No repositories match the current filter.",
+        };
+    }
 
     private void SetFeedback(string message, Severity severity)
     {

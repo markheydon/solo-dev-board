@@ -179,7 +179,7 @@ public sealed class PmWorkflowChromeCoordinatorTests
             NullLogger<PmWorkflowChromeCoordinator>.Instance);
 
     private static RepositoryDto CreateRepository(string owner, string name) =>
-        new(1, name, $"{owner}/{name}", string.Empty, $"https://github.com/{owner}/{name}", false, false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
+        new(1, name, $"{owner}/{name}", string.Empty, $"https://github.com/{owner}/{name}", false, false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, [], false);
 
     private static BacklogReviewResultDto EmptyBacklogResult()
         => new([], [], [], [], [], [], false, []);
