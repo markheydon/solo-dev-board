@@ -110,17 +110,21 @@ Shared chrome on every tab:
 
 ```
 +------------------------------------------------------------------+
-| Capacity  [========    ]  6 / 8   Warns in amber when at limit   |
+| Capacity  [========    ]  6 / 8   Meter only (amber at limit)    |
 |------------------------------------------------------------------|
-| Resolve stalled Up Next before adding                            |
+| [error] You cannot add to Up Next until stalled items are        |
+| handled (2 stalled). Next: Re-commit, Mark Blocked, Ice Box,     |
+| Remove. Do not mention capacity here.              (#445)        |
 |  #275  4d  [Re-commit] [Mark Blocked] [Ice Box] [Remove]         |
 |------------------------------------------------------------------|
 | Candidate picker                                                 |
+|  Add is paused until stalled Up Next is cleared.                 |
 |  Search across included repos   [ ] issues  [ ] PRs              |
-|  [ ] owner/repo#50  Title   [Add to Up Next]                     |
+|  [ ] owner/repo#50  Title   [Add to Up Next] (disabled + tooltip)|
 |------------------------------------------------------------------|
 | This batch (Up Next)                                             |
 |  1. #40  [Focus Order]   2. #41                                  |
+|  Capacity 8/8 is status, not a lock.                             |
 |  [Assign milestone to selected: v1.1.0 v] [Apply]                |
 +------------------------------------------------------------------+
 ```
@@ -132,6 +136,7 @@ Shared chrome on every tab:
 - New Up Next items receive sequential Focus Order (stories, enablers, and tests only; skip Feature/Epic parents).
 - Capacity warning is not a hard stop: the user can exceed the limit after confirming a `MudDialog`.
 - Bulk milestone (#286) is optional and applies only to selected batch items that belong to repositories where that milestone exists; skip others with a snackbar summary.
+- **Stall versus capacity (#445):** stall is the only hard disable for **Add to Up Next**. Use one error-severity alert (not warning) that names the stalled count and the stall-table actions. Do not put “capacity” on that alert. Capacity N/N stays a meter; inner Up Next copy must not say the user must resolve items before adding when the meter is full. Keep the candidate list visible with one short pause line; optional tooltip on disabled Add. The stall table remains the place to act.
 
 ## Repo Management (`/pm-workflow/repos`)
 

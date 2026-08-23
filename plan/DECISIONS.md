@@ -327,6 +327,15 @@ Test coverage expectations for cache-hit, cache-miss, invalidation, TTL expiry, 
 
 ---
 
+### DEC-034: Label Manager recommended catalogue omits `area/*` labels
+
+**Status:** Active  
+**Date:** 2026-08-23  
+**Related:** [#446](https://github.com/markheydon/solo-dev-board/issues/446), [#444](https://github.com/markheydon/solo-dev-board/issues/444), [DEC-033](#dec-033-actions-templates-and-planning-product-names), [`plan/LABEL_STRATEGY.md`](LABEL_STRATEGY.md)  
+**Summary:** Label Manager's built-in recommended catalogue is the **portable** workflow set (`type/`, `priority/`, `status/`, `size/`). `area/*` names describe SoloDevBoard's own feature map and must not be created on other repositories by Recommended taxonomy or Synchronise. When **Remove labels outside taxonomy** is on, a nested **Keep `area/*` labels** control (default on) excludes those names from extra deletes; unchecking it treats them as genuine extras. Hard-code the `area/` prefix for v1.1.0; do not add app-settings ignore lists yet. Bulk delete on the Labels tab (#444) is a separate confirmation loop and does not add a protected allow-list. Reject exporting this repository's area map as product-default labels.
+
+---
+
 ## Superseded legacy (archive only)
 
 | Legacy ADR | Superseded by | Notes |
