@@ -52,6 +52,7 @@ body:
       description: "Which area of the codebase or project does this chore relate to?"
       options:
         - "area/dashboard"
+        - "area/repositories"
         - "area/migration"
         - "area/labels"
         - "area/board-rules"

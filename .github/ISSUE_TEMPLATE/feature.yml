@@ -75,6 +75,7 @@ body:
       description: "Which area of SoloDevBoard does this feature relate to?"
       options:
         - "area/dashboard"
+        - "area/repositories"
         - "area/migration"
         - "area/labels"
         - "area/board-rules"

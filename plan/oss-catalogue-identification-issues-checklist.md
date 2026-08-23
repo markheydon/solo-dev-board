@@ -7,7 +7,7 @@ Parent Feature: [#440](https://github.com/markheydon/solo-dev-board/issues/440).
 - [x] Scope validated (`plan/SCOPE.md` Repositories catalogue increment).
 - [x] Decision recorded (DEC-032).
 - [x] Wireframe updated (`plan/wireframes/repositories-wireframe.md`).
-- [x] Feature #440 already exists (`type/feature`, `priority/low`, `status/todo`, `area/dashboard`, `size/m`, milestone v1.1.0).
+- [x] Feature #440 already exists (`type/feature`, `priority/low`, `status/todo`, `area/repositories`, `size/m`, milestone v1.1.0).
 
 ## Issues
 
