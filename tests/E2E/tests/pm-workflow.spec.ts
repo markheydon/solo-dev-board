@@ -1,14 +1,14 @@
 import { test, expect } from '@playwright/test';
 import { navigateViaDrawer } from '../fixtures/navigation';
 
-test.describe('PM Workflow', () => {
+test.describe('Planning', () => {
   test('drawer navigation opens the Daily Focus tab shell', async ({ page }) => {
     await page.goto('/');
 
-    await navigateViaDrawer(page, 'PM Workflow');
+    await navigateViaDrawer(page, 'Planning');
 
     await expect(page).toHaveURL(/\/pm-workflow\/daily-focus$/);
-    await expect(page).toHaveTitle(/PM Workflow — Daily Focus/);
+    await expect(page).toHaveTitle(/Planning — Daily Focus/);
     await expect(page.getByTestId('pm-workflow-shell')).toBeVisible();
     await expect(page.getByTestId('pm-workflow-tab-strip')).toBeVisible();
     await expect(page.getByRole('tab', { name: 'Daily Focus' })).toBeVisible();
@@ -138,7 +138,7 @@ test.describe('Daily Focus', () => {
     await page.goto('/pm-workflow/daily-focus');
 
     await expect(page).toHaveURL(/\/pm-workflow\/daily-focus$/);
-    await expect(page).toHaveTitle(/PM Workflow — Daily Focus/);
+    await expect(page).toHaveTitle(/Planning — Daily Focus/);
     await expect(page.getByTestId('pm-workflow-shell')).toBeVisible();
     await expect(page.getByTestId('pm-workflow-tab-strip')).toBeVisible();
     await expect(page.getByRole('tab', { name: 'Daily Focus' })).toBeVisible();
@@ -206,7 +206,7 @@ test.describe('Repo Management', () => {
   test('repos tab shows planning thresholds, exclusions, and per-repository summary shell', async ({ page }) => {
     await page.goto('/pm-workflow/repos');
 
-    await expect(page).toHaveTitle(/PM Workflow — Repos/);
+    await expect(page).toHaveTitle(/Planning — Repos/);
     await expect(page.getByTestId('pm-workflow-shell')).toBeVisible();
     await expect(page.getByTestId('pm-workflow-repos-page')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Repo Management' })).toBeVisible();
@@ -259,10 +259,10 @@ test.describe('Iteration Planning', () => {
     await page.goto('/pm-workflow/planning');
 
     await expect(page).toHaveURL(/\/pm-workflow\/planning$/);
-    await expect(page).toHaveTitle(/PM Workflow — Planning/);
+    await expect(page).toHaveTitle(/Planning — Iteration/);
     await expect(page.getByTestId('pm-workflow-shell')).toBeVisible();
     await expect(page.getByTestId('pm-workflow-tab-strip')).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Planning' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Iteration' })).toBeVisible();
     await expect(page.getByTestId('pm-workflow-planning-page')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Iteration Planning' })).toBeVisible();
   });
@@ -336,7 +336,7 @@ test.describe('Backlog Review', () => {
     await page.goto('/pm-workflow/backlog');
 
     await expect(page).toHaveURL(/\/pm-workflow\/backlog$/);
-    await expect(page).toHaveTitle(/PM Workflow — Backlog/);
+    await expect(page).toHaveTitle(/Planning — Backlog/);
     await expect(page.getByTestId('pm-workflow-shell')).toBeVisible();
     await expect(page.getByTestId('pm-workflow-tab-strip')).toBeVisible();
     await expect(page.getByRole('tab', { name: 'Backlog' })).toBeVisible();

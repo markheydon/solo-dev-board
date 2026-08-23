@@ -9,9 +9,9 @@ This document describes the phased implementation of SoloDevBoard. Each phase ha
 Phases in this document are **historical sequencing for the v1.0 release**. Post-1.0 delivery uses one open milestone at a time ([DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)). Unfinished work from earlier phases remains open until completed, regardless of progress in later phases. Public-release prerequisites from Phase 6 (hosted authentication and admission control) were pulled forward to enable safe hosted validation.
 
 **Current roadmap status (2026-08-18):**
-- Phases 1–4 are complete. All six core feature areas are delivered (Label Manager, Audit Dashboard, One-Click Migration, Triage UI, Board Rules Visualiser, Workflow Templates).
+- Phases 1–4 are complete. All six core feature areas are delivered (Label Manager, Audit Dashboard, One-Click Migration, Triage UI, Board Rules Visualiser, Actions Templates).
 - Phase 6 (Production Ready, v1.0.0) is complete. Public release [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) tagged on 2026-08-18.
-- **v1.1.0** is the sole open milestone: deferred slices [#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#292](https://github.com/markheydon/solo-dev-board/issues/292), Cross-Repo PM Workflow [#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288), OSS catalogue identification [#440](https://github.com/markheydon/solo-dev-board/issues/440), and dogfood fixes.
+- **v1.1.0** is the sole open milestone: deferred slices [#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#292](https://github.com/markheydon/solo-dev-board/issues/292), Planning [#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288), OSS catalogue identification [#440](https://github.com/markheydon/solo-dev-board/issues/440), and dogfood fixes.
 - [#293](https://github.com/markheydon/solo-dev-board/issues/293) (hosted private Projects v2) is unmilestoned platform-blocked backlog.
 
 For the full feature scope, see [SCOPE.md](SCOPE.md). For open work, see [GitHub Issues](https://github.com/markheydon/solo-dev-board/issues) and [Project #8](https://github.com/users/markheydon/projects/8). The backlog index is at [BACKLOG.md](BACKLOG.md).
@@ -263,7 +263,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Enable CD pipeline with production environment gate (`.github/workflows/cd.yml` via `aspire deploy`). _(#251)_
 - [x] Write end-to-end tests for critical user journeys. _(#255; see tests/E2E/CRITICAL_JOURNEYS.md.)_
 - [x] Update hosted-authentication documentation for GitHub App-first hosted sign-in, admission-control allow-lists, PAT-only local trusted mode, and fallback boundaries. _(#119; completed on 2026-03-16; see docs/getting-started.md, docs/hosted-authentication.md, and website/content/_index.md.)_
-- [x] Write comprehensive end-user documentation for all shipped features under `website/`. _(#256; Hugo site + screenshots; Cross-Repo PM Workflow guide published with v1.1.0 four-tab behaviour)_
+- [x] Write comprehensive end-user documentation for all shipped features under `website/`. _(#256; Hugo site + screenshots; Planning guide published with v1.1.0 four-tab behaviour)_
 - [x] Public product site: landing, User Guide IA, About narrative, `website/` rename, canonical `solodevboard.com`. _(#358; see plan/product-site-project-plan.md and DEC-023.)_
 - [x] Optional shared Azure Container Registry for CD (opt-in `acr-name` / `acr-resource-group`; default Aspire registry unchanged). _(#372)_
 - [x] Tag v1.0.0 release on GitHub with release notes. _(#257)_
@@ -271,7 +271,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 ### Dependencies
 
-- Intended release sequence: close v1.0.0, then v1.1.0 (deferred slices, Cross-Repo PM Workflow, dogfood fixes).
+- Intended release sequence: close v1.0.0, then v1.1.0 (deferred slices, Planning, dogfood fixes).
 
 **Note:** Hosted authentication and admission control were advanced out of sequence to enable safe hosted validation. Phases 1–4 are complete. v1.0.0 readiness does not depend on Phase 5.
 

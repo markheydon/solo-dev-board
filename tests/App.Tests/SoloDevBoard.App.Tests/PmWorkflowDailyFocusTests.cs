@@ -506,7 +506,7 @@ public sealed class PmWorkflowDailyFocusTests
 
         cut.WaitForAssertion(() =>
         {
-            Assert.Contains("Loading PM Workflow", cut.Markup);
+            Assert.Contains("Loading Planning", cut.Markup);
             Assert.Contains("Loading planning boards, occupancy, and recommendations.", cut.Markup);
         });
 
@@ -545,7 +545,7 @@ public sealed class PmWorkflowDailyFocusTests
         var coordinator = ctx.Services.GetRequiredService<PmWorkflowChromeCoordinator>();
         var cut = ctx.RenderPmWorkflowPage<PmWorkflowDailyFocus>();
 
-        cut.WaitForAssertion(() => Assert.Contains("Loading PM Workflow", cut.Markup));
+        cut.WaitForAssertion(() => Assert.Contains("Loading Planning", cut.Markup));
 
         cut.Instance.Dispose();
         repositoriesReady.SetResult([CreateRepository("owner", "repo-a")]);

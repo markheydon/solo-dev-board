@@ -5,7 +5,7 @@ using SoloDevBoard.Application.Services.Repositories;
 namespace SoloDevBoard.App.Components.Features.PmWorkflow;
 
 /// <summary>
-/// Scoped coordinator that loads, caches, and cancels PM Workflow chrome data for the current Blazor circuit.
+/// Scoped coordinator that loads, caches, and cancels Planning chrome data for the current Blazor circuit.
 /// </summary>
 public sealed class PmWorkflowChromeCoordinator
 {
@@ -232,7 +232,7 @@ public sealed class PmWorkflowChromeCoordinator
     /// <summary>Clears cached Iteration Planning view data.</summary>
     public void ClearIterationPlanning() => IterationPlanning = null;
 
-    /// <summary>Cancels any in-flight chrome load, for example when leaving PM Workflow.</summary>
+    /// <summary>Cancels any in-flight chrome load, for example when leaving Planning.</summary>
     public void CancelPendingLoad()
     {
         if (_loadCancellation is null)
@@ -307,7 +307,7 @@ public sealed class PmWorkflowChromeCoordinator
         {
             _logger.LogError(exception, "Failed to load PM Workflow chrome data.");
             State.LoadErrorMessage =
-                "Unable to load PM Workflow settings. Check your GitHub connection and try again.";
+                "Unable to load Planning settings. Check your GitHub connection and try again.";
         }
         finally
         {

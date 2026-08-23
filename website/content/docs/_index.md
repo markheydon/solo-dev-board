@@ -11,7 +11,7 @@ Guides for using SoloDevBoard in the app. Developer and operator material (local
 
 ## Features
 
-Feature guides follow the same order as the application navigation drawer (Audit Dashboard through PM Workflow). Prev/next links walk this feature set only.
+Feature guides follow the same order as the application navigation drawer (Audit Dashboard through Planning). Prev/next links walk this feature set only.
 
 {{< guide-feature-table >}}
 

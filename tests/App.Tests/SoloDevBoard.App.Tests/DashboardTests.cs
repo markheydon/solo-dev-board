@@ -31,8 +31,8 @@ public sealed class DashboardTests : BunitContext
         Assert.Contains("Label Manager", cut.Markup);
         Assert.Contains("Board Rules Visualiser", cut.Markup);
         Assert.Contains("Triage UI", cut.Markup);
-        Assert.Contains("Workflow Templates", cut.Markup);
-        Assert.Contains("PM Workflow", cut.Markup);
+        Assert.Contains("Actions Templates", cut.Markup);
+        Assert.Contains("Planning", cut.Markup);
     }
 
     [Fact]

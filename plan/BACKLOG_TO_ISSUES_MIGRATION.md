@@ -124,7 +124,7 @@ Create a parent epic: `[Epic] Post-v1 Improvements`
 |---|---------|-------|------------------|
 | 1 | Label consistency warnings (Audit Dashboard) | Originally in SCOPE.md; never built | `type/story`, `priority/low`, `area/dashboard`, `size/m` |
 | 2 | Project board column migration | Deferred; ADR-0013 | `type/story`, `priority/low`, `area/migration`, `size/l` |
-| 3 | Custom workflow template repositories | Built-in templates done | `type/story`, `priority/low`, `area/workflows`, `size/m` |
+| 3 | Custom workflow template repositories | Built-in templates done | `type/story`, `priority/low`, `area/actions-templates`, `size/m` |
 | 4 | Private user-owned Projects v2 via hosted sign-in | **Blocked** by GitHub platform | `type/story`, `priority/low`, `status/blocked`, `area/board-rules` |
 
 ---

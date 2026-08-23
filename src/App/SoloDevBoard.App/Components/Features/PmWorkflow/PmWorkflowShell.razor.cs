@@ -3,7 +3,7 @@ using SoloDevBoard.Application.Services.PmWorkflow;
 
 namespace SoloDevBoard.App.Components.Features.PmWorkflow;
 
-/// <summary>Shared chrome for Cross-Repo PM Workflow tab pages.</summary>
+/// <summary>Shared chrome for Planning tab pages.</summary>
 public partial class PmWorkflowShell : ComponentBase
 {
     /// <summary>Gets or sets the active tab route segment.</summary>
@@ -14,7 +14,7 @@ public partial class PmWorkflowShell : ComponentBase
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
 
-    /// <summary>Gets or sets the PM Workflow chrome coordinator.</summary>
+    /// <summary>Gets or sets the Planning chrome coordinator.</summary>
     [Inject]
     public PmWorkflowChromeCoordinator ChromeCoordinator { get; set; } = default!;
 

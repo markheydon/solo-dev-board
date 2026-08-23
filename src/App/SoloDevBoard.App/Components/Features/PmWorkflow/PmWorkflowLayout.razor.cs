@@ -3,14 +3,14 @@ using Microsoft.AspNetCore.Components.Routing;
 
 namespace SoloDevBoard.App.Components.Features.PmWorkflow;
 
-/// <summary>Shared layout that hosts PM Workflow chrome across tab routes.</summary>
+/// <summary>Shared layout that hosts Planning chrome across tab routes.</summary>
 public partial class PmWorkflowLayout : LayoutComponentBase, IDisposable
 {
     /// <summary>Gets or sets the navigation manager.</summary>
     [Inject]
     public NavigationManager NavigationManager { get; set; } = default!;
 
-    /// <summary>Gets or sets the PM Workflow chrome coordinator.</summary>
+    /// <summary>Gets or sets the Planning chrome coordinator.</summary>
     [Inject]
     public PmWorkflowChromeCoordinator ChromeCoordinator { get; set; } = default!;
 
@@ -49,7 +49,7 @@ public partial class PmWorkflowLayout : LayoutComponentBase, IDisposable
         };
     }
 
-    /// <summary>Returns whether the URI is a PM Workflow route.</summary>
+    /// <summary>Returns whether the URI is a Planning route.</summary>
     /// <param name="uri">The navigation URI.</param>
     /// <returns><see langword="true" /> when the path is under <c>/pm-workflow</c>; otherwise, <see langword="false" />.</returns>
     internal static bool IsPmWorkflowPath(string uri)

@@ -59,7 +59,7 @@ The following **must** stay synchronised across formats:
 - Must align with `plan/LABEL_STRATEGY.md` taxonomy:
   - `type/` — bug, feature, chore, documentation, epic
   - `priority/` — critical, high, medium, low
-  - `area/` — dashboard, repositories, migration, labels, board-rules, triage, workflows, infrastructure, docs
+  - `area/` — dashboard, repositories, migration, labels, board-rules, triage, actions-templates, planning, infrastructure, docs
   - `size/` — xs, s, m, l, xl (typically added by PM during planning)
   - `status/` — todo, in-progress, blocked, in-review, done (lifecycle state)
 
@@ -146,7 +146,7 @@ YAML templates have `dropdown` fields for priority and area. Markdown templates 
 
 Example:
 ```markdown
-**Labels to apply:** `type/story`, `priority/medium` (default), optionally add `area/` label (dashboard, repositories, migration, labels, board-rules, triage, workflows, infrastructure, docs)
+**Labels to apply:** `type/story`, `priority/medium` (default), optionally add `area/` label (dashboard, repositories, migration, labels, board-rules, triage, actions-templates, planning, infrastructure, docs)
 ```
 
 ### User Story Template Pattern

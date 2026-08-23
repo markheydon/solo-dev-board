@@ -1,8 +1,8 @@
-# Cross-Repo PM Workflow Wireframe
+# Planning Wireframe
 
 ## Purpose
 
-The Cross-Repo PM Workflow is a four-page planning area inside SoloDevBoard. It replaces the prompt-and-script operating system from [markheydon/github-workflows](https://github.com/markheydon/github-workflows) with a MudBlazor UI: a morning **Daily Focus**, a cross-repository **Backlog Review**, a guided **Iteration Planning** session that curates **Up Next**, and **Repo Management** for which repositories and which Projects v2 board participate.
+Planning is a four-page area inside SoloDevBoard. It replaces the prompt-and-script operating system from [markheydon/github-workflows](https://github.com/markheydon/github-workflows) with a MudBlazor UI: a morning **Daily Focus**, a cross-repository **Backlog Review**, a guided **Iteration** session that curates **Up Next**, and **Repo Management** for which repositories and which Projects v2 board participate.
 
 This wireframe is the planning baseline for feature [#272](https://github.com/markheydon/solo-dev-board/issues/272) (stories #273–#288 plus enablers and tests).
 
@@ -16,7 +16,7 @@ This wireframe is the planning baseline for feature [#272](https://github.com/ma
 
 ## Information architecture
 
-Drawer entry: **PM Workflow** (`Icons.Material.Filled.ViewWeek`) linking to `/pm-workflow`.
+Drawer entry: **Planning** (`Icons.Material.Filled.ViewWeek`) linking to `/pm-workflow`.
 
 The hub is a `MudTabs` shell (or equivalent `MudNavLink` sub-nav) with four routes:
 
@@ -24,7 +24,7 @@ The hub is a `MudTabs` shell (or equivalent `MudNavLink` sub-nav) with four rout
 |-----|-------|-----------------|
 | Daily Focus | `/pm-workflow/daily-focus` | #273–#276 |
 | Backlog | `/pm-workflow/backlog` | #277–#282 |
-| Planning | `/pm-workflow/planning` | #283–#286 |
+| Iteration | `/pm-workflow/planning` | #283–#286 |
 | Repos | `/pm-workflow/repos` | #287–#288 |
 
 Shared chrome on every tab:
@@ -37,10 +37,10 @@ Shared chrome on every tab:
 
 ```
 +------------------------------------------------------------------+
-| PM Workflow                                                      |
+| Planning                                                      |
 +------------------------------------------------------------------+
 | Board: [ SoloDevBoard Roadmap v ]   Repos: 12 included   [Refresh]
-| [Daily Focus] [Backlog] [Planning] [Repos]                       |
+| [Daily Focus] [Backlog] [Iteration] [Repos]                       |
 |------------------------------------------------------------------|
 | (tab content)                                                    |
 +------------------------------------------------------------------+

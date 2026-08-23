@@ -12,8 +12,8 @@ test.describe('Feature navigation', () => {
     await expect(page.getByRole('link', { name: 'Open Label Manager' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Open Board Rules Visualiser' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Open Triage UI' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Open Workflow Templates' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Open PM Workflow' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Open Actions Templates' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Open Planning' })).toBeVisible();
   });
 
   test('home feature cards navigate to the matching feature page', async ({ page }) => {
@@ -24,8 +24,8 @@ test.describe('Feature navigation', () => {
       { linkName: 'Open Label Manager', path: '/labels', title: /Label Manager/ },
       { linkName: 'Open Board Rules Visualiser', path: '/board-rules', title: /Board Rules Visualiser/ },
       { linkName: 'Open Triage UI', path: '/triage', title: /Triage UI/ },
-      { linkName: 'Open Workflow Templates', path: '/workflows', title: /Workflow Templates/ },
-      { linkName: 'Open PM Workflow', path: '/pm-workflow/daily-focus', title: /PM Workflow — Daily Focus/ },
+      { linkName: 'Open Actions Templates', path: '/workflows', title: /Actions Templates/ },
+      { linkName: 'Open Planning', path: '/pm-workflow/daily-focus', title: /Planning — Daily Focus/ },
     ] as const;
 
     for (const feature of featureCards) {

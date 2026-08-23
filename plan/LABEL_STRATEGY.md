@@ -67,7 +67,8 @@ Describes which feature area the issue relates to.
 | `area/labels` | `#c5def5` | Label Manager feature |
 | `area/board-rules` | `#fef2c0` | Board Rules Visualiser feature |
 | `area/triage` | `#f9d0c4` | Triage UI feature |
-| `area/workflows` | `#c5def5` | Workflow Templates feature |
+| `area/actions-templates` | `#c5def5` | Actions Templates feature |
+| `area/planning` | `#96d8c9` | Planning feature — Daily Focus, Backlog, Iteration, Repos |
 | `area/infrastructure` | `#e4e669` | Azure infrastructure, CI/CD, deployment |
 | `area/docs` | `#0052cc` | Documentation, user guides, ADRs, planning docs |
 
@@ -105,7 +106,7 @@ A script to create all labels at once will be provided in `infra/scripts/create-
 ### When to Apply Each Label
 
 #### `type/` - Always required on issues and PRs
-- Apply `type/epic` to issues that name a shippable product theme spanning multiple features or a major increment (for example Cross-Repo PM Workflow). Do not create epics that duplicate milestones or catch unrelated deferred work.
+- Apply `type/epic` to issues that name a shippable product theme spanning multiple features or a major increment (for example Planning). Do not create epics that duplicate milestones or catch unrelated deferred work.
 - Apply `type/feature` when **two or more** related stories/enablers deliver one user-facing capability under an epic.
 - Apply `type/story` to user-facing delivery issues (e.g. `[Story] Implement REST API calls`).
 - Apply `type/enabler` to technical prerequisite issues that unblock stories (e.g. `[Enabler] Configure HttpClient`).
@@ -131,7 +132,9 @@ A script to create all labels at once will be provided in `infra/scripts/create-
 #### `area/` - Apply when the scope is clear
 - Apply the relevant `area/` label to all issues and PRs.
 - Multiple `area/` labels may be applied if the issue spans more than one feature.
-- Apply `area/dashboard` to the Audit Dashboard (`/`) and cross-repo PM Workflow surfaces (Daily Focus, Backlog Review, Iteration Planning, and Repo Management under `/pm-workflow`).
+- Apply `area/dashboard` to the Audit Dashboard (`/audit-dashboard`) only.
+- Apply `area/actions-templates` to the Actions Templates page (`/workflows`).
+- Apply `area/planning` to Planning surfaces (Daily Focus, Backlog Review, Iteration, and Repo Management under `/pm-workflow`).
 - Apply `area/repositories` to the Repositories catalogue page (`/repositories`), including search and refresh, catalogue status, OSS classification and filters ([#440](https://github.com/markheydon/solo-dev-board/issues/440)), repository groups ([#381](https://github.com/markheydon/solo-dev-board/issues/381)), catalogue management actions ([#435](https://github.com/markheydon/solo-dev-board/issues/435)), and overnight OSS hygiene views that scan the catalogue ([#438](https://github.com/markheydon/solo-dev-board/issues/438), [#439](https://github.com/markheydon/solo-dev-board/issues/439)). Do not use `area/dashboard` as a stand-in when the primary deliverable is the Repositories catalogue.
 - `area/*` labels on this repository describe SoloDevBoard's own feature map for issue and PR triage. They are **not** part of Label Manager's cross-repository recommended catalogue ([#446](https://github.com/markheydon/solo-dev-board/issues/446)); create or update `area/*` labels on `solo-dev-board` manually when the taxonomy changes.
 
