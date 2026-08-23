@@ -65,6 +65,7 @@ Use this when extending specs so assertions track documented workflows.
 |---------------|--------------|-------------------------|
 | Three tabs (Labels, Recommended taxonomy, Synchronise) | Tab strip and headings | `docs-capture` |
 | Optional remove labels outside taxonomy | — | `docs-capture` + unit/component tests ([#380](https://github.com/markheydon/solo-dev-board/issues/380)) |
+| Confirm apply shows in-progress feedback | — | Component tests in `LabelsTests` (loading Confirm button and progress indicator) |
 | No repositories message | Empty-state text | — |
 
 ### Repositories

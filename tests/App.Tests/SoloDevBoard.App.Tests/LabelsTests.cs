@@ -348,6 +348,165 @@ public sealed class LabelsTests
     }
 
     [Fact]
+    public async Task Labels_ApplyRecommendedTaxonomy_WhenConfirmed_ShowsInProgressStateUntilApplyCompletes()
+    {
+        // Arrange
+        var repoA = CreateRepository("owner", "repo-a");
+        var applyTask = new TaskCompletionSource<IReadOnlyList<RecommendedTaxonomyRepositoryResultDto>>();
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
+
+        _labelManagerService.PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns([
+                new RecommendedTaxonomyRepositoryPreviewDto(
+                    "owner/repo-a",
+                    [new LabelDto("type/story", "1d76db", "Story", "owner/repo-a")],
+                    [],
+                    [],
+                    []),
+            ]);
+
+        _labelManagerService.ApplyRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(applyTask.Task);
+        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<LabelDto>());
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
+
+        await SelectRepositoriesAsync(cut, repoA);
+        await ActivateTabAsync(cut, "Recommended taxonomy");
+        cut.Find("[data-testid='preview-taxonomy-button']").Click();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='confirm-apply-taxonomy-button']"));
+
+        cut.Find("[data-testid='confirm-apply-taxonomy-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='taxonomy-progress-indicator']"));
+            Assert.Contains("Applying taxonomy changes. Duplicate submissions are disabled.", cut.Markup);
+            Assert.Contains("Applying taxonomy changes...", cut.Markup);
+
+            var confirmButton = cut.Find("[data-testid='confirm-apply-taxonomy-button']");
+            Assert.True(confirmButton.HasAttribute("disabled"));
+            Assert.Contains("Applying...", confirmButton.TextContent);
+
+            var cancelButton = cut.Find("[data-testid='cancel-apply-taxonomy-button']");
+            Assert.True(cancelButton.HasAttribute("disabled"));
+        });
+
+        await cut.InvokeAsync(() => applyTask.SetResult([
+            new RecommendedTaxonomyRepositoryResultDto("owner/repo-a", 1, 0, 0, 0, [], null),
+        ]));
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Empty(cut.FindAll("[data-testid='taxonomy-progress-indicator']"));
+            Assert.Contains("Applied taxonomy successfully.", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task Labels_ApplyRecommendedTaxonomy_WhenClickedTwiceDuringPendingCall_CallsServiceOnce()
+    {
+        // Arrange
+        var repoA = CreateRepository("owner", "repo-a");
+        var applyTask = new TaskCompletionSource<IReadOnlyList<RecommendedTaxonomyRepositoryResultDto>>();
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
+
+        _labelManagerService.PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns([
+                new RecommendedTaxonomyRepositoryPreviewDto(
+                    "owner/repo-a",
+                    [new LabelDto("type/story", "1d76db", "Story", "owner/repo-a")],
+                    [],
+                    [],
+                    []),
+            ]);
+
+        _labelManagerService.ApplyRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(applyTask.Task);
+        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<LabelDto>());
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
+
+        await SelectRepositoriesAsync(cut, repoA);
+        await ActivateTabAsync(cut, "Recommended taxonomy");
+        cut.Find("[data-testid='preview-taxonomy-button']").Click();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='confirm-apply-taxonomy-button']"));
+
+        var confirmButton = cut.Find("[data-testid='confirm-apply-taxonomy-button']");
+        confirmButton.Click();
+        confirmButton.Click();
+
+        await cut.InvokeAsync(() => applyTask.SetResult([
+            new RecommendedTaxonomyRepositoryResultDto("owner/repo-a", 1, 0, 0, 0, [], null),
+        ]));
+
+        cut.WaitForAssertion(() => Assert.Contains("Applied taxonomy successfully.", cut.Markup));
+
+        // Assert
+        await _labelManagerService.Received(1).ApplyRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), false, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Labels_ApplySynchronisation_WhenConfirmed_ShowsInProgressStateUntilApplyCompletes()
+    {
+        // Arrange
+        var repoA = CreateRepository("owner", "repo-a");
+        var repoB = CreateRepository("owner", "repo-b");
+        var applyTask = new TaskCompletionSource<IReadOnlyList<LabelSyncRepositoryResultDto>>();
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA, repoB]);
+
+        _labelManagerService.PreviewLabelSynchronisationAsync("owner/repo-a", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
+                new LabelSyncRepositoryPreviewDto("owner/repo-b", [], [], [], []),
+            ]);
+
+        _labelManagerService.ApplyLabelSynchronisationAsync("owner/repo-a", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(applyTask.Task);
+        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<LabelDto>());
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
+
+        await SelectRepositoriesAsync(cut, repoA, repoB);
+        await ActivateTabAsync(cut, "Synchronise");
+        cut.Find("[data-testid='preview-sync-button']").Click();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='confirm-sync-button']"));
+
+        cut.Find("[data-testid='confirm-sync-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='sync-progress-indicator']"));
+            Assert.Contains("Applying synchronisation changes. Duplicate submissions are disabled.", cut.Markup);
+            Assert.Contains("Applying synchronisation changes...", cut.Markup);
+
+            var confirmButton = cut.Find("[data-testid='confirm-sync-button']");
+            Assert.True(confirmButton.HasAttribute("disabled"));
+            Assert.Contains("Applying...", confirmButton.TextContent);
+        });
+
+        await cut.InvokeAsync(() => applyTask.SetResult([
+            new LabelSyncRepositoryResultDto("owner/repo-b", 1, 0, 0, 0, null),
+        ]));
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Empty(cut.FindAll("[data-testid='sync-progress-indicator']"));
+            Assert.Contains("Synchronisation completed.", cut.Markup);
+        });
+    }
+
+    [Fact]
     public async Task Labels_InitialLoad_DefaultsToSoloDevBoardStrategy()
     {
         // Arrange

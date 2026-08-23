@@ -91,7 +91,7 @@ Optionally enable **Remove labels outside taxonomy** (off by default) when you w
 
 ### Preview and confirm
 
-Select **Preview** to review proposed changes per repository. Confirm or cancel before any changes are applied.
+Select **Preview** to review proposed changes per repository. Confirm or cancel before any changes are applied. After **Confirm**, the apply button shows a loading state and an in-progress indicator until the operation finishes.
 
 ### Review the summary
 
