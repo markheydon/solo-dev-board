@@ -318,6 +318,15 @@ Test coverage expectations for cache-hit, cache-miss, invalidation, TTL expiry, 
 
 ---
 
+### DEC-033: Actions Templates and Planning product names
+
+**Status:** Active  
+**Date:** 2026-08-23  
+**Related:** [#446](https://github.com/markheydon/solo-dev-board/issues/446), [`plan/LABEL_STRATEGY.md`](LABEL_STRATEGY.md)  
+**Summary:** User-facing names are **Actions Templates** (GitHub Actions workflow template library at `/workflows`) and **Planning** (cross-repo planning hub at `/pm-workflow`). The Iteration tab inside Planning is labelled **Iteration**, not Planning. Routes (`/workflows`, `/pm-workflow`), C# namespaces (`Features.Workflows`, `PmWorkflow`), and `data-testid` prefixes stay for compatibility. This repository's GitHub `area/*` labels use `area/actions-templates` and `area/planning`; `area/dashboard` is Audit Dashboard only. Label Manager's built-in recommended catalogue still lists `area/workflows` until [#446](https://github.com/markheydon/solo-dev-board/issues/446) removes `area/*` from the product default. Reject reverting nav labels to **Workflows** / **PM Workflow** or mapping Planning work to `area/dashboard`.
+
+---
+
 ## Superseded legacy (archive only)
 
 | Legacy ADR | Superseded by | Notes |

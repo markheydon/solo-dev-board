@@ -3,7 +3,7 @@ using SoloDevBoard.Application.Services.PmWorkflow;
 
 namespace SoloDevBoard.App.Components.Features.PmWorkflow;
 
-/// <summary>Shared Issue and pull request chip styling for PM Workflow panels.</summary>
+/// <summary>Shared Issue and pull request chip styling for Planning panels.</summary>
 public static class PmWorkflowItemKindFormatting
 {
     /// <summary>Filter value that includes both issues and pull requests.</summary>

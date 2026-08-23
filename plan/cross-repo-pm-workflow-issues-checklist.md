@@ -1,4 +1,4 @@
-# Cross-Repo PM Workflow — issues checklist
+# Planning — issues checklist
 
 Parent: [#272](https://github.com/markheydon/solo-dev-board/issues/272). Milestone: **v1.1.0** (number 7). Assignee: `markheydon`. Status on new/updated children: `status/todo` (do not add an Up Next **label**).
 
@@ -11,10 +11,10 @@ Wireframe: `plan/wireframes/pm-workflow-wireframe.md`. Plan: `plan/cross-repo-pm
 | Enabler | [#382](https://github.com/markheydon/solo-dev-board/issues/382) Projects v2 item catalogue | `size/l` | high | `area/infrastructure` | #273, #275, #283–#285 |
 | Enabler | [#383](https://github.com/markheydon/solo-dev-board/issues/383) PM settings persistence | `size/s` | high | `area/infrastructure` | #273, #274, #277, #284, #287 |
 | Enabler | [#384](https://github.com/markheydon/solo-dev-board/issues/384) Cross-repo work-item catalogue | `size/l` | high | `area/infrastructure` | #274, #276, #277, #279, #281, #288 |
-| Test | [#385](https://github.com/markheydon/solo-dev-board/issues/385) Daily Focus | `size/m` | medium | `area/dashboard` | Feature close-out |
-| Test | [#386](https://github.com/markheydon/solo-dev-board/issues/386) Backlog Review | `size/m` | medium | `area/dashboard` | Feature close-out |
-| Test | [#387](https://github.com/markheydon/solo-dev-board/issues/387) Iteration Planning | `size/m` | medium | `area/dashboard` | Feature close-out |
-| Test | [#388](https://github.com/markheydon/solo-dev-board/issues/388) Repo Management | `size/s` | medium | `area/dashboard` | Feature close-out |
+| Test | [#385](https://github.com/markheydon/solo-dev-board/issues/385) Daily Focus | `size/m` | medium | `area/planning` | Feature close-out |
+| Test | [#386](https://github.com/markheydon/solo-dev-board/issues/386) Backlog Review | `size/m` | medium | `area/planning` | Feature close-out |
+| Test | [#387](https://github.com/markheydon/solo-dev-board/issues/387) Iteration Planning | `size/m` | medium | `area/planning` | Feature close-out |
+| Test | [#388](https://github.com/markheydon/solo-dev-board/issues/388) Repo Management | `size/s` | medium | `area/planning` | Feature close-out |
 
 ## Existing stories (spec upgrade)
 

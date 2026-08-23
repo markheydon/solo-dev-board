@@ -1,6 +1,6 @@
 ---
 weight: 70
-title: Workflow Templates
+title: Actions Templates
 landing: true
 landingIcon: account_tree
 landingSubtitle: "Browse, customise, and apply GitHub Actions workflow templates across repositories."
@@ -9,11 +9,11 @@ guideStatus: Partially Available
 
 ## Overview
 
-The Workflow Templates feature allows you to browse, apply, and customise GitHub Actions workflow templates across your repositories, all from within SoloDevBoard. Rather than manually copying YAML files between repositories, you can manage templates centrally and push them where needed.
+The Actions Templates feature allows you to browse, apply, and customise GitHub Actions workflow templates across your repositories, all from within SoloDevBoard. Rather than manually copying YAML files between repositories, you can manage templates centrally and push them where needed.
 
-![Workflow Templates with a selected template YAML preview for markheydon/solo-dev-board](/images/workflow-templates/overview.png)
+![Actions Templates with a selected template YAML preview for markheydon/solo-dev-board](/images/workflow-templates/overview.png)
 
-Key goals of Workflow Templates:
+Key goals of Actions Templates:
 - Provide a library of reusable GitHub Actions workflow templates suited to common .NET development patterns.
 - Allow templates to be parameterised and customised per repository before being applied.
 - Track which repositories have a given template applied and whether they are up to date.
@@ -26,7 +26,7 @@ Key goals of Workflow Templates:
 
 ### Browse built-in templates
 
-1. Open **Workflow Templates** from the navigation menu or the app home page.
+1. Open **Actions Templates** from the navigation menu or the app home page.
 2. Select one or more target repositories using the repository selector at the top of the page.
 3. Review the built-in template cards for common .NET workflows such as CI, Azure CD (Aspire), and Dependabot auto-merge.
 4. Use the search field to filter templates by name, category, or tag.

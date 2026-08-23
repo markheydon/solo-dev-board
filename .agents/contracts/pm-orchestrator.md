@@ -54,7 +54,7 @@ Invoke this when you need to:
 - Apply correct labels per `plan/LABEL_STRATEGY.md`:
   - `type/` (epic, feature, story, enabler, test, bug, chore, documentation)
   - `priority/` (critical, high, medium, low)
-  - `area/` (dashboard, migration, labels, board-rules, triage, workflows, infrastructure, docs)
+  - `area/` (dashboard, migration, labels, board-rules, triage, actions-templates, planning, infrastructure, docs)
   - `size/` (xs, s, m, l, xl)
   - `status/todo` for new items
 - To park work: apply `status/blocked` (external dependency) or `status/ice-box` (shelved for later); Roadmap Sync maps these to Project #8 **Blocked** and **Ice Box** ([DEC-028](../../plan/DECISIONS.md#dec-028-blocked-and-ice-box-project-status-options)). **Up Next** is board-only and has no issue label.

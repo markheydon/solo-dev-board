@@ -80,7 +80,8 @@ body:
         - "area/labels"
         - "area/board-rules"
         - "area/triage"
-        - "area/workflows"
+        - "area/actions-templates"
+        - "area/planning"
         - "area/infrastructure"
         - "area/docs"
     validations:

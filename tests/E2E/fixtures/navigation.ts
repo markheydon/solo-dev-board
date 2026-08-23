@@ -7,8 +7,8 @@ export const featureRoutes = [
   { navLabel: 'Labels', path: '/labels', title: /Label Manager/ },
   { navLabel: 'Board Rules', path: '/board-rules', title: /Board Rules Visualiser/ },
   { navLabel: 'Triage', path: '/triage', title: /Triage UI/ },
-  { navLabel: 'Workflows', path: '/workflows', title: /Workflow Templates/ },
-  { navLabel: 'PM Workflow', path: '/pm-workflow/daily-focus', title: /PM Workflow — Daily Focus/ },
+  { navLabel: 'Actions Templates', path: '/workflows', title: /Actions Templates/ },
+  { navLabel: 'Planning', path: '/pm-workflow/daily-focus', title: /Planning — Daily Focus/ },
 ] as const;
 
 async function ensureDrawerOpen(page: Page): Promise<void> {

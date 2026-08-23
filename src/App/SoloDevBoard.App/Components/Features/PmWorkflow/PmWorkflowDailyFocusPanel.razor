@@ -10,7 +10,7 @@
 
     @if (ChromeState is null)
     {
-        <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">PM Workflow chrome is unavailable.</MudAlert>
+        <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">Planning chrome is unavailable.</MudAlert>
     }
     else if (!ChromeState.IsLoading && !string.IsNullOrWhiteSpace(ChromeState.LoadErrorMessage))
     {

@@ -30,6 +30,8 @@
 | `area/triage` | `src/App/.../Features/Triage/`, `src/Application/.../Services/Triage/` |
 | `area/board-rules` | `src/App/.../Features/BoardRules/`, `src/Application/.../Services/BoardRules/` |
 | `area/workflows` | `src/App/.../Features/Workflows/`, `src/Application/.../Services/Workflows/` |
+| `area/actions-templates` | `src/App/.../Features/Workflows/`, `src/Application/.../Services/Workflows/` |
+| `area/planning` | `src/App/.../Features/PmWorkflow/`, `src/Application/.../Services/PmWorkflow/` |
 | `area/infrastructure` | `src/Infrastructure/`, `src/SoloDevBoard.AppHost/` |
 | `area/docs` | `website/`, `docs/`, `plan/` |
 

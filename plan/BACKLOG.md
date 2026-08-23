@@ -24,7 +24,7 @@ For historical backlog content (pre-migration), see [archive/BACKLOG-2026-07-18.
 | Production Ready | v1.0.0 | Complete — [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) (2026-08-18) |
 | **Next release** | **v1.1.0** | **Not started — 20 open issues** |
 
-The sole open milestone is **v1.1.0**. It includes deferred v1.0 slices ([#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#292](https://github.com/markheydon/solo-dev-board/issues/292)), Cross-Repo PM Workflow ([#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288)), and dogfood fixes as they are raised.
+The sole open milestone is **v1.1.0**. It includes deferred v1.0 slices ([#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#292](https://github.com/markheydon/solo-dev-board/issues/292)), Planning ([#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288)), and dogfood fixes as they are raised.
 
 **Unmilestoned backlog:** [#293](https://github.com/markheydon/solo-dev-board/issues/293) (platform-blocked private user-owned Projects v2 under hosted sign-in); [#397](https://github.com/markheydon/solo-dev-board/issues/397) (product branding including a logo — ice-box).
 
@@ -34,12 +34,12 @@ Implementation phases in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) are hi
 
 | Feature | Issue | Milestone |
 |---------|-------|-----------|
-| Cross-Repo PM Workflow | [#272](https://github.com/markheydon/solo-dev-board/issues/272) | v1.1.0 |
+| Planning | [#272](https://github.com/markheydon/solo-dev-board/issues/272) | v1.1.0 |
 
 Deferred slices ([#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#292](https://github.com/markheydon/solo-dev-board/issues/292)) are milestone stories extending shipped features, not children of a bucket epic.
 
 ## Shipped summary
 
-The six core tools (Label Manager, Audit Dashboard, One-Click Migration, Triage UI, Board Rules Visualiser, Workflow Templates) plus hosted and self-host hardening shipped in v1.0.0. Duplicate Cross-Repo PM Workflow issues #260–#271 were closed as duplicates of the #272–#288 family.
+The six core tools (Label Manager, Audit Dashboard, One-Click Migration, Triage UI, Board Rules Visualiser, Actions Templates) plus hosted and self-host hardening shipped in v1.0.0. Duplicate Planning issues #260–#271 were closed as duplicates of the #272–#288 family.
 
 For phase sequencing history and architecture milestones, see [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). For product boundaries, see [SCOPE.md](SCOPE.md).

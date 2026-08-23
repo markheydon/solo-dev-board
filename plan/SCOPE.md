@@ -47,11 +47,11 @@ An interactive diagram showing the automation rules configured on GitHub project
 
 A focused, keyboard-friendly interface for triaging incoming GitHub issues one at a time, supporting quick labelling, milestone assignment, and duplicate closure.
 
-### 6. Workflow Templates
+### 6. Actions Templates
 
 Browse, customise, and apply built-in GitHub Actions workflow templates across repositories, with tracking of which repositories have which templates applied. Custom template repositories are in scope for **v1.1.0** ([#292](https://github.com/markheydon/solo-dev-board/issues/292)).
 
-### 7. Cross-Repo PM Workflow
+### 7. Planning
 
 A UI-based implementation of the two-mode PM operating system from [markheydon/github-workflows](https://github.com/markheydon/github-workflows): a Daily Focus view (board state, stalled items, top priorities), a cross-repository Backlog Review (prioritised work across all repos, neglected repo detection), and an Iteration Planning tool (capacity management, Up Next curation, milestone assignment). Tracked in [#272](https://github.com/markheydon/solo-dev-board/issues/272) on milestone **v1.1.0** ([DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)).
 

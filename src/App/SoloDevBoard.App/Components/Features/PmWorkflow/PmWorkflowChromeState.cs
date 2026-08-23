@@ -3,7 +3,7 @@ using SoloDevBoard.Application.Services.Repositories;
 
 namespace SoloDevBoard.App.Components.Features.PmWorkflow;
 
-/// <summary>Shared PM Workflow chrome state cascaded to tab pages.</summary>
+/// <summary>Shared Planning chrome state cascaded to tab pages.</summary>
 public sealed class PmWorkflowChromeState
 {
     /// <summary>Gets or sets the effective PM settings.</summary>

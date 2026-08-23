@@ -2,15 +2,15 @@
 @using MudBlazor
 
 <MudStack Spacing="3" data-testid="pm-workflow-shell">
-    <MudText Typo="Typo.h4">PM Workflow</MudText>
+    <MudText Typo="Typo.h4">Planning</MudText>
 
     @if (ChromeState.IsLoading)
     {
-        <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="Loading PM Workflow" />
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="Loading Planning" />
     }
     else if (ChromeState.IsRefreshing)
     {
-        <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="Refreshing PM Workflow" />
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="Refreshing Planning" />
     }
 
     @if (!string.IsNullOrWhiteSpace(ChromeState.LoadErrorMessage))
@@ -62,7 +62,7 @@
                         · Refreshed @FormatLastRefreshed(ChromeState.LastRefreshedAtUtc)
                     </MudText>
                     <MudIconButton Icon="@Icons.Material.Filled.Refresh"
-                                   aria-label="Refresh PM Workflow data"
+                                   aria-label="Refresh Planning data"
                                    Disabled="ChromeState.IsLoading || ChromeState.IsRefreshing"
                                    OnClick="RefreshAsync"
                                    data-testid="pm-workflow-refresh-button" />
@@ -76,7 +76,7 @@
                      data-testid="pm-workflow-tab-strip">
                 <MudTabPanel Text="Daily Focus" />
                 <MudTabPanel Text="Backlog" />
-                <MudTabPanel Text="Planning" />
+                <MudTabPanel Text="Iteration" />
                 <MudTabPanel Text="Repos" />
             </MudTabs>
         </MudStack>
