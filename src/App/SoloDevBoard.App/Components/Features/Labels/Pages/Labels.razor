@@ -67,7 +67,7 @@
                         </MudButton>
                     </MudStack>
 
-                    @if (IsLabelsTabBusy)
+                    @if (isBulkDeletingLabels)
                     {
                         <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="@BulkDeleteProgressAriaLabel" data-testid="bulk-delete-progress-indicator" />
                         <MudText Typo="Typo.body2" aria-live="polite" role="status">@BulkDeleteProgressMessage</MudText>

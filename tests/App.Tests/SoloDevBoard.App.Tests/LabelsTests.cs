@@ -998,6 +998,51 @@ public sealed class LabelsTests
     }
 
     [Fact]
+    public async Task Labels_BulkDelete_WhenAwaitingConfirmation_DoesNotShowProgressIndicator()
+    {
+        // Arrange
+        var repoA = CreateRepository("owner", "repo-a");
+        var dialogResultTask = new TaskCompletionSource<DialogResult?>();
+        var dialogService = Substitute.For<IDialogService>();
+        var dialogReference = Substitute.For<IDialogReference>();
+        dialogReference.Result.Returns(dialogResultTask.Task);
+        dialogService
+            .ShowAsync<LabelBulkDeleteConfirmDialog>(Arg.Any<string>(), Arg.Any<DialogParameters>(), Arg.Any<DialogOptions>())
+            .Returns(dialogReference);
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
+
+        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
+                new LabelDto("type/story", "1d76db", "Story label", "owner/repo-a"),
+            ]);
+
+        await using var ctx = CreateContext(dialogService);
+
+        // Act
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
+
+        await SelectRepositoriesAsync(cut, repoA);
+        cut.Find("[data-testid='load-labels-button']").Click();
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='labels-grid']")));
+
+        var selectedRow = new Labels.LabelRow("type/story", "1d76db", "Story label", ["owner/repo-a"], []);
+        var grid = cut.FindComponent<MudDataGrid<Labels.LabelRow>>();
+        await cut.InvokeAsync(() => grid.Instance.SelectedItemsChanged.InvokeAsync(new HashSet<Labels.LabelRow> { selectedRow }));
+
+        cut.Find("[data-testid='bulk-delete-labels-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Empty(cut.FindAll("[data-testid='bulk-delete-progress-indicator']"));
+            Assert.True(cut.Find("[data-testid='bulk-delete-labels-button']").HasAttribute("disabled"));
+        });
+
+        await cut.InvokeAsync(() => dialogResultTask.SetResult(DialogResult.Cancel()));
+    }
+
+    [Fact]
     public async Task Labels_BulkDelete_WhenCancelled_DoesNotCallService()
     {
         // Arrange
