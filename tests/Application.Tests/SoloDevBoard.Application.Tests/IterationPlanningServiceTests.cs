@@ -37,6 +37,7 @@ public sealed class IterationPlanningServiceTests
             cancellationToken);
 
         Assert.True(result.AddedBoardCard);
+        Assert.Equal("PVTI_new", result.ProjectItemId);
         Assert.Equal(3, result.FocusOrderAssigned);
         Assert.False(result.FocusOrderSkipped);
 
@@ -79,6 +80,7 @@ public sealed class IterationPlanningServiceTests
             cancellationToken);
 
         Assert.False(result.AddedBoardCard);
+        Assert.Equal("PVTI_existing", result.ProjectItemId);
         Assert.Equal(3, result.FocusOrderAssigned);
         Assert.False(result.FocusOrderSkipped);
 
@@ -123,6 +125,7 @@ public sealed class IterationPlanningServiceTests
             cancellationToken);
 
         Assert.True(result.AddedBoardCard);
+        Assert.Equal("PVTI_feature", result.ProjectItemId);
         Assert.Null(result.FocusOrderAssigned);
         Assert.True(result.FocusOrderSkipped);
 

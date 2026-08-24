@@ -312,13 +312,8 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
                 Severity.Success,
                 configure: config => config.VisibleStateDuration = 5000);
 
-            ChromeCoordinator.ClearDailyFocusBoardState();
-            ChromeCoordinator.ClearDailyFocusRecommendations();
-            ChromeCoordinator.ClearBacklogReview();
-            ChromeCoordinator.ClearIterationPlanning();
+            ApplyAddToUpNextLocally(candidate, result);
             ChromeState.MarkDataChanged();
-
-            await LoadPlanningViewAsync(boardId, forceReload: true).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -524,6 +519,55 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
             selectedMilestoneTitle = null;
             milestoneOptions = [];
         }
+
+        ChromeCoordinator.SetIterationPlanning(boardId, planningView, null, isLoading: false);
+    }
+
+    private void ApplyAddToUpNextLocally(
+        IterationPlanningCandidateDto candidate,
+        IterationPlanningAddToUpNextResultDto result)
+    {
+        if (planningView is null || ChromeState?.Settings.PlanningBoardNodeId is not { } boardId)
+        {
+            return;
+        }
+
+        var candidateKey = BuildCandidateKey(candidate);
+        var newUpNextItem = new IterationPlanningUpNextItemDto(
+            result.ProjectItemId,
+            candidate.ItemType,
+            candidate.Number,
+            candidate.Title,
+            candidate.HtmlUrl,
+            candidate.RepositoryFullName,
+            result.FocusOrderAssigned,
+            candidate.Labels);
+
+        var upNextItems = planningView.UpNextItems
+            .Append(newUpNextItem)
+            .OrderBy(static item => item.FocusOrder ?? double.MaxValue)
+            .ThenBy(static item => item.Title, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var candidates = planningView.Candidates
+            .Where(item => !BuildCandidateKey(item).Equals(candidateKey, StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+
+        var activeLoad = planningView.ActiveLoad + 1;
+        var nextStoryFocusOrder = planningView.NextStoryFocusOrder;
+        if (planningView.HasFocusOrderField && result.FocusOrderAssigned.HasValue)
+        {
+            nextStoryFocusOrder = result.FocusOrderAssigned.Value + 1;
+        }
+
+        planningView = planningView with
+        {
+            UpNextItems = upNextItems,
+            Candidates = candidates,
+            ActiveLoad = activeLoad,
+            IsAtOrOverCapacity = activeLoad >= planningView.Capacity,
+            NextStoryFocusOrder = nextStoryFocusOrder,
+        };
 
         ChromeCoordinator.SetIterationPlanning(boardId, planningView, null, isLoading: false);
     }

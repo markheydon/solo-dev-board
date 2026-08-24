@@ -241,7 +241,7 @@ public sealed class PmWorkflowPlanningTests
             Arg.Any<IReadOnlyList<string>>(),
             3,
             Arg.Any<CancellationToken>()).Returns(
-            new IterationPlanningAddToUpNextResultDto(AddedBoardCard: false, FocusOrderAssigned: 2, FocusOrderSkipped: false));
+            new IterationPlanningAddToUpNextResultDto(AddedBoardCard: false, ProjectItemId: "PVTI_candidate", FocusOrderAssigned: 2, FocusOrderSkipped: false));
 
         await using var ctx = CreateContext(dialogService);
         var cut = ctx.RenderPmWorkflowPage<PmWorkflowPlanning>();
@@ -487,12 +487,50 @@ public sealed class PmWorkflowPlanningTests
     }
 
     [Fact]
+    public async Task PmWorkflowPlanning_WhenAddToUpNextSucceeds_UpdatesLocallyWithoutFullReload()
+    {
+        ConfigureDefaults();
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
+            CreatePlanningViewWithCandidate());
+        _planningService.AddToUpNextAsync(
+            "PVT_board",
+            PmWorkItemTypeDto.Issue,
+            "owner/repo-a",
+            50,
+            Arg.Any<IReadOnlyList<string>>(),
+            3,
+            Arg.Any<CancellationToken>()).Returns(
+            new IterationPlanningAddToUpNextResultDto(
+                AddedBoardCard: false,
+                ProjectItemId: "PVTI_candidate",
+                FocusOrderAssigned: 2,
+                FocusOrderSkipped: false));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowPlanning>();
+
+        cut.WaitForAssertion(() => Assert.Contains("data-testid=\"pm-workflow-planning-add-button\"", cut.Markup));
+
+        await cut.InvokeAsync(() => cut.Find("[data-testid='pm-workflow-planning-add-button']").Click());
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("data-testid=\"pm-workflow-planning-up-next-table\"", cut.Markup);
+            Assert.Contains("owner/repo-a#50", cut.Markup);
+            Assert.Contains("data-testid=\"pm-workflow-planning-focus-order-chip\"", cut.Markup);
+            Assert.Contains(">2<", cut.Markup);
+            Assert.Contains("2 / 8", cut.Markup);
+        });
+
+        await _planningService.Received(1).GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task PmWorkflowPlanning_WhenAddToUpNextSucceeds_ShowsSuccessSnackbar()
     {
         ConfigureDefaults();
         var initialView = CreatePlanningViewWithCandidate();
         _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
-            initialView,
             initialView);
         _planningService.AddToUpNextAsync(
             "PVT_board",
@@ -504,6 +542,7 @@ public sealed class PmWorkflowPlanningTests
             Arg.Any<CancellationToken>()).Returns(
             new IterationPlanningAddToUpNextResultDto(
                 AddedBoardCard: false,
+                ProjectItemId: "PVTI_candidate",
                 FocusOrderAssigned: 2,
                 FocusOrderSkipped: false));
 

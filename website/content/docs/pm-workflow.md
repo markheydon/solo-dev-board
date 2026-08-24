@@ -234,7 +234,7 @@ Choosing **Add to Up Next**:
 3. Sets board Status to **Up Next** (matched by option name, case-insensitive).
 4. Assigns the next sequential Focus Order when the item has a `type/story`, `type/enabler`, or `type/test` label and the board exposes a Focus Order field. Feature and Epic cards skip Focus Order; story, enabler, and test cards still move to Up Next when the field is unavailable.
 
-A success snackbar confirms the add. Failure snackbars cover GitHub API errors and missing board fields. If some repository catalogues fail but others succeed, a warning lists the failed repositories while candidates from the rest still load.
+A success snackbar confirms the add and the page updates immediately: the item moves from the candidate picker into **This batch (Up Next)**, capacity increments, and Focus Order chips refresh when assigned. Use **Refresh** when you want to reload the full view from GitHub. Failure snackbars cover GitHub API errors and missing board fields. If some repository catalogues fail but others succeed, a warning lists the failed repositories while candidates from the rest still load.
 
 ---
 

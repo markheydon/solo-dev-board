@@ -165,6 +165,7 @@ public sealed class IterationPlanningService : IIterationPlanningService
 
         return new IterationPlanningAddToUpNextResultDto(
             addedBoardCard,
+            projectItemId,
             focusOrderAssigned,
             focusOrderSkipped);
     }
