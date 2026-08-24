@@ -659,7 +659,7 @@ public sealed class MigrationService : IMigrationService
             static (left, right) => HasSameLabelValues(left, right),
             source => MapToLabelDto(source, targetRepositoryFullName));
 
-        return new LabelSyncRepositoryPreviewDto(targetRepositoryFullName, toCreate, toUpdate, toDelete, skipped);
+        return new LabelSyncRepositoryPreviewDto(targetRepositoryFullName, toCreate, toUpdate, toDelete, skipped, []);
     }
 
     private static MilestoneSyncRepositoryPreviewDto BuildMilestonePreview(

@@ -96,7 +96,7 @@ public sealed class LabelService : ILabelManagerService
     }
 
     /// <inheritdoc/>
-    public async Task<LabelSyncPreviewDto> SyncLabelsAsync(string sourceOwner, string sourceRepo, string targetOwner, string targetRepo, bool applyChanges = false, CancellationToken cancellationToken = default)
+    public async Task<LabelSyncPreviewDto> SyncLabelsAsync(string sourceOwner, string sourceRepo, string targetOwner, string targetRepo, bool applyChanges = false, bool keepAreaLabels = true, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceOwner);
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceRepo);
@@ -106,7 +106,7 @@ public sealed class LabelService : ILabelManagerService
         var sourceLabels = await _labelRepository.GetLabelsAsync(sourceOwner, sourceRepo, cancellationToken).ConfigureAwait(false);
         var targetLabels = await _labelRepository.GetLabelsAsync(targetOwner, targetRepo, cancellationToken).ConfigureAwait(false);
 
-        var preview = BuildSyncPreview(targetOwner, targetRepo, sourceLabels, targetLabels);
+        var preview = BuildSyncPreview(targetOwner, targetRepo, sourceLabels, targetLabels, keepAreaLabels);
 
         if (applyChanges)
         {
@@ -117,7 +117,7 @@ public sealed class LabelService : ILabelManagerService
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<LabelSyncRepositoryPreviewDto>> PreviewLabelSynchronisationAsync(string sourceRepositoryFullName, IReadOnlyList<string> targetRepositoryFullNames, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<LabelSyncRepositoryPreviewDto>> PreviewLabelSynchronisationAsync(string sourceRepositoryFullName, IReadOnlyList<string> targetRepositoryFullNames, bool keepAreaLabels = true, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceRepositoryFullName);
         var source = SplitRepositoryFullName(sourceRepositoryFullName);
@@ -133,13 +133,14 @@ public sealed class LabelService : ILabelManagerService
             var target = SplitRepositoryFullName(targetRepositoryFullName);
             var targetLabels = await _labelRepository.GetLabelsAsync(target.Owner, target.Name, cancellationToken).ConfigureAwait(false);
 
-            var preview = BuildSyncPreview(target.Owner, target.Name, sourceLabels, targetLabels);
+            var preview = BuildSyncPreview(target.Owner, target.Name, sourceLabels, targetLabels, keepAreaLabels);
             previews.Add(new LabelSyncRepositoryPreviewDto(
                 targetRepositoryFullName,
                 preview.ToAdd,
                 preview.ToUpdate,
                 preview.ToDelete,
-                preview.Skipped));
+                preview.Skipped,
+                preview.KeptAreaLabels));
         }
 
         return previews
@@ -148,7 +149,7 @@ public sealed class LabelService : ILabelManagerService
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<LabelSyncRepositoryResultDto>> ApplyLabelSynchronisationAsync(string sourceRepositoryFullName, IReadOnlyList<string> targetRepositoryFullNames, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<LabelSyncRepositoryResultDto>> ApplyLabelSynchronisationAsync(string sourceRepositoryFullName, IReadOnlyList<string> targetRepositoryFullNames, bool keepAreaLabels = true, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceRepositoryFullName);
         var source = SplitRepositoryFullName(sourceRepositoryFullName);
@@ -169,7 +170,7 @@ public sealed class LabelService : ILabelManagerService
             try
             {
                 var targetLabels = await _labelRepository.GetLabelsAsync(target.Owner, target.Name, cancellationToken).ConfigureAwait(false);
-                var preview = BuildSyncPreview(target.Owner, target.Name, sourceLabels, targetLabels);
+                var preview = BuildSyncPreview(target.Owner, target.Name, sourceLabels, targetLabels, keepAreaLabels);
 
                 foreach (var label in preview.ToAdd)
                 {
@@ -232,7 +233,7 @@ public sealed class LabelService : ILabelManagerService
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto>> PreviewRecommendedTaxonomyAsync(string strategyId, IReadOnlyList<string> repositories, bool removeLabelsOutsideTaxonomy = false, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto>> PreviewRecommendedTaxonomyAsync(string strategyId, IReadOnlyList<string> repositories, bool removeLabelsOutsideTaxonomy = false, bool keepAreaLabels = true, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(strategyId);
         var normalisedRepositories = NormaliseRepositories(repositories);
@@ -245,7 +246,7 @@ public sealed class LabelService : ILabelManagerService
             cancellationToken.ThrowIfCancellationRequested();
             var repository = SplitRepositoryFullName(repositoryFullName);
             var existing = await _labelRepository.GetLabelsAsync(repository.Owner, repository.Name, cancellationToken).ConfigureAwait(false);
-            previews.Add(BuildRepositoryPreview(repositoryFullName, strategyLabels, existing, removeLabelsOutsideTaxonomy));
+            previews.Add(BuildRepositoryPreview(repositoryFullName, strategyLabels, existing, removeLabelsOutsideTaxonomy, keepAreaLabels));
         }
 
         return previews
@@ -254,7 +255,7 @@ public sealed class LabelService : ILabelManagerService
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<RecommendedTaxonomyRepositoryResultDto>> ApplyRecommendedTaxonomyAsync(string strategyId, IReadOnlyList<string> repositories, bool removeLabelsOutsideTaxonomy = false, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<RecommendedTaxonomyRepositoryResultDto>> ApplyRecommendedTaxonomyAsync(string strategyId, IReadOnlyList<string> repositories, bool removeLabelsOutsideTaxonomy = false, bool keepAreaLabels = true, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(strategyId);
         var normalisedRepositories = NormaliseRepositories(repositories);
@@ -275,7 +276,7 @@ public sealed class LabelService : ILabelManagerService
             {
                 var repository = SplitRepositoryFullName(repositoryFullName);
                 var existing = await _labelRepository.GetLabelsAsync(repository.Owner, repository.Name, cancellationToken).ConfigureAwait(false);
-                var preview = BuildRepositoryPreview(repositoryFullName, strategyLabels, existing, removeLabelsOutsideTaxonomy);
+                var preview = BuildRepositoryPreview(repositoryFullName, strategyLabels, existing, removeLabelsOutsideTaxonomy, keepAreaLabels);
 
                 foreach (var labelToCreate in preview.ToCreate)
                 {
@@ -365,12 +366,14 @@ public sealed class LabelService : ILabelManagerService
     /// <param name="strategyLabels">The strategy labels to compare against.</param>
     /// <param name="existingLabels">The labels currently present in the repository.</param>
     /// <param name="removeLabelsOutsideTaxonomy">When <see langword="true" />, includes labels to delete that are not in the strategy set.</param>
+    /// <param name="keepAreaLabels">When <see langword="true" /> and remove-outside is enabled, labels with the <c>area/</c> prefix are kept instead of deleted.</param>
     /// <returns>A repository preview showing create, update, delete, and skip actions.</returns>
     private static RecommendedTaxonomyRepositoryPreviewDto BuildRepositoryPreview(
         string repositoryFullName,
         IReadOnlyList<LabelDto> strategyLabels,
         IReadOnlyList<Label> existingLabels,
-        bool removeLabelsOutsideTaxonomy)
+        bool removeLabelsOutsideTaxonomy,
+        bool keepAreaLabels)
     {
         var existingByName = existingLabels.ToDictionary(label => label.Name, StringComparer.OrdinalIgnoreCase);
         var strategyByName = strategyLabels.ToDictionary(label => label.Name, StringComparer.OrdinalIgnoreCase);
@@ -395,15 +398,27 @@ public sealed class LabelService : ILabelManagerService
             .OrderBy(label => label.Name, StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
-        var toDelete = removeLabelsOutsideTaxonomy
-            ? existingLabels
-                .Where(label => !strategyByName.ContainsKey(label.Name))
+        var extraLabels = removeLabelsOutsideTaxonomy
+            ? existingLabels.Where(label => !strategyByName.ContainsKey(label.Name))
+            : [];
+
+        var keptAreaLabels = removeLabelsOutsideTaxonomy && keepAreaLabels
+            ? extraLabels
+                .Where(label => LabelTaxonomyPrefixes.IsAreaLabel(label.Name))
                 .Select(label => MapToDto(label, repositoryFullName))
                 .OrderBy(label => label.Name, StringComparer.OrdinalIgnoreCase)
                 .ToArray()
             : [];
 
-        return new RecommendedTaxonomyRepositoryPreviewDto(repositoryFullName, toCreate, toUpdate, toDelete, skipped);
+        var toDelete = removeLabelsOutsideTaxonomy
+            ? extraLabels
+                .Where(label => !keepAreaLabels || !LabelTaxonomyPrefixes.IsAreaLabel(label.Name))
+                .Select(label => MapToDto(label, repositoryFullName))
+                .OrderBy(label => label.Name, StringComparer.OrdinalIgnoreCase)
+                .ToArray()
+            : [];
+
+        return new RecommendedTaxonomyRepositoryPreviewDto(repositoryFullName, toCreate, toUpdate, toDelete, skipped, keptAreaLabels);
     }
 
     /// <summary>Maps an application label DTO to a domain label record.</summary>
@@ -424,8 +439,9 @@ public sealed class LabelService : ILabelManagerService
     /// <param name="targetRepo">The target repository name.</param>
     /// <param name="sourceLabels">The labels from the source repository.</param>
     /// <param name="targetLabels">The labels from the target repository.</param>
+    /// <param name="keepAreaLabels">When <see langword="true" />, labels with the <c>area/</c> prefix on the target are kept instead of deleted.</param>
     /// <returns>A synchronisation preview containing create, update, delete, and skip actions.</returns>
-    private static LabelSyncPreviewDto BuildSyncPreview(string targetOwner, string targetRepo, IReadOnlyList<Label> sourceLabels, IReadOnlyList<Label> targetLabels)
+    private static LabelSyncPreviewDto BuildSyncPreview(string targetOwner, string targetRepo, IReadOnlyList<Label> sourceLabels, IReadOnlyList<Label> targetLabels, bool keepAreaLabels)
     {
         var sourceByName = sourceLabels.ToDictionary(label => label.Name, StringComparer.OrdinalIgnoreCase);
         var targetByName = targetLabels.ToDictionary(label => label.Name, StringComparer.OrdinalIgnoreCase);
@@ -443,8 +459,18 @@ public sealed class LabelService : ILabelManagerService
             .OrderBy(label => label.Name, StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
-        var toDelete = targetLabels
-            .Where(target => !sourceByName.ContainsKey(target.Name))
+        var extraLabels = targetLabels.Where(target => !sourceByName.ContainsKey(target.Name));
+
+        var keptAreaLabels = keepAreaLabels
+            ? extraLabels
+                .Where(target => LabelTaxonomyPrefixes.IsAreaLabel(target.Name))
+                .Select(target => MapToDto(target, repositoryFullName))
+                .OrderBy(label => label.Name, StringComparer.OrdinalIgnoreCase)
+                .ToArray()
+            : [];
+
+        var toDelete = extraLabels
+            .Where(target => !keepAreaLabels || !LabelTaxonomyPrefixes.IsAreaLabel(target.Name))
             .Select(target => MapToDto(target, repositoryFullName))
             .OrderBy(label => label.Name, StringComparer.OrdinalIgnoreCase)
             .ToArray();
@@ -455,7 +481,7 @@ public sealed class LabelService : ILabelManagerService
             .OrderBy(label => label.Name, StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
-        return new LabelSyncPreviewDto(toAdd, toUpdate, toDelete, skipped);
+        return new LabelSyncPreviewDto(toAdd, toUpdate, toDelete, skipped, keptAreaLabels);
     }
 
     /// <summary>Applies a precomputed synchronisation preview to a target repository.</summary>

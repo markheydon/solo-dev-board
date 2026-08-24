@@ -53,6 +53,7 @@ public partial class Labels : ComponentBase
     private IReadOnlyList<RecommendedTaxonomyRepositoryResultDto> recommendedApplyResults = [];
     private bool showRecommendedPreview;
     private bool removeLabelsOutsideTaxonomy;
+    private bool keepAreaLabels = true;
     private bool isPreviewingRecommendedTaxonomy;
     private bool isApplyingRecommendedTaxonomy;
     private string? taxonomyOperationMessage;
@@ -125,6 +126,20 @@ public partial class Labels : ComponentBase
         showRecommendedPreview = false;
         recommendedApplyResults = [];
         taxonomyOperationMessage = null;
+        return Task.CompletedTask;
+    }
+
+    private Task OnKeepAreaLabelsChanged(bool value)
+    {
+        keepAreaLabels = value;
+        recommendedPreview = [];
+        showRecommendedPreview = false;
+        recommendedApplyResults = [];
+        syncPreviewResults = [];
+        showSyncPreview = false;
+        syncApplyResults = [];
+        taxonomyOperationMessage = null;
+        syncOperationMessage = null;
         return Task.CompletedTask;
     }
 
@@ -255,7 +270,7 @@ public partial class Labels : ComponentBase
         try
         {
             recommendedApplyResults = [];
-            recommendedPreview = await LabelManagerService.PreviewRecommendedTaxonomyAsync(selectedStrategyId, selectedFullNames, removeLabelsOutsideTaxonomy);
+            recommendedPreview = await LabelManagerService.PreviewRecommendedTaxonomyAsync(selectedStrategyId, selectedFullNames, removeLabelsOutsideTaxonomy, keepAreaLabels);
             showRecommendedPreview = true;
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
@@ -321,7 +336,7 @@ public partial class Labels : ComponentBase
 
         try
         {
-            recommendedApplyResults = await LabelManagerService.ApplyRecommendedTaxonomyAsync(selectedStrategyId, selectedFullNames, removeLabelsOutsideTaxonomy);
+            recommendedApplyResults = await LabelManagerService.ApplyRecommendedTaxonomyAsync(selectedStrategyId, selectedFullNames, removeLabelsOutsideTaxonomy, keepAreaLabels);
             showRecommendedPreview = false;
             recommendedPreview = [];
 
@@ -465,7 +480,7 @@ public partial class Labels : ComponentBase
         try
         {
             syncApplyResults = [];
-            syncPreviewResults = await LabelManagerService.PreviewLabelSynchronisationAsync(syncSourceRepositoryFullName, targets);
+            syncPreviewResults = await LabelManagerService.PreviewLabelSynchronisationAsync(syncSourceRepositoryFullName, targets, keepAreaLabels);
             showSyncPreview = true;
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
@@ -536,7 +551,7 @@ public partial class Labels : ComponentBase
 
         try
         {
-            syncApplyResults = await LabelManagerService.ApplyLabelSynchronisationAsync(syncSourceRepositoryFullName, targets);
+            syncApplyResults = await LabelManagerService.ApplyLabelSynchronisationAsync(syncSourceRepositoryFullName, targets, keepAreaLabels);
             showSyncPreview = false;
             syncPreviewResults = [];
 
@@ -964,7 +979,7 @@ public partial class Labels : ComponentBase
         && !string.IsNullOrWhiteSpace(selectedStrategyId);
 
     private bool CanApplyRecommendedTaxonomy => showRecommendedPreview
-        && recommendedPreview.Count > 0
+        && recommendedPreview.Any(HasRecommendedTaxonomyActions)
         && !isApplyingRecommendedTaxonomy;
 
     private bool CanPreviewLabelSynchronisation => !ShowLoadingState
@@ -973,12 +988,30 @@ public partial class Labels : ComponentBase
         && syncTargetRepositoryFullNames.Count > 0;
 
     private bool CanApplyLabelSynchronisation => showSyncPreview
-        && syncPreviewResults.Count > 0
+        && syncPreviewResults.Any(HasLabelSynchronisationActions)
         && !isApplyingSync;
+
+    private static bool HasRecommendedTaxonomyActions(RecommendedTaxonomyRepositoryPreviewDto preview)
+        => preview.ToCreate.Count > 0
+            || preview.ToUpdate.Count > 0
+            || preview.ToDelete.Count > 0;
+
+    private static bool HasLabelSynchronisationActions(LabelSyncRepositoryPreviewDto preview)
+        => preview.ToCreate.Count > 0
+            || preview.ToUpdate.Count > 0
+            || preview.ToDelete.Count > 0;
 
     private string SelectedStrategyDescription
         => recommendedStrategies.FirstOrDefault(strategy => strategy.Id.Equals(selectedStrategyId, StringComparison.OrdinalIgnoreCase))?.Description
             ?? string.Empty;
+
+    private static string FormatPreviewActionCounts(int createCount, int updateCount, int deleteCount, int skipCount)
+        => $"Create: {createCount}, Update: {updateCount}, Delete: {deleteCount}, Skip: {skipCount}";
+
+    private static string FormatKeptAreaLabelsCaption(int keptAreaLabelCount)
+        => keptAreaLabelCount == 1
+            ? "1 area/* label is excluded from delete and will be left unchanged."
+            : $"{keptAreaLabelCount} area/* labels are excluded from delete and will be left unchanged.";
 
     private bool ShowLabelFilter => hasLoadedLabels && rows.Count > 0 && !ShowLoadingState && string.IsNullOrWhiteSpace(errorMessage);
 

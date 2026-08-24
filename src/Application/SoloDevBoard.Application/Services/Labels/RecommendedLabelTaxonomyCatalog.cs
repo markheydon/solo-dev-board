@@ -33,15 +33,6 @@ public static class RecommendedLabelTaxonomyCatalog
         new("status/in-review", "1d76db", "Pull request open; awaiting code review", string.Empty),
         new("status/done", "cfd3d7", "Completed and closed", string.Empty),
 
-        new("area/dashboard", "bfd4f2", "Audit Dashboard feature", string.Empty),
-        new("area/migration", "d4c5f9", "One-Click Migration feature", string.Empty),
-        new("area/labels", "c5def5", "Label Manager feature", string.Empty),
-        new("area/board-rules", "fef2c0", "Board Rules Visualiser feature", string.Empty),
-        new("area/triage", "f9d0c4", "Triage UI feature", string.Empty),
-        new("area/workflows", "c5def5", "Workflow Templates feature", string.Empty),
-        new("area/infrastructure", "e4e669", "Azure infrastructure, CI/CD, deployment", string.Empty),
-        new("area/docs", "0052cc", "Documentation, user guides, ADRs, planning docs", string.Empty),
-
         new("size/xs", "dde8c9", "Trivial - less than 1 hour (e.g. typo fix, config change)", string.Empty),
         new("size/s", "c5def5", "Small - less than half a day", string.Empty),
         new("size/m", "fef2c0", "Medium - half a day to one day", string.Empty),
@@ -66,7 +57,7 @@ public static class RecommendedLabelTaxonomyCatalog
     /// <summary>Gets the available built-in recommended strategies.</summary>
     public static IReadOnlyList<RecommendedLabelStrategyDto> Strategies { get; } =
     [
-        new(SoloDevBoardStrategyId, "SoloDevBoard", "The SoloDevBoard canonical taxonomy covering type, priority, status, area, and size labels."),
+        new(SoloDevBoardStrategyId, "SoloDevBoard", "The SoloDevBoard canonical taxonomy covering type, priority, status, and size labels."),
         new(GitHubDefaultStrategyId, "GitHub default", "GitHub's default label set for new repositories."),
     ];
 

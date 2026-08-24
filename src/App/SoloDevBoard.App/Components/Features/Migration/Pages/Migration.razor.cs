@@ -662,7 +662,7 @@ public partial class Migration : ComponentBase
 
     private LabelSyncRepositoryPreviewDto GetLabelPreview(string repositoryFullName)
         => previewResult.LabelPreviews.FirstOrDefault(item => item.RepositoryFullName.Equals(repositoryFullName, StringComparison.OrdinalIgnoreCase))
-            ?? new LabelSyncRepositoryPreviewDto(repositoryFullName, [], [], [], []);
+            ?? new LabelSyncRepositoryPreviewDto(repositoryFullName, [], [], [], [], []);
 
     private MilestoneSyncRepositoryPreviewDto GetMilestonePreview(string repositoryFullName)
         => previewResult.MilestonePreviews.FirstOrDefault(item => item.RepositoryFullName.Equals(repositoryFullName, StringComparison.OrdinalIgnoreCase))

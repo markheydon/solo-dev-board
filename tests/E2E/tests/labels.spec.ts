@@ -24,8 +24,10 @@ test.describe('Label Manager shell', () => {
     await page.getByRole('tab', { name: 'Recommended taxonomy' }).click();
     await expect(page.getByRole('heading', { name: 'Apply recommended taxonomy' })).toBeVisible();
     await expect(page.getByTestId('preview-taxonomy-button')).toHaveText('Preview');
+    await expect(page.getByTestId('remove-labels-outside-taxonomy-checkbox')).toBeVisible();
 
     await page.getByRole('tab', { name: 'Synchronise' }).click();
     await expect(page.getByRole('heading', { name: 'Synchronise labels' })).toBeVisible();
+    await expect(page.getByTestId('sync-keep-area-labels-checkbox')).toBeVisible();
   });
 });

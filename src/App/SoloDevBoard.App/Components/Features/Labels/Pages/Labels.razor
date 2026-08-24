@@ -168,6 +168,17 @@
                                      data-testid="remove-labels-outside-taxonomy-checkbox" />
                         <MudText Typo="Typo.caption">When enabled, deletes every label not in the selected strategy, including GitHub defaults and automation labels such as <code>dependencies</code>.</MudText>
 
+                        @if (removeLabelsOutsideTaxonomy)
+                        {
+                            <MudCheckBox T="bool"
+                                         Value="keepAreaLabels"
+                                         ValueChanged="OnKeepAreaLabelsChanged"
+                                         Label="Keep area/* labels"
+                                         Disabled="@(ShowLoadingState || IsRecommendedTaxonomyBusy || !selectedRepositories.Any() || recommendedStrategies.Count == 0)"
+                                         data-testid="keep-area-labels-checkbox" />
+                            <MudText Typo="Typo.caption">Those labels will not be deleted as outside the taxonomy.</MudText>
+                        }
+
                         <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
                             <MudButton Variant="Variant.Outlined"
                                        Color="Color.Secondary"
@@ -230,7 +241,7 @@
                                 {
                                     <MudPaper Class="pa-3" Outlined="true">
                                         <MudText Typo="Typo.subtitle1">@preview.RepositoryFullName</MudText>
-                                        <MudText Typo="Typo.body2">Create: @preview.ToCreate.Count, Update: @preview.ToUpdate.Count, Delete: @preview.ToDelete.Count, Skip: @preview.Skipped.Count</MudText>
+                                        <MudText Typo="Typo.body2">@FormatPreviewActionCounts(preview.ToCreate.Count, preview.ToUpdate.Count, preview.ToDelete.Count, preview.Skipped.Count)</MudText>
 
                                         @if (preview.ToCreate.Count > 0)
                                         {
@@ -245,6 +256,11 @@
                                         @if (preview.ToDelete.Count > 0)
                                         {
                                             <LabelPreviewTable Heading="Labels to delete" Labels="preview.ToDelete" />
+                                        }
+
+                                        @if (keepAreaLabels && preview.KeptAreaLabels.Count > 0)
+                                        {
+                                            <MudText Typo="Typo.caption" data-testid="kept-area-labels-caption">@FormatKeptAreaLabelsCaption(preview.KeptAreaLabels.Count)</MudText>
                                         }
                                     </MudPaper>
                                 }
@@ -326,6 +342,14 @@
                             }
                         </MudStack>
 
+                        <MudCheckBox T="bool"
+                                     Value="keepAreaLabels"
+                                     ValueChanged="OnKeepAreaLabelsChanged"
+                                     Label="Keep area/* labels"
+                                     Disabled="@(ShowLoadingState || IsSynchronisationBusy || selectedRepositories.Count < 2)"
+                                     data-testid="sync-keep-area-labels-checkbox" />
+                        <MudText Typo="Typo.caption">Those labels will not be deleted when synchronising.</MudText>
+
                         <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
                             <MudButton Variant="Variant.Outlined"
                                        Color="Color.Secondary"
@@ -381,7 +405,7 @@
                                 {
                                     <MudPaper Class="pa-3" Outlined="true">
                                         <MudText Typo="Typo.subtitle1">@preview.RepositoryFullName</MudText>
-                                        <MudText Typo="Typo.body2">Create: @preview.ToCreate.Count, Update: @preview.ToUpdate.Count, Delete: @preview.ToDelete.Count, Skip: @preview.Skipped.Count</MudText>
+                                        <MudText Typo="Typo.body2">@FormatPreviewActionCounts(preview.ToCreate.Count, preview.ToUpdate.Count, preview.ToDelete.Count, preview.Skipped.Count)</MudText>
 
                                         @if (preview.ToCreate.Count > 0)
                                         {
@@ -396,6 +420,11 @@
                                         @if (preview.ToDelete.Count > 0)
                                         {
                                             <LabelPreviewTable Heading="Labels to delete" Labels="preview.ToDelete" />
+                                        }
+
+                                        @if (keepAreaLabels && preview.KeptAreaLabels.Count > 0)
+                                        {
+                                            <MudText Typo="Typo.caption" data-testid="sync-kept-area-labels-caption">@FormatKeptAreaLabelsCaption(preview.KeptAreaLabels.Count)</MudText>
                                         }
 
                                         @if (preview.Skipped.Count > 0)
