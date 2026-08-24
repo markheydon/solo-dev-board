@@ -381,6 +381,25 @@ public sealed class PlanningIterationTests
     }
 
     [Fact]
+    public async Task PlanningIteration_WhenUnderCapacityWithoutStall_DoesNotShowStallGateAlertAndEnablesAdd()
+    {
+        ConfigureDefaults();
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
+            CreatePlanningViewWithCandidate());
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPlanningPage<PlanningIteration>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.DoesNotContain("data-testid=\"planning-planning-stall-gate-alert\"", cut.Markup);
+            Assert.DoesNotContain("data-testid=\"planning-planning-candidate-pause-line\"", cut.Markup);
+            var addButton = cut.Find("[data-testid=\"planning-planning-add-button\"]");
+            Assert.False(addButton.HasAttribute("disabled"));
+        });
+    }
+
+    [Fact]
     public async Task PlanningIteration_WhenAtCapacityWithoutStall_ShowsSoftCapacityStatusInUpNext()
     {
         ConfigureDefaults();
