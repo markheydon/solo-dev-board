@@ -1141,7 +1141,7 @@ public sealed class LabelsTests
         bulkDeleteButton.Click();
         bulkDeleteButton.Click();
 
-                cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='bulk-delete-progress-indicator']")));
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='bulk-delete-progress-indicator']")));
 
         await cut.InvokeAsync(() => deleteTask.SetResult(new LabelBulkDeleteResultDto(1, 0, [])));
 
