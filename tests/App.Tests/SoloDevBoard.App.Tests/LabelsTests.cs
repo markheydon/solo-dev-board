@@ -683,6 +683,49 @@ public sealed class LabelsTests
     }
 
     [Fact]
+    public async Task Labels_PreviewRecommendedTaxonomy_WhenKeepAreaLabelsEnabled_ShowsCaptionNotKeptTable()
+    {
+        // Arrange
+        var repoA = CreateRepository("owner", "repo-a");
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
+
+        _labelManagerService.PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), true, true, Arg.Any<CancellationToken>()).Returns([
+                new RecommendedTaxonomyRepositoryPreviewDto(
+                    "owner/repo-a",
+                    [],
+                    [],
+                    [],
+                    [new LabelDto("type/story", "1d76db", "Story", "owner/repo-a")],
+                    [
+                        new LabelDto("area/docs", "0052cc", "Documentation", "owner/repo-a"),
+                        new LabelDto("area/labels", "c5def5", "Label Manager feature", "owner/repo-a"),
+                    ]),
+            ]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
+        await SelectRepositoriesAsync(cut, repoA);
+        await ActivateTabAsync(cut, "Recommended taxonomy");
+
+        var checkbox = cut.FindComponent<MudCheckBox<bool>>();
+        await cut.InvokeAsync(() => checkbox.Instance.ValueChanged.InvokeAsync(true));
+        cut.Find("[data-testid='preview-taxonomy-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Delete: 0", cut.Markup);
+            Assert.Contains("2 area/* labels are excluded from delete and will be left unchanged.", cut.Markup);
+            Assert.DoesNotContain("Kept (area prefix)", cut.Markup);
+            Assert.DoesNotContain("area/docs", cut.Markup);
+        });
+    }
+
+    [Fact]
     public async Task Labels_PreviewRecommendedTaxonomy_WhenRemoveOutsideTaxonomyDisabled_PassesFalseToService()
     {
         // Arrange

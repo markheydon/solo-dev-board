@@ -241,7 +241,7 @@
                                 {
                                     <MudPaper Class="pa-3" Outlined="true">
                                         <MudText Typo="Typo.subtitle1">@preview.RepositoryFullName</MudText>
-                                        <MudText Typo="Typo.body2">Create: @preview.ToCreate.Count, Update: @preview.ToUpdate.Count, Delete: @preview.ToDelete.Count, Skip: @preview.Skipped.Count, Keep: @preview.KeptAreaLabels.Count</MudText>
+                                        <MudText Typo="Typo.body2">@FormatPreviewActionCounts(preview.ToCreate.Count, preview.ToUpdate.Count, preview.ToDelete.Count, preview.Skipped.Count)</MudText>
 
                                         @if (preview.ToCreate.Count > 0)
                                         {
@@ -258,9 +258,9 @@
                                             <LabelPreviewTable Heading="Labels to delete" Labels="preview.ToDelete" />
                                         }
 
-                                        @if (preview.KeptAreaLabels.Count > 0)
+                                        @if (keepAreaLabels && preview.KeptAreaLabels.Count > 0)
                                         {
-                                            <LabelPreviewTable Heading="Kept (area prefix)" Labels="preview.KeptAreaLabels" />
+                                            <MudText Typo="Typo.caption" data-testid="kept-area-labels-caption">@FormatKeptAreaLabelsCaption(preview.KeptAreaLabels.Count)</MudText>
                                         }
                                     </MudPaper>
                                 }
@@ -405,7 +405,7 @@
                                 {
                                     <MudPaper Class="pa-3" Outlined="true">
                                         <MudText Typo="Typo.subtitle1">@preview.RepositoryFullName</MudText>
-                                        <MudText Typo="Typo.body2">Create: @preview.ToCreate.Count, Update: @preview.ToUpdate.Count, Delete: @preview.ToDelete.Count, Skip: @preview.Skipped.Count, Keep: @preview.KeptAreaLabels.Count</MudText>
+                                        <MudText Typo="Typo.body2">@FormatPreviewActionCounts(preview.ToCreate.Count, preview.ToUpdate.Count, preview.ToDelete.Count, preview.Skipped.Count)</MudText>
 
                                         @if (preview.ToCreate.Count > 0)
                                         {
@@ -422,9 +422,9 @@
                                             <LabelPreviewTable Heading="Labels to delete" Labels="preview.ToDelete" />
                                         }
 
-                                        @if (preview.KeptAreaLabels.Count > 0)
+                                        @if (keepAreaLabels && preview.KeptAreaLabels.Count > 0)
                                         {
-                                            <LabelPreviewTable Heading="Kept (area prefix)" Labels="preview.KeptAreaLabels" />
+                                            <MudText Typo="Typo.caption" data-testid="sync-kept-area-labels-caption">@FormatKeptAreaLabelsCaption(preview.KeptAreaLabels.Count)</MudText>
                                         }
 
                                         @if (preview.Skipped.Count > 0)

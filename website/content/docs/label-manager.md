@@ -116,8 +116,9 @@ There is no protected allow-list for other extras: GitHub defaults (`bug`, `enha
 
 When remove-outside is on:
 
-- Preview summary counts include **Delete** and **Keep** (for kept `area/*` labels when the nested option is on), alongside Create, Update, and Skip.
-- Preview lists **Labels to delete** and, when applicable, **Kept (area prefix)** for each repository.
+- Preview summary counts include **Delete**, alongside Create, Update, and Skip.
+- Preview lists **Labels to delete** for each repository.
+- When **Keep `area/*` labels** is on, excluded area labels are summarised by count only (no per-label table); they are not deleted.
 - Apply removes listed deletes after you confirm, then reports a deleted count per repository.
 - If a label cannot be deleted (for example it is still applied to open issues or pull requests), SoloDevBoard shows a clear per-label error and continues with the rest of the batch.
 
@@ -143,7 +144,7 @@ The Label Manager allows you to synchronise labels from a source repository to o
 ### Preview Before Apply
 - After selecting repositories, initiate the synchronisation preview.
 - The preview displays, for each target repository, which labels will be created, updated, deleted, or skipped.
-- Use **Keep `area/*` labels** (on by default) to retain target labels whose names start with `area/` instead of deleting them as extras. Preview lists kept names under **Kept (area prefix)**.
+- Use **Keep `area/*` labels** (on by default) to retain target labels whose names start with `area/` instead of deleting them as extras. Preview summarises how many are excluded; it does not list each name.
 - Skipped labels are those already matching the source exactly; no action is taken for these.
 
 ### Duplicate Submission Prevention
