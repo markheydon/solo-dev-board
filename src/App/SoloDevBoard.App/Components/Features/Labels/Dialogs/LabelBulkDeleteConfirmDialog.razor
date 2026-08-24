@@ -1,0 +1,39 @@
+<MudDialog data-testid="bulk-delete-confirm-dialog">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Are you sure?</MudText>
+    </TitleContent>
+
+    <DialogContent>
+        <MudText Typo="Typo.body1">Delete the selected labels from the repositories in scope.</MudText>
+
+        <MudText Typo="Typo.subtitle2" Class="mt-3">Labels to delete</MudText>
+        <MudList T="string" Dense="true" data-testid="bulk-delete-label-list">
+            @foreach (var labelName in Content.LabelNames)
+            {
+                <MudListItem T="string">@labelName</MudListItem>
+            }
+        </MudList>
+
+        <MudText Typo="Typo.subtitle2" Class="mt-3">Repositories in scope</MudText>
+        <MudList T="string" Dense="true" data-testid="bulk-delete-repository-list">
+            @foreach (var repositoryFullName in Content.RepositoryFullNames)
+            {
+                <MudListItem T="string">@repositoryFullName</MudListItem>
+            }
+        </MudList>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Text"
+                   OnClick="CancelAsync"
+                   data-testid="bulk-delete-cancel-button">
+            No
+        </MudButton>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Error"
+                   OnClick="ConfirmAsync"
+                   data-testid="bulk-delete-confirm-button">
+            Yes, delete
+        </MudButton>
+    </DialogActions>
+</MudDialog>

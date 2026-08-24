@@ -45,7 +45,7 @@
                         <MudButton Variant="Variant.Filled"
                                    Color="Color.Primary"
                                    data-testid="new-label-button"
-                                   Disabled="@(ShowLoadingState || !selectedRepositories.Any())"
+                                   Disabled="@(ShowLoadingState || IsLabelsTabBusy || !selectedRepositories.Any())"
                                    OnClick="ShowCreateDialogAsync">
                             New label
                         </MudButton>
@@ -53,11 +53,25 @@
                         <MudButton Variant="Variant.Outlined"
                                    Color="Color.Secondary"
                                    data-testid="load-labels-button"
-                                   Disabled="@(ShowLoadingState || !selectedRepositories.Any())"
+                                   Disabled="@(ShowLoadingState || IsLabelsTabBusy || !selectedRepositories.Any())"
                                    OnClick="LoadLabelsForSelectionAsync">
                             Load selected repositories
                         </MudButton>
+
+                        <MudButton Variant="Variant.Text"
+                                   Color="Color.Error"
+                                   data-testid="bulk-delete-labels-button"
+                                   Disabled="@(!CanBulkDeleteLabels)"
+                                   OnClick="ShowBulkDeleteConfirmDialogAsync">
+                            Delete
+                        </MudButton>
                     </MudStack>
+
+                    @if (IsLabelsTabBusy)
+                    {
+                        <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="@BulkDeleteProgressAriaLabel" data-testid="bulk-delete-progress-indicator" />
+                        <MudText Typo="Typo.body2" aria-live="polite" role="status">@BulkDeleteProgressMessage</MudText>
+                    }
 
                     @if (ShowLabelFilter)
                     {
@@ -95,8 +109,12 @@
                                          SortMode="SortMode.Multiple"
                                          Breakpoint="Breakpoint.Xs"
                                          Class="sdb-responsive-grid"
+                                         MultiSelection="true"
+                                         SelectedItems="selectedLabelRows"
+                                         SelectedItemsChanged="OnSelectedLabelRowsChangedAsync"
                                          data-testid="labels-grid">
                                 <Columns>
+                                    <SelectColumn T="Labels.LabelRow" />
                                     <PropertyColumn Property="row => row.Name" Title="Label" Sortable="true" />
                                     <TemplateColumn T="Labels.LabelRow" Title="Colour">
                                         <CellTemplate>

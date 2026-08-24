@@ -48,6 +48,18 @@ The Label Manager page uses a tabbed layout to organise label management workflo
   {{< tab name="Labels" >}}
 View, create, edit, and delete labels across the selected repositories. Use the consolidated label view and bulk CRUD operations here. Filter by label name, and use the `New label` button to add labels. Row-level actions allow editing and deleting existing labels.
 
+### Bulk delete on the Labels tab
+
+Select one or more label rows in the grid, then choose **Delete** on the action strip. The bulk delete action is disabled until at least one row is selected and repositories are in scope.
+
+- A confirmation dialog asks **Are you sure?** and lists the label names and repositories that will be affected.
+- Choose **No** or cancel to leave labels and your selection unchanged.
+- Choose **Yes, delete** to remove each selected label from every selected repository that currently contains it. Repositories that do not have a label are skipped for that name.
+- If GitHub returns an error for one label or repository, SoloDevBoard continues with the remaining items and reports per-item failures.
+- While the batch is running, duplicate submissions are disabled and an in-progress indicator is shown.
+
+Per-row **Delete** remains available for deleting a single label name through the existing repository-scoped dialog.
+
 The create and edit dialogs include:
 
 - `Label name` input.

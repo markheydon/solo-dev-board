@@ -96,6 +96,61 @@ public sealed class LabelService : ILabelManagerService
     }
 
     /// <inheritdoc/>
+    public async Task<LabelBulkDeleteResultDto> BulkDeleteLabelsAsync(IReadOnlyList<LabelBulkDeleteTargetDto> targets, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(targets);
+
+        if (targets.Count == 0)
+        {
+            throw new ArgumentException("At least one bulk delete target must be provided.", nameof(targets));
+        }
+
+        var deletedCount = 0;
+        var skippedCount = 0;
+        var errors = new List<LabelBulkDeleteErrorDto>();
+
+        foreach (var target in targets)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (string.IsNullOrWhiteSpace(target.LabelName))
+            {
+                continue;
+            }
+
+            var repositoryFullNames = target.RepositoryFullNames
+                .Where(repositoryFullName => !string.IsNullOrWhiteSpace(repositoryFullName))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(repositoryFullName => repositoryFullName, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            foreach (var repositoryFullName in repositoryFullNames)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                try
+                {
+                    var repository = SplitRepositoryFullName(repositoryFullName);
+                    await _labelRepository
+                        .DeleteLabelAsync(repository.Owner, repository.Name, target.LabelName, cancellationToken)
+                        .ConfigureAwait(false);
+                    deletedCount++;
+                }
+                catch (KeyNotFoundException)
+                {
+                    skippedCount++;
+                }
+                catch (Exception ex) when (ex is HttpRequestException or ArgumentException)
+                {
+                    errors.Add(new LabelBulkDeleteErrorDto(target.LabelName, repositoryFullName, ex.Message));
+                }
+            }
+        }
+
+        return new LabelBulkDeleteResultDto(deletedCount, skippedCount, errors);
+    }
+
+    /// <inheritdoc/>
     public async Task<LabelSyncPreviewDto> SyncLabelsAsync(string sourceOwner, string sourceRepo, string targetOwner, string targetRepo, bool applyChanges = false, bool keepAreaLabels = true, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceOwner);

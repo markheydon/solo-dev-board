@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
 using MudBlazor.Services;
 using NSubstitute;
+using SoloDevBoard.App.Components.Features.Labels.Dialogs;
 using SoloDevBoard.App.Components.Features.Labels.Pages;
 using SoloDevBoard.App.Components.Shared.Components;
 using SoloDevBoard.Application.Services.Labels;
@@ -908,7 +909,137 @@ public sealed class LabelsTests
         });
     }
 
-    private BunitContext CreateContext()
+    [Fact]
+    public async Task Labels_BulkDeleteButton_WhenNoRowsSelected_IsDisabled()
+    {
+        // Arrange
+        var repoA = CreateRepository("owner", "repo-a");
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
+
+        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
+                new LabelDto("type/story", "1d76db", "Story label", "owner/repo-a"),
+            ]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
+
+        await SelectRepositoriesAsync(cut, repoA);
+        cut.Find("[data-testid='load-labels-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            var bulkDeleteButton = cut.Find("[data-testid='bulk-delete-labels-button']");
+            Assert.True(bulkDeleteButton.HasAttribute("disabled"));
+        });
+    }
+
+    [Fact]
+    public async Task Labels_BulkDelete_WhenConfirmed_CallsServiceAndShowsSuccess()
+    {
+        // Arrange
+        var repoA = CreateRepository("owner", "repo-a");
+        var dialogService = Substitute.For<IDialogService>();
+        var dialogReference = Substitute.For<IDialogReference>();
+        dialogReference.Result.Returns(Task.FromResult<DialogResult?>(DialogResult.Ok(true)));
+        dialogService
+            .ShowAsync<LabelBulkDeleteConfirmDialog>(Arg.Any<string>(), Arg.Any<DialogParameters>(), Arg.Any<DialogOptions>())
+            .Returns(dialogReference);
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
+
+        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
+                new LabelDto("type/story", "1d76db", "Story label", "owner/repo-a"),
+                new LabelDto("status/done", "cfd3d7", "Completed", "owner/repo-a"),
+            ]);
+
+        _labelManagerService.BulkDeleteLabelsAsync(Arg.Any<IReadOnlyList<LabelBulkDeleteTargetDto>>(), Arg.Any<CancellationToken>()).Returns(
+            new LabelBulkDeleteResultDto(1, 0, []));
+
+        await using var ctx = CreateContext(dialogService);
+
+        // Act
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
+
+        await SelectRepositoriesAsync(cut, repoA);
+        cut.Find("[data-testid='load-labels-button']").Click();
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='labels-grid']")));
+
+        var selectedRow = new Labels.LabelRow("type/story", "1d76db", "Story label", ["owner/repo-a"], []);
+        var grid = cut.FindComponent<MudDataGrid<Labels.LabelRow>>();
+        await cut.InvokeAsync(() => grid.Instance.SelectedItemsChanged.InvokeAsync(new HashSet<Labels.LabelRow> { selectedRow }));
+
+        cut.WaitForAssertion(() =>
+        {
+            var bulkDeleteButton = cut.Find("[data-testid='bulk-delete-labels-button']");
+            Assert.False(bulkDeleteButton.HasAttribute("disabled"));
+        });
+
+        await cut.InvokeAsync(() => cut.Find("[data-testid='bulk-delete-labels-button']").Click());
+
+        // Assert
+        await dialogService.Received(1).ShowAsync<LabelBulkDeleteConfirmDialog>(
+            Arg.Any<string>(),
+            Arg.Any<DialogParameters>(),
+            Arg.Any<DialogOptions>());
+
+        await _labelManagerService.Received(1).BulkDeleteLabelsAsync(
+            Arg.Is<IReadOnlyList<LabelBulkDeleteTargetDto>>(targets =>
+                targets.Count == 1
+                && targets[0].LabelName == "type/story"
+                && targets[0].RepositoryFullNames.SequenceEqual(new[] { "owner/repo-a" })),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Labels_BulkDelete_WhenCancelled_DoesNotCallService()
+    {
+        // Arrange
+        var repoA = CreateRepository("owner", "repo-a");
+        var dialogService = Substitute.For<IDialogService>();
+        var dialogReference = Substitute.For<IDialogReference>();
+        dialogReference.Result.Returns(Task.FromResult<DialogResult?>(DialogResult.Cancel()));
+        dialogService
+            .ShowAsync<LabelBulkDeleteConfirmDialog>(Arg.Any<string>(), Arg.Any<DialogParameters>(), Arg.Any<DialogOptions>())
+            .Returns(dialogReference);
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
+
+        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
+                new LabelDto("type/story", "1d76db", "Story label", "owner/repo-a"),
+            ]);
+
+        await using var ctx = CreateContext(dialogService);
+
+        // Act
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
+
+        await SelectRepositoriesAsync(cut, repoA);
+        cut.Find("[data-testid='load-labels-button']").Click();
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='labels-grid']")));
+
+        var selectedRow = new Labels.LabelRow("type/story", "1d76db", "Story label", ["owner/repo-a"], []);
+        var grid = cut.FindComponent<MudDataGrid<Labels.LabelRow>>();
+        await cut.InvokeAsync(() => grid.Instance.SelectedItemsChanged.InvokeAsync(new HashSet<Labels.LabelRow> { selectedRow }));
+
+        cut.Find("[data-testid='bulk-delete-labels-button']").Click();
+
+        // Assert
+        await dialogService.Received(1).ShowAsync<LabelBulkDeleteConfirmDialog>(
+            Arg.Any<string>(),
+            Arg.Any<DialogParameters>(),
+            Arg.Any<DialogOptions>());
+
+        await _labelManagerService.DidNotReceive().BulkDeleteLabelsAsync(Arg.Any<IReadOnlyList<LabelBulkDeleteTargetDto>>(), Arg.Any<CancellationToken>());
+    }
+
+    private BunitContext CreateContext(IDialogService? dialogService = null)
     {
         var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
@@ -922,6 +1053,11 @@ public sealed class LabelsTests
 
         ctx.Services.AddScoped(_ => _repositoryService);
         ctx.Services.AddScoped(_ => _labelManagerService);
+
+        if (dialogService is not null)
+        {
+            ctx.Services.AddSingleton(dialogService);
+        }
 
         ctx.Render<MudPopoverProvider>();
         ctx.Render<MudDialogProvider>();
