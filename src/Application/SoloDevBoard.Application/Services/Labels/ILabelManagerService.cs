@@ -42,6 +42,12 @@ public interface ILabelManagerService
     /// <returns>A task that represents the asynchronous delete operation.</returns>
     Task DeleteLabelAsync(string owner, IReadOnlyList<string> repositories, string labelName, CancellationToken cancellationToken = default);
 
+    /// <summary>Deletes multiple labels across repositories and continues after per-item failures.</summary>
+    /// <param name="targets">The label names and repository scopes to delete.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A summary of deleted, skipped, and failed label-repository pairs.</returns>
+    Task<LabelBulkDeleteResultDto> BulkDeleteLabelsAsync(IReadOnlyList<LabelBulkDeleteTargetDto> targets, CancellationToken cancellationToken = default);
+
     /// <summary>Synchronises labels from a source repository to a target repository.</summary>
     /// <param name="sourceOwner">The GitHub account owner login for the source repository.</param>
     /// <param name="sourceRepo">The source repository name.</param>

@@ -9,6 +9,7 @@ test.describe('Label Manager shell', () => {
     await expect(page.getByTestId('label-manager-tab-strip')).toBeVisible();
     await expect(page.getByTestId('new-label-button')).toBeDisabled();
     await expect(page.getByTestId('load-labels-button')).toBeDisabled();
+    await expect(page.getByTestId('bulk-delete-labels-button')).toBeDisabled();
     await expect(page.getByText('No active repositories are available for label analysis.')).toBeVisible({
       timeout: 15_000,
     });
@@ -29,5 +30,13 @@ test.describe('Label Manager shell', () => {
     await page.getByRole('tab', { name: 'Synchronise' }).click();
     await expect(page.getByRole('heading', { name: 'Synchronise labels' })).toBeVisible();
     await expect(page.getByTestId('sync-keep-area-labels-checkbox')).toBeVisible();
+  });
+
+  test('labels tab exposes bulk delete control disabled until rows are selected', async ({ page }) => {
+    await page.goto('/labels');
+
+    await expect(page.getByRole('tab', { name: 'Labels' })).toBeVisible();
+    await expect(page.getByTestId('bulk-delete-labels-button')).toBeDisabled();
+    await expect(page.getByTestId('bulk-delete-labels-button')).toHaveText('Delete');
   });
 });

@@ -982,4 +982,107 @@ public sealed class LabelServiceTests
         // Assert
         _ = await Assert.ThrowsAsync<ArgumentException>(action);
     }
+
+    [Fact]
+    public async Task BulkDeleteLabelsAsync_MultipleTargets_DeletesEachLabelRepositoryPair()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        _labelRepository
+            .DeleteLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), cancellationToken)
+            .Returns(Task.CompletedTask);
+
+        var sut = new LabelService(_labelRepository);
+        var targets = new[]
+        {
+            new LabelBulkDeleteTargetDto("bug", ["owner/repo-a", "owner/repo-b"]),
+            new LabelBulkDeleteTargetDto("enhancement", ["owner/repo-a"]),
+        };
+
+        // Act
+        var result = await sut.BulkDeleteLabelsAsync(targets, cancellationToken);
+
+        // Assert
+        Assert.Equal(3, result.DeletedCount);
+        Assert.Equal(0, result.SkippedCount);
+        Assert.Empty(result.Errors);
+        await _labelRepository.Received(1).DeleteLabelAsync("owner", "repo-a", "bug", cancellationToken);
+        await _labelRepository.Received(1).DeleteLabelAsync("owner", "repo-b", "bug", cancellationToken);
+        await _labelRepository.Received(1).DeleteLabelAsync("owner", "repo-a", "enhancement", cancellationToken);
+    }
+
+    [Fact]
+    public async Task BulkDeleteLabelsAsync_LabelMissingInRepository_CountsAsSkippedAndContinues()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        _labelRepository
+            .DeleteLabelAsync("owner", "repo-a", "bug", cancellationToken)
+            .Returns(Task.FromException(new KeyNotFoundException("Label not found")));
+
+        _labelRepository
+            .DeleteLabelAsync("owner", "repo-b", "bug", cancellationToken)
+            .Returns(Task.CompletedTask);
+
+        var sut = new LabelService(_labelRepository);
+        var targets = new[] { new LabelBulkDeleteTargetDto("bug", ["owner/repo-a", "owner/repo-b"]) };
+
+        // Act
+        var result = await sut.BulkDeleteLabelsAsync(targets, cancellationToken);
+
+        // Assert
+        Assert.Equal(1, result.DeletedCount);
+        Assert.Equal(1, result.SkippedCount);
+        Assert.Empty(result.Errors);
+    }
+
+    [Fact]
+    public async Task BulkDeleteLabelsAsync_OneDeleteFails_RecordsErrorAndContinues()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        _labelRepository
+            .DeleteLabelAsync("owner", "repo-a", "bug", cancellationToken)
+            .Returns(Task.FromException(new HttpRequestException("GitHub API failure")));
+
+        _labelRepository
+            .DeleteLabelAsync("owner", "repo-b", "bug", cancellationToken)
+            .Returns(Task.CompletedTask);
+
+        _labelRepository
+            .DeleteLabelAsync("owner", "repo-a", "enhancement", cancellationToken)
+            .Returns(Task.CompletedTask);
+
+        var sut = new LabelService(_labelRepository);
+        var targets = new[]
+        {
+            new LabelBulkDeleteTargetDto("bug", ["owner/repo-a", "owner/repo-b"]),
+            new LabelBulkDeleteTargetDto("enhancement", ["owner/repo-a"]),
+        };
+
+        // Act
+        var result = await sut.BulkDeleteLabelsAsync(targets, cancellationToken);
+
+        // Assert
+        Assert.Equal(2, result.DeletedCount);
+        Assert.Equal(0, result.SkippedCount);
+        Assert.Single(result.Errors);
+        Assert.Equal("bug", result.Errors[0].LabelName);
+        Assert.Equal("owner/repo-a", result.Errors[0].RepositoryFullName);
+        Assert.Contains("GitHub API failure", result.Errors[0].ErrorMessage, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task BulkDeleteLabelsAsync_TargetsEmpty_ThrowsArgumentException()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        var sut = new LabelService(_labelRepository);
+
+        // Act
+        var action = async () => await sut.BulkDeleteLabelsAsync([], cancellationToken);
+
+        // Assert
+        _ = await Assert.ThrowsAsync<ArgumentException>(action);
+    }
 }
