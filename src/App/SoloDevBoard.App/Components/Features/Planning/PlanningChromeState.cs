@@ -18,6 +18,12 @@ public sealed class PlanningChromeState
     /// <summary>Gets or sets the inaccessible project boards warning, if any.</summary>
     public string? InaccessibleProjectBoardsWarning { get; set; }
 
+    /// <summary>Gets or sets the selected planning board compatibility report, when loaded.</summary>
+    public PlanningBoardCompatibilityReportDto? BoardCompatibilityReport { get; set; }
+
+    /// <summary>Gets or sets a value indicating whether board compatibility is loading.</summary>
+    public bool IsLoadingBoardCompatibility { get; set; }
+
     /// <summary>Gets or sets the UTC timestamp when data was last refreshed.</summary>
     public DateTimeOffset? LastRefreshedAtUtc { get; set; }
 
@@ -47,6 +53,9 @@ public sealed class PlanningChromeState
 
     /// <summary>Gets or sets the callback used to reload chrome data.</summary>
     public Func<Task> RefreshAsync { get; set; } = () => Task.CompletedTask;
+
+    /// <summary>Gets or sets the callback used to re-check board compatibility for the selected board.</summary>
+    public Func<Task> RecheckBoardCompatibilityAsync { get; set; } = () => Task.CompletedTask;
 
     /// <summary>Gets a monotonic revision that changes when cascaded chrome data is refreshed or saved.</summary>
     public int DataRevision { get; private set; }

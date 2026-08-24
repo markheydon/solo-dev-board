@@ -2,21 +2,31 @@ using SoloDevBoard.Domain.Entities.Milestones;
 
 namespace SoloDevBoard.Application.Services.Planning;
 
-/// <summary>Builds milestone unions and skip lists for Iteration Planning bulk assignment.</summary>
+/// <summary>Builds shared milestone options and skip lists for Iteration Planning bulk assignment.</summary>
 public static class PlanningBulkMilestoneAssigner
 {
     /// <summary>
-    /// Builds the union of milestone titles available on the selected items' repositories.
+    /// Builds milestone titles that exist on every repository represented by the selected items.
     /// </summary>
     /// <param name="selectedItems">Checked Up Next items in the current batch.</param>
     /// <param name="milestonesByRepository">Milestone catalogues keyed by repository full name.</param>
-    /// <returns>Deduplicated milestone options ordered by title.</returns>
+    /// <returns>Milestone titles shared across all selected repositories, ordered by title.</returns>
     public static IReadOnlyList<IterationPlanningMilestoneOptionDto> BuildMilestoneOptions(
         IReadOnlyList<IterationPlanningUpNextItemDto> selectedItems,
         IReadOnlyDictionary<string, IReadOnlyList<Milestone>> milestonesByRepository)
     {
         ArgumentNullException.ThrowIfNull(selectedItems);
         ArgumentNullException.ThrowIfNull(milestonesByRepository);
+
+        if (selectedItems.Count == 0)
+        {
+            return [];
+        }
+
+        var requiredRepositories = selectedItems
+            .Select(static item => item.RepositoryFullName)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
 
         var titlesByRepository = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
 
@@ -45,10 +55,14 @@ public static class PlanningBulkMilestoneAssigner
         }
 
         return titlesByRepository
+            .Where(entry => requiredRepositories.All(repository => entry.Value.Contains(repository)))
             .OrderBy(static entry => entry.Key, StringComparer.OrdinalIgnoreCase)
             .Select(entry => new IterationPlanningMilestoneOptionDto(
                 entry.Key,
-                entry.Value.OrderBy(static repository => repository, StringComparer.OrdinalIgnoreCase).ToArray()))
+                requiredRepositories
+                    .Where(repository => entry.Value.Contains(repository))
+                    .OrderBy(static repository => repository, StringComparer.OrdinalIgnoreCase)
+                    .ToArray()))
             .ToArray();
     }
 

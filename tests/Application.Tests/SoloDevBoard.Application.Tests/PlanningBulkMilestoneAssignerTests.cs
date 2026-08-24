@@ -30,7 +30,7 @@ public sealed class PlanningBulkMilestoneAssignerTests
     }
 
     [Fact]
-    public void BuildMilestoneOptions_UnionAcrossRepositories_ReturnsDistinctTitles()
+    public void BuildMilestoneOptions_WhenRepositoriesShareTitle_ReturnsOnlySharedTitles()
     {
         var selectedItems = new[]
         {
@@ -46,11 +46,51 @@ public sealed class PlanningBulkMilestoneAssignerTests
 
         var result = PlanningBulkMilestoneAssigner.BuildMilestoneOptions(selectedItems, milestonesByRepository);
 
+        Assert.Single(result);
+        Assert.Equal("v1.1.0", result[0].Title);
+        Assert.Equal(["owner/repo-a", "owner/repo-b"], result[0].RepositoryFullNames);
+    }
+
+    [Fact]
+    public void BuildMilestoneOptions_WhenRepositoriesShareNoTitles_ReturnsEmptyList()
+    {
+        var selectedItems = new[]
+        {
+            CreateUpNextItem("owner/repo-a", 10),
+            CreateUpNextItem("owner/repo-b", 20),
+        };
+
+        var milestonesByRepository = new Dictionary<string, IReadOnlyList<Milestone>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["owner/repo-a"] = [CreateMilestone("v1.1.0", 1)],
+            ["owner/repo-b"] = [CreateMilestone("v1.0.0", 2)],
+        };
+
+        var result = PlanningBulkMilestoneAssigner.BuildMilestoneOptions(selectedItems, milestonesByRepository);
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public void BuildMilestoneOptions_WhenSingleRepositorySelected_ReturnsAllRepositoryMilestones()
+    {
+        var selectedItems = new[]
+        {
+            CreateUpNextItem("owner/repo-a", 10),
+        };
+
+        var milestonesByRepository = new Dictionary<string, IReadOnlyList<Milestone>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["owner/repo-a"] = [CreateMilestone("v1.1.0", 1), CreateMilestone("v1.0.0", 2)],
+        };
+
+        var result = PlanningBulkMilestoneAssigner.BuildMilestoneOptions(selectedItems, milestonesByRepository);
+
         Assert.Equal(2, result.Count);
         Assert.Equal("v1.0.0", result[0].Title);
         Assert.Equal(["owner/repo-a"], result[0].RepositoryFullNames);
         Assert.Equal("v1.1.0", result[1].Title);
-        Assert.Equal(["owner/repo-a", "owner/repo-b"], result[1].RepositoryFullNames);
+        Assert.Equal(["owner/repo-a"], result[1].RepositoryFullNames);
     }
 
     [Fact]

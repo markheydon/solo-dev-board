@@ -9,6 +9,7 @@ public interface IIterationPlanningService
     /// <param name="projectId">The GitHub Project v2 node identifier.</param>
     /// <param name="capacity">The persisted planning capacity from PM settings.</param>
     /// <param name="stallDays">The inclusive stall threshold in days from PM settings.</param>
+    /// <param name="forceReload">When <see langword="true" />, invalidates the cached project board catalogue before loading.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>The planning view snapshot.</returns>
     /// <exception cref="InvalidOperationException">
@@ -18,6 +19,7 @@ public interface IIterationPlanningService
         string projectId,
         int capacity,
         int stallDays,
+        bool forceReload = false,
         CancellationToken cancellationToken = default);
 
     /// <summary>

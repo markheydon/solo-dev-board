@@ -24,7 +24,7 @@ public sealed class PlanningBacklogTests
     };
 
     [Fact]
-    public async Task PmWorkflowTabSwitch_WhenReturningToBacklog_DoesNotReloadBacklog()
+    public async Task PlanningTabSwitch_WhenReturningToBacklog_DoesNotReloadBacklog()
     {
         ConfigureDefaults();
         _backlogReviewService.GetBacklogAsync("PVT_board", Arg.Any<CancellationToken>()).Returns(
@@ -63,11 +63,11 @@ public sealed class PlanningBacklogTests
     }
 
     [Fact]
-    public async Task PmWorkflowTabSwitch_WhenReturningToPlanning_DoesNotReloadPlanning()
+    public async Task PlanningTabSwitch_WhenReturningToPlanning_DoesNotReloadPlanning()
     {
         ConfigureDefaults();
         var planningService = Substitute.For<IIterationPlanningService>();
-        planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+        planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             new IterationPlanningViewDto([], [], [], true, 1, 0, 8, false, []));
 
         await using var ctx = CreateContext(planningService);
@@ -83,6 +83,7 @@ public sealed class PlanningBacklogTests
             "PVT_board",
             8,
             3,
+            false,
             Arg.Any<CancellationToken>());
     }
 
@@ -112,6 +113,7 @@ public sealed class PlanningBacklogTests
         ctx.Services.AddScoped(_ => _projectBoardDiscoveryService);
         ctx.Services.AddScoped(_ => _backlogReviewService);
         ctx.Services.AddScoped(_ => planningService ?? Substitute.For<IIterationPlanningService>());
+        ctx.Services.AddScoped(_ => PlanningTestChromeDependencies.CreateBoardCompatibilityService());
         ctx.Services.AddScoped<PlanningChromeCoordinator>();
         ctx.Services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
 

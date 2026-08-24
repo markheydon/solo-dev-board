@@ -31,7 +31,7 @@ public sealed class PlanningIterationTests
         ConfigureDefaults();
 
         await using var ctx = CreateContext();
-        ctx.Services.GetRequiredService<NavigationManager>().NavigateTo("/planning/iteration");
+        ctx.Services.GetRequiredService<NavigationManager>().NavigateTo("/planning/planning");
         var cut = ctx.RenderPlanningPage<PlanningIteration>();
 
         cut.WaitForAssertion(() =>
@@ -67,7 +67,7 @@ public sealed class PlanningIterationTests
     public async Task PlanningIteration_WhenBoardIsSelected_ShowsUpNextAndCandidates()
     {
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             new IterationPlanningViewDto(
                 [
                     new IterationPlanningUpNextItemDto(
@@ -111,10 +111,10 @@ public sealed class PlanningIterationTests
             Assert.Contains("data-testid=\"planning-planning-add-button\"", cut.Markup);
             Assert.Contains(">Issue<", cut.Markup);
             Assert.Contains("planning-planning-kind-chip", cut.Markup);
-            Assert.Contains("data-testid=\"planning-planning-next-focus-order\"", cut.Markup);
-            Assert.Contains("Next story Focus Order: 2", cut.Markup);
             Assert.Contains("data-testid=\"planning-planning-focus-order-chip\"", cut.Markup);
             Assert.Contains("Will assign 2", cut.Markup);
+            Assert.DoesNotContain("data-testid=\"planning-planning-next-focus-order\"", cut.Markup);
+            Assert.DoesNotContain("Next story Focus Order:", cut.Markup);
         });
     }
 
@@ -122,7 +122,7 @@ public sealed class PlanningIterationTests
     public async Task PlanningIteration_WhenBoardHasNoFocusOrderField_ShowsWarning()
     {
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             new IterationPlanningViewDto(
                 [],
                 [
@@ -150,7 +150,7 @@ public sealed class PlanningIterationTests
         cut.WaitForAssertion(() =>
         {
             Assert.Contains("data-testid=\"planning-planning-no-focus-order-field\"", cut.Markup);
-            Assert.Contains("Unavailable on this board", cut.Markup);
+            Assert.DoesNotContain("Unavailable on this board", cut.Markup);
         });
     }
 
@@ -158,7 +158,7 @@ public sealed class PlanningIterationTests
     public async Task PlanningIteration_WhenActiveLoadAtCapacity_ShowsCapacityWarning()
     {
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             CreateAtCapacityPlanningView());
 
         await using var ctx = CreateContext();
@@ -188,7 +188,7 @@ public sealed class PlanningIterationTests
             .Returns((bool?)null);
 
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             CreateAtCapacityPlanningView());
 
         await using var ctx = CreateContext(dialogService);
@@ -230,7 +230,7 @@ public sealed class PlanningIterationTests
             .Returns((bool?)true);
 
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             CreateAtCapacityPlanningView(),
             CreateAtCapacityPlanningView());
         _planningService.AddToUpNextAsync(
@@ -241,7 +241,7 @@ public sealed class PlanningIterationTests
             Arg.Any<IReadOnlyList<string>>(),
             3,
             Arg.Any<CancellationToken>()).Returns(
-            new IterationPlanningAddToUpNextResultDto(AddedBoardCard: false, FocusOrderAssigned: 2, FocusOrderSkipped: false));
+            new IterationPlanningAddToUpNextResultDto(AddedBoardCard: false, ProjectItemId: "PVTI_candidate", FocusOrderAssigned: 2, FocusOrderSkipped: false));
 
         await using var ctx = CreateContext(dialogService);
         var cut = ctx.RenderPlanningPage<PlanningIteration>();
@@ -275,7 +275,7 @@ public sealed class PlanningIterationTests
     public async Task PlanningIteration_WhenStalledUpNextItemsExist_DisablesAddToUpNext()
     {
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             new IterationPlanningViewDto(
                 [],
                 [
@@ -314,9 +314,259 @@ public sealed class PlanningIterationTests
         cut.WaitForAssertion(() =>
         {
             Assert.Contains("data-testid=\"planning-planning-stall-gate-alert\"", cut.Markup);
-            Assert.Contains("Resolve stalled Up Next items before adding new work", cut.Markup);
+            Assert.Contains("mud-alert-outlined-error", cut.Markup);
+            Assert.Contains("You cannot add to Up Next until stalled items are handled", cut.Markup);
+            Assert.Contains("1 item is stalled", cut.Markup);
+            Assert.Contains("Re-commit", cut.Markup);
+            Assert.Contains("Mark Blocked", cut.Markup);
+            Assert.Contains("Ice Box", cut.Markup);
+            Assert.Contains("Remove", cut.Markup);
+            Assert.DoesNotContain("capacity", cut.Find("[data-testid=\"planning-planning-stall-gate-alert\"]").TextContent, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("data-testid=\"planning-planning-candidate-pause-line\"", cut.Markup);
+            Assert.Contains("Add is paused until stalled Up Next is cleared.", cut.Markup);
             var addButton = cut.Find("[data-testid=\"planning-planning-add-button\"]");
             Assert.True(addButton.HasAttribute("disabled"));
+        });
+    }
+
+    [Fact]
+    public async Task PlanningIteration_WhenStalledAndAtCapacity_DisablesAddOnlyForStall()
+    {
+        ConfigureDefaults();
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
+            new IterationPlanningViewDto(
+                [],
+                [
+                    new IterationPlanningCandidateDto(
+                        PlanningWorkItemTypeDto.Issue,
+                        50,
+                        "Candidate story",
+                        "https://github.com/owner/repo-a/issues/50",
+                        "owner/repo-a",
+                        ["type/story", "priority/high"],
+                        "Todo",
+                        "PVTI_candidate"),
+                ],
+                [],
+                true,
+                1,
+                8,
+                8,
+                true,
+                [
+                    new IterationPlanningStalledItemDto(
+                        "PVTI_stalled",
+                        PlanningWorkItemTypeDto.Issue,
+                        275,
+                        "Stalled story",
+                        "https://github.com/owner/repo-a/issues/275",
+                        "owner/repo-a",
+                        4,
+                        false,
+                        ["type/story"]),
+                ]));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPlanningPage<PlanningIteration>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("data-testid=\"planning-planning-capacity\"", cut.Markup);
+            Assert.Contains("8 / 8", cut.Markup);
+            Assert.Contains("data-testid=\"planning-planning-stall-gate-alert\"", cut.Markup);
+            Assert.DoesNotContain("data-testid=\"planning-planning-up-next-capacity-status\"", cut.Markup);
+            var addButton = cut.Find("[data-testid=\"planning-planning-add-button\"]");
+            Assert.True(addButton.HasAttribute("disabled"));
+        });
+    }
+
+    [Fact]
+    public async Task PlanningIteration_WhenAtCapacityWithoutStall_ShowsSoftCapacityStatusInUpNext()
+    {
+        ConfigureDefaults();
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
+            CreateAtCapacityPlanningView());
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPlanningPage<PlanningIteration>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("data-testid=\"planning-planning-up-next-capacity-status\"", cut.Markup);
+            Assert.Contains("You can still add items after confirming.", cut.Markup);
+            var addButton = cut.Find("[data-testid=\"planning-planning-add-button\"]");
+            Assert.False(addButton.HasAttribute("disabled"));
+        });
+    }
+
+    [Fact]
+    public async Task PlanningIteration_WhenStalledItemRemoved_UpdatesLocallyWithoutFullReload()
+    {
+        ConfigureDefaults();
+        var stalledItem = new IterationPlanningStalledItemDto(
+            "PVTI_stalled",
+            PlanningWorkItemTypeDto.Issue,
+            275,
+            "Stalled story",
+            "https://github.com/owner/repo-a/issues/275",
+            "owner/repo-a",
+            4,
+            false,
+            ["type/story"]);
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
+            new IterationPlanningViewDto(
+                [],
+                [
+                    new IterationPlanningCandidateDto(
+                        PlanningWorkItemTypeDto.Issue,
+                        50,
+                        "Candidate story",
+                        "https://github.com/owner/repo-a/issues/50",
+                        "owner/repo-a",
+                        ["type/story", "priority/high"],
+                        "Todo",
+                        "PVTI_candidate"),
+                ],
+                [],
+                true,
+                1,
+                1,
+                8,
+                false,
+                [stalledItem]));
+        _planningService
+            .RemoveStalledUpNextItemAsync("PVT_board", stalledItem, Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPlanningPage<PlanningIteration>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("data-testid=\"planning-planning-stall-gate-alert\"", cut.Markup);
+        });
+
+        await cut.InvokeAsync(() => cut.Find("[data-testid='planning-planning-remove-button']").Click());
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.DoesNotContain("data-testid=\"planning-planning-stall-gate-alert\"", cut.Markup);
+            Assert.DoesNotContain("data-testid=\"planning-planning-stalled\"", cut.Markup);
+            Assert.DoesNotContain("data-testid=\"planning-planning-candidate-pause-line\"", cut.Markup);
+            var addButton = cut.Find("[data-testid=\"planning-planning-add-button\"]");
+            Assert.False(addButton.HasAttribute("disabled"));
+        });
+
+        await _planningService.Received(1).GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await _planningService.Received(1)
+            .RemoveStalledUpNextItemAsync("PVT_board", stalledItem, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task PlanningIteration_WhenRefreshClicked_ReloadsPlanningView()
+    {
+        ConfigureDefaults();
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
+            CreatePlanningViewWithCandidate());
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPlanningPage<PlanningIteration>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("data-testid=\"planning-planning-refresh\"", cut.Markup);
+        });
+
+        await cut.InvokeAsync(() => cut.Find("[data-testid='planning-planning-refresh']").Click());
+
+        cut.WaitForAssertion(() =>
+        {
+            _planningService.Received(1).GetPlanningViewAsync("PVT_board", 8, 3, false, Arg.Any<CancellationToken>());
+            _planningService.Received(1).GetPlanningViewAsync("PVT_board", 8, 3, true, Arg.Any<CancellationToken>());
+        });
+    }
+
+    [Fact]
+    public async Task PlanningIteration_WhenAddToUpNextSucceeds_UpdatesLocallyWithoutFullReload()
+    {
+        ConfigureDefaults();
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
+            CreatePlanningViewWithCandidate());
+        _planningService.AddToUpNextAsync(
+            "PVT_board",
+            PlanningWorkItemTypeDto.Issue,
+            "owner/repo-a",
+            50,
+            Arg.Any<IReadOnlyList<string>>(),
+            3,
+            Arg.Any<CancellationToken>()).Returns(
+            new IterationPlanningAddToUpNextResultDto(
+                AddedBoardCard: false,
+                ProjectItemId: "PVTI_candidate",
+                FocusOrderAssigned: 2,
+                FocusOrderSkipped: false));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPlanningPage<PlanningIteration>();
+
+        cut.WaitForAssertion(() => Assert.Contains("data-testid=\"planning-planning-add-button\"", cut.Markup));
+
+        await cut.InvokeAsync(() => cut.Find("[data-testid='planning-planning-add-button']").Click());
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("data-testid=\"planning-planning-up-next-table\"", cut.Markup);
+            Assert.Contains("owner/repo-a#50", cut.Markup);
+            Assert.Contains("data-testid=\"planning-planning-focus-order-chip\"", cut.Markup);
+            Assert.Contains(">2<", cut.Markup);
+            Assert.Contains("2 / 8", cut.Markup);
+        });
+
+        await _planningService.Received(1).GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task PlanningIteration_WhenAddToUpNextSucceeds_InvalidatesDailyFocusAndBacklogCaches()
+    {
+        ConfigureDefaults();
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
+            CreatePlanningViewWithCandidate());
+        _planningService.AddToUpNextAsync(
+            "PVT_board",
+            PlanningWorkItemTypeDto.Issue,
+            "owner/repo-a",
+            50,
+            Arg.Any<IReadOnlyList<string>>(),
+            3,
+            Arg.Any<CancellationToken>()).Returns(
+            new IterationPlanningAddToUpNextResultDto(
+                AddedBoardCard: false,
+                ProjectItemId: "PVTI_candidate",
+                FocusOrderAssigned: 2,
+                FocusOrderSkipped: false));
+
+        await using var ctx = CreateContext();
+        var coordinator = ctx.Services.GetRequiredService<PlanningChromeCoordinator>();
+        coordinator.SetDailyFocusBoardState(
+            "PVT_board",
+            8,
+            3,
+            new DailyFocusBoardStateDto([], 1, 8, 8, [], 3),
+            null,
+            isLoading: false);
+        coordinator.SetBacklogReview("PVT_board", new BacklogReviewResultDto([], [], [], [], [], [], false, []), null, isLoading: false);
+
+        var cut = ctx.RenderPlanningPage<PlanningIteration>();
+
+        cut.WaitForAssertion(() => Assert.Contains("data-testid=\"planning-planning-add-button\"", cut.Markup));
+
+        await cut.InvokeAsync(() => cut.Find("[data-testid='planning-planning-add-button']").Click());
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Null(coordinator.DailyFocusBoardState);
+            Assert.Null(coordinator.BacklogReview);
+            Assert.NotNull(coordinator.IterationPlanning?.View);
         });
     }
 
@@ -325,8 +575,7 @@ public sealed class PlanningIterationTests
     {
         ConfigureDefaults();
         var initialView = CreatePlanningViewWithCandidate();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
-            initialView,
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             initialView);
         _planningService.AddToUpNextAsync(
             "PVT_board",
@@ -338,6 +587,7 @@ public sealed class PlanningIterationTests
             Arg.Any<CancellationToken>()).Returns(
             new IterationPlanningAddToUpNextResultDto(
                 AddedBoardCard: false,
+                ProjectItemId: "PVTI_candidate",
                 FocusOrderAssigned: 2,
                 FocusOrderSkipped: false));
 
@@ -359,7 +609,7 @@ public sealed class PlanningIterationTests
     public async Task PlanningIteration_WhenAddToUpNextFails_ShowsErrorSnackbar()
     {
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             CreatePlanningViewWithCandidate());
         _planningService.AddToUpNextAsync(
             Arg.Any<string>(),
@@ -390,7 +640,7 @@ public sealed class PlanningIterationTests
     public async Task PlanningIteration_WhenBoardHasUpNextItems_ShowsBulkMilestoneControls()
     {
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             new IterationPlanningViewDto(
                 [
                     new IterationPlanningUpNextItemDto(
@@ -453,6 +703,7 @@ public sealed class PlanningIterationTests
         ctx.Services.AddScoped(_ => _repositoryService);
         ctx.Services.AddScoped(_ => _projectBoardDiscoveryService);
         ctx.Services.AddScoped(_ => _planningService);
+        ctx.Services.AddScoped(_ => PlanningTestChromeDependencies.CreateBoardCompatibilityService());
         ctx.Services.AddScoped<PlanningChromeCoordinator>();
         ctx.Services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
 

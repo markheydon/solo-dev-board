@@ -14,6 +14,8 @@ public sealed class PlanningChromeCoordinatorTests
     private readonly IRepositoryService _repositoryService = Substitute.For<IRepositoryService>();
     private readonly IPlanningProjectBoardDiscoveryService _projectBoardDiscoveryService =
         Substitute.For<IPlanningProjectBoardDiscoveryService>();
+    private readonly IPlanningBoardCompatibilityService _boardCompatibilityService =
+        Substitute.For<IPlanningBoardCompatibilityService>();
 
     [Fact]
     public async Task EnsureLoadedAsync_WhenAlreadyLoaded_DoesNotCallRepositoryServiceAgain()
@@ -142,6 +144,27 @@ public sealed class PlanningChromeCoordinatorTests
         Assert.NotNull(coordinator.State.LoadErrorMessage);
     }
 
+    [Fact]
+    public async Task RecheckBoardCompatibilityAsync_WhenCheckFails_SetsLoadFailureReport()
+    {
+        ConfigureSuccessfulLoad();
+        _boardCompatibilityService
+            .GetReportAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
+            .ThrowsAsync(new InvalidOperationException("GitHub API unavailable."));
+
+        var coordinator = CreateCoordinator();
+        await coordinator.EnsureLoadedAsync();
+        coordinator.State.Settings = coordinator.State.Settings with { PlanningBoardNodeId = "PVT_board" };
+
+        await coordinator.RecheckBoardCompatibilityAsync(TestContext.Current.CancellationToken);
+
+        Assert.NotNull(coordinator.State.BoardCompatibilityReport);
+        Assert.True(coordinator.State.BoardCompatibilityReport.HasIssues);
+        Assert.Contains(
+            coordinator.State.BoardCompatibilityReport.Issues,
+            issue => issue.Code == "compatibility-check-failed");
+    }
+
     private void ConfigureSuccessfulLoad(bool delayRepositoryFetch = false)
     {
         _pmSettingsService.GetSettingsAsync()
@@ -169,6 +192,10 @@ public sealed class PlanningChromeCoordinatorTests
                 Arg.Any<IReadOnlyList<RepositoryDto>>(),
                 Arg.Any<CancellationToken>())
             .Returns(new PlanningProjectBoardDiscoveryDto([], 0, 0));
+
+        _boardCompatibilityService
+            .GetReportAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
+            .Returns(call => new PlanningBoardCompatibilityReportDto(call.Arg<string>(), []));
     }
 
     private PlanningChromeCoordinator CreateCoordinator() =>
@@ -176,6 +203,7 @@ public sealed class PlanningChromeCoordinatorTests
             _pmSettingsService,
             _repositoryService,
             _projectBoardDiscoveryService,
+            _boardCompatibilityService,
             NullLogger<PlanningChromeCoordinator>.Instance);
 
     private static RepositoryDto CreateRepository(string owner, string name) =>

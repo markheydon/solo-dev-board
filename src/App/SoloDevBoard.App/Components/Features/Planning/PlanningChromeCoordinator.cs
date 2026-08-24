@@ -12,6 +12,7 @@ public sealed class PlanningChromeCoordinator
     private readonly IPlanningSettingsService _pmSettingsService;
     private readonly IRepositoryService _repositoryService;
     private readonly IPlanningProjectBoardDiscoveryService _projectBoardDiscoveryService;
+    private readonly IPlanningBoardCompatibilityService _boardCompatibilityService;
     private readonly ILogger<PlanningChromeCoordinator> _logger;
     private CancellationTokenSource? _loadCancellation;
     private Task? _inFlightLoad;
@@ -20,21 +21,25 @@ public sealed class PlanningChromeCoordinator
     /// <param name="pmSettingsService">The PM settings service.</param>
     /// <param name="repositoryService">The repository catalogue service.</param>
     /// <param name="projectBoardDiscoveryService">The planning board discovery service.</param>
+    /// <param name="boardCompatibilityService">The planning board compatibility service.</param>
     /// <param name="logger">The logger.</param>
     public PlanningChromeCoordinator(
         IPlanningSettingsService pmSettingsService,
         IRepositoryService repositoryService,
         IPlanningProjectBoardDiscoveryService projectBoardDiscoveryService,
+        IPlanningBoardCompatibilityService boardCompatibilityService,
         ILogger<PlanningChromeCoordinator> logger)
     {
         ArgumentNullException.ThrowIfNull(pmSettingsService);
         ArgumentNullException.ThrowIfNull(repositoryService);
         ArgumentNullException.ThrowIfNull(projectBoardDiscoveryService);
+        ArgumentNullException.ThrowIfNull(boardCompatibilityService);
         ArgumentNullException.ThrowIfNull(logger);
 
         _pmSettingsService = pmSettingsService;
         _repositoryService = repositoryService;
         _projectBoardDiscoveryService = projectBoardDiscoveryService;
+        _boardCompatibilityService = boardCompatibilityService;
         _logger = logger;
     }
 
@@ -83,12 +88,13 @@ public sealed class PlanningChromeCoordinator
             ClearDailyFocusRecommendations();
             ClearBacklogReview();
             ClearIterationPlanning();
+            State.BoardCompatibilityReport = null;
         }
 
         CancelPendingLoad();
         _loadCancellation = new CancellationTokenSource();
         var showBlockingLoader = !HasLoadedOnce;
-        _inFlightLoad = LoadCoreAsync(_loadCancellation.Token, showBlockingLoader);
+        _inFlightLoad = LoadCoreAsync(_loadCancellation.Token, showBlockingLoader, forceReload);
         return _inFlightLoad;
     }
 
@@ -103,7 +109,14 @@ public sealed class PlanningChromeCoordinator
         ClearDailyFocusRecommendations();
         ClearBacklogReview();
         ClearIterationPlanning();
+        State.BoardCompatibilityReport = null;
         State.MarkDataChanged();
+
+        if (!string.IsNullOrWhiteSpace(State.Settings.PlanningBoardNodeId))
+        {
+            await LoadBoardCompatibilityAsync(State.Settings.PlanningBoardNodeId, forceReload: true, CancellationToken.None)
+                .ConfigureAwait(false);
+        }
     }
 
     /// <summary>Stores Daily Focus board state in the circuit cache.</summary>
@@ -232,6 +245,24 @@ public sealed class PlanningChromeCoordinator
     /// <summary>Clears cached Iteration Planning view data.</summary>
     public void ClearIterationPlanning() => IterationPlanning = null;
 
+    /// <summary>Reloads board compatibility for the selected planning board from GitHub.</summary>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A task that completes when the compatibility check finishes.</returns>
+    public async Task RecheckBoardCompatibilityAsync(CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(State.Settings.PlanningBoardNodeId))
+        {
+            return;
+        }
+
+        await LoadBoardCompatibilityAsync(
+                State.Settings.PlanningBoardNodeId,
+                forceReload: true,
+                cancellationToken)
+            .ConfigureAwait(false);
+        State.MarkDataChanged();
+    }
+
     /// <summary>Cancels any in-flight chrome load, for example when leaving Planning.</summary>
     public void CancelPendingLoad()
     {
@@ -247,7 +278,7 @@ public sealed class PlanningChromeCoordinator
         State.IsRefreshing = false;
     }
 
-    private async Task LoadCoreAsync(CancellationToken cancellationToken, bool showBlockingLoader)
+    private async Task LoadCoreAsync(CancellationToken cancellationToken, bool showBlockingLoader, bool forceReload)
     {
         if (showBlockingLoader)
         {
@@ -296,6 +327,8 @@ public sealed class PlanningChromeCoordinator
             }
 
             State.LastRefreshedAtUtc = DateTimeOffset.UtcNow;
+            await LoadBoardCompatibilityAsync(selectedPlanningBoardId, forceReload, cancellationToken)
+                .ConfigureAwait(false);
             State.MarkDataChanged();
             HasLoadedOnce = true;
         }
@@ -313,6 +346,47 @@ public sealed class PlanningChromeCoordinator
         {
             State.IsLoading = false;
             State.IsRefreshing = false;
+            State.IsLoadingBoardCompatibility = false;
+        }
+    }
+
+    private async Task LoadBoardCompatibilityAsync(
+        string selectedPlanningBoardId,
+        bool forceReload,
+        CancellationToken cancellationToken)
+    {
+        State.BoardCompatibilityReport = null;
+
+        if (string.IsNullOrWhiteSpace(selectedPlanningBoardId))
+        {
+            State.IsLoadingBoardCompatibility = false;
+            return;
+        }
+
+        State.IsLoadingBoardCompatibility = true;
+
+        try
+        {
+            State.BoardCompatibilityReport = await _boardCompatibilityService
+                .GetReportAsync(selectedPlanningBoardId, forceReload, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(
+                exception,
+                "Failed to evaluate planning board compatibility for board {BoardId}.",
+                selectedPlanningBoardId);
+            State.BoardCompatibilityReport = PlanningBoardCompatibilityEvaluator.CreateLoadFailureReport(
+                selectedPlanningBoardId);
+        }
+        finally
+        {
+            State.IsLoadingBoardCompatibility = false;
         }
     }
 }

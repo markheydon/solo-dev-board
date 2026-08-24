@@ -26,6 +26,7 @@ The system is built around two modes of operation:
 | **Backlog** | `/planning/backlog` | Search, type and repository filters, plus Urgent, Ready to start, Awaiting triage, Blocked/deferred, Epics near completion, and Neglected repositories panels. Issue and pull request kind chips appear on grouped rows. Urgent items are omitted from Ready to start. |
 | **Iteration** | `/planning/iteration` | Capacity guidance, stalled Up Next resolution gate, Up Next batch list with optional bulk milestone assignment, searchable candidate picker, and **Add to Up Next** with sequential Focus Order for stories, enablers, and tests. Feature and Epic cards skip Focus Order. |
 | **Repos** | `/planning/repos` | Planning board selection, thresholds, repository exclusions, and per-repository open-work counts. |
+| **Board setup** | `/planning/board-setup` | Shown when the selected board is missing required Status columns or fields. Lists required fixes and recommended improvements, with **Recheck** after you update the board in GitHub Projects. |
 
 Open **Planning** from the Home card or the navigation drawer. The hub redirects to **Daily Focus**.
 
@@ -57,7 +58,8 @@ Shared chrome on every Planning tab includes:
 
 - **Planning board** selector — choose a Projects v2 board discovered from your active repositories (same discovery model as Triage and Board Rules).
 - **Status line** — `Repos: N included`, selected board title (when chosen), last refreshed time, and a **Refresh** control to reload board options and the repository catalogue.
-- **Tab strip** — Daily Focus, Backlog, Iteration, and Repos.
+- **Tab strip** — Daily Focus, Backlog, Iteration, and Repos. When the selected board is missing Status columns or fields Planning expects, a warning **Board setup** tab appears at the end of the strip.
+- **Board setup summary** — when issues exist, a collapsible panel above the tab strip lists the first few problems and links to the **Board setup** tab for the full checklist. Fix the board in GitHub Projects, then open **Board setup** and select **Recheck** to confirm the board is ready.
 
 If GitHub reports linked project boards that cannot be read with your current sign-in, a warning appears at the top of the page. This is common for **private user-owned** Projects v2 boards when you use hosted GitHub App sign-in: GitHub can list the board as linked to a repository while the App token cannot read it (`Resource not accessible by integration`). Public linked boards still load normally.
 
@@ -178,9 +180,11 @@ When a board is selected, Iteration shows **Capacity** as active load over the p
 
 Capacity is a soft ceiling. Choosing **Add to Up Next** when the next item would exceed the limit opens a confirmation dialog (**Exceed capacity limit?**). **Add anyway** continues; **Cancel** leaves the board unchanged.
 
-### Resolve stalled Up Next before adding
+### Stall gate blocks Add to Up Next
 
-If any Up Next item is stalled for the configured **Stall days** threshold (same inclusive clock as Daily Focus), Iteration shows a warning and a **Resolve stalled Up Next before adding** table. **Add to Up Next** stays disabled until every stalled item is handled.
+If any Up Next item is stalled for the configured **Stall days** threshold (same inclusive clock as Daily Focus), Iteration shows a single error alert and a **Stalled Up Next** table. **Add to Up Next** stays disabled until every stalled item is handled. This stall gate is separate from capacity: a full capacity meter does not disable Add on its own.
+
+The error alert states how many items are stalled and names the four resolution actions. The **Candidate picker** stays visible with a short pause line explaining that Add is paused until stalled Up Next is cleared.
 
 Each stalled row shows `owner/name#number`, title, age, and four actions:
 
@@ -191,15 +195,19 @@ Each stalled row shows `owner/name#number`, title, age, and four actions:
 | **Ice Box** | Moves the card to **Ice Box** and applies the `status/ice-box` label where appropriate. |
 | **Remove** | Returns the item from Up Next (clears Focus Order when present). |
 
-Success and failure snackbars confirm each resolution. After a successful action, Iteration reloads so occupancy and the gate update together.
+Success and failure snackbars confirm each resolution. Resolving a stalled row updates the page immediately so you can work through the list without waiting for a full reload. Use the **Refresh** control on the page heading (or in the Stalled Up Next section) when you want to reload candidates, capacity, and Up Next from GitHub.
 
 ### This batch (Up Next)
 
-When a board is selected, the page lists items whose board Status is **Up Next**, ordered by Focus Order then title. Each row shows a selection checkbox, an **Issue** or **PR** chip, `owner/name#number`, the title, and an optional **Focus Order** chip (or a short skip reason for Feature and Epic cards).
+When a board is selected, the page lists items whose board Status is **Up Next**, ordered by Focus Order then title. Each row shows a selection checkbox, an **Issue** or **PR** chip, `owner/name#number`, the title, and a **Focus Order** chip when a value is assigned.
 
-If the board exposes Focus Order, a **Next story Focus Order** hint appears above the table. If the field is missing, a warning explains that story, enabler, and test cards can still move to Up Next without Focus Order.
+The introduction at the top of the page explains when Focus Order applies. Rows without a chip have no Focus Order (for example Feature or Epic cards, or items missing a `type/story`, `type/enabler`, or `type/test` label).
+
+If the board does not expose a Focus Order field, a warning in this section explains that story, enabler, and test cards can still move to Up Next without Focus Order.
 
 If the column is empty, an informational sentence explains that no items are in Up Next yet.
+
+When active load is at or above your capacity limit and there are no stalled Up Next items, a caption in this section explains that you can still add items after confirming. Capacity remains a meter, not a hard lock.
 
 ### Assign milestone to selected
 
@@ -217,7 +225,8 @@ Below the batch, a searchable list shows open issues and pull requests from incl
 
 - **Search** matches title, repository name, or item number.
 - The **Type** dropdown filters the list (`All types`, **Issues**, or **Pull requests**).
-- Each row shows an **Issue** or **PR** chip, `owner/name#number`, the title, the current board Status when the item is already on the board, the expected Focus Order outcome, and **Add to Up Next**.
+- When stalled Up Next items exist, a pause line explains that **Add to Up Next** is paused until they are cleared. Disabled Add buttons show the same reason in a tooltip.
+- Each row shows an **Issue** or **PR** chip, `owner/name#number`, the title, the current board Status when the item is already on the board, an optional **Will assign** hint when the next Focus Order would apply on add, and **Add to Up Next**.
 
 Choosing **Add to Up Next**:
 
@@ -226,7 +235,7 @@ Choosing **Add to Up Next**:
 3. Sets board Status to **Up Next** (matched by option name, case-insensitive).
 4. Assigns the next sequential Focus Order when the item has a `type/story`, `type/enabler`, or `type/test` label and the board exposes a Focus Order field. Feature and Epic cards skip Focus Order; story, enabler, and test cards still move to Up Next when the field is unavailable.
 
-A success snackbar confirms the add. Failure snackbars cover GitHub API errors and missing board fields. If some repository catalogues fail but others succeed, a warning lists the failed repositories while candidates from the rest still load.
+A success snackbar confirms the add and the page updates immediately: the item moves from the candidate picker into **This batch (Up Next)**, capacity increments, and Focus Order chips refresh when assigned. Use **Refresh** when you want to reload the full view from GitHub. Failure snackbars cover GitHub API errors and missing board fields. If some repository catalogues fail but others succeed, a warning lists the failed repositories while candidates from the rest still load.
 
 ---
 

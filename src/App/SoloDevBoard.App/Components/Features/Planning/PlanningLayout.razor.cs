@@ -45,6 +45,7 @@ public partial class PlanningLayout : LayoutComponentBase, IDisposable
             "/planning/backlog" => "backlog",
             "/planning/iteration" => "iteration",
             "/planning/repos" => "repos",
+            "/planning/board-setup" => "board-setup",
             _ => "daily-focus",
         };
     }

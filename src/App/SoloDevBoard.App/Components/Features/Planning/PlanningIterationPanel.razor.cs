@@ -199,6 +199,7 @@ public partial class PlanningIterationPanel : ComponentBase, IDisposable
                     boardId,
                     ChromeState!.Settings.Capacity,
                     ChromeState.Settings.StallDays,
+                    forceReload,
                     cancellationToken)
                 .ConfigureAwait(false);
 
@@ -311,13 +312,8 @@ public partial class PlanningIterationPanel : ComponentBase, IDisposable
                 Severity.Success,
                 configure: config => config.VisibleStateDuration = 5000);
 
-            ChromeCoordinator.ClearDailyFocusBoardState();
-            ChromeCoordinator.ClearDailyFocusRecommendations();
-            ChromeCoordinator.ClearBacklogReview();
-            ChromeCoordinator.ClearIterationPlanning();
+            ApplyAddToUpNextLocally(candidate, result);
             ChromeState.MarkDataChanged();
-
-            await LoadPlanningViewAsync(boardId, forceReload: true).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -369,6 +365,7 @@ public partial class PlanningIterationPanel : ComponentBase, IDisposable
     private Task ReCommitStalledItemAsync(IterationPlanningStalledItemDto item) =>
         ResolveStalledItemAsync(
             item,
+            StalledItemResolutionOutcome.RemainsInUpNext,
             (projectId, cancellationToken) =>
                 PlanningService.ReCommitStalledUpNextItemAsync(projectId, item.ProjectItemId, cancellationToken),
             $"Re-committed {FormatItemReference(item.RepositoryFullName, item.Number)} to Up Next.");
@@ -376,6 +373,7 @@ public partial class PlanningIterationPanel : ComponentBase, IDisposable
     private Task MarkStalledItemBlockedAsync(IterationPlanningStalledItemDto item) =>
         ResolveStalledItemAsync(
             item,
+            StalledItemResolutionOutcome.LeavesUpNext,
             (projectId, cancellationToken) =>
                 PlanningService.MarkStalledUpNextItemBlockedAsync(projectId, item, cancellationToken),
             $"Marked {FormatItemReference(item.RepositoryFullName, item.Number)} as blocked.");
@@ -383,6 +381,7 @@ public partial class PlanningIterationPanel : ComponentBase, IDisposable
     private Task MoveStalledItemToIceBoxAsync(IterationPlanningStalledItemDto item) =>
         ResolveStalledItemAsync(
             item,
+            StalledItemResolutionOutcome.LeavesUpNext,
             (projectId, cancellationToken) =>
                 PlanningService.MoveStalledUpNextItemToIceBoxAsync(projectId, item, cancellationToken),
             $"Moved {FormatItemReference(item.RepositoryFullName, item.Number)} to Ice Box.");
@@ -390,12 +389,25 @@ public partial class PlanningIterationPanel : ComponentBase, IDisposable
     private Task RemoveStalledItemAsync(IterationPlanningStalledItemDto item) =>
         ResolveStalledItemAsync(
             item,
+            StalledItemResolutionOutcome.LeavesUpNext,
             (projectId, cancellationToken) =>
                 PlanningService.RemoveStalledUpNextItemAsync(projectId, item, cancellationToken),
             $"Removed {FormatItemReference(item.RepositoryFullName, item.Number)} from Up Next.");
 
+    private Task RefreshPlanningViewAsync()
+    {
+        if (ChromeState is null || !ChromeState.HasPlanningBoardSelected || isLoadingView)
+        {
+            return Task.CompletedTask;
+        }
+
+        ChromeCoordinator.ClearIterationPlanning();
+        return LoadPlanningViewAsync(ChromeState.Settings.PlanningBoardNodeId!, forceReload: true);
+    }
+
     private async Task ResolveStalledItemAsync(
         IterationPlanningStalledItemDto item,
+        StalledItemResolutionOutcome resolutionOutcome,
         Func<string, CancellationToken, Task> action,
         string successMessage)
     {
@@ -418,7 +430,8 @@ public partial class PlanningIterationPanel : ComponentBase, IDisposable
             await action(boardId, cancellationToken).ConfigureAwait(false);
 
             Snackbar.Add(successMessage, Severity.Success, configure: config => config.VisibleStateDuration = 5000);
-            await ReloadPlanningDataAsync(boardId).ConfigureAwait(false);
+            ApplyStalledItemResolvedLocally(item, resolutionOutcome);
+            ChromeState.MarkDataChanged();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -467,6 +480,111 @@ public partial class PlanningIterationPanel : ComponentBase, IDisposable
         ChromeCoordinator.ClearIterationPlanning();
         ChromeState?.MarkDataChanged();
         await LoadPlanningViewAsync(boardId, forceReload: true).ConfigureAwait(false);
+    }
+
+    private void ApplyStalledItemResolvedLocally(
+        IterationPlanningStalledItemDto item,
+        StalledItemResolutionOutcome resolutionOutcome)
+    {
+        if (planningView is null || ChromeState?.Settings.PlanningBoardNodeId is not { } boardId)
+        {
+            return;
+        }
+
+        var stalledItems = planningView.StalledUpNextItems
+            .Where(stalledItem => !stalledItem.ProjectItemId.Equals(item.ProjectItemId, StringComparison.Ordinal))
+            .ToArray();
+
+        var upNextItems = resolutionOutcome == StalledItemResolutionOutcome.RemainsInUpNext
+            ? planningView.UpNextItems
+            : planningView.UpNextItems
+                .Where(upNextItem => !upNextItem.ProjectItemId.Equals(item.ProjectItemId, StringComparison.Ordinal))
+                .ToArray();
+
+        var activeLoad = resolutionOutcome == StalledItemResolutionOutcome.RemainsInUpNext
+            ? planningView.ActiveLoad
+            : Math.Max(0, planningView.ActiveLoad - 1);
+
+        planningView = planningView with
+        {
+            StalledUpNextItems = stalledItems,
+            UpNextItems = upNextItems,
+            ActiveLoad = activeLoad,
+            IsAtOrOverCapacity = activeLoad >= planningView.Capacity,
+        };
+
+        selectedUpNextItemIds.Remove(item.ProjectItemId);
+        if (SelectedUpNextItems.Count == 0)
+        {
+            selectedMilestoneTitle = null;
+            milestoneOptions = [];
+        }
+
+        ChromeCoordinator.SetIterationPlanning(boardId, planningView, null, isLoading: false);
+        InvalidateDependentPlanningCaches();
+    }
+
+    private void ApplyAddToUpNextLocally(
+        IterationPlanningCandidateDto candidate,
+        IterationPlanningAddToUpNextResultDto result)
+    {
+        if (planningView is null || ChromeState?.Settings.PlanningBoardNodeId is not { } boardId)
+        {
+            return;
+        }
+
+        var candidateKey = BuildCandidateKey(candidate);
+        var newUpNextItem = new IterationPlanningUpNextItemDto(
+            result.ProjectItemId,
+            candidate.ItemType,
+            candidate.Number,
+            candidate.Title,
+            candidate.HtmlUrl,
+            candidate.RepositoryFullName,
+            result.FocusOrderAssigned,
+            candidate.Labels);
+
+        var upNextItems = planningView.UpNextItems
+            .Append(newUpNextItem)
+            .OrderBy(static item => item.FocusOrder ?? double.MaxValue)
+            .ThenBy(static item => item.Title, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var candidates = planningView.Candidates
+            .Where(item => !BuildCandidateKey(item).Equals(candidateKey, StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+
+        var activeLoad = planningView.ActiveLoad + 1;
+        var nextStoryFocusOrder = planningView.NextStoryFocusOrder;
+        if (planningView.HasFocusOrderField && result.FocusOrderAssigned.HasValue)
+        {
+            nextStoryFocusOrder = result.FocusOrderAssigned.Value + 1;
+        }
+
+        planningView = planningView with
+        {
+            UpNextItems = upNextItems,
+            Candidates = candidates,
+            ActiveLoad = activeLoad,
+            IsAtOrOverCapacity = activeLoad >= planningView.Capacity,
+            NextStoryFocusOrder = nextStoryFocusOrder,
+        };
+
+        ChromeCoordinator.SetIterationPlanning(boardId, planningView, null, isLoading: false);
+        InvalidateDependentPlanningCaches();
+    }
+
+    private void InvalidateDependentPlanningCaches()
+    {
+        ChromeCoordinator.ClearDailyFocusBoardState();
+        ChromeCoordinator.ClearDailyFocusRecommendations();
+        ChromeCoordinator.ClearBacklogReview();
+    }
+
+    private enum StalledItemResolutionOutcome
+    {
+        RemainsInUpNext,
+        LeavesUpNext,
     }
 
     private static string BuildCandidateKey(IterationPlanningCandidateDto candidate) =>
@@ -540,6 +658,15 @@ public partial class PlanningIterationPanel : ComponentBase, IDisposable
     private static string FormatStallAge(int ageInDays) =>
         ageInDays == 1 ? "1 day" : $"{ageInDays} days";
 
+    private static string FormatStalledUpNextCount(int stalledCount) =>
+        stalledCount == 1 ? "1 item is stalled" : $"{stalledCount} items are stalled";
+
+    private static string FormatStallGateAlertMessage(int stalledCount) =>
+        $"You cannot add to Up Next until stalled items are handled. {FormatStalledUpNextCount(stalledCount)}. "
+        + "Use the stalled Up Next table below to Re-commit, Mark Blocked, Ice Box, or Remove each row.";
+
+    private const string StallGateAddPauseMessage = "Add is paused until stalled Up Next is cleared.";
+
     private bool IsUpNextItemSelected(IterationPlanningUpNextItemDto item) =>
         selectedUpNextItemIds.Contains(item.ProjectItemId);
 
@@ -582,6 +709,13 @@ public partial class PlanningIterationPanel : ComponentBase, IDisposable
             milestoneOptions = await PlanningService
                 .GetBulkMilestoneOptionsAsync(SelectedUpNextItems)
                 .ConfigureAwait(false);
+
+            if (selectedMilestoneTitle is not null
+                && !milestoneOptions.Any(option =>
+                    option.Title.Equals(selectedMilestoneTitle, StringComparison.OrdinalIgnoreCase)))
+            {
+                selectedMilestoneTitle = null;
+            }
         }
         catch (Exception ex)
         {

@@ -439,7 +439,7 @@ public sealed class PlanningDailyFocusTests
     }
 
     [Fact]
-    public async Task PmWorkflowTabSwitch_WhenReturningToDailyFocus_DoesNotReloadStalledReviews()
+    public async Task PlanningTabSwitch_WhenReturningToDailyFocus_DoesNotReloadStalledReviews()
     {
         ConfigureDefaults();
         _boardStateService.GetBoardStateAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>())
@@ -519,7 +519,7 @@ public sealed class PlanningDailyFocusTests
     }
 
     [Fact]
-    public async Task PlanningLayout_DisposeWhileStillOnPmWorkflow_DoesNotCancelChromeLoad()
+    public async Task PlanningLayout_DisposeWhileStillOnPlanning_DoesNotCancelChromeLoad()
     {
         var repositoriesReady = new TaskCompletionSource<IReadOnlyList<RepositoryDto>>();
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>())
@@ -554,7 +554,7 @@ public sealed class PlanningDailyFocusTests
     }
 
     [Fact]
-    public async Task PmWorkflowTabSwitch_WhenChromeAlreadyLoaded_DoesNotFetchRepositoriesAgain()
+    public async Task PlanningTabSwitch_WhenChromeAlreadyLoaded_DoesNotFetchRepositoriesAgain()
     {
         ConfigureDefaults();
         _boardStateService.GetBoardStateAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>())
@@ -802,6 +802,7 @@ public sealed class PlanningDailyFocusTests
         ctx.Services.AddScoped(_ => _stalledReviewService);
         ctx.Services.AddScoped(_ => _workItemCatalogueService);
         ctx.Services.AddScoped(_ => _recommendationService);
+        ctx.Services.AddScoped(_ => PlanningTestChromeDependencies.CreateBoardCompatibilityService());
         ctx.Services.AddScoped<PlanningChromeCoordinator>();
         ctx.Services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
 

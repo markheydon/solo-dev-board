@@ -379,6 +379,7 @@ public sealed class PlanningReposTests
         ctx.Services.AddScoped(_ => _repositoryService);
         ctx.Services.AddScoped(_ => _projectBoardDiscoveryService);
         ctx.Services.AddScoped(_ => _workItemCatalogueService);
+        ctx.Services.AddScoped(_ => PlanningTestChromeDependencies.CreateBoardCompatibilityService());
         ctx.Services.AddScoped<PlanningChromeCoordinator>();
         ctx.Services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
 
