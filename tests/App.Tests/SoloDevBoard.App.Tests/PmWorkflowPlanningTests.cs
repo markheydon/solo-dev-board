@@ -67,7 +67,7 @@ public sealed class PmWorkflowPlanningTests
     public async Task PmWorkflowPlanning_WhenBoardIsSelected_ShowsUpNextAndCandidates()
     {
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             new IterationPlanningViewDto(
                 [
                     new IterationPlanningUpNextItemDto(
@@ -122,7 +122,7 @@ public sealed class PmWorkflowPlanningTests
     public async Task PmWorkflowPlanning_WhenBoardHasNoFocusOrderField_ShowsWarning()
     {
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             new IterationPlanningViewDto(
                 [],
                 [
@@ -158,7 +158,7 @@ public sealed class PmWorkflowPlanningTests
     public async Task PmWorkflowPlanning_WhenActiveLoadAtCapacity_ShowsCapacityWarning()
     {
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             CreateAtCapacityPlanningView());
 
         await using var ctx = CreateContext();
@@ -188,7 +188,7 @@ public sealed class PmWorkflowPlanningTests
             .Returns((bool?)null);
 
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             CreateAtCapacityPlanningView());
 
         await using var ctx = CreateContext(dialogService);
@@ -230,7 +230,7 @@ public sealed class PmWorkflowPlanningTests
             .Returns((bool?)true);
 
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             CreateAtCapacityPlanningView(),
             CreateAtCapacityPlanningView());
         _planningService.AddToUpNextAsync(
@@ -275,7 +275,7 @@ public sealed class PmWorkflowPlanningTests
     public async Task PmWorkflowPlanning_WhenStalledUpNextItemsExist_DisablesAddToUpNext()
     {
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             new IterationPlanningViewDto(
                 [],
                 [
@@ -333,7 +333,7 @@ public sealed class PmWorkflowPlanningTests
     public async Task PmWorkflowPlanning_WhenStalledAndAtCapacity_DisablesAddOnlyForStall()
     {
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             new IterationPlanningViewDto(
                 [],
                 [
@@ -384,7 +384,7 @@ public sealed class PmWorkflowPlanningTests
     public async Task PmWorkflowPlanning_WhenAtCapacityWithoutStall_ShowsSoftCapacityStatusInUpNext()
     {
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             CreateAtCapacityPlanningView());
 
         await using var ctx = CreateContext();
@@ -413,7 +413,7 @@ public sealed class PmWorkflowPlanningTests
             4,
             false,
             ["type/story"]);
-        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             new IterationPlanningViewDto(
                 [],
                 [
@@ -457,7 +457,7 @@ public sealed class PmWorkflowPlanningTests
             Assert.False(addButton.HasAttribute("disabled"));
         });
 
-        await _planningService.Received(1).GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>());
+        await _planningService.Received(1).GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await _planningService.Received(1)
             .RemoveStalledUpNextItemAsync("PVT_board", stalledItem, Arg.Any<CancellationToken>());
     }
@@ -466,7 +466,7 @@ public sealed class PmWorkflowPlanningTests
     public async Task PmWorkflowPlanning_WhenRefreshClicked_ReloadsPlanningView()
     {
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             CreatePlanningViewWithCandidate());
 
         await using var ctx = CreateContext();
@@ -481,7 +481,8 @@ public sealed class PmWorkflowPlanningTests
 
         cut.WaitForAssertion(() =>
         {
-            _planningService.Received(2).GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>());
+            _planningService.Received(1).GetPlanningViewAsync("PVT_board", 8, 3, false, Arg.Any<CancellationToken>());
+            _planningService.Received(1).GetPlanningViewAsync("PVT_board", 8, 3, true, Arg.Any<CancellationToken>());
         });
     }
 
@@ -490,7 +491,7 @@ public sealed class PmWorkflowPlanningTests
     {
         ConfigureDefaults();
         var initialView = CreatePlanningViewWithCandidate();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             initialView,
             initialView);
         _planningService.AddToUpNextAsync(
@@ -524,7 +525,7 @@ public sealed class PmWorkflowPlanningTests
     public async Task PmWorkflowPlanning_WhenAddToUpNextFails_ShowsErrorSnackbar()
     {
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             CreatePlanningViewWithCandidate());
         _planningService.AddToUpNextAsync(
             Arg.Any<string>(),
@@ -555,7 +556,7 @@ public sealed class PmWorkflowPlanningTests
     public async Task PmWorkflowPlanning_WhenBoardHasUpNextItems_ShowsBulkMilestoneControls()
     {
         ConfigureDefaults();
-        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             new IterationPlanningViewDto(
                 [
                     new IterationPlanningUpNextItemDto(

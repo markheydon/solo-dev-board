@@ -199,6 +199,7 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
                     boardId,
                     ChromeState!.Settings.Capacity,
                     ChromeState.Settings.StallDays,
+                    forceReload,
                     cancellationToken)
                 .ConfigureAwait(false);
 

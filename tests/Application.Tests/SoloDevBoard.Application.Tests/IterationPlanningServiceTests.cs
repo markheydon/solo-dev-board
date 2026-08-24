@@ -487,6 +487,25 @@ public sealed class IterationPlanningServiceTests
         Assert.Contains("GitHub unavailable", failure.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task GetPlanningViewAsync_ForceReload_InvalidatesProjectBoardCatalogue()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var boardCatalogue = CreateCatalogue(existingItem: null);
+        _workItemCatalogueService
+            .GetCatalogueAsync(cancellationToken)
+            .Returns(new PmWorkItemCatalogueResultDto([], [], []));
+        _projectItemCatalogueService
+            .GetCatalogueAsync("project-id", cancellationToken)
+            .Returns(boardCatalogue);
+
+        var sut = CreateSut();
+
+        await sut.GetPlanningViewAsync("project-id", 8, 3, forceReload: true, cancellationToken);
+
+        _projectItemCatalogueService.Received(1).InvalidateCatalogue("project-id");
+    }
+
     private IterationPlanningService CreateSut() =>
         new(_workItemCatalogueService, _projectItemCatalogueService, _gitHubService, TimeProvider.System);
 
