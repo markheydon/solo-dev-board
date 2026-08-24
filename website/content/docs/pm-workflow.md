@@ -57,7 +57,8 @@ Shared chrome on every Planning tab includes:
 
 - **Planning board** selector — choose a Projects v2 board discovered from your active repositories (same discovery model as Triage and Board Rules).
 - **Status line** — `Repos: N included`, selected board title (when chosen), last refreshed time, and a **Refresh** control to reload board options and the repository catalogue.
-- **Tab strip** — Daily Focus, Backlog, Iteration, and Repos.
+- **Tab strip** — Daily Focus, Backlog, Iteration, and Repos. When the selected board is missing Status columns or fields Planning expects, a warning **Board setup** tab appears at the end of the strip.
+- **Board setup summary** — when issues exist, a collapsible panel above the tab strip lists the first few problems and links to the **Board setup** tab for the full checklist. Fix the board in GitHub Projects, then open **Board setup** and select **Recheck** to confirm the board is ready.
 
 If GitHub reports linked project boards that cannot be read with your current sign-in, a warning appears at the top of the page. This is common for **private user-owned** Projects v2 boards when you use hosted GitHub App sign-in: GitHub can list the board as linked to a repository while the App token cannot read it (`Resource not accessible by integration`). Public linked boards still load normally.
 

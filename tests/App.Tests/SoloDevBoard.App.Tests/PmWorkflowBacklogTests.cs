@@ -112,6 +112,7 @@ public sealed class PmWorkflowBacklogTests
         ctx.Services.AddScoped(_ => _projectBoardDiscoveryService);
         ctx.Services.AddScoped(_ => _backlogReviewService);
         ctx.Services.AddScoped(_ => planningService ?? Substitute.For<IIterationPlanningService>());
+        ctx.Services.AddScoped(_ => PmWorkflowTestChromeDependencies.CreateBoardCompatibilityService());
         ctx.Services.AddScoped<PmWorkflowChromeCoordinator>();
         ctx.Services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
 

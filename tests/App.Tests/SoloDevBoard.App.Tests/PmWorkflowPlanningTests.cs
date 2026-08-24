@@ -618,6 +618,7 @@ public sealed class PmWorkflowPlanningTests
         ctx.Services.AddScoped(_ => _repositoryService);
         ctx.Services.AddScoped(_ => _projectBoardDiscoveryService);
         ctx.Services.AddScoped(_ => _planningService);
+        ctx.Services.AddScoped(_ => PmWorkflowTestChromeDependencies.CreateBoardCompatibilityService());
         ctx.Services.AddScoped<PmWorkflowChromeCoordinator>();
         ctx.Services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
 

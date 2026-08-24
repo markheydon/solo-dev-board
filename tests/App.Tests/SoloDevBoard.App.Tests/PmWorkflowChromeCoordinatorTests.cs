@@ -14,6 +14,8 @@ public sealed class PmWorkflowChromeCoordinatorTests
     private readonly IRepositoryService _repositoryService = Substitute.For<IRepositoryService>();
     private readonly IPmProjectBoardDiscoveryService _projectBoardDiscoveryService =
         Substitute.For<IPmProjectBoardDiscoveryService>();
+    private readonly IPlanningBoardCompatibilityService _boardCompatibilityService =
+        Substitute.For<IPlanningBoardCompatibilityService>();
 
     [Fact]
     public async Task EnsureLoadedAsync_WhenAlreadyLoaded_DoesNotCallRepositoryServiceAgain()
@@ -169,6 +171,10 @@ public sealed class PmWorkflowChromeCoordinatorTests
                 Arg.Any<IReadOnlyList<RepositoryDto>>(),
                 Arg.Any<CancellationToken>())
             .Returns(new PmProjectBoardDiscoveryDto([], 0, 0));
+
+        _boardCompatibilityService
+            .GetReportAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
+            .Returns(call => new PlanningBoardCompatibilityReportDto(call.Arg<string>(), []));
     }
 
     private PmWorkflowChromeCoordinator CreateCoordinator() =>
@@ -176,6 +182,7 @@ public sealed class PmWorkflowChromeCoordinatorTests
             _pmSettingsService,
             _repositoryService,
             _projectBoardDiscoveryService,
+            _boardCompatibilityService,
             NullLogger<PmWorkflowChromeCoordinator>.Instance);
 
     private static RepositoryDto CreateRepository(string owner, string name) =>
