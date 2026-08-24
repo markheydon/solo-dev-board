@@ -156,7 +156,7 @@ public sealed class PmWorkflowChromeCoordinatorTests
         await coordinator.EnsureLoadedAsync();
         coordinator.State.Settings = coordinator.State.Settings with { PlanningBoardNodeId = "PVT_board" };
 
-        await coordinator.RecheckBoardCompatibilityAsync();
+        await coordinator.RecheckBoardCompatibilityAsync(TestContext.Current.CancellationToken);
 
         Assert.NotNull(coordinator.State.BoardCompatibilityReport);
         Assert.True(coordinator.State.BoardCompatibilityReport.HasIssues);
