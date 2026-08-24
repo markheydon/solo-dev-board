@@ -69,6 +69,27 @@ Use this when extending specs so assertions track documented workflows.
 | Confirm apply shows in-progress feedback | — | Component tests in `LabelsTests` (loading Confirm button and progress indicator) |
 | No repositories message | Empty-state text | — |
 
+### Label Manager keep `area/*` automated coverage ([#457](https://github.com/markheydon/solo-dev-board/issues/457))
+
+Issue [#457](https://github.com/markheydon/solo-dev-board/issues/457) closes the test slice for story [#446](https://github.com/markheydon/solo-dev-board/issues/446) (keep `area/*` labels out of built-in taxonomy cleanup). Keep this mapping aligned with [label-manager.md](../../website/content/docs/label-manager.md).
+
+| Behaviour | Unit / component | Playwright (CI placeholder auth) |
+|-----------|------------------|----------------------------------|
+| Built-in recommended catalogue excludes `area/*` names | `LabelServiceTests.GetRecommendedTaxonomyAsync` | — |
+| Remove-outside off leaves extras undeleted | `LabelServiceTests.PreviewRecommendedTaxonomyAsync_WhenRemoveOutsideTaxonomyDisabled_ReturnsNoLabelsToDelete` | — |
+| Remove-outside on with keep on/off and Synchronise extra deletes | `LabelServiceTests` preview/apply/sync matrix | — |
+| Nested keep checkbox enablement, default checked, preview caption | `LabelsTests` Recommended taxonomy and Synchronise tabs | `labels.spec.ts` remove-outside enables `keep-area-labels-checkbox`; Synchronise `sync-keep-area-labels-checkbox` |
+
+### Label Manager bulk delete automated coverage ([#459](https://github.com/markheydon/solo-dev-board/issues/459))
+
+Issue [#459](https://github.com/markheydon/solo-dev-board/issues/459) closes the test slice for story [#444](https://github.com/markheydon/solo-dev-board/issues/444) (Labels-tab bulk delete). Keep this mapping aligned with [label-manager.md](../../website/content/docs/label-manager.md).
+
+| Behaviour | Unit / component | Playwright (CI placeholder auth) |
+|-----------|------------------|----------------------------------|
+| Bulk delete continues after per-repository GitHub errors | `LabelServiceTests.BulkDeleteLabelsAsync_OneDeleteFails_RecordsErrorAndContinues` | — |
+| Bulk delete skips repositories without the selected label | `LabelServiceTests.BulkDeleteLabelsAsync_LabelMissingInRepository_CountsAsSkippedAndContinues` | — |
+| Bulk Delete disabled with no selection; confirm lists names/repos; cancel keeps selection; success refreshes grid; disable while in flight | `LabelsTests` bulk delete describe | `labels.spec.ts` disabled bulk delete button on shell |
+
 ### Repositories
 
 | Guide section | CI assertion | Loaded-state validation |
@@ -155,8 +176,20 @@ Issue [#415](https://github.com/markheydon/solo-dev-board/issues/415) closes the
 | Backlog Review filters, urgency panels, empty copy, warning, or catalogue error | `planning.spec.ts` `Planning` describe — `planning-backlog-filters` / `planning-backlog-panels` / empty or error copy, or chrome error | `docs-capture` (`planning/backlog.png`) |
 | Awaiting triage, epics near completion, and neglected repositories | `planning.spec.ts` `Backlog Review` describe — `planning-backlog-awaiting-triage`, `planning-backlog-epics`, and `planning-backlog-neglected` when panels load | `docs-capture` |
 | Iteration Planning Up Next, candidates, empty copy, warning, or catalogue error | `planning.spec.ts` `Iteration Planning` describe — `planning-planning-up-next` / `planning-planning-candidates` / empty or error copy, or chrome error | `docs-capture` (`planning/iteration.png`) |
-| Capacity, stalled gate, and bulk milestone | `PlanningIterationTests` (bUnit); CI shell only | `docs-capture` |
-| Board setup compatibility tab, chrome summary, and Recheck | `PlanningBoardSetupTests` (bUnit); Playwright shell in #458 | `docs-capture` (future) |
+| Capacity, stalled gate, and bulk milestone | `PlanningIterationTests` (bUnit); CI shell asserts capacity region and conditional stall gate | `docs-capture` |
+
+### Iteration Planning stall versus capacity automated coverage ([#458](https://github.com/markheydon/solo-dev-board/issues/458))
+
+Issue [#458](https://github.com/markheydon/solo-dev-board/issues/458) closes the test slice for story [#445](https://github.com/markheydon/solo-dev-board/issues/445) (separate stall gate from capacity). Keep this mapping aligned with [planning.md](../../website/content/docs/planning.md).
+
+| Behaviour | Unit / component | Playwright (CI placeholder auth) |
+|-----------|------------------|----------------------------------|
+| Stalled Up Next disables Add; error stall alert without capacity wording; candidate pause line | `PlanningIterationTests` stall gate describe | `planning.spec.ts` conditional stall gate and pause line when loaded |
+| Capacity at limit keeps Add enabled; exceed-capacity confirm still shown | `PlanningIterationTests` at-capacity describe | — |
+| Under capacity without stall shows no stall alert and enabled Add | `PlanningIterationTests.PlanningIteration_WhenUnderCapacityWithoutStall_DoesNotShowStallGateAlertAndEnablesAdd` | — |
+| Soft capacity copy in Up Next does not require resolving items before add | `PlanningIterationTests.PlanningIteration_WhenAtCapacityWithoutStall_ShowsSoftCapacityStatusInUpNext` | — |
+
+| Board setup compatibility tab, chrome summary, and Recheck | `PlanningBoardSetupTests` (bUnit); Playwright shell in board setup work | `docs-capture` (future) |
 
 ### Daily Focus automated coverage ([#385](https://github.com/markheydon/solo-dev-board/issues/385))
 

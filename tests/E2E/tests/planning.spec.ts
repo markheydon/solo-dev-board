@@ -316,6 +316,8 @@ test.describe('Iteration Planning', () => {
 
     if (await upNextRegion.isVisible()) {
       await expect(page.getByRole('heading', { name: 'This batch (Up Next)' })).toBeVisible();
+      await expect(page.getByTestId('planning-planning-capacity')).toBeVisible();
+      await expect(page.getByTestId('planning-planning-active-load')).toBeVisible();
       await expect(upNextEmpty.or(page.getByTestId('planning-planning-up-next-row')).first()).toBeVisible();
     }
 
@@ -327,6 +329,26 @@ test.describe('Iteration Planning', () => {
       await expect(
         candidatesEmpty.or(page.getByTestId('planning-planning-add-button')).first(),
       ).toBeVisible();
+    }
+  });
+
+  test('iteration shell exposes stall gate and pause line test ids when stalled Up Next is present', async ({ page }) => {
+    await page.goto('/planning/iteration');
+
+    await expect(page.getByTestId('planning-shell')).toBeVisible();
+
+    const upNextRegion = page.getByTestId('planning-planning-up-next');
+    const stallGateAlert = page.getByTestId('planning-planning-stall-gate-alert');
+    const candidatePauseLine = page.getByTestId('planning-planning-candidate-pause-line');
+
+    if (await upNextRegion.isVisible()) {
+      await expect(page.getByTestId('planning-planning-capacity')).toBeVisible();
+
+      if (await stallGateAlert.isVisible()) {
+        await expect(stallGateAlert).toBeVisible();
+        await expect(candidatePauseLine).toBeVisible();
+        await expect(page.getByTestId('planning-planning-add-button')).toBeDisabled();
+      }
     }
   });
 });

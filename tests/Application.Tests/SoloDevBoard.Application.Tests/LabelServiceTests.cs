@@ -714,6 +714,36 @@ public sealed class LabelServiceTests
     }
 
     [Fact]
+    public async Task PreviewRecommendedTaxonomyAsync_WhenRemoveOutsideTaxonomyDisabled_ReturnsNoLabelsToDelete()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-a", cancellationToken)
+            .Returns([
+                new Label { Name = "bug", Colour = "d73a4a", Description = "Something is not working", RepositoryName = "repo-a" },
+                new Label { Name = "dependencies", Colour = "0366d6", Description = "Pull requests that update a dependency", RepositoryName = "repo-a" },
+                new Label { Name = "area/docs", Colour = "0052cc", Description = "Documentation", RepositoryName = "repo-a" },
+            ]);
+
+        var sut = new LabelService(_labelRepository);
+
+        // Act
+        var result = await sut.PreviewRecommendedTaxonomyAsync(
+            "github-default",
+            ["owner/repo-a"],
+            removeLabelsOutsideTaxonomy: false,
+            keepAreaLabels: true,
+            cancellationToken);
+
+        // Assert
+        var preview = Assert.Single(result);
+        Assert.Empty(preview.ToDelete);
+        Assert.Empty(preview.KeptAreaLabels);
+        Assert.Contains(preview.Skipped, label => label.Name == "bug");
+    }
+
+    [Fact]
     public async Task PreviewRecommendedTaxonomyAsync_WhenRemoveOutsideTaxonomyEnabled_ReturnsLabelsToDelete()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
