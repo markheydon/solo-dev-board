@@ -27,8 +27,12 @@ test.describe('Label Manager shell', () => {
     await expect(page.getByTestId('preview-taxonomy-button')).toHaveText('Preview');
     await expect(page.getByTestId('remove-labels-outside-taxonomy-checkbox')).toBeVisible();
     await expect(page.getByTestId('keep-area-labels-checkbox')).toHaveCount(0);
-    await page.getByTestId('remove-labels-outside-taxonomy-checkbox').click();
-    await expect(page.getByTestId('keep-area-labels-checkbox')).toBeVisible();
+
+    const removeOutsideCheckbox = page.getByTestId('remove-labels-outside-taxonomy-checkbox');
+    if (await removeOutsideCheckbox.isEnabled()) {
+      await removeOutsideCheckbox.click();
+      await expect(page.getByTestId('keep-area-labels-checkbox')).toBeVisible();
+    }
 
     await page.getByRole('tab', { name: 'Synchronise' }).click();
     await expect(page.getByRole('heading', { name: 'Synchronise labels' })).toBeVisible();

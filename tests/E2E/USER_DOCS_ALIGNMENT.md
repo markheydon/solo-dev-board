@@ -78,7 +78,7 @@ Issue [#457](https://github.com/markheydon/solo-dev-board/issues/457) closes the
 | Built-in recommended catalogue excludes `area/*` names | `LabelServiceTests.GetRecommendedTaxonomyAsync` | — |
 | Remove-outside off leaves extras undeleted | `LabelServiceTests.PreviewRecommendedTaxonomyAsync_WhenRemoveOutsideTaxonomyDisabled_ReturnsNoLabelsToDelete` | — |
 | Remove-outside on with keep on/off and Synchronise extra deletes | `LabelServiceTests` preview/apply/sync matrix | — |
-| Nested keep checkbox enablement, default checked, preview caption | `LabelsTests` Recommended taxonomy and Synchronise tabs | `labels.spec.ts` remove-outside enables `keep-area-labels-checkbox`; Synchronise `sync-keep-area-labels-checkbox` |
+| Nested keep checkbox enablement, default checked, preview caption | `LabelsTests` Recommended taxonomy and Synchronise tabs | `labels.spec.ts` remove-outside enables `keep-area-labels-checkbox` when repositories are selected; Synchronise `sync-keep-area-labels-checkbox` |
 
 ### Label Manager bulk delete automated coverage ([#459](https://github.com/markheydon/solo-dev-board/issues/459))
 
