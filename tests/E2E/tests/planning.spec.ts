@@ -258,7 +258,7 @@ test.describe('Iteration Planning', () => {
   test('direct navigation opens the Planning route shell', async ({ page }) => {
     await page.goto('/planning/iteration');
 
-    await expect(page).toHaveURL(/\/planning\/planning$/);
+    await expect(page).toHaveURL(/\/planning\/iteration$/);
     await expect(page).toHaveTitle(/Planning — Iteration/);
     await expect(page.getByTestId('planning-shell')).toBeVisible();
     await expect(page.getByTestId('planning-tab-strip')).toBeVisible();

@@ -31,7 +31,7 @@ public sealed class PlanningIterationTests
         ConfigureDefaults();
 
         await using var ctx = CreateContext();
-        ctx.Services.GetRequiredService<NavigationManager>().NavigateTo("/planning/planning");
+        ctx.Services.GetRequiredService<NavigationManager>().NavigateTo("/planning/iteration");
         var cut = ctx.RenderPlanningPage<PlanningIteration>();
 
         cut.WaitForAssertion(() =>
