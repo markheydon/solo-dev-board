@@ -655,6 +655,13 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
             milestoneOptions = await PlanningService
                 .GetBulkMilestoneOptionsAsync(SelectedUpNextItems)
                 .ConfigureAwait(false);
+
+            if (selectedMilestoneTitle is not null
+                && !milestoneOptions.Any(option =>
+                    option.Title.Equals(selectedMilestoneTitle, StringComparison.OrdinalIgnoreCase)))
+            {
+                selectedMilestoneTitle = null;
+            }
         }
         catch (Exception ex)
         {
