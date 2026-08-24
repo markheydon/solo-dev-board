@@ -189,6 +189,8 @@ Issue [#458](https://github.com/markheydon/solo-dev-board/issues/458) closes the
 | Under capacity without stall shows no stall alert and enabled Add | `PlanningIterationTests.PlanningIteration_WhenUnderCapacityWithoutStall_DoesNotShowStallGateAlertAndEnablesAdd` | — |
 | Soft capacity copy in Up Next does not require resolving items before add | `PlanningIterationTests.PlanningIteration_WhenAtCapacityWithoutStall_ShowsSoftCapacityStatusInUpNext` | — |
 
+Placeholder-auth CI usually loads Iteration Planning without a stalled Up Next item, so stall-gate alert and pause-line assertions in `planning.spec.ts` are conditional when a loaded board happens to show stalled work. Populated stall UI and disable-Add behaviour are covered in `PlanningIterationTests` (bUnit). PAT docs-capture can validate loaded stall screenshots when needed.
+
 | Board setup compatibility tab, chrome summary, and Recheck | `PlanningBoardSetupTests` (bUnit); Playwright shell in board setup work | `docs-capture` (future) |
 
 ### Daily Focus automated coverage ([#385](https://github.com/markheydon/solo-dev-board/issues/385))

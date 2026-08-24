@@ -741,6 +741,8 @@ public sealed class LabelServiceTests
         Assert.Empty(preview.ToDelete);
         Assert.Empty(preview.KeptAreaLabels);
         Assert.Contains(preview.Skipped, label => label.Name == "bug");
+        Assert.DoesNotContain(preview.ToDelete, label => label.Name == "dependencies");
+        Assert.DoesNotContain(preview.ToDelete, label => label.Name == "area/docs");
     }
 
     [Fact]

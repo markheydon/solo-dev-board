@@ -1173,6 +1173,12 @@ public sealed class LabelsTests
         {
             var bulkDeleteButton = cut.Find("[data-testid='bulk-delete-labels-button']");
             Assert.False(bulkDeleteButton.HasAttribute("disabled"));
+
+#pragma warning disable MUD0012
+            var selectedItem = Assert.Single(grid.Instance.SelectedItems!);
+#pragma warning restore MUD0012
+            Assert.Equal("type/story", selectedItem.Name);
+            Assert.Contains("type/story", cut.Find("[data-testid='labels-grid']").TextContent, StringComparison.Ordinal);
         });
 
         await _labelManagerService.Received(1).GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
