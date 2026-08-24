@@ -468,7 +468,13 @@ public sealed class LabelsTests
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA, repoB]);
 
         _labelManagerService.PreviewLabelSynchronisationAsync("owner/repo-a", Arg.Any<IReadOnlyList<string>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns([
-                new LabelSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [], []),
+                new LabelSyncRepositoryPreviewDto(
+                    "owner/repo-b",
+                    [new LabelDto("priority/high", "d93f0b", "High", "owner/repo-b")],
+                    [],
+                    [],
+                    [],
+                    []),
             ]);
 
         _labelManagerService.ApplyLabelSynchronisationAsync("owner/repo-a", Arg.Any<IReadOnlyList<string>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(applyTask.Task);
@@ -722,7 +728,48 @@ public sealed class LabelsTests
             Assert.Contains("2 area/* labels are excluded from delete and will be left unchanged.", cut.Markup);
             Assert.DoesNotContain("Kept (area prefix)", cut.Markup);
             Assert.DoesNotContain("area/docs", cut.Markup);
+
+            var confirmButton = cut.Find("[data-testid='confirm-apply-taxonomy-button']");
+            Assert.True(confirmButton.HasAttribute("disabled"));
         });
+    }
+
+    [Fact]
+    public async Task Labels_PreviewRecommendedTaxonomy_WhenNoActionableChanges_DisablesConfirmButton()
+    {
+        // Arrange
+        var repoA = CreateRepository("owner", "repo-a");
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
+
+        _labelManagerService.PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns([
+                new RecommendedTaxonomyRepositoryPreviewDto(
+                    "owner/repo-a",
+                    [],
+                    [],
+                    [],
+                    [new LabelDto("type/story", "1d76db", "Story", "owner/repo-a")],
+                    []),
+            ]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
+        await SelectRepositoriesAsync(cut, repoA);
+        await ActivateTabAsync(cut, "Recommended taxonomy");
+        cut.Find("[data-testid='preview-taxonomy-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Taxonomy preview", cut.Markup);
+            var confirmButton = cut.Find("[data-testid='confirm-apply-taxonomy-button']");
+            Assert.True(confirmButton.HasAttribute("disabled"));
+        });
+
+        await _labelManagerService.DidNotReceive().ApplyRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -786,7 +833,13 @@ public sealed class LabelsTests
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA, repoB]);
 
         _labelManagerService.PreviewLabelSynchronisationAsync("owner/repo-a", Arg.Any<IReadOnlyList<string>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns([
-                new LabelSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [], []),
+                new LabelSyncRepositoryPreviewDto(
+                    "owner/repo-b",
+                    [new LabelDto("priority/high", "d93f0b", "High", "owner/repo-b")],
+                    [],
+                    [],
+                    [],
+                    []),
             ]);
 
         _labelManagerService.ApplyLabelSynchronisationAsync("owner/repo-a", Arg.Any<IReadOnlyList<string>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns([

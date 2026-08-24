@@ -979,7 +979,7 @@ public partial class Labels : ComponentBase
         && !string.IsNullOrWhiteSpace(selectedStrategyId);
 
     private bool CanApplyRecommendedTaxonomy => showRecommendedPreview
-        && recommendedPreview.Count > 0
+        && recommendedPreview.Any(HasRecommendedTaxonomyActions)
         && !isApplyingRecommendedTaxonomy;
 
     private bool CanPreviewLabelSynchronisation => !ShowLoadingState
@@ -988,8 +988,18 @@ public partial class Labels : ComponentBase
         && syncTargetRepositoryFullNames.Count > 0;
 
     private bool CanApplyLabelSynchronisation => showSyncPreview
-        && syncPreviewResults.Count > 0
+        && syncPreviewResults.Any(HasLabelSynchronisationActions)
         && !isApplyingSync;
+
+    private static bool HasRecommendedTaxonomyActions(RecommendedTaxonomyRepositoryPreviewDto preview)
+        => preview.ToCreate.Count > 0
+            || preview.ToUpdate.Count > 0
+            || preview.ToDelete.Count > 0;
+
+    private static bool HasLabelSynchronisationActions(LabelSyncRepositoryPreviewDto preview)
+        => preview.ToCreate.Count > 0
+            || preview.ToUpdate.Count > 0
+            || preview.ToDelete.Count > 0;
 
     private string SelectedStrategyDescription
         => recommendedStrategies.FirstOrDefault(strategy => strategy.Id.Equals(selectedStrategyId, StringComparison.OrdinalIgnoreCase))?.Description
