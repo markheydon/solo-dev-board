@@ -160,7 +160,7 @@ Functions should call **Application use cases** (scan/write snapshot), not scrap
 | Redis | Only if `webfrontend` and `apiservice` both need a shared hot catalogue cache, or multiple API replicas appear. Not required while ACA `MaxReplicas = 1`. |
 | Azure SQL / Cosmos | Only if scan history, acknowledgements, or ignore-lists become first-class product data. Avoid until a scanner needs queryable history. |
 | Service Bus / Storage Queue | Fan-out across hundreds of repos, or “user clicked Apply FUNDING to 40 repos”. Durable Functions + task hub is the Aspire-supported alternative for fan-out. |
-| User preferences (PM settings) | When SQL/Cosmos or equivalent per-user storage is provisioned for first-class product data. **Interim:** browser `localStorage` per [DEC-029](DECISIONS.md#dec-029-cross-repo-pm-workflow-board-selection-and-local-settings) ([#383](https://github.com/markheydon/solo-dev-board/issues/383)). **Refactor:** [#391](https://github.com/markheydon/solo-dev-board/issues/391). |
+| User preferences (PM settings) | When SQL/Cosmos or equivalent per-user storage is provisioned for first-class product data. **Interim:** browser `localStorage` per [DEC-029](DECISIONS.md#dec-029-cross-repo-planning-board-selection-and-local-settings) ([#383](https://github.com/markheydon/solo-dev-board/issues/383)). **Refactor:** [#391](https://github.com/markheydon/solo-dev-board/issues/391). |
 
 Do not add a database solely to look like a starter template. GitHub remains the system of record for live mutations. Persistence is for **derived snapshots**, **job state**, and (when justified) **user preferences** that must outlive a single browser profile.
 

@@ -1,4 +1,4 @@
-using SoloDevBoard.Application.Services.PmWorkflow;
+using SoloDevBoard.Application.Services.Planning;
 
 namespace SoloDevBoard.Application.Tests;
 
@@ -167,7 +167,7 @@ public sealed class BacklogReviewGroupingTests
             8,
             "PR parked",
             ["priority/high"],
-            PmWorkItemTypeDto.PullRequest);
+            PlanningWorkItemTypeDto.PullRequest);
         var boardItems = new[]
         {
             CreateBoardItem(8, "Blocked", ProjectBoardItemContentTypeDto.PullRequest),
@@ -218,7 +218,7 @@ public sealed class BacklogReviewGroupingTests
     {
         var failures = new[]
         {
-            new PmRepositoryCatalogueFailureDto("owner/failed", "Not found", 404),
+            new PlanningRepositoryCatalogueFailureDto("owner/failed", "Not found", 404),
         };
 
         var result = BacklogReviewGrouping.Group([], [], [], failures, 14, ReferenceTime);
@@ -232,7 +232,7 @@ public sealed class BacklogReviewGroupingTests
     [InlineData(15, true)]
     public void IsNeglected_BoundaryDays_ReturnsExpected(int daysSinceActivity, bool expected)
     {
-        var summary = new PmRepositorySummaryDto(
+        var summary = new PlanningRepositorySummaryDto(
             "owner/quiet",
             0,
             0,
@@ -245,7 +245,7 @@ public sealed class BacklogReviewGroupingTests
     [Fact]
     public void IsNeglected_NoRecordedActivity_ReturnsTrue()
     {
-        var summary = new PmRepositorySummaryDto("owner/empty", 0, 0, default, IsIncluded: true);
+        var summary = new PlanningRepositorySummaryDto("owner/empty", 0, 0, default, IsIncluded: true);
 
         Assert.True(BacklogReviewGrouping.IsNeglected(summary, neglectDays: 14, ReferenceTime));
     }
@@ -255,19 +255,19 @@ public sealed class BacklogReviewGroupingTests
     {
         var summaries = new[]
         {
-            new PmRepositorySummaryDto(
+            new PlanningRepositorySummaryDto(
                 "owner/active",
                 2,
                 1,
                 ReferenceTime.AddDays(-3),
                 IsIncluded: true),
-            new PmRepositorySummaryDto(
+            new PlanningRepositorySummaryDto(
                 "owner/quiet",
                 0,
                 0,
                 ReferenceTime.AddDays(-20),
                 IsIncluded: true),
-            new PmRepositorySummaryDto(
+            new PlanningRepositorySummaryDto(
                 "owner/excluded",
                 0,
                 0,
@@ -314,17 +314,17 @@ public sealed class BacklogReviewGroupingTests
         Assert.True(result.SubIssueCountsUnavailable);
     }
 
-    private static PmWorkItemDto CreateWorkItem(
+    private static PlanningWorkItemDto CreateWorkItem(
         int number,
         string title,
         IReadOnlyList<string> labels,
-        PmWorkItemTypeDto itemType = PmWorkItemTypeDto.Issue,
+        PlanningWorkItemTypeDto itemType = PlanningWorkItemTypeDto.Issue,
         string repositoryFullName = "owner/a",
         int? subIssueTotal = null,
         int? subIssueCompleted = null)
     {
-        var path = itemType == PmWorkItemTypeDto.PullRequest ? "pull" : "issues";
-        return new PmWorkItemDto(
+        var path = itemType == PlanningWorkItemTypeDto.PullRequest ? "pull" : "issues";
+        return new PlanningWorkItemDto(
             itemType,
             number,
             title,
@@ -335,8 +335,8 @@ public sealed class BacklogReviewGroupingTests
             MilestoneTitle: null,
             CreatedAt: DateTimeOffset.Parse("2026-08-18T00:00:00Z"),
             UpdatedAt: DateTimeOffset.Parse("2026-08-18T00:00:00Z"),
-            IsDraft: itemType == PmWorkItemTypeDto.PullRequest ? false : null,
-            HasReviewPending: itemType == PmWorkItemTypeDto.PullRequest ? false : null,
+            IsDraft: itemType == PlanningWorkItemTypeDto.PullRequest ? false : null,
+            HasReviewPending: itemType == PlanningWorkItemTypeDto.PullRequest ? false : null,
             subIssueTotal,
             subIssueCompleted);
     }

@@ -14,9 +14,9 @@ This directory contains planning-only wireframe references for key SoloDevBoard 
 - [one-click-migration-wireframe.md](one-click-migration-wireframe.md): One-Click Migration page wireframe, workflow-first layout, preview-first review flow, and post-migration summary states.
 - [triage-ui-wireframe.md](triage-ui-wireframe.md): Triage UI wireframe, session flow, progress tracking, label/milestone/project-board actions, skip/return, and end-of-session summary.
 - [board-rules-visualiser-wireframe.md](board-rules-visualiser-wireframe.md): Board Rules Visualiser wireframe, repository/project selection, interactive diagram, rule detail and conflict panels, compare mode, and responsive layout.
-- [workflow-templates-wireframe.md](workflow-templates-wireframe.md): Workflow Templates page wireframe, template browser, parameter editor, apply-to-repository flow, status/feedback region, and responsive layout.
+- [actions-templates-wireframe.md](actions-templates-wireframe.md): Actions Templates page wireframe, template browser, parameter editor, apply-to-repository flow, status/feedback region, and responsive layout.
 - [auth-entry-wireframe.md](auth-entry-wireframe.md): Hosted sign-in landing page, PAT connectivity shell indicator, recovery pages, and manual test scenarios for issues #249 and #314.
-- [pm-workflow-wireframe.md](pm-workflow-wireframe.md): Cross-Repo PM Workflow hub, Daily Focus, Backlog Review, Iteration Planning (stall gate vs capacity meter, #445), and Repo Management for feature #272.
+- [planning-wireframe.md](planning-wireframe.md): Cross-Repo Planning hub, Daily Focus, Backlog Review, Iteration Planning (stall gate vs capacity meter, #445), and Repo Management for feature #272.
 - [product-site-landing-wireframe.md](product-site-landing-wireframe.md): Public product site landing (`/`), navigation, feature grid, and release version badge.
 - [product-site-about-wireframe.md](product-site-about-wireframe.md): Product About/history section (`/about/`), origin and AI-collaborator narrative pages.
 

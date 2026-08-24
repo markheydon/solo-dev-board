@@ -7,7 +7,7 @@ using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Domain.Entities.Labels;
 using SoloDevBoard.Domain.Entities.Migration;
 using SoloDevBoard.Domain.Entities.Milestones;
-using SoloDevBoard.Domain.Entities.PmWorkflow;
+using SoloDevBoard.Domain.Entities.Planning;
 using SoloDevBoard.Domain.Entities.Repositories;
 using SoloDevBoard.Domain.Entities.Triage;
 using SoloDevBoard.Domain.Entities.Workflows;

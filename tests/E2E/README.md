@@ -16,14 +16,14 @@ Published user guides must stay aligned with these tests like-for-like. See [USE
 | `about.spec.ts` | About page metadata via the shell menu |
 | `auth-entry.spec.ts` | PAT-mode welcome redirect and connectivity error page |
 | `auth-entry-hosted.spec.ts` | Hosted-mode login gate, welcome landing, and Blazor negotiate |
-| `audit-dashboard.spec.ts` | Audit Dashboard shell and repository load failure; `/audit` alias |
+| `audit-dashboard.spec.ts` | Audit Dashboard shell and repository load failure |
 | `repositories.spec.ts` | Repositories command strip, load failure handling, and phone-width overflow guard |
 | `migrate.spec.ts` | One-Click Migration setup shell, columns scope switch, and API failure feedback |
 | `board-rules.spec.ts` | Board Rules selector region, compare mode, and load failure |
 | `labels.spec.ts` | Label Manager shell, tabs, and empty-repository state |
-| `workflows.spec.ts` | Built-in template browse/filter/select and repository error state |
+| `actions-templates.spec.ts` | Built-in template browse/filter/select and repository error state |
 | `triage.spec.ts` | Triage shell and no-repositories alert without a live GitHub connection |
-| `pm-workflow.spec.ts` | Planning Daily Focus occupancy, recommendations, stalled Up Next, stalled-review, Backlog Review, and Iteration shells, plus Repos tab threshold, exclusion, and summary regions or chrome error |
+| `planning.spec.ts` | Planning — Daily Focus occupancy, recommendations, stalled Up Next, stalled-review, Backlog Review, and Iteration shells, plus Repos tab threshold, exclusion, and summary regions or chrome error |
 | `accessibility.spec.ts` | WCAG 2.1 AA axe-core scan of Tier 1–2 journeys in light and dark mode; labelled shell controls; isolated snackbar contrast scan |
 
 Tests are designed to pass in CI with placeholder auth. The PAT job uses `GitHubAuth__PersonalAccessToken=ci-e2e-placeholder`. The hosted job uses placeholder GitHub App credentials and asserts the login gate without live OAuth. Repository-dependent features assert empty or error states rather than live GitHub data.

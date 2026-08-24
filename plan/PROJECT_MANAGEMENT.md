@@ -107,7 +107,7 @@ Milestones map to **releases**, not ongoing product themes. After v1.0.0, keep *
 | v1.0.0 | Closed | Public release (2026-08-18) |
 | **v1.1.0** | **Open** | Sole active milestone — deferred slices, Planning ([#272](https://github.com/markheydon/solo-dev-board/issues/272)), dogfood fixes |
 
-The unused `v1.2.0 — Cross-Repo PM Workflow` milestone was closed then **deleted** on 2026-08-18 after work moved to v1.1.0.
+The unused `v1.2.0 — Cross-Repo Planning` milestone was closed then **deleted** on 2026-08-18 after work moved to v1.1.0.
 
 ### Milestone Workflow
 

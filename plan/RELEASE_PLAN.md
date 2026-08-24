@@ -71,11 +71,11 @@ Application version numbers are calculated automatically at build time by [MinVe
 
 ### v0.4.0 — Visualisation and Templates
 
-**Goal:** Deliver the Board Rules Visualiser and Workflow Templates features.
+**Goal:** Deliver the Board Rules Visualiser and Actions Templates features.
 
 **Scope:**
 - Board Rules Visualiser: interactive diagram of project board automation rules
-- Workflow Templates: built-in template library, apply to repositories
+- Actions Templates: built-in template library, apply to repositories
 
 **Status:** Complete (2026-07-17).
 

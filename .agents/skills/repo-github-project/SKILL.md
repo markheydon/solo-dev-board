@@ -74,7 +74,7 @@ As of 2026-08-18, the Project board **Phase** field is **legacy** for closed pre
 | Phase 2 — Label Manager + Audit | `0f90ba94` | v0.2.0 | Legacy |
 | Phase 3 — Migration + Triage | `f3de38ba` | v0.3.0 | Legacy |
 | Phase 4 — Board Rules + Workflows | `f5bc6726` | v0.4.0 | Legacy |
-| Phase 5 — Cross-Repo PM Workflow | `495afaf1` | v0.5.0 (historical) | Legacy |
+| Phase 5 — Cross-Repo Planning | `495afaf1` | v0.5.0 (historical) | Legacy |
 | Phase 6 — Polish and v1.0 | `dfa36cee` | v1.0.0 | Legacy |
 
 `v1.1.0` and unmilestoned issues: **do not set Phase** (Roadmap Sync leaves the field blank).
@@ -100,7 +100,7 @@ As of 2026-08-18, the Project board **Phase** field is **legacy** for closed pre
 | `v0.2.0` | Phase 2 — Label Manager + Audit |
 | `v0.3.0` | Phase 3 — Migration + Triage |
 | `v0.4.0` | Phase 4 — Board Rules + Workflows |
-| `v0.5.0` | Phase 5 — Cross-Repo PM Workflow |
+| `v0.5.0` | Phase 5 — Cross-Repo Planning |
 | `v1.0.0` | Phase 6 — Polish and v1.0 |
 | `v1.1.0` or none | **Leave Phase blank** |
 

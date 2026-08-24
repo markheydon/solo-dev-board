@@ -1,13 +1,13 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using SoloDevBoard.Application.Services.ActionsTemplates;
 using SoloDevBoard.Application.Services.Audit;
 using SoloDevBoard.Application.Services.BoardRules;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Migration;
-using SoloDevBoard.Application.Services.PmWorkflow;
+using SoloDevBoard.Application.Services.Planning;
 using SoloDevBoard.Application.Services.Repositories;
 using SoloDevBoard.Application.Services.Triage;
-using SoloDevBoard.Application.Services.Workflows;
 
 namespace SoloDevBoard.Application.Services.Common;
 
@@ -29,11 +29,11 @@ public static class ApplicationServiceCollectionExtensions
         services.AddSingleton<IAuditDashboardMarkdownExporter, AuditDashboardMarkdownExporter>();
         services.AddScoped<IBoardRulesService, BoardRulesService>();
         services.AddScoped<ITriageService, TriageService>();
-        services.AddScoped<IWorkflowTemplateService, WorkflowTemplateService>();
-        services.AddScoped<IPmSettingsService, PmSettingsService>();
+        services.AddScoped<IActionsTemplateService, ActionsTemplateService>();
+        services.AddScoped<IPlanningSettingsService, PlanningSettingsService>();
         services.AddScoped<IProjectItemCatalogueService, ProjectItemCatalogueService>();
-        services.AddScoped<IPmWorkItemCatalogueService, PmWorkItemCatalogueService>();
-        services.AddScoped<IPmProjectBoardDiscoveryService, PmProjectBoardDiscoveryService>();
+        services.AddScoped<IPlanningWorkItemCatalogueService, PlanningWorkItemCatalogueService>();
+        services.AddScoped<IPlanningProjectBoardDiscoveryService, PlanningProjectBoardDiscoveryService>();
         services.AddScoped<IDailyFocusBoardStateService, DailyFocusBoardStateService>();
         services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<IDailyFocusStalledReviewService, DailyFocusStalledReviewService>();

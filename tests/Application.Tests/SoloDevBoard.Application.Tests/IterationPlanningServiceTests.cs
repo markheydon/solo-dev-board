@@ -1,6 +1,6 @@
 using NSubstitute;
 using SoloDevBoard.Application.Services.GitHub;
-using SoloDevBoard.Application.Services.PmWorkflow;
+using SoloDevBoard.Application.Services.Planning;
 using SoloDevBoard.Domain.Entities.Milestones;
 
 namespace SoloDevBoard.Application.Tests;
@@ -8,7 +8,7 @@ namespace SoloDevBoard.Application.Tests;
 /// <summary>Tests for <see cref="IterationPlanningService"/>.</summary>
 public sealed class IterationPlanningServiceTests
 {
-    private readonly IPmWorkItemCatalogueService _workItemCatalogueService = Substitute.For<IPmWorkItemCatalogueService>();
+    private readonly IPlanningWorkItemCatalogueService _workItemCatalogueService = Substitute.For<IPlanningWorkItemCatalogueService>();
     private readonly IProjectItemCatalogueService _projectItemCatalogueService = Substitute.For<IProjectItemCatalogueService>();
     private readonly IGitHubService _gitHubService = Substitute.For<IGitHubService>();
 
@@ -29,7 +29,7 @@ public sealed class IterationPlanningServiceTests
 
         var result = await sut.AddToUpNextAsync(
             "project-id",
-            PmWorkItemTypeDto.Issue,
+            PlanningWorkItemTypeDto.Issue,
             "owner/repo",
             50,
             labels,
@@ -72,7 +72,7 @@ public sealed class IterationPlanningServiceTests
 
         var result = await sut.AddToUpNextAsync(
             "project-id",
-            PmWorkItemTypeDto.Issue,
+            PlanningWorkItemTypeDto.Issue,
             "owner/repo",
             51,
             labels,
@@ -113,11 +113,11 @@ public sealed class IterationPlanningServiceTests
             .Returns("PVTI_feature");
 
         var sut = CreateSut();
-        var labels = new[] { PmLabelHelpers.FeatureTypeLabel };
+        var labels = new[] { PlanningLabelHelpers.FeatureTypeLabel };
 
         var result = await sut.AddToUpNextAsync(
             "project-id",
-            PmWorkItemTypeDto.Issue,
+            PlanningWorkItemTypeDto.Issue,
             "owner/repo",
             52,
             labels,
@@ -156,7 +156,7 @@ public sealed class IterationPlanningServiceTests
 
         var result = await sut.AddToUpNextAsync(
             "project-id",
-            PmWorkItemTypeDto.Issue,
+            PlanningWorkItemTypeDto.Issue,
             "owner/repo",
             54,
             labels,
@@ -199,7 +199,7 @@ public sealed class IterationPlanningServiceTests
 
         var action = async () => await sut.AddToUpNextAsync(
             "project-id",
-            PmWorkItemTypeDto.Issue,
+            PlanningWorkItemTypeDto.Issue,
             "owner/repo",
             53,
             ["type/story"],
@@ -229,7 +229,7 @@ public sealed class IterationPlanningServiceTests
 
         var action = async () => await sut.AddToUpNextAsync(
             "project-id",
-            PmWorkItemTypeDto.Issue,
+            PlanningWorkItemTypeDto.Issue,
             "owner/repo",
             53,
             ["type/story"],
@@ -325,7 +325,7 @@ public sealed class IterationPlanningServiceTests
         var sut = CreateSut();
         var item = new IterationPlanningStalledItemDto(
             "PVTI_one",
-            PmWorkItemTypeDto.Issue,
+            PlanningWorkItemTypeDto.Issue,
             40,
             "Blocked story",
             "https://github.com/owner/repo/issues/40",
@@ -351,7 +351,7 @@ public sealed class IterationPlanningServiceTests
                 Arg.Is<IReadOnlyList<string>>(labels =>
                     labels.Contains("type/story")
                     && labels.Contains("priority/medium")
-                    && labels.Contains(PmLabelHelpers.BlockedStatusLabel)),
+                    && labels.Contains(PlanningLabelHelpers.BlockedStatusLabel)),
                 cancellationToken);
     }
 
@@ -367,7 +367,7 @@ public sealed class IterationPlanningServiceTests
         var sut = CreateSut();
         var item = new IterationPlanningStalledItemDto(
             "PVTI_one",
-            PmWorkItemTypeDto.Issue,
+            PlanningWorkItemTypeDto.Issue,
             40,
             "Ice box story",
             "https://github.com/owner/repo/issues/40",
@@ -395,7 +395,7 @@ public sealed class IterationPlanningServiceTests
                 Arg.Is<IReadOnlyList<string>>(labels =>
                     labels.Contains("type/story")
                     && labels.Contains("priority/medium")
-                    && labels.Contains(PmLabelHelpers.IceBoxStatusLabel)),
+                    && labels.Contains(PlanningLabelHelpers.IceBoxStatusLabel)),
                 cancellationToken);
     }
 
@@ -411,7 +411,7 @@ public sealed class IterationPlanningServiceTests
         var sut = CreateSut();
         var item = new IterationPlanningStalledItemDto(
             "PVTI_one",
-            PmWorkItemTypeDto.Issue,
+            PlanningWorkItemTypeDto.Issue,
             40,
             "Remove me",
             "https://github.com/owner/repo/issues/40",
@@ -497,7 +497,7 @@ public sealed class IterationPlanningServiceTests
         var boardCatalogue = CreateCatalogue(existingItem: null);
         _workItemCatalogueService
             .GetCatalogueAsync(cancellationToken)
-            .Returns(new PmWorkItemCatalogueResultDto([], [], []));
+            .Returns(new PlanningWorkItemCatalogueResultDto([], [], []));
         _projectItemCatalogueService
             .GetCatalogueAsync("project-id", cancellationToken)
             .Returns(boardCatalogue);
@@ -571,7 +571,7 @@ public sealed class IterationPlanningServiceTests
     private static IterationPlanningUpNextItemDto CreateUpNextItem(string repositoryFullName, int number) =>
         new(
             $"PVTI_{number}",
-            PmWorkItemTypeDto.Issue,
+            PlanningWorkItemTypeDto.Issue,
             number,
             $"Title {number}",
             $"https://github.com/{repositoryFullName}/issues/{number}",

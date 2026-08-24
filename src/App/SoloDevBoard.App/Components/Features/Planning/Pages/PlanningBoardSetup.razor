@@ -1,0 +1,24 @@
+@page "/planning/board-setup"
+@layout PlanningLayout
+@using SoloDevBoard.App.Components.Features.Planning
+
+<PageTitle>Planning — Board setup</PageTitle>
+
+<PlanningBoardSetupPanel />
+
+@code {
+    [CascadingParameter]
+    public PlanningChromeState? ChromeState { get; set; }
+
+    [Inject]
+    public NavigationManager NavigationManager { get; set; } = default!;
+
+    /// <inheritdoc/>
+    protected override void OnParametersSet()
+    {
+        if (ChromeState?.BoardCompatibilityReport is { HasIssues: false })
+        {
+            NavigationManager.NavigateTo("/planning/daily-focus", replace: true);
+        }
+    }
+}

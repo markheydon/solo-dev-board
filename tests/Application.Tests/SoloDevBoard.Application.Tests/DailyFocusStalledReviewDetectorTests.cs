@@ -1,4 +1,4 @@
-using SoloDevBoard.Application.Services.PmWorkflow;
+using SoloDevBoard.Application.Services.Planning;
 
 namespace SoloDevBoard.Application.Tests;
 
@@ -181,8 +181,8 @@ public sealed class DailyFocusStalledReviewDetectorTests
     {
         var items = new[]
         {
-            new PmWorkItemDto(
-                PmWorkItemTypeDto.Issue,
+            new PlanningWorkItemDto(
+                PlanningWorkItemTypeDto.Issue,
                 1,
                 "Issue",
                 "https://github.com/owner/repo/issues/1",
@@ -267,14 +267,14 @@ public sealed class DailyFocusStalledReviewDetectorTests
             activityTimestamp,
             false);
 
-    private static PmWorkItemDto CreateWorkItem(
+    private static PlanningWorkItemDto CreateWorkItem(
         int number,
         DateTimeOffset createdAt,
         bool isDraft,
         bool hasReviewPending,
         string repositoryFullName = "owner/repo")
         => new(
-            PmWorkItemTypeDto.PullRequest,
+            PlanningWorkItemTypeDto.PullRequest,
             number,
             $"PR {number}",
             $"https://github.com/{repositoryFullName}/pull/{number}",

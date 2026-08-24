@@ -1,0 +1,10 @@
+@page "/planning"
+@inject NavigationManager NavigationManager
+
+@code {
+    /// <inheritdoc/>
+    protected override void OnInitialized()
+    {
+        NavigationManager.NavigateTo("/planning/daily-focus", replace: true);
+    }
+}

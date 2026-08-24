@@ -35,7 +35,7 @@ Adopt a phased approach to authentication and multi-tenancy:
 - **Constraint for Delivery Agent:** No Application or Domain service method may access `IOptions<GitHubAuthOptions>` directly. All auth context must flow through `ICurrentUserContext`.
 
 ### Phases 3–4 (v0.3.0–v0.4.0) — No Auth Changes
-- Continue building features (One-Click Migration, Triage UI, Board Rules Visualiser, Workflow Templates) against the `ICurrentUserContext` abstraction.
+- Continue building features (One-Click Migration, Triage UI, Board Rules Visualiser, Actions Templates) against the `ICurrentUserContext` abstraction.
 - No authentication changes required; the interface work in Phase 2 makes these phases safe.
 
 ### Phase 5 (v1.0.0) — Full Multi-Tenancy

@@ -1,4 +1,4 @@
-using SoloDevBoard.Application.Services.PmWorkflow;
+using SoloDevBoard.Application.Services.Planning;
 
 namespace SoloDevBoard.Application.Tests;
 
@@ -167,9 +167,9 @@ public sealed class IterationPlanningViewMapperTests
         Assert.Equal(expected, result);
     }
 
-    private static PmWorkItemDto CreateWorkItem(int number, string title) =>
+    private static PlanningWorkItemDto CreateWorkItem(int number, string title) =>
         new(
-            PmWorkItemTypeDto.Issue,
+            PlanningWorkItemTypeDto.Issue,
             number,
             title,
             $"https://github.com/owner/repo/issues/{number}",
@@ -185,12 +185,12 @@ public sealed class IterationPlanningViewMapperTests
             null);
 
     private static IterationPlanningViewDto Map(
-        IReadOnlyList<PmWorkItemDto> workItems,
+        IReadOnlyList<PlanningWorkItemDto> workItems,
         IReadOnlyList<ProjectBoardItemDto> boardItems,
-        IReadOnlyList<PmRepositoryCatalogueFailureDto> failures,
+        IReadOnlyList<PlanningRepositoryCatalogueFailureDto> failures,
         bool hasFocusOrderField,
         int capacity,
-        int stallDays = PmSettingsDefaults.StallDays) =>
+        int stallDays = PlanningSettingsDefaults.StallDays) =>
         IterationPlanningViewMapper.Map(
             workItems,
             boardItems,

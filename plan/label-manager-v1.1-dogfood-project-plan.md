@@ -69,4 +69,4 @@ graph TD
 - Decision: [DEC-034](DECISIONS.md#dec-034-label-manager-recommended-catalogue-omits-area-labels)
 - This repository's areas: [`plan/LABEL_STRATEGY.md`](LABEL_STRATEGY.md)
 - User Guide (update during delivery): [`website/content/docs/label-manager.md`](../website/content/docs/label-manager.md)
-- Catalogue code: `RecommendedLabelTaxonomyCatalog` (`area/dashboard`, `area/migration`, `area/labels`, `area/board-rules`, `area/triage`, `area/workflows`, `area/infrastructure`, `area/docs`)
+- Catalogue code: `RecommendedLabelTaxonomyCatalog` (`area/dashboard`, `area/migration`, `area/labels`, `area/board-rules`, `area/triage`, `area/actions-templates`, `area/infrastructure`, `area/docs`)

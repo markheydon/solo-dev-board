@@ -56,7 +56,7 @@ public sealed class DashboardTests : BunitContext
         Assert.Contains("/labels", links);
         Assert.Contains("/board-rules", links);
         Assert.Contains("/triage", links);
-        Assert.Contains("/workflows", links);
-        Assert.Contains("/pm-workflow", links);
+        Assert.Contains("/actions-templates", links);
+        Assert.Contains("/planning", links);
     }
 }

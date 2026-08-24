@@ -24,8 +24,8 @@ test.describe('Feature navigation', () => {
       { linkName: 'Open Label Manager', path: '/labels', title: /Label Manager/ },
       { linkName: 'Open Board Rules Visualiser', path: '/board-rules', title: /Board Rules Visualiser/ },
       { linkName: 'Open Triage UI', path: '/triage', title: /Triage UI/ },
-      { linkName: 'Open Actions Templates', path: '/workflows', title: /Actions Templates/ },
-      { linkName: 'Open Planning', path: '/pm-workflow/daily-focus', title: /Planning — Daily Focus/ },
+      { linkName: 'Open Actions Templates', path: '/actions-templates', title: /Actions Templates/ },
+      { linkName: 'Open Planning', path: '/planning/daily-focus', title: /Planning — Daily Focus/ },
     ] as const;
 
     for (const feature of featureCards) {

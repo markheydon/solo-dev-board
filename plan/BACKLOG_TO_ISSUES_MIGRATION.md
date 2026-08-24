@@ -54,7 +54,7 @@ GitHub Milestones        → release targeting
 
 - **Phases 1–4 are complete.** Deferred slices are post-v1 improvements, not blockers.
 - **v1.0.0 is the immediate goal** (Phase 6 closure).
-- **Phase 5 (Cross-Repo PM Workflow)** is parked until after v1.0.0 ships.
+- **Phase 5 (Cross-Repo Planning)** is parked until after v1.0.0 ships.
 - **Deferred improvements** (label consistency, custom template repos, project board migration, etc.) are post-v1 backlog items with no milestone.
 
 ---
@@ -101,11 +101,11 @@ The following items are open in `plan/BACKLOG.md` and/or `plan/IMPLEMENTATION_PL
 | 15 | Audit Dashboard auto-refresh | New issue | `type/story`, `priority/low`, `area/dashboard`, `size/s` |
 | 16 | Audit Dashboard Markdown export | New issue | `type/story`, `priority/low`, `area/dashboard`, `size/s` |
 
-### Phase 5 — v0.5.0 (parked; milestone: `v0.5.0 — Cross-Repo PM Workflow`)
+### Phase 5 — v0.5.0 (parked; milestone: `v0.5.0 — Cross-Repo Planning`)
 
 Create issues now or at v1 kickoff, but **do not assign v1.0.0 milestone**. Group under a parent epic issue.
 
-**Parent epic (create if not exists):** `[Epic] Cross-Repo PM Workflow (Phase 5)`
+**Parent epic (create if not exists):** `[Epic] Cross-Repo Planning (Phase 5)`
 
 | Group | Stories (from BACKLOG.md Epic 7) | Count |
 |-------|----------------------------------|-------|
@@ -158,9 +158,9 @@ Execute in order. Each step has acceptance criteria.
 
 ### Step 3 — Create parked Phase 5 issues
 
-- [x] Created `[Epic] Cross-Repo PM Workflow (Phase 5)` — #272.
+- [x] Created `[Epic] Cross-Repo Planning (Phase 5)` — #272.
 - [x] Created 16 story issues #273–#288.
-- [x] Assigned milestone `v0.5.0 — Cross-Repo PM Workflow` (milestone #6).
+- [x] Assigned milestone `v0.5.0 — Cross-Repo Planning` (milestone #6).
 - [x] Set `status/todo` on all; not placed in Up Next.
 - [ ] Add to Project #8 (pending GraphQL rate-limit reset or roadmap-sync).
 

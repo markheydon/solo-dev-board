@@ -14,10 +14,10 @@ export const accessibilityRoutes = [
   { path: '/labels', name: 'Label Manager' },
   { path: '/board-rules', name: 'Board Rules' },
   { path: '/triage', name: 'Triage' },
-  { path: '/workflows', name: 'Actions Templates' },
-  { path: '/pm-workflow/daily-focus', name: 'Planning Daily Focus' },
-  { path: '/pm-workflow/backlog', name: 'Planning Backlog Review' },
-  { path: '/pm-workflow/planning', name: 'Planning Iteration' },
+  { path: '/actions-templates', name: 'Actions Templates' },
+  { path: '/planning/daily-focus', name: 'Planning — Daily Focus' },
+  { path: '/planning/backlog', name: 'Planning Backlog Review' },
+  { path: '/planning/iteration', name: 'Planning Iteration' },
 ] as const;
 
 const wcagTags = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] as const;
@@ -29,7 +29,7 @@ const routeLoadingTestIds: Readonly<Record<string, readonly string[]>> = {
   '/labels': ['labels-loading-state'],
   '/board-rules': ['board-rules-repositories-loading-state'],
   '/triage': ['triage-loading-repositories'],
-  '/workflows': ['workflow-repositories-loading-state', 'workflow-templates-loading-state'],
+  '/actions-templates': ['actions-templates-repositories-loading-state', 'actions-templates-loading-state'],
 };
 
 function getBlockingViolations(violations: Result['violations']) {
@@ -110,12 +110,12 @@ export async function waitForAccessibilityScanReady(page: Page, path: string): P
   }
 
   if (
-    routePath === '/pm-workflow/daily-focus'
-    || routePath === '/pm-workflow/backlog'
-    || routePath === '/pm-workflow/planning'
-    || routePath === '/pm-workflow/repos'
+    routePath === '/planning/daily-focus'
+    || routePath === '/planning/backlog'
+    || routePath === '/planning/iteration'
+    || routePath === '/planning/repos'
   ) {
-    await expect(page.getByTestId('pm-workflow-shell')).toBeVisible();
+    await expect(page.getByTestId('planning-shell')).toBeVisible();
     await expect(page.locator('[aria-label="Loading Planning"]')).toBeHidden({ timeout: 15_000 });
   }
 }

@@ -1,13 +1,13 @@
 using Microsoft.Extensions.DependencyInjection;
+using SoloDevBoard.Application.Services.ActionsTemplates;
 using SoloDevBoard.Application.Services.Audit;
 using SoloDevBoard.Application.Services.BoardRules;
 using SoloDevBoard.Application.Services.Common;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Migration;
-using SoloDevBoard.Application.Services.PmWorkflow;
+using SoloDevBoard.Application.Services.Planning;
 using SoloDevBoard.Application.Services.Repositories;
 using SoloDevBoard.Application.Services.Triage;
-using SoloDevBoard.Application.Services.Workflows;
 
 namespace SoloDevBoard.Application.Tests;
 
@@ -45,11 +45,11 @@ public sealed class ApplicationServiceCollectionExtensionsTests
         AssertServiceRegistration<IAuditDashboardMarkdownExporter, AuditDashboardMarkdownExporter>(services, ServiceLifetime.Singleton);
         AssertServiceRegistration<IBoardRulesService, BoardRulesService>(services, ServiceLifetime.Scoped);
         AssertServiceRegistration<ITriageService, TriageService>(services, ServiceLifetime.Scoped);
-        AssertServiceRegistration<IWorkflowTemplateService, WorkflowTemplateService>(services, ServiceLifetime.Scoped);
-        AssertServiceRegistration<IPmSettingsService, PmSettingsService>(services, ServiceLifetime.Scoped);
+        AssertServiceRegistration<IActionsTemplateService, ActionsTemplateService>(services, ServiceLifetime.Scoped);
+        AssertServiceRegistration<IPlanningSettingsService, PlanningSettingsService>(services, ServiceLifetime.Scoped);
         AssertServiceRegistration<IProjectItemCatalogueService, ProjectItemCatalogueService>(services, ServiceLifetime.Scoped);
-        AssertServiceRegistration<IPmWorkItemCatalogueService, PmWorkItemCatalogueService>(services, ServiceLifetime.Scoped);
-        AssertServiceRegistration<IPmProjectBoardDiscoveryService, PmProjectBoardDiscoveryService>(services, ServiceLifetime.Scoped);
+        AssertServiceRegistration<IPlanningWorkItemCatalogueService, PlanningWorkItemCatalogueService>(services, ServiceLifetime.Scoped);
+        AssertServiceRegistration<IPlanningProjectBoardDiscoveryService, PlanningProjectBoardDiscoveryService>(services, ServiceLifetime.Scoped);
         AssertServiceRegistration<IDailyFocusBoardStateService, DailyFocusBoardStateService>(services, ServiceLifetime.Scoped);
         AssertServiceRegistration<IDailyFocusStalledReviewService, DailyFocusStalledReviewService>(services, ServiceLifetime.Scoped);
         AssertServiceRegistration<IDailyFocusRecommendationService, DailyFocusRecommendationService>(services, ServiceLifetime.Scoped);

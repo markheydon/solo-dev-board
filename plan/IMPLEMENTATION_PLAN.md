@@ -126,13 +126,13 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 ---
 
-## Phase 4 — Board Rules Visualiser + Workflow Templates
+## Phase 4 — Board Rules Visualiser + Actions Templates
 
 **Goal:** Deliver the remaining two features: a visual representation of project board automation rules, and a template library for GitHub Actions workflows.
 
 **Milestone:** v0.4.0
 
-**Status:** Complete. Board Rules Visualiser and Workflow Templates are delivered.
+**Status:** Complete. Board Rules Visualiser and Actions Templates are delivered.
 
 ### Key Tasks
 
@@ -145,13 +145,13 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Write unit tests for `BoardRuleService`, `BoardRulesComparer`, and compare mode functionality
 - [x] Update `website/content/docs/board-rules-visualiser.md` _(compare mode documented as available)_
 
-#### Workflow Templates
-- [x] Design `WorkflowTemplate` domain record
-- [x] Implement `WorkflowTemplateService` in `Application`
+#### Actions Templates
+- [x] Design `ActionsTemplate` domain record
+- [x] Implement `ActionsTemplateService` in `Application`
 - [x] Build MudBlazor UI: template browser, parameter editor, apply to repositories, staleness tracker
 - [x] Include built-in templates: CI (dotnet), CD (Aspire deploy to Azure Container Apps), Dependabot
-- [x] Write unit tests for `WorkflowTemplateService`
-- [x] Update `website/content/docs/workflow-templates.md`
+- [x] Write unit tests for `ActionsTemplateService`
+- [x] Update `website/content/docs/actions-templates.md`
 - [ ] Support custom template repositories _(deferred to v1.1.0 — [#292](https://github.com/markheydon/solo-dev-board/issues/292); only built-in templates are available today)_
 
 ### Dependencies
@@ -161,13 +161,13 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 ---
 
-## Phase 5 — Cross-Repo PM Workflow (historical)
+## Phase 5 — Cross-Repo Planning (historical)
 
 **Goal:** Deliver Epic 7 — the UI-based implementation of the two-mode PM operating system from [markheydon/github-workflows](https://github.com/markheydon/github-workflows). This phase transforms SoloDevBoard from a collection of individual tools into a cohesive planning environment.
 
 **Milestone:** v1.1.0 (sole open milestone; formerly planned as v1.2.0 — see [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy))
 
-**Status:** Planned (2026-08-18). Feature [#272](https://github.com/markheydon/solo-dev-board/issues/272) (no parent epic). Stories #273–#288 plus enablers and tests. Wireframe: `plan/wireframes/pm-workflow-wireframe.md`. Plan: `plan/cross-repo-pm-workflow-project-plan.md`. Decision: [DEC-029](DECISIONS.md#dec-029-cross-repo-pm-workflow-board-selection-and-local-settings). Hardcoding audit: [#423](https://github.com/markheydon/solo-dev-board/issues/423) — [`HARDCODING_AUDIT_v1.1.md`](HARDCODING_AUDIT_v1.1.md).
+**Status:** Planned (2026-08-18). Feature [#272](https://github.com/markheydon/solo-dev-board/issues/272) (no parent epic). Stories #273–#288 plus enablers and tests. Wireframe: `plan/wireframes/planning-wireframe.md`. Plan: `plan/cross-repo-planning-project-plan.md`. Decision: [DEC-029](DECISIONS.md#dec-029-cross-repo-planning-board-selection-and-local-settings). Hardcoding audit: [#423](https://github.com/markheydon/solo-dev-board/issues/423) — [`HARDCODING_AUDIT_v1.1.md`](HARDCODING_AUDIT_v1.1.md).
 
 ### Key Tasks
 
@@ -180,21 +180,21 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [ ] Build MudBlazor Daily Focus view: board state summary, stalled item alerts, top-3 recommended work items
 - [ ] Implement stalled item detection (Up Next for 3+ days; PRs In Review for 3+ days)
 - [ ] Write unit tests for `DailyFocusService`
-- [ ] Update `website/content/docs/pm-workflow.md`
+- [ ] Update `website/content/docs/planning.md`
 
 #### Backlog Review
 - [ ] Implement `BacklogReviewService` in `Application` (cross-repo, priority-grouped, PR-aware)
 - [ ] Build MudBlazor Backlog Review view: groups for urgent, ready, blocked, deferred; neglected repo alerts
 - [ ] Implement neglected repo detection (no issue or PR activity in 14 days)
 - [ ] Write unit tests for `BacklogReviewService`
-- [ ] Update `website/content/docs/pm-workflow.md`
+- [ ] Update `website/content/docs/planning.md`
 
 #### Iteration Planning
 - [ ] Design `IterationPlan` domain record
 - [ ] Implement `IterationPlanningService` in `Application` (capacity enforcement, stale resolution, milestone assignment)
 - [ ] Build MudBlazor Iteration Planning view: capacity indicator, stale item resolution, Up Next curation, optional milestone assignment
 - [ ] Write unit tests for `IterationPlanningService`
-- [ ] Update `website/content/docs/pm-workflow.md`
+- [ ] Update `website/content/docs/planning.md`
 
 #### Repo Management
 - [ ] Implement excluded-repos configuration (persisted per user, applied to all cross-repo operations)

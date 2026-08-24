@@ -65,7 +65,7 @@ Assume issues created via planning workflows are product-ready. Escalate only wh
 
 #### Step 3: Codebase discovery
 
-Explore the feature area using the `area/` label (see [implement-issue workflow](../workflows/implement-issue.md) for path hints). Identify services, components, and tests to reuse. Produce a touch map of likely files and projects.
+Explore the feature area using the `area/` label (see [implement-issue workflow](../actions-templates/implement-issue.md) for path hints). Identify services, components, and tests to reuse. Produce a touch map of likely files and projects.
 
 Invoke `dotnet-best-practices` for all issues. Invoke `mudblazor` for UI work during the sketch. Read [`.agents/skills/aspire/SKILL.md`](../skills/aspire/SKILL.md) for all issues (this repo is Aspire-hosted); route to `aspire-orchestration` and `aspire-monitoring` when the AppHost is running or when diagnosing exceptions. Do not invoke `aspire-init` or `aspireify` unless the AppHost is missing or unwired.
 
@@ -276,7 +276,7 @@ Do not perform a full repository audit.
 
 ### 10. PR Review Comment Loop
 
-When invoked via [`address-pr-review-comments`](../workflows/address-pr-review-comments.md):
+When invoked via [`address-pr-review-comments`](../actions-templates/address-pr-review-comments.md):
 
 1. Load the pull request: `gh pr view <N> --json number,headRefName,baseRefName,state`.
 2. Checkout the PR head branch locally.
