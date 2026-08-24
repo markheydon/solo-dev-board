@@ -11,7 +11,7 @@ This document records the shipped-app and user-guide audit for issue [#423](http
 | Product-behaviour fixtures under `tests/` that imply shipped defaults | Docs-capture helpers and clearly labelled test login fixtures |
 | Example strings: `markheydon`, `solo-dev-board`, `Project #8`, Roadmap Sync identifiers | Marketing About / landing origin narrative (`website/content/about/`, landing `_index.md`) as project story, not app instructions |
 
-Related decisions: [DEC-020](DECISIONS.md#dec-020-public-only-docs-capture-mode-for-documentation-screenshots), [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy), [DEC-029](DECISIONS.md#dec-029-cross-repo-pm-workflow-board-selection-and-local-settings).
+Related decisions: [DEC-020](DECISIONS.md#dec-020-public-only-docs-capture-mode-for-documentation-screenshots), [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy), [DEC-029](DECISIONS.md#dec-029-cross-repo-planning-board-selection-and-local-settings).
 
 ## Classification rules
 
@@ -20,7 +20,7 @@ Related decisions: [DEC-020](DECISIONS.md#dec-020-public-only-docs-capture-mode-
 - Open-source attribution to `https://github.com/markheydon/solo-dev-board`.
 - Docs-capture example repository when gated by `DocsCapture:Enabled` (DEC-020).
 - Product brand prefixes such as `solo-dev-board.*` claim types and localStorage keys.
-- **Opinionated product contracts** for Cross-Repo PM Workflow and Label Manager: SoloDevBoard label taxonomy (`type/`, `priority/`, `status/` and related names), Projects v2 Status display names matched by name (`Up Next`, `In Progress`, `Blocked`, `Ice Box`, and review-equivalent names), and the optional `Focus Order` field name. These are deliberate product behaviour (see [`LABEL_STRATEGY.md`](LABEL_STRATEGY.md) and the built-in SoloDevBoard recommended taxonomy), not maintainer dogfood leaks. Boards and repositories remain **user-selected** (DEC-029); Project #8 option ids are not compiled into `src/`.
+- **Opinionated product contracts** for Cross-Repo Planning and Label Manager: SoloDevBoard label taxonomy (`type/`, `priority/`, `status/` and related names), Projects v2 Status display names matched by name (`Up Next`, `In Progress`, `Blocked`, `Ice Box`, and review-equivalent names), and the optional `Focus Order` field name. These are deliberate product behaviour (see [`LABEL_STRATEGY.md`](LABEL_STRATEGY.md) and the built-in SoloDevBoard recommended taxonomy), not maintainer dogfood leaks. Boards and repositories remain **user-selected** (DEC-029); Project #8 option ids are not compiled into `src/`.
 
 **Must fix**
 
@@ -44,18 +44,18 @@ Related decisions: [DEC-020](DECISIONS.md#dec-020-public-only-docs-capture-mode-
 |---------|----------------|-------|
 | About page `RepositoryAddress` → `https://github.com/markheydon/solo-dev-board` | Acceptable | OSS attribution. |
 | Claim types / cookie / localStorage keys prefixed `solo-dev-board.` | Acceptable | Product brand namespace, not a GitHub owner. |
-| PM Workflow UI copy referencing Up Next / In Progress / capacity | Acceptable | Opinionated Status-name contract; board is user-selected. |
+| Planning UI copy referencing Up Next / In Progress / capacity | Acceptable | Opinionated Status-name contract; board is user-selected. |
 | Placeholders (`owner/name`, `owner/repo`) | Acceptable | Generic. |
-| No default repository or project node id in startup or PM settings | Acceptable | `PmSettingsDefaults` leaves `PlanningBoardNodeId` null. |
+| No default repository or project node id in startup or PM settings | Acceptable | `PlanningSettingsDefaults` leaves `PlanningBoardNodeId` null. |
 
 ### `src/Application/`
 
 | Finding | Classification | Notes |
 |---------|----------------|-------|
 | No `markheydon` / `solo-dev-board` / Project #8 string hits | Acceptable | — |
-| `PmLabelHelpers`, `PmPriorityRanker`, SoloDevBoard recommended taxonomy catalogue | Acceptable | Deliberate opinionated labelling strategy. |
+| `PlanningLabelHelpers`, `PlanningPriorityRanker`, SoloDevBoard recommended taxonomy catalogue | Acceptable | Deliberate opinionated labelling strategy. |
 | `DailyFocusBoardStateMapper` / recommendation Status names; GraphQL consumers of `Focus Order` | Acceptable | Deliberate PM board field conventions matched by display name (DEC-029). |
-| `PmSettingsDefaults` capacity / stall / neglect numbers | Acceptable | Product defaults, not maintainer identity. |
+| `PlanningSettingsDefaults` capacity / stall / neglect numbers | Acceptable | Product defaults, not maintainer identity. |
 
 ### `src/Infrastructure/`
 
@@ -86,7 +86,7 @@ Related decisions: [DEC-020](DECISIONS.md#dec-020-public-only-docs-capture-mode-
 |---------|----------------|-------|
 | Screenshot alt text naming `markheydon/solo-dev-board` | Acceptable | DEC-020 docs-capture example repository shown in published screenshots. |
 | Links to upstream `docs/`, `plan/`, and issue trackers under `github.com/markheydon/solo-dev-board` | Acceptable | OSS / contributor deep links, not in-app defaults. |
-| `pm-workflow.md` overview linked `markheydon/github-workflows` as if adopters needed that companion | **Must fix** | Remediated in this delivery — generic product overview; opinionated conventions called out explicitly. |
+| `planning.md` overview linked `markheydon/github-workflows` as if adopters needed that companion | **Must fix** | Remediated in this delivery — generic product overview; opinionated conventions called out explicitly. |
 | Label Manager / Audit copy referring to SoloDevBoard taxonomy | Acceptable | Product feature. |
 | PM guide documenting Up Next / Focus Order / `type/`/`priority/` behaviour | Acceptable | Documents the opinionated contract. |
 

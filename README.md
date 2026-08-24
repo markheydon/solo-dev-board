@@ -1,6 +1,6 @@
 # SoloDevBoard
 
-[![CI](https://github.com/markheydon/solo-dev-board/actions/workflows/ci.yml/badge.svg)](https://github.com/markheydon/solo-dev-board/actions/workflows/ci.yml)
+[![CI](https://github.com/markheydon/solo-dev-board/actions/actions-templates/ci.yml/badge.svg)](https://github.com/markheydon/solo-dev-board/actions/actions-templates/ci.yml)
 
 > **A single pane of glass for solo developers managing GitHub workloads across multiple repositories.**
 

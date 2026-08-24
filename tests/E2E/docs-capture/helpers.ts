@@ -9,12 +9,12 @@ export const DOCS_EXAMPLE_PROJECT_BOARD = 'SoloDevBoard Roadmap';
 export const DOCS_EXAMPLE_REPOSITORY = 'markheydon/solo-dev-board';
 
 /**
- * Clears PM Workflow browser settings so captures do not reuse a previous planning board.
+ * Clears Planning browser settings so captures do not reuse a previous planning board.
  * @param page Playwright page.
  */
-export async function clearPmWorkflowLocalSettings(page: Page): Promise<void> {
+export async function clearPlanningLocalSettings(page: Page): Promise<void> {
   await page.addInitScript(() => {
-    window.localStorage.removeItem('solo-dev-board.pm-settings');
+    window.localStorage.removeItem('solo-dev-board.planning-settings');
   });
 }
 
@@ -225,26 +225,26 @@ export async function prepareMigrationForCapture(page: Page): Promise<void> {
 }
 
 /**
- * Prepares a PM Workflow tab with SoloDevBoard Roadmap selected when available.
+ * Prepares a Planning tab with SoloDevBoard Roadmap selected when available.
  * @param page Playwright page.
- * @param route Absolute PM Workflow route (for example `/pm-workflow/backlog`).
+ * @param route Absolute Planning route (for example `/planning/backlog`).
  * @param readyLocatorTestIds Test ids that indicate the tab has settled (any one is enough).
  */
-async function preparePmWorkflowTabForCapture(
+async function preparePlanningTabForCapture(
   page: Page,
   route: string,
   readyLocatorTestIds: readonly string[],
 ): Promise<void> {
-  await clearPmWorkflowLocalSettings(page);
+  await clearPlanningLocalSettings(page);
   await openFeatureForCapture(page, route);
   await page.evaluate(() => {
-    window.localStorage.removeItem('solo-dev-board.pm-settings');
+    window.localStorage.removeItem('solo-dev-board.planning-settings');
   });
   await page.reload();
-  await expect(page.getByTestId('pm-workflow-shell')).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByTestId('pm-workflow-shared-chrome')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('planning-shell')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('planning-shared-chrome')).toBeVisible({ timeout: 30_000 });
 
-  const chromeError = page.getByTestId('pm-workflow-chrome-error');
+  const chromeError = page.getByTestId('planning-chrome-error');
   const readyLocators = readyLocatorTestIds.map((id) => page.getByTestId(id));
   let ready = chromeError;
   for (const locator of readyLocators) {
@@ -265,72 +265,72 @@ async function preparePmWorkflowTabForCapture(
 }
 
 /**
- * Prepares PM Workflow Daily Focus with the SoloDevBoard Roadmap board selected when available.
+ * Prepares Planning — Daily Focus with the SoloDevBoard Roadmap board selected when available.
  * @param page Playwright page.
  */
-export async function preparePmWorkflowDailyFocusForCapture(page: Page): Promise<void> {
-  await preparePmWorkflowTabForCapture(page, '/pm-workflow/daily-focus', [
-    'pm-workflow-daily-focus-no-board',
-    'pm-workflow-daily-focus-board-state',
-    'pm-workflow-daily-focus-error',
-    'pm-workflow-daily-focus-empty',
+export async function preparePlanningDailyFocusForCapture(page: Page): Promise<void> {
+  await preparePlanningTabForCapture(page, '/planning/daily-focus', [
+    'planning-daily-focus-no-board',
+    'planning-daily-focus-board-state',
+    'planning-daily-focus-error',
+    'planning-daily-focus-empty',
   ]);
 }
 
 /**
- * Prepares PM Workflow Backlog Review with the SoloDevBoard Roadmap board selected when available.
+ * Prepares Planning Backlog Review with the SoloDevBoard Roadmap board selected when available.
  * @param page Playwright page.
  */
-export async function preparePmWorkflowBacklogForCapture(page: Page): Promise<void> {
-  await preparePmWorkflowTabForCapture(page, '/pm-workflow/backlog', [
-    'pm-workflow-backlog-no-board',
-    'pm-workflow-backlog-filters',
-    'pm-workflow-backlog-panels',
-    'pm-workflow-backlog-error',
+export async function preparePlanningBacklogForCapture(page: Page): Promise<void> {
+  await preparePlanningTabForCapture(page, '/planning/backlog', [
+    'planning-backlog-no-board',
+    'planning-backlog-filters',
+    'planning-backlog-panels',
+    'planning-backlog-error',
   ]);
 }
 
 /**
- * Prepares PM Workflow Iteration Planning with the SoloDevBoard Roadmap board selected when available.
+ * Prepares Planning Iteration Planning with the SoloDevBoard Roadmap board selected when available.
  * @param page Playwright page.
  */
-export async function preparePmWorkflowPlanningForCapture(page: Page): Promise<void> {
-  await preparePmWorkflowTabForCapture(page, '/pm-workflow/planning', [
-    'pm-workflow-planning-no-board',
-    'pm-workflow-planning-up-next',
-    'pm-workflow-planning-candidates',
-    'pm-workflow-planning-up-next-empty',
-    'pm-workflow-planning-candidates-empty',
-    'pm-workflow-planning-error',
-    'pm-workflow-planning-partial-failure',
+export async function preparePlanningIterationForCapture(page: Page): Promise<void> {
+  await preparePlanningTabForCapture(page, '/planning/iteration', [
+    'planning-planning-no-board',
+    'planning-planning-up-next',
+    'planning-planning-candidates',
+    'planning-planning-up-next-empty',
+    'planning-planning-candidates-empty',
+    'planning-planning-error',
+    'planning-planning-partial-failure',
   ]);
 }
 
 /**
- * Prepares PM Workflow Repo Management showing thresholds and participation regions.
+ * Prepares Planning Repo Management showing thresholds and participation regions.
  * @param page Playwright page.
  */
-export async function preparePmWorkflowReposForCapture(page: Page): Promise<void> {
-  await clearPmWorkflowLocalSettings(page);
-  await openFeatureForCapture(page, '/pm-workflow/repos');
-  await expect(page.getByTestId('pm-workflow-shell')).toBeVisible({ timeout: 30_000 });
+export async function preparePlanningReposForCapture(page: Page): Promise<void> {
+  await clearPlanningLocalSettings(page);
+  await openFeatureForCapture(page, '/planning/repos');
+  await expect(page.getByTestId('planning-shell')).toBeVisible({ timeout: 30_000 });
 
-  const chromeError = page.getByTestId('pm-workflow-chrome-error');
-  const thresholdsRegion = page.getByTestId('pm-workflow-thresholds-region');
+  const chromeError = page.getByTestId('planning-chrome-error');
+  const thresholdsRegion = page.getByTestId('planning-thresholds-region');
   await expect(chromeError.or(thresholdsRegion).first()).toBeVisible({ timeout: 60_000 });
 
   if (await thresholdsRegion.isVisible()) {
     await selectPlanningBoardByTitle(page).catch(() => false);
-    await expect(page.getByTestId('pm-workflow-participation-region')).toBeVisible({
+    await expect(page.getByTestId('planning-participation-region')).toBeVisible({
       timeout: 30_000,
     });
-    const includedFilter = page.getByTestId('pm-workflow-included-filter');
+    const includedFilter = page.getByTestId('planning-included-filter');
     if (await includedFilter.isVisible().catch(() => false)) {
       await includedFilter.fill('solo-dev-board');
       await page.waitForTimeout(500);
     }
 
-    await expect(page.getByTestId('pm-workflow-repository-summary-region')).toBeVisible({
+    await expect(page.getByTestId('planning-repository-summary-region')).toBeVisible({
       timeout: 30_000,
     });
   }
@@ -391,11 +391,11 @@ export async function prepareTriageForCapture(page: Page): Promise<void> {
 }
 
 /**
- * Prepares Workflow Templates with the example repository selected and a template open in the detail panel.
+ * Prepares Actions Templates with the example repository selected and a template open in the detail panel.
  * @param page Playwright page.
  */
-export async function prepareWorkflowTemplatesForCapture(page: Page): Promise<void> {
-  await openFeatureForCapture(page, '/workflows');
+export async function prepareActionsTemplatesForCapture(page: Page): Promise<void> {
+  await openFeatureForCapture(page, '/actions-templates');
   await selectRepositoryInAutocomplete(page, 'workflow-repository-autocomplete');
 
   await expect(page.getByTestId('workflow-template-grid')).toBeVisible({ timeout: 60_000 });

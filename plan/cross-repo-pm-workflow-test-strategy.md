@@ -1,8 +1,8 @@
-# Cross-Repo PM Workflow — test strategy
+# Cross-Repo Planning — test strategy
 
 ## Scope
 
-Validate feature [#272](https://github.com/markheydon/solo-dev-board/issues/272) against `plan/wireframes/pm-workflow-wireframe.md` and `website/content/docs/pm-workflow.md`.
+Validate feature [#272](https://github.com/markheydon/solo-dev-board/issues/272) against `plan/wireframes/planning-wireframe.md` and `website/content/docs/planning.md`.
 
 Layers:
 
@@ -10,7 +10,7 @@ Layers:
 |-------|--------|------|
 | Unit | `tests/Application` (and Domain if records need tests) | Ranking, stall detection, grouping, capacity, exclusion filter, label helpers |
 | Component | `tests/App` bUnit | Tab shell, empty/error/loading, disabled Planning add when stalled |
-| E2E | `tests/E2E/tests/pm-workflow.spec.ts` | Nav, four routes, no-board and load-failure shells (CI placeholder auth) |
+| E2E | `tests/E2E/tests/planning.spec.ts` | Nav, four routes, no-board and load-failure shells (CI placeholder auth) |
 | Docs-capture | `tests/E2E/docs-capture/` | Public-only screenshots after UI exists (DEC-020) |
 
 Do not test AppHost orchestration.
@@ -70,7 +70,7 @@ When the guide is published, add a row to `tests/E2E/USER_DOCS_ALIGNMENT.md`:
 
 | Guide | Routes | Spec | CI |
 |-------|--------|------|-----|
-| `pm-workflow.md` | `/pm-workflow`, `/pm-workflow/daily-focus`, `/pm-workflow/backlog`, `/pm-workflow/planning`, `/pm-workflow/repos` | `pm-workflow.spec.ts` | Tier 2 shell |
+| `planning.md` | `/planning`, `/planning/daily-focus`, `/planning/backlog`, `/planning/iteration`, `/planning/repos` | `planning.spec.ts` | Tier 2 shell |
 
 Update `tests/E2E/CRITICAL_JOURNEYS.md` with the morning-focus and planning-session journeys.
 

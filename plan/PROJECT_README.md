@@ -21,7 +21,7 @@ SoloDevBoard provides a single pane of glass for solo developers managing GitHub
 
 ### Current focus
 
-**v1.1.0** — sole open milestone (20 issues): deferred v1.0 slices ([#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#292](https://github.com/markheydon/solo-dev-board/issues/292)) and Cross-Repo PM Workflow ([#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288)). Dogfood fixes from the public tag are added here as they arise.
+**v1.1.0** — sole open milestone (20 issues): deferred v1.0 slices ([#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#292](https://github.com/markheydon/solo-dev-board/issues/292)) and Cross-Repo Planning ([#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288)). Dogfood fixes from the public tag are added here as they arise.
 
 Platform-blocked private user-owned Projects v2 ([#293](https://github.com/markheydon/solo-dev-board/issues/293)) is unmilestoned backlog.
 

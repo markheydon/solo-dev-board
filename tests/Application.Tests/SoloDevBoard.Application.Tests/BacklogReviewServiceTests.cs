@@ -1,20 +1,20 @@
 using NSubstitute;
-using SoloDevBoard.Application.Services.PmWorkflow;
+using SoloDevBoard.Application.Services.Planning;
 
 namespace SoloDevBoard.Application.Tests;
 
 /// <summary>Tests for <see cref="BacklogReviewService"/>.</summary>
 public sealed class BacklogReviewServiceTests
 {
-    private readonly IPmWorkItemCatalogueService _workItemCatalogueService =
-        Substitute.For<IPmWorkItemCatalogueService>();
+    private readonly IPlanningWorkItemCatalogueService _workItemCatalogueService =
+        Substitute.For<IPlanningWorkItemCatalogueService>();
     private readonly IProjectItemCatalogueService _projectItemCatalogueService =
         Substitute.For<IProjectItemCatalogueService>();
-    private readonly IPmSettingsService _pmSettingsService = Substitute.For<IPmSettingsService>();
+    private readonly IPlanningSettingsService _pmSettingsService = Substitute.For<IPlanningSettingsService>();
 
     public BacklogReviewServiceTests()
     {
-        _pmSettingsService.GetSettingsAsync().Returns(PmSettingsDefaults.Create());
+        _pmSettingsService.GetSettingsAsync().Returns(PlanningSettingsDefaults.Create());
     }
 
     [Fact]
@@ -55,8 +55,8 @@ public sealed class BacklogReviewServiceTests
         var updated = DateTimeOffset.Parse("2026-08-18T00:00:00Z");
         var workItems = new[]
         {
-            new PmWorkItemDto(
-                PmWorkItemTypeDto.Issue,
+            new PlanningWorkItemDto(
+                PlanningWorkItemTypeDto.Issue,
                 40,
                 "Do this",
                 "https://github.com/owner/repo/issues/40",
@@ -70,8 +70,8 @@ public sealed class BacklogReviewServiceTests
                 null,
                 null,
                 null),
-            new PmWorkItemDto(
-                PmWorkItemTypeDto.Issue,
+            new PlanningWorkItemDto(
+                PlanningWorkItemTypeDto.Issue,
                 41,
                 "Parked",
                 "https://github.com/owner/repo/issues/41",
@@ -88,7 +88,7 @@ public sealed class BacklogReviewServiceTests
         };
 
         _workItemCatalogueService.GetCatalogueAsync(cancellationToken)
-            .Returns(new PmWorkItemCatalogueResultDto(workItems, [], []));
+            .Returns(new PlanningWorkItemCatalogueResultDto(workItems, [], []));
         _projectItemCatalogueService.GetCatalogueAsync("PVT_board", cancellationToken)
             .Returns(new ProjectBoardItemCatalogueDto(
                 new ProjectBoardFieldIdsDto("PVTF_status", null),
@@ -110,9 +110,9 @@ public sealed class BacklogReviewServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         _workItemCatalogueService.GetCatalogueAsync(cancellationToken)
-            .Returns(new PmWorkItemCatalogueResultDto(
+            .Returns(new PlanningWorkItemCatalogueResultDto(
                 [],
-                [new PmRepositoryCatalogueFailureDto("owner/repo-a", "GitHub unavailable", 500)],
+                [new PlanningRepositoryCatalogueFailureDto("owner/repo-a", "GitHub unavailable", 500)],
                 []));
         _projectItemCatalogueService.GetCatalogueAsync("PVT_board", cancellationToken)
             .Returns(new ProjectBoardItemCatalogueDto(
@@ -136,8 +136,8 @@ public sealed class BacklogReviewServiceTests
         var updated = DateTimeOffset.Parse("2026-08-18T00:00:00Z");
         var workItems = new[]
         {
-            new PmWorkItemDto(
-                PmWorkItemTypeDto.Issue,
+            new PlanningWorkItemDto(
+                PlanningWorkItemTypeDto.Issue,
                 40,
                 "Do this",
                 "https://github.com/owner/repo/issues/40",
@@ -154,9 +154,9 @@ public sealed class BacklogReviewServiceTests
         };
 
         _workItemCatalogueService.GetCatalogueAsync(cancellationToken)
-            .Returns(new PmWorkItemCatalogueResultDto(
+            .Returns(new PlanningWorkItemCatalogueResultDto(
                 workItems,
-                [new PmRepositoryCatalogueFailureDto("owner/repo-b", "Not found", 404)],
+                [new PlanningRepositoryCatalogueFailureDto("owner/repo-b", "Not found", 404)],
                 []));
         _projectItemCatalogueService.GetCatalogueAsync("PVT_board", cancellationToken)
             .Returns(new ProjectBoardItemCatalogueDto(

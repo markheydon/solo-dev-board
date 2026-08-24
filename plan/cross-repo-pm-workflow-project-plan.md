@@ -1,4 +1,4 @@
-# Cross-Repo PM Workflow — project plan
+# Cross-Repo Planning — project plan
 
 ## Project overview
 
@@ -15,7 +15,7 @@ The sixteen child stories (#273–#288) were created as one-line stubs. This pla
 - Backlog Review groups cross-repo issues and PRs by urgency, flags missing `type/` or `priority/` labels, near-complete epics, and neglected repositories.
 - Iteration Planning moves selected items to Up Next with Focus Order, enforces a soft capacity limit, and requires stalled Up Next resolution first.
 - Excluded repositories persist in the browser and are omitted from PM queries (except raw board occupancy).
-- User guide `website/content/docs/pm-workflow.md` is published when the four pages match the guide; Playwright maps the published page.
+- User guide `website/content/docs/planning.md` is published when the four pages match the guide; Playwright maps the published page.
 
 ### Key milestones (no calendar dates)
 
@@ -40,7 +40,7 @@ The sixteen child stories (#273–#288) were created as one-line stubs. This pla
 
 ```mermaid
 graph TD
-    F["Feature #272 Cross-Repo PM Workflow"] --> E1["Enabler: Projects v2 item catalogue"]
+    F["Feature #272 Cross-Repo Planning"] --> E1["Enabler: Projects v2 item catalogue"]
     F --> E2["Enabler: PM settings persistence"]
     F --> E3["Enabler: Cross-repo work-item catalogue"]
     F --> R["Stories #287–#288 Repo Management"]
@@ -64,7 +64,7 @@ graph TD
 
 ## GitHub issues breakdown
 
-See [cross-repo-pm-workflow-issues-checklist.md](cross-repo-pm-workflow-issues-checklist.md) for labels, sizes, and blocking edges.
+See [cross-repo-planning-issues-checklist.md](cross-repo-planning-issues-checklist.md) for labels, sizes, and blocking edges.
 
 ### Pages and MudBlazor
 
@@ -79,15 +79,15 @@ See [cross-repo-pm-workflow-issues-checklist.md](cross-repo-pm-workflow-issues-c
 ### Technical approach (enablers)
 
 1. **Projects v2 item catalogue** — extend `IGitHubService` with GraphQL `node(id: project) { ... on ProjectV2 { items { ... Status, Focus Order, content, updatedAt } } } }` plus writes already used by Triage (`updateProjectV2ItemFieldValue` for Status and number Focus Order). Discover field ids from the board, same as Status options today.
-2. **PM settings** — `IPmSettingsService` + JS localStorage (mirror theme preference). Defaults: capacity 8, stall days 3, neglect days 14, empty exclusion list.
-3. **Work-item catalogue** — fan-out `GetIssuesAsync` / `GetPullRequestsAsync` across included repos; map to `PmWorkItemDto` with labels, milestone, URL, updated-at. Label helpers for `type/`, `priority/`, `status/`. Epic-near-complete uses GraphQL sub-issue summary on open `type/epic` (and `type/feature` if useful) issues.
+2. **PM settings** — `IPlanningSettingsService` + JS localStorage (mirror theme preference). Defaults: capacity 8, stall days 3, neglect days 14, empty exclusion list.
+3. **Work-item catalogue** — fan-out `GetIssuesAsync` / `GetPullRequestsAsync` across included repos; map to `PlanningWorkItemDto` with labels, milestone, URL, updated-at. Label helpers for `type/`, `priority/`, `status/`. Epic-near-complete uses GraphQL sub-issue summary on open `type/epic` (and `type/feature` if useful) issues.
 
 ### Definition of done (feature)
 
 - [ ] All child stories, enablers, and tests closed or explicitly deferred.
 - [ ] Wireframe behaviour present on the four routes.
-- [ ] Unit tests for services; bUnit for page shells; Playwright spec for `/pm-workflow` empty/error/nav.
-- [x] `website/content/docs/pm-workflow.md` published (not draft) and `tests/E2E/USER_DOCS_ALIGNMENT.md` updated.
+- [ ] Unit tests for services; bUnit for page shells; Playwright spec for `/planning` empty/error/nav.
+- [x] `website/content/docs/planning.md` published (not draft) and `tests/E2E/USER_DOCS_ALIGNMENT.md` updated.
 - [ ] No secrets in localStorage.
 
 ## Priority and value
@@ -109,7 +109,7 @@ See [cross-repo-pm-workflow-issues-checklist.md](cross-repo-pm-workflow-issues-c
 
 ## Implementation references
 
-- Wireframe: `plan/wireframes/pm-workflow-wireframe.md`
+- Wireframe: `plan/wireframes/planning-wireframe.md`
 - Decisions: DEC-008, DEC-018, DEC-027, DEC-028, DEC-029
-- User guide stub: `website/content/docs/pm-workflow.md`
+- User guide stub: `website/content/docs/planning.md`
 - Access limitation: `plan/GITHUB_PROJECTS_V2_ACCESS.md`

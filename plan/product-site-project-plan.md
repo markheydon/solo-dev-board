@@ -27,7 +27,7 @@ Turn the Hugo/Hextra site into the **public product site** for SoloDevBoard: mar
 |------|------------|
 | `CNAME` committed before DNS ready | Document operator must complete DNS before first `v*` tag after merge. |
 | Broken links after folder rename | Grep for `user-docs` and update all references in same PR. |
-| Landing claims exceed shipped features | Generate cards from guide front matter; omit draft guides (PM Workflow is published). |
+| Landing claims exceed shipped features | Generate cards from guide front matter; omit draft guides (Planning is published). |
 
 ## Work item hierarchy
 

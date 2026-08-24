@@ -1,5 +1,5 @@
 using NSubstitute;
-using SoloDevBoard.Application.Services.PmWorkflow;
+using SoloDevBoard.Application.Services.Planning;
 
 namespace SoloDevBoard.Application.Tests;
 
@@ -7,7 +7,7 @@ namespace SoloDevBoard.Application.Tests;
 public sealed class DailyFocusStalledReviewServiceTests
 {
     private readonly IProjectItemCatalogueService _projectCatalogue = Substitute.For<IProjectItemCatalogueService>();
-    private readonly IPmWorkItemCatalogueService _workCatalogue = Substitute.For<IPmWorkItemCatalogueService>();
+    private readonly IPlanningWorkItemCatalogueService _workCatalogue = Substitute.For<IPlanningWorkItemCatalogueService>();
     private static readonly DateTimeOffset UtcNow = DateTimeOffset.UtcNow;
 
     [Fact]
@@ -89,8 +89,8 @@ public sealed class DailyFocusStalledReviewServiceTests
             []);
         _projectCatalogue.GetCatalogueAsync("project-id", cancellationToken).Returns(boardCatalogue);
 
-        var workItem = new PmWorkItemDto(
-            PmWorkItemTypeDto.PullRequest,
+        var workItem = new PlanningWorkItemDto(
+            PlanningWorkItemTypeDto.PullRequest,
             21,
             "Pending review",
             "https://github.com/owner/repo/pull/21",
@@ -105,7 +105,7 @@ public sealed class DailyFocusStalledReviewServiceTests
             SubIssueTotal: null,
             SubIssueCompleted: null);
         _workCatalogue.GetCatalogueAsync(cancellationToken)
-            .Returns(new PmWorkItemCatalogueResultDto([workItem], [], []));
+            .Returns(new PlanningWorkItemCatalogueResultDto([workItem], [], []));
 
         var sut = new DailyFocusStalledReviewService(_projectCatalogue, _workCatalogue);
 
@@ -127,8 +127,8 @@ public sealed class DailyFocusStalledReviewServiceTests
             []);
         _projectCatalogue.GetCatalogueAsync("project-id", cancellationToken).Returns(boardCatalogue);
 
-        var excludedItem = new PmWorkItemDto(
-            PmWorkItemTypeDto.PullRequest,
+        var excludedItem = new PlanningWorkItemDto(
+            PlanningWorkItemTypeDto.PullRequest,
             21,
             "Pending review",
             "https://github.com/owner/skipped/pull/21",
@@ -143,7 +143,7 @@ public sealed class DailyFocusStalledReviewServiceTests
             SubIssueTotal: null,
             SubIssueCompleted: null);
         _workCatalogue.GetCatalogueAsync(cancellationToken)
-            .Returns(new PmWorkItemCatalogueResultDto([excludedItem], [], []));
+            .Returns(new PlanningWorkItemCatalogueResultDto([excludedItem], [], []));
 
         var sut = new DailyFocusStalledReviewService(_projectCatalogue, _workCatalogue);
 
@@ -167,9 +167,9 @@ public sealed class DailyFocusStalledReviewServiceTests
             []);
         _projectCatalogue.GetCatalogueAsync("project-id", cancellationToken).Returns(boardCatalogue);
         _workCatalogue.GetCatalogueAsync(cancellationToken)
-            .Returns(new PmWorkItemCatalogueResultDto(
+            .Returns(new PlanningWorkItemCatalogueResultDto(
                 [],
-                [new PmRepositoryCatalogueFailureDto("owner/repo", "GitHub unavailable", 502)],
+                [new PlanningRepositoryCatalogueFailureDto("owner/repo", "GitHub unavailable", 502)],
                 []));
 
         var sut = new DailyFocusStalledReviewService(_projectCatalogue, _workCatalogue);

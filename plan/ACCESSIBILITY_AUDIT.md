@@ -33,7 +33,7 @@ Standard: **WCAG 2.1 Level A and AA**, automated with [axe-core](https://github.
 | `/labels` | Label Manager shell |
 | `/board-rules` | Board Rules shell |
 | `/triage` | Triage shell |
-| `/workflows` | Workflow Templates shell |
+| `/actions-templates` | Actions Templates shell |
 
 ## Findings and remediation
 

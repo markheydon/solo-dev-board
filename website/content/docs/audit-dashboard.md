@@ -14,7 +14,7 @@ The Audit Dashboard summarises open issues, open pull requests, and repository h
 ## Accessing the Audit Dashboard
 
 - Open **Audit Dashboard** from the app home page or the left navigation.
-- The route is `/audit-dashboard`. The legacy `/audit` route is also supported.
+- The route is `/audit-dashboard`.
 
 ## Features
 

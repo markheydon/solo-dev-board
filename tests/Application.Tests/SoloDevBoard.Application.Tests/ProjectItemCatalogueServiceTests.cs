@@ -1,7 +1,7 @@
 using NSubstitute;
 using SoloDevBoard.Application.Services.GitHub;
-using SoloDevBoard.Application.Services.PmWorkflow;
-using SoloDevBoard.Domain.Entities.PmWorkflow;
+using SoloDevBoard.Application.Services.Planning;
+using SoloDevBoard.Domain.Entities.Planning;
 using SoloDevBoard.Domain.Entities.Triage;
 
 namespace SoloDevBoard.Application.Tests;

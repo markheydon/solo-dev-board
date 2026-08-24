@@ -1,4 +1,4 @@
-# Workflow Templates Page Wireframe
+# Actions Templates Page Wireframe
 
 ## Purpose
 - Provide a central page for browsing, customising, and applying GitHub Actions workflow templates across repositories.

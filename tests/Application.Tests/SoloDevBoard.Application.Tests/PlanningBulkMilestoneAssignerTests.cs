@@ -1,4 +1,4 @@
-using SoloDevBoard.Application.Services.PmWorkflow;
+using SoloDevBoard.Application.Services.Planning;
 using SoloDevBoard.Domain.Entities.Milestones;
 
 namespace SoloDevBoard.Application.Tests;
@@ -66,7 +66,7 @@ public sealed class PlanningBulkMilestoneAssignerTests
     private static IterationPlanningUpNextItemDto CreateUpNextItem(string repositoryFullName, int number) =>
         new(
             $"PVTI_{number}",
-            PmWorkItemTypeDto.Issue,
+            PlanningWorkItemTypeDto.Issue,
             number,
             $"Title {number}",
             $"https://github.com/{repositoryFullName}/issues/{number}",

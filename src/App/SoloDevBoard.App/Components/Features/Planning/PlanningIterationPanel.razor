@@ -1,0 +1,416 @@
+@using SoloDevBoard.App.Components.Features.Planning
+@using SoloDevBoard.Application.Services.Planning
+
+<MudStack Spacing="3" data-testid="planning-planning-page">
+    <MudText Typo="Typo.h5">Iteration Planning</MudText>
+    <MudText Typo="Typo.body1">
+        Select issues and pull requests from included repositories and move them to Up Next on the selected planning board.
+        Stories, enablers, and tests receive sequential Focus Order; Feature and Epic cards skip Focus Order.
+    </MudText>
+
+    @if (ChromeState is null)
+    {
+        <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">Planning chrome is unavailable.</MudAlert>
+    }
+    else if (!ChromeState.IsLoading && !string.IsNullOrWhiteSpace(ChromeState.LoadErrorMessage))
+    {
+        @* Chrome already shows the error and retry. *@
+    }
+    else if (ChromeState.IsLoading)
+    {
+        <MudText Typo="Typo.body2" data-testid="planning-planning-loading">
+            Loading planning boards and candidate work items.
+        </MudText>
+    }
+    else if (!ChromeState.HasPlanningBoardSelected)
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" data-testid="planning-planning-no-board">
+            Select a planning board in the dropdown above to load Up Next and candidate work items.
+        </MudAlert>
+    }
+    else
+    {
+        @if (isLoadingView)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="@PlanningLoadingAriaLabel" />
+        }
+
+        @if (!string.IsNullOrWhiteSpace(loadErrorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" data-testid="planning-planning-error">
+                @loadErrorMessage
+                <MudButton Variant="Variant.Text"
+                           OnClick="RetryLoadAsync"
+                           data-testid="planning-planning-retry">Retry</MudButton>
+            </MudAlert>
+        }
+        else if (!isLoadingView && planningView is not null)
+        {
+            @if (planningView.CatalogueFailures.Count > 0)
+            {
+                <MudAlert Severity="Severity.Warning"
+                          Variant="Variant.Outlined"
+                          data-testid="planning-planning-partial-failure">
+                    @FormatPartialFailureMessage(planningView.CatalogueFailures)
+                </MudAlert>
+            }
+
+            <MudPaper Class="pa-4" Elevation="1" data-testid="planning-planning-capacity">
+                <MudStack Spacing="2">
+                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.h6">Capacity</MudText>
+                        <MudText Typo="Typo.body1"
+                                 aria-live="polite"
+                                 data-testid="planning-planning-active-load">
+                            @planningView.ActiveLoad / @planningView.Capacity
+                        </MudText>
+                        @if (planningView.IsAtOrOverCapacity)
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Warning" data-testid="planning-planning-capacity-warning">
+                                At or above your capacity limit
+                            </MudText>
+                        }
+                    </MudStack>
+                    <MudProgressLinear Value="@GetCapacityProgressValue(planningView)"
+                                       Color="@(planningView.IsAtOrOverCapacity ? Color.Warning : Color.Primary)"
+                                       aria-label="@FormatCapacityProgressAriaLabel(planningView)"
+                                       data-testid="planning-planning-capacity-bar" />
+                    <MudText Typo="Typo.caption">
+                        Active load is Up Next plus In Progress. Edit the capacity limit on the Repos tab.
+                    </MudText>
+                </MudStack>
+            </MudPaper>
+
+            @if (planningView.StalledUpNextItems.Count > 0)
+            {
+                <MudAlert Severity="Severity.Warning"
+                          Variant="Variant.Outlined"
+                          data-testid="planning-planning-stall-gate-alert">
+                    Resolve stalled Up Next items before adding new work. Add to Up Next stays disabled until every stalled item below is handled.
+                </MudAlert>
+
+                <MudPaper Class="pa-4" Elevation="1" data-testid="planning-planning-stalled">
+                    <MudStack Spacing="2">
+                        <MudText Typo="Typo.h6">Resolve stalled Up Next before adding</MudText>
+                        <MudSimpleTable Hover="true" Dense="true" data-testid="planning-planning-stalled-table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Title</th>
+                                    <th>Age</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var stalledItem in planningView.StalledUpNextItems)
+                                {
+                                    <tr data-testid="planning-planning-stalled-row">
+                                        <td>
+                                            <MudLink Href="@stalledItem.HtmlUrl"
+                                                     Target="_blank"
+                                                     rel="noopener noreferrer">
+                                                @FormatItemReference(stalledItem.RepositoryFullName, stalledItem.Number)
+                                            </MudLink>
+                                        </td>
+                                        <td>@stalledItem.Title</td>
+                                        <td>@FormatStallAge(stalledItem.AgeInDays)</td>
+                                        <td>
+                                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
+                                                <MudButton Variant="Variant.Outlined"
+                                                           Size="Size.Small"
+                                                           Disabled="@IsResolvingStalledItem(stalledItem)"
+                                                           OnClick="@(() => ReCommitStalledItemAsync(stalledItem))"
+                                                           data-testid="planning-planning-recommit-button">
+                                                    Re-commit
+                                                </MudButton>
+                                                <MudButton Variant="Variant.Outlined"
+                                                           Size="Size.Small"
+                                                           Color="Color.Warning"
+                                                           Disabled="@IsResolvingStalledItem(stalledItem)"
+                                                           OnClick="@(() => MarkStalledItemBlockedAsync(stalledItem))"
+                                                           data-testid="planning-planning-mark-blocked-button">
+                                                    Mark Blocked
+                                                </MudButton>
+                                                <MudButton Variant="Variant.Outlined"
+                                                           Size="Size.Small"
+                                                           Disabled="@IsResolvingStalledItem(stalledItem)"
+                                                           OnClick="@(() => MoveStalledItemToIceBoxAsync(stalledItem))"
+                                                           data-testid="planning-planning-ice-box-button">
+                                                    Ice Box
+                                                </MudButton>
+                                                <MudButton Variant="Variant.Outlined"
+                                                           Size="Size.Small"
+                                                           Color="Color.Error"
+                                                           Disabled="@IsResolvingStalledItem(stalledItem)"
+                                                           OnClick="@(() => RemoveStalledItemAsync(stalledItem))"
+                                                           data-testid="planning-planning-remove-button">
+                                                    Remove
+                                                </MudButton>
+                                            </MudStack>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    </MudStack>
+                </MudPaper>
+            }
+
+            <MudPaper Class="pa-4" Elevation="1" data-testid="planning-planning-up-next">
+                <MudStack Spacing="2">
+                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.h6">This batch (Up Next)</MudText>
+                        @if (planningView.HasFocusOrderField && planningView.NextStoryFocusOrder > 0)
+                        {
+                            <MudText Typo="Typo.body2" data-testid="planning-planning-next-focus-order">
+                                Next story Focus Order: @FormatFocusOrder(planningView.NextStoryFocusOrder)
+                            </MudText>
+                        }
+                    </MudStack>
+                    @if (!planningView.HasFocusOrderField)
+                    {
+                        <MudAlert Severity="Severity.Warning"
+                                  Variant="Variant.Outlined"
+                                  Dense="true"
+                                  data-testid="planning-planning-no-focus-order-field">
+                            This planning board does not expose a Focus Order field. Story, enabler, and test cards can still move to Up Next, but Focus Order cannot be assigned.
+                        </MudAlert>
+                    }
+                    @if (planningView.UpNextItems.Count == 0)
+                    {
+                        <MudText Typo="Typo.body2" data-testid="planning-planning-up-next-empty">
+                            No items are in Up Next on this planning board yet.
+                        </MudText>
+                    }
+                    else
+                    {
+                        <MudSimpleTable Hover="true" Dense="true" data-testid="planning-planning-up-next-table">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>#</th>
+                                    <th>Kind</th>
+                                    <th>Item</th>
+                                    <th>Title</th>
+                                    <th>Focus Order</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var (item, index) in planningView.UpNextItems.Select((item, index) => (item, index + 1)))
+                                {
+                                    <tr data-testid="planning-planning-up-next-row">
+                                        <td>
+                                            <MudCheckBox T="bool"
+                                                         Value="@IsUpNextItemSelected(item)"
+                                                         ValueChanged="@(value => OnUpNextItemSelectionChanged(item, value))"
+                                                         data-testid="planning-planning-up-next-checkbox" />
+                                        </td>
+                                        <td>@index</td>
+                                        <td>
+                                            <MudChip T="string"
+                                                     Value="@PlanningItemKindFormatting.FormatLabel(item.ItemType)"
+                                                     Variant="Variant.Filled"
+                                                     Color="@PlanningItemKindFormatting.FormatChipColor(item.ItemType)"
+                                                     Size="Size.Small"
+                                                     data-testid="planning-planning-kind-chip">
+                                                @PlanningItemKindFormatting.FormatLabel(item.ItemType)
+                                            </MudChip>
+                                        </td>
+                                        <td>
+                                            <MudLink Href="@item.HtmlUrl"
+                                                     Target="_blank"
+                                                     rel="noopener noreferrer"
+                                                     data-testid="planning-planning-up-next-github-link">
+                                                @FormatItemReference(item.RepositoryFullName, item.Number)
+                                            </MudLink>
+                                        </td>
+                                        <td>@item.Title</td>
+                                        <td>
+                                            @if (item.FocusOrder.HasValue)
+                                            {
+                                                <MudChip T="string"
+                                                         Value="@FormatFocusOrder(item.FocusOrder)"
+                                                         Variant="Variant.Filled"
+                                                         Color="Color.Primary"
+                                                         Size="Size.Small"
+                                                         data-testid="planning-planning-focus-order-chip">
+                                                    @FormatFocusOrder(item.FocusOrder)
+                                                </MudChip>
+                                            }
+                                            else
+                                            {
+                                                var skipReason = PlanningFocusOrderSequencer.DescribeFocusOrderSkipReason(
+                                                    item.Labels,
+                                                    planningView.HasFocusOrderField);
+                                                if (skipReason is not null)
+                                                {
+                                                    <MudText Typo="Typo.caption" data-testid="planning-planning-focus-order-skipped">
+                                                        @skipReason
+                                                    </MudText>
+                                                }
+                                                else
+                                                {
+                                                    <MudText Typo="Typo.caption">—</MudText>
+                                                }
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+
+                        <MudStack Row="true"
+                                  Wrap="Wrap.Wrap"
+                                  Spacing="2"
+                                  AlignItems="AlignItems.End"
+                                  data-testid="planning-planning-bulk-milestone">
+                            <MudSelect T="string"
+                                       Label="Assign milestone to selected"
+                                       Variant="Variant.Outlined"
+                                       Dense="true"
+                                       Disabled="@(SelectedUpNextItems.Count == 0 || isLoadingMilestoneOptions || isApplyingBulkMilestone)"
+                                       Value="selectedMilestoneTitle"
+                                       ValueChanged="OnBulkMilestoneSelectionChanged"
+                                       data-testid="planning-planning-milestone-select">
+                                @if (SelectedUpNextItems.Count == 0)
+                                {
+                                    <MudSelectItem T="string" Value="@string.Empty">Select batch items first</MudSelectItem>
+                                }
+                                else if (milestoneOptions.Count == 0 && !isLoadingMilestoneOptions)
+                                {
+                                    <MudSelectItem T="string" Value="@string.Empty">No shared milestones on selected repos</MudSelectItem>
+                                }
+                                else
+                                {
+                                    @foreach (var option in milestoneOptions)
+                                    {
+                                        <MudSelectItem T="string" Value="@option.Title">@option.Title</MudSelectItem>
+                                    }
+                                }
+                            </MudSelect>
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Primary"
+                                       Disabled="@(!CanApplyBulkMilestone)"
+                                       OnClick="ApplyBulkMilestoneAsync"
+                                       data-testid="planning-planning-milestone-apply">
+                                Apply
+                            </MudButton>
+                        </MudStack>
+                    }
+                </MudStack>
+            </MudPaper>
+
+            <MudPaper Class="pa-4" Elevation="1" data-testid="planning-planning-candidates">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.h6">Candidate picker</MudText>
+                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.End" data-testid="planning-planning-filters">
+                        <MudSelect T="string"
+                                   Label="Type"
+                                   Variant="Variant.Outlined"
+                                   Dense="true"
+                                   Value="selectedTypeFilter"
+                                   ValueChanged="OnTypeFilterChanged"
+                                   data-testid="planning-planning-type-filter">
+                            <MudSelectItem T="string" Value="@PlanningItemKindFormatting.AllTypesFilter">All types</MudSelectItem>
+                            <MudSelectItem T="string" Value="@PlanningItemKindFormatting.IssueTypeFilter">Issues</MudSelectItem>
+                            <MudSelectItem T="string" Value="@PlanningItemKindFormatting.PullRequestTypeFilter">Pull requests</MudSelectItem>
+                        </MudSelect>
+                        <MudTextField T="string"
+                                      Label="Search across included repos"
+                                      Variant="Variant.Outlined"
+                                      Immediate="true"
+                                      DebounceInterval="200"
+                                      Value="candidateSearch"
+                                      ValueChanged="OnSearchChanged"
+                                      Clearable="true"
+                                      data-testid="planning-planning-search" />
+                    </MudStack>
+
+                    @if (!FilteredCandidates.Any())
+                    {
+                        <MudText Typo="Typo.body2" data-testid="planning-planning-candidates-empty">
+                            No matching candidates are available to add to Up Next.
+                        </MudText>
+                    }
+                    else
+                    {
+                        <MudSimpleTable Hover="true" Dense="true" data-testid="planning-planning-candidates-table">
+                            <thead>
+                                <tr>
+                                    <th>Kind</th>
+                                    <th>Item</th>
+                                    <th>Title</th>
+                                    <th>Board Status</th>
+                                    <th>Focus Order</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var candidate in FilteredCandidates)
+                                {
+                                    <tr data-testid="planning-planning-candidate-row">
+                                        <td>
+                                            <MudChip T="string"
+                                                     Value="@PlanningItemKindFormatting.FormatLabel(candidate.ItemType)"
+                                                     Variant="Variant.Filled"
+                                                     Color="@PlanningItemKindFormatting.FormatChipColor(candidate.ItemType)"
+                                                     Size="Size.Small"
+                                                     data-testid="planning-planning-kind-chip">
+                                                @PlanningItemKindFormatting.FormatLabel(candidate.ItemType)
+                                            </MudChip>
+                                        </td>
+                                        <td>
+                                            <MudLink Href="@candidate.HtmlUrl"
+                                                     Target="_blank"
+                                                     rel="noopener noreferrer"
+                                                     data-testid="planning-planning-candidate-link">
+                                                @FormatItemReference(candidate.RepositoryFullName, candidate.Number)
+                                            </MudLink>
+                                        </td>
+                                        <td>@candidate.Title</td>
+                                        <td>@(string.IsNullOrWhiteSpace(candidate.BoardStatusName) ? "—" : candidate.BoardStatusName)</td>
+                                        <td>
+                                            @if (!planningView.HasFocusOrderField)
+                                            {
+                                                <MudText Typo="Typo.caption" data-testid="planning-planning-candidate-focus-order-unavailable">
+                                                    Unavailable on this board
+                                                </MudText>
+                                            }
+                                            else
+                                            {
+                                                var skipReason = PlanningFocusOrderSequencer.DescribeFocusOrderSkipReason(
+                                                    candidate.Labels,
+                                                    planningView.HasFocusOrderField);
+                                                if (skipReason is not null)
+                                                {
+                                                    <MudText Typo="Typo.caption" data-testid="planning-planning-candidate-focus-order-skipped">
+                                                        @skipReason
+                                                    </MudText>
+                                                }
+                                                else
+                                                {
+                                                    <MudText Typo="Typo.caption" data-testid="planning-planning-candidate-focus-order-next">
+                                                        Will assign @FormatFocusOrder(planningView.NextStoryFocusOrder)
+                                                    </MudText>
+                                                }
+                                            }
+                                        </td>
+                                        <td>
+                                            <MudButton Variant="Variant.Outlined"
+                                                       Color="Color.Primary"
+                                                       Disabled="@(isAddingToUpNext || IsAddingCandidate(candidate) || IsAddToUpNextDisabled)"
+                                                       OnClick="@(() => AddToUpNextAsync(candidate))"
+                                                       data-testid="planning-planning-add-button">
+                                                Add to Up Next
+                                            </MudButton>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    }
+                </MudStack>
+            </MudPaper>
+        }
+    }
+</MudStack>

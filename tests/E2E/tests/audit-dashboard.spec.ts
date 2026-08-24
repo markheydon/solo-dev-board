@@ -9,12 +9,4 @@ test.describe('Audit Dashboard shell', () => {
     await expect(page.getByTestId('audit-feedback-region')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText('Unable to load repositories')).toBeVisible();
   });
-
-  test('/audit route renders the same audit dashboard shell', async ({ page }) => {
-    await page.goto('/audit');
-
-    await expect(page).toHaveTitle(/Audit Dashboard/);
-    await expect(page.getByRole('heading', { name: 'Audit Dashboard' })).toBeVisible();
-    await expect(page.getByText('Unable to load repositories')).toBeVisible({ timeout: 15_000 });
-  });
 });

@@ -1,4 +1,4 @@
-using SoloDevBoard.Application.Services.PmWorkflow;
+using SoloDevBoard.Application.Services.Planning;
 
 namespace SoloDevBoard.Application.Tests;
 
@@ -116,7 +116,7 @@ public sealed class DailyFocusRecommendationMapperTests
                 "PR in progress",
                 ["priority/critical"],
                 updated,
-                PmWorkItemTypeDto.PullRequest),
+                PlanningWorkItemTypeDto.PullRequest),
         };
         var boardItems = new[]
         {
@@ -176,16 +176,16 @@ public sealed class DailyFocusRecommendationMapperTests
         Assert.Equal(expected, DailyFocusRecommendationMapper.IsExcludedBoardStatus(statusName));
     }
 
-    private static PmWorkItemDto CreateWorkItem(
+    private static PlanningWorkItemDto CreateWorkItem(
         string repositoryFullName,
         int number,
         string title,
         IReadOnlyList<string> labels,
         DateTimeOffset updatedAt,
-        PmWorkItemTypeDto itemType = PmWorkItemTypeDto.Issue)
+        PlanningWorkItemTypeDto itemType = PlanningWorkItemTypeDto.Issue)
     {
-        var path = itemType == PmWorkItemTypeDto.PullRequest ? "pull" : "issues";
-        return new PmWorkItemDto(
+        var path = itemType == PlanningWorkItemTypeDto.PullRequest ? "pull" : "issues";
+        return new PlanningWorkItemDto(
             itemType,
             number,
             title,
@@ -196,8 +196,8 @@ public sealed class DailyFocusRecommendationMapperTests
             MilestoneTitle: null,
             CreatedAt: updatedAt,
             UpdatedAt: updatedAt,
-            IsDraft: itemType == PmWorkItemTypeDto.PullRequest ? false : null,
-            HasReviewPending: itemType == PmWorkItemTypeDto.PullRequest ? false : null,
+            IsDraft: itemType == PlanningWorkItemTypeDto.PullRequest ? false : null,
+            HasReviewPending: itemType == PlanningWorkItemTypeDto.PullRequest ? false : null,
             SubIssueTotal: null,
             SubIssueCompleted: null);
     }

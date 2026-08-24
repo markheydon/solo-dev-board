@@ -1,4 +1,4 @@
-using SoloDevBoard.Application.Services.PmWorkflow;
+using SoloDevBoard.Application.Services.Planning;
 
 namespace SoloDevBoard.Application.Tests;
 
@@ -85,9 +85,9 @@ public sealed class DailyFocusBoardStateMapperTests
         var result = Map([], [], capacity: 0);
 
         Assert.Equal(0, result.ActiveLoad);
-        Assert.Equal(PmSettingsDefaults.Capacity, result.Capacity);
+        Assert.Equal(PlanningSettingsDefaults.Capacity, result.Capacity);
         Assert.Empty(result.Occupancy);
-        Assert.Equal(PmSettingsDefaults.StallDays, result.StallDays);
+        Assert.Equal(PlanningSettingsDefaults.StallDays, result.StallDays);
     }
 
     [Fact]
@@ -170,7 +170,7 @@ public sealed class DailyFocusBoardStateMapperTests
         Assert.Equal("Day three item", stalled.Title);
         Assert.Equal(3, stalled.AgeInDays);
         Assert.False(stalled.UsedUpdatedAtFallback);
-        Assert.Equal(PmSettingsDefaults.StallDays, result.StallDays);
+        Assert.Equal(PlanningSettingsDefaults.StallDays, result.StallDays);
     }
 
     [Fact]
@@ -285,7 +285,7 @@ public sealed class DailyFocusBoardStateMapperTests
         IReadOnlyList<ProjectBoardStatusOptionDto> statusOptions,
         IReadOnlyList<ProjectBoardItemDto> items,
         int capacity,
-        int stallDays = PmSettingsDefaults.StallDays) =>
+        int stallDays = PlanningSettingsDefaults.StallDays) =>
         DailyFocusBoardStateMapper.Map(statusOptions, items, capacity, stallDays, UtcNow);
 
     private static IReadOnlyList<ProjectBoardStatusOptionDto> UpNextOptions() =>

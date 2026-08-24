@@ -6,7 +6,7 @@ Parent: shipped Feature [#272](https://github.com/markheydon/solo-dev-board/issu
 
 - [x] Scope validated (`plan/SCOPE.md` Planning).
 - [x] No new DEC (behaviour already shipped; this is explanation UX).
-- [x] Wireframe updated (`plan/wireframes/pm-workflow-wireframe.md`).
+- [x] Wireframe updated (`plan/wireframes/planning-wireframe.md`).
 - [x] Story #445 already exists on milestone v1.1.0.
 
 ## Issues

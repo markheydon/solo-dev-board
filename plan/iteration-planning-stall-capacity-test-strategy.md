@@ -29,7 +29,7 @@ Validate that stalled Up Next is the only hard disable for Add to Up Next, that 
 | Layer | Focus |
 |-------|--------|
 | App (bUnit) | `IsAddToUpNextDisabled` vs capacity; alert severity; pause line; exceed dialog still shown. |
-| Playwright | `/pm-workflow/planning` shell: stall alert test id; Add buttons present. |
+| Playwright | `/planning/iteration` shell: stall alert test id; Add buttons present. |
 
 ## Out of scope
 

@@ -133,8 +133,8 @@ A script to create all labels at once will be provided in `infra/scripts/create-
 - Apply the relevant `area/` label to all issues and PRs.
 - Multiple `area/` labels may be applied if the issue spans more than one feature.
 - Apply `area/dashboard` to the Audit Dashboard (`/audit-dashboard`) only.
-- Apply `area/actions-templates` to the Actions Templates page (`/workflows`).
-- Apply `area/planning` to Planning surfaces (Daily Focus, Backlog Review, Iteration, and Repo Management under `/pm-workflow`).
+- Apply `area/actions-templates` to the Actions Templates page (`/actions-templates`).
+- Apply `area/planning` to Planning surfaces (Daily Focus, Backlog Review, Iteration, and Repo Management under `/planning`).
 - Apply `area/repositories` to the Repositories catalogue page (`/repositories`), including search and refresh, catalogue status, OSS classification and filters ([#440](https://github.com/markheydon/solo-dev-board/issues/440)), repository groups ([#381](https://github.com/markheydon/solo-dev-board/issues/381)), catalogue management actions ([#435](https://github.com/markheydon/solo-dev-board/issues/435)), and overnight OSS hygiene views that scan the catalogue ([#438](https://github.com/markheydon/solo-dev-board/issues/438), [#439](https://github.com/markheydon/solo-dev-board/issues/439)). Do not use `area/dashboard` as a stand-in when the primary deliverable is the Repositories catalogue.
 - `area/*` labels on this repository describe SoloDevBoard's own feature map for issue and PR triage. They are **not** part of Label Manager's cross-repository recommended catalogue ([#446](https://github.com/markheydon/solo-dev-board/issues/446)); create or update `area/*` labels on `solo-dev-board` manually when the taxonomy changes.
 

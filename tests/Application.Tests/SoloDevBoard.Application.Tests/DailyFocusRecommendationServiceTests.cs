@@ -1,13 +1,13 @@
 using NSubstitute;
-using SoloDevBoard.Application.Services.PmWorkflow;
+using SoloDevBoard.Application.Services.Planning;
 
 namespace SoloDevBoard.Application.Tests;
 
 /// <summary>Tests for <see cref="DailyFocusRecommendationService"/>.</summary>
 public sealed class DailyFocusRecommendationServiceTests
 {
-    private readonly IPmWorkItemCatalogueService _workItemCatalogueService =
-        Substitute.For<IPmWorkItemCatalogueService>();
+    private readonly IPlanningWorkItemCatalogueService _workItemCatalogueService =
+        Substitute.For<IPlanningWorkItemCatalogueService>();
     private readonly IProjectItemCatalogueService _projectItemCatalogueService =
         Substitute.For<IProjectItemCatalogueService>();
 
@@ -42,8 +42,8 @@ public sealed class DailyFocusRecommendationServiceTests
         var updated = DateTimeOffset.Parse("2026-08-18T00:00:00Z");
         var workItems = new[]
         {
-            new PmWorkItemDto(
-                PmWorkItemTypeDto.Issue,
+            new PlanningWorkItemDto(
+                PlanningWorkItemTypeDto.Issue,
                 40,
                 "Do this",
                 "https://github.com/owner/repo/issues/40",
@@ -57,8 +57,8 @@ public sealed class DailyFocusRecommendationServiceTests
                 null,
                 null,
                 null),
-            new PmWorkItemDto(
-                PmWorkItemTypeDto.Issue,
+            new PlanningWorkItemDto(
+                PlanningWorkItemTypeDto.Issue,
                 41,
                 "In flight",
                 "https://github.com/owner/repo/issues/41",
@@ -75,7 +75,7 @@ public sealed class DailyFocusRecommendationServiceTests
         };
 
         _workItemCatalogueService.GetCatalogueAsync(cancellationToken)
-            .Returns(new PmWorkItemCatalogueResultDto(workItems, [], []));
+            .Returns(new PlanningWorkItemCatalogueResultDto(workItems, [], []));
         _projectItemCatalogueService.GetCatalogueAsync("PVT_board", cancellationToken)
             .Returns(new ProjectBoardItemCatalogueDto(
                 new ProjectBoardFieldIdsDto("PVTF_status", null),
@@ -113,9 +113,9 @@ public sealed class DailyFocusRecommendationServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         _workItemCatalogueService.GetCatalogueAsync(cancellationToken)
-            .Returns(new PmWorkItemCatalogueResultDto(
+            .Returns(new PlanningWorkItemCatalogueResultDto(
                 [],
-                [new PmRepositoryCatalogueFailureDto("owner/repo-a", "GitHub unavailable", 500)],
+                [new PlanningRepositoryCatalogueFailureDto("owner/repo-a", "GitHub unavailable", 500)],
                 []));
         _projectItemCatalogueService.GetCatalogueAsync("PVT_board", cancellationToken)
             .Returns(new ProjectBoardItemCatalogueDto(
@@ -139,8 +139,8 @@ public sealed class DailyFocusRecommendationServiceTests
         var updated = DateTimeOffset.Parse("2026-08-18T00:00:00Z");
         var workItems = new[]
         {
-            new PmWorkItemDto(
-                PmWorkItemTypeDto.Issue,
+            new PlanningWorkItemDto(
+                PlanningWorkItemTypeDto.Issue,
                 40,
                 "Do this",
                 "https://github.com/owner/repo/issues/40",
@@ -157,11 +157,11 @@ public sealed class DailyFocusRecommendationServiceTests
         };
 
         _workItemCatalogueService.GetCatalogueAsync(cancellationToken)
-            .Returns(new PmWorkItemCatalogueResultDto(
+            .Returns(new PlanningWorkItemCatalogueResultDto(
                 workItems,
                 [
-                    new PmRepositoryCatalogueFailureDto("owner/repo-b", "Not found", 404),
-                    new PmRepositoryCatalogueFailureDto("owner/repo-c", "Forbidden", 403),
+                    new PlanningRepositoryCatalogueFailureDto("owner/repo-b", "Not found", 404),
+                    new PlanningRepositoryCatalogueFailureDto("owner/repo-c", "Forbidden", 403),
                 ],
                 []));
         _projectItemCatalogueService.GetCatalogueAsync("PVT_board", cancellationToken)
