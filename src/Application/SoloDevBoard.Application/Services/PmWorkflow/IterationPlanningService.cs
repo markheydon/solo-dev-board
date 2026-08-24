@@ -38,10 +38,16 @@ public sealed class IterationPlanningService : IIterationPlanningService
         string projectId,
         int capacity,
         int stallDays,
+        bool forceReload = false,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentException.ThrowIfNullOrWhiteSpace(projectId);
+
+        if (forceReload)
+        {
+            _projectItemCatalogueService.InvalidateCatalogue(projectId);
+        }
 
         var workItemsTask = _workItemCatalogueService.GetCatalogueAsync(cancellationToken);
         var boardCatalogueTask = _projectItemCatalogueService.GetCatalogueAsync(projectId, cancellationToken);
@@ -159,6 +165,7 @@ public sealed class IterationPlanningService : IIterationPlanningService
 
         return new IterationPlanningAddToUpNextResultDto(
             addedBoardCard,
+            projectItemId,
             focusOrderAssigned,
             focusOrderSkipped);
     }

@@ -69,6 +69,35 @@
                 </MudStack>
             </MudStack>
 
+            @if (HasBoardCompatibilityIssues)
+            {
+                <MudExpansionPanels data-testid="pm-workflow-board-compatibility-summary">
+                    <MudExpansionPanel Text="@FormatBoardCompatibilitySummary()"
+                                       Icon="@Icons.Material.Filled.Warning">
+                        <MudStack Spacing="2">
+                            @foreach (var issue in ChromeState.BoardCompatibilityReport!.Issues.Take(3))
+                            {
+                                <MudText Typo="Typo.body2">
+                                    <strong>@issue.Title.</strong> @issue.Detail
+                                </MudText>
+                            }
+                            @if (ChromeState.BoardCompatibilityReport.Issues.Count > 3)
+                            {
+                                <MudText Typo="Typo.caption">
+                                    @FormatAdditionalBoardCompatibilityCount(ChromeState.BoardCompatibilityReport.Issues.Count - 3)
+                                </MudText>
+                            }
+                            <MudButton Variant="Variant.Text"
+                                       Color="Color.Warning"
+                                       OnClick="NavigateToBoardSetupAsync"
+                                       data-testid="pm-workflow-board-compatibility-view-all">
+                                View all board setup issues
+                            </MudButton>
+                        </MudStack>
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+            }
+
             <MudTabs Rounded="true"
                      ApplyEffectsToContainer="true"
                      ActivePanelIndex="ActiveTabIndex"
@@ -78,6 +107,26 @@
                 <MudTabPanel Text="Backlog" />
                 <MudTabPanel Text="Iteration" />
                 <MudTabPanel Text="Repos" />
+                @if (HasBoardCompatibilityIssues)
+                {
+                    <MudTabPanel data-testid="pm-workflow-board-setup-tab">
+                        <TabContent>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="text-nowrap">
+                                <MudIcon Icon="@Icons.Material.Filled.Warning"
+                                         Color="Color.Warning"
+                                         Size="Size.Small" />
+                                <span>Board setup</span>
+                                <MudChip T="string"
+                                         Size="Size.Small"
+                                         Color="Color.Warning"
+                                         Variant="Variant.Filled"
+                                         data-testid="pm-workflow-board-setup-tab-count">
+                                    @ChromeState.BoardCompatibilityReport!.Issues.Count
+                                </MudChip>
+                            </MudStack>
+                        </TabContent>
+                    </MudTabPanel>
+                }
             </MudTabs>
         </MudStack>
     </MudPaper>

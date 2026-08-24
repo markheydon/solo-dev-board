@@ -67,7 +67,7 @@ public sealed class PmWorkflowBacklogTests
     {
         ConfigureDefaults();
         var planningService = Substitute.For<IIterationPlanningService>();
-        planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+        planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             new IterationPlanningViewDto([], [], [], true, 1, 0, 8, false, []));
 
         await using var ctx = CreateContext(planningService);
@@ -83,6 +83,7 @@ public sealed class PmWorkflowBacklogTests
             "PVT_board",
             8,
             3,
+            false,
             Arg.Any<CancellationToken>());
     }
 
@@ -112,6 +113,7 @@ public sealed class PmWorkflowBacklogTests
         ctx.Services.AddScoped(_ => _projectBoardDiscoveryService);
         ctx.Services.AddScoped(_ => _backlogReviewService);
         ctx.Services.AddScoped(_ => planningService ?? Substitute.For<IIterationPlanningService>());
+        ctx.Services.AddScoped(_ => PmWorkflowTestChromeDependencies.CreateBoardCompatibilityService());
         ctx.Services.AddScoped<PmWorkflowChromeCoordinator>();
         ctx.Services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
 

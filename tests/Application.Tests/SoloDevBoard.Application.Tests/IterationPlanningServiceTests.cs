@@ -37,6 +37,7 @@ public sealed class IterationPlanningServiceTests
             cancellationToken);
 
         Assert.True(result.AddedBoardCard);
+        Assert.Equal("PVTI_new", result.ProjectItemId);
         Assert.Equal(3, result.FocusOrderAssigned);
         Assert.False(result.FocusOrderSkipped);
 
@@ -79,6 +80,7 @@ public sealed class IterationPlanningServiceTests
             cancellationToken);
 
         Assert.False(result.AddedBoardCard);
+        Assert.Equal("PVTI_existing", result.ProjectItemId);
         Assert.Equal(3, result.FocusOrderAssigned);
         Assert.False(result.FocusOrderSkipped);
 
@@ -123,6 +125,7 @@ public sealed class IterationPlanningServiceTests
             cancellationToken);
 
         Assert.True(result.AddedBoardCard);
+        Assert.Equal("PVTI_feature", result.ProjectItemId);
         Assert.Null(result.FocusOrderAssigned);
         Assert.True(result.FocusOrderSkipped);
 
@@ -485,6 +488,25 @@ public sealed class IterationPlanningServiceTests
         Assert.Equal("owner/repo-a", failure.RepositoryFullName);
         Assert.Equal(11, failure.Number);
         Assert.Contains("GitHub unavailable", failure.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetPlanningViewAsync_ForceReload_InvalidatesProjectBoardCatalogue()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var boardCatalogue = CreateCatalogue(existingItem: null);
+        _workItemCatalogueService
+            .GetCatalogueAsync(cancellationToken)
+            .Returns(new PmWorkItemCatalogueResultDto([], [], []));
+        _projectItemCatalogueService
+            .GetCatalogueAsync("project-id", cancellationToken)
+            .Returns(boardCatalogue);
+
+        var sut = CreateSut();
+
+        await sut.GetPlanningViewAsync("project-id", 8, 3, forceReload: true, cancellationToken);
+
+        _projectItemCatalogueService.Received(1).InvalidateCatalogue("project-id");
     }
 
     private IterationPlanningService CreateSut() =>

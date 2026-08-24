@@ -802,6 +802,7 @@ public sealed class PmWorkflowDailyFocusTests
         ctx.Services.AddScoped(_ => _stalledReviewService);
         ctx.Services.AddScoped(_ => _workItemCatalogueService);
         ctx.Services.AddScoped(_ => _recommendationService);
+        ctx.Services.AddScoped(_ => PmWorkflowTestChromeDependencies.CreateBoardCompatibilityService());
         ctx.Services.AddScoped<PmWorkflowChromeCoordinator>();
         ctx.Services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
 

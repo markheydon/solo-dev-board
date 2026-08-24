@@ -45,6 +45,7 @@ public partial class PmWorkflowLayout : LayoutComponentBase, IDisposable
             "/pm-workflow/backlog" => "backlog",
             "/pm-workflow/planning" => "planning",
             "/pm-workflow/repos" => "repos",
+            "/pm-workflow/board-setup" => "board-setup",
             _ => "daily-focus",
         };
     }
