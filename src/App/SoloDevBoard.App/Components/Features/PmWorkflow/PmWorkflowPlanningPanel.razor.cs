@@ -540,6 +540,15 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
     private static string FormatStallAge(int ageInDays) =>
         ageInDays == 1 ? "1 day" : $"{ageInDays} days";
 
+    private static string FormatStalledUpNextCount(int stalledCount) =>
+        stalledCount == 1 ? "1 item is stalled" : $"{stalledCount} items are stalled";
+
+    private static string FormatStallGateAlertMessage(int stalledCount) =>
+        $"You cannot add to Up Next until stalled items are handled. {FormatStalledUpNextCount(stalledCount)}. "
+        + "Use the stalled Up Next table below to Re-commit, Mark Blocked, Ice Box, or Remove each row.";
+
+    private const string StallGateAddPauseMessage = "Add is paused until stalled Up Next is cleared.";
+
     private bool IsUpNextItemSelected(IterationPlanningUpNextItemDto item) =>
         selectedUpNextItemIds.Contains(item.ProjectItemId);
 

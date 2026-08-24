@@ -178,9 +178,11 @@ When a board is selected, Iteration shows **Capacity** as active load over the p
 
 Capacity is a soft ceiling. Choosing **Add to Up Next** when the next item would exceed the limit opens a confirmation dialog (**Exceed capacity limit?**). **Add anyway** continues; **Cancel** leaves the board unchanged.
 
-### Resolve stalled Up Next before adding
+### Stall gate blocks Add to Up Next
 
-If any Up Next item is stalled for the configured **Stall days** threshold (same inclusive clock as Daily Focus), Iteration shows a warning and a **Resolve stalled Up Next before adding** table. **Add to Up Next** stays disabled until every stalled item is handled.
+If any Up Next item is stalled for the configured **Stall days** threshold (same inclusive clock as Daily Focus), Iteration shows a single error alert and a **Stalled Up Next** table. **Add to Up Next** stays disabled until every stalled item is handled. This stall gate is separate from capacity: a full capacity meter does not disable Add on its own.
+
+The error alert states how many items are stalled and names the four resolution actions. The **Candidate picker** stays visible with a short pause line explaining that Add is paused until stalled Up Next is cleared.
 
 Each stalled row shows `owner/name#number`, title, age, and four actions:
 
@@ -201,6 +203,8 @@ If the board exposes Focus Order, a **Next story Focus Order** hint appears abov
 
 If the column is empty, an informational sentence explains that no items are in Up Next yet.
 
+When active load is at or above your capacity limit and there are no stalled Up Next items, a caption in this section explains that you can still add items after confirming. Capacity remains a meter, not a hard lock.
+
 ### Assign milestone to selected
 
 Below the Up Next table, **Assign milestone to selected** lists milestones that exist on every repository represented by the checked batch items.
@@ -217,6 +221,7 @@ Below the batch, a searchable list shows open issues and pull requests from incl
 
 - **Search** matches title, repository name, or item number.
 - The **Type** dropdown filters the list (`All types`, **Issues**, or **Pull requests**).
+- When stalled Up Next items exist, a pause line explains that **Add to Up Next** is paused until they are cleared. Disabled Add buttons show the same reason in a tooltip.
 - Each row shows an **Issue** or **PR** chip, `owner/name#number`, the title, the current board Status when the item is already on the board, the expected Focus Order outcome, and **Add to Up Next**.
 
 Choosing **Add to Up Next**:

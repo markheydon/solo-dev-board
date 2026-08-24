@@ -83,15 +83,15 @@
 
             @if (planningView.StalledUpNextItems.Count > 0)
             {
-                <MudAlert Severity="Severity.Warning"
+                <MudAlert Severity="Severity.Error"
                           Variant="Variant.Outlined"
                           data-testid="pm-workflow-planning-stall-gate-alert">
-                    Resolve stalled Up Next items before adding new work. Add to Up Next stays disabled until every stalled item below is handled.
+                    @FormatStallGateAlertMessage(planningView.StalledUpNextItems.Count)
                 </MudAlert>
 
                 <MudPaper Class="pa-4" Elevation="1" data-testid="pm-workflow-planning-stalled">
                     <MudStack Spacing="2">
-                        <MudText Typo="Typo.h6">Resolve stalled Up Next before adding</MudText>
+                        <MudText Typo="Typo.h6">Stalled Up Next</MudText>
                         <MudSimpleTable Hover="true" Dense="true" data-testid="pm-workflow-planning-stalled-table">
                             <thead>
                                 <tr>
@@ -175,6 +175,14 @@
                                   data-testid="pm-workflow-planning-no-focus-order-field">
                             This planning board does not expose a Focus Order field. Story, enabler, and test cards can still move to Up Next, but Focus Order cannot be assigned.
                         </MudAlert>
+                    }
+                    @if (planningView.IsAtOrOverCapacity && planningView.StalledUpNextItems.Count == 0)
+                    {
+                        <MudText Typo="Typo.caption"
+                                 Color="Color.Warning"
+                                 data-testid="pm-workflow-planning-up-next-capacity-status">
+                            Active load is at or above your capacity limit. You can still add items after confirming.
+                        </MudText>
                     }
                     @if (planningView.UpNextItems.Count == 0)
                     {
@@ -303,6 +311,13 @@
             <MudPaper Class="pa-4" Elevation="1" data-testid="pm-workflow-planning-candidates">
                 <MudStack Spacing="2">
                     <MudText Typo="Typo.h6">Candidate picker</MudText>
+                    @if (IsAddToUpNextDisabled)
+                    {
+                        <MudText Typo="Typo.body2"
+                                 data-testid="pm-workflow-planning-candidate-pause-line">
+                            @StallGateAddPauseMessage
+                        </MudText>
+                    }
                     <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.End" data-testid="pm-workflow-planning-filters">
                         <MudSelect T="string"
                                    Label="Type"
@@ -396,13 +411,29 @@
                                             }
                                         </td>
                                         <td>
-                                            <MudButton Variant="Variant.Outlined"
-                                                       Color="Color.Primary"
-                                                       Disabled="@(isAddingToUpNext || IsAddingCandidate(candidate) || IsAddToUpNextDisabled)"
-                                                       OnClick="@(() => AddToUpNextAsync(candidate))"
-                                                       data-testid="pm-workflow-planning-add-button">
-                                                Add to Up Next
-                                            </MudButton>
+                                            @if (IsAddToUpNextDisabled)
+                                            {
+                                                <MudTooltip Text="@StallGateAddPauseMessage">
+                                                    <span>
+                                                        <MudButton Variant="Variant.Outlined"
+                                                                   Color="Color.Primary"
+                                                                   Disabled="true"
+                                                                   data-testid="pm-workflow-planning-add-button">
+                                                            Add to Up Next
+                                                        </MudButton>
+                                                    </span>
+                                                </MudTooltip>
+                                            }
+                                            else
+                                            {
+                                                <MudButton Variant="Variant.Outlined"
+                                                           Color="Color.Primary"
+                                                           Disabled="@(isAddingToUpNext || IsAddingCandidate(candidate))"
+                                                           OnClick="@(() => AddToUpNextAsync(candidate))"
+                                                           data-testid="pm-workflow-planning-add-button">
+                                                    Add to Up Next
+                                                </MudButton>
+                                            }
                                         </td>
                                     </tr>
                                 }

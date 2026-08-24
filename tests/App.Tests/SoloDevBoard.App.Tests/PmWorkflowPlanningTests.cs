@@ -314,9 +314,88 @@ public sealed class PmWorkflowPlanningTests
         cut.WaitForAssertion(() =>
         {
             Assert.Contains("data-testid=\"pm-workflow-planning-stall-gate-alert\"", cut.Markup);
-            Assert.Contains("Resolve stalled Up Next items before adding new work", cut.Markup);
+            Assert.Contains("mud-alert-outlined-error", cut.Markup);
+            Assert.Contains("You cannot add to Up Next until stalled items are handled", cut.Markup);
+            Assert.Contains("1 item is stalled", cut.Markup);
+            Assert.Contains("Re-commit", cut.Markup);
+            Assert.Contains("Mark Blocked", cut.Markup);
+            Assert.Contains("Ice Box", cut.Markup);
+            Assert.Contains("Remove", cut.Markup);
+            Assert.DoesNotContain("capacity", cut.Find("[data-testid=\"pm-workflow-planning-stall-gate-alert\"]").TextContent, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("data-testid=\"pm-workflow-planning-candidate-pause-line\"", cut.Markup);
+            Assert.Contains("Add is paused until stalled Up Next is cleared.", cut.Markup);
             var addButton = cut.Find("[data-testid=\"pm-workflow-planning-add-button\"]");
             Assert.True(addButton.HasAttribute("disabled"));
+        });
+    }
+
+    [Fact]
+    public async Task PmWorkflowPlanning_WhenStalledAndAtCapacity_DisablesAddOnlyForStall()
+    {
+        ConfigureDefaults();
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+            new IterationPlanningViewDto(
+                [],
+                [
+                    new IterationPlanningCandidateDto(
+                        PmWorkItemTypeDto.Issue,
+                        50,
+                        "Candidate story",
+                        "https://github.com/owner/repo-a/issues/50",
+                        "owner/repo-a",
+                        ["type/story", "priority/high"],
+                        "Todo",
+                        "PVTI_candidate"),
+                ],
+                [],
+                true,
+                1,
+                8,
+                8,
+                true,
+                [
+                    new IterationPlanningStalledItemDto(
+                        "PVTI_stalled",
+                        PmWorkItemTypeDto.Issue,
+                        275,
+                        "Stalled story",
+                        "https://github.com/owner/repo-a/issues/275",
+                        "owner/repo-a",
+                        4,
+                        false,
+                        ["type/story"]),
+                ]));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowPlanning>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("data-testid=\"pm-workflow-planning-capacity\"", cut.Markup);
+            Assert.Contains("8 / 8", cut.Markup);
+            Assert.Contains("data-testid=\"pm-workflow-planning-stall-gate-alert\"", cut.Markup);
+            Assert.DoesNotContain("data-testid=\"pm-workflow-planning-up-next-capacity-status\"", cut.Markup);
+            var addButton = cut.Find("[data-testid=\"pm-workflow-planning-add-button\"]");
+            Assert.True(addButton.HasAttribute("disabled"));
+        });
+    }
+
+    [Fact]
+    public async Task PmWorkflowPlanning_WhenAtCapacityWithoutStall_ShowsSoftCapacityStatusInUpNext()
+    {
+        ConfigureDefaults();
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+            CreateAtCapacityPlanningView());
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowPlanning>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("data-testid=\"pm-workflow-planning-up-next-capacity-status\"", cut.Markup);
+            Assert.Contains("You can still add items after confirming.", cut.Markup);
+            var addButton = cut.Find("[data-testid=\"pm-workflow-planning-add-button\"]");
+            Assert.False(addButton.HasAttribute("disabled"));
         });
     }
 
