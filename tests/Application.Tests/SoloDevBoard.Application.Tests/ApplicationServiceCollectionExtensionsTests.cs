@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using SoloDevBoard.Application.Services.ActionsTemplates;
 using SoloDevBoard.Application.Services.Audit;
 using SoloDevBoard.Application.Services.BoardRules;
 using SoloDevBoard.Application.Services.Common;
@@ -7,7 +8,6 @@ using SoloDevBoard.Application.Services.Migration;
 using SoloDevBoard.Application.Services.Planning;
 using SoloDevBoard.Application.Services.Repositories;
 using SoloDevBoard.Application.Services.Triage;
-using SoloDevBoard.Application.Services.ActionsTemplates;
 
 namespace SoloDevBoard.Application.Tests;
 

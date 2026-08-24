@@ -1,6 +1,5 @@
 using NSubstitute;
 using SoloDevBoard.Application.Services.ActionsTemplates;
-using SoloDevBoard.Domain.Entities.ActionsTemplates;
 using SoloDevBoard.Domain.Entities.Workflows;
 
 namespace SoloDevBoard.Application.Tests;

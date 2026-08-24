@@ -4,8 +4,8 @@ using MudBlazor;
 using MudBlazor.Services;
 using NSubstitute;
 using SoloDevBoard.App.Components.Features.ActionsTemplates.Pages;
-using SoloDevBoard.Application.Services.Repositories;
 using SoloDevBoard.Application.Services.ActionsTemplates;
+using SoloDevBoard.Application.Services.Repositories;
 
 namespace SoloDevBoard.App.Tests;
 
