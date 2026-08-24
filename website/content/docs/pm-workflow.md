@@ -193,7 +193,7 @@ Each stalled row shows `owner/name#number`, title, age, and four actions:
 | **Ice Box** | Moves the card to **Ice Box** and applies the `status/ice-box` label where appropriate. |
 | **Remove** | Returns the item from Up Next (clears Focus Order when present). |
 
-Success and failure snackbars confirm each resolution. After a successful action, Iteration reloads so occupancy and the gate update together.
+Success and failure snackbars confirm each resolution. Resolving a stalled row updates the page immediately so you can work through the list without waiting for a full reload. Use the **Refresh** control on the page heading (or in the Stalled Up Next section) when you want to reload candidates, capacity, and Up Next from GitHub.
 
 ### This batch (Up Next)
 

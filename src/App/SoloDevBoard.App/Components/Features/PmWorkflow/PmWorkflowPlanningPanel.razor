@@ -2,7 +2,17 @@
 @using SoloDevBoard.Application.Services.PmWorkflow
 
 <MudStack Spacing="3" data-testid="pm-workflow-planning-page">
-    <MudText Typo="Typo.h5">Iteration Planning</MudText>
+    <MudStack Row="true" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Spacing="1">
+        <MudText Typo="Typo.h5">Iteration Planning</MudText>
+        @if (planningView is not null && !isLoadingView)
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                           aria-label="Refresh Iteration Planning"
+                           Disabled="isLoadingView"
+                           OnClick="RefreshPlanningViewAsync"
+                           data-testid="pm-workflow-planning-refresh" />
+        }
+    </MudStack>
     <MudText Typo="Typo.body1">
         Select issues and pull requests from included repositories and move them to Up Next on the selected planning board.
         Stories, enablers, and tests receive sequential Focus Order; Feature and Epic cards skip Focus Order.
@@ -91,7 +101,18 @@
 
                 <MudPaper Class="pa-4" Elevation="1" data-testid="pm-workflow-planning-stalled">
                     <MudStack Spacing="2">
-                        <MudText Typo="Typo.h6">Stalled Up Next</MudText>
+                        <MudStack Row="true" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudText Typo="Typo.h6">Stalled Up Next</MudText>
+                            <MudSpacer />
+                            <MudTooltip Text="Refresh Iteration Planning">
+                                <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                                               Size="Size.Small"
+                                               aria-label="Refresh Iteration Planning"
+                                               Disabled="isLoadingView"
+                                               OnClick="RefreshPlanningViewAsync"
+                                               data-testid="pm-workflow-planning-stalled-refresh" />
+                            </MudTooltip>
+                        </MudStack>
                         <MudSimpleTable Hover="true" Dense="true" data-testid="pm-workflow-planning-stalled-table">
                             <thead>
                                 <tr>

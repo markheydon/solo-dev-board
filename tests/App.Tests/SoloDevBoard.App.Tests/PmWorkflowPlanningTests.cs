@@ -400,6 +400,92 @@ public sealed class PmWorkflowPlanningTests
     }
 
     [Fact]
+    public async Task PmWorkflowPlanning_WhenStalledItemRemoved_UpdatesLocallyWithoutFullReload()
+    {
+        ConfigureDefaults();
+        var stalledItem = new IterationPlanningStalledItemDto(
+            "PVTI_stalled",
+            PmWorkItemTypeDto.Issue,
+            275,
+            "Stalled story",
+            "https://github.com/owner/repo-a/issues/275",
+            "owner/repo-a",
+            4,
+            false,
+            ["type/story"]);
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+            new IterationPlanningViewDto(
+                [],
+                [
+                    new IterationPlanningCandidateDto(
+                        PmWorkItemTypeDto.Issue,
+                        50,
+                        "Candidate story",
+                        "https://github.com/owner/repo-a/issues/50",
+                        "owner/repo-a",
+                        ["type/story", "priority/high"],
+                        "Todo",
+                        "PVTI_candidate"),
+                ],
+                [],
+                true,
+                1,
+                1,
+                8,
+                false,
+                [stalledItem]));
+        _planningService
+            .RemoveStalledUpNextItemAsync("PVT_board", stalledItem, Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowPlanning>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("data-testid=\"pm-workflow-planning-stall-gate-alert\"", cut.Markup);
+        });
+
+        await cut.InvokeAsync(() => cut.Find("[data-testid='pm-workflow-planning-remove-button']").Click());
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.DoesNotContain("data-testid=\"pm-workflow-planning-stall-gate-alert\"", cut.Markup);
+            Assert.DoesNotContain("data-testid=\"pm-workflow-planning-stalled\"", cut.Markup);
+            Assert.DoesNotContain("data-testid=\"pm-workflow-planning-candidate-pause-line\"", cut.Markup);
+            var addButton = cut.Find("[data-testid=\"pm-workflow-planning-add-button\"]");
+            Assert.False(addButton.HasAttribute("disabled"));
+        });
+
+        await _planningService.Received(1).GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>());
+        await _planningService.Received(1)
+            .RemoveStalledUpNextItemAsync("PVT_board", stalledItem, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task PmWorkflowPlanning_WhenRefreshClicked_ReloadsPlanningView()
+    {
+        ConfigureDefaults();
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>()).Returns(
+            CreatePlanningViewWithCandidate());
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowPlanning>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("data-testid=\"pm-workflow-planning-refresh\"", cut.Markup);
+        });
+
+        await cut.InvokeAsync(() => cut.Find("[data-testid='pm-workflow-planning-refresh']").Click());
+
+        cut.WaitForAssertion(() =>
+        {
+            _planningService.Received(2).GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>());
+        });
+    }
+
+    [Fact]
     public async Task PmWorkflowPlanning_WhenAddToUpNextSucceeds_ShowsSuccessSnackbar()
     {
         ConfigureDefaults();
