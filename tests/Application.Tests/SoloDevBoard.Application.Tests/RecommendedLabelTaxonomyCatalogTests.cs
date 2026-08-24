@@ -31,4 +31,12 @@ public sealed class RecommendedLabelTaxonomyCatalogTests
         Assert.False(resolved);
         Assert.Empty(labels);
     }
+
+    [Fact]
+    public void SoloDevBoard_WhenCatalogueIsResolved_ContainsNoAreaLabels()
+    {
+        Assert.DoesNotContain(
+            RecommendedLabelTaxonomyCatalog.SoloDevBoard,
+            label => label.Name.StartsWith(LabelTaxonomyPrefixes.AreaPrefix, StringComparison.OrdinalIgnoreCase));
+    }
 }
