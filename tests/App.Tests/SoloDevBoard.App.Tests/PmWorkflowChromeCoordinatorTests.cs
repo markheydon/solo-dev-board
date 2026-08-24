@@ -144,6 +144,27 @@ public sealed class PmWorkflowChromeCoordinatorTests
         Assert.NotNull(coordinator.State.LoadErrorMessage);
     }
 
+    [Fact]
+    public async Task RecheckBoardCompatibilityAsync_WhenCheckFails_SetsLoadFailureReport()
+    {
+        ConfigureSuccessfulLoad();
+        _boardCompatibilityService
+            .GetReportAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
+            .ThrowsAsync(new InvalidOperationException("GitHub API unavailable."));
+
+        var coordinator = CreateCoordinator();
+        await coordinator.EnsureLoadedAsync();
+        coordinator.State.Settings = coordinator.State.Settings with { PlanningBoardNodeId = "PVT_board" };
+
+        await coordinator.RecheckBoardCompatibilityAsync();
+
+        Assert.NotNull(coordinator.State.BoardCompatibilityReport);
+        Assert.True(coordinator.State.BoardCompatibilityReport.HasIssues);
+        Assert.Contains(
+            coordinator.State.BoardCompatibilityReport.Issues,
+            issue => issue.Code == "compatibility-check-failed");
+    }
+
     private void ConfigureSuccessfulLoad(bool delayRepositoryFetch = false)
     {
         _pmSettingsService.GetSettingsAsync()

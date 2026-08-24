@@ -33,6 +33,27 @@ public static class PlanningBoardCompatibilityEvaluator
     ];
 
     /// <summary>
+    /// Builds a report when the board catalogue could not be loaded for compatibility evaluation.
+    /// </summary>
+    /// <param name="boardId">The GitHub Project v2 node identifier.</param>
+    /// <returns>A compatibility report containing a single load-failure issue.</returns>
+    public static PlanningBoardCompatibilityReportDto CreateLoadFailureReport(string boardId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(boardId);
+
+        return new PlanningBoardCompatibilityReportDto(
+            boardId,
+            [
+                new PlanningBoardCompatibilityIssueDto(
+                    "compatibility-check-failed",
+                    PlanningBoardCompatibilitySeverity.Error,
+                    "Could not check board setup",
+                    "Planning could not load the selected project board to verify Status columns and fields. "
+                    + "Select Recheck on the Board setup tab or Refresh on the planning chrome to try again."),
+            ]);
+    }
+
+    /// <summary>
     /// Evaluates discovered board fields and Status options against Planning expectations.
     /// </summary>
     /// <param name="boardId">The GitHub Project v2 node identifier.</param>

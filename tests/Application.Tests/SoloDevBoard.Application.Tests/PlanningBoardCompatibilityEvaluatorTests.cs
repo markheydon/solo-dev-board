@@ -57,6 +57,17 @@ public sealed class PlanningBoardCompatibilityEvaluatorTests
         Assert.Contains(report.Issues, issue => issue.Severity == PlanningBoardCompatibilitySeverity.Warning);
     }
 
+    [Fact]
+    public void CreateLoadFailureReport_ReturnsSingleErrorIssue()
+    {
+        var report = PlanningBoardCompatibilityEvaluator.CreateLoadFailureReport("PVT_board");
+
+        Assert.True(report.HasIssues);
+        Assert.Single(report.Issues);
+        Assert.Equal("compatibility-check-failed", report.Issues[0].Code);
+        Assert.Equal(PlanningBoardCompatibilitySeverity.Error, report.Issues[0].Severity);
+    }
+
     private static IReadOnlyList<ProjectBoardStatusOptionDto> CreateFullStatusOptions() =>
     [
         new("opt_todo", PlanningBoardStatusResolver.TodoStatusName),

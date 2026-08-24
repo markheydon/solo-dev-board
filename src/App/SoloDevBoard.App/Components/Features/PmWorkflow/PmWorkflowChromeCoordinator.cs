@@ -381,6 +381,8 @@ public sealed class PmWorkflowChromeCoordinator
                 exception,
                 "Failed to evaluate planning board compatibility for board {BoardId}.",
                 selectedPlanningBoardId);
+            State.BoardCompatibilityReport = PlanningBoardCompatibilityEvaluator.CreateLoadFailureReport(
+                selectedPlanningBoardId);
         }
         finally
         {

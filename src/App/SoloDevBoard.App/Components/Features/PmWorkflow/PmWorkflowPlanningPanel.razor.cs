@@ -521,6 +521,7 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
         }
 
         ChromeCoordinator.SetIterationPlanning(boardId, planningView, null, isLoading: false);
+        InvalidateDependentPlanningCaches();
     }
 
     private void ApplyAddToUpNextLocally(
@@ -570,6 +571,14 @@ public partial class PmWorkflowPlanningPanel : ComponentBase, IDisposable
         };
 
         ChromeCoordinator.SetIterationPlanning(boardId, planningView, null, isLoading: false);
+        InvalidateDependentPlanningCaches();
+    }
+
+    private void InvalidateDependentPlanningCaches()
+    {
+        ChromeCoordinator.ClearDailyFocusBoardState();
+        ChromeCoordinator.ClearDailyFocusRecommendations();
+        ChromeCoordinator.ClearBacklogReview();
     }
 
     private enum StalledItemResolutionOutcome

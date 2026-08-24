@@ -526,6 +526,51 @@ public sealed class PmWorkflowPlanningTests
     }
 
     [Fact]
+    public async Task PmWorkflowPlanning_WhenAddToUpNextSucceeds_InvalidatesDailyFocusAndBacklogCaches()
+    {
+        ConfigureDefaults();
+        _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
+            CreatePlanningViewWithCandidate());
+        _planningService.AddToUpNextAsync(
+            "PVT_board",
+            PmWorkItemTypeDto.Issue,
+            "owner/repo-a",
+            50,
+            Arg.Any<IReadOnlyList<string>>(),
+            3,
+            Arg.Any<CancellationToken>()).Returns(
+            new IterationPlanningAddToUpNextResultDto(
+                AddedBoardCard: false,
+                ProjectItemId: "PVTI_candidate",
+                FocusOrderAssigned: 2,
+                FocusOrderSkipped: false));
+
+        await using var ctx = CreateContext();
+        var coordinator = ctx.Services.GetRequiredService<PmWorkflowChromeCoordinator>();
+        coordinator.SetDailyFocusBoardState(
+            "PVT_board",
+            8,
+            3,
+            new DailyFocusBoardStateDto([], 1, 8, 8, [], 3),
+            null,
+            isLoading: false);
+        coordinator.SetBacklogReview("PVT_board", new BacklogReviewResultDto([], [], [], [], [], [], false, []), null, isLoading: false);
+
+        var cut = ctx.RenderPmWorkflowPage<PmWorkflowPlanning>();
+
+        cut.WaitForAssertion(() => Assert.Contains("data-testid=\"pm-workflow-planning-add-button\"", cut.Markup));
+
+        await cut.InvokeAsync(() => cut.Find("[data-testid='pm-workflow-planning-add-button']").Click());
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Null(coordinator.DailyFocusBoardState);
+            Assert.Null(coordinator.BacklogReview);
+            Assert.NotNull(coordinator.IterationPlanning?.View);
+        });
+    }
+
+    [Fact]
     public async Task PmWorkflowPlanning_WhenAddToUpNextSucceeds_ShowsSuccessSnackbar()
     {
         ConfigureDefaults();

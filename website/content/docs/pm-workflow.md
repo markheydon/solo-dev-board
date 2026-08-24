@@ -26,6 +26,7 @@ The system is built around two modes of operation:
 | **Backlog** | `/pm-workflow/backlog` | Search, type and repository filters, plus Urgent, Ready to start, Awaiting triage, Blocked/deferred, Epics near completion, and Neglected repositories panels. Issue and pull request kind chips appear on grouped rows. Urgent items are omitted from Ready to start. |
 | **Iteration** | `/pm-workflow/planning` | Capacity guidance, stalled Up Next resolution gate, Up Next batch list with optional bulk milestone assignment, searchable candidate picker, and **Add to Up Next** with sequential Focus Order for stories, enablers, and tests. Feature and Epic cards skip Focus Order. |
 | **Repos** | `/pm-workflow/repos` | Planning board selection, thresholds, repository exclusions, and per-repository open-work counts. |
+| **Board setup** | `/pm-workflow/board-setup` | Shown when the selected board is missing required Status columns or fields. Lists required fixes and recommended improvements, with **Recheck** after you update the board in GitHub Projects. |
 
 Open **Planning** from the Home card or the navigation drawer. The hub redirects to **Daily Focus**.
 
