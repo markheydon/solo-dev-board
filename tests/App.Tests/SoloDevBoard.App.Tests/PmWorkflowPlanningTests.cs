@@ -111,10 +111,10 @@ public sealed class PmWorkflowPlanningTests
             Assert.Contains("data-testid=\"pm-workflow-planning-add-button\"", cut.Markup);
             Assert.Contains(">Issue<", cut.Markup);
             Assert.Contains("pm-workflow-planning-kind-chip", cut.Markup);
-            Assert.Contains("data-testid=\"pm-workflow-planning-next-focus-order\"", cut.Markup);
-            Assert.Contains("Next story Focus Order: 2", cut.Markup);
             Assert.Contains("data-testid=\"pm-workflow-planning-focus-order-chip\"", cut.Markup);
             Assert.Contains("Will assign 2", cut.Markup);
+            Assert.DoesNotContain("data-testid=\"pm-workflow-planning-next-focus-order\"", cut.Markup);
+            Assert.DoesNotContain("Next story Focus Order:", cut.Markup);
         });
     }
 
@@ -150,7 +150,7 @@ public sealed class PmWorkflowPlanningTests
         cut.WaitForAssertion(() =>
         {
             Assert.Contains("data-testid=\"pm-workflow-planning-no-focus-order-field\"", cut.Markup);
-            Assert.Contains("Unavailable on this board", cut.Markup);
+            Assert.DoesNotContain("Unavailable on this board", cut.Markup);
         });
     }
 

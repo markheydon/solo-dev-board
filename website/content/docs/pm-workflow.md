@@ -198,9 +198,11 @@ Success and failure snackbars confirm each resolution. Resolving a stalled row u
 
 ### This batch (Up Next)
 
-When a board is selected, the page lists items whose board Status is **Up Next**, ordered by Focus Order then title. Each row shows a selection checkbox, an **Issue** or **PR** chip, `owner/name#number`, the title, and an optional **Focus Order** chip (or a short skip reason for Feature and Epic cards).
+When a board is selected, the page lists items whose board Status is **Up Next**, ordered by Focus Order then title. Each row shows a selection checkbox, an **Issue** or **PR** chip, `owner/name#number`, the title, and a **Focus Order** chip when a value is assigned.
 
-If the board exposes Focus Order, a **Next story Focus Order** hint appears above the table. If the field is missing, a warning explains that story, enabler, and test cards can still move to Up Next without Focus Order.
+The introduction at the top of the page explains when Focus Order applies. Rows without a chip have no Focus Order (for example Feature or Epic cards, or items missing a `type/story`, `type/enabler`, or `type/test` label).
+
+If the board does not expose a Focus Order field, a warning in this section explains that story, enabler, and test cards can still move to Up Next without Focus Order.
 
 If the column is empty, an informational sentence explains that no items are in Up Next yet.
 
@@ -223,7 +225,7 @@ Below the batch, a searchable list shows open issues and pull requests from incl
 - **Search** matches title, repository name, or item number.
 - The **Type** dropdown filters the list (`All types`, **Issues**, or **Pull requests**).
 - When stalled Up Next items exist, a pause line explains that **Add to Up Next** is paused until they are cleared. Disabled Add buttons show the same reason in a tooltip.
-- Each row shows an **Issue** or **PR** chip, `owner/name#number`, the title, the current board Status when the item is already on the board, the expected Focus Order outcome, and **Add to Up Next**.
+- Each row shows an **Issue** or **PR** chip, `owner/name#number`, the title, the current board Status when the item is already on the board, an optional **Will assign** hint when the next Focus Order would apply on add, and **Add to Up Next**.
 
 Choosing **Add to Up Next**:
 

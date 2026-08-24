@@ -15,7 +15,8 @@
     </MudStack>
     <MudText Typo="Typo.body1">
         Select issues and pull requests from included repositories and move them to Up Next on the selected planning board.
-        Stories, enablers, and tests receive sequential Focus Order; Feature and Epic cards skip Focus Order.
+        When the board exposes a Focus Order field, items with a <code>type/story</code>, <code>type/enabler</code>, or <code>type/test</code> label receive the next sequential value on add.
+        Feature and Epic cards, and items without one of those type labels, move to Up Next without Focus Order.
     </MudText>
 
     @if (ChromeState is null)
@@ -179,15 +180,7 @@
 
             <MudPaper Class="pa-4" Elevation="1" data-testid="pm-workflow-planning-up-next">
                 <MudStack Spacing="2">
-                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center">
-                        <MudText Typo="Typo.h6">This batch (Up Next)</MudText>
-                        @if (planningView.HasFocusOrderField && planningView.NextStoryFocusOrder > 0)
-                        {
-                            <MudText Typo="Typo.body2" data-testid="pm-workflow-planning-next-focus-order">
-                                Next story Focus Order: @FormatFocusOrder(planningView.NextStoryFocusOrder)
-                            </MudText>
-                        }
-                    </MudStack>
+                    <MudText Typo="Typo.h6">This batch (Up Next)</MudText>
                     @if (!planningView.HasFocusOrderField)
                     {
                         <MudAlert Severity="Severity.Warning"
@@ -265,22 +258,6 @@
                                                          data-testid="pm-workflow-planning-focus-order-chip">
                                                     @FormatFocusOrder(item.FocusOrder)
                                                 </MudChip>
-                                            }
-                                            else
-                                            {
-                                                var skipReason = PlanningFocusOrderSequencer.DescribeFocusOrderSkipReason(
-                                                    item.Labels,
-                                                    planningView.HasFocusOrderField);
-                                                if (skipReason is not null)
-                                                {
-                                                    <MudText Typo="Typo.caption" data-testid="pm-workflow-planning-focus-order-skipped">
-                                                        @skipReason
-                                                    </MudText>
-                                                }
-                                                else
-                                                {
-                                                    <MudText Typo="Typo.caption">—</MudText>
-                                                }
                                             }
                                         </td>
                                     </tr>
@@ -408,29 +385,12 @@
                                         <td>@candidate.Title</td>
                                         <td>@(string.IsNullOrWhiteSpace(candidate.BoardStatusName) ? "—" : candidate.BoardStatusName)</td>
                                         <td>
-                                            @if (!planningView.HasFocusOrderField)
+                                            @if (planningView.HasFocusOrderField
+                                                 && PlanningFocusOrderSequencer.ShouldAssignFocusOrder(candidate.Labels))
                                             {
-                                                <MudText Typo="Typo.caption" data-testid="pm-workflow-planning-candidate-focus-order-unavailable">
-                                                    Unavailable on this board
+                                                <MudText Typo="Typo.caption" data-testid="pm-workflow-planning-candidate-focus-order-next">
+                                                    Will assign @FormatFocusOrder(planningView.NextStoryFocusOrder)
                                                 </MudText>
-                                            }
-                                            else
-                                            {
-                                                var skipReason = PlanningFocusOrderSequencer.DescribeFocusOrderSkipReason(
-                                                    candidate.Labels,
-                                                    planningView.HasFocusOrderField);
-                                                if (skipReason is not null)
-                                                {
-                                                    <MudText Typo="Typo.caption" data-testid="pm-workflow-planning-candidate-focus-order-skipped">
-                                                        @skipReason
-                                                    </MudText>
-                                                }
-                                                else
-                                                {
-                                                    <MudText Typo="Typo.caption" data-testid="pm-workflow-planning-candidate-focus-order-next">
-                                                        Will assign @FormatFocusOrder(planningView.NextStoryFocusOrder)
-                                                    </MudText>
-                                                }
                                             }
                                         </td>
                                         <td>
