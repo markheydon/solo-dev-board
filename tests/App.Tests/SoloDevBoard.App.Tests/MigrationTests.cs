@@ -288,7 +288,7 @@ public sealed class MigrationTests
 
         _migrationService.PreviewMigrationAsync("owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })), Arg.Is<MigrationScopeDto>(scope => scope!.IncludeLabels && scope.IncludeMilestones), MigrationConflictStrategy.Overwrite, Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<CancellationToken>()).Returns(new MigrationPreviewDto(
                 MigrationConflictStrategy.Overwrite,
-                [new LabelSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [])],
+                [new LabelSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [], [])],
                 [new MilestoneSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [])],
                 []));
 
@@ -331,7 +331,8 @@ public sealed class MigrationTests
                     [],
                     [],
                     [],
-                    [new LabelDto("type/story", "1d76db", "Story", "owner/repo-b")])],
+                    [new LabelDto("type/story", "1d76db", "Story", "owner/repo-b")],
+                    [])],
                 [new MilestoneSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [])],
                 []));
 
@@ -375,6 +376,7 @@ public sealed class MigrationTests
                     [new LabelDto("priority/high", "d93f0b", "High priority", "owner/repo-b")],
                     [],
                     [],
+                    [],
                     [])],
                 [new MilestoneSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [])],
                 []));
@@ -412,7 +414,7 @@ public sealed class MigrationTests
 
         _migrationService.PreviewMigrationAsync("owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Merge, Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<CancellationToken>()).Returns(new MigrationPreviewDto(
                 MigrationConflictStrategy.Merge,
-                [new LabelSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [])],
+                [new LabelSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [], [])],
                 [new MilestoneSyncRepositoryPreviewDto(
                     "owner/repo-b",
                     [new MilestoneDto(1, 1, "Sprint 12", "Delivery sprint", "open", DateTimeOffset.Parse("2026-04-30T00:00:00Z"), 0, 0)],
@@ -499,6 +501,7 @@ public sealed class MigrationTests
                     [new LabelDto("priority/high", "d93f0b", "High priority", "owner/repo-b")],
                     [],
                     [],
+                    [],
                     [])],
                 [new MilestoneSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [])],
                 []));
@@ -548,6 +551,7 @@ public sealed class MigrationTests
                 [new LabelSyncRepositoryPreviewDto(
                     "owner/repo-b",
                     [new LabelDto("priority/high", "d93f0b", "High priority", "owner/repo-b")],
+                    [],
                     [],
                     [],
                     [])],

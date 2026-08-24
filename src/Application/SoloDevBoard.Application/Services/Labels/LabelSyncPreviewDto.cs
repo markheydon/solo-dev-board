@@ -5,8 +5,10 @@ namespace SoloDevBoard.Application.Services.Labels;
 /// <param name="ToUpdate">The labels to update in the target repository.</param>
 /// <param name="ToDelete">The labels to delete from the target repository.</param>
 /// <param name="Skipped">The labels skipped because they already match exactly.</param>
+/// <param name="KeptAreaLabels">Labels kept because they use the <c>area/</c> prefix.</param>
 public sealed record LabelSyncPreviewDto(
     IReadOnlyList<LabelDto> ToAdd,
     IReadOnlyList<LabelDto> ToUpdate,
     IReadOnlyList<LabelDto> ToDelete,
-    IReadOnlyList<LabelDto> Skipped);
+    IReadOnlyList<LabelDto> Skipped,
+    IReadOnlyList<LabelDto> KeptAreaLabels);

@@ -53,6 +53,7 @@ public partial class Labels : ComponentBase
     private IReadOnlyList<RecommendedTaxonomyRepositoryResultDto> recommendedApplyResults = [];
     private bool showRecommendedPreview;
     private bool removeLabelsOutsideTaxonomy;
+    private bool keepAreaLabels = true;
     private bool isPreviewingRecommendedTaxonomy;
     private bool isApplyingRecommendedTaxonomy;
     private string? taxonomyOperationMessage;
@@ -125,6 +126,20 @@ public partial class Labels : ComponentBase
         showRecommendedPreview = false;
         recommendedApplyResults = [];
         taxonomyOperationMessage = null;
+        return Task.CompletedTask;
+    }
+
+    private Task OnKeepAreaLabelsChanged(bool value)
+    {
+        keepAreaLabels = value;
+        recommendedPreview = [];
+        showRecommendedPreview = false;
+        recommendedApplyResults = [];
+        syncPreviewResults = [];
+        showSyncPreview = false;
+        syncApplyResults = [];
+        taxonomyOperationMessage = null;
+        syncOperationMessage = null;
         return Task.CompletedTask;
     }
 
@@ -255,7 +270,7 @@ public partial class Labels : ComponentBase
         try
         {
             recommendedApplyResults = [];
-            recommendedPreview = await LabelManagerService.PreviewRecommendedTaxonomyAsync(selectedStrategyId, selectedFullNames, removeLabelsOutsideTaxonomy);
+            recommendedPreview = await LabelManagerService.PreviewRecommendedTaxonomyAsync(selectedStrategyId, selectedFullNames, removeLabelsOutsideTaxonomy, keepAreaLabels);
             showRecommendedPreview = true;
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
@@ -321,7 +336,7 @@ public partial class Labels : ComponentBase
 
         try
         {
-            recommendedApplyResults = await LabelManagerService.ApplyRecommendedTaxonomyAsync(selectedStrategyId, selectedFullNames, removeLabelsOutsideTaxonomy);
+            recommendedApplyResults = await LabelManagerService.ApplyRecommendedTaxonomyAsync(selectedStrategyId, selectedFullNames, removeLabelsOutsideTaxonomy, keepAreaLabels);
             showRecommendedPreview = false;
             recommendedPreview = [];
 
@@ -465,7 +480,7 @@ public partial class Labels : ComponentBase
         try
         {
             syncApplyResults = [];
-            syncPreviewResults = await LabelManagerService.PreviewLabelSynchronisationAsync(syncSourceRepositoryFullName, targets);
+            syncPreviewResults = await LabelManagerService.PreviewLabelSynchronisationAsync(syncSourceRepositoryFullName, targets, keepAreaLabels);
             showSyncPreview = true;
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
@@ -536,7 +551,7 @@ public partial class Labels : ComponentBase
 
         try
         {
-            syncApplyResults = await LabelManagerService.ApplyLabelSynchronisationAsync(syncSourceRepositoryFullName, targets);
+            syncApplyResults = await LabelManagerService.ApplyLabelSynchronisationAsync(syncSourceRepositoryFullName, targets, keepAreaLabels);
             showSyncPreview = false;
             syncPreviewResults = [];
 

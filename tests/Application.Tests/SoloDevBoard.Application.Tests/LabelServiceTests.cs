@@ -355,7 +355,7 @@ public sealed class LabelServiceTests
         var sut = new LabelService(_labelRepository);
 
         // Act
-        var result = await sut.SyncLabelsAsync("source-owner", "source-repo", "target-owner", "target-repo", applyChanges: false, cancellationToken);
+        var result = await sut.SyncLabelsAsync("source-owner", "source-repo", "target-owner", "target-repo", applyChanges: false, keepAreaLabels: true, cancellationToken);
 
         // Assert
         Assert.Single(result.ToAdd);
@@ -416,7 +416,7 @@ public sealed class LabelServiceTests
         var sut = new LabelService(_labelRepository);
 
         // Act
-        var result = await sut.SyncLabelsAsync("source-owner", "source-repo", "target-owner", "target-repo", applyChanges: true, cancellationToken);
+        var result = await sut.SyncLabelsAsync("source-owner", "source-repo", "target-owner", "target-repo", applyChanges: true, keepAreaLabels: true, cancellationToken);
 
         // Assert
         Assert.Single(result.ToAdd);
@@ -450,7 +450,7 @@ public sealed class LabelServiceTests
         var sut = new LabelService(_labelRepository);
 
         // Act
-        var result = await sut.SyncLabelsAsync("source-owner", "source-repo", "target-owner", "target-repo", applyChanges: true, cancellationToken);
+        var result = await sut.SyncLabelsAsync("source-owner", "source-repo", "target-owner", "target-repo", applyChanges: true, keepAreaLabels: true, cancellationToken);
 
         // Assert
         Assert.Empty(result.ToAdd);
@@ -460,6 +460,71 @@ public sealed class LabelServiceTests
         await _labelRepository.DidNotReceive().UpdateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), cancellationToken);
         await _labelRepository.DidNotReceive().DeleteLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), cancellationToken);
         Assert.Equal(2, result.Skipped.Count);
+    }
+
+    [Fact]
+    public async Task SyncLabelsAsync_WhenKeepAreaLabelsEnabled_KeepsAreaOrphansOnTarget()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        _labelRepository
+            .GetLabelsAsync("source-owner", "source-repo", cancellationToken)
+            .Returns([
+                new Label { Name = "type/story", Colour = "1d76db", Description = "Story", RepositoryName = "source-repo" },
+            ]);
+
+        _labelRepository
+            .GetLabelsAsync("target-owner", "target-repo", cancellationToken)
+            .Returns([
+                new Label { Name = "type/story", Colour = "1d76db", Description = "Story", RepositoryName = "target-repo" },
+                new Label { Name = "area/docs", Colour = "0052cc", Description = "Documentation", RepositoryName = "target-repo" },
+                new Label { Name = "legacy", Colour = "ffffff", Description = "Legacy", RepositoryName = "target-repo" },
+            ]);
+
+        var sut = new LabelService(_labelRepository);
+
+        // Act
+        var result = await sut.SyncLabelsAsync("source-owner", "source-repo", "target-owner", "target-repo", applyChanges: false, keepAreaLabels: true, cancellationToken);
+
+        // Assert
+        Assert.Single(result.KeptAreaLabels);
+        Assert.Equal("area/docs", result.KeptAreaLabels[0].Name);
+        Assert.Single(result.ToDelete);
+        Assert.Equal("legacy", result.ToDelete[0].Name);
+    }
+
+    [Fact]
+    public async Task SyncLabelsAsync_WhenKeepAreaLabelsDisabled_DeletesAreaOrphansOnTarget()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        _labelRepository
+            .GetLabelsAsync("source-owner", "source-repo", cancellationToken)
+            .Returns([
+                new Label { Name = "type/story", Colour = "1d76db", Description = "Story", RepositoryName = "source-repo" },
+            ]);
+
+        _labelRepository
+            .GetLabelsAsync("target-owner", "target-repo", cancellationToken)
+            .Returns([
+                new Label { Name = "type/story", Colour = "1d76db", Description = "Story", RepositoryName = "target-repo" },
+                new Label { Name = "area/docs", Colour = "0052cc", Description = "Documentation", RepositoryName = "target-repo" },
+            ]);
+
+        _labelRepository
+            .DeleteLabelAsync("target-owner", "target-repo", Arg.Any<string>(), cancellationToken)
+            .Returns(Task.CompletedTask);
+
+        var sut = new LabelService(_labelRepository);
+
+        // Act
+        var result = await sut.SyncLabelsAsync("source-owner", "source-repo", "target-owner", "target-repo", applyChanges: true, keepAreaLabels: false, cancellationToken);
+
+        // Assert
+        Assert.Empty(result.KeptAreaLabels);
+        Assert.Single(result.ToDelete);
+        Assert.Equal("area/docs", result.ToDelete[0].Name);
+        await _labelRepository.Received(1).DeleteLabelAsync("target-owner", "target-repo", "area/docs", cancellationToken);
     }
 
     [Fact]
@@ -492,7 +557,9 @@ public sealed class LabelServiceTests
         // Act
         var result = await sut.PreviewLabelSynchronisationAsync(
             "source-owner/source-repo",
-            ["target-owner/target-a", "target-owner/target-b"], cancellationToken);
+            ["target-owner/target-a", "target-owner/target-b"],
+            keepAreaLabels: true,
+            cancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -533,7 +600,9 @@ public sealed class LabelServiceTests
         // Act
         var result = await sut.ApplyLabelSynchronisationAsync(
             "source-owner/source-repo",
-            ["target-owner/target-a", "target-owner/target-b"], cancellationToken);
+            ["target-owner/target-a", "target-owner/target-b"],
+            keepAreaLabels: true,
+            cancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -568,7 +637,7 @@ public sealed class LabelServiceTests
         var sut = new LabelService(_labelRepository);
 
         // Act
-        var action = async () => await sut.SyncLabelsAsync("source-owner", "source-repo", "target-owner", "target-repo", applyChanges: true, cancellationToken);
+        var action = async () => await sut.SyncLabelsAsync("source-owner", "source-repo", "target-owner", "target-repo", applyChanges: true, keepAreaLabels: true, cancellationToken);
 
         // Assert
         _ = await Assert.ThrowsAsync<HttpRequestException>(action);
@@ -592,14 +661,13 @@ public sealed class LabelServiceTests
         Assert.Contains(result, label => label.Name == "priority/high" && label.Colour == "d93f0b");
         Assert.Contains(result, label => label.Name == "priority/critical" && label.Description == "Blocking - must be resolved immediately");
         Assert.Contains(result, label => label.Name == "status/in-progress" && label.Colour == "0e8a16");
-        Assert.Contains(result, label => label.Name == "area/labels" && label.Colour == "c5def5");
         Assert.Contains(result, label => label.Name == "size/m" && label.Colour == "fef2c0");
         Assert.Contains(result, label => label.Name == "size/xs" && label.Description == "Trivial - less than 1 hour (e.g. typo fix, config change)");
-        Assert.Equal(31, result.Count);
+        Assert.Equal(23, result.Count);
         Assert.Contains(result, label => label.Name.StartsWith("type/", StringComparison.Ordinal));
         Assert.Contains(result, label => label.Name.StartsWith("priority/", StringComparison.Ordinal));
         Assert.Contains(result, label => label.Name.StartsWith("status/", StringComparison.Ordinal));
-        Assert.Contains(result, label => label.Name.StartsWith("area/", StringComparison.Ordinal));
+        Assert.DoesNotContain(result, label => label.Name.StartsWith("area/", StringComparison.Ordinal));
         Assert.Contains(result, label => label.Name.StartsWith("size/", StringComparison.Ordinal));
     }
 
@@ -661,13 +729,61 @@ public sealed class LabelServiceTests
         var sut = new LabelService(_labelRepository);
 
         // Act
-        var result = await sut.PreviewRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, cancellationToken);
+        var result = await sut.PreviewRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, keepAreaLabels: true, cancellationToken);
 
         // Assert
         var preview = Assert.Single(result);
         Assert.Contains(preview.ToDelete, label => label.Name == "dependencies");
         Assert.Contains(preview.ToDelete, label => label.Name == "epic");
         Assert.DoesNotContain(preview.ToDelete, label => label.Name == "bug");
+    }
+
+    [Fact]
+    public async Task PreviewRecommendedTaxonomyAsync_WhenRemoveOutsideTaxonomyEnabled_WithKeepAreaLabels_KeepsAreaOrphans()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-a", cancellationToken)
+            .Returns([
+                new Label { Name = "bug", Colour = "d73a4a", Description = "Something is not working", RepositoryName = "repo-a" },
+                new Label { Name = "dependencies", Colour = "0366d6", Description = "Pull requests that update a dependency", RepositoryName = "repo-a" },
+                new Label { Name = "area/docs", Colour = "0052cc", Description = "Documentation", RepositoryName = "repo-a" },
+            ]);
+
+        var sut = new LabelService(_labelRepository);
+
+        // Act
+        var result = await sut.PreviewRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, keepAreaLabels: true, cancellationToken);
+
+        // Assert
+        var preview = Assert.Single(result);
+        Assert.Contains(preview.ToDelete, label => label.Name == "dependencies");
+        Assert.Contains(preview.KeptAreaLabels, label => label.Name == "area/docs");
+        Assert.DoesNotContain(preview.ToDelete, label => label.Name == "area/docs");
+    }
+
+    [Fact]
+    public async Task PreviewRecommendedTaxonomyAsync_WhenRemoveOutsideTaxonomyEnabled_WithoutKeepAreaLabels_DeletesAreaOrphans()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-a", cancellationToken)
+            .Returns([
+                new Label { Name = "bug", Colour = "d73a4a", Description = "Something is not working", RepositoryName = "repo-a" },
+                new Label { Name = "area/docs", Colour = "0052cc", Description = "Documentation", RepositoryName = "repo-a" },
+            ]);
+
+        var sut = new LabelService(_labelRepository);
+
+        // Act
+        var result = await sut.PreviewRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, keepAreaLabels: false, cancellationToken);
+
+        // Assert
+        var preview = Assert.Single(result);
+        Assert.Contains(preview.ToDelete, label => label.Name == "area/docs");
+        Assert.Empty(preview.KeptAreaLabels);
     }
 
     [Fact]
@@ -698,7 +814,7 @@ public sealed class LabelServiceTests
         var sut = new LabelService(_labelRepository);
 
         // Act
-        var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, cancellationToken);
+        var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, keepAreaLabels: true, cancellationToken);
 
         // Assert
         var summary = Assert.Single(result);
@@ -742,7 +858,7 @@ public sealed class LabelServiceTests
         var sut = new LabelService(_labelRepository);
 
         // Act
-        var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, cancellationToken);
+        var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, keepAreaLabels: true, cancellationToken);
 
         // Assert
         var summary = Assert.Single(result);
