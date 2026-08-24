@@ -52,7 +52,7 @@ View, create, edit, and delete labels across the selected repositories. Use the 
 
 Select one or more label rows in the grid, then choose **Delete** on the action strip. The bulk delete action is disabled until at least one row is selected and repositories are in scope.
 
-- A confirmation dialog asks **Are you sure?** and lists the label names and repositories that will be affected.
+- A confirmation dialog asks **Are you sure?** and lists each selected label with the repositories where it will be removed.
 - Choose **No** or cancel to leave labels and your selection unchanged.
 - Choose **Yes, delete** to remove each selected label from every selected repository that currently contains it. Repositories that do not have a label are skipped for that name.
 - If GitHub returns an error for one label or repository, SoloDevBoard continues with the remaining items and reports per-item failures.

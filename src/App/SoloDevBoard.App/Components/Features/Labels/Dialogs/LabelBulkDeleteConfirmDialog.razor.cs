@@ -8,7 +8,7 @@ public partial class LabelBulkDeleteConfirmDialog
 {
     /// <summary>Gets or sets the dialog request payload.</summary>
     [Parameter]
-    public LabelBulkDeleteConfirmDialogRequest Content { get; set; } = new([], []);
+    public LabelBulkDeleteConfirmDialogRequest Content { get; set; } = new([]);
 
     /// <summary>Gets or sets the active MudBlazor dialog instance.</summary>
     [CascadingParameter]
@@ -25,4 +25,9 @@ public partial class LabelBulkDeleteConfirmDialog
         MudDialog.Close(DialogResult.Ok(true));
         return Task.CompletedTask;
     }
+
+    private static string FormatRepositoryList(IReadOnlyList<string> repositoryFullNames)
+        => repositoryFullNames.Count == 0
+            ? "No repositories"
+            : string.Join(", ", repositoryFullNames);
 }

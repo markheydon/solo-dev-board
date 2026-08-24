@@ -70,6 +70,7 @@ public partial class Labels : ComponentBase
     private int activeTabIndex = LabelsTabIndex;
     private HashSet<LabelRow> selectedLabelRows = [];
     private bool isBulkDeletingLabels;
+    private bool isAwaitingBulkDeleteConfirmation;
 
     protected override async Task OnInitializedAsync()
     {
@@ -846,23 +847,23 @@ public partial class Labels : ComponentBase
 
     private async Task ShowBulkDeleteConfirmDialogAsync()
     {
-        if (isBulkDeletingLabels || selectedLabelRows.Count == 0)
+        if (isBulkDeletingLabels || isAwaitingBulkDeleteConfirmation || selectedLabelRows.Count == 0)
         {
             return;
         }
 
-        if (!TryGetSelectedRepositoryFullNames(out var selectedFullNames))
+        if (!TryBuildBulkDeleteTargets(out var targets))
         {
-            Snackbar.Add("Select at least one repository before deleting labels.", Severity.Warning);
             return;
         }
 
-        var labelNames = selectedLabelRows
-            .Select(row => row.Name)
-            .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+        var dialogTargets = targets
+            .Select(target => new LabelBulkDeleteConfirmDialogLabelTarget(
+                target.LabelName,
+                target.RepositoryFullNames))
             .ToArray();
 
-        var request = new LabelBulkDeleteConfirmDialogRequest(labelNames, selectedFullNames);
+        var request = new LabelBulkDeleteConfirmDialogRequest(dialogTargets);
         var parameters = new DialogParameters<LabelBulkDeleteConfirmDialog>
         {
             { dialog => dialog.Content, request },
@@ -876,44 +877,31 @@ public partial class Labels : ComponentBase
             CloseOnEscapeKey = true,
         };
 
-        var dialog = await DialogService.ShowAsync<LabelBulkDeleteConfirmDialog>("Delete labels", parameters, options);
-        var dialogResult = await dialog.Result;
-        if (dialogResult is null || dialogResult.Canceled)
-        {
-            return;
-        }
+        isAwaitingBulkDeleteConfirmation = true;
+        await InvokeAsync(StateHasChanged);
 
-        await ExecuteBulkDeleteAsync();
+        try
+        {
+            var dialog = await DialogService.ShowAsync<LabelBulkDeleteConfirmDialog>("Delete labels", parameters, options);
+            var dialogResult = await dialog.Result;
+            if (dialogResult is null || dialogResult.Canceled)
+            {
+                return;
+            }
+
+            await ExecuteBulkDeleteAsync(targets);
+        }
+        finally
+        {
+            isAwaitingBulkDeleteConfirmation = false;
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
-    private async Task ExecuteBulkDeleteAsync()
+    private async Task ExecuteBulkDeleteAsync(LabelBulkDeleteTargetDto[] targets)
     {
-        if (isBulkDeletingLabels || selectedLabelRows.Count == 0)
+        if (isBulkDeletingLabels || targets.Length == 0)
         {
-            return;
-        }
-
-        if (!TryGetSelectedRepositoryFullNames(out var selectedFullNames))
-        {
-            Snackbar.Add("Select at least one repository before deleting labels.", Severity.Warning);
-            return;
-        }
-
-        var selectedRepositorySet = selectedFullNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var targets = selectedLabelRows
-            .Select(row => new LabelBulkDeleteTargetDto(
-                row.Name,
-                row.RepositoriesWithLabel
-                    .Where(repositoryFullName => selectedRepositorySet.Contains(repositoryFullName))
-                    .OrderBy(repositoryFullName => repositoryFullName, StringComparer.OrdinalIgnoreCase)
-                    .ToArray()))
-            .Where(target => target.RepositoryFullNames.Count > 0)
-            .OrderBy(target => target.LabelName, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-
-        if (targets.Length == 0)
-        {
-            Snackbar.Add("None of the selected labels are present in the selected repositories.", Severity.Warning);
             return;
         }
 
@@ -926,12 +914,12 @@ public partial class Labels : ComponentBase
 
             if (!result.HasErrors)
             {
-                Snackbar.Add($"Deleted {result.DeletedCount} label-repository pairs.", Severity.Success);
+                Snackbar.Add(FormatBulkDeleteSummaryMessage(result.DeletedCount, result.SkippedCount, 0), Severity.Success);
             }
             else
             {
                 Snackbar.Add(
-                    $"Deleted {result.DeletedCount} label-repository pairs with {result.Errors.Count} failures.",
+                    FormatBulkDeleteSummaryMessage(result.DeletedCount, result.SkippedCount, result.Errors.Count),
                     Severity.Warning);
 
                 foreach (var error in result.Errors.Take(5))
@@ -965,6 +953,53 @@ public partial class Labels : ComponentBase
             selectedLabelRows = [];
             await LoadLabelsForSelectionAsync();
         }
+    }
+
+    private bool TryBuildBulkDeleteTargets(out LabelBulkDeleteTargetDto[] targets)
+    {
+        if (!TryGetSelectedRepositoryFullNames(out var selectedFullNames))
+        {
+            Snackbar.Add("Select at least one repository before deleting labels.", Severity.Warning);
+            targets = [];
+            return false;
+        }
+
+        var selectedRepositorySet = selectedFullNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        targets = selectedLabelRows
+            .Select(row => new LabelBulkDeleteTargetDto(
+                row.Name,
+                row.RepositoriesWithLabel
+                    .Where(repositoryFullName => selectedRepositorySet.Contains(repositoryFullName))
+                    .OrderBy(repositoryFullName => repositoryFullName, StringComparer.OrdinalIgnoreCase)
+                    .ToArray()))
+            .Where(target => target.RepositoryFullNames.Count > 0)
+            .OrderBy(target => target.LabelName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (targets.Length == 0)
+        {
+            Snackbar.Add("None of the selected labels are present in the selected repositories.", Severity.Warning);
+            return false;
+        }
+
+        return true;
+    }
+
+    private static string FormatBulkDeleteSummaryMessage(int deletedCount, int skippedCount, int failureCount)
+    {
+        var summary = $"Deleted {deletedCount} label-repository pair{(deletedCount == 1 ? string.Empty : "s")}";
+
+        if (skippedCount > 0)
+        {
+            summary += $" ({skippedCount} skipped)";
+        }
+
+        if (failureCount > 0)
+        {
+            return $"{summary} with {failureCount} failure{(failureCount == 1 ? string.Empty : "s")}.";
+        }
+
+        return $"{summary}.";
     }
 
     private void BuildRows(IReadOnlyList<LabelDto> labels, IReadOnlyList<string> selectedFullNames)
@@ -1088,7 +1123,7 @@ public partial class Labels : ComponentBase
 
     private bool IsSynchronisationBusy => isPreviewingSync || isApplyingSync;
 
-    private bool IsLabelsTabBusy => isBulkDeletingLabels;
+    private bool IsLabelsTabBusy => isBulkDeletingLabels || isAwaitingBulkDeleteConfirmation;
 
     private string TaxonomyProgressAriaLabel => isApplyingRecommendedTaxonomy
         ? "Applying taxonomy changes"
