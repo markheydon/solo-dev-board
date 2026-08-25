@@ -14,11 +14,11 @@ test.describe('One-Click Migration shell', () => {
     await expect(page.getByTestId('migration-preview-empty-state')).toBeVisible();
   });
 
-  test('repository load failure surfaces in the migration feedback region', async ({ page }) => {
+  test('repository load failure surfaces in a snackbar toast', async ({ page }) => {
     await page.goto('/migrate');
 
     await expect(page.getByTestId('migration-feedback-region')).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByTestId('migration-operation-message')).toBeVisible();
+    await expect(page.locator('.mud-snackbar').first()).toBeVisible();
     await expect(page.getByText(/GitHub API request failed while loading repositories/i)).toBeVisible();
   });
 });
