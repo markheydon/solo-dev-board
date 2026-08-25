@@ -344,14 +344,75 @@ public sealed class IterationPlanningServiceTests
                 "opt-blocked",
                 cancellationToken);
         await _gitHubService.Received(1)
-            .ApplyLabelsToTriageItemAsync(
+            .RemoveLabelFromTriageItemAsync(
+                "owner",
+                "repo",
+                40,
+                PlanningLabelHelpers.IceBoxStatusLabel,
+                cancellationToken);
+        await _gitHubService.Received(1)
+            .AddLabelsToTriageItemAsync(
                 "owner",
                 "repo",
                 40,
                 Arg.Is<IReadOnlyList<string>>(labels =>
-                    labels.Contains("type/story")
-                    && labels.Contains("priority/medium")
+                    labels.Count == 1
                     && labels.Contains(PlanningLabelHelpers.BlockedStatusLabel)),
+                cancellationToken);
+        await _gitHubService.DidNotReceive()
+            .ApplyLabelsToTriageItemAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<int>(),
+                Arg.Any<IReadOnlyList<string>>(),
+                cancellationToken);
+    }
+
+    [Fact]
+    public async Task MarkStalledUpNextItemBlockedAsync_WhenCatalogueLabelsMissing_UsesAdditiveLabelChange()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var catalogue = CreateCatalogue(existingItem: null);
+        _projectItemCatalogueService
+            .GetCatalogueAsync("project-id", cancellationToken)
+            .Returns(catalogue);
+
+        var sut = CreateSut();
+        var item = new IterationPlanningStalledItemDto(
+            "PVTI_one",
+            PlanningWorkItemTypeDto.Issue,
+            40,
+            "Blocked story",
+            "https://github.com/owner/repo/issues/40",
+            "owner/repo",
+            4,
+            false,
+            []);
+
+        await sut.MarkStalledUpNextItemBlockedAsync("project-id", item, cancellationToken);
+
+        await _gitHubService.Received(1)
+            .RemoveLabelFromTriageItemAsync(
+                "owner",
+                "repo",
+                40,
+                PlanningLabelHelpers.IceBoxStatusLabel,
+                cancellationToken);
+        await _gitHubService.Received(1)
+            .AddLabelsToTriageItemAsync(
+                "owner",
+                "repo",
+                40,
+                Arg.Is<IReadOnlyList<string>>(labels =>
+                    labels.Count == 1
+                    && labels.Contains(PlanningLabelHelpers.BlockedStatusLabel)),
+                cancellationToken);
+        await _gitHubService.DidNotReceive()
+            .ApplyLabelsToTriageItemAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<int>(),
+                Arg.Any<IReadOnlyList<string>>(),
                 cancellationToken);
     }
 
@@ -388,14 +449,27 @@ public sealed class IterationPlanningServiceTests
         await _projectItemCatalogueService.Received(1)
             .ClearFocusOrderAsync("project-id", "PVTI_one", "PVTF_focus", cancellationToken);
         await _gitHubService.Received(1)
-            .ApplyLabelsToTriageItemAsync(
+            .RemoveLabelFromTriageItemAsync(
+                "owner",
+                "repo",
+                40,
+                PlanningLabelHelpers.BlockedStatusLabel,
+                cancellationToken);
+        await _gitHubService.Received(1)
+            .AddLabelsToTriageItemAsync(
                 "owner",
                 "repo",
                 40,
                 Arg.Is<IReadOnlyList<string>>(labels =>
-                    labels.Contains("type/story")
-                    && labels.Contains("priority/medium")
+                    labels.Count == 1
                     && labels.Contains(PlanningLabelHelpers.IceBoxStatusLabel)),
+                cancellationToken);
+        await _gitHubService.DidNotReceive()
+            .ApplyLabelsToTriageItemAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<int>(),
+                Arg.Any<IReadOnlyList<string>>(),
                 cancellationToken);
     }
 
