@@ -417,6 +417,54 @@ public sealed class IterationPlanningServiceTests
     }
 
     [Fact]
+    public async Task MoveStalledUpNextItemToIceBoxAsync_WhenCatalogueLabelsMissing_UsesAdditiveLabelChange()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var catalogue = CreateCatalogue(existingItem: null);
+        _projectItemCatalogueService
+            .GetCatalogueAsync("project-id", cancellationToken)
+            .Returns(catalogue);
+
+        var sut = CreateSut();
+        var item = new IterationPlanningStalledItemDto(
+            "PVTI_one",
+            PlanningWorkItemTypeDto.Issue,
+            40,
+            "Ice box story",
+            "https://github.com/owner/repo/issues/40",
+            "owner/repo",
+            4,
+            false,
+            []);
+
+        await sut.MoveStalledUpNextItemToIceBoxAsync("project-id", item, cancellationToken);
+
+        await _gitHubService.Received(1)
+            .RemoveLabelFromTriageItemAsync(
+                "owner",
+                "repo",
+                40,
+                PlanningLabelHelpers.BlockedStatusLabel,
+                cancellationToken);
+        await _gitHubService.Received(1)
+            .AddLabelsToTriageItemAsync(
+                "owner",
+                "repo",
+                40,
+                Arg.Is<IReadOnlyList<string>>(labels =>
+                    labels.Count == 1
+                    && labels.Contains(PlanningLabelHelpers.IceBoxStatusLabel)),
+                cancellationToken);
+        await _gitHubService.DidNotReceive()
+            .ApplyLabelsToTriageItemAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<int>(),
+                Arg.Any<IReadOnlyList<string>>(),
+                cancellationToken);
+    }
+
+    [Fact]
     public async Task MoveStalledUpNextItemToIceBoxAsync_ValidItem_UpdatesStatusClearsFocusOrderAndLabels()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
