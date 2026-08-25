@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -333,6 +334,68 @@ public sealed class GitHubService : IGitHubService
                 JsonOptions,
                 cancellationToken)
             .ConfigureAwait(false);
+
+        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async Task AddLabelsToTriageItemAsync(string owner, string repo, int itemNumber, IReadOnlyList<string> labelNames, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+
+        if (itemNumber <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(itemNumber), "Item number must be greater than zero.");
+        }
+
+        ArgumentNullException.ThrowIfNull(labelNames);
+
+        var normalisedLabelNames = labelNames
+            .Where(label => !string.IsNullOrWhiteSpace(label))
+            .Select(label => label.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (normalisedLabelNames.Length == 0)
+        {
+            return;
+        }
+
+        var client = CreateAuthenticatedClient();
+        var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/issues/{itemNumber}/labels";
+
+        using var response = await client.PostAsJsonAsync(
+                endpoint,
+                new TriageLabelsRequestDto(normalisedLabelNames),
+                JsonOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async Task RemoveLabelFromTriageItemAsync(string owner, string repo, int itemNumber, string labelName, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+        ArgumentException.ThrowIfNullOrWhiteSpace(labelName);
+
+        if (itemNumber <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(itemNumber), "Item number must be greater than zero.");
+        }
+
+        var client = CreateAuthenticatedClient();
+        var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/issues/{itemNumber}/labels/{Uri.EscapeDataString(labelName.Trim())}";
+
+        using var response = await client.DeleteAsync(endpoint, cancellationToken).ConfigureAwait(false);
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return;
+        }
 
         await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
     }

@@ -114,10 +114,28 @@ public interface IGitHubService
     /// <param name="owner">The GitHub account owner login.</param>
     /// <param name="repo">The repository name.</param>
     /// <param name="itemNumber">The repository-scoped item number.</param>
-    /// <param name="labelNames">The label names to set on the item.</param>
+    /// <param name="labelNames">The label names to set on the item, replacing any existing labels.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>A task that represents the asynchronous label assignment operation.</returns>
     Task ApplyLabelsToTriageItemAsync(string owner, string repo, int itemNumber, IReadOnlyList<string> labelNames, CancellationToken cancellationToken = default);
+
+    /// <summary>Adds labels to a triage item without removing existing labels.</summary>
+    /// <param name="owner">The GitHub account owner login.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="itemNumber">The repository-scoped item number.</param>
+    /// <param name="labelNames">The label names to add to the item.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous label addition operation.</returns>
+    Task AddLabelsToTriageItemAsync(string owner, string repo, int itemNumber, IReadOnlyList<string> labelNames, CancellationToken cancellationToken = default);
+
+    /// <summary>Removes one label from a triage item when present.</summary>
+    /// <param name="owner">The GitHub account owner login.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="itemNumber">The repository-scoped item number.</param>
+    /// <param name="labelName">The label name to remove from the item.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous label removal operation.</returns>
+    Task RemoveLabelFromTriageItemAsync(string owner, string repo, int itemNumber, string labelName, CancellationToken cancellationToken = default);
 
     /// <summary>Assigns or clears a milestone on a triage item.</summary>
     /// <param name="owner">The GitHub account owner login.</param>
