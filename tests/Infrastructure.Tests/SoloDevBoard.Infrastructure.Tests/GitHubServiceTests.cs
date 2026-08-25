@@ -995,6 +995,73 @@ public sealed class GitHubServiceTests
     }
 
     [Fact]
+    public async Task AddLabelsToTriageItemAsync_ValidLabels_PostsLabelsPayload()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var handler = new QueueMessageHandler([
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("[]", Encoding.UTF8, "application/json"),
+            },
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        await sut.AddLabelsToTriageItemAsync("owner", "repo", 42, ["status/blocked"], cancellationToken);
+
+        Assert.Single(handler.Requests);
+        Assert.Equal(HttpMethod.Post, handler.Requests[0].Method);
+        Assert.Equal("https://api.github.com/repos/owner/repo/issues/42/labels", handler.Requests[0].RequestUri!.ToString());
+
+        var payload = await handler.Requests[0].Content!.ReadAsStringAsync(cancellationToken);
+        using var document = JsonDocument.Parse(payload);
+        var labels = document.RootElement.GetProperty("labels");
+        Assert.Equal(1, labels.GetArrayLength());
+        Assert.Equal("status/blocked", labels[0].GetString());
+    }
+
+    [Fact]
+    public async Task RemoveLabelFromTriageItemAsync_WhenLabelMissing_ReturnsWithoutError()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var handler = new QueueMessageHandler([
+            new HttpResponseMessage(HttpStatusCode.NotFound)
+            {
+                Content = new StringContent("{\"message\":\"Label does not exist\"}", Encoding.UTF8, "application/json"),
+            },
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        await sut.RemoveLabelFromTriageItemAsync("owner", "repo", 42, "status/ice-box", cancellationToken);
+
+        Assert.Single(handler.Requests);
+        Assert.Equal(HttpMethod.Delete, handler.Requests[0].Method);
+        Assert.Equal(
+            "https://api.github.com/repos/owner/repo/issues/42/labels/status%2Fice-box",
+            handler.Requests[0].RequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task RemoveLabelFromTriageItemAsync_ValidLabel_DeletesLabel()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var handler = new QueueMessageHandler([
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("[]", Encoding.UTF8, "application/json"),
+            },
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        await sut.RemoveLabelFromTriageItemAsync("owner", "repo", 42, "status/blocked", cancellationToken);
+
+        Assert.Single(handler.Requests);
+        Assert.Equal(HttpMethod.Delete, handler.Requests[0].Method);
+    }
+
+    [Fact]
     public async Task AssignMilestoneToTriageItemAsync_NullMilestone_SendsPatchWithNullMilestone()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;

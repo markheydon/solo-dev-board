@@ -263,9 +263,10 @@ public sealed class IterationPlanningService : IIterationPlanningService
             blockedOption.OptionId,
             cancellationToken).ConfigureAwait(false);
 
-        await ApplyWorkItemLabelsAsync(
+        await ApplyStalledItemStatusLabelChangeAsync(
             item,
-            MergeStatusLabel(item.Labels, PlanningLabelHelpers.BlockedStatusLabel, PlanningLabelHelpers.IceBoxStatusLabel),
+            PlanningLabelHelpers.BlockedStatusLabel,
+            PlanningLabelHelpers.IceBoxStatusLabel,
             cancellationToken).ConfigureAwait(false);
 
         _projectItemCatalogueService.InvalidateCatalogue(projectId);
@@ -297,9 +298,10 @@ public sealed class IterationPlanningService : IIterationPlanningService
         await ClearFocusOrderWhenPresentAsync(projectId, item.ProjectItemId, catalogue, cancellationToken)
             .ConfigureAwait(false);
 
-        await ApplyWorkItemLabelsAsync(
+        await ApplyStalledItemStatusLabelChangeAsync(
             item,
-            MergeStatusLabel(item.Labels, PlanningLabelHelpers.IceBoxStatusLabel, PlanningLabelHelpers.BlockedStatusLabel),
+            PlanningLabelHelpers.IceBoxStatusLabel,
+            PlanningLabelHelpers.BlockedStatusLabel,
             cancellationToken).ConfigureAwait(false);
 
         _projectItemCatalogueService.InvalidateCatalogue(projectId);
@@ -494,9 +496,10 @@ public sealed class IterationPlanningService : IIterationPlanningService
             .ConfigureAwait(false);
     }
 
-    private async Task ApplyWorkItemLabelsAsync(
+    private async Task ApplyStalledItemStatusLabelChangeAsync(
         IterationPlanningStalledItemDto item,
-        IReadOnlyList<string> labelNames,
+        string labelToAdd,
+        string labelToRemove,
         CancellationToken cancellationToken)
     {
         if (!TryParseRepositoryFullName(item.RepositoryFullName, out var owner, out var repo))
@@ -507,24 +510,12 @@ public sealed class IterationPlanningService : IIterationPlanningService
         }
 
         await _gitHubService
-            .ApplyLabelsToTriageItemAsync(owner, repo, item.Number, labelNames, cancellationToken)
+            .RemoveLabelFromTriageItemAsync(owner, repo, item.Number, labelToRemove, cancellationToken)
             .ConfigureAwait(false);
-    }
 
-    private static IReadOnlyList<string> MergeStatusLabel(
-        IReadOnlyList<string> currentLabels,
-        string labelToAdd,
-        string labelToRemove)
-    {
-        ArgumentNullException.ThrowIfNull(currentLabels);
-
-        return currentLabels
-            .Where(label => !label.Equals(labelToRemove, StringComparison.OrdinalIgnoreCase))
-            .Concat([labelToAdd])
-            .Where(static label => !string.IsNullOrWhiteSpace(label))
-            .Select(static label => label.Trim())
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
+        await _gitHubService
+            .AddLabelsToTriageItemAsync(owner, repo, item.Number, [labelToAdd], cancellationToken)
+            .ConfigureAwait(false);
     }
 
     private static void EnsureNoStalledUpNextItemsRemain(
