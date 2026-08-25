@@ -56,8 +56,6 @@ public partial class Labels : ComponentBase
     private bool keepAreaLabels = true;
     private bool isPreviewingRecommendedTaxonomy;
     private bool isApplyingRecommendedTaxonomy;
-    private string? taxonomyOperationMessage;
-    private Severity taxonomyOperationSeverity = Severity.Info;
     private string syncSourceRepositoryFullName = string.Empty;
     private HashSet<string> syncTargetRepositoryFullNames = new(StringComparer.OrdinalIgnoreCase);
     private IReadOnlyList<LabelSyncRepositoryPreviewDto> syncPreviewResults = [];
@@ -65,8 +63,6 @@ public partial class Labels : ComponentBase
     private bool showSyncPreview;
     private bool isPreviewingSync;
     private bool isApplyingSync;
-    private string? syncOperationMessage;
-    private Severity syncOperationSeverity = Severity.Info;
     private int activeTabIndex = LabelsTabIndex;
     private HashSet<LabelRow> selectedLabelRows = [];
     private bool isBulkDeletingLabels;
@@ -96,8 +92,7 @@ public partial class Labels : ComponentBase
             Logger.LogError(ex, "Failed to load recommended label strategies.");
             recommendedStrategies = [];
             selectedStrategyId = string.Empty;
-            taxonomyOperationSeverity = Severity.Error;
-            taxonomyOperationMessage = "Unable to load recommended taxonomy strategies.";
+                        Snackbar.Add("Unable to load recommended taxonomy strategies.", Severity.Error);
         }
     }
 
@@ -118,7 +113,6 @@ public partial class Labels : ComponentBase
         recommendedPreview = [];
         showRecommendedPreview = false;
         recommendedApplyResults = [];
-        taxonomyOperationMessage = null;
         return Task.CompletedTask;
     }
 
@@ -128,7 +122,6 @@ public partial class Labels : ComponentBase
         recommendedPreview = [];
         showRecommendedPreview = false;
         recommendedApplyResults = [];
-        taxonomyOperationMessage = null;
         return Task.CompletedTask;
     }
 
@@ -141,8 +134,6 @@ public partial class Labels : ComponentBase
         syncPreviewResults = [];
         showSyncPreview = false;
         syncApplyResults = [];
-        taxonomyOperationMessage = null;
-        syncOperationMessage = null;
         return Task.CompletedTask;
     }
 
@@ -165,8 +156,7 @@ public partial class Labels : ComponentBase
             recommendedPreview = [];
             recommendedApplyResults = [];
             showRecommendedPreview = false;
-            taxonomyOperationMessage = null;
-            ResetSyncWorkflow();
+                ResetSyncWorkflow();
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
@@ -208,7 +198,6 @@ public partial class Labels : ComponentBase
         recommendedPreview = [];
         showRecommendedPreview = false;
         recommendedApplyResults = [];
-        taxonomyOperationMessage = null;
         EnsureSyncSelections();
         return Task.CompletedTask;
     }
@@ -220,7 +209,6 @@ public partial class Labels : ComponentBase
         syncPreviewResults = [];
         showSyncPreview = false;
         syncApplyResults = [];
-        syncOperationMessage = null;
         return Task.CompletedTask;
     }
 
@@ -243,7 +231,6 @@ public partial class Labels : ComponentBase
         syncPreviewResults = [];
         showSyncPreview = false;
         syncApplyResults = [];
-        syncOperationMessage = null;
         return Task.CompletedTask;
     }
 
@@ -267,7 +254,6 @@ public partial class Labels : ComponentBase
         }
 
         isPreviewingRecommendedTaxonomy = true;
-        taxonomyOperationMessage = null;
         await InvokeAsync(StateHasChanged);
 
         try
@@ -286,16 +272,14 @@ public partial class Labels : ComponentBase
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while previewing strategy {StrategyId}.", selectedStrategyId);
-            taxonomyOperationSeverity = Severity.Error;
-            taxonomyOperationMessage = $"GitHub API request failed while previewing taxonomy changes. {ex.Message}";
+                        Snackbar.Add($"GitHub API request failed while previewing taxonomy changes. {ex.Message}", Severity.Error);
             showRecommendedPreview = false;
             recommendedPreview = [];
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to preview strategy {StrategyId}.", selectedStrategyId);
-            taxonomyOperationSeverity = Severity.Error;
-            taxonomyOperationMessage = "An unexpected error occurred while previewing taxonomy changes.";
+                        Snackbar.Add("An unexpected error occurred while previewing taxonomy changes.", Severity.Error);
             showRecommendedPreview = false;
             recommendedPreview = [];
         }
@@ -309,8 +293,7 @@ public partial class Labels : ComponentBase
     {
         showRecommendedPreview = false;
         recommendedPreview = [];
-        taxonomyOperationMessage = "Taxonomy apply was cancelled.";
-        taxonomyOperationSeverity = Severity.Info;
+                    Snackbar.Add("Taxonomy apply was cancelled.", Severity.Info);
     }
 
     private async Task ApplyRecommendedTaxonomyAsync()
@@ -333,8 +316,7 @@ public partial class Labels : ComponentBase
         }
 
         isApplyingRecommendedTaxonomy = true;
-        taxonomyOperationSeverity = Severity.Info;
-        taxonomyOperationMessage = "Applying taxonomy changes...";
+                    Snackbar.Add("Applying taxonomy changes...", Severity.Info);
         await InvokeAsync(StateHasChanged);
 
         try
@@ -351,13 +333,11 @@ public partial class Labels : ComponentBase
 
             if (failedCount == 0)
             {
-                taxonomyOperationSeverity = Severity.Success;
-                taxonomyOperationMessage = $"Applied taxonomy successfully. Created {createdCount}, updated {updatedCount}, deleted {deletedCount}, skipped {skippedCount}.";
+                            Snackbar.Add($"Applied taxonomy successfully. Created {createdCount}, updated {updatedCount}, deleted {deletedCount}, skipped {skippedCount}.", Severity.Success);
             }
             else
             {
-                taxonomyOperationSeverity = Severity.Warning;
-                taxonomyOperationMessage = $"Applied taxonomy with {failedCount} repository errors. Created {createdCount}, updated {updatedCount}, deleted {deletedCount}, skipped {skippedCount}.";
+                            Snackbar.Add($"Applied taxonomy with {failedCount} repository errors. Created {createdCount}, updated {updatedCount}, deleted {deletedCount}, skipped {skippedCount}.", Severity.Warning);
             }
 
             await LoadLabelsForSelectionAsync();
@@ -365,8 +345,7 @@ public partial class Labels : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to apply strategy {StrategyId}.", selectedStrategyId);
-            taxonomyOperationSeverity = Severity.Error;
-            taxonomyOperationMessage = "An unexpected error occurred while applying taxonomy changes.";
+                        Snackbar.Add("An unexpected error occurred while applying taxonomy changes.", Severity.Error);
         }
         finally
         {
@@ -477,7 +456,6 @@ public partial class Labels : ComponentBase
         }
 
         isPreviewingSync = true;
-        syncOperationMessage = null;
         await InvokeAsync(StateHasChanged);
 
         try
@@ -496,16 +474,14 @@ public partial class Labels : ComponentBase
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while previewing synchronisation from {SourceRepository}.", syncSourceRepositoryFullName);
-            syncOperationSeverity = Severity.Error;
-            syncOperationMessage = $"GitHub API request failed while previewing synchronisation. {ex.Message}";
+                        Snackbar.Add($"GitHub API request failed while previewing synchronisation. {ex.Message}", Severity.Error);
             showSyncPreview = false;
             syncPreviewResults = [];
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to preview synchronisation from {SourceRepository}.", syncSourceRepositoryFullName);
-            syncOperationSeverity = Severity.Error;
-            syncOperationMessage = "An unexpected error occurred while previewing synchronisation.";
+                        Snackbar.Add("An unexpected error occurred while previewing synchronisation.", Severity.Error);
             showSyncPreview = false;
             syncPreviewResults = [];
         }
@@ -519,8 +495,7 @@ public partial class Labels : ComponentBase
     {
         showSyncPreview = false;
         syncPreviewResults = [];
-        syncOperationMessage = "Label synchronisation preview was cancelled. No changes were applied.";
-        syncOperationSeverity = Severity.Info;
+                    Snackbar.Add("Label synchronisation preview was cancelled. No changes were applied.", Severity.Info);
     }
 
     private async Task ApplyLabelSynchronisationAsync()
@@ -548,8 +523,7 @@ public partial class Labels : ComponentBase
         }
 
         isApplyingSync = true;
-        syncOperationSeverity = Severity.Info;
-        syncOperationMessage = "Applying synchronisation changes...";
+                    Snackbar.Add("Applying synchronisation changes...", Severity.Info);
         await InvokeAsync(StateHasChanged);
 
         try
@@ -566,13 +540,11 @@ public partial class Labels : ComponentBase
 
             if (failedCount == 0)
             {
-                syncOperationSeverity = Severity.Success;
-                syncOperationMessage = $"Synchronisation completed. Created {createdCount}, updated {updatedCount}, deleted {deletedCount}, skipped {skippedCount}.";
+                            Snackbar.Add($"Synchronisation completed. Created {createdCount}, updated {updatedCount}, deleted {deletedCount}, skipped {skippedCount}.", Severity.Success);
             }
             else
             {
-                syncOperationSeverity = Severity.Warning;
-                syncOperationMessage = $"Synchronisation completed with {failedCount} repository failures. Created {createdCount}, updated {updatedCount}, deleted {deletedCount}, skipped {skippedCount}.";
+                            Snackbar.Add($"Synchronisation completed with {failedCount} repository failures. Created {createdCount}, updated {updatedCount}, deleted {deletedCount}, skipped {skippedCount}.", Severity.Warning);
             }
 
             await LoadLabelsForSelectionAsync();
@@ -580,8 +552,7 @@ public partial class Labels : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to apply synchronisation from {SourceRepository}.", syncSourceRepositoryFullName);
-            syncOperationSeverity = Severity.Error;
-            syncOperationMessage = "An unexpected error occurred while applying synchronisation.";
+                        Snackbar.Add("An unexpected error occurred while applying synchronisation.", Severity.Error);
         }
         finally
         {
@@ -1257,7 +1228,6 @@ public partial class Labels : ComponentBase
         syncPreviewResults = [];
         showSyncPreview = false;
         syncApplyResults = [];
-        syncOperationMessage = null;
     }
 
     private void ResetSyncWorkflow()
@@ -1269,8 +1239,6 @@ public partial class Labels : ComponentBase
         showSyncPreview = false;
         isPreviewingSync = false;
         isApplyingSync = false;
-        syncOperationMessage = null;
-        syncOperationSeverity = Severity.Info;
     }
 
     /// <summary>Represents a consolidated label row for the grid view.</summary>

@@ -16,6 +16,7 @@ public sealed class MigrationTests
 {
     private readonly IRepositoryService _repositoryService = Substitute.For<IRepositoryService>();
     private readonly IMigrationService _migrationService = Substitute.For<IMigrationService>();
+    private IRenderedComponent<MudSnackbarProvider> _snackbarProvider = default!;
 
     [Fact]
     public async Task Migration_ProjectBoardColumnsScopeSwitch_RendersInScopeCard()
@@ -533,7 +534,7 @@ public sealed class MigrationTests
             [])));
 
         // Assert
-        cut.WaitForAssertion(() => Assert.Contains("Migration completed successfully", cut.Markup));
+        _snackbarProvider.WaitForAssertion(() => AssertSnackbarContains("Migration completed successfully"));
         await _migrationService.Received(1).ApplyMigrationAsync("owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Skip, Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<CancellationToken>());
     }
 
@@ -606,9 +607,16 @@ public sealed class MigrationTests
 
         ctx.Render<MudPopoverProvider>();
         ctx.Render<MudDialogProvider>();
-        ctx.Render<MudSnackbarProvider>();
+        _snackbarProvider = ctx.Render<MudSnackbarProvider>();
 
         return ctx;
+    }
+
+    private void AssertSnackbarContains(string expected)
+    {
+        var snackbars = _snackbarProvider.FindAll(".mud-snackbar");
+        Assert.NotEmpty(snackbars);
+        Assert.Contains(expected, snackbars[^1].TextContent, StringComparison.Ordinal);
     }
 
     private static async Task SelectRepositoriesAsync(IRenderedComponent<Migration> cut, params RepositoryDto[] repositories)

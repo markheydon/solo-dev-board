@@ -64,13 +64,6 @@
         </MudStack>
     </MudPaper>
 
-    @if (!string.IsNullOrWhiteSpace(operationMessage))
-    {
-        <MudAlert Severity="operationSeverity" Dense="true" Variant="Variant.Outlined" data-testid="triage-operation-alert">
-            @operationMessage
-        </MudAlert>
-    }
-
     @if (currentSession is null)
     {
         <MudPaper Class="pa-4" Elevation="1" data-testid="triage-not-started-region">

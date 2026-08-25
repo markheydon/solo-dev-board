@@ -14,6 +14,7 @@ public sealed class ActionsTemplatesTests
 {
     private readonly IActionsTemplateService _workflowTemplateService = Substitute.For<IActionsTemplateService>();
     private readonly IRepositoryService _repositoryService = Substitute.For<IRepositoryService>();
+    private IRenderedComponent<MudSnackbarProvider> _snackbarProvider = default!;
 
     [Fact]
     public async Task ActionsTemplates_WhileTemplatesAreLoading_ShowsLoadingState()
@@ -168,7 +169,7 @@ public sealed class ActionsTemplatesTests
         cut.WaitForAssertion(() =>
         {
             Assert.Single(cut.FindAll("[data-testid='actions-templates-feedback-region']"));
-            Assert.Contains("Applied template successfully", cut.Markup);
+            AssertSnackbarContains("Applied template successfully");
             Assert.Single(cut.FindAll("[data-testid='actions-templates-apply-results']"));
         });
     }
@@ -205,7 +206,7 @@ public sealed class ActionsTemplatesTests
         // Assert
         cut.WaitForAssertion(() =>
         {
-            Assert.Contains("repository errors", cut.Markup);
+            AssertSnackbarContains("repository errors");
             Assert.Contains("GitHub API request failed.", cut.Markup);
         });
     }
@@ -299,9 +300,16 @@ public sealed class ActionsTemplatesTests
 
         ctx.Render<MudPopoverProvider>();
         ctx.Render<MudDialogProvider>();
-        ctx.Render<MudSnackbarProvider>();
+        _snackbarProvider = ctx.Render<MudSnackbarProvider>();
 
         return ctx;
+    }
+
+    private void AssertSnackbarContains(string expected)
+    {
+        var snackbars = _snackbarProvider.FindAll(".mud-snackbar");
+        Assert.NotEmpty(snackbars);
+        Assert.Contains(expected, snackbars[^1].TextContent, StringComparison.Ordinal);
     }
 
     private static IReadOnlyList<RepositoryDto> CreateRepositories()

@@ -451,13 +451,7 @@
         <MudStack Spacing="1">
             <MudText Typo="Typo.h6">Status and guidance</MudText>
 
-            @if (!string.IsNullOrWhiteSpace(operationMessage))
-            {
-                <MudAlert Severity="@operationSeverity" Dense="true" Variant="Variant.Outlined" data-testid="migration-operation-message">
-                    @operationMessage
-                </MudAlert>
-            }
-            else if (!CanPreview)
+            @if (!CanPreview)
             {
                 <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" data-testid="migration-requirements-info">
                     @BoardSelectionRequirementsMessage
