@@ -3,7 +3,7 @@
 ## Purpose
 - Provide a workflow-first layout for the existing labels-and-milestones migration slice.
 - Make source selection, target selection, migration scope, preview review, and results easier to scan before and after apply.
-- Guide implementation for story #139 and the paired bUnit coverage in issue #140.
+- Guide implementation for story #139, the paired bUnit coverage in issue #140, and the keep-`area/*` overwrite control for [#464](https://github.com/markheydon/solo-dev-board/issues/464).
 
 ## User Goals
 - Select one source repository and one or more target repositories without losing context.
@@ -20,6 +20,7 @@
 | Migration Setup                                                       |
 | [Source Repository Select] [Target Repository Multi-Select]           |
 | [Scope: Labels] [Scope: Milestones] [Conflict Strategy Select]        |
+| [Keep area/* labels]  (visible when Labels + Overwrite)               |
 | [Preview Changes]                                    [Apply Migration]|
 +-----------------------------------------------------------------------+
 | Preview                                                               |
@@ -47,6 +48,8 @@
 - Preview stays hidden until the source, at least one target, and a valid scope are selected.
 - Apply remains disabled until a preview has been generated and there is actionable work to perform.
 - Conflict strategy is explained inline because it materially changes preview and apply outcomes.
+- When **Labels** is in scope and **Overwrite** is selected, show a nested **Keep `area/*` labels** checkbox (default on), matching Label Manager copy. Hide or disable it for Skip and Merge.
+- Overwrite preview lists kept `area/*` target labels as kept, not as pending deletes, when the nested box is ticked (DEC-036).
 - Preview and post-migration summary are grouped by target repository so multi-target runs are easier to interpret.
 - MudBlazor layout primitives and utility classes should be preferred over bespoke CSS.
 

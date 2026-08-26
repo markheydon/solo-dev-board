@@ -345,6 +345,15 @@ Test coverage expectations for cache-hit, cache-miss, invalidation, TTL expiry, 
 
 ---
 
+### DEC-036: One-Click Migration label overwrite keeps `area/*` by default
+
+**Status:** Active  
+**Date:** 2026-08-26  
+**Related:** [#464](https://github.com/markheydon/solo-dev-board/issues/464), [DEC-034](#dec-034-label-manager-recommended-catalogue-omits-area-labels), [DEC-010](#dec-010-one-click-migration-scope-and-preview-strategy)  
+**Summary:** One-Click Migration **Overwrite** for labels must honour the same hard-coded `area/` keep rule as Label Manager extra deletes. Default **Keep `area/*` labels** on so target `area/*` names are excluded from overwrite deletes and listed as kept, not pending deletes. When the nested control is unchecked, those names are ordinary target-only deletes. Skip and Merge stay unchanged. Milestones and Projects v2 Status columns are out of scope. Reuse `LabelTaxonomyPrefixes` rather than duplicating prefix logic. Reject app-settings keep/ignore lists for this slice.
+
+---
+
 ## Superseded legacy (archive only)
 
 | Legacy ADR | Superseded by | Notes |

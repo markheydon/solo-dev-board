@@ -33,7 +33,7 @@ A consolidated view of repository health: open issues, stale PRs, GitHub Actions
 
 ### 2. One-Click Migration
 
-Copy labels and milestones from a source repository to one or more target repositories in a single, preview-first action. Project board column migration is in scope for **v1.1.0** ([#291](https://github.com/markheydon/solo-dev-board/issues/291)), not v1.0.0.
+Copy labels and milestones from a source repository to one or more target repositories in a single, preview-first action. Project board column migration is in scope for **v1.1.0** ([#291](https://github.com/markheydon/solo-dev-board/issues/291)), not v1.0.0. Label **Overwrite** follows the Label Manager keep-`area/*` rule (default on) so target area labels are not deleted when the source catalogue omits them ([#464](https://github.com/markheydon/solo-dev-board/issues/464), [DEC-036](DECISIONS.md#dec-036-one-click-migration-label-overwrite-keeps-area-by-default)).
 
 ### 3. Label Manager
 
@@ -128,4 +128,5 @@ The following are explicitly **not** in scope for the current version of SoloDev
 | 2026-08-20 | Label consistency warnings delivered on the Audit Dashboard ([#290](https://github.com/markheydon/solo-dev-board/issues/290)). | Solo developer |
 | 2026-08-23 | Repositories catalogue OSS identification in scope for v1.1.0: GitHub topic `open-source` plus built-in Open source / Not open source filters ([#440](https://github.com/markheydon/solo-dev-board/issues/440), DEC-032). Groups (#381) remain a later increment. | Solo developer |
 | 2026-08-23 | Remaining v1.1.0 dogfood: Label Manager bulk delete (#444), omit `area/*` from the built-in catalogue (#446, DEC-034), Iteration Planning stall vs capacity copy (#445). Unmilestoned backlog stays off this milestone. | Solo developer |
+| 2026-08-26 | One-Click Migration label Overwrite keeps `area/*` by default, matching Label Manager extra-delete behaviour (#464, DEC-036). Configurable keep-prefix lists remain out of scope. | Solo developer |
 
