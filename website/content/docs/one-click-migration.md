@@ -86,7 +86,7 @@ The preview card for each target shows:
 
 If the preview shows no actionable changes for a target repository, an information notice is displayed instead and the **Apply** button is not shown.
 
-The status and guidance region provides immediate status updates, warnings, and error messages while you work through preview and apply actions.
+The status and guidance region provides setup guidance, preview warnings, and contextual notices while you work through preview and apply actions. Transient operation outcomes (preview errors, apply summaries, and cancellations) appear as snackbar toasts. Repository load failures appear inline in the migration setup region with a retry action.
 
 ### Step 5 — Apply the migration
 

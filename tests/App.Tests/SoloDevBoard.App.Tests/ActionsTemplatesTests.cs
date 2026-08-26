@@ -169,9 +169,9 @@ public sealed class ActionsTemplatesTests
         cut.WaitForAssertion(() =>
         {
             Assert.Single(cut.FindAll("[data-testid='actions-templates-feedback-region']"));
-            AssertSnackbarContains("Applied template successfully");
             Assert.Single(cut.FindAll("[data-testid='actions-templates-apply-results']"));
         });
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Applied template successfully"));
     }
 
     [Fact]
@@ -206,7 +206,7 @@ public sealed class ActionsTemplatesTests
         // Assert
         cut.WaitForAssertion(() =>
         {
-            AssertSnackbarContains("repository errors");
+            SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "repository errors");
             Assert.Contains("GitHub API request failed.", cut.Markup);
         });
     }
@@ -303,13 +303,6 @@ public sealed class ActionsTemplatesTests
         _snackbarProvider = ctx.Render<MudSnackbarProvider>();
 
         return ctx;
-    }
-
-    private void AssertSnackbarContains(string expected)
-    {
-        var snackbars = _snackbarProvider.FindAll(".mud-snackbar");
-        Assert.NotEmpty(snackbars);
-        Assert.Contains(expected, snackbars[^1].TextContent, StringComparison.Ordinal);
     }
 
     private static IReadOnlyList<RepositoryDto> CreateRepositories()

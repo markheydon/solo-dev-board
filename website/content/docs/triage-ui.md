@@ -62,7 +62,7 @@ You can apply labels or close items (issues and pull requests) as duplicates dir
 - When the repository exposes a canonical `duplicate` label, SoloDevBoard will also apply that label as part of the duplicate closure workflow.
 - The **Duplicate reference** input is shown inline in the duplicate closure section, allowing you to specify the related issue number before confirming the closure.
 - Keyboard shortcuts work when the action button row is focused. Typing in the Quick Label or Duplicate reference fields does not trigger shortcuts.
-- Primary success and failure feedback appears inline in the triage view via the operation alert, with additional snackbar notifications used for selected error conditions.
+- Primary success and failure feedback for triage actions appears as snackbar toasts in the bottom-right corner. Repository load failures appear inline in the session scope region with a retry action.
 
 The action model now supports three flows: label and advance, close as duplicate and advance, or advance without changes. This keeps the triage rhythm straightforward and efficient.
 
@@ -72,10 +72,10 @@ You can assign a milestone to an issue directly within the Triage UI, without le
 
 - In the **Planning Actions** section, use the milestone dropdown to select the desired milestone for the current issue.
 - Click the **Assign milestone** button to apply your selection.
-- A feedback message will confirm whether the milestone was assigned successfully or if an error occurred.
+- A snackbar toast confirms whether the milestone was assigned successfully or if an error occurred.
 - You can continue triaging without interruption after assigning a milestone.
 
-Milestone assignment is available for all issues where you have permission to edit milestones. If the operation fails, an error message will be shown with guidance to retry or check your permissions.
+Milestone assignment is available for all issues where you have permission to edit milestones. If the operation fails, an error snackbar is shown with guidance to retry or check your permissions.
 
 ## Adding Issues to Project Boards from the Triage UI
 
@@ -84,7 +84,7 @@ The Triage UI allows you to add issues to a GitHub project board and set their s
 - In the **Planning Actions** section, select a project board from the available list.
 - Choose the desired project status (column) for the issue.
 - Click the **Add to project board** button to place the issue in the selected board and status.
-- Success or failure feedback appears in the user feedback region, confirming the result of the operation.
+- Success or failure feedback appears as a snackbar toast, confirming the result of the operation.
 
 If the issue is already on the selected board, you can update its status column directly. Any errors encountered during project board placement will be surfaced with actionable feedback.
 

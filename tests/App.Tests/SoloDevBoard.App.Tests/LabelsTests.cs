@@ -346,7 +346,7 @@ public sealed class LabelsTests
             Assert.Contains("Apply summary", cut.Markup);
             Assert.Contains("Created: 1, Updated: 0, Deleted: 0, Skipped: 0", cut.Markup);
         });
-        _snackbarProvider.WaitForAssertion(() => AssertSnackbarContains("Applied taxonomy successfully. Created 1, updated 0, deleted 0, skipped 0."));
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Applied taxonomy successfully. Created 1, updated 0, deleted 0, skipped 0."));
 
         await _labelManagerService.Received(1).ApplyRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), false, true, Arg.Any<CancellationToken>());
     }
@@ -399,14 +399,12 @@ public sealed class LabelsTests
             var cancelButton = cut.Find("[data-testid='cancel-apply-taxonomy-button']");
             Assert.True(cancelButton.HasAttribute("disabled"));
         });
-        _snackbarProvider.WaitForAssertion(() => AssertSnackbarContains("Applying taxonomy changes..."));
-
         await cut.InvokeAsync(() => applyTask.SetResult([
             new RecommendedTaxonomyRepositoryResultDto("owner/repo-a", 1, 0, 0, 0, [], null),
         ]));
 
         cut.WaitForAssertion(() => Assert.Empty(cut.FindAll("[data-testid='taxonomy-progress-indicator']")));
-        _snackbarProvider.WaitForAssertion(() => AssertSnackbarContains("Applied taxonomy successfully."));
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Applied taxonomy successfully."));
     }
 
     [Fact]
@@ -450,7 +448,7 @@ public sealed class LabelsTests
             new RecommendedTaxonomyRepositoryResultDto("owner/repo-a", 1, 0, 0, 0, [], null),
         ]));
 
-        _snackbarProvider.WaitForAssertion(() => AssertSnackbarContains("Applied taxonomy successfully."));
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Applied taxonomy successfully."));
 
         // Assert
         await _labelManagerService.Received(1).ApplyRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), false, true, Arg.Any<CancellationToken>());
@@ -502,14 +500,12 @@ public sealed class LabelsTests
             Assert.True(confirmButton.HasAttribute("disabled"));
             Assert.Contains("Applying...", confirmButton.TextContent);
         });
-        _snackbarProvider.WaitForAssertion(() => AssertSnackbarContains("Applying synchronisation changes..."));
-
         await cut.InvokeAsync(() => applyTask.SetResult([
             new LabelSyncRepositoryResultDto("owner/repo-b", 1, 0, 0, 0, null),
         ]));
 
         cut.WaitForAssertion(() => Assert.Empty(cut.FindAll("[data-testid='sync-progress-indicator']")));
-        _snackbarProvider.WaitForAssertion(() => AssertSnackbarContains("Synchronisation completed."));
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Synchronisation completed."));
     }
 
     [Fact]
@@ -861,7 +857,7 @@ public sealed class LabelsTests
             Assert.Contains("Synchronisation summary", cut.Markup);
             Assert.Contains("GitHub API failure", cut.Markup);
         });
-        _snackbarProvider.WaitForAssertion(() => AssertSnackbarContains("repository failures"));
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "repository failures"));
     }
 
     [Fact]
@@ -1366,13 +1362,6 @@ public sealed class LabelsTests
         _snackbarProvider = ctx.Render<MudSnackbarProvider>();
 
         return ctx;
-    }
-
-    private void AssertSnackbarContains(string expected)
-    {
-        var snackbars = _snackbarProvider.FindAll(".mud-snackbar");
-        Assert.NotEmpty(snackbars);
-        Assert.Contains(expected, snackbars[^1].TextContent, StringComparison.Ordinal);
     }
 
     private static async Task SelectRepositoriesAsync(IRenderedComponent<Labels> cut, params RepositoryDto[] repositories)

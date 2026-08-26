@@ -26,8 +26,9 @@ Use this reference for user feedback, status communication, and transient surfac
 ### Rules
 
 - Do not duplicate the same message in a snackbar and an inline alert.
+- Do not use snackbars for in-progress operation feedback when an inline progress indicator or disabled control state already communicates the work in flight.
 - Operation-complete feedback must not require scrolling on typical viewports (1400×900); prefer snackbars for transient outcomes on long pages.
-- Map severity consistently: `Success` for completed work, `Warning` for partial success or recoverable issues, `Error` for failures, `Info` for neutral guidance.
+- Map severity consistently: `Success` for completed work, `Warning` for partial success or recoverable issues, `Error` for failures (six-second snackbar duration), `Info` for neutral guidance.
 - Global snackbar defaults live in `Program.cs` (bottom-right, five-second duration, outlined variant).
 - Retain `aria-live="polite"` and `role="status"` on inline regions that surface persistent page state; snackbars inherit MudBlazor provider accessibility.
 

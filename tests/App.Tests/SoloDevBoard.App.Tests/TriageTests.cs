@@ -75,6 +75,74 @@ public sealed class TriageTests
     }
 
     [Fact]
+    public async Task Triage_RepositoryLoadFailure_ShowsInlineErrorWithRetry()
+    {
+        // Arrange
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<IReadOnlyList<RepositoryDto>>(new HttpRequestException("Bad gateway", null, HttpStatusCode.BadGateway)));
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Triage>();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.NotEmpty(cut.FindAll("[data-testid='triage-repositories-load-error']"));
+            Assert.Contains("GitHub API request failed while loading repositories.", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("Try loading repositories again", cut.Markup, StringComparison.Ordinal);
+            Assert.Empty(cut.FindAll("[data-testid='triage-no-repositories-alert']"));
+        });
+    }
+
+    [Fact]
+    public async Task Triage_RepositoryScopeChanged_OnFirstSelection_DoesNotShowSnackbar()
+    {
+        // Arrange
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
+            CreateRepository("owner", "repo-a"),
+            CreateRepository("owner", "repo-b"),
+        ]);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Triage>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-repository-autocomplete']"));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+
+        // Act
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo-a" }));
+
+        // Assert
+        Assert.Empty(_snackbarProvider.FindAll(".mud-snackbar"));
+    }
+
+    [Fact]
+    public async Task Triage_RepositoryScopeChanged_WhenSwitchingBetweenRepositories_ShowsSnackbar()
+    {
+        // Arrange
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
+            CreateRepository("owner", "repo-a"),
+            CreateRepository("owner", "repo-b"),
+        ]);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Triage>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-repository-autocomplete']"));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo-a" }));
+
+        // Act
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo-b" }));
+
+        // Assert
+        _snackbarProvider.WaitForAssertion(() =>
+            SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Repository scope changed. Start a new triage session to load items."));
+    }
+
+    [Fact]
     public async Task Triage_StartSessionFailure_ShowsErrorSnackbar()
     {
         // Arrange
@@ -95,7 +163,7 @@ public sealed class TriageTests
         await cut.InvokeAsync(() => cut.Find("[data-testid='triage-start-session-button']").Click());
 
         // Assert
-        _snackbarProvider.WaitForAssertion(() => AssertSnackbarContains("GitHub API request failed while starting triage session."));
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "GitHub API request failed while starting triage session."));
     }
 
     [Fact]
@@ -131,7 +199,7 @@ public sealed class TriageTests
             Assert.Contains("Processed 0 of 0 items. 0 skipped item(s) are available to revisit.", cut.Markup, StringComparison.Ordinal);
         });
 
-        _snackbarProvider.WaitForAssertion(() => AssertSnackbarContains("No untriaged items were found in owner/repo."));
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "No untriaged items were found in owner/repo."));
     }
 
     [Fact]
@@ -540,7 +608,7 @@ public sealed class TriageTests
 
         // Assert
         cut.WaitForAssertion(() => Assert.Contains("Issue 402", cut.Markup));
-        _snackbarProvider.WaitForAssertion(() => AssertSnackbarContains("Applied label 'type/bug' to item #401 and moved to Item 2 of 2"));
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Applied label 'type/bug' to item #401 and moved to Item 2 of 2"));
 
         await _triageService.Received(1).ApplyLabelToCurrentItemAsync(Arg.Any<TriageSessionDto>(), "type/bug", Arg.Any<CancellationToken>());
         await _triageService.Received(1).AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>());
@@ -690,10 +758,7 @@ public sealed class TriageTests
         cut.Find("[data-testid='triage-assign-milestone-button']").Click();
 
         // Assert
-        cut.WaitForAssertion(() =>
-        {
-        });
-        _snackbarProvider.WaitForAssertion(() => AssertSnackbarContains("Assigned milestone 'v0.7.0' to item #501"));
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Assigned milestone 'v0.7.0' to item #501"));
 
 
         await _triageService.Received(1).AssignMilestoneToCurrentItemAsync(Arg.Any<TriageSessionDto>(), 7, "v0.7.0", Arg.Any<CancellationToken>());
@@ -763,10 +828,7 @@ public sealed class TriageTests
 
         cut.Find("[data-testid='triage-assign-milestone-button']").Click();
 
-        cut.WaitForAssertion(() =>
-        {
-        });
-        _snackbarProvider.WaitForAssertion(() => AssertSnackbarContains("Assigned milestone 'v0.7.0' to item #2202"));
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Assigned milestone 'v0.7.0' to item #2202"));
 
 
         // Assert
@@ -831,10 +893,7 @@ public sealed class TriageTests
         cut.Find("[data-testid='triage-add-to-project-board-button']").Click();
 
         // Assert
-        cut.WaitForAssertion(() =>
-        {
-        });
-        _snackbarProvider.WaitForAssertion(() => AssertSnackbarContains("Added item #601 to 'Roadmap' with status 'In Progress'"));
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Added item #601 to 'Roadmap' with status 'In Progress'"));
 
 
         await _triageService.Received(1).AddCurrentItemToProjectBoardAsync(Arg.Any<TriageSessionDto>(), "project-id", "Roadmap", "status-field-id", "in-progress", "In Progress", Arg.Any<CancellationToken>());
@@ -903,7 +962,7 @@ public sealed class TriageTests
         {
             Assert.Contains("Issue 702", cut.Markup);
         });
-        _snackbarProvider.WaitForAssertion(() => AssertSnackbarContains("Closed item #701 as a duplicate of '#555' and moved to Item 2 of 2"));
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Closed item #701 as a duplicate of '#555' and moved to Item 2 of 2"));
 
 
         await _triageService.Received(1).CloseCurrentItemAsDuplicateAsync(Arg.Any<TriageSessionDto>(), "#555", Arg.Any<CancellationToken>());
@@ -1017,7 +1076,7 @@ public sealed class TriageTests
             Assert.Contains("Issue 802", cut.Markup);
             Assert.Contains("Skipped: 1 item", cut.Markup);
         });
-        _snackbarProvider.WaitForAssertion(() => AssertSnackbarContains("Skipped item #801 for later review and moved to Item 1 of 1"));
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Skipped item #801 for later review and moved to Item 1 of 1"));
 
 
         await _triageService.Received(1).SkipCurrentItemAsync(Arg.Any<TriageSessionDto>(), "Requires broader context", Arg.Any<CancellationToken>());
@@ -1204,7 +1263,7 @@ public sealed class TriageTests
         {
             Assert.Contains("Issue 951", cut.Markup);
         });
-        _snackbarProvider.WaitForAssertion(() => AssertSnackbarContains("Skipped items were appended to the queue for review."));
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Skipped items were appended to the queue for review."));
 
 
         await _triageService.Received(1).RevisitSkippedItemsAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>());
@@ -1369,12 +1428,5 @@ public sealed class TriageTests
         _snackbarProvider = ctx.Render<MudSnackbarProvider>();
 
         return ctx;
-    }
-
-    private void AssertSnackbarContains(string expected)
-    {
-        var snackbars = _snackbarProvider.FindAll(".mud-snackbar");
-        Assert.NotEmpty(snackbars);
-        Assert.Contains(expected, snackbars[^1].TextContent, StringComparison.Ordinal);
     }
 }

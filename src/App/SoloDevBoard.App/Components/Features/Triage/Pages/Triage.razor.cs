@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 using SoloDevBoard.App.Authentication;
+using SoloDevBoard.App.Feedback;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Application.Services.Labels;
@@ -73,9 +74,11 @@ public partial class Triage : ComponentBase
     private string selectedProjectBoardId = string.Empty;
     private string selectedProjectBoardStatusOptionId = string.Empty;
     private string? inaccessibleProjectBoardsWarning;
+    private bool hasRepositoryLoadFailure;
+    private string? repositoryLoadErrorMessage;
 
     private void ShowTransientFeedback(string message, Severity severity)
-        => Snackbar.Add(message, severity);
+        => SnackbarFeedback.Show(Snackbar, message, severity);
 
     private bool isLoadingPlanningOptions;
 
@@ -200,9 +203,14 @@ public partial class Triage : ComponentBase
         await LoadRepositoriesAsync();
     }
 
+    private async Task ReloadRepositoriesAsync()
+        => await LoadRepositoriesAsync();
+
     private async Task LoadRepositoriesAsync()
     {
         isLoadingRepositories = true;
+        hasRepositoryLoadFailure = false;
+        repositoryLoadErrorMessage = null;
 
         try
         {
@@ -225,12 +233,16 @@ public partial class Triage : ComponentBase
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while loading triage repositories.");
-            ShowTransientFeedback($"GitHub API request failed while loading repositories. {ex.Message}", Severity.Error);
+            availableRepositories = [];
+            hasRepositoryLoadFailure = true;
+            repositoryLoadErrorMessage = $"GitHub API request failed while loading repositories. {ex.Message}";
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to load triage repositories.");
-            ShowTransientFeedback("An unexpected error occurred while loading repositories.", Severity.Error);
+            availableRepositories = [];
+            hasRepositoryLoadFailure = true;
+            repositoryLoadErrorMessage = "An unexpected error occurred while loading repositories.";
         }
         finally
         {

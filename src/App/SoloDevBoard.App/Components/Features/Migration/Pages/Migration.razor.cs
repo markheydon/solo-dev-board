@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using SoloDevBoard.App.Authentication;
+using SoloDevBoard.App.Feedback;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Application.Services.Labels;
@@ -57,6 +58,11 @@ public partial class Migration : ComponentBase
     private bool isApplying;
     private bool showPreview;
     private string? inaccessibleProjectBoardsWarning;
+    private bool hasRepositoryLoadFailure;
+    private string? repositoryLoadErrorMessage;
+
+    private void ShowSnackbarFeedback(string message, Severity severity)
+        => SnackbarFeedback.Show(Snackbar, message, severity);
 
     private static readonly IReadOnlyList<ConflictOption> conflictOptions =
     [
@@ -70,9 +76,14 @@ public partial class Migration : ComponentBase
         await LoadRepositoriesAsync();
     }
 
+    private async Task ReloadRepositoriesAsync()
+        => await LoadRepositoriesAsync();
+
     private async Task LoadRepositoriesAsync()
     {
         isLoadingRepositories = true;
+        hasRepositoryLoadFailure = false;
+        repositoryLoadErrorMessage = null;
 
         try
         {
@@ -93,12 +104,16 @@ public partial class Migration : ComponentBase
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while loading migration repositories.");
-            Snackbar.Add($"GitHub API request failed while loading repositories. {ex.Message}", Severity.Error);
+            availableRepositories = [];
+            hasRepositoryLoadFailure = true;
+            repositoryLoadErrorMessage = $"GitHub API request failed while loading repositories. {ex.Message}";
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to load migration repositories.");
-            Snackbar.Add("An unexpected error occurred while loading repositories.", Severity.Error);
+            availableRepositories = [];
+            hasRepositoryLoadFailure = true;
+            repositoryLoadErrorMessage = "An unexpected error occurred while loading repositories.";
         }
         finally
         {
@@ -307,7 +322,7 @@ public partial class Migration : ComponentBase
             }
 
             Logger.LogError(ex, "GitHub API request failed while loading source project boards for {SourceRepository}.", expectedSourceRepositoryFullName);
-            Snackbar.Add($"GitHub API request failed while loading source project boards. {ex.Message}", Severity.Error);
+            ShowSnackbarFeedback($"GitHub API request failed while loading source project boards. {ex.Message}", Severity.Error);
             sourceBoardDiscovery = null;
             sourceProjectBoardId = string.Empty;
         }
@@ -319,7 +334,7 @@ public partial class Migration : ComponentBase
             }
 
             Logger.LogError(ex, "Failed to load source project boards for {SourceRepository}.", expectedSourceRepositoryFullName);
-            Snackbar.Add("An unexpected error occurred while loading source project boards.", Severity.Error);
+            ShowSnackbarFeedback("An unexpected error occurred while loading source project boards.", Severity.Error);
             sourceBoardDiscovery = null;
             sourceProjectBoardId = string.Empty;
         }
@@ -391,7 +406,7 @@ public partial class Migration : ComponentBase
             }
 
             Logger.LogError(ex, "GitHub API request failed while loading target project boards for {TargetRepository}.", targetRepositoryFullName);
-            Snackbar.Add($"GitHub API request failed while loading target project boards. {ex.Message}", Severity.Error);
+            ShowSnackbarFeedback($"GitHub API request failed while loading target project boards. {ex.Message}", Severity.Error);
             _ = targetBoardDiscoveries.Remove(targetRepositoryFullName);
             _ = targetProjectBoardSelections.Remove(targetRepositoryFullName);
         }
@@ -403,7 +418,7 @@ public partial class Migration : ComponentBase
             }
 
             Logger.LogError(ex, "Failed to load target project boards for {TargetRepository}.", targetRepositoryFullName);
-            Snackbar.Add("An unexpected error occurred while loading target project boards.", Severity.Error);
+            ShowSnackbarFeedback("An unexpected error occurred while loading target project boards.", Severity.Error);
             _ = targetBoardDiscoveries.Remove(targetRepositoryFullName);
             _ = targetProjectBoardSelections.Remove(targetRepositoryFullName);
         }
@@ -440,7 +455,7 @@ public partial class Migration : ComponentBase
 
         if (!CanPreview)
         {
-            Snackbar.Add(GetPreviewBlockedMessage(), Severity.Warning);
+            ShowSnackbarFeedback(GetPreviewBlockedMessage(), Severity.Warning);
             return;
         }
 
@@ -468,14 +483,14 @@ public partial class Migration : ComponentBase
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while previewing migration from {SourceRepository}.", sourceRepositoryFullName);
-            Snackbar.Add($"GitHub API request failed while previewing migration. {ex.Message}", Severity.Error);
+            ShowSnackbarFeedback($"GitHub API request failed while previewing migration. {ex.Message}", Severity.Error);
             showPreview = false;
             previewResult = new MigrationPreviewDto(conflictStrategy, [], [], []);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to preview migration from {SourceRepository}.", sourceRepositoryFullName);
-            Snackbar.Add("An unexpected error occurred while previewing migration.", Severity.Error);
+            ShowSnackbarFeedback("An unexpected error occurred while previewing migration.", Severity.Error);
             showPreview = false;
             previewResult = new MigrationPreviewDto(conflictStrategy, [], [], []);
         }
@@ -489,14 +504,14 @@ public partial class Migration : ComponentBase
     {
         showPreview = false;
         previewResult = new MigrationPreviewDto(conflictStrategy, [], [], []);
-        Snackbar.Add("Migration preview was cancelled. No changes were applied.", Severity.Info);
+        ShowSnackbarFeedback("Migration preview was cancelled. No changes were applied.", Severity.Info);
     }
 
     private async Task ApplyMigrationAsync()
     {
         if (!CanApply)
         {
-            Snackbar.Add("Preview migration before applying changes.", Severity.Warning);
+            ShowSnackbarFeedback("Preview migration before applying changes.", Severity.Warning);
             return;
         }
 
@@ -521,17 +536,17 @@ public partial class Migration : ComponentBase
 
             if (totalFailures == 0)
             {
-                Snackbar.Add("Migration completed successfully.", Severity.Success);
+                ShowSnackbarFeedback("Migration completed successfully.", Severity.Success);
             }
             else
             {
-                Snackbar.Add($"Migration completed with {totalFailures} repository operation errors.", Severity.Warning);
+                ShowSnackbarFeedback($"Migration completed with {totalFailures} repository operation errors.", Severity.Warning);
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to apply migration from {SourceRepository}.", sourceRepositoryFullName);
-            Snackbar.Add("An unexpected error occurred while applying migration.", Severity.Error);
+            ShowSnackbarFeedback("An unexpected error occurred while applying migration.", Severity.Error);
         }
         finally
         {
