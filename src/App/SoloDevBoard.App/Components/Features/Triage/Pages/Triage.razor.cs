@@ -273,7 +273,11 @@ public partial class Triage : ComponentBase
             selectedMilestoneNumber = null;
             selectedProjectBoardId = string.Empty;
             selectedProjectBoardStatusOptionId = string.Empty;
-            ShowTransientFeedback("Repository scope changed. Start a new triage session to load items.", Severity.Info);
+
+            if (!string.IsNullOrWhiteSpace(selectedRepositoryFullName))
+            {
+                ShowTransientFeedback("Repository scope changed. Start a new triage session to load items.", Severity.Info);
+            }
         }
 
         return Task.CompletedTask;

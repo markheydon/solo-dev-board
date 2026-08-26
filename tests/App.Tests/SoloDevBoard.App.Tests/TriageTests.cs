@@ -1319,6 +1319,29 @@ public sealed class TriageTests
     }
 
     [Fact]
+    public async Task Triage_RepositorySelectionCleared_DoesNotShowScopeChangedSnackbar()
+    {
+        // Arrange
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
+            CreateRepository("owner", "repo-a"),
+            CreateRepository("owner", "repo-b"),
+        ]);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Triage>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-repository-autocomplete']"));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(new[] { "owner/repo-a" }));
+
+        // Act
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(Array.Empty<string>()));
+
+        // Assert
+        Assert.Empty(_snackbarProvider.FindAll(".mud-snackbar"));
+    }
+
+    [Fact]
     public async Task Triage_RepositorySelectionClearedAfterSessionStarted_HidesActiveSessionDetails()
     {
         // Arrange
@@ -1354,7 +1377,6 @@ public sealed class TriageTests
             Assert.DoesNotContain("Issue 301", cut.Markup);
             Assert.Empty(cut.FindAll("[data-testid='triage-item-detail-region']"));
         });
-
     }
 
     private static RepositoryDto CreateRepository(string owner, string name)
