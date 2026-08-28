@@ -4,7 +4,7 @@
 
 ### Feature summary
 
-Extend the shipped One-Click Migration workflow ([#88](https://github.com/markheydon/solo-dev-board/issues/88), labels and milestones) so a solo developer can copy **Projects v2 Status column structure** from a source repository board to one or more target repositories. Tracked as feature [#291](https://github.com/markheydon/solo-dev-board/issues/291) on milestone **v1.1.0**.
+Extend the shipped One-Click Migration workflow ([#88](https://github.com/markheydon/solo-dev-board/issues/88), labels and milestones) so a solo developer can copy **Projects v2 Status column structure** from a source repository board to one or more target repositories. Tracked as feature [#291](https://github.com/markheydon/solo-dev-board/issues/291) on milestone **`v1.1`**.
 
 ADR-0013 / [DEC-010](DECISIONS.md#dec-010-one-click-migration-scope-and-preview-strategy) deferred this slice because Projects v2 GraphQL was not in the solution. Read and item-write GraphQL now exist (Triage, Board Rules, Cross-Repo Planning). This feature adds **field-structure writes**: Status single-select options, and creating a linked board when a target has none.
 

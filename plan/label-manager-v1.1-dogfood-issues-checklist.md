@@ -7,7 +7,7 @@ Parent: shipped Feature [#27](https://github.com/markheydon/solo-dev-board/issue
 - [x] Scope validated (`plan/SCOPE.md` Label Manager).
 - [x] Decision recorded (DEC-034).
 - [x] Wireframe updated (`plan/wireframes/label-manager-wireframe.md`).
-- [x] Stories #444 and #446 already exist on milestone v1.1.0.
+- [x] Stories #444 and #446 already exist on milestone `v1.1 - Cross-Repo Planning & Refinement`.
 
 ## Issues
 

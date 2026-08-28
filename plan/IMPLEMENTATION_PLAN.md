@@ -8,10 +8,10 @@ This document describes the phased implementation of SoloDevBoard. Each phase ha
 **Note on sequencing:**
 Phases in this document are **historical sequencing for the v1.0 release**. Post-1.0 delivery uses one open milestone at a time ([DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)). Unfinished work from earlier phases remains open until completed, regardless of progress in later phases. Public-release prerequisites from Phase 6 (hosted authentication and admission control) were pulled forward to enable safe hosted validation.
 
-**Current roadmap status (2026-08-18):**
+**Current roadmap status (2026-08-28):**
 - Phases 1–4 are complete. All six core feature areas are delivered (Label Manager, Audit Dashboard, One-Click Migration, Triage UI, Board Rules Visualiser, Actions Templates).
-- Phase 6 (Production Ready, v1.0.0) is complete. Public release [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) tagged on 2026-08-18.
-- **v1.1.0** is the sole open milestone: deferred slices [#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#292](https://github.com/markheydon/solo-dev-board/issues/292), Planning [#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288), OSS catalogue identification [#440](https://github.com/markheydon/solo-dev-board/issues/440), and dogfood fixes.
+- Phase 6 (Production Ready) is complete. Public release [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) tagged on 2026-08-18.
+- **`v1.1 - Cross-Repo Planning & Refinement`** is the sole open GitHub milestone (release tag **`v1.1.0`** when shipped): deferred v1.0 slices [#290](https://github.com/markheydon/solo-dev-board/issues/290) and [#291](https://github.com/markheydon/solo-dev-board/issues/291) (complete), Planning [#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288) (complete), OSS catalogue identification [#440](https://github.com/markheydon/solo-dev-board/issues/440) (complete), and post-release refinements ([#444](https://github.com/markheydon/solo-dev-board/issues/444)–[#446](https://github.com/markheydon/solo-dev-board/issues/446), [#465](https://github.com/markheydon/solo-dev-board/issues/465), [#473](https://github.com/markheydon/solo-dev-board/issues/473), [#464](https://github.com/markheydon/solo-dev-board/issues/464)–[#471](https://github.com/markheydon/solo-dev-board/issues/471)). [#292](https://github.com/markheydon/solo-dev-board/issues/292) (custom template repositories) is ice-boxed and unmilestoned for a later release.
 - [#293](https://github.com/markheydon/solo-dev-board/issues/293) (hosted private Projects v2) is unmilestoned platform-blocked backlog.
 
 For the full feature scope, see [SCOPE.md](SCOPE.md). For open work, see [GitHub Issues](https://github.com/markheydon/solo-dev-board/issues) and [Project #8](https://github.com/users/markheydon/projects/8). The backlog index is at [BACKLOG.md](BACKLOG.md).
@@ -33,7 +33,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Scaffold solution structure: `App`, `Application`, `Domain`, `Infrastructure` projects
 - [x] Configure nullable reference types, implicit usings, and coding conventions across all projects
 - [x] Implement GitHub Personal Access Token (PAT) authentication flow
-- [x] Implement GitHub App authentication flow (optional in this phase, required before v1.0 — delivered in Phase 6 hosted-auth side-step)
+- [x] Implement GitHub App authentication flow (optional in this phase, required before v1.0 - delivered in Phase 6 hosted-auth side-step)
 - [x] Implement `IGitHubService` interface in `Application` layer
 - [x] Implement `GitHubService` in `Infrastructure` layer (using `HttpClient` + `System.Text.Json`)
 - [x] Implement basic repository listing: fetch and display all repositories the authenticated user has access to _(issue #8 done — 2026-03-07)_
@@ -80,7 +80,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Implement `AuditDashboardService` in `Application` (aggregate data from multiple repositories)
 - [x] Build MudBlazor UI components for the Audit Dashboard
 - [x] Implement health indicators: unlabelled issues, stale PRs, failing workflows
-- [x] Implement label consistency warnings _(v1.1.0 — [#290](https://github.com/markheydon/solo-dev-board/issues/290))_
+- [x] Implement label consistency warnings _(milestone `v1.1 - Cross-Repo Planning & Refinement` — [#290](https://github.com/markheydon/solo-dev-board/issues/290))_
 - [x] Write unit tests for `AuditDashboardService`
 - [x] Update `website/content/docs/audit-dashboard.md`
 
@@ -105,7 +105,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Implement `MigrationService` in `Application` (diff, preview, apply).
 - [x] Build MudBlazor UI: source/target repository selection, diff preview, confirmation, summary.
 - [x] Support migration of labels and milestones for the current delivery slice.
-- [ ] Support migration of project board columns as a later slice of this feature. _(deferred to v1.1.0 — [#291](https://github.com/markheydon/solo-dev-board/issues/291))_
+- [x] Support migration of project board columns as a later slice of this feature. _(milestone `v1.1` — [#291](https://github.com/markheydon/solo-dev-board/issues/291))_
 - [x] Write unit tests for `MigrationService`.
 - [x] Update `website/content/docs/one-click-migration.md`.
 
@@ -122,7 +122,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 - Phase 2 complete (Label Manager, GitHub label/milestone API integration)
 
-**Note:** v0.3.0 is complete. Project board column migration remains a deferred v1.1.0 slice (ADR-0013, [#291](https://github.com/markheydon/solo-dev-board/issues/291)).
+**Note:** v0.3.0 is complete. Project board column migration shipped on milestone `v1.1` ([#291](https://github.com/markheydon/solo-dev-board/issues/291), ADR-0013).
 
 ---
 
@@ -152,7 +152,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Include built-in templates: CI (dotnet), CD (Aspire deploy to Azure Container Apps), Dependabot
 - [x] Write unit tests for `ActionsTemplateService`
 - [x] Update `website/content/docs/actions-templates.md`
-- [ ] Support custom template repositories _(deferred to v1.1.0 — [#292](https://github.com/markheydon/solo-dev-board/issues/292); only built-in templates are available today)_
+- [ ] Support custom template repositories _(deferred past `v1.1` — [#292](https://github.com/markheydon/solo-dev-board/issues/292) ice-boxed; only built-in templates are available today)_
 
 ### Dependencies
 
@@ -165,9 +165,9 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Goal:** Deliver Epic 7 — the UI-based implementation of the two-mode PM operating system from [markheydon/github-workflows](https://github.com/markheydon/github-workflows). This phase transforms SoloDevBoard from a collection of individual tools into a cohesive planning environment.
 
-**Milestone:** v1.1.0 (sole open milestone; formerly planned as v1.2.0 — see [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy))
+**Milestone:** `v1.1 - Cross-Repo Planning & Refinement` (release tag `v1.1.0`; formerly planned as v1.2.0 — see [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy))
 
-**Status:** Planned (2026-08-18). Feature [#272](https://github.com/markheydon/solo-dev-board/issues/272) (no parent epic). Stories #273–#288 plus enablers and tests. Wireframe: `plan/wireframes/planning-wireframe.md`. Plan: `plan/cross-repo-planning-project-plan.md`. Decision: [DEC-029](DECISIONS.md#dec-029-cross-repo-planning-board-selection-and-local-settings). Hardcoding audit: [#423](https://github.com/markheydon/solo-dev-board/issues/423) — [`HARDCODING_AUDIT_v1.1.md`](HARDCODING_AUDIT_v1.1.md).
+**Status:** Complete (2026-08-20). Feature [#272](https://github.com/markheydon/solo-dev-board/issues/272) (no parent epic). Stories #273–#288 plus enablers and tests. Wireframe: `plan/wireframes/planning-wireframe.md`. Plan: `plan/cross-repo-planning-project-plan.md`. Decision: [DEC-029](DECISIONS.md#dec-029-cross-repo-planning-board-selection-and-local-settings). Hardcoding audit: [#423](https://github.com/markheydon/solo-dev-board/issues/423) — [`HARDCODING_AUDIT_v1.1.md`](HARDCODING_AUDIT_v1.1.md).
 
 ### Key Tasks
 
@@ -206,13 +206,13 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 ---
 
-## v1.1.0 — OSS catalogue identification
+## v1.1 - Cross-Repo Planning & Refinement — OSS catalogue identification
 
 **Goal:** Classify which catalogue repositories are open-source project repos from the GitHub topic `open-source`, and expose that as built-in Repositories page filters.
 
-**Milestone:** v1.1.0
+**Milestone:** `v1.1 - Cross-Repo Planning & Refinement`
 
-**Status:** Complete (2026-08-23, in review via [#452](https://github.com/markheydon/solo-dev-board/pull/452)). Feature [#440](https://github.com/markheydon/solo-dev-board/issues/440) (no parent epic). Wireframe: `plan/wireframes/repositories-wireframe.md`. Plan: `plan/oss-catalogue-identification-project-plan.md`. Decision: [DEC-032](DECISIONS.md#dec-032-oss-catalogue-identification-from-the-github-open-source-topic).
+**Status:** Complete (2026-08-23). Feature [#440](https://github.com/markheydon/solo-dev-board/issues/440) (no parent epic). Wireframe: `plan/wireframes/repositories-wireframe.md`. Plan: `plan/oss-catalogue-identification-project-plan.md`. Decision: [DEC-032](DECISIONS.md#dec-032-oss-catalogue-identification-from-the-github-open-source-topic).
 
 ### Key Tasks
 
@@ -228,30 +228,31 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 ---
 
-## v1.1.0 — remaining dogfood (open)
+## v1.1 - Cross-Repo Planning & Refinement — remaining release work (open)
 
-**Goal:** Finish locked-in v1.1.0 catch-up without pulling unmilestoned backlog onto this release.
+**Goal:** Finish locked-in `v1.1 - Cross-Repo Planning & Refinement` catch-up without pulling unmilestoned backlog onto this release.
 
-**Milestone:** v1.1.0
+**Milestone:** `v1.1 - Cross-Repo Planning & Refinement` (release tag `v1.1.0`)
 
-**Status:** Label Manager and Iteration dogfood stories [#446](https://github.com/markheydon/solo-dev-board/issues/446), [#444](https://github.com/markheydon/solo-dev-board/issues/444), and [#445](https://github.com/markheydon/solo-dev-board/issues/445) are closed. Toast/snackbar standardisation [#465](https://github.com/markheydon/solo-dev-board/issues/465) is closed. Remaining open milestone leaf: migration keep-`area/*` overwrite [#464](https://github.com/markheydon/solo-dev-board/issues/464). Catch-up on shipped Features [#27](https://github.com/markheydon/solo-dev-board/issues/27), [#88](https://github.com/markheydon/solo-dev-board/issues/88), and [#272](https://github.com/markheydon/solo-dev-board/issues/272) (no new Feature wrappers; [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)). Decisions: [DEC-034](DECISIONS.md#dec-034-label-manager-recommended-catalogue-omits-area-labels), [DEC-035](DECISIONS.md#dec-035-transient-feedback-via-snackbar), [DEC-036](DECISIONS.md#dec-036-one-click-migration-label-overwrite-keeps-area-by-default). Plans: [`plan/label-manager-v1.1-dogfood-project-plan.md`](label-manager-v1.1-dogfood-project-plan.md), [`plan/iteration-planning-stall-capacity-project-plan.md`](iteration-planning-stall-capacity-project-plan.md), [`plan/migration-keep-area-labels-project-plan.md`](migration-keep-area-labels-project-plan.md).
+**Status:** Label Manager and Iteration refinements [#446](https://github.com/markheydon/solo-dev-board/issues/446), [#444](https://github.com/markheydon/solo-dev-board/issues/444), and [#445](https://github.com/markheydon/solo-dev-board/issues/445) are closed. Toast/snackbar standardisation [#465](https://github.com/markheydon/solo-dev-board/issues/465) is closed. **Three open milestone leaves remain:** migration keep-`area/*` overwrite [#464](https://github.com/markheydon/solo-dev-board/issues/464) and paired tests [#471](https://github.com/markheydon/solo-dev-board/issues/471); feedback region relocation [#473](https://github.com/markheydon/solo-dev-board/issues/473) (#465 follow-up). Catch-up on shipped Features [#27](https://github.com/markheydon/solo-dev-board/issues/27), [#88](https://github.com/markheydon/solo-dev-board/issues/88), and [#272](https://github.com/markheydon/solo-dev-board/issues/272) (no new Feature wrappers; [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)). Decisions: [DEC-034](DECISIONS.md#dec-034-label-manager-recommended-catalogue-omits-area-labels), [DEC-035](DECISIONS.md#dec-035-transient-feedback-via-snackbar), [DEC-036](DECISIONS.md#dec-036-one-click-migration-label-overwrite-keeps-area-by-default). Plans: [`plan/label-manager-v1.1-dogfood-project-plan.md`](label-manager-v1.1-dogfood-project-plan.md), [`plan/iteration-planning-stall-capacity-project-plan.md`](iteration-planning-stall-capacity-project-plan.md), [`plan/migration-keep-area-labels-project-plan.md`](migration-keep-area-labels-project-plan.md).
 
 ### Key Tasks
 
 - [x] Remove `area/*` from `RecommendedLabelTaxonomyCatalog`; add nested **Keep `area/*` labels** (default on) for Recommended taxonomy and Synchronise extra deletes. _(#446)_
 - [x] Labels tab multi-select bulk delete with confirmation, continue-on-error, User Guide and Playwright alignment. _(#444)_
 - [x] Iteration Planning: one error-severity stall gate; capacity remains a meter plus confirm; candidate picker stays visible while Add is paused. _(#445)_
-- [ ] Align One-Click Migration label Overwrite with the Label Manager keep-`area/*` rule (default on), including preview/apply, tests, and User Guide. _(#464)_
-- [ ] Standardise toast versus inline status feedback across shipped feature pages. _(#465; in review)_
+- [x] Standardise toast versus inline status feedback across shipped feature pages. _(#465)_
+- [ ] Align One-Click Migration label Overwrite with the Label Manager keep-`area/*` rule (default on), including preview/apply, tests, and User Guide. _(#464, then #471)_
+- [ ] Relocate persistent feedback regions and remove empty Status panels. _(#473)_
 
 ### Delivery sequence
 
-1. Complete review and merge of #465 when the human is ready (do not auto-merge).
-2. Deliver #464, then its paired test issue.
+1. Deliver #464, then its paired test issue #471 (planning complete via PR #472).
+2. Deliver #473 (feedback region cleanup).
 
 ### Dependencies
 
-- Independent of unmilestoned items (#292, #291, #293, reload-from-GitHub epic, and later catalogue hygiene features).
+- Independent of unmilestoned items (#292, #293, reload-from-GitHub epic [#447](https://github.com/markheydon/solo-dev-board/issues/447), and later catalogue hygiene features).
 
 ---
 
@@ -298,7 +299,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 ### Dependencies
 
-- Intended release sequence: close v1.0.0, then v1.1.0 (deferred slices, Planning, dogfood fixes).
+- Intended release sequence: close v1.0.0, then ship `v1.1 - Cross-Repo Planning & Refinement` (tag `v1.1.0`).
 
 **Note:** Hosted authentication and admission control were advanced out of sequence to enable safe hosted validation. Phases 1–4 are complete. v1.0.0 readiness does not depend on Phase 5.
 

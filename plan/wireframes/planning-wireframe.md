@@ -125,7 +125,7 @@ Shared chrome on every tab:
 | This batch (Up Next)                                             |
 |  1. #40  [Focus Order]   2. #41                                  |
 |  Capacity 8/8 is status, not a lock.                             |
-|  [Assign milestone to selected: v1.1.0 v] [Apply]                |
+|  [Assign milestone to selected: v1.1 v] [Apply]                |
 +------------------------------------------------------------------+
 ```
 

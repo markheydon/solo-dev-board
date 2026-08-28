@@ -13,30 +13,31 @@ For historical backlog content (pre-migration), see [archive/BACKLOG-2026-07-18.
 | [Project info pane README](PROJECT_README.md) | Canonical copy of the Project #8 info pane text |
 | [Milestones](https://github.com/markheydon/solo-dev-board/milestones) | Release targeting |
 
-## Roadmap status (2026-08-18)
+## Roadmap status (2026-08-28)
 
-| Release | Milestone | Status |
-|---------|-----------|--------|
-| Foundation | v0.1.0 | Complete |
-| Core features | v0.2.0 | Complete |
-| Migration + Triage | v0.3.0 | Complete |
-| Visualisation + Templates | v0.4.0 | Complete |
-| Production Ready | v1.0.0 | Complete — [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) (2026-08-18) |
-| **Next release** | **v1.1.0** | **Not started — 20 open issues** |
+| Release | GitHub milestone | Release tag | Status |
+|---------|------------------|-------------|--------|
+| Foundation | `v0.1 - Foundation` | `v0.1.0` | Complete |
+| Core features | `v0.2 - Label Manager + Audit Dashboard` | `v0.2.0` | Complete |
+| Migration + Triage | `v0.3 - One-Click Migration + Triage UI` | `v0.3.0` | Complete |
+| Visualisation + Templates | `v0.4 - Board Rules Visualiser + Workflow Templates` | `v0.4.0` | Complete |
+| Production Ready | `v1.0 - Production Ready` | `v1.0.0` | Complete — [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) (2026-08-18) |
+| **Next release** | **`v1.1 - Cross-Repo Planning & Refinement`** | **`v1.1.0`** | **In progress — 3 open issues** |
 
-The sole open milestone is **v1.1.0**. It includes deferred v1.0 slices ([#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#292](https://github.com/markheydon/solo-dev-board/issues/292)), Planning ([#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288)), and dogfood fixes as they are raised.
+The sole open milestone is **`v1.1 - Cross-Repo Planning & Refinement`**. It includes deferred v1.0 slices ([#290](https://github.com/markheydon/solo-dev-board/issues/290), [#291](https://github.com/markheydon/solo-dev-board/issues/291); complete), Planning ([#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288); complete), OSS catalogue ([#440](https://github.com/markheydon/solo-dev-board/issues/440); complete), and post-release refinements ([#444](https://github.com/markheydon/solo-dev-board/issues/444)–[#446](https://github.com/markheydon/solo-dev-board/issues/446), [#465](https://github.com/markheydon/solo-dev-board/issues/465), [#473](https://github.com/markheydon/solo-dev-board/issues/473), [#464](https://github.com/markheydon/solo-dev-board/issues/464)–[#471](https://github.com/markheydon/solo-dev-board/issues/471)). [#292](https://github.com/markheydon/solo-dev-board/issues/292) (custom template repositories) is ice-boxed and unmilestoned.
 
 **Unmilestoned backlog:** [#293](https://github.com/markheydon/solo-dev-board/issues/293) (platform-blocked private user-owned Projects v2 under hosted sign-in); [#397](https://github.com/markheydon/solo-dev-board/issues/397) (product branding including a logo — ice-box).
 
 Implementation phases in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) are historical sequencing for the v1.0 release only.
 
-## Key features (open work)
+## Key features (remaining open work)
 
-| Feature | Issue | Milestone |
-|---------|-------|-----------|
-| Planning | [#272](https://github.com/markheydon/solo-dev-board/issues/272) | v1.1.0 |
+| Work | Issues | Milestone |
+|------|--------|-----------|
+| Migration keep-`area/*` overwrite | [#464](https://github.com/markheydon/solo-dev-board/issues/464), [#471](https://github.com/markheydon/solo-dev-board/issues/471) | `v1.1 - Cross-Repo Planning & Refinement` |
+| Feedback region cleanup | [#473](https://github.com/markheydon/solo-dev-board/issues/473) | `v1.1 - Cross-Repo Planning & Refinement` |
 
-Deferred slices ([#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#292](https://github.com/markheydon/solo-dev-board/issues/292)) are milestone stories extending shipped features, not children of a bucket epic.
+Deferred slices ([#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#291](https://github.com/markheydon/solo-dev-board/issues/291); complete) and Planning ([#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288); complete) are milestone stories extending shipped features, not children of a bucket epic. [#292](https://github.com/markheydon/solo-dev-board/issues/292) is ice-boxed and unmilestoned.
 
 ## Shipped summary
 

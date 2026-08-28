@@ -1,7 +1,7 @@
 # One-Click Migration keep-`area/*` overwrite — project plan
 
 **Issue:** [#464](https://github.com/markheydon/solo-dev-board/issues/464)  
-**Milestone:** v1.1.0  
+**Milestone:** `v1.1 - Cross-Repo Planning & Refinement`  
 **Decision:** [DEC-036](DECISIONS.md#dec-036-one-click-migration-label-overwrite-keeps-area-by-default)  
 **Parent feature:** Closed [#88](https://github.com/markheydon/solo-dev-board/issues/88) (catch-up; no new Feature wrapper — [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)).  
 **Wireframe:** [wireframes/one-click-migration-wireframe.md](wireframes/one-click-migration-wireframe.md)
