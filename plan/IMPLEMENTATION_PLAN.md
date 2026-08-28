@@ -230,23 +230,24 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 ## v1.1.0 — remaining dogfood (open)
 
-**Goal:** Finish the three open v1.1.0 stories from Label Manager and Planning dogfood. Do not pull unmilestoned backlog onto this release.
+**Goal:** Finish locked-in v1.1.0 catch-up without pulling unmilestoned backlog onto this release.
 
 **Milestone:** v1.1.0
 
-**Status:** Planned (2026-08-23). Stories [#446](https://github.com/markheydon/solo-dev-board/issues/446), [#444](https://github.com/markheydon/solo-dev-board/issues/444), [#445](https://github.com/markheydon/solo-dev-board/issues/445). Catch-up on shipped Features [#27](https://github.com/markheydon/solo-dev-board/issues/27) and [#272](https://github.com/markheydon/solo-dev-board/issues/272) (no new Feature wrappers; [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)). Decision: [DEC-034](DECISIONS.md#dec-034-label-manager-recommended-catalogue-omits-area-labels). Plans: [`plan/label-manager-v1.1-dogfood-project-plan.md`](label-manager-v1.1-dogfood-project-plan.md), [`plan/iteration-planning-stall-capacity-project-plan.md`](iteration-planning-stall-capacity-project-plan.md).
+**Status:** Label Manager and Iteration dogfood stories [#446](https://github.com/markheydon/solo-dev-board/issues/446), [#444](https://github.com/markheydon/solo-dev-board/issues/444), and [#445](https://github.com/markheydon/solo-dev-board/issues/445) are closed. Toast/snackbar standardisation [#465](https://github.com/markheydon/solo-dev-board/issues/465) is closed. Remaining open milestone leaf: migration keep-`area/*` overwrite [#464](https://github.com/markheydon/solo-dev-board/issues/464). Catch-up on shipped Features [#27](https://github.com/markheydon/solo-dev-board/issues/27), [#88](https://github.com/markheydon/solo-dev-board/issues/88), and [#272](https://github.com/markheydon/solo-dev-board/issues/272) (no new Feature wrappers; [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)). Decisions: [DEC-034](DECISIONS.md#dec-034-label-manager-recommended-catalogue-omits-area-labels), [DEC-035](DECISIONS.md#dec-035-transient-feedback-via-snackbar), [DEC-036](DECISIONS.md#dec-036-one-click-migration-label-overwrite-keeps-area-by-default). Plans: [`plan/label-manager-v1.1-dogfood-project-plan.md`](label-manager-v1.1-dogfood-project-plan.md), [`plan/iteration-planning-stall-capacity-project-plan.md`](iteration-planning-stall-capacity-project-plan.md), [`plan/migration-keep-area-labels-project-plan.md`](migration-keep-area-labels-project-plan.md).
 
 ### Key Tasks
 
-- [ ] Remove `area/*` from `RecommendedLabelTaxonomyCatalog`; add nested **Keep `area/*` labels** (default on) for Recommended taxonomy and Synchronise extra deletes. _(#446)_
-- [ ] Labels tab multi-select bulk delete with confirmation, continue-on-error, User Guide and Playwright alignment. _(#444)_
-- [ ] Iteration Planning: one error-severity stall gate; capacity remains a meter plus confirm; candidate picker stays visible while Add is paused. _(#445)_
+- [x] Remove `area/*` from `RecommendedLabelTaxonomyCatalog`; add nested **Keep `area/*` labels** (default on) for Recommended taxonomy and Synchronise extra deletes. _(#446)_
+- [x] Labels tab multi-select bulk delete with confirmation, continue-on-error, User Guide and Playwright alignment. _(#444)_
+- [x] Iteration Planning: one error-severity stall gate; capacity remains a meter plus confirm; candidate picker stays visible while Add is paused. _(#445)_
+- [ ] Align One-Click Migration label Overwrite with the Label Manager keep-`area/*` rule (default on), including preview/apply, tests, and User Guide. _(#464)_
+- [ ] Standardise toast versus inline status feedback across shipped feature pages. _(#465; in review)_
 
 ### Delivery sequence
 
-1. #446 (safer catalogue), then its test issue.
-2. #444, then its test issue.
-3. #445 may run in parallel with Label Manager work.
+1. Complete review and merge of #465 when the human is ready (do not auto-merge).
+2. Deliver #464, then its paired test issue.
 
 ### Dependencies
 

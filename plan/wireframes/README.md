@@ -11,7 +11,7 @@ This directory contains planning-only wireframe references for key SoloDevBoard 
 - [repositories-wireframe.md](repositories-wireframe.md): Repositories page wireframe, command strip, and built-in Open source / Not open source catalogue filters (#440).
 - [label-manager-wireframe.md](label-manager-wireframe.md): Label Manager page wireframe, mode separation rationale, tabbed IA, Labels-tab bulk delete (#444), and keep-`area/*` nested option (#446).
 - [audit-dashboard-wireframe.md](audit-dashboard-wireframe.md): Audit Dashboard wireframe, KPI cards, health indicators, and filter surface.
-- [one-click-migration-wireframe.md](one-click-migration-wireframe.md): One-Click Migration page wireframe, workflow-first layout, preview-first review flow, and post-migration summary states.
+- [one-click-migration-wireframe.md](one-click-migration-wireframe.md): One-Click Migration page wireframe, workflow-first layout, preview-first review flow, post-migration summary states, and keep-`area/*` overwrite control (#464).
 - [triage-ui-wireframe.md](triage-ui-wireframe.md): Triage UI wireframe, session flow, progress tracking, label/milestone/project-board actions, skip/return, and end-of-session summary.
 - [board-rules-visualiser-wireframe.md](board-rules-visualiser-wireframe.md): Board Rules Visualiser wireframe, repository/project selection, interactive diagram, rule detail and conflict panels, compare mode, and responsive layout.
 - [actions-templates-wireframe.md](actions-templates-wireframe.md): Actions Templates page wireframe, template browser, parameter editor, apply-to-repository flow, status/feedback region, and responsive layout.
