@@ -2,7 +2,7 @@
 
 ## Feature summary
 
-Close two Label Manager dogfood gaps on milestone **v1.1.0**: stop exporting this repository's `area/*` map through the built-in recommended catalogue, and add multi-select bulk delete on the Labels tab.
+Close two Label Manager refinement gaps on milestone **`v1.1`**: stop exporting this repository's `area/*` map through the built-in recommended catalogue, and add multi-select bulk delete on the Labels tab.
 
 Stories (no new Feature parent — catch-up on shipped Feature [#27](https://github.com/markheydon/solo-dev-board/issues/27) per [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)):
 
@@ -30,7 +30,7 @@ Decision: [DEC-034](DECISIONS.md#dec-034-label-manager-recommended-catalogue-omi
 
 | Risk | Mitigation |
 |------|------------|
-| Operators still want SoloDevBoard areas on other repos | Out of scope for v1.1.0. They can create `area/*` labels manually. Do not add app-settings prefix lists yet. |
+| Operators still want SoloDevBoard areas on other repos | Out of scope for `v1.1`. They can create `area/*` labels manually. Do not add app-settings prefix lists yet. |
 | Nested checkbox copy contradicts “delete every label not in the strategy” | Helper text must say `area/*` is an explicit keep exception when the nested box is checked. |
 | Bulk delete stops on first API failure (current single-label path) | Follow taxonomy-apply: continue the batch and report per-label / per-repository errors. |
 | GitHub has no bulk-delete REST endpoint | Loop `DELETE /repos/{owner}/{repo}/labels/{name}`; disable double-submit while the batch runs. |
@@ -61,7 +61,7 @@ graph TD
 - Per-repository area overlays or creating `area/*` labels in Label Manager.
 - Configurable keep/ignore prefix lists in app settings.
 - Protecting GitHub default labels from bulk delete (Label Manager CRUD has no allow-list today).
-- Project board column migration ([#291](https://github.com/markheydon/solo-dev-board/issues/291)) and custom template repositories ([#292](https://github.com/markheydon/solo-dev-board/issues/292)) — unmilestoned until the next release is declared.
+- Custom template repositories ([#292](https://github.com/markheydon/solo-dev-board/issues/292)) — ice-boxed and unmilestoned for a later release.
 
 ## Implementation references
 

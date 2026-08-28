@@ -33,11 +33,11 @@ A consolidated view of repository health: open issues, stale PRs, GitHub Actions
 
 ### 2. One-Click Migration
 
-Copy labels and milestones from a source repository to one or more target repositories in a single, preview-first action. Project board column migration is in scope for **v1.1.0** ([#291](https://github.com/markheydon/solo-dev-board/issues/291)), not v1.0.0. Label **Overwrite** follows the Label Manager keep-`area/*` rule (default on) so target area labels are not deleted when the source catalogue omits them ([#464](https://github.com/markheydon/solo-dev-board/issues/464), [DEC-036](DECISIONS.md#dec-036-one-click-migration-label-overwrite-keeps-area-by-default)).
+Copy labels and milestones from a source repository to one or more target repositories in a single, preview-first action. Project board column migration shipped on milestone **`v1.1`** ([#291](https://github.com/markheydon/solo-dev-board/issues/291)). Label **Overwrite** follows the Label Manager keep-`area/*` rule (default on) so target area labels are not deleted when the source catalogue omits them ([#464](https://github.com/markheydon/solo-dev-board/issues/464), [DEC-036](DECISIONS.md#dec-036-one-click-migration-label-overwrite-keeps-area-by-default)).
 
 ### 3. Label Manager
 
-Create, edit, recolour, delete, and synchronise GitHub labels across multiple repositories from a single interface, using a canonical label taxonomy as the source of truth. **v1.1.0** dogfood: bulk delete on the Labels tab ([#444](https://github.com/markheydon/solo-dev-board/issues/444)) and omit this repository's `area/*` labels from the built-in catalogue, with a nested keep option during extra cleanup ([#446](https://github.com/markheydon/solo-dev-board/issues/446), [DEC-034](DECISIONS.md#dec-034-label-manager-recommended-catalogue-omits-area-labels)).
+Create, edit, recolour, delete, and synchronise GitHub labels across multiple repositories from a single interface, using a canonical label taxonomy as the source of truth. **`v1.1` refinements:** bulk delete on the Labels tab ([#444](https://github.com/markheydon/solo-dev-board/issues/444)) and omit this repository's `area/*` labels from the built-in catalogue, with a nested keep option during extra cleanup ([#446](https://github.com/markheydon/solo-dev-board/issues/446), [DEC-034](DECISIONS.md#dec-034-label-manager-recommended-catalogue-omits-area-labels)).
 
 ### 4. Board Rules Visualiser
 
@@ -49,11 +49,11 @@ A focused, keyboard-friendly interface for triaging incoming GitHub issues one a
 
 ### 6. Actions Templates
 
-Browse, customise, and apply built-in GitHub Actions workflow templates across repositories, with tracking of which repositories have which templates applied. Custom template repositories are in scope for **v1.1.0** ([#292](https://github.com/markheydon/solo-dev-board/issues/292)).
+Browse, customise, and apply built-in GitHub Actions workflow templates across repositories, with tracking of which repositories have which templates applied. Custom template repositories are **deferred past `v1.1`** ([#292](https://github.com/markheydon/solo-dev-board/issues/292), ice-boxed).
 
 ### 7. Planning
 
-A UI-based implementation of the two-mode PM operating system from [markheydon/github-workflows](https://github.com/markheydon/github-workflows): a Daily Focus view (board state, stalled items, top priorities), a cross-repository Backlog Review (prioritised work across all repos, neglected repo detection), and an Iteration Planning tool (capacity management, Up Next curation, milestone assignment). Tracked in [#272](https://github.com/markheydon/solo-dev-board/issues/272) on milestone **v1.1.0** ([DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)). **v1.1.0** dogfood: keep the stall gate as the only hard disable for Add to Up Next, and keep capacity as a meter plus confirm ([#445](https://github.com/markheydon/solo-dev-board/issues/445)).
+A UI-based implementation of the two-mode PM operating system from [markheydon/github-workflows](https://github.com/markheydon/github-workflows): a Daily Focus view (board state, stalled items, top priorities), a cross-repository Backlog Review (prioritised work across all repos, neglected repo detection), and an Iteration Planning tool (capacity management, Up Next curation, milestone assignment). Tracked in [#272](https://github.com/markheydon/solo-dev-board/issues/272) on milestone **`v1.1`** ([DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)). **`v1.1` refinement:** keep the stall gate as the only hard disable for Add to Up Next, and keep capacity as a meter plus confirm ([#445](https://github.com/markheydon/solo-dev-board/issues/445)).
 
 ### 8. Public product site (GitHub Pages)
 
@@ -61,7 +61,7 @@ The Hugo/Hextra site in `website/` (published at `https://solodevboard.com/`) se
 
 ### 9. Repositories catalogue and OSS identification
 
-The Repositories page lists GitHub repositories available to the authenticated account (search, refresh, visibility and status chips). **v1.1.0** adds first-class open-source identification from the GitHub topic `open-source`, with built-in **Open source** and **Not open source** filters on that page ([#440](https://github.com/markheydon/solo-dev-board/issues/440), [DEC-032](DECISIONS.md#dec-032-oss-catalogue-identification-from-the-github-open-source-topic)). Repository groups ([#381](https://github.com/markheydon/solo-dev-board/issues/381)) and overnight OSS hygiene views ([#438](https://github.com/markheydon/solo-dev-board/issues/438), [#439](https://github.com/markheydon/solo-dev-board/issues/439)) consume that classification later; they are not prerequisites.
+The Repositories page lists GitHub repositories available to the authenticated account (search, refresh, visibility and status chips). **`v1.1`** adds first-class open-source identification from the GitHub topic `open-source`, with built-in **Open source** and **Not open source** filters on that page ([#440](https://github.com/markheydon/solo-dev-board/issues/440), [DEC-032](DECISIONS.md#dec-032-oss-catalogue-identification-from-the-github-open-source-topic)). Repository groups ([#381](https://github.com/markheydon/solo-dev-board/issues/381)) and overnight OSS hygiene views ([#438](https://github.com/markheydon/solo-dev-board/issues/438), [#439](https://github.com/markheydon/solo-dev-board/issues/439)) consume that classification later; they are not prerequisites.
 
 ---
 
@@ -129,4 +129,5 @@ The following are explicitly **not** in scope for the current version of SoloDev
 | 2026-08-23 | Repositories catalogue OSS identification in scope for v1.1.0: GitHub topic `open-source` plus built-in Open source / Not open source filters ([#440](https://github.com/markheydon/solo-dev-board/issues/440), DEC-032). Groups (#381) remain a later increment. | Solo developer |
 | 2026-08-23 | Remaining v1.1.0 dogfood: Label Manager bulk delete (#444), omit `area/*` from the built-in catalogue (#446, DEC-034), Iteration Planning stall vs capacity copy (#445). Unmilestoned backlog stays off this milestone. | Solo developer |
 | 2026-08-26 | One-Click Migration label Overwrite keeps `area/*` by default, matching Label Manager extra-delete behaviour (#464, DEC-036). Configurable keep-prefix lists remain out of scope. | Solo developer |
+| 2026-08-28 | GitHub milestones renamed to `vX.Y - Descriptive name` (ASCII hyphen; release tags remain SemVer `vX.Y.Z`). Open milestone titled `v1.1 - Cross-Repo Planning & Refinement`. Custom template repositories ([#292](https://github.com/markheydon/solo-dev-board/issues/292)) deferred past this release. Project board column migration ([#291](https://github.com/markheydon/solo-dev-board/issues/291)) marked complete. | Solo developer |
 

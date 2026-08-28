@@ -30,7 +30,7 @@ Centralised reference and command patterns for maintaining the **SoloDevBoard Ro
 
 ### Phase Model Note
 
-As of 2026-08-18, the Project board **Phase** field is **legacy** for closed pre-1.0 milestones only. Roadmap Sync does not set Phase on `v1.1.0` or unmilestoned issues ([DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)). Post-1.0 delivery uses **one open GitHub milestone** at a time (`v1.1.0`).
+As of 2026-08-28, the Project board **Phase** field is **legacy** for closed pre-1.0 milestones only. Roadmap Sync does not set Phase on `v1.1 - Cross-Repo Planning & Refinement` (or any `v1.1` prefix title) or unmilestoned issues ([DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)). Post-1.0 delivery uses **one open GitHub milestone** at a time (`v1.1 - Cross-Repo Planning & Refinement`; release tag `v1.1.0` when shipped).
 
 ---
 
@@ -70,14 +70,14 @@ As of 2026-08-18, the Project board **Phase** field is **legacy** for closed pre
 
 | Phase | Option ID | Milestone | Notes |
 |-------|-----------|-----------|-------|
-| Phase 1 — Foundation | `1fbac877` | v0.1.0 | Legacy — closed releases only |
-| Phase 2 — Label Manager + Audit | `0f90ba94` | v0.2.0 | Legacy |
-| Phase 3 — Migration + Triage | `f3de38ba` | v0.3.0 | Legacy |
-| Phase 4 — Board Rules + Workflows | `f5bc6726` | v0.4.0 | Legacy |
-| Phase 5 — Cross-Repo Planning | `495afaf1` | v0.5.0 (historical) | Legacy |
-| Phase 6 — Polish and v1.0 | `dfa36cee` | v1.0.0 | Legacy |
+| Phase 1 — Foundation | `1fbac877` | `v0.1 - Foundation` | Legacy — closed releases only |
+| Phase 2 — Label Manager + Audit | `0f90ba94` | `v0.2 - Label Manager + Audit Dashboard` | Legacy |
+| Phase 3 — Migration + Triage | `f3de38ba` | `v0.3 - One-Click Migration + Triage UI` | Legacy |
+| Phase 4 — Board Rules + Workflows | `f5bc6726` | `v0.4 - Board Rules Visualiser + Workflow Templates` | Legacy |
+| Phase 5 — Cross-Repo Planning | `495afaf1` | *(historical `v0.5.0`)* | Legacy |
+| Phase 6 — Polish and v1.0 | `dfa36cee` | `v1.0 - Production Ready` | Legacy |
 
-`v1.1.0` and unmilestoned issues: **do not set Phase** (Roadmap Sync leaves the field blank).
+`v1.1` (for example `v1.1 - Cross-Repo Planning & Refinement`) and unmilestoned issues: **do not set Phase** (Roadmap Sync leaves the field blank).
 
 ### Priority Options
 
@@ -92,17 +92,17 @@ As of 2026-08-18, the Project board **Phase** field is **legacy** for closed pre
 
 ## Phase Assignment Rules
 
-**Legacy only.** Roadmap Sync sets Phase for closed pre-1.0 milestone titles (`v0.1.0`–`v0.5.0`, `v1.0.0`). It does **not** set Phase for `v1.1.0` or unmilestoned issues ([DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)).
+**Legacy only.** Roadmap Sync sets Phase for closed pre-1.0 milestone titles (for example `v0.3 - One-Click Migration + Triage UI` and legacy `v0.3.0`). It does **not** set Phase for titles starting with `v1.1` (for example `v1.1 - Cross-Repo Planning & Refinement`) or unmilestoned issues ([DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)).
 
 | Milestone assigned | → Phase (legacy) |
 |--------------------|------------------|
-| `v0.1.0` | Phase 1 — Foundation |
-| `v0.2.0` | Phase 2 — Label Manager + Audit |
-| `v0.3.0` | Phase 3 — Migration + Triage |
-| `v0.4.0` | Phase 4 — Board Rules + Workflows |
-| `v0.5.0` | Phase 5 — Cross-Repo Planning |
-| `v1.0.0` | Phase 6 — Polish and v1.0 |
-| `v1.1.0` or none | **Leave Phase blank** |
+| `v0.1 - Foundation` (or `v0.1.0`) | Phase 1 — Foundation |
+| `v0.2 - Label Manager + Audit Dashboard` (or `v0.2.0`) | Phase 2 — Label Manager + Audit |
+| `v0.3 - One-Click Migration + Triage UI` (or `v0.3.0`) | Phase 3 — Migration + Triage |
+| `v0.4 - Board Rules Visualiser + Workflow Templates` (or `v0.4.0`) | Phase 4 — Board Rules + Workflows |
+| `v0.5.0` (historical) | Phase 5 — Cross-Repo Planning |
+| `v1.0 - Production Ready` (or `v1.0.0`) | Phase 6 — Polish and v1.0 |
+| `v1.1 - …` or `v1.1` alone or none | **Leave Phase blank** |
 
 ---
 

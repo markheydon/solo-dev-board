@@ -4,7 +4,7 @@
 
 ### Feature summary
 
-Ship a visual two-mode PM operating system inside SoloDevBoard (feature [#272](https://github.com/markheydon/solo-dev-board/issues/272), milestone **v1.1.0**). PM Mode (weekly/fortnightly) reviews the backlog and curates **Up Next**. Work Mode (daily) uses Daily Focus as a morning nudge while the selected Projects v2 board remains the execution pane of glass.
+Ship a visual two-mode PM operating system inside SoloDevBoard (feature [#272](https://github.com/markheydon/solo-dev-board/issues/272), milestone **`v1.1`**). PM Mode (weekly/fortnightly) reviews the backlog and curates **Up Next**. Work Mode (daily) uses Daily Focus as a morning nudge while the selected Projects v2 board remains the execution pane of glass.
 
 The sixteen child stories (#273–#288) were created as one-line stubs. This plan specifies them as slices of **four pages**, plus three **enablers** (API and settings) and four **test** issues. [#272](https://github.com/markheydon/solo-dev-board/issues/272) stays a Feature with no parent Epic (DEC-027 catch-up exception).
 

@@ -17,49 +17,47 @@ Refresh this file during each [PM progress review](../.agents/workflows/pm-progr
 
 SoloDevBoard provides a single pane of glass for solo developers managing GitHub workloads across multiple repositories.
 
-**Status:** On track. Public release [v1.0.0](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) tagged 18 August 2026.
+**Status:** On track. Public release [v1.0.0](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) tagged 18 August 2026. Milestone **`v1.1 - Cross-Repo Planning & Refinement`** in progress (release tag **`v1.1.0`** when shipped).
 
 ### Current focus
 
-**v1.1.0** — sole open milestone (20 issues): deferred v1.0 slices ([#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#292](https://github.com/markheydon/solo-dev-board/issues/292)) and Cross-Repo Planning ([#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288)). Dogfood fixes from the public tag are added here as they arise.
+**`v1.1 - Cross-Repo Planning & Refinement`** — sole open milestone (**82 closed, 3 open**): finish migration keep-`area/*` ([#464](https://github.com/markheydon/solo-dev-board/issues/464), [#471](https://github.com/markheydon/solo-dev-board/issues/471)) and feedback region cleanup ([#473](https://github.com/markheydon/solo-dev-board/issues/473)). Major increments (Planning [#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288), OSS catalogue [#440](https://github.com/markheydon/solo-dev-board/issues/440), deferred slices [#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#291](https://github.com/markheydon/solo-dev-board/issues/291)) are complete.
 
 Platform-blocked private user-owned Projects v2 ([#293](https://github.com/markheydon/solo-dev-board/issues/293)) is unmilestoned backlog.
 
 ### Release history
 
-| Release | Milestone | Status |
-|---|---|---|
-| Foundation | v0.1.0 | Complete |
-| Core features | v0.2.0 | Complete |
-| Migration + Triage | v0.3.0 | Complete |
-| Visualisation + Templates | v0.4.0 | Complete |
-| Production Ready | v1.0.0 | Complete |
-| **Next** | **v1.1.0** | **Not started** |
+| Release | GitHub milestone | Release tag | Status |
+|---|---|---|---|
+| Foundation | `v0.1 - Foundation` | `v0.1.0` | Complete |
+| Core features | `v0.2 - Label Manager + Audit Dashboard` | `v0.2.0` | Complete |
+| Migration + Triage | `v0.3 - One-Click Migration + Triage UI` | `v0.3.0` | Complete |
+| Visualisation + Templates | `v0.4 - Board Rules Visualiser + Workflow Templates` | `v0.4.0` | Complete |
+| Production Ready | `v1.0 - Production Ready` | `v1.0.0` | Complete |
+| **Next** | **`v1.1 - Cross-Repo Planning & Refinement`** | **`v1.1.0`** | **In progress** |
 
 Post-1.0 model: one open milestone at a time ([DEC-027](https://github.com/markheydon/solo-dev-board/blob/main/plan/DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)).
 
 ### Current snapshot
 
-Snapshot date: 18 August 2026.
+Snapshot date: 28 August 2026.
 
 | Milestone | Closed | Open | Complete |
 |---|---:|---:|---|
-| v0.1.0 | 9 | 0 | 100% |
-| v0.2.0 | 73 | 0 | 100% |
-| v0.3.0 | 38 | 0 | 100% |
-| v0.4.0 | 25 | 0 | 100% |
-| v1.0.0 | 78 | 0 | 100% |
-| v1.1.0 | 1 | 20 | 5% |
+| `v0.1 - Foundation` | 9 | 0 | 100% |
+| `v0.2 - Label Manager + Audit Dashboard` | 73 | 0 | 100% |
+| `v0.3 - One-Click Migration + Triage UI` | 38 | 0 | 100% |
+| `v0.4 - Board Rules Visualiser + Workflow Templates` | 25 | 0 | 100% |
+| `v1.0 - Production Ready` | 78 | 0 | 100% |
+| `v1.1 - Cross-Repo Planning & Refinement` | 82 | 3 | 96% |
 
-v1.1.0 closed count includes organisational epic #289 (closed during backlog cleanup). Live queue: #272–#288 and #290–#292.
+Open leaves: [#464](https://github.com/markheydon/solo-dev-board/issues/464), [#471](https://github.com/markheydon/solo-dev-board/issues/471), [#473](https://github.com/markheydon/solo-dev-board/issues/473).
 
 ### Key resources
 
 - [Repository](https://github.com/markheydon/solo-dev-board)
 - [Implementation plan](https://github.com/markheydon/solo-dev-board/blob/main/plan/IMPLEMENTATION_PLAN.md)
 - [GitHub Issues](https://github.com/markheydon/solo-dev-board/issues)
-- [Progress reviews](https://github.com/markheydon/solo-dev-board/tree/main/plan/weekly-updates)
-- [v1.0.0 release](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0)
-- [Product site](https://solodevboard.com/)
+- [Milestones](https://github.com/markheydon/solo-dev-board/milestones)
 - [User Guide](https://solodevboard.com/docs/)
 ```

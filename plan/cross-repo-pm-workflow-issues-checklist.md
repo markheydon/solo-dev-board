@@ -1,6 +1,6 @@
 # Planning — issues checklist
 
-Parent: [#272](https://github.com/markheydon/solo-dev-board/issues/272). Milestone: **v1.1.0** (number 7). Assignee: `markheydon`. Status on new/updated children: `status/todo` (do not add an Up Next **label**).
+Parent: [#272](https://github.com/markheydon/solo-dev-board/issues/272). Milestone: **`v1.1 - Cross-Repo Planning & Refinement`** (number 7). Assignee: `markheydon`. Status on new/updated children: `status/todo` (do not add an Up Next **label**).
 
 Wireframe: `plan/wireframes/planning-wireframe.md`. Plan: `plan/cross-repo-planning-project-plan.md`. Decisions: DEC-027, DEC-028, DEC-029.
 
@@ -64,7 +64,7 @@ Suggested delivery order (Up Next later, not this session):
 
 ## Do not
 
-- Set Project **Phase** (v1.1.0 leaves Phase blank).
+- Set Project **Phase** (`v1.1` leaves Phase blank).
 - Set Start/Target dates at planning time.
 - Put Features in Up Next.
 - Merge #280/#282 into #277 on the board; keep slices, same route.

@@ -32,7 +32,7 @@
 - Reduces confusion and cognitive load by isolating workflows.
 - Each tab presents relevant actions and feedback, minimising context switching.
 
-## Labels tab — multi-select bulk delete (v1.1.0, #444)
+## Labels tab — multi-select bulk delete (`v1.1`, #444)
 
 ```
 +-------------------------------------------------------------+
@@ -58,7 +58,7 @@
 - Disable repeat submit while the batch is running (same idea as Synchronise apply).
 - Do not invent an in-use protection: GitHub allows deleting labels that are still on issues.
 
-## Recommended taxonomy and Synchronise — keep `area/*` (v1.1.0, #446)
+## Recommended taxonomy and Synchronise — keep `area/*` (`v1.1`, #446)
 
 ```
 +-------------------------------------------------------------+

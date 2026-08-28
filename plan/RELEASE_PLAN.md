@@ -30,7 +30,7 @@ Application version numbers are calculated automatically at build time by [MinVe
 
 ## Release Roadmap
 
-### v0.1.0 — Foundation / MVP
+### v0.1.0 - Foundation / MVP
 
 **Goal:** A working Blazor Server application deployed to Azure that can authenticate with GitHub and display a list of repositories.
 
@@ -45,7 +45,7 @@ Application version numbers are calculated automatically at build time by [MinVe
 
 ---
 
-### v0.2.0 — Core Features
+### v0.2.0 - Core Features
 
 **Goal:** Deliver the Label Manager and Audit Dashboard features.
 
@@ -57,7 +57,7 @@ Application version numbers are calculated automatically at build time by [MinVe
 
 ---
 
-### v0.3.0 — Migration and Triage
+### v0.3.0 - Migration and Triage
 
 **Goal:** Deliver the One-Click Migration and Triage UI features.
 
@@ -69,7 +69,7 @@ Application version numbers are calculated automatically at build time by [MinVe
 
 ---
 
-### v0.4.0 — Visualisation and Templates
+### v0.4.0 - Visualisation and Templates
 
 **Goal:** Deliver the Board Rules Visualiser and Actions Templates features.
 
@@ -83,7 +83,7 @@ Application version numbers are calculated automatically at build time by [MinVe
 
 ---
 
-### v1.0.0 — Production Ready
+### v1.0.0 - Production Ready
 
 **Goal:** A stable, well-tested, and fully documented release of the six shipped tools, suitable for regular hosted and self-hosted use.
 
@@ -92,7 +92,7 @@ Application version numbers are calculated automatically at build time by [MinVe
 - ≥80% unit test coverage on Application and Domain
 - Accessibility audit of primary journey shells (WCAG 2.1 AA)
 - Performance review and optimisation
-- Complete user-facing documentation for shipped features (Hugo site at `https://solodevboard.com/`; Planning guide remains draft until v1.1.0)
+- Complete user-facing documentation for shipped features (Hugo site at `https://solodevboard.com/`; Planning guide shipped with `v1.1`)
 - Full Azure deployment pipeline with staging and production environment gates
 
 **Status:** Complete (2026-08-18). Tagged [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0). Production CD and GitHub Pages publish from `v*` tags.
@@ -101,22 +101,23 @@ Application version numbers are calculated automatically at build time by [MinVe
 
 ---
 
-### v1.1.0 — Next release
+### v1.1 - Cross-Repo Planning & Refinement — Next release
 
-**Goal:** Close out incomplete v1.0 slices, deliver Planning, and ship dogfood fixes from public use.
+**Goal:** Close out incomplete v1.0 slices, deliver Planning, and ship post-release refinements from public use.
 
 **Scope:**
-- Label consistency warnings on the Audit Dashboard ([#290](https://github.com/markheydon/solo-dev-board/issues/290)) — extends [#40](https://github.com/markheydon/solo-dev-board/issues/40)
-- Project board column migration ([#291](https://github.com/markheydon/solo-dev-board/issues/291)) — extends [#88](https://github.com/markheydon/solo-dev-board/issues/88)
-- Custom workflow template repositories ([#292](https://github.com/markheydon/solo-dev-board/issues/292)) — extends Actions Templates
-- Planning ([#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288)): Daily Focus, Backlog Review, Iteration, Repo Management
-- Dogfood fixes raised after v1.0.0
+- Label consistency warnings on the Audit Dashboard ([#290](https://github.com/markheydon/solo-dev-board/issues/290)) — extends [#40](https://github.com/markheydon/solo-dev-board/issues/40) — **complete**
+- Project board column migration ([#291](https://github.com/markheydon/solo-dev-board/issues/291)) — extends [#88](https://github.com/markheydon/solo-dev-board/issues/88) — **complete**
+- Custom workflow template repositories ([#292](https://github.com/markheydon/solo-dev-board/issues/292)) — **deferred** (ice-boxed; post-`v1.1` backlog)
+- Planning ([#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288)): Daily Focus, Backlog Review, Iteration, Repo Management — **complete**
+- OSS catalogue identification ([#440](https://github.com/markheydon/solo-dev-board/issues/440)) — **complete**
+- Post-release refinements: Label Manager bulk delete and keep-`area/*` ([#444](https://github.com/markheydon/solo-dev-board/issues/444), [#446](https://github.com/markheydon/solo-dev-board/issues/446)), Iteration stall/capacity UX ([#445](https://github.com/markheydon/solo-dev-board/issues/445)), snackbar standardisation ([#465](https://github.com/markheydon/solo-dev-board/issues/465)), migration keep-`area/*` ([#464](https://github.com/markheydon/solo-dev-board/issues/464), [#471](https://github.com/markheydon/solo-dev-board/issues/471)), feedback region cleanup ([#473](https://github.com/markheydon/solo-dev-board/issues/473))
 
 **Out of milestone (backlog):** Private user-owned Projects v2 via hosted sign-in ([#293](https://github.com/markheydon/solo-dev-board/issues/293)) — platform-blocked; see [`plan/GITHUB_PROJECTS_V2_ACCESS.md`](GITHUB_PROJECTS_V2_ACCESS.md).
 
-**Status:** Not started. GitHub milestone: `v1.1.0` (sole open milestone).
+**Status:** In progress — **82 closed, 3 open** on GitHub milestone `v1.1 - Cross-Repo Planning & Refinement`. Release tag **`v1.1.0`** when shipped.
 
-**Target:** After v1.0.0
+**Target:** Early September 2026
 
 ---
 
@@ -133,13 +134,13 @@ Feature branch → Pull Request → CI passes → Code review → Merge to main 
 3. **Update documentation:** Ensure all user-facing docs on `main` reflect the released features (validated by `hugo-validate` on PRs; not published until tagged).
 4. **Tag the release:**
    ```bash
-   git tag -a v0.2.0 -m "Release v0.2.0 — Core Features"
+   git tag -a v0.2.0 -m "Release v0.2.0 - Core Features"
    git push origin v0.2.0
    ```
 5. **Create a GitHub Release:**
    - Navigate to the repository on GitHub → Releases → Draft a new release.
    - Select the tag created above.
-   - Use the release title format: `v0.2.0 — Core Features`.
+   - Use the release title format: `v0.2.0 - Core Features`.
    - Write release notes describing what's new, what's fixed, and any known issues.
    - Attach build artefacts if applicable.
    - Publish the release.
@@ -163,7 +164,7 @@ GitHub Releases are created from the GitHub web interface or using the GitHub CL
 ```bash
 # Using the GitHub CLI
 gh release create v0.2.0 \
-  --title "v0.2.0 — Core Features" \
+  --title "v0.2.0 - Core Features" \
   --notes "## What's New
 
 ### Label Manager

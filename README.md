@@ -14,10 +14,10 @@
 | **Audit Dashboard** | Consolidated view of issues, open PRs, and workflow health across selected repositories. | Available |
 | **Label Manager** | Create, edit, synchronise, and enforce label taxonomies across multiple repositories from a single interface. | Available |
 | **Repositories** | View and manage repositories accessible to your GitHub account. | Available |
-| **One-Click Migration** | Migrate labels and milestones from one repository to another in a single action. Project board migration is planned for v1.1.0. | Partially Available |
+| **One-Click Migration** | Migrate labels, milestones, and project board columns from one repository to another in a single action. Migration keep-`area/*` overwrite alignment is in progress for `v1.1`. | Partially Available |
 | **Board Rules Visualiser** | Visualise supported board states and transitions for GitHub Project v2 boards. | Partially Available |
 | **Triage UI** | Keyboard-friendly interface for triaging incoming issues quickly. | Available |
-| **Actions Templates** | Browse, customise, and apply built-in GitHub Actions workflow templates across repositories. Custom template repositories are planned for v1.1.0. | Partially Available |
+| **Actions Templates** | Browse, customise, and apply built-in GitHub Actions workflow templates across repositories. Custom template repositories are deferred past `v1.1`. | Partially Available |
 | **Planning** | Daily Focus, backlog review, iteration planning, and repository participation for your project board. | Available |
 
 

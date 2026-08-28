@@ -1,6 +1,6 @@
 # Project board column migration — issues checklist
 
-Parent: [#291](https://github.com/markheydon/solo-dev-board/issues/291). Milestone: **v1.1.0** (number 7). Assignee: `markheydon`. Status on new/updated issues: `status/todo` (do not add an Up Next **label**).
+Parent: [#291](https://github.com/markheydon/solo-dev-board/issues/291). Milestone: **`v1.1 - Cross-Repo Planning & Refinement`** (number 7). Assignee: `markheydon`. Status on new/updated issues: `status/todo` (do not add an Up Next **label**).
 
 Wireframe: `plan/wireframes/one-click-migration-wireframe.md`. Plan: `plan/project-board-column-migration-project-plan.md`. Decisions: DEC-010, DEC-032.
 
@@ -28,7 +28,7 @@ Suggested delivery order (Up Next later, not this session):
 
 ## Do not
 
-- Set Project **Phase** (v1.1.0 leaves Phase blank).
+- Set Project **Phase** (`v1.1` leaves Phase blank).
 - Set Start/Target dates at planning time.
 - Put the Feature in Up Next.
 - Reopen closed epic #87 or closed feature #88.

@@ -6,7 +6,7 @@ Planning pass 2026-08-26. Automation created #471 and set parent/blocking links;
 
 | Issue | Role | Applied in this run | Manual follow-up |
 |-------|------|---------------------|------------------|
-| [#464](https://github.com/markheydon/solo-dev-board/issues/464) | Enabler | On v1.1.0 with labels. Child #471 linked. Body updated to planned AC (DEC-036). | None. |
+| [#464](https://github.com/markheydon/solo-dev-board/issues/464) | Enabler | On `v1.1 - Cross-Repo Planning & Refinement` with labels. Child #471 linked. Body updated to planned AC (DEC-036). | None. |
 | [#471](https://github.com/markheydon/solo-dev-board/issues/471) | Test | Body created. Parent #464. Blocked by #464. Labels, milestone, and Project #8 applied. | None. |
 
 ## Planned #464 body (paste)
@@ -32,7 +32,7 @@ DEC-036: Migration Overwrite **does** follow Label Manager keep-`area/*` (defaul
 
 ## Project #8
 
-#471 added with Status Todo and Priority Low. No Phase, Start Date, or Target Date (v1.1.0 leaf).
+#471 added with Status Todo and Priority Low. No Phase, Start Date, or Target Date (`v1.1 - Cross-Repo Planning & Refinement` leaf).
 
 ## Planned #464 body (full paste)
 
@@ -64,7 +64,7 @@ When the source repository omits `area/*` names (for example after the portable 
 
 ## Related Epic / Milestone
 
-v1.1.0. Catch-up on closed Feature [#88](https://github.com/markheydon/solo-dev-board/issues/88). No parent epic. Raised from review of PR [#462](https://github.com/markheydon/solo-dev-board/pull/462) implementing #446.
+`v1.1 - Cross-Repo Planning & Refinement`. Catch-up on closed Feature [#88](https://github.com/markheydon/solo-dev-board/issues/88). No parent epic. Raised from review of PR [#462](https://github.com/markheydon/solo-dev-board/pull/462) implementing #446.
 
 ## Implementation References
 
