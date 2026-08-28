@@ -225,20 +225,13 @@
         </MudItem>
     </MudGrid>
 
-    @if (!string.IsNullOrWhiteSpace(operationMessage) || applyResults.Count > 0)
+    @if (applyResults.Count > 0)
     {
         <MudPaper Class="pa-4" Elevation="1" aria-live="polite" data-testid="actions-templates-feedback-region">
             <MudStack Spacing="2">
                 <MudText Typo="Typo.h6">Apply results</MudText>
 
-                @if (!string.IsNullOrWhiteSpace(operationMessage))
-                {
-                    <MudAlert Severity="@operationSeverity" data-testid="actions-templates-operation-message">@operationMessage</MudAlert>
-                }
-
-                @if (applyResults.Count > 0)
-                {
-                    <MudStack Spacing="1" data-testid="actions-templates-apply-results">
+                <MudStack Spacing="1" data-testid="actions-templates-apply-results">
                         @foreach (var result in applyResults)
                         {
                             <MudPaper Class="pa-2" Outlined="true" data-testid="@($"actions-templates-apply-result-{result.RepositoryFullName.Replace('/', '-').ToLowerInvariant()}")">
@@ -258,7 +251,6 @@
                             </MudPaper>
                         }
                     </MudStack>
-                }
             </MudStack>
         </MudPaper>
     }

@@ -1,3 +1,4 @@
+using System.Net;
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
@@ -16,6 +17,28 @@ public sealed class MigrationTests
 {
     private readonly IRepositoryService _repositoryService = Substitute.For<IRepositoryService>();
     private readonly IMigrationService _migrationService = Substitute.For<IMigrationService>();
+    private IRenderedComponent<MudSnackbarProvider> _snackbarProvider = default!;
+
+    [Fact]
+    public async Task Migration_RepositoryLoadFailure_ShowsInlineErrorWithRetry()
+    {
+        // Arrange
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<IReadOnlyList<RepositoryDto>>(new HttpRequestException("Bad gateway", null, HttpStatusCode.BadGateway)));
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Migration>();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.NotEmpty(cut.FindAll("[data-testid='migration-repositories-load-error']"));
+            Assert.Contains("GitHub API request failed while loading repositories.", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("Try loading repositories again", cut.Markup, StringComparison.Ordinal);
+        });
+    }
 
     [Fact]
     public async Task Migration_ProjectBoardColumnsScopeSwitch_RendersInScopeCard()
@@ -533,7 +556,7 @@ public sealed class MigrationTests
             [])));
 
         // Assert
-        cut.WaitForAssertion(() => Assert.Contains("Migration completed successfully", cut.Markup));
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Migration completed successfully"));
         await _migrationService.Received(1).ApplyMigrationAsync("owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Skip, Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<CancellationToken>());
     }
 
@@ -606,7 +629,7 @@ public sealed class MigrationTests
 
         ctx.Render<MudPopoverProvider>();
         ctx.Render<MudDialogProvider>();
-        ctx.Render<MudSnackbarProvider>();
+        _snackbarProvider = ctx.Render<MudSnackbarProvider>();
 
         return ctx;
     }

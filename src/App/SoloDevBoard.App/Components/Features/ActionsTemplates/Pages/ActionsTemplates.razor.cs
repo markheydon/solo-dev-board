@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using SoloDevBoard.App.Authentication;
+using SoloDevBoard.App.Feedback;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.ActionsTemplates;
 using SoloDevBoard.Application.Services.Repositories;
@@ -28,6 +29,10 @@ public partial class ActionsTemplates : ComponentBase
     [Inject]
     public IGitHubAuthenticationRecoveryService GitHubAuthRecovery { get; set; } = default!;
 
+    /// <summary>Gets or sets the snackbar service for transient operation feedback.</summary>
+    [Inject]
+    public ISnackbar Snackbar { get; set; } = default!;
+
     private IReadOnlyList<ActionsTemplateDto> templates = [];
     private ActionsTemplateDetailDto? selectedTemplateDetail;
     private IReadOnlyList<ActionsTemplateRepositoryStatusDto> repositoryStatuses = [];
@@ -45,8 +50,9 @@ public partial class ActionsTemplates : ComponentBase
     private bool hasLoadFailure;
     private bool hasRepositoryLoadFailure;
     private string? repositoryLoadErrorMessage;
-    private string? operationMessage;
-    private Severity operationSeverity = Severity.Info;
+
+    private void ShowSnackbarFeedback(string message, Severity severity)
+        => SnackbarFeedback.Show(Snackbar, message, severity);
 
     private bool ShowLoadingState => isLoadingTemplates;
 
@@ -174,7 +180,6 @@ public partial class ActionsTemplates : ComponentBase
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         applyResults = [];
-        operationMessage = null;
         await RefreshRepositoryStatusesAsync();
     }
 
@@ -188,7 +193,6 @@ public partial class ActionsTemplates : ComponentBase
     {
         selectedTemplateId = template.Id;
         applyResults = [];
-        operationMessage = null;
 
         try
         {
@@ -201,8 +205,7 @@ public partial class ActionsTemplates : ComponentBase
         {
             Logger.LogError(ex, "Failed to load workflow template detail for template {TemplateId}.", template.Id);
             selectedTemplateDetail = null;
-            operationSeverity = Severity.Error;
-            operationMessage = "Unable to load template details.";
+            ShowSnackbarFeedback("Unable to load template details.", Severity.Error);
         }
     }
 
@@ -210,7 +213,6 @@ public partial class ActionsTemplates : ComponentBase
     {
         parameterValues[parameterName] = value ?? string.Empty;
         applyResults = [];
-        operationMessage = null;
         await RefreshRepositoryStatusesAsync();
     }
 
@@ -234,14 +236,12 @@ public partial class ActionsTemplates : ComponentBase
         }
         catch (ArgumentException ex)
         {
-            operationSeverity = Severity.Warning;
-            operationMessage = ex.Message;
+            ShowSnackbarFeedback(ex.Message, Severity.Warning);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to load workflow template repository statuses.");
-            operationSeverity = Severity.Error;
-            operationMessage = "Unable to load repository workflow status.";
+            ShowSnackbarFeedback("Unable to load repository workflow status.", Severity.Error);
         }
         finally
         {
@@ -257,7 +257,6 @@ public partial class ActionsTemplates : ComponentBase
         }
 
         isApplyingTemplate = true;
-        operationMessage = null;
         applyResults = [];
 
         try
@@ -274,27 +273,23 @@ public partial class ActionsTemplates : ComponentBase
 
             if (failedCount == 0)
             {
-                operationSeverity = Severity.Success;
-                operationMessage = $"Applied template successfully. Created {createdCount}, updated {updatedCount}, skipped {skippedCount}.";
+                ShowSnackbarFeedback($"Applied template successfully. Created {createdCount}, updated {updatedCount}, skipped {skippedCount}.", Severity.Success);
             }
             else
             {
-                operationSeverity = Severity.Warning;
-                operationMessage = $"Applied template with {failedCount} repository errors. Created {createdCount}, updated {updatedCount}, skipped {skippedCount}.";
+                ShowSnackbarFeedback($"Applied template with {failedCount} repository errors. Created {createdCount}, updated {updatedCount}, skipped {skippedCount}.", Severity.Warning);
             }
 
             await RefreshRepositoryStatusesAsync();
         }
         catch (ArgumentException ex)
         {
-            operationSeverity = Severity.Error;
-            operationMessage = ex.Message;
+            ShowSnackbarFeedback(ex.Message, Severity.Error);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to apply workflow template {TemplateId}.", selectedTemplateDetail.Id);
-            operationSeverity = Severity.Error;
-            operationMessage = "An unexpected error occurred while applying the workflow template.";
+            ShowSnackbarFeedback("An unexpected error occurred while applying the workflow template.", Severity.Error);
         }
         finally
         {

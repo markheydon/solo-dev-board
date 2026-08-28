@@ -17,6 +17,24 @@
                     <MudText Typo="Typo.body2">Loading repositories...</MudText>
                 </MudStack>
             }
+            else if (hasRepositoryLoadFailure)
+            {
+                <MudAlert Severity="Severity.Error"
+                          Variant="Variant.Outlined"
+                          Dense="true"
+                          aria-live="assertive"
+                          role="alert"
+                          data-testid="triage-repositories-load-error">
+                    <MudText Typo="Typo.subtitle2">Unable to load repositories</MudText>
+                    <MudText Typo="Typo.body2">@repositoryLoadErrorMessage</MudText>
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Secondary"
+                               Class="mt-2"
+                               OnClick="ReloadRepositoriesAsync">
+                        Try loading repositories again
+                    </MudButton>
+                </MudAlert>
+            }
             else if (availableRepositories.Count == 0)
             {
                 <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true" data-testid="triage-no-repositories-alert">
@@ -63,13 +81,6 @@
             }
         </MudStack>
     </MudPaper>
-
-    @if (!string.IsNullOrWhiteSpace(operationMessage))
-    {
-        <MudAlert Severity="operationSeverity" Dense="true" Variant="Variant.Outlined" data-testid="triage-operation-alert">
-            @operationMessage
-        </MudAlert>
-    }
 
     @if (currentSession is null)
     {

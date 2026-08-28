@@ -3,6 +3,7 @@ using MudBlazor;
 using SoloDevBoard.App.Authentication;
 using SoloDevBoard.App.Components.Features.Labels.Components;
 using SoloDevBoard.App.Components.Features.Labels.Dialogs;
+using SoloDevBoard.App.Feedback;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Repositories;
@@ -56,8 +57,6 @@ public partial class Labels : ComponentBase
     private bool keepAreaLabels = true;
     private bool isPreviewingRecommendedTaxonomy;
     private bool isApplyingRecommendedTaxonomy;
-    private string? taxonomyOperationMessage;
-    private Severity taxonomyOperationSeverity = Severity.Info;
     private string syncSourceRepositoryFullName = string.Empty;
     private HashSet<string> syncTargetRepositoryFullNames = new(StringComparer.OrdinalIgnoreCase);
     private IReadOnlyList<LabelSyncRepositoryPreviewDto> syncPreviewResults = [];
@@ -65,12 +64,13 @@ public partial class Labels : ComponentBase
     private bool showSyncPreview;
     private bool isPreviewingSync;
     private bool isApplyingSync;
-    private string? syncOperationMessage;
-    private Severity syncOperationSeverity = Severity.Info;
     private int activeTabIndex = LabelsTabIndex;
     private HashSet<LabelRow> selectedLabelRows = [];
     private bool isBulkDeletingLabels;
     private bool isAwaitingBulkDeleteConfirmation;
+
+    private void ShowSnackbarFeedback(string message, Severity severity)
+        => SnackbarFeedback.Show(Snackbar, message, severity);
 
     protected override async Task OnInitializedAsync()
     {
@@ -96,8 +96,7 @@ public partial class Labels : ComponentBase
             Logger.LogError(ex, "Failed to load recommended label strategies.");
             recommendedStrategies = [];
             selectedStrategyId = string.Empty;
-            taxonomyOperationSeverity = Severity.Error;
-            taxonomyOperationMessage = "Unable to load recommended taxonomy strategies.";
+            ShowSnackbarFeedback("Unable to load recommended taxonomy strategies.", Severity.Error);
         }
     }
 
@@ -118,7 +117,6 @@ public partial class Labels : ComponentBase
         recommendedPreview = [];
         showRecommendedPreview = false;
         recommendedApplyResults = [];
-        taxonomyOperationMessage = null;
         return Task.CompletedTask;
     }
 
@@ -128,7 +126,6 @@ public partial class Labels : ComponentBase
         recommendedPreview = [];
         showRecommendedPreview = false;
         recommendedApplyResults = [];
-        taxonomyOperationMessage = null;
         return Task.CompletedTask;
     }
 
@@ -141,8 +138,6 @@ public partial class Labels : ComponentBase
         syncPreviewResults = [];
         showSyncPreview = false;
         syncApplyResults = [];
-        taxonomyOperationMessage = null;
-        syncOperationMessage = null;
         return Task.CompletedTask;
     }
 
@@ -165,7 +160,6 @@ public partial class Labels : ComponentBase
             recommendedPreview = [];
             recommendedApplyResults = [];
             showRecommendedPreview = false;
-            taxonomyOperationMessage = null;
             ResetSyncWorkflow();
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
@@ -208,7 +202,6 @@ public partial class Labels : ComponentBase
         recommendedPreview = [];
         showRecommendedPreview = false;
         recommendedApplyResults = [];
-        taxonomyOperationMessage = null;
         EnsureSyncSelections();
         return Task.CompletedTask;
     }
@@ -220,7 +213,6 @@ public partial class Labels : ComponentBase
         syncPreviewResults = [];
         showSyncPreview = false;
         syncApplyResults = [];
-        syncOperationMessage = null;
         return Task.CompletedTask;
     }
 
@@ -243,7 +235,6 @@ public partial class Labels : ComponentBase
         syncPreviewResults = [];
         showSyncPreview = false;
         syncApplyResults = [];
-        syncOperationMessage = null;
         return Task.CompletedTask;
     }
 
@@ -256,18 +247,17 @@ public partial class Labels : ComponentBase
 
         if (!TryGetSelectedRepositoryFullNames(out var selectedFullNames))
         {
-            Snackbar.Add("Select at least one repository before previewing taxonomy changes.", Severity.Warning);
+            ShowSnackbarFeedback("Select at least one repository before previewing taxonomy changes.", Severity.Warning);
             return;
         }
 
         if (string.IsNullOrWhiteSpace(selectedStrategyId))
         {
-            Snackbar.Add("Select a recommended strategy before previewing taxonomy changes.", Severity.Warning);
+            ShowSnackbarFeedback("Select a recommended strategy before previewing taxonomy changes.", Severity.Warning);
             return;
         }
 
         isPreviewingRecommendedTaxonomy = true;
-        taxonomyOperationMessage = null;
         await InvokeAsync(StateHasChanged);
 
         try
@@ -286,16 +276,14 @@ public partial class Labels : ComponentBase
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while previewing strategy {StrategyId}.", selectedStrategyId);
-            taxonomyOperationSeverity = Severity.Error;
-            taxonomyOperationMessage = $"GitHub API request failed while previewing taxonomy changes. {ex.Message}";
+            ShowSnackbarFeedback($"GitHub API request failed while previewing taxonomy changes. {ex.Message}", Severity.Error);
             showRecommendedPreview = false;
             recommendedPreview = [];
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to preview strategy {StrategyId}.", selectedStrategyId);
-            taxonomyOperationSeverity = Severity.Error;
-            taxonomyOperationMessage = "An unexpected error occurred while previewing taxonomy changes.";
+            ShowSnackbarFeedback("An unexpected error occurred while previewing taxonomy changes.", Severity.Error);
             showRecommendedPreview = false;
             recommendedPreview = [];
         }
@@ -309,8 +297,7 @@ public partial class Labels : ComponentBase
     {
         showRecommendedPreview = false;
         recommendedPreview = [];
-        taxonomyOperationMessage = "Taxonomy apply was cancelled.";
-        taxonomyOperationSeverity = Severity.Info;
+        ShowSnackbarFeedback("Taxonomy apply was cancelled.", Severity.Info);
     }
 
     private async Task ApplyRecommendedTaxonomyAsync()
@@ -322,19 +309,17 @@ public partial class Labels : ComponentBase
 
         if (!TryGetSelectedRepositoryFullNames(out var selectedFullNames))
         {
-            Snackbar.Add("Select at least one repository before applying taxonomy changes.", Severity.Warning);
+            ShowSnackbarFeedback("Select at least one repository before applying taxonomy changes.", Severity.Warning);
             return;
         }
 
         if (string.IsNullOrWhiteSpace(selectedStrategyId))
         {
-            Snackbar.Add("Select a recommended strategy before applying taxonomy changes.", Severity.Warning);
+            ShowSnackbarFeedback("Select a recommended strategy before applying taxonomy changes.", Severity.Warning);
             return;
         }
 
         isApplyingRecommendedTaxonomy = true;
-        taxonomyOperationSeverity = Severity.Info;
-        taxonomyOperationMessage = "Applying taxonomy changes...";
         await InvokeAsync(StateHasChanged);
 
         try
@@ -351,13 +336,11 @@ public partial class Labels : ComponentBase
 
             if (failedCount == 0)
             {
-                taxonomyOperationSeverity = Severity.Success;
-                taxonomyOperationMessage = $"Applied taxonomy successfully. Created {createdCount}, updated {updatedCount}, deleted {deletedCount}, skipped {skippedCount}.";
+                ShowSnackbarFeedback($"Applied taxonomy successfully. Created {createdCount}, updated {updatedCount}, deleted {deletedCount}, skipped {skippedCount}.", Severity.Success);
             }
             else
             {
-                taxonomyOperationSeverity = Severity.Warning;
-                taxonomyOperationMessage = $"Applied taxonomy with {failedCount} repository errors. Created {createdCount}, updated {updatedCount}, deleted {deletedCount}, skipped {skippedCount}.";
+                ShowSnackbarFeedback($"Applied taxonomy with {failedCount} repository errors. Created {createdCount}, updated {updatedCount}, deleted {deletedCount}, skipped {skippedCount}.", Severity.Warning);
             }
 
             await LoadLabelsForSelectionAsync();
@@ -365,8 +348,7 @@ public partial class Labels : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to apply strategy {StrategyId}.", selectedStrategyId);
-            taxonomyOperationSeverity = Severity.Error;
-            taxonomyOperationMessage = "An unexpected error occurred while applying taxonomy changes.";
+            ShowSnackbarFeedback("An unexpected error occurred while applying taxonomy changes.", Severity.Error);
         }
         finally
         {
@@ -461,7 +443,7 @@ public partial class Labels : ComponentBase
 
         if (string.IsNullOrWhiteSpace(syncSourceRepositoryFullName))
         {
-            Snackbar.Add("Select a source repository before previewing label synchronisation.", Severity.Warning);
+            ShowSnackbarFeedback("Select a source repository before previewing label synchronisation.", Severity.Warning);
             return;
         }
 
@@ -472,12 +454,11 @@ public partial class Labels : ComponentBase
 
         if (targets.Length == 0)
         {
-            Snackbar.Add("Select at least one target repository before previewing label synchronisation.", Severity.Warning);
+            ShowSnackbarFeedback("Select at least one target repository before previewing label synchronisation.", Severity.Warning);
             return;
         }
 
         isPreviewingSync = true;
-        syncOperationMessage = null;
         await InvokeAsync(StateHasChanged);
 
         try
@@ -496,16 +477,14 @@ public partial class Labels : ComponentBase
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while previewing synchronisation from {SourceRepository}.", syncSourceRepositoryFullName);
-            syncOperationSeverity = Severity.Error;
-            syncOperationMessage = $"GitHub API request failed while previewing synchronisation. {ex.Message}";
+            ShowSnackbarFeedback($"GitHub API request failed while previewing synchronisation. {ex.Message}", Severity.Error);
             showSyncPreview = false;
             syncPreviewResults = [];
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to preview synchronisation from {SourceRepository}.", syncSourceRepositoryFullName);
-            syncOperationSeverity = Severity.Error;
-            syncOperationMessage = "An unexpected error occurred while previewing synchronisation.";
+            ShowSnackbarFeedback("An unexpected error occurred while previewing synchronisation.", Severity.Error);
             showSyncPreview = false;
             syncPreviewResults = [];
         }
@@ -519,8 +498,7 @@ public partial class Labels : ComponentBase
     {
         showSyncPreview = false;
         syncPreviewResults = [];
-        syncOperationMessage = "Label synchronisation preview was cancelled. No changes were applied.";
-        syncOperationSeverity = Severity.Info;
+        ShowSnackbarFeedback("Label synchronisation preview was cancelled. No changes were applied.", Severity.Info);
     }
 
     private async Task ApplyLabelSynchronisationAsync()
@@ -532,7 +510,7 @@ public partial class Labels : ComponentBase
 
         if (string.IsNullOrWhiteSpace(syncSourceRepositoryFullName))
         {
-            Snackbar.Add("Select a source repository before applying label synchronisation.", Severity.Warning);
+            ShowSnackbarFeedback("Select a source repository before applying label synchronisation.", Severity.Warning);
             return;
         }
 
@@ -543,13 +521,11 @@ public partial class Labels : ComponentBase
 
         if (targets.Length == 0)
         {
-            Snackbar.Add("Select at least one target repository before applying label synchronisation.", Severity.Warning);
+            ShowSnackbarFeedback("Select at least one target repository before applying label synchronisation.", Severity.Warning);
             return;
         }
 
         isApplyingSync = true;
-        syncOperationSeverity = Severity.Info;
-        syncOperationMessage = "Applying synchronisation changes...";
         await InvokeAsync(StateHasChanged);
 
         try
@@ -566,13 +542,11 @@ public partial class Labels : ComponentBase
 
             if (failedCount == 0)
             {
-                syncOperationSeverity = Severity.Success;
-                syncOperationMessage = $"Synchronisation completed. Created {createdCount}, updated {updatedCount}, deleted {deletedCount}, skipped {skippedCount}.";
+                ShowSnackbarFeedback($"Synchronisation completed. Created {createdCount}, updated {updatedCount}, deleted {deletedCount}, skipped {skippedCount}.", Severity.Success);
             }
             else
             {
-                syncOperationSeverity = Severity.Warning;
-                syncOperationMessage = $"Synchronisation completed with {failedCount} repository failures. Created {createdCount}, updated {updatedCount}, deleted {deletedCount}, skipped {skippedCount}.";
+                ShowSnackbarFeedback($"Synchronisation completed with {failedCount} repository failures. Created {createdCount}, updated {updatedCount}, deleted {deletedCount}, skipped {skippedCount}.", Severity.Warning);
             }
 
             await LoadLabelsForSelectionAsync();
@@ -580,8 +554,7 @@ public partial class Labels : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to apply synchronisation from {SourceRepository}.", syncSourceRepositoryFullName);
-            syncOperationSeverity = Severity.Error;
-            syncOperationMessage = "An unexpected error occurred while applying synchronisation.";
+            ShowSnackbarFeedback("An unexpected error occurred while applying synchronisation.", Severity.Error);
         }
         finally
         {
@@ -593,7 +566,7 @@ public partial class Labels : ComponentBase
     {
         if (!TryGetSelectedRepositoryFullNames(out var selectedFullNames))
         {
-            Snackbar.Add("Select at least one repository before creating a label.", Severity.Warning);
+            ShowSnackbarFeedback("Select at least one repository before creating a label.", Severity.Warning);
             return;
         }
 
@@ -622,7 +595,7 @@ public partial class Labels : ComponentBase
 
         if (!TryGetSelectedRepositoryFullNames(out var selectedFullNames))
         {
-            Snackbar.Add("Select at least one repository before editing a label.", Severity.Warning);
+            ShowSnackbarFeedback("Select at least one repository before editing a label.", Severity.Warning);
             return;
         }
 
@@ -655,7 +628,7 @@ public partial class Labels : ComponentBase
 
         if (!TryGetSelectedRepositoryFullNames(out var selectedFullNames))
         {
-            Snackbar.Add("Select at least one repository before deleting a label.", Severity.Warning);
+            ShowSnackbarFeedback("Select at least one repository before deleting a label.", Severity.Warning);
             return;
         }
 
@@ -713,7 +686,7 @@ public partial class Labels : ComponentBase
         if (dialogResult.Data is not LabelOperationDialogResult result)
         {
             Logger.LogWarning("Label operation dialog closed without a valid result payload for {Mode}.", request.Mode);
-            Snackbar.Add("No changes were saved. Please use the form action button in the dialog.", Severity.Warning);
+            ShowSnackbarFeedback("No changes were saved. Please use the form action button in the dialog.", Severity.Warning);
             return null;
         }
 
@@ -735,7 +708,7 @@ public partial class Labels : ComponentBase
                 changedRepositoryCount += created.Count;
             }
 
-            Snackbar.Add($"Created '{operation.LabelName}' in {changedRepositoryCount} repositories.", Severity.Success);
+            ShowSnackbarFeedback($"Created '{operation.LabelName}' in {changedRepositoryCount} repositories.", Severity.Success);
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
@@ -747,12 +720,12 @@ public partial class Labels : ComponentBase
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while creating label {LabelName}.", operation.LabelName);
-            Snackbar.Add($"GitHub API request failed while creating '{operation.LabelName}'. {ex.Message}", Severity.Error);
+            ShowSnackbarFeedback($"GitHub API request failed while creating '{operation.LabelName}'. {ex.Message}", Severity.Error);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to create label {LabelName}.", operation.LabelName);
-            Snackbar.Add($"An unexpected error occurred while creating '{operation.LabelName}'.", Severity.Error);
+            ShowSnackbarFeedback($"An unexpected error occurred while creating '{operation.LabelName}'.", Severity.Error);
         }
         finally
         {
@@ -775,7 +748,7 @@ public partial class Labels : ComponentBase
                 changedRepositoryCount += updated.Count;
             }
 
-            Snackbar.Add($"Updated '{operation.OriginalLabelName}' across {changedRepositoryCount} repositories.", Severity.Success);
+            ShowSnackbarFeedback($"Updated '{operation.OriginalLabelName}' across {changedRepositoryCount} repositories.", Severity.Success);
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
@@ -787,12 +760,12 @@ public partial class Labels : ComponentBase
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while updating label {LabelName}.", operation.OriginalLabelName);
-            Snackbar.Add($"GitHub API request failed while updating '{operation.OriginalLabelName}'. {ex.Message}", Severity.Error);
+            ShowSnackbarFeedback($"GitHub API request failed while updating '{operation.OriginalLabelName}'. {ex.Message}", Severity.Error);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to update label {LabelName}.", operation.OriginalLabelName);
-            Snackbar.Add($"An unexpected error occurred while updating '{operation.OriginalLabelName}'.", Severity.Error);
+            ShowSnackbarFeedback($"An unexpected error occurred while updating '{operation.OriginalLabelName}'.", Severity.Error);
         }
         finally
         {
@@ -814,7 +787,7 @@ public partial class Labels : ComponentBase
                 changedRepositoryCount += ownerGroup.Value.Count;
             }
 
-            Snackbar.Add($"Deleted '{operation.OriginalLabelName}' from {changedRepositoryCount} repositories.", Severity.Success);
+            ShowSnackbarFeedback($"Deleted '{operation.OriginalLabelName}' from {changedRepositoryCount} repositories.", Severity.Success);
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
@@ -826,12 +799,12 @@ public partial class Labels : ComponentBase
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while deleting label {LabelName}.", operation.OriginalLabelName);
-            Snackbar.Add($"GitHub API request failed while deleting '{operation.OriginalLabelName}'. {ex.Message}", Severity.Error);
+            ShowSnackbarFeedback($"GitHub API request failed while deleting '{operation.OriginalLabelName}'. {ex.Message}", Severity.Error);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to delete label {LabelName}.", operation.OriginalLabelName);
-            Snackbar.Add($"An unexpected error occurred while deleting '{operation.OriginalLabelName}'.", Severity.Error);
+            ShowSnackbarFeedback($"An unexpected error occurred while deleting '{operation.OriginalLabelName}'.", Severity.Error);
         }
         finally
         {
@@ -914,24 +887,24 @@ public partial class Labels : ComponentBase
 
             if (!result.HasErrors)
             {
-                Snackbar.Add(FormatBulkDeleteSummaryMessage(result.DeletedCount, result.SkippedCount, 0), Severity.Success);
+                ShowSnackbarFeedback(FormatBulkDeleteSummaryMessage(result.DeletedCount, result.SkippedCount, 0), Severity.Success);
             }
             else
             {
-                Snackbar.Add(
+                ShowSnackbarFeedback(
                     FormatBulkDeleteSummaryMessage(result.DeletedCount, result.SkippedCount, result.Errors.Count),
                     Severity.Warning);
 
                 foreach (var error in result.Errors.Take(5))
                 {
-                    Snackbar.Add(
+                    ShowSnackbarFeedback(
                         $"Failed to delete '{error.LabelName}' from {error.RepositoryFullName}: {error.ErrorMessage}",
                         Severity.Error);
                 }
 
                 if (result.Errors.Count > 5)
                 {
-                    Snackbar.Add($"{result.Errors.Count - 5} additional delete failures were not shown.", Severity.Error);
+                    ShowSnackbarFeedback($"{result.Errors.Count - 5} additional delete failures were not shown.", Severity.Error);
                 }
             }
         }
@@ -945,7 +918,7 @@ public partial class Labels : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to bulk delete labels.");
-            Snackbar.Add("An unexpected error occurred while deleting labels.", Severity.Error);
+            ShowSnackbarFeedback("An unexpected error occurred while deleting labels.", Severity.Error);
         }
         finally
         {
@@ -959,7 +932,7 @@ public partial class Labels : ComponentBase
     {
         if (!TryGetSelectedRepositoryFullNames(out var selectedFullNames))
         {
-            Snackbar.Add("Select at least one repository before deleting labels.", Severity.Warning);
+            ShowSnackbarFeedback("Select at least one repository before deleting labels.", Severity.Warning);
             targets = [];
             return false;
         }
@@ -978,7 +951,7 @@ public partial class Labels : ComponentBase
 
         if (targets.Length == 0)
         {
-            Snackbar.Add("None of the selected labels are present in the selected repositories.", Severity.Warning);
+            ShowSnackbarFeedback("None of the selected labels are present in the selected repositories.", Severity.Warning);
             return false;
         }
 
@@ -1257,7 +1230,6 @@ public partial class Labels : ComponentBase
         syncPreviewResults = [];
         showSyncPreview = false;
         syncApplyResults = [];
-        syncOperationMessage = null;
     }
 
     private void ResetSyncWorkflow()
@@ -1269,8 +1241,6 @@ public partial class Labels : ComponentBase
         showSyncPreview = false;
         isPreviewingSync = false;
         isApplyingSync = false;
-        syncOperationMessage = null;
-        syncOperationSeverity = Severity.Info;
     }
 
     /// <summary>Represents a consolidated label row for the grid view.</summary>

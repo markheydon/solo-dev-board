@@ -119,7 +119,6 @@ public partial class Repositories : ComponentBase
 
     private void ShowPlaceholderFeedback(string message)
     {
-        SetFeedback(message, Severity.Info);
         Snackbar.Add(message, Severity.Info);
     }
 

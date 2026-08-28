@@ -345,8 +345,8 @@ public sealed class LabelsTests
         {
             Assert.Contains("Apply summary", cut.Markup);
             Assert.Contains("Created: 1, Updated: 0, Deleted: 0, Skipped: 0", cut.Markup);
-            Assert.Contains("Applied taxonomy successfully. Created 1, updated 0, deleted 0, skipped 0.", cut.Markup);
         });
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Applied taxonomy successfully. Created 1, updated 0, deleted 0, skipped 0."));
 
         await _labelManagerService.Received(1).ApplyRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), false, true, Arg.Any<CancellationToken>());
     }
@@ -391,7 +391,6 @@ public sealed class LabelsTests
         {
             Assert.Single(cut.FindAll("[data-testid='taxonomy-progress-indicator']"));
             Assert.Contains("Applying taxonomy changes. Duplicate submissions are disabled.", cut.Markup);
-            Assert.Contains("Applying taxonomy changes...", cut.Markup);
 
             var confirmButton = cut.Find("[data-testid='confirm-apply-taxonomy-button']");
             Assert.True(confirmButton.HasAttribute("disabled"));
@@ -400,16 +399,12 @@ public sealed class LabelsTests
             var cancelButton = cut.Find("[data-testid='cancel-apply-taxonomy-button']");
             Assert.True(cancelButton.HasAttribute("disabled"));
         });
-
         await cut.InvokeAsync(() => applyTask.SetResult([
             new RecommendedTaxonomyRepositoryResultDto("owner/repo-a", 1, 0, 0, 0, [], null),
         ]));
 
-        cut.WaitForAssertion(() =>
-        {
-            Assert.Empty(cut.FindAll("[data-testid='taxonomy-progress-indicator']"));
-            Assert.Contains("Applied taxonomy successfully.", cut.Markup);
-        });
+        cut.WaitForAssertion(() => Assert.Empty(cut.FindAll("[data-testid='taxonomy-progress-indicator']")));
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Applied taxonomy successfully."));
     }
 
     [Fact]
@@ -453,7 +448,7 @@ public sealed class LabelsTests
             new RecommendedTaxonomyRepositoryResultDto("owner/repo-a", 1, 0, 0, 0, [], null),
         ]));
 
-        cut.WaitForAssertion(() => Assert.Contains("Applied taxonomy successfully.", cut.Markup));
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Applied taxonomy successfully."));
 
         // Assert
         await _labelManagerService.Received(1).ApplyRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), false, true, Arg.Any<CancellationToken>());
@@ -500,22 +495,17 @@ public sealed class LabelsTests
         {
             Assert.Single(cut.FindAll("[data-testid='sync-progress-indicator']"));
             Assert.Contains("Applying synchronisation changes. Duplicate submissions are disabled.", cut.Markup);
-            Assert.Contains("Applying synchronisation changes...", cut.Markup);
 
             var confirmButton = cut.Find("[data-testid='confirm-sync-button']");
             Assert.True(confirmButton.HasAttribute("disabled"));
             Assert.Contains("Applying...", confirmButton.TextContent);
         });
-
         await cut.InvokeAsync(() => applyTask.SetResult([
             new LabelSyncRepositoryResultDto("owner/repo-b", 1, 0, 0, 0, null),
         ]));
 
-        cut.WaitForAssertion(() =>
-        {
-            Assert.Empty(cut.FindAll("[data-testid='sync-progress-indicator']"));
-            Assert.Contains("Synchronisation completed.", cut.Markup);
-        });
+        cut.WaitForAssertion(() => Assert.Empty(cut.FindAll("[data-testid='sync-progress-indicator']")));
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Synchronisation completed."));
     }
 
     [Fact]
@@ -866,8 +856,8 @@ public sealed class LabelsTests
         {
             Assert.Contains("Synchronisation summary", cut.Markup);
             Assert.Contains("GitHub API failure", cut.Markup);
-            Assert.Contains("repository failures", cut.Markup);
         });
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "repository failures"));
     }
 
     [Fact]

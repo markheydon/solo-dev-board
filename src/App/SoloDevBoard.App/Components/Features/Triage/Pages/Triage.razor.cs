@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 using SoloDevBoard.App.Authentication;
+using SoloDevBoard.App.Feedback;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Application.Services.Labels;
@@ -52,6 +53,10 @@ public partial class Triage : ComponentBase
     [Inject]
     public IGitHubAuthenticationRecoveryService GitHubAuthRecovery { get; set; } = default!;
 
+    /// <summary>Gets or sets the snackbar service for transient operation feedback.</summary>
+    [Inject]
+    public ISnackbar Snackbar { get; set; } = default!;
+
     private IReadOnlyList<RepositoryDto> availableRepositories = [];
     private string selectedRepositoryFullName = string.Empty;
     private bool includePullRequests = true;
@@ -68,11 +73,13 @@ public partial class Triage : ComponentBase
     private int? selectedMilestoneNumber;
     private string selectedProjectBoardId = string.Empty;
     private string selectedProjectBoardStatusOptionId = string.Empty;
-    private string? operationMessage;
-    // Persistent page feedback uses MudAlert via operationMessage; snackbars are not duplicated here
-    // because animated overlays can fail axe colour-contrast scans and duplicate inline alerts.
     private string? inaccessibleProjectBoardsWarning;
-    private Severity operationSeverity = Severity.Info;
+    private bool hasRepositoryLoadFailure;
+    private string? repositoryLoadErrorMessage;
+
+    private void ShowTransientFeedback(string message, Severity severity)
+        => SnackbarFeedback.Show(Snackbar, message, severity);
+
     private bool isLoadingPlanningOptions;
 
     private bool CanStartSession
@@ -196,10 +203,14 @@ public partial class Triage : ComponentBase
         await LoadRepositoriesAsync();
     }
 
+    private async Task ReloadRepositoriesAsync()
+        => await LoadRepositoriesAsync();
+
     private async Task LoadRepositoriesAsync()
     {
         isLoadingRepositories = true;
-        operationMessage = null;
+        hasRepositoryLoadFailure = false;
+        repositoryLoadErrorMessage = null;
 
         try
         {
@@ -222,14 +233,16 @@ public partial class Triage : ComponentBase
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while loading triage repositories.");
-            operationSeverity = Severity.Error;
-            operationMessage = $"GitHub API request failed while loading repositories. {ex.Message}";
+            availableRepositories = [];
+            hasRepositoryLoadFailure = true;
+            repositoryLoadErrorMessage = $"GitHub API request failed while loading repositories. {ex.Message}";
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to load triage repositories.");
-            operationSeverity = Severity.Error;
-            operationMessage = "An unexpected error occurred while loading repositories.";
+            availableRepositories = [];
+            hasRepositoryLoadFailure = true;
+            repositoryLoadErrorMessage = "An unexpected error occurred while loading repositories.";
         }
         finally
         {
@@ -247,7 +260,8 @@ public partial class Triage : ComponentBase
             .FirstOrDefault(static fullName => !string.IsNullOrWhiteSpace(fullName))
             ?? string.Empty;
 
-        if (!string.Equals(previousRepositoryFullName, selectedRepositoryFullName, StringComparison.OrdinalIgnoreCase))
+        if (!string.IsNullOrWhiteSpace(previousRepositoryFullName)
+            && !string.Equals(previousRepositoryFullName, selectedRepositoryFullName, StringComparison.OrdinalIgnoreCase))
         {
             currentSession = null;
             availableLabelNames = [];
@@ -259,10 +273,11 @@ public partial class Triage : ComponentBase
             selectedMilestoneNumber = null;
             selectedProjectBoardId = string.Empty;
             selectedProjectBoardStatusOptionId = string.Empty;
-            operationSeverity = Severity.Info;
-            operationMessage = string.IsNullOrWhiteSpace(selectedRepositoryFullName)
-                ? null
-                : "Repository scope changed. Start a new triage session to load items.";
+
+            if (!string.IsNullOrWhiteSpace(selectedRepositoryFullName))
+            {
+                ShowTransientFeedback("Repository scope changed. Start a new triage session to load items.", Severity.Info);
+            }
         }
 
         return Task.CompletedTask;
@@ -283,13 +298,11 @@ public partial class Triage : ComponentBase
 
         if (!TryParseRepositoryScope(selectedRepositoryFullName, out var owner, out var repo))
         {
-            operationSeverity = Severity.Warning;
-            operationMessage = "Repository scope must be in owner/repository format.";
+            ShowTransientFeedback("Repository scope must be in owner/repository format.", Severity.Warning);
             return;
         }
 
         isStartingSession = true;
-        operationMessage = null;
 
         try
         {
@@ -298,10 +311,9 @@ public partial class Triage : ComponentBase
             await LoadPlanningOptionsAsync(currentSession);
             SyncPlanningSelectionFromCurrentItem();
 
-            operationSeverity = Severity.Success;
-            operationMessage = currentSession.Progress.TotalItems == 0
+            ShowTransientFeedback(currentSession.Progress.TotalItems == 0
                 ? $"No untriaged items were found in {selectedRepositoryFullName}."
-                : $"Started triage session for {selectedRepositoryFullName}.";
+                : $"Started triage session for {selectedRepositoryFullName}.", Severity.Success);
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
@@ -313,14 +325,12 @@ public partial class Triage : ComponentBase
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while starting triage session for {RepositoryScope}.", selectedRepositoryFullName);
-            operationSeverity = Severity.Error;
-            operationMessage = $"GitHub API request failed while starting triage session. {ex.Message}";
+            ShowTransientFeedback($"GitHub API request failed while starting triage session. {ex.Message}", Severity.Error);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to start triage session for {RepositoryScope}.", selectedRepositoryFullName);
-            operationSeverity = Severity.Error;
-            operationMessage = "An unexpected error occurred while starting triage session.";
+            ShowTransientFeedback("An unexpected error occurred while starting triage session.", Severity.Error);
         }
         finally
         {
@@ -347,8 +357,7 @@ public partial class Triage : ComponentBase
 
             if (availableLabelNames.Count == 0)
             {
-                operationSeverity = Severity.Warning;
-                operationMessage = "No repository labels are available to apply as quick actions.";
+                ShowTransientFeedback("No repository labels are available to apply as quick actions.", Severity.Warning);
             }
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
@@ -363,16 +372,14 @@ public partial class Triage : ComponentBase
             Logger.LogError(ex, "GitHub API request failed while loading quick-action labels for {RepositoryScope}.", $"{owner}/{repo}");
             availableLabelNames = [];
             selectedQuickActionLabelName = string.Empty;
-            operationSeverity = Severity.Error;
-            operationMessage = $"GitHub API request failed while loading labels. {ex.Message}";
+            ShowTransientFeedback($"GitHub API request failed while loading labels. {ex.Message}", Severity.Error);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to load quick-action labels for {RepositoryScope}.", $"{owner}/{repo}");
             availableLabelNames = [];
             selectedQuickActionLabelName = string.Empty;
-            operationSeverity = Severity.Error;
-            operationMessage = "An unexpected error occurred while loading labels for quick actions.";
+            ShowTransientFeedback("An unexpected error occurred while loading labels for quick actions.", Severity.Error);
         }
     }
 
@@ -447,10 +454,9 @@ public partial class Triage : ComponentBase
             currentSession = await TriageService.AdvanceSessionAsync(labelledSession);
             SyncPlanningSelectionFromCurrentItem();
 
-            operationSeverity = Severity.Success;
-            operationMessage = currentSession.CurrentItem is null
+            ShowTransientFeedback(currentSession.CurrentItem is null
                 ? $"Applied label '{labelName}' to item #{appliedItemNumber}. Reached the end of the current queue."
-                : $"Applied label '{labelName}' to item #{appliedItemNumber} and moved to {CurrentPositionText}.";
+                : $"Applied label '{labelName}' to item #{appliedItemNumber} and moved to {CurrentPositionText}.", Severity.Success);
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
@@ -462,14 +468,12 @@ public partial class Triage : ComponentBase
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while applying label to triage item.");
-            operationSeverity = Severity.Error;
-            operationMessage = $"GitHub API request failed while applying the label. {ex.Message}";
+            ShowTransientFeedback($"GitHub API request failed while applying the label. {ex.Message}", Severity.Error);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to apply label to the current triage item.");
-            operationSeverity = Severity.Error;
-            operationMessage = "An unexpected error occurred while applying the selected label.";
+            ShowTransientFeedback("An unexpected error occurred while applying the selected label.", Severity.Error);
         }
         finally
         {
@@ -491,16 +495,14 @@ public partial class Triage : ComponentBase
             var completedItemNumber = currentSession.CurrentItem.Number;
             currentSession = await TriageService.AdvanceSessionAsync(currentSession);
             SyncPlanningSelectionFromCurrentItem();
-            operationSeverity = Severity.Info;
-            operationMessage = currentSession.CurrentItem is null
+            ShowTransientFeedback(currentSession.CurrentItem is null
                 ? $"Moved past item #{completedItemNumber} without changes. Reached the end of the current queue."
-                : $"Moved past item #{completedItemNumber} without changes and moved to {CurrentPositionText}.";
+                : $"Moved past item #{completedItemNumber} without changes and moved to {CurrentPositionText}.", Severity.Info);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to move to the next triage item without changes.");
-            operationSeverity = Severity.Error;
-            operationMessage = "An unexpected error occurred while moving to the next item without changes.";
+            ShowTransientFeedback("An unexpected error occurred while moving to the next item without changes.", Severity.Error);
         }
         finally
         {
@@ -530,7 +532,6 @@ public partial class Triage : ComponentBase
             currentSession = await TriageService.AdvanceSessionAsync(duplicateClosedSession);
             SyncPlanningSelectionFromCurrentItem();
 
-            operationSeverity = Severity.Success;
             var baseMessage = currentSession.CurrentItem is null
                 ? $"Closed item #{closedItemNumber} as a duplicate of '{trimmedDuplicateReference}'. Reached the end of the current queue."
                 : $"Closed item #{closedItemNumber} as a duplicate of '{trimmedDuplicateReference}' and moved to {CurrentPositionText}.";
@@ -547,9 +548,10 @@ public partial class Triage : ComponentBase
                 }
             }
 
-            operationMessage = string.IsNullOrWhiteSpace(duplicateLabelSuffix)
+            var duplicateMessage = string.IsNullOrWhiteSpace(duplicateLabelSuffix)
                 ? baseMessage
                 : $"{baseMessage} {duplicateLabelSuffix}";
+            ShowTransientFeedback(duplicateMessage, Severity.Success);
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
@@ -561,14 +563,12 @@ public partial class Triage : ComponentBase
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while closing triage item as duplicate.");
-            operationSeverity = Severity.Error;
-            operationMessage = $"GitHub API request failed while closing as duplicate. {ex.Message}";
+            ShowTransientFeedback($"GitHub API request failed while closing as duplicate. {ex.Message}", Severity.Error);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to close the current triage item as duplicate.");
-            operationSeverity = Severity.Error;
-            operationMessage = "An unexpected error occurred while closing this item as a duplicate.";
+            ShowTransientFeedback("An unexpected error occurred while closing this item as a duplicate.", Severity.Error);
         }
         finally
         {
@@ -591,16 +591,14 @@ public partial class Triage : ComponentBase
             currentSession = await TriageService.SkipCurrentItemAsync(currentSession, skipReason);
             SyncPlanningSelectionFromCurrentItem();
 
-            operationSeverity = Severity.Info;
-            operationMessage = currentSession.CurrentItem is null
+            ShowTransientFeedback(currentSession.CurrentItem is null
                 ? $"Skipped item #{skippedItemNumber} for later review. Reached the end of the current queue."
-                : $"Skipped item #{skippedItemNumber} for later review and moved to {CurrentPositionText}.";
+                : $"Skipped item #{skippedItemNumber} for later review and moved to {CurrentPositionText}.", Severity.Info);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to skip the current triage item.");
-            operationSeverity = Severity.Error;
-            operationMessage = "An unexpected error occurred while skipping this item.";
+            ShowTransientFeedback("An unexpected error occurred while skipping this item.", Severity.Error);
         }
         finally
         {
@@ -660,10 +658,9 @@ public partial class Triage : ComponentBase
 
             SyncPlanningSelectionFromCurrentItem();
 
-            operationSeverity = Severity.Success;
-            operationMessage = selectedMilestoneNumber is null
+            ShowTransientFeedback(selectedMilestoneNumber is null
                 ? $"Cleared milestone assignment for item #{CurrentItem.Number}."
-                : $"Assigned milestone '{selectedMilestoneTitle}' to item #{CurrentItem.Number}.";
+                : $"Assigned milestone '{selectedMilestoneTitle}' to item #{CurrentItem.Number}.", Severity.Success);
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
@@ -675,14 +672,12 @@ public partial class Triage : ComponentBase
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while assigning milestone to triage item.");
-            operationSeverity = Severity.Error;
-            operationMessage = $"GitHub API request failed while assigning milestone. {ex.Message}";
+            ShowTransientFeedback($"GitHub API request failed while assigning milestone. {ex.Message}", Severity.Error);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to assign milestone to the current triage item.");
-            operationSeverity = Severity.Error;
-            operationMessage = "An unexpected error occurred while assigning the selected milestone.";
+            ShowTransientFeedback("An unexpected error occurred while assigning the selected milestone.", Severity.Error);
         }
         finally
         {
@@ -718,8 +713,7 @@ public partial class Triage : ComponentBase
                 selectedStatusOption.Id,
                 selectedStatusOption.Name);
 
-            operationSeverity = Severity.Success;
-            operationMessage = $"Added item #{currentItemNumber} to '{ActiveProjectBoard.Title}' with status '{selectedStatusOption.Name}'.";
+            ShowTransientFeedback($"Added item #{currentItemNumber} to '{ActiveProjectBoard.Title}' with status '{selectedStatusOption.Name}'.", Severity.Success);
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
@@ -731,14 +725,12 @@ public partial class Triage : ComponentBase
         catch (HttpRequestException ex)
         {
             Logger.LogError(ex, "GitHub API request failed while adding triage item to project board.");
-            operationSeverity = Severity.Error;
-            operationMessage = $"GitHub API request failed while adding to project board. {ex.Message}";
+            ShowTransientFeedback($"GitHub API request failed while adding to project board. {ex.Message}", Severity.Error);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to add the current triage item to a project board.");
-            operationSeverity = Severity.Error;
-            operationMessage = "An unexpected error occurred while adding this item to a project board.";
+            ShowTransientFeedback("An unexpected error occurred while adding this item to a project board.", Severity.Error);
         }
         finally
         {
@@ -759,14 +751,12 @@ public partial class Triage : ComponentBase
         {
             currentSession = await TriageService.RevisitSkippedItemsAsync(currentSession);
             SyncPlanningSelectionFromCurrentItem();
-            operationSeverity = Severity.Info;
-            operationMessage = "Skipped items were appended to the queue for review.";
+            ShowTransientFeedback("Skipped items were appended to the queue for review.", Severity.Info);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to revisit skipped triage items.");
-            operationSeverity = Severity.Error;
-            operationMessage = "An unexpected error occurred while revisiting skipped items.";
+            ShowTransientFeedback("An unexpected error occurred while revisiting skipped items.", Severity.Error);
         }
         finally
         {
@@ -799,16 +789,14 @@ public partial class Triage : ComponentBase
             Logger.LogError(ex, "GitHub API request failed while loading milestone options for triage.");
             availableMilestoneOptions = [];
             milestoneLoadFailed = true;
-            operationSeverity = Severity.Error;
-            operationMessage = $"GitHub API request failed while loading milestone options. {ex.Message}";
+            ShowTransientFeedback($"GitHub API request failed while loading milestone options. {ex.Message}", Severity.Error);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to load milestone options for triage.");
             availableMilestoneOptions = [];
             milestoneLoadFailed = true;
-            operationSeverity = Severity.Error;
-            operationMessage = "An unexpected error occurred while loading milestone options.";
+            ShowTransientFeedback("An unexpected error occurred while loading milestone options.", Severity.Error);
         }
 
         try
@@ -857,8 +845,7 @@ public partial class Triage : ComponentBase
 
             if (!milestoneLoadFailed)
             {
-                operationSeverity = Severity.Warning;
-                operationMessage = $"Milestones loaded, but project-board options could not be loaded. {ex.Message}";
+                ShowTransientFeedback($"Milestones loaded, but project-board options could not be loaded. {ex.Message}", Severity.Warning);
             }
         }
         catch (Exception ex)
@@ -871,8 +858,7 @@ public partial class Triage : ComponentBase
 
             if (!milestoneLoadFailed)
             {
-                operationSeverity = Severity.Warning;
-                operationMessage = "Milestones loaded, but an unexpected error occurred while loading project-board options.";
+                ShowTransientFeedback("Milestones loaded, but an unexpected error occurred while loading project-board options.", Severity.Warning);
             }
         }
         finally

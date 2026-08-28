@@ -19,6 +19,18 @@
                     <MudText Typo="Typo.body2">Loading repositories...</MudText>
                 </MudStack>
             }
+            else if (hasRepositoryLoadFailure)
+            {
+                <MudStack Spacing="1" aria-live="assertive" role="alert" data-testid="migration-repositories-load-error">
+                    <MudText Typo="Typo.h6">Unable to load repositories</MudText>
+                    <MudText Typo="Typo.body2">@repositoryLoadErrorMessage</MudText>
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Secondary"
+                               OnClick="ReloadRepositoriesAsync">
+                        Try loading repositories again
+                    </MudButton>
+                </MudStack>
+            }
             else
             {
                 <MudGrid Spacing="2">
@@ -451,13 +463,7 @@
         <MudStack Spacing="1">
             <MudText Typo="Typo.h6">Status and guidance</MudText>
 
-            @if (!string.IsNullOrWhiteSpace(operationMessage))
-            {
-                <MudAlert Severity="@operationSeverity" Dense="true" Variant="Variant.Outlined" data-testid="migration-operation-message">
-                    @operationMessage
-                </MudAlert>
-            }
-            else if (!CanPreview)
+            @if (!CanPreview)
             {
                 <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" data-testid="migration-requirements-info">
                     @BoardSelectionRequirementsMessage

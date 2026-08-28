@@ -14,6 +14,7 @@ public sealed class ActionsTemplatesTests
 {
     private readonly IActionsTemplateService _workflowTemplateService = Substitute.For<IActionsTemplateService>();
     private readonly IRepositoryService _repositoryService = Substitute.For<IRepositoryService>();
+    private IRenderedComponent<MudSnackbarProvider> _snackbarProvider = default!;
 
     [Fact]
     public async Task ActionsTemplates_WhileTemplatesAreLoading_ShowsLoadingState()
@@ -168,9 +169,9 @@ public sealed class ActionsTemplatesTests
         cut.WaitForAssertion(() =>
         {
             Assert.Single(cut.FindAll("[data-testid='actions-templates-feedback-region']"));
-            Assert.Contains("Applied template successfully", cut.Markup);
             Assert.Single(cut.FindAll("[data-testid='actions-templates-apply-results']"));
         });
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Applied template successfully"));
     }
 
     [Fact]
@@ -205,7 +206,7 @@ public sealed class ActionsTemplatesTests
         // Assert
         cut.WaitForAssertion(() =>
         {
-            Assert.Contains("repository errors", cut.Markup);
+            SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "repository errors");
             Assert.Contains("GitHub API request failed.", cut.Markup);
         });
     }
@@ -299,7 +300,7 @@ public sealed class ActionsTemplatesTests
 
         ctx.Render<MudPopoverProvider>();
         ctx.Render<MudDialogProvider>();
-        ctx.Render<MudSnackbarProvider>();
+        _snackbarProvider = ctx.Render<MudSnackbarProvider>();
 
         return ctx;
     }

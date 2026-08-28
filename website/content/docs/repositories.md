@@ -62,7 +62,7 @@ Key goals of the Repositories page:
 - **Edit** (row action) — edit repository metadata or catalogue settings for a single repository.
 - **More** (row action) — overflow menu for additional per-repository management.
 
-Until those ship, each control opens an informational snackbar and feedback message stating that the action will be available in a future milestone.
+Until those ship, each control opens an informational snackbar stating that the action will be available in a future milestone.
 
 {{% /steps %}}
 
@@ -72,7 +72,7 @@ Until those ship, each control opens an informational snackbar and feedback mess
 - **Search field** — Filter repositories by name.
 - **Catalogue filter** — Exclusive toggle group with **All**, **Open source**, and **Not open source**. The filter is not persisted across page reloads.
 - **Data grid** — Repository name, status chips, visibility chips, and stub row actions. On phone-width viewports the grid stacks each field so names wrap, chips stay fully visible, and row actions remain tappable without horizontal overflow.
-- **Feedback region** — Loading, empty, success, error, filter-empty, and placeholder messages.
+- **Feedback region** — Loading, empty, success, error, filter-empty, and catalogue status messages. Placeholder stub actions use snackbar toasts only.
 
 ### Empty and error states
 
