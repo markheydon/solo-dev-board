@@ -113,7 +113,7 @@ Application version numbers are calculated automatically at build time by [MinVe
 - OSS catalogue identification ([#440](https://github.com/markheydon/solo-dev-board/issues/440)) — **complete**
 - Post-release refinements: Label Manager bulk delete and keep-`area/*` ([#444](https://github.com/markheydon/solo-dev-board/issues/444), [#446](https://github.com/markheydon/solo-dev-board/issues/446)), Iteration stall/capacity UX ([#445](https://github.com/markheydon/solo-dev-board/issues/445)), snackbar standardisation ([#465](https://github.com/markheydon/solo-dev-board/issues/465)), migration keep-`area/*` ([#464](https://github.com/markheydon/solo-dev-board/issues/464), [#471](https://github.com/markheydon/solo-dev-board/issues/471)), feedback region cleanup ([#473](https://github.com/markheydon/solo-dev-board/issues/473))
 
-**Out of milestone (backlog):** Private user-owned Projects v2 via hosted sign-in ([#293](https://github.com/markheydon/solo-dev-board/issues/293)) — platform-blocked; see [`plan/GITHUB_PROJECTS_V2_ACCESS.md`](GITHUB_PROJECTS_V2_ACCESS.md).
+**Out of milestone (backlog):** Private user-owned Projects v2 via hosted sign-in ([#293](https://github.com/markheydon/solo-dev-board/issues/293)) — platform-blocked; see [`plan/GITHUB_PROJECTS_V2_ACCESS.md`](GITHUB_PROJECTS_V2_ACCESS.md). Product operating system overlay ([#475](https://github.com/markheydon/solo-dev-board/issues/475)) — ice-boxed direction; see [`plan/PRODUCT_OPERATING_SYSTEM.md`](PRODUCT_OPERATING_SYSTEM.md). Do not treat this as `v1.2` scope until that release is declared.
 
 **Status:** In progress — **82 closed, 3 open** on GitHub milestone `v1.1 - Cross-Repo Planning & Refinement`. Release tag **`v1.1.0`** when shipped.
 
