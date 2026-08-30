@@ -64,6 +64,57 @@ public sealed class MigrationTests
     }
 
     [Fact]
+    public async Task Migration_PreviewClickedWithIgnoreAreaLabelsUnchecked_PassesIgnoreFalseToService()
+    {
+        // Arrange
+        var sourceRepository = CreateRepository("owner", "repo-a");
+        var targetRepository = CreateRepository("owner", "repo-b");
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([sourceRepository, targetRepository]);
+
+        _migrationService.PreviewMigrationAsync(
+                "owner/repo-a",
+                Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })),
+                Arg.Is<MigrationScopeDto>(scope => scope!.IncludeLabels && scope.IncludeMilestones),
+                MigrationConflictStrategy.Skip,
+                Arg.Any<MigrationBoardSelectionDto?>(),
+                true,
+                false,
+                Arg.Any<CancellationToken>())
+            .Returns(new MigrationPreviewDto(
+                MigrationConflictStrategy.Skip,
+                [new LabelSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [], [], [])],
+                [new MilestoneSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [])],
+                []));
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Migration>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='migration-repository-autocomplete']"));
+
+        await SelectRepositoriesAsync(cut, sourceRepository, targetRepository);
+
+        cut.Find("[data-testid='migration-ignore-area-labels-checkbox']").Change(false);
+
+        var targetCheckboxes = cut.FindAll("[data-testid='migration-target-checkbox']");
+        targetCheckboxes[1].Change(true);
+
+        cut.Find("[data-testid='migration-preview-button']").Click();
+
+        // Assert
+        await _migrationService.Received(1).PreviewMigrationAsync(
+            "owner/repo-a",
+            Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })),
+            Arg.Is<MigrationScopeDto>(scope => scope!.IncludeLabels && scope.IncludeMilestones),
+            MigrationConflictStrategy.Skip,
+            Arg.Any<MigrationBoardSelectionDto?>(),
+            true,
+            false,
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task Migration_SkipPreviewWithIgnoredAreaLabels_ShowsIgnoredCaption()
     {
         // Arrange
