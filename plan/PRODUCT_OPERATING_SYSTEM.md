@@ -1,7 +1,8 @@
 # Product operating system — deferred direction
 
 **Status:** Direction only. Not in scope for `v1.1`. Unmilestoned; ice-boxed as [#475](https://github.com/markheydon/solo-dev-board/issues/475).  
-**Does not replace:** PAT-only local trusted mode, or the existing GitHub operations features.
+**Does not replace:** PAT-only local trusted mode, or the existing GitHub operations features.  
+**Detail:** Field lists, examples, positioning, and the 2026-08-30 discussion notes are in [Captured vision (2026-08-30)](#captured-vision-2026-08-30). That appendix is memory, not committed scope.
 
 Solo developers think in **products**. GitHub starts at **repositories**. This note records a future overlay that closes that gap without turning SoloDevBoard into Jira for one person.
 
