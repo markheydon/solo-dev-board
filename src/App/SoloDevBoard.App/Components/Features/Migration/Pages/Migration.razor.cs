@@ -42,6 +42,7 @@ public partial class Migration : ComponentBase
     private bool migrateLabels = true;
     private bool migrateMilestones = true;
     private bool migrateProjectBoardColumns;
+    private bool keepAreaLabels = true;
     private string sourceProjectBoardId = string.Empty;
     private Dictionary<string, string> targetProjectBoardSelections = new(StringComparer.OrdinalIgnoreCase);
     private MigrationProjectBoardDiscoveryDto? sourceBoardDiscovery;
@@ -171,6 +172,13 @@ public partial class Migration : ComponentBase
     private Task OnConflictStrategyChangedAsync(MigrationConflictStrategy value)
     {
         conflictStrategy = value;
+        ResetPreviewAndResults();
+        return Task.CompletedTask;
+    }
+
+    private Task OnKeepAreaLabelsChangedAsync(bool value)
+    {
+        keepAreaLabels = value;
         ResetPreviewAndResults();
         return Task.CompletedTask;
     }
@@ -468,7 +476,8 @@ public partial class Migration : ComponentBase
                 targetRepositoryFullNames.OrderBy(name => name, StringComparer.OrdinalIgnoreCase).ToArray(),
                 BuildScope(),
                 conflictStrategy,
-                BuildBoardSelection());
+                BuildBoardSelection(),
+                keepAreaLabels);
 
             showPreview = true;
             applyResult = new MigrationResultDto(conflictStrategy, [], [], []);
@@ -524,7 +533,8 @@ public partial class Migration : ComponentBase
                 targetRepositoryFullNames.OrderBy(name => name, StringComparer.OrdinalIgnoreCase).ToArray(),
                 BuildScope(),
                 conflictStrategy,
-                BuildBoardSelection());
+                BuildBoardSelection(),
+                keepAreaLabels);
 
             showPreview = false;
             previewResult = new MigrationPreviewDto(conflictStrategy, [], [], []);
@@ -710,6 +720,7 @@ public partial class Migration : ComponentBase
         migrateLabels = true;
         migrateMilestones = true;
         migrateProjectBoardColumns = false;
+        keepAreaLabels = true;
         conflictStrategy = MigrationConflictStrategy.Skip;
         ClearBoardSelectionState();
         ResetPreviewAndResults();

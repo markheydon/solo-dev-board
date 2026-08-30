@@ -1,4 +1,5 @@
 @page "/migrate"
+@using SoloDevBoard.App.Components.Features.Labels.Components
 @using SoloDevBoard.App.Components.Features.Migration.Components
 
 <PageTitle>One-Click Migration</PageTitle>
@@ -146,6 +147,21 @@
                                                data-testid="migration-scope-columns-switch" />
                                 </MudStack>
                             </MudPaper>
+
+                            @if (migrateLabels && conflictStrategy == MigrationConflictStrategy.Overwrite)
+                            {
+                                <MudPaper Class="pa-3" Outlined="true" data-testid="migration-keep-area-labels-card">
+                                    <MudStack Spacing="1">
+                                        <MudCheckBox T="bool"
+                                                     Value="keepAreaLabels"
+                                                     ValueChanged="OnKeepAreaLabelsChangedAsync"
+                                                     Label="Keep area/* labels"
+                                                     Disabled="IsBusy"
+                                                     data-testid="migration-keep-area-labels-checkbox" />
+                                        <MudText Typo="Typo.caption">Target labels whose names start with <code>area/</code> are kept instead of deleted during overwrite.</MudText>
+                                    </MudStack>
+                                </MudPaper>
+                            }
 
                             @if (migrateProjectBoardColumns)
                             {
@@ -317,6 +333,11 @@
                             @if (labelPreview.ToDelete.Count > 0)
                             {
                                 <LabelPreviewTable Heading="Labels to delete" Labels="labelPreview.ToDelete" />
+                            }
+
+                            @if (keepAreaLabels && labelPreview.KeptAreaLabels.Count > 0)
+                            {
+                                <MudText Typo="Typo.caption" data-testid="migration-kept-area-labels-caption">@LabelAreaCaptionHelper.FormatKeptAreaLabelsCaption(labelPreview.KeptAreaLabels.Count)</MudText>
                             }
                         }
 

@@ -11,13 +11,16 @@ test.describe('One-Click Migration shell', () => {
     await expect(page.getByTestId('migration-preview-empty-state')).toBeVisible({ timeout: 15_000 });
 
     const loadError = page.getByTestId('migration-repositories-load-error');
+    const columnsSwitch = page.getByTestId('migration-scope-columns-switch');
+    await expect(loadError.or(columnsSwitch)).toBeVisible({ timeout: 30_000 });
+
     if (await loadError.isVisible()) {
       await expect(page.getByText(/GitHub API request failed while loading repositories/i)).toBeVisible();
       await expect(page.getByRole('button', { name: /try loading repositories again/i })).toBeVisible();
       return;
     }
 
-    await expect(page.getByTestId('migration-scope-columns-switch')).toBeVisible();
+    await expect(columnsSwitch).toBeVisible();
     await expect(page.getByText('Project board columns')).toBeVisible();
     await expect(page.getByTestId('migration-preview-button')).toBeDisabled();
   });
@@ -28,5 +31,27 @@ test.describe('One-Click Migration shell', () => {
     await expect(page.getByTestId('migration-repositories-load-error')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(/GitHub API request failed while loading repositories/i)).toBeVisible();
     await expect(page.getByRole('button', { name: /try loading repositories again/i })).toBeVisible();
+  });
+
+  test('overwrite with labels scope shows keep area labels control when repositories load', async ({ page }) => {
+    await page.goto('/migrate');
+
+    await expect(page.getByTestId('migration-workflow-controls-card')).toBeVisible({ timeout: 15_000 });
+
+    const loadError = page.getByTestId('migration-repositories-load-error');
+    const conflictSelect = page.getByTestId('migration-conflict-strategy-select');
+    await expect(loadError.or(conflictSelect)).toBeVisible({ timeout: 30_000 });
+
+    if (await loadError.isVisible()) {
+      return;
+    }
+
+    await conflictSelect.click();
+    await page.getByRole('option', { name: 'Overwrite' }).click();
+
+    const keepAreaCheckbox = page.getByTestId('migration-keep-area-labels-checkbox');
+    await expect(keepAreaCheckbox).toBeVisible();
+    await expect(keepAreaCheckbox).toBeChecked();
+    await expect(page.getByText('Keep area/* labels')).toBeVisible();
   });
 });
