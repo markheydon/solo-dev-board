@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 using MudBlazor;
 using SoloDevBoard.App.Theming;
 using SoloDevBoard.Application.Services.GitHub;
-using SoloDevBoard.Infrastructure.GitHub;
+using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Themes;
 
 namespace SoloDevBoard.App.Components.Shell.Layout;

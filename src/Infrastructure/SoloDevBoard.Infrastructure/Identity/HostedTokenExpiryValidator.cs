@@ -1,3 +1,4 @@
+using SoloDevBoard.Application.Authentication;
 using System.Globalization;
 using System.Security.Claims;
 using SoloDevBoard.Infrastructure.GitHub;

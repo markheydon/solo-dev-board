@@ -12,11 +12,10 @@ using SoloDevBoard.App.Components.Features.Planning;
 using SoloDevBoard.App.Components.Shell;
 using SoloDevBoard.App.Planning;
 using SoloDevBoard.App.Theming;
+using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Application.Services.Common;
 using SoloDevBoard.Application.Services.Planning;
-using SoloDevBoard.Infrastructure.Common;
-using SoloDevBoard.Infrastructure.GitHub;
-using SoloDevBoard.Infrastructure.Identity;
+using SoloDevBoard.Composition;
 
 const string HostedSignInStateCookieName = "solo-dev-board.hosted-sign-in-state";
 
@@ -91,10 +90,8 @@ if (hostedSignInEnabled)
     builder.Services.AddAuthorization();
 }
 
-// Add our services.
-// The Infrastructure project is referenced here solely as the DI composition root.
-builder.Services.AddApplicationServices();
-builder.Services.AddInfrastructureServices(builder.Configuration);
+// Add our services via the shared composition root.
+builder.Services.AddSoloDevBoard(builder.Configuration);
 
 var app = builder.Build();
 app.MapDefaultEndpoints();
@@ -119,7 +116,7 @@ if (hostedSignInEnabled)
 {
     app.UseAuthentication();
     app.UseAuthorization();
-    app.UseHostedAdmissionControl();
+    app.UseSoloDevBoardInfrastructure();
 }
 
 app.UseAntiforgery();

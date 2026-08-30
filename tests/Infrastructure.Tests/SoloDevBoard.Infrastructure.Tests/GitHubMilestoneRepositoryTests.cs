@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using SoloDevBoard.Domain.Entities.Milestones;
+using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Infrastructure.GitHub;
 using SoloDevBoard.Infrastructure.Milestones;
 

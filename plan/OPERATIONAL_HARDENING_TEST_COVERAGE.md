@@ -21,7 +21,8 @@ The scope covers response caching, health endpoints and hosting probes, structur
 | TTL expiry and refetch after configured lifetime (labels and milestones) | Unit | `GitHubResponseCacheTests.cs` |
 | Invalid TTL configuration rejected at startup | Unit | `GitHubCacheOptionsValidatorTests.cs`, `InfrastructureServiceExtensionsTests.cs` |
 | Invalid pagination configuration rejected at startup | Unit | `GitHubPaginationOptionsValidatorTests.cs`, `InfrastructureServiceExtensionsTests.cs` |
-| `GitHubResponseCache` registered in DI composition root | Unit | `InfrastructureServiceExtensionsTests.cs` |
+| `GitHubResponseCache` registered in DI composition root | Unit | `InfrastructureServiceExtensionsTests.cs`, `Composition.Tests/.../SoloDevBoardServiceCollectionExtensionsTests.cs` |
+| App project does not reference Infrastructure (architecture guard) | Unit | `Composition.Tests/.../AppArchitectureGuardTests.cs` |
 
 Out of scope for this tranche: caching issues, pull requests, workflow runs, GraphQL project board queries, distributed cache, and Application-layer DTO caching (see DEC-018).
 

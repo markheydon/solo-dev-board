@@ -48,17 +48,19 @@ Use the following spellings consistently:
 The solution follows a **clean/layered architecture** with the following projects:
 
 ```
-SoloDevBoard.App             → Blazor Server UI (presentation layer)
-SoloDevBoard.Application     → Application logic, use cases, service interfaces
-SoloDevBoard.Domain          → Domain entities, value objects, domain events
-SoloDevBoard.Infrastructure  → GitHub API clients, persistence, external integrations
+SoloDevBoard.Domain         → Domain entities, value objects, domain events (no external dependencies)
+SoloDevBoard.Application    → Application logic, use cases, service interfaces, DTOs, auth contracts
+SoloDevBoard.Infrastructure → GitHub API clients, persistence, external integrations
+SoloDevBoard.Composition    → DI/pipeline composition root (wires Application + Infrastructure)
+SoloDevBoard.App            → Blazor Server UI (presentation + host-specific auth endpoints)
 ```
 
 ### Rules
 - **Domain** has no external dependencies.
 - **Application** depends on Domain only.
 - **Infrastructure** depends on Application and Domain (implements interfaces).
-- **App** depends on Application (calls use cases via services/mediators).
+- **Composition** depends on Application and Infrastructure; owns `AddSoloDevBoard` and pipeline wiring.
+- **App** depends on Application and Composition only; **must not reference Infrastructure** (not in `.csproj`, not in `using` statements).
 - Use constructor injection throughout; avoid service locator patterns.
 
 ### Boundary Data Shapes (DEC-008)
@@ -197,6 +199,7 @@ When code changes are made, ensure the following are kept in sync:
 | New decision | `plan/DECISIONS.md` (+ constitution if cross-cutting) |
 | Scope change | `plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md` |
 | New env variable | `docs/getting-started.md`, `docs/deployment.md`, `src/SoloDevBoard.AppHost/README.md` |
+| Layer boundary or composition-root change | `AGENTS.md`, `plan/DECISIONS.md` (DEC-002), `CONTRIBUTING.md`, `.agents/contracts/code-review.md`, `.agents/skills/dotnet-best-practices/SKILL.md`, `plan/ASPIRE_MULTI_PROCESS_FINDINGS.md` when multi-process notes apply |
 | New release | `plan/RELEASE_PLAN.md` |
 
 ---

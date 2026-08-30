@@ -6,8 +6,7 @@ using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
-using SoloDevBoard.Infrastructure.GitHub;
-using SoloDevBoard.Infrastructure.Identity;
+using SoloDevBoard.Application.Authentication;
 
 namespace SoloDevBoard.App.Authentication;
 

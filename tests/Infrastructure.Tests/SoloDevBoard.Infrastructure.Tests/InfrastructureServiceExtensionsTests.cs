@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.Common;
 using SoloDevBoard.Infrastructure.Common;
+using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Infrastructure.GitHub;
 using SoloDevBoard.Infrastructure.Identity;
 

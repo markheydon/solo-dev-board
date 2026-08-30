@@ -2,8 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using SoloDevBoard.Application.Identity;
-using SoloDevBoard.Infrastructure.GitHub;
-using SoloDevBoard.Infrastructure.Identity;
+using SoloDevBoard.Application.Authentication;
 
 namespace SoloDevBoard.App.Authentication;
 

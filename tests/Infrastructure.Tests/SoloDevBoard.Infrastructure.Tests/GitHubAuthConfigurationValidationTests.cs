@@ -1,3 +1,4 @@
+using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Infrastructure.GitHub;
 using SoloDevBoard.Infrastructure.Identity;
 

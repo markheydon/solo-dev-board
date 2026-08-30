@@ -5,8 +5,7 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
-using SoloDevBoard.Infrastructure.GitHub;
-using SoloDevBoard.Infrastructure.Identity;
+using SoloDevBoard.Application.Authentication;
 
 namespace SoloDevBoard.App.Authentication;
 
@@ -16,6 +15,8 @@ internal sealed class HostedGitHubAuthGateway(
     IOptions<HostedAdmissionControlOptions> admissionOptions)
 {
     internal const string HostedGitHubAuthClientName = "HostedGitHubAuthClient";
+
+    private const string GitHubJsonAcceptMediaType = "application/vnd.github+json";
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -265,7 +266,7 @@ internal sealed class HostedGitHubAuthGateway(
     {
         var request = new HttpRequestMessage(method, path);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(GitHubApiHeaders.JsonAcceptMediaType));
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(GitHubJsonAcceptMediaType));
 
         return request;
     }

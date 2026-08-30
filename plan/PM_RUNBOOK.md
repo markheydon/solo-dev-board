@@ -159,7 +159,7 @@ Implement issue #[number]
 - Invokes the **Delivery** contract ([`.agents/contracts/delivery.md`](../.agents/contracts/delivery.md))
 - Runs **implementation preflight** before coding (load context, codebase discovery, touch map, proceed gate)
 - Loads Aspire skills (`aspire`, then `aspire-orchestration` / `aspire-monitoring` when the AppHost is running)
-- Writes code following layered architecture (Domain/Application/Infrastructure/App)
+- Writes code following layered architecture (Domain/Application/Infrastructure/Composition/App)
 - After C# or Razor fixes while Aspire is running, rebuilds the live `app` resource (`aspire resource app rebuild` then `aspire wait app`) and inspects `aspire otel logs` / `aspire logs` on exceptions
 - Creates xUnit v3 tests (NSubstitute, `Assert.*`, correct naming)
 - Updates user-facing docs in `website/content/docs/` if needed
@@ -453,7 +453,7 @@ START
 - Runs implementation preflight (context, codebase discovery, touch map, proceed gate)
 - Sets `status/in-progress` on the implementing issue (Roadmap Sync updates Project #8)
 - Loads Aspire skills and follows the live AppHost loop (logs, `app` resource rebuild)
-- Implements code (Domain/Application/Infrastructure/App layers)
+- Implements code (Domain/Application/Infrastructure/Composition/App layers)
 - Creates xUnit v3 tests (NSubstitute, `Assert.*`)
 - Updates user-facing docs
 - Records architectural decisions via `repo-decision-log` / `plan/DECISIONS.md`

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using SoloDevBoard.App.Authentication;
+using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Infrastructure.Identity;
 
 namespace SoloDevBoard.App.Tests;

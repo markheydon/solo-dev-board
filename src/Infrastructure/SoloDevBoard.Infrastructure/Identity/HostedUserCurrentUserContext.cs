@@ -1,3 +1,4 @@
+using SoloDevBoard.Application.Authentication;
 using System.Globalization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;

@@ -1,3 +1,4 @@
+using SoloDevBoard.Application.Authentication;
 namespace SoloDevBoard.Infrastructure.GitHub;
 
 /// <summary>Stores the GitHub login resolved from a PAT when <see cref="GitHubAuthOptions.OwnerLogin" /> is not configured.</summary>

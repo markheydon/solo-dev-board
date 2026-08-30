@@ -31,7 +31,7 @@ That matches the incremental path in [ADR-0016](../adr/archive/0016-consider-asp
 
 Other facts that matter for a later split:
 
-- **Layered libraries are already in place.** `Domain`, `Application`, and `Infrastructure` are class libraries. The App project is the only composition root (`AddApplicationServices` + `AddInfrastructureServices` in `Program.cs`).
+- **Layered libraries are already in place.** `Domain`, `Application`, `Infrastructure`, and `Composition` are class libraries. `SoloDevBoard.Composition` is the DI composition root (`AddSoloDevBoard`); `SoloDevBoard.App` references Application and Composition only — not Infrastructure directly ([DEC-002](DECISIONS.md#dec-002-layered--clean-architecture), clarification 2026-08-30).
 - **`ServiceDefaults` already prepares multi-process Aspire.** HTTP clients get service discovery and standard resilience, but nothing in the solution currently *consumes* another Aspire resource by name.
 - **GitHub is called in-process from Blazor Server.** There is no HTTP API for labels, audit, triage, or migration. Cache is `IMemoryCache` scoped by user login — process-local, lost on scale-to-zero, and not shareable with a worker.
 - **Hosted authentication lives on the web host.** Cookie sign-in, OAuth callback, and admission control are ASP.NET endpoints on `SoloDevBoard.App`. PAT mode injects a token into the same process.
@@ -136,7 +136,7 @@ Should **not** be published with `WithExternalHttpEndpoints()` on a public hoste
 
 DEC-008 still applies: HTTP contracts are Application DTOs (or API-specific request/response records mapped from DTOs). Domain entities do not leave Application.
 
-Composition: `apiservice` becomes a second composition root that calls the same `AddApplicationServices()` / `AddInfrastructureServices()` extensions. The App project would drop its Infrastructure project reference once it no longer composes GitHub clients — that is the cleanest way to stop the UI from “reaching around” the API.
+Composition: `apiservice` becomes a second composition root that calls the same `AddSoloDevBoard` extension from `SoloDevBoard.Composition`. A future Functions worker should also reference Composition rather than wiring Infrastructure from `SoloDevBoard.App`.
 
 ### 3.3 `functions` (new, when overnight work exists)
 
@@ -150,7 +150,7 @@ Aspire 13.4 models this as `AddAzureFunctionsProject<T>("functions")` from `Aspi
 
 Timer triggers are the natural fit for “review all my repos overnight”. They need no extra messaging resource beyond host storage.
 
-Functions should call **Application use cases** (scan/write snapshot), not scrape Razor pages, and should not duplicate GitHub HTTP mapping. Prefer referencing Application + Infrastructure as libraries from the Functions host, *or* calling `apiservice` over HTTP. Library reference is simpler for long-running scans (no HTTP timeouts, easier cancellation and progress). HTTP is better if you want a single GitHub-rate-limit chokepoint. Those two options should be chosen when the first scanner is specified — not both.
+Functions should call **Application use cases** (scan/write snapshot), not scrape Razor pages, and should not duplicate GitHub HTTP mapping. Prefer referencing `SoloDevBoard.Composition` (or Application + Infrastructure as libraries) from the Functions host, *or* calling `apiservice` over HTTP. Library reference via Composition is simpler for long-running scans (no HTTP timeouts, easier cancellation and progress). HTTP is better if you want a single GitHub-rate-limit chokepoint. Those two options should be chosen when the first scanner is specified — not both.
 
 ### 3.4 Optional backing stores
 
@@ -299,9 +299,9 @@ Idle cost will rise modestly (Storage + possibly a second Container App). The po
 Do **not** block v1.0.0 on this. Sequence for a later phase:
 
 1. **Keep the monolith** until the first overnight scanner has a GitHub issue, acceptance criteria, and a wireframe for how snapshots appear in the UI.
-2. **Extract `apiservice`** only if the scanner *or* a second client needs HTTP. If the first scanner can be a Functions project referencing Application + Infrastructure, an API split can wait. The Aspire starter’s `apiservice` is valuable once the UI and a worker would otherwise duplicate composition.
+2. **Extract `apiservice`** only if the scanner *or* a second client needs HTTP. If the first scanner can be a Functions project referencing `SoloDevBoard.Composition`, an API split can wait. The Aspire starter’s `apiservice` is valuable once the UI and a worker would otherwise duplicate composition.
 3. **Add Storage + Functions (or a scheduled Job)** for the first scanner. Persist snapshots. Teach Audit (or a new page) to read snapshots with an explicit “last scanned” timestamp and stale-data copy.
-4. **Thin the Blazor composition root** so Infrastructure is no longer referenced from App (optional hardening after the API exists).
+4. ~~**Thin the Blazor composition root** so Infrastructure is no longer referenced from App~~ **Done (2026-08-30):** `SoloDevBoard.Composition` owns DI wiring; App references Application and Composition only.
 5. **Rename** AppHost resource `app` → `webfrontend` when it is no longer the only compute resource, so dashboard and `aspire logs` names match Aspire convention. Coordinate CD health checks and docs that say `aspire logs app`.
 6. Record a decision log entry (next DEC) only when we commit to the split. This findings file is not that decision.
 

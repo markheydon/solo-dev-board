@@ -25,7 +25,7 @@
 
 	<ItemGroup>
     <ProjectReference Include="..\..\Application\SoloDevBoard.Application\SoloDevBoard.Application.csproj" />
-    <ProjectReference Include="..\..\Infrastructure\SoloDevBoard.Infrastructure\SoloDevBoard.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Composition\SoloDevBoard.Composition\SoloDevBoard.Composition.csproj" />
     <ProjectReference Include="..\..\SoloDevBoard.ServiceDefaults\SoloDevBoard.ServiceDefaults.csproj" />
   </ItemGroup>
 

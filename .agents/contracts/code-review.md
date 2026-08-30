@@ -24,7 +24,8 @@ Invoke this agent when you need to review:
   - `Domain` has no external dependencies.
   - `Application` depends only on `Domain`.
   - `Infrastructure` implements interfaces from `Application`.
-  - `App` depends only on `Application`.
+  - `Composition` wires Application and Infrastructure; hosts call `AddSoloDevBoard`.
+  - `App` depends only on `Application` and `Composition`; flag any `using SoloDevBoard.Infrastructure` in App source or an Infrastructure `ProjectReference` in `SoloDevBoard.App.csproj`.
 - Verify public Application service interfaces use DTOs, not domain entities.
 - Ensure Razor components contain rendering and event wiring only; business logic belongs in Application or code-behind.
 - Confirm new UI work uses MudBlazor components and utility classes before custom CSS.

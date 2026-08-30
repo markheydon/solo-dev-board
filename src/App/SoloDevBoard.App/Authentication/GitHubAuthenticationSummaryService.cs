@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Options;
 using SoloDevBoard.Application.Services.GitHub;
-using SoloDevBoard.Infrastructure.GitHub;
+using SoloDevBoard.Application.Authentication;
 
 namespace SoloDevBoard.App.Authentication;
 

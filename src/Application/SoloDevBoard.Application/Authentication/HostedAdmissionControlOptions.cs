@@ -1,4 +1,4 @@
-namespace SoloDevBoard.Infrastructure.Identity;
+namespace SoloDevBoard.Application.Authentication;
 
 /// <summary>
 /// Configuration options for hosted admission control.

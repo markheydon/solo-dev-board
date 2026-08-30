@@ -1,3 +1,4 @@
+using SoloDevBoard.Application.Authentication;
 using System.Security.Claims;
 using Microsoft.Extensions.Options;
 using SoloDevBoard.Infrastructure.GitHub;

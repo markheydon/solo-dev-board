@@ -1,7 +1,6 @@
 using System.Net;
 using System.Text;
-using SoloDevBoard.Infrastructure.GitHub;
-using SoloDevBoard.Infrastructure.Identity;
+using SoloDevBoard.Application.Authentication;
 
 namespace SoloDevBoard.App.Authentication;
 
