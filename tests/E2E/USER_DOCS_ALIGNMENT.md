@@ -135,10 +135,11 @@ Issue [#415](https://github.com/markheydon/solo-dev-board/issues/415) closes the
 | Skip / Merge / Overwrite conflict matrix for Status options | `MigrationServiceTests` | — |
 | Create-new board path and preserve target option ids on name match | `MigrationServiceTests` | — |
 | Overwrite does not delete options still referenced by items | `MigrationServiceTests` | — |
+| Overwrite keep `area/*` preview and apply behaviour | `MigrationServiceTests` | — |
 | Missing Status field and inaccessible boards | `MigrationServiceTests`, `GitHubServiceTests` | — |
 | GraphQL discovery, `createProjectV2`, and update payload retains existing option ids | `GitHubServiceTests` | — |
 | Columns scope switch, board selectors, preview locked until boards chosen | `MigrationTests` | `migrate.spec.ts` columns scope switch |
-| Overwrite warning copy and inaccessible-board alert | `MigrationTests` | — |
+| Overwrite warning copy, keep `area/*` nested control, and inaccessible-board alert | `MigrationTests` | `migrate.spec.ts` keep `area/*` control when Overwrite selected |
 | Setup shell, disabled preview, API failure feedback | — | `migrate.spec.ts` |
 | Migration overview screenshot with board selectors | — | `docs-capture` (`one-click-migration/overview.png`) |
 

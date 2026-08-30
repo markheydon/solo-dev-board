@@ -9,6 +9,7 @@ public interface IMigrationService
     /// <param name="scope">The migration item types to include.</param>
     /// <param name="conflictStrategy">The conflict strategy applied to existing target items.</param>
     /// <param name="boardSelection">The project board selections when <paramref name="scope"/> includes project board columns.</param>
+    /// <param name="keepAreaLabels">When <see langword="true" /> and <paramref name="conflictStrategy"/> is <see cref="MigrationConflictStrategy.Overwrite"/>, labels with the <c>area/</c> prefix on targets are kept instead of deleted.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>A preview describing label, milestone, and Status column changes for each target repository.</returns>
     Task<MigrationPreviewDto> PreviewMigrationAsync(
@@ -17,6 +18,7 @@ public interface IMigrationService
         MigrationScopeDto scope,
         MigrationConflictStrategy conflictStrategy,
         MigrationBoardSelectionDto? boardSelection = null,
+        bool keepAreaLabels = true,
         CancellationToken cancellationToken = default);
 
     /// <summary>Applies migration for one source repository to multiple target repositories.</summary>
@@ -25,6 +27,7 @@ public interface IMigrationService
     /// <param name="scope">The migration item types to include.</param>
     /// <param name="conflictStrategy">The conflict strategy applied to existing target items.</param>
     /// <param name="boardSelection">The project board selections when <paramref name="scope"/> includes project board columns.</param>
+    /// <param name="keepAreaLabels">When <see langword="true" /> and <paramref name="conflictStrategy"/> is <see cref="MigrationConflictStrategy.Overwrite"/>, labels with the <c>area/</c> prefix on targets are kept instead of deleted.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>Per-repository results for label, milestone, and Status column migration.</returns>
     Task<MigrationResultDto> ApplyMigrationAsync(
@@ -33,6 +36,7 @@ public interface IMigrationService
         MigrationScopeDto scope,
         MigrationConflictStrategy conflictStrategy,
         MigrationBoardSelectionDto? boardSelection = null,
+        bool keepAreaLabels = true,
         CancellationToken cancellationToken = default);
 
     /// <summary>Discovers supported project boards for column migration on a repository.</summary>

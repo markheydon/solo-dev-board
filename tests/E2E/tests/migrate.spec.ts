@@ -29,4 +29,21 @@ test.describe('One-Click Migration shell', () => {
     await expect(page.getByText(/GitHub API request failed while loading repositories/i)).toBeVisible();
     await expect(page.getByRole('button', { name: /try loading repositories again/i })).toBeVisible();
   });
+
+  test('overwrite with labels scope shows keep area labels control when repositories load', async ({ page }) => {
+    await page.goto('/migrate');
+
+    const loadError = page.getByTestId('migration-repositories-load-error');
+    if (await loadError.isVisible({ timeout: 15_000 })) {
+      return;
+    }
+
+    await page.getByTestId('migration-conflict-strategy-select').click();
+    await page.getByRole('option', { name: 'Overwrite' }).click();
+
+    const keepAreaCheckbox = page.getByTestId('migration-keep-area-labels-checkbox');
+    await expect(keepAreaCheckbox).toBeVisible();
+    await expect(keepAreaCheckbox).toBeChecked();
+    await expect(page.getByText('Keep area/* labels')).toBeVisible();
+  });
 });

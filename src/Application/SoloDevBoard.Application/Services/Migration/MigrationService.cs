@@ -61,6 +61,7 @@ public sealed class MigrationService : IMigrationService
         MigrationScopeDto scope,
         MigrationConflictStrategy conflictStrategy,
         MigrationBoardSelectionDto? boardSelection = null,
+        bool keepAreaLabels = true,
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceRepositoryFullName);
@@ -98,7 +99,7 @@ public sealed class MigrationService : IMigrationService
             if (scope.IncludeLabels)
             {
                 var targetLabels = await _labelRepository.GetLabelsAsync(target.Owner, target.Name, cancellationToken).ConfigureAwait(false);
-                labelPreviews.Add(BuildLabelPreview(targetRepositoryFullName, sourceLabels, targetLabels, conflictStrategy));
+                labelPreviews.Add(BuildLabelPreview(targetRepositoryFullName, sourceLabels, targetLabels, conflictStrategy, keepAreaLabels));
             }
 
             if (scope.IncludeMilestones)
@@ -152,6 +153,7 @@ public sealed class MigrationService : IMigrationService
         MigrationScopeDto scope,
         MigrationConflictStrategy conflictStrategy,
         MigrationBoardSelectionDto? boardSelection = null,
+        bool keepAreaLabels = true,
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceRepositoryFullName);
@@ -188,7 +190,7 @@ public sealed class MigrationService : IMigrationService
 
             if (scope.IncludeLabels)
             {
-                labelResults.Add(await ApplyLabelMigrationAsync(targetRepositoryFullName, target.Owner, target.Name, sourceLabels, conflictStrategy, cancellationToken).ConfigureAwait(false));
+                labelResults.Add(await ApplyLabelMigrationAsync(targetRepositoryFullName, target.Owner, target.Name, sourceLabels, conflictStrategy, keepAreaLabels, cancellationToken).ConfigureAwait(false));
             }
 
             if (scope.IncludeMilestones)
@@ -532,6 +534,7 @@ public sealed class MigrationService : IMigrationService
         string targetRepo,
         IReadOnlyList<Label> sourceLabels,
         MigrationConflictStrategy conflictStrategy,
+        bool keepAreaLabels,
         CancellationToken cancellationToken)
     {
         var createdCount = 0;
@@ -541,7 +544,7 @@ public sealed class MigrationService : IMigrationService
         try
         {
             var targetLabels = await _labelRepository.GetLabelsAsync(targetOwner, targetRepo, cancellationToken).ConfigureAwait(false);
-            var preview = BuildLabelPreview(targetRepositoryFullName, sourceLabels, targetLabels, conflictStrategy);
+            var preview = BuildLabelPreview(targetRepositoryFullName, sourceLabels, targetLabels, conflictStrategy, keepAreaLabels);
 
             foreach (var label in preview.ToCreate)
             {
@@ -622,7 +625,8 @@ public sealed class MigrationService : IMigrationService
         string targetRepositoryFullName,
         IReadOnlyList<Label> sourceLabels,
         IReadOnlyList<Label> targetLabels,
-        MigrationConflictStrategy conflictStrategy)
+        MigrationConflictStrategy conflictStrategy,
+        bool keepAreaLabels)
     {
         var sourceByName = sourceLabels.ToDictionary(label => label.Name, StringComparer.OrdinalIgnoreCase);
         var targetByName = targetLabels.ToDictionary(label => label.Name, StringComparer.OrdinalIgnoreCase);
@@ -646,10 +650,20 @@ public sealed class MigrationService : IMigrationService
         var toDelete = conflictStrategy == MigrationConflictStrategy.Overwrite
             ? targetLabels
                 .Where(target => !sourceByName.ContainsKey(target.Name))
+                .Where(target => !keepAreaLabels || !LabelTaxonomyPrefixes.IsAreaLabel(target.Name))
                 .Select(target => MapToLabelDto(target, targetRepositoryFullName))
                 .OrderBy(label => label.Name, StringComparer.OrdinalIgnoreCase)
                 .ToArray()
             : Array.Empty<LabelDto>();
+
+        var keptAreaLabels = conflictStrategy == MigrationConflictStrategy.Overwrite && keepAreaLabels
+            ? targetLabels
+                .Where(target => !sourceByName.ContainsKey(target.Name))
+                .Where(target => LabelTaxonomyPrefixes.IsAreaLabel(target.Name))
+                .Select(target => MapToLabelDto(target, targetRepositoryFullName))
+                .OrderBy(label => label.Name, StringComparer.OrdinalIgnoreCase)
+                .ToArray()
+            : [];
 
         var skipped = BuildSkippedItems(
             sourceLabels,
@@ -659,7 +673,7 @@ public sealed class MigrationService : IMigrationService
             static (left, right) => HasSameLabelValues(left, right),
             source => MapToLabelDto(source, targetRepositoryFullName));
 
-        return new LabelSyncRepositoryPreviewDto(targetRepositoryFullName, toCreate, toUpdate, toDelete, skipped, []);
+        return new LabelSyncRepositoryPreviewDto(targetRepositoryFullName, toCreate, toUpdate, toDelete, skipped, keptAreaLabels);
     }
 
     private static MilestoneSyncRepositoryPreviewDto BuildMilestonePreview(
