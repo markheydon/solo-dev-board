@@ -20,7 +20,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\App\SoloDevBoard.App\SoloDevBoard.App.csproj" />
     <ProjectReference Include="..\..\..\src\Composition\SoloDevBoard.Composition\SoloDevBoard.Composition.csproj" />
   </ItemGroup>
 

@@ -16,6 +16,7 @@ internal sealed class HostedGitHubAuthGateway(
 {
     internal const string HostedGitHubAuthClientName = "HostedGitHubAuthClient";
 
+    // Must stay aligned with GitHubApiHeaders.JsonAcceptMediaType in Infrastructure (App cannot reference Infrastructure).
     private const string GitHubJsonAcceptMediaType = "application/vnd.github+json";
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
