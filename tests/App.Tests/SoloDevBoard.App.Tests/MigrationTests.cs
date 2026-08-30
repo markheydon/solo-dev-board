@@ -20,6 +20,106 @@ public sealed class MigrationTests
     private IRenderedComponent<MudSnackbarProvider> _snackbarProvider = default!;
 
     [Fact]
+    public async Task Migration_LabelsScope_RendersIgnoreAreaLabelsCheckboxCheckedByDefault()
+    {
+        // Arrange
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
+                CreateRepository("owner", "repo-a"),
+                CreateRepository("owner", "repo-b"),
+            ]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Migration>();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            var checkbox = cut.Find("[data-testid='migration-ignore-area-labels-checkbox']");
+            Assert.NotNull(checkbox);
+            Assert.Contains("Ignore area/* labels", cut.Markup);
+            Assert.True(checkbox.HasAttribute("checked"));
+        });
+    }
+
+    [Fact]
+    public async Task Migration_LabelsScopeOff_HidesIgnoreAreaLabelsCheckbox()
+    {
+        // Arrange
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
+                CreateRepository("owner", "repo-a"),
+                CreateRepository("owner", "repo-b"),
+            ]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Migration>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='migration-scope-labels-switch']"));
+        cut.Find("[data-testid='migration-scope-labels-switch']").Change(false);
+
+        // Assert
+        cut.WaitForAssertion(() => Assert.Empty(cut.FindAll("[data-testid='migration-ignore-area-labels-checkbox']")));
+    }
+
+    [Fact]
+    public async Task Migration_SkipPreviewWithIgnoredAreaLabels_ShowsIgnoredCaption()
+    {
+        // Arrange
+        var sourceRepository = CreateRepository("owner", "repo-a");
+        var targetRepository = CreateRepository("owner", "repo-b");
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([sourceRepository, targetRepository]);
+
+        _migrationService.PreviewMigrationAsync(
+                "owner/repo-a",
+                Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })),
+                Arg.Is<MigrationScopeDto>(scope => scope!.IncludeLabels && !scope.IncludeMilestones),
+                MigrationConflictStrategy.Skip,
+                Arg.Any<MigrationBoardSelectionDto?>(),
+                Arg.Any<bool>(),
+                true,
+                Arg.Any<CancellationToken>())
+            .Returns(new MigrationPreviewDto(
+                MigrationConflictStrategy.Skip,
+                [new LabelSyncRepositoryPreviewDto(
+                    "owner/repo-b",
+                    [new LabelDto("priority/high", "d93f0b", "High priority", "owner/repo-b")],
+                    [],
+                    [],
+                    [],
+                    [],
+                    [new LabelDto("area/docs", "0e8a16", "Docs area", "owner/repo-a")])],
+                [],
+                []));
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Migration>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='migration-repository-autocomplete']"));
+
+        await SelectRepositoriesAsync(cut, sourceRepository, targetRepository);
+
+        cut.Find("[data-testid='migration-scope-milestones-switch']").Change(false);
+
+        var targetCheckboxes = cut.FindAll("[data-testid='migration-target-checkbox']");
+        targetCheckboxes[1].Change(true);
+
+        cut.Find("[data-testid='migration-preview-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.NotNull(cut.Find("[data-testid='migration-ignored-area-labels-caption']"));
+            Assert.Contains("1 source area/* label is ignored and will not be copied", cut.Markup);
+            Assert.Contains("priority/high", cut.Markup);
+            Assert.DoesNotContain("area/docs", cut.Markup);
+        });
+    }
+
+    [Fact]
     public async Task Migration_OverwriteWithLabelsScope_RendersKeepAreaLabelsCheckboxCheckedByDefault()
     {
         // Arrange
@@ -81,6 +181,7 @@ public sealed class MigrationTests
                 MigrationConflictStrategy.Overwrite,
                 Arg.Any<MigrationBoardSelectionDto?>(),
                 true,
+                true,
                 Arg.Any<CancellationToken>())
             .Returns(new MigrationPreviewDto(
                 MigrationConflictStrategy.Overwrite,
@@ -90,7 +191,8 @@ public sealed class MigrationTests
                     [],
                     [],
                     [],
-                    [new LabelDto("area/docs", "0e8a16", "Docs area", "owner/repo-b")])],
+                    [new LabelDto("area/docs", "0e8a16", "Docs area", "owner/repo-b")],
+                    [])],
                 [],
                 []));
 
@@ -291,6 +393,7 @@ public sealed class MigrationTests
             Arg.Any<MigrationConflictStrategy>(),
             Arg.Any<MigrationBoardSelectionDto?>(),
             Arg.Any<bool>(),
+            Arg.Any<bool>(),
             Arg.Any<CancellationToken>());
     }
 
@@ -411,9 +514,9 @@ public sealed class MigrationTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([sourceRepository, targetRepository]);
 
-        _migrationService.PreviewMigrationAsync("owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })), Arg.Is<MigrationScopeDto>(scope => scope!.IncludeLabels && scope.IncludeMilestones), MigrationConflictStrategy.Overwrite, Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(new MigrationPreviewDto(
+        _migrationService.PreviewMigrationAsync("owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })), Arg.Is<MigrationScopeDto>(scope => scope!.IncludeLabels && scope.IncludeMilestones), MigrationConflictStrategy.Overwrite, Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(new MigrationPreviewDto(
                 MigrationConflictStrategy.Overwrite,
-                [new LabelSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [], [])],
+                [new LabelSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [], [], [])],
                 [new MilestoneSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [])],
                 []));
 
@@ -437,7 +540,7 @@ public sealed class MigrationTests
         // Assert
         cut.WaitForAssertion(() => Assert.Contains("Migration preview (Overwrite)", cut.Markup));
 
-        await _migrationService.Received(1).PreviewMigrationAsync("owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })), Arg.Is<MigrationScopeDto>(scope => scope!.IncludeLabels && scope.IncludeMilestones), MigrationConflictStrategy.Overwrite, Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await _migrationService.Received(1).PreviewMigrationAsync("owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })), Arg.Is<MigrationScopeDto>(scope => scope!.IncludeLabels && scope.IncludeMilestones), MigrationConflictStrategy.Overwrite, Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -449,7 +552,7 @@ public sealed class MigrationTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([sourceRepository, targetRepository]);
 
-        _migrationService.PreviewMigrationAsync("owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Skip, Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(new MigrationPreviewDto(
+        _migrationService.PreviewMigrationAsync("owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Skip, Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(new MigrationPreviewDto(
                 MigrationConflictStrategy.Skip,
                 [new LabelSyncRepositoryPreviewDto(
                     "owner/repo-b",
@@ -457,6 +560,7 @@ public sealed class MigrationTests
                     [],
                     [],
                     [new LabelDto("type/story", "1d76db", "Story", "owner/repo-b")],
+                    [],
                     [])],
                 [new MilestoneSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [])],
                 []));
@@ -494,11 +598,12 @@ public sealed class MigrationTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([sourceRepository, targetRepository]);
 
-        _migrationService.PreviewMigrationAsync("owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Skip, Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(new MigrationPreviewDto(
+        _migrationService.PreviewMigrationAsync("owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Skip, Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(new MigrationPreviewDto(
                 MigrationConflictStrategy.Skip,
                 [new LabelSyncRepositoryPreviewDto(
                     "owner/repo-b",
                     [new LabelDto("priority/high", "d93f0b", "High priority", "owner/repo-b")],
+                    [],
                     [],
                     [],
                     [],
@@ -537,9 +642,9 @@ public sealed class MigrationTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([sourceRepository, targetRepository]);
 
-        _migrationService.PreviewMigrationAsync("owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Merge, Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(new MigrationPreviewDto(
+        _migrationService.PreviewMigrationAsync("owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Merge, Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(new MigrationPreviewDto(
                 MigrationConflictStrategy.Merge,
-                [new LabelSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [], [])],
+                [new LabelSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [], [], [])],
                 [new MilestoneSyncRepositoryPreviewDto(
                     "owner/repo-b",
                     [new MilestoneDto(1, 1, "Sprint 12", "Delivery sprint", "open", DateTimeOffset.Parse("2026-04-30T00:00:00Z"), 0, 0)],
@@ -606,7 +711,7 @@ public sealed class MigrationTests
 
         // Assert
         Assert.Empty(cut.FindAll("[data-testid='migration-preview-card']"));
-        await _migrationService.DidNotReceive().PreviewMigrationAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<MigrationScopeDto>(), Arg.Any<MigrationConflictStrategy>(), Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await _migrationService.DidNotReceive().PreviewMigrationAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<MigrationScopeDto>(), Arg.Any<MigrationConflictStrategy>(), Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -619,7 +724,7 @@ public sealed class MigrationTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([sourceRepository, targetRepository]);
 
-        _migrationService.PreviewMigrationAsync("owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Skip, Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(new MigrationPreviewDto(
+        _migrationService.PreviewMigrationAsync("owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Skip, Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(new MigrationPreviewDto(
                 MigrationConflictStrategy.Skip,
                 [new LabelSyncRepositoryPreviewDto(
                     "owner/repo-b",
@@ -627,11 +732,12 @@ public sealed class MigrationTests
                     [],
                     [],
                     [],
+                    [],
                     [])],
                 [new MilestoneSyncRepositoryPreviewDto("owner/repo-b", [], [], [], [])],
                 []));
 
-        _migrationService.ApplyMigrationAsync("owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Skip, Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(applyTaskSource.Task);
+        _migrationService.ApplyMigrationAsync("owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Skip, Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(applyTaskSource.Task);
 
         await using var ctx = CreateContext();
 
@@ -659,7 +765,7 @@ public sealed class MigrationTests
 
         // Assert
         _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Migration completed successfully"));
-        await _migrationService.Received(1).ApplyMigrationAsync("owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Skip, Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await _migrationService.Received(1).ApplyMigrationAsync("owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Skip, Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -671,11 +777,12 @@ public sealed class MigrationTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([sourceRepository, targetRepository]);
 
-        _migrationService.PreviewMigrationAsync("owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Merge, Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(new MigrationPreviewDto(
+        _migrationService.PreviewMigrationAsync("owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Merge, Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(new MigrationPreviewDto(
                 MigrationConflictStrategy.Merge,
                 [new LabelSyncRepositoryPreviewDto(
                     "owner/repo-b",
                     [new LabelDto("priority/high", "d93f0b", "High priority", "owner/repo-b")],
+                    [],
                     [],
                     [],
                     [],
@@ -688,7 +795,7 @@ public sealed class MigrationTests
                     [])],
                 []));
 
-        _migrationService.ApplyMigrationAsync("owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Merge, Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(new MigrationResultDto(
+        _migrationService.ApplyMigrationAsync("owner/repo-a", Arg.Is<IReadOnlyList<string>>(targets => targets!.SequenceEqual(new[] { "owner/repo-b" })), Arg.Any<MigrationScopeDto>(), MigrationConflictStrategy.Merge, Arg.Any<MigrationBoardSelectionDto?>(), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(new MigrationResultDto(
                 MigrationConflictStrategy.Merge,
                 [new LabelSyncRepositoryResultDto("owner/repo-b", 1, 0, 0, 0, "GitHub label API rate limit reached")],
                 [new MilestoneSyncRepositoryResultDto("owner/repo-b", 1, 0, 0, 0, null)],

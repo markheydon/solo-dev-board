@@ -148,6 +148,21 @@
                                 </MudStack>
                             </MudPaper>
 
+                            @if (migrateLabels)
+                            {
+                                <MudPaper Class="pa-3" Outlined="true" data-testid="migration-ignore-area-labels-card">
+                                    <MudStack Spacing="1">
+                                        <MudCheckBox T="bool"
+                                                     Value="ignoreAreaLabels"
+                                                     ValueChanged="OnIgnoreAreaLabelsChangedAsync"
+                                                     Label="Ignore area/* labels"
+                                                     Disabled="IsBusy"
+                                                     data-testid="migration-ignore-area-labels-checkbox" />
+                                        <MudText Typo="Typo.caption">Source labels whose names start with <code>area/</code> are not copied to targets.</MudText>
+                                    </MudStack>
+                                </MudPaper>
+                            }
+
                             @if (migrateLabels && conflictStrategy == MigrationConflictStrategy.Overwrite)
                             {
                                 <MudPaper Class="pa-3" Outlined="true" data-testid="migration-keep-area-labels-card">
@@ -333,6 +348,11 @@
                             @if (labelPreview.ToDelete.Count > 0)
                             {
                                 <LabelPreviewTable Heading="Labels to delete" Labels="labelPreview.ToDelete" />
+                            }
+
+                            @if (ignoreAreaLabels && labelPreview.IgnoredAreaLabels.Count > 0)
+                            {
+                                <MudText Typo="Typo.caption" data-testid="migration-ignored-area-labels-caption">@LabelAreaCaptionHelper.FormatIgnoredAreaLabelsCaption(labelPreview.IgnoredAreaLabels.Count)</MudText>
                             }
 
                             @if (keepAreaLabels && labelPreview.KeptAreaLabels.Count > 0)

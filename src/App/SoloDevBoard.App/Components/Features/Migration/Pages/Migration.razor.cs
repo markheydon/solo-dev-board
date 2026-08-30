@@ -43,6 +43,7 @@ public partial class Migration : ComponentBase
     private bool migrateMilestones = true;
     private bool migrateProjectBoardColumns;
     private bool keepAreaLabels = true;
+    private bool ignoreAreaLabels = true;
     private string sourceProjectBoardId = string.Empty;
     private Dictionary<string, string> targetProjectBoardSelections = new(StringComparer.OrdinalIgnoreCase);
     private MigrationProjectBoardDiscoveryDto? sourceBoardDiscovery;
@@ -179,6 +180,13 @@ public partial class Migration : ComponentBase
     private Task OnKeepAreaLabelsChangedAsync(bool value)
     {
         keepAreaLabels = value;
+        ResetPreviewAndResults();
+        return Task.CompletedTask;
+    }
+
+    private Task OnIgnoreAreaLabelsChangedAsync(bool value)
+    {
+        ignoreAreaLabels = value;
         ResetPreviewAndResults();
         return Task.CompletedTask;
     }
@@ -477,7 +485,8 @@ public partial class Migration : ComponentBase
                 BuildScope(),
                 conflictStrategy,
                 BuildBoardSelection(),
-                keepAreaLabels);
+                keepAreaLabels,
+                ignoreAreaLabels);
 
             showPreview = true;
             applyResult = new MigrationResultDto(conflictStrategy, [], [], []);
@@ -534,7 +543,8 @@ public partial class Migration : ComponentBase
                 BuildScope(),
                 conflictStrategy,
                 BuildBoardSelection(),
-                keepAreaLabels);
+                keepAreaLabels,
+                ignoreAreaLabels);
 
             showPreview = false;
             previewResult = new MigrationPreviewDto(conflictStrategy, [], [], []);
@@ -670,7 +680,7 @@ public partial class Migration : ComponentBase
 
     private LabelSyncRepositoryPreviewDto GetLabelPreview(string repositoryFullName)
         => previewResult.LabelPreviews.FirstOrDefault(item => item.RepositoryFullName.Equals(repositoryFullName, StringComparison.OrdinalIgnoreCase))
-            ?? new LabelSyncRepositoryPreviewDto(repositoryFullName, [], [], [], [], []);
+            ?? new LabelSyncRepositoryPreviewDto(repositoryFullName, [], [], [], [], [], []);
 
     private MilestoneSyncRepositoryPreviewDto GetMilestonePreview(string repositoryFullName)
         => previewResult.MilestonePreviews.FirstOrDefault(item => item.RepositoryFullName.Equals(repositoryFullName, StringComparison.OrdinalIgnoreCase))
@@ -721,6 +731,7 @@ public partial class Migration : ComponentBase
         migrateMilestones = true;
         migrateProjectBoardColumns = false;
         keepAreaLabels = true;
+        ignoreAreaLabels = true;
         conflictStrategy = MigrationConflictStrategy.Skip;
         ClearBoardSelectionState();
         ResetPreviewAndResults();

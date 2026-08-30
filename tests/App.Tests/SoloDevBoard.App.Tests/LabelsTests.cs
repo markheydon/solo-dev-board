@@ -471,6 +471,7 @@ public sealed class LabelsTests
                     [],
                     [],
                     [],
+                    [],
                     []),
             ]);
 
@@ -831,6 +832,7 @@ public sealed class LabelsTests
                     [],
                     [],
                     [],
+                    [],
                     []),
             ]);
 
@@ -876,6 +878,7 @@ public sealed class LabelsTests
                     [],
                     [],
                     [new LabelDto("type/story", "1d76db", "Story", "owner/repo-b")],
+                    [],
                     []),
             ]);
 

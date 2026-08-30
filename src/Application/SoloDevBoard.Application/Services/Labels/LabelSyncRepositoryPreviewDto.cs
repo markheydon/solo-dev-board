@@ -7,10 +7,12 @@ namespace SoloDevBoard.Application.Services.Labels;
 /// <param name="ToDelete">The labels to delete from the target repository.</param>
 /// <param name="Skipped">The labels skipped because they already match exactly.</param>
 /// <param name="KeptAreaLabels">Labels kept because they use the <c>area/</c> prefix.</param>
+/// <param name="IgnoredAreaLabels">Source labels ignored because they use the <c>area/</c> prefix when copy-ignore is enabled.</param>
 public sealed record LabelSyncRepositoryPreviewDto(
     string RepositoryFullName,
     IReadOnlyList<LabelDto> ToCreate,
     IReadOnlyList<LabelDto> ToUpdate,
     IReadOnlyList<LabelDto> ToDelete,
     IReadOnlyList<LabelDto> Skipped,
-    IReadOnlyList<LabelDto> KeptAreaLabels);
+    IReadOnlyList<LabelDto> KeptAreaLabels,
+    IReadOnlyList<LabelDto> IgnoredAreaLabels);

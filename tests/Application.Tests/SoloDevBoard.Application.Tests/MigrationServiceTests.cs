@@ -15,6 +15,103 @@ public sealed class MigrationServiceTests
     private readonly IProjectBoardStructureRepository _projectBoardStructureRepository = Substitute.For<IProjectBoardStructureRepository>();
 
     [Fact]
+    public async Task PreviewMigrationAsync_SkipIgnoreAreaLabelsOn_ExcludesSourceAreaLabelsFromCreate()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        SetupSourceAndTargetDataWithSourceAreaLabels();
+        var sut = CreateSubject();
+
+        var result = await sut.PreviewMigrationAsync(
+            "owner/source",
+            ["owner/target"],
+            new MigrationScopeDto(true, false),
+            MigrationConflictStrategy.Skip,
+            ignoreAreaLabels: true,
+            cancellationToken: cancellationToken);
+
+        var labelPreview = Assert.Single(result.LabelPreviews);
+        Assert.DoesNotContain(labelPreview.ToCreate, label => label.Name == "area/docs");
+        Assert.Single(labelPreview.ToCreate);
+        Assert.Equal("priority/high", labelPreview.ToCreate[0].Name);
+        Assert.Single(labelPreview.IgnoredAreaLabels);
+        Assert.Equal("area/docs", labelPreview.IgnoredAreaLabels[0].Name);
+    }
+
+    [Fact]
+    public async Task PreviewMigrationAsync_MergeIgnoreAreaLabelsOff_CopiesSourceAreaLabels()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        SetupSourceAndTargetDataWithSourceAreaLabels();
+        var sut = CreateSubject();
+
+        var result = await sut.PreviewMigrationAsync(
+            "owner/source",
+            ["owner/target"],
+            new MigrationScopeDto(true, false),
+            MigrationConflictStrategy.Merge,
+            ignoreAreaLabels: false,
+            cancellationToken: cancellationToken);
+
+        var labelPreview = Assert.Single(result.LabelPreviews);
+        Assert.Contains(labelPreview.ToCreate, label => label.Name == "area/docs");
+        Assert.Empty(labelPreview.IgnoredAreaLabels);
+    }
+
+    [Fact]
+    public async Task PreviewMigrationAsync_OverwriteIgnoreAreaLabelsOn_StillKeepsTargetAreaLabelsWhenKeepEnabled()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        SetupSourceAndTargetDataWithSourceAndTargetAreaLabels();
+        var sut = CreateSubject();
+
+        var result = await sut.PreviewMigrationAsync(
+            "owner/source",
+            ["owner/target"],
+            new MigrationScopeDto(true, false),
+            MigrationConflictStrategy.Overwrite,
+            keepAreaLabels: true,
+            ignoreAreaLabels: true,
+            cancellationToken: cancellationToken);
+
+        var labelPreview = Assert.Single(result.LabelPreviews);
+        Assert.DoesNotContain(labelPreview.ToCreate, label => label.Name == "area/docs");
+        Assert.Single(labelPreview.IgnoredAreaLabels);
+        Assert.Single(labelPreview.KeptAreaLabels);
+        Assert.Equal("area/migration", labelPreview.KeptAreaLabels[0].Name);
+    }
+
+    [Fact]
+    public async Task ApplyMigrationAsync_SkipIgnoreAreaLabelsOn_DoesNotCreateSourceAreaLabels()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        SetupSourceAndTargetDataWithSourceAreaLabels();
+
+        _labelRepository
+            .CreateLabelAsync("owner", "target", Arg.Any<Label>(), cancellationToken)
+            .Returns(callInfo =>
+            {
+                var repo = callInfo.ArgAt<string>(1);
+                var label = callInfo.ArgAt<Label>(2);
+                return label with { RepositoryName = repo };
+            });
+
+        var sut = CreateSubject();
+
+        var result = await sut.ApplyMigrationAsync(
+            "owner/source",
+            ["owner/target"],
+            new MigrationScopeDto(true, false),
+            MigrationConflictStrategy.Skip,
+            ignoreAreaLabels: true,
+            cancellationToken: cancellationToken);
+
+        var labelResult = Assert.Single(result.LabelResults);
+        Assert.Equal(1, labelResult.CreatedCount);
+        await _labelRepository.Received(1).CreateLabelAsync("owner", "target", Arg.Is<Label>(label => label.Name == "priority/high"), cancellationToken);
+        await _labelRepository.DidNotReceive().CreateLabelAsync("owner", "target", Arg.Is<Label>(label => label.Name == "area/docs"), cancellationToken);
+    }
+
+    [Fact]
     public async Task PreviewMigrationAsync_OverwriteKeepAreaLabelsOn_KeepsAreaLabelsAndDeletesOthers()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
@@ -963,6 +1060,41 @@ public sealed class MigrationServiceTests
                 new ProjectBoardStatusStructureOption { Id = "option-blocked", Name = "Blocked", Colour = "RED", Description = string.Empty, Order = 3 },
             ],
         };
+
+    private void SetupSourceAndTargetDataWithSourceAreaLabels()
+    {
+        _labelRepository
+            .GetLabelsAsync("owner", "source", Arg.Any<CancellationToken>())
+            .Returns([
+                new Label { Name = "type/story", Colour = "1d76db", Description = "Source story", RepositoryName = "source" },
+                new Label { Name = "priority/high", Colour = "d93f0b", Description = "Source high", RepositoryName = "source" },
+                new Label { Name = "area/docs", Colour = "0e8a16", Description = "Docs area", RepositoryName = "source" },
+            ]);
+
+        _labelRepository
+            .GetLabelsAsync("owner", "target", Arg.Any<CancellationToken>())
+            .Returns([
+                new Label { Name = "type/story", Colour = "ffffff", Description = "Target story", RepositoryName = "target" },
+            ]);
+    }
+
+    private void SetupSourceAndTargetDataWithSourceAndTargetAreaLabels()
+    {
+        _labelRepository
+            .GetLabelsAsync("owner", "source", Arg.Any<CancellationToken>())
+            .Returns([
+                new Label { Name = "type/story", Colour = "1d76db", Description = "Source story", RepositoryName = "source" },
+                new Label { Name = "area/docs", Colour = "0e8a16", Description = "Docs area", RepositoryName = "source" },
+            ]);
+
+        _labelRepository
+            .GetLabelsAsync("owner", "target", Arg.Any<CancellationToken>())
+            .Returns([
+                new Label { Name = "type/story", Colour = "ffffff", Description = "Target story", RepositoryName = "target" },
+                new Label { Name = "area/migration", Colour = "5319e7", Description = "Migration area", RepositoryName = "target" },
+                new Label { Name = "legacy", Colour = "cfd3d7", Description = "Legacy", RepositoryName = "target" },
+            ]);
+    }
 
     private void SetupSourceAndTargetDataWithAreaLabels()
     {

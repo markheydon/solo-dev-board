@@ -38,7 +38,7 @@ For data-driven journeys against a real GitHub account, run the PAT suite locall
 |---------|------|-------------------|
 | Audit Dashboard repository selector failure | `audit-dashboard.spec.ts` | Feedback region and unable-to-load message. |
 | Repositories | `repositories.spec.ts` | Refresh control, search field, catalogue filter toggle group, error state with retry, and no horizontal overflow at 390px. |
-| One-Click Migration setup shell | `migrate.spec.ts` | Workflow controls, columns scope switch, Overwrite keep `area/*` control when repositories load, disabled preview, and API failure feedback. |
+| One-Click Migration setup shell | `migrate.spec.ts` | Workflow controls, columns scope switch, nested ignore `area/*` control (default on), Overwrite keep `area/*` control when repositories load, disabled preview, and API failure feedback. |
 | Board Rules selector and compare mode | `board-rules.spec.ts` | Selector region, compare toggle, and repository load failure. |
 | Label Manager taxonomy tabs, bulk delete shell, keep `area/*` controls, and empty repository state | `labels.spec.ts` | Tab strip, disabled bulk delete, nested keep `area/*` checkbox on Recommended taxonomy when remove-outside is enabled, Synchronise keep control, and no-repositories message. |
 | Workflow template browse, filter, and select | `actions-templates.spec.ts` | Built-in templates load; repository selector shows error. |
