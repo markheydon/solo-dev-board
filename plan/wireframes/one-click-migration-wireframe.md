@@ -21,6 +21,7 @@
 | [Source Repository Select] [Target Repository Multi-Select]           |
 | [Scope: Labels] [Scope: Milestones] [Conflict Strategy Select]        |
 | [Keep area/* labels]  (visible when Labels + Overwrite)               |
+| [Ignore area/* labels] (visible when Labels; default on)                |
 | [Preview Changes]                                    [Apply Migration]|
 +-----------------------------------------------------------------------+
 | Preview                                                               |
@@ -49,7 +50,9 @@
 - Apply remains disabled until a preview has been generated and there is actionable work to perform.
 - Conflict strategy is explained inline because it materially changes preview and apply outcomes.
 - When **Labels** is in scope and **Overwrite** is selected, show a nested **Keep `area/*` labels** checkbox (default on), matching Label Manager copy. Hide or disable it for Skip and Merge.
+- When **Labels** is in scope, show a nested **Ignore `area/*` labels** checkbox (default on) for all conflict strategies. Hide or disable it when Labels is off.
 - Overwrite preview lists kept `area/*` target labels as kept, not as pending deletes, when the nested box is ticked (DEC-036).
+- Preview summarises ignored source `area/*` labels by count when **Ignore `area/*` labels** is on (DEC-037).
 - Preview and post-migration summary are grouped by target repository so multi-target runs are easier to interpret.
 - MudBlazor layout primitives and utility classes should be preferred over bespoke CSS.
 

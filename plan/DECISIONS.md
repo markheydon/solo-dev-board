@@ -356,6 +356,15 @@ Test coverage expectations for cache-hit, cache-miss, invalidation, TTL expiry, 
 
 ---
 
+### DEC-037: One-Click Migration ignores source `area/*` labels by default
+
+**Status:** Active  
+**Date:** 2026-08-30  
+**Related:** [#478](https://github.com/markheydon/solo-dev-board/issues/478), [DEC-034](#dec-034-label-manager-recommended-catalogue-omits-area-labels), [DEC-036](#dec-036-one-click-migration-label-overwrite-keeps-area-by-default)  
+**Summary:** When **Labels** is in scope, One-Click Migration must ignore source `area/*` labels by default for Skip, Merge, and Overwrite. Nested **Ignore `area/*` labels** (default on) excludes those names from create and update; preview summarises them as ignored. Unchecking restores ordinary copy behaviour. **Keep `area/*` labels** remains independent (Overwrite deletes only). Do not special-case the source repository name. Reuse `LabelTaxonomyPrefixes`. Reject app-settings ignore lists for this slice.
+
+---
+
 ## Superseded legacy (archive only)
 
 | Legacy ADR | Superseded by | Notes |

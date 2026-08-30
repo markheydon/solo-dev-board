@@ -70,9 +70,9 @@ Select how existing artefacts in each target repository are handled when a match
 
 | Strategy | Behaviour |
 |---|---|
-| **Skip** | Conflicting items in the target are left unchanged. |
-| **Overwrite** | Conflicting items are replaced with those from the source. Unused target-only Status options may be removed when no board items use them. A warning is shown before you confirm. When **Labels** is in scope, a nested **Keep `area/*` labels** checkbox appears (on by default) so target labels whose names start with `area/` are kept instead of deleted; uncheck it to treat those names as ordinary target-only deletes. |
-| **Merge** | Conflicting items are replaced with source values; items that exist only in the target are preserved. |
+| **Skip** | Conflicting items in the target are left unchanged. When **Labels** is in scope, a nested **Ignore `area/*` labels** checkbox appears (on by default) so source labels whose names start with `area/` are not copied; uncheck it to copy those names like any other label. |
+| **Overwrite** | Conflicting items are replaced with those from the source. Unused target-only Status options may be removed when no board items use them. A warning is shown before you confirm. When **Labels** is in scope, a nested **Keep `area/*` labels** checkbox appears (on by default) so target labels whose names start with `area/` are kept instead of deleted; uncheck it to treat those names as ordinary target-only deletes. The nested **Ignore `area/*` labels** control (also on by default) excludes source `area/*` names from create and update and is independent of **Keep**. |
+| **Merge** | Conflicting items are replaced with source values; items that exist only in the target are preserved. When **Labels** is in scope, **Ignore `area/*` labels** (on by default) excludes source `area/*` names from create and update. |
 
 ### Step 4 — Review the preview and status guidance
 
@@ -80,7 +80,7 @@ Click **Preview migration** to generate a read-only diff for each target reposit
 
 The preview card for each target shows:
 
-- **Labels** — tables listing labels to create, update, and delete, with colour, name, and description for each row. When **Overwrite** is selected and **Keep `area/*` labels** is on, kept `area/*` target labels are summarised by count (not listed in the delete table).
+- **Labels** — tables listing labels to create, update, and delete, with colour, name, and description for each row. When **Ignore `area/*` labels** is on, ignored source `area/*` names are summarised by count (not listed in the create or update tables). When **Overwrite** is selected and **Keep `area/*` labels** is on, kept `area/*` target labels are summarised by count (not listed in the delete table).
 - **Milestones** — tables listing milestones to create, update, and delete, with title, state, due date, and description for each row.
 - **Status columns** — tables listing Status options to create, update, and delete, with name, colour, description, and order for each row. Warnings explain when a new board will be created or when options cannot be removed safely.
 

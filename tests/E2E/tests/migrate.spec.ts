@@ -33,6 +33,24 @@ test.describe('One-Click Migration shell', () => {
     await expect(page.getByRole('button', { name: /try loading repositories again/i })).toBeVisible();
   });
 
+  test('labels scope shows ignore area labels control by default when repositories load', async ({ page }) => {
+    await page.goto('/migrate');
+
+    await expect(page.getByTestId('migration-workflow-controls-card')).toBeVisible({ timeout: 15_000 });
+
+    const loadError = page.getByTestId('migration-repositories-load-error');
+    const ignoreAreaCheckbox = page.getByTestId('migration-ignore-area-labels-checkbox');
+    await expect(loadError.or(ignoreAreaCheckbox)).toBeVisible({ timeout: 30_000 });
+
+    if (await loadError.isVisible()) {
+      return;
+    }
+
+    await expect(ignoreAreaCheckbox).toBeVisible();
+    await expect(ignoreAreaCheckbox).toBeChecked();
+    await expect(page.getByText('Ignore area/* labels')).toBeVisible();
+  });
+
   test('overwrite with labels scope shows keep area labels control when repositories load', async ({ page }) => {
     await page.goto('/migrate');
 

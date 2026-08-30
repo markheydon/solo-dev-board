@@ -195,7 +195,8 @@ public sealed class LabelService : ILabelManagerService
                 preview.ToUpdate,
                 preview.ToDelete,
                 preview.Skipped,
-                preview.KeptAreaLabels));
+                preview.KeptAreaLabels,
+                []));
         }
 
         return previews
