@@ -75,6 +75,7 @@ The following are explicitly **not** in scope for the current version of SoloDev
 - Real-time collaboration — No shared sessions, shared boards, or live collaboration features.
 - Issue content editing — SoloDevBoard manages metadata (labels, milestones, assignments) but does not provide a full issue editor.
 - GitHub Sponsors, billing-backed entitlement automation, and marketplace monetisation are not in scope for v1.0.0. No integration with GitHub Marketplace, billing APIs, or paid access flows is planned for this release.
+- **Product operating system (deferred).** A future product-catalogue overlay (ideas, journal, feedback, research, product roadmaps) is recorded in [`plan/PRODUCT_OPERATING_SYSTEM.md`](PRODUCT_OPERATING_SYSTEM.md) and ice-boxed as [#475](https://github.com/markheydon/solo-dev-board/issues/475). It is **not** in scope for `v1.1`. GitHub remains the delivery spine; a product may start with no repo and is expected to gain one or more repos unless cancelled or abandoned. PAT-only operations remain in scope independently of that overlay.
 
 ## Assumptions
 
@@ -130,4 +131,5 @@ The following are explicitly **not** in scope for the current version of SoloDev
 | 2026-08-23 | Remaining v1.1.0 dogfood: Label Manager bulk delete (#444), omit `area/*` from the built-in catalogue (#446, DEC-034), Iteration Planning stall vs capacity copy (#445). Unmilestoned backlog stays off this milestone. | Solo developer |
 | 2026-08-26 | One-Click Migration label Overwrite keeps `area/*` by default, matching Label Manager extra-delete behaviour (#464, DEC-036). Configurable keep-prefix lists remain out of scope. | Solo developer |
 | 2026-08-28 | GitHub milestones renamed to `vX.Y - Descriptive name` (ASCII hyphen; release tags remain SemVer `vX.Y.Z`). Open milestone titled `v1.1 - Cross-Repo Planning & Refinement`. Custom template repositories ([#292](https://github.com/markheydon/solo-dev-board/issues/292)) deferred past this release. Project board column migration ([#291](https://github.com/markheydon/solo-dev-board/issues/291)) marked complete. | Solo developer |
+| 2026-08-30 | Recorded deferred product operating system direction ([#475](https://github.com/markheydon/solo-dev-board/issues/475), [`plan/PRODUCT_OPERATING_SYSTEM.md`](PRODUCT_OPERATING_SYSTEM.md)). Not added to current in-scope features or `v1.1`. | Solo developer |
 
