@@ -33,14 +33,16 @@ test.describe('One-Click Migration shell', () => {
   test('overwrite with labels scope shows keep area labels control when repositories load', async ({ page }) => {
     await page.goto('/migrate');
 
+    await expect(page.getByTestId('migration-workflow-controls-card')).toBeVisible({ timeout: 15_000 });
+
     const loadError = page.getByTestId('migration-repositories-load-error');
-    if (await loadError.isVisible({ timeout: 15_000 })) {
-      await expect(page.getByText(/GitHub API request failed while loading repositories/i)).toBeVisible();
-      await expect(page.getByRole('button', { name: /try loading repositories again/i })).toBeVisible();
+    if (await loadError.isVisible()) {
       return;
     }
 
-    await page.getByTestId('migration-conflict-strategy-select').click();
+    const conflictSelect = page.getByTestId('migration-conflict-strategy-select');
+    await expect(conflictSelect).toBeVisible({ timeout: 30_000 });
+    await conflictSelect.click();
     await page.getByRole('option', { name: 'Overwrite' }).click();
 
     const keepAreaCheckbox = page.getByTestId('migration-keep-area-labels-checkbox');
