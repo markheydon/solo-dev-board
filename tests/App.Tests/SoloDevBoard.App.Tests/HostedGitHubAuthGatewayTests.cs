@@ -5,8 +5,6 @@ using Microsoft.Extensions.Options;
 using NSubstitute;
 using SoloDevBoard.App.Authentication;
 using SoloDevBoard.Application.Authentication;
-using SoloDevBoard.Infrastructure.GitHub;
-using SoloDevBoard.Infrastructure.Identity;
 
 namespace SoloDevBoard.App.Tests;
 

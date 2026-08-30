@@ -1,4 +1,3 @@
-using SoloDevBoard.Application.Authentication;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
@@ -7,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
+using SoloDevBoard.Application.Authentication;
 
 namespace SoloDevBoard.Infrastructure.Identity;
 

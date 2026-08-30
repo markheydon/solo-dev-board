@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using SoloDevBoard.Application.Services.GitHub;
-using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Infrastructure.GitHub;
 
 namespace SoloDevBoard.Infrastructure.Tests;

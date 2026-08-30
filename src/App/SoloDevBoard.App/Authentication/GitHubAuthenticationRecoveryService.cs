@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
-using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Authentication;
+using SoloDevBoard.Application.Identity;
 
 namespace SoloDevBoard.App.Authentication;
 

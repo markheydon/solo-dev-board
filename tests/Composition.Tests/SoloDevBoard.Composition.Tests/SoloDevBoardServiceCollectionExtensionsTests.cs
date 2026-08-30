@@ -4,7 +4,6 @@ using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.Common;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Application.Services.Labels;
-using SoloDevBoard.Composition;
 
 namespace SoloDevBoard.Composition.Tests;
 

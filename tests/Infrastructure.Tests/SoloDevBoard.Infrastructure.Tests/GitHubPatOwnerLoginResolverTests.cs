@@ -1,6 +1,5 @@
 using System.Net;
 using Microsoft.Extensions.Logging.Abstractions;
-using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Infrastructure.GitHub;
 
 namespace SoloDevBoard.Infrastructure.Tests;

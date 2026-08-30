@@ -1,9 +1,8 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
-using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Authentication;
-using SoloDevBoard.Infrastructure.GitHub;
+using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Infrastructure.Identity;
 
 namespace SoloDevBoard.Infrastructure.Tests;

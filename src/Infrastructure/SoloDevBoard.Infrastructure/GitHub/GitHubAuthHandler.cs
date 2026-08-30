@@ -1,7 +1,7 @@
-using SoloDevBoard.Application.Authentication;
 using System.Net;
 using System.Net.Http.Headers;
 using Microsoft.Extensions.Options;
+using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Application.Identity;
 
 namespace SoloDevBoard.Infrastructure.GitHub;

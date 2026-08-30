@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.Extensions.Options;
 using MudBlazor;
 using SoloDevBoard.App.Theming;
-using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Application.Authentication;
+using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Themes;
 
 namespace SoloDevBoard.App.Components.Shell.Layout;

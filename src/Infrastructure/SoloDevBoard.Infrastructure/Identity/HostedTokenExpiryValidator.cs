@@ -1,7 +1,6 @@
-using SoloDevBoard.Application.Authentication;
 using System.Globalization;
 using System.Security.Claims;
-using SoloDevBoard.Infrastructure.GitHub;
+using SoloDevBoard.Application.Authentication;
 
 namespace SoloDevBoard.Infrastructure.Identity;
 

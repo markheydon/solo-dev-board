@@ -1,5 +1,4 @@
 using SoloDevBoard.Application.Authentication;
-using SoloDevBoard.Infrastructure.GitHub;
 
 namespace SoloDevBoard.Infrastructure.Identity;
 

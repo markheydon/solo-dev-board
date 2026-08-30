@@ -1,5 +1,5 @@
-using SoloDevBoard.Application.Authentication;
 using Microsoft.Extensions.Options;
+using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.GitHub;
 
