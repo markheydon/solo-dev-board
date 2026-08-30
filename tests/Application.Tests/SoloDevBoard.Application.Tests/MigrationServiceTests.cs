@@ -141,6 +141,50 @@ public sealed class MigrationServiceTests
     }
 
     [Fact]
+    public async Task ApplyMigrationAsync_OverwriteKeepAreaLabelsOff_DeletesAreaLabels()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        SetupSourceAndTargetDataWithAreaLabels();
+
+        _labelRepository
+            .CreateLabelAsync("owner", "target", Arg.Any<Label>(), cancellationToken)
+            .Returns(callInfo =>
+            {
+                var repo = callInfo.ArgAt<string>(1);
+                var label = callInfo.ArgAt<Label>(2);
+                return label with { RepositoryName = repo };
+            });
+
+        _labelRepository
+            .UpdateLabelAsync("owner", "target", "type/story", Arg.Any<Label>(), cancellationToken)
+            .Returns(callInfo =>
+            {
+                var repo = callInfo.ArgAt<string>(1);
+                var label = callInfo.ArgAt<Label>(3);
+                return label with { RepositoryName = repo };
+            });
+
+        _labelRepository
+            .DeleteLabelAsync("owner", "target", Arg.Any<string>(), cancellationToken)
+            .Returns(Task.CompletedTask);
+
+        var sut = CreateSubject();
+
+        var result = await sut.ApplyMigrationAsync(
+            "owner/source",
+            ["owner/target"],
+            new MigrationScopeDto(true, false),
+            MigrationConflictStrategy.Overwrite,
+            keepAreaLabels: false,
+            cancellationToken: cancellationToken);
+
+        var labelResult = Assert.Single(result.LabelResults);
+        Assert.Equal(2, labelResult.DeletedCount);
+        await _labelRepository.Received(1).DeleteLabelAsync("owner", "target", "legacy", cancellationToken);
+        await _labelRepository.Received(1).DeleteLabelAsync("owner", "target", "area/docs", cancellationToken);
+    }
+
+    [Fact]
     public async Task PreviewMigrationAsync_SkipStrategy_ReturnsCreateAndSkipOnly()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;

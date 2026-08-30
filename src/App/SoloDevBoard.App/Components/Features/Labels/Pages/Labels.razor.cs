@@ -1159,11 +1159,6 @@ public partial class Labels : ComponentBase
     private static string FormatPreviewActionCounts(int createCount, int updateCount, int deleteCount, int skipCount)
         => $"Create: {createCount}, Update: {updateCount}, Delete: {deleteCount}, Skip: {skipCount}";
 
-    private static string FormatKeptAreaLabelsCaption(int keptAreaLabelCount)
-        => keptAreaLabelCount == 1
-            ? "1 area/* label is excluded from delete and will be left unchanged."
-            : $"{keptAreaLabelCount} area/* labels are excluded from delete and will be left unchanged.";
-
     private bool ShowLabelFilter => hasLoadedLabels && rows.Count > 0 && !ShowLoadingState && string.IsNullOrWhiteSpace(errorMessage);
 
     private string ErrorTitle => hasRepositoryLoadFailure

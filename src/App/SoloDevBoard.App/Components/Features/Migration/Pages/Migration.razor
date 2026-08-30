@@ -1,4 +1,5 @@
 @page "/migrate"
+@using SoloDevBoard.App.Components.Features.Labels.Components
 @using SoloDevBoard.App.Components.Features.Migration.Components
 
 <PageTitle>One-Click Migration</PageTitle>
@@ -336,7 +337,7 @@
 
                             @if (keepAreaLabels && labelPreview.KeptAreaLabels.Count > 0)
                             {
-                                <MudText Typo="Typo.caption" data-testid="migration-kept-area-labels-caption">@FormatKeptAreaLabelsCaption(labelPreview.KeptAreaLabels.Count)</MudText>
+                                <MudText Typo="Typo.caption" data-testid="migration-kept-area-labels-caption">@LabelAreaCaptionHelper.FormatKeptAreaLabelsCaption(labelPreview.KeptAreaLabels.Count)</MudText>
                             }
                         }
 

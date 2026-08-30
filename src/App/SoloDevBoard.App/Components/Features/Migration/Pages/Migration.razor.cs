@@ -887,11 +887,6 @@ public partial class Migration : ComponentBase
     private bool IsStaleTargetProjectBoardsBatch(CancellationTokenSource loadCts)
         => loadCts.IsCancellationRequested || !ReferenceEquals(_targetProjectBoardsLoadCts, loadCts);
 
-    private static string FormatKeptAreaLabelsCaption(int keptAreaLabelCount)
-        => keptAreaLabelCount == 1
-            ? "1 area/* label is excluded from delete and will be left unchanged."
-            : $"{keptAreaLabelCount} area/* labels are excluded from delete and will be left unchanged.";
-
     private sealed record ConflictOption(MigrationConflictStrategy Value, string Label, string Description);
 
     private sealed record RepositoryCoordinates(string Owner, string Name);

@@ -278,7 +278,7 @@
 
                                         @if (keepAreaLabels && preview.KeptAreaLabels.Count > 0)
                                         {
-                                            <MudText Typo="Typo.caption" data-testid="kept-area-labels-caption">@FormatKeptAreaLabelsCaption(preview.KeptAreaLabels.Count)</MudText>
+                                            <MudText Typo="Typo.caption" data-testid="kept-area-labels-caption">@LabelAreaCaptionHelper.FormatKeptAreaLabelsCaption(preview.KeptAreaLabels.Count)</MudText>
                                         }
                                     </MudPaper>
                                 }
@@ -442,7 +442,7 @@
 
                                         @if (keepAreaLabels && preview.KeptAreaLabels.Count > 0)
                                         {
-                                            <MudText Typo="Typo.caption" data-testid="sync-kept-area-labels-caption">@FormatKeptAreaLabelsCaption(preview.KeptAreaLabels.Count)</MudText>
+                                            <MudText Typo="Typo.caption" data-testid="sync-kept-area-labels-caption">@LabelAreaCaptionHelper.FormatKeptAreaLabelsCaption(preview.KeptAreaLabels.Count)</MudText>
                                         }
 
                                         @if (preview.Skipped.Count > 0)

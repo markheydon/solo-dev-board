@@ -35,6 +35,8 @@ test.describe('One-Click Migration shell', () => {
 
     const loadError = page.getByTestId('migration-repositories-load-error');
     if (await loadError.isVisible({ timeout: 15_000 })) {
+      await expect(page.getByText(/GitHub API request failed while loading repositories/i)).toBeVisible();
+      await expect(page.getByRole('button', { name: /try loading repositories again/i })).toBeVisible();
       return;
     }
 
