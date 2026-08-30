@@ -1,7 +1,7 @@
 ﻿@namespace SoloDevBoard.App.Components.Shell
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.Extensions.Options
-@using SoloDevBoard.Infrastructure.GitHub
+@using SoloDevBoard.Application.Authentication
 @inject IOptions<GitHubAuthOptions> GitHubAuthOptionsAccessor
 
 @if (GitHubAuthOptionsAccessor.Value.HostedSignInEnabled)

@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Options;
 using SoloDevBoard.App.Authentication;
+using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Application.Identity;
-using SoloDevBoard.Infrastructure.GitHub;
 
 namespace SoloDevBoard.App.Tests;
 

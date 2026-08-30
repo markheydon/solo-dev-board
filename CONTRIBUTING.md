@@ -112,11 +112,12 @@ When suggesting a feature:
    - Do not test .NET Aspire AppHost modelling or orchestration.
 
 4. **Architecture:**
-   - Follow the clean/layered architecture (Domain → Application → Infrastructure → App)
-   - Domain has no external dependencies
-   - Infrastructure implements interfaces defined in Application
-   - No business logic in Razor components
-   - Prefer immutable records for domain entities
+   - Follow the clean/layered architecture: Domain, Application, Infrastructure, Composition, and App with strict dependency direction (see [AGENTS.md — Architecture](AGENTS.md#architecture) and [DEC-002](plan/DECISIONS.md#dec-002-layered--clean-architecture)).
+   - Domain has no external dependencies.
+   - Infrastructure implements interfaces defined in Application.
+   - Composition wires Application and Infrastructure via `AddSoloDevBoard`; App must not reference Infrastructure.
+   - No business logic in Razor components.
+   - Prefer immutable records for domain entities.
 
 5. **Commits and history:**
    - Write clear, concise commit messages in UK English

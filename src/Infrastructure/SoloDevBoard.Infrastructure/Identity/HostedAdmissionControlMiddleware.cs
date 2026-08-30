@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
+using SoloDevBoard.Application.Authentication;
 
 namespace SoloDevBoard.Infrastructure.Identity;
 

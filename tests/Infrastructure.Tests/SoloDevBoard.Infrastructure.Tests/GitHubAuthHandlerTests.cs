@@ -1,6 +1,7 @@
 using System.Net;
 using Microsoft.Extensions.Options;
 using NSubstitute;
+using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Infrastructure.GitHub;
 

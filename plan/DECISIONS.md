@@ -26,7 +26,9 @@ A formal migration to GitHub Spec Kit is planned — see [`plan/SPEC_KIT_MIGRATI
 **Date:** 2026-02-15  
 **Legacy:** [ADR-0004](../adr/archive/0004-layered-architecture.md)  
 **Constitution:** [AGENTS.md — Architecture](../AGENTS.md#architecture)  
-**Summary:** Four projects (App, Application, Domain, Infrastructure) with strict dependency direction. Domain has no external dependencies; App never references Infrastructure directly. Reject service locator patterns and cross-layer shortcuts.
+**Summary:** Five projects (App, Application, Composition, Domain, Infrastructure) with strict dependency direction. Domain has no external dependencies; `SoloDevBoard.Composition` is the sole DI composition root (`AddSoloDevBoard`); App depends on Application and Composition only and must not reference Infrastructure directly. Auth configuration contracts (`GitHubAuthOptions`, route helpers, and related types) live in `SoloDevBoard.Application.Authentication`. Reject service locator patterns and cross-layer shortcuts.
+
+**Clarification (2026-08-30):** Introduced `SoloDevBoard.Composition` to implement the App→Infrastructure boundary DEC-002 already required. Future hosts (for example Azure Functions workers) should call `AddSoloDevBoard` from Composition rather than wiring Infrastructure from presentation projects.
 
 ---
 

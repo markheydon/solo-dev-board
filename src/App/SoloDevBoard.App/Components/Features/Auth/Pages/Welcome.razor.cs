@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Options;
 using SoloDevBoard.App.Authentication;
-using SoloDevBoard.Infrastructure.GitHub;
+using SoloDevBoard.Application.Authentication;
 
 namespace SoloDevBoard.App.Components.Features.Auth.Pages;
 

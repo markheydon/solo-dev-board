@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.ActionsTemplates;
 using SoloDevBoard.Application.Services.Common;
@@ -20,8 +21,8 @@ namespace SoloDevBoard.Infrastructure.Common;
 public static class InfrastructureServiceExtensions
 {
     /// <summary>
-    /// Registers all Infrastructure-layer services. Call this from the application's
-    /// composition root (i.e. <c>Program.cs</c>) during startup configuration.
+    /// Registers all Infrastructure-layer services. Call from <c>SoloDevBoard.Composition</c>
+    /// via <c>AddSoloDevBoard</c> — not from <c>SoloDevBoard.App</c> directly.
     /// </summary>
     /// <param name="services">The service collection to register services into.</param>
     /// <param name="configuration">Application configuration used for options binding.</param>

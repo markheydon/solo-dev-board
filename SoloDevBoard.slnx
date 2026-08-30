@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/App/SoloDevBoard.App/SoloDevBoard.App.csproj" />
     <Project Path="src/Application/SoloDevBoard.Application/SoloDevBoard.Application.csproj" />
+    <Project Path="src/Composition/SoloDevBoard.Composition/SoloDevBoard.Composition.csproj" />
     <Project Path="src/Domain/SoloDevBoard.Domain/SoloDevBoard.Domain.csproj" />
     <Project Path="src/Infrastructure/SoloDevBoard.Infrastructure/SoloDevBoard.Infrastructure.csproj" />
     <Project Path="src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj" />
@@ -11,6 +12,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/App.Tests/SoloDevBoard.App.Tests/SoloDevBoard.App.Tests.csproj" />
     <Project Path="tests/Application.Tests/SoloDevBoard.Application.Tests/SoloDevBoard.Application.Tests.csproj" />
+    <Project Path="tests/Composition.Tests/SoloDevBoard.Composition.Tests/SoloDevBoard.Composition.Tests.csproj" />
     <Project Path="tests/Domain.Tests/SoloDevBoard.Domain.Tests/SoloDevBoard.Domain.Tests.csproj" />
     <Project Path="tests/ServiceDefaults.Tests/SoloDevBoard.ServiceDefaults.Tests/SoloDevBoard.ServiceDefaults.Tests.csproj" />
   </Folder>

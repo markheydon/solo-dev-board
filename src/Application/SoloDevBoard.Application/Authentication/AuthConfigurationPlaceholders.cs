@@ -1,4 +1,4 @@
-namespace SoloDevBoard.Infrastructure.GitHub;
+namespace SoloDevBoard.Application.Authentication;
 
 /// <summary>Sentinel values used for inactive Aspire AppHost parameters and optional config.</summary>
 public static class AuthConfigurationPlaceholders

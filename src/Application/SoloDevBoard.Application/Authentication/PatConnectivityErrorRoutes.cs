@@ -1,6 +1,4 @@
-using Microsoft.AspNetCore.WebUtilities;
-
-namespace SoloDevBoard.Infrastructure.Identity;
+namespace SoloDevBoard.Application.Authentication;
 
 /// <summary>Defines PAT connectivity error page routes and reason codes.</summary>
 public static class PatConnectivityErrorRoutes
@@ -20,11 +18,13 @@ public static class PatConnectivityErrorRoutes
     /// <returns>The error page URL including the reason query parameter.</returns>
     public static string BuildErrorUrl(string reason, string? returnUrl = null)
     {
-        var url = QueryHelpers.AddQueryString(ErrorPath, "reason", reason);
+        ArgumentException.ThrowIfNullOrWhiteSpace(reason);
+
+        var url = $"{ErrorPath}?reason={Uri.EscapeDataString(reason)}";
 
         if (!string.IsNullOrWhiteSpace(returnUrl))
         {
-            url = QueryHelpers.AddQueryString(url, "returnUrl", returnUrl);
+            url += $"&returnUrl={Uri.EscapeDataString(returnUrl)}";
         }
 
         return url;

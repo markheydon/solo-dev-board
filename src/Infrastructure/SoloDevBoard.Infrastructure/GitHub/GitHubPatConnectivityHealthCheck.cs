@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
+using SoloDevBoard.Application.Authentication;
 
 namespace SoloDevBoard.Infrastructure.GitHub;
 

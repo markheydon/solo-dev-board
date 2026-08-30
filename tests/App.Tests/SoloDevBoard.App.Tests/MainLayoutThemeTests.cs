@@ -6,8 +6,8 @@ using MudBlazor.Services;
 using NSubstitute;
 using SoloDevBoard.App.Components.Shell.Layout;
 using SoloDevBoard.App.Theming;
+using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Application.Services.GitHub;
-using SoloDevBoard.Infrastructure.GitHub;
 
 namespace SoloDevBoard.App.Tests;
 

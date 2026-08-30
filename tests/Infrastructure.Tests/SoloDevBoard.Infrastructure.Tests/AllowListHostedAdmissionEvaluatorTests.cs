@@ -1,6 +1,6 @@
 using System.Security.Claims;
 using Microsoft.Extensions.Options;
-using SoloDevBoard.Infrastructure.GitHub;
+using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Infrastructure.Identity;
 
 namespace SoloDevBoard.Infrastructure.Tests;

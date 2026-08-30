@@ -12,7 +12,7 @@ Your task is to ensure .NET/C# code in `${selection}` meets the SoloDevBoard sta
 - Target framework: `.NET 10` (`net10.0`)
 - Language version: `C# 14`
 - Nullable reference types and implicit usings are enabled
-- Architecture: clean/layered (`App`, `Application`, `Domain`, `Infrastructure`)
+- Architecture: clean/layered (`Domain`, `Application`, `Infrastructure`, `Composition`, `App`)
 
 ## Documentation & Structure
 
@@ -30,7 +30,8 @@ Your task is to ensure .NET/C# code in `${selection}` meets the SoloDevBoard sta
 	- `Domain` has no external dependencies
 	- `Application` depends on `Domain` only
 	- `Infrastructure` depends on `Application` and `Domain`
-	- `App` depends on `Application`
+	- `Composition` depends on `Application` and `Infrastructure`; exposes `AddSoloDevBoard`
+	- `App` depends on `Application` and `Composition` only; must not reference `Infrastructure`
 
 ## Dependency Injection & Services
 

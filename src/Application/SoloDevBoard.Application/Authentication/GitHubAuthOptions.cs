@@ -1,6 +1,4 @@
-using SoloDevBoard.Infrastructure.Identity;
-
-namespace SoloDevBoard.Infrastructure.GitHub;
+namespace SoloDevBoard.Application.Authentication;
 
 /// <summary>Configuration options for GitHub authentication.</summary>
 public sealed class GitHubAuthOptions

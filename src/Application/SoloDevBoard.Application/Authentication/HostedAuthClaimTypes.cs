@@ -1,4 +1,4 @@
-namespace SoloDevBoard.Infrastructure.Identity;
+namespace SoloDevBoard.Application.Authentication;
 
 /// <summary>
 /// Defines hosted authentication claim types used for per-request GitHub user context resolution.
