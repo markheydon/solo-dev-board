@@ -43,6 +43,8 @@ One-Click Migration covers labels, milestones, and Projects v2 Status columns in
 
 The Label Manager page uses a tabbed layout to organise label management workflows. The repository selector is positioned above the tabs, allowing you to choose one or more repositories before switching between workflows.
 
+Load failures and retry actions appear at the top of the repository selector or **Labels** tab. Transient operation outcomes (create, update, delete, and synchronisation summaries) appear as snackbar notifications.
+
 {{< tabs >}}
 
   {{< tab name="Labels" >}}

@@ -10,9 +10,32 @@
         <MudStack Spacing="2">
             <MudText Typo="Typo.h6">Repository selector</MudText>
 
-            @if (availableRepositories.Count == 0)
+            @if (isLoadingRepositories)
             {
-                <MudText Typo="Typo.body2">No active repositories are available for label analysis.</MudText>
+                <MudStack AlignItems="AlignItems.Center" Spacing="1" aria-live="polite" role="status">
+                    <MudProgressCircular Indeterminate="true" Color="Color.Primary" aria-label="Loading repositories" />
+                    <MudText Typo="Typo.body2">Loading repositories...</MudText>
+                </MudStack>
+            }
+            else if (!string.IsNullOrWhiteSpace(errorMessage) && hasRepositoryLoadFailure)
+            {
+                <MudStack Spacing="1" aria-live="assertive" role="alert" data-testid="label-manager-feedback-region">
+                    <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Outlined"
+                              data-testid="label-manager-error-alert">
+                        <MudText Typo="Typo.subtitle2">@ErrorTitle</MudText>
+                        <MudText Typo="Typo.body2">@errorMessage</MudText>
+                    </MudAlert>
+
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ReloadRepositoriesAsync">
+                        Try loading repositories again
+                    </MudButton>
+                </MudStack>
+            }
+            else if (availableRepositories.Count == 0)
+            {
+                <MudStack Spacing="1" aria-live="polite" data-testid="label-manager-repositories-empty-state">
+                    <MudText Typo="Typo.body2">No active repositories are available for label analysis.</MudText>
+                </MudStack>
             }
             else
             {
@@ -41,6 +64,20 @@
                  data-testid="label-manager-tabs">
             <MudTabPanel Text="Labels">
                 <MudStack Spacing="2" Class="pt-3">
+                    @if (!string.IsNullOrWhiteSpace(errorMessage) && !hasRepositoryLoadFailure)
+                    {
+                        <MudStack Spacing="1" aria-live="assertive" role="alert" data-testid="label-manager-feedback-region">
+                            <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Outlined">
+                                <MudText Typo="Typo.subtitle2">@ErrorTitle</MudText>
+                                <MudText Typo="Typo.body2">@errorMessage</MudText>
+                            </MudAlert>
+
+                            <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="LoadLabelsForSelectionAsync">
+                                Try loading labels again
+                            </MudButton>
+                        </MudStack>
+                    }
+
                     <MudStack Row="true" Spacing="1" data-testid="labels-action-strip">
                         <MudButton Variant="Variant.Filled"
                                    Color="Color.Primary"
@@ -481,35 +518,5 @@
                 </MudStack>
             </MudTabPanel>
         </MudTabs>
-    </MudPaper>
-
-    <MudPaper Class="pa-4" Elevation="1" aria-live="polite" data-testid="label-manager-feedback-region">
-        <MudStack Spacing="1">
-            <MudText Typo="Typo.h6">Status</MudText>
-
-            @if (!string.IsNullOrWhiteSpace(errorMessage))
-            {
-                <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Outlined">
-                    <MudText Typo="Typo.subtitle2">@ErrorTitle</MudText>
-                    <MudText Typo="Typo.body2">@errorMessage</MudText>
-                </MudAlert>
-
-                @if (availableRepositories.Count == 0)
-                {
-                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ReloadRepositoriesAsync">Try loading repositories again</MudButton>
-                }
-                else
-                {
-                    <MudStack Row="true" Spacing="1" Class="mt-2">
-                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ReloadRepositoriesAsync">Reload repositories</MudButton>
-                        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="LoadLabelsForSelectionAsync">Try loading labels again</MudButton>
-                    </MudStack>
-                }
-            }
-            else
-            {
-                <MudText Typo="Typo.body2">Transient operation outcomes appear as snackbar notifications.</MudText>
-            }
-        </MudStack>
     </MudPaper>
 </MudStack>

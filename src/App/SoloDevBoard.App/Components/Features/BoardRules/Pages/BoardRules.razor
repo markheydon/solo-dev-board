@@ -17,6 +17,22 @@
                                data-testid="board-rules-compare-mode-toggle" />
                 </MudStack>
 
+                @if (!string.IsNullOrWhiteSpace(errorMessage) && hasRepositoryLoadFailure)
+                {
+                    <MudStack Spacing="1" aria-live="assertive" role="alert" data-testid="board-rules-feedback-region">
+                        <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Outlined"
+                                  data-testid="board-rules-error-alert">
+                            <MudText Typo="Typo.subtitle2">@ErrorTitle</MudText>
+                            <MudText Typo="Typo.body2">@errorMessage</MudText>
+                        </MudAlert>
+
+                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ReloadRepositoriesAsync"
+                                   data-testid="board-rules-reload-repositories-button">
+                            Try loading repositories again
+                        </MudButton>
+                    </MudStack>
+                }
+
                 @if (isLoadingRepositories)
                 {
                     <MudStack AlignItems="AlignItems.Center" Spacing="1" aria-live="polite" role="status"
@@ -57,6 +73,21 @@
                                     {
                                         <MudText Typo="Typo.body2" data-testid="board-rules-board-selector-prompt">Select a
                                             repository to load supported project boards.</MudText>
+                                        }
+                                else if (hasProjectBoardLoadFailure)
+                                        {
+                                            <MudStack Spacing="1" aria-live="assertive" role="alert" data-testid="board-rules-feedback-region">
+                                                <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Outlined"
+                                                          data-testid="board-rules-error-alert">
+                                                    <MudText Typo="Typo.subtitle2">@ErrorTitle</MudText>
+                                                    <MudText Typo="Typo.body2">@errorMessage</MudText>
+                                                </MudAlert>
+
+                                                <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ReloadProjectBoardsAsync"
+                                                           data-testid="board-rules-reload-boards-button">
+                                                    Try loading project boards again
+                                                </MudButton>
+                                            </MudStack>
                                         }
                                 else if (isLoadingProjectBoards)
                                         {
@@ -195,6 +226,22 @@
 
             <MudPaper Class="pa-4" Elevation="1" Outlined="true" aria-label="Board rules visualisation area"
                       data-testid="board-rules-visualisation-region">
+                @if (!string.IsNullOrWhiteSpace(errorMessage) && hasBoardRulesLoadFailure)
+                {
+                    <MudStack Spacing="1" Class="mb-3" aria-live="assertive" role="alert" data-testid="board-rules-feedback-region">
+                        <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Outlined"
+                                  data-testid="board-rules-error-alert">
+                            <MudText Typo="Typo.subtitle2">@ErrorTitle</MudText>
+                            <MudText Typo="Typo.body2">@errorMessage</MudText>
+                        </MudAlert>
+
+                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ReloadProjectBoardsAsync"
+                                   data-testid="board-rules-reload-boards-button">
+                            Try loading board rules again
+                        </MudButton>
+                    </MudStack>
+                }
+
                 @if (!HasSelectedRepository)
                 {
                     <MudStack Spacing="1" aria-live="polite" data-testid="board-rules-empty-state">
@@ -428,46 +475,5 @@
                                     </MudGrid>
                                 </MudStack>
                             }
-                        </MudPaper>
-
-                        <MudPaper Class="pa-4" Elevation="1" aria-live="polite" data-testid="board-rules-feedback-region">
-                            <MudStack Spacing="1">
-                                <MudText Typo="Typo.h6">Status</MudText>
-
-                                @if (!string.IsNullOrWhiteSpace(errorMessage))
-                                {
-                                    <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Outlined"
-                                              data-testid="board-rules-error-alert">
-                                        <MudText Typo="Typo.subtitle2">@ErrorTitle</MudText>
-                                        <MudText Typo="Typo.body2">@errorMessage</MudText>
-                                    </MudAlert>
-
-                                    @if (hasRepositoryLoadFailure)
-                                    {
-                                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ReloadRepositoriesAsync"
-                                                   data-testid="board-rules-reload-repositories-button">
-                                            Try loading repositories again
-                                        </MudButton>
-                                    }
-                                    else if (hasProjectBoardLoadFailure)
-                                    {
-                                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ReloadProjectBoardsAsync"
-                                                   data-testid="board-rules-reload-boards-button">
-                                            Try loading project boards again
-                                        </MudButton>
-                                    }
-                                    else if (hasBoardRulesLoadFailure)
-                                    {
-                                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ReloadProjectBoardsAsync"
-                                                   data-testid="board-rules-reload-boards-button">
-                                            Try loading board rules again
-                                        </MudButton>
-                                    }
-                                }
-                                else
-                                {
-                                    <MudText Typo="Typo.body2">No active status messages.</MudText>
-                                }
-                            </MudStack>
                         </MudPaper>
                     </MudStack>

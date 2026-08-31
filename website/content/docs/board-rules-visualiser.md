@@ -72,4 +72,4 @@ Private user-owned Projects v2 boards often need PAT mode with `read:project`, o
 {{< /callout >}}
 
 - **Loading:** Progress indicators appear while repositories or project boards are loading.
-- **Errors:** If GitHub cannot be reached, an error message appears with a retry action.
+- **Errors:** If GitHub cannot be reached, an error message appears at the top of the affected section (repository selector, project board selector, or visualisation area) with a retry action.

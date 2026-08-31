@@ -276,6 +276,13 @@
                     </MudItem>
                 </MudGrid>
 
+                @if (!CanPreview)
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" data-testid="migration-requirements-info">
+                        @BoardSelectionRequirementsMessage
+                    </MudAlert>
+                }
+
                 <MudStack Row="true" Spacing="1" Class="justify-end" data-testid="migration-workflow-actions">
                     <MudButton Variant="Variant.Outlined"
                                Color="Color.Secondary"
@@ -306,6 +313,19 @@
                         </MudButton>
                     }
                 </MudStack>
+
+                @if (showPreview && !HasActionablePreviewChanges)
+                {
+                    <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined" data-testid="migration-no-action-warning">
+                        The current preview has no actionable create, update, or delete changes.
+                    </MudAlert>
+                }
+                else if (showPreview && HasActionablePreviewChanges)
+                {
+                    <MudAlert Severity="Severity.Success" Dense="true" Variant="Variant.Outlined" data-testid="migration-ready-to-apply-info">
+                        Review the preview and apply migration when you are ready.
+                    </MudAlert>
+                }
 
                 @if (IsBusy)
                 {
@@ -429,9 +449,7 @@
     else
     {
         <MudPaper Class="pa-4" Elevation="1" data-testid="migration-preview-empty-state">
-            <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined">
-                @BoardSelectionRequirementsMessage
-            </MudAlert>
+            <MudText Typo="Typo.body2">Migration preview results appear here after you run preview.</MudText>
         </MudPaper>
     }
 
@@ -499,29 +517,4 @@
             </MudStack>
         </MudPaper>
     }
-
-    <MudPaper Class="pa-4" Elevation="1" data-testid="migration-feedback-region" aria-live="polite">
-        <MudStack Spacing="1">
-            <MudText Typo="Typo.h6">Status and guidance</MudText>
-
-            @if (!CanPreview)
-            {
-                <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined" data-testid="migration-requirements-info">
-                    @BoardSelectionRequirementsMessage
-                </MudAlert>
-            }
-            else if (showPreview && !HasActionablePreviewChanges)
-            {
-                <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined" data-testid="migration-no-action-warning">
-                    The current preview has no actionable create, update, or delete changes.
-                </MudAlert>
-            }
-            else if (showPreview && HasActionablePreviewChanges)
-            {
-                <MudAlert Severity="Severity.Success" Dense="true" Variant="Variant.Outlined" data-testid="migration-ready-to-apply-info">
-                    Review the preview and apply migration when you are ready.
-                </MudAlert>
-            }
-        </MudStack>
-    </MudPaper>
 </MudStack>

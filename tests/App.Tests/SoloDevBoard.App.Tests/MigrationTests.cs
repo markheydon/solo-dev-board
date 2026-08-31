@@ -551,7 +551,6 @@ public sealed class MigrationTests
         {
             Assert.NotNull(cut.Find("[data-testid='migration-workflow-controls-card']"));
             Assert.NotNull(cut.Find("[data-testid='migration-preview-empty-state']"));
-            Assert.NotNull(cut.Find("[data-testid='migration-feedback-region']"));
             Assert.NotNull(cut.Find("[data-testid='migration-requirements-info']"));
         });
     }

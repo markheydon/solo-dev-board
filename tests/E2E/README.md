@@ -20,7 +20,7 @@ Published user guides must stay aligned with these tests like-for-like. See [USE
 | `repositories.spec.ts` | Repositories command strip, load failure handling, and phone-width overflow guard |
 | `migrate.spec.ts` | One-Click Migration setup shell, columns scope switch, and API failure feedback |
 | `board-rules.spec.ts` | Board Rules selector region, compare mode, and load failure |
-| `labels.spec.ts` | Label Manager shell, tabs, and empty-repository state |
+| `labels.spec.ts` | Label Manager shell, tabs, and repository load failure feedback |
 | `actions-templates.spec.ts` | Built-in template browse/filter/select and repository error state |
 | `triage.spec.ts` | Triage shell and no-repositories alert without a live GitHub connection |
 | `planning.spec.ts` | Planning — Daily Focus occupancy, recommendations, stalled Up Next, stalled-review, Backlog Review, and Iteration shells, plus Repos tab threshold, exclusion, and summary regions or chrome error |

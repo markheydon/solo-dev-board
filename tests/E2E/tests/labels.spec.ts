@@ -10,9 +10,15 @@ test.describe('Label Manager shell', () => {
     await expect(page.getByTestId('new-label-button')).toBeDisabled();
     await expect(page.getByTestId('load-labels-button')).toBeDisabled();
     await expect(page.getByTestId('bulk-delete-labels-button')).toBeDisabled();
-    await expect(page.getByText('No active repositories are available for label analysis.')).toBeVisible({
-      timeout: 15_000,
-    });
+  });
+
+  test('repository load failure surfaces in the label manager feedback region', async ({ page }) => {
+    await page.goto('/labels');
+
+    await expect(page.getByText('Loading repositories...')).toBeHidden({ timeout: 15_000 });
+    await expect(page.getByTestId('label-manager-feedback-region')).toBeVisible();
+    await expect(page.getByText(/GitHub API request failed/i)).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Try loading repositories again' })).toBeVisible();
   });
 
   test('label manager tabs remain available across taxonomy modes', async ({ page }) => {
