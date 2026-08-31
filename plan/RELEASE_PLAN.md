@@ -113,11 +113,29 @@ Application version numbers are calculated automatically at build time by [MinVe
 - OSS catalogue identification ([#440](https://github.com/markheydon/solo-dev-board/issues/440)) — **complete**
 - Post-release refinements: Label Manager bulk delete and keep-`area/*` ([#444](https://github.com/markheydon/solo-dev-board/issues/444), [#446](https://github.com/markheydon/solo-dev-board/issues/446)), Iteration stall/capacity UX ([#445](https://github.com/markheydon/solo-dev-board/issues/445)), snackbar standardisation ([#465](https://github.com/markheydon/solo-dev-board/issues/465)), migration keep-`area/*` ([#464](https://github.com/markheydon/solo-dev-board/issues/464), [#471](https://github.com/markheydon/solo-dev-board/issues/471)), feedback region cleanup ([#473](https://github.com/markheydon/solo-dev-board/issues/473)) — **complete**
 
-**Out of milestone (backlog):** Private user-owned Projects v2 via hosted sign-in ([#293](https://github.com/markheydon/solo-dev-board/issues/293)) — platform-blocked; see [`plan/GITHUB_PROJECTS_V2_ACCESS.md`](GITHUB_PROJECTS_V2_ACCESS.md). Product operating system overlay ([#475](https://github.com/markheydon/solo-dev-board/issues/475)) — ice-boxed direction; see [`plan/PRODUCT_OPERATING_SYSTEM.md`](PRODUCT_OPERATING_SYSTEM.md). Do not treat this as `v1.2` scope until that release is declared.
+**Out of milestone (backlog):** Private user-owned Projects v2 via hosted sign-in ([#293](https://github.com/markheydon/solo-dev-board/issues/293)) — platform-blocked; see [`plan/GITHUB_PROJECTS_V2_ACCESS.md`](GITHUB_PROJECTS_V2_ACCESS.md). Product operating system overlay ([#475](https://github.com/markheydon/solo-dev-board/issues/475)) — ice-boxed direction; see [`plan/PRODUCT_OPERATING_SYSTEM.md`](PRODUCT_OPERATING_SYSTEM.md). Window-focus refetch ([#450](https://github.com/markheydon/solo-dev-board/issues/450)) stays off `v1.2`.
 
 **Status:** Complete (2026-08-31). Tagged [`v1.1.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.1.0). Production CD and GitHub Pages publish from `v*` tags.
 
 **Target:** Early September 2026 (met)
+
+---
+
+### v1.2 - Planning polish, Reload & Templates
+
+**Goal:** Finish older unfinished slices after `v1.1.0`: Planning follow-through, Reload from GitHub, hosted-auth HttpClient hygiene, and custom workflow template repositories.
+
+**Scope:**
+- Optional board-scoped Daily Focus recommendations ([#403](https://github.com/markheydon/solo-dev-board/issues/403))
+- Reload from GitHub, keep selection ([#447](https://github.com/markheydon/solo-dev-board/issues/447), [#449](https://github.com/markheydon/solo-dev-board/issues/449), [#451](https://github.com/markheydon/solo-dev-board/issues/451))
+- Split hosted GitHub OAuth and API HttpClients ([#453](https://github.com/markheydon/solo-dev-board/issues/453))
+- Custom workflow template repositories ([#292](https://github.com/markheydon/solo-dev-board/issues/292)) — stay on this milestone to force a decision (implement, reshape, or explicitly drop), not another ice-box kick
+
+**Out of milestone:** Window-focus refetch ([#450](https://github.com/markheydon/solo-dev-board/issues/450), ice-box); hosted private Projects v2 ([#293](https://github.com/markheydon/solo-dev-board/issues/293)); Aspire PM settings store ([#391](https://github.com/markheydon/solo-dev-board/issues/391)); newer ice-box catalogue and hygiene work ([#381](https://github.com/markheydon/solo-dev-board/issues/381), [#397](https://github.com/markheydon/solo-dev-board/issues/397), [#411](https://github.com/markheydon/solo-dev-board/issues/411), [#435](https://github.com/markheydon/solo-dev-board/issues/435)–[#439](https://github.com/markheydon/solo-dev-board/issues/439), [#470](https://github.com/markheydon/solo-dev-board/issues/470)).
+
+**Status:** Open (declared 2026-08-31). GitHub milestone [`v1.2 - Planning polish, Reload & Templates`](https://github.com/markheydon/solo-dev-board/milestone/8). Release tag `v1.2.0` when shipped.
+
+**Target:** Not set — dates follow actual start per Roadmap date guidelines.
 
 ---
 

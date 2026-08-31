@@ -41,7 +41,7 @@ Create, edit, recolour, delete, and synchronise GitHub labels across multiple re
 
 ### 4. Board Rules Visualiser
 
-An interactive diagram showing the automation rules configured on GitHub project boards, making it easy to understand how issues flow between columns.
+An interactive diagram showing the automation rules configured on GitHub project boards, making it easy to understand how issues flow between columns. **`v1.2`:** Reload from GitHub that keeps repository selection ([#449](https://github.com/markheydon/solo-dev-board/issues/449)), as the first slice of epic [#447](https://github.com/markheydon/solo-dev-board/issues/447).
 
 ### 5. Triage UI
 
@@ -49,11 +49,11 @@ A focused, keyboard-friendly interface for triaging incoming GitHub issues one a
 
 ### 6. Actions Templates
 
-Browse, customise, and apply built-in GitHub Actions workflow templates across repositories, with tracking of which repositories have which templates applied. Custom template repositories are **deferred past `v1.1`** ([#292](https://github.com/markheydon/solo-dev-board/issues/292), ice-boxed).
+Browse, customise, and apply built-in GitHub Actions workflow templates across repositories, with tracking of which repositories have which templates applied. Custom template repositories stay on **`v1.2`** ([#292](https://github.com/markheydon/solo-dev-board/issues/292)) so the increment forces a decision (implement, reshape, or explicitly drop) rather than another ice-box deferral.
 
 ### 7. Planning
 
-A UI-based implementation of the two-mode PM operating system from [markheydon/github-workflows](https://github.com/markheydon/github-workflows): a Daily Focus view (board state, stalled items, top priorities), a cross-repository Backlog Review (prioritised work across all repos, neglected repo detection), and an Iteration Planning tool (capacity management, Up Next curation, milestone assignment). Tracked in [#272](https://github.com/markheydon/solo-dev-board/issues/272) on milestone **`v1.1`** ([DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)). **`v1.1` refinement:** keep the stall gate as the only hard disable for Add to Up Next, and keep capacity as a meter plus confirm ([#445](https://github.com/markheydon/solo-dev-board/issues/445)).
+A UI-based implementation of the two-mode PM operating system from [markheydon/github-workflows](https://github.com/markheydon/github-workflows): a Daily Focus view (board state, stalled items, top priorities), a cross-repository Backlog Review (prioritised work across all repos, neglected repo detection), and an Iteration Planning tool (capacity management, Up Next curation, milestone assignment). Tracked in [#272](https://github.com/markheydon/solo-dev-board/issues/272) on milestone **`v1.1`** ([DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)). **`v1.1` refinement:** keep the stall gate as the only hard disable for Add to Up Next, and keep capacity as a meter plus confirm ([#445](https://github.com/markheydon/solo-dev-board/issues/445)). **`v1.2` follow-through:** optional board-scoped Daily Focus recommendations ([#403](https://github.com/markheydon/solo-dev-board/issues/403)); the default remains all included repositories.
 
 ### 8. Public product site (GitHub Pages)
 
@@ -132,4 +132,5 @@ The following are explicitly **not** in scope for the current version of SoloDev
 | 2026-08-26 | One-Click Migration label Overwrite keeps `area/*` by default, matching Label Manager extra-delete behaviour (#464, DEC-036). Configurable keep-prefix lists remain out of scope. | Solo developer |
 | 2026-08-28 | GitHub milestones renamed to `vX.Y - Descriptive name` (ASCII hyphen; release tags remain SemVer `vX.Y.Z`). Open milestone titled `v1.1 - Cross-Repo Planning & Refinement`. Custom template repositories ([#292](https://github.com/markheydon/solo-dev-board/issues/292)) deferred past this release. Project board column migration ([#291](https://github.com/markheydon/solo-dev-board/issues/291)) marked complete. | Solo developer |
 | 2026-08-31 | `v1.1 - Cross-Repo Planning & Refinement` shipped as [`v1.1.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.1.0) (91 closed, 0 open). Custom template repositories (#292) and hosted private Projects v2 (#293) stay unmilestoned. | Solo developer |
+| 2026-08-31 | Declared **`v1.2 - Planning polish, Reload & Templates`** (tag `v1.2.0` when shipped). Locked in: #403, Reload #447/#449/#451, HttpClient split #453, custom templates #292 (kept on the milestone to force a decision rather than another ice-box). Window-focus refetch #450, platform-blocked #293/#391, and newer ice-box catalogue work stay off this milestone. | Solo developer |
 

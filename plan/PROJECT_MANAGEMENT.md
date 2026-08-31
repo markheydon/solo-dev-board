@@ -118,8 +118,9 @@ The descriptive suffix names the milestone theme; it is not repeated in the rele
 | `v0.4 - Board Rules Visualiser + Workflow Templates` | `v0.4.0` | Closed | |
 | `v1.0 - Production Ready` | `v1.0.0` | Closed | Public release (2026-08-18) |
 | `v1.1 - Cross-Repo Planning & Refinement` | `v1.1.0` | Closed | Shipped 2026-08-31 — **91 closed, 0 open**. |
+| `v1.2 - Planning polish, Reload & Templates` | `v1.2.0` | Open | Declared 2026-08-31. Phase stays blank ([DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)). |
 
-The unused `v1.2.0 - Cross-Repo Planning` milestone was closed then **deleted** on 2026-08-18 after work moved to `v1.1 - Cross-Repo Planning & Refinement`.
+The unused `v1.2.0 - Cross-Repo Planning` milestone was closed then **deleted** on 2026-08-18 after work moved to `v1.1 - Cross-Repo Planning & Refinement`. The current `v1.2` milestone is a later, different increment (Planning polish, Reload, and templates), not a revival of that deleted planning-only bucket.
 
 ### Milestone Workflow
 
