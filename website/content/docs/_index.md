@@ -31,6 +31,7 @@ These guides are for contributors, self-hosters, and operators (not published on
 - [Getting Started](https://github.com/markheydon/solo-dev-board/blob/main/docs/getting-started.md) — prerequisites, Aspire-first local setup, and configuration.
 - [Deployment](https://github.com/markheydon/solo-dev-board/blob/main/docs/deployment.md) — Azure Container Apps via Aspire.
 - [Hosted Authentication](https://github.com/markheydon/solo-dev-board/blob/main/docs/hosted-authentication.md) — hosted sign-in and allow-lists.
+- [GitHub App listing](https://github.com/markheydon/solo-dev-board/blob/main/docs/github-app.md) — logo, callback URLs, permissions, and listing copy.
 - [PAT Connectivity](https://github.com/markheydon/solo-dev-board/blob/main/docs/pat-connectivity.md) — PAT validation and recovery UX.
 - [Azure Deployment Costs](https://github.com/markheydon/solo-dev-board/blob/main/docs/azure-costs.md) — resource charges and cost optimisation.
 - [Observability](https://github.com/markheydon/solo-dev-board/blob/main/docs/observability.md) — structured logging and Application Insights.

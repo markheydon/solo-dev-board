@@ -144,7 +144,7 @@ The preview shows the labels that will be created, updated, deleted (when the op
 
 The apply summary is shown per repository and includes created, updated, deleted, and skipped counts. If one repository fails due to a GitHub API error, the summary marks that repository with an error while still showing successful outcomes for other repositories.
 
-Strategies are currently built in for the MVP stage. Future releases can externalise strategy definitions so custom strategies can be managed without code changes.
+Strategies are built in to the application. Custom strategy files that you maintain outside the shipped catalogue remain a later increment.
 
 
 ## Synchronise Labels Workflow

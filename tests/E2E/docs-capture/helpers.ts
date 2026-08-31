@@ -259,6 +259,7 @@ async function preparePlanningTabForCapture(
   const selected = await selectPlanningBoardByTitle(page);
   if (selected) {
     await expect(ready.first()).toBeVisible({ timeout: 90_000 });
+    await page.waitForTimeout(3_000);
   }
 
   await page.waitForTimeout(1_000);
@@ -354,9 +355,8 @@ export async function prepareBoardRulesForCapture(page: Page): Promise<void> {
   await projectBoardSelect.click();
 
   const preferredOption = page.getByRole('option', { name: /SoloDevBoard Roadmap/i });
-  const boardOption = (await preferredOption.isVisible({ timeout: 5_000 }).catch(() => false))
-    ? preferredOption
-    : page.getByRole('option').first();
+  const boardOption =
+    (await preferredOption.count()) > 0 ? preferredOption.first() : page.getByRole('option').first();
 
   await expect(boardOption).toBeVisible({ timeout: 15_000 });
   const boardTitle = (await boardOption.textContent())?.trim();
@@ -398,12 +398,12 @@ export async function prepareActionsTemplatesForCapture(page: Page): Promise<voi
   await openFeatureForCapture(page, '/actions-templates');
   await selectRepositoryInAutocomplete(page, 'workflow-repository-autocomplete');
 
-  await expect(page.getByTestId('workflow-template-grid')).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByTestId('actions-templates-grid')).toBeVisible({ timeout: 60_000 });
 
-  const firstTemplateCard = page.locator('[data-testid^="workflow-template-card-"]').first();
+  const firstTemplateCard = page.locator('[data-testid^="actions-templates-card-"]').first();
   await expect(firstTemplateCard).toBeVisible({ timeout: 15_000 });
   await firstTemplateCard.getByRole('button').first().click();
 
-  await expect(page.getByTestId('workflow-template-yaml-preview')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByTestId('actions-templates-yaml-preview')).toBeVisible({ timeout: 15_000 });
   await page.waitForTimeout(750);
 }

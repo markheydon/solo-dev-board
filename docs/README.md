@@ -5,6 +5,8 @@ This folder holds **repository-centric** documentation for contributors, self-ho
 The public product site (landing, User Guide, About) is published from [`website/`](../website/) via Hugo and GitHub Pages:
 `https://solodevboard.com/`.
 
+Release notes live in [`CHANGELOG.md`](../CHANGELOG.md) at the repository root.
+
 ## Contents
 
 | Document | Description |

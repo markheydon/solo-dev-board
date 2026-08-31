@@ -17,11 +17,11 @@ Refresh this file during each [PM progress review](../.agents/workflows/pm-progr
 
 SoloDevBoard provides a single pane of glass for solo developers managing GitHub workloads across multiple repositories.
 
-**Status:** On track. Public release [v1.0.0](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) tagged 18 August 2026. Milestone **`v1.1 - Cross-Repo Planning & Refinement`** in progress (release tag **`v1.1.0`** when shipped).
+**Status:** On track. Public release [v1.0.0](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) tagged 18 August 2026. Milestone **`v1.1 - Cross-Repo Planning & Refinement`** is ready to tag (release tag **`v1.1.0`**).
 
 ### Current focus
 
-**`v1.1 - Cross-Repo Planning & Refinement`** — sole open milestone (**82 closed, 3 open**): finish migration keep-`area/*` ([#464](https://github.com/markheydon/solo-dev-board/issues/464), [#471](https://github.com/markheydon/solo-dev-board/issues/471)) and feedback region cleanup ([#473](https://github.com/markheydon/solo-dev-board/issues/473)). Major increments (Planning [#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288), OSS catalogue [#440](https://github.com/markheydon/solo-dev-board/issues/440), deferred slices [#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#291](https://github.com/markheydon/solo-dev-board/issues/291)) are complete.
+**`v1.1 - Cross-Repo Planning & Refinement`** — sole open milestone (**90 closed, 0 open**). Planning [#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288), OSS catalogue [#440](https://github.com/markheydon/solo-dev-board/issues/440), deferred slices [#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#291](https://github.com/markheydon/solo-dev-board/issues/291), and post-release refinements are complete. Operator next step: smoke staging, then tag **`v1.1.0`**.
 
 Platform-blocked private user-owned Projects v2 ([#293](https://github.com/markheydon/solo-dev-board/issues/293)) is unmilestoned backlog.
 
@@ -34,13 +34,13 @@ Platform-blocked private user-owned Projects v2 ([#293](https://github.com/markh
 | Migration + Triage | `v0.3 - One-Click Migration + Triage UI` | `v0.3.0` | Complete |
 | Visualisation + Templates | `v0.4 - Board Rules Visualiser + Workflow Templates` | `v0.4.0` | Complete |
 | Production Ready | `v1.0 - Production Ready` | `v1.0.0` | Complete |
-| **Next** | **`v1.1 - Cross-Repo Planning & Refinement`** | **`v1.1.0`** | **In progress** |
+| **Next** | **`v1.1 - Cross-Repo Planning & Refinement`** | **`v1.1.0`** | **Ready to tag** |
 
 Post-1.0 model: one open milestone at a time ([DEC-027](https://github.com/markheydon/solo-dev-board/blob/main/plan/DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)).
 
 ### Current snapshot
 
-Snapshot date: 28 August 2026.
+Snapshot date: 31 August 2026.
 
 | Milestone | Closed | Open | Complete |
 |---|---:|---:|---|
@@ -49,9 +49,9 @@ Snapshot date: 28 August 2026.
 | `v0.3 - One-Click Migration + Triage UI` | 38 | 0 | 100% |
 | `v0.4 - Board Rules Visualiser + Workflow Templates` | 25 | 0 | 100% |
 | `v1.0 - Production Ready` | 78 | 0 | 100% |
-| `v1.1 - Cross-Repo Planning & Refinement` | 82 | 3 | 96% |
+| `v1.1 - Cross-Repo Planning & Refinement` | 90 | 0 | 100% |
 
-Open leaves: [#464](https://github.com/markheydon/solo-dev-board/issues/464), [#471](https://github.com/markheydon/solo-dev-board/issues/471), [#473](https://github.com/markheydon/solo-dev-board/issues/473).
+No open leaves remain on `v1.1`. Close the GitHub milestone after the `v1.1.0` tag is published.
 
 ### Key resources
 
