@@ -54,7 +54,7 @@ Parameter values are used to render the workflow file that will be written to ea
 2. Confirm parameter values and review repository status badges in the detail panel.
 3. Select **Apply template to selected repositories**.
 
-The feedback region shows per-repository results, including created, updated, skipped, and failed outcomes. Partial failures are reported clearly so you can retry affected repositories.
+After you apply a template, an **Apply results** panel appears below the template detail panel with per-repository outcomes, including created, updated, skipped, and failed results. Partial failures are reported clearly so you can retry affected repositories.
 
 ### Review repository status and drift
 

@@ -74,7 +74,7 @@ Select how existing artefacts in each target repository are handled when a match
 | **Overwrite** | Conflicting items are replaced with those from the source. Unused target-only Status options may be removed when no board items use them. A warning is shown before you confirm. When **Labels** is in scope, a nested **Keep `area/*` labels** checkbox appears (on by default) so target labels whose names start with `area/` are kept instead of deleted; uncheck it to treat those names as ordinary target-only deletes. The nested **Ignore `area/*` labels** control (also on by default) excludes source `area/*` names from create and update and is independent of **Keep**. |
 | **Merge** | Conflicting items are replaced with source values; items that exist only in the target are preserved. When **Labels** is in scope, **Ignore `area/*` labels** (on by default) excludes source `area/*` names from create and update. |
 
-### Step 4 — Review the preview and status guidance
+### Step 4 — Review the preview
 
 Click **Preview migration** to generate a read-only diff for each target repository. No changes are made at this stage.
 
@@ -86,7 +86,7 @@ The preview card for each target shows:
 
 If the preview shows no actionable changes for a target repository, an information notice is displayed instead and the **Apply** button is not shown.
 
-The status and guidance region provides setup guidance, preview warnings, and contextual notices while you work through preview and apply actions. Transient operation outcomes (preview errors, apply summaries, and cancellations) appear as snackbar toasts. Repository load failures appear inline in the migration setup region with a retry action.
+Setup guidance, preview warnings, and ready-to-apply notices appear inline in the migration setup region beside the preview and apply actions. Transient operation outcomes (preview errors, apply summaries, and cancellations) appear as snackbar toasts. Repository load failures appear at the top of the migration setup region with a retry action.
 
 ### Step 5 — Apply the migration
 

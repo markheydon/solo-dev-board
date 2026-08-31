@@ -28,20 +28,25 @@ Use this reference for user feedback, status communication, and transient surfac
 - Do not duplicate the same message in a snackbar and an inline alert.
 - Do not use snackbars for in-progress operation feedback when an inline progress indicator or disabled control state already communicates the work in flight.
 - Operation-complete feedback must not require scrolling on typical viewports (1400×900); prefer snackbars for transient outcomes on long pages.
+- Persistent load or API errors with retry actions belong at the top of the affected workflow section, not in a page footer.
+- Do not render an empty status shell when there is no persistent content to show; hide the region instead.
+- Setup guidance sits inline adjacent to the controls it describes (for example migration preview requirements beside workflow actions).
+- Multi-item batch result panels appear only when content exists; place them near the apply action where practical (Actions Templates is the reference pattern).
 - Map severity consistently: `Success` for completed work, `Warning` for partial success or recoverable issues, `Error` for failures (six-second snackbar duration), `Info` for neutral guidance.
 - Global snackbar defaults live in `Program.cs` (bottom-right, five-second duration, outlined variant).
 - Retain `aria-live="polite"` and `role="status"` on inline regions that surface persistent page state; snackbars inherit MudBlazor provider accessibility.
 
-### Feature inventory (2026-08-25)
+### Feature inventory (2026-08-31)
 
 | Feature | Snackbar | Inline | Notes |
 |---------|----------|--------|-------|
-| Label Manager | CRUD, taxonomy/sync apply summaries, validation | Load errors with retry | Batch apply results stay inline in tab panels. |
-| One-Click Migration | Apply/preview outcomes, API errors | Requirements info, preview warnings, result summaries | Bottom guidance region keeps contextual alerts only. |
+| Label Manager | CRUD, taxonomy/sync apply summaries, validation | Repository load errors at selector top; label load errors at Labels tab top | No footer Status panel; batch apply results stay inline in tab panels. |
+| One-Click Migration | Apply/preview outcomes, API errors | Requirements and preview guidance inline in workflow controls; result summaries in preview/summary cards | No bottom guidance footer. |
 | Triage | Session and triage action outcomes | Empty repositories, per-item warnings | Operation alert removed in favour of snackbars. |
-| Actions Templates | Apply summaries and errors | Per-repository apply result list | Summary toast; detailed results stay inline. |
+| Actions Templates | Apply summaries and errors | Per-repository apply result list (conditional panel near apply action) | Reference pattern for batch-result panels. |
 | Repositories | Placeholder actions | Load-state banner at page top | No duplicate snackbar for the same placeholder message. |
 | Audit | Export actions | Load/error regions | Existing split retained. |
+| Board Rules Visualiser | — | Repository, board, and rules load errors at section tops | No footer Status panel. |
 | Planning | Panel mutations | Load/error in panels | Existing snackbar usage retained. |
 
 ## Decision Guidance
