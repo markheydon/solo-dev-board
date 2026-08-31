@@ -101,7 +101,7 @@ Application version numbers are calculated automatically at build time by [MinVe
 
 ---
 
-### v1.1 - Cross-Repo Planning & Refinement — Ready to tag
+### v1.1 - Cross-Repo Planning & Refinement
 
 **Goal:** Close out incomplete v1.0 slices, deliver Planning, and ship post-release refinements from public use.
 
@@ -115,9 +115,9 @@ Application version numbers are calculated automatically at build time by [MinVe
 
 **Out of milestone (backlog):** Private user-owned Projects v2 via hosted sign-in ([#293](https://github.com/markheydon/solo-dev-board/issues/293)) — platform-blocked; see [`plan/GITHUB_PROJECTS_V2_ACCESS.md`](GITHUB_PROJECTS_V2_ACCESS.md). Product operating system overlay ([#475](https://github.com/markheydon/solo-dev-board/issues/475)) — ice-boxed direction; see [`plan/PRODUCT_OPERATING_SYSTEM.md`](PRODUCT_OPERATING_SYSTEM.md). Do not treat this as `v1.2` scope until that release is declared.
 
-**Status:** Ready to tag — **90 closed, 0 open** on GitHub milestone `v1.1 - Cross-Repo Planning & Refinement`. Leave the milestone open until the **`v1.1.0`** git tag and GitHub Release are published (see [Release Process](#release-process)).
+**Status:** Complete (2026-08-31). Tagged [`v1.1.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.1.0). Production CD and GitHub Pages publish from `v*` tags.
 
-**Target:** Early September 2026
+**Target:** Early September 2026 (met)
 
 ---
 

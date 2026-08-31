@@ -27,7 +27,7 @@ Follow [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)
 
 | Level | When to use | When not to use |
 |-------|-------------|-----------------|
-| **Milestone** | One open release target at a time (`v1.1 - Cross-Repo Planning & Refinement` today; tag `v1.1.0` when shipped) | Do not mirror milestone scope with a bucket epic |
+| **Milestone** | One open release target at a time (declare the next milestone when a new release is scoped) | Do not mirror milestone scope with a bucket epic |
 | **Epic** | A shippable product theme spanning **multiple features** | Milestone labels, catch-all parents, or single-story wrappers |
 | **Feature** | A user-facing capability; groups two or more stories/enablers ([#272](https://github.com/markheydon/solo-dev-board/issues/272) is a catch-up exception — large, no parent epic) | Single-story features; inventing a layer for organisation only |
 | **Story** | A discrete delivery unit with clear acceptance criteria | — |
@@ -117,7 +117,7 @@ The descriptive suffix names the milestone theme; it is not repeated in the rele
 | `v0.3 - One-Click Migration + Triage UI` | `v0.3.0` | Closed | |
 | `v0.4 - Board Rules Visualiser + Workflow Templates` | `v0.4.0` | Closed | |
 | `v1.0 - Production Ready` | `v1.0.0` | Closed | Public release (2026-08-18) |
-| **`v1.1 - Cross-Repo Planning & Refinement`** | **`v1.1.0`** | **Open (ready to tag)** | Sole active milestone — **90 closed, 0 open**. Close after the `v1.1.0` tag. |
+| `v1.1 - Cross-Repo Planning & Refinement` | `v1.1.0` | Closed | Shipped 2026-08-31 — **91 closed, 0 open**. |
 
 The unused `v1.2.0 - Cross-Repo Planning` milestone was closed then **deleted** on 2026-08-18 after work moved to `v1.1 - Cross-Repo Planning & Refinement`.
 

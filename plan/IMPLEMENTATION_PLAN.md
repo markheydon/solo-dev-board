@@ -11,7 +11,7 @@ Phases in this document are **historical sequencing for the v1.0 release**. Post
 **Current roadmap status (2026-08-31):**
 - Phases 1–4 are complete. All six core feature areas are delivered (Label Manager, Audit Dashboard, One-Click Migration, Triage UI, Board Rules Visualiser, Actions Templates).
 - Phase 6 (Production Ready) is complete. Public release [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) tagged on 2026-08-18.
-- **`v1.1 - Cross-Repo Planning & Refinement`** is ready to tag (**90 closed, 0 open**; release tag **`v1.1.0`**): deferred v1.0 slices [#290](https://github.com/markheydon/solo-dev-board/issues/290) and [#291](https://github.com/markheydon/solo-dev-board/issues/291), Planning [#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288), OSS catalogue identification [#440](https://github.com/markheydon/solo-dev-board/issues/440), and post-release refinements ([#444](https://github.com/markheydon/solo-dev-board/issues/444)–[#446](https://github.com/markheydon/solo-dev-board/issues/446), [#465](https://github.com/markheydon/solo-dev-board/issues/465), [#473](https://github.com/markheydon/solo-dev-board/issues/473), [#464](https://github.com/markheydon/solo-dev-board/issues/464)–[#471](https://github.com/markheydon/solo-dev-board/issues/471)). [#292](https://github.com/markheydon/solo-dev-board/issues/292) (custom template repositories) is ice-boxed and unmilestoned for a later release.
+- **`v1.1 - Cross-Repo Planning & Refinement`** is complete (tag [`v1.1.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.1.0), 2026-08-31): deferred v1.0 slices [#290](https://github.com/markheydon/solo-dev-board/issues/290) and [#291](https://github.com/markheydon/solo-dev-board/issues/291), Planning [#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288), OSS catalogue identification [#440](https://github.com/markheydon/solo-dev-board/issues/440), and post-release refinements ([#444](https://github.com/markheydon/solo-dev-board/issues/444)–[#446](https://github.com/markheydon/solo-dev-board/issues/446), [#465](https://github.com/markheydon/solo-dev-board/issues/465), [#473](https://github.com/markheydon/solo-dev-board/issues/473), [#464](https://github.com/markheydon/solo-dev-board/issues/464)–[#471](https://github.com/markheydon/solo-dev-board/issues/471)).
 - [#293](https://github.com/markheydon/solo-dev-board/issues/293) (hosted private Projects v2) is unmilestoned platform-blocked backlog.
 
 For the full feature scope, see [SCOPE.md](SCOPE.md). For open work, see [GitHub Issues](https://github.com/markheydon/solo-dev-board/issues) and [Project #8](https://github.com/users/markheydon/projects/8). The backlog index is at [BACKLOG.md](BACKLOG.md).
@@ -247,7 +247,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 ### Delivery sequence
 
-All locked-in leaves are closed. Remaining operator work is the `v1.1.0` tag and GitHub Release (see [RELEASE_PLAN.md](RELEASE_PLAN.md)).
+All locked-in leaves are closed. Shipped as [`v1.1.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.1.0) on 2026-08-31 (see [RELEASE_PLAN.md](RELEASE_PLAN.md)).
 
 ### Dependencies
 

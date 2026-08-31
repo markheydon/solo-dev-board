@@ -17,13 +17,11 @@ Refresh this file during each [PM progress review](../.agents/workflows/pm-progr
 
 SoloDevBoard provides a single pane of glass for solo developers managing GitHub workloads across multiple repositories.
 
-**Status:** On track. Public release [v1.0.0](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) tagged 18 August 2026. Milestone **`v1.1 - Cross-Repo Planning & Refinement`** is ready to tag (release tag **`v1.1.0`**).
+**Status:** On track. Public releases [v1.0.0](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) (18 August 2026) and [v1.1.0](https://github.com/markheydon/solo-dev-board/releases/tag/v1.1.0) (31 August 2026). No open milestone until the next release is declared.
 
 ### Current focus
 
-**`v1.1 - Cross-Repo Planning & Refinement`** — sole open milestone (**90 closed, 0 open**). Planning [#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288), OSS catalogue [#440](https://github.com/markheydon/solo-dev-board/issues/440), deferred slices [#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#291](https://github.com/markheydon/solo-dev-board/issues/291), and post-release refinements are complete. Operator next step: smoke staging, then tag **`v1.1.0`**.
-
-Platform-blocked private user-owned Projects v2 ([#293](https://github.com/markheydon/solo-dev-board/issues/293)) is unmilestoned backlog.
+**Post-`v1.1.0` backlog** — work is **unmilestoned** until the next release milestone is created. Platform-blocked private user-owned Projects v2 ([#293](https://github.com/markheydon/solo-dev-board/issues/293)) and ice-boxed items ([#292](https://github.com/markheydon/solo-dev-board/issues/292), [#475](https://github.com/markheydon/solo-dev-board/issues/475)) remain backlog.
 
 ### Release history
 
@@ -34,7 +32,7 @@ Platform-blocked private user-owned Projects v2 ([#293](https://github.com/markh
 | Migration + Triage | `v0.3 - One-Click Migration + Triage UI` | `v0.3.0` | Complete |
 | Visualisation + Templates | `v0.4 - Board Rules Visualiser + Workflow Templates` | `v0.4.0` | Complete |
 | Production Ready | `v1.0 - Production Ready` | `v1.0.0` | Complete |
-| **Next** | **`v1.1 - Cross-Repo Planning & Refinement`** | **`v1.1.0`** | **Ready to tag** |
+| Cross-Repo Planning & Refinement | `v1.1 - Cross-Repo Planning & Refinement` | `v1.1.0` | Complete — [`v1.1.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.1.0) (2026-08-31) |
 
 Post-1.0 model: one open milestone at a time ([DEC-027](https://github.com/markheydon/solo-dev-board/blob/main/plan/DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)).
 
@@ -51,7 +49,7 @@ Snapshot date: 31 August 2026.
 | `v1.0 - Production Ready` | 78 | 0 | 100% |
 | `v1.1 - Cross-Repo Planning & Refinement` | 90 | 0 | 100% |
 
-No open leaves remain on `v1.1`. Close the GitHub milestone after the `v1.1.0` tag is published.
+No open milestones. Declare the next release milestone before assigning new work to a release target.
 
 ### Key resources
 

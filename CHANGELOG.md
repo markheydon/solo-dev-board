@@ -5,11 +5,11 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-When you tag `v1.1.0`, rename the **Unreleased** heading below to `## [1.1.0] - YYYY-MM-DD` and leave a fresh empty Unreleased section for the next increment.
+## [Unreleased]
 
-## [Unreleased] — forthcoming v1.1.0
+## [1.1.0] - 2026-08-31
 
-GitHub milestone [`v1.1 - Cross-Repo Planning & Refinement`](https://github.com/markheydon/solo-dev-board/milestone/7) is complete (90 closed, 0 open). The public site and production app update when the `v1.1.0` tag is pushed.
+Cross-Repo Planning & Refinement release. GitHub milestone [`v1.1 - Cross-Repo Planning & Refinement`](https://github.com/markheydon/solo-dev-board/milestone/7) closed with 91 issues delivered.
 
 ### Added
 
