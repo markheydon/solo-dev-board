@@ -20,7 +20,7 @@ The Board Rules Visualiser displays the board states and supported transitions f
 Key goals of the Board Rules Visualiser:
 - Make project board states and supported transitions visible and understandable at a glance.
 - Help diagnose board flow issues by surfacing the supported column progression for a selected board.
-- Provide a foundation for the One-Click Migration feature (migrating board rules between repositories).
+- Compare Status columns across two boards. Copying Status column structure between repositories is a separate One-Click Migration workflow.
 
 ---
 

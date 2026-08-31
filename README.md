@@ -1,6 +1,6 @@
 # SoloDevBoard
 
-[![CI](https://github.com/markheydon/solo-dev-board/actions/actions-templates/ci.yml/badge.svg)](https://github.com/markheydon/solo-dev-board/actions/actions-templates/ci.yml)
+[![CI](https://github.com/markheydon/solo-dev-board/actions/workflows/ci.yml/badge.svg)](https://github.com/markheydon/solo-dev-board/actions/workflows/ci.yml)
 
 > **A single pane of glass for solo developers managing GitHub workloads across multiple repositories.**
 
@@ -11,11 +11,11 @@
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| **Audit Dashboard** | Consolidated view of issues, open PRs, and workflow health across selected repositories. | Available |
+| **Audit Dashboard** | Consolidated view of issues, open PRs, workflow health, and label consistency across selected repositories. | Available |
 | **Label Manager** | Create, edit, synchronise, and enforce label taxonomies across multiple repositories from a single interface. | Available |
-| **Repositories** | View and manage repositories accessible to your GitHub account. | Available |
-| **One-Click Migration** | Migrate labels, milestones, and project board columns from one repository to another in a single action. Migration keep-`area/*` overwrite alignment is in progress for `v1.1`. | Partially Available |
-| **Board Rules Visualiser** | Visualise supported board states and transitions for GitHub Project v2 boards. | Partially Available |
+| **Repositories** | View, search, refresh, and filter repositories accessible to your GitHub account (including open-source topic filters). Add, remove, bulk, and row catalogue actions remain stubs. | Partially Available |
+| **One-Click Migration** | Migrate labels, milestones, and Projects v2 Status columns from one repository to another in a single preview-first action. | Available |
+| **Board Rules Visualiser** | Visualise supported board states and transitions for GitHub Project v2 boards. Full GitHub automation-rule retrieval remains a later slice. | Partially Available |
 | **Triage UI** | Keyboard-friendly interface for triaging incoming issues quickly. | Available |
 | **Actions Templates** | Browse, customise, and apply built-in GitHub Actions workflow templates across repositories. Custom template repositories are deferred past `v1.1`. | Partially Available |
 | **Planning** | Daily Focus, backlog review, iteration planning, and repository participation for your project board. | Available |
@@ -91,13 +91,15 @@ solo-dev-board/
 ├── docs/                       # Developer / operator documentation
 │   ├── README.md               # Index for repository-centric docs
 │   ├── getting-started.md      # Setup and configuration guide
-│   └── deployment.md           # Azure Container Apps deployment guide
+│   ├── deployment.md           # Azure Container Apps deployment guide
+│   └── github-app.md           # Hosted-sign-in GitHub App listing checklist
 ├── website/                    # Public product site (Hugo / Hextra → GitHub Pages)
 │   ├── hugo.yaml               # Hugo site configuration
 │   └── content/                # Landing, User Guide, and About pages
 ├── scripts/
 │   ├── invoke-hugo-site.sh     # Local Hugo build/serve via Docker/Podman (bash)
 │   └── Invoke-HugoSite.ps1     # Windows PowerShell equivalent
+├── CHANGELOG.md                # Keep a Changelog (release notes source)
 ├── plan/
 │   ├── SCOPE.md                # Project scope and constraints
 │   ├── DECISIONS.md            # Active decision log (repo memory)

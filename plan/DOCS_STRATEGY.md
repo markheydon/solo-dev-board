@@ -23,6 +23,8 @@ Do not add new files under `adr/` except via archive migration. Record new decis
 ## Documentation Structure
 
 ```
+CHANGELOG.md                     # Keep a Changelog (root)
+
 website/                         # Published public product site (Hugo + Hextra)
 ├── hugo.yaml
 ├── go.mod / go.sum
@@ -38,6 +40,7 @@ docs/                           # Repository / developer / operator docs (not Pa
 ├── getting-started.md
 ├── deployment.md
 ├── hosted-authentication.md
+├── github-app.md
 ├── pat-connectivity.md
 ├── azure-costs.md
 └── observability.md
@@ -122,7 +125,7 @@ The Playwright docs-capture suite in `tests/E2E/docs-capture/` encodes these com
 
 ## Changelog Conventions
 
-SoloDevBoard follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) conventions. A `CHANGELOG.md` will be maintained at the root of the repository starting from v0.1.0.
+SoloDevBoard follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) conventions. The living changelog is [`CHANGELOG.md`](../CHANGELOG.md) at the repository root. On each tagged release, move the matching `[Unreleased]` notes into a dated `## [X.Y.Z]` section.
 
 Changelog entries are grouped by:
 - `Added` — new features.
@@ -170,7 +173,7 @@ When Copilot or another AI agent is asked to write or update documentation:
 > | New environment variable | Update `docs/getting-started.md` configuration table and `docs/deployment.md` |
 > | New architectural decision | Follow `repo-decision-log`; update `plan/DECISIONS.md` and constitution if cross-cutting |
 > | Scope change | Update `plan/SCOPE.md`; update `website/content/_index.md` if the published feature list changes |
-> | New release | Update `plan/RELEASE_PLAN.md`; draft CHANGELOG entry |
+> | New release | Update `plan/RELEASE_PLAN.md` and [`CHANGELOG.md`](../CHANGELOG.md) |
 > | New label | Update `plan/LABEL_STRATEGY.md` |
 > | New board column or rule | Update `plan/PROJECT_BOARD_DESIGN.md` |
 > | Project #8 info pane / phase status | Update `plan/PROJECT_README.md` and paste into the project info pane |

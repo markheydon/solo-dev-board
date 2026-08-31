@@ -156,6 +156,7 @@ When submitting a pull request that changes code, ensure related documentation i
 | New decision | `plan/DECISIONS.md` (if architectural decision required; see `repo-decision-log` skill) |
 | Scope change | `plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md` |
 | New env variable | `docs/getting-started.md`, `SoloDevBoard.AppHost/README.md`, `docs/deployment.md` |
+| Tagged release | [`CHANGELOG.md`](CHANGELOG.md) and [`plan/RELEASE_PLAN.md`](plan/RELEASE_PLAN.md) |
 
 ---
 
@@ -170,6 +171,6 @@ By contributing to SoloDevBoard, you agree that your contributions will be licen
 If you have questions about contributing, feel free to:
 - Open a discussion on GitHub
 - Check existing issues and documentation
-- Review the architecture decision records in `adr/`
+- Review the decision log in [`plan/DECISIONS.md`](plan/DECISIONS.md)
 
 Thank you for helping make SoloDevBoard better!

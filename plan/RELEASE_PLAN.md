@@ -92,7 +92,7 @@ Application version numbers are calculated automatically at build time by [MinVe
 - ≥80% unit test coverage on Application and Domain
 - Accessibility audit of primary journey shells (WCAG 2.1 AA)
 - Performance review and optimisation
-- Complete user-facing documentation for shipped features (Hugo site at `https://solodevboard.com/`; Planning guide shipped with `v1.1`)
+- Complete user-facing documentation for shipped features (Hugo site at `https://solodevboard.com/`; Planning guide ships with `v1.1.0`)
 - Full Azure deployment pipeline with staging and production environment gates
 
 **Status:** Complete (2026-08-18). Tagged [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0). Production CD and GitHub Pages publish from `v*` tags.
@@ -101,7 +101,7 @@ Application version numbers are calculated automatically at build time by [MinVe
 
 ---
 
-### v1.1 - Cross-Repo Planning & Refinement — Next release
+### v1.1 - Cross-Repo Planning & Refinement — Ready to tag
 
 **Goal:** Close out incomplete v1.0 slices, deliver Planning, and ship post-release refinements from public use.
 
@@ -111,11 +111,11 @@ Application version numbers are calculated automatically at build time by [MinVe
 - Custom workflow template repositories ([#292](https://github.com/markheydon/solo-dev-board/issues/292)) — **deferred** (ice-boxed; post-`v1.1` backlog)
 - Planning ([#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288)): Daily Focus, Backlog Review, Iteration, Repo Management — **complete**
 - OSS catalogue identification ([#440](https://github.com/markheydon/solo-dev-board/issues/440)) — **complete**
-- Post-release refinements: Label Manager bulk delete and keep-`area/*` ([#444](https://github.com/markheydon/solo-dev-board/issues/444), [#446](https://github.com/markheydon/solo-dev-board/issues/446)), Iteration stall/capacity UX ([#445](https://github.com/markheydon/solo-dev-board/issues/445)), snackbar standardisation ([#465](https://github.com/markheydon/solo-dev-board/issues/465)), migration keep-`area/*` ([#464](https://github.com/markheydon/solo-dev-board/issues/464), [#471](https://github.com/markheydon/solo-dev-board/issues/471)), feedback region cleanup ([#473](https://github.com/markheydon/solo-dev-board/issues/473))
+- Post-release refinements: Label Manager bulk delete and keep-`area/*` ([#444](https://github.com/markheydon/solo-dev-board/issues/444), [#446](https://github.com/markheydon/solo-dev-board/issues/446)), Iteration stall/capacity UX ([#445](https://github.com/markheydon/solo-dev-board/issues/445)), snackbar standardisation ([#465](https://github.com/markheydon/solo-dev-board/issues/465)), migration keep-`area/*` ([#464](https://github.com/markheydon/solo-dev-board/issues/464), [#471](https://github.com/markheydon/solo-dev-board/issues/471)), feedback region cleanup ([#473](https://github.com/markheydon/solo-dev-board/issues/473)) — **complete**
 
 **Out of milestone (backlog):** Private user-owned Projects v2 via hosted sign-in ([#293](https://github.com/markheydon/solo-dev-board/issues/293)) — platform-blocked; see [`plan/GITHUB_PROJECTS_V2_ACCESS.md`](GITHUB_PROJECTS_V2_ACCESS.md). Product operating system overlay ([#475](https://github.com/markheydon/solo-dev-board/issues/475)) — ice-boxed direction; see [`plan/PRODUCT_OPERATING_SYSTEM.md`](PRODUCT_OPERATING_SYSTEM.md). Do not treat this as `v1.2` scope until that release is declared.
 
-**Status:** In progress — **82 closed, 3 open** on GitHub milestone `v1.1 - Cross-Repo Planning & Refinement`. Release tag **`v1.1.0`** when shipped.
+**Status:** Ready to tag — **90 closed, 0 open** on GitHub milestone `v1.1 - Cross-Repo Planning & Refinement`. Leave the milestone open until the **`v1.1.0`** git tag and GitHub Release are published (see [Release Process](#release-process)).
 
 **Target:** Early September 2026
 
