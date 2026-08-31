@@ -259,8 +259,55 @@ public sealed class LabelsTests
         cut.WaitForAssertion(() =>
         {
             Assert.Contains("Unable to load repositories", cut.Markup);
+            Assert.Single(cut.FindAll("[data-testid='label-manager-error-alert']"));
             Assert.Contains("Try loading repositories again", cut.Markup);
             Assert.DoesNotContain("Try loading labels again", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task Labels_NoActiveRepositories_ShowsEmptyRepositoriesState()
+    {
+        // Arrange
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Labels>();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='label-manager-repositories-empty-state']"));
+            Assert.Contains("No active repositories are available for label analysis.", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task Labels_LabelLoadFails_ShowsLabelSpecificErrorAndRetryOnly()
+    {
+        // Arrange
+        var repoA = CreateRepository("owner", "repo-a");
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
+
+        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<IReadOnlyList<LabelDto>>(new HttpRequestException("Service unavailable")));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
+        await SelectRepositoriesAsync(cut, repoA);
+        cut.Find("[data-testid='load-labels-button']").Click();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Unable to load labels", cut.Markup);
+            Assert.Contains("Try loading labels again", cut.Markup);
+            Assert.DoesNotContain("Reload repositories", cut.Markup);
+            Assert.DoesNotContain("Try loading repositories again", cut.Markup);
         });
     }
 
