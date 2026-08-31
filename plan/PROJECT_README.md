@@ -21,7 +21,7 @@ SoloDevBoard provides a single pane of glass for solo developers managing GitHub
 
 ### Current focus
 
-**Post-`v1.1.0` backlog** — work is **unmilestoned** until the next release milestone is created. Platform-blocked private user-owned Projects v2 ([#293](https://github.com/markheydon/solo-dev-board/issues/293)) and ice-boxed items ([#292](https://github.com/markheydon/solo-dev-board/issues/292), [#475](https://github.com/markheydon/solo-dev-board/issues/475)) remain backlog.
+**Post-`v1.1.0` backlog** — 18 open issues, all **unmilestoned**. Immediate Todo queue is the Reload-from-GitHub epic ([#447](https://github.com/markheydon/solo-dev-board/issues/447)) plus HttpClient split ([#453](https://github.com/markheydon/solo-dev-board/issues/453)). Do not start platform-blocked [#293](https://github.com/markheydon/solo-dev-board/issues/293) or [#391](https://github.com/markheydon/solo-dev-board/issues/391). Ice-boxed items (including [#292](https://github.com/markheydon/solo-dev-board/issues/292)) stay parked.
 
 ### Release history
 
@@ -47,7 +47,7 @@ Snapshot date: 31 August 2026.
 | `v0.3 - One-Click Migration + Triage UI` | 38 | 0 | 100% |
 | `v0.4 - Board Rules Visualiser + Workflow Templates` | 25 | 0 | 100% |
 | `v1.0 - Production Ready` | 78 | 0 | 100% |
-| `v1.1 - Cross-Repo Planning & Refinement` | 90 | 0 | 100% |
+| `v1.1 - Cross-Repo Planning & Refinement` | 91 | 0 | 100% |
 
 No open milestones. Declare the next release milestone before assigning new work to a release target.
 
