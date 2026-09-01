@@ -679,7 +679,7 @@ public sealed class TriageServiceTests
             .Returns(new[] { new Label { Name = "duplicate" } });
 
         _gitHubService
-            .ApplyLabelsToTriageItemAsync(
+            .AddLabelsToTriageItemAsync(
                 "owner",
                 "repo",
                 1,
@@ -697,11 +697,17 @@ public sealed class TriageServiceTests
         Assert.Equal(1, result.Summary.DuplicateClosuresCount);
 
         await _gitHubService.Received(1).GetLabelsAsync("owner", "repo", cancellationToken);
-        await _gitHubService.Received(1).ApplyLabelsToTriageItemAsync(
+        await _gitHubService.Received(1).AddLabelsToTriageItemAsync(
             "owner",
             "repo",
             1,
             Arg.Is<IReadOnlyList<string>>(labels => labels!.SequenceEqual(new[] { "duplicate" })),
+            cancellationToken);
+        await _gitHubService.DidNotReceive().ApplyLabelsToTriageItemAsync(
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<int>(),
+            Arg.Any<IReadOnlyList<string>>(),
             cancellationToken);
     }
 
@@ -731,6 +737,7 @@ public sealed class TriageServiceTests
         Assert.Equal(1, result.Summary.DuplicateClosuresCount);
 
         await _gitHubService.Received(1).GetLabelsAsync("owner", "repo", cancellationToken);
+        await _gitHubService.DidNotReceive().AddLabelsToTriageItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<IReadOnlyList<string>>(), cancellationToken);
         await _gitHubService.DidNotReceive().ApplyLabelsToTriageItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<IReadOnlyList<string>>(), cancellationToken);
     }
 
