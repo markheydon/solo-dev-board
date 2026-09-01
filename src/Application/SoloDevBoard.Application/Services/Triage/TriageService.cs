@@ -439,7 +439,7 @@ public sealed class TriageService : ITriageService
             try
             {
                 await _gitHubService
-                    .ApplyLabelsToTriageItemAsync(owner, repo, currentItem.Number, new[] { duplicateLabelName! }, cancellationToken)
+                    .AddLabelsToTriageItemAsync(owner, repo, currentItem.Number, [duplicateLabelName!], cancellationToken)
                     .ConfigureAwait(false);
 
                 detail += $" Applied label '{duplicateLabelName}'.";
