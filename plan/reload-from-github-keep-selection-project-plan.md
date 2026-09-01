@@ -40,7 +40,7 @@ No new architecture decision. Reuse Planning `forceReload` and existing `GitHubR
 graph TD
     A[Epic: Reload from GitHub #447] --> B[Enabler: Repository catalogue force-reload #485]
     A --> C[Story: Board Rules keep selection #449]
-    A --> D[Feature: Remaining surfaces #451]
+    A --> D[Story: Remaining surfaces #451]
     A --> E[Story: Window-focus refetch #450]
     B --> C
     C --> F[Test: Board Rules Reload #486]
@@ -48,6 +48,8 @@ graph TD
     D --> G[Test: Remaining surfaces Reload #487]
     D --> E
 ```
+
+There is **no Feature issue** in this tree. #451 is a Story (one delivery unit spanning several pages). A Feature that only parents test #487 would violate [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy) (Features group two or more stories or enablers). Shared enabler #485 sits on the epic because both #449 and #451 need the catalogue force-reload.
 
 ## GitHub issues breakdown
 
@@ -57,7 +59,7 @@ graph TD
 | [#485](https://github.com/markheydon/solo-dev-board/issues/485) | Enabler | medium | s | Blocks #449. |
 | [#449](https://github.com/markheydon/solo-dev-board/issues/449) | Story | medium | m | First UI slice. Blocks #451 and #486. |
 | [#486](https://github.com/markheydon/solo-dev-board/issues/486) | Test | medium | s | Board Rules bUnit and Playwright. |
-| [#451](https://github.com/markheydon/solo-dev-board/issues/451) | Feature | low | l | One issue for remaining pages. Blocks #487. |
+| [#451](https://github.com/markheydon/solo-dev-board/issues/451) | Story | low | l | One issue for remaining pages. Blocks #487. Not a Feature wrapper. |
 | [#487](https://github.com/markheydon/solo-dev-board/issues/487) | Test | low | m | Remaining surfaces. |
 | [#450](https://github.com/markheydon/solo-dev-board/issues/450) | Story | low | m | Ice-box; not a `v1.2` close-out gate. |
 

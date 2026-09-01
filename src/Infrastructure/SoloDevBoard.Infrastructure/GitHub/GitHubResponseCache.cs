@@ -118,6 +118,19 @@ public sealed class GitHubResponseCache
         _memoryCache.Remove(BuildMilestonesKey(owner, repo));
     }
 
+    /// <summary>Removes the cached repository catalogue for the authenticated user.</summary>
+    public void InvalidateUserRepositories()
+        => _memoryCache.Remove(BuildUserRepositoriesKey());
+
+    /// <summary>Removes the cached repository catalogue for the specified owner.</summary>
+    /// <param name="owner">The GitHub account owner login.</param>
+    public void InvalidateOwnerRepositories(string owner)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+
+        _memoryCache.Remove(BuildOwnerRepositoriesKey(owner));
+    }
+
     private string BuildUserRepositoriesKey()
         => $"gh:{NormalizeKeySegment(_currentUserContext.OwnerLogin)}:repos:user";
 
