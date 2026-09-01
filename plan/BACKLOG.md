@@ -41,6 +41,7 @@ Locked-in `v1.2` delivery is the open queue. Remaining work stays **unmilestoned
 | Reload from GitHub (keep selection) | [#447](https://github.com/markheydon/solo-dev-board/issues/447), [#449](https://github.com/markheydon/solo-dev-board/issues/449), [#451](https://github.com/markheydon/solo-dev-board/issues/451) | `v1.2` |
 | Hosted GitHub HttpClient split | [#453](https://github.com/markheydon/solo-dev-board/issues/453) | `v1.2` |
 | Custom template repositories | [#292](https://github.com/markheydon/solo-dev-board/issues/292) | `v1.2` |
+| Triage action-surface usability | [#492](https://github.com/markheydon/solo-dev-board/issues/492) | `v1.2` |
 | Window-focus refetch | [#450](https://github.com/markheydon/solo-dev-board/issues/450) | Unmilestoned (ice-box; later follow-up) |
 | Hosted private Projects v2 | [#293](https://github.com/markheydon/solo-dev-board/issues/293) | Unmilestoned (platform-blocked) |
 

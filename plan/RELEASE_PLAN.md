@@ -123,13 +123,14 @@ Application version numbers are calculated automatically at build time by [MinVe
 
 ### v1.2 - Planning polish, Reload & Templates
 
-**Goal:** Finish older unfinished slices after `v1.1.0`: Planning follow-through, Reload from GitHub, hosted-auth HttpClient hygiene, and custom workflow template repositories.
+**Goal:** Finish older unfinished slices after `v1.1.0`: Planning follow-through, Reload from GitHub, hosted-auth HttpClient hygiene, custom workflow template repositories, and Triage action-surface usability.
 
 **Scope:**
 - Optional board-scoped Daily Focus recommendations ([#403](https://github.com/markheydon/solo-dev-board/issues/403))
 - Reload from GitHub, keep selection ([#447](https://github.com/markheydon/solo-dev-board/issues/447), [#449](https://github.com/markheydon/solo-dev-board/issues/449), [#451](https://github.com/markheydon/solo-dev-board/issues/451))
 - Split hosted GitHub OAuth and API HttpClients ([#453](https://github.com/markheydon/solo-dev-board/issues/453))
 - Custom workflow template repositories ([#292](https://github.com/markheydon/solo-dev-board/issues/292)) — stay on this milestone to force a decision (implement, reshape, or explicitly drop), not another ice-box kick
+- Triage action-surface usability ([#492](https://github.com/markheydon/solo-dev-board/issues/492)) — Save and next / duplicate / skip layout only
 
 **Out of milestone:** Window-focus refetch ([#450](https://github.com/markheydon/solo-dev-board/issues/450), ice-box); hosted private Projects v2 ([#293](https://github.com/markheydon/solo-dev-board/issues/293)); Aspire PM settings store ([#391](https://github.com/markheydon/solo-dev-board/issues/391)); newer ice-box catalogue and hygiene work ([#381](https://github.com/markheydon/solo-dev-board/issues/381), [#397](https://github.com/markheydon/solo-dev-board/issues/397), [#411](https://github.com/markheydon/solo-dev-board/issues/411), [#435](https://github.com/markheydon/solo-dev-board/issues/435)–[#439](https://github.com/markheydon/solo-dev-board/issues/439), [#470](https://github.com/markheydon/solo-dev-board/issues/470)).
 

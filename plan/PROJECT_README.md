@@ -21,7 +21,7 @@ SoloDevBoard provides a single pane of glass for solo developers managing GitHub
 
 ### Current focus
 
-**`v1.2`** — Daily Focus board-scope ([#403](https://github.com/markheydon/solo-dev-board/issues/403)), Reload from GitHub ([#447](https://github.com/markheydon/solo-dev-board/issues/447), [#449](https://github.com/markheydon/solo-dev-board/issues/449), [#451](https://github.com/markheydon/solo-dev-board/issues/451)), HttpClient split ([#453](https://github.com/markheydon/solo-dev-board/issues/453)), custom template repositories ([#292](https://github.com/markheydon/solo-dev-board/issues/292)). Do not start platform-blocked [#293](https://github.com/markheydon/solo-dev-board/issues/293) or [#391](https://github.com/markheydon/solo-dev-board/issues/391). Window-focus refetch ([#450](https://github.com/markheydon/solo-dev-board/issues/450)) stays unmilestoned and ice-boxed.
+**`v1.2`** — Daily Focus board-scope ([#403](https://github.com/markheydon/solo-dev-board/issues/403)), Reload from GitHub ([#447](https://github.com/markheydon/solo-dev-board/issues/447), [#449](https://github.com/markheydon/solo-dev-board/issues/449), [#451](https://github.com/markheydon/solo-dev-board/issues/451)), HttpClient split ([#453](https://github.com/markheydon/solo-dev-board/issues/453)), custom template repositories ([#292](https://github.com/markheydon/solo-dev-board/issues/292)), Triage action-surface usability ([#492](https://github.com/markheydon/solo-dev-board/issues/492)). Do not start platform-blocked [#293](https://github.com/markheydon/solo-dev-board/issues/293) or [#391](https://github.com/markheydon/solo-dev-board/issues/391). Window-focus refetch ([#450](https://github.com/markheydon/solo-dev-board/issues/450)) stays unmilestoned and ice-boxed.
 
 ### Release history
 
@@ -39,7 +39,7 @@ Post-1.0 model: one open milestone at a time ([DEC-027](https://github.com/markh
 
 ### Current snapshot
 
-Snapshot date: 31 August 2026.
+Snapshot date: 1 September 2026.
 
 | Milestone | Closed | Open | Complete |
 |---|---:|---:|---|
@@ -49,7 +49,7 @@ Snapshot date: 31 August 2026.
 | `v0.4 - Board Rules Visualiser + Workflow Templates` | 25 | 0 | 100% |
 | `v1.0 - Production Ready` | 78 | 0 | 100% |
 | `v1.1 - Cross-Repo Planning & Refinement` | 91 | 0 | 100% |
-| `v1.2 - Planning polish, Reload & Templates` | 0 | 6 | 0% |
+| `v1.2 - Planning polish, Reload & Templates` | 0 | 7 | 0% |
 
 Open milestone: `v1.2 - Planning polish, Reload & Templates`. Phase stays blank for this increment ([DEC-027](https://github.com/markheydon/solo-dev-board/blob/main/plan/DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)).
 

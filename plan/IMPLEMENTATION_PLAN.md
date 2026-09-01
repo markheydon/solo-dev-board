@@ -12,7 +12,7 @@ Phases in this document are **historical sequencing for the v1.0 release**. Post
 - Phases 1–4 are complete. All six core feature areas are delivered (Label Manager, Audit Dashboard, One-Click Migration, Triage UI, Board Rules Visualiser, Actions Templates).
 - Phase 6 (Production Ready) is complete. Public release [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) tagged on 2026-08-18.
 - **`v1.1 - Cross-Repo Planning & Refinement`** is complete (tag [`v1.1.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.1.0), 2026-08-31): deferred v1.0 slices [#290](https://github.com/markheydon/solo-dev-board/issues/290) and [#291](https://github.com/markheydon/solo-dev-board/issues/291), Planning [#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288), OSS catalogue identification [#440](https://github.com/markheydon/solo-dev-board/issues/440), and post-release refinements ([#444](https://github.com/markheydon/solo-dev-board/issues/444)–[#446](https://github.com/markheydon/solo-dev-board/issues/446), [#465](https://github.com/markheydon/solo-dev-board/issues/465), [#473](https://github.com/markheydon/solo-dev-board/issues/473), [#464](https://github.com/markheydon/solo-dev-board/issues/464)–[#471](https://github.com/markheydon/solo-dev-board/issues/471)).
-- **`v1.2 - Planning polish, Reload & Templates`** is the open milestone (tag `v1.2.0` when shipped): Daily Focus board-scope [#403](https://github.com/markheydon/solo-dev-board/issues/403), Reload [#447](https://github.com/markheydon/solo-dev-board/issues/447)/[#449](https://github.com/markheydon/solo-dev-board/issues/449)/[#451](https://github.com/markheydon/solo-dev-board/issues/451), HttpClient split [#453](https://github.com/markheydon/solo-dev-board/issues/453), custom templates [#292](https://github.com/markheydon/solo-dev-board/issues/292).
+- **`v1.2 - Planning polish, Reload & Templates`** is the open milestone (tag `v1.2.0` when shipped): Daily Focus board-scope [#403](https://github.com/markheydon/solo-dev-board/issues/403), Reload [#447](https://github.com/markheydon/solo-dev-board/issues/447)/[#449](https://github.com/markheydon/solo-dev-board/issues/449)/[#451](https://github.com/markheydon/solo-dev-board/issues/451), HttpClient split [#453](https://github.com/markheydon/solo-dev-board/issues/453), custom templates [#292](https://github.com/markheydon/solo-dev-board/issues/292), Triage action-surface usability [#492](https://github.com/markheydon/solo-dev-board/issues/492).
 - [#293](https://github.com/markheydon/solo-dev-board/issues/293) (hosted private Projects v2) and [#391](https://github.com/markheydon/solo-dev-board/issues/391) stay unmilestoned platform-blocked backlog. Window-focus refetch [#450](https://github.com/markheydon/solo-dev-board/issues/450) stays unmilestoned and ice-boxed until Reload ships.
 
 For the full feature scope, see [SCOPE.md](SCOPE.md). For open work, see [GitHub Issues](https://github.com/markheydon/solo-dev-board/issues) and [Project #8](https://github.com/users/markheydon/projects/8). The backlog index is at [BACKLOG.md](BACKLOG.md).
@@ -258,7 +258,7 @@ All locked-in leaves are closed. Shipped as [`v1.1.0`](https://github.com/markhe
 
 ## v1.2 - Planning polish, Reload & Templates
 
-**Goal:** Finish older unfinished slices after `v1.1.0` without pulling newer ice-box catalogue ideas onto the release.
+**Goal:** Finish older unfinished slices after `v1.1.0` without pulling newer ice-box catalogue ideas onto the release, and make the shipped Triage page usable.
 
 **Milestone:** `v1.2 - Planning polish, Reload & Templates` (release tag `v1.2.0`)
 
@@ -271,6 +271,7 @@ All locked-in leaves are closed. Shipped as [`v1.1.0`](https://github.com/markhe
 - [ ] Roll Reload from GitHub out to remaining GitHub-backed surfaces. _(#451, parent epic #447)_
 - [ ] Split hosted GitHub OAuth and API HttpClients for REST header defaults. _(#453)_
 - [ ] Custom workflow template repositories, extending shipped Workflow Templates — **decide this increment** (implement, reshape, or explicitly drop; do not ice-box again without a decision). _(#292)_
+- [ ] Unify the Triage action surface into Save and next (process) versus duplicate versus skip — usability only, not opinionated-workflow integration. _(#492)_
 
 ### Delivery sequence
 
@@ -278,7 +279,8 @@ All locked-in leaves are closed. Shipped as [`v1.1.0`](https://github.com/markhe
 2. #403 can proceed in parallel as Planning catch-up (closed Feature #272).
 3. #453 is an independent `size/s` chore.
 4. #292 after a planning pass that forces a real decision (deliver, reshape, or drop). It is the oldest unblocked v1.1 leftover; Ice Box was uncertainty, not a scoped deferral.
-5. Do not start #450, #293, or #391 on this milestone.
+5. #492 is independent usability work on `/triage`. Revise the wireframe before implementation. Do not expand it into PM-workflow integration.
+6. Do not start #450, #293, or #391 on this milestone.
 
 ### Dependencies
 

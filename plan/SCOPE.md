@@ -45,7 +45,7 @@ An interactive diagram showing the automation rules configured on GitHub project
 
 ### 5. Triage UI
 
-A focused, keyboard-friendly interface for triaging incoming GitHub issues one at a time, supporting quick labelling, milestone assignment, and duplicate closure.
+A focused, keyboard-friendly interface for triaging incoming GitHub issues one at a time, supporting quick labelling, milestone assignment, and duplicate closure. **`v1.2`:** usability pass so the action surface is a single Save and next (or duplicate / skip) commit rather than competing buttons ([#492](https://github.com/markheydon/solo-dev-board/issues/492)). Tying triage into the opinionated PM workflow stays a later increment.
 
 ### 6. Actions Templates
 
@@ -133,4 +133,5 @@ The following are explicitly **not** in scope for the current version of SoloDev
 | 2026-08-28 | GitHub milestones renamed to `vX.Y - Descriptive name` (ASCII hyphen; release tags remain SemVer `vX.Y.Z`). Open milestone titled `v1.1 - Cross-Repo Planning & Refinement`. Custom template repositories ([#292](https://github.com/markheydon/solo-dev-board/issues/292)) deferred past this release. Project board column migration ([#291](https://github.com/markheydon/solo-dev-board/issues/291)) marked complete. | Solo developer |
 | 2026-08-31 | `v1.1 - Cross-Repo Planning & Refinement` shipped as [`v1.1.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.1.0) (91 closed, 0 open). Custom template repositories (#292) and hosted private Projects v2 (#293) stay unmilestoned. | Solo developer |
 | 2026-08-31 | Declared **`v1.2 - Planning polish, Reload & Templates`** (tag `v1.2.0` when shipped). Locked in: #403, Reload #447/#449/#451, HttpClient split #453, custom templates #292 (kept on the milestone to force a decision rather than another ice-box). Window-focus refetch #450, platform-blocked #293/#391, and newer ice-box catalogue work stay off this milestone. | Solo developer |
+| 2026-09-01 | Added Triage action-surface usability ([#492](https://github.com/markheydon/solo-dev-board/issues/492)) to **`v1.2`**. Screen layout only (Save and next / duplicate / skip); opinionated-workflow integration stays later. | Solo developer |
 
