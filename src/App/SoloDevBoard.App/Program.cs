@@ -13,7 +13,6 @@ using SoloDevBoard.App.Components.Shell;
 using SoloDevBoard.App.Planning;
 using SoloDevBoard.App.Theming;
 using SoloDevBoard.Application.Authentication;
-using SoloDevBoard.Application.Services.Common;
 using SoloDevBoard.Application.Services.Planning;
 using SoloDevBoard.Composition;
 
@@ -65,12 +64,7 @@ if (hostedSignInEnabled)
 
 if (hostedSignInEnabled)
 {
-    builder.Services.AddHttpClient(HostedGitHubAuthGateway.HostedGitHubAuthClientName, static (serviceProvider, client) =>
-    {
-        var appVersionService = serviceProvider.GetRequiredService<IAppVersionService>();
-        client.BaseAddress = new Uri("https://api.github.com");
-        client.DefaultRequestHeaders.UserAgent.ParseAdd(appVersionService.UserAgent);
-    });
+    builder.Services.AddHostedGitHubAuthHttpClients();
     builder.Services.AddScoped<HostedGitHubAuthGateway>();
 
     var hostedAuthOptions = builder.Configuration.GetSection(GitHubAuthOptions.SectionName).Get<GitHubAuthOptions>()

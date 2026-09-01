@@ -5,6 +5,7 @@ using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.Common;
 using SoloDevBoard.Infrastructure.Common;
+using SoloDevBoard.Application.GitHub;
 using SoloDevBoard.Infrastructure.GitHub;
 using SoloDevBoard.Infrastructure.Identity;
 

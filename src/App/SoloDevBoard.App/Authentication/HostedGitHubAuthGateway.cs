@@ -1,4 +1,3 @@
-using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -14,10 +13,9 @@ internal sealed class HostedGitHubAuthGateway(
     IOptions<GitHubAuthOptions> authOptions,
     IOptions<HostedAdmissionControlOptions> admissionOptions)
 {
-    internal const string HostedGitHubAuthClientName = "HostedGitHubAuthClient";
+    internal const string HostedGitHubOAuthClientName = "HostedGitHubOAuthClient";
 
-    // Must stay aligned with GitHubApiHeaders.JsonAcceptMediaType in Infrastructure (App cannot reference Infrastructure).
-    private const string GitHubJsonAcceptMediaType = "application/vnd.github+json";
+    internal const string HostedGitHubApiClientName = "HostedGitHubApiClient";
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -52,12 +50,13 @@ internal sealed class HostedGitHubAuthGateway(
 
         EnsureHostedSignInConfiguration();
 
-        var client = _httpClientFactory.CreateClient(HostedGitHubAuthClientName);
+        var oauthClient = _httpClientFactory.CreateClient(HostedGitHubOAuthClientName);
+        var apiClient = _httpClientFactory.CreateClient(HostedGitHubApiClientName);
 
-        var tokenResponse = await ExchangeCodeForAccessTokenAsync(client, code, cancellationToken).ConfigureAwait(false);
-        var user = await GetAuthenticatedUserAsync(client, tokenResponse.AccessToken, cancellationToken).ConfigureAwait(false);
-        var installationId = await ResolveInstallationIdAsync(client, tokenResponse.AccessToken, user.Login, cancellationToken).ConfigureAwait(false);
-        var organisationLogins = await GetOrganisationLoginsAsync(client, tokenResponse.AccessToken, cancellationToken).ConfigureAwait(false);
+        var tokenResponse = await ExchangeCodeForAccessTokenAsync(oauthClient, code, cancellationToken).ConfigureAwait(false);
+        var user = await GetAuthenticatedUserAsync(apiClient, tokenResponse.AccessToken, cancellationToken).ConfigureAwait(false);
+        var installationId = await ResolveInstallationIdAsync(apiClient, tokenResponse.AccessToken, user.Login, cancellationToken).ConfigureAwait(false);
+        var organisationLogins = await GetOrganisationLoginsAsync(apiClient, tokenResponse.AccessToken, cancellationToken).ConfigureAwait(false);
 
         var tokenExpiresAtUtc = ComputeExpiresAtUtc(tokenResponse.ExpiresInSeconds);
         var refreshTokenExpiresAtUtc = ComputeExpiresAtUtc(tokenResponse.RefreshTokenExpiresInSeconds);
@@ -80,9 +79,9 @@ internal sealed class HostedGitHubAuthGateway(
 
         EnsureHostedSignInConfiguration();
 
-        var client = _httpClientFactory.CreateClient(HostedGitHubAuthClientName);
+        var oauthClient = _httpClientFactory.CreateClient(HostedGitHubOAuthClientName);
 
-        var tokenResponse = await ExchangeRefreshTokenForAccessTokenAsync(client, currentSession.RefreshToken, cancellationToken).ConfigureAwait(false);
+        var tokenResponse = await ExchangeRefreshTokenForAccessTokenAsync(oauthClient, currentSession.RefreshToken, cancellationToken).ConfigureAwait(false);
 
         var tokenExpiresAtUtc = ComputeExpiresAtUtc(tokenResponse.ExpiresInSeconds);
         var refreshTokenExpiresAtUtc = ComputeExpiresAtUtc(tokenResponse.RefreshTokenExpiresInSeconds);
@@ -200,14 +199,10 @@ internal sealed class HostedGitHubAuthGateway(
             formFields[field.Key] = field.Value;
         }
 
-        var request = new HttpRequestMessage(HttpMethod.Post, _authOptions.HostedGitHubAccessTokenEndpoint)
+        return new HttpRequestMessage(HttpMethod.Post, _authOptions.HostedGitHubAccessTokenEndpoint)
         {
             Content = new FormUrlEncodedContent(formFields),
         };
-
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-        return request;
     }
 
     private static async Task<AuthenticatedUserDto> GetAuthenticatedUserAsync(HttpClient client, string accessToken, CancellationToken cancellationToken)
@@ -266,8 +261,7 @@ internal sealed class HostedGitHubAuthGateway(
     private static HttpRequestMessage CreateGitHubApiRequest(HttpMethod method, string path, string accessToken)
     {
         var request = new HttpRequestMessage(method, path);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(GitHubJsonAcceptMediaType));
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
 
         return request;
     }
