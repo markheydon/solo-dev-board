@@ -2,10 +2,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using SoloDevBoard.Application.Authentication;
+using SoloDevBoard.Application.GitHub;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.Common;
 using SoloDevBoard.Infrastructure.Common;
-using SoloDevBoard.Application.GitHub;
 using SoloDevBoard.Infrastructure.GitHub;
 using SoloDevBoard.Infrastructure.Identity;
 
