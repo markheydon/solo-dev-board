@@ -171,4 +171,23 @@ public sealed class RepositoryServiceTests
         // Assert
         await _gitHubService.Received(1).GetActiveRepositoriesAsync(cancellationTokenSource.Token);
     }
+
+    [Fact]
+    public async Task GetActiveRepositoriesAsync_ForceReloadTrue_PassesFlagToGitHubService()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+
+        _gitHubService
+            .GetActiveRepositoriesAsync(cancellationToken, forceReload: true)
+            .Returns([
+                new Repository { Id = 1, Name = "repo-one", FullName = "owner/repo-one", IsArchived = false },
+            ]);
+
+        var sut = new RepositoryService(_gitHubService);
+
+        var result = await sut.GetActiveRepositoriesAsync(cancellationToken, forceReload: true);
+
+        Assert.Single(result);
+        await _gitHubService.Received(1).GetActiveRepositoriesAsync(cancellationToken, forceReload: true);
+    }
 }

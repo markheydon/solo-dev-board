@@ -19,8 +19,9 @@ public interface IGitHubService
 
     /// <summary>Retrieves active repositories accessible to the authenticated GitHub user.</summary>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <param name="forceReload">When <see langword="true" />, bypasses any cached repository catalogue before loading.</param>
     /// <returns>A read-only list of non-archived repositories visible to the authenticated user.</returns>
-    Task<IReadOnlyList<Repository>> GetActiveRepositoriesAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Repository>> GetActiveRepositoriesAsync(CancellationToken cancellationToken = default, bool forceReload = false);
 
     /// <summary>Retrieves repositories for the specified owner.</summary>
     /// <param name="owner">The GitHub account owner login.</param>
@@ -31,8 +32,9 @@ public interface IGitHubService
     /// <summary>Retrieves active repositories for the specified owner.</summary>
     /// <param name="owner">The GitHub account owner login.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <param name="forceReload">When <see langword="true" />, bypasses any cached repository catalogue before loading.</param>
     /// <returns>A read-only list of non-archived repositories for the specified owner.</returns>
-    Task<IReadOnlyList<Repository>> GetActiveRepositoriesAsync(string owner, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Repository>> GetActiveRepositoriesAsync(string owner, CancellationToken cancellationToken = default, bool forceReload = false);
 
     /// <summary>Retrieves all issues for the specified repository.</summary>
     /// <param name="owner">The GitHub account owner login.</param>

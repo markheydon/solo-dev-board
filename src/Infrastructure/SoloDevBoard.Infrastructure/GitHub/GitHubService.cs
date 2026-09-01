@@ -70,8 +70,13 @@ public sealed class GitHubService : IGitHubService
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<Repository>> GetActiveRepositoriesAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Repository>> GetActiveRepositoriesAsync(CancellationToken cancellationToken = default, bool forceReload = false)
     {
+        if (forceReload)
+        {
+            _responseCache.InvalidateUserRepositories();
+        }
+
         var repositories = await GetRepositoriesAsync(cancellationToken).ConfigureAwait(false);
         return repositories
             .Where(repository => !repository.IsArchived)
@@ -103,8 +108,15 @@ public sealed class GitHubService : IGitHubService
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<Repository>> GetActiveRepositoriesAsync(string owner, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Repository>> GetActiveRepositoriesAsync(string owner, CancellationToken cancellationToken = default, bool forceReload = false)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+
+        if (forceReload)
+        {
+            _responseCache.InvalidateOwnerRepositories(owner);
+        }
+
         var repositories = await GetRepositoriesAsync(owner, cancellationToken).ConfigureAwait(false);
         return repositories
             .Where(repository => !repository.IsArchived)

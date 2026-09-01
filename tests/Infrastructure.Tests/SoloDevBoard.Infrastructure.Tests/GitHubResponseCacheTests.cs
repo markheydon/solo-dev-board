@@ -202,4 +202,66 @@ public sealed class GitHubResponseCacheTests
         Assert.Equal(["second"], refreshed);
         Assert.Equal(2, factoryCalls);
     }
+
+    [Fact]
+    public async Task InvalidateUserRepositories_RemovesCachedEntry_NextCallRefetches()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+
+        var sut = GitHubCachingTestSupport.CreateResponseCache();
+        var factoryCalls = 0;
+
+        await sut.GetOrCreateUserRepositoriesAsync(
+            _ =>
+            {
+                factoryCalls++;
+                return Task.FromResult<IReadOnlyList<string>>(["before"]);
+            },
+            cancellationToken);
+
+        sut.InvalidateUserRepositories();
+
+        var refreshed = await sut.GetOrCreateUserRepositoriesAsync(
+            _ =>
+            {
+                factoryCalls++;
+                return Task.FromResult<IReadOnlyList<string>>(["after"]);
+            },
+            cancellationToken);
+
+        Assert.Equal(["after"], refreshed);
+        Assert.Equal(2, factoryCalls);
+    }
+
+    [Fact]
+    public async Task InvalidateOwnerRepositories_RemovesCachedEntry_NextCallRefetches()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+
+        var sut = GitHubCachingTestSupport.CreateResponseCache();
+        var factoryCalls = 0;
+
+        await sut.GetOrCreateOwnerRepositoriesAsync(
+            "owner",
+            _ =>
+            {
+                factoryCalls++;
+                return Task.FromResult<IReadOnlyList<string>>(["before"]);
+            },
+            cancellationToken);
+
+        sut.InvalidateOwnerRepositories("owner");
+
+        var refreshed = await sut.GetOrCreateOwnerRepositoriesAsync(
+            "owner",
+            _ =>
+            {
+                factoryCalls++;
+                return Task.FromResult<IReadOnlyList<string>>(["after"]);
+            },
+            cancellationToken);
+
+        Assert.Equal(["after"], refreshed);
+        Assert.Equal(2, factoryCalls);
+    }
 }
