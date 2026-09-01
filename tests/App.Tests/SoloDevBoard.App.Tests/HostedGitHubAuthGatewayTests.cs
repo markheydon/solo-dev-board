@@ -355,13 +355,18 @@ public sealed class HostedGitHubAuthGatewayTests
     private static HostedGitHubAuthGateway CreateSubject(Queue<HttpResponseMessage> responses)
     {
         var messageHandler = new QueueMessageHandler(responses);
-        var httpClient = new HttpClient(messageHandler)
+        var oauthClient = new HttpClient(messageHandler)
+        {
+            BaseAddress = new Uri("https://github.com"),
+        };
+        var apiClient = new HttpClient(messageHandler)
         {
             BaseAddress = new Uri("https://api.github.com"),
         };
 
         var httpClientFactory = Substitute.For<IHttpClientFactory>();
-        httpClientFactory.CreateClient(HostedGitHubAuthGateway.HostedGitHubAuthClientName).Returns(httpClient);
+        httpClientFactory.CreateClient(HostedGitHubAuthGateway.HostedGitHubOAuthClientName).Returns(oauthClient);
+        httpClientFactory.CreateClient(HostedGitHubAuthGateway.HostedGitHubApiClientName).Returns(apiClient);
 
         var authOptions = Options.Create(new GitHubAuthOptions
         {

@@ -1,4 +1,4 @@
-namespace SoloDevBoard.Infrastructure.GitHub;
+namespace SoloDevBoard.Application.GitHub;
 
 /// <summary>Standard request headers for GitHub REST API (<c>api.github.com</c>) calls.</summary>
 public static class GitHubApiHeaders
