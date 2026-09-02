@@ -867,6 +867,56 @@ public sealed class BoardRulesTests
     }
 
     [Fact]
+    public async Task BoardRules_ReloadFromGitHub_ShowsSectionScopedBoardsLoadingState()
+    {
+        // Arrange
+        var repository = CreateRepository("owner", "repo-a");
+        var reloadBoardsTask = new TaskCompletionSource<BoardRulesProjectBoardDiscoveryDto>();
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([repository]);
+
+        var projectBoardLoadCount = 0;
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>())
+            .Returns(_ =>
+            {
+                projectBoardLoadCount++;
+                return projectBoardLoadCount == 1
+                    ? Task.FromResult(new BoardRulesProjectBoardDiscoveryDto([], 0, 0))
+                    : reloadBoardsTask.Task;
+            });
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<BoardRules>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='board-rules-repository-autocomplete']"));
+        await SelectRepositoryAsync(cut, repository);
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='board-rules-unsupported-boards-message']"));
+        });
+
+        // Act
+        var reloadTask = cut.Find("[data-testid='board-rules-reload-from-github-button']").ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='board-rules-boards-loading-state']"));
+            Assert.Single(cut.FindAll("[data-testid='board-rules-repository-autocomplete']"));
+            Assert.Empty(cut.FindAll("[data-testid='board-rules-repositories-loading-state']"));
+        });
+
+        reloadBoardsTask.SetResult(new BoardRulesProjectBoardDiscoveryDto(
+            [
+                new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
+            ],
+            1,
+            0));
+
+        await reloadTask;
+    }
+
+    [Fact]
     public async Task BoardRules_UnsupportedBoardsTryAgain_RefetchesProjectBoardsWithoutClearingRepository()
     {
         // Arrange
@@ -916,6 +966,56 @@ public sealed class BoardRulesTests
 
         await _boardRulesService.Received(2).GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>());
         await _repositoryService.DidNotReceive().GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), true);
+    }
+
+    [Fact]
+    public async Task BoardRules_UnsupportedBoardsTryAgain_ShowsSectionScopedBoardsLoadingState()
+    {
+        // Arrange
+        var repository = CreateRepository("owner", "repo-a");
+        var retryBoardsTask = new TaskCompletionSource<BoardRulesProjectBoardDiscoveryDto>();
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([repository]);
+
+        var projectBoardLoadCount = 0;
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>())
+            .Returns(_ =>
+            {
+                projectBoardLoadCount++;
+                return projectBoardLoadCount == 1
+                    ? Task.FromResult(new BoardRulesProjectBoardDiscoveryDto([], 0, 0))
+                    : retryBoardsTask.Task;
+            });
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<BoardRules>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='board-rules-repository-autocomplete']"));
+        await SelectRepositoryAsync(cut, repository);
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='board-rules-unsupported-boards-retry-button']"));
+        });
+
+        // Act
+        var retryTask = cut.Find("[data-testid='board-rules-unsupported-boards-retry-button']").ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='board-rules-boards-loading-state']"));
+            Assert.Single(cut.FindAll("[data-testid='board-rules-repository-autocomplete']"));
+            Assert.Empty(cut.FindAll("[data-testid='board-rules-repositories-loading-state']"));
+        });
+
+        retryBoardsTask.SetResult(new BoardRulesProjectBoardDiscoveryDto(
+            [
+                new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
+            ],
+            1,
+            0));
+
+        await retryTask;
     }
 
     [Fact]
@@ -995,6 +1095,70 @@ public sealed class BoardRulesTests
         await _repositoryService.Received(1).GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), true);
         await _boardRulesService.Received(2).GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>());
         await _boardRulesService.Received(2).GetProjectBoardOptionsAsync("owner", "repo-b", Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task BoardRules_ReloadFromGitHubInCompareMode_ShowsSectionScopedComparisonBoardsLoadingState()
+    {
+        // Arrange
+        var repositoryA = CreateRepository("owner", "repo-a");
+        var repositoryB = CreateRepository("owner", "repo-b");
+        var reloadComparisonBoardsTask = new TaskCompletionSource<BoardRulesProjectBoardDiscoveryDto>();
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([repositoryA, repositoryB]);
+
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>()).Returns(new BoardRulesProjectBoardDiscoveryDto(
+            [
+                new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
+            ],
+            1,
+            0));
+
+        var comparisonProjectBoardLoadCount = 0;
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-b", Arg.Any<CancellationToken>())
+            .Returns(_ =>
+            {
+                comparisonProjectBoardLoadCount++;
+                return comparisonProjectBoardLoadCount == 1
+                    ? Task.FromResult(new BoardRulesProjectBoardDiscoveryDto([], 0, 0))
+                    : reloadComparisonBoardsTask.Task;
+            });
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<BoardRules>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='board-rules-compare-mode-toggle']"));
+
+        var compareSwitch = cut.FindComponent<MudSwitch<bool>>();
+        await cut.InvokeAsync(() => compareSwitch.Instance.ValueChanged.InvokeAsync(true));
+
+        await SelectRepositoryAsync(cut, repositoryA);
+        cut.WaitForAssertion(() => Assert.Contains("Alpha Board", cut.Markup));
+
+        await SelectComparisonRepositoryAsync(cut, repositoryB);
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='board-rules-comparison-unsupported-boards-message']"));
+        });
+
+        // Act
+        var reloadTask = cut.Find("[data-testid='board-rules-reload-from-github-button']").ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='board-rules-comparison-boards-loading-state']"));
+            Assert.Single(cut.FindAll("[data-testid='board-rules-comparison-repository-autocomplete']"));
+            Assert.Empty(cut.FindAll("[data-testid='board-rules-repositories-loading-state']"));
+        });
+
+        reloadComparisonBoardsTask.SetResult(new BoardRulesProjectBoardDiscoveryDto(
+            [
+                new BoardRulesProjectBoardOptionDto("PVT_beta", "Beta Board", "owner"),
+            ],
+            1,
+            0));
+
+        await reloadTask;
     }
 
     [Fact]

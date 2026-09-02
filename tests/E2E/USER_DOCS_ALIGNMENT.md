@@ -64,8 +64,8 @@ Use this when extending specs so assertions track documented workflows.
 | Guide section | CI assertion | Loaded-state validation |
 |---------------|--------------|-------------------------|
 | Accessing (`/board-rules`) | `board-rules.spec.ts` URL, title, selector region, and compare toggle | `docs-capture` |
-| Reload from GitHub in selector header | `board-rules-reload-from-github-button` after initial catalogue load, including repository error states | `BoardRulesTests` Reload and compare-mode reload |
-| Unsupported-board Try again | — | `BoardRulesTests` unsupported-board and comparison unsupported-board retry |
+| Reload from GitHub in selector header | `board-rules-reload-from-github-button` after initial catalogue load, including repository error states | `BoardRulesTests` Reload, compare-mode reload, and section-scoped `board-rules-boards-loading-state` / `board-rules-comparison-boards-loading-state` |
+| Unsupported-board Try again | — | `BoardRulesTests` unsupported-board and comparison unsupported-board retry with section-scoped boards loading |
 | Compare mode | Compare toggle and comparison selector region | `docs-capture` + `BoardRulesTests` compare mode |
 | Repository and project board load failure | `board-rules-error-alert` and `board-rules-reload-repositories-button` | — |
 

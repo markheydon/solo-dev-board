@@ -73,5 +73,5 @@ Key goals of the Board Rules Visualiser:
 Private user-owned Projects v2 boards often need PAT mode with `read:project`, or a public project, when hosted GitHub App sign-in cannot read them.
 {{< /callout >}}
 
-- **Loading:** Progress indicators appear while repositories or project boards are loading.
+- **Loading:** Progress indicators appear in the repository selector, project board selector, or comparison selector sections while data is loading. Reload from GitHub and **Try again** show section-scoped loading in the board selector areas without hiding your repository pickers.
 - **Errors:** If GitHub cannot be reached, an error message appears at the top of the affected section (repository selector, project board selector, or visualisation area) with a retry action.
