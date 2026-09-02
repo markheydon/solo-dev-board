@@ -10,7 +10,7 @@ namespace SoloDevBoard.Application.Services.ActionsTemplates;
 /// <param name="TriggerDescription">A short description of when the workflow runs.</param>
 /// <param name="CreatedAt">The date and time when the template was created.</param>
 public sealed record ActionsTemplateDto(
-    int Id,
+    string Id,
     string Name,
     string Description,
     string Category,

@@ -131,6 +131,28 @@ public sealed class GitHubResponseCache
         _memoryCache.Remove(BuildOwnerRepositoriesKey(owner));
     }
 
+    /// <summary>Gets or creates a cached workflow directory listing for the specified repository.</summary>
+    /// <typeparam name="T">The cached item type.</typeparam>
+    /// <param name="owner">The GitHub account owner login.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="factory">The factory used to load the catalogue when the cache misses.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>The cached or freshly loaded workflow directory entries.</returns>
+    public Task<IReadOnlyList<T>> GetOrCreateWorkflowDirectoryAsync<T>(
+        string owner,
+        string repo,
+        Func<CancellationToken, Task<IReadOnlyList<T>>> factory,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+
+        return GetOrCreateAsync(BuildWorkflowDirectoryKey(owner, repo), _options.WorkflowDirectoryTtlSeconds, factory, cancellationToken);
+    }
+
+    private string BuildWorkflowDirectoryKey(string owner, string repo)
+        => $"gh:{NormalizeKeySegment(_currentUserContext.OwnerLogin)}:workflows:{NormalizeKeySegment(owner)}:{NormalizeKeySegment(repo)}";
+
     private string BuildUserRepositoriesKey()
         => $"gh:{NormalizeKeySegment(_currentUserContext.OwnerLogin)}:repos:user";
 

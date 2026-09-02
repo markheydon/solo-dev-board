@@ -5,6 +5,13 @@ namespace SoloDevBoard.Application.Services.ActionsTemplates;
 /// <summary>Provides repository operations for managing GitHub workflow files.</summary>
 public interface IWorkflowFileRepository
 {
+    /// <summary>Lists top-level workflow YAML files in the repository <c>.github/workflows</c> directory.</summary>
+    /// <param name="owner">The GitHub account owner login.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>The workflow directory entries. An empty list means the directory exists but contains no workflow files.</returns>
+    Task<IReadOnlyList<WorkflowDirectoryEntry>> ListWorkflowFilesAsync(string owner, string repo, CancellationToken cancellationToken = default);
+
     /// <summary>Retrieves a workflow file from the specified repository path.</summary>
     /// <param name="owner">The GitHub account owner login.</param>
     /// <param name="repo">The repository name.</param>

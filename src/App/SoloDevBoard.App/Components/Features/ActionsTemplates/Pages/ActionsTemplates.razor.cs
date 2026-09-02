@@ -42,7 +42,7 @@ public partial class ActionsTemplates : ComponentBase
     private Dictionary<string, string> parameterValues = new(StringComparer.OrdinalIgnoreCase);
     private string searchText = string.Empty;
     private string selectedCategory = AllCategoriesLabel;
-    private int? selectedTemplateId;
+    private string? selectedTemplateId;
     private bool isLoadingTemplates = true;
     private bool isLoadingRepositories = true;
     private bool isLoadingStatuses;
@@ -50,6 +50,8 @@ public partial class ActionsTemplates : ComponentBase
     private bool hasLoadFailure;
     private bool hasRepositoryLoadFailure;
     private string? repositoryLoadErrorMessage;
+    private string? customSourceError;
+    private string? customSourceWarning;
 
     private void ShowSnackbarFeedback(string message, Severity severity)
         => SnackbarFeedback.Show(Snackbar, message, severity);
@@ -113,10 +115,15 @@ public partial class ActionsTemplates : ComponentBase
     {
         isLoadingTemplates = true;
         hasLoadFailure = false;
+        customSourceError = null;
+        customSourceWarning = null;
 
         try
         {
-            templates = await ActionsTemplateService.GetTemplatesAsync();
+            var catalogue = await ActionsTemplateService.GetTemplatesAsync();
+            templates = catalogue.Templates;
+            customSourceError = catalogue.CustomSourceError;
+            customSourceWarning = catalogue.CustomSourceWarning;
         }
         catch
         {

@@ -46,6 +46,20 @@
         <MudStack Spacing="2">
             <MudText Typo="Typo.h6">Template browser</MudText>
 
+            @if (!string.IsNullOrWhiteSpace(customSourceError))
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" aria-live="polite" data-testid="actions-templates-custom-source-error">
+                    @customSourceError
+                </MudAlert>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(customSourceWarning))
+            {
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" aria-live="polite" data-testid="actions-templates-custom-source-warning">
+                    @customSourceWarning
+                </MudAlert>
+            }
+
             <MudTextField @bind-Value="SearchText"
                           Placeholder="Search templates by name, category, or tags"
                           Variant="Variant.Outlined"

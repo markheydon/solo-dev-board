@@ -24,6 +24,7 @@ public sealed class GitHubCacheOptionsValidatorTests
     [InlineData(nameof(GitHubCacheOptions.RepositoriesTtlSeconds), 0)]
     [InlineData(nameof(GitHubCacheOptions.LabelsTtlSeconds), -1)]
     [InlineData(nameof(GitHubCacheOptions.MilestonesTtlSeconds), -5)]
+    [InlineData(nameof(GitHubCacheOptions.WorkflowDirectoryTtlSeconds), 0)]
     public void Validate_InvalidTtl_ReturnsFailure(string propertyName, int invalidValue)
     {
         // Arrange

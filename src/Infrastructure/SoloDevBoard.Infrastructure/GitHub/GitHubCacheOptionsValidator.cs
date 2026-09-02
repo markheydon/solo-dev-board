@@ -27,6 +27,11 @@ public sealed class GitHubCacheOptionsValidator : IValidateOptions<GitHubCacheOp
             failures.Add($"{nameof(GitHubCacheOptions.MilestonesTtlSeconds)} must be at least 1 second.");
         }
 
+        if (options.WorkflowDirectoryTtlSeconds < 1)
+        {
+            failures.Add($"{nameof(GitHubCacheOptions.WorkflowDirectoryTtlSeconds)} must be at least 1 second.");
+        }
+
         return failures.Count > 0
             ? ValidateOptionsResult.Fail(failures)
             : ValidateOptionsResult.Success;
