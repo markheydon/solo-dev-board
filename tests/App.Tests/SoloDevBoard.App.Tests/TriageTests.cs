@@ -249,7 +249,7 @@ public sealed class TriageTests
         {
             Assert.Contains("Pull request", cut.Markup, StringComparison.Ordinal);
             Assert.Contains("Open item #2201 on GitHub", cut.Markup, StringComparison.Ordinal);
-            Assert.Contains("Keyboard shortcuts (when the action buttons are focused)", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("Keyboard shortcuts: Enter or L commits the current disposition", cut.Markup, StringComparison.Ordinal);
         });
 
     }
@@ -334,7 +334,7 @@ public sealed class TriageTests
         cut.Find("[data-testid='triage-start-session-button']").Click();
         cut.WaitForAssertion(() => Assert.Contains("Issue 101", cut.Markup));
 
-        cut.Find("[data-testid='triage-next-item-button']").Click();
+        cut.Find("[data-testid='triage-next-without-saving-button']").Click();
 
         // Assert
         cut.WaitForAssertion(() =>
@@ -388,7 +388,7 @@ public sealed class TriageTests
         cut.Find("[data-testid='triage-start-session-button']").Click();
         cut.WaitForAssertion(() => Assert.Contains("Issue 101", cut.Markup));
 
-        cut.Find("[data-testid='triage-next-item-button']").Click();
+        cut.Find("[data-testid='triage-next-without-saving-button']").Click();
 
         // Assert
         cut.WaitForAssertion(() =>
@@ -437,7 +437,7 @@ public sealed class TriageTests
         cut.Find("[data-testid='triage-start-session-button']").Click();
         cut.WaitForAssertion(() => Assert.Contains("Issue 103", cut.Markup));
 
-        cut.Find("[data-testid='triage-next-item-button']").Click();
+        cut.Find("[data-testid='triage-next-without-saving-button']").Click();
 
         // Assert
         cut.WaitForAssertion(() =>
@@ -541,7 +541,7 @@ public sealed class TriageTests
     }
 
     [Fact]
-    public async Task Triage_ApplyLabelClicked_InvokesTriageServiceAndShowsUpdatedLabels()
+    public async Task Triage_SaveAndNextClicked_InvokesProcessCommitAndAdvances()
     {
         // Arrange
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
@@ -586,9 +586,11 @@ public sealed class TriageTests
 
         _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>()).Returns(startedSession);
 
-        _triageService.ApplyLabelToCurrentItemAsync(Arg.Any<TriageSessionDto>(), "type/bug", Arg.Any<CancellationToken>()).Returns(labelledSession);
-
-        _triageService.AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>()).Returns(advancedSession);
+        _triageService.ProcessAndAdvanceCurrentItemAsync(
+                Arg.Any<TriageSessionDto>(),
+                Arg.Is<TriageProcessCommitRequestDto>(request => request.LabelName == "type/bug"),
+                Arg.Any<CancellationToken>())
+            .Returns(advancedSession);
 
         await using var ctx = CreateContext();
 
@@ -604,14 +606,16 @@ public sealed class TriageTests
 
         await SelectQuickLabelAsync(cut, "type/bug");
 
-        await cut.InvokeAsync(() => cut.Find("[data-testid='triage-apply-label-button']").Click());
+        await cut.InvokeAsync(() => cut.Find("[data-testid='triage-save-and-next-button']").Click());
 
         // Assert
         cut.WaitForAssertion(() => Assert.Contains("Issue 402", cut.Markup));
-        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Applied label 'type/bug' to item #401 and moved to Item 2 of 2"));
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Saved changes for item #401 and moved to Item 2 of 2"));
 
-        await _triageService.Received(1).ApplyLabelToCurrentItemAsync(Arg.Any<TriageSessionDto>(), "type/bug", Arg.Any<CancellationToken>());
-        await _triageService.Received(1).AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>());
+        await _triageService.Received(1).ProcessAndAdvanceCurrentItemAsync(
+            Arg.Any<TriageSessionDto>(),
+            Arg.Is<TriageProcessCommitRequestDto>(request => request.LabelName == "type/bug"),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -633,9 +637,11 @@ public sealed class TriageTests
 
         _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>()).Returns(startedSession);
 
-        _triageService.ApplyLabelToCurrentItemAsync(Arg.Any<TriageSessionDto>(), "priority/high", Arg.Any<CancellationToken>()).Returns(startedSession);
-
-        _triageService.AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>()).Returns(startedSession);
+        _triageService.ProcessAndAdvanceCurrentItemAsync(
+                Arg.Any<TriageSessionDto>(),
+                Arg.Is<TriageProcessCommitRequestDto>(request => request.LabelName == "priority/high"),
+                Arg.Any<CancellationToken>())
+            .Returns(startedSession);
 
         await using var ctx = CreateContext();
 
@@ -651,15 +657,17 @@ public sealed class TriageTests
 
         await SelectQuickLabelAsync(cut, "priority/high");
 
-        cut.Find("[data-testid='triage-action-buttons-row']").KeyDown("l");
+        cut.Find("[data-testid='triage-action-surface-region']").KeyDown("l");
 
         // Assert
-        await _triageService.Received(1).ApplyLabelToCurrentItemAsync(Arg.Any<TriageSessionDto>(), "priority/high", Arg.Any<CancellationToken>());
-        await _triageService.Received(1).AdvanceSessionAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>());
+        await _triageService.Received(1).ProcessAndAdvanceCurrentItemAsync(
+            Arg.Any<TriageSessionDto>(),
+            Arg.Is<TriageProcessCommitRequestDto>(request => request.LabelName == "priority/high"),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Triage_SessionStartsWithAvailableLabels_QuickLabelDefaultsToEmptyAndApplyDisabled()
+    public async Task Triage_SessionStartsWithAvailableLabels_QuickLabelDefaultsToEmptyAndSaveAndNextEnabled()
     {
         // Arrange
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
@@ -693,15 +701,18 @@ public sealed class TriageTests
         cut.WaitForAssertion(() =>
         {
             Assert.True(string.IsNullOrEmpty(cut.Find("[data-testid='triage-quick-label-autocomplete']").GetAttribute("value")));
-            Assert.True(cut.Find("[data-testid='triage-apply-label-button']").HasAttribute("disabled"));
+            Assert.False(cut.Find("[data-testid='triage-save-and-next-button']").HasAttribute("disabled"));
         });
 
 
-        await _triageService.DidNotReceive().ApplyLabelToCurrentItemAsync(Arg.Any<TriageSessionDto>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _triageService.DidNotReceive().ProcessAndAdvanceCurrentItemAsync(
+            Arg.Any<TriageSessionDto>(),
+            Arg.Any<TriageProcessCommitRequestDto>(),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Triage_AssignMilestoneClicked_AssignsMilestoneAndShowsSuccessMessage()
+    public async Task Triage_SaveAndNextWithMilestone_AssignsMilestoneAndAdvances()
     {
         // Arrange
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
@@ -730,13 +741,23 @@ public sealed class TriageTests
             Summary = new TriageSessionSummaryDto(1, 0, 1, 0, 0, 1, 0, 0),
         };
 
+        var advancedSession = milestoneAssignedSession with
+        {
+            CurrentIndex = 1,
+            Progress = new TriageSessionProgressDto(1, 1, 0, 0),
+        };
+
         _triageService.StartSessionAsync("owner", "repo", true, Arg.Any<CancellationToken>()).Returns(startedSession);
 
         _triageService.GetMilestoneOptionsAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>()).Returns([new TriageMilestoneOptionDto(7, "v0.7.0")]);
 
         _triageService.GetProjectBoardOptionsAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>()).Returns(new TriageProjectBoardDiscoveryDto([], 0, 0));
 
-        _triageService.AssignMilestoneToCurrentItemAsync(Arg.Any<TriageSessionDto>(), 7, "v0.7.0", Arg.Any<CancellationToken>()).Returns(milestoneAssignedSession);
+        _triageService.ProcessAndAdvanceCurrentItemAsync(
+                Arg.Any<TriageSessionDto>(),
+                Arg.Is<TriageProcessCommitRequestDto>(request => request.MilestoneNumber == 7),
+                Arg.Any<CancellationToken>())
+            .Returns(advancedSession);
 
         await using var ctx = CreateContext();
 
@@ -755,13 +776,16 @@ public sealed class TriageTests
             .Single(component => string.Equals(component.Instance.Label, "Milestone", StringComparison.Ordinal));
 
         await cut.InvokeAsync(() => milestoneSelect.Instance.ValueChanged.InvokeAsync(7));
-        cut.Find("[data-testid='triage-assign-milestone-button']").Click();
+        cut.Find("[data-testid='triage-save-and-next-button']").Click();
 
         // Assert
-        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Assigned milestone 'v0.7.0' to item #501"));
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Saved changes for item #501"));
 
 
-        await _triageService.Received(1).AssignMilestoneToCurrentItemAsync(Arg.Any<TriageSessionDto>(), 7, "v0.7.0", Arg.Any<CancellationToken>());
+        await _triageService.Received(1).ProcessAndAdvanceCurrentItemAsync(
+            Arg.Any<TriageSessionDto>(),
+            Arg.Is<TriageProcessCommitRequestDto>(request => request.MilestoneNumber == 7),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -811,7 +835,8 @@ public sealed class TriageTests
 
         _triageService.GetProjectBoardOptionsAsync(Arg.Any<TriageSessionDto>(), Arg.Any<CancellationToken>()).Returns(new TriageProjectBoardDiscoveryDto([], 0, 0));
 
-        _triageService.AssignMilestoneToCurrentItemAsync(Arg.Any<TriageSessionDto>(), 7, "v0.7.0", Arg.Any<CancellationToken>()).Returns(milestoneAssignedSession);
+        _triageService.ProcessAndAdvanceCurrentItemAsync(Arg.Any<TriageSessionDto>(), Arg.Any<TriageProcessCommitRequestDto>(), Arg.Any<CancellationToken>())
+            .Returns(milestoneAssignedSession);
 
         await using var ctx = CreateContext();
 
@@ -826,17 +851,20 @@ public sealed class TriageTests
 
         cut.WaitForAssertion(() => Assert.Contains("PR 2202", cut.Markup, StringComparison.Ordinal));
 
-        cut.Find("[data-testid='triage-assign-milestone-button']").Click();
-
-        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Assigned milestone 'v0.7.0' to item #2202"));
-
+        var milestoneSelect = cut
+            .FindComponents<MudSelect<int?>>()
+            .Single(component => string.Equals(component.Instance.Label, "Milestone", StringComparison.Ordinal));
 
         // Assert
-        await _triageService.Received(1).AssignMilestoneToCurrentItemAsync(Arg.Any<TriageSessionDto>(), 7, "v0.7.0", Arg.Any<CancellationToken>());
+        Assert.Equal(7, milestoneSelect.Instance.Value);
+        await _triageService.DidNotReceive().ProcessAndAdvanceCurrentItemAsync(
+            Arg.Any<TriageSessionDto>(),
+            Arg.Any<TriageProcessCommitRequestDto>(),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Triage_AddToProjectBoardClicked_AddsItemAndShowsSuccessMessage()
+    public async Task Triage_SaveAndNextWithProjectBoard_AddsItemAndAdvances()
     {
         // Arrange
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo")]);
@@ -876,7 +904,11 @@ public sealed class TriageTests
             1,
             0));
 
-        _triageService.AddCurrentItemToProjectBoardAsync(Arg.Any<TriageSessionDto>(), "project-id", "Roadmap", "status-field-id", "in-progress", "In Progress", Arg.Any<CancellationToken>()).Returns(updatedSession);
+        _triageService.ProcessAndAdvanceCurrentItemAsync(
+                Arg.Any<TriageSessionDto>(),
+                Arg.Is<TriageProcessCommitRequestDto>(request => request.ProjectBoardId == "project-id"),
+                Arg.Any<CancellationToken>())
+            .Returns(updatedSession);
 
         await using var ctx = CreateContext();
 
@@ -890,13 +922,21 @@ public sealed class TriageTests
         cut.Find("[data-testid='triage-start-session-button']").Click();
         cut.WaitForAssertion(() => Assert.Contains("Issue 601", cut.Markup));
 
-        cut.Find("[data-testid='triage-add-to-project-board-button']").Click();
+        var projectBoardSelect = cut
+            .FindComponents<MudSelect<string>>()
+            .Single(component => string.Equals(component.Instance.Label, "Project board", StringComparison.Ordinal));
+
+        await cut.InvokeAsync(() => projectBoardSelect.Instance.ValueChanged.InvokeAsync("project-id"));
+        cut.Find("[data-testid='triage-save-and-next-button']").Click();
 
         // Assert
-        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Added item #601 to 'Roadmap' with status 'In Progress'"));
+        _snackbarProvider.WaitForAssertion(() => SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Saved changes for item #601"));
 
 
-        await _triageService.Received(1).AddCurrentItemToProjectBoardAsync(Arg.Any<TriageSessionDto>(), "project-id", "Roadmap", "status-field-id", "in-progress", "In Progress", Arg.Any<CancellationToken>());
+        await _triageService.Received(1).ProcessAndAdvanceCurrentItemAsync(
+            Arg.Any<TriageSessionDto>(),
+            Arg.Is<TriageProcessCommitRequestDto>(request => request.ProjectBoardId == "project-id"),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -949,13 +989,15 @@ public sealed class TriageTests
         cut.Find("[data-testid='triage-start-session-button']").Click();
         cut.WaitForAssertion(() => Assert.Contains("Issue 701", cut.Markup));
 
+        cut.Find("[data-testid='triage-disposition-duplicate']").Click();
+
         var duplicateReferenceInput = cut
             .FindComponents<MudTextField<string>>()
             .Single(component => string.Equals(component.Instance.Label, "Duplicate reference", StringComparison.Ordinal));
 
         await cut.InvokeAsync(() => duplicateReferenceInput.Instance.ValueChanged.InvokeAsync("#555"));
 
-        cut.Find("[data-testid='triage-close-duplicate-button']").Click();
+        cut.Find("[data-testid='triage-close-duplicate-and-next-button']").Click();
 
         // Assert
         cut.WaitForAssertion(() =>
@@ -1000,13 +1042,15 @@ public sealed class TriageTests
         cut.Find("[data-testid='triage-start-session-button']").Click();
         cut.WaitForAssertion(() => Assert.NotEmpty(cut.FindAll("[data-testid='triage-action-surface-region']")));
 
+        cut.Find("[data-testid='triage-disposition-duplicate']").Click();
+
         var duplicateReferenceInput = cut
             .FindComponents<MudTextField<string>>()
             .Single(component => string.Equals(component.Instance.Label, "Duplicate reference", StringComparison.Ordinal));
 
         await cut.InvokeAsync(() => duplicateReferenceInput.Instance.ValueChanged.InvokeAsync("#556"));
 
-        cut.Find("[data-testid='triage-action-buttons-row']").KeyDown("d");
+        cut.Find("[data-testid='triage-action-surface-region']").KeyDown("d");
 
         // Assert
         await _triageService.Received(1).CloseCurrentItemAsDuplicateAsync(Arg.Any<TriageSessionDto>(), "#556", Arg.Any<CancellationToken>());
@@ -1063,12 +1107,14 @@ public sealed class TriageTests
         cut.Find("[data-testid='triage-start-session-button']").Click();
         cut.WaitForAssertion(() => Assert.Contains("Issue 801", cut.Markup));
 
+        cut.Find("[data-testid='triage-disposition-skip']").Click();
+
         var skipReasonInput = cut
             .FindComponents<MudTextField<string>>()
             .Single(component => string.Equals(component.Instance.Label, "Skip reason (optional)", StringComparison.Ordinal));
 
         await cut.InvokeAsync(() => skipReasonInput.Instance.ValueChanged.InvokeAsync("Requires broader context"));
-        cut.Find("[data-testid='triage-skip-item-button']").Click();
+        cut.Find("[data-testid='triage-skip-and-next-button']").Click();
 
         // Assert
         cut.WaitForAssertion(() =>
@@ -1315,7 +1361,10 @@ public sealed class TriageTests
         cut.Find("[data-testid='triage-quick-label-autocomplete']").KeyDown("l");
 
         // Assert
-        await _triageService.DidNotReceive().ApplyLabelToCurrentItemAsync(Arg.Any<TriageSessionDto>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _triageService.DidNotReceive().ProcessAndAdvanceCurrentItemAsync(
+            Arg.Any<TriageSessionDto>(),
+            Arg.Any<TriageProcessCommitRequestDto>(),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]

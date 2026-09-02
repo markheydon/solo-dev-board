@@ -542,6 +542,62 @@ public sealed class TriageServiceTests
     }
 
     [Fact]
+    public async Task ProcessAndAdvanceCurrentItemAsync_WithLabelMilestoneAndProject_AppliesInOrderAndAdvances()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        _gitHubService
+            .AddTriageItemToProjectBoardAsync("owner", "repo", 1, "project-id", cancellationToken)
+            .Returns("project-item-id");
+
+        var sut = new TriageService(_gitHubService);
+        var session = CreateSession(queueCount: 2, currentIndex: 0);
+
+        var request = new TriageProcessCommitRequestDto(
+            "type/story",
+            12,
+            "v1.2.0",
+            "project-id",
+            "Roadmap",
+            "status-field-id",
+            "in-progress",
+            "In Progress");
+
+        // Act
+        var result = await sut.ProcessAndAdvanceCurrentItemAsync(session, request, cancellationToken);
+
+        // Assert
+        Assert.Equal(1, result.CurrentIndex);
+        Assert.Equal(1, result.Summary.LabelsAppliedCount);
+        Assert.Equal(1, result.Summary.MilestonesAssignedCount);
+        Assert.Equal(1, result.Summary.ProjectAssignmentsCount);
+
+        await _gitHubService.Received(1).ApplyLabelsToTriageItemAsync("owner", "repo", 1, Arg.Any<IReadOnlyList<string>>(), cancellationToken);
+        await _gitHubService.Received(1).AssignMilestoneToTriageItemAsync("owner", "repo", 1, 12, cancellationToken);
+        await _gitHubService.Received(1).AddTriageItemToProjectBoardAsync("owner", "repo", 1, "project-id", cancellationToken);
+    }
+
+    [Fact]
+    public async Task ProcessAndAdvanceCurrentItemAsync_WithNoWrites_AdvancesWithoutGitHubCalls()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        var sut = new TriageService(_gitHubService);
+        var session = CreateSession(queueCount: 2, currentIndex: 0);
+
+        var request = new TriageProcessCommitRequestDto(null, session.CurrentItem!.MilestoneNumber, null, null, null, null, null, null);
+
+        // Act
+        var result = await sut.ProcessAndAdvanceCurrentItemAsync(session, request, cancellationToken);
+
+        // Assert
+        Assert.Equal(1, result.CurrentIndex);
+        await _gitHubService.DidNotReceive().ApplyLabelsToTriageItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<IReadOnlyList<string>>(), cancellationToken);
+        await _gitHubService.DidNotReceive().AssignMilestoneToTriageItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), cancellationToken);
+        await _gitHubService.DidNotReceive().AddTriageItemToProjectBoardAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>(), cancellationToken);
+    }
+
+    [Fact]
     public async Task AssignMilestoneToCurrentItemAsync_ValidMilestone_AssignsMilestoneAndRecordsAction()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;

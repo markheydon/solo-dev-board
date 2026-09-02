@@ -11,4 +11,11 @@ test.describe('Triage shell', () => {
     await expect(page.getByText(/GitHub API request failed while loading repositories/i)).toBeVisible();
     await expect(page.getByRole('button', { name: /try loading repositories again/i })).toBeVisible();
   });
+
+  test('action surface exposes disposition controls before a session starts only after session', async ({ page }) => {
+    await page.goto('/triage');
+
+    await expect(page.getByTestId('triage-not-started-region')).toBeVisible();
+    await expect(page.getByTestId('triage-disposition-toggle')).toHaveCount(0);
+  });
 });

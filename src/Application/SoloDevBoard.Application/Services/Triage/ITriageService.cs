@@ -75,6 +75,19 @@ public interface ITriageService
         string statusOptionName,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Applies optional process metadata (label, milestone, project board) in order, then advances the session.
+    /// Empty or unchanged fields are no-ops. Stops on the first write failure without advancing.
+    /// </summary>
+    /// <param name="session">The current session state.</param>
+    /// <param name="request">The optional metadata writes to apply before advancing.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>The updated triage session DTO after successful writes and queue advancement.</returns>
+    Task<TriageSessionDto> ProcessAndAdvanceCurrentItemAsync(
+        TriageSessionDto session,
+        TriageProcessCommitRequestDto request,
+        CancellationToken cancellationToken = default);
+
     /// <summary>Closes the current session item as a duplicate with a canonical reference.</summary>
     /// <param name="session">The current session state.</param>
     /// <param name="duplicateReference">The canonical duplicate reference to include in the closure comment.</param>
