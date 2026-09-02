@@ -73,7 +73,8 @@ public sealed class PlanningSettingsService(IPlanningSettingsStorage storage, IL
             excludedRepositories,
             ResolvePositiveOrDefault(model.Capacity, PlanningSettingsDefaults.Capacity),
             ResolvePositiveOrDefault(model.StallDays, PlanningSettingsDefaults.StallDays),
-            ResolvePositiveOrDefault(model.NeglectDays, PlanningSettingsDefaults.NeglectDays));
+            ResolvePositiveOrDefault(model.NeglectDays, PlanningSettingsDefaults.NeglectDays),
+            model.LimitRecommendationsToPlanningBoard ?? false);
     }
 
     private static int ResolvePositiveOrDefault(int? value, int defaultValue) =>
@@ -86,6 +87,7 @@ public sealed class PlanningSettingsService(IPlanningSettingsStorage storage, IL
         Capacity = settings.Capacity,
         StallDays = settings.StallDays,
         NeglectDays = settings.NeglectDays,
+        LimitRecommendationsToPlanningBoard = settings.LimitRecommendationsToPlanningBoard,
     };
 
     private sealed class PlanningSettingsStorageModel
@@ -104,5 +106,8 @@ public sealed class PlanningSettingsService(IPlanningSettingsStorage storage, IL
 
         [JsonPropertyName("neglectDays")]
         public int? NeglectDays { get; set; }
+
+        [JsonPropertyName("limitRecommendationsToPlanningBoard")]
+        public bool? LimitRecommendationsToPlanningBoard { get; set; }
     }
 }

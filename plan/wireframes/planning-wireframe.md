@@ -58,7 +58,8 @@ Shared chrome on every tab:
 | Up Next 3+ days:  #275 title  (4d)  [Open]                       |
 | PRs awaiting review 3+ days:  owner/repo#12  (5d)  [Open]        |
 |------------------------------------------------------------------|
-| Recommended today (top 3 unblocked)                              |
+| Recommended today (top 3 unblocked; all included repositories by default) |
+| [ ] Limit Recommended today to selected planning board (optional)        |
 | 1. [priority/high] owner/repo#40  Title…                         |
 | 2. [priority/medium] owner/repo#41 Title…                        |
 | 3. [priority/medium] owner/repo#42 Title…                        |
@@ -71,7 +72,7 @@ Shared chrome on every tab:
 - **Active load** is Up Next + In Progress item count; the denominator is the configurable capacity from Repo Management (default 8).
 - Stalled **Up Next** uses time in that Status (prefer Status-changed-at; fall back to item updated-at with a footnote).
 - Stalled PRs: if the board has an **In Review** (or equivalent) Status, use time in that column. Otherwise use open, non-draft PRs with pending review (`reviewDecision` pending or requested reviewers) aged three or more days.
-- Top three: unblocked (`status/blocked` absent, board Status not Blocked/Ice Box), ranked `priority/critical` > `high` > `medium` > `low` > unlabelled, then recency. Exclude items already In Progress.
+- Top three: unblocked (`status/blocked` absent, board Status not Blocked/Ice Box), ranked `priority/critical` > `high` > `medium` > `low` > unlabelled, then recency. Exclude items already In Progress. Default scope is all included repositories; optional switch limits eligibility to items on the selected planning board (no backfill when fewer than three qualify).
 - Empty, loading, and GitHub error states use `MudAlert` plus retry, matching Audit Dashboard.
 
 ## Backlog Review (`/planning/backlog`)

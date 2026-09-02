@@ -178,12 +178,14 @@ public sealed class PlanningChromeCoordinator
 
     /// <summary>Stores Daily Focus recommendations in the circuit cache.</summary>
     /// <param name="boardId">The planning board node identifier.</param>
+    /// <param name="limitToPlanningBoard">Whether recommendations are limited to the selected planning board.</param>
     /// <param name="recommendations">The ranked recommendations, when successful.</param>
     /// <param name="errorMessage">The load error message, when unsuccessful.</param>
     /// <param name="isLoading"><see langword="true"/> when a load is currently in flight; otherwise, <see langword="false"/>.</param>
     /// <param name="warningMessage">A partial-catalogue warning, when ranking proceeded without every repository.</param>
     public void SetDailyFocusRecommendations(
         string boardId,
+        bool limitToPlanningBoard,
         IReadOnlyList<DailyFocusRecommendationDto>? recommendations,
         string? errorMessage,
         bool isLoading,
@@ -191,6 +193,7 @@ public sealed class PlanningChromeCoordinator
     {
         DailyFocusRecommendations = new DailyFocusRecommendationsCacheEntry(
             boardId,
+            limitToPlanningBoard,
             recommendations,
             errorMessage,
             isLoading,
@@ -423,12 +426,14 @@ public sealed record DailyFocusStalledReviewsCacheEntry(
 
 /// <summary>Cached Daily Focus recommendations for a planning board within the current circuit.</summary>
 /// <param name="BoardId">The planning board node identifier.</param>
+/// <param name="LimitToPlanningBoard">Whether recommendations are limited to the selected planning board.</param>
 /// <param name="Recommendations">The ranked recommendations, when successful.</param>
 /// <param name="ErrorMessage">The load error message, when unsuccessful.</param>
 /// <param name="IsLoading">Whether a load is currently in flight.</param>
 /// <param name="WarningMessage">A partial-catalogue warning, when ranking proceeded without every repository.</param>
 public sealed record DailyFocusRecommendationsCacheEntry(
     string BoardId,
+    bool LimitToPlanningBoard,
     IReadOnlyList<DailyFocusRecommendationDto>? Recommendations,
     string? ErrorMessage,
     bool IsLoading,

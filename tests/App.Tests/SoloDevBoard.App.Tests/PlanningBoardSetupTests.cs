@@ -142,7 +142,7 @@ public sealed class PlanningBoardSetupTests
             Arg.Any<IReadOnlyList<string>>(),
             Arg.Any<CancellationToken>()).Returns(
             new DailyFocusStalledReviewSnapshotDto([], UsedInReviewColumn: false));
-        _recommendationService.GetRecommendationsAsync("PVT_board", Arg.Any<CancellationToken>()).Returns(
+        _recommendationService.GetRecommendationsAsync("PVT_board", Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
             new DailyFocusRecommendationResultDto([], []));
     }
 

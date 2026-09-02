@@ -6,9 +6,13 @@ namespace SoloDevBoard.Application.Services.Planning;
 /// <param name="Capacity">The maximum active load (Up Next plus In Progress) for planning.</param>
 /// <param name="StallDays">Days before Daily Focus treats a review pull request as stalled.</param>
 /// <param name="NeglectDays">Days before a repository is treated as neglected.</param>
+/// <param name="LimitRecommendationsToPlanningBoard">
+/// When <see langword="true"/>, Daily Focus Recommended today ranks only items on the selected planning board.
+/// </param>
 public sealed record PlanningSettingsDto(
     string? PlanningBoardNodeId,
     IReadOnlyList<string> ExcludedRepositories,
     int Capacity,
     int StallDays,
-    int NeglectDays);
+    int NeglectDays,
+    bool LimitRecommendationsToPlanningBoard = false);

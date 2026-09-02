@@ -155,6 +155,48 @@ public sealed class DailyFocusRecommendationMapperTests
     }
 
     [Fact]
+    public void SelectTopThree_WhenLimitedToPlanningBoard_OnlyRanksBoardItems()
+    {
+        var updated = DateTimeOffset.Parse("2026-08-18T00:00:00Z");
+        var workItems = new[]
+        {
+            CreateWorkItem("owner/a", 1, "Off board critical", ["priority/critical"], updated),
+            CreateWorkItem("owner/a", 2, "On board high", ["priority/high"], updated),
+            CreateWorkItem("owner/a", 3, "On board medium", ["priority/medium"], updated),
+        };
+        var boardItems = new[]
+        {
+            CreateBoardItem(2, "Todo", ProjectBoardItemContentTypeDto.Issue),
+            CreateBoardItem(3, "Up Next", ProjectBoardItemContentTypeDto.Issue),
+        };
+
+        var result = DailyFocusRecommendationMapper.SelectTopThree(workItems, boardItems, limitToPlanningBoard: true);
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal([2, 3], result.Select(item => item.Number).ToArray());
+    }
+
+    [Fact]
+    public void SelectTopThree_WhenLimitedToPlanningBoard_DoesNotBackfillFromOffBoardRepositories()
+    {
+        var updated = DateTimeOffset.Parse("2026-08-18T00:00:00Z");
+        var workItems = new[]
+        {
+            CreateWorkItem("owner/off-board", 99, "Off board critical", ["priority/critical"], updated),
+            CreateWorkItem("owner/a", 7, "On board queued", ["priority/high"], updated),
+        };
+        var boardItems = new[]
+        {
+            CreateBoardItem(7, "Up Next", ProjectBoardItemContentTypeDto.Issue),
+        };
+
+        var result = DailyFocusRecommendationMapper.SelectTopThree(workItems, boardItems, limitToPlanningBoard: true);
+
+        var recommended = Assert.Single(result);
+        Assert.Equal(7, recommended.Number);
+    }
+
+    [Fact]
     public void SelectTopThree_NullArguments_ThrowsArgumentNullException()
     {
         Assert.Throws<ArgumentNullException>(() =>

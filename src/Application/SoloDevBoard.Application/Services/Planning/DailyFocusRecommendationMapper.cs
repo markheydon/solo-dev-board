@@ -21,25 +21,34 @@ public static class DailyFocusRecommendationMapper
     /// </summary>
     /// <param name="workItems">Open issues and pull requests from included repositories.</param>
     /// <param name="boardItems">Items currently on the selected planning board.</param>
+    /// <param name="limitToPlanningBoard">
+    /// When <see langword="true"/>, only work items that appear on the planning board are eligible.
+    /// </param>
     /// <returns>The ranked recommendation list.</returns>
     public static IReadOnlyList<DailyFocusRecommendationDto> SelectTopThree(
         IReadOnlyList<PlanningWorkItemDto> workItems,
-        IReadOnlyList<ProjectBoardItemDto> boardItems)
+        IReadOnlyList<ProjectBoardItemDto> boardItems,
+        bool limitToPlanningBoard = false)
     {
         ArgumentNullException.ThrowIfNull(workItems);
         ArgumentNullException.ThrowIfNull(boardItems);
 
         var excludedKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var boardKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var boardItem in boardItems)
         {
+            var joinKey = PlanningWorkItemJoinKey.For(boardItem);
+            boardKeys.Add(joinKey);
+
             if (IsExcludedBoardStatus(boardItem.Status?.Name))
             {
-                excludedKeys.Add(PlanningWorkItemJoinKey.For(boardItem));
+                excludedKeys.Add(joinKey);
             }
         }
 
         return workItems
-            .Where(item => PlanningLabelHelpers.IsUnblocked(item.Labels)
+            .Where(item => (!limitToPlanningBoard || boardKeys.Contains(PlanningWorkItemJoinKey.For(item)))
+                && PlanningLabelHelpers.IsUnblocked(item.Labels)
                 && !excludedKeys.Contains(PlanningWorkItemJoinKey.For(item)))
             .OrderBy(static item => PlanningPriorityRanker.GetRank(PlanningLabelHelpers.ParsePriorityLabel(item.Labels)))
             .ThenByDescending(static item => item.UpdatedAt)
