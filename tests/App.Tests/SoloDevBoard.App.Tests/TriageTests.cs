@@ -9,6 +9,7 @@ using SoloDevBoard.App.Components.Shared.Components;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Repositories;
 using SoloDevBoard.Application.Services.Triage;
+using MudBlazor.Extensions;
 
 namespace SoloDevBoard.App.Tests;
 
@@ -856,7 +857,7 @@ public sealed class TriageTests
             .Single(component => string.Equals(component.Instance.Label, "Milestone", StringComparison.Ordinal));
 
         // Assert
-        Assert.Equal(7, milestoneSelect.Instance.Value);
+        Assert.Equal(7, milestoneSelect.Instance.GetState(x => x.Value));
         await _triageService.DidNotReceive().ProcessAndAdvanceCurrentItemAsync(
             Arg.Any<TriageSessionDto>(),
             Arg.Any<TriageProcessCommitRequestDto>(),
