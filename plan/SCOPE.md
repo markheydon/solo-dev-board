@@ -49,7 +49,7 @@ A focused, keyboard-friendly interface for triaging incoming GitHub issues one a
 
 ### 6. Actions Templates
 
-Browse, customise, and apply built-in GitHub Actions workflow templates across repositories, with tracking of which repositories have which templates applied. Custom template repositories stay on **`v1.2`** ([#292](https://github.com/markheydon/solo-dev-board/issues/292)) so the increment forces a decision (implement, reshape, or explicitly drop) rather than another ice-box deferral.
+Browse, customise, and apply GitHub Actions workflow templates across repositories, with tracking of which repositories have which templates applied. **`v1.2`:** load one additional GitHub `owner/name` as a custom catalogue from `.github/workflows` YAML, merge it with built-ins, and remember the last-used source in localStorage ([#292](https://github.com/markheydon/solo-dev-board/issues/292), [DEC-038](DECISIONS.md#dec-038-custom-actions-template-sources)). Server-backed persistence of that source waits on an Aspire product store. Persisted parameter profiles stay later ([#436](https://github.com/markheydon/solo-dev-board/issues/436)).
 
 ### 7. Planning
 
@@ -134,4 +134,5 @@ The following are explicitly **not** in scope for the current version of SoloDev
 | 2026-08-31 | `v1.1 - Cross-Repo Planning & Refinement` shipped as [`v1.1.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.1.0) (91 closed, 0 open). Custom template repositories (#292) and hosted private Projects v2 (#293) stay unmilestoned. | Solo developer |
 | 2026-08-31 | Declared **`v1.2 - Planning polish, Reload & Templates`** (tag `v1.2.0` when shipped). Locked in: #403, Reload #447/#449/#451, HttpClient split #453, custom templates #292 (kept on the milestone to force a decision rather than another ice-box). Window-focus refetch #450, platform-blocked #293/#391, and newer ice-box catalogue work stay off this milestone. | Solo developer |
 | 2026-09-01 | Added Triage action-surface usability ([#492](https://github.com/markheydon/solo-dev-board/issues/492)) to **`v1.2`**. Screen layout only (Save and next / duplicate / skip); opinionated-workflow integration stays later. | Solo developer |
+| 2026-09-02 | Custom template repositories (#292) specified for **`v1.2`**: one GitHub YAML source, inferred `{{tokens}}`, merged catalogue, localStorage last-used only (DEC-038). Server persistence and parameter profiles (#436) stay later. | Solo developer |
 

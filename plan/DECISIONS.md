@@ -367,6 +367,15 @@ Test coverage expectations for cache-hit, cache-miss, invalidation, TTL expiry, 
 
 ---
 
+### DEC-038: Custom Actions template sources
+
+**Status:** Active  
+**Date:** 2026-09-02  
+**Related:** [#292](https://github.com/markheydon/solo-dev-board/issues/292), [DEC-029](#dec-029-cross-repo-planning-board-selection-and-local-settings)  
+**Summary:** Actions Templates may load **one additional GitHub repository** (`owner/name`) as a custom catalogue. The page lists YAML files at `.github/workflows/*.yml` and `*.yaml` (top-level only), infers `{{token}}` placeholders as required string parameters, and merges those templates into the same browser as built-ins with a source badge. Last-used source is stored in **browser localStorage** and pre-fills the field; load is otherwise session-scoped. Built-in templates always remain visible when a custom file shares a workflow path. Public DTOs must use **stable string template identifiers** so custom paths do not collide with built-in integer ids. Private sources use the existing GitHub token. Server-backed persistence of sources waits on an Aspire product store ([#391](https://github.com/markheydon/solo-dev-board/issues/391)). Reject sidecar manifests, GitHub starter-workflow `properties.json`, appsettings-only registration, multiple concurrent custom sources, and in-app YAML authoring for this increment.
+
+---
+
 ## Superseded legacy (archive only)
 
 | Legacy ADR | Superseded by | Notes |
