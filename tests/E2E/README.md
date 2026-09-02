@@ -19,7 +19,7 @@ Published user guides must stay aligned with these tests like-for-like. See [USE
 | `audit-dashboard.spec.ts` | Audit Dashboard shell and repository load failure |
 | `repositories.spec.ts` | Repositories command strip, load failure handling, and phone-width overflow guard |
 | `migrate.spec.ts` | One-Click Migration setup shell, columns scope switch, and API failure feedback |
-| `board-rules.spec.ts` | Board Rules selector region, compare mode, and load failure |
+| `board-rules.spec.ts` | Board Rules selector region, compare mode, Reload from GitHub when the catalogue loads, and repository load failure |
 | `labels.spec.ts` | Label Manager shell, tabs, and repository load failure feedback |
 | `actions-templates.spec.ts` | Built-in template browse/filter/select and repository error state |
 | `triage.spec.ts` | Triage shell and no-repositories alert without a live GitHub connection |

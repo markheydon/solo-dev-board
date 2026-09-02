@@ -44,7 +44,7 @@ Key goals of the Board Rules Visualiser:
 - Click rule nodes to inspect the full rule name, trigger and action configuration.
 - See potential rule conflicts highlighted when duplicate triggers or incomplete rule details are present.
 - Enable **Compare mode** to select a second repository and project board, then review column, rule, and visibility differences side by side.
-- Choose **Reload from GitHub** to refresh the repository catalogue and refetch project boards without clearing your repository or comparison selections.
+- Choose **Reload from GitHub** in the selector header to refresh the repository catalogue and refetch project boards without clearing your repository or comparison selections. The control stays available after load errors and is disabled only while a reload is running.
 - Reload repositories or project boards if GitHub API requests fail.
 
 ### Compare two repositories
@@ -66,7 +66,7 @@ Key goals of the Board Rules Visualiser:
 
 - **No repository selected:** The visualisation area prompts you to choose a repository and project board.
 - **No supported boards:** If the repository has no GitHub Project v2 board with a Status field, SoloDevBoard explains why the visualiser cannot continue and does not show the diagram state. Use **Try again** after you add a Status field on GitHub; your repository selection is kept.
-- **Reload from GitHub:** When a repository is selected, use **Reload from GitHub** in the selector header to bust the repository catalogue cache and refetch project boards while keeping your repository and comparison selections.
+- **Reload from GitHub:** Use **Reload from GitHub** in the selector header to bust the repository catalogue cache and refetch project boards while keeping your repository and comparison selections. It remains available when the catalogue fails to load and is disabled only while a reload is in progress.
 - **Some linked boards inaccessible:** If GitHub reports more linked project boards than SoloDevBoard can load, a warning explains how many could not be read. This commonly happens for **private user-owned** Projects v2 boards under hosted GitHub App sign-in: GitHub may list the board as linked while the App token cannot read it. Public linked boards still load. Use PAT mode with the `read:project` scope, or make the project public.
 
 {{< callout type="important" >}}

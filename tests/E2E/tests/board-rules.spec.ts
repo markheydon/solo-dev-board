@@ -19,4 +19,16 @@ test.describe('Board Rules Visualiser shell', () => {
     await expect(page.getByText(/GitHub API request failed/i)).toBeVisible();
     await expect(page.getByTestId('board-rules-reload-repositories-button')).toBeVisible();
   });
+
+  test('selector header exposes reload from GitHub and compare mode after repositories finish loading', async ({ page }) => {
+    await page.goto('/board-rules');
+
+    await expect(page.getByTestId('board-rules-repositories-loading-state')).toBeHidden({ timeout: 15_000 });
+
+    const selectorRegion = page.getByTestId('board-rules-selector-region');
+    await expect(selectorRegion).toBeVisible();
+    await expect(selectorRegion.getByTestId('board-rules-compare-mode-toggle')).toBeVisible();
+    await expect(selectorRegion.getByTestId('board-rules-reload-from-github-button')).toBeVisible();
+    await expect(selectorRegion.getByRole('button', { name: 'Reload from GitHub' })).toBeVisible();
+  });
 });

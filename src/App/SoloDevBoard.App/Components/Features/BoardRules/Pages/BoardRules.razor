@@ -15,7 +15,7 @@
                         @if (ShowReloadFromGitHubButton)
                         {
                             <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ReloadFromGitHubAsync"
-                                       Disabled="ShowLoadingState"
+                                       Disabled="IsReloadFromGitHubDisabled"
                                        data-testid="board-rules-reload-from-github-button">
                                 Reload from GitHub
                             </MudButton>
