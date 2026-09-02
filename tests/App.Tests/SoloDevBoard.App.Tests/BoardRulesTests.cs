@@ -1238,6 +1238,70 @@ public sealed class BoardRulesTests
         await _repositoryService.DidNotReceive().GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), true);
     }
 
+    [Fact]
+    public async Task BoardRules_ComparisonUnsupportedBoardsTryAgain_ShowsSectionScopedComparisonBoardsLoadingState()
+    {
+        // Arrange
+        var repositoryA = CreateRepository("owner", "repo-a");
+        var repositoryB = CreateRepository("owner", "repo-b");
+        var retryComparisonBoardsTask = new TaskCompletionSource<BoardRulesProjectBoardDiscoveryDto>();
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([repositoryA, repositoryB]);
+
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>()).Returns(new BoardRulesProjectBoardDiscoveryDto(
+            [
+                new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
+            ],
+            1,
+            0));
+
+        var comparisonProjectBoardLoadCount = 0;
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-b", Arg.Any<CancellationToken>())
+            .Returns(_ =>
+            {
+                comparisonProjectBoardLoadCount++;
+                return comparisonProjectBoardLoadCount == 1
+                    ? Task.FromResult(new BoardRulesProjectBoardDiscoveryDto([], 0, 0))
+                    : retryComparisonBoardsTask.Task;
+            });
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<BoardRules>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='board-rules-compare-mode-toggle']"));
+
+        var compareSwitch = cut.FindComponent<MudSwitch<bool>>();
+        await cut.InvokeAsync(() => compareSwitch.Instance.ValueChanged.InvokeAsync(true));
+
+        await SelectRepositoryAsync(cut, repositoryA);
+        cut.WaitForAssertion(() => Assert.Contains("Alpha Board", cut.Markup));
+
+        await SelectComparisonRepositoryAsync(cut, repositoryB);
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='board-rules-comparison-unsupported-boards-retry-button']"));
+        });
+
+        // Act
+        var retryTask = cut.Find("[data-testid='board-rules-comparison-unsupported-boards-retry-button']").ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='board-rules-comparison-boards-loading-state']"));
+            Assert.Single(cut.FindAll("[data-testid='board-rules-comparison-repository-autocomplete']"));
+            Assert.Empty(cut.FindAll("[data-testid='board-rules-repositories-loading-state']"));
+        });
+
+        retryComparisonBoardsTask.SetResult(new BoardRulesProjectBoardDiscoveryDto(
+            [
+                new BoardRulesProjectBoardOptionDto("PVT_beta", "Beta Board", "owner"),
+            ],
+            1,
+            0));
+
+        await retryTask;
+    }
+
     private BunitContext CreateContext()
     {
         var ctx = new BunitContext();
