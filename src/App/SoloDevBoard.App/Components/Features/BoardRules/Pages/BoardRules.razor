@@ -11,10 +11,20 @@
             <MudStack Spacing="2">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Wrap="Wrap.Wrap" Spacing="2">
                     <MudText Typo="Typo.h6">Repository and project board</MudText>
-                    <MudSwitch T="bool" Value="isCompareModeEnabled" ValueChanged="OnCompareModeToggledAsync"
-                               Color="Color.Primary" Label="Compare mode"
-                               aria-label="Toggle compare mode to inspect two repositories side by side"
-                               data-testid="board-rules-compare-mode-toggle" />
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
+                        @if (ShowReloadFromGitHubButton)
+                        {
+                            <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ReloadFromGitHubAsync"
+                                       Disabled="ShowLoadingState"
+                                       data-testid="board-rules-reload-from-github-button">
+                                Reload from GitHub
+                            </MudButton>
+                        }
+                        <MudSwitch T="bool" Value="isCompareModeEnabled" ValueChanged="OnCompareModeToggledAsync"
+                                   Color="Color.Primary" Label="Compare mode"
+                                   aria-label="Toggle compare mode to inspect two repositories side by side"
+                                   data-testid="board-rules-compare-mode-toggle" />
+                    </MudStack>
                 </MudStack>
 
                 @if (!string.IsNullOrWhiteSpace(errorMessage) && hasRepositoryLoadFailure)
@@ -109,11 +119,18 @@
                                             }
                                             else
                                             {
-                                                <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined"
-                                                          data-testid="board-rules-unsupported-boards-message">
-                                                    No supported GitHub Project v2 boards were found for this repository. SoloDevBoard can
-                                                    only visualise boards that expose a Status field.
-                                                </MudAlert>
+                                                <MudStack Spacing="1">
+                                                    <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined"
+                                                              data-testid="board-rules-unsupported-boards-message">
+                                                        No supported GitHub Project v2 boards were found for this repository. SoloDevBoard can
+                                                        only visualise boards that expose a Status field.
+                                                    </MudAlert>
+                                                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="RetryUnsupportedBoardsAsync"
+                                                               Disabled="ShowLoadingState"
+                                                               data-testid="board-rules-unsupported-boards-retry-button">
+                                                        Try again
+                                                    </MudButton>
+                                                </MudStack>
                                             }
                                         }
                                         else
@@ -190,10 +207,17 @@
                                                 }
                                                 else
                                                 {
-                                                    <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined"
-                                                              data-testid="board-rules-comparison-unsupported-boards-message">
-                                                        No supported GitHub Project v2 boards were found for the comparison repository.
-                                                    </MudAlert>
+                                                    <MudStack Spacing="1">
+                                                        <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined"
+                                                                  data-testid="board-rules-comparison-unsupported-boards-message">
+                                                            No supported GitHub Project v2 boards were found for the comparison repository.
+                                                        </MudAlert>
+                                                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="RetryComparisonUnsupportedBoardsAsync"
+                                                                   Disabled="ShowLoadingState"
+                                                                   data-testid="board-rules-comparison-unsupported-boards-retry-button">
+                                                            Try again
+                                                        </MudButton>
+                                                    </MudStack>
                                                 }
                                             }
                                             else

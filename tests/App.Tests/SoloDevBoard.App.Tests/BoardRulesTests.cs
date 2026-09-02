@@ -791,6 +791,131 @@ public sealed class BoardRulesTests
         });
     }
 
+    [Fact]
+    public async Task BoardRules_AfterRepositoriesLoad_ShowsReloadFromGitHubButton()
+    {
+        // Arrange
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([
+                CreateRepository("owner", "repo-a"),
+            ]);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<BoardRules>();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='board-rules-reload-from-github-button']"));
+            Assert.Contains("Reload from GitHub", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task BoardRules_ReloadFromGitHub_KeepsRepositorySelectionAndForceReloadsCatalogue()
+    {
+        // Arrange
+        var repository = CreateRepository("owner", "repo-a");
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([repository]);
+
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>()).Returns(
+            new BoardRulesProjectBoardDiscoveryDto([], 0, 0),
+            new BoardRulesProjectBoardDiscoveryDto(
+                [
+                    new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
+                ],
+                1,
+                0));
+
+        _boardRulesService.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", Arg.Any<CancellationToken>()).Returns(new BoardRulesDefinitionDto(
+                "PVT_alpha",
+                "Alpha Board",
+                "owner",
+                [
+                    new BoardColumnDto(0, "To Do", 0, ["To Do"]),
+                    new BoardColumnDto(1, "Done", 1, ["Done"]),
+                ],
+                Array.Empty<BoardRuleDto>(),
+                []));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<BoardRules>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='board-rules-repository-autocomplete']"));
+        await SelectRepositoryAsync(cut, repository);
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='board-rules-unsupported-boards-message']"));
+        });
+
+        // Act
+        await cut.Find("[data-testid='board-rules-reload-from-github-button']").ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Alpha Board", cut.Markup);
+            Assert.Contains("Board context ready", cut.Markup);
+        });
+
+        await _repositoryService.Received(1).GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), true);
+        await _boardRulesService.Received(2).GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task BoardRules_UnsupportedBoardsTryAgain_RefetchesProjectBoardsWithoutClearingRepository()
+    {
+        // Arrange
+        var repository = CreateRepository("owner", "repo-a");
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([repository]);
+
+        _boardRulesService.GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>()).Returns(
+            new BoardRulesProjectBoardDiscoveryDto([], 0, 0),
+            new BoardRulesProjectBoardDiscoveryDto(
+                [
+                    new BoardRulesProjectBoardOptionDto("PVT_alpha", "Alpha Board", "owner"),
+                ],
+                1,
+                0));
+
+        _boardRulesService.GetBoardRulesAsync("owner", "repo-a", "PVT_alpha", Arg.Any<CancellationToken>()).Returns(new BoardRulesDefinitionDto(
+                "PVT_alpha",
+                "Alpha Board",
+                "owner",
+                [
+                    new BoardColumnDto(0, "To Do", 0, ["To Do"]),
+                    new BoardColumnDto(1, "Done", 1, ["Done"]),
+                ],
+                Array.Empty<BoardRuleDto>(),
+                []));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<BoardRules>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='board-rules-repository-autocomplete']"));
+        await SelectRepositoryAsync(cut, repository);
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='board-rules-unsupported-boards-retry-button']"));
+        });
+
+        // Act
+        await cut.Find("[data-testid='board-rules-unsupported-boards-retry-button']").ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Alpha Board", cut.Markup);
+            Assert.DoesNotContain("board-rules-unsupported-boards-message", cut.Markup);
+        });
+
+        await _boardRulesService.Received(2).GetProjectBoardOptionsAsync("owner", "repo-a", Arg.Any<CancellationToken>());
+        await _repositoryService.DidNotReceive().GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), true);
+    }
+
     private BunitContext CreateContext()
     {
         var ctx = new BunitContext();
