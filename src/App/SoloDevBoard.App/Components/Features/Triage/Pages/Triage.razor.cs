@@ -14,6 +14,19 @@ using SoloDevBoard.Application.Services.Triage;
 
 namespace SoloDevBoard.App.Components.Features.Triage.Pages;
 
+/// <summary>Mutually exclusive triage outcomes for the current queue item.</summary>
+internal enum TriageItemDisposition
+{
+    /// <summary>Keep the item open and optionally apply process metadata.</summary>
+    Process,
+
+    /// <summary>Close the item as a duplicate.</summary>
+    Duplicate,
+
+    /// <summary>Defer the item within the current session without GitHub writes.</summary>
+    Skip,
+}
+
 /// <summary>Provides the one-at-a-time triage session workflow UI.</summary>
 public partial class Triage : ComponentBase
 {
@@ -76,6 +89,7 @@ public partial class Triage : ComponentBase
     private string? inaccessibleProjectBoardsWarning;
     private bool hasRepositoryLoadFailure;
     private string? repositoryLoadErrorMessage;
+    private TriageItemDisposition currentDisposition = TriageItemDisposition.Process;
 
     private void ShowTransientFeedback(string message, Severity severity)
         => SnackbarFeedback.Show(Snackbar, message, severity);
@@ -94,10 +108,34 @@ public partial class Triage : ComponentBase
 
     private TriageItemDto? CurrentItem => currentSession?.CurrentItem;
 
-    private bool CanApplySelectedLabel
+    private bool CanCommitCurrentDisposition
         => !isApplyingSessionAction
             && CurrentItem is not null
-            && LabelExists(selectedQuickActionLabelName);
+            && currentDisposition switch
+            {
+                TriageItemDisposition.Process => true,
+                TriageItemDisposition.Duplicate => CanCloseAsDuplicate,
+                TriageItemDisposition.Skip => CanSkipCurrentItem,
+                _ => false,
+            };
+
+    private string PrimaryCommitButtonText
+        => currentDisposition switch
+        {
+            TriageItemDisposition.Process => "Save and next",
+            TriageItemDisposition.Duplicate => "Close as duplicate and next",
+            TriageItemDisposition.Skip => "Skip and next",
+            _ => "Commit",
+        };
+
+    private string PrimaryCommitButtonTestId
+        => currentDisposition switch
+        {
+            TriageItemDisposition.Process => "triage-save-and-next-button",
+            TriageItemDisposition.Duplicate => "triage-close-duplicate-and-next-button",
+            TriageItemDisposition.Skip => "triage-skip-and-next-button",
+            _ => "triage-commit-button",
+        };
 
     private bool CanCloseAsDuplicate
         => !isApplyingSessionAction
@@ -107,20 +145,6 @@ public partial class Triage : ComponentBase
     private bool CanSkipCurrentItem
         => !isApplyingSessionAction
             && CurrentItem is not null;
-
-    private bool CanAssignMilestone
-        => !isApplyingSessionAction
-            && CurrentItem is not null
-            && !isLoadingPlanningOptions
-            && (selectedMilestoneNumber.HasValue || CurrentItem.MilestoneNumber.HasValue);
-
-    private bool CanAddToProjectBoard
-        => !isApplyingSessionAction
-            && CurrentItem is not null
-            && !isLoadingPlanningOptions
-            && !string.IsNullOrWhiteSpace(selectedProjectBoardId)
-            && !string.IsNullOrWhiteSpace(selectedProjectBoardStatusOptionId)
-            && ActiveProjectBoard is not null;
 
     private TriageProjectBoardOptionDto? ActiveProjectBoard
         => availableProjectBoardOptions.FirstOrDefault(option =>
@@ -273,6 +297,7 @@ public partial class Triage : ComponentBase
             selectedMilestoneNumber = null;
             selectedProjectBoardId = string.Empty;
             selectedProjectBoardStatusOptionId = string.Empty;
+            currentDisposition = TriageItemDisposition.Process;
 
             if (!string.IsNullOrWhiteSpace(selectedRepositoryFullName))
             {
@@ -436,9 +461,38 @@ public partial class Triage : ComponentBase
         return false;
     }
 
-    private async Task ApplySelectedLabelAsync()
+    private Task OnDispositionChangedAsync(TriageItemDisposition disposition)
     {
-        if (currentSession is null || CurrentItem is null || !CanApplySelectedLabel)
+        currentDisposition = disposition;
+        return Task.CompletedTask;
+    }
+
+    private async Task CommitCurrentDispositionAsync()
+    {
+        if (!CanCommitCurrentDisposition || currentSession is null || CurrentItem is null)
+        {
+            return;
+        }
+
+        switch (currentDisposition)
+        {
+            case TriageItemDisposition.Process:
+                await SaveAndNextAsync();
+                break;
+            case TriageItemDisposition.Duplicate:
+                await CloseCurrentItemAsDuplicateAsync();
+                break;
+            case TriageItemDisposition.Skip:
+                await SkipCurrentItemAsync();
+                break;
+            default:
+                break;
+        }
+    }
+
+    private async Task SaveAndNextAsync()
+    {
+        if (currentSession is null || CurrentItem is null || isApplyingSessionAction)
         {
             return;
         }
@@ -447,16 +501,19 @@ public partial class Triage : ComponentBase
 
         try
         {
-            var appliedItemNumber = CurrentItem.Number;
-            var labelName = selectedQuickActionLabelName.Trim();
-
-            var labelledSession = await TriageService.ApplyLabelToCurrentItemAsync(currentSession, labelName);
-            currentSession = await TriageService.AdvanceSessionAsync(labelledSession);
+            var processedItemNumber = CurrentItem.Number;
+            var itemAtCommitStart = CurrentItem;
+            var request = BuildProcessCommitRequest();
+            var hadWrites = HasProcessCommitWrites(request, itemAtCommitStart);
+            currentSession = await TriageService.ProcessAndAdvanceCurrentItemAsync(currentSession, request);
             SyncPlanningSelectionFromCurrentItem();
-
             ShowTransientFeedback(currentSession.CurrentItem is null
-                ? $"Applied label '{labelName}' to item #{appliedItemNumber}. Reached the end of the current queue."
-                : $"Applied label '{labelName}' to item #{appliedItemNumber} and moved to {CurrentPositionText}.", Severity.Success);
+                ? hadWrites
+                    ? $"Saved changes for item #{processedItemNumber}. Reached the end of the current queue."
+                    : $"Moved past item #{processedItemNumber} without changes. Reached the end of the current queue."
+                : hadWrites
+                    ? $"Saved changes for item #{processedItemNumber} and moved to {CurrentPositionText}."
+                    : $"Moved past item #{processedItemNumber} without changes and moved to {CurrentPositionText}.", Severity.Success);
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
@@ -467,18 +524,81 @@ public partial class Triage : ComponentBase
         }
         catch (HttpRequestException ex)
         {
-            Logger.LogError(ex, "GitHub API request failed while applying label to triage item.");
-            ShowTransientFeedback($"GitHub API request failed while applying the label. {ex.Message}", Severity.Error);
+            Logger.LogError(ex, "GitHub API request failed while saving triage item changes.");
+            ShowTransientFeedback($"GitHub API request failed while saving changes. {ex.Message}", Severity.Error);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to apply label to the current triage item.");
-            ShowTransientFeedback("An unexpected error occurred while applying the selected label.", Severity.Error);
+            Logger.LogError(ex, "Failed to save triage item changes.");
+            ShowTransientFeedback("An unexpected error occurred while saving changes for this item.", Severity.Error);
         }
         finally
         {
             isApplyingSessionAction = false;
         }
+    }
+
+    private TriageProcessCommitRequestDto BuildProcessCommitRequest()
+    {
+        var labelName = LabelExists(selectedQuickActionLabelName)
+            ? selectedQuickActionLabelName.Trim()
+            : null;
+
+        var milestoneTitle = availableMilestoneOptions
+            .FirstOrDefault(option => option.Number == selectedMilestoneNumber)
+            ?.Title;
+
+        string? projectBoardId = null;
+        string? projectBoardTitle = null;
+        string? statusFieldId = null;
+        string? statusOptionId = null;
+        string? statusOptionName = null;
+
+        if (!string.IsNullOrWhiteSpace(selectedProjectBoardId)
+            && !string.IsNullOrWhiteSpace(selectedProjectBoardStatusOptionId)
+            && ActiveProjectBoard is not null)
+        {
+            var selectedStatusOption = ActiveProjectBoardStatusOptions
+                .FirstOrDefault(option => option.Id.Equals(selectedProjectBoardStatusOptionId, StringComparison.Ordinal));
+
+            if (selectedStatusOption is not null)
+            {
+                projectBoardId = ActiveProjectBoard.Id;
+                projectBoardTitle = ActiveProjectBoard.Title;
+                statusFieldId = ActiveProjectBoard.StatusFieldId;
+                statusOptionId = selectedStatusOption.Id;
+                statusOptionName = selectedStatusOption.Name;
+            }
+        }
+
+        return new TriageProcessCommitRequestDto(
+            labelName,
+            selectedMilestoneNumber,
+            milestoneTitle,
+            projectBoardId,
+            projectBoardTitle,
+            statusFieldId,
+            statusOptionId,
+            statusOptionName);
+    }
+
+    private static bool HasProcessCommitWrites(TriageProcessCommitRequestDto request, TriageItemDto itemAtCommitStart)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(itemAtCommitStart);
+
+        if (!string.IsNullOrWhiteSpace(request.LabelName))
+        {
+            return true;
+        }
+
+        if (request.MilestoneNumber != itemAtCommitStart.MilestoneNumber)
+        {
+            return true;
+        }
+
+        return !string.IsNullOrWhiteSpace(request.ProjectBoardId)
+            && !string.IsNullOrWhiteSpace(request.StatusOptionId);
     }
 
     private async Task CompleteWithoutChangesAsync()
@@ -616,6 +736,12 @@ public partial class Triage : ComponentBase
     {
         selectedProjectBoardId = projectBoardId ?? string.Empty;
 
+        if (string.IsNullOrWhiteSpace(selectedProjectBoardId))
+        {
+            selectedProjectBoardStatusOptionId = string.Empty;
+            return Task.CompletedTask;
+        }
+
         if (ActiveProjectBoardStatusOptions.Count == 0)
         {
             selectedProjectBoardStatusOptionId = string.Empty;
@@ -634,108 +760,6 @@ public partial class Triage : ComponentBase
     {
         selectedProjectBoardStatusOptionId = statusOptionId ?? string.Empty;
         return Task.CompletedTask;
-    }
-
-    private async Task AssignSelectedMilestoneAsync()
-    {
-        if (currentSession is null || CurrentItem is null || !CanAssignMilestone)
-        {
-            return;
-        }
-
-        isApplyingSessionAction = true;
-
-        try
-        {
-            var selectedMilestoneTitle = availableMilestoneOptions
-                .FirstOrDefault(option => option.Number == selectedMilestoneNumber)
-                ?.Title;
-
-            currentSession = await TriageService.AssignMilestoneToCurrentItemAsync(
-                currentSession,
-                selectedMilestoneNumber,
-                selectedMilestoneTitle);
-
-            SyncPlanningSelectionFromCurrentItem();
-
-            ShowTransientFeedback(selectedMilestoneNumber is null
-                ? $"Cleared milestone assignment for item #{CurrentItem.Number}."
-                : $"Assigned milestone '{selectedMilestoneTitle}' to item #{CurrentItem.Number}.", Severity.Success);
-        }
-        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
-        {
-            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
-            {
-                return;
-            }
-        }
-        catch (HttpRequestException ex)
-        {
-            Logger.LogError(ex, "GitHub API request failed while assigning milestone to triage item.");
-            ShowTransientFeedback($"GitHub API request failed while assigning milestone. {ex.Message}", Severity.Error);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Failed to assign milestone to the current triage item.");
-            ShowTransientFeedback("An unexpected error occurred while assigning the selected milestone.", Severity.Error);
-        }
-        finally
-        {
-            isApplyingSessionAction = false;
-        }
-    }
-
-    private async Task AddCurrentItemToProjectBoardAsync()
-    {
-        if (currentSession is null || CurrentItem is null || !CanAddToProjectBoard || ActiveProjectBoard is null)
-        {
-            return;
-        }
-
-        var selectedStatusOption = ActiveProjectBoardStatusOptions
-            .FirstOrDefault(option => option.Id.Equals(selectedProjectBoardStatusOptionId, StringComparison.Ordinal));
-
-        if (selectedStatusOption is null)
-        {
-            return;
-        }
-
-        isApplyingSessionAction = true;
-
-        try
-        {
-            var currentItemNumber = CurrentItem.Number;
-            currentSession = await TriageService.AddCurrentItemToProjectBoardAsync(
-                currentSession,
-                ActiveProjectBoard.Id,
-                ActiveProjectBoard.Title,
-                ActiveProjectBoard.StatusFieldId,
-                selectedStatusOption.Id,
-                selectedStatusOption.Name);
-
-            ShowTransientFeedback($"Added item #{currentItemNumber} to '{ActiveProjectBoard.Title}' with status '{selectedStatusOption.Name}'.", Severity.Success);
-        }
-        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
-        {
-            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
-            {
-                return;
-            }
-        }
-        catch (HttpRequestException ex)
-        {
-            Logger.LogError(ex, "GitHub API request failed while adding triage item to project board.");
-            ShowTransientFeedback($"GitHub API request failed while adding to project board. {ex.Message}", Severity.Error);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Failed to add the current triage item to a project board.");
-            ShowTransientFeedback("An unexpected error occurred while adding this item to a project board.", Severity.Error);
-        }
-        finally
-        {
-            isApplyingSessionAction = false;
-        }
     }
 
     private async Task RevisitSkippedItemsAsync()
@@ -807,22 +831,6 @@ public partial class Triage : ComponentBase
                 discovery.TotalLinkedProjectCount,
                 discovery.InaccessibleLinkedProjectCount);
 
-            if (!availableProjectBoardOptions.Any(option => option.Id.Equals(selectedProjectBoardId, StringComparison.Ordinal)))
-            {
-                selectedProjectBoardId = availableProjectBoardOptions.FirstOrDefault()?.Id ?? string.Empty;
-            }
-
-            if (ActiveProjectBoardStatusOptions.Count == 0)
-            {
-                selectedProjectBoardStatusOptionId = string.Empty;
-                return;
-            }
-
-            if (!ActiveProjectBoardStatusOptions.Any(option => option.Id.Equals(selectedProjectBoardStatusOptionId, StringComparison.Ordinal)))
-            {
-                selectedProjectBoardStatusOptionId = ActiveProjectBoardStatusOptions[0].Id;
-            }
-
             if (milestoneLoadFailed)
             {
                 return;
@@ -869,52 +877,65 @@ public partial class Triage : ComponentBase
 
     private void SyncPlanningSelectionFromCurrentItem()
     {
+        selectedQuickActionLabelName = string.Empty;
         selectedMilestoneNumber = CurrentItem?.MilestoneNumber;
         duplicateReference = string.Empty;
         skipReason = string.Empty;
-
-        if (!availableProjectBoardOptions.Any(option => option.Id.Equals(selectedProjectBoardId, StringComparison.Ordinal)))
-        {
-            selectedProjectBoardId = availableProjectBoardOptions.FirstOrDefault()?.Id ?? string.Empty;
-        }
-
-        if (!ActiveProjectBoardStatusOptions.Any(option => option.Id.Equals(selectedProjectBoardStatusOptionId, StringComparison.Ordinal)))
-        {
-            selectedProjectBoardStatusOptionId = ActiveProjectBoardStatusOptions.FirstOrDefault()?.Id ?? string.Empty;
-        }
+        selectedProjectBoardId = string.Empty;
+        selectedProjectBoardStatusOptionId = string.Empty;
+        currentDisposition = TriageItemDisposition.Process;
     }
 
     private async Task HandleActionSurfaceKeyDownAsync(KeyboardEventArgs args)
     {
         ArgumentNullException.ThrowIfNull(args);
 
-        if (isApplyingSessionAction)
+        if (isApplyingSessionAction || ShouldIgnoreActionSurfaceShortcut(args))
         {
             return;
         }
 
         switch (args.Key)
         {
+            case "Enter":
             case "l":
             case "L":
-                await ApplySelectedLabelAsync();
-                break;
-            case "n":
-            case "N":
-                await CompleteWithoutChangesAsync();
+                await CommitCurrentDispositionAsync();
                 break;
             case "d":
             case "D":
-                await CloseCurrentItemAsDuplicateAsync();
+                if (currentDisposition == TriageItemDisposition.Duplicate && CanCloseAsDuplicate)
+                {
+                    await CommitCurrentDispositionAsync();
+                }
+                else
+                {
+                    currentDisposition = TriageItemDisposition.Duplicate;
+                }
+
                 break;
             case "s":
             case "S":
-                await SkipCurrentItemAsync();
+                if (currentDisposition == TriageItemDisposition.Skip)
+                {
+                    await CommitCurrentDispositionAsync();
+                }
+                else
+                {
+                    await SkipCurrentItemAsync();
+                }
+
                 break;
             default:
                 break;
         }
     }
+
+    private static bool ShouldIgnoreActionSurfaceShortcut(KeyboardEventArgs args)
+        => args.AltKey
+            || args.CtrlKey
+            || args.MetaKey
+            || args.ShiftKey;
 
     private static bool TryParseRepositoryScope(string repositoryFullName, out string owner, out string repo)
     {

@@ -220,6 +220,58 @@ public sealed class TriageService : ITriageService
     }
 
     /// <inheritdoc/>
+    public async Task<TriageSessionDto> ProcessAndAdvanceCurrentItemAsync(
+        TriageSessionDto session,
+        TriageProcessCommitRequestDto request,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(session);
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (session.CurrentItem is null)
+        {
+            return session;
+        }
+
+        var workingSession = session;
+
+        if (!string.IsNullOrWhiteSpace(request.LabelName))
+        {
+            workingSession = await ApplyLabelToCurrentItemAsync(workingSession, request.LabelName, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        if (request.MilestoneNumber != session.CurrentItem.MilestoneNumber)
+        {
+            workingSession = await AssignMilestoneToCurrentItemAsync(
+                    workingSession,
+                    request.MilestoneNumber,
+                    request.MilestoneTitle,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.ProjectBoardId)
+            && !string.IsNullOrWhiteSpace(request.StatusFieldId)
+            && !string.IsNullOrWhiteSpace(request.StatusOptionId)
+            && !string.IsNullOrWhiteSpace(request.StatusOptionName))
+        {
+            workingSession = await AddCurrentItemToProjectBoardAsync(
+                    workingSession,
+                    request.ProjectBoardId,
+                    request.ProjectBoardTitle ?? string.Empty,
+                    request.StatusFieldId,
+                    request.StatusOptionId,
+                    request.StatusOptionName,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        return await AdvanceSessionAsync(workingSession, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
     public async Task<IReadOnlyList<TriageMilestoneOptionDto>> GetMilestoneOptionsAsync(TriageSessionDto session, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();

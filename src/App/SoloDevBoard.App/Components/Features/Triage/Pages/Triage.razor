@@ -156,68 +156,131 @@
 
             <MudPaper Class="pa-4"
                       Elevation="1"
-                      data-testid="triage-action-surface-region">
+                      data-testid="triage-action-surface-region"
+                      tabindex="0"
+                      @onkeydown="HandleActionSurfaceKeyDownAsync">
                 <MudStack Spacing="2">
-                    <MudText Typo="Typo.h6">Actions</MudText>
+                    <MudText Typo="Typo.h6">Triage this item</MudText>
 
                     <MudText Typo="Typo.body2" data-testid="triage-action-semantics-help">
-                        Apply + next saves the selected label and advances. Next advances without making any change to the current item.
+                        Choose how to handle this item, fill any process metadata you need, then commit with one primary action.
                     </MudText>
 
-                    <MudStack Spacing="1" data-testid="triage-label-quick-action-row">
-                        <MudAutocomplete T="string"
-                                         Value="selectedQuickActionLabelName"
-                                         ValueChanged="OnSelectedQuickActionLabelChangedAsync"
-                                         SearchFunc="SearchQuickActionLabelsAsync"
-                                         ToStringFunc="labelName => labelName ?? string.Empty"
-                                         Label="Quick label"
-                                         Placeholder="Search labels and select"
-                                         Variant="Variant.Outlined"
-                                         MinCharacters="0"
-                                         Clearable="true"
-                                         Immediate="true"
-                                         Strict="false"
-                                         ResetValueOnEmptyText="true"
-                                         Disabled="isApplyingSessionAction || availableLabelNames.Count == 0"
-                                         Adornment="Adornment.Start"
-                                         AdornmentIcon="@Icons.Material.Filled.Search"
-                                         Class="flex-grow-1"
-                                         data-testid="triage-quick-label-autocomplete" />
+                    <MudToggleGroup T="TriageItemDisposition"
+                                    Value="currentDisposition"
+                                    ValueChanged="OnDispositionChangedAsync"
+                                    Color="Color.Primary"
+                                    Class="flex-wrap"
+                                    aria-label="Triage disposition"
+                                    data-testid="triage-disposition-toggle">
+                        <MudToggleItem Value="TriageItemDisposition.Process"
+                                       Text="Process"
+                                       data-testid="triage-disposition-process" />
+                        <MudToggleItem Value="TriageItemDisposition.Duplicate"
+                                       Text="Duplicate"
+                                       data-testid="triage-disposition-duplicate" />
+                        <MudToggleItem Value="TriageItemDisposition.Skip"
+                                       Text="Skip"
+                                       data-testid="triage-disposition-skip" />
+                    </MudToggleGroup>
 
-                        <MudStack Row="true"
-                                  Spacing="1"
-                                  tabindex="0"
-                                  @onkeydown="HandleActionSurfaceKeyDownAsync"
-                                  data-testid="triage-action-buttons-row">
-                            <MudButton Variant="Variant.Filled"
-                                       Color="Color.Primary"
-                                       Disabled="!CanApplySelectedLabel"
-                                       OnClick="ApplySelectedLabelAsync"
-                                       data-testid="triage-apply-label-button">
-                                Apply + next
-                            </MudButton>
+                    @if (currentDisposition == TriageItemDisposition.Process)
+                    {
+                        <MudStack Spacing="2" data-testid="triage-process-metadata-region">
+                            <MudAutocomplete T="string"
+                                             Value="selectedQuickActionLabelName"
+                                             ValueChanged="OnSelectedQuickActionLabelChangedAsync"
+                                             SearchFunc="SearchQuickActionLabelsAsync"
+                                             ToStringFunc="labelName => labelName ?? string.Empty"
+                                             Label="Quick label"
+                                             Placeholder="Search labels and select"
+                                             Variant="Variant.Outlined"
+                                             MinCharacters="0"
+                                             Clearable="true"
+                                             Immediate="true"
+                                             Strict="false"
+                                             ResetValueOnEmptyText="true"
+                                             Disabled="isApplyingSessionAction || availableLabelNames.Count == 0"
+                                             Adornment="Adornment.Start"
+                                             AdornmentIcon="@Icons.Material.Filled.Search"
+                                             Class="flex-grow-1"
+                                             @onkeydown:stopPropagation="true"
+                                             data-testid="triage-quick-label-autocomplete" />
 
-                            <MudButton Variant="Variant.Filled"
-                                       Color="Color.Secondary"
-                                       Disabled="isApplyingSessionAction"
-                                       OnClick="CompleteWithoutChangesAsync"
-                                       data-testid="triage-next-item-button">
-                                Next
-                            </MudButton>
+                            <MudGrid Spacing="2" data-testid="triage-planning-actions-region">
+                                <MudItem xs="12" md="6">
+                                    <MudStack Spacing="1" data-testid="triage-milestone-action-region">
+                                        <MudSelect T="int?"
+                                                   Value="selectedMilestoneNumber"
+                                                   ValueChanged="OnSelectedMilestoneChangedAsync"
+                                                   Label="Milestone"
+                                                   Variant="Variant.Outlined"
+                                                   Disabled="isApplyingSessionAction || isLoadingPlanningOptions"
+                                                   data-testid="triage-milestone-select">
+                                            <MudSelectItem T="int?" Value="@((int?)null)">No milestone</MudSelectItem>
+
+                                            @if (availableMilestoneOptions.Count == 0)
+                                            {
+                                                <MudSelectItem T="int?" Value="@((int?)null)" Disabled="true">No milestones found in this repository</MudSelectItem>
+                                            }
+
+                                            @foreach (var milestoneOption in availableMilestoneOptions)
+                                            {
+                                                <MudSelectItem T="int?" Value="@((int?)milestoneOption.Number)">@milestoneOption.Title</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudStack>
+                                </MudItem>
+
+                                <MudItem xs="12" md="6">
+                                    <MudStack Spacing="1" data-testid="triage-project-board-action-region">
+                                        @if (HasInaccessibleProjectBoardsWarning)
+                                        {
+                                            <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined"
+                                                      data-testid="triage-inaccessible-project-boards-warning">
+                                                @inaccessibleProjectBoardsWarning
+                                            </MudAlert>
+                                        }
+
+                                        <MudSelect T="string"
+                                                   Value="selectedProjectBoardId"
+                                                   ValueChanged="OnSelectedProjectBoardChangedAsync"
+                                                   Label="Project board"
+                                                   Variant="Variant.Outlined"
+                                                   Disabled="isApplyingSessionAction || isLoadingPlanningOptions || availableProjectBoardOptions.Count == 0"
+                                                   data-testid="triage-project-board-select">
+                                            <MudSelectItem T="string" Value="@string.Empty">No project board</MudSelectItem>
+
+                                            @foreach (var projectBoardOption in availableProjectBoardOptions)
+                                            {
+                                                <MudSelectItem T="string" Value="@projectBoardOption.Id">@projectBoardOption.Title</MudSelectItem>
+                                            }
+                                        </MudSelect>
+
+                                        <MudSelect T="string"
+                                                   Value="selectedProjectBoardStatusOptionId"
+                                                   ValueChanged="OnSelectedProjectBoardStatusOptionChangedAsync"
+                                                   Label="Project status"
+                                                   Variant="Variant.Outlined"
+                                                   Disabled="isApplyingSessionAction || isLoadingPlanningOptions || ActiveProjectBoardStatusOptions.Count == 0 || string.IsNullOrWhiteSpace(selectedProjectBoardId)"
+                                                   data-testid="triage-project-status-select">
+                                            @foreach (var statusOption in ActiveProjectBoardStatusOptions)
+                                            {
+                                                <MudSelectItem T="string" Value="@statusOption.Id">@statusOption.Name</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudStack>
+                                </MudItem>
+                            </MudGrid>
                         </MudStack>
-                    </MudStack>
+                    }
+                    else if (currentDisposition == TriageItemDisposition.Duplicate)
+                    {
+                        <MudStack Spacing="1" data-testid="triage-duplicate-action-region">
+                            <MudText Typo="Typo.body2" data-testid="triage-duplicate-help">
+                                Close the current item as a duplicate and include the canonical issue or pull request reference.
+                            </MudText>
 
-                    <MudText Typo="Typo.caption" data-testid="triage-keyboard-shortcuts-legend">
-                        Keyboard shortcuts (when the action buttons are focused): L applies selected label and advances, N moves to the next item without changes, D closes the current item as a duplicate, and S skips the current item for later review.
-                    </MudText>
-
-                    <MudStack Spacing="1" data-testid="triage-duplicate-action-region">
-                        <MudText Typo="Typo.subtitle2">Duplicate closure</MudText>
-                        <MudText Typo="Typo.body2" data-testid="triage-duplicate-help">
-                            Close the current item as a duplicate and include the canonical issue or pull request reference.
-                        </MudText>
-
-                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
                             <MudTextField T="string"
                                           Value="duplicateReference"
                                           ValueChanged="OnDuplicateReferenceChangedAsync"
@@ -227,26 +290,17 @@
                                           Disabled="isApplyingSessionAction"
                                           Immediate="true"
                                           Clearable="true"
-                                          Class="flex-grow-1"
+                                          @onkeydown:stopPropagation="true"
                                           data-testid="triage-duplicate-reference-input" />
-
-                            <MudButton Variant="Variant.Outlined"
-                                       Color="Color.Warning"
-                                       Disabled="!CanCloseAsDuplicate"
-                                       OnClick="CloseCurrentItemAsDuplicateAsync"
-                                       data-testid="triage-close-duplicate-button">
-                                Close as duplicate
-                            </MudButton>
                         </MudStack>
-                    </MudStack>
+                    }
+                    else
+                    {
+                        <MudStack Spacing="1" data-testid="triage-skip-action-region">
+                            <MudText Typo="Typo.body2" data-testid="triage-skip-help">
+                                Skip this item for now and return to it later from the session summary. No GitHub writes are made.
+                            </MudText>
 
-                    <MudStack Spacing="1" data-testid="triage-skip-action-region">
-                        <MudText Typo="Typo.subtitle2">Skip and return later</MudText>
-                        <MudText Typo="Typo.body2" data-testid="triage-skip-help">
-                            Skip this item for now and return to it later from the session summary.
-                        </MudText>
-
-                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
                             <MudTextField T="string"
                                           Value="skipReason"
                                           ValueChanged="OnSkipReasonChangedAsync"
@@ -256,9 +310,26 @@
                                           Disabled="isApplyingSessionAction"
                                           Immediate="true"
                                           Clearable="true"
-                                          Class="flex-grow-1"
+                                          @onkeydown:stopPropagation="true"
                                           data-testid="triage-skip-reason-input" />
+                        </MudStack>
+                    }
 
+                    <MudStack Row="true"
+                              Spacing="1"
+                              AlignItems="AlignItems.Center"
+                              Wrap="Wrap.Wrap"
+                              data-testid="triage-commit-actions-row">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   Disabled="!CanCommitCurrentDisposition"
+                                   OnClick="CommitCurrentDispositionAsync"
+                                   data-testid="@PrimaryCommitButtonTestId">
+                            @PrimaryCommitButtonText
+                        </MudButton>
+
+                        @if (currentDisposition != TriageItemDisposition.Skip)
+                        {
                             <MudButton Variant="Variant.Outlined"
                                        Color="Color.Tertiary"
                                        Disabled="!CanSkipCurrentItem"
@@ -266,95 +337,23 @@
                                        data-testid="triage-skip-item-button">
                                 Skip item
                             </MudButton>
-                        </MudStack>
+                        }
+
+                        @if (currentDisposition == TriageItemDisposition.Process)
+                        {
+                            <MudButton Variant="Variant.Text"
+                                       Color="Color.Secondary"
+                                       Disabled="isApplyingSessionAction"
+                                       OnClick="CompleteWithoutChangesAsync"
+                                       data-testid="triage-next-without-saving-button">
+                                Next without saving
+                            </MudButton>
+                        }
                     </MudStack>
 
-                    <MudDivider />
-
-                    <MudText Typo="Typo.subtitle2">Planning actions</MudText>
-                    <MudText Typo="Typo.body2" data-testid="triage-planning-help">
-                        Assign a milestone or place this item on a project board without leaving the current triage context.
+                    <MudText Typo="Typo.caption" data-testid="triage-keyboard-shortcuts-legend">
+                        Keyboard shortcuts: Enter or L commits the current disposition (when not typing in a field), D switches to Duplicate, and S skips the current item for later review.
                     </MudText>
-
-                    <MudGrid Spacing="2" data-testid="triage-planning-actions-region">
-                        <MudItem xs="12" md="6">
-                            <MudStack Spacing="1" data-testid="triage-milestone-action-region">
-                                <MudSelect T="int?"
-                                           Value="selectedMilestoneNumber"
-                                           ValueChanged="OnSelectedMilestoneChangedAsync"
-                                           Label="Milestone"
-                                           Variant="Variant.Outlined"
-                                           Disabled="isApplyingSessionAction || isLoadingPlanningOptions"
-                                           data-testid="triage-milestone-select">
-                                    <MudSelectItem T="int?" Value="@((int?)null)">No milestone</MudSelectItem>
-
-                                    @if (availableMilestoneOptions.Count == 0)
-                                    {
-                                        <MudSelectItem T="int?" Value="@((int?)null)" Disabled="true">No milestones found in this repository</MudSelectItem>
-                                    }
-
-                                    @foreach (var milestoneOption in availableMilestoneOptions)
-                                    {
-                                        <MudSelectItem T="int?" Value="@((int?)milestoneOption.Number)">@milestoneOption.Title</MudSelectItem>
-                                    }
-                                </MudSelect>
-
-                                <MudButton Variant="Variant.Outlined"
-                                           Color="Color.Primary"
-                                           Disabled="!CanAssignMilestone"
-                                           OnClick="AssignSelectedMilestoneAsync"
-                                           data-testid="triage-assign-milestone-button">
-                                    Assign milestone
-                                </MudButton>
-                            </MudStack>
-                        </MudItem>
-
-                        <MudItem xs="12" md="6">
-                            <MudStack Spacing="1" data-testid="triage-project-board-action-region">
-                                @if (HasInaccessibleProjectBoardsWarning)
-                                {
-                                    <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined"
-                                              data-testid="triage-inaccessible-project-boards-warning">
-                                        @inaccessibleProjectBoardsWarning
-                                    </MudAlert>
-                                }
-
-                                <MudSelect T="string"
-                                           Value="selectedProjectBoardId"
-                                           ValueChanged="OnSelectedProjectBoardChangedAsync"
-                                           Label="Project board"
-                                           Variant="Variant.Outlined"
-                                           Disabled="isApplyingSessionAction || isLoadingPlanningOptions || availableProjectBoardOptions.Count == 0"
-                                           data-testid="triage-project-board-select">
-                                    @foreach (var projectBoardOption in availableProjectBoardOptions)
-                                    {
-                                        <MudSelectItem T="string" Value="@projectBoardOption.Id">@projectBoardOption.Title</MudSelectItem>
-                                    }
-                                </MudSelect>
-
-                                <MudSelect T="string"
-                                           Value="selectedProjectBoardStatusOptionId"
-                                           ValueChanged="OnSelectedProjectBoardStatusOptionChangedAsync"
-                                           Label="Project status"
-                                           Variant="Variant.Outlined"
-                                           Disabled="isApplyingSessionAction || isLoadingPlanningOptions || ActiveProjectBoardStatusOptions.Count == 0"
-                                           data-testid="triage-project-status-select">
-                                    @foreach (var statusOption in ActiveProjectBoardStatusOptions)
-                                    {
-                                        <MudSelectItem T="string" Value="@statusOption.Id">@statusOption.Name</MudSelectItem>
-                                    }
-                                </MudSelect>
-
-                                <MudButton Variant="Variant.Outlined"
-                                           Color="Color.Secondary"
-                                           Disabled="!CanAddToProjectBoard"
-                                           OnClick="AddCurrentItemToProjectBoardAsync"
-                                           data-testid="triage-add-to-project-board-button">
-                                    Add to project board
-                                </MudButton>
-                            </MudStack>
-                        </MudItem>
-                    </MudGrid>
                 </MudStack>
             </MudPaper>
         }
