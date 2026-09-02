@@ -19,5 +19,6 @@ public static class PlanningSettingsDefaults
         ExcludedRepositories: [],
         Capacity: Capacity,
         StallDays: StallDays,
-        NeglectDays: NeglectDays);
+        NeglectDays: NeglectDays,
+        LimitRecommendationsToPlanningBoard: false);
 }

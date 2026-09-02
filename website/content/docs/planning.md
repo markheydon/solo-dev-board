@@ -16,13 +16,13 @@ The Planning feature brings a structured, two-mode operating system into SoloDev
 The system is built around two modes of operation:
 
 - **PM Mode** (weekly or fortnightly) — Active curation: review your backlog across all repositories, resolve stalled work, and populate your project board with a realistic set of committed items for the next few days.
-- **Work Mode** (daily) — Execution: the project board is the single pane of glass. Open it, pick the next item, and get things done. Daily Focus shows occupancy and active load for the selected planning board, stalled Up Next items, the top three unblocked items from all included repositories, and pull requests that have been waiting on review for the configured **Stall days** threshold (default 3).
+- **Work Mode** (daily) — Execution: the project board is the single pane of glass. Open it, pick the next item, and get things done. Daily Focus shows occupancy and active load for the selected planning board, stalled Up Next items, the top three unblocked items from all included repositories by default (or from the selected planning board when you opt in), and pull requests that have been waiting on review for the configured **Stall days** threshold (default 3).
 
 ### Tabs
 
 | Tab | Route | What it does |
 |-----|-------|--------------|
-| **Daily Focus** | `/planning/daily-focus` | Status occupancy chips, active load, stalled Up Next, top-three recommendations, and pull requests awaiting review for the configured Stall days threshold. |
+| **Daily Focus** | `/planning/daily-focus` | Status occupancy chips, active load, stalled Up Next, top-three recommendations (all included repositories by default, or the selected planning board when opted in), and pull requests awaiting review for the configured Stall days threshold. |
 | **Backlog** | `/planning/backlog` | Search, type and repository filters, plus Urgent, Ready to start, Awaiting triage, Blocked/deferred, Epics near completion, and Neglected repositories panels. Issue and pull request kind chips appear on grouped rows. Urgent items are omitted from Ready to start. |
 | **Iteration** | `/planning/iteration` | Capacity guidance, stalled Up Next resolution gate, Up Next batch list with optional bulk milestone assignment, searchable candidate picker, and **Add to Up Next** with sequential Focus Order for stories, enablers, and tests. Feature and Epic cards skip Focus Order. |
 | **Repos** | `/planning/repos` | Planning board selection, thresholds, repository exclusions, and per-repository open-work counts. |
@@ -46,7 +46,7 @@ These conventions are product behaviour, not upstream dogfood. They mirror the p
 
 ## Daily Focus
 
-Daily Focus is a read-only morning snapshot. Occupancy and active load describe the selected planning board. Stalled Up Next items surface when the stall threshold is reached. **Recommended today** lists the top three unblocked items from all included repositories, not only cards on that board. Stalled review pull requests show which PRs have been waiting on review for too long.
+Daily Focus is a read-only morning snapshot. Occupancy and active load describe the selected planning board. Stalled Up Next items surface when the stall threshold is reached. **Recommended today** lists the top three unblocked items from all included repositories by default. Turn on **Limit Recommended today to the selected planning board** to rank only items on that board instead. Stalled review pull requests show which PRs have been waiting on review for too long.
 
 ### Accessing
 
@@ -87,14 +87,18 @@ Board occupancy counts mapped **Issue** and **Pull Request** cards on the select
 
 If the occupancy catalogue cannot be loaded, an error alert includes **Retry**. An empty board still lists Status chips at zero and explains that there are no items.
 
-### Recommended today (all included repositories)
+### Recommended today
 
-After a board is selected, Daily Focus also lists up to three unblocked work items from all included repositories, not only cards on that board:
+After a board is selected, Daily Focus also lists up to three unblocked work items. By default they come from all included repositories, not only cards on that board. Use the **Limit Recommended today to the selected planning board** switch to rank only items on the selected planning board instead. Board occupancy and active load are unaffected by this option.
+
+Ranking rules (both scopes):
 
 1. Items labelled `status/blocked` or `status/ice-box` are omitted.
 2. Items whose board Status is **Blocked**, **Ice Box**, or **In Progress** are omitted.
 3. Remaining items are ranked `priority/critical`, then `priority/high`, `priority/medium`, `priority/low`, then unlabelled, and then by most recently updated.
 4. Each row shows rank, a priority chip, an `owner/name#number` link that opens GitHub in a new tab, and the title.
+
+When the board-scoped option is on, only items that appear on the selected planning board are eligible. If fewer than three board items qualify, Daily Focus shows the available rows and an informational shortfall message rather than backfilling from off-board repositories.
 
 Excluded repositories (see [Repo Management](#manage-repository-participation)) are omitted from this list. Items already in **Up Next** can still appear so you know what is queued.
 

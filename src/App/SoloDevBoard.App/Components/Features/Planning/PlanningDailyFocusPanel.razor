@@ -4,8 +4,7 @@
 <MudStack Spacing="3" data-testid="planning-daily-focus-page">
     <MudText Typo="Typo.h5">Daily Focus</MudText>
     <MudText Typo="Typo.body1">
-        Occupancy and active load are for the selected planning board. Recommended today is the top three unblocked items from all included repositories.
-        Stalled Up Next items are shown when they exceed the stall threshold. Pull requests awaiting review for @stallDaysThreshold or more days are listed below.
+        Occupancy and active load are for the selected planning board. Recommended today ranks unblocked work from all included repositories by default, or from the selected planning board when you turn on the option below. Stalled Up Next items are shown when they exceed the stall threshold. Pull requests awaiting review for @stallDaysThreshold or more days are listed below.
     </MudText>
 
     @if (ChromeState is null)
@@ -149,7 +148,23 @@
 
             <MudPaper Class="pa-4" Elevation="1" data-testid="planning-daily-focus-recommendations">
                 <MudStack Spacing="2">
-                    <MudText Typo="Typo.h6">Recommended today (all included repositories)</MudText>
+                    <MudText Typo="Typo.h6">@RecommendationsHeading</MudText>
+                    <MudSwitch T="bool"
+                               Value="limitRecommendationsToPlanningBoard"
+                               ValueChanged="ToggleRecommendationsScopeAsync"
+                               Color="Color.Primary"
+                               data-testid="planning-limit-recommendations-switch">
+                        Limit Recommended today to the selected planning board
+                    </MudSwitch>
+                    <MudText Typo="Typo.body2" data-testid="planning-limit-recommendations-help">
+                        Board occupancy and active load always use the selected planning board. This option only changes which items are eligible for Recommended today.
+                    </MudText>
+                    @if (ShowRecommendationsShortfall)
+                    {
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" data-testid="planning-daily-focus-recommendations-shortfall">
+                            Only @recommendations!.Count eligible @(recommendations.Count == 1 ? "item" : "items") on the planning board. Recommendations are not backfilled from other repositories.
+                        </MudAlert>
+                    }
                     @if (recommendations.Count == 0)
                     {
                         <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" data-testid="planning-daily-focus-recommendations-empty">

@@ -37,6 +37,7 @@ public partial class PlanningDailyFocusPanel : ComponentBase
     private DailyFocusStalledReviewSnapshotDto? stalledReviews;
     private bool isLoadingStalledReviews;
     private string? stalledReviewsErrorMessage;
+    private bool limitRecommendationsToPlanningBoard;
     private int stallDaysThreshold = PlanningSettingsDefaults.StallDays;
     private int stalledReviewsLoadGeneration;
 
@@ -51,6 +52,7 @@ public partial class PlanningDailyFocusPanel : ComponentBase
         stallDaysThreshold = ChromeState.Settings.StallDays > 0
             ? ChromeState.Settings.StallDays
             : PlanningSettingsDefaults.StallDays;
+        limitRecommendationsToPlanningBoard = ChromeState.Settings.LimitRecommendationsToPlanningBoard;
 
         if (!ChromeState.HasPlanningBoardSelected)
         {
@@ -68,7 +70,7 @@ public partial class PlanningDailyFocusPanel : ComponentBase
         var capacity = ChromeState.Settings.Capacity;
         var stallDays = ChromeState.Settings.StallDays;
         var boardCached = TryApplyCachedBoardState(boardId, capacity, stallDays);
-        var recommendationsCached = TryApplyCachedRecommendations(boardId);
+        var recommendationsCached = TryApplyCachedRecommendations(boardId, limitRecommendationsToPlanningBoard);
         var stalledCached = TryApplyCachedStalledReviews(
             boardId,
             stallDaysThreshold,
@@ -81,7 +83,7 @@ public partial class PlanningDailyFocusPanel : ComponentBase
 
         if (!recommendationsCached)
         {
-            _ = LoadRecommendationsAsync(boardId);
+            _ = LoadRecommendationsAsync(boardId, limitRecommendationsToPlanningBoard);
         }
 
         if (!stalledCached)
@@ -135,10 +137,12 @@ public partial class PlanningDailyFocusPanel : ComponentBase
         => cached.Count == current.Count
             && cached.SequenceEqual(current, StringComparer.OrdinalIgnoreCase);
 
-    private bool TryApplyCachedRecommendations(string boardId)
+    private bool TryApplyCachedRecommendations(string boardId, bool limitToPlanningBoard)
     {
         var cached = ChromeCoordinator.DailyFocusRecommendations;
-        if (cached is null || !cached.BoardId.Equals(boardId, StringComparison.Ordinal))
+        if (cached is null
+            || !cached.BoardId.Equals(boardId, StringComparison.Ordinal)
+            || cached.LimitToPlanningBoard != limitToPlanningBoard)
         {
             return false;
         }
@@ -192,7 +196,37 @@ public partial class PlanningDailyFocusPanel : ComponentBase
         }
 
         ChromeCoordinator.ClearDailyFocusRecommendations();
-        return LoadRecommendationsAsync(ChromeState.Settings.PlanningBoardNodeId);
+        return LoadRecommendationsAsync(
+            ChromeState.Settings.PlanningBoardNodeId,
+            ChromeState.Settings.LimitRecommendationsToPlanningBoard);
+    }
+
+    private async Task ToggleRecommendationsScopeAsync(bool limitToPlanningBoard)
+    {
+        if (ChromeState is null)
+        {
+            return;
+        }
+
+        if (ChromeState.Settings.LimitRecommendationsToPlanningBoard == limitToPlanningBoard)
+        {
+            return;
+        }
+
+        await ChromeState.SaveSettingsAsync(ChromeState.Settings with
+        {
+            LimitRecommendationsToPlanningBoard = limitToPlanningBoard,
+        }).ConfigureAwait(false);
+
+        limitRecommendationsToPlanningBoard = limitToPlanningBoard;
+        ChromeCoordinator.ClearDailyFocusRecommendations();
+
+        if (!string.IsNullOrWhiteSpace(ChromeState.Settings.PlanningBoardNodeId))
+        {
+            await LoadRecommendationsAsync(
+                ChromeState.Settings.PlanningBoardNodeId,
+                limitToPlanningBoard).ConfigureAwait(false);
+        }
     }
 
     private async Task LoadBoardStateAsync(string boardId, int capacity, int stallDays)
@@ -312,9 +346,9 @@ public partial class PlanningDailyFocusPanel : ComponentBase
             && currentBoardId.Equals(boardId, StringComparison.Ordinal);
     }
 
-    private async Task LoadRecommendationsAsync(string boardId)
+    private async Task LoadRecommendationsAsync(string boardId, bool limitToPlanningBoard)
     {
-        if (TryApplyCachedRecommendations(boardId))
+        if (TryApplyCachedRecommendations(boardId, limitToPlanningBoard))
         {
             return;
         }
@@ -323,15 +357,18 @@ public partial class PlanningDailyFocusPanel : ComponentBase
         recommendationsErrorMessage = null;
         recommendationsWarningMessage = null;
         recommendations = null;
-        ChromeCoordinator.SetDailyFocusRecommendations(boardId, null, null, isLoading: true);
+        ChromeCoordinator.SetDailyFocusRecommendations(boardId, limitToPlanningBoard, null, null, isLoading: true);
 
         try
         {
-            var result = await RecommendationService.GetRecommendationsAsync(boardId).ConfigureAwait(false);
+            var result = await RecommendationService
+                .GetRecommendationsAsync(boardId, limitToPlanningBoard)
+                .ConfigureAwait(false);
             recommendations = result.Recommendations;
             recommendationsWarningMessage = FormatPartialFailureWarning(result.Failures);
             ChromeCoordinator.SetDailyFocusRecommendations(
                 boardId,
+                limitToPlanningBoard,
                 recommendations,
                 null,
                 isLoading: false,
@@ -346,6 +383,7 @@ public partial class PlanningDailyFocusPanel : ComponentBase
                 "Unable to load recommended work. Check your GitHub connection and try again.";
             ChromeCoordinator.SetDailyFocusRecommendations(
                 boardId,
+                limitToPlanningBoard,
                 null,
                 recommendationsErrorMessage,
                 isLoading: false);
@@ -385,6 +423,15 @@ public partial class PlanningDailyFocusPanel : ComponentBase
             };
         }
     }
+
+    private string RecommendationsHeading =>
+        limitRecommendationsToPlanningBoard
+            ? "Recommended today (selected planning board)"
+            : "Recommended today (all included repositories)";
+
+    private bool ShowRecommendationsShortfall =>
+        limitRecommendationsToPlanningBoard
+            && recommendations is { Count: > 0 and < 3 };
 
     private static string FormatPriorityChip(string? priorityLabel)
         => string.IsNullOrWhiteSpace(priorityLabel) ? "Unlabelled" : priorityLabel;

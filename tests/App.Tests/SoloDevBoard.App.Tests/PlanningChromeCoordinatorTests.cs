@@ -81,7 +81,7 @@ public sealed class PlanningChromeCoordinatorTests
             null,
             isLoading: false);
 
-        coordinator.SetDailyFocusRecommendations("PVT_board", [], null, isLoading: false);
+        coordinator.SetDailyFocusRecommendations("PVT_board", false, [], null, isLoading: false);
         coordinator.SetDailyFocusStalledReviews(
             "PVT_board",
             3,
@@ -112,7 +112,7 @@ public sealed class PlanningChromeCoordinatorTests
 
         var coordinator = CreateCoordinator();
         await coordinator.EnsureLoadedAsync();
-        coordinator.SetDailyFocusRecommendations("PVT_board", [], null, isLoading: false);
+        coordinator.SetDailyFocusRecommendations("PVT_board", false, [], null, isLoading: false);
         coordinator.SetDailyFocusStalledReviews(
             "PVT_board",
             3,

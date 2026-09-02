@@ -54,8 +54,11 @@ test.describe('Planning', () => {
       const recommendationsWarning = page.getByTestId('planning-daily-focus-recommendations-warning');
       await expect(recommendationsRegion.or(recommendationsError).or(recommendationsWarning).first()).toBeVisible();
       if (await recommendationsRegion.isVisible()) {
+        await expect(page.getByTestId('planning-limit-recommendations-switch')).toBeVisible();
         await expect(
-          page.getByRole('heading', { name: 'Recommended today (all included repositories)' }),
+          page
+            .getByRole('heading', { name: 'Recommended today (all included repositories)' })
+            .or(page.getByRole('heading', { name: 'Recommended today (selected planning board)' })),
         ).toBeVisible();
       }
     }

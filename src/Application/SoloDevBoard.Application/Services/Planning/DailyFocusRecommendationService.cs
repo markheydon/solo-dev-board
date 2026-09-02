@@ -29,6 +29,7 @@ public sealed class DailyFocusRecommendationService : IDailyFocusRecommendationS
     /// </remarks>
     public async Task<DailyFocusRecommendationResultDto> GetRecommendationsAsync(
         string projectId,
+        bool limitToPlanningBoard = false,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -46,7 +47,10 @@ public sealed class DailyFocusRecommendationService : IDailyFocusRecommendationS
             throw CreateCatalogueFailureException(workItems.Failures);
         }
 
-        var recommendations = DailyFocusRecommendationMapper.SelectTopThree(workItems.Items, boardCatalogue.Items);
+        var recommendations = DailyFocusRecommendationMapper.SelectTopThree(
+            workItems.Items,
+            boardCatalogue.Items,
+            limitToPlanningBoard);
         return new DailyFocusRecommendationResultDto(recommendations, workItems.Failures);
     }
 

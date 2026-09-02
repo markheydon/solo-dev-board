@@ -584,7 +584,7 @@ public sealed class PlanningDailyFocusTests
         var recommendationsReady = new TaskCompletionSource<DailyFocusRecommendationResultDto>();
         _boardStateService.GetBoardStateAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>())
             .Returns(_ => occupancyReady.Task);
-        _recommendationService.GetRecommendationsAsync("PVT_board", Arg.Any<CancellationToken>())
+        _recommendationService.GetRecommendationsAsync("PVT_board", Arg.Any<bool>(), Arg.Any<CancellationToken>())
             .Returns(_ => recommendationsReady.Task);
 
         await using var ctx = CreateContext();
@@ -625,6 +625,48 @@ public sealed class PlanningDailyFocusTests
     }
 
     [Fact]
+    public async Task PlanningDailyFocus_WhenBoardScopedRecommendationsEnabled_ShowsBoardHeadingAndShortfall()
+    {
+        ConfigureDefaults();
+        _settingsStorage.StoredJson = """
+            {
+              "planningBoardNodeId": "PVT_board",
+              "limitRecommendationsToPlanningBoard": true
+            }
+            """;
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>())
+            .Returns(new DailyFocusBoardStateDto(
+                [new DailyFocusOccupancyChipDto("Todo", 1)],
+                ActiveLoad: 0,
+                Capacity: 8,
+                ItemCount: 1,
+                StalledUpNextItems: [],
+                StallDays: 3));
+        _recommendationService.GetRecommendationsAsync("PVT_board", true, Arg.Any<CancellationToken>())
+            .Returns(CreateRecommendationResult(
+                new DailyFocusRecommendationDto(
+                    1,
+                    "owner/repo-a",
+                    40,
+                    "Board item",
+                    "https://github.com/owner/repo-a/issues/40",
+                    "priority/high")));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPlanningPage<PlanningDailyFocus>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Recommended today (selected planning board)", cut.Markup);
+            Assert.Contains("data-testid=\"planning-limit-recommendations-switch\"", cut.Markup);
+            Assert.Contains("Only 1 eligible item on the planning board", cut.Markup);
+            Assert.Contains("not backfilled from other repositories", cut.Markup);
+        });
+
+        await _recommendationService.Received(1).GetRecommendationsAsync("PVT_board", true, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task PlanningDailyFocus_WhenRecommendationsExist_ShowsRankedRowsWithGitHubLinks()
     {
         ConfigureDefaults();
@@ -636,7 +678,7 @@ public sealed class PlanningDailyFocusTests
                 ItemCount: 1,
                 StalledUpNextItems: [],
                 StallDays: 3));
-        _recommendationService.GetRecommendationsAsync("PVT_board", Arg.Any<CancellationToken>())
+        _recommendationService.GetRecommendationsAsync("PVT_board", Arg.Any<bool>(), Arg.Any<CancellationToken>())
             .Returns(CreateRecommendationResult(
                 new DailyFocusRecommendationDto(
                     1,
@@ -702,7 +744,7 @@ public sealed class PlanningDailyFocusTests
                 ItemCount: 1,
                 StalledUpNextItems: [],
                 StallDays: 3));
-        _recommendationService.GetRecommendationsAsync("PVT_board", Arg.Any<CancellationToken>())
+        _recommendationService.GetRecommendationsAsync("PVT_board", Arg.Any<bool>(), Arg.Any<CancellationToken>())
             .Returns(
                 _ => throw new InvalidOperationException("GitHub unavailable"),
                 _ => CreateRecommendationResult(
@@ -731,7 +773,7 @@ public sealed class PlanningDailyFocusTests
             Assert.Contains("priority/medium", cut.Markup);
         });
 
-        await _recommendationService.Received(2).GetRecommendationsAsync("PVT_board", Arg.Any<CancellationToken>());
+        await _recommendationService.Received(2).GetRecommendationsAsync("PVT_board", Arg.Any<bool>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -746,7 +788,7 @@ public sealed class PlanningDailyFocusTests
                 ItemCount: 1,
                 StalledUpNextItems: [],
                 StallDays: 3));
-        _recommendationService.GetRecommendationsAsync("PVT_board", Arg.Any<CancellationToken>())
+        _recommendationService.GetRecommendationsAsync("PVT_board", Arg.Any<bool>(), Arg.Any<CancellationToken>())
             .Returns(new DailyFocusRecommendationResultDto(
                 [
                     new DailyFocusRecommendationDto(
@@ -784,7 +826,7 @@ public sealed class PlanningDailyFocusTests
                 [new PlanningBoardOptionDto("PVT_board", "Roadmap", "owner", "status-field")],
                 1,
                 0));
-        _recommendationService.GetRecommendationsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+        _recommendationService.GetRecommendationsAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
             .Returns(CreateRecommendationResult());
     }
 

@@ -179,7 +179,7 @@ Issue [#415](https://github.com/markheydon/solo-dev-board/issues/415) closes the
 | Planning board selector, status line, and refresh | `planning.spec.ts` shared chrome `data-testid`s | `docs-capture` |
 | Occupancy chips, active load, empty board, or catalogue error | `planning-daily-focus-board-state` / empty or error copy, or chrome error | `docs-capture` |
 | Stalled Up Next rows, none-stalled sentence, or catalogue error | `planning-daily-focus-stalled` when occupancy region is visible | `docs-capture` |
-| Recommended today (all included repositories) list, empty copy, warning, or catalogue error | `planning-daily-focus-recommendations` heading, empty or error copy when occupancy loaded | `docs-capture` |
+| Recommended today list, scope switch, shortfall copy, empty copy, warning, or catalogue error | `planning-daily-focus-recommendations` heading, `planning-limit-recommendations-switch`, empty or error copy when occupancy loaded | `docs-capture` |
 | Stalled review pull requests, empty stall copy, or stall load error | `planning-daily-focus-stalled-reviews` / empty or error copy when occupancy loaded | `docs-capture` |
 | Planning thresholds | `planning-thresholds-region`, capacity field, or chrome error | `docs-capture` (`planning/repos.png`) |
 | Repository participation summary | `planning-participation-summary` | `docs-capture` |

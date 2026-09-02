@@ -8,6 +8,9 @@ public interface IDailyFocusRecommendationService
     /// honouring repository exclusions and the selected board's parked and in-progress statuses.
     /// </summary>
     /// <param name="projectId">The GitHub Project v2 node identifier for the selected planning board.</param>
+    /// <param name="limitToPlanningBoard">
+    /// When <see langword="true"/>, only items on the selected planning board are eligible for ranking.
+    /// </param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>
     /// Ranked recommendations and any per-repository catalogue failures that did not prevent ranking.
@@ -17,5 +20,6 @@ public interface IDailyFocusRecommendationService
     /// </exception>
     Task<DailyFocusRecommendationResultDto> GetRecommendationsAsync(
         string projectId,
+        bool limitToPlanningBoard = false,
         CancellationToken cancellationToken = default);
 }

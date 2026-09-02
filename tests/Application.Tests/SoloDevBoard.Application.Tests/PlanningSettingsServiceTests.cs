@@ -247,6 +247,42 @@ public sealed class PlanningSettingsServiceTests
         Assert.DoesNotContain("owner/dotfiles", settings.ExcludedRepositories);
     }
 
+    [Fact]
+    public async Task GetSettingsAsync_WhenLimitRecommendationsEnabled_ReturnsTrue()
+    {
+        var storage = new FakePlanningSettingsStorage
+        {
+            StoredJson = """
+                {
+                  "limitRecommendationsToPlanningBoard": true
+                }
+                """,
+        };
+        var service = CreateService(storage);
+
+        var settings = await service.GetSettingsAsync();
+
+        Assert.True(settings.LimitRecommendationsToPlanningBoard);
+    }
+
+    [Fact]
+    public async Task SaveSettingsAsync_PersistsLimitRecommendationsFlag()
+    {
+        var storage = new FakePlanningSettingsStorage();
+        var service = CreateService(storage);
+        var settings = new PlanningSettingsDto(
+            "PVT_board123",
+            [],
+            PlanningSettingsDefaults.Capacity,
+            PlanningSettingsDefaults.StallDays,
+            PlanningSettingsDefaults.NeglectDays,
+            LimitRecommendationsToPlanningBoard: true);
+
+        await service.SaveSettingsAsync(settings);
+
+        Assert.Contains("\"limitRecommendationsToPlanningBoard\":true", storage.StoredJson, StringComparison.Ordinal);
+    }
+
     private static PlanningSettingsService CreateService(FakePlanningSettingsStorage storage) =>
         new(storage, NullLogger<PlanningSettingsService>.Instance);
 
