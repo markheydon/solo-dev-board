@@ -14,4 +14,7 @@ public sealed class GitHubCacheOptions
 
     /// <summary>Absolute cache lifetime in seconds for milestone catalogue responses.</summary>
     public int MilestonesTtlSeconds { get; set; } = 300;
+
+    /// <summary>Absolute cache lifetime in seconds for workflow directory catalogue responses.</summary>
+    public int WorkflowDirectoryTtlSeconds { get; set; } = 300;
 }

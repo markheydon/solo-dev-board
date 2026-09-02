@@ -20,8 +20,8 @@ public sealed class ActionsTemplatesTests
     public async Task ActionsTemplates_WhileTemplatesAreLoading_ShowsLoadingState()
     {
         // Arrange
-        var templatesTask = new TaskCompletionSource<IReadOnlyList<ActionsTemplateDto>>();
-        _workflowTemplateService.GetTemplatesAsync(Arg.Any<CancellationToken>()).Returns(templatesTask.Task);
+        var templatesTask = new TaskCompletionSource<ActionsTemplateCatalogueDto>();
+        _workflowTemplateService.GetTemplatesAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>()).Returns(templatesTask.Task);
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(CreateRepositories());
 
@@ -62,7 +62,7 @@ public sealed class ActionsTemplatesTests
     {
         // Arrange
         SetupDefaultServices();
-        _workflowTemplateService.GetTemplateDetailAsync(1, Arg.Any<CancellationToken>()).Returns(CreateTemplateDetail());
+        _workflowTemplateService.GetTemplateDetailAsync("builtin:1", Arg.Any<CancellationToken>()).Returns(CreateTemplateDetail());
 
         await using var ctx = CreateContext();
         var cut = ctx.Render<ActionsTemplates>();
@@ -70,7 +70,7 @@ public sealed class ActionsTemplatesTests
         cut.WaitForAssertion(() => Assert.Equal(3, cut.FindAll("[data-testid^='actions-templates-select-']").Count));
 
         // Act
-        var selectButton = cut.Find("[data-testid='actions-templates-select-1']");
+        var selectButton = cut.Find("[data-testid='actions-templates-select-builtin:1']");
         await cut.InvokeAsync(() => selectButton.Click());
 
         // Assert
@@ -88,7 +88,7 @@ public sealed class ActionsTemplatesTests
     {
         // Arrange
         SetupDefaultServices();
-        _workflowTemplateService.GetTemplateDetailAsync(1, Arg.Any<CancellationToken>()).Returns(CreateTemplateDetail());
+        _workflowTemplateService.GetTemplateDetailAsync("builtin:1", Arg.Any<CancellationToken>()).Returns(CreateTemplateDetail());
 
         await using var ctx = CreateContext();
         var cut = ctx.Render<ActionsTemplates>();
@@ -96,7 +96,7 @@ public sealed class ActionsTemplatesTests
         cut.WaitForAssertion(() => Assert.Equal(3, cut.FindAll("[data-testid^='actions-templates-select-']").Count));
 
         // Act
-        await cut.InvokeAsync(() => cut.Find("[data-testid='actions-templates-select-1']").Click());
+        await cut.InvokeAsync(() => cut.Find("[data-testid='actions-templates-select-builtin:1']").Click());
 
         // Assert
         cut.WaitForAssertion(() =>
@@ -112,13 +112,13 @@ public sealed class ActionsTemplatesTests
     {
         // Arrange
         SetupDefaultServices();
-        _workflowTemplateService.GetTemplateDetailAsync(1, Arg.Any<CancellationToken>()).Returns(CreateTemplateDetail());
+        _workflowTemplateService.GetTemplateDetailAsync("builtin:1", Arg.Any<CancellationToken>()).Returns(CreateTemplateDetail());
 
         await using var ctx = CreateContext();
         var cut = ctx.Render<ActionsTemplates>();
 
         cut.WaitForAssertion(() => Assert.Equal(3, cut.FindAll("[data-testid^='actions-templates-select-']").Count));
-        await cut.InvokeAsync(() => cut.Find("[data-testid='actions-templates-select-1']").Click());
+        await cut.InvokeAsync(() => cut.Find("[data-testid='actions-templates-select-builtin:1']").Click());
 
         cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='actions-templates-parameter-mainBranch']")));
 
@@ -140,13 +140,13 @@ public sealed class ActionsTemplatesTests
     {
         // Arrange
         SetupDefaultServices();
-        _workflowTemplateService.GetTemplateDetailAsync(1, Arg.Any<CancellationToken>()).Returns(CreateTemplateDetail());
+        _workflowTemplateService.GetTemplateDetailAsync("builtin:1", Arg.Any<CancellationToken>()).Returns(CreateTemplateDetail());
 
-        _workflowTemplateService.GetRepositoryStatusesAsync(1, Arg.Any<IReadOnlyList<string>>(), Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<CancellationToken>()).Returns([
+        _workflowTemplateService.GetRepositoryStatusesAsync("builtin:1", Arg.Any<IReadOnlyList<string>>(), Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<CancellationToken>()).Returns([
                 new ActionsTemplateRepositoryStatusDto("owner/repo-a", ActionsTemplateApplicationStatus.NotApplied, "Workflow file is not present in this repository."),
             ]);
 
-        _workflowTemplateService.ApplyTemplateAsync(1, Arg.Any<IReadOnlyList<string>>(), Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<CancellationToken>()).Returns([
+        _workflowTemplateService.ApplyTemplateAsync("builtin:1", Arg.Any<IReadOnlyList<string>>(), Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<CancellationToken>()).Returns([
                 new ActionsTemplateRepositoryResultDto("owner/repo-a", "Created", null),
             ]);
 
@@ -154,7 +154,7 @@ public sealed class ActionsTemplatesTests
         var cut = ctx.Render<ActionsTemplates>();
 
         cut.WaitForAssertion(() => Assert.Equal(3, cut.FindAll("[data-testid^='actions-templates-select-']").Count));
-        await cut.InvokeAsync(() => cut.Find("[data-testid='actions-templates-select-1']").Click());
+        await cut.InvokeAsync(() => cut.Find("[data-testid='actions-templates-select-builtin:1']").Click());
 
         cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='workflow-repository-autocomplete']")));
         var autocomplete = cut.FindComponent<MudAutocomplete<string>>();
@@ -179,13 +179,13 @@ public sealed class ActionsTemplatesTests
     {
         // Arrange
         SetupDefaultServices();
-        _workflowTemplateService.GetTemplateDetailAsync(1, Arg.Any<CancellationToken>()).Returns(CreateTemplateDetail());
+        _workflowTemplateService.GetTemplateDetailAsync("builtin:1", Arg.Any<CancellationToken>()).Returns(CreateTemplateDetail());
 
-        _workflowTemplateService.GetRepositoryStatusesAsync(1, Arg.Any<IReadOnlyList<string>>(), Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<CancellationToken>()).Returns([
+        _workflowTemplateService.GetRepositoryStatusesAsync("builtin:1", Arg.Any<IReadOnlyList<string>>(), Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<CancellationToken>()).Returns([
                 new ActionsTemplateRepositoryStatusDto("owner/repo-a", ActionsTemplateApplicationStatus.NotApplied, "Workflow file is not present in this repository."),
             ]);
 
-        _workflowTemplateService.ApplyTemplateAsync(1, Arg.Any<IReadOnlyList<string>>(), Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<CancellationToken>()).Returns([
+        _workflowTemplateService.ApplyTemplateAsync("builtin:1", Arg.Any<IReadOnlyList<string>>(), Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<CancellationToken>()).Returns([
                 new ActionsTemplateRepositoryResultDto("owner/repo-a", "Failed", "GitHub API request failed."),
             ]);
 
@@ -193,7 +193,7 @@ public sealed class ActionsTemplatesTests
         var cut = ctx.Render<ActionsTemplates>();
 
         cut.WaitForAssertion(() => Assert.Equal(3, cut.FindAll("[data-testid^='actions-templates-select-']").Count));
-        await cut.InvokeAsync(() => cut.Find("[data-testid='actions-templates-select-1']").Click());
+        await cut.InvokeAsync(() => cut.Find("[data-testid='actions-templates-select-builtin:1']").Click());
 
         var autocomplete = cut.FindComponent<MudAutocomplete<string>>();
         await cut.InvokeAsync(() => autocomplete.Instance.ValueChanged.InvokeAsync("owner/repo-a"));
@@ -284,7 +284,7 @@ public sealed class ActionsTemplatesTests
 
     private void SetupDefaultServices()
     {
-        _workflowTemplateService.GetTemplatesAsync(Arg.Any<CancellationToken>()).Returns(CreateTemplates());
+        _workflowTemplateService.GetTemplatesAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>()).Returns(new ActionsTemplateCatalogueDto(CreateTemplates(), null));
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(CreateRepositories());
     }
@@ -314,7 +314,7 @@ public sealed class ActionsTemplatesTests
 
     private static ActionsTemplateDetailDto CreateTemplateDetail()
         => new(
-            1,
+            "builtin:1",
             ".NET CI",
             "Build and test a .NET solution on every push and pull request to the main branch.",
             "CI",
@@ -332,7 +332,7 @@ public sealed class ActionsTemplatesTests
         =>
         [
             new(
-                1,
+                "builtin:1",
                 ".NET CI",
                 "Build and test a .NET solution on every push and pull request to the main branch.",
                 "CI",
@@ -341,7 +341,7 @@ public sealed class ActionsTemplatesTests
                 "Push and pull request to main",
                 new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)),
             new(
-                2,
+                "builtin:2",
                 "Azure CD (Aspire)",
                 "Deploy the application to Azure Container Apps using Aspire after operator approval.",
                 "CD",
@@ -350,7 +350,7 @@ public sealed class ActionsTemplatesTests
                 "Manual workflow dispatch",
                 new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)),
             new(
-                3,
+                "builtin:3",
                 "Dependabot Auto-Merge",
                 "Automatically enable auto-merge for low-risk Dependabot pull requests after metadata checks.",
                 "Maintenance",

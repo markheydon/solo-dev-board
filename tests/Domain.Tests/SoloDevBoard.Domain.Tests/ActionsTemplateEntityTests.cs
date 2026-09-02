@@ -14,7 +14,7 @@ public sealed class ActionsTemplateEntityTests
         // Act
         var template = new ActionsTemplate
         {
-            Id = 5,
+            Id = "builtin:5",
             Name = "CI",
             Description = "Continuous integration workflow.",
             Category = "Automation",
@@ -26,7 +26,7 @@ public sealed class ActionsTemplateEntityTests
         };
 
         // Assert
-        Assert.Equal(5, template.Id);
+        Assert.Equal("builtin:5", template.Id);
         Assert.Equal("CI", template.Name);
         Assert.Equal("Continuous integration workflow.", template.Description);
         Assert.Equal("Automation", template.Category);

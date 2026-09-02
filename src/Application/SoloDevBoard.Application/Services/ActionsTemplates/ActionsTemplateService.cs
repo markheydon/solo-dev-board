@@ -5,14 +5,16 @@ namespace SoloDevBoard.Application.Services.ActionsTemplates;
 /// <summary>Provides built-in workflow templates for browsing, customisation, and apply flows.</summary>
 public sealed class ActionsTemplateService : IActionsTemplateService
 {
+    private const string CustomCategory = "Custom";
     private const string PlaceholderPrefix = "{{";
     private const string PlaceholderSuffix = "}}";
+    private const string WorkflowsDirectoryPath = ".github/workflows";
 
     private static readonly DateTimeOffset BuiltInCreatedAt = new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
     private static readonly IReadOnlyList<ActionsTemplate> BuiltInTemplates = BuildBuiltInTemplates();
 
-    private static readonly IReadOnlyDictionary<int, IReadOnlyList<ActionsTemplateParameter>> ParametersByTemplateId =
+    private static readonly IReadOnlyDictionary<string, IReadOnlyList<ActionsTemplateParameter>> ParametersByTemplateId =
         BuildParametersByTemplateId();
 
     private readonly IWorkflowFileRepository _workflowFileRepository;
@@ -26,37 +28,56 @@ public sealed class ActionsTemplateService : IActionsTemplateService
     }
 
     /// <inheritdoc/>
-    public Task<IReadOnlyList<ActionsTemplateDto>> GetTemplatesAsync(CancellationToken cancellationToken = default)
+    public async Task<ActionsTemplateCatalogueDto> GetTemplatesAsync(string? customSourceRepository = null, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        IReadOnlyList<ActionsTemplateDto> result = BuiltInTemplates
+        var builtInTemplates = BuiltInTemplates
             .Select(MapToDto)
             .ToArray();
 
-        return Task.FromResult(result);
+        if (string.IsNullOrWhiteSpace(customSourceRepository))
+        {
+            return new ActionsTemplateCatalogueDto(builtInTemplates, null);
+        }
+
+        try
+        {
+            var customTemplates = await LoadCustomTemplatesAsync(customSourceRepository.Trim(), cancellationToken).ConfigureAwait(false);
+            var mergedTemplates = builtInTemplates
+                .Concat(customTemplates.Select(MapToDto))
+                .ToArray();
+
+            return new ActionsTemplateCatalogueDto(mergedTemplates, null);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or ArgumentException or FormatException)
+        {
+            return new ActionsTemplateCatalogueDto(builtInTemplates, MapCustomSourceError(ex, customSourceRepository.Trim()));
+        }
     }
 
     /// <inheritdoc/>
-    public Task<ActionsTemplateDetailDto> GetTemplateDetailAsync(int templateId, CancellationToken cancellationToken = default)
+    public async Task<ActionsTemplateDetailDto> GetTemplateDetailAsync(string templateId, CancellationToken cancellationToken = default)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(templateId);
         cancellationToken.ThrowIfCancellationRequested();
 
-        var template = ResolveTemplate(templateId);
-        var parameters = GetParameters(templateId);
+        var template = await ResolveTemplateAsync(templateId, cancellationToken).ConfigureAwait(false);
+        var parameters = await GetParametersAsync(template, cancellationToken).ConfigureAwait(false);
         var resolvedValues = ResolveParameterValues(parameters, new Dictionary<string, string>());
         var yamlPreview = ApplyParameterValues(template.YamlContent, resolvedValues);
 
-        return Task.FromResult(MapToDetailDto(template, parameters, yamlPreview));
+        return MapToDetailDto(template, parameters, yamlPreview);
     }
 
     /// <inheritdoc/>
     public async Task<IReadOnlyList<ActionsTemplateRepositoryStatusDto>> GetRepositoryStatusesAsync(
-        int templateId,
+        string templateId,
         IReadOnlyList<string> repositoryFullNames,
         IReadOnlyDictionary<string, string> parameterValues,
         CancellationToken cancellationToken = default)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(templateId);
         ArgumentNullException.ThrowIfNull(repositoryFullNames);
         ArgumentNullException.ThrowIfNull(parameterValues);
 
@@ -65,8 +86,8 @@ public sealed class ActionsTemplateService : IActionsTemplateService
             return [];
         }
 
-        var template = ResolveTemplate(templateId);
-        var parameters = GetParameters(templateId);
+        var template = await ResolveTemplateAsync(templateId, cancellationToken).ConfigureAwait(false);
+        var parameters = await GetParametersAsync(template, cancellationToken).ConfigureAwait(false);
         var resolvedValues = ResolveParameterValues(parameters, parameterValues);
         ValidateParameterValues(parameters, resolvedValues);
         var canonicalContent = NormaliseContent(ApplyParameterValues(template.YamlContent, resolvedValues));
@@ -84,16 +105,17 @@ public sealed class ActionsTemplateService : IActionsTemplateService
 
     /// <inheritdoc/>
     public async Task<IReadOnlyList<ActionsTemplateRepositoryResultDto>> ApplyTemplateAsync(
-        int templateId,
+        string templateId,
         IReadOnlyList<string> repositoryFullNames,
         IReadOnlyDictionary<string, string> parameterValues,
         CancellationToken cancellationToken = default)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(templateId);
         ArgumentNullException.ThrowIfNull(repositoryFullNames);
         ArgumentNullException.ThrowIfNull(parameterValues);
 
-        var template = ResolveTemplate(templateId);
-        var parameters = GetParameters(templateId);
+        var template = await ResolveTemplateAsync(templateId, cancellationToken).ConfigureAwait(false);
+        var parameters = await GetParametersAsync(template, cancellationToken).ConfigureAwait(false);
         var resolvedValues = ResolveParameterValues(parameters, parameterValues);
         ValidateParameterValues(parameters, resolvedValues);
 
@@ -146,6 +168,51 @@ public sealed class ActionsTemplateService : IActionsTemplateService
             .ToArray();
     }
 
+    private async Task<IReadOnlyList<ActionsTemplate>> LoadCustomTemplatesAsync(string repositoryFullName, CancellationToken cancellationToken)
+    {
+        var sourceRepository = SplitRepositoryFullName(repositoryFullName);
+        var directoryEntries = await _workflowFileRepository
+            .ListWorkflowFilesAsync(sourceRepository.Owner, sourceRepository.Name, cancellationToken)
+            .ConfigureAwait(false);
+
+        var workflowEntries = directoryEntries
+            .Where(entry => WorkflowYamlTemplateParser.IsWorkflowYamlFileName(entry.Name))
+            .Where(entry => IsTopLevelWorkflowPath(entry.Path))
+            .OrderBy(entry => entry.Path, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var templates = new List<ActionsTemplate>(workflowEntries.Length);
+
+        foreach (var entry in workflowEntries)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var workflowFile = await _workflowFileRepository
+                .GetWorkflowFileAsync(sourceRepository.Owner, sourceRepository.Name, entry.Path, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (workflowFile is null)
+            {
+                continue;
+            }
+
+            templates.Add(new ActionsTemplate
+            {
+                Id = ActionsTemplateIdFormatter.FormatCustom(repositoryFullName, entry.Path),
+                Name = WorkflowYamlTemplateParser.ResolveDisplayName(workflowFile.Content, entry.Name),
+                Description = string.Empty,
+                Category = CustomCategory,
+                Tags = [],
+                WorkflowFilePath = entry.Path,
+                TriggerDescription = string.Empty,
+                YamlContent = workflowFile.Content,
+                CreatedAt = BuiltInCreatedAt,
+            });
+        }
+
+        return templates;
+    }
+
     private async Task<ActionsTemplateRepositoryStatusDto> BuildRepositoryStatusAsync(
         ActionsTemplate template,
         string repositoryFullName,
@@ -189,7 +256,44 @@ public sealed class ActionsTemplateService : IActionsTemplateService
         }
     }
 
-    private static ActionsTemplate ResolveTemplate(int templateId)
+    private async Task<ActionsTemplate> ResolveTemplateAsync(string templateId, CancellationToken cancellationToken)
+    {
+        if (ActionsTemplateIdFormatter.IsBuiltIn(templateId))
+        {
+            return ResolveBuiltInTemplate(templateId);
+        }
+
+        if (!ActionsTemplateIdFormatter.IsCustom(templateId))
+        {
+            throw new KeyNotFoundException($"Workflow template '{templateId}' was not found.");
+        }
+
+        var (repositoryFullName, workflowFilePath) = ActionsTemplateIdFormatter.ParseCustom(templateId);
+        var sourceRepository = SplitRepositoryFullName(repositoryFullName);
+        var workflowFile = await _workflowFileRepository
+            .GetWorkflowFileAsync(sourceRepository.Owner, sourceRepository.Name, workflowFilePath, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (workflowFile is null)
+        {
+            throw new KeyNotFoundException($"Workflow template '{templateId}' was not found.");
+        }
+
+        return new ActionsTemplate
+        {
+            Id = templateId,
+            Name = WorkflowYamlTemplateParser.ResolveDisplayName(workflowFile.Content, Path.GetFileName(workflowFilePath)),
+            Description = string.Empty,
+            Category = CustomCategory,
+            Tags = [],
+            WorkflowFilePath = workflowFilePath,
+            TriggerDescription = string.Empty,
+            YamlContent = workflowFile.Content,
+            CreatedAt = BuiltInCreatedAt,
+        };
+    }
+
+    private static ActionsTemplate ResolveBuiltInTemplate(string templateId)
     {
         var template = BuiltInTemplates.FirstOrDefault(candidate => candidate.Id == templateId);
         if (template is null)
@@ -200,10 +304,47 @@ public sealed class ActionsTemplateService : IActionsTemplateService
         return template;
     }
 
-    private static IReadOnlyList<ActionsTemplateParameter> GetParameters(int templateId)
+    private static Task<IReadOnlyList<ActionsTemplateParameter>> GetParametersAsync(ActionsTemplate template, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (ActionsTemplateIdFormatter.IsBuiltIn(template.Id))
+        {
+            return Task.FromResult(GetBuiltInParameters(template.Id));
+        }
+
+        return Task.FromResult<IReadOnlyList<ActionsTemplateParameter>>(WorkflowYamlTemplateParser.InferParameters(template.YamlContent));
+    }
+
+    private static IReadOnlyList<ActionsTemplateParameter> GetBuiltInParameters(string templateId)
         => ParametersByTemplateId.TryGetValue(templateId, out var parameters)
             ? parameters
             : [];
+
+    private static string MapCustomSourceError(Exception exception, string repositoryFullName)
+        => exception switch
+        {
+            ArgumentException => exception.Message,
+            FormatException => $"Repository '{repositoryFullName}' must be in owner/repository format.",
+            HttpRequestException httpRequestException when httpRequestException.Message.Contains("404", StringComparison.Ordinal)
+                => $"Repository '{repositoryFullName}' was not found or is not accessible.",
+            HttpRequestException httpRequestException when httpRequestException.Message.Contains("403", StringComparison.Ordinal)
+                => $"Repository '{repositoryFullName}' is not accessible with the current GitHub token.",
+            HttpRequestException httpRequestException => httpRequestException.Message,
+            _ => $"Unable to load custom templates from '{repositoryFullName}'.",
+        };
+
+    private static bool IsTopLevelWorkflowPath(string path)
+    {
+        const string prefix = ".github/workflows/";
+        if (!path.StartsWith(prefix, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        var fileName = path[prefix.Length..];
+        return !fileName.Contains('/', StringComparison.Ordinal);
+    }
 
     private static ActionsTemplateDto MapToDto(ActionsTemplate template)
         => new(
@@ -325,10 +466,10 @@ public sealed class ActionsTemplateService : IActionsTemplateService
         return new RepositoryCoordinates(parts[0], parts[1]);
     }
 
-    private static IReadOnlyDictionary<int, IReadOnlyList<ActionsTemplateParameter>> BuildParametersByTemplateId()
-        => new Dictionary<int, IReadOnlyList<ActionsTemplateParameter>>
+    private static IReadOnlyDictionary<string, IReadOnlyList<ActionsTemplateParameter>> BuildParametersByTemplateId()
+        => new Dictionary<string, IReadOnlyList<ActionsTemplateParameter>>
         {
-            [1] =
+            [ActionsTemplateIdFormatter.FormatBuiltIn(1)] =
             [
                 new ActionsTemplateParameter
                 {
@@ -347,7 +488,7 @@ public sealed class ActionsTemplateService : IActionsTemplateService
                     IsRequired = false,
                 },
             ],
-            [2] =
+            [ActionsTemplateIdFormatter.FormatBuiltIn(2)] =
             [
                 new ActionsTemplateParameter
                 {
@@ -358,7 +499,7 @@ public sealed class ActionsTemplateService : IActionsTemplateService
                     IsRequired = true,
                 },
             ],
-            [3] =
+            [ActionsTemplateIdFormatter.FormatBuiltIn(3)] =
             [
                 new ActionsTemplateParameter
                 {
@@ -376,7 +517,7 @@ public sealed class ActionsTemplateService : IActionsTemplateService
         [
             new ActionsTemplate
             {
-                Id = 1,
+                Id = ActionsTemplateIdFormatter.FormatBuiltIn(1),
                 Name = ".NET CI",
                 Description = "Build and test a .NET solution on every push and pull request to the main branch.",
                 Category = "CI",
@@ -409,7 +550,7 @@ public sealed class ActionsTemplateService : IActionsTemplateService
             },
             new ActionsTemplate
             {
-                Id = 2,
+                Id = ActionsTemplateIdFormatter.FormatBuiltIn(2),
                 Name = "Azure CD (Aspire)",
                 Description = "Deploy the application to Azure Container Apps using Aspire after operator approval.",
                 Category = "CD",
@@ -436,7 +577,7 @@ public sealed class ActionsTemplateService : IActionsTemplateService
             },
             new ActionsTemplate
             {
-                Id = 3,
+                Id = ActionsTemplateIdFormatter.FormatBuiltIn(3),
                 Name = "Dependabot Auto-Merge",
                 Description = "Automatically enable auto-merge for low-risk Dependabot pull requests after metadata checks.",
                 Category = "Maintenance",

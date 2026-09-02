@@ -12,7 +12,7 @@ namespace SoloDevBoard.Application.Services.ActionsTemplates;
 /// <param name="YamlPreview">The rendered YAML preview with default parameter values applied.</param>
 /// <param name="Parameters">The configurable parameters for the workflow template.</param>
 public sealed record ActionsTemplateDetailDto(
-    int Id,
+    string Id,
     string Name,
     string Description,
     string Category,

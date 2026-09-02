@@ -12,18 +12,36 @@ namespace SoloDevBoard.Infrastructure.Workflows;
 /// <summary>GitHub REST API implementation of <see cref="IWorkflowFileRepository"/>.</summary>
 public sealed class GitHubWorkflowFileRepository : IWorkflowFileRepository
 {
+    private const string WorkflowsDirectoryPath = ".github/workflows";
+
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
         PropertyNameCaseInsensitive = true,
     };
 
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly GitHubResponseCache _responseCache;
 
     /// <summary>Initialises a new instance of the <see cref="GitHubWorkflowFileRepository"/> class.</summary>
     /// <param name="httpClientFactory">The factory used to create named <see cref="HttpClient"/> instances.</param>
-    public GitHubWorkflowFileRepository(IHttpClientFactory httpClientFactory)
+    /// <param name="responseCache">The cache used for read-heavy GitHub API catalogue responses.</param>
+    public GitHubWorkflowFileRepository(IHttpClientFactory httpClientFactory, GitHubResponseCache responseCache)
     {
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        _responseCache = responseCache ?? throw new ArgumentNullException(nameof(responseCache));
+    }
+
+    /// <inheritdoc/>
+    public Task<IReadOnlyList<WorkflowDirectoryEntry>> ListWorkflowFilesAsync(string owner, string repo, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+
+        return _responseCache.GetOrCreateWorkflowDirectoryAsync(
+            owner,
+            repo,
+            ct => LoadWorkflowDirectoryAsync(owner, repo, ct),
+            cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -84,6 +102,28 @@ public sealed class GitHubWorkflowFileRepository : IWorkflowFileRepository
         await GitHubService.EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
     }
 
+    private async Task<IReadOnlyList<WorkflowDirectoryEntry>> LoadWorkflowDirectoryAsync(string owner, string repo, CancellationToken cancellationToken)
+    {
+        var client = CreateClient();
+        var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/contents/{WorkflowsDirectoryPath}";
+
+        using var response = await client.GetAsync(endpoint, cancellationToken).ConfigureAwait(false);
+        await GitHubService.EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
+
+        var entries = await response.Content.ReadFromJsonAsync<List<WorkflowDirectoryResponseDto>>(JsonOptions, cancellationToken).ConfigureAwait(false)
+            ?? throw GitHubService.CreateInvalidResponseException("Workflow directory response was empty.", endpoint);
+
+        return entries
+            .Where(entry => string.Equals(entry.Type, "file", StringComparison.OrdinalIgnoreCase))
+            .Select(entry => new WorkflowDirectoryEntry
+            {
+                Path = entry.Path ?? string.Empty,
+                Name = entry.Name ?? string.Empty,
+            })
+            .Where(entry => !string.IsNullOrWhiteSpace(entry.Path) && !string.IsNullOrWhiteSpace(entry.Name))
+            .ToArray();
+    }
+
     private static string DecodeContent(string? encodedContent)
     {
         if (string.IsNullOrWhiteSpace(encodedContent))
@@ -98,6 +138,18 @@ public sealed class GitHubWorkflowFileRepository : IWorkflowFileRepository
 
     private HttpClient CreateClient()
         => _httpClientFactory.CreateClient(GitHubService.GitHubApiClientName);
+
+    private sealed class WorkflowDirectoryResponseDto
+    {
+        [JsonPropertyName("name")]
+        public string? Name { get; init; }
+
+        [JsonPropertyName("path")]
+        public string? Path { get; init; }
+
+        [JsonPropertyName("type")]
+        public string? Type { get; init; }
+    }
 
     private sealed class WorkflowFileResponseDto
     {

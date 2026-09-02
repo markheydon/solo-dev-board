@@ -7,6 +7,9 @@ namespace SoloDevBoard.Application.Tests;
 /// <summary>Tests for <see cref="ActionsTemplateService"/>.</summary>
 public sealed class ActionsTemplateServiceTests
 {
+    private const string BuiltInCiId = "builtin:1";
+    private const string CustomTemplateId = "custom:source-owner/template-repo:.github/workflows/deploy.yml";
+
     private readonly IWorkflowFileRepository _workflowFileRepository = Substitute.For<IWorkflowFileRepository>();
 
     [Fact]
@@ -30,13 +33,14 @@ public sealed class ActionsTemplateServiceTests
         var sut = CreateSut();
 
         // Act
-        var result = await sut.GetTemplatesAsync(cancellationToken);
+        var result = await sut.GetTemplatesAsync(cancellationToken: cancellationToken);
 
         // Assert
-        Assert.Equal(3, result.Count);
-        Assert.Contains(result, template => template.Name == ".NET CI");
-        Assert.Contains(result, template => template.Name == "Azure CD (Aspire)");
-        Assert.Contains(result, template => template.Name == "Dependabot Auto-Merge");
+        Assert.Null(result.CustomSourceError);
+        Assert.Equal(3, result.Templates.Count);
+        Assert.Contains(result.Templates, template => template.Name == ".NET CI");
+        Assert.Contains(result.Templates, template => template.Name == "Azure CD (Aspire)");
+        Assert.Contains(result.Templates, template => template.Name == "Dependabot Auto-Merge");
     }
 
     [Fact]
@@ -47,14 +51,146 @@ public sealed class ActionsTemplateServiceTests
         var sut = CreateSut();
 
         // Act
-        var result = await sut.GetTemplatesAsync(cancellationToken);
-        var ciTemplate = result.Single(template => template.Name == ".NET CI");
+        var result = await sut.GetTemplatesAsync(cancellationToken: cancellationToken);
+        var ciTemplate = result.Templates.Single(template => template.Name == ".NET CI");
 
         // Assert
+        Assert.Equal(BuiltInCiId, ciTemplate.Id);
         Assert.Equal("CI", ciTemplate.Category);
         Assert.Equal(".github/workflows/ci.yml", ciTemplate.WorkflowFilePath);
         Assert.Contains("dotnet", ciTemplate.Tags);
         Assert.False(string.IsNullOrWhiteSpace(ciTemplate.TriggerDescription));
+    }
+
+    [Fact]
+    public async Task GetTemplatesAsync_WithCustomSource_MergesCustomTemplatesWithBuiltIns()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        _workflowFileRepository
+            .ListWorkflowFilesAsync("source-owner", "template-repo", cancellationToken)
+            .Returns([
+                new WorkflowDirectoryEntry
+                {
+                    Path = ".github/workflows/deploy.yml",
+                    Name = "deploy.yml",
+                },
+            ]);
+
+        _workflowFileRepository
+            .GetWorkflowFileAsync("source-owner", "template-repo", ".github/workflows/deploy.yml", cancellationToken)
+            .Returns(new WorkflowFile
+            {
+                Path = ".github/workflows/deploy.yml",
+                Content = "name: Deploy\n\njobs:\n  deploy:\n    runs-on: ubuntu-latest",
+                Sha = "sha-1",
+            });
+
+        var sut = CreateSut();
+
+        // Act
+        var result = await sut.GetTemplatesAsync("source-owner/template-repo", cancellationToken);
+
+        // Assert
+        Assert.Null(result.CustomSourceError);
+        Assert.Equal(4, result.Templates.Count);
+        Assert.Contains(result.Templates, template => template.Id == BuiltInCiId);
+        Assert.Contains(result.Templates, template => template.Id == CustomTemplateId);
+        Assert.Equal("Deploy", result.Templates.Single(template => template.Id == CustomTemplateId).Name);
+        Assert.Equal("Custom", result.Templates.Single(template => template.Id == CustomTemplateId).Category);
+    }
+
+    [Fact]
+    public async Task GetTemplatesAsync_WithCustomSource_InfersPlaceholderParametersOnDetail()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        _workflowFileRepository
+            .ListWorkflowFilesAsync("source-owner", "template-repo", cancellationToken)
+            .Returns([
+                new WorkflowDirectoryEntry
+                {
+                    Path = ".github/workflows/deploy.yml",
+                    Name = "deploy.yml",
+                },
+            ]);
+
+        _workflowFileRepository
+            .GetWorkflowFileAsync("source-owner", "template-repo", ".github/workflows/deploy.yml", cancellationToken)
+            .Returns(new WorkflowFile
+            {
+                Path = ".github/workflows/deploy.yml",
+                Content = "name: Deploy\nenvironment: {{environmentName}}",
+                Sha = "sha-1",
+            });
+
+        var sut = CreateSut();
+        await sut.GetTemplatesAsync("source-owner/template-repo", cancellationToken);
+
+        // Act
+        var detail = await sut.GetTemplateDetailAsync(CustomTemplateId, cancellationToken);
+
+        // Assert
+        Assert.Single(detail.Parameters);
+        Assert.Equal("environmentName", detail.Parameters[0].Name);
+        Assert.Equal("environmentName", detail.Parameters[0].Label);
+        Assert.True(detail.Parameters[0].IsRequired);
+        Assert.Equal(string.Empty, detail.Parameters[0].Description);
+    }
+
+    [Fact]
+    public async Task GetTemplatesAsync_WithCustomSourceFailure_ReturnsBuiltInsAndError()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        _workflowFileRepository
+            .ListWorkflowFilesAsync("source-owner", "missing-repo", cancellationToken)
+            .Returns(Task.FromException<IReadOnlyList<WorkflowDirectoryEntry>>(new HttpRequestException("GitHub API request failed. Status: 404 (Not Found).")));
+
+        var sut = CreateSut();
+
+        // Act
+        var result = await sut.GetTemplatesAsync("source-owner/missing-repo", cancellationToken);
+
+        // Assert
+        Assert.Equal(3, result.Templates.Count);
+        Assert.NotNull(result.CustomSourceError);
+        Assert.Contains("not found", result.CustomSourceError, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task GetTemplatesAsync_WithEmptyWorkflowDirectory_ReturnsBuiltInsOnly()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        _workflowFileRepository
+            .ListWorkflowFilesAsync("source-owner", "template-repo", cancellationToken)
+            .Returns([]);
+
+        var sut = CreateSut();
+
+        // Act
+        var result = await sut.GetTemplatesAsync("source-owner/template-repo", cancellationToken);
+
+        // Assert
+        Assert.Null(result.CustomSourceError);
+        Assert.Equal(3, result.Templates.Count);
+    }
+
+    [Fact]
+    public async Task GetTemplatesAsync_WithInvalidCustomSource_ReturnsBuiltInsAndFormatError()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        var sut = CreateSut();
+
+        // Act
+        var result = await sut.GetTemplatesAsync("invalid-source", cancellationToken);
+
+        // Assert
+        Assert.Equal(3, result.Templates.Count);
+        Assert.NotNull(result.CustomSourceError);
+        Assert.Contains("owner/repository format", result.CustomSourceError, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -65,7 +201,7 @@ public sealed class ActionsTemplateServiceTests
         var sut = CreateSut();
 
         // Act
-        var result = await sut.GetTemplateDetailAsync(1, cancellationToken);
+        var result = await sut.GetTemplateDetailAsync(BuiltInCiId, cancellationToken);
 
         // Assert
         Assert.Equal(".NET CI", result.Name);
@@ -82,7 +218,7 @@ public sealed class ActionsTemplateServiceTests
         var sut = CreateSut();
 
         // Act
-        var action = () => sut.GetTemplateDetailAsync(999, cancellationToken);
+        var action = () => sut.GetTemplateDetailAsync("builtin:999", cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<KeyNotFoundException>(action);
@@ -100,7 +236,7 @@ public sealed class ActionsTemplateServiceTests
         var sut = CreateSut();
 
         // Act
-        var result = await sut.GetRepositoryStatusesAsync(1, ["owner/repo-a"], new Dictionary<string, string>(), cancellationToken);
+        var result = await sut.GetRepositoryStatusesAsync(BuiltInCiId, ["owner/repo-a"], new Dictionary<string, string>(), cancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -126,7 +262,7 @@ public sealed class ActionsTemplateServiceTests
         var sut = CreateSut();
 
         // Act
-        var result = await sut.GetRepositoryStatusesAsync(1, ["owner/repo-a"], new Dictionary<string, string>(), cancellationToken);
+        var result = await sut.GetRepositoryStatusesAsync(BuiltInCiId, ["owner/repo-a"], new Dictionary<string, string>(), cancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -150,7 +286,7 @@ public sealed class ActionsTemplateServiceTests
         var sut = CreateSut();
 
         // Act
-        var result = await sut.GetRepositoryStatusesAsync(1, ["owner/repo-a"], new Dictionary<string, string>(), cancellationToken);
+        var result = await sut.GetRepositoryStatusesAsync(BuiltInCiId, ["owner/repo-a"], new Dictionary<string, string>(), cancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -165,7 +301,7 @@ public sealed class ActionsTemplateServiceTests
         var sut = CreateSut();
 
         // Act
-        var action = () => sut.GetRepositoryStatusesAsync(1, ["owner/repo-a"], new Dictionary<string, string> { ["mainBranch"] = "   " }, cancellationToken);
+        var action = () => sut.GetRepositoryStatusesAsync(BuiltInCiId, ["owner/repo-a"], new Dictionary<string, string> { ["mainBranch"] = "   " }, cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<ArgumentException>(action);
@@ -183,7 +319,7 @@ public sealed class ActionsTemplateServiceTests
         var sut = CreateSut();
 
         // Act
-        var result = await sut.ApplyTemplateAsync(1, ["owner/repo-a"], new Dictionary<string, string>(), cancellationToken);
+        var result = await sut.ApplyTemplateAsync(BuiltInCiId, ["owner/repo-a"], new Dictionary<string, string>(), cancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -194,6 +330,44 @@ public sealed class ActionsTemplateServiceTests
             Arg.Is("repo-a"),
             Arg.Is(".github/workflows/ci.yml"),
             Arg.Is<string>(content => content!.Contains("name: CI", StringComparison.Ordinal)),
+            Arg.Is<string?>(sha => sha == null),
+            Arg.Any<string>(),
+            cancellationToken);
+    }
+
+    [Fact]
+    public async Task ApplyTemplateAsync_CustomTemplateWithoutPlaceholders_WritesYamlAsIs()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        const string yamlContent = "name: Deploy\njobs:\n  deploy:\n    runs-on: ubuntu-latest";
+
+        _workflowFileRepository
+            .GetWorkflowFileAsync("source-owner", "template-repo", ".github/workflows/deploy.yml", cancellationToken)
+            .Returns(new WorkflowFile
+            {
+                Path = ".github/workflows/deploy.yml",
+                Content = yamlContent,
+                Sha = "sha-1",
+            });
+
+        _workflowFileRepository
+            .GetWorkflowFileAsync("owner", "repo-a", ".github/workflows/deploy.yml", cancellationToken)
+            .Returns((WorkflowFile?)null);
+
+        var sut = CreateSut();
+
+        // Act
+        var result = await sut.ApplyTemplateAsync(CustomTemplateId, ["owner/repo-a"], new Dictionary<string, string>(), cancellationToken);
+
+        // Assert
+        Assert.Single(result);
+        Assert.Equal("Created", result[0].Action);
+        await _workflowFileRepository.Received(1).CreateOrUpdateWorkflowFileAsync(
+            Arg.Is("owner"),
+            Arg.Is("repo-a"),
+            Arg.Is(".github/workflows/deploy.yml"),
+            Arg.Is(yamlContent),
             Arg.Is<string?>(sha => sha == null),
             Arg.Any<string>(),
             cancellationToken);
@@ -218,7 +392,7 @@ public sealed class ActionsTemplateServiceTests
         var sut = CreateSut();
 
         // Act
-        var result = await sut.ApplyTemplateAsync(1, ["owner/repo-a"], new Dictionary<string, string>(), cancellationToken);
+        var result = await sut.ApplyTemplateAsync(BuiltInCiId, ["owner/repo-a"], new Dictionary<string, string>(), cancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -246,7 +420,7 @@ public sealed class ActionsTemplateServiceTests
 
         // Act
         await sut.ApplyTemplateAsync(
-            1,
+            BuiltInCiId,
             ["owner/repo-a"],
             new Dictionary<string, string>
             {
@@ -281,7 +455,7 @@ public sealed class ActionsTemplateServiceTests
         var sut = CreateSut();
 
         // Act
-        var result = await sut.ApplyTemplateAsync(1, ["owner/repo-a", "owner/repo-b"], new Dictionary<string, string>(), cancellationToken);
+        var result = await sut.ApplyTemplateAsync(BuiltInCiId, ["owner/repo-a", "owner/repo-b"], new Dictionary<string, string>(), cancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -299,7 +473,7 @@ public sealed class ActionsTemplateServiceTests
         var sut = CreateSut();
 
         // Act
-        var action = () => sut.ApplyTemplateAsync(1, [repository], new Dictionary<string, string>(), cancellationToken);
+        var action = () => sut.ApplyTemplateAsync(BuiltInCiId, [repository], new Dictionary<string, string>(), cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<ArgumentException>(action);
@@ -313,7 +487,7 @@ public sealed class ActionsTemplateServiceTests
         var sut = CreateSut();
 
         // Act
-        var result = await sut.ApplyTemplateAsync(1, ["invalid-repo"], new Dictionary<string, string>(), cancellationToken);
+        var result = await sut.ApplyTemplateAsync(BuiltInCiId, ["invalid-repo"], new Dictionary<string, string>(), cancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -327,7 +501,7 @@ public sealed class ActionsTemplateServiceTests
     private static async Task<string> GetRenderedCiYamlAsync()
     {
         var sut = new ActionsTemplateService(Substitute.For<IWorkflowFileRepository>());
-        var detail = await sut.GetTemplateDetailAsync(1, TestContext.Current.CancellationToken);
+        var detail = await sut.GetTemplateDetailAsync(BuiltInCiId, TestContext.Current.CancellationToken);
         return detail.YamlPreview;
     }
 }
