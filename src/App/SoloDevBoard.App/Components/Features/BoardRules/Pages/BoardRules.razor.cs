@@ -43,6 +43,7 @@ public partial class BoardRules : ComponentBase, IAsyncDisposable
     private string? errorMessage;
     private string? inaccessibleProjectBoardsWarning;
     private bool isCompareModeEnabled;
+    private bool isReloadingFromGitHub;
     private RepositoryDto? comparisonRepository;
     private IReadOnlyList<BoardRulesProjectBoardOptionDto> comparisonProjectBoardOptions = [];
     private string comparisonProjectBoardId = string.Empty;
@@ -71,7 +72,53 @@ public partial class BoardRules : ComponentBase, IAsyncDisposable
 
     private async Task ReloadRepositoriesAsync()
     {
-        await LoadRepositoriesAsync();
+        await LoadRepositoriesAsync(forceReload: true);
+    }
+
+    private async Task ReloadFromGitHubAsync()
+    {
+        if (isLoadingRepositories || isReloadingFromGitHub)
+        {
+            return;
+        }
+
+        var primaryRepositoryFullName = selectedRepository?.FullName;
+        var comparisonRepositoryFullName = comparisonRepository?.FullName;
+        var preservedPrimaryProjectBoardId = selectedProjectBoardId;
+        var preservedComparisonProjectBoardId = comparisonProjectBoardId;
+
+        isReloadingFromGitHub = true;
+
+        try
+        {
+            await RefreshRepositoriesCatalogueAsync(forceReload: true);
+
+            if (!string.IsNullOrWhiteSpace(primaryRepositoryFullName))
+            {
+                selectedRepository = availableRepositories
+                    .FirstOrDefault(repository => repository.FullName.Equals(primaryRepositoryFullName, StringComparison.OrdinalIgnoreCase));
+
+                if (selectedRepository is not null)
+                {
+                    await LoadProjectBoardOptionsAsync(selectedRepository, preservedPrimaryProjectBoardId);
+                }
+            }
+
+            if (isCompareModeEnabled && !string.IsNullOrWhiteSpace(comparisonRepositoryFullName))
+            {
+                comparisonRepository = availableRepositories
+                    .FirstOrDefault(repository => repository.FullName.Equals(comparisonRepositoryFullName, StringComparison.OrdinalIgnoreCase));
+
+                if (comparisonRepository is not null)
+                {
+                    await LoadComparisonProjectBoardOptionsAsync(comparisonRepository, preservedComparisonProjectBoardId);
+                }
+            }
+        }
+        finally
+        {
+            isReloadingFromGitHub = false;
+        }
     }
 
     private async Task ReloadProjectBoardsAsync()
@@ -81,7 +128,12 @@ public partial class BoardRules : ComponentBase, IAsyncDisposable
             return;
         }
 
-        await LoadProjectBoardOptionsAsync(selectedRepository);
+        await LoadProjectBoardOptionsAsync(selectedRepository, selectedProjectBoardId);
+    }
+
+    private async Task RetryUnsupportedBoardsAsync()
+    {
+        await ReloadProjectBoardsAsync();
     }
 
     private async Task ReloadComparisonProjectBoardsAsync()
@@ -91,10 +143,15 @@ public partial class BoardRules : ComponentBase, IAsyncDisposable
             return;
         }
 
-        await LoadComparisonProjectBoardOptionsAsync(comparisonRepository);
+        await LoadComparisonProjectBoardOptionsAsync(comparisonRepository, comparisonProjectBoardId);
     }
 
-    private async Task LoadRepositoriesAsync()
+    private async Task RetryComparisonUnsupportedBoardsAsync()
+    {
+        await ReloadComparisonProjectBoardsAsync();
+    }
+
+    private async Task LoadRepositoriesAsync(bool forceReload = false)
     {
         CancelPrimaryLoads();
         isLoadingRepositories = true;
@@ -110,7 +167,7 @@ public partial class BoardRules : ComponentBase, IAsyncDisposable
 
         try
         {
-            availableRepositories = (await RepositoryService.GetActiveRepositoriesAsync())
+            availableRepositories = (await RepositoryService.GetActiveRepositoriesAsync(forceReload: forceReload))
                 .OrderBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
         }
@@ -135,6 +192,37 @@ public partial class BoardRules : ComponentBase, IAsyncDisposable
         finally
         {
             isLoadingRepositories = false;
+        }
+    }
+
+    private async Task RefreshRepositoriesCatalogueAsync(bool forceReload)
+    {
+        hasRepositoryLoadFailure = false;
+        errorMessage = null;
+
+        try
+        {
+            availableRepositories = (await RepositoryService.GetActiveRepositoriesAsync(forceReload: forceReload))
+                .OrderBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
+        {
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            hasRepositoryLoadFailure = true;
+            errorMessage = $"GitHub API request failed. {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            hasRepositoryLoadFailure = true;
+            Logger.LogError(ex, "Failed to refresh repositories for the Board Rules Visualiser.");
+            errorMessage = "An unexpected error occurred while refreshing repositories.";
         }
     }
 
@@ -233,7 +321,7 @@ public partial class BoardRules : ComponentBase, IAsyncDisposable
         await LoadComparisonProjectBoardOptionsAsync(comparisonRepository);
     }
 
-    private async Task LoadProjectBoardOptionsAsync(RepositoryDto repository)
+    private async Task LoadProjectBoardOptionsAsync(RepositoryDto repository, string? preserveProjectBoardId = null)
     {
         ArgumentNullException.ThrowIfNull(repository);
 
@@ -276,7 +364,7 @@ public partial class BoardRules : ComponentBase, IAsyncDisposable
             inaccessibleProjectBoardsWarning = LinkedProjectBoardVisibility.BuildInaccessibleProjectsWarning(
                 discovery.TotalLinkedProjectCount,
                 discovery.InaccessibleLinkedProjectCount);
-            selectedProjectBoardId = availableProjectBoardOptions.FirstOrDefault()?.Id ?? string.Empty;
+            selectedProjectBoardId = ResolvePreservedProjectBoardId(availableProjectBoardOptions, preserveProjectBoardId);
             if (!string.IsNullOrWhiteSpace(selectedProjectBoardId))
             {
                 await LoadBoardRulesDefinitionAsync(owner, repo, selectedProjectBoardId);
@@ -330,7 +418,7 @@ public partial class BoardRules : ComponentBase, IAsyncDisposable
         }
     }
 
-    private async Task LoadComparisonProjectBoardOptionsAsync(RepositoryDto repository)
+    private async Task LoadComparisonProjectBoardOptionsAsync(RepositoryDto repository, string? preserveProjectBoardId = null)
     {
         ArgumentNullException.ThrowIfNull(repository);
 
@@ -370,7 +458,7 @@ public partial class BoardRules : ComponentBase, IAsyncDisposable
             comparisonInaccessibleProjectBoardsWarning = LinkedProjectBoardVisibility.BuildInaccessibleProjectsWarning(
                 discovery.TotalLinkedProjectCount,
                 discovery.InaccessibleLinkedProjectCount);
-            comparisonProjectBoardId = comparisonProjectBoardOptions.FirstOrDefault()?.Id ?? string.Empty;
+            comparisonProjectBoardId = ResolvePreservedProjectBoardId(comparisonProjectBoardOptions, preserveProjectBoardId);
             if (!string.IsNullOrWhiteSpace(comparisonProjectBoardId))
             {
                 await LoadComparisonBoardRulesDefinitionAsync(owner, repo, comparisonProjectBoardId);
@@ -715,6 +803,25 @@ public partial class BoardRules : ComponentBase, IAsyncDisposable
         var parts = fullName.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         return parts.Length > 1 ? parts[1] : string.Empty;
     }
+
+    private static string ResolvePreservedProjectBoardId(
+        IReadOnlyList<BoardRulesProjectBoardOptionDto> options,
+        string? preserveProjectBoardId)
+    {
+        if (!string.IsNullOrWhiteSpace(preserveProjectBoardId)
+            && options.Any(option => option.Id.Equals(preserveProjectBoardId, StringComparison.Ordinal)))
+        {
+            return preserveProjectBoardId;
+        }
+
+        return options.FirstOrDefault()?.Id ?? string.Empty;
+    }
+
+    private bool ShowReloadFromGitHubButton
+        => !isLoadingRepositories;
+
+    private bool IsReloadFromGitHubDisabled
+        => isReloadingFromGitHub;
 
     private bool HasInaccessibleProjectBoardsWarning
         => !string.IsNullOrWhiteSpace(inaccessibleProjectBoardsWarning);
