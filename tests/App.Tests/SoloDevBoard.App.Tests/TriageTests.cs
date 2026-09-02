@@ -2,6 +2,7 @@ using System.Net;
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
+using MudBlazor.Extensions;
 using MudBlazor.Services;
 using NSubstitute;
 using SoloDevBoard.App.Components.Features.Triage.Pages;
@@ -9,7 +10,6 @@ using SoloDevBoard.App.Components.Shared.Components;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Repositories;
 using SoloDevBoard.Application.Services.Triage;
-using MudBlazor.Extensions;
 
 namespace SoloDevBoard.App.Tests;
 
