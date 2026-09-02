@@ -40,6 +40,7 @@ public partial class PlanningDailyFocusPanel : ComponentBase
     private bool limitRecommendationsToPlanningBoard;
     private int stallDaysThreshold = PlanningSettingsDefaults.StallDays;
     private int stalledReviewsLoadGeneration;
+    private int recommendationsLoadGeneration;
 
     /// <inheritdoc/>
     protected override Task OnParametersSetAsync()
@@ -217,16 +218,6 @@ public partial class PlanningDailyFocusPanel : ComponentBase
         {
             LimitRecommendationsToPlanningBoard = limitToPlanningBoard,
         }).ConfigureAwait(false);
-
-        limitRecommendationsToPlanningBoard = limitToPlanningBoard;
-        ChromeCoordinator.ClearDailyFocusRecommendations();
-
-        if (!string.IsNullOrWhiteSpace(ChromeState.Settings.PlanningBoardNodeId))
-        {
-            await LoadRecommendationsAsync(
-                ChromeState.Settings.PlanningBoardNodeId,
-                limitToPlanningBoard).ConfigureAwait(false);
-        }
     }
 
     private async Task LoadBoardStateAsync(string boardId, int capacity, int stallDays)
@@ -353,6 +344,7 @@ public partial class PlanningDailyFocusPanel : ComponentBase
             return;
         }
 
+        var generation = Interlocked.Increment(ref recommendationsLoadGeneration);
         isLoadingRecommendations = true;
         recommendationsErrorMessage = null;
         recommendationsWarningMessage = null;
@@ -364,6 +356,12 @@ public partial class PlanningDailyFocusPanel : ComponentBase
             var result = await RecommendationService
                 .GetRecommendationsAsync(boardId, limitToPlanningBoard)
                 .ConfigureAwait(false);
+
+            if (!ShouldApplyRecommendationsResult(generation, boardId, limitToPlanningBoard))
+            {
+                return;
+            }
+
             recommendations = result.Recommendations;
             recommendationsWarningMessage = FormatPartialFailureWarning(result.Failures);
             ChromeCoordinator.SetDailyFocusRecommendations(
@@ -377,6 +375,12 @@ public partial class PlanningDailyFocusPanel : ComponentBase
         catch (Exception exception)
         {
             Logger.LogError(exception, "Failed to load Daily Focus recommendations.");
+
+            if (!ShouldApplyRecommendationsResult(generation, boardId, limitToPlanningBoard))
+            {
+                return;
+            }
+
             recommendations = null;
             recommendationsWarningMessage = null;
             recommendationsErrorMessage =
@@ -390,9 +394,29 @@ public partial class PlanningDailyFocusPanel : ComponentBase
         }
         finally
         {
-            isLoadingRecommendations = false;
-            await InvokeAsync(StateHasChanged).ConfigureAwait(false);
+            if (generation == recommendationsLoadGeneration)
+            {
+                isLoadingRecommendations = false;
+                await InvokeAsync(StateHasChanged).ConfigureAwait(false);
+            }
         }
+    }
+
+    private bool ShouldApplyRecommendationsResult(int generation, string boardId, bool limitToPlanningBoard)
+    {
+        if (generation != recommendationsLoadGeneration)
+        {
+            return false;
+        }
+
+        var settings = ChromeState?.Settings;
+        if (settings is null || string.IsNullOrWhiteSpace(settings.PlanningBoardNodeId))
+        {
+            return false;
+        }
+
+        return settings.PlanningBoardNodeId.Equals(boardId, StringComparison.Ordinal)
+            && settings.LimitRecommendationsToPlanningBoard == limitToPlanningBoard;
     }
 
     private string DailyFocusLoadingAriaLabel
@@ -431,7 +455,16 @@ public partial class PlanningDailyFocusPanel : ComponentBase
 
     private bool ShowRecommendationsShortfall =>
         limitRecommendationsToPlanningBoard
-            && recommendations is { Count: > 0 and < 3 };
+            && recommendations is not null
+            && recommendations.Count < 3;
+
+    private string RecommendationsShortfallMessage =>
+        recommendations!.Count switch
+        {
+            0 => "No eligible items on the planning board. Recommendations are not backfilled from other repositories.",
+            1 => "Only 1 eligible item on the planning board. Recommendations are not backfilled from other repositories.",
+            _ => $"Only {recommendations.Count} eligible items on the planning board. Recommendations are not backfilled from other repositories.",
+        };
 
     private static string FormatPriorityChip(string? priorityLabel)
         => string.IsNullOrWhiteSpace(priorityLabel) ? "Unlabelled" : priorityLabel;

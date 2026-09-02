@@ -162,10 +162,10 @@
                     @if (ShowRecommendationsShortfall)
                     {
                         <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" data-testid="planning-daily-focus-recommendations-shortfall">
-                            Only @recommendations!.Count eligible @(recommendations.Count == 1 ? "item" : "items") on the planning board. Recommendations are not backfilled from other repositories.
+                            @RecommendationsShortfallMessage
                         </MudAlert>
                     }
-                    @if (recommendations.Count == 0)
+                    @if (recommendations.Count == 0 && !ShowRecommendationsShortfall)
                     {
                         <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" data-testid="planning-daily-focus-recommendations-empty">
                             No unblocked work items to recommend today.

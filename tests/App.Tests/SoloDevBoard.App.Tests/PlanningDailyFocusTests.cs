@@ -667,6 +667,98 @@ public sealed class PlanningDailyFocusTests
     }
 
     [Fact]
+    public async Task PlanningDailyFocus_WhenBoardScopedWithNoEligibleItems_ShowsShortfallInsteadOfEmptyAlert()
+    {
+        ConfigureDefaults();
+        _settingsStorage.StoredJson = """
+            {
+              "planningBoardNodeId": "PVT_board",
+              "limitRecommendationsToPlanningBoard": true
+            }
+            """;
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>())
+            .Returns(new DailyFocusBoardStateDto(
+                [new DailyFocusOccupancyChipDto("Todo", 1)],
+                ActiveLoad: 0,
+                Capacity: 8,
+                ItemCount: 1,
+                StalledUpNextItems: [],
+                StallDays: 3));
+        _recommendationService.GetRecommendationsAsync("PVT_board", true, Arg.Any<CancellationToken>())
+            .Returns(CreateRecommendationResult());
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPlanningPage<PlanningDailyFocus>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("No eligible items on the planning board", cut.Markup);
+            Assert.Contains("not backfilled from other repositories", cut.Markup);
+            Assert.DoesNotContain("No unblocked work items to recommend today.", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task PlanningDailyFocus_WhenRecommendationsScopeToggled_PersistsSettingAndReloadsBoardScopedRecommendations()
+    {
+        ConfigureDefaults();
+        _settingsStorage.StoredJson = """
+            {
+              "planningBoardNodeId": "PVT_board",
+              "limitRecommendationsToPlanningBoard": false
+            }
+            """;
+        _boardStateService.GetBoardStateAsync("PVT_board", 8, 3, Arg.Any<CancellationToken>())
+            .Returns(new DailyFocusBoardStateDto(
+                [new DailyFocusOccupancyChipDto("Todo", 1)],
+                ActiveLoad: 0,
+                Capacity: 8,
+                ItemCount: 1,
+                StalledUpNextItems: [],
+                StallDays: 3));
+        _recommendationService.GetRecommendationsAsync("PVT_board", false, Arg.Any<CancellationToken>())
+            .Returns(CreateRecommendationResult(
+                new DailyFocusRecommendationDto(
+                    1,
+                    "owner/repo-a",
+                    40,
+                    "Cross-repo item",
+                    "https://github.com/owner/repo-a/issues/40",
+                    "priority/high")));
+        _recommendationService.GetRecommendationsAsync("PVT_board", true, Arg.Any<CancellationToken>())
+            .Returns(CreateRecommendationResult(
+                new DailyFocusRecommendationDto(
+                    1,
+                    "owner/repo-a",
+                    7,
+                    "Board item",
+                    "https://github.com/owner/repo-a/issues/7",
+                    "priority/medium")));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.RenderPlanningPage<PlanningDailyFocus>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Recommended today (all included repositories)", cut.Markup);
+            Assert.Contains("owner/repo-a#40", cut.Markup);
+        });
+
+        var scopeSwitch = cut.FindComponent<MudSwitch<bool>>();
+        await cut.InvokeAsync(() => scopeSwitch.Instance.ValueChanged.InvokeAsync(true));
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Recommended today (selected planning board)", cut.Markup);
+            Assert.Contains("owner/repo-a#7", cut.Markup);
+            Assert.Contains("\"limitRecommendationsToPlanningBoard\":true", _settingsStorage.StoredJson, StringComparison.Ordinal);
+        });
+
+        await _recommendationService.Received(1).GetRecommendationsAsync("PVT_board", false, Arg.Any<CancellationToken>());
+        await _recommendationService.Received(1).GetRecommendationsAsync("PVT_board", true, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task PlanningDailyFocus_WhenRecommendationsExist_ShowsRankedRowsWithGitHubLinks()
     {
         ConfigureDefaults();
