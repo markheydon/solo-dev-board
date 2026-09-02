@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using SoloDevBoard.Domain.Entities.ActionsTemplates;
 
 namespace SoloDevBoard.Application.Services.ActionsTemplates;
@@ -8,7 +9,6 @@ public sealed class ActionsTemplateService : IActionsTemplateService
     private const string CustomCategory = "Custom";
     private const string PlaceholderPrefix = "{{";
     private const string PlaceholderSuffix = "}}";
-    private const string WorkflowsDirectoryPath = ".github/workflows";
 
     private static readonly DateTimeOffset BuiltInCreatedAt = new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
@@ -18,13 +18,17 @@ public sealed class ActionsTemplateService : IActionsTemplateService
         BuildParametersByTemplateId();
 
     private readonly IWorkflowFileRepository _workflowFileRepository;
+    private readonly ILogger<ActionsTemplateService> _logger;
 
     /// <summary>Initialises a new instance of the <see cref="ActionsTemplateService"/> class.</summary>
     /// <param name="workflowFileRepository">The repository used to read and write workflow files.</param>
-    public ActionsTemplateService(IWorkflowFileRepository workflowFileRepository)
+    /// <param name="logger">The logger used for custom template load diagnostics.</param>
+    public ActionsTemplateService(IWorkflowFileRepository workflowFileRepository, ILogger<ActionsTemplateService> logger)
     {
         ArgumentNullException.ThrowIfNull(workflowFileRepository);
+        ArgumentNullException.ThrowIfNull(logger);
         _workflowFileRepository = workflowFileRepository;
+        _logger = logger;
     }
 
     /// <inheritdoc/>
@@ -38,21 +42,44 @@ public sealed class ActionsTemplateService : IActionsTemplateService
 
         if (string.IsNullOrWhiteSpace(customSourceRepository))
         {
-            return new ActionsTemplateCatalogueDto(builtInTemplates, null);
+            return new ActionsTemplateCatalogueDto
+            {
+                Templates = builtInTemplates,
+            };
         }
 
         try
         {
-            var customTemplates = await LoadCustomTemplatesAsync(customSourceRepository.Trim(), cancellationToken).ConfigureAwait(false);
+            var trimmedSource = customSourceRepository.Trim();
+            var customLoadResult = await LoadCustomTemplatesAsync(trimmedSource, cancellationToken).ConfigureAwait(false);
             var mergedTemplates = builtInTemplates
-                .Concat(customTemplates.Select(MapToDto))
+                .Concat(customLoadResult.Templates.Select(MapToDto))
                 .ToArray();
+            var customSourceWarning = BuildSkippedWorkflowWarning(trimmedSource, customLoadResult.SkippedWorkflowPaths);
 
-            return new ActionsTemplateCatalogueDto(mergedTemplates, null);
+            if (customLoadResult.SkippedWorkflowPaths.Count > 0)
+            {
+                _logger.LogWarning(
+                    "Skipped {SkippedCount} workflow file(s) while loading custom Actions templates from {RepositoryFullName}: {SkippedPaths}",
+                    customLoadResult.SkippedWorkflowPaths.Count,
+                    trimmedSource,
+                    string.Join(", ", customLoadResult.SkippedWorkflowPaths));
+            }
+
+            return new ActionsTemplateCatalogueDto
+            {
+                Templates = mergedTemplates,
+                CustomSourceWarning = customSourceWarning,
+                SkippedWorkflowPaths = customLoadResult.SkippedWorkflowPaths,
+            };
         }
         catch (Exception ex) when (ex is HttpRequestException or ArgumentException or FormatException)
         {
-            return new ActionsTemplateCatalogueDto(builtInTemplates, MapCustomSourceError(ex, customSourceRepository.Trim()));
+            return new ActionsTemplateCatalogueDto
+            {
+                Templates = builtInTemplates,
+                CustomSourceError = MapCustomSourceError(ex, customSourceRepository.Trim()),
+            };
         }
     }
 
@@ -168,7 +195,7 @@ public sealed class ActionsTemplateService : IActionsTemplateService
             .ToArray();
     }
 
-    private async Task<IReadOnlyList<ActionsTemplate>> LoadCustomTemplatesAsync(string repositoryFullName, CancellationToken cancellationToken)
+    private async Task<CustomTemplateLoadResult> LoadCustomTemplatesAsync(string repositoryFullName, CancellationToken cancellationToken)
     {
         var sourceRepository = SplitRepositoryFullName(repositoryFullName);
         var directoryEntries = await _workflowFileRepository
@@ -182,6 +209,7 @@ public sealed class ActionsTemplateService : IActionsTemplateService
             .ToArray();
 
         var templates = new List<ActionsTemplate>(workflowEntries.Length);
+        var skippedWorkflowPaths = new List<string>();
 
         foreach (var entry in workflowEntries)
         {
@@ -193,6 +221,7 @@ public sealed class ActionsTemplateService : IActionsTemplateService
 
             if (workflowFile is null)
             {
+                skippedWorkflowPaths.Add(entry.Path);
                 continue;
             }
 
@@ -210,8 +239,12 @@ public sealed class ActionsTemplateService : IActionsTemplateService
             });
         }
 
-        return templates;
+        return new CustomTemplateLoadResult(templates, skippedWorkflowPaths);
     }
+
+    private sealed record CustomTemplateLoadResult(
+        IReadOnlyList<ActionsTemplate> Templates,
+        IReadOnlyList<string> SkippedWorkflowPaths);
 
     private async Task<ActionsTemplateRepositoryStatusDto> BuildRepositoryStatusAsync(
         ActionsTemplate template,
@@ -333,6 +366,17 @@ public sealed class ActionsTemplateService : IActionsTemplateService
             HttpRequestException httpRequestException => httpRequestException.Message,
             _ => $"Unable to load custom templates from '{repositoryFullName}'.",
         };
+
+    private static string? BuildSkippedWorkflowWarning(string repositoryFullName, IReadOnlyList<string> skippedWorkflowPaths)
+    {
+        if (skippedWorkflowPaths.Count == 0)
+        {
+            return null;
+        }
+
+        var skippedPaths = string.Join(", ", skippedWorkflowPaths);
+        return $"Could not load {skippedWorkflowPaths.Count} workflow file(s) from '{repositoryFullName}': {skippedPaths}.";
+    }
 
     private static bool IsTopLevelWorkflowPath(string path)
     {

@@ -260,6 +260,57 @@ public sealed class ActionsTemplatesTests
     }
 
     [Fact]
+    public async Task ActionsTemplates_CustomSourceError_ShowsErrorAlert()
+    {
+        // Arrange
+        _workflowTemplateService
+            .GetTemplatesAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(new ActionsTemplateCatalogueDto
+            {
+                Templates = CreateTemplates(),
+                CustomSourceError = "Repository 'owner/missing' was not found or is not accessible.",
+            });
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(CreateRepositories());
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<ActionsTemplates>();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='actions-templates-custom-source-error']"));
+            Assert.Contains("was not found or is not accessible", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task ActionsTemplates_CustomSourceWarning_ShowsWarningAlert()
+    {
+        // Arrange
+        _workflowTemplateService
+            .GetTemplatesAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(new ActionsTemplateCatalogueDto
+            {
+                Templates = CreateTemplates(),
+                CustomSourceWarning = "Could not load 1 workflow file(s) from 'owner/template-repo': .github/workflows/missing.yml.",
+                SkippedWorkflowPaths = [".github/workflows/missing.yml"],
+            });
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(CreateRepositories());
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<ActionsTemplates>();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='actions-templates-custom-source-warning']"));
+            Assert.Contains("Could not load 1 workflow file(s)", cut.Markup);
+        });
+    }
+
+    [Fact]
     public async Task ActionsTemplates_NoMatchingResults_ShowsEmptyState()
     {
         // Arrange
@@ -284,7 +335,7 @@ public sealed class ActionsTemplatesTests
 
     private void SetupDefaultServices()
     {
-        _workflowTemplateService.GetTemplatesAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>()).Returns(new ActionsTemplateCatalogueDto(CreateTemplates(), null));
+        _workflowTemplateService.GetTemplatesAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>()).Returns(new ActionsTemplateCatalogueDto { Templates = CreateTemplates() });
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(CreateRepositories());
     }

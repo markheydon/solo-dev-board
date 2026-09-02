@@ -6,9 +6,6 @@ namespace SoloDevBoard.Application.Services.ActionsTemplates;
 /// <summary>Parses workflow YAML for display metadata and inferred template parameters.</summary>
 public static partial class WorkflowYamlTemplateParser
 {
-    private const string PlaceholderPrefix = "{{";
-    private const string PlaceholderSuffix = "}}";
-
     [GeneratedRegex(@"^\s*name\s*:\s*(.+?)\s*$", RegexOptions.Multiline)]
     private static partial Regex WorkflowNameRegex();
 

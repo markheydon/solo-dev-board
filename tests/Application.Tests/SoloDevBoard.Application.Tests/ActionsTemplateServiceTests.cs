@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using SoloDevBoard.Application.Services.ActionsTemplates;
 using SoloDevBoard.Domain.Entities.Workflows;
@@ -11,6 +12,7 @@ public sealed class ActionsTemplateServiceTests
     private const string CustomTemplateId = "custom:source-owner/template-repo:.github/workflows/deploy.yml";
 
     private readonly IWorkflowFileRepository _workflowFileRepository = Substitute.For<IWorkflowFileRepository>();
+    private readonly ILogger<ActionsTemplateService> _logger = Substitute.For<ILogger<ActionsTemplateService>>();
 
     [Fact]
     public void Constructor_WorkflowFileRepositoryIsNull_ThrowsArgumentNullException()
@@ -19,7 +21,20 @@ public sealed class ActionsTemplateServiceTests
         IWorkflowFileRepository? workflowFileRepository = null;
 
         // Act
-        var action = () => _ = new ActionsTemplateService(workflowFileRepository!);
+        var action = () => _ = new ActionsTemplateService(workflowFileRepository!, _logger);
+
+        // Assert
+        Assert.Throws<ArgumentNullException>(action);
+    }
+
+    [Fact]
+    public void Constructor_LoggerIsNull_ThrowsArgumentNullException()
+    {
+        // Arrange
+        ILogger<ActionsTemplateService>? logger = null;
+
+        // Act
+        var action = () => _ = new ActionsTemplateService(_workflowFileRepository, logger!);
 
         // Assert
         Assert.Throws<ArgumentNullException>(action);
@@ -156,6 +171,53 @@ public sealed class ActionsTemplateServiceTests
         Assert.Equal(3, result.Templates.Count);
         Assert.NotNull(result.CustomSourceError);
         Assert.Contains("not found", result.CustomSourceError, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task GetTemplatesAsync_WithCustomSourceAndSkippedWorkflowFile_ReturnsWarningAndSkippedPaths()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        _workflowFileRepository
+            .ListWorkflowFilesAsync("source-owner", "template-repo", cancellationToken)
+            .Returns([
+                new WorkflowDirectoryEntry
+                {
+                    Path = ".github/workflows/deploy.yml",
+                    Name = "deploy.yml",
+                },
+                new WorkflowDirectoryEntry
+                {
+                    Path = ".github/workflows/missing.yml",
+                    Name = "missing.yml",
+                },
+            ]);
+
+        _workflowFileRepository
+            .GetWorkflowFileAsync("source-owner", "template-repo", ".github/workflows/deploy.yml", cancellationToken)
+            .Returns(new WorkflowFile
+            {
+                Path = ".github/workflows/deploy.yml",
+                Content = "name: Deploy\n\njobs:\n  deploy:\n    runs-on: ubuntu-latest",
+                Sha = "sha-1",
+            });
+
+        _workflowFileRepository
+            .GetWorkflowFileAsync("source-owner", "template-repo", ".github/workflows/missing.yml", cancellationToken)
+            .Returns((WorkflowFile?)null);
+
+        var sut = CreateSut();
+
+        // Act
+        var result = await sut.GetTemplatesAsync("source-owner/template-repo", cancellationToken);
+
+        // Assert
+        Assert.Null(result.CustomSourceError);
+        Assert.NotNull(result.CustomSourceWarning);
+        Assert.Contains("missing.yml", result.CustomSourceWarning, StringComparison.OrdinalIgnoreCase);
+        Assert.Single(result.SkippedWorkflowPaths);
+        Assert.Equal(".github/workflows/missing.yml", result.SkippedWorkflowPaths[0]);
+        Assert.Equal(4, result.Templates.Count);
     }
 
     [Fact]
@@ -496,11 +558,13 @@ public sealed class ActionsTemplateServiceTests
     }
 
     private ActionsTemplateService CreateSut()
-        => new(_workflowFileRepository);
+        => new(_workflowFileRepository, _logger);
 
     private static async Task<string> GetRenderedCiYamlAsync()
     {
-        var sut = new ActionsTemplateService(Substitute.For<IWorkflowFileRepository>());
+        var sut = new ActionsTemplateService(
+            Substitute.For<IWorkflowFileRepository>(),
+            Substitute.For<ILogger<ActionsTemplateService>>());
         var detail = await sut.GetTemplateDetailAsync(BuiltInCiId, TestContext.Current.CancellationToken);
         return detail.YamlPreview;
     }

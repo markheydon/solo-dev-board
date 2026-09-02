@@ -50,6 +50,8 @@ public partial class ActionsTemplates : ComponentBase
     private bool hasLoadFailure;
     private bool hasRepositoryLoadFailure;
     private string? repositoryLoadErrorMessage;
+    private string? customSourceError;
+    private string? customSourceWarning;
 
     private void ShowSnackbarFeedback(string message, Severity severity)
         => SnackbarFeedback.Show(Snackbar, message, severity);
@@ -113,11 +115,15 @@ public partial class ActionsTemplates : ComponentBase
     {
         isLoadingTemplates = true;
         hasLoadFailure = false;
+        customSourceError = null;
+        customSourceWarning = null;
 
         try
         {
             var catalogue = await ActionsTemplateService.GetTemplatesAsync();
             templates = catalogue.Templates;
+            customSourceError = catalogue.CustomSourceError;
+            customSourceWarning = catalogue.CustomSourceWarning;
         }
         catch
         {
