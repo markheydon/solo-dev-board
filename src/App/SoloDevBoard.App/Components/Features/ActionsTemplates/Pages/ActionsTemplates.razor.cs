@@ -8,10 +8,11 @@ using SoloDevBoard.Application.Services.Repositories;
 
 namespace SoloDevBoard.App.Components.Features.ActionsTemplates.Pages;
 
-/// <summary>Provides the workflow template browser for built-in GitHub Actions templates.</summary>
+/// <summary>Provides the workflow template browser for built-in and custom GitHub Actions templates.</summary>
 public partial class ActionsTemplates : ComponentBase
 {
     private const string AllCategoriesLabel = "All";
+    private const string LastUsedSourceHelperText = "Last-used source restored from browser storage.";
 
     /// <summary>Gets or sets the application service used to retrieve workflow templates.</summary>
     [Inject]
@@ -20,6 +21,10 @@ public partial class ActionsTemplates : ComponentBase
     /// <summary>Gets or sets the application service used to retrieve repositories.</summary>
     [Inject]
     public IRepositoryService RepositoryService { get; set; } = default!;
+
+    /// <summary>Gets or sets the browser storage for the last-used custom template source.</summary>
+    [Inject]
+    public IActionsTemplateSourceStorage ActionsTemplateSourceStorage { get; set; } = default!;
 
     /// <summary>Gets or sets the logger for workflow page diagnostics.</summary>
     [Inject]
@@ -52,11 +57,42 @@ public partial class ActionsTemplates : ComponentBase
     private string? repositoryLoadErrorMessage;
     private string? customSourceError;
     private string? customSourceWarning;
+    private string customSourceRepository = string.Empty;
+    private string? loadedCustomSourceRepository;
+    private bool isLoadingCustomSource;
+    private bool restoredLastUsedSource;
 
     private void ShowSnackbarFeedback(string message, Severity severity)
         => SnackbarFeedback.Show(Snackbar, message, severity);
 
     private bool ShowLoadingState => isLoadingTemplates;
+
+    private bool IsLoadCustomSourceDisabled
+        => ShowLoadingState
+            || isLoadingCustomSource
+            || string.IsNullOrWhiteSpace(customSourceRepository);
+
+    private string CustomSourceHelperText
+        => restoredLastUsedSource && !string.IsNullOrWhiteSpace(customSourceRepository)
+            ? LastUsedSourceHelperText
+            : string.Empty;
+
+    private string CustomSourceRepository
+    {
+        get => customSourceRepository;
+        set
+        {
+            var normalisedValue = value ?? string.Empty;
+            if (customSourceRepository == normalisedValue)
+            {
+                return;
+            }
+
+            customSourceRepository = normalisedValue;
+            restoredLastUsedSource = false;
+            StateHasChanged();
+        }
+    }
 
     private string SearchText
     {
@@ -108,19 +144,61 @@ public partial class ActionsTemplates : ComponentBase
     /// <inheritdoc/>
     protected override async Task OnInitializedAsync()
     {
-        await Task.WhenAll(LoadTemplatesAsync(), LoadRepositoriesAsync());
+        await RestoreLastUsedCustomSourceAsync();
+        await Task.WhenAll(LoadTemplatesAsync(loadedCustomSourceRepository), LoadRepositoriesAsync());
     }
 
-    private async Task LoadTemplatesAsync()
+    private async Task RestoreLastUsedCustomSourceAsync()
+    {
+        var lastUsedSource = await ActionsTemplateSourceStorage.GetLastUsedSourceAsync().ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(lastUsedSource))
+        {
+            return;
+        }
+
+        customSourceRepository = lastUsedSource.Trim();
+        loadedCustomSourceRepository = customSourceRepository;
+        restoredLastUsedSource = true;
+    }
+
+    private async Task LoadCustomSourceAsync()
+    {
+        if (string.IsNullOrWhiteSpace(customSourceRepository))
+        {
+            return;
+        }
+
+        var trimmedSource = customSourceRepository.Trim();
+        loadedCustomSourceRepository = trimmedSource;
+        restoredLastUsedSource = false;
+        isLoadingCustomSource = true;
+
+        try
+        {
+            await ActionsTemplateSourceStorage.SetLastUsedSourceAsync(trimmedSource).ConfigureAwait(false);
+            await LoadTemplatesAsync(trimmedSource).ConfigureAwait(false);
+        }
+        finally
+        {
+            isLoadingCustomSource = false;
+        }
+    }
+
+    private async Task LoadTemplatesAsync(string? customSource = null)
     {
         isLoadingTemplates = true;
         hasLoadFailure = false;
         customSourceError = null;
         customSourceWarning = null;
+        selectedTemplateId = null;
+        selectedTemplateDetail = null;
+        parameterValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        repositoryStatuses = [];
+        applyResults = [];
 
         try
         {
-            var catalogue = await ActionsTemplateService.GetTemplatesAsync();
+            var catalogue = await ActionsTemplateService.GetTemplatesAsync(customSource).ConfigureAwait(false);
             templates = catalogue.Templates;
             customSourceError = catalogue.CustomSourceError;
             customSourceWarning = catalogue.CustomSourceWarning;

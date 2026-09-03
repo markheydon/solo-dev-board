@@ -15,6 +15,7 @@ The Actions Templates feature allows you to browse, apply, and customise GitHub 
 
 Key goals of Actions Templates:
 - Provide a library of reusable GitHub Actions workflow templates suited to common .NET development patterns.
+- Load additional workflow YAML from one GitHub repository you maintain.
 - Allow templates to be parameterised and customised per repository before being applied.
 - Track which repositories have a given template applied and whether they are up to date.
 
@@ -36,9 +37,21 @@ Key goals of Actions Templates:
 Each template card shows:
 
 - Template name and description.
+- Source badge (**Built-in** or the custom `owner/name` repository).
 - Category and tags.
 - Target workflow file path.
 - Trigger summary describing when the workflow runs.
+
+### Load custom template repositories
+
+1. In the **Custom template source** section, enter a GitHub repository in `owner/name` format.
+2. Select **Load templates** to fetch workflow YAML from `.github/workflows` in that repository.
+3. Custom templates appear in the same card grid as built-ins, each with a source badge showing the repository you loaded.
+4. SoloDevBoard remembers the last-used source in your browser and pre-fills the field on your next visit.
+
+Built-in templates always remain visible. If the source is invalid, inaccessible, or has no workflow files, a clear message is shown and you can continue using built-ins.
+
+Custom YAML may include `{{token}}` placeholders. When you open a custom template, each unique token becomes a required parameter field labelled with the token name.
 
 ### Customise template parameters
 
@@ -70,7 +83,6 @@ Drift detection is informational and does not block browsing or previewing templ
 
 ### What is coming later
 
-- Custom template repositories so you can maintain organisation-specific templates outside the built-in catalogue.
 - Persisted default parameter profiles so common values can be reused across apply runs without re-entering them each time.
 
 ---
@@ -78,11 +90,12 @@ Drift detection is informational and does not block browsing or previewing templ
 ## Configuration
 
 {{< callout type="info" >}}
-**Scope note** — Built-in templates, parameterisation, apply, and drift detection are available now. Custom template repositories and persisted default parameter profiles are planned for a later release.
+**Scope note** — Built-in templates, custom template repositories, parameterisation, apply, and drift detection are available now. Persisted default parameter profiles are planned for a later release.
 {{< /callout >}}
 
 Current behaviour:
 
-- Templates are provided as a built-in catalogue.
+- Built-in templates are always available.
+- One additional GitHub `owner/name` source can be loaded per session. The last-used source is remembered in browser storage only.
 - Parameter values are entered per apply run in the UI.
 - There are no `appsettings.json` entries specific to this feature.

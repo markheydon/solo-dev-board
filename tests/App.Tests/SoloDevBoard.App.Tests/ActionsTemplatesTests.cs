@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
 using MudBlazor.Services;
 using NSubstitute;
+using SoloDevBoard.App.Components.Features.ActionsTemplates;
 using SoloDevBoard.App.Components.Features.ActionsTemplates.Pages;
 using SoloDevBoard.Application.Services.ActionsTemplates;
 using SoloDevBoard.Application.Services.Repositories;
@@ -14,6 +15,7 @@ public sealed class ActionsTemplatesTests
 {
     private readonly IActionsTemplateService _workflowTemplateService = Substitute.For<IActionsTemplateService>();
     private readonly IRepositoryService _repositoryService = Substitute.For<IRepositoryService>();
+    private readonly IActionsTemplateSourceStorage _actionsTemplateSourceStorage = Substitute.For<IActionsTemplateSourceStorage>();
     private IRenderedComponent<MudSnackbarProvider> _snackbarProvider = default!;
 
     [Fact]
@@ -49,11 +51,15 @@ public sealed class ActionsTemplatesTests
         cut.WaitForAssertion(() =>
         {
             Assert.Single(cut.FindAll("[data-testid='repository-selector-region']"));
+            Assert.Single(cut.FindAll("[data-testid='actions-templates-custom-source-region']"));
+            Assert.Single(cut.FindAll("[data-testid='actions-templates-custom-source-field']"));
             Assert.Single(cut.FindAll("[data-testid='actions-templates-browser-region']"));
             Assert.Single(cut.FindAll("[data-testid='actions-templates-grid']"));
             Assert.Contains(".NET CI", cut.Markup);
             Assert.Contains("Azure CD (Aspire)", cut.Markup);
             Assert.Contains("Dependabot Auto-Merge", cut.Markup);
+            Assert.Single(cut.FindAll("[data-testid='actions-templates-source-badge-builtin:1']"));
+            Assert.Contains("Built-in", cut.Markup);
         });
     }
 
@@ -311,6 +317,94 @@ public sealed class ActionsTemplatesTests
     }
 
     [Fact]
+    public async Task ActionsTemplates_RestoreLastUsedSource_LoadsCatalogueWithStoredSource()
+    {
+        // Arrange
+        _actionsTemplateSourceStorage.GetLastUsedSourceAsync().Returns("owner/template-repo");
+        _workflowTemplateService
+            .GetTemplatesAsync("owner/template-repo", Arg.Any<CancellationToken>())
+            .Returns(new ActionsTemplateCatalogueDto { Templates = CreateTemplates() });
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(CreateRepositories());
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<ActionsTemplates>();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("owner/template-repo", cut.Markup);
+            Assert.Contains(LastUsedSourceHelperText, cut.Markup);
+        });
+
+        await _workflowTemplateService.Received(1).GetTemplatesAsync("owner/template-repo", Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ActionsTemplates_LoadCustomSource_CallsServiceWithRepositoryAndShowsCustomBadge()
+    {
+        // Arrange
+        SetupDefaultServices();
+        _workflowTemplateService
+            .GetTemplatesAsync("owner/template-repo", Arg.Any<CancellationToken>())
+            .Returns(new ActionsTemplateCatalogueDto
+            {
+                Templates =
+                [
+                    ..CreateTemplates(),
+                    new(
+                        "custom:owner/template-repo:.github/workflows/deploy.yml",
+                        "Deploy",
+                        "Deploy workflow",
+                        "Custom",
+                        ["deploy"],
+                        ".github/workflows/deploy.yml",
+                        "Manual workflow dispatch",
+                        new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
+                        "owner/template-repo"),
+                ],
+            });
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<ActionsTemplates>();
+
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='actions-templates-custom-source-field']")));
+
+        // Act
+        var sourceField = cut.Find("[data-testid='actions-templates-custom-source-field']");
+        sourceField.Change("owner/template-repo");
+        await cut.InvokeAsync(() => cut.Find("[data-testid='actions-templates-custom-source-load']").Click());
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='actions-templates-source-badge-custom:owner/template-repo:.github/workflows/deploy.yml']"));
+            Assert.Contains("owner/template-repo", cut.Markup);
+        });
+
+        await _actionsTemplateSourceStorage.Received(1).SetLastUsedSourceAsync("owner/template-repo");
+        await _workflowTemplateService.Received(1).GetTemplatesAsync("owner/template-repo", Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ActionsTemplates_LoadCustomSource_DisabledWhenFieldEmpty()
+    {
+        // Arrange
+        SetupDefaultServices();
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<ActionsTemplates>();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            var loadButton = cut.Find("[data-testid='actions-templates-custom-source-load']");
+            Assert.True(loadButton.HasAttribute("disabled"));
+        });
+    }
+
+    [Fact]
     public async Task ActionsTemplates_NoMatchingResults_ShowsEmptyState()
     {
         // Arrange
@@ -335,6 +429,7 @@ public sealed class ActionsTemplatesTests
 
     private void SetupDefaultServices()
     {
+        _actionsTemplateSourceStorage.GetLastUsedSourceAsync().Returns((string?)null);
         _workflowTemplateService.GetTemplatesAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>()).Returns(new ActionsTemplateCatalogueDto { Templates = CreateTemplates() });
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(CreateRepositories());
@@ -348,6 +443,7 @@ public sealed class ActionsTemplatesTests
         ctx.Services.AddTestGitHubAuthenticationRecovery();
         ctx.Services.AddScoped(_ => _workflowTemplateService);
         ctx.Services.AddScoped(_ => _repositoryService);
+        ctx.Services.AddScoped(_ => _actionsTemplateSourceStorage);
 
         ctx.Render<MudPopoverProvider>();
         ctx.Render<MudDialogProvider>();
@@ -379,6 +475,8 @@ public sealed class ActionsTemplatesTests
                 new ActionsTemplateParameterDto("dotnetVersion", ".NET version", "The .NET SDK version used by the workflow.", "10.0.x", false),
             ]);
 
+    private const string LastUsedSourceHelperText = "Last-used source restored from browser storage.";
+
     private static IReadOnlyList<ActionsTemplateDto> CreateTemplates()
         =>
         [
@@ -390,7 +488,8 @@ public sealed class ActionsTemplatesTests
                 ["dotnet", "github-actions", "build", "test"],
                 ".github/workflows/ci.yml",
                 "Push and pull request to main",
-                new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)),
+                new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
+                "Built-in"),
             new(
                 "builtin:2",
                 "Azure CD (Aspire)",
@@ -399,7 +498,8 @@ public sealed class ActionsTemplatesTests
                 ["aspire", "azure", "deploy", "container-apps"],
                 ".github/workflows/cd.yml",
                 "Manual workflow dispatch",
-                new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)),
+                new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
+                "Built-in"),
             new(
                 "builtin:3",
                 "Dependabot Auto-Merge",
@@ -408,6 +508,7 @@ public sealed class ActionsTemplatesTests
                 ["dependabot", "security", "automation"],
                 ".github/workflows/dependabot-auto-merge.yml",
                 "Dependabot pull requests targeting main",
-                new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)),
+                new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
+                "Built-in"),
         ];
 }

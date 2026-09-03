@@ -399,7 +399,23 @@ public sealed class ActionsTemplateService : IActionsTemplateService
             template.Tags,
             template.WorkflowFilePath,
             template.TriggerDescription,
-            template.CreatedAt);
+            template.CreatedAt,
+            ResolveSourceLabel(template.Id));
+
+    private static string ResolveSourceLabel(string templateId)
+    {
+        if (ActionsTemplateIdFormatter.IsBuiltIn(templateId))
+        {
+            return "Built-in";
+        }
+
+        if (ActionsTemplateIdFormatter.IsCustom(templateId))
+        {
+            return ActionsTemplateIdFormatter.ParseCustom(templateId).RepositoryFullName;
+        }
+
+        return "Unknown";
+    }
 
     private static ActionsTemplateDetailDto MapToDetailDto(
         ActionsTemplate template,

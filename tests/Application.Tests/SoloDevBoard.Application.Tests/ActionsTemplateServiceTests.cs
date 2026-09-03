@@ -72,6 +72,7 @@ public sealed class ActionsTemplateServiceTests
         // Assert
         Assert.Equal(BuiltInCiId, ciTemplate.Id);
         Assert.Equal("CI", ciTemplate.Category);
+        Assert.Equal("Built-in", ciTemplate.SourceLabel);
         Assert.Equal(".github/workflows/ci.yml", ciTemplate.WorkflowFilePath);
         Assert.Contains("dotnet", ciTemplate.Tags);
         Assert.False(string.IsNullOrWhiteSpace(ciTemplate.TriggerDescription));
@@ -113,6 +114,7 @@ public sealed class ActionsTemplateServiceTests
         Assert.Contains(result.Templates, template => template.Id == CustomTemplateId);
         Assert.Equal("Deploy", result.Templates.Single(template => template.Id == CustomTemplateId).Name);
         Assert.Equal("Custom", result.Templates.Single(template => template.Id == CustomTemplateId).Category);
+        Assert.Equal("source-owner/template-repo", result.Templates.Single(template => template.Id == CustomTemplateId).SourceLabel);
     }
 
     [Fact]
