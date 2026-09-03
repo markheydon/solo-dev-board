@@ -421,7 +421,12 @@ public sealed class TriageServiceTests
         Assert.Single(result.Queue[0].Labels);
         Assert.Equal("priority/high", result.Queue[0].Labels[0]);
 
-        await _gitHubService.Received(1).AddLabelsToTriageItemAsync("owner", "repo", 99, Arg.Is<IReadOnlyList<string>>(labels => labels!.Count == 1 && labels[0] == "priority/high"), cancellationToken);
+        await _gitHubService.DidNotReceive().AddLabelsToTriageItemAsync(
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<int>(),
+            Arg.Any<IReadOnlyList<string>>(),
+            cancellationToken);
     }
 
     [Fact]

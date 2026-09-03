@@ -177,6 +177,11 @@ public sealed class TriageService : ITriageService
         }
 
         var trimmedLabelName = labelName.Trim();
+        if (currentItem.Labels.Any(label => string.Equals(label.Name, trimmedLabelName, StringComparison.OrdinalIgnoreCase)))
+        {
+            return ToDto(domainSession);
+        }
+
         var updatedLabels = currentItem.Labels
             .Select(label => label.Name)
             .Concat([trimmedLabelName])
