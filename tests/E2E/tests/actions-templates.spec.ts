@@ -6,6 +6,7 @@ test.describe('Workflow template browser', () => {
 
     await expect(page.getByTestId('actions-templates-custom-source-region')).toBeVisible();
     await expect(page.getByTestId('actions-templates-custom-source-field')).toBeVisible();
+    await expect(page.getByTestId('actions-templates-custom-source-load')).toBeVisible();
     await expect(page.getByTestId('actions-templates-browser-region')).toBeVisible();
     await expect(page.getByTestId('actions-templates-loading-state')).toBeHidden({ timeout: 15_000 });
     await expect(page.getByTestId('actions-templates-grid')).toBeVisible();
@@ -20,6 +21,38 @@ test.describe('Workflow template browser', () => {
       'Select a template to review YAML',
     );
     await expect(page.getByTestId('actions-templates-select-builtin:1')).toHaveText('Selected');
+  });
+
+  test('built-in-only catalogue when custom source is empty', async ({ page }) => {
+    await page.goto('/actions-templates');
+
+    await expect(page.getByTestId('actions-templates-loading-state')).toBeHidden({ timeout: 15_000 });
+    await expect(page.getByTestId('actions-templates-custom-source-field')).toHaveValue('');
+    await expect(page.getByTestId('actions-templates-custom-source-load')).toBeDisabled();
+    await expect(page.getByTestId('actions-templates-card-builtin:1')).toBeVisible();
+    await expect(page.getByTestId('actions-templates-card-builtin:2')).toBeVisible();
+    await expect(page.getByTestId('actions-templates-card-builtin:3')).toBeVisible();
+    await expect(page.getByTestId('actions-templates-source-badge-builtin:1')).toHaveText('Built-in');
+    await expect(page.locator('[data-testid^="actions-templates-source-badge-custom:"]')).toHaveCount(0);
+    await expect(page.getByTestId('actions-templates-custom-source-error')).toBeHidden();
+  });
+
+  test('invalid custom source shows error while built-in templates remain visible', async ({ page }) => {
+    await page.goto('/actions-templates');
+
+    await expect(page.getByTestId('actions-templates-loading-state')).toBeHidden({ timeout: 15_000 });
+
+    const customSourceField = page.getByRole('textbox', { name: 'Source repository' });
+    await customSourceField.fill('invalid-source');
+    await customSourceField.press('Tab');
+    await expect(page.getByTestId('actions-templates-custom-source-load')).toBeEnabled();
+    await page.getByTestId('actions-templates-custom-source-load').click();
+
+    await expect(page.getByTestId('actions-templates-custom-source-error')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('actions-templates-custom-source-error')).toContainText('owner/repository format');
+    await expect(page.getByTestId('actions-templates-card-builtin:1')).toBeVisible();
+    await expect(page.getByTestId('actions-templates-card-builtin:2')).toBeVisible();
+    await expect(page.getByTestId('actions-templates-card-builtin:3')).toBeVisible();
   });
 
   test('repository selector surfaces an error without a live GitHub connection', async ({ page }) => {

@@ -290,6 +290,8 @@ public sealed class ActionsTemplatesTests
         {
             Assert.Single(cut.FindAll("[data-testid='actions-templates-custom-source-error']"));
             Assert.Contains("was not found or is not accessible", cut.Markup);
+            Assert.Equal(3, cut.FindAll("[data-testid^='actions-templates-card-']").Count);
+            Assert.Single(cut.FindAll("[data-testid='actions-templates-source-badge-builtin:1']"));
         });
     }
 
