@@ -319,38 +319,6 @@ public sealed class GitHubService : IGitHubService
     }
 
     /// <inheritdoc/>
-    public async Task ApplyLabelsToTriageItemAsync(string owner, string repo, int itemNumber, IReadOnlyList<string> labelNames, CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
-        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
-
-        if (itemNumber <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(itemNumber), "Item number must be greater than zero.");
-        }
-
-        ArgumentNullException.ThrowIfNull(labelNames);
-
-        var normalisedLabelNames = labelNames
-            .Where(label => !string.IsNullOrWhiteSpace(label))
-            .Select(label => label.Trim())
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-
-        var client = CreateAuthenticatedClient();
-        var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/issues/{itemNumber}/labels";
-
-        using var response = await client.PutAsJsonAsync(
-                endpoint,
-                new TriageLabelsRequestDto(normalisedLabelNames),
-                JsonOptions,
-                cancellationToken)
-            .ConfigureAwait(false);
-
-        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <inheritdoc/>
     public async Task AddLabelsToTriageItemAsync(string owner, string repo, int itemNumber, IReadOnlyList<string> labelNames, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
