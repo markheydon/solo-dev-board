@@ -186,7 +186,7 @@ public sealed class TriageService : ITriageService
             .ToArray();
 
         await _gitHubService
-            .ApplyLabelsToTriageItemAsync(owner, repo, currentItem.Number, updatedLabels, cancellationToken)
+            .AddLabelsToTriageItemAsync(owner, repo, currentItem.Number, [trimmedLabelName], cancellationToken)
             .ConfigureAwait(false);
 
         var updatedCurrentItem = currentItem with
