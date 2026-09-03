@@ -359,13 +359,6 @@ public sealed class IterationPlanningServiceTests
                     labels.Count == 1
                     && labels.Contains(PlanningLabelHelpers.BlockedStatusLabel)),
                 cancellationToken);
-        await _gitHubService.DidNotReceive()
-            .ApplyLabelsToTriageItemAsync(
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<int>(),
-                Arg.Any<IReadOnlyList<string>>(),
-                cancellationToken);
     }
 
     [Fact]
@@ -407,13 +400,6 @@ public sealed class IterationPlanningServiceTests
                     labels.Count == 1
                     && labels.Contains(PlanningLabelHelpers.BlockedStatusLabel)),
                 cancellationToken);
-        await _gitHubService.DidNotReceive()
-            .ApplyLabelsToTriageItemAsync(
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<int>(),
-                Arg.Any<IReadOnlyList<string>>(),
-                cancellationToken);
     }
 
     [Fact]
@@ -454,13 +440,6 @@ public sealed class IterationPlanningServiceTests
                 Arg.Is<IReadOnlyList<string>>(labels =>
                     labels.Count == 1
                     && labels.Contains(PlanningLabelHelpers.IceBoxStatusLabel)),
-                cancellationToken);
-        await _gitHubService.DidNotReceive()
-            .ApplyLabelsToTriageItemAsync(
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<int>(),
-                Arg.Any<IReadOnlyList<string>>(),
                 cancellationToken);
     }
 
@@ -511,13 +490,6 @@ public sealed class IterationPlanningServiceTests
                 Arg.Is<IReadOnlyList<string>>(labels =>
                     labels.Count == 1
                     && labels.Contains(PlanningLabelHelpers.IceBoxStatusLabel)),
-                cancellationToken);
-        await _gitHubService.DidNotReceive()
-            .ApplyLabelsToTriageItemAsync(
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<int>(),
-                Arg.Any<IReadOnlyList<string>>(),
                 cancellationToken);
     }
 

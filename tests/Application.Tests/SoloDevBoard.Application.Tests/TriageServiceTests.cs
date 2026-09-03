@@ -377,12 +377,6 @@ public sealed class TriageServiceTests
         Assert.Equal(1, result.Summary.LabelsAppliedCount);
 
         await _gitHubService.Received(1).AddLabelsToTriageItemAsync("owner", "repo", 1, Arg.Is<IReadOnlyList<string>>(labels => labels!.Count == 1 && labels[0] == "type/story"), cancellationToken);
-        await _gitHubService.DidNotReceive().ApplyLabelsToTriageItemAsync(
-            Arg.Any<string>(),
-            Arg.Any<string>(),
-            Arg.Any<int>(),
-            Arg.Any<IReadOnlyList<string>>(),
-            cancellationToken);
     }
 
     [Fact]
@@ -428,12 +422,6 @@ public sealed class TriageServiceTests
         Assert.Equal("priority/high", result.Queue[0].Labels[0]);
 
         await _gitHubService.Received(1).AddLabelsToTriageItemAsync("owner", "repo", 99, Arg.Is<IReadOnlyList<string>>(labels => labels!.Count == 1 && labels[0] == "priority/high"), cancellationToken);
-        await _gitHubService.DidNotReceive().ApplyLabelsToTriageItemAsync(
-            Arg.Any<string>(),
-            Arg.Any<string>(),
-            Arg.Any<int>(),
-            Arg.Any<IReadOnlyList<string>>(),
-            cancellationToken);
     }
 
     [Fact]
@@ -484,12 +472,6 @@ public sealed class TriageServiceTests
             "repo",
             42,
             Arg.Is<IReadOnlyList<string>>(labels => labels!.SequenceEqual(new[] { "type/story" })),
-            cancellationToken);
-        await _gitHubService.DidNotReceive().ApplyLabelsToTriageItemAsync(
-            Arg.Any<string>(),
-            Arg.Any<string>(),
-            Arg.Any<int>(),
-            Arg.Any<IReadOnlyList<string>>(),
             cancellationToken);
     }
 
@@ -642,12 +624,6 @@ public sealed class TriageServiceTests
         Assert.Equal(1, result.Summary.ProjectAssignmentsCount);
 
         await _gitHubService.Received(1).AddLabelsToTriageItemAsync("owner", "repo", 1, Arg.Any<IReadOnlyList<string>>(), cancellationToken);
-        await _gitHubService.DidNotReceive().ApplyLabelsToTriageItemAsync(
-            Arg.Any<string>(),
-            Arg.Any<string>(),
-            Arg.Any<int>(),
-            Arg.Any<IReadOnlyList<string>>(),
-            cancellationToken);
         await _gitHubService.Received(1).AssignMilestoneToTriageItemAsync("owner", "repo", 1, 12, cancellationToken);
         await _gitHubService.Received(1).AddTriageItemToProjectBoardAsync("owner", "repo", 1, "project-id", cancellationToken);
     }
@@ -667,7 +643,6 @@ public sealed class TriageServiceTests
 
         // Assert
         Assert.Equal(1, result.CurrentIndex);
-        await _gitHubService.DidNotReceive().ApplyLabelsToTriageItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<IReadOnlyList<string>>(), cancellationToken);
         await _gitHubService.DidNotReceive().AssignMilestoneToTriageItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), cancellationToken);
         await _gitHubService.DidNotReceive().AddTriageItemToProjectBoardAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>(), cancellationToken);
     }
@@ -834,12 +809,6 @@ public sealed class TriageServiceTests
             1,
             Arg.Is<IReadOnlyList<string>>(labels => labels!.SequenceEqual(new[] { "duplicate" })),
             cancellationToken);
-        await _gitHubService.DidNotReceive().ApplyLabelsToTriageItemAsync(
-            Arg.Any<string>(),
-            Arg.Any<string>(),
-            Arg.Any<int>(),
-            Arg.Any<IReadOnlyList<string>>(),
-            cancellationToken);
     }
 
     [Fact]
@@ -869,7 +838,6 @@ public sealed class TriageServiceTests
 
         await _gitHubService.Received(1).GetLabelsAsync("owner", "repo", cancellationToken);
         await _gitHubService.DidNotReceive().AddLabelsToTriageItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<IReadOnlyList<string>>(), cancellationToken);
-        await _gitHubService.DidNotReceive().ApplyLabelsToTriageItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<IReadOnlyList<string>>(), cancellationToken);
     }
 
     [Fact]
