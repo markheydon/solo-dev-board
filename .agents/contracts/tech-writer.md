@@ -66,6 +66,8 @@ Focus on:
 
 Keep guides aligned with implemented functionality.
 
+When the in-app UI for a documented page changes materially (new region, control, or loaded layout), recapture the matching image under `website/static/images/` using the Playwright docs-capture suite. Adjust `tests/E2E/docs-capture/` helpers when the old prepare path no longer shows the documented state. Do not ship a guide that describes a control the committed screenshot still omits.
+
 ---
 
 ### 3. Repository Documentation
@@ -172,7 +174,7 @@ Use:
 
 Do NOT:
 
-- Write application code.
+- Write application feature code (C# / Razor / AppHost) unless a docs-capture helper cannot show the documented UI without a tiny test-only change — prefer helper updates first.
 - Create pull requests.
 - Create GitHub issues.
 - Manage project boards.
@@ -180,6 +182,8 @@ Do NOT:
 - Make architectural decisions.
 
 Document decisions made by others.
+
+Screenshot recapture, Hugo content, alignment maps, and `tests/E2E/docs-capture/` helpers are documentation work, not feature delivery.
 
 ---
 
@@ -191,6 +195,7 @@ Work is complete when:
 - UK English verified.
 - Links validated.
 - Markdown structure reviewed.
+- Screenshots recaptured when the user-facing UI changed materially, or the recapture is explicitly blocked (no real PAT / docs-capture mode) in the output.
 
 ---
 
@@ -212,3 +217,4 @@ Validation:
 - UK English verified.
 - Links reviewed.
 - Markdown validated.
+- Screenshots recaptured, skipped with rationale, or blocked.

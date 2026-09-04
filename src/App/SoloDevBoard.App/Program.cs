@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using MudBlazor;
 using MudBlazor.Services;
 using SoloDevBoard.App.Authentication;
+using SoloDevBoard.App.Components.Features.ActionsTemplates;
 using SoloDevBoard.App.Components.Features.Planning;
 using SoloDevBoard.App.Components.Shell;
 using SoloDevBoard.App.Planning;
@@ -55,6 +56,7 @@ builder.Services.AddScoped<IGitHubAuthenticationSummaryService, GitHubAuthentica
 builder.Services.AddScoped<IThemePreferenceStorage, ThemePreferenceJsStorage>();
 builder.Services.AddScoped<IThemePreferenceService, ThemePreferenceService>();
 builder.Services.AddScoped<IPlanningSettingsStorage, PlanningSettingsJsStorage>();
+builder.Services.AddScoped<IActionsTemplateSourceStorage, ActionsTemplateSourceJsStorage>();
 builder.Services.AddScoped<PlanningChromeCoordinator>();
 
 if (hostedSignInEnabled)

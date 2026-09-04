@@ -17,7 +17,7 @@
 | **One-Click Migration** | Migrate labels, milestones, and Projects v2 Status columns from one repository to another in a single preview-first action. | Available |
 | **Board Rules Visualiser** | Visualise supported board states and transitions for GitHub Project v2 boards. Full GitHub automation-rule retrieval remains a later slice. | Partially Available |
 | **Triage UI** | Keyboard-friendly interface for triaging incoming issues quickly. | Available |
-| **Actions Templates** | Browse, customise, and apply built-in GitHub Actions workflow templates across repositories. Custom template repositories are deferred past `v1.1`. | Partially Available |
+| **Actions Templates** | Browse, customise, and apply built-in GitHub Actions workflow templates across repositories, plus load one custom GitHub `owner/name` source. | Partially Available |
 | **Planning** | Daily Focus, backlog review, iteration planning, and repository participation for your project board. | Available |
 
 

@@ -8,10 +8,11 @@ using SoloDevBoard.Application.Services.Repositories;
 
 namespace SoloDevBoard.App.Components.Features.ActionsTemplates.Pages;
 
-/// <summary>Provides the workflow template browser for built-in GitHub Actions templates.</summary>
+/// <summary>Provides the workflow template browser for built-in and custom GitHub Actions templates.</summary>
 public partial class ActionsTemplates : ComponentBase
 {
     private const string AllCategoriesLabel = "All";
+    private const string LastUsedSourceCaptionText = "Last-used source restored from browser storage.";
 
     /// <summary>Gets or sets the application service used to retrieve workflow templates.</summary>
     [Inject]
@@ -20,6 +21,10 @@ public partial class ActionsTemplates : ComponentBase
     /// <summary>Gets or sets the application service used to retrieve repositories.</summary>
     [Inject]
     public IRepositoryService RepositoryService { get; set; } = default!;
+
+    /// <summary>Gets or sets the browser storage for the last-used custom template source.</summary>
+    [Inject]
+    public IActionsTemplateSourceStorage ActionsTemplateSourceStorage { get; set; } = default!;
 
     /// <summary>Gets or sets the logger for workflow page diagnostics.</summary>
     [Inject]
@@ -39,6 +44,7 @@ public partial class ActionsTemplates : ComponentBase
     private IReadOnlyList<ActionsTemplateRepositoryResultDto> applyResults = [];
     private IReadOnlyList<string> repositoryOptions = [];
     private HashSet<string> selectedRepositories = new(StringComparer.OrdinalIgnoreCase);
+    private HashSet<string> selectedCustomSourceRepositories = new(StringComparer.OrdinalIgnoreCase);
     private Dictionary<string, string> parameterValues = new(StringComparer.OrdinalIgnoreCase);
     private string searchText = string.Empty;
     private string selectedCategory = AllCategoriesLabel;
@@ -52,11 +58,41 @@ public partial class ActionsTemplates : ComponentBase
     private string? repositoryLoadErrorMessage;
     private string? customSourceError;
     private string? customSourceWarning;
+    private string customSourceRepository = string.Empty;
+    private string? loadedCustomSourceRepository;
+    private bool isLoadingCustomSource;
+    private bool restoredLastUsedSource;
 
     private void ShowSnackbarFeedback(string message, Severity severity)
         => SnackbarFeedback.Show(Snackbar, message, severity);
 
     private bool ShowLoadingState => isLoadingTemplates;
+
+    private bool IsLoadCustomSourceDisabled
+        => ShowLoadingState
+            || isLoadingCustomSource
+            || string.IsNullOrWhiteSpace(customSourceRepository);
+
+    private bool ShowLastUsedSourceCaption
+        => restoredLastUsedSource && !string.IsNullOrWhiteSpace(customSourceRepository);
+
+    private string CustomSourceRepository
+    {
+        get => customSourceRepository;
+        set
+        {
+            var normalisedValue = value ?? string.Empty;
+            if (customSourceRepository == normalisedValue)
+            {
+                return;
+            }
+
+            customSourceRepository = normalisedValue;
+            restoredLastUsedSource = false;
+            SyncCustomSourceSelectorFromManualField();
+            StateHasChanged();
+        }
+    }
 
     private string SearchText
     {
@@ -88,6 +124,22 @@ public partial class ActionsTemplates : ComponentBase
             .OrderBy(repository => repository, StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
+    private IReadOnlyList<string> SelectedCustomSourceRepositoryFullNames
+        => selectedCustomSourceRepositories
+            .OrderBy(repository => repository, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+    private string CustomSourceRepositorySelectorSummary
+    {
+        get
+        {
+            var repositoryCount = repositoryOptions.Count;
+            var repositoryNoun = repositoryCount == 1 ? "repository" : "repositories";
+
+            return $"Showing {repositoryCount} active {repositoryNoun} from your catalogue.";
+        }
+    }
+
     private string RepositorySelectorSummary
     {
         get
@@ -108,19 +160,89 @@ public partial class ActionsTemplates : ComponentBase
     /// <inheritdoc/>
     protected override async Task OnInitializedAsync()
     {
-        await Task.WhenAll(LoadTemplatesAsync(), LoadRepositoriesAsync());
+        await RestoreLastUsedCustomSourceAsync();
+        await Task.WhenAll(LoadTemplatesAsync(loadedCustomSourceRepository), LoadRepositoriesAsync());
     }
 
-    private async Task LoadTemplatesAsync()
+    private async Task RestoreLastUsedCustomSourceAsync()
+    {
+        var lastUsedSource = await ActionsTemplateSourceStorage.GetLastUsedSourceAsync().ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(lastUsedSource))
+        {
+            return;
+        }
+
+        customSourceRepository = lastUsedSource.Trim();
+        loadedCustomSourceRepository = customSourceRepository;
+        restoredLastUsedSource = true;
+    }
+
+    private void ApplyRestoredCustomSourceToPickers()
+    {
+        if (string.IsNullOrWhiteSpace(customSourceRepository))
+        {
+            return;
+        }
+
+        SyncCustomSourceSelectorFromManualField();
+    }
+
+    private void SyncCustomSourceSelectorFromManualField()
+    {
+        var trimmedSource = customSourceRepository.Trim();
+        if (string.IsNullOrWhiteSpace(trimmedSource))
+        {
+            selectedCustomSourceRepositories.Clear();
+            return;
+        }
+
+        if (repositoryOptions.Contains(trimmedSource, StringComparer.OrdinalIgnoreCase))
+        {
+            selectedCustomSourceRepositories = new HashSet<string>([trimmedSource], StringComparer.OrdinalIgnoreCase);
+            return;
+        }
+
+        selectedCustomSourceRepositories.Clear();
+    }
+
+    private async Task LoadCustomSourceAsync()
+    {
+        if (string.IsNullOrWhiteSpace(customSourceRepository))
+        {
+            return;
+        }
+
+        var trimmedSource = customSourceRepository.Trim();
+        loadedCustomSourceRepository = trimmedSource;
+        restoredLastUsedSource = false;
+        isLoadingCustomSource = true;
+
+        try
+        {
+            await ActionsTemplateSourceStorage.SetLastUsedSourceAsync(trimmedSource).ConfigureAwait(false);
+            await LoadTemplatesAsync(trimmedSource).ConfigureAwait(false);
+        }
+        finally
+        {
+            isLoadingCustomSource = false;
+        }
+    }
+
+    private async Task LoadTemplatesAsync(string? customSource = null)
     {
         isLoadingTemplates = true;
         hasLoadFailure = false;
         customSourceError = null;
         customSourceWarning = null;
+        selectedTemplateId = null;
+        selectedTemplateDetail = null;
+        parameterValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        repositoryStatuses = [];
+        applyResults = [];
 
         try
         {
-            var catalogue = await ActionsTemplateService.GetTemplatesAsync();
+            var catalogue = await ActionsTemplateService.GetTemplatesAsync(customSource).ConfigureAwait(false);
             templates = catalogue.Templates;
             customSourceError = catalogue.CustomSourceError;
             customSourceWarning = catalogue.CustomSourceWarning;
@@ -175,7 +297,22 @@ public partial class ActionsTemplates : ComponentBase
         finally
         {
             isLoadingRepositories = false;
+            ApplyRestoredCustomSourceToPickers();
         }
+    }
+
+    private Task OnCustomSourceRepositoriesChangedAsync(IReadOnlyList<string> repositories)
+    {
+        ArgumentNullException.ThrowIfNull(repositories);
+
+        selectedCustomSourceRepositories = repositories
+            .Where(repository => !string.IsNullOrWhiteSpace(repository))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        customSourceRepository = selectedCustomSourceRepositories.FirstOrDefault() ?? string.Empty;
+        restoredLastUsedSource = false;
+
+        return Task.CompletedTask;
     }
 
     private async Task OnSelectedRepositoriesChangedAsync(IReadOnlyList<string> repositories)

@@ -153,7 +153,7 @@ When Copilot or another AI agent is asked to write or update documentation:
 
 1. **UK English required.** All documentation must use UK English spelling. Run a spell check if possible.
 2. **Accuracy over completeness.** Do not document features that are not yet implemented. Use "Coming Soon" or "Under Development" notices for stubs.
-3. **Sync with code and E2E.** When updating docs, verify that the documented behaviour matches the current implementation and that Playwright specs in `tests/E2E/tests/` assert the same routes, controls, and workflows. Maintain the mapping in [tests/E2E/USER_DOCS_ALIGNMENT.md](../tests/E2E/USER_DOCS_ALIGNMENT.md).
+3. **Sync with code, E2E, and screenshots.** When updating docs, verify that the documented behaviour matches the current implementation and that Playwright specs in `tests/E2E/tests/` assert the same routes, controls, and workflows. Maintain the mapping in [tests/E2E/USER_DOCS_ALIGNMENT.md](../tests/E2E/USER_DOCS_ALIGNMENT.md). If the in-app UI for a published guide or landing tile changed materially, recapture `website/static/images/` in the same docs-update via `cd tests/E2E && npm run capture:docs` (or a focused `-g` filter) against a local app with a real PAT and `DocsCapture:Enabled=true`. Update `tests/E2E/docs-capture/` helpers when the prepare path no longer shows the documented state. Do not leave recapture as a later note. If capture cannot run, report it as blocked.
 4. **Link generously.** Cross-reference related docs, decisions, and planning files. Use relative links within the same docs tree; use GitHub blob URLs when linking from the published site to repository-only files.
 5. **Heading hierarchy.** Use H1 for the page title, H2 for major sections, H3 for subsections. Do not skip levels.
 6. **Code blocks.** All code, commands, and configuration snippets must be in fenced code blocks with the appropriate language identifier.
@@ -169,7 +169,7 @@ When Copilot or another AI agent is asked to write or update documentation:
 >
 > | Code Change | Documentation Action |
 > |-------------|---------------------|
-> | New end-user feature implemented | Update `website/content/docs/<feature>.md` to full content; remove "Under Development" notice; refresh site indexes |
+> | New end-user feature implemented | Update `website/content/docs/<feature>.md` to full content; remove "Under Development" notice; refresh site indexes; recapture feature screenshots when the UI changed |
 > | New environment variable | Update `docs/getting-started.md` configuration table and `docs/deployment.md` |
 > | New architectural decision | Follow `repo-decision-log`; update `plan/DECISIONS.md` and constitution if cross-cutting |
 > | Scope change | Update `plan/SCOPE.md`; update `website/content/_index.md` if the published feature list changes |

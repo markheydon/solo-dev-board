@@ -9,6 +9,7 @@ namespace SoloDevBoard.Application.Services.ActionsTemplates;
 /// <param name="WorkflowFilePath">The relative workflow file path applied to repositories.</param>
 /// <param name="TriggerDescription">A short description of when the workflow runs.</param>
 /// <param name="CreatedAt">The date and time when the template was created.</param>
+/// <param name="SourceLabel">The source badge label shown in the template browser.</param>
 public sealed record ActionsTemplateDto(
     string Id,
     string Name,
@@ -17,4 +18,5 @@ public sealed record ActionsTemplateDto(
     IReadOnlyList<string> Tags,
     string WorkflowFilePath,
     string TriggerDescription,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    string SourceLabel);

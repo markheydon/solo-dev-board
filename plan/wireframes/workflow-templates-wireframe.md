@@ -15,11 +15,13 @@
 ## Layout
 ```
 +-------------------------------------------------------------+
-| Repository selector / repository scope filter               |
+| Repository selector / repository scope filter (multi)       |
 +-------------------------------------------------------------+
 | Custom template source                                      |
+|   [ RepositorySelector — single-select, own catalogue ]       |
+|   Or enter a repository not in your list:                   |
 |   [ owner/name text field ]  [ Load templates ]             |
-|   Hint: last-used value restored from localStorage          |
+|   Caption: last-used value restored from localStorage       |
 +-------------------------------------------------------------+
 | Template browser: [Search] [Category chips]                 |
 +-------------------------------------------------------------+
@@ -39,12 +41,20 @@
 
 ## Interaction Notes
 - Repository selector sets the **apply** scope (target repositories). It is independent of the custom template source.
-- Custom template source is a single `owner/name` field. Load is explicit (button), not on every keystroke.
-- On first visit the source field is empty. If localStorage has a last-used source, pre-fill the field and load that catalogue on page load.
+- Custom template source uses a **dual picker**: single-select `RepositorySelector` (same active catalogue as apply targets) plus a manual `owner/name` field. Load is explicit (button beside the manual field only), not on every keystroke or autocomplete browse.
+- Selecting a catalogue repository sets the source `owner/name` and syncs the manual field; it does not load until **Load templates** is selected.
+- Typing a manual `owner/name` that is not in the catalogue clears the source selector selection.
+- Typing a manual `owner/name` that matches a catalogue repository selects that repository in the source selector.
+- On first visit neither picker has a value. If localStorage has a last-used source, pre-select the catalogue repo when it is in the list, otherwise pre-fill the manual field, and load that catalogue on page load.
 - Changing the source and loading replaces the custom catalogue for the session. Built-in templates always remain visible.
 - Selecting a template loads details and parameter fields.
 - Apply action is disabled until required parameters and target repositories are selected.
 - Feedback region shows success, partial apply results, conflicts, and custom-source load failures.
+
+### Load button alignment
+- Do not put last-used or hint copy on `MudTextField.HelperText` in the same row as **Load templates** — MudBlazor end-aligns the button to the helper-text baseline and the button sags below the input outline.
+- Place last-used / hint text as a caption **below** the manual-field row.
+- Align **Load templates** to the outlined manual field (input control baseline), not beside the full `RepositorySelector` stack (chips and summary).
 
 ## State Variants
 - Empty state: no templates or no repositories selected.
@@ -54,13 +64,13 @@
 - Difference state: repository workflow differs from the canonical template.
 
 ## Accessibility Notes
-- Focus order: repository selector → custom template source → template list → template details → apply controls → feedback.
+- Focus order: apply repository selector → custom source selector → manual source field → Load → template list → template details → apply controls → feedback.
 - Use `aria-live="polite"` for result updates and source-load outcomes.
-- Template cards, source field, Load, and form controls must be keyboard-accessible.
+- Template cards, source selector, manual field, Load, and form controls must be keyboard-accessible.
 - Source badges must not rely on colour alone (text label Built-in or `owner/name`).
 
 ## Responsive Behaviour
-- Desktop: side-by-side template list and details panel. Source field sits in the full-width stack above the browser.
+- Desktop: side-by-side template list and details panel. Custom source section sits in the full-width stack above the browser.
 - Mobile: stacked template list above details, with collapsible details panel.
 
 ## v1.2 — Custom template source (#292)
@@ -68,6 +78,7 @@
 Product decisions (also [DEC-038](../DECISIONS.md#dec-038-custom-actions-template-sources)):
 
 - One GitHub repository at a time. Multiple concurrent sources are out of this increment.
+- Source selection: catalogue `RepositorySelector` (single-select) **or** manual `owner/name` field; both resolve to one `owner/name` for load.
 - Last-used `owner/name` only in browser localStorage. No application database. Server-side persistence is a later blocked chore.
 - Scan `.github/workflows/*.yml` and `*.yaml` at the top level of that directory only.
 - Infer `{{token}}` placeholders as required string parameters labelled with the token name. No sidecar or front-matter.

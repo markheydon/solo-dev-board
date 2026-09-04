@@ -153,7 +153,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Include built-in templates: CI (dotnet), CD (Aspire deploy to Azure Container Apps), Dependabot
 - [x] Write unit tests for `ActionsTemplateService`
 - [x] Update `website/content/docs/actions-templates.md`
-- [ ] Support custom template repositories — one GitHub `owner/name` source, merged catalogue, localStorage last-used ([#292](https://github.com/markheydon/solo-dev-board/issues/292), [DEC-038](DECISIONS.md#dec-038-custom-actions-template-sources)).
+- [x] Support custom template repositories — one GitHub `owner/name` source via catalogue selector or manual field, merged catalogue, localStorage last-used ([#292](https://github.com/markheydon/solo-dev-board/issues/292), [DEC-038](DECISIONS.md#dec-038-custom-actions-template-sources)).
 
 ### Dependencies
 
@@ -270,7 +270,7 @@ All locked-in leaves are closed. Shipped as [`v1.1.0`](https://github.com/markhe
 - [ ] Reload from GitHub on Board Rules, keeping repository (and comparison) selection. _(#449)_
 - [ ] Roll Reload from GitHub out to remaining GitHub-backed surfaces. _(#451, parent epic #447)_
 - [ ] Split hosted GitHub OAuth and API HttpClients for REST header defaults. _(#453)_
-- [ ] Custom workflow template repositories: one GitHub YAML source, inferred parameters, apply/drift parity, last-used localStorage. _(#292, DEC-038)_
+- [x] Custom workflow template repositories: one GitHub YAML source (catalogue selector or manual field), inferred parameters, apply/drift parity, last-used localStorage. _(#292, DEC-038)_
 - [ ] Unify the Triage action surface into Save and next (process) versus duplicate versus skip — usability only, not opinionated-workflow integration. _(#492)_
 
 ### Delivery sequence
@@ -278,7 +278,7 @@ All locked-in leaves are closed. Shipped as [`v1.1.0`](https://github.com/markhe
 1. Plan and size #449 (and the Reload tree) before coding.
 2. #403 can proceed in parallel as Planning catch-up (closed Feature #272).
 3. #453 is an independent `size/s` chore.
-4. #292 is specified to implement (DEC-038). Deliver the enabler (catalogue loader) then the source-field UI and tests. Do not ice-box again.
+4. #292 is specified (DEC-038). Enabler (#497), dual source-picker UI, and tests are on this delivery; do not ice-box again.
 5. #492 is independent usability work on `/triage`. Revise the wireframe before implementation. Do not expand it into PM-workflow integration.
 6. Do not start #450, #293, or #391 on this milestone.
 

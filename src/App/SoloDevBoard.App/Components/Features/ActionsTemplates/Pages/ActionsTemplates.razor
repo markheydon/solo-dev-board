@@ -42,6 +42,61 @@
         </MudStack>
     </MudPaper>
 
+    <MudPaper Class="pa-4" Elevation="1" data-testid="actions-templates-custom-source-region">
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h6">Custom template source</MudText>
+            <MudText Typo="Typo.body2">
+                Optionally load workflow YAML from a GitHub repository. Built-in templates always remain visible.
+            </MudText>
+
+            @if (!isLoadingRepositories && !hasRepositoryLoadFailure && repositoryOptions.Count > 0)
+            {
+                <RepositorySelector
+                    Title=""
+                    Label="Source repository"
+                    Placeholder="Search repositories and select"
+                    EmptyStateText="No active repositories are available."
+                    AvailableRepositories="repositoryOptions"
+                    SelectedRepositories="SelectedCustomSourceRepositoryFullNames"
+                    SelectedRepositoriesChanged="OnCustomSourceRepositoriesChangedAsync"
+                    SummaryText="@CustomSourceRepositorySelectorSummary"
+                    ShowSelectionActions="false"
+                    SingleSelectionOnly="true"
+                    Disabled="ShowLoadingState || isLoadingCustomSource"
+                    AutocompleteTestId="actions-templates-custom-source-autocomplete"
+                    SummaryTestId="actions-templates-custom-source-selector-summary" />
+            }
+
+            <MudText Typo="Typo.body2">Or enter a repository not in your list:</MudText>
+
+            <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" AlignItems="AlignItems.End">
+                <MudTextField @bind-Value="CustomSourceRepository"
+                              Label="Source repository"
+                              Placeholder="owner/name"
+                              Variant="Variant.Outlined"
+                              Disabled="ShowLoadingState || isLoadingCustomSource"
+                              data-testid="actions-templates-custom-source-field"
+                              Class="flex-grow-1" />
+
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           OnClick="LoadCustomSourceAsync"
+                           Disabled="IsLoadCustomSourceDisabled"
+                           Class="mb-4"
+                           data-testid="actions-templates-custom-source-load">
+                    @(isLoadingCustomSource ? "Loading..." : "Load templates")
+                </MudButton>
+            </MudStack>
+
+            @if (ShowLastUsedSourceCaption)
+            {
+                <MudText Typo="Typo.caption" data-testid="actions-templates-custom-source-last-used-caption">
+                    @LastUsedSourceCaptionText
+                </MudText>
+            }
+        </MudStack>
+    </MudPaper>
+
     <MudPaper Class="pa-4" Elevation="1" data-testid="actions-templates-browser-region">
         <MudStack Spacing="2">
             <MudText Typo="Typo.h6">Template browser</MudText>
@@ -125,6 +180,9 @@
                                             <MudText Typo="Typo.body2">@template.Description</MudText>
 
                                             <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center">
+                                                <MudChip T="string" Variant="Variant.Outlined" Size="Size.Small" data-testid="@($"actions-templates-source-badge-{template.Id}")">
+                                                    @template.SourceLabel
+                                                </MudChip>
                                                 <MudChip T="string" Color="Color.Secondary" Variant="Variant.Outlined" Size="Size.Small">@template.Category</MudChip>
                                                 @foreach (var tag in template.Tags)
                                                 {

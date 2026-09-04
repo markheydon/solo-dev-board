@@ -4,6 +4,8 @@ test.describe('Workflow template browser', () => {
   test('built-in templates load and can be filtered and selected', async ({ page }) => {
     await page.goto('/actions-templates');
 
+    await expect(page.getByTestId('actions-templates-custom-source-region')).toBeVisible();
+    await expect(page.getByTestId('actions-templates-custom-source-field')).toBeVisible();
     await expect(page.getByTestId('actions-templates-browser-region')).toBeVisible();
     await expect(page.getByTestId('actions-templates-loading-state')).toBeHidden({ timeout: 15_000 });
     await expect(page.getByTestId('actions-templates-grid')).toBeVisible();
