@@ -52,6 +52,7 @@ public sealed class ActionsTemplatesTests
         {
             Assert.Single(cut.FindAll("[data-testid='repository-selector-region']"));
             Assert.Single(cut.FindAll("[data-testid='actions-templates-custom-source-region']"));
+            Assert.Single(cut.FindAll("[data-testid='actions-templates-custom-source-autocomplete']"));
             Assert.Single(cut.FindAll("[data-testid='actions-templates-custom-source-field']"));
             Assert.Single(cut.FindAll("[data-testid='actions-templates-browser-region']"));
             Assert.Single(cut.FindAll("[data-testid='actions-templates-grid']"));
@@ -163,7 +164,8 @@ public sealed class ActionsTemplatesTests
         await cut.InvokeAsync(() => cut.Find("[data-testid='actions-templates-select-builtin:1']").Click());
 
         cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='workflow-repository-autocomplete']")));
-        var autocomplete = cut.FindComponent<MudAutocomplete<string>>();
+        var autocomplete = cut.FindComponents<MudAutocomplete<string>>()
+            .First(component => component.Instance.Label == "Repositories");
         await cut.InvokeAsync(() => autocomplete.Instance.ValueChanged.InvokeAsync("owner/repo-a"));
 
         cut.WaitForAssertion(() => Assert.Contains("owner/repo-a", cut.Markup));
@@ -201,7 +203,8 @@ public sealed class ActionsTemplatesTests
         cut.WaitForAssertion(() => Assert.Equal(3, cut.FindAll("[data-testid^='actions-templates-select-']").Count));
         await cut.InvokeAsync(() => cut.Find("[data-testid='actions-templates-select-builtin:1']").Click());
 
-        var autocomplete = cut.FindComponent<MudAutocomplete<string>>();
+        var autocomplete = cut.FindComponents<MudAutocomplete<string>>()
+            .First(component => component.Instance.Label == "Repositories");
         await cut.InvokeAsync(() => autocomplete.Instance.ValueChanged.InvokeAsync("owner/repo-a"));
 
         cut.WaitForAssertion(() => Assert.Contains("owner/repo-a", cut.Markup));
@@ -335,10 +338,110 @@ public sealed class ActionsTemplatesTests
         cut.WaitForAssertion(() =>
         {
             Assert.Contains("owner/template-repo", cut.Markup);
-            Assert.Contains(LastUsedSourceHelperText, cut.Markup);
+            Assert.Single(cut.FindAll("[data-testid='actions-templates-custom-source-last-used-caption']"));
+            Assert.Contains(LastUsedSourceCaptionText, cut.Markup);
         });
 
         await _workflowTemplateService.Received(1).GetTemplatesAsync("owner/template-repo", Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ActionsTemplates_RestoreLastUsedSourceInCatalogue_PreSelectsSourceSelector()
+    {
+        // Arrange
+        _actionsTemplateSourceStorage.GetLastUsedSourceAsync().Returns("owner/repo-a");
+        _workflowTemplateService
+            .GetTemplatesAsync("owner/repo-a", Arg.Any<CancellationToken>())
+            .Returns(new ActionsTemplateCatalogueDto { Templates = CreateTemplates() });
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(CreateRepositories());
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<ActionsTemplates>();
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("owner/repo-a", cut.Find("[data-testid='selected-repositories']").TextContent);
+            Assert.Single(cut.FindAll("[data-testid='actions-templates-custom-source-last-used-caption']"));
+        });
+
+        await _workflowTemplateService.Received(1).GetTemplatesAsync("owner/repo-a", Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ActionsTemplates_CustomSourceSelectorSelection_SyncsManualFieldWithoutLoading()
+    {
+        // Arrange
+        SetupDefaultServices();
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<ActionsTemplates>();
+
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='actions-templates-custom-source-autocomplete']")));
+
+        // Act
+        var sourceAutocomplete = cut.FindComponents<MudAutocomplete<string>>()
+            .First(autocomplete => autocomplete.Instance.Label == "Source repository");
+        await cut.InvokeAsync(() => sourceAutocomplete.Instance.ValueChanged.InvokeAsync("owner/repo-a"));
+
+        // Assert — load enables and chip appears without an explicit load call.
+        cut.WaitForAssertion(() =>
+        {
+            var loadButton = cut.Find("[data-testid='actions-templates-custom-source-load']");
+            Assert.False(loadButton.HasAttribute("disabled"));
+            Assert.Contains("owner/repo-a", cut.Find("[data-testid='selected-repositories']").TextContent);
+        });
+
+        await _workflowTemplateService.DidNotReceive().GetTemplatesAsync("owner/repo-a", Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ActionsTemplates_ManualSourceMatchingCatalogue_SelectsSourceSelector()
+    {
+        // Arrange
+        SetupDefaultServices();
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<ActionsTemplates>();
+
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='actions-templates-custom-source-field']")));
+
+        // Act
+        var sourceField = cut.Find("[data-testid='actions-templates-custom-source-field']");
+        sourceField.Change("owner/repo-b");
+
+        // Assert
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("owner/repo-b", cut.Find("[data-testid='selected-repositories']").TextContent);
+        });
+    }
+
+    [Fact]
+    public async Task ActionsTemplates_ManualSourceOutsideCatalogue_ClearsSourceSelector()
+    {
+        // Arrange
+        SetupDefaultServices();
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<ActionsTemplates>();
+
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='actions-templates-custom-source-autocomplete']")));
+
+        var sourceAutocomplete = cut.FindComponents<MudAutocomplete<string>>()
+            .First(autocomplete => autocomplete.Instance.Label == "Source repository");
+        await cut.InvokeAsync(() => sourceAutocomplete.Instance.ValueChanged.InvokeAsync("owner/repo-a"));
+
+        cut.WaitForAssertion(() => Assert.Contains("owner/repo-a", cut.Find("[data-testid='selected-repositories']").TextContent));
+
+        // Act
+        var sourceField = cut.Find("[data-testid='actions-templates-custom-source-field']");
+        sourceField.Change("other/external-repo");
+
+        // Assert
+        cut.WaitForAssertion(() => Assert.Empty(cut.FindAll("[data-testid='selected-repositories']")));
     }
 
     [Fact]
@@ -475,7 +578,7 @@ public sealed class ActionsTemplatesTests
                 new ActionsTemplateParameterDto("dotnetVersion", ".NET version", "The .NET SDK version used by the workflow.", "10.0.x", false),
             ]);
 
-    private const string LastUsedSourceHelperText = "Last-used source restored from browser storage.";
+    private const string LastUsedSourceCaptionText = "Last-used source restored from browser storage.";
 
     private static IReadOnlyList<ActionsTemplateDto> CreateTemplates()
         =>

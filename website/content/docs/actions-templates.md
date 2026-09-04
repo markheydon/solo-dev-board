@@ -44,10 +44,11 @@ Each template card shows:
 
 ### Load custom template repositories
 
-1. In the **Custom template source** section, enter a GitHub repository in `owner/name` format.
-2. Select **Load templates** to fetch workflow YAML from `.github/workflows` in that repository.
-3. Custom templates appear in the same card grid as built-ins, each with a source badge showing the repository you loaded.
-4. SoloDevBoard remembers the last-used source in your browser and pre-fills the field on your next visit.
+1. In the **Custom template source** section, select a repository from your catalogue using the source repository selector, or enter a GitHub repository in `owner/name` format when it is not in your list.
+2. Selecting a catalogue repository fills the manual field with that `owner/name` but does not load templates until you select **Load templates**.
+3. Select **Load templates** to fetch workflow YAML from `.github/workflows` in that repository.
+4. Custom templates appear in the same card grid as built-ins, each with a source badge showing the repository you loaded.
+5. SoloDevBoard remembers the last-used source in your browser. On your next visit it pre-selects the catalogue repository when it is still in your list, otherwise it pre-fills the manual field, and loads that catalogue automatically.
 
 Built-in templates always remain visible. If the source is invalid, inaccessible, or has no workflow files, a clear message is shown and you can continue using built-ins.
 

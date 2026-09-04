@@ -49,13 +49,32 @@
                 Optionally load workflow YAML from a GitHub repository. Built-in templates always remain visible.
             </MudText>
 
+            @if (!isLoadingRepositories && !hasRepositoryLoadFailure && repositoryOptions.Count > 0)
+            {
+                <RepositorySelector
+                    Title=""
+                    Label="Source repository"
+                    Placeholder="Search repositories and select"
+                    EmptyStateText="No active repositories are available."
+                    AvailableRepositories="repositoryOptions"
+                    SelectedRepositories="SelectedCustomSourceRepositoryFullNames"
+                    SelectedRepositoriesChanged="OnCustomSourceRepositoriesChangedAsync"
+                    SummaryText="@CustomSourceRepositorySelectorSummary"
+                    ShowSelectionActions="false"
+                    SingleSelectionOnly="true"
+                    Disabled="ShowLoadingState || isLoadingCustomSource"
+                    AutocompleteTestId="actions-templates-custom-source-autocomplete"
+                    SummaryTestId="actions-templates-custom-source-selector-summary" />
+            }
+
+            <MudText Typo="Typo.body2">Or enter a repository not in your list:</MudText>
+
             <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" AlignItems="AlignItems.End">
                 <MudTextField @bind-Value="CustomSourceRepository"
                               Label="Source repository"
                               Placeholder="owner/name"
                               Variant="Variant.Outlined"
                               Disabled="ShowLoadingState || isLoadingCustomSource"
-                              HelperText="@CustomSourceHelperText"
                               data-testid="actions-templates-custom-source-field"
                               Class="flex-grow-1" />
 
@@ -67,6 +86,13 @@
                     @(isLoadingCustomSource ? "Loading..." : "Load templates")
                 </MudButton>
             </MudStack>
+
+            @if (ShowLastUsedSourceCaption)
+            {
+                <MudText Typo="Typo.caption" data-testid="actions-templates-custom-source-last-used-caption">
+                    @LastUsedSourceCaptionText
+                </MudText>
+            }
         </MudStack>
     </MudPaper>
 

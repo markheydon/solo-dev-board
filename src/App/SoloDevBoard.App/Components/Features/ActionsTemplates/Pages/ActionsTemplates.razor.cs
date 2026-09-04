@@ -12,7 +12,7 @@ namespace SoloDevBoard.App.Components.Features.ActionsTemplates.Pages;
 public partial class ActionsTemplates : ComponentBase
 {
     private const string AllCategoriesLabel = "All";
-    private const string LastUsedSourceHelperText = "Last-used source restored from browser storage.";
+    private const string LastUsedSourceCaptionText = "Last-used source restored from browser storage.";
 
     /// <summary>Gets or sets the application service used to retrieve workflow templates.</summary>
     [Inject]
@@ -44,6 +44,7 @@ public partial class ActionsTemplates : ComponentBase
     private IReadOnlyList<ActionsTemplateRepositoryResultDto> applyResults = [];
     private IReadOnlyList<string> repositoryOptions = [];
     private HashSet<string> selectedRepositories = new(StringComparer.OrdinalIgnoreCase);
+    private HashSet<string> selectedCustomSourceRepositories = new(StringComparer.OrdinalIgnoreCase);
     private Dictionary<string, string> parameterValues = new(StringComparer.OrdinalIgnoreCase);
     private string searchText = string.Empty;
     private string selectedCategory = AllCategoriesLabel;
@@ -72,10 +73,8 @@ public partial class ActionsTemplates : ComponentBase
             || isLoadingCustomSource
             || string.IsNullOrWhiteSpace(customSourceRepository);
 
-    private string CustomSourceHelperText
-        => restoredLastUsedSource && !string.IsNullOrWhiteSpace(customSourceRepository)
-            ? LastUsedSourceHelperText
-            : string.Empty;
+    private bool ShowLastUsedSourceCaption
+        => restoredLastUsedSource && !string.IsNullOrWhiteSpace(customSourceRepository);
 
     private string CustomSourceRepository
     {
@@ -90,6 +89,7 @@ public partial class ActionsTemplates : ComponentBase
 
             customSourceRepository = normalisedValue;
             restoredLastUsedSource = false;
+            SyncCustomSourceSelectorFromManualField();
             StateHasChanged();
         }
     }
@@ -123,6 +123,22 @@ public partial class ActionsTemplates : ComponentBase
         => selectedRepositories
             .OrderBy(repository => repository, StringComparer.OrdinalIgnoreCase)
             .ToArray();
+
+    private IReadOnlyList<string> SelectedCustomSourceRepositoryFullNames
+        => selectedCustomSourceRepositories
+            .OrderBy(repository => repository, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+    private string CustomSourceRepositorySelectorSummary
+    {
+        get
+        {
+            var repositoryCount = repositoryOptions.Count;
+            var repositoryNoun = repositoryCount == 1 ? "repository" : "repositories";
+
+            return $"Showing {repositoryCount} active {repositoryNoun} from your catalogue.";
+        }
+    }
 
     private string RepositorySelectorSummary
     {
@@ -159,6 +175,34 @@ public partial class ActionsTemplates : ComponentBase
         customSourceRepository = lastUsedSource.Trim();
         loadedCustomSourceRepository = customSourceRepository;
         restoredLastUsedSource = true;
+    }
+
+    private void ApplyRestoredCustomSourceToPickers()
+    {
+        if (string.IsNullOrWhiteSpace(customSourceRepository))
+        {
+            return;
+        }
+
+        SyncCustomSourceSelectorFromManualField();
+    }
+
+    private void SyncCustomSourceSelectorFromManualField()
+    {
+        var trimmedSource = customSourceRepository.Trim();
+        if (string.IsNullOrWhiteSpace(trimmedSource))
+        {
+            selectedCustomSourceRepositories.Clear();
+            return;
+        }
+
+        if (repositoryOptions.Contains(trimmedSource, StringComparer.OrdinalIgnoreCase))
+        {
+            selectedCustomSourceRepositories = new HashSet<string>([trimmedSource], StringComparer.OrdinalIgnoreCase);
+            return;
+        }
+
+        selectedCustomSourceRepositories.Clear();
     }
 
     private async Task LoadCustomSourceAsync()
@@ -253,7 +297,22 @@ public partial class ActionsTemplates : ComponentBase
         finally
         {
             isLoadingRepositories = false;
+            ApplyRestoredCustomSourceToPickers();
         }
+    }
+
+    private Task OnCustomSourceRepositoriesChangedAsync(IReadOnlyList<string> repositories)
+    {
+        ArgumentNullException.ThrowIfNull(repositories);
+
+        selectedCustomSourceRepositories = repositories
+            .Where(repository => !string.IsNullOrWhiteSpace(repository))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        customSourceRepository = selectedCustomSourceRepositories.FirstOrDefault() ?? string.Empty;
+        restoredLastUsedSource = false;
+
+        return Task.CompletedTask;
     }
 
     private async Task OnSelectedRepositoriesChangedAsync(IReadOnlyList<string> repositories)
