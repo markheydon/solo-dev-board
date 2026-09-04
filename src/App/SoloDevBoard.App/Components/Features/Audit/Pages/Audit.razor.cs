@@ -57,6 +57,7 @@ public partial class Audit : ComponentBase, IAsyncDisposable
     private bool isLoadingRepositories = true;
     private bool isLoadingAuditData;
     private bool isRefreshingAuditData;
+    private bool isReloadingFromGitHub;
     private bool isLoadingWorkflowHealth;
     private bool isLoadingLabelConsistency;
     private bool workflowHealthLoadFailed;
@@ -141,6 +142,82 @@ public partial class Audit : ComponentBase, IAsyncDisposable
         }
     }
 
+    private async Task ReloadFromGitHubAsync()
+    {
+        if (isLoadingRepositories || isReloadingFromGitHub || isLoadingAuditData)
+        {
+            return;
+        }
+
+        var preservedRepositories = selectedRepositories.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var shouldReloadAuditData = hasLoadedAuditSummary && preservedRepositories.Count > 0;
+
+        isReloadingFromGitHub = true;
+
+        try
+        {
+            await RefreshRepositoryOptionsAsync(forceReload: true);
+
+            selectedRepositories = repositoryOptions
+                .Where(repository => preservedRepositories.Contains(repository))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            if (shouldReloadAuditData && selectedRepositories.Count > 0)
+            {
+                await LoadAuditDataAsync(isBackgroundRefresh: false, forceReload: true);
+            }
+        }
+        finally
+        {
+            isReloadingFromGitHub = false;
+        }
+    }
+
+    private async Task RetryLoadRepositoriesAsync()
+    {
+        await RefreshRepositoryOptionsAsync(forceReload: true);
+    }
+
+    private async Task RetryLoadAuditDataAsync()
+    {
+        await LoadAuditDataAsync(isBackgroundRefresh: false, forceReload: true);
+    }
+
+    private async Task RefreshRepositoryOptionsAsync(bool forceReload)
+    {
+        repositoryLoadErrorMessage = null;
+
+        try
+        {
+            var repositories = await RepositoryService.GetActiveRepositoriesAsync(forceReload: forceReload);
+
+            repositoryOptions = repositories
+                .Select(repository => repository.FullName)
+                .OrderBy(fullName => fullName, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
+        {
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            repositoryLoadErrorMessage = $"GitHub API request failed. {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to refresh audit dashboard repositories.");
+            repositoryLoadErrorMessage = "An unexpected error occurred while loading repositories for the audit dashboard.";
+        }
+    }
+
+    private bool ShowReloadFromGitHubButton => !isLoadingRepositories;
+
+    private bool IsReloadFromGitHubDisabled => isReloadingFromGitHub || isLoadingAuditData;
+
     private Task OnSelectedRepositoriesChanged(IReadOnlyList<string> repositories)
     {
         ArgumentNullException.ThrowIfNull(repositories);
@@ -174,7 +251,7 @@ public partial class Audit : ComponentBase, IAsyncDisposable
         await LoadAuditDataAsync(isBackgroundRefresh: false);
     }
 
-    private async Task LoadAuditDataAsync(bool isBackgroundRefresh)
+    private async Task LoadAuditDataAsync(bool isBackgroundRefresh, bool forceReload = false)
     {
         auditLoadErrorMessage = null;
 

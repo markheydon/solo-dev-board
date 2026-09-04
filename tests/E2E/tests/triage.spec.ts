@@ -1,6 +1,14 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Triage shell', () => {
+  test('session scope exposes reload from GitHub after repositories finish loading', async ({ page }) => {
+    await page.goto('/triage');
+
+    await expect(page.getByTestId('triage-repositories-load-error')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('triage-reload-from-github-button')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Reload from GitHub' })).toBeVisible();
+  });
+
   test('page shows repository load failure inline without a live GitHub connection', async ({ page }) => {
     await page.goto('/triage');
 

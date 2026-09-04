@@ -68,6 +68,8 @@ public partial class Labels : ComponentBase
     private HashSet<LabelRow> selectedLabelRows = [];
     private bool isBulkDeletingLabels;
     private bool isAwaitingBulkDeleteConfirmation;
+    private bool isReloadingFromGitHub;
+    private bool hasLabelsLoadFailure;
 
     private void ShowSnackbarFeedback(string message, Severity severity)
         => SnackbarFeedback.Show(Snackbar, message, severity);
@@ -102,7 +104,75 @@ public partial class Labels : ComponentBase
 
     private async Task ReloadRepositoriesAsync()
     {
-        await LoadRepositoriesAsync();
+        await RetryLoadRepositoriesAsync();
+    }
+
+    private async Task ReloadFromGitHubAsync()
+    {
+        if (isLoadingRepositories || isReloadingFromGitHub || IsPageWriteBusy)
+        {
+            return;
+        }
+
+        var preservedRepositoryFullNames = selectedRepositoryFullNames.ToArray();
+        var preservedStrategyId = selectedStrategyId;
+        var preservedRemoveOutside = removeLabelsOutsideTaxonomy;
+        var preservedKeepArea = keepAreaLabels;
+        var preservedSyncSource = syncSourceRepositoryFullName;
+        var preservedSyncTargets = syncTargetRepositoryFullNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var shouldReloadLabels = hasLoadedLabels && preservedRepositoryFullNames.Length > 0;
+
+        isReloadingFromGitHub = true;
+
+        try
+        {
+            await RefreshRepositoriesCatalogueAsync(forceReload: true);
+
+            if (preservedRepositoryFullNames.Length > 0)
+            {
+                var preservedNames = preservedRepositoryFullNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
+                selectedRepositories = availableRepositories
+                    .Where(repository => preservedNames.Contains(repository.FullName))
+                    .OrderBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+
+                selectedStrategyId = recommendedStrategies.Any(strategy => strategy.Id.Equals(preservedStrategyId, StringComparison.OrdinalIgnoreCase))
+                    ? preservedStrategyId
+                    : selectedStrategyId;
+
+                removeLabelsOutsideTaxonomy = preservedRemoveOutside;
+                keepAreaLabels = preservedKeepArea;
+                syncSourceRepositoryFullName = preservedSyncSource;
+                syncTargetRepositoryFullNames = preservedSyncTargets
+                    .Where(preservedNames.Contains)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+                EnsureSyncSelections();
+            }
+
+            if (shouldReloadLabels && string.IsNullOrWhiteSpace(errorMessage))
+            {
+                await LoadLabelsForSelectionAsync(forceReload: true);
+            }
+        }
+        finally
+        {
+            isReloadingFromGitHub = false;
+        }
+    }
+
+    private async Task RetryLoadRepositoriesAsync()
+    {
+        await RefreshRepositoriesCatalogueAsync(forceReload: true);
+    }
+
+    private async Task RetryLoadLabelsAsync()
+    {
+        await LoadLabelsForSelectionAsync(forceReload: true);
+    }
+
+    private async Task LoadSelectedLabelsAsync()
+    {
+        await LoadLabelsForSelectionAsync();
     }
 
     private Task OnActiveTabIndexChanged(int tabIndex)
@@ -183,6 +253,37 @@ public partial class Labels : ComponentBase
         finally
         {
             isLoadingRepositories = false;
+        }
+    }
+
+    private async Task RefreshRepositoriesCatalogueAsync(bool forceReload)
+    {
+        hasRepositoryLoadFailure = false;
+        errorMessage = null;
+
+        try
+        {
+            availableRepositories = (await RepositoryService.GetActiveRepositoriesAsync(forceReload: forceReload))
+                .OrderBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
+        {
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            hasRepositoryLoadFailure = true;
+            errorMessage = $"GitHub API request failed. {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            hasRepositoryLoadFailure = true;
+            Logger.LogError(ex, "Failed to refresh repositories for the Label Manager.");
+            errorMessage = "An unexpected error occurred while refreshing repositories.";
         }
     }
 
@@ -356,9 +457,10 @@ public partial class Labels : ComponentBase
         }
     }
 
-    private async Task LoadLabelsForSelectionAsync()
+    private async Task LoadLabelsForSelectionAsync(bool forceReload = false)
     {
         hasRepositoryLoadFailure = false;
+        hasLabelsLoadFailure = false;
         errorMessage = null;
         hasLoadedLabels = true;
 
@@ -401,7 +503,7 @@ public partial class Labels : ComponentBase
                     .ToArray();
 
                 var labels = await LabelManagerService
-                    .GetLabelsForRepositoriesAsync(owner, repositoriesForOwner);
+                    .GetLabelsForRepositoriesAsync(owner, repositoriesForOwner, forceReload: forceReload);
 
                 consolidatedLabels.AddRange(labels.Select(label => label with { RepositoryName = $"{owner}/{label.RepositoryName}" }));
             }
@@ -417,12 +519,14 @@ public partial class Labels : ComponentBase
         }
         catch (HttpRequestException ex)
         {
+            hasLabelsLoadFailure = true;
             errorMessage = $"GitHub API request failed. {ex.Message}";
             rows = [];
             filteredRows = [];
         }
         catch (Exception ex)
         {
+            hasLabelsLoadFailure = true;
             Logger.LogError(ex, "Failed to load labels for selected repositories.");
             errorMessage = "An unexpected error occurred while loading labels.";
             rows = [];
@@ -1092,6 +1196,17 @@ public partial class Labels : ComponentBase
 
     private bool ShowLoadingState => isLoadingRepositories || isLoadingLabels;
 
+    private bool IsPageWriteBusy => isPreviewingRecommendedTaxonomy
+        || isApplyingRecommendedTaxonomy
+        || isPreviewingSync
+        || isApplyingSync
+        || isBulkDeletingLabels
+        || isAwaitingBulkDeleteConfirmation;
+
+    private bool ShowReloadFromGitHubButton => !isLoadingRepositories;
+
+    private bool IsReloadFromGitHubDisabled => isReloadingFromGitHub || IsPageWriteBusy;
+
     private bool IsRecommendedTaxonomyBusy => isPreviewingRecommendedTaxonomy || isApplyingRecommendedTaxonomy;
 
     private bool IsSynchronisationBusy => isPreviewingSync || isApplyingSync;
@@ -1163,7 +1278,9 @@ public partial class Labels : ComponentBase
 
     private string ErrorTitle => hasRepositoryLoadFailure
         ? "Unable to load repositories"
-        : "Unable to load labels";
+        : hasLabelsLoadFailure
+            ? "Unable to load labels"
+            : "Unable to load labels";
 
     private string RepositorySelectorSummary
     {

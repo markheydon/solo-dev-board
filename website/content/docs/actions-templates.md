@@ -28,7 +28,7 @@ Key goals of Actions Templates:
 ### Browse built-in templates
 
 1. Open **Actions Templates** from the navigation menu or the app home page.
-2. Select one or more target repositories using the repository selector at the top of the page.
+2. Select one or more target repositories using the repository selector at the top of the page. Choose **Reload from GitHub** to refresh templates and repository statuses without clearing your template or repository selections.
 3. Review the built-in template cards for common .NET workflows such as CI, Azure CD (Aspire), and Dependabot auto-merge.
 4. Use the search field to filter templates by name, category, or tag.
 5. Select a category chip (for example **CI** or **CD**) to narrow the list.

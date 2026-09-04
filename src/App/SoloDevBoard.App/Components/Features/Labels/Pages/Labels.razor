@@ -8,7 +8,17 @@
 
     <MudPaper Class="pa-4" Elevation="1" data-testid="repository-selector-region">
         <MudStack Spacing="2">
-            <MudText Typo="Typo.h6">Repository selector</MudText>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Wrap="Wrap.Wrap" Spacing="2">
+                <MudText Typo="Typo.h6">Repository selector</MudText>
+                @if (ShowReloadFromGitHubButton)
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ReloadFromGitHubAsync"
+                               Disabled="IsReloadFromGitHubDisabled"
+                               data-testid="labels-reload-from-github-button">
+                        Reload from GitHub
+                    </MudButton>
+                }
+            </MudStack>
 
             @if (isLoadingRepositories)
             {
@@ -26,7 +36,8 @@
                         <MudText Typo="Typo.body2">@errorMessage</MudText>
                     </MudAlert>
 
-                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ReloadRepositoriesAsync">
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="RetryLoadRepositoriesAsync"
+                               data-testid="labels-reload-repositories-button">
                         Try loading repositories again
                     </MudButton>
                 </MudStack>
@@ -72,7 +83,8 @@
                                 <MudText Typo="Typo.body2">@errorMessage</MudText>
                             </MudAlert>
 
-                            <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="LoadLabelsForSelectionAsync">
+                            <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="RetryLoadLabelsAsync"
+                                       data-testid="labels-reload-labels-button">
                                 Try loading labels again
                             </MudButton>
                         </MudStack>
@@ -91,7 +103,7 @@
                                    Color="Color.Secondary"
                                    data-testid="load-labels-button"
                                    Disabled="@(ShowLoadingState || IsLabelsTabBusy || !selectedRepositories.Any())"
-                                   OnClick="LoadLabelsForSelectionAsync">
+                                   OnClick="LoadSelectedLabelsAsync">
                             Load selected repositories
                         </MudButton>
 
@@ -125,7 +137,7 @@
                     <MudPaper Class="pa-4" Outlined="true" aria-label="Labels results" data-testid="labels-results-region">
                         @if (ShowLoadingState)
                         {
-                            <MudStack AlignItems="AlignItems.Center" Spacing="1" aria-live="polite" role="status" data-testid="labels-loading-state">
+                            <MudStack AlignItems="AlignItems.Center" Spacing="1" aria-live="polite" role="status" data-testid="@(isLoadingRepositories ? "labels-repositories-loading-state" : "labels-loading-state")">
                                 <MudProgressCircular Indeterminate="true" Color="Color.Primary" aria-label="Loading labels" />
                                 <MudText Typo="Typo.body2">@(isLoadingRepositories ? "Loading repositories..." : "Loading labels...")</MudText>
                             </MudStack>

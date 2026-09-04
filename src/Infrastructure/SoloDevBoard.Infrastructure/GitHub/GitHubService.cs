@@ -47,8 +47,13 @@ public sealed class GitHubService : IGitHubService
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<Repository>> GetRepositoriesAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Repository>> GetRepositoriesAsync(CancellationToken cancellationToken = default, bool forceReload = false)
     {
+        if (forceReload)
+        {
+            _responseCache.InvalidateUserRepositories();
+        }
+
         return await _responseCache.GetOrCreateUserRepositoriesAsync(
             async ct =>
             {

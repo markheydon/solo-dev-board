@@ -1387,6 +1387,73 @@ public sealed class LabelsTests
         });
     }
 
+    [Fact]
+    public async Task Labels_AfterRepositoriesLoad_ShowsReloadFromGitHubButton()
+    {
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([
+                CreateRepository("owner", "repo-a"),
+            ]);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Labels>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='labels-reload-from-github-button']"));
+            Assert.Contains("Reload from GitHub", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task Labels_ReloadFromGitHub_KeepsRepositorySelectionAndForceReloadsCatalogue()
+    {
+        var repository = CreateRepository("owner", "repo-a");
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([repository]);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => Assert.Contains("Showing 1 active repository", cut.Markup));
+
+        await SelectRepositoriesAsync(cut, repository);
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("1 selected", cut.Markup);
+        });
+
+        await cut.Find("[data-testid='labels-reload-from-github-button']").ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("1 selected", cut.Markup);
+        });
+
+        await _repositoryService.Received(1).GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), true);
+    }
+
+    [Fact]
+    public async Task Labels_LabelsLoadFailure_ShowsTryAgainButton()
+    {
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([
+                CreateRepository("owner", "repo-a"),
+            ]);
+
+        _labelManagerService.GetLabelsForRepositoriesAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>(), Arg.Any<bool>())
+            .Returns(Task.FromException<IReadOnlyList<LabelDto>>(new HttpRequestException("Connection refused")));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Labels>();
+        await SelectRepositoriesAsync(cut, CreateRepository("owner", "repo-a"));
+        await cut.Find("[data-testid='load-labels-button']").ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='labels-reload-labels-button']"));
+            Assert.Contains("Try loading labels again", cut.Markup);
+        });
+    }
+
     private BunitContext CreateContext(IDialogService? dialogService = null)
     {
         var ctx = new BunitContext();

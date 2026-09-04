@@ -23,7 +23,7 @@ public sealed class AuditTests
     {
         // Arrange
         var tcs = new TaskCompletionSource<IReadOnlyList<RepositoryDto>>();
-        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(tcs.Task);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns(tcs.Task);
         _auditDashboardService.GetDashboardSnapshotAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(CreateSnapshot());
 
         await using var ctx = CreateContext();
@@ -41,7 +41,7 @@ public sealed class AuditTests
     public async Task Audit_WhenServiceReturnsNoRepositories_ShowsEmptyStateInFeedbackRegion()
     {
         // Arrange
-        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(Array.Empty<RepositoryDto>());
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns(Array.Empty<RepositoryDto>());
 
         await using var ctx = CreateContext();
 
@@ -67,7 +67,7 @@ public sealed class AuditTests
             new("owner/repo-a", 4, 3, 1, 1, 0),
         };
 
-        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([
                 CreateRepository("owner", "repo-a"),
                 CreateRepository("owner", "repo-b"),
             ]);
@@ -114,7 +114,7 @@ public sealed class AuditTests
     public async Task Audit_WhenLoadingSelectedRepositories_ShowsAuditLoadingState()
     {
         // Arrange
-        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([CreateRepository("owner", "repo-a")]);
 
         var snapshotCompletionSource = new TaskCompletionSource<AuditDashboardSnapshotDto>(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -153,7 +153,7 @@ public sealed class AuditTests
     public async Task Audit_WhenLabelConsistencyIsLoading_ShowsKpiSkeleton()
     {
         // Arrange
-        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([CreateRepository("owner", "repo-a")]);
         _auditDashboardService
             .GetDashboardSnapshotAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), false, Arg.Any<CancellationToken>())
             .Returns(CreateSnapshot([new RepositoryAuditSummaryDto("owner/repo-a", 1, 1, 0, 0, 0)]));
@@ -191,7 +191,7 @@ public sealed class AuditTests
             new("owner/repo-a", 4, 2, 1, 1, 1),
         };
 
-        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([CreateRepository("owner", "repo-a")]);
 
         var issues = new List<IssueDto>
         {
@@ -252,7 +252,7 @@ public sealed class AuditTests
             new("owner/repo-a", 1, 0, 0, 0, 0),
         };
 
-        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([CreateRepository("owner", "repo-a")]);
         _auditDashboardService.GetDashboardSnapshotAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), false, Arg.Any<CancellationToken>()).Returns(CreateSnapshot(summary));
 
         await using var ctx = CreateContext();
@@ -293,7 +293,7 @@ public sealed class AuditTests
             new(12, "Needs triage", "https://github.com/owner/repo-a/issues/12", "owner/repo-a", DateTimeOffset.UtcNow.AddDays(-5), DateTimeOffset.UtcNow.AddDays(-2)),
         };
 
-        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([CreateRepository("owner", "repo-a")]);
         _auditDashboardService
             .GetDashboardSnapshotAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), false, Arg.Any<CancellationToken>())
             .Returns(CreateSnapshot(summary, issues));
@@ -338,7 +338,7 @@ public sealed class AuditTests
             new(12, "Needs triage", "https://github.com/owner/repo-a/issues/12", "owner/repo-a", DateTimeOffset.UtcNow.AddDays(-5), DateTimeOffset.UtcNow.AddDays(-2)),
         };
 
-        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([CreateRepository("owner", "repo-a")]);
         _auditDashboardService
             .GetDashboardSnapshotAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), false, Arg.Any<CancellationToken>())
             .Returns(CreateSnapshot(summary, issues));
@@ -378,7 +378,7 @@ public sealed class AuditTests
             new("owner/repo-a", 1, 1, 0, 0, 0),
         };
 
-        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([CreateRepository("owner", "repo-a")]);
 
         _auditDashboardService.GetDashboardSnapshotAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), false, Arg.Any<CancellationToken>()).Returns(CreateSnapshot(summary));
 
@@ -411,7 +411,7 @@ public sealed class AuditTests
             new("owner/repo-b", 3, 1, 0, 0, 0),
         };
 
-        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([
                 CreateRepository("owner", "repo-a"),
                 CreateRepository("owner", "repo-b"),
             ]);
@@ -441,7 +441,7 @@ public sealed class AuditTests
             new("owner/repo-a", 1, 1, 0, 0, 0),
         };
 
-        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([CreateRepository("owner", "repo-a")]);
         _auditDashboardService.GetDashboardSnapshotAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), false, Arg.Any<CancellationToken>()).Returns(CreateSnapshot(summary));
 
         await using var ctx = CreateContext();
@@ -472,7 +472,7 @@ public sealed class AuditTests
             new("owner/repo-a", 1, 1, 0, 0, 0),
         };
 
-        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([CreateRepository("owner", "repo-a")]);
         _auditDashboardService.GetDashboardSnapshotAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), false, Arg.Any<CancellationToken>()).Returns(CreateSnapshot(summary));
         _markdownExporter.GenerateSummaryMarkdown(Arg.Any<AuditDashboardMarkdownExportRequest>()).Returns(markdown);
 
@@ -510,7 +510,7 @@ public sealed class AuditTests
     public async Task Audit_WhenRendered_ShowsDefaultAutoRefreshInterval()
     {
         // Arrange
-        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([CreateRepository("owner", "repo-a")]);
 
         await using var ctx = CreateContext();
 
@@ -537,7 +537,7 @@ public sealed class AuditTests
         var refreshCompletionSource = new TaskCompletionSource<AuditDashboardSnapshotDto>(TaskCreationOptions.RunContinuationsAsynchronously);
         var snapshotCallCount = 0;
 
-        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([CreateRepository("owner", "repo-a")]);
         _auditDashboardService.GetDashboardSnapshotAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), false, Arg.Any<CancellationToken>())
             .Returns(callInfo =>
             {
@@ -581,7 +581,7 @@ public sealed class AuditTests
 
         var snapshotCallCount = 0;
 
-        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([CreateRepository("owner", "repo-a")]);
         _auditDashboardService.GetDashboardSnapshotAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<int>(), false, Arg.Any<CancellationToken>())
             .Returns(callInfo =>
             {
@@ -618,7 +618,7 @@ public sealed class AuditTests
     public async Task Audit_WhenAutoRefreshIntervalChangedToOff_UpdatesSelectedInterval()
     {
         // Arrange
-        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([CreateRepository("owner", "repo-a")]);
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([CreateRepository("owner", "repo-a")]);
 
         await using var ctx = CreateContext();
 
@@ -643,7 +643,7 @@ public sealed class AuditTests
         var method = typeof(Audit).GetMethod("LoadAuditDataAsync", BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.NotNull(method);
 
-        await cut.InvokeAsync(async () => await (Task)method!.Invoke(cut.Instance, [true])!);
+        await cut.InvokeAsync(async () => await (Task)method!.Invoke(cut.Instance, [true, false])!);
     }
 
     private static async Task InvokeAutoRefreshIntervalChangedAsync(IRenderedComponent<Audit> cut, int intervalMinutes)
@@ -652,6 +652,39 @@ public sealed class AuditTests
         Assert.NotNull(method);
 
         await cut.InvokeAsync(async () => await (Task)method!.Invoke(cut.Instance, [intervalMinutes])!);
+    }
+
+    [Fact]
+    public async Task Audit_AfterRepositoriesLoad_ShowsReloadFromGitHubButton()
+    {
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([
+                new RepositoryDto(1, "repo-a", "owner/repo-a", string.Empty, string.Empty, false, false, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, [], false),
+            ]);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Audit>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='audit-reload-from-github-button']"));
+            Assert.Contains("Reload from GitHub", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task Audit_RepositoryLoadFailure_ShowsTryAgainButton()
+    {
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>())
+            .Returns(Task.FromException<IReadOnlyList<RepositoryDto>>(new HttpRequestException("Connection refused")));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Audit>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='audit-reload-repositories-button']"));
+            Assert.Contains("Try again", cut.Markup);
+        });
     }
 
     private BunitContext CreateContext()

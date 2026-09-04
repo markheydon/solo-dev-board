@@ -1484,6 +1484,46 @@ public sealed class TriageTests
             DateTimeOffset.UtcNow);
     }
 
+    [Fact]
+    public async Task Triage_AfterRepositoriesLoad_ShowsReloadFromGitHubButton()
+    {
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([
+                new RepositoryDto(1, "repo-a", "owner/repo-a", string.Empty, string.Empty, false, false, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, [], false),
+            ]);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Triage>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='triage-reload-from-github-button']"));
+            Assert.Contains("Reload from GitHub", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task Triage_ReloadFromGitHub_KeepsRepositorySelectionAndForceReloadsCatalogue()
+    {
+        var repository = new RepositoryDto(1, "repo-a", "owner/repo-a", string.Empty, string.Empty, false, false, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, [], false);
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([repository]);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Triage>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='triage-repository-autocomplete']"));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync([repository.FullName]));
+
+        cut.WaitForAssertion(() => Assert.Contains("owner/repo-a", cut.Markup));
+
+        await cut.Find("[data-testid='triage-reload-from-github-button']").ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+
+        cut.WaitForAssertion(() => Assert.Contains("owner/repo-a", cut.Markup));
+
+        await _repositoryService.Received(1).GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), true);
+    }
+
     private BunitContext CreateContext()
     {
         var ctx = new BunitContext();

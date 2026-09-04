@@ -877,6 +877,48 @@ public sealed class MigrationTests
         });
     }
 
+    [Fact]
+    public async Task Migration_AfterRepositoriesLoad_ShowsReloadFromGitHubButton()
+    {
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([
+                CreateRepository("owner", "repo-a"),
+                CreateRepository("owner", "repo-b"),
+            ]);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Migration>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='migration-reload-from-github-button']"));
+            Assert.Contains("Reload from GitHub", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task Migration_ReloadFromGitHub_KeepsRepositorySelectionAndForceReloadsCatalogue()
+    {
+        var repoA = CreateRepository("owner", "repo-a");
+        var repoB = CreateRepository("owner", "repo-b");
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([repoA, repoB]);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Migration>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='migration-repository-autocomplete']"));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync([repoA.FullName, repoB.FullName]));
+
+        cut.WaitForAssertion(() => Assert.Contains("2 selected", cut.Markup));
+
+        await cut.Find("[data-testid='migration-reload-from-github-button']").ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+
+        cut.WaitForAssertion(() => Assert.Contains("2 selected", cut.Markup));
+
+        await _repositoryService.Received(1).GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), true);
+    }
+
     private BunitContext CreateContext()
     {
         var ctx = new BunitContext();

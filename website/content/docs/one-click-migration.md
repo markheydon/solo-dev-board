@@ -44,7 +44,7 @@ One-Click Migration covers labels, milestones, and Projects v2 Status columns (t
 
 ### Step 1 — Select repositories
 
-Choose one source repository and one or more target repositories. The source repository cannot also appear in the target list. The Preview and Apply buttons remain disabled until at least one source and one target are selected.
+Choose one source repository and one or more target repositories. The source repository cannot also appear in the target list. Use **Reload from GitHub** in the migration setup header to refresh catalogues and board options without clearing your source, target, or scope selections. The Preview and Apply buttons remain disabled until at least one source and one target are selected.
 
 ### Step 2 — Choose migration scope
 

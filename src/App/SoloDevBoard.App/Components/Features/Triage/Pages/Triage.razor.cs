@@ -89,6 +89,7 @@ public partial class Triage : ComponentBase
     private string? inaccessibleProjectBoardsWarning;
     private bool hasRepositoryLoadFailure;
     private string? repositoryLoadErrorMessage;
+    private bool isReloadingFromGitHub;
     private TriageItemDisposition currentDisposition = TriageItemDisposition.Process;
 
     private void ShowTransientFeedback(string message, Severity severity)
@@ -228,7 +229,58 @@ public partial class Triage : ComponentBase
     }
 
     private async Task ReloadRepositoriesAsync()
-        => await LoadRepositoriesAsync();
+        => await RetryLoadRepositoriesAsync();
+
+    private async Task ReloadFromGitHubAsync()
+    {
+        if (isLoadingRepositories || isReloadingFromGitHub || isStartingSession || isApplyingSessionAction)
+        {
+            return;
+        }
+
+        var preservedRepositoryFullName = selectedRepositoryFullName;
+        var preservedIncludePullRequests = includePullRequests;
+        var preservedProjectBoardId = selectedProjectBoardId;
+        var preservedProjectBoardStatusOptionId = selectedProjectBoardStatusOptionId;
+        var activeSession = currentSession;
+
+        isReloadingFromGitHub = true;
+
+        try
+        {
+            await RefreshRepositoriesCatalogueAsync(forceReload: true);
+
+            if (!string.IsNullOrWhiteSpace(preservedRepositoryFullName))
+            {
+                selectedRepositoryFullName = availableRepositories
+                    .Any(repository => repository.FullName.Equals(preservedRepositoryFullName, StringComparison.OrdinalIgnoreCase))
+                    ? preservedRepositoryFullName
+                    : string.Empty;
+            }
+
+            includePullRequests = preservedIncludePullRequests;
+
+            if (activeSession is not null && !string.IsNullOrWhiteSpace(selectedRepositoryFullName))
+            {
+                selectedProjectBoardId = preservedProjectBoardId;
+                selectedProjectBoardStatusOptionId = preservedProjectBoardStatusOptionId;
+                await LoadQuickActionLabelsAsync(
+                    ResolveOwner(selectedRepositoryFullName),
+                    ResolveRepositoryName(selectedRepositoryFullName),
+                    forceReload: true);
+                await LoadPlanningOptionsAsync(activeSession, preserveProjectBoardSelection: true);
+            }
+        }
+        finally
+        {
+            isReloadingFromGitHub = false;
+        }
+    }
+
+    private async Task RetryLoadRepositoriesAsync()
+    {
+        await RefreshRepositoriesCatalogueAsync(forceReload: true);
+    }
 
     private async Task LoadRepositoriesAsync()
     {
@@ -273,6 +325,64 @@ public partial class Triage : ComponentBase
             isLoadingRepositories = false;
         }
     }
+
+    private async Task RefreshRepositoriesCatalogueAsync(bool forceReload)
+    {
+        hasRepositoryLoadFailure = false;
+        repositoryLoadErrorMessage = null;
+
+        try
+        {
+            availableRepositories = (await RepositoryService.GetActiveRepositoriesAsync(forceReload: forceReload))
+                .OrderBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
+        {
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            Logger.LogError(ex, "GitHub API request failed while refreshing triage repositories.");
+            hasRepositoryLoadFailure = true;
+            repositoryLoadErrorMessage = $"GitHub API request failed while loading repositories. {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to refresh triage repositories.");
+            hasRepositoryLoadFailure = true;
+            repositoryLoadErrorMessage = "An unexpected error occurred while loading repositories.";
+        }
+    }
+
+    private static string ResolveOwner(string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+        {
+            return string.Empty;
+        }
+
+        var parts = fullName.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return parts.Length > 0 ? parts[0] : string.Empty;
+    }
+
+    private static string ResolveRepositoryName(string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+        {
+            return string.Empty;
+        }
+
+        var parts = fullName.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return parts.Length > 1 ? parts[1] : string.Empty;
+    }
+
+    private bool ShowReloadFromGitHubButton => !isLoadingRepositories;
+
+    private bool IsReloadFromGitHubDisabled => isReloadingFromGitHub || isStartingSession || isApplyingSessionAction;
 
     private Task OnSelectedRepositoryChangedAsync(IReadOnlyList<string> repositoryFullNames)
     {
@@ -363,14 +473,14 @@ public partial class Triage : ComponentBase
         }
     }
 
-    private async Task LoadQuickActionLabelsAsync(string owner, string repo)
+    private async Task LoadQuickActionLabelsAsync(string owner, string repo, bool forceReload = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
         ArgumentException.ThrowIfNullOrWhiteSpace(repo);
 
         try
         {
-            var labelNames = await LabelManagerService.GetLabelsAsync(owner, repo);
+            var labelNames = await LabelManagerService.GetLabelsAsync(owner, repo, forceReload: forceReload);
 
             availableLabelNames = labelNames
                 .Select(label => label.Name)
@@ -788,12 +898,15 @@ public partial class Triage : ComponentBase
         }
     }
 
-    private async Task LoadPlanningOptionsAsync(TriageSessionDto session)
+    private async Task LoadPlanningOptionsAsync(TriageSessionDto session, bool preserveProjectBoardSelection = false)
     {
         ArgumentNullException.ThrowIfNull(session);
 
         isLoadingPlanningOptions = true;
         inaccessibleProjectBoardsWarning = null;
+
+        var preservedProjectBoardId = preserveProjectBoardSelection ? selectedProjectBoardId : string.Empty;
+        var preservedProjectBoardStatusOptionId = preserveProjectBoardSelection ? selectedProjectBoardStatusOptionId : string.Empty;
 
         var milestoneLoadFailed = false;
 
@@ -830,6 +943,14 @@ public partial class Triage : ComponentBase
             inaccessibleProjectBoardsWarning = LinkedProjectBoardVisibility.BuildInaccessibleProjectsWarning(
                 discovery.TotalLinkedProjectCount,
                 discovery.InaccessibleLinkedProjectCount);
+
+            if (preserveProjectBoardSelection
+                && !string.IsNullOrWhiteSpace(preservedProjectBoardId)
+                && discovery.Options.Any(option => option.Id.Equals(preservedProjectBoardId, StringComparison.Ordinal)))
+            {
+                selectedProjectBoardId = preservedProjectBoardId;
+                selectedProjectBoardStatusOptionId = preservedProjectBoardStatusOptionId;
+            }
 
             if (milestoneLoadFailed)
             {

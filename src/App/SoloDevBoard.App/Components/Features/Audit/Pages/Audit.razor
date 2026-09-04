@@ -32,6 +32,10 @@
             <MudStack Spacing="2">
                 <MudText Typo="Typo.h6">Unable to load repositories</MudText>
                 <MudText Typo="Typo.body2">@repositoryLoadErrorMessage</MudText>
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="RetryLoadRepositoriesAsync"
+                           data-testid="audit-reload-repositories-button">
+                    Try again
+                </MudButton>
             </MudStack>
         </MudPaper>
     }
@@ -48,7 +52,17 @@
     {
         <MudPaper Class="pa-4" Outlined="true" data-testid="audit-command-surface">
             <MudStack Spacing="2">
-                <MudText Typo="Typo.h6">Repository selector</MudText>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Wrap="Wrap.Wrap" Spacing="2">
+                    <MudText Typo="Typo.h6">Repository selector</MudText>
+                    @if (ShowReloadFromGitHubButton)
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ReloadFromGitHubAsync"
+                                   Disabled="IsReloadFromGitHubDisabled"
+                                   data-testid="audit-reload-from-github-button">
+                            Reload from GitHub
+                        </MudButton>
+                    }
+                </MudStack>
                 <MudText Typo="Typo.body2">Select the repositories to include, then load the latest dashboard snapshot.</MudText>
                 <RepositorySelector
                     Title=""
@@ -115,6 +129,10 @@
                 <MudStack Spacing="2">
                     <MudText Typo="Typo.h6">Unable to load audit summary</MudText>
                     <MudText Typo="Typo.body2">@auditLoadErrorMessage</MudText>
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="RetryLoadAuditDataAsync"
+                               data-testid="audit-retry-load-button">
+                        Try again
+                    </MudButton>
                 </MudStack>
             </MudPaper>
         }

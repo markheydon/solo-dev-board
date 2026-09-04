@@ -6,7 +6,7 @@ test.describe('Repositories shell', () => {
 
     await expect(page).toHaveTitle(/Repositories/);
     await expect(page.getByRole('heading', { name: 'Repositories', exact: true })).toBeVisible();
-    await expect(page.getByTestId('repositories-refresh-button')).toBeVisible();
+    await expect(page.getByTestId('repositories-reload-from-github-button')).toBeVisible();
     await expect(page.getByLabel('Search repositories')).toBeVisible();
     await expect(page.getByTestId('repositories-catalogue-filter')).toBeVisible();
     await expect(page.getByTestId('repositories-catalogue-filter-all')).toBeVisible();
