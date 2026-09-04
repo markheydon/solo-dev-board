@@ -69,7 +69,6 @@ public partial class Labels : ComponentBase
     private bool isBulkDeletingLabels;
     private bool isAwaitingBulkDeleteConfirmation;
     private bool isReloadingFromGitHub;
-    private bool hasLabelsLoadFailure;
 
     private void ShowSnackbarFeedback(string message, Severity severity)
         => SnackbarFeedback.Show(Snackbar, message, severity);
@@ -460,7 +459,6 @@ public partial class Labels : ComponentBase
     private async Task LoadLabelsForSelectionAsync(bool forceReload = false)
     {
         hasRepositoryLoadFailure = false;
-        hasLabelsLoadFailure = false;
         errorMessage = null;
         hasLoadedLabels = true;
 
@@ -519,14 +517,12 @@ public partial class Labels : ComponentBase
         }
         catch (HttpRequestException ex)
         {
-            hasLabelsLoadFailure = true;
             errorMessage = $"GitHub API request failed. {ex.Message}";
             rows = [];
             filteredRows = [];
         }
         catch (Exception ex)
         {
-            hasLabelsLoadFailure = true;
             Logger.LogError(ex, "Failed to load labels for selected repositories.");
             errorMessage = "An unexpected error occurred while loading labels.";
             rows = [];
@@ -1278,9 +1274,7 @@ public partial class Labels : ComponentBase
 
     private string ErrorTitle => hasRepositoryLoadFailure
         ? "Unable to load repositories"
-        : hasLabelsLoadFailure
-            ? "Unable to load labels"
-            : "Unable to load labels";
+        : "Unable to load labels";
 
     private string RepositorySelectorSummary
     {

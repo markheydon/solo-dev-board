@@ -5,6 +5,7 @@ using MudBlazor.Services;
 using NSubstitute;
 using SoloDevBoard.App.Components.Features.ActionsTemplates;
 using SoloDevBoard.App.Components.Features.ActionsTemplates.Pages;
+using SoloDevBoard.App.Components.Shared.Components;
 using SoloDevBoard.Application.Services.ActionsTemplates;
 using SoloDevBoard.Application.Services.Repositories;
 
@@ -548,6 +549,27 @@ public sealed class ActionsTemplatesTests
     }
 
     [Fact]
+    public async Task ActionsTemplates_ReloadFromGitHub_KeepsRepositorySelectionAndForceReloadsCatalogue()
+    {
+        SetupDefaultServices();
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<ActionsTemplates>();
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='workflow-repository-autocomplete']")));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(["owner/repo-a", "owner/repo-b"]));
+
+        cut.WaitForAssertion(() => Assert.Contains("2 selected", cut.Markup));
+
+        await cut.Find("[data-testid='actions-templates-reload-from-github-button']").ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+
+        cut.WaitForAssertion(() => Assert.Contains("2 selected", cut.Markup));
+
+        await _repositoryService.Received(1).GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), true);
+    }
+
+    [Fact]
     public async Task ActionsTemplates_RepositoryLoadFailure_ShowsTryAgainButton()
     {
         _actionsTemplateSourceStorage.GetLastUsedSourceAsync().Returns((string?)null);
@@ -562,6 +584,7 @@ public sealed class ActionsTemplatesTests
         cut.WaitForAssertion(() =>
         {
             Assert.Single(cut.FindAll("[data-testid='actions-templates-reload-repositories-button']"));
+            Assert.Single(cut.FindAll("[data-testid='actions-templates-reload-from-github-button']"));
             Assert.Contains("Try again", cut.Markup);
         });
     }

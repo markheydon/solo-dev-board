@@ -312,7 +312,7 @@ public partial class Audit : ComponentBase, IAsyncDisposable
             await InvokeAsync(StateHasChanged);
 
             var workflowHealthTask = FetchFailingWorkflowRunsAsync(selectedRepoNames, isBackgroundRefresh);
-            var labelConsistencyTask = FetchLabelConsistencyWarningsAsync(selectedRepoNames, isBackgroundRefresh);
+            var labelConsistencyTask = FetchLabelConsistencyWarningsAsync(selectedRepoNames, isBackgroundRefresh, forceReload);
             await Task.WhenAll(workflowHealthTask, labelConsistencyTask);
 
             var workflowHealthResult = await workflowHealthTask;
@@ -486,11 +486,16 @@ public partial class Audit : ComponentBase, IAsyncDisposable
         }
     }
 
-    private async Task<SecondaryFetchResult<LabelConsistencyWarningDto>> FetchLabelConsistencyWarningsAsync(IReadOnlyList<string> selectedRepoNames, bool isBackgroundRefresh)
+    private async Task<SecondaryFetchResult<LabelConsistencyWarningDto>> FetchLabelConsistencyWarningsAsync(
+        IReadOnlyList<string> selectedRepoNames,
+        bool isBackgroundRefresh,
+        bool forceReload = false)
     {
         try
         {
-            var warnings = await AuditDashboardService.GetLabelConsistencyWarningsAsync(selectedRepoNames);
+            var warnings = await AuditDashboardService.GetLabelConsistencyWarningsAsync(
+                selectedRepoNames,
+                forceReload: forceReload);
             return new SecondaryFetchResult<LabelConsistencyWarningDto>(
                 warnings
                     .OrderBy(warning => warning.RepositoryFullName, StringComparer.OrdinalIgnoreCase)

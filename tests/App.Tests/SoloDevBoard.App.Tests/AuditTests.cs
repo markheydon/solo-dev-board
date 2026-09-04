@@ -672,6 +672,33 @@ public sealed class AuditTests
     }
 
     [Fact]
+    public async Task Audit_ReloadFromGitHub_KeepsRepositorySelectionAndForceReloadsCatalogue()
+    {
+        var repoA = CreateRepository("owner", "repo-a");
+        var repoB = CreateRepository("owner", "repo-b");
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns([
+                repoA,
+                repoB,
+            ]);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Audit>();
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='audit-repository-autocomplete']")));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync([repoA.FullName, repoB.FullName]));
+
+        cut.WaitForAssertion(() => Assert.Contains("2 selected", cut.Markup));
+
+        await cut.Find("[data-testid='audit-reload-from-github-button']").ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+
+        cut.WaitForAssertion(() => Assert.Contains("2 selected", cut.Markup));
+
+        await _repositoryService.Received(1).GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), true);
+    }
+
+    [Fact]
     public async Task Audit_RepositoryLoadFailure_ShowsTryAgainButton()
     {
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>())
@@ -683,6 +710,7 @@ public sealed class AuditTests
         cut.WaitForAssertion(() =>
         {
             Assert.Single(cut.FindAll("[data-testid='audit-reload-repositories-button']"));
+            Assert.Single(cut.FindAll("[data-testid='audit-reload-from-github-button']"));
             Assert.Contains("Try again", cut.Markup);
         });
     }

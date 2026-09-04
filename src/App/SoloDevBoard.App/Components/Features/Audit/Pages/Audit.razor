@@ -6,63 +6,48 @@
     <MudText Typo="Typo.h4">Audit Dashboard</MudText>
     <MudText Typo="Typo.body1">Review repository health signals across your active repositories.</MudText>
 
-    @if (isLoadingRepositories)
-    {
-        <MudPaper Class="pa-4" Outlined="true" aria-live="polite" role="status" data-testid="audit-feedback-region">
-            <MudStack Spacing="2">
+    <MudPaper Class="pa-4" Outlined="true" data-testid="audit-command-surface">
+        <MudStack Spacing="2">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Wrap="Wrap.Wrap" Spacing="2">
                 <MudText Typo="Typo.h6">Repository selector</MudText>
-                <MudSkeleton Height="56px" Animation="Animation.Wave" />
-                <MudSkeleton Height="36px" Width="220px" Animation="Animation.Wave" />
-                <MudSkeleton Height="20px" Width="340px" Animation="Animation.Wave" />
+                @if (ShowReloadFromGitHubButton)
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ReloadFromGitHubAsync"
+                               Disabled="IsReloadFromGitHubDisabled"
+                               data-testid="audit-reload-from-github-button">
+                        Reload from GitHub
+                    </MudButton>
+                }
             </MudStack>
-        </MudPaper>
 
-        @if (isLoadingAuditData)
-        {
-            <MudPaper Class="pa-4" Elevation="1" aria-live="polite" role="status" data-testid="audit-loading-state">
-                <MudStack Spacing="2">
-                    <MudSkeleton Height="20px" Width="320px" Animation="Animation.Wave" />
+            @if (isLoadingRepositories)
+            {
+                <MudStack Spacing="2" aria-live="polite" role="status" data-testid="audit-feedback-region">
+                    <MudSkeleton Height="56px" Animation="Animation.Wave" />
+                    <MudSkeleton Height="36px" Width="220px" Animation="Animation.Wave" />
+                    <MudSkeleton Height="20px" Width="340px" Animation="Animation.Wave" />
                 </MudStack>
-            </MudPaper>
-        }
-    }
-    else if (!string.IsNullOrWhiteSpace(repositoryLoadErrorMessage))
-    {
-        <MudPaper Class="pa-4" Elevation="1" aria-live="assertive" role="alert" data-testid="audit-feedback-region">
-            <MudStack Spacing="2">
-                <MudText Typo="Typo.h6">Unable to load repositories</MudText>
-                <MudText Typo="Typo.body2">@repositoryLoadErrorMessage</MudText>
-                <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="RetryLoadRepositoriesAsync"
-                           data-testid="audit-reload-repositories-button">
-                    Try again
-                </MudButton>
-            </MudStack>
-        </MudPaper>
-    }
-    else if (repositoryOptions.Count == 0)
-    {
-        <MudPaper Class="pa-4" Elevation="1" aria-live="polite" data-testid="audit-feedback-region">
-            <MudStack Spacing="1">
-                <MudText Typo="Typo.h6">No repositories found</MudText>
-                <MudText Typo="Typo.body2">No active repositories were returned for this account.</MudText>
-            </MudStack>
-        </MudPaper>
-    }
-    else
-    {
-        <MudPaper Class="pa-4" Outlined="true" data-testid="audit-command-surface">
-            <MudStack Spacing="2">
-                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Wrap="Wrap.Wrap" Spacing="2">
-                    <MudText Typo="Typo.h6">Repository selector</MudText>
-                    @if (ShowReloadFromGitHubButton)
-                    {
-                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ReloadFromGitHubAsync"
-                                   Disabled="IsReloadFromGitHubDisabled"
-                                   data-testid="audit-reload-from-github-button">
-                            Reload from GitHub
-                        </MudButton>
-                    }
+            }
+            else if (!string.IsNullOrWhiteSpace(repositoryLoadErrorMessage))
+            {
+                <MudStack Spacing="2" aria-live="assertive" role="alert" data-testid="audit-feedback-region">
+                    <MudText Typo="Typo.h6">Unable to load repositories</MudText>
+                    <MudText Typo="Typo.body2">@repositoryLoadErrorMessage</MudText>
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="RetryLoadRepositoriesAsync"
+                               data-testid="audit-reload-repositories-button">
+                        Try again
+                    </MudButton>
                 </MudStack>
+            }
+            else if (repositoryOptions.Count == 0)
+            {
+                <MudStack Spacing="1" aria-live="polite" data-testid="audit-feedback-region">
+                    <MudText Typo="Typo.h6">No repositories found</MudText>
+                    <MudText Typo="Typo.body2">No active repositories were returned for this account.</MudText>
+                </MudStack>
+            }
+            else
+            {
                 <MudText Typo="Typo.body2">Select the repositories to include, then load the latest dashboard snapshot.</MudText>
                 <RepositorySelector
                     Title=""
@@ -110,9 +95,12 @@
                         </MudButton>
                     </MudStack>
                 </MudStack>
-            </MudStack>
-        </MudPaper>
+            }
+        </MudStack>
+    </MudPaper>
 
+    @if (!isLoadingRepositories && string.IsNullOrWhiteSpace(repositoryLoadErrorMessage) && repositoryOptions.Count > 0)
+    {
         @if (isLoadingAuditData)
         {
             <MudPaper Class="pa-4" Elevation="1" aria-live="polite" role="status" data-testid="audit-feedback-region">

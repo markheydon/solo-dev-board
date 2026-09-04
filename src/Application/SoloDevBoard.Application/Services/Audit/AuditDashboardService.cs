@@ -190,14 +190,17 @@ public sealed class AuditDashboardService : IAuditDashboardService
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<LabelConsistencyWarningDto>> GetLabelConsistencyWarningsAsync(IReadOnlyList<string> repos, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<LabelConsistencyWarningDto>> GetLabelConsistencyWarningsAsync(
+        IReadOnlyList<string> repos,
+        CancellationToken cancellationToken = default,
+        bool forceReload = false)
     {
         ArgumentNullException.ThrowIfNull(repos);
 
         var repositoryReferences = GetRepositoryReferences(repos);
         var taxonomyLabels = RecommendedLabelTaxonomyCatalog.SoloDevBoard;
         var warningTasks = repositoryReferences.Select(repositoryReference =>
-            BuildLabelConsistencyWarningsAsync(repositoryReference, taxonomyLabels, cancellationToken));
+            BuildLabelConsistencyWarningsAsync(repositoryReference, taxonomyLabels, cancellationToken, forceReload));
         var warningsByRepository = await Task.WhenAll(warningTasks).ConfigureAwait(false);
 
         return warningsByRepository
@@ -341,12 +344,13 @@ public sealed class AuditDashboardService : IAuditDashboardService
     private async Task<IReadOnlyList<LabelConsistencyWarningDto>> BuildLabelConsistencyWarningsAsync(
         RepositoryReference repositoryReference,
         IReadOnlyList<LabelDto> taxonomyLabels,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool forceReload)
     {
         try
         {
             var labels = await _labelRepository
-                .GetLabelsAsync(repositoryReference.Owner, repositoryReference.RepoName, cancellationToken)
+                .GetLabelsAsync(repositoryReference.Owner, repositoryReference.RepoName, cancellationToken, forceReload)
                 .ConfigureAwait(false);
 
             return LabelConsistencyAnalyser.Analyse(repositoryReference.FullName, labels, taxonomyLabels);

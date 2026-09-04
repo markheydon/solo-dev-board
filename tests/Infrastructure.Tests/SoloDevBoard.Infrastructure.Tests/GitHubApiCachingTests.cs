@@ -56,6 +56,71 @@ public sealed class GitHubApiCachingTests
     }
 
     [Fact]
+    public async Task GetRepositoriesAsync_ForceReloadTrue_RefetchesFromGitHub()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                [
+                  {
+                    "id": 1,
+                    "name": "repo-one",
+                    "full_name": "owner/repo-one",
+                    "description": "First repo",
+                    "html_url": "https://github.com/owner/repo-one",
+                    "private": false,
+                    "archived": false,
+                    "created_at": "2026-03-01T10:00:00Z",
+                    "updated_at": "2026-03-02T11:00:00Z"
+                  }
+                ]
+                """),
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                [
+                  {
+                    "id": 1,
+                    "name": "repo-one",
+                    "full_name": "owner/repo-one",
+                    "description": "First repo",
+                    "html_url": "https://github.com/owner/repo-one",
+                    "private": false,
+                    "archived": false,
+                    "created_at": "2026-03-01T10:00:00Z",
+                    "updated_at": "2026-03-02T11:00:00Z"
+                  },
+                  {
+                    "id": 2,
+                    "name": "repo-two",
+                    "full_name": "owner/repo-two",
+                    "description": "Second repo",
+                    "html_url": "https://github.com/owner/repo-two",
+                    "private": false,
+                    "archived": false,
+                    "created_at": "2026-03-01T10:00:00Z",
+                    "updated_at": "2026-03-02T11:00:00Z"
+                  }
+                ]
+                """),
+        ]);
+
+        var memoryCache = new MemoryCache(new MemoryCacheOptions());
+        var sut = CreateGitHubService(handler, memoryCache);
+
+        var first = await sut.GetRepositoriesAsync(cancellationToken);
+        var second = await sut.GetRepositoriesAsync(cancellationToken, forceReload: true);
+
+        Assert.Single(first);
+        Assert.Equal(2, second.Count);
+        Assert.Equal(2, handler.Requests.Count);
+    }
+
+    [Fact]
     public async Task GetActiveRepositoriesAsync_ForceReloadTrue_RefetchesFromGitHub()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
