@@ -391,12 +391,19 @@ export async function prepareTriageForCapture(page: Page): Promise<void> {
 }
 
 /**
- * Prepares Actions Templates with the example repository selected and a template open in the detail panel.
+ * Prepares Actions Templates with the custom source section populated, the example repository
+ * selected as an apply target, and a built-in template open in the detail panel.
+ * Does not click Load templates, so the grid stays on built-ins for a readable overview.
  * @param page Playwright page.
  */
 export async function prepareActionsTemplatesForCapture(page: Page): Promise<void> {
   await openFeatureForCapture(page, '/actions-templates');
+
+  await expect(page.getByTestId('actions-templates-custom-source-region')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('actions-templates-custom-source-field')).toBeVisible({ timeout: 15_000 });
+
   await selectRepositoryInAutocomplete(page, 'workflow-repository-autocomplete');
+  await selectRepositoryInAutocomplete(page, 'actions-templates-custom-source-autocomplete');
 
   await expect(page.getByTestId('actions-templates-grid')).toBeVisible({ timeout: 60_000 });
 

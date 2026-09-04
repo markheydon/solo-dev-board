@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Actions Templates** — load one additional GitHub `owner/name` custom template source via the catalogue selector or a manual field, merge `.github/workflows` YAML with built-ins, and remember the last-used source in browser storage ([#292](https://github.com/markheydon/solo-dev-board/issues/292), [#497](https://github.com/markheydon/solo-dev-board/issues/497)).
+
 ## [1.1.0] - 2026-08-31
 
 Cross-Repo Planning & Refinement release. GitHub milestone [`v1.1 - Cross-Repo Planning & Refinement`](https://github.com/markheydon/solo-dev-board/milestone/7) closed with 91 issues delivered.

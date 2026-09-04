@@ -13,10 +13,11 @@ This skill enables Copilot to create, review, and improve software documentation
 - Ask for documentation review and improvement suggestions
 
 ## Guidelines
-- Use clear, concise UK English
-- Structure documentation according to Diátaxis principles
-- Link to relevant code, tests, and user guides
-- Ensure documentation is discoverable and up-to-date
+- Use clear, concise UK English.
+- Structure documentation according to Diátaxis principles.
+- Link to relevant code, tests, and user guides.
+- Ensure documentation is discoverable and up-to-date.
+- When a user-guide page describes a UI that changed, recapture `website/static/images/` via `tests/E2E` `npm run capture:docs` (real PAT, `DocsCapture:Enabled=true`). Do not defer recapture.
 
 ## References
 - [Diátaxis Framework](https://diataxis.fr/)

@@ -155,6 +155,17 @@ Issue [#415](https://github.com/markheydon/solo-dev-board/issues/415) closes the
 | Setup shell, disabled preview, API failure feedback | — | `migrate.spec.ts` |
 | Migration overview screenshot with board selectors | — | `docs-capture` (`one-click-migration/overview.png`) |
 
+### Actions Templates
+
+| Guide section | CI assertion | Loaded-state validation |
+|---------------|--------------|-------------------------|
+| Accessing (`/actions-templates`) | `actions-templates.spec.ts` URL via `goto`, browser region, grid, built-in card | `docs-capture` |
+| Custom template source (selector, manual `owner/name`, Load templates) | `actions-templates-custom-source-region` and `actions-templates-custom-source-field` | `ActionsTemplatesTests` dual picker, last-used restore, and load; `docs-capture` (`actions-templates/overview.png`) with the source section populated |
+| Browse, search, and select built-in templates | Search box, `.NET CI` heading, selected card | `docs-capture` |
+| Apply repository selector load failure | `actions-templates-repositories-error-state` and "Unable to load repositories" | — |
+| Source badges, inferred `{{token}}` parameters, apply, and drift | — | Unit/component tests; `docs-capture` for populated YAML preview |
+| Persisted parameter profiles | — | Later ([#436](https://github.com/markheydon/solo-dev-board/issues/436)) |
+
 ### Appearance
 
 | Guide section | CI assertion | Loaded-state validation |
