@@ -8,7 +8,7 @@
   </ItemGroup>
   <!-- UI -->
   <ItemGroup>
-    <PackageVersion Include="AngleSharp" Version="1.7.2" />
+    <PackageVersion Include="AngleSharp" Version="1.7.3" />
     <PackageVersion Include="Aspire.Hosting.Azure.AppContainers" Version="13.5.3" />
     <PackageVersion Include="Aspire.Hosting.Azure.ContainerRegistry" Version="13.5.3" />
     <PackageVersion Include="Aspire.Hosting.Azure.ApplicationInsights" Version="13.5.3" />
