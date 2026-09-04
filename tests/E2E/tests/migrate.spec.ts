@@ -1,6 +1,14 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('One-Click Migration shell', () => {
+  test('migration setup exposes reload from GitHub after repositories finish loading', async ({ page }) => {
+    await page.goto('/migrate');
+
+    await expect(page.getByTestId('migration-repositories-load-error')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('migration-reload-from-github-button')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Reload from GitHub' })).toBeVisible();
+  });
+
   test('migration setup shell renders with preview locked before migration starts', async ({ page }) => {
     await page.goto('/migrate');
 

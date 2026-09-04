@@ -17,9 +17,9 @@ public sealed class RepositoryService : IRepositoryService
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<RepositoryDto>> GetRepositoriesAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<RepositoryDto>> GetRepositoriesAsync(CancellationToken cancellationToken = default, bool forceReload = false)
     {
-        var repositories = await _gitHubService.GetRepositoriesAsync(cancellationToken).ConfigureAwait(false);
+        var repositories = await _gitHubService.GetRepositoriesAsync(cancellationToken, forceReload).ConfigureAwait(false);
         return repositories.Select(MapToDto).ToArray();
     }
 

@@ -12,6 +12,14 @@ test.describe('Label Manager shell', () => {
     await expect(page.getByTestId('bulk-delete-labels-button')).toBeDisabled();
   });
 
+  test('repository selector exposes reload from GitHub after repositories finish loading', async ({ page }) => {
+    await page.goto('/labels');
+
+    await expect(page.getByText('Loading repositories...')).toBeHidden({ timeout: 15_000 });
+    await expect(page.getByTestId('labels-reload-from-github-button')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Reload from GitHub' })).toBeVisible();
+  });
+
   test('repository load failure surfaces in the label manager feedback region', async ({ page }) => {
     await page.goto('/labels');
 

@@ -10,7 +10,8 @@ public interface ILabelRepository
     /// <param name="repo">The repository name.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>A read-only list of labels for the repository.</returns>
-    Task<IReadOnlyList<Label>> GetLabelsAsync(string owner, string repo, CancellationToken cancellationToken = default);
+    /// <param name="forceReload">When <see langword="true" />, bypasses any cached label catalogue before loading.</param>
+    Task<IReadOnlyList<Label>> GetLabelsAsync(string owner, string repo, CancellationToken cancellationToken = default, bool forceReload = false);
 
     /// <summary>Creates a new label in the specified repository.</summary>
     /// <param name="owner">The GitHub account owner login.</param>

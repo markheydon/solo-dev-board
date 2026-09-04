@@ -19,6 +19,7 @@ The Audit Dashboard summarises open issues, open pull requests, and repository h
 ## Features
 
 - Choose one or more active repositories with the repository selector before loading data.
+- Choose **Reload from GitHub** in the repository selector header to refresh the catalogue and audit snapshot without clearing your repository filter.
 - Review a sortable summary grid with repository name (linked to GitHub), open issue count, and open pull request count.
 - KPI summary cards show total open issues, total open pull requests, unlabelled issues, failing workflows, and label consistency warnings for the selection.
 - Health sections cover unlabelled issues, stale pull requests, failing workflows, and label consistency, each with a badge count and expandable detail.

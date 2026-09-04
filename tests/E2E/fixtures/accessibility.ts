@@ -106,7 +106,7 @@ export async function waitForAccessibilityScanReady(page: Page, path: string): P
 
   // Filled primary controls are disabled during repository loads; wait for a stable enabled state.
   if (routePath === '/repositories') {
-    await expect(page.getByTestId('repositories-refresh-button')).toBeEnabled({ timeout: 15_000 });
+    await expect(page.getByTestId('repositories-reload-from-github-button')).toBeEnabled({ timeout: 15_000 });
   }
 
   if (

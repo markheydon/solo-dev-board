@@ -33,7 +33,7 @@ Key goals of the Repositories page:
 
 1. Open **Repositories** from the left navigation menu.
 2. Use the search field to filter repositories by name if needed.
-3. Use **Refresh** to reload the catalogue after connectivity changes.
+3. Use **Reload from GitHub** to reload the catalogue after connectivity changes without clearing your search or filter.
 4. Review status chips (Connected or Archived) and visibility chips (Public or Private).
 
 ### Filter open-source project repositories
@@ -49,7 +49,7 @@ Key goals of the Repositories page:
 
 - View accessible repositories in a responsive data grid.
 - Search repositories by name.
-- Refresh the catalogue from the command strip.
+- Reload the catalogue from the command strip with **Reload from GitHub**.
 - Filter the catalogue to **Open source** or **Not open source** using the built-in toggle group.
 - See connection status and visibility at a glance.
 - Use the phone-width stacked grid layout without horizontal overflow.
@@ -68,7 +68,7 @@ Until those ship, each control opens an informational snackbar stating that the 
 
 ### Page layout
 
-- **Command strip** — Refresh (live), plus Add, Remove, and Bulk actions (stubs). On mobile the stub actions are grouped into a compact actions menu.
+- **Command strip** — **Reload from GitHub** (live), plus Add, Remove, and Bulk actions (stubs). On mobile the stub actions are grouped into a compact actions menu.
 - **Search field** — Filter repositories by name.
 - **Catalogue filter** — Exclusive toggle group with **All**, **Open source**, and **Not open source**. The filter is not persisted across page reloads.
 - **Data grid** — Repository name, status chips, visibility chips, and stub row actions. On phone-width viewports the grid stacks each field so names wrap, chips stay fully visible, and row actions remain tappable without horizontal overflow.
@@ -87,9 +87,9 @@ If repositories do not appear or loading fails:
 
 - Confirm GitHub authentication is working (connected status in the app bar).
 - Check that your account can access the repositories you expect.
-- Use **Refresh** to retry after resolving connectivity issues.
+- Use **Reload from GitHub** or **Try again** to retry after resolving connectivity issues.
 
 If open-source filters look wrong:
 
 - Confirm the repository has the `open-source` topic on GitHub (topics are stored in lowercase).
-- Use **Refresh** after changing topics on GitHub so the catalogue picks up the latest list-repos payload.
+- Use **Reload from GitHub** after changing topics on GitHub so the catalogue picks up the latest list-repos payload.

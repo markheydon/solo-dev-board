@@ -62,6 +62,7 @@ public partial class ActionsTemplates : ComponentBase
     private string? loadedCustomSourceRepository;
     private bool isLoadingCustomSource;
     private bool restoredLastUsedSource;
+    private bool isReloadingFromGitHub;
 
     private void ShowSnackbarFeedback(string message, Severity severity)
         => SnackbarFeedback.Show(Snackbar, message, severity);
@@ -157,6 +158,10 @@ public partial class ActionsTemplates : ComponentBase
         && !isApplyingTemplate
         && !isLoadingStatuses;
 
+    private bool ShowReloadFromGitHubButton => !isLoadingRepositories;
+
+    private bool IsReloadFromGitHubDisabled => isReloadingFromGitHub || isApplyingTemplate || isLoadingCustomSource;
+
     /// <inheritdoc/>
     protected override async Task OnInitializedAsync()
     {
@@ -203,6 +208,78 @@ public partial class ActionsTemplates : ComponentBase
         }
 
         selectedCustomSourceRepositories.Clear();
+    }
+
+    private async Task ReloadFromGitHubAsync()
+    {
+        if (isLoadingRepositories || isReloadingFromGitHub || isApplyingTemplate)
+        {
+            return;
+        }
+
+        var preservedRepositories = selectedRepositories.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var preservedCustomSourceRepositories = selectedCustomSourceRepositories.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var preservedCustomSource = customSourceRepository;
+        var preservedTemplateId = selectedTemplateId;
+        var preservedCategory = selectedCategory;
+        var preservedSearch = searchText;
+        var preservedParameterValues = new Dictionary<string, string>(parameterValues, StringComparer.OrdinalIgnoreCase);
+        var preservedLoadedCustomSource = loadedCustomSourceRepository;
+
+        isReloadingFromGitHub = true;
+
+        try
+        {
+            await RefreshRepositoriesCatalogueAsync(forceReload: true);
+
+            selectedRepositories = repositoryOptions
+                .Where(repository => preservedRepositories.Contains(repository))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            customSourceRepository = preservedCustomSource;
+            loadedCustomSourceRepository = preservedLoadedCustomSource;
+            selectedCustomSourceRepositories = repositoryOptions
+                .Where(repository => preservedCustomSourceRepositories.Contains(repository))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            SyncCustomSourceSelectorFromManualField();
+
+            selectedCategory = preservedCategory;
+            searchText = preservedSearch;
+
+            await LoadTemplatesAsync(loadedCustomSourceRepository);
+
+            if (!string.IsNullOrWhiteSpace(preservedTemplateId)
+                && templates.Any(template => template.Id.Equals(preservedTemplateId, StringComparison.OrdinalIgnoreCase)))
+            {
+                selectedTemplateId = preservedTemplateId;
+                selectedTemplateDetail = await ActionsTemplateService.GetTemplateDetailAsync(preservedTemplateId);
+                parameterValues = selectedTemplateDetail.Parameters
+                    .ToDictionary(
+                        parameter => parameter.Name,
+                        parameter => preservedParameterValues.TryGetValue(parameter.Name, out var value) ? value : parameter.DefaultValue,
+                        StringComparer.OrdinalIgnoreCase);
+                await RefreshRepositoryStatusesAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to reload Actions Templates data from GitHub.");
+            ShowSnackbarFeedback("An unexpected error occurred while reloading from GitHub.", Severity.Error);
+        }
+        finally
+        {
+            isReloadingFromGitHub = false;
+        }
+    }
+
+    private async Task RetryLoadRepositoriesAsync()
+    {
+        await RefreshRepositoriesCatalogueAsync(forceReload: true);
+    }
+
+    private async Task RetryLoadTemplatesAsync()
+    {
+        await LoadTemplatesAsync(loadedCustomSourceRepository);
     }
 
     private async Task LoadCustomSourceAsync()
@@ -298,6 +375,39 @@ public partial class ActionsTemplates : ComponentBase
         {
             isLoadingRepositories = false;
             ApplyRestoredCustomSourceToPickers();
+        }
+    }
+
+    private async Task RefreshRepositoriesCatalogueAsync(bool forceReload)
+    {
+        hasRepositoryLoadFailure = false;
+        repositoryLoadErrorMessage = null;
+
+        try
+        {
+            var repositories = await RepositoryService.GetActiveRepositoriesAsync(forceReload: forceReload);
+            repositoryOptions = repositories
+                .Select(repository => repository.FullName)
+                .OrderBy(fullName => fullName, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
+        {
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            hasRepositoryLoadFailure = true;
+            repositoryLoadErrorMessage = $"GitHub API request failed. {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to refresh workflow template repositories.");
+            hasRepositoryLoadFailure = true;
+            repositoryLoadErrorMessage = "An unexpected error occurred while loading repositories.";
         }
     }
 

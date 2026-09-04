@@ -16,17 +16,17 @@ public sealed class LabelService : ILabelManagerService
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<LabelDto>> GetLabelsAsync(string owner, string repo, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<LabelDto>> GetLabelsAsync(string owner, string repo, CancellationToken cancellationToken = default, bool forceReload = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
         ArgumentException.ThrowIfNullOrWhiteSpace(repo);
 
-        var labels = await _labelRepository.GetLabelsAsync(owner, repo, cancellationToken).ConfigureAwait(false);
+        var labels = await _labelRepository.GetLabelsAsync(owner, repo, cancellationToken, forceReload).ConfigureAwait(false);
         return labels.Select(label => MapToDto(label, repo)).ToArray();
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<LabelDto>> GetLabelsForRepositoriesAsync(string owner, IReadOnlyList<string> repositories, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<LabelDto>> GetLabelsForRepositoriesAsync(string owner, IReadOnlyList<string> repositories, CancellationToken cancellationToken = default, bool forceReload = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
         var normalisedRepositories = NormaliseRepositories(repositories);
@@ -35,7 +35,7 @@ public sealed class LabelService : ILabelManagerService
         foreach (var repository in normalisedRepositories)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var repositoryLabels = await _labelRepository.GetLabelsAsync(owner, repository, cancellationToken).ConfigureAwait(false);
+            var repositoryLabels = await _labelRepository.GetLabelsAsync(owner, repository, cancellationToken, forceReload).ConfigureAwait(false);
             labels.AddRange(repositoryLabels.Select(label => MapToDto(label, repository)));
         }
 

@@ -60,6 +60,10 @@ public interface IAuditDashboardService
     /// </summary>
     /// <param name="repos">A read-only list of repository names.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <param name="forceReload">When <see langword="true" />, bypasses any cached label catalogues before loading.</param>
     /// <returns>A read-only list of missing or divergent taxonomy labels.</returns>
-    Task<IReadOnlyList<LabelConsistencyWarningDto>> GetLabelConsistencyWarningsAsync(IReadOnlyList<string> repos, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<LabelConsistencyWarningDto>> GetLabelConsistencyWarningsAsync(
+        IReadOnlyList<string> repos,
+        CancellationToken cancellationToken = default,
+        bool forceReload = false);
 }

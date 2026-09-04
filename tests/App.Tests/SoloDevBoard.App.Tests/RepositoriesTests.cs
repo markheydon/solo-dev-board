@@ -27,7 +27,7 @@ public sealed class RepositoriesTests
 
         // Assert
         Assert.Contains("Repository command strip", cut.Markup);
-        Assert.Contains("Refresh", cut.Markup);
+        Assert.Contains("Reload from GitHub", cut.Markup);
         Assert.True(
             cut.Markup.Contains("Bulk actions", StringComparison.Ordinal) ||
             cut.Markup.Contains("Actions", StringComparison.Ordinal));
@@ -332,6 +332,55 @@ public sealed class RepositoriesTests
             Assert.DoesNotContain("oss-repo", cut.Markup);
         });
     }
+
+    [Fact]
+    public async Task Repositories_AfterInitialLoad_ShowsReloadFromGitHubButton()
+    {
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>())
+            .Returns([CreateRepository("owner", "repo-a")]);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Repositories>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='repositories-reload-from-github-button']"));
+            Assert.Contains("Reload from GitHub", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task Repositories_ReloadFromGitHub_ForceReloadsCatalogueAndKeepsSearchFilter()
+    {
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>())
+            .Returns([CreateRepository("owner", "repo-a"), CreateRepository("owner", "repo-b")]);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Repositories>();
+
+        cut.WaitForAssertion(() => Assert.Contains("repo-a", cut.Markup));
+
+        cut.Find("input").Input("repo-b");
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("repo-b", cut.Markup);
+            Assert.DoesNotContain("repo-a", cut.Markup);
+        });
+
+        await cut.Find("[data-testid='repositories-reload-from-github-button']").ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("repo-b", cut.Markup);
+            Assert.DoesNotContain("repo-a", cut.Markup);
+        });
+
+        await _repositoryService.Received(1).GetRepositoriesAsync(Arg.Any<CancellationToken>(), true);
+    }
+
+    private static RepositoryDto CreateRepository(string owner, string name)
+        => new(1, name, $"{owner}/{name}", string.Empty, string.Empty, false, false, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, [], false);
 
     private BunitContext CreateContext()
     {

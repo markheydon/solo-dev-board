@@ -11,12 +11,11 @@
     <MudPaper Class="pa-3" Elevation="1">
         <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center" aria-label="Repository command strip">
             <MudButton Variant="Variant.Filled"
-                       Color="Color.Primary"
-                       StartIcon="@Icons.Material.Filled.Refresh"
+                       Color="Color.Secondary"
                        OnClick="ReloadAsync"
                        Disabled="isLoading"
-                       data-testid="repositories-refresh-button">
-                Refresh
+                       data-testid="repositories-reload-from-github-button">
+                Reload from GitHub
             </MudButton>
 
             <MudHidden Breakpoint="Breakpoint.SmAndDown">
@@ -107,7 +106,7 @@
                 <MudStack Spacing="2">
                     <MudText Typo="Typo.h6">Unable to load repositories</MudText>
                     <MudText Typo="Typo.body2">@errorMessage</MudText>
-                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ReloadAsync">Try again</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ReloadAsync" data-testid="repositories-try-again-button">Try again</MudButton>
                 </MudStack>
             </MudAlert>
         </MudPaper>

@@ -59,8 +59,8 @@ public partial class Repositories : ComponentBase
 
     private async Task ReloadAsync()
     {
-        SetFeedback("Refreshing repositories.", Severity.Info);
-        await LoadRepositoriesAsync();
+        SetFeedback("Reloading repositories from GitHub.", Severity.Info);
+        await LoadRepositoriesAsync(forceReload: true);
     }
 
     private void AddRepository()
@@ -122,7 +122,7 @@ public partial class Repositories : ComponentBase
         Snackbar.Add(message, Severity.Info);
     }
 
-    private async Task LoadRepositoriesAsync()
+    private async Task LoadRepositoriesAsync(bool forceReload = false)
     {
         isLoading = true;
         errorMessage = null;
@@ -130,7 +130,7 @@ public partial class Repositories : ComponentBase
 
         try
         {
-            repositories = await RepositoryService.GetRepositoriesAsync();
+            repositories = await RepositoryService.GetRepositoriesAsync(forceReload: forceReload);
             SetFeedback(
                 repositories.Count == 0
                     ? "No repositories are connected yet."

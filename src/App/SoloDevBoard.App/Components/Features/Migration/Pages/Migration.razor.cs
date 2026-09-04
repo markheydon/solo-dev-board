@@ -62,6 +62,7 @@ public partial class Migration : ComponentBase
     private string? inaccessibleProjectBoardsWarning;
     private bool hasRepositoryLoadFailure;
     private string? repositoryLoadErrorMessage;
+    private bool isReloadingFromGitHub;
 
     private void ShowSnackbarFeedback(string message, Severity severity)
         => SnackbarFeedback.Show(Snackbar, message, severity);
@@ -79,7 +80,87 @@ public partial class Migration : ComponentBase
     }
 
     private async Task ReloadRepositoriesAsync()
-        => await LoadRepositoriesAsync();
+        => await RetryLoadRepositoriesAsync();
+
+    private async Task ReloadFromGitHubAsync()
+    {
+        if (isLoadingRepositories || isReloadingFromGitHub || isPreviewing || isApplying)
+        {
+            return;
+        }
+
+        var preservedRepositoryFullNames = selectedRepositoryFullNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var preservedSource = sourceRepositoryFullName;
+        var preservedTargets = targetRepositoryFullNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var preservedSourceBoardId = sourceProjectBoardId;
+        var preservedTargetBoardSelections = new Dictionary<string, string>(targetProjectBoardSelections, StringComparer.OrdinalIgnoreCase);
+        var preservedMigrateLabels = migrateLabels;
+        var preservedMigrateMilestones = migrateMilestones;
+        var preservedMigrateProjectBoardColumns = migrateProjectBoardColumns;
+        var preservedKeepAreaLabels = keepAreaLabels;
+        var preservedIgnoreAreaLabels = ignoreAreaLabels;
+        var preservedConflictStrategy = conflictStrategy;
+
+        isReloadingFromGitHub = true;
+
+        try
+        {
+            await RefreshRepositoriesCatalogueAsync(forceReload: true);
+
+            if (preservedRepositoryFullNames.Count > 0)
+            {
+                selectedRepositories = availableRepositories
+                    .Where(repository => preservedRepositoryFullNames.Contains(repository.FullName))
+                    .OrderBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+
+                sourceRepositoryFullName = selectedRepositories.Any(repository =>
+                    repository.FullName.Equals(preservedSource, StringComparison.OrdinalIgnoreCase))
+                    ? preservedSource
+                    : string.Empty;
+
+                targetRepositoryFullNames = preservedTargets
+                    .Where(target => selectedRepositories.Any(repository => repository.FullName.Equals(target, StringComparison.OrdinalIgnoreCase))
+                        && !target.Equals(sourceRepositoryFullName, StringComparison.OrdinalIgnoreCase))
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                migrateLabels = preservedMigrateLabels;
+                migrateMilestones = preservedMigrateMilestones;
+                migrateProjectBoardColumns = preservedMigrateProjectBoardColumns;
+                keepAreaLabels = preservedKeepAreaLabels;
+                ignoreAreaLabels = preservedIgnoreAreaLabels;
+                conflictStrategy = preservedConflictStrategy;
+
+                EnsureSelectionState();
+                await LoadBoardOptionsAsync();
+
+                if (!string.IsNullOrWhiteSpace(sourceProjectBoardId)
+                    && sourceBoardDiscovery?.Options.Any(option => option.Id.Equals(preservedSourceBoardId, StringComparison.Ordinal)) == true)
+                {
+                    sourceProjectBoardId = preservedSourceBoardId;
+                }
+
+                foreach (var (targetRepository, boardId) in preservedTargetBoardSelections)
+                {
+                    if (targetBoardDiscoveries.TryGetValue(targetRepository, out var discovery)
+                        && (boardId.Equals(CreateNewBoardOptionValue, StringComparison.Ordinal)
+                            || discovery.Options.Any(option => option.Id.Equals(boardId, StringComparison.Ordinal))))
+                    {
+                        targetProjectBoardSelections[targetRepository] = boardId;
+                    }
+                }
+            }
+        }
+        finally
+        {
+            isReloadingFromGitHub = false;
+        }
+    }
+
+    private async Task RetryLoadRepositoriesAsync()
+    {
+        await RefreshRepositoriesCatalogueAsync(forceReload: true);
+    }
 
     private async Task LoadRepositoriesAsync()
     {
@@ -122,6 +203,42 @@ public partial class Migration : ComponentBase
             isLoadingRepositories = false;
         }
     }
+
+    private async Task RefreshRepositoriesCatalogueAsync(bool forceReload)
+    {
+        hasRepositoryLoadFailure = false;
+        repositoryLoadErrorMessage = null;
+
+        try
+        {
+            availableRepositories = (await RepositoryService.GetActiveRepositoriesAsync(forceReload: forceReload))
+                .OrderBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
+        {
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            Logger.LogError(ex, "GitHub API request failed while refreshing migration repositories.");
+            hasRepositoryLoadFailure = true;
+            repositoryLoadErrorMessage = $"GitHub API request failed while loading repositories. {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to refresh migration repositories.");
+            hasRepositoryLoadFailure = true;
+            repositoryLoadErrorMessage = "An unexpected error occurred while loading repositories.";
+        }
+    }
+
+    private bool ShowReloadFromGitHubButton => !isLoadingRepositories;
+
+    private bool IsReloadFromGitHubDisabled => isReloadingFromGitHub || isPreviewing || isApplying;
 
     private async Task OnSelectedRepositoriesChangedAsync(IReadOnlyList<string> repositoryFullNames)
     {

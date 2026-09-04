@@ -7,15 +7,17 @@ public interface ILabelManagerService
     /// <param name="owner">The GitHub account owner login.</param>
     /// <param name="repo">The repository name.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <param name="forceReload">When <see langword="true" />, bypasses any cached label catalogue before loading.</param>
     /// <returns>A read-only list of labels for the repository.</returns>
-    Task<IReadOnlyList<LabelDto>> GetLabelsAsync(string owner, string repo, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<LabelDto>> GetLabelsAsync(string owner, string repo, CancellationToken cancellationToken = default, bool forceReload = false);
 
     /// <summary>Retrieves labels across the specified repositories and merges the results.</summary>
     /// <param name="owner">The GitHub account owner login.</param>
     /// <param name="repositories">The repository names to retrieve labels from.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <param name="forceReload">When <see langword="true" />, bypasses any cached label catalogue before loading.</param>
     /// <returns>A read-only list of labels from the specified repositories.</returns>
-    Task<IReadOnlyList<LabelDto>> GetLabelsForRepositoriesAsync(string owner, IReadOnlyList<string> repositories, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<LabelDto>> GetLabelsForRepositoriesAsync(string owner, IReadOnlyList<string> repositories, CancellationToken cancellationToken = default, bool forceReload = false);
 
     /// <summary>Creates a label in one or more repositories.</summary>
     /// <param name="owner">The GitHub account owner login.</param>

@@ -5,6 +5,7 @@ using MudBlazor.Services;
 using NSubstitute;
 using SoloDevBoard.App.Components.Features.ActionsTemplates;
 using SoloDevBoard.App.Components.Features.ActionsTemplates.Pages;
+using SoloDevBoard.App.Components.Shared.Components;
 using SoloDevBoard.Application.Services.ActionsTemplates;
 using SoloDevBoard.Application.Services.Repositories;
 
@@ -25,7 +26,7 @@ public sealed class ActionsTemplatesTests
         var templatesTask = new TaskCompletionSource<ActionsTemplateCatalogueDto>();
         _workflowTemplateService.GetTemplatesAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>()).Returns(templatesTask.Task);
 
-        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(CreateRepositories());
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns(CreateRepositories());
 
         await using var ctx = CreateContext();
 
@@ -280,7 +281,7 @@ public sealed class ActionsTemplatesTests
                 CustomSourceError = "Repository 'owner/missing' was not found or is not accessible.",
             });
 
-        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(CreateRepositories());
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns(CreateRepositories());
 
         await using var ctx = CreateContext();
         var cut = ctx.Render<ActionsTemplates>();
@@ -308,7 +309,7 @@ public sealed class ActionsTemplatesTests
                 SkippedWorkflowPaths = [".github/workflows/missing.yml"],
             });
 
-        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(CreateRepositories());
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns(CreateRepositories());
 
         await using var ctx = CreateContext();
         var cut = ctx.Render<ActionsTemplates>();
@@ -329,7 +330,7 @@ public sealed class ActionsTemplatesTests
         _workflowTemplateService
             .GetTemplatesAsync("owner/template-repo", Arg.Any<CancellationToken>())
             .Returns(new ActionsTemplateCatalogueDto { Templates = CreateTemplates() });
-        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(CreateRepositories());
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns(CreateRepositories());
 
         await using var ctx = CreateContext();
 
@@ -355,7 +356,7 @@ public sealed class ActionsTemplatesTests
         _workflowTemplateService
             .GetTemplatesAsync("owner/repo-a", Arg.Any<CancellationToken>())
             .Returns(new ActionsTemplateCatalogueDto { Templates = CreateTemplates() });
-        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(CreateRepositories());
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns(CreateRepositories());
 
         await using var ctx = CreateContext();
 
@@ -532,12 +533,68 @@ public sealed class ActionsTemplatesTests
         });
     }
 
+    [Fact]
+    public async Task ActionsTemplates_AfterRepositoriesLoad_ShowsReloadFromGitHubButton()
+    {
+        SetupDefaultServices();
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<ActionsTemplates>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='actions-templates-reload-from-github-button']"));
+            Assert.Contains("Reload from GitHub", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task ActionsTemplates_ReloadFromGitHub_KeepsRepositorySelectionAndForceReloadsCatalogue()
+    {
+        SetupDefaultServices();
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<ActionsTemplates>();
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='workflow-repository-autocomplete']")));
+
+        var selector = cut.FindComponent<RepositorySelector>();
+        await cut.InvokeAsync(() => selector.Instance.SelectedRepositoriesChanged.InvokeAsync(["owner/repo-a", "owner/repo-b"]));
+
+        cut.WaitForAssertion(() => Assert.Contains("2 selected", cut.Markup));
+
+        await cut.Find("[data-testid='actions-templates-reload-from-github-button']").ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+
+        cut.WaitForAssertion(() => Assert.Contains("2 selected", cut.Markup));
+
+        await _repositoryService.Received(1).GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), true);
+    }
+
+    [Fact]
+    public async Task ActionsTemplates_RepositoryLoadFailure_ShowsTryAgainButton()
+    {
+        _actionsTemplateSourceStorage.GetLastUsedSourceAsync().Returns((string?)null);
+        _workflowTemplateService.GetTemplatesAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(new ActionsTemplateCatalogueDto { Templates = CreateTemplates() });
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>())
+            .Returns(Task.FromException<IReadOnlyList<RepositoryDto>>(new HttpRequestException("Connection refused")));
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<ActionsTemplates>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='actions-templates-reload-repositories-button']"));
+            Assert.Single(cut.FindAll("[data-testid='actions-templates-reload-from-github-button']"));
+            Assert.Contains("Try again", cut.Markup);
+        });
+    }
+
     private void SetupDefaultServices()
     {
         _actionsTemplateSourceStorage.GetLastUsedSourceAsync().Returns((string?)null);
         _workflowTemplateService.GetTemplatesAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>()).Returns(new ActionsTemplateCatalogueDto { Templates = CreateTemplates() });
 
-        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(CreateRepositories());
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns(CreateRepositories());
     }
 
     private BunitContext CreateContext()

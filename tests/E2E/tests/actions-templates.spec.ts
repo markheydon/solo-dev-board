@@ -55,6 +55,14 @@ test.describe('Workflow template browser', () => {
     await expect(page.getByTestId('actions-templates-card-builtin:3')).toBeVisible();
   });
 
+  test('repository selector exposes reload from GitHub after repositories finish loading', async ({ page }) => {
+    await page.goto('/actions-templates');
+
+    await expect(page.getByTestId('actions-templates-repositories-loading-state')).toBeHidden({ timeout: 15_000 });
+    await expect(page.getByTestId('actions-templates-reload-from-github-button')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Reload from GitHub' })).toBeVisible();
+  });
+
   test('repository selector surfaces an error without a live GitHub connection', async ({ page }) => {
     await page.goto('/actions-templates');
 

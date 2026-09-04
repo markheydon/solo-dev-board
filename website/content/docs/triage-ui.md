@@ -61,7 +61,7 @@ The action surface uses one primary commit per disposition instead of separate p
 - **Skip:** Switch to **Skip**, optionally add a reason, then click **Skip and next** (or press **Enter** / **L**). Press **S** to skip from **Process** or **Duplicate** without changing disposition.
 - When the repository exposes a canonical `duplicate` label, SoloDevBoard applies it as part of duplicate closure.
 - Keyboard shortcuts do not fire while you are typing in autocomplete or text fields.
-- Primary success and failure feedback for triage actions appears as snackbar toasts in the bottom-right corner. Repository load failures appear inline in the session scope region with a retry action.
+- Primary success and failure feedback for triage actions appears as snackbar toasts in the bottom-right corner. Repository load failures appear inline in the session scope region with a retry action. Choose **Reload from GitHub** in the session scope header to refresh the catalogue and planning options without clearing your repository selection or active session.
 
 ## Milestones and project boards in one commit
 

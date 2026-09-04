@@ -8,7 +8,17 @@
 
     <MudPaper Class="pa-4" Elevation="1" data-testid="repository-selector-region">
         <MudStack Spacing="2">
-            <MudText Typo="Typo.h6">Repository selector</MudText>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Wrap="Wrap.Wrap" Spacing="2">
+                <MudText Typo="Typo.h6">Repository selector</MudText>
+                @if (ShowReloadFromGitHubButton)
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ReloadFromGitHubAsync"
+                               Disabled="IsReloadFromGitHubDisabled"
+                               data-testid="actions-templates-reload-from-github-button">
+                        Reload from GitHub
+                    </MudButton>
+                }
+            </MudStack>
 
             @if (isLoadingRepositories)
             {
@@ -22,6 +32,10 @@
                 <MudStack Spacing="1" aria-live="polite" data-testid="actions-templates-repositories-error-state">
                     <MudText Typo="Typo.h6">Unable to load repositories</MudText>
                     <MudText Typo="Typo.body2">@repositoryLoadErrorMessage</MudText>
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="RetryLoadRepositoriesAsync"
+                               data-testid="actions-templates-reload-repositories-button">
+                        Try again
+                    </MudButton>
                 </MudStack>
             }
             else
@@ -155,7 +169,11 @@
                 {
                     <MudStack Spacing="1" aria-live="polite" data-testid="actions-templates-error-state">
                         <MudText Typo="Typo.h6">Unable to load workflow templates</MudText>
-                        <MudText Typo="Typo.body2">Try refreshing the page. If the problem persists, check the application logs.</MudText>
+                        <MudText Typo="Typo.body2">Try reloading from GitHub. If the problem persists, check the application logs.</MudText>
+                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="RetryLoadTemplatesAsync"
+                                   data-testid="actions-templates-retry-load-button">
+                            Try again
+                        </MudButton>
                     </MudStack>
                 }
                 else if (FilteredTemplates.Count == 0)

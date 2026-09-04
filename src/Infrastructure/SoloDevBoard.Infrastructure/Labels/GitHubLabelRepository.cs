@@ -30,10 +30,15 @@ public sealed class GitHubLabelRepository : ILabelRepository
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<Label>> GetLabelsAsync(string owner, string repo, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Label>> GetLabelsAsync(string owner, string repo, CancellationToken cancellationToken = default, bool forceReload = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
         ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+
+        if (forceReload)
+        {
+            _responseCache.InvalidateLabels(owner, repo);
+        }
 
         return await _responseCache.GetOrCreateLabelsAsync(
             owner,
