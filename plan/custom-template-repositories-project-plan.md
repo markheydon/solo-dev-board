@@ -10,11 +10,12 @@
 
 ## Feature summary
 
-Solo developers can point Actions Templates at one GitHub repository of their own workflow YAML. Those files join the built-in catalogue for preview, inferred parameterisation, apply, and drift. Last-used `owner/name` is remembered in localStorage only.
+Solo developers can point Actions Templates at one GitHub repository of workflow YAML, choosing from their repository catalogue or typing an `owner/name` outside that list. Those files join the built-in catalogue for preview, inferred parameterisation, apply, and drift. Last-used `owner/name` is remembered in localStorage only.
 
 ## Success criteria
 
-- Built-in templates still work with no source entered.
+- Built-in templates still work with no source selected or entered.
+- The custom source section offers a single-select `RepositorySelector` plus a manual `owner/name` field; both sync to one source value and Load is explicit.
 - A valid `owner/name` with `.github/workflows` YAML appears as extra cards with a source badge.
 - Apply and drift use the selected template content, including inferred `{{token}}` values.
 - Custom-source failures do not hide built-ins.
@@ -59,6 +60,6 @@ The persistence chore is **not** a child of #292. #292 can close when localStora
 ## Delivery sequence
 
 1. Enabler: directory list, fetch YAML, infer tokens, merge catalogue, string ids.
-2. Story UI: source field, Load, last-used localStorage, badges, error/empty states.
+2. Story UI: source selector plus manual field, Load (aligned to the manual field row), last-used localStorage, badges, error/empty states.
 3. Tests and User Guide / E2E alignment.
 4. Persistence chore stays blocked until [#391](https://github.com/markheydon/solo-dev-board/issues/391).
