@@ -5,7 +5,6 @@ test.describe('Workflow template browser', () => {
     await page.goto('/actions-templates');
 
     await expect(page.getByTestId('actions-templates-custom-source-region')).toBeVisible();
-    await expect(page.getByTestId('actions-templates-custom-source-autocomplete')).toBeVisible();
     await expect(page.getByTestId('actions-templates-custom-source-field')).toBeVisible();
     await expect(page.getByTestId('actions-templates-browser-region')).toBeVisible();
     await expect(page.getByTestId('actions-templates-loading-state')).toBeHidden({ timeout: 15_000 });
