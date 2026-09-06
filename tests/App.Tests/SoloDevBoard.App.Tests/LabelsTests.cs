@@ -57,7 +57,7 @@ public sealed class LabelsTests
             Assert.Empty(cut.FindAll("[data-testid='labels-grid']"));
         });
 
-        await _labelManagerService.DidNotReceive().GetLabelsForRepositoriesAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
+        await _labelManagerService.DidNotReceive().GetLabelMatrixAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -139,7 +139,7 @@ public sealed class LabelsTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
 
-        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<LabelDto>());
+        _labelManagerService.GetLabelMatrixAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<LabelMatrixRowDto>());
 
         await using var ctx = CreateContext();
 
@@ -167,13 +167,9 @@ public sealed class LabelsTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA, repoB]);
 
-        _labelManagerService.GetLabelsForRepositoriesAsync("owner-a", Arg.Is<IReadOnlyList<string>>(repositories => repositories!.SequenceEqual(new[] { "repo-a" })), Arg.Any<CancellationToken>()).Returns([
-                new LabelDto("type/story", "1d76db", "Story label", "repo-a"),
-                new LabelDto("priority/high", "d93f0b", "High priority", "repo-a"),
-            ]);
-
-        _labelManagerService.GetLabelsForRepositoriesAsync("owner-b", Arg.Is<IReadOnlyList<string>>(repositories => repositories!.SequenceEqual(new[] { "repo-b" })), Arg.Any<CancellationToken>()).Returns([
-                new LabelDto("priority/high", "d93f0b", "High priority", "repo-b"),
+        _labelManagerService.GetLabelMatrixAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
+                new LabelMatrixRowDto("type/story", "1d76db", "Story label", ["owner-a/repo-a"], ["owner-b/repo-b"]),
+                new LabelMatrixRowDto("priority/high", "d93f0b", "High priority", ["owner-a/repo-a", "owner-b/repo-b"], []),
             ]);
 
         await using var ctx = CreateContext();
@@ -194,9 +190,9 @@ public sealed class LabelsTests
             Assert.Contains("owner-b/repo-b", cut.Markup);
         });
 
-        await _labelManagerService.Received(1).GetLabelsForRepositoriesAsync("owner-a", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
-
-        await _labelManagerService.Received(1).GetLabelsForRepositoriesAsync("owner-b", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
+        await _labelManagerService.Received(1).GetLabelMatrixAsync(
+            Arg.Is<IReadOnlyList<string>>(repositories => repositories!.SequenceEqual(new[] { "owner-a/repo-a", "owner-b/repo-b" })),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -207,9 +203,9 @@ public sealed class LabelsTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
 
-        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
-                new LabelDto("type/story", "1d76db", "Story label", "repo-a"),
-                new LabelDto("status/done", "cfd3d7", "Completed", "repo-a"),
+        _labelManagerService.GetLabelMatrixAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
+                new LabelMatrixRowDto("type/story", "1d76db", "Story label", ["owner/repo-a"], []),
+                new LabelMatrixRowDto("status/done", "cfd3d7", "Completed", ["owner/repo-a"], []),
             ]);
 
         await using var ctx = CreateContext();
@@ -292,8 +288,8 @@ public sealed class LabelsTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
 
-        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromException<IReadOnlyList<LabelDto>>(new HttpRequestException("Service unavailable")));
+        _labelManagerService.GetLabelMatrixAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<IReadOnlyList<LabelMatrixRowDto>>(new HttpRequestException("Service unavailable")));
 
         await using var ctx = CreateContext();
         var cut = ctx.Render<Labels>();
@@ -372,7 +368,7 @@ public sealed class LabelsTests
                 new RecommendedTaxonomyRepositoryResultDto("owner/repo-a", 1, 0, 0, 0, [], null),
             ]);
 
-        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<LabelDto>());
+        _labelManagerService.GetLabelMatrixAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<LabelMatrixRowDto>());
 
         await using var ctx = CreateContext();
 
@@ -418,7 +414,7 @@ public sealed class LabelsTests
             ]);
 
         _labelManagerService.ApplyRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(applyTask.Task);
-        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<LabelDto>());
+        _labelManagerService.GetLabelMatrixAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<LabelMatrixRowDto>());
 
         await using var ctx = CreateContext();
 
@@ -474,7 +470,7 @@ public sealed class LabelsTests
             ]);
 
         _labelManagerService.ApplyRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<bool>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(applyTask.Task);
-        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<LabelDto>());
+        _labelManagerService.GetLabelMatrixAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<LabelMatrixRowDto>());
 
         await using var ctx = CreateContext();
 
@@ -523,7 +519,7 @@ public sealed class LabelsTests
             ]);
 
         _labelManagerService.ApplyLabelSynchronisationAsync("owner/repo-a", Arg.Any<IReadOnlyList<string>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(applyTask.Task);
-        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<LabelDto>());
+        _labelManagerService.GetLabelMatrixAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<LabelMatrixRowDto>());
 
         await using var ctx = CreateContext();
 
@@ -887,7 +883,7 @@ public sealed class LabelsTests
                 new LabelSyncRepositoryResultDto("owner/repo-b", 1, 2, 3, 4, "GitHub API failure"),
             ]);
 
-        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<LabelDto>());
+        _labelManagerService.GetLabelMatrixAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<LabelMatrixRowDto>());
 
         await using var ctx = CreateContext();
 
@@ -958,8 +954,8 @@ public sealed class LabelsTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
 
-        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
-                new LabelDto("type/story", "1d76db", "Story label", "owner/repo-a"),
+        _labelManagerService.GetLabelMatrixAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
+                new LabelMatrixRowDto("type/story", "1d76db", "Story label", ["owner/repo-a"], []),
             ]);
 
         await using var ctx = CreateContext();
@@ -993,9 +989,9 @@ public sealed class LabelsTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
 
-        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
-                new LabelDto("type/story", "1d76db", "Story label", "owner/repo-a"),
-                new LabelDto("status/done", "cfd3d7", "Completed", "owner/repo-a"),
+        _labelManagerService.GetLabelMatrixAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
+                new LabelMatrixRowDto("type/story", "1d76db", "Story label", ["owner/repo-a"], []),
+                new LabelMatrixRowDto("status/done", "cfd3d7", "Completed", ["owner/repo-a"], []),
             ]);
 
         _labelManagerService.BulkDeleteLabelsAsync(Arg.Any<IReadOnlyList<LabelBulkDeleteTargetDto>>(), Arg.Any<CancellationToken>()).Returns(
@@ -1011,9 +1007,9 @@ public sealed class LabelsTests
         cut.Find("[data-testid='load-labels-button']").Click();
         cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='labels-grid']")));
 
-        var selectedRow = new Labels.LabelRow("type/story", "1d76db", "Story label", ["owner/repo-a"], []);
-        var grid = cut.FindComponent<MudDataGrid<Labels.LabelRow>>();
-        await cut.InvokeAsync(() => grid.Instance.SelectedItemsChanged.InvokeAsync(new HashSet<Labels.LabelRow> { selectedRow }));
+        var selectedRow = new LabelMatrixRowDto("type/story", "1d76db", "Story label", ["owner/repo-a"], []);
+        var grid = cut.FindComponent<MudDataGrid<LabelMatrixRowDto>>();
+        await cut.InvokeAsync(() => grid.Instance.SelectedItemsChanged.InvokeAsync(new HashSet<LabelMatrixRowDto> { selectedRow }));
 
         cut.WaitForAssertion(() =>
         {
@@ -1052,8 +1048,8 @@ public sealed class LabelsTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
 
-        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
-                new LabelDto("type/story", "1d76db", "Story label", "owner/repo-a"),
+        _labelManagerService.GetLabelMatrixAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
+                new LabelMatrixRowDto("type/story", "1d76db", "Story label", ["owner/repo-a"], []),
             ]);
 
         await using var ctx = CreateContext(dialogService);
@@ -1066,9 +1062,9 @@ public sealed class LabelsTests
         cut.Find("[data-testid='load-labels-button']").Click();
         cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='labels-grid']")));
 
-        var selectedRow = new Labels.LabelRow("type/story", "1d76db", "Story label", ["owner/repo-a"], []);
-        var grid = cut.FindComponent<MudDataGrid<Labels.LabelRow>>();
-        await cut.InvokeAsync(() => grid.Instance.SelectedItemsChanged.InvokeAsync(new HashSet<Labels.LabelRow> { selectedRow }));
+        var selectedRow = new LabelMatrixRowDto("type/story", "1d76db", "Story label", ["owner/repo-a"], []);
+        var grid = cut.FindComponent<MudDataGrid<LabelMatrixRowDto>>();
+        await cut.InvokeAsync(() => grid.Instance.SelectedItemsChanged.InvokeAsync(new HashSet<LabelMatrixRowDto> { selectedRow }));
 
         cut.Find("[data-testid='bulk-delete-labels-button']").Click();
 
@@ -1101,9 +1097,8 @@ public sealed class LabelsTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA, repoB]);
 
-        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
-                new LabelDto("type/story", "1d76db", "Story label", "owner/repo-a"),
-                new LabelDto("type/story", "1d76db", "Story label", "owner/repo-b"),
+        _labelManagerService.GetLabelMatrixAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
+                new LabelMatrixRowDto("type/story", "1d76db", "Story label", ["owner/repo-a", "owner/repo-b"], []),
             ]);
 
         await using var ctx = CreateContext(dialogService);
@@ -1116,9 +1111,9 @@ public sealed class LabelsTests
         cut.Find("[data-testid='load-labels-button']").Click();
         cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='labels-grid']")));
 
-        var selectedRow = new Labels.LabelRow("type/story", "1d76db", "Story label", ["owner/repo-a", "owner/repo-b"], []);
-        var grid = cut.FindComponent<MudDataGrid<Labels.LabelRow>>();
-        await cut.InvokeAsync(() => grid.Instance.SelectedItemsChanged.InvokeAsync(new HashSet<Labels.LabelRow> { selectedRow }));
+        var selectedRow = new LabelMatrixRowDto("type/story", "1d76db", "Story label", ["owner/repo-a", "owner/repo-b"], []);
+        var grid = cut.FindComponent<MudDataGrid<LabelMatrixRowDto>>();
+        await cut.InvokeAsync(() => grid.Instance.SelectedItemsChanged.InvokeAsync(new HashSet<LabelMatrixRowDto> { selectedRow }));
 
         cut.Find("[data-testid='bulk-delete-labels-button']").Click();
 
@@ -1145,8 +1140,8 @@ public sealed class LabelsTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
 
-        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
-                new LabelDto("type/story", "1d76db", "Story label", "owner/repo-a"),
+        _labelManagerService.GetLabelMatrixAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
+                new LabelMatrixRowDto("type/story", "1d76db", "Story label", ["owner/repo-a"], []),
             ]);
 
         await using var ctx = CreateContext(dialogService);
@@ -1159,9 +1154,9 @@ public sealed class LabelsTests
         cut.Find("[data-testid='load-labels-button']").Click();
         cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='labels-grid']")));
 
-        var selectedRow = new Labels.LabelRow("type/story", "1d76db", "Story label", ["owner/repo-a"], []);
-        var grid = cut.FindComponent<MudDataGrid<Labels.LabelRow>>();
-        await cut.InvokeAsync(() => grid.Instance.SelectedItemsChanged.InvokeAsync(new HashSet<Labels.LabelRow> { selectedRow }));
+        var selectedRow = new LabelMatrixRowDto("type/story", "1d76db", "Story label", ["owner/repo-a"], []);
+        var grid = cut.FindComponent<MudDataGrid<LabelMatrixRowDto>>();
+        await cut.InvokeAsync(() => grid.Instance.SelectedItemsChanged.InvokeAsync(new HashSet<LabelMatrixRowDto> { selectedRow }));
 
         cut.Find("[data-testid='bulk-delete-labels-button']").Click();
 
@@ -1188,8 +1183,8 @@ public sealed class LabelsTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
 
-        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
-                new LabelDto("type/story", "1d76db", "Story label", "owner/repo-a"),
+        _labelManagerService.GetLabelMatrixAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
+                new LabelMatrixRowDto("type/story", "1d76db", "Story label", ["owner/repo-a"], []),
             ]);
 
         await using var ctx = CreateContext(dialogService);
@@ -1202,9 +1197,9 @@ public sealed class LabelsTests
         cut.Find("[data-testid='load-labels-button']").Click();
         cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='labels-grid']")));
 
-        var selectedRow = new Labels.LabelRow("type/story", "1d76db", "Story label", ["owner/repo-a"], []);
-        var grid = cut.FindComponent<MudDataGrid<Labels.LabelRow>>();
-        await cut.InvokeAsync(() => grid.Instance.SelectedItemsChanged.InvokeAsync(new HashSet<Labels.LabelRow> { selectedRow }));
+        var selectedRow = new LabelMatrixRowDto("type/story", "1d76db", "Story label", ["owner/repo-a"], []);
+        var grid = cut.FindComponent<MudDataGrid<LabelMatrixRowDto>>();
+        await cut.InvokeAsync(() => grid.Instance.SelectedItemsChanged.InvokeAsync(new HashSet<LabelMatrixRowDto> { selectedRow }));
 
         cut.Find("[data-testid='bulk-delete-labels-button']").Click();
 
@@ -1221,7 +1216,7 @@ public sealed class LabelsTests
             Assert.Contains("type/story", cut.Find("[data-testid='labels-grid']").TextContent, StringComparison.Ordinal);
         });
 
-        await _labelManagerService.Received(1).GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
+        await _labelManagerService.Received(1).GetLabelMatrixAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -1239,11 +1234,11 @@ public sealed class LabelsTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
 
-        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(
+        _labelManagerService.GetLabelMatrixAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(
             [
-                new LabelDto("type/story", "1d76db", "Story label", "owner/repo-a"),
+                new LabelMatrixRowDto("type/story", "1d76db", "Story label", ["owner/repo-a"], []),
             ],
-            Array.Empty<LabelDto>());
+            Array.Empty<LabelMatrixRowDto>());
 
         _labelManagerService.BulkDeleteLabelsAsync(Arg.Any<IReadOnlyList<LabelBulkDeleteTargetDto>>(), Arg.Any<CancellationToken>()).Returns(deleteTask.Task);
 
@@ -1257,9 +1252,9 @@ public sealed class LabelsTests
         cut.Find("[data-testid='load-labels-button']").Click();
         cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='labels-grid']")));
 
-        var selectedRow = new Labels.LabelRow("type/story", "1d76db", "Story label", ["owner/repo-a"], []);
-        var grid = cut.FindComponent<MudDataGrid<Labels.LabelRow>>();
-        await cut.InvokeAsync(() => grid.Instance.SelectedItemsChanged.InvokeAsync(new HashSet<Labels.LabelRow> { selectedRow }));
+        var selectedRow = new LabelMatrixRowDto("type/story", "1d76db", "Story label", ["owner/repo-a"], []);
+        var grid = cut.FindComponent<MudDataGrid<LabelMatrixRowDto>>();
+        await cut.InvokeAsync(() => grid.Instance.SelectedItemsChanged.InvokeAsync(new HashSet<LabelMatrixRowDto> { selectedRow }));
 
         cut.Find("[data-testid='bulk-delete-labels-button']").Click();
 
@@ -1283,7 +1278,7 @@ public sealed class LabelsTests
             Assert.Contains("Deleted 1 label-repository pair.", snackbar.TextContent, StringComparison.Ordinal);
         });
 
-        await _labelManagerService.Received(2).GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
+        await _labelManagerService.Received(2).GetLabelMatrixAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -1301,11 +1296,11 @@ public sealed class LabelsTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
 
-        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(
+        _labelManagerService.GetLabelMatrixAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(
             [
-                new LabelDto("type/story", "1d76db", "Story label", "owner/repo-a"),
+                new LabelMatrixRowDto("type/story", "1d76db", "Story label", ["owner/repo-a"], []),
             ],
-            Array.Empty<LabelDto>());
+            Array.Empty<LabelMatrixRowDto>());
 
         _labelManagerService.BulkDeleteLabelsAsync(Arg.Any<IReadOnlyList<LabelBulkDeleteTargetDto>>(), Arg.Any<CancellationToken>()).Returns(deleteTask.Task);
 
@@ -1319,9 +1314,9 @@ public sealed class LabelsTests
         cut.Find("[data-testid='load-labels-button']").Click();
         cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='labels-grid']")));
 
-        var selectedRow = new Labels.LabelRow("type/story", "1d76db", "Story label", ["owner/repo-a"], []);
-        var grid = cut.FindComponent<MudDataGrid<Labels.LabelRow>>();
-        await cut.InvokeAsync(() => grid.Instance.SelectedItemsChanged.InvokeAsync(new HashSet<Labels.LabelRow> { selectedRow }));
+        var selectedRow = new LabelMatrixRowDto("type/story", "1d76db", "Story label", ["owner/repo-a"], []);
+        var grid = cut.FindComponent<MudDataGrid<LabelMatrixRowDto>>();
+        await cut.InvokeAsync(() => grid.Instance.SelectedItemsChanged.InvokeAsync(new HashSet<LabelMatrixRowDto> { selectedRow }));
 
         var bulkDeleteButton = cut.Find("[data-testid='bulk-delete-labels-button']");
         bulkDeleteButton.Click();
@@ -1356,8 +1351,8 @@ public sealed class LabelsTests
 
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
 
-        _labelManagerService.GetLabelsForRepositoriesAsync("owner", Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
-                new LabelDto("type/story", "1d76db", "Story label", "owner/repo-a"),
+        _labelManagerService.GetLabelMatrixAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns([
+                new LabelMatrixRowDto("type/story", "1d76db", "Story label", ["owner/repo-a"], []),
             ]);
 
         _labelManagerService.BulkDeleteLabelsAsync(Arg.Any<IReadOnlyList<LabelBulkDeleteTargetDto>>(), Arg.Any<CancellationToken>()).Returns(
@@ -1373,9 +1368,9 @@ public sealed class LabelsTests
         cut.Find("[data-testid='load-labels-button']").Click();
         cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-testid='labels-grid']")));
 
-        var selectedRow = new Labels.LabelRow("type/story", "1d76db", "Story label", ["owner/repo-a"], []);
-        var grid = cut.FindComponent<MudDataGrid<Labels.LabelRow>>();
-        await cut.InvokeAsync(() => grid.Instance.SelectedItemsChanged.InvokeAsync(new HashSet<Labels.LabelRow> { selectedRow }));
+        var selectedRow = new LabelMatrixRowDto("type/story", "1d76db", "Story label", ["owner/repo-a"], []);
+        var grid = cut.FindComponent<MudDataGrid<LabelMatrixRowDto>>();
+        await cut.InvokeAsync(() => grid.Instance.SelectedItemsChanged.InvokeAsync(new HashSet<LabelMatrixRowDto> { selectedRow }));
 
         cut.Find("[data-testid='bulk-delete-labels-button']").Click();
 
@@ -1439,8 +1434,8 @@ public sealed class LabelsTests
                 CreateRepository("owner", "repo-a"),
             ]);
 
-        _labelManagerService.GetLabelsForRepositoriesAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>(), Arg.Any<bool>())
-            .Returns(Task.FromException<IReadOnlyList<LabelDto>>(new HttpRequestException("Connection refused")));
+        _labelManagerService.GetLabelMatrixAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>(), Arg.Any<bool>())
+            .Returns(Task.FromException<IReadOnlyList<LabelMatrixRowDto>>(new HttpRequestException("Connection refused")));
 
         await using var ctx = CreateContext();
         var cut = ctx.Render<Labels>();

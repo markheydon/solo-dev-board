@@ -19,6 +19,13 @@ public interface ILabelManagerService
     /// <returns>A read-only list of labels from the specified repositories.</returns>
     Task<IReadOnlyList<LabelDto>> GetLabelsForRepositoriesAsync(string owner, IReadOnlyList<string> repositories, CancellationToken cancellationToken = default, bool forceReload = false);
 
+    /// <summary>Loads labels for the selected repositories and assembles the cross-repository presence matrix.</summary>
+    /// <param name="repositoryFullNames">The selected repositories in <c>owner/repository</c> form.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <param name="forceReload">When <see langword="true" />, bypasses any cached label catalogue before loading.</param>
+    /// <returns>A read-only list of consolidated label rows for the Label Manager grid.</returns>
+    Task<IReadOnlyList<LabelMatrixRowDto>> GetLabelMatrixAsync(IReadOnlyList<string> repositoryFullNames, CancellationToken cancellationToken = default, bool forceReload = false);
+
     /// <summary>Creates a label in one or more repositories.</summary>
     /// <param name="owner">The GitHub account owner login.</param>
     /// <param name="repositories">The repository names where the label will be created.</param>

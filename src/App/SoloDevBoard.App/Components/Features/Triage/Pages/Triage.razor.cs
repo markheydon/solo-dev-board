@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 using SoloDevBoard.App.Authentication;
 using SoloDevBoard.App.Feedback;
+using SoloDevBoard.Application.GitHub;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Application.Services.Labels;
@@ -265,8 +266,8 @@ public partial class Triage : ComponentBase
                 selectedProjectBoardId = preservedProjectBoardId;
                 selectedProjectBoardStatusOptionId = preservedProjectBoardStatusOptionId;
                 await LoadQuickActionLabelsAsync(
-                    ResolveOwner(selectedRepositoryFullName),
-                    ResolveRepositoryName(selectedRepositoryFullName),
+                    RepositoryFullName.ResolveOwner(selectedRepositoryFullName),
+                    RepositoryFullName.ResolveRepositoryName(selectedRepositoryFullName),
                     forceReload: true);
                 await LoadPlanningOptionsAsync(activeSession, preserveProjectBoardSelection: true);
             }
@@ -356,28 +357,6 @@ public partial class Triage : ComponentBase
             hasRepositoryLoadFailure = true;
             repositoryLoadErrorMessage = "An unexpected error occurred while loading repositories.";
         }
-    }
-
-    private static string ResolveOwner(string fullName)
-    {
-        if (string.IsNullOrWhiteSpace(fullName))
-        {
-            return string.Empty;
-        }
-
-        var parts = fullName.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        return parts.Length > 0 ? parts[0] : string.Empty;
-    }
-
-    private static string ResolveRepositoryName(string fullName)
-    {
-        if (string.IsNullOrWhiteSpace(fullName))
-        {
-            return string.Empty;
-        }
-
-        var parts = fullName.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        return parts.Length > 1 ? parts[1] : string.Empty;
     }
 
     private bool ShowReloadFromGitHubButton => !isLoadingRepositories;
@@ -1059,25 +1038,7 @@ public partial class Triage : ComponentBase
             || args.ShiftKey;
 
     private static bool TryParseRepositoryScope(string repositoryFullName, out string owner, out string repo)
-    {
-        owner = string.Empty;
-        repo = string.Empty;
-
-        if (string.IsNullOrWhiteSpace(repositoryFullName))
-        {
-            return false;
-        }
-
-        var segments = repositoryFullName.Split('/', 2, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-        if (segments.Length != 2)
-        {
-            return false;
-        }
-
-        owner = segments[0];
-        repo = segments[1];
-        return true;
-    }
+        => RepositoryFullName.TryParse(repositoryFullName, out owner, out repo);
 
     /// <summary>Converts markdown body content into HTML suitable for safe display in the triage UI.</summary>
     /// <param name="body">The original issue or pull-request body content.</param>
