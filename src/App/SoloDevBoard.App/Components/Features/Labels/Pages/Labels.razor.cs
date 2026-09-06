@@ -4,6 +4,7 @@ using SoloDevBoard.App.Authentication;
 using SoloDevBoard.App.Components.Features.Labels.Components;
 using SoloDevBoard.App.Components.Features.Labels.Dialogs;
 using SoloDevBoard.App.Feedback;
+using SoloDevBoard.Application.GitHub;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Repositories;
@@ -41,8 +42,8 @@ public partial class Labels : ComponentBase
 
     private IReadOnlyList<RepositoryDto> availableRepositories = [];
     private IReadOnlyList<RepositoryDto> selectedRepositories = [];
-    private IReadOnlyList<LabelRow> rows = [];
-    private IReadOnlyList<LabelRow> filteredRows = [];
+    private IReadOnlyList<LabelMatrixRowDto> rows = [];
+    private IReadOnlyList<LabelMatrixRowDto> filteredRows = [];
     private bool isLoadingRepositories = true;
     private bool isLoadingLabels;
     private bool hasLoadedLabels;
@@ -65,7 +66,7 @@ public partial class Labels : ComponentBase
     private bool isPreviewingSync;
     private bool isApplyingSync;
     private int activeTabIndex = LabelsTabIndex;
-    private HashSet<LabelRow> selectedLabelRows = [];
+    private HashSet<LabelMatrixRowDto> selectedLabelRows = [];
     private bool isBulkDeletingLabels;
     private bool isAwaitingBulkDeleteConfirmation;
     private bool isReloadingFromGitHub;
@@ -462,13 +463,10 @@ public partial class Labels : ComponentBase
         errorMessage = null;
         hasLoadedLabels = true;
 
-        var selectedRepositoryList = selectedRepositories
+        var selectedRepositoryFullNames = selectedRepositories
             .Where(repository => !string.IsNullOrWhiteSpace(repository.FullName))
-            .DistinctBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-
-        var selectedRepositoryFullNames = selectedRepositoryList
             .Select(repository => repository.FullName)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(fullName => fullName, StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
@@ -483,30 +481,8 @@ public partial class Labels : ComponentBase
 
         try
         {
-            var repositoryGroups = selectedRepositoryList
-                .Select(repository => (Repository: repository, Owner: ResolveOwner(repository.FullName)))
-                .Where(item => !string.IsNullOrWhiteSpace(item.Owner))
-                .GroupBy(item => item.Owner, StringComparer.OrdinalIgnoreCase)
-                .ToArray();
-
-            var consolidatedLabels = new List<LabelDto>();
-
-            foreach (var ownerGroup in repositoryGroups)
-            {
-                var owner = ownerGroup.Key;
-                var repositoriesForOwner = ownerGroup
-                    .Select(item => item.Repository.Name)
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
-                    .ToArray();
-
-                var labels = await LabelManagerService
-                    .GetLabelsForRepositoriesAsync(owner, repositoriesForOwner, forceReload: forceReload);
-
-                consolidatedLabels.AddRange(labels.Select(label => label with { RepositoryName = $"{owner}/{label.RepositoryName}" }));
-            }
-
-            BuildRows(consolidatedLabels, selectedRepositoryFullNames);
+            rows = await LabelManagerService.GetLabelMatrixAsync(selectedRepositoryFullNames, forceReload: forceReload);
+            ApplyFilter();
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
@@ -689,7 +665,7 @@ public partial class Labels : ComponentBase
         await ExecuteCreateAsync(result);
     }
 
-    private async Task ShowEditDialogAsync(LabelRow row)
+    private async Task ShowEditDialogAsync(LabelMatrixRowDto row)
     {
         ArgumentNullException.ThrowIfNull(row);
 
@@ -708,7 +684,7 @@ public partial class Labels : ComponentBase
             row.Name,
             row.Name,
             $"#{row.Colour}",
-            row.Description == "No description" ? string.Empty : row.Description,
+            row.Description == LabelMatrixRowDto.MissingDescriptionDisplay ? string.Empty : row.Description,
             selectedFullNames,
             row.RepositoriesWithLabel,
             defaultSelection);
@@ -722,7 +698,7 @@ public partial class Labels : ComponentBase
         await ExecuteUpdateAsync(result);
     }
 
-    private async Task ShowDeleteDialogAsync(LabelRow row)
+    private async Task ShowDeleteDialogAsync(LabelMatrixRowDto row)
     {
         ArgumentNullException.ThrowIfNull(row);
 
@@ -795,7 +771,7 @@ public partial class Labels : ComponentBase
 
     private async Task ExecuteCreateAsync(LabelOperationDialogResult operation)
     {
-        var repositoriesByOwner = GroupRepositoriesByOwner(operation.SelectedRepositories);
+        var repositoriesByOwner = RepositoryFullName.GroupByOwner(operation.SelectedRepositories);
         var createRequest = new LabelDto(operation.LabelName, operation.Colour, operation.Description, string.Empty);
 
         try
@@ -835,7 +811,7 @@ public partial class Labels : ComponentBase
 
     private async Task ExecuteUpdateAsync(LabelOperationDialogResult operation)
     {
-        var repositoriesByOwner = GroupRepositoriesByOwner(operation.SelectedRepositories);
+        var repositoriesByOwner = RepositoryFullName.GroupByOwner(operation.SelectedRepositories);
         var updateRequest = new LabelDto(operation.LabelName, operation.Colour, operation.Description, string.Empty);
 
         try
@@ -875,7 +851,7 @@ public partial class Labels : ComponentBase
 
     private async Task ExecuteDeleteAsync(LabelOperationDialogResult operation)
     {
-        var repositoriesByOwner = GroupRepositoriesByOwner(operation.SelectedRepositories);
+        var repositoriesByOwner = RepositoryFullName.GroupByOwner(operation.SelectedRepositories);
 
         try
         {
@@ -912,7 +888,7 @@ public partial class Labels : ComponentBase
         }
     }
 
-    private Task OnSelectedLabelRowsChangedAsync(ICollection<LabelRow> selectedRows)
+    private Task OnSelectedLabelRowsChangedAsync(ICollection<LabelMatrixRowDto> selectedRows)
     {
         selectedLabelRows = selectedRows.ToHashSet();
         return Task.CompletedTask;
@@ -1075,62 +1051,6 @@ public partial class Labels : ComponentBase
         return $"{summary}.";
     }
 
-    private void BuildRows(IReadOnlyList<LabelDto> labels, IReadOnlyList<string> selectedFullNames)
-    {
-        var selectedSet = selectedFullNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        rows = labels
-            .GroupBy(label => label.Name, StringComparer.OrdinalIgnoreCase)
-            .Select(group =>
-            {
-                var first = group.First();
-                var repositoriesWithLabel = group
-                    .Select(label => label.RepositoryName)
-                    .Where(repositoryName => !string.IsNullOrWhiteSpace(repositoryName))
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .OrderBy(repositoryName => repositoryName, StringComparer.OrdinalIgnoreCase)
-                    .ToArray();
-
-                var missingRepositories = selectedSet
-                    .Except(repositoriesWithLabel, StringComparer.OrdinalIgnoreCase)
-                    .OrderBy(repositoryName => repositoryName, StringComparer.OrdinalIgnoreCase)
-                    .ToArray();
-
-                return new LabelRow(
-                    first.Name,
-                    first.Colour,
-                    string.IsNullOrWhiteSpace(first.Description) ? "No description" : first.Description,
-                    repositoriesWithLabel,
-                    missingRepositories);
-            })
-            .OrderBy(row => row.Name, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-
-        ApplyFilter();
-    }
-
-    private static string ResolveOwner(string fullName)
-    {
-        if (string.IsNullOrWhiteSpace(fullName))
-        {
-            return string.Empty;
-        }
-
-        var parts = fullName.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        return parts.Length > 0 ? parts[0] : string.Empty;
-    }
-
-    private static string ResolveRepositoryName(string fullName)
-    {
-        if (string.IsNullOrWhiteSpace(fullName))
-        {
-            return string.Empty;
-        }
-
-        var parts = fullName.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        return parts.Length > 1 ? parts[1] : string.Empty;
-    }
-
     private bool TryGetSelectedRepositoryFullNames(out IReadOnlyList<string> selectedFullNames)
     {
         selectedFullNames = selectedRepositories
@@ -1141,28 +1061,6 @@ public partial class Labels : ComponentBase
             .ToArray();
 
         return selectedFullNames.Count > 0;
-    }
-
-    private static IReadOnlyDictionary<string, IReadOnlyList<string>> GroupRepositoriesByOwner(IReadOnlyList<string> repositoryFullNames)
-    {
-        ArgumentNullException.ThrowIfNull(repositoryFullNames);
-
-        return repositoryFullNames
-            .Select(fullName => new
-            {
-                Owner = ResolveOwner(fullName),
-                Repository = ResolveRepositoryName(fullName),
-            })
-            .Where(item => !string.IsNullOrWhiteSpace(item.Owner) && !string.IsNullOrWhiteSpace(item.Repository))
-            .GroupBy(item => item.Owner, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(
-                group => group.Key,
-                group => (IReadOnlyList<string>)group
-                    .Select(item => item.Repository)
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .OrderBy(repository => repository, StringComparer.OrdinalIgnoreCase)
-                    .ToArray(),
-                StringComparer.OrdinalIgnoreCase);
     }
 
     private void ApplyFilter()
@@ -1347,29 +1245,5 @@ public partial class Labels : ComponentBase
         showSyncPreview = false;
         isPreviewingSync = false;
         isApplyingSync = false;
-    }
-
-    /// <summary>Represents a consolidated label row for the grid view.</summary>
-    /// <param name="Name">The label name.</param>
-    /// <param name="Colour">The hexadecimal colour (without #).</param>
-    /// <param name="Description">The label description text.</param>
-    /// <param name="RepositoriesWithLabel">Repositories that contain the label.</param>
-    /// <param name="MissingRepositories">Repositories currently missing the label.</param>
-    public sealed record LabelRow(
-        string Name,
-        string Colour,
-        string Description,
-        IReadOnlyList<string> RepositoriesWithLabel,
-        IReadOnlyList<string> MissingRepositories)
-    {
-        /// <summary>Gets repository names containing the label as readable text.</summary>
-        public string RepositoriesWithLabelText => RepositoriesWithLabel.Count == 0
-            ? "None"
-            : string.Join(", ", RepositoriesWithLabel);
-
-        /// <summary>Gets repository names missing the label as readable text.</summary>
-        public string MissingRepositoriesText => MissingRepositories.Count == 0
-            ? "None"
-            : string.Join(", ", MissingRepositories);
     }
 }

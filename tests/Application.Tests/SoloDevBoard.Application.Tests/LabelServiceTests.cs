@@ -1117,4 +1117,97 @@ public sealed class LabelServiceTests
         // Assert
         _ = await Assert.ThrowsAsync<ArgumentException>(action);
     }
+
+    [Fact]
+    public async Task GetLabelMatrixAsync_RepositoryFullNamesNull_ThrowsArgumentNullException()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var sut = new LabelService(_labelRepository);
+
+        var action = async () => await sut.GetLabelMatrixAsync(null!, cancellationToken);
+
+        _ = await Assert.ThrowsAsync<ArgumentNullException>(action);
+    }
+
+    [Fact]
+    public async Task GetLabelMatrixAsync_EmptySelection_ReturnsEmptyWithoutCallingRepository()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var sut = new LabelService(_labelRepository);
+
+        var result = await sut.GetLabelMatrixAsync([], cancellationToken);
+
+        Assert.Empty(result);
+        await _labelRepository.DidNotReceive().GetLabelsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>(), Arg.Any<bool>());
+    }
+
+    [Fact]
+    public async Task GetLabelMatrixAsync_MultipleOwners_GroupsRowsAndComputesMissingRepositories()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        _labelRepository
+            .GetLabelsAsync("owner-a", "repo-a", cancellationToken, Arg.Any<bool>())
+            .Returns([
+                new Label { Name = "type/story", Colour = "1d76db", Description = "Story label", RepositoryName = "repo-a" },
+                new Label { Name = "priority/high", Colour = "d93f0b", Description = "High priority", RepositoryName = "repo-a" },
+            ]);
+        _labelRepository
+            .GetLabelsAsync("owner-b", "repo-b", cancellationToken, Arg.Any<bool>())
+            .Returns([
+                new Label { Name = "priority/high", Colour = "d93f0b", Description = "High priority", RepositoryName = "repo-b" },
+            ]);
+
+        var sut = new LabelService(_labelRepository);
+
+        var result = await sut.GetLabelMatrixAsync(["owner-b/repo-b", "owner-a/repo-a"], cancellationToken);
+
+        Assert.Equal(2, result.Count);
+
+        var story = Assert.Single(result, row => row.Name == "type/story");
+        Assert.Equal("1d76db", story.Colour);
+        Assert.Equal("Story label", story.Description);
+        Assert.Equal(["owner-a/repo-a"], story.RepositoriesWithLabel);
+        Assert.Equal(["owner-b/repo-b"], story.MissingRepositories);
+        Assert.Equal("owner-a/repo-a", story.RepositoriesWithLabelText);
+        Assert.Equal("owner-b/repo-b", story.MissingRepositoriesText);
+
+        var priority = Assert.Single(result, row => row.Name == "priority/high");
+        Assert.Equal(["owner-a/repo-a", "owner-b/repo-b"], priority.RepositoriesWithLabel);
+        Assert.Empty(priority.MissingRepositories);
+        Assert.Equal("None", priority.MissingRepositoriesText);
+
+        await _labelRepository.Received(1).GetLabelsAsync("owner-a", "repo-a", cancellationToken, false);
+        await _labelRepository.Received(1).GetLabelsAsync("owner-b", "repo-b", cancellationToken, false);
+    }
+
+    [Fact]
+    public async Task GetLabelMatrixAsync_EmptyDescription_UsesMissingDescriptionDisplay()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-a", cancellationToken, Arg.Any<bool>())
+            .Returns([new Label { Name = "bug", Colour = "d73a4a", Description = " ", RepositoryName = "repo-a" }]);
+
+        var sut = new LabelService(_labelRepository);
+
+        var result = await sut.GetLabelMatrixAsync(["owner/repo-a"], cancellationToken);
+
+        var row = Assert.Single(result);
+        Assert.Equal(LabelMatrixRowDto.MissingDescriptionDisplay, row.Description);
+    }
+
+    [Fact]
+    public async Task GetLabelMatrixAsync_ForceReloadTrue_PassesFlagToRepository()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-a", cancellationToken, true)
+            .Returns([new Label { Name = "bug", Colour = "d73a4a", Description = "Bug", RepositoryName = "repo-a" }]);
+
+        var sut = new LabelService(_labelRepository);
+
+        _ = await sut.GetLabelMatrixAsync(["owner/repo-a"], cancellationToken, forceReload: true);
+
+        await _labelRepository.Received(1).GetLabelsAsync("owner", "repo-a", cancellationToken, true);
+    }
 }

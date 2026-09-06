@@ -151,7 +151,7 @@
                         }
                         else if (hasLoadedLabels)
                         {
-                            <MudDataGrid T="Labels.LabelRow"
+                            <MudDataGrid T="LabelMatrixRowDto"
                                          Items="filteredRows"
                                          Hover="true"
                                          Dense="true"
@@ -163,9 +163,9 @@
                                          SelectedItemsChanged="OnSelectedLabelRowsChangedAsync"
                                          data-testid="labels-grid">
                                 <Columns>
-                                    <SelectColumn T="Labels.LabelRow" />
+                                    <SelectColumn T="LabelMatrixRowDto" />
                                     <PropertyColumn Property="row => row.Name" Title="Label" Sortable="true" />
-                                    <TemplateColumn T="Labels.LabelRow" Title="Colour">
+                                    <TemplateColumn T="LabelMatrixRowDto" Title="Colour">
                                         <CellTemplate>
                                             <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
                                                 <MudChip Variant="Variant.Outlined"
@@ -177,7 +177,7 @@
                                     <PropertyColumn Property="row => row.Description" Title="Description" />
                                     <PropertyColumn Property="row => row.RepositoriesWithLabelText" Title="Repositories" />
                                     <PropertyColumn Property="row => row.MissingRepositoriesText" Title="Missing in" />
-                                    <TemplateColumn T="Labels.LabelRow" Title="Actions">
+                                    <TemplateColumn T="LabelMatrixRowDto" Title="Actions">
                                         <CellTemplate>
                                             <MudStack Row="true" Spacing="1">
                                                 <MudButton Variant="Variant.Outlined"
