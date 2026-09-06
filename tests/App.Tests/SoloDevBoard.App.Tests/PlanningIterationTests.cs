@@ -213,6 +213,7 @@ public sealed class PlanningIterationTests
             Arg.Any<int>(),
             Arg.Any<IReadOnlyList<string>>(),
             Arg.Any<int>(),
+            Arg.Any<int>(),
             Arg.Any<CancellationToken>());
     }
 
@@ -240,8 +241,9 @@ public sealed class PlanningIterationTests
             50,
             Arg.Any<IReadOnlyList<string>>(),
             3,
+            8,
             Arg.Any<CancellationToken>()).Returns(
-            new IterationPlanningAddToUpNextResultDto(AddedBoardCard: false, ProjectItemId: "PVTI_candidate", FocusOrderAssigned: 2, FocusOrderSkipped: false));
+            CreateSuccessfulAddResult(CreateViewAfterAddingCandidate(activeLoad: 9, capacity: 8, isAtOrOverCapacity: true)));
 
         await using var ctx = CreateContext(dialogService);
         var cut = ctx.RenderPlanningPage<PlanningIteration>();
@@ -267,6 +269,7 @@ public sealed class PlanningIterationTests
                 50,
                 Arg.Any<IReadOnlyList<string>>(),
                 3,
+                8,
                 Arg.Any<CancellationToken>());
         });
     }
@@ -419,7 +422,7 @@ public sealed class PlanningIterationTests
     }
 
     [Fact]
-    public async Task PlanningIteration_WhenStalledItemRemoved_UpdatesLocallyWithoutFullReload()
+    public async Task PlanningIteration_WhenStalledItemRemoved_BindsReturnedPlanningViewWithoutReloading()
     {
         ConfigureDefaults();
         var stalledItem = new IterationPlanningStalledItemDto(
@@ -454,8 +457,8 @@ public sealed class PlanningIterationTests
                 false,
                 [stalledItem]));
         _planningService
-            .RemoveStalledUpNextItemAsync("PVT_board", stalledItem, Arg.Any<CancellationToken>())
-            .Returns(Task.CompletedTask);
+            .RemoveStalledUpNextItemAsync("PVT_board", stalledItem, 8, 3, Arg.Any<CancellationToken>())
+            .Returns(CreatePlanningViewWithCandidate());
 
         await using var ctx = CreateContext();
         var cut = ctx.RenderPlanningPage<PlanningIteration>();
@@ -478,7 +481,7 @@ public sealed class PlanningIterationTests
 
         await _planningService.Received(1).GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await _planningService.Received(1)
-            .RemoveStalledUpNextItemAsync("PVT_board", stalledItem, Arg.Any<CancellationToken>());
+            .RemoveStalledUpNextItemAsync("PVT_board", stalledItem, 8, 3, Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -506,7 +509,7 @@ public sealed class PlanningIterationTests
     }
 
     [Fact]
-    public async Task PlanningIteration_WhenAddToUpNextSucceeds_UpdatesLocallyWithoutFullReload()
+    public async Task PlanningIteration_WhenAddToUpNextSucceeds_BindsReturnedPlanningViewWithoutReloading()
     {
         ConfigureDefaults();
         _planningService.GetPlanningViewAsync("PVT_board", 8, 3, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(
@@ -518,12 +521,9 @@ public sealed class PlanningIterationTests
             50,
             Arg.Any<IReadOnlyList<string>>(),
             3,
+            8,
             Arg.Any<CancellationToken>()).Returns(
-            new IterationPlanningAddToUpNextResultDto(
-                AddedBoardCard: false,
-                ProjectItemId: "PVTI_candidate",
-                FocusOrderAssigned: 2,
-                FocusOrderSkipped: false));
+            CreateSuccessfulAddResult(CreateViewAfterAddingCandidate()));
 
         await using var ctx = CreateContext();
         var cut = ctx.RenderPlanningPage<PlanningIteration>();
@@ -557,12 +557,9 @@ public sealed class PlanningIterationTests
             50,
             Arg.Any<IReadOnlyList<string>>(),
             3,
+            8,
             Arg.Any<CancellationToken>()).Returns(
-            new IterationPlanningAddToUpNextResultDto(
-                AddedBoardCard: false,
-                ProjectItemId: "PVTI_candidate",
-                FocusOrderAssigned: 2,
-                FocusOrderSkipped: false));
+            CreateSuccessfulAddResult(CreateViewAfterAddingCandidate()));
 
         await using var ctx = CreateContext();
         var coordinator = ctx.Services.GetRequiredService<PlanningChromeCoordinator>();
@@ -603,12 +600,9 @@ public sealed class PlanningIterationTests
             50,
             Arg.Any<IReadOnlyList<string>>(),
             3,
+            8,
             Arg.Any<CancellationToken>()).Returns(
-            new IterationPlanningAddToUpNextResultDto(
-                AddedBoardCard: false,
-                ProjectItemId: "PVTI_candidate",
-                FocusOrderAssigned: 2,
-                FocusOrderSkipped: false));
+            CreateSuccessfulAddResult(CreateViewAfterAddingCandidate()));
 
         await using var ctx = CreateContext();
         var cut = ctx.RenderPlanningPage<PlanningIteration>();
@@ -636,6 +630,7 @@ public sealed class PlanningIterationTests
             Arg.Any<string>(),
             Arg.Any<int>(),
             Arg.Any<IReadOnlyList<string>>(),
+            Arg.Any<int>(),
             Arg.Any<int>(),
             Arg.Any<CancellationToken>()).Returns(
             Task.FromException<IterationPlanningAddToUpNextResultDto>(
@@ -732,6 +727,39 @@ public sealed class PlanningIterationTests
 
         return ctx;
     }
+
+    private static IterationPlanningAddToUpNextResultDto CreateSuccessfulAddResult(IterationPlanningViewDto view) =>
+        new(
+            AddedBoardCard: false,
+            ProjectItemId: "PVTI_candidate",
+            FocusOrderAssigned: 2,
+            FocusOrderSkipped: false,
+            view);
+
+    private static IterationPlanningViewDto CreateViewAfterAddingCandidate(
+        int activeLoad = 2,
+        int capacity = 8,
+        bool isAtOrOverCapacity = false) =>
+        new(
+            [
+                new IterationPlanningUpNextItemDto(
+                    "PVTI_candidate",
+                    PlanningWorkItemTypeDto.Issue,
+                    50,
+                    "Candidate story",
+                    "https://github.com/owner/repo-a/issues/50",
+                    "owner/repo-a",
+                    2,
+                    ["type/story", "priority/high"]),
+            ],
+            [],
+            [],
+            true,
+            3,
+            activeLoad,
+            capacity,
+            isAtOrOverCapacity,
+            []);
 
     private static IterationPlanningViewDto CreateAtCapacityPlanningView() =>
         CreatePlanningViewWithCandidate(activeLoad: 8, capacity: 8, isAtOrOverCapacity: true);

@@ -36,12 +36,15 @@ public sealed class IterationPlanningServiceTests
             50,
             labels,
             3,
+            8,
             cancellationToken);
 
         Assert.True(result.AddedBoardCard);
         Assert.Equal("PVTI_new", result.ProjectItemId);
         Assert.Equal(3, result.FocusOrderAssigned);
         Assert.False(result.FocusOrderSkipped);
+        Assert.Equal(2, result.View.ActiveLoad);
+        Assert.False(result.View.IsAtOrOverCapacity);
 
         await _gitHubService.Received(1)
             .AddTriageItemToProjectBoardAsync("owner", "repo", 50, "project-id", cancellationToken);
@@ -52,7 +55,7 @@ public sealed class IterationPlanningServiceTests
                 "PVTF_status",
                 "opt-up-next",
                 cancellationToken);
-        await _projectItemCatalogueService.Received(2)
+        await _projectItemCatalogueService.Received(3)
             .GetCatalogueAsync("project-id", cancellationToken);
         await _projectItemCatalogueService.Received(1)
             .UpdateFocusOrderAsync("project-id", "PVTI_new", "PVTF_focus", 3, cancellationToken);
@@ -79,12 +82,14 @@ public sealed class IterationPlanningServiceTests
             51,
             labels,
             3,
+            8,
             cancellationToken);
 
         Assert.False(result.AddedBoardCard);
         Assert.Equal("PVTI_existing", result.ProjectItemId);
         Assert.Equal(3, result.FocusOrderAssigned);
         Assert.False(result.FocusOrderSkipped);
+        Assert.Equal(2, result.View.ActiveLoad);
 
         await _gitHubService.DidNotReceive()
             .AddTriageItemToProjectBoardAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
@@ -95,7 +100,7 @@ public sealed class IterationPlanningServiceTests
                 "PVTF_status",
                 "opt-up-next",
                 cancellationToken);
-        await _projectItemCatalogueService.Received(2)
+        await _projectItemCatalogueService.Received(3)
             .GetCatalogueAsync("project-id", cancellationToken);
         await _projectItemCatalogueService.Received(1)
             .UpdateFocusOrderAsync("project-id", "PVTI_existing", "PVTF_focus", 3, cancellationToken);
@@ -124,12 +129,14 @@ public sealed class IterationPlanningServiceTests
             52,
             labels,
             3,
+            8,
             cancellationToken);
 
         Assert.True(result.AddedBoardCard);
         Assert.Equal("PVTI_feature", result.ProjectItemId);
         Assert.Null(result.FocusOrderAssigned);
         Assert.True(result.FocusOrderSkipped);
+        Assert.NotNull(result.View);
 
         await _projectItemCatalogueService.DidNotReceive()
             .UpdateFocusOrderAsync(
@@ -163,6 +170,7 @@ public sealed class IterationPlanningServiceTests
             54,
             labels,
             3,
+            8,
             cancellationToken);
 
         Assert.True(result.AddedBoardCard);
@@ -176,7 +184,7 @@ public sealed class IterationPlanningServiceTests
                 "PVTF_status",
                 "opt-up-next",
                 cancellationToken);
-        await _projectItemCatalogueService.Received(1)
+        await _projectItemCatalogueService.Received(2)
             .GetCatalogueAsync("project-id", cancellationToken);
         await _projectItemCatalogueService.DidNotReceive()
             .UpdateFocusOrderAsync(
@@ -206,6 +214,7 @@ public sealed class IterationPlanningServiceTests
             53,
             ["type/story"],
             3,
+            8,
             cancellationToken);
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(action);
@@ -236,6 +245,7 @@ public sealed class IterationPlanningServiceTests
             53,
             ["type/story"],
             3,
+            8,
             cancellationToken);
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(action);
@@ -255,7 +265,7 @@ public sealed class IterationPlanningServiceTests
 
         var sut = CreateSut();
 
-        await sut.ReCommitStalledUpNextItemAsync("project-id", "PVTI_one", cancellationToken);
+        await sut.ReCommitStalledUpNextItemAsync("project-id", "PVTI_one", 8, 3, cancellationToken);
 
         await _gitHubService.Received(1)
             .UpdateProjectBoardItemStatusAsync(
@@ -296,7 +306,7 @@ public sealed class IterationPlanningServiceTests
         var sut = CreateSut();
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            sut.ReCommitStalledUpNextItemAsync("project-id", "PVTI_one", cancellationToken));
+            sut.ReCommitStalledUpNextItemAsync("project-id", "PVTI_one", 8, 3, cancellationToken));
 
         Assert.Contains("restored to Up Next", exception.Message, StringComparison.Ordinal);
         await _gitHubService.Received(1)
@@ -336,7 +346,7 @@ public sealed class IterationPlanningServiceTests
             false,
             ["type/story", "priority/medium"]);
 
-        await sut.MarkStalledUpNextItemBlockedAsync("project-id", item, cancellationToken);
+        await sut.MarkStalledUpNextItemBlockedAsync("project-id", item, 8, 3, cancellationToken);
 
         await _gitHubService.Received(1)
             .UpdateProjectBoardItemStatusAsync(
@@ -384,7 +394,7 @@ public sealed class IterationPlanningServiceTests
             false,
             []);
 
-        await sut.MarkStalledUpNextItemBlockedAsync("project-id", item, cancellationToken);
+        await sut.MarkStalledUpNextItemBlockedAsync("project-id", item, 8, 3, cancellationToken);
 
         await _gitHubService.Received(1)
             .RemoveLabelFromTriageItemAsync(
@@ -425,7 +435,7 @@ public sealed class IterationPlanningServiceTests
             false,
             []);
 
-        await sut.MoveStalledUpNextItemToIceBoxAsync("project-id", item, cancellationToken);
+        await sut.MoveStalledUpNextItemToIceBoxAsync("project-id", item, 8, 3, cancellationToken);
 
         await _gitHubService.Received(1)
             .RemoveLabelFromTriageItemAsync(
@@ -466,7 +476,7 @@ public sealed class IterationPlanningServiceTests
             false,
             ["type/story", "priority/medium"]);
 
-        await sut.MoveStalledUpNextItemToIceBoxAsync("project-id", item, cancellationToken);
+        await sut.MoveStalledUpNextItemToIceBoxAsync("project-id", item, 8, 3, cancellationToken);
 
         await _gitHubService.Received(1)
             .UpdateProjectBoardItemStatusAsync(
@@ -516,7 +526,7 @@ public sealed class IterationPlanningServiceTests
             false,
             ["type/story"]);
 
-        await sut.RemoveStalledUpNextItemAsync("project-id", item, cancellationToken);
+        await sut.RemoveStalledUpNextItemAsync("project-id", item, 8, 3, cancellationToken);
 
         await _gitHubService.Received(1)
             .UpdateProjectBoardItemStatusAsync(
@@ -587,6 +597,71 @@ public sealed class IterationPlanningServiceTests
     }
 
     [Fact]
+    public async Task AddToUpNextAsync_ItemNotOnBoard_ReturnsViewWithUpdatedQueueAndCapacity()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var labels = new[] { PlanningFocusOrderSequencer.StoryTypeLabel, "priority/medium" };
+        var initialCatalogue = CreateCatalogue(existingItem: null);
+        var refreshedCatalogue = CreateCatalogue(CreateBoardItem("PVTI_new", "Up Next", 3, 50));
+        _projectItemCatalogueService
+            .GetCatalogueAsync("project-id", cancellationToken)
+            .Returns(initialCatalogue, refreshedCatalogue, refreshedCatalogue);
+        _gitHubService
+            .AddTriageItemToProjectBoardAsync("owner", "repo", 50, "project-id", cancellationToken)
+            .Returns("PVTI_new");
+
+        var sut = CreateSut();
+
+        var result = await sut.AddToUpNextAsync(
+            "project-id",
+            PlanningWorkItemTypeDto.Issue,
+            "owner/repo",
+            50,
+            labels,
+            3,
+            8,
+            cancellationToken);
+
+        Assert.Equal(["Title 40", "Title 41", "Title 50"], result.View.UpNextItems.Select(item => item.Title).ToArray());
+        Assert.Equal(3, result.View.UpNextItems[^1].FocusOrder);
+        Assert.Empty(result.View.Candidates);
+        Assert.Equal(3, result.View.ActiveLoad);
+        Assert.Equal(4, result.View.NextStoryFocusOrder);
+        Assert.False(result.View.IsAtOrOverCapacity);
+    }
+
+    [Fact]
+    public async Task RemoveStalledUpNextItemAsync_ValidItem_ReturnsViewWithoutRemovedItem()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var initialCatalogue = CreateCatalogue(existingItem: null);
+        var remainingCatalogue = CreateCatalogueWithItems(CreateBoardItem("PVTI_two", "Up Next", 2, 41));
+        _projectItemCatalogueService
+            .GetCatalogueAsync("project-id", cancellationToken)
+            .Returns(initialCatalogue, remainingCatalogue);
+
+        var sut = CreateSut();
+        var item = new IterationPlanningStalledItemDto(
+            "PVTI_one",
+            PlanningWorkItemTypeDto.Issue,
+            40,
+            "Remove me",
+            "https://github.com/owner/repo/issues/40",
+            "owner/repo",
+            5,
+            false,
+            ["type/story"]);
+
+        var view = await sut.RemoveStalledUpNextItemAsync("project-id", item, 8, 3, cancellationToken);
+
+        var remaining = Assert.Single(view.UpNextItems);
+        Assert.Equal("PVTI_two", remaining.ProjectItemId);
+        Assert.Equal(1, view.ActiveLoad);
+        Assert.False(view.IsAtOrOverCapacity);
+        Assert.Empty(view.StalledUpNextItems);
+    }
+
+    [Fact]
     public async Task GetPlanningViewAsync_ForceReload_InvalidatesProjectBoardCatalogue()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
@@ -605,8 +680,14 @@ public sealed class IterationPlanningServiceTests
         _projectItemCatalogueService.Received(1).InvalidateCatalogue("project-id");
     }
 
-    private IterationPlanningService CreateSut() =>
-        new(_workItemCatalogueService, _projectItemCatalogueService, _gitHubService, _milestoneRepository, TimeProvider.System);
+    private IterationPlanningService CreateSut()
+    {
+        _workItemCatalogueService
+            .GetCatalogueAsync(Arg.Any<CancellationToken>())
+            .Returns(new PlanningWorkItemCatalogueResultDto([], [], []));
+
+        return new(_workItemCatalogueService, _projectItemCatalogueService, _gitHubService, _milestoneRepository, TimeProvider.System);
+    }
 
     private static ProjectBoardItemCatalogueDto CreateCatalogue(
         ProjectBoardItemDto? existingItem,
@@ -643,6 +724,12 @@ public sealed class IterationPlanningServiceTests
             statusOptions,
             items);
     }
+
+    private static ProjectBoardItemCatalogueDto CreateCatalogueWithItems(params ProjectBoardItemDto[] items) =>
+        CreateCatalogue(existingItem: null, includeUpNextOption: true, includeFocusOrderField: true) with
+        {
+            Items = items,
+        };
 
     private static ProjectBoardItemDto CreateBoardItem(
         string projectItemId,
