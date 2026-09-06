@@ -42,6 +42,7 @@ Agents must treat those comments as first-class workflow invocations, not as vag
 | refresh the docs; update the user guide for this; update the decision log | `docs-update` |
 | run daily start; what's next from the board | `daily-start` |
 | run a progress review | `pm-progress-review` |
+| run a technical debt review; monthly debt deep dive | `technical-debt-review` |
 | clean up status labels | `sync-status-labels` |
 
 Bare "implement this issue" on a GitHub Issue is **`deliver-issue`**, not the split `implement-issue` path. A Cloud Agent started from GitHub is expected to open a pull request unless the comment says otherwise.
@@ -60,6 +61,7 @@ Bare "implement this issue" on a GitHub Issue is **`deliver-issue`**, not the sp
 - **"Review this issue"** is not code review and not verify. Ask which workflow, or treat as read-only clarification, unless the comment also says "code review" or "conventions".
 - **"Review this PR"** without "code review" or "conventions" is still `code-review` when the comment is on a pull request.
 - **"Verify"** means quality gates and PR creation (`verify-and-create-pr`). It does not mean code review.
+- **"Technical debt review"** is a read-only candidate list (`technical-debt-review`). It does not mean implement chores or open issues until the user picks items.
 - Slash commands and Copilot prompts in chat keep the split: `/implement-issue` does not open a PR; `/deliver-issue` does.
 
 ## Routing
@@ -74,6 +76,7 @@ Bare "implement this issue" on a GitHub Issue is **`deliver-issue`**, not the sp
 | Validate implementation and open PR | "Verify issue #N", "Create PR for issue #N", `/verify-and-create-pr` | `verify-and-create-pr` | `verify` |
 | Address PR review comments | "Address PR review comments on PR #N", `/address-pr-review-comments` | `address-pr-review-comments` | `delivery` |
 | Progress review since last update | "Run the PM progress review", `/pm-progress-review` | `pm-progress-review` | `pm-orchestrator` |
+| Technical debt candidates (read-only) | "Run a technical debt review", `/technical-debt-review` | `technical-debt-review` | — |
 | Status label hygiene | "Clean up status labels", `/sync-status-labels` | `sync-status-labels` | `repo-github-gh-cli` |
 | Audit code against conventions | "Code review PR #N", "Review PR #N for conventions", `/code-review` | `code-review` | `code-review` |
 | Refresh documentation | "Refresh documentation for X", `/docs-update` | `docs-update` | `tech-writer` |
@@ -92,6 +95,7 @@ Bare "implement this issue" on a GitHub Issue is **`deliver-issue`**, not the sp
 | [verify-and-create-pr](verify-and-create-pr.md) | "Verify issue #N", "Create PR for issue #N" | `verify` | — | Stage 3: Verify and PR |
 | [address-pr-review-comments](address-pr-review-comments.md) | "Address PR review comments on PR #N" | `delivery` | `aspire` (when AppHost is running) | PR Review Comment Loop |
 | [pm-progress-review](pm-progress-review.md) | "Run the PM progress review" | `pm-orchestrator` | — | Progress Review Rhythm |
+| [technical-debt-review](technical-debt-review.md) | "Run a technical debt review" | — | — | Technical Debt Review |
 | [sync-status-labels](sync-status-labels.md) | "Clean up status labels", `/sync-status-labels` | `repo-github-gh-cli` | — | Board Hygiene Audit |
 | [code-review](code-review.md) | "Code review PR #N" | `code-review` | — | Stage 3b: Independent code review |
 | [docs-update](docs-update.md) | "Refresh documentation for X" | `tech-writer` | `documentation-writer` | — |
