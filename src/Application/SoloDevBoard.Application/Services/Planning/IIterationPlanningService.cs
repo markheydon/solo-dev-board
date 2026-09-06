@@ -31,8 +31,9 @@ public interface IIterationPlanningService
     /// <param name="number">The repository-scoped item number.</param>
     /// <param name="labels">Label names on the work item, used to decide Focus Order assignment.</param>
     /// <param name="stallDays">The inclusive stall threshold in days from PM settings.</param>
+    /// <param name="capacity">The persisted planning capacity from PM settings.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
-    /// <returns>The add outcome, including any Focus Order assigned.</returns>
+    /// <returns>The add outcome, including any Focus Order assigned and the refreshed planning view.</returns>
     Task<IterationPlanningAddToUpNextResultDto> AddToUpNextAsync(
         string projectId,
         PlanningWorkItemTypeDto itemType,
@@ -40,6 +41,7 @@ public interface IIterationPlanningService
         int number,
         IReadOnlyList<string> labels,
         int stallDays,
+        int capacity,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -47,11 +49,15 @@ public interface IIterationPlanningService
     /// </summary>
     /// <param name="projectId">The GitHub Project v2 node identifier.</param>
     /// <param name="projectItemId">The project-item node identifier.</param>
+    /// <param name="capacity">The persisted planning capacity from PM settings.</param>
+    /// <param name="stallDays">The inclusive stall threshold in days from PM settings.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
-    /// <returns>A task that represents the asynchronous update operation.</returns>
-    Task ReCommitStalledUpNextItemAsync(
+    /// <returns>The refreshed planning view after the stall clock is restarted.</returns>
+    Task<IterationPlanningViewDto> ReCommitStalledUpNextItemAsync(
         string projectId,
         string projectItemId,
+        int capacity,
+        int stallDays,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -59,11 +65,15 @@ public interface IIterationPlanningService
     /// </summary>
     /// <param name="projectId">The GitHub Project v2 node identifier.</param>
     /// <param name="item">The stalled Up Next item to update.</param>
+    /// <param name="capacity">The persisted planning capacity from PM settings.</param>
+    /// <param name="stallDays">The inclusive stall threshold in days from PM settings.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
-    /// <returns>A task that represents the asynchronous update operation.</returns>
-    Task MarkStalledUpNextItemBlockedAsync(
+    /// <returns>The refreshed planning view after the item is marked blocked.</returns>
+    Task<IterationPlanningViewDto> MarkStalledUpNextItemBlockedAsync(
         string projectId,
         IterationPlanningStalledItemDto item,
+        int capacity,
+        int stallDays,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -71,11 +81,15 @@ public interface IIterationPlanningService
     /// </summary>
     /// <param name="projectId">The GitHub Project v2 node identifier.</param>
     /// <param name="item">The stalled Up Next item to update.</param>
+    /// <param name="capacity">The persisted planning capacity from PM settings.</param>
+    /// <param name="stallDays">The inclusive stall threshold in days from PM settings.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
-    /// <returns>A task that represents the asynchronous update operation.</returns>
-    Task MoveStalledUpNextItemToIceBoxAsync(
+    /// <returns>The refreshed planning view after the item is moved to Ice Box.</returns>
+    Task<IterationPlanningViewDto> MoveStalledUpNextItemToIceBoxAsync(
         string projectId,
         IterationPlanningStalledItemDto item,
+        int capacity,
+        int stallDays,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -83,11 +97,15 @@ public interface IIterationPlanningService
     /// </summary>
     /// <param name="projectId">The GitHub Project v2 node identifier.</param>
     /// <param name="item">The stalled Up Next item to remove from the batch.</param>
+    /// <param name="capacity">The persisted planning capacity from PM settings.</param>
+    /// <param name="stallDays">The inclusive stall threshold in days from PM settings.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
-    /// <returns>A task that represents the asynchronous update operation.</returns>
-    Task RemoveStalledUpNextItemAsync(
+    /// <returns>The refreshed planning view after the item is removed from Up Next.</returns>
+    Task<IterationPlanningViewDto> RemoveStalledUpNextItemAsync(
         string projectId,
         IterationPlanningStalledItemDto item,
+        int capacity,
+        int stallDays,
         CancellationToken cancellationToken = default);
 
     /// <summary>

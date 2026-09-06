@@ -5,8 +5,10 @@ namespace SoloDevBoard.Application.Services.Planning;
 /// <param name="ProjectItemId">The project-item node identifier for the Up Next card.</param>
 /// <param name="FocusOrderAssigned">The Focus Order written for story, enabler, and test cards; otherwise, <see langword="null" />.</param>
 /// <param name="FocusOrderSkipped">Whether Focus Order was intentionally skipped for the item type.</param>
+/// <param name="View">The refreshed Iteration Planning snapshot after the mutation.</param>
 public sealed record IterationPlanningAddToUpNextResultDto(
     bool AddedBoardCard,
     string ProjectItemId,
     double? FocusOrderAssigned,
-    bool FocusOrderSkipped);
+    bool FocusOrderSkipped,
+    IterationPlanningViewDto View);

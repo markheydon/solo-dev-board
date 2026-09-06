@@ -304,15 +304,16 @@ public partial class PlanningIterationPanel : ComponentBase, IDisposable
                     candidate.Number,
                     candidate.Labels,
                     ChromeState.Settings.StallDays,
+                    ChromeState.Settings.Capacity,
                     cancellationToken)
                 .ConfigureAwait(false);
 
             Snackbar.Add(
-                FormatAddToUpNextMessage(candidate, result, planningView?.HasFocusOrderField ?? true),
+                FormatAddToUpNextMessage(candidate, result, result.View.HasFocusOrderField),
                 Severity.Success,
                 configure: config => config.VisibleStateDuration = 5000);
 
-            ApplyAddToUpNextLocally(candidate, result);
+            BindUpdatedPlanningView(boardId, result.View);
             ChromeState.MarkDataChanged();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -365,33 +366,49 @@ public partial class PlanningIterationPanel : ComponentBase, IDisposable
     private Task ReCommitStalledItemAsync(IterationPlanningStalledItemDto item) =>
         ResolveStalledItemAsync(
             item,
-            StalledItemResolutionOutcome.RemainsInUpNext,
-            (projectId, cancellationToken) =>
-                PlanningService.ReCommitStalledUpNextItemAsync(projectId, item.ProjectItemId, cancellationToken),
+            (projectId, capacity, stallDays, cancellationToken) =>
+                PlanningService.ReCommitStalledUpNextItemAsync(
+                    projectId,
+                    item.ProjectItemId,
+                    capacity,
+                    stallDays,
+                    cancellationToken),
             $"Re-committed {FormatItemReference(item.RepositoryFullName, item.Number)} to Up Next.");
 
     private Task MarkStalledItemBlockedAsync(IterationPlanningStalledItemDto item) =>
         ResolveStalledItemAsync(
             item,
-            StalledItemResolutionOutcome.LeavesUpNext,
-            (projectId, cancellationToken) =>
-                PlanningService.MarkStalledUpNextItemBlockedAsync(projectId, item, cancellationToken),
+            (projectId, capacity, stallDays, cancellationToken) =>
+                PlanningService.MarkStalledUpNextItemBlockedAsync(
+                    projectId,
+                    item,
+                    capacity,
+                    stallDays,
+                    cancellationToken),
             $"Marked {FormatItemReference(item.RepositoryFullName, item.Number)} as blocked.");
 
     private Task MoveStalledItemToIceBoxAsync(IterationPlanningStalledItemDto item) =>
         ResolveStalledItemAsync(
             item,
-            StalledItemResolutionOutcome.LeavesUpNext,
-            (projectId, cancellationToken) =>
-                PlanningService.MoveStalledUpNextItemToIceBoxAsync(projectId, item, cancellationToken),
+            (projectId, capacity, stallDays, cancellationToken) =>
+                PlanningService.MoveStalledUpNextItemToIceBoxAsync(
+                    projectId,
+                    item,
+                    capacity,
+                    stallDays,
+                    cancellationToken),
             $"Moved {FormatItemReference(item.RepositoryFullName, item.Number)} to Ice Box.");
 
     private Task RemoveStalledItemAsync(IterationPlanningStalledItemDto item) =>
         ResolveStalledItemAsync(
             item,
-            StalledItemResolutionOutcome.LeavesUpNext,
-            (projectId, cancellationToken) =>
-                PlanningService.RemoveStalledUpNextItemAsync(projectId, item, cancellationToken),
+            (projectId, capacity, stallDays, cancellationToken) =>
+                PlanningService.RemoveStalledUpNextItemAsync(
+                    projectId,
+                    item,
+                    capacity,
+                    stallDays,
+                    cancellationToken),
             $"Removed {FormatItemReference(item.RepositoryFullName, item.Number)} from Up Next.");
 
     private Task RefreshPlanningViewAsync()
@@ -407,8 +424,7 @@ public partial class PlanningIterationPanel : ComponentBase, IDisposable
 
     private async Task ResolveStalledItemAsync(
         IterationPlanningStalledItemDto item,
-        StalledItemResolutionOutcome resolutionOutcome,
-        Func<string, CancellationToken, Task> action,
+        Func<string, int, int, CancellationToken, Task<IterationPlanningViewDto>> action,
         string successMessage)
     {
         if (ChromeState is null || !ChromeState.HasPlanningBoardSelected || IsResolvingStalledItem(item))
@@ -427,10 +443,15 @@ public partial class PlanningIterationPanel : ComponentBase, IDisposable
 
         try
         {
-            await action(boardId, cancellationToken).ConfigureAwait(false);
+            var view = await action(
+                    boardId,
+                    ChromeState.Settings.Capacity,
+                    ChromeState.Settings.StallDays,
+                    cancellationToken)
+                .ConfigureAwait(false);
 
             Snackbar.Add(successMessage, Severity.Success, configure: config => config.VisibleStateDuration = 5000);
-            ApplyStalledItemResolvedLocally(item, resolutionOutcome);
+            BindUpdatedPlanningView(boardId, view);
             ChromeState.MarkDataChanged();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -482,95 +503,26 @@ public partial class PlanningIterationPanel : ComponentBase, IDisposable
         await LoadPlanningViewAsync(boardId, forceReload: true).ConfigureAwait(false);
     }
 
-    private void ApplyStalledItemResolvedLocally(
-        IterationPlanningStalledItemDto item,
-        StalledItemResolutionOutcome resolutionOutcome)
+    /// <summary>
+    /// Binds a mutation result from <see cref="IIterationPlanningService"/> without recomputing queue or capacity locally.
+    /// </summary>
+    /// <param name="boardId">The selected planning board node identifier.</param>
+    /// <param name="view">The refreshed planning view snapshot.</param>
+    private void BindUpdatedPlanningView(string boardId, IterationPlanningViewDto view)
     {
-        if (planningView is null || ChromeState?.Settings.PlanningBoardNodeId is not { } boardId)
-        {
-            return;
-        }
+        ArgumentException.ThrowIfNullOrWhiteSpace(boardId);
+        ArgumentNullException.ThrowIfNull(view);
 
-        var stalledItems = planningView.StalledUpNextItems
-            .Where(stalledItem => !stalledItem.ProjectItemId.Equals(item.ProjectItemId, StringComparison.Ordinal))
-            .ToArray();
-
-        var upNextItems = resolutionOutcome == StalledItemResolutionOutcome.RemainsInUpNext
-            ? planningView.UpNextItems
-            : planningView.UpNextItems
-                .Where(upNextItem => !upNextItem.ProjectItemId.Equals(item.ProjectItemId, StringComparison.Ordinal))
-                .ToArray();
-
-        var activeLoad = resolutionOutcome == StalledItemResolutionOutcome.RemainsInUpNext
-            ? planningView.ActiveLoad
-            : Math.Max(0, planningView.ActiveLoad - 1);
-
-        planningView = planningView with
-        {
-            StalledUpNextItems = stalledItems,
-            UpNextItems = upNextItems,
-            ActiveLoad = activeLoad,
-            IsAtOrOverCapacity = activeLoad >= planningView.Capacity,
-        };
-
-        selectedUpNextItemIds.Remove(item.ProjectItemId);
+        planningView = view;
+        selectedUpNextItemIds.RemoveWhere(id =>
+            view.UpNextItems.All(item => !item.ProjectItemId.Equals(id, StringComparison.Ordinal)));
         if (SelectedUpNextItems.Count == 0)
         {
             selectedMilestoneTitle = null;
             milestoneOptions = [];
         }
 
-        ChromeCoordinator.SetIterationPlanning(boardId, planningView, null, isLoading: false);
-        InvalidateDependentPlanningCaches();
-    }
-
-    private void ApplyAddToUpNextLocally(
-        IterationPlanningCandidateDto candidate,
-        IterationPlanningAddToUpNextResultDto result)
-    {
-        if (planningView is null || ChromeState?.Settings.PlanningBoardNodeId is not { } boardId)
-        {
-            return;
-        }
-
-        var candidateKey = BuildCandidateKey(candidate);
-        var newUpNextItem = new IterationPlanningUpNextItemDto(
-            result.ProjectItemId,
-            candidate.ItemType,
-            candidate.Number,
-            candidate.Title,
-            candidate.HtmlUrl,
-            candidate.RepositoryFullName,
-            result.FocusOrderAssigned,
-            candidate.Labels);
-
-        var upNextItems = planningView.UpNextItems
-            .Append(newUpNextItem)
-            .OrderBy(static item => item.FocusOrder ?? double.MaxValue)
-            .ThenBy(static item => item.Title, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-
-        var candidates = planningView.Candidates
-            .Where(item => !BuildCandidateKey(item).Equals(candidateKey, StringComparison.OrdinalIgnoreCase))
-            .ToArray();
-
-        var activeLoad = planningView.ActiveLoad + 1;
-        var nextStoryFocusOrder = planningView.NextStoryFocusOrder;
-        if (planningView.HasFocusOrderField && result.FocusOrderAssigned.HasValue)
-        {
-            nextStoryFocusOrder = result.FocusOrderAssigned.Value + 1;
-        }
-
-        planningView = planningView with
-        {
-            UpNextItems = upNextItems,
-            Candidates = candidates,
-            ActiveLoad = activeLoad,
-            IsAtOrOverCapacity = activeLoad >= planningView.Capacity,
-            NextStoryFocusOrder = nextStoryFocusOrder,
-        };
-
-        ChromeCoordinator.SetIterationPlanning(boardId, planningView, null, isLoading: false);
+        ChromeCoordinator.SetIterationPlanning(boardId, view, null, isLoading: false);
         InvalidateDependentPlanningCaches();
     }
 
@@ -579,12 +531,6 @@ public partial class PlanningIterationPanel : ComponentBase, IDisposable
         ChromeCoordinator.ClearDailyFocusBoardState();
         ChromeCoordinator.ClearDailyFocusRecommendations();
         ChromeCoordinator.ClearBacklogReview();
-    }
-
-    private enum StalledItemResolutionOutcome
-    {
-        RemainsInUpNext,
-        LeavesUpNext,
     }
 
     private static string BuildCandidateKey(IterationPlanningCandidateDto candidate) =>

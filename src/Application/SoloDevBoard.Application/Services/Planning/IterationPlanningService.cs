@@ -1,4 +1,5 @@
 using SoloDevBoard.Application.Services.GitHub;
+using SoloDevBoard.Application.Services.Migration;
 using SoloDevBoard.Domain.Entities.Milestones;
 
 namespace SoloDevBoard.Application.Services.Planning;
@@ -9,27 +10,32 @@ public sealed class IterationPlanningService : IIterationPlanningService
     private readonly IPlanningWorkItemCatalogueService _workItemCatalogueService;
     private readonly IProjectItemCatalogueService _projectItemCatalogueService;
     private readonly IGitHubService _gitHubService;
+    private readonly IMilestoneRepository _milestoneRepository;
     private readonly TimeProvider _timeProvider;
 
     /// <summary>Initialises a new instance of the <see cref="IterationPlanningService"/> class.</summary>
     /// <param name="workItemCatalogueService">The cross-repository work-item catalogue.</param>
     /// <param name="projectItemCatalogueService">The project board item catalogue.</param>
     /// <param name="gitHubService">The GitHub service used to add items and update board fields.</param>
+    /// <param name="milestoneRepository">The repository used to read repository milestones.</param>
     /// <param name="timeProvider">The time provider used to compute stall age.</param>
     public IterationPlanningService(
         IPlanningWorkItemCatalogueService workItemCatalogueService,
         IProjectItemCatalogueService projectItemCatalogueService,
         IGitHubService gitHubService,
+        IMilestoneRepository milestoneRepository,
         TimeProvider timeProvider)
     {
         ArgumentNullException.ThrowIfNull(workItemCatalogueService);
         ArgumentNullException.ThrowIfNull(projectItemCatalogueService);
         ArgumentNullException.ThrowIfNull(gitHubService);
+        ArgumentNullException.ThrowIfNull(milestoneRepository);
         ArgumentNullException.ThrowIfNull(timeProvider);
 
         _workItemCatalogueService = workItemCatalogueService;
         _projectItemCatalogueService = projectItemCatalogueService;
         _gitHubService = gitHubService;
+        _milestoneRepository = milestoneRepository;
         _timeProvider = timeProvider;
     }
 
@@ -81,6 +87,7 @@ public sealed class IterationPlanningService : IIterationPlanningService
         int number,
         IReadOnlyList<string> labels,
         int stallDays,
+        int capacity,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -163,17 +170,23 @@ public sealed class IterationPlanningService : IIterationPlanningService
                 .ConfigureAwait(false);
         }
 
+        var view = await GetUpdatedPlanningViewAsync(projectId, capacity, stallDays, cancellationToken)
+            .ConfigureAwait(false);
+
         return new IterationPlanningAddToUpNextResultDto(
             addedBoardCard,
             projectItemId,
             focusOrderAssigned,
-            focusOrderSkipped);
+            focusOrderSkipped,
+            view);
     }
 
     /// <inheritdoc/>
-    public async Task ReCommitStalledUpNextItemAsync(
+    public async Task<IterationPlanningViewDto> ReCommitStalledUpNextItemAsync(
         string projectId,
         string projectItemId,
+        int capacity,
+        int stallDays,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -238,12 +251,17 @@ public sealed class IterationPlanningService : IIterationPlanningService
         }
 
         _projectItemCatalogueService.InvalidateCatalogue(projectId);
+
+        return await GetUpdatedPlanningViewAsync(projectId, capacity, stallDays, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public async Task MarkStalledUpNextItemBlockedAsync(
+    public async Task<IterationPlanningViewDto> MarkStalledUpNextItemBlockedAsync(
         string projectId,
         IterationPlanningStalledItemDto item,
+        int capacity,
+        int stallDays,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -270,12 +288,17 @@ public sealed class IterationPlanningService : IIterationPlanningService
             cancellationToken).ConfigureAwait(false);
 
         _projectItemCatalogueService.InvalidateCatalogue(projectId);
+
+        return await GetUpdatedPlanningViewAsync(projectId, capacity, stallDays, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public async Task MoveStalledUpNextItemToIceBoxAsync(
+    public async Task<IterationPlanningViewDto> MoveStalledUpNextItemToIceBoxAsync(
         string projectId,
         IterationPlanningStalledItemDto item,
+        int capacity,
+        int stallDays,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -305,12 +328,17 @@ public sealed class IterationPlanningService : IIterationPlanningService
             cancellationToken).ConfigureAwait(false);
 
         _projectItemCatalogueService.InvalidateCatalogue(projectId);
+
+        return await GetUpdatedPlanningViewAsync(projectId, capacity, stallDays, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public async Task RemoveStalledUpNextItemAsync(
+    public async Task<IterationPlanningViewDto> RemoveStalledUpNextItemAsync(
         string projectId,
         IterationPlanningStalledItemDto item,
+        int capacity,
+        int stallDays,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -334,7 +362,25 @@ public sealed class IterationPlanningService : IIterationPlanningService
             .ConfigureAwait(false);
 
         _projectItemCatalogueService.InvalidateCatalogue(projectId);
+
+        return await GetUpdatedPlanningViewAsync(projectId, capacity, stallDays, cancellationToken)
+            .ConfigureAwait(false);
     }
+
+    /// <summary>
+    /// Reloads the planning view after a mutation, using the already-invalidated project catalogue.
+    /// </summary>
+    /// <param name="projectId">The GitHub Project v2 node identifier.</param>
+    /// <param name="capacity">The persisted planning capacity from PM settings.</param>
+    /// <param name="stallDays">The inclusive stall threshold in days from PM settings.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>The refreshed planning view snapshot.</returns>
+    private Task<IterationPlanningViewDto> GetUpdatedPlanningViewAsync(
+        string projectId,
+        int capacity,
+        int stallDays,
+        CancellationToken cancellationToken) =>
+        GetPlanningViewAsync(projectId, capacity, stallDays, forceReload: false, cancellationToken);
 
     /// <inheritdoc/>
     public async Task<IReadOnlyList<IterationPlanningMilestoneOptionDto>> GetBulkMilestoneOptionsAsync(
@@ -439,7 +485,7 @@ public sealed class IterationPlanningService : IIterationPlanningService
                     nameof(selectedItems));
             }
 
-            var milestones = await _gitHubService
+            var milestones = await _milestoneRepository
                 .GetMilestonesAsync(owner, repo, cancellationToken)
                 .ConfigureAwait(false);
             milestonesByRepository[repositoryFullName] = milestones;
