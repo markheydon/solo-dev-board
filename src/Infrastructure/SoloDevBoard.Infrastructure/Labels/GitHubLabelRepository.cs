@@ -145,7 +145,7 @@ public sealed class GitHubLabelRepository : ILabelRepository
         {
             Name = Name,
             Colour = Colour,
-            Description = Description ?? string.Empty,
+            Description = GitHubService.RepairCommonMojibake(Description),
             RepositoryName = repoName,
         };
     }
