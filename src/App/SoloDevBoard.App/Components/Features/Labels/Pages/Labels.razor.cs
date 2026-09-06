@@ -4,8 +4,8 @@ using SoloDevBoard.App.Authentication;
 using SoloDevBoard.App.Components.Features.Labels.Components;
 using SoloDevBoard.App.Components.Features.Labels.Dialogs;
 using SoloDevBoard.App.Feedback;
-using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.GitHub;
+using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Repositories;
 
