@@ -60,6 +60,7 @@ Reusable workflows for PM operations (canonical definitions in `.agents/workflow
 - `verify-and-create-pr`: Quality gates (clean rebuild, package hygiene) → PR creation → issue closure
 - `address-pr-review-comments`: PR review feedback (any reviewer) → implement → thread replies → resolved conversations
 - `pm-progress-review`: Milestone health since last review → velocity trends → release confidence → top 3 next-session priorities
+- `technical-debt-review`: On-demand (typically monthly) read-only codebase deep dive → candidate debt list for human review (no auto-filed issues)
 - `code-review`: PR and branch review against repository conventions (GitHub review with resolvable threads)
 - `docs-update`: Documentation refresh and decision log updates
 

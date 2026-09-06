@@ -19,6 +19,7 @@ This runbook orchestrates [`.agents/contracts/`](../.agents/contracts/) and [`.a
 | Code review (independent session)        | "Code review PR #N" or `/code-review`                      | GitHub review with resolvable threads         |
 | Address PR review comments               | "Address PR review comments on PR #N" or `/address-pr-review-comments` | PR fixes + thread replies + resolved comments |
 | Progress review (since last update)      | "Run the PM progress review" or `/pm-progress-review`        | Executive summary + next-session priorities   |
+| Technical debt candidates (typically monthly) | "Run a technical debt review" or `/technical-debt-review` | Ranked candidate list; you pick what to log as chores |
 | End-to-end feature delivery              | `.agents/skills/repo-pm-feature-workflow/SKILL.md`         | Full workflow from backlog to closure         |
 | Start a Cloud Agent from GitHub          | Comment `@cursor implement this issue` (or another phrase in [workflow README](../.agents/workflows/README.md#github-comment-invocation)) | Same as the matching workflow; `N` is the thread |
 
@@ -384,6 +385,33 @@ Run the PM progress review
 
 ---
 
+## Technical Debt Review
+
+### On-demand deep dive (typically monthly)
+
+**Goal:** Find clustered gaps against written standards so you can decide which ones are worth `type/chore` issues. This is a review, not a daily hunt and not an automatic cleanup.
+
+#### Run Technical Debt Review
+```
+Run a technical debt review
+```
+
+**What it does:**
+- Scans the codebase against `AGENTS.md`, the decision log, UI and test conventions, and docs/test alignment.
+- Deduplicates against open chores, accepted DECs, and previous files in `plan/debt-reviews/`.
+- Writes a ranked candidate list to `plan/debt-reviews/YYYY-MM-DD.md`.
+- Stops. It does not file issues, change code, or open a pull request unless you name items afterwards.
+
+**What you produce:**
+- A human decision on each High/Medium candidate: log as a chore, defer, or ignore.
+- Optional GitHub issues from the Chore template, created only for the items you pick.
+
+**Do not use this for:**
+- Critical correctness bugs (use the daily bug hunt or a `type/bug` issue).
+- Unscoped “clean up the codebase” implementation in the same session.
+
+---
+
 ## Workflow Decision Tree
 
 Use this decision tree when you're unsure what to do next:
@@ -416,6 +444,9 @@ START
   │
   ├─ Time for a progress review?
   │   └─> Run PM progress review → Review and plan next session(s)
+  │
+  ├─ Time for a technical debt review (typically monthly)?
+  │   └─> `/technical-debt-review` → You pick which candidates become chores
   │
   ├─ Stuck / Blocked / Unsure?
   │   └─> Run daily start workflow → Get recommendation
@@ -501,6 +532,7 @@ Canonical workflow definitions live in [`.agents/workflows/`](../.agents/workflo
 | Verify and create PR | [`verify-and-create-pr.md`](../.agents/workflows/verify-and-create-pr.md) | `/verify-and-create-pr` |
 | Address PR review comments | [`address-pr-review-comments.md`](../.agents/workflows/address-pr-review-comments.md) | `/address-pr-review-comments` |
 | PM progress review | [`pm-progress-review.md`](../.agents/workflows/pm-progress-review.md) | `/pm-progress-review` |
+| Technical debt review | [`technical-debt-review.md`](../.agents/workflows/technical-debt-review.md) | `/technical-debt-review` |
 | Code review | [`code-review.md`](../.agents/workflows/code-review.md) | `/code-review` |
 | Docs update | [`docs-update.md`](../.agents/workflows/docs-update.md) | `/docs-update` |
 
