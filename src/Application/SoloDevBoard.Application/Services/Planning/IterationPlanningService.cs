@@ -1,4 +1,5 @@
 using SoloDevBoard.Application.Services.GitHub;
+using SoloDevBoard.Application.Services.Migration;
 using SoloDevBoard.Domain.Entities.Milestones;
 
 namespace SoloDevBoard.Application.Services.Planning;
@@ -9,27 +10,32 @@ public sealed class IterationPlanningService : IIterationPlanningService
     private readonly IPlanningWorkItemCatalogueService _workItemCatalogueService;
     private readonly IProjectItemCatalogueService _projectItemCatalogueService;
     private readonly IGitHubService _gitHubService;
+    private readonly IMilestoneRepository _milestoneRepository;
     private readonly TimeProvider _timeProvider;
 
     /// <summary>Initialises a new instance of the <see cref="IterationPlanningService"/> class.</summary>
     /// <param name="workItemCatalogueService">The cross-repository work-item catalogue.</param>
     /// <param name="projectItemCatalogueService">The project board item catalogue.</param>
     /// <param name="gitHubService">The GitHub service used to add items and update board fields.</param>
+    /// <param name="milestoneRepository">The repository used to read repository milestones.</param>
     /// <param name="timeProvider">The time provider used to compute stall age.</param>
     public IterationPlanningService(
         IPlanningWorkItemCatalogueService workItemCatalogueService,
         IProjectItemCatalogueService projectItemCatalogueService,
         IGitHubService gitHubService,
+        IMilestoneRepository milestoneRepository,
         TimeProvider timeProvider)
     {
         ArgumentNullException.ThrowIfNull(workItemCatalogueService);
         ArgumentNullException.ThrowIfNull(projectItemCatalogueService);
         ArgumentNullException.ThrowIfNull(gitHubService);
+        ArgumentNullException.ThrowIfNull(milestoneRepository);
         ArgumentNullException.ThrowIfNull(timeProvider);
 
         _workItemCatalogueService = workItemCatalogueService;
         _projectItemCatalogueService = projectItemCatalogueService;
         _gitHubService = gitHubService;
+        _milestoneRepository = milestoneRepository;
         _timeProvider = timeProvider;
     }
 
@@ -439,7 +445,7 @@ public sealed class IterationPlanningService : IIterationPlanningService
                     nameof(selectedItems));
             }
 
-            var milestones = await _gitHubService
+            var milestones = await _milestoneRepository
                 .GetMilestonesAsync(owner, repo, cancellationToken)
                 .ConfigureAwait(false);
             milestonesByRepository[repositoryFullName] = milestones;
