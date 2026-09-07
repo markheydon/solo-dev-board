@@ -1,4 +1,5 @@
 using SoloDevBoard.Application.GitHub;
+using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Domain.Entities.Labels;
 
 namespace SoloDevBoard.Application.Services.Labels;
@@ -6,14 +7,20 @@ namespace SoloDevBoard.Application.Services.Labels;
 /// <summary>Default implementation of <see cref="ILabelManagerService"/>.</summary>
 public sealed class LabelService : ILabelManagerService
 {
+    private const string DefaultNewLabelColour = "ededed";
+
     private readonly ILabelRepository _labelRepository;
+    private readonly IGitHubService _gitHubService;
 
     /// <summary>Initialises a new instance of the <see cref="LabelService"/> class.</summary>
     /// <param name="labelRepository">The repository used to manage labels in GitHub repositories.</param>
-    public LabelService(ILabelRepository labelRepository)
+    /// <param name="gitHubService">The GitHub service used to add and remove labels on issues and pull requests.</param>
+    public LabelService(ILabelRepository labelRepository, IGitHubService gitHubService)
     {
         ArgumentNullException.ThrowIfNull(labelRepository);
+        ArgumentNullException.ThrowIfNull(gitHubService);
         _labelRepository = labelRepository;
+        _gitHubService = gitHubService;
     }
 
     /// <inheritdoc/>
@@ -187,6 +194,92 @@ public sealed class LabelService : ILabelManagerService
         }
 
         return new LabelBulkDeleteResultDto(deletedCount, skippedCount, errors);
+    }
+
+    /// <inheritdoc/>
+    public async Task<LabelRemapResultDto> RemapLabelAsync(string owner, string repo, string sourceLabelName, string destinationLabelName, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourceLabelName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(destinationLabelName);
+
+        var sourceName = sourceLabelName.Trim();
+        var destinationName = destinationLabelName.Trim();
+
+        if (string.Equals(sourceName, destinationName, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException("Source and destination labels must be different names.", nameof(destinationLabelName));
+        }
+
+        var labels = await _labelRepository.GetLabelsAsync(owner, repo, cancellationToken, forceReload: true).ConfigureAwait(false);
+        var source = labels.FirstOrDefault(label => string.Equals(label.Name, sourceName, StringComparison.OrdinalIgnoreCase))
+            ?? throw new KeyNotFoundException($"Source label '{sourceName}' was not found in '{owner}/{repo}'.");
+
+        var destination = labels.FirstOrDefault(label => string.Equals(label.Name, destinationName, StringComparison.OrdinalIgnoreCase));
+        var destinationCreated = false;
+
+        if (destination is null)
+        {
+            destination = await _labelRepository
+                .CreateLabelAsync(
+                    owner,
+                    repo,
+                    new Label
+                    {
+                        Name = destinationName,
+                        Colour = string.IsNullOrWhiteSpace(source.Colour) ? DefaultNewLabelColour : source.Colour,
+                        Description = source.Description,
+                        RepositoryName = repo,
+                    },
+                    cancellationToken)
+                .ConfigureAwait(false);
+            destinationCreated = true;
+        }
+
+        var workItems = await _labelRepository
+            .GetWorkItemsWithLabelAsync(owner, repo, source.Name, cancellationToken)
+            .ConfigureAwait(false);
+
+        var succeededItemCount = 0;
+        var errors = new List<LabelRemapItemErrorDto>();
+
+        foreach (var workItem in workItems)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            try
+            {
+                await _gitHubService
+                    .AddLabelsToTriageItemAsync(owner, repo, workItem.Number, [destination.Name], cancellationToken)
+                    .ConfigureAwait(false);
+                await _gitHubService
+                    .RemoveLabelFromTriageItemAsync(owner, repo, workItem.Number, source.Name, cancellationToken)
+                    .ConfigureAwait(false);
+                succeededItemCount++;
+            }
+            catch (Exception ex) when (ex is HttpRequestException or ArgumentException)
+            {
+                errors.Add(new LabelRemapItemErrorDto(workItem.Number, ex.Message));
+            }
+        }
+
+        var sourceDeleted = false;
+        if (errors.Count == 0)
+        {
+            await _labelRepository.DeleteLabelAsync(owner, repo, source.Name, cancellationToken).ConfigureAwait(false);
+            sourceDeleted = true;
+        }
+
+        return new LabelRemapResultDto(
+            repo,
+            source.Name,
+            destination.Name,
+            succeededItemCount,
+            errors.Count,
+            sourceDeleted,
+            destinationCreated,
+            errors);
     }
 
     /// <inheritdoc/>

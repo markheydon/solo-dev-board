@@ -24,6 +24,14 @@ public sealed class LabelTests
     }
 
     [Fact]
+    public void LabelledWorkItem_WithNumber_ShouldReturnNumber()
+    {
+        var workItem = new LabelledWorkItem { Number = 42 };
+
+        Assert.Equal(42, workItem.Number);
+    }
+
+    [Fact]
     public void Label_RepositoryNameNotProvided_ShouldDefaultToEmptyString()
     {
         // Arrange & Act

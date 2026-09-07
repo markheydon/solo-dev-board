@@ -123,11 +123,37 @@ public sealed class GitHubLabelRepository : ILabelRepository
         _responseCache.InvalidateLabels(owner, repo);
     }
 
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<LabelledWorkItem>> GetWorkItemsWithLabelAsync(string owner, string repo, string labelName, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+        ArgumentException.ThrowIfNullOrWhiteSpace(labelName);
+
+        var client = CreateClient();
+        var endpoint =
+            $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/issues?state=all&labels={Uri.EscapeDataString(labelName.Trim())}&per_page=100";
+
+        return await GitHubService.GetPagedAsync<IssueNumberResponseDto, LabelledWorkItem>(
+                client,
+                endpoint,
+                static dto => dto.Number > 0 ? new LabelledWorkItem { Number = dto.Number } : null,
+                JsonOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
     private HttpClient CreateClient()
     {
         // Authentication is handled by the configured GitHubAuthHandler on the named HttpClient.
         var client = _httpClientFactory.CreateClient(GitHubService.GitHubApiClientName);
         return client;
+    }
+
+    private sealed record IssueNumberResponseDto
+    {
+        [JsonPropertyName("number")]
+        public int Number { get; init; }
     }
 
     private sealed record LabelResponseDto
