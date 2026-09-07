@@ -271,7 +271,7 @@ public sealed class GitHubApiCachingTests
         ]);
 
         var memoryCache = new MemoryCache(new MemoryCacheOptions());
-        var sut = CreateGitHubService(handler, memoryCache);
+        var sut = CreateLabelRepository(handler, memoryCache);
 
         // Act
         await sut.GetLabelsAsync("owner", "repo", cancellationToken);
@@ -307,7 +307,7 @@ public sealed class GitHubApiCachingTests
         ]);
 
         var memoryCache = new MemoryCache(new MemoryCacheOptions());
-        var sut = CreateGitHubService(handler, memoryCache);
+        var sut = CreateMilestoneRepository(handler, memoryCache);
 
         // Act
         await sut.GetMilestonesAsync("owner", "repo", cancellationToken);
@@ -351,12 +351,12 @@ public sealed class GitHubApiCachingTests
         var memoryCache = new MemoryCache(new MemoryCacheOptions());
         var userAContext = GitHubCachingTestSupport.CreateCurrentUserContext("user-a");
         var userBContext = GitHubCachingTestSupport.CreateCurrentUserContext("user-b");
-        var userAService = CreateGitHubService(handler, memoryCache, userAContext);
-        var userBService = CreateGitHubService(handler, memoryCache, userBContext);
+        var userARepository = CreateLabelRepository(handler, memoryCache, userAContext);
+        var userBRepository = CreateLabelRepository(handler, memoryCache, userBContext);
 
         // Act
-        var userALabels = await userAService.GetLabelsAsync("owner", "repo", cancellationToken);
-        var userBLabels = await userBService.GetLabelsAsync("owner", "repo", cancellationToken);
+        var userALabels = await userARepository.GetLabelsAsync("owner", "repo", cancellationToken);
+        var userBLabels = await userBRepository.GetLabelsAsync("owner", "repo", cancellationToken);
 
         // Assert
         Assert.Equal("user-a-label", userALabels[0].Name);
@@ -385,7 +385,7 @@ public sealed class GitHubApiCachingTests
         ]);
 
         var memoryCache = new MemoryCache(new MemoryCacheOptions());
-        var sut = CreateGitHubService(handler, memoryCache);
+        var sut = CreateLabelRepository(handler, memoryCache);
 
         // Act
         await sut.GetLabelsAsync("Owner", "Repo", cancellationToken);
@@ -416,7 +416,7 @@ public sealed class GitHubApiCachingTests
         ]);
 
         var memoryCache = new MemoryCache(new MemoryCacheOptions());
-        var sut = CreateGitHubService(handler, memoryCache);
+        var sut = CreateLabelRepository(handler, memoryCache);
 
         // Act
         var first = await sut.GetLabelsAsync("owner", "repo", cancellationToken);
@@ -424,44 +424,6 @@ public sealed class GitHubApiCachingTests
 
         // Assert
         Assert.NotSame(first, second);
-        Assert.Single(handler.Requests);
-    }
-
-    [Fact]
-    public async Task GetLabelsAsync_RepositoryAndServiceShareCacheKey_UsesSingleHttpRequest()
-    {
-        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
-        // Arrange
-        var handler = new QueueMessageHandler(
-        [
-            CreateJsonResponse(
-                HttpStatusCode.OK,
-                """
-                [
-                  {
-                    "name": "enhancement",
-                    "color": "a2eeef",
-                    "description": null
-                  }
-                ]
-                """),
-        ]);
-
-        var memoryCache = new MemoryCache(new MemoryCacheOptions());
-        var currentUserContext = GitHubCachingTestSupport.CreateCurrentUserContext();
-        var responseCache = GitHubCachingTestSupport.CreateResponseCache(memoryCache, currentUserContext);
-        var labelRepository = CreateLabelRepository(handler, responseCache, currentUserContext);
-        var gitHubService = CreateGitHubService(handler, memoryCache, currentUserContext);
-
-        // Act
-        var repositoryLabels = await labelRepository.GetLabelsAsync("owner", "repo", cancellationToken);
-        var serviceLabels = await gitHubService.GetLabelsAsync("owner", "repo", cancellationToken);
-
-        // Assert
-        Assert.Single(repositoryLabels);
-        Assert.Single(serviceLabels);
-        Assert.Equal("repo", repositoryLabels[0].RepositoryName);
-        Assert.Equal("repo", serviceLabels[0].RepositoryName);
         Assert.Single(handler.Requests);
     }
 
@@ -854,6 +816,26 @@ public sealed class GitHubApiCachingTests
         Assert.Equal(HttpMethod.Get, handler.Requests[0].Method);
         Assert.Equal(HttpMethod.Delete, handler.Requests[1].Method);
         Assert.Equal(HttpMethod.Get, handler.Requests[2].Method);
+    }
+
+    private static GitHubLabelRepository CreateLabelRepository(
+        HttpMessageHandler handler,
+        IMemoryCache memoryCache,
+        ICurrentUserContext? currentUserContext = null)
+    {
+        var context = currentUserContext ?? GitHubCachingTestSupport.CreateCurrentUserContext();
+        var responseCache = GitHubCachingTestSupport.CreateResponseCache(memoryCache, context);
+        return CreateLabelRepository(handler, responseCache, context);
+    }
+
+    private static GitHubMilestoneRepository CreateMilestoneRepository(
+        HttpMessageHandler handler,
+        IMemoryCache memoryCache,
+        ICurrentUserContext? currentUserContext = null)
+    {
+        var context = currentUserContext ?? GitHubCachingTestSupport.CreateCurrentUserContext();
+        var responseCache = GitHubCachingTestSupport.CreateResponseCache(memoryCache, context);
+        return CreateMilestoneRepository(handler, responseCache, context);
     }
 
     private static GitHubService CreateGitHubService(

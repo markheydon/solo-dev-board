@@ -1,4 +1,6 @@
 using SoloDevBoard.Application.Services.GitHub;
+using SoloDevBoard.Application.Services.Labels;
+using SoloDevBoard.Application.Services.Migration;
 using SoloDevBoard.Domain.Entities.Triage;
 
 namespace SoloDevBoard.Application.Services.Triage;
@@ -7,12 +9,25 @@ namespace SoloDevBoard.Application.Services.Triage;
 public sealed class TriageService : ITriageService
 {
     private readonly IGitHubService _gitHubService;
+    private readonly ILabelRepository _labelRepository;
+    private readonly IMilestoneRepository _milestoneRepository;
 
     /// <summary>Initialises a new instance of the <see cref="TriageService"/> class.</summary>
     /// <param name="gitHubService">The GitHub service used to retrieve and apply triage actions.</param>
-    public TriageService(IGitHubService gitHubService)
+    /// <param name="labelRepository">The repository used to read repository labels.</param>
+    /// <param name="milestoneRepository">The repository used to read repository milestones.</param>
+    public TriageService(
+        IGitHubService gitHubService,
+        ILabelRepository labelRepository,
+        IMilestoneRepository milestoneRepository)
     {
-        _gitHubService = gitHubService ?? throw new ArgumentNullException(nameof(gitHubService));
+        ArgumentNullException.ThrowIfNull(gitHubService);
+        ArgumentNullException.ThrowIfNull(labelRepository);
+        ArgumentNullException.ThrowIfNull(milestoneRepository);
+
+        _gitHubService = gitHubService;
+        _labelRepository = labelRepository;
+        _milestoneRepository = milestoneRepository;
     }
 
     /// <inheritdoc/>
@@ -282,7 +297,7 @@ public sealed class TriageService : ITriageService
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentNullException.ThrowIfNull(session);
 
-        var milestones = await _gitHubService
+        var milestones = await _milestoneRepository
             .GetMilestonesAsync(session.OwnerLogin, session.RepositoryName, cancellationToken)
             .ConfigureAwait(false);
 
@@ -540,7 +555,7 @@ public sealed class TriageService : ITriageService
 
         try
         {
-            var labels = await _gitHubService.GetLabelsAsync(owner, repo, cancellationToken).ConfigureAwait(false);
+            var labels = await _labelRepository.GetLabelsAsync(owner, repo, cancellationToken).ConfigureAwait(false);
             return labels
                 .Select(label => label.Name)
                 .FirstOrDefault(name => string.Equals(name, CanonicalDuplicateLabelName, StringComparison.OrdinalIgnoreCase));

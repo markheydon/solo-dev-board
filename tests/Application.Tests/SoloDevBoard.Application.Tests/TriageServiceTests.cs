@@ -1,5 +1,7 @@
 using NSubstitute;
 using SoloDevBoard.Application.Services.GitHub;
+using SoloDevBoard.Application.Services.Labels;
+using SoloDevBoard.Application.Services.Migration;
 using SoloDevBoard.Application.Services.Triage;
 using SoloDevBoard.Domain.Entities.Labels;
 using SoloDevBoard.Domain.Entities.Triage;
@@ -10,17 +12,36 @@ namespace SoloDevBoard.Application.Tests;
 public sealed class TriageServiceTests
 {
     private readonly IGitHubService _gitHubService = Substitute.For<IGitHubService>();
+    private readonly ILabelRepository _labelRepository = Substitute.For<ILabelRepository>();
+    private readonly IMilestoneRepository _milestoneRepository = Substitute.For<IMilestoneRepository>();
 
     [Fact]
     public void Constructor_GitHubServiceIsNull_ThrowsArgumentNullException()
     {
-        // Arrange
         IGitHubService? gitHubService = null;
 
-        // Act
-        var action = () => _ = new TriageService(gitHubService!);
+        var action = () => _ = new TriageService(gitHubService!, _labelRepository, _milestoneRepository);
 
-        // Assert
+        Assert.Throws<ArgumentNullException>(action);
+    }
+
+    [Fact]
+    public void Constructor_LabelRepositoryIsNull_ThrowsArgumentNullException()
+    {
+        ILabelRepository? labelRepository = null;
+
+        var action = () => _ = new TriageService(_gitHubService, labelRepository!, _milestoneRepository);
+
+        Assert.Throws<ArgumentNullException>(action);
+    }
+
+    [Fact]
+    public void Constructor_MilestoneRepositoryIsNull_ThrowsArgumentNullException()
+    {
+        IMilestoneRepository? milestoneRepository = null;
+
+        var action = () => _ = new TriageService(_gitHubService, _labelRepository, milestoneRepository!);
+
         Assert.Throws<ArgumentNullException>(action);
     }
 
@@ -29,7 +50,7 @@ public sealed class TriageServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
 
         // Act
         var action = async () => _ = await sut.StartSessionAsync(" ", "repo", cancellationToken: cancellationToken);
@@ -43,7 +64,7 @@ public sealed class TriageServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
 
         // Act
         var action = async () => _ = await sut.StartSessionAsync("owner", " ", cancellationToken: cancellationToken);
@@ -65,7 +86,7 @@ public sealed class TriageServiceTests
                 new Issue { Id = 2, Number = 12, Title = "Newer", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-1) },
             ]);
 
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.StartSessionAsync("owner", "repo", includePullRequests: false, cancellationToken);
@@ -101,7 +122,7 @@ public sealed class TriageServiceTests
                 new PullRequest { Id = 2, Number = 21, Title = "Pull request", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-1) },
             ]);
 
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.StartSessionAsync("owner", "repo", includePullRequests: true, cancellationToken);
@@ -144,7 +165,7 @@ public sealed class TriageServiceTests
                 },
             ]);
 
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.StartSessionAsync("owner", "repo", includePullRequests: true, cancellationToken);
@@ -174,7 +195,7 @@ public sealed class TriageServiceTests
                 new PullRequest { Id = 3, Number = 21, Title = "Middle pull request", UpdatedAt = DateTimeOffset.Parse("2026-03-02T10:00:00Z"), Labels = [] },
             ]);
 
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.StartSessionAsync("owner", "repo", includePullRequests: true, cancellationToken);
@@ -216,7 +237,7 @@ public sealed class TriageServiceTests
                 },
             ]);
 
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.StartSessionAsync("owner", "repo", includePullRequests: true, cancellationToken);
@@ -240,7 +261,7 @@ public sealed class TriageServiceTests
                 new Issue { Id = 2, Number = 12, Title = "Labelled", UpdatedAt = DateTimeOffset.UtcNow.AddDays(-1), Labels = [new Label { Name = "priority/high" }] },
             ]);
 
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.StartSessionAsync("owner", "repo", includePullRequests: false, cancellationToken);
@@ -255,7 +276,7 @@ public sealed class TriageServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
         var session = CreateSession(queueCount: 2, currentIndex: 0);
 
         // Act
@@ -272,7 +293,7 @@ public sealed class TriageServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
         var session = CreateSession(queueCount: 2, currentIndex: 0);
 
         // Act
@@ -294,7 +315,7 @@ public sealed class TriageServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
         var queue = new[]
         {
             new TriageItemDto(TriageItemTypeDto.Issue, 1, 11, "owner/repo", "Item 1", string.Empty, string.Empty, "open", "mark", [], null, string.Empty, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow),
@@ -330,7 +351,7 @@ public sealed class TriageServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
         var itemOne = new TriageItemDto(TriageItemTypeDto.Issue, 1, 11, "owner/repo", "Item 1", string.Empty, string.Empty, "open", "mark", [], null, string.Empty, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
         var itemTwo = new TriageItemDto(TriageItemTypeDto.Issue, 2, 12, "owner/repo", "Item 2", string.Empty, string.Empty, "open", "mark", [], null, string.Empty, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
 
@@ -362,7 +383,7 @@ public sealed class TriageServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
         var session = CreateSession(queueCount: 1, currentIndex: 0);
 
         // Act
@@ -384,7 +405,7 @@ public sealed class TriageServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
         var existingLabelItem = new TriageItemDto(
             TriageItemTypeDto.Issue,
             1,
@@ -434,7 +455,7 @@ public sealed class TriageServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
         var itemWithSessionLabel = new TriageItemDto(
             TriageItemTypeDto.Issue,
             1,
@@ -485,7 +506,7 @@ public sealed class TriageServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
         var invalidScopeItem = new TriageItemDto(
             TriageItemTypeDto.Issue,
             1,
@@ -527,14 +548,14 @@ public sealed class TriageServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        _gitHubService
+        _milestoneRepository
             .GetMilestonesAsync("owner", "repo", cancellationToken)
             .Returns([
                 new SoloDevBoard.Domain.Entities.Milestones.Milestone { Number = 3, Title = "v0.3.0" },
                 new SoloDevBoard.Domain.Entities.Milestones.Milestone { Number = 1, Title = "v0.1.0" },
             ]);
 
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
         var session = CreateSession(queueCount: 1, currentIndex: 0);
 
         // Act
@@ -583,7 +604,7 @@ public sealed class TriageServiceTests
             2,
             0));
 
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
         var session = CreateSession(queueCount: 1, currentIndex: 0);
 
         // Act
@@ -606,7 +627,7 @@ public sealed class TriageServiceTests
             .AddTriageItemToProjectBoardAsync("owner", "repo", 1, "project-id", cancellationToken)
             .Returns("project-item-id");
 
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
         var session = CreateSession(queueCount: 2, currentIndex: 0);
 
         var request = new TriageProcessCommitRequestDto(
@@ -638,7 +659,7 @@ public sealed class TriageServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
         var session = CreateSession(queueCount: 2, currentIndex: 0);
 
         var request = new TriageProcessCommitRequestDto(null, session.CurrentItem!.MilestoneNumber, null, null, null, null, null, null);
@@ -657,7 +678,7 @@ public sealed class TriageServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
         var session = CreateSession(queueCount: 1, currentIndex: 0);
 
         // Act
@@ -682,7 +703,7 @@ public sealed class TriageServiceTests
             .AddTriageItemToProjectBoardAsync("owner", "repo", 1, "project-id", cancellationToken)
             .Returns("project-item-id");
 
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
         var session = CreateSession(queueCount: 1, currentIndex: 0);
 
         // Act
@@ -710,7 +731,7 @@ public sealed class TriageServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
         var invalidScopeItem = new TriageItemDto(
             TriageItemTypeDto.Issue,
             1,
@@ -758,7 +779,7 @@ public sealed class TriageServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
         var session = CreateSession(queueCount: 1, currentIndex: 0);
 
         // Act
@@ -778,15 +799,15 @@ public sealed class TriageServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
         var session = CreateSession(queueCount: 1, currentIndex: 0);
 
         _gitHubService
             .CloseTriageItemAsDuplicateAsync("owner", "repo", GitHubTriageItemType.Issue, 1, "#123", cancellationToken)
             .Returns(Task.CompletedTask);
 
-        _gitHubService
-            .GetLabelsAsync("owner", "repo", cancellationToken)
+        _labelRepository
+            .GetLabelsAsync("owner", "repo", cancellationToken, Arg.Any<bool>())
             .Returns(new[] { new Label { Name = "duplicate" } });
 
         _gitHubService
@@ -807,7 +828,7 @@ public sealed class TriageServiceTests
         Assert.Contains("Applied label 'duplicate'", result.ActionHistory[0].Detail, StringComparison.Ordinal);
         Assert.Equal(1, result.Summary.DuplicateClosuresCount);
 
-        await _gitHubService.Received(1).GetLabelsAsync("owner", "repo", cancellationToken);
+        await _labelRepository.Received(1).GetLabelsAsync("owner", "repo", cancellationToken, Arg.Any<bool>());
         await _gitHubService.Received(1).AddLabelsToTriageItemAsync(
             "owner",
             "repo",
@@ -821,15 +842,15 @@ public sealed class TriageServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
         var session = CreateSession(queueCount: 1, currentIndex: 0);
 
         _gitHubService
             .CloseTriageItemAsDuplicateAsync("owner", "repo", GitHubTriageItemType.Issue, 1, "#123", cancellationToken)
             .Returns(Task.CompletedTask);
 
-        _gitHubService
-            .GetLabelsAsync("owner", "repo", cancellationToken)
+        _labelRepository
+            .GetLabelsAsync("owner", "repo", cancellationToken, Arg.Any<bool>())
             .Returns(Array.Empty<Label>());
 
         // Act
@@ -841,7 +862,7 @@ public sealed class TriageServiceTests
         Assert.Contains("No canonical duplicate label was available", result.ActionHistory[0].Detail, StringComparison.Ordinal);
         Assert.Equal(1, result.Summary.DuplicateClosuresCount);
 
-        await _gitHubService.Received(1).GetLabelsAsync("owner", "repo", cancellationToken);
+        await _labelRepository.Received(1).GetLabelsAsync("owner", "repo", cancellationToken, Arg.Any<bool>());
         await _gitHubService.DidNotReceive().AddLabelsToTriageItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<IReadOnlyList<string>>(), cancellationToken);
     }
 
@@ -850,7 +871,7 @@ public sealed class TriageServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
         var pullRequestItem = new TriageItemDto(
             TriageItemTypeDto.PullRequest,
             21,
@@ -897,7 +918,7 @@ public sealed class TriageServiceTests
     public void BuildSessionSummary_ActionHistoryIncludesAllActionTypes_ReturnsComputedCounts()
     {
         // Arrange
-        var sut = new TriageService(_gitHubService);
+        var sut = CreateSut();
         var actions = new[]
         {
             new TriageActionDto(TriageActionTypeDto.LabelApplied, TriageItemTypeDto.Issue, 1, "owner/repo", string.Empty, DateTimeOffset.UtcNow),
@@ -996,4 +1017,6 @@ public sealed class TriageServiceTests
                 DateTimeOffset.UtcNow))
             .ToArray();
     }
+
+    private TriageService CreateSut() => new(_gitHubService, _labelRepository, _milestoneRepository);
 }

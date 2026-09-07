@@ -212,118 +212,6 @@ public sealed class GitHubService : IGitHubService
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<Milestone>> GetMilestonesAsync(string owner, string repo, CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
-        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
-
-        return await _responseCache.GetOrCreateMilestonesAsync(
-            owner,
-            repo,
-            async ct =>
-            {
-                var client = CreateAuthenticatedClient();
-                var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/milestones?state=all&per_page=100";
-                return await GetPagedAsync<MilestoneResponseDto, Milestone>(
-                        client,
-                        endpoint,
-                        static dto => dto.ToDomain(),
-                        JsonOptions,
-                        ct)
-                    .ConfigureAwait(false);
-            },
-            cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <inheritdoc/>
-    public async Task<IReadOnlyList<Label>> GetLabelsAsync(string owner, string repo, CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
-        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
-
-        return await _responseCache.GetOrCreateLabelsAsync(
-            owner,
-            repo,
-            async ct =>
-            {
-                var client = CreateAuthenticatedClient();
-                var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/labels?per_page=100";
-                return await GetPagedAsync<LabelResponseDto, Label>(
-                        client,
-                        endpoint,
-                        dto => dto.ToDomain(repo),
-                        JsonOptions,
-                        ct)
-                    .ConfigureAwait(false);
-            },
-            cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <inheritdoc/>
-    public async Task<Label> CreateLabelAsync(string owner, string repo, Label label, CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
-        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
-        ArgumentNullException.ThrowIfNull(label);
-
-        var client = CreateAuthenticatedClient();
-        var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/labels";
-
-        using var response = await client.PostAsJsonAsync(endpoint, LabelUpsertRequestDto.FromDomain(label), JsonOptions, cancellationToken).ConfigureAwait(false);
-        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
-
-        var created = await response.Content.ReadFromJsonAsync<LabelResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
-            ?? throw CreateInvalidResponseException("Label response was empty.", endpoint);
-
-        _responseCache.InvalidateLabels(owner, repo);
-
-        return created.ToDomain(repo);
-    }
-
-    /// <inheritdoc/>
-    public async Task<Label> UpdateLabelAsync(string owner, string repo, string labelName, Label label, CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
-        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
-        ArgumentException.ThrowIfNullOrWhiteSpace(labelName);
-        ArgumentNullException.ThrowIfNull(label);
-
-        var client = CreateAuthenticatedClient();
-        var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/labels/{Uri.EscapeDataString(labelName)}";
-
-        using var request = new HttpRequestMessage(HttpMethod.Patch, endpoint)
-        {
-            Content = JsonContent.Create(UpdateLabelRequestDto.FromDomain(label), options: JsonOptions),
-        };
-
-        using var response = await client.SendAsync(request, cancellationToken).ConfigureAwait(false);
-        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
-
-        var updated = await response.Content.ReadFromJsonAsync<LabelResponseDto>(JsonOptions, cancellationToken).ConfigureAwait(false)
-            ?? throw CreateInvalidResponseException("Label response was empty.", endpoint);
-
-        _responseCache.InvalidateLabels(owner, repo);
-
-        return updated.ToDomain(repo);
-    }
-
-    /// <inheritdoc/>
-    public async Task DeleteLabelAsync(string owner, string repo, string labelName, CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
-        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
-        ArgumentException.ThrowIfNullOrWhiteSpace(labelName);
-
-        var client = CreateAuthenticatedClient();
-        var endpoint = $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/labels/{Uri.EscapeDataString(labelName)}";
-
-        using var response = await client.DeleteAsync(endpoint, cancellationToken).ConfigureAwait(false);
-        await EnsureSuccessStatusCodeAsync(response, cancellationToken).ConfigureAwait(false);
-
-        _responseCache.InvalidateLabels(owner, repo);
-    }
-
-    /// <inheritdoc/>
     public async Task AddLabelsToTriageItemAsync(string owner, string repo, int itemNumber, IReadOnlyList<string> labelNames, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
@@ -2075,14 +1963,6 @@ public sealed class GitHubService : IGitHubService
             Colour = Colour,
             Description = RepairCommonMojibake(Description),
         };
-
-        public Label ToDomain(string repoName) => new()
-        {
-            Name = Name,
-            Colour = Colour,
-            Description = RepairCommonMojibake(Description),
-            RepositoryName = repoName,
-        };
     }
 
     /// <summary>Embedded DTO representing the author of an issue or pull request.</summary>
@@ -2104,49 +1984,6 @@ public sealed class GitHubService : IGitHubService
     /// A non-<see langword="null"/> value indicates the item should be treated as a pull request, not an issue.
     /// </summary>
     private sealed record PullRequestMarkerDto;
-
-    /// <summary>Request body DTO for creating a new label via <c>POST /repos/{owner}/{repo}/labels</c>.</summary>
-    private sealed record LabelUpsertRequestDto
-    {
-        [JsonPropertyName("name")]
-        public string Name { get; init; } = string.Empty;
-
-        [JsonPropertyName("color")]
-        public string Colour { get; init; } = string.Empty;
-
-        [JsonPropertyName("description")]
-        public string Description { get; init; } = string.Empty;
-
-        public static LabelUpsertRequestDto FromDomain(Label label) => new()
-        {
-            Name = label.Name,
-            Colour = label.Colour,
-            Description = label.Description,
-        };
-    }
-
-    /// <summary>
-    /// Request body DTO for renaming or updating an existing label via <c>PATCH /repos/{owner}/{repo}/labels/{name}</c>.
-    /// Uses <c>new_name</c> rather than <c>name</c> to rename the label, per the GitHub API contract.
-    /// </summary>
-    private sealed record UpdateLabelRequestDto
-    {
-        [JsonPropertyName("new_name")]
-        public string NewName { get; init; } = string.Empty;
-
-        [JsonPropertyName("color")]
-        public string Colour { get; init; } = string.Empty;
-
-        [JsonPropertyName("description")]
-        public string Description { get; init; } = string.Empty;
-
-        public static UpdateLabelRequestDto FromDomain(Label label) => new()
-        {
-            NewName = label.Name,
-            Colour = label.Colour,
-            Description = label.Description,
-        };
-    }
 
     /// <summary>Request body DTO for setting labels on a triage item.</summary>
     private sealed record TriageLabelsRequestDto(

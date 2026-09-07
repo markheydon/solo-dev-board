@@ -2,6 +2,7 @@ using NSubstitute;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Application.Services.Planning;
 using SoloDevBoard.Domain.Entities.Milestones;
+using IMilestoneRepository = SoloDevBoard.Application.Services.Migration.IMilestoneRepository;
 
 namespace SoloDevBoard.Application.Tests;
 
@@ -11,6 +12,7 @@ public sealed class IterationPlanningServiceTests
     private readonly IPlanningWorkItemCatalogueService _workItemCatalogueService = Substitute.For<IPlanningWorkItemCatalogueService>();
     private readonly IProjectItemCatalogueService _projectItemCatalogueService = Substitute.For<IProjectItemCatalogueService>();
     private readonly IGitHubService _gitHubService = Substitute.For<IGitHubService>();
+    private readonly IMilestoneRepository _milestoneRepository = Substitute.For<IMilestoneRepository>();
 
     [Fact]
     public async Task AddToUpNextAsync_ItemNotOnBoard_AddsThenSetsStatusAndFocusOrder()
@@ -536,7 +538,7 @@ public sealed class IterationPlanningServiceTests
             CreateUpNextItem("owner/repo-a", 10),
             CreateUpNextItem("owner/repo-a", 11),
         };
-        _gitHubService
+        _milestoneRepository
             .GetMilestonesAsync("owner", "repo-a", cancellationToken)
             .Returns([CreateMilestone("v1.0.0", 5)]);
 
@@ -562,7 +564,7 @@ public sealed class IterationPlanningServiceTests
             CreateUpNextItem("owner/repo-a", 10),
             CreateUpNextItem("owner/repo-a", 11),
         };
-        _gitHubService
+        _milestoneRepository
             .GetMilestonesAsync("owner", "repo-a", cancellationToken)
             .Returns([CreateMilestone("v1.0.0", 5)]);
         _gitHubService
@@ -604,7 +606,7 @@ public sealed class IterationPlanningServiceTests
     }
 
     private IterationPlanningService CreateSut() =>
-        new(_workItemCatalogueService, _projectItemCatalogueService, _gitHubService, TimeProvider.System);
+        new(_workItemCatalogueService, _projectItemCatalogueService, _gitHubService, _milestoneRepository, TimeProvider.System);
 
     private static ProjectBoardItemCatalogueDto CreateCatalogue(
         ProjectBoardItemDto? existingItem,

@@ -53,6 +53,33 @@ public sealed class GitHubLabelRepositoryTests
     }
 
     [Fact]
+    public async Task GetLabelsAsync_MojibakeDescription_RepairsDescription()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                [
+                  {
+                    "name": "out-of-scope",
+                    "color": "d4c5f9",
+                    "description": "Intentionally deferred \u00d4\u00c7\u00f6 may be revisited later."
+                  }
+                ]
+                """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        var result = await sut.GetLabelsAsync("owner", "repo", cancellationToken);
+
+        Assert.Single(result);
+        Assert.Equal("Intentionally deferred - may be revisited later.", result[0].Description);
+    }
+
+    [Fact]
     public async Task CreateLabelAsync_ValidLabel_PostsPayloadAndReturnsLabel()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
