@@ -134,7 +134,7 @@ Application version numbers are calculated automatically at build time by [MinVe
 
 **Out of milestone:** Window-focus refetch ([#450](https://github.com/markheydon/solo-dev-board/issues/450), ice-box); hosted private Projects v2 ([#293](https://github.com/markheydon/solo-dev-board/issues/293)); Aspire PM settings store ([#391](https://github.com/markheydon/solo-dev-board/issues/391)); newer ice-box catalogue and hygiene work ([#381](https://github.com/markheydon/solo-dev-board/issues/381), [#397](https://github.com/markheydon/solo-dev-board/issues/397), [#411](https://github.com/markheydon/solo-dev-board/issues/411), [#435](https://github.com/markheydon/solo-dev-board/issues/435)–[#439](https://github.com/markheydon/solo-dev-board/issues/439), [#470](https://github.com/markheydon/solo-dev-board/issues/470)).
 
-**Status:** Ready to tag — **30 closed, 0 open** on GitHub milestone `v1.2 - Planning polish, Reload & Templates`. Leave the milestone open until the **`v1.2.0`** git tag and GitHub Release are published (see [Release Process](#release-process)).
+**Status:** Complete (2026-09-07). Tagged [`v1.2.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.2.0). Production CD and GitHub Pages publish from `v*` tags.
 
 **Target:** Not set — dates follow actual start per Roadmap date guidelines.
 
