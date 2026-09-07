@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using SoloDevBoard.App.Authentication;
+using SoloDevBoard.Application.GitHub;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.BoardRules;
 using SoloDevBoard.Application.Services.GitHub;
@@ -325,8 +326,8 @@ public partial class BoardRules : ComponentBase, IAsyncDisposable
     {
         ArgumentNullException.ThrowIfNull(repository);
 
-        var owner = ResolveOwner(repository.FullName);
-        var repo = ResolveRepositoryName(repository.FullName);
+        var owner = RepositoryFullName.ResolveOwner(repository.FullName);
+        var repo = RepositoryFullName.ResolveRepositoryName(repository.FullName);
 
         if (string.IsNullOrWhiteSpace(owner) || string.IsNullOrWhiteSpace(repo))
         {
@@ -422,8 +423,8 @@ public partial class BoardRules : ComponentBase, IAsyncDisposable
     {
         ArgumentNullException.ThrowIfNull(repository);
 
-        var owner = ResolveOwner(repository.FullName);
-        var repo = ResolveRepositoryName(repository.FullName);
+        var owner = RepositoryFullName.ResolveOwner(repository.FullName);
+        var repo = RepositoryFullName.ResolveRepositoryName(repository.FullName);
 
         if (string.IsNullOrWhiteSpace(owner) || string.IsNullOrWhiteSpace(repo))
         {
@@ -758,8 +759,8 @@ public partial class BoardRules : ComponentBase, IAsyncDisposable
             return;
         }
 
-        var owner = ResolveOwner(selectedRepository!.FullName);
-        var repo = ResolveRepositoryName(selectedRepository.FullName);
+        var owner = RepositoryFullName.ResolveOwner(selectedRepository!.FullName);
+        var repo = RepositoryFullName.ResolveRepositoryName(selectedRepository.FullName);
 
         await LoadBoardRulesDefinitionAsync(owner, repo, selectedProjectBoardId);
     }
@@ -776,32 +777,10 @@ public partial class BoardRules : ComponentBase, IAsyncDisposable
             return;
         }
 
-        var owner = ResolveOwner(comparisonRepository!.FullName);
-        var repo = ResolveRepositoryName(comparisonRepository.FullName);
+        var owner = RepositoryFullName.ResolveOwner(comparisonRepository!.FullName);
+        var repo = RepositoryFullName.ResolveRepositoryName(comparisonRepository.FullName);
 
         await LoadComparisonBoardRulesDefinitionAsync(owner, repo, comparisonProjectBoardId);
-    }
-
-    private static string ResolveOwner(string fullName)
-    {
-        if (string.IsNullOrWhiteSpace(fullName))
-        {
-            return string.Empty;
-        }
-
-        var parts = fullName.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        return parts.Length > 0 ? parts[0] : string.Empty;
-    }
-
-    private static string ResolveRepositoryName(string fullName)
-    {
-        if (string.IsNullOrWhiteSpace(fullName))
-        {
-            return string.Empty;
-        }
-
-        var parts = fullName.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        return parts.Length > 1 ? parts[1] : string.Empty;
     }
 
     private static string ResolvePreservedProjectBoardId(
