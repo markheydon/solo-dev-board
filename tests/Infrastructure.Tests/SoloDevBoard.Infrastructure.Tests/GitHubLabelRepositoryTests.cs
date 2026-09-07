@@ -179,6 +179,91 @@ public sealed class GitHubLabelRepositoryTests
     }
 
     [Fact]
+    public async Task GetWorkItemsWithLabelAsync_IssuesAndPullRequests_ReturnsNumbersWithoutFilteringPullRequests()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var handler = new QueueMessageHandler(
+        [
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                [
+                  {
+                    "number": 10,
+                    "title": "An issue"
+                  },
+                  {
+                    "number": 11,
+                    "title": "A pull request",
+                    "pull_request": {
+                      "url": "https://api.github.com/repos/owner/repo/pulls/11"
+                    }
+                  }
+                ]
+                """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        var result = await sut.GetWorkItemsWithLabelAsync("owner", "repo", "story", cancellationToken);
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal(10, result[0].Number);
+        Assert.Equal(11, result[1].Number);
+        Assert.Single(handler.Requests);
+        Assert.Equal(HttpMethod.Get, handler.Requests[0].Method);
+        Assert.Equal("https://api.github.com/repos/owner/repo/issues?state=all&labels=story&per_page=100", handler.Requests[0].RequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task GetWorkItemsWithLabelAsync_MultiplePages_FollowsLinkHeaderAndDoesNotCache()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var firstPage = CreateJsonResponse(
+            HttpStatusCode.OK,
+            """
+            [
+              { "number": 1 }
+            ]
+            """);
+        firstPage.Headers.TryAddWithoutValidation(
+            "Link",
+            "<https://api.github.com/repos/owner/repo/issues?state=all&labels=story&per_page=100&page=2>; rel=\"next\"");
+
+        var handler = new QueueMessageHandler(
+        [
+            firstPage,
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                [
+                  { "number": 2 }
+                ]
+                """),
+            CreateJsonResponse(
+                HttpStatusCode.OK,
+                """
+                [
+                  { "number": 1 },
+                  { "number": 2 }
+                ]
+                """),
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        var first = await sut.GetWorkItemsWithLabelAsync("owner", "repo", "story", cancellationToken);
+        var second = await sut.GetWorkItemsWithLabelAsync("owner", "repo", "story", cancellationToken);
+
+        Assert.Equal([1, 2], first.Select(item => item.Number).ToArray());
+        Assert.Equal([1, 2], second.Select(item => item.Number).ToArray());
+        Assert.Equal(3, handler.Requests.Count);
+        Assert.Equal("https://api.github.com/repos/owner/repo/issues?state=all&labels=story&per_page=100", handler.Requests[0].RequestUri!.ToString());
+        Assert.Equal("https://api.github.com/repos/owner/repo/issues?state=all&labels=story&per_page=100&page=2", handler.Requests[1].RequestUri!.ToString());
+        Assert.Equal("https://api.github.com/repos/owner/repo/issues?state=all&labels=story&per_page=100", handler.Requests[2].RequestUri!.ToString());
+    }
+
+    [Fact]
     public async Task CreateLabelAsync_ApiReturnsBadRequest_ThrowsHttpRequestException()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;

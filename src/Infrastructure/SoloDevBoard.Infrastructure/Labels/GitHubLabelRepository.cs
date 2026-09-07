@@ -123,11 +123,43 @@ public sealed class GitHubLabelRepository : ILabelRepository
         _responseCache.InvalidateLabels(owner, repo);
     }
 
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Calls <c>GET /repos/{owner}/{repo}/issues</c> with <c>state=all</c> and a single label filter.
+    /// GitHub includes pull requests in that list; they are kept so remap retags both issues and pull requests.
+    /// Pages follow <c>Link: rel="next"</c>. The result is not stored in <see cref="GitHubResponseCache"/>.
+    /// </remarks>
+    public async Task<IReadOnlyList<LabelledWorkItem>> GetWorkItemsWithLabelAsync(string owner, string repo, string labelName, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        ArgumentException.ThrowIfNullOrWhiteSpace(repo);
+        ArgumentException.ThrowIfNullOrWhiteSpace(labelName);
+
+        var client = CreateClient();
+        var endpoint =
+            $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/issues?state=all&labels={Uri.EscapeDataString(labelName.Trim())}&per_page=100";
+
+        return await GitHubService.GetPagedAsync<IssueNumberResponseDto, LabelledWorkItem>(
+                client,
+                endpoint,
+                static dto => dto.Number > 0 ? new LabelledWorkItem { Number = dto.Number } : null,
+                JsonOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
     private HttpClient CreateClient()
     {
         // Authentication is handled by the configured GitHubAuthHandler on the named HttpClient.
         var client = _httpClientFactory.CreateClient(GitHubService.GitHubApiClientName);
         return client;
+    }
+
+    /// <summary>GitHub issues-list payload used only to read the item number, including pull requests.</summary>
+    private sealed record IssueNumberResponseDto
+    {
+        [JsonPropertyName("number")]
+        public int Number { get; init; }
     }
 
     private sealed record LabelResponseDto

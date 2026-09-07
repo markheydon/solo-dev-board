@@ -103,6 +103,18 @@ public interface ILabelManagerService
     /// <returns>A read-only list of repository previews showing create, update, delete, and skip actions.</returns>
     Task<IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto>> PreviewRecommendedTaxonomyAsync(string strategyId, IReadOnlyList<string> repositories, bool removeLabelsOutsideTaxonomy = false, bool keepAreaLabels = true, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Remaps every issue and pull request from a source label onto a destination label in one repository,
+    /// then deletes the source only when every retag succeeded.
+    /// </summary>
+    /// <param name="owner">The GitHub account owner login.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="sourceLabelName">The label to remove from items after the destination is applied.</param>
+    /// <param name="destinationLabelName">The label to add to items that currently have the source.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>Success and failure counts for the repository, including whether the source was deleted.</returns>
+    Task<LabelRemapResultDto> RemapLabelAsync(string owner, string repo, string sourceLabelName, string destinationLabelName, CancellationToken cancellationToken = default);
+
     /// <summary>Applies a recommended taxonomy to repositories and returns per-repository summaries.</summary>
     /// <param name="strategyId">The recommended strategy identifier.</param>
     /// <param name="repositories">The target repositories in owner/repository format.</param>

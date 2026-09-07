@@ -1,4 +1,5 @@
 using NSubstitute;
+using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Domain.Entities.Labels;
 
@@ -8,17 +9,25 @@ namespace SoloDevBoard.Application.Tests;
 public sealed class LabelServiceTests
 {
     private readonly ILabelRepository _labelRepository = Substitute.For<ILabelRepository>();
+    private readonly IGitHubService _gitHubService = Substitute.For<IGitHubService>();
 
     [Fact]
     public void Constructor_LabelRepositoryIsNull_ThrowsArgumentNullException()
     {
-        // Arrange
         ILabelRepository? labelRepository = null;
 
-        // Act
-        var action = () => _ = new LabelService(labelRepository!);
+        var action = () => _ = new LabelService(labelRepository!, _gitHubService);
 
-        // Assert
+        Assert.Throws<ArgumentNullException>(action);
+    }
+
+    [Fact]
+    public void Constructor_GitHubServiceIsNull_ThrowsArgumentNullException()
+    {
+        IGitHubService? gitHubService = null;
+
+        var action = () => _ = new LabelService(_labelRepository, gitHubService!);
+
         Assert.Throws<ArgumentNullException>(action);
     }
 
@@ -34,7 +43,7 @@ public sealed class LabelServiceTests
                 new Label { Name = "priority/high", Colour = "d93f0b", Description = "Should be addressed in the current sprint or release", RepositoryName = "repo" },
             ]);
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.GetLabelsAsync("owner", "repo", cancellationToken);
@@ -58,7 +67,7 @@ public sealed class LabelServiceTests
             .GetLabelsAsync("owner", "repo-b", cancellationToken)
             .Returns([new Label { Name = "priority/high", Colour = "d93f0b", Description = "High", RepositoryName = "repo-b" }]);
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.GetLabelsForRepositoriesAsync("owner", ["repo-a", "repo-b"], cancellationToken);
@@ -78,7 +87,7 @@ public sealed class LabelServiceTests
             .GetLabelsAsync("owner", "repo-a", cancellationToken)
             .Returns([new Label { Name = "type/story", Colour = "1d76db", Description = "Story", RepositoryName = "repo-a" }]);
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.GetLabelsForRepositoriesAsync("owner", ["repo-a", "repo-a", "repo-a"], cancellationToken);
@@ -93,7 +102,7 @@ public sealed class LabelServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var action = async () => await sut.GetLabelsForRepositoriesAsync(" ", ["repo-a"], cancellationToken);
@@ -118,7 +127,7 @@ public sealed class LabelServiceTests
                 return value with { RepositoryName = repo };
             });
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.CreateLabelAsync("owner", ["repo-a", "repo-b"], label, cancellationToken);
@@ -149,7 +158,7 @@ public sealed class LabelServiceTests
             .CreateLabelAsync("owner", "repo-b", Arg.Any<Label>(), cancellationToken)
             .Returns(Task.FromException<Label>(new HttpRequestException("GitHub API failure")));
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var action = async () => await sut.CreateLabelAsync("owner", ["repo-a", "repo-b", "repo-c"], label, cancellationToken);
@@ -166,7 +175,7 @@ public sealed class LabelServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var action = async () => await sut.CreateLabelAsync("owner", ["repo-a"], null!, cancellationToken);
@@ -180,7 +189,7 @@ public sealed class LabelServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
         var label = new LabelDto("area/labels", "c5def5", "Label Manager feature", string.Empty);
 
         // Act
@@ -206,7 +215,7 @@ public sealed class LabelServiceTests
                 return value with { RepositoryName = repo };
             });
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.UpdateLabelAsync("owner", ["repo-a", "repo-b"], "priority/urgent", updatedLabel, cancellationToken);
@@ -228,7 +237,7 @@ public sealed class LabelServiceTests
             .UpdateLabelAsync("owner", "repo-a", "priority/urgent", Arg.Any<Label>(), cancellationToken)
             .Returns(Task.FromException<Label>(new KeyNotFoundException("Label not found")));
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var action = async () => await sut.UpdateLabelAsync("owner", ["repo-a", "repo-b"], "priority/urgent", updatedLabel, cancellationToken);
@@ -258,7 +267,7 @@ public sealed class LabelServiceTests
             .UpdateLabelAsync("owner", "repo-b", "priority/urgent", Arg.Any<Label>(), cancellationToken)
             .Returns(Task.FromException<Label>(new HttpRequestException("GitHub API failure")));
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var action = async () => await sut.UpdateLabelAsync("owner", ["repo-a", "repo-b", "repo-c"], "priority/urgent", updatedLabel, cancellationToken);
@@ -279,7 +288,7 @@ public sealed class LabelServiceTests
             .DeleteLabelAsync("owner", Arg.Any<string>(), "status/blocked", cancellationToken)
             .Returns(Task.CompletedTask);
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         await sut.DeleteLabelAsync("owner", ["repo-a", "repo-b"], "status/blocked", cancellationToken);
@@ -298,7 +307,7 @@ public sealed class LabelServiceTests
             .DeleteLabelAsync("owner", "repo-a", "status/blocked", cancellationToken)
             .Returns(Task.FromException(new KeyNotFoundException("Label not found")));
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var action = async () => await sut.DeleteLabelAsync("owner", ["repo-a", "repo-b"], "status/blocked", cancellationToken);
@@ -321,7 +330,7 @@ public sealed class LabelServiceTests
             .DeleteLabelAsync("owner", "repo-b", "status/blocked", cancellationToken)
             .Returns(Task.FromException(new HttpRequestException("GitHub API failure")));
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var action = async () => await sut.DeleteLabelAsync("owner", ["repo-a", "repo-b", "repo-c"], "status/blocked", cancellationToken);
@@ -352,7 +361,7 @@ public sealed class LabelServiceTests
                 new Label { Name = "status/obsolete", Colour = "ffffff", Description = "Old", RepositoryName = "target-repo" },
             ]);
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.SyncLabelsAsync("source-owner", "source-repo", "target-owner", "target-repo", applyChanges: false, keepAreaLabels: true, cancellationToken);
@@ -413,7 +422,7 @@ public sealed class LabelServiceTests
             .DeleteLabelAsync("target-owner", "target-repo", "status/obsolete", cancellationToken)
             .Returns(Task.CompletedTask);
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.SyncLabelsAsync("source-owner", "source-repo", "target-owner", "target-repo", applyChanges: true, keepAreaLabels: true, cancellationToken);
@@ -447,7 +456,7 @@ public sealed class LabelServiceTests
             .GetLabelsAsync("target-owner", "target-repo", cancellationToken)
             .Returns(labels);
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.SyncLabelsAsync("source-owner", "source-repo", "target-owner", "target-repo", applyChanges: true, keepAreaLabels: true, cancellationToken);
@@ -481,7 +490,7 @@ public sealed class LabelServiceTests
                 new Label { Name = "legacy", Colour = "ffffff", Description = "Legacy", RepositoryName = "target-repo" },
             ]);
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.SyncLabelsAsync("source-owner", "source-repo", "target-owner", "target-repo", applyChanges: false, keepAreaLabels: true, cancellationToken);
@@ -515,7 +524,7 @@ public sealed class LabelServiceTests
             .DeleteLabelAsync("target-owner", "target-repo", Arg.Any<string>(), cancellationToken)
             .Returns(Task.CompletedTask);
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.SyncLabelsAsync("source-owner", "source-repo", "target-owner", "target-repo", applyChanges: true, keepAreaLabels: false, cancellationToken);
@@ -552,7 +561,7 @@ public sealed class LabelServiceTests
                 new Label { Name = "priority/high", Colour = "d93f0b", Description = "High", RepositoryName = "target-b" },
             ]);
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.PreviewLabelSynchronisationAsync(
@@ -595,7 +604,7 @@ public sealed class LabelServiceTests
                 return label with { RepositoryName = repo };
             });
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.ApplyLabelSynchronisationAsync(
@@ -634,7 +643,7 @@ public sealed class LabelServiceTests
             .DeleteLabelAsync("target-owner", "target-repo", "status/obsolete", cancellationToken)
             .Returns(Task.FromException(new HttpRequestException("GitHub API failure")));
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var action = async () => await sut.SyncLabelsAsync("source-owner", "source-repo", "target-owner", "target-repo", applyChanges: true, keepAreaLabels: true, cancellationToken);
@@ -648,7 +657,7 @@ public sealed class LabelServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.GetRecommendedTaxonomyAsync(cancellationToken);
@@ -676,7 +685,7 @@ public sealed class LabelServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.GetRecommendedLabelStrategiesAsync(cancellationToken);
@@ -699,7 +708,7 @@ public sealed class LabelServiceTests
                 new Label { Name = "documentation", Colour = "0075ca", Description = "Improvements or additions to documentation", RepositoryName = "repo-a" },
             ]);
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.PreviewRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], cancellationToken: cancellationToken);
@@ -726,7 +735,7 @@ public sealed class LabelServiceTests
                 new Label { Name = "area/docs", Colour = "0052cc", Description = "Documentation", RepositoryName = "repo-a" },
             ]);
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.PreviewRecommendedTaxonomyAsync(
@@ -758,7 +767,7 @@ public sealed class LabelServiceTests
                 new Label { Name = "epic", Colour = "5319e7", Description = "Legacy epic label", RepositoryName = "repo-a" },
             ]);
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.PreviewRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, keepAreaLabels: true, cancellationToken);
@@ -783,7 +792,7 @@ public sealed class LabelServiceTests
                 new Label { Name = "area/docs", Colour = "0052cc", Description = "Documentation", RepositoryName = "repo-a" },
             ]);
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.PreviewRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, keepAreaLabels: true, cancellationToken);
@@ -807,7 +816,7 @@ public sealed class LabelServiceTests
                 new Label { Name = "area/docs", Colour = "0052cc", Description = "Documentation", RepositoryName = "repo-a" },
             ]);
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.PreviewRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, keepAreaLabels: false, cancellationToken);
@@ -843,7 +852,7 @@ public sealed class LabelServiceTests
             .DeleteLabelAsync("owner", "repo-a", Arg.Any<string>(), cancellationToken)
             .Returns(Task.CompletedTask);
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, keepAreaLabels: true, cancellationToken);
@@ -887,7 +896,7 @@ public sealed class LabelServiceTests
             .DeleteLabelAsync("owner", "repo-a", "story", cancellationToken)
             .Returns(Task.CompletedTask);
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, keepAreaLabels: true, cancellationToken);
@@ -921,7 +930,7 @@ public sealed class LabelServiceTests
                 new Label { Name = "wontfix", Colour = "ffffff", Description = "This will not be worked on", RepositoryName = "repo-a" },
             ]);
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], cancellationToken: cancellationToken);
@@ -961,7 +970,7 @@ public sealed class LabelServiceTests
                 return value with { RepositoryName = repo };
             });
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a", "owner/repo-b"], cancellationToken: cancellationToken);
@@ -990,7 +999,7 @@ public sealed class LabelServiceTests
                 return value with { RepositoryName = repo };
             });
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a", "invalid-format"], cancellationToken: cancellationToken);
@@ -1006,7 +1015,7 @@ public sealed class LabelServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var action = async () => await sut.GetLabelsForRepositoriesAsync("owner", [], cancellationToken);
@@ -1024,7 +1033,7 @@ public sealed class LabelServiceTests
             .DeleteLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), cancellationToken)
             .Returns(Task.CompletedTask);
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
         var targets = new[]
         {
             new LabelBulkDeleteTargetDto("bug", ["owner/repo-a", "owner/repo-b"]),
@@ -1056,7 +1065,7 @@ public sealed class LabelServiceTests
             .DeleteLabelAsync("owner", "repo-b", "bug", cancellationToken)
             .Returns(Task.CompletedTask);
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
         var targets = new[] { new LabelBulkDeleteTargetDto("bug", ["owner/repo-a", "owner/repo-b"]) };
 
         // Act
@@ -1085,7 +1094,7 @@ public sealed class LabelServiceTests
             .DeleteLabelAsync("owner", "repo-a", "enhancement", cancellationToken)
             .Returns(Task.CompletedTask);
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
         var targets = new[]
         {
             new LabelBulkDeleteTargetDto("bug", ["owner/repo-a", "owner/repo-b"]),
@@ -1109,7 +1118,7 @@ public sealed class LabelServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         // Arrange
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         // Act
         var action = async () => await sut.BulkDeleteLabelsAsync([], cancellationToken);
@@ -1122,7 +1131,7 @@ public sealed class LabelServiceTests
     public async Task GetLabelMatrixAsync_RepositoryFullNamesNull_ThrowsArgumentNullException()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         var action = async () => await sut.GetLabelMatrixAsync(null!, cancellationToken);
 
@@ -1133,7 +1142,7 @@ public sealed class LabelServiceTests
     public async Task GetLabelMatrixAsync_EmptySelection_ReturnsEmptyWithoutCallingRepository()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         var result = await sut.GetLabelMatrixAsync([], cancellationToken);
 
@@ -1157,7 +1166,7 @@ public sealed class LabelServiceTests
                 new Label { Name = "priority/high", Colour = "d93f0b", Description = "High priority", RepositoryName = "repo-b" },
             ]);
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         var result = await sut.GetLabelMatrixAsync(["owner-b/repo-b", "owner-a/repo-a"], cancellationToken);
 
@@ -1188,7 +1197,7 @@ public sealed class LabelServiceTests
             .GetLabelsAsync("owner", "repo-a", cancellationToken, Arg.Any<bool>())
             .Returns([new Label { Name = "bug", Colour = "d73a4a", Description = " ", RepositoryName = "repo-a" }]);
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         var result = await sut.GetLabelMatrixAsync(["owner/repo-a"], cancellationToken);
 
@@ -1204,10 +1213,143 @@ public sealed class LabelServiceTests
             .GetLabelsAsync("owner", "repo-a", cancellationToken, true)
             .Returns([new Label { Name = "bug", Colour = "d73a4a", Description = "Bug", RepositoryName = "repo-a" }]);
 
-        var sut = new LabelService(_labelRepository);
+        var sut = CreateSut();
 
         _ = await sut.GetLabelMatrixAsync(["owner/repo-a"], cancellationToken, forceReload: true);
 
         await _labelRepository.Received(1).GetLabelsAsync("owner", "repo-a", cancellationToken, true);
+    }
+
+    [Fact]
+    public async Task RemapLabelAsync_ItemsHaveSource_AddsDestinationRemovesSourceAndDeletesSource()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        ArrangeLabels("story", "type/story");
+        _labelRepository
+            .GetWorkItemsWithLabelAsync("owner", "repo", "story", cancellationToken)
+            .Returns([new LabelledWorkItem { Number = 10 }, new LabelledWorkItem { Number = 11 }]);
+
+        var result = await CreateSut().RemapLabelAsync("owner", "repo", "story", "type/story", cancellationToken);
+
+        Assert.Equal(2, result.SucceededItemCount);
+        Assert.Equal(0, result.FailedItemCount);
+        Assert.True(result.SourceDeleted);
+        Assert.False(result.DestinationCreated);
+        await _gitHubService.Received(1).AddLabelsToTriageItemAsync("owner", "repo", 10, Arg.Is<IReadOnlyList<string>>(labels => labels.Count == 1 && labels[0] == "type/story"), cancellationToken);
+        await _gitHubService.Received(1).RemoveLabelFromTriageItemAsync("owner", "repo", 10, "story", cancellationToken);
+        await _gitHubService.Received(1).AddLabelsToTriageItemAsync("owner", "repo", 11, Arg.Is<IReadOnlyList<string>>(labels => labels.Count == 1 && labels[0] == "type/story"), cancellationToken);
+        await _gitHubService.Received(1).RemoveLabelFromTriageItemAsync("owner", "repo", 11, "story", cancellationToken);
+        await _labelRepository.Received(1).DeleteLabelAsync("owner", "repo", "story", cancellationToken);
+        await _labelRepository.DidNotReceive().UpdateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), Arg.Any<CancellationToken>());
+        await _labelRepository.DidNotReceive().CreateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RemapLabelAsync_DestinationMissing_CreatesDestinationBeforeRetagging()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        _labelRepository
+            .GetLabelsAsync("owner", "repo", cancellationToken, true)
+            .Returns([new Label { Name = "story", Colour = "1d76db", Description = "User story", RepositoryName = "repo" }]);
+        _labelRepository
+            .CreateLabelAsync("owner", "repo", Arg.Any<Label>(), cancellationToken)
+            .Returns(callInfo => callInfo.ArgAt<Label>(2) with { RepositoryName = "repo" });
+        _labelRepository
+            .GetWorkItemsWithLabelAsync("owner", "repo", "story", cancellationToken)
+            .Returns([new LabelledWorkItem { Number = 7 }]);
+
+        var result = await CreateSut().RemapLabelAsync("owner", "repo", "story", "type/story", cancellationToken);
+
+        Assert.True(result.DestinationCreated);
+        Assert.Equal("type/story", result.DestinationLabelName);
+        Assert.True(result.SourceDeleted);
+        await _labelRepository.Received(1).CreateLabelAsync(
+            "owner",
+            "repo",
+            Arg.Is<Label>(label => label.Name == "type/story" && label.Colour == "1d76db" && label.Description == "User story"),
+            cancellationToken);
+        await _gitHubService.Received(1).AddLabelsToTriageItemAsync("owner", "repo", 7, Arg.Is<IReadOnlyList<string>>(labels => labels.Count == 1 && labels[0] == "type/story"), cancellationToken);
+        await _labelRepository.Received(1).DeleteLabelAsync("owner", "repo", "story", cancellationToken);
+        await _labelRepository.DidNotReceive().UpdateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RemapLabelAsync_OneItemFails_ContinuesAndDoesNotDeleteSource()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        ArrangeLabels("story", "type/story");
+        _labelRepository
+            .GetWorkItemsWithLabelAsync("owner", "repo", "story", cancellationToken)
+            .Returns([new LabelledWorkItem { Number = 10 }, new LabelledWorkItem { Number = 11 }, new LabelledWorkItem { Number = 12 }]);
+        _gitHubService
+            .When(service => service.AddLabelsToTriageItemAsync("owner", "repo", 11, Arg.Any<IReadOnlyList<string>>(), cancellationToken))
+            .Throw(new HttpRequestException("GitHub API failure"));
+
+        var result = await CreateSut().RemapLabelAsync("owner", "repo", "story", "type/story", cancellationToken);
+
+        Assert.Equal(2, result.SucceededItemCount);
+        Assert.Equal(1, result.FailedItemCount);
+        Assert.False(result.SourceDeleted);
+        Assert.True(result.HasErrors);
+        Assert.Equal(11, Assert.Single(result.Errors).ItemNumber);
+        await _gitHubService.Received(1).AddLabelsToTriageItemAsync("owner", "repo", 12, Arg.Any<IReadOnlyList<string>>(), cancellationToken);
+        await _labelRepository.DidNotReceive().DeleteLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _labelRepository.DidNotReceive().UpdateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RemapLabelAsync_NoWorkItems_DeletesSource()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        ArrangeLabels("story", "type/story");
+        _labelRepository
+            .GetWorkItemsWithLabelAsync("owner", "repo", "story", cancellationToken)
+            .Returns([]);
+
+        var result = await CreateSut().RemapLabelAsync("owner", "repo", "story", "type/story", cancellationToken);
+
+        Assert.Equal(0, result.SucceededItemCount);
+        Assert.Equal(0, result.FailedItemCount);
+        Assert.True(result.SourceDeleted);
+        await _labelRepository.Received(1).DeleteLabelAsync("owner", "repo", "story", cancellationToken);
+        await _gitHubService.DidNotReceive().AddLabelsToTriageItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RemapLabelAsync_SameSourceAndDestination_ThrowsArgumentException()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+
+        var action = async () => await CreateSut().RemapLabelAsync("owner", "repo", "story", "Story", cancellationToken);
+
+        _ = await Assert.ThrowsAsync<ArgumentException>(action);
+        await _labelRepository.DidNotReceive().GetLabelsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>(), Arg.Any<bool>());
+    }
+
+    [Fact]
+    public async Task RemapLabelAsync_SourceMissing_ThrowsKeyNotFoundException()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        _labelRepository
+            .GetLabelsAsync("owner", "repo", cancellationToken, true)
+            .Returns([new Label { Name = "type/story", Colour = "1d76db", Description = "Story", RepositoryName = "repo" }]);
+
+        var action = async () => await CreateSut().RemapLabelAsync("owner", "repo", "story", "type/story", cancellationToken);
+
+        _ = await Assert.ThrowsAsync<KeyNotFoundException>(action);
+        await _labelRepository.DidNotReceive().DeleteLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
+    private LabelService CreateSut() => new(_labelRepository, _gitHubService);
+
+    private void ArrangeLabels(string sourceName, string destinationName)
+    {
+        _labelRepository
+            .GetLabelsAsync("owner", "repo", Arg.Any<CancellationToken>(), true)
+            .Returns(
+            [
+                new Label { Name = sourceName, Colour = "ededed", Description = "Source", RepositoryName = "repo" },
+                new Label { Name = destinationName, Colour = "1d76db", Description = "Destination", RepositoryName = "repo" },
+            ]);
     }
 }

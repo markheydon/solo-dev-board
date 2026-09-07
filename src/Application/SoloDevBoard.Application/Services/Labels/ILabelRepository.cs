@@ -37,4 +37,15 @@ public interface ILabelRepository
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>A task that represents the asynchronous delete operation.</returns>
     Task DeleteLabelAsync(string owner, string repo, string labelName, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves issues and pull requests that currently have the specified label.
+    /// Results are paginated from GitHub and are not cached across calls.
+    /// </summary>
+    /// <param name="owner">The GitHub account owner login.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="labelName">The label name to search for.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A read-only list of labelled issues and pull requests.</returns>
+    Task<IReadOnlyList<LabelledWorkItem>> GetWorkItemsWithLabelAsync(string owner, string repo, string labelName, CancellationToken cancellationToken = default);
 }
