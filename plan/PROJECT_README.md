@@ -49,7 +49,7 @@ Snapshot date: 7 September 2026.
 | `v0.4 - Board Rules Visualiser + Workflow Templates` | 25 | 0 | 100% |
 | `v1.0 - Production Ready` | 78 | 0 | 100% |
 | `v1.1 - Cross-Repo Planning & Refinement` | 91 | 0 | 100% |
-| `v1.2 - Planning polish, Reload & Templates` | 30 | 0 | 100% |
+| `v1.2 - Planning polish, Reload & Templates` | 32 | 0 | 100% |
 
 No open milestone. Phase stays blank for unmilestoned work ([DEC-027](https://github.com/markheydon/solo-dev-board/blob/main/plan/DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)). GitHub’s `v1.2` closed count includes milestoned pull requests.
 
