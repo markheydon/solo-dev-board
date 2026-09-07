@@ -17,11 +17,11 @@ Refresh this file during each [PM progress review](../.agents/workflows/pm-progr
 
 SoloDevBoard provides a single pane of glass for solo developers managing GitHub workloads across multiple repositories.
 
-**Status:** On track. Public releases [v1.0.0](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) (18 August 2026), [v1.1.0](https://github.com/markheydon/solo-dev-board/releases/tag/v1.1.0) (31 August 2026), and forthcoming [v1.2.0](https://github.com/markheydon/solo-dev-board/releases/tag/v1.2.0) (ready to tag). Open milestone: [`v1.2 - Planning polish, Reload & Templates`](https://github.com/markheydon/solo-dev-board/milestone/8) — **30 closed, 0 open**.
+**Status:** On track. Public releases [v1.0.0](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) (18 August 2026), [v1.1.0](https://github.com/markheydon/solo-dev-board/releases/tag/v1.1.0) (31 August 2026), and [v1.2.0](https://github.com/markheydon/solo-dev-board/releases/tag/v1.2.0) (7 September 2026). No open milestone (DEC-027 interregnum until the next named release is declared). Closed milestone: [`v1.2 - Planning polish, Reload & Templates`](https://github.com/markheydon/solo-dev-board/milestone/8) — **32 closed, 0 open**.
 
 ### Current focus
 
-**`v1.2`** — delivery complete. Tag **`v1.2.0`** after staging smoke test and GitHub Release publication. Do not start platform-blocked [#293](https://github.com/markheydon/solo-dev-board/issues/293) or [#391](https://github.com/markheydon/solo-dev-board/issues/391). Window-focus refetch ([#450](https://github.com/markheydon/solo-dev-board/issues/450)) stays unmilestoned and ice-boxed.
+**Post-`v1.2.0`.** Dogfood production **`v1.2.0`**. Leave planning and delivery idle until a next named milestone is declared. Do not start Todo [#491](https://github.com/markheydon/solo-dev-board/issues/491), platform-blocked [#293](https://github.com/markheydon/solo-dev-board/issues/293) or [#391](https://github.com/markheydon/solo-dev-board/issues/391), or [#498](https://github.com/markheydon/solo-dev-board/issues/498). Window-focus refetch ([#450](https://github.com/markheydon/solo-dev-board/issues/450)) stays unmilestoned and ice-boxed.
 
 ### Release history
 
@@ -33,7 +33,7 @@ SoloDevBoard provides a single pane of glass for solo developers managing GitHub
 | Visualisation + Templates | `v0.4 - Board Rules Visualiser + Workflow Templates` | `v0.4.0` | Complete |
 | Production Ready | `v1.0 - Production Ready` | `v1.0.0` | Complete |
 | Cross-Repo Planning & Refinement | `v1.1 - Cross-Repo Planning & Refinement` | `v1.1.0` | Complete — [`v1.1.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.1.0) (2026-08-31) |
-| Planning polish, Reload & Templates | `v1.2 - Planning polish, Reload & Templates` | `v1.2.0` | Ready to tag |
+| Planning polish, Reload & Templates | `v1.2 - Planning polish, Reload & Templates` | `v1.2.0` | Complete — [`v1.2.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.2.0) (2026-09-07) |
 
 Post-1.0 model: one open milestone at a time ([DEC-027](https://github.com/markheydon/solo-dev-board/blob/main/plan/DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)).
 
@@ -51,7 +51,7 @@ Snapshot date: 7 September 2026.
 | `v1.1 - Cross-Repo Planning & Refinement` | 91 | 0 | 100% |
 | `v1.2 - Planning polish, Reload & Templates` | 30 | 0 | 100% |
 
-Open milestone: `v1.2 - Planning polish, Reload & Templates` (ready to tag `v1.2.0`). Phase stays blank for this increment ([DEC-027](https://github.com/markheydon/solo-dev-board/blob/main/plan/DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)).
+No open milestone. Phase stays blank for unmilestoned work ([DEC-027](https://github.com/markheydon/solo-dev-board/blob/main/plan/DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)). GitHub’s `v1.2` closed count includes milestoned pull requests.
 
 ### Key resources
 
