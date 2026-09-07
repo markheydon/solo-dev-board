@@ -1,3 +1,4 @@
+using SoloDevBoard.Application.GitHub;
 using SoloDevBoard.Domain.Entities.Labels;
 
 namespace SoloDevBoard.Application.Services.Labels;
@@ -40,6 +41,44 @@ public sealed class LabelService : ILabelManagerService
         }
 
         return labels.Distinct().ToArray();
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Groups the requested repositories by owner, loads labels per owner, rewrites each
+    /// <see cref="LabelDto.RepositoryName"/> to <c>owner/repository</c>, then groups labels by name
+    /// to compute presence and missing-repository lists.
+    /// </remarks>
+    public async Task<IReadOnlyList<LabelMatrixRowDto>> GetLabelMatrixAsync(IReadOnlyList<string> repositoryFullNames, CancellationToken cancellationToken = default, bool forceReload = false)
+    {
+        ArgumentNullException.ThrowIfNull(repositoryFullNames);
+
+        var selectedFullNames = repositoryFullNames
+            .Where(fullName => !string.IsNullOrWhiteSpace(fullName))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(fullName => fullName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (selectedFullNames.Length == 0)
+        {
+            return [];
+        }
+
+        var repositoriesByOwner = RepositoryFullName.GroupByOwner(selectedFullNames);
+        if (repositoriesByOwner.Count == 0)
+        {
+            return [];
+        }
+
+        var consolidatedLabels = new List<LabelDto>();
+        foreach (var ownerGroup in repositoriesByOwner)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var labels = await GetLabelsForRepositoriesAsync(ownerGroup.Key, ownerGroup.Value, cancellationToken, forceReload).ConfigureAwait(false);
+            consolidatedLabels.AddRange(labels.Select(label => label with { RepositoryName = $"{ownerGroup.Key}/{label.RepositoryName}" }));
+        }
+
+        return BuildMatrixRows(consolidatedLabels, selectedFullNames);
     }
 
     /// <inheritdoc/>
@@ -565,6 +604,42 @@ public sealed class LabelService : ILabelManagerService
             cancellationToken.ThrowIfCancellationRequested();
             await _labelRepository.DeleteLabelAsync(targetOwner, targetRepo, label.Name, cancellationToken).ConfigureAwait(false);
         }
+    }
+
+    /// <summary>Groups loaded labels by name and computes missing repositories for the current selection.</summary>
+    /// <param name="labels">The labels loaded for the selected repositories, with owner-qualified repository names.</param>
+    /// <param name="selectedFullNames">The selected repository full names used as the matrix columns.</param>
+    /// <returns>A read-only list of matrix rows ordered by label name.</returns>
+    private static IReadOnlyList<LabelMatrixRowDto> BuildMatrixRows(IReadOnlyList<LabelDto> labels, IReadOnlyList<string> selectedFullNames)
+    {
+        var selectedSet = selectedFullNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        return labels
+            .GroupBy(label => label.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(group =>
+            {
+                var first = group.First();
+                var repositoriesWithLabel = group
+                    .Select(label => label.RepositoryName)
+                    .Where(repositoryName => !string.IsNullOrWhiteSpace(repositoryName))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(repositoryName => repositoryName, StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+
+                var missingRepositories = selectedSet
+                    .Except(repositoriesWithLabel, StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(repositoryName => repositoryName, StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+
+                return new LabelMatrixRowDto(
+                    first.Name,
+                    first.Colour,
+                    string.IsNullOrWhiteSpace(first.Description) ? LabelMatrixRowDto.MissingDescriptionDisplay : first.Description,
+                    repositoriesWithLabel,
+                    missingRepositories);
+            })
+            .OrderBy(row => row.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
     }
 
     /// <summary>Normalises, validates, and de-duplicates repository names for bulk operations.</summary>
