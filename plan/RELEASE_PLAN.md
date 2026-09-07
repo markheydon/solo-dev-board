@@ -140,6 +140,22 @@ Application version numbers are calculated automatically at build time by [MinVe
 
 ---
 
+### v1.3 - Usable solo workflow across repositories
+
+**Goal:** Formalise a usable daily workflow across multiple GitHub repositories for a solo developer, starting from real use of the shipped app rather than a second invented planning epic.
+
+**Scope:**
+- Label Manager remap of extras onto the recommended taxonomy without wiping issue and pull request history ([#491](https://github.com/markheydon/solo-dev-board/issues/491))
+- Further issues added from dogfood (Planning, Triage, and related surfaces) as they are filed and explicitly placed on this milestone
+
+**Out of milestone:** Window-focus refetch ([#450](https://github.com/markheydon/solo-dev-board/issues/450), ice-box); hosted private Projects v2 ([#293](https://github.com/markheydon/solo-dev-board/issues/293)); Aspire PM settings store ([#391](https://github.com/markheydon/solo-dev-board/issues/391)); server-backed template source ([#498](https://github.com/markheydon/solo-dev-board/issues/498)); ice-box catalogue and hygiene work unless promoted.
+
+**Status:** Open (declared 2026-09-07). Tag [`v1.3.0`](https://github.com/markheydon/solo-dev-board/releases) when shipped.
+
+**Target:** Not set — dates follow actual start per Roadmap date guidelines.
+
+---
+
 ## Release Process
 
 ```

@@ -118,7 +118,8 @@ The descriptive suffix names the milestone theme; it is not repeated in the rele
 | `v0.4 - Board Rules Visualiser + Workflow Templates` | `v0.4.0` | Closed | |
 | `v1.0 - Production Ready` | `v1.0.0` | Closed | Public release (2026-08-18) |
 | `v1.1 - Cross-Repo Planning & Refinement` | `v1.1.0` | Closed | Shipped 2026-08-31 — **91 closed, 0 open**. |
-| `v1.2 - Planning polish, Reload & Templates` | `v1.2.0` | Open | Ready to tag — **30 closed, 0 open** (declared 2026-08-31). |
+| `v1.2 - Planning polish, Reload & Templates` | `v1.2.0` | Closed | Shipped 2026-09-07 — [`v1.2.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.2.0). |
+| `v1.3 - Usable solo workflow across repositories` | `v1.3.0` | Open | Declared 2026-09-07 — locked-in start [#491](https://github.com/markheydon/solo-dev-board/issues/491). |
 
 The unused `v1.2.0 - Cross-Repo Planning` milestone was closed then **deleted** on 2026-08-18 after work moved to `v1.1 - Cross-Repo Planning & Refinement`. The current `v1.2` milestone is a later, different increment (Planning polish, Reload, and templates), not a revival of that deleted planning-only bucket.
 

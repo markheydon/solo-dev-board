@@ -23,9 +23,10 @@ For historical backlog content (pre-migration), see [archive/BACKLOG-2026-07-18.
 | Visualisation + Templates | `v0.4 - Board Rules Visualiser + Workflow Templates` | `v0.4.0` | Complete |
 | Production Ready | `v1.0 - Production Ready` | `v1.0.0` | Complete — [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) (2026-08-18) |
 | Cross-Repo Planning & Refinement | `v1.1 - Cross-Repo Planning & Refinement` | `v1.1.0` | Complete — [`v1.1.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.1.0) (2026-08-31) |
-| Planning polish, Reload & Templates | `v1.2 - Planning polish, Reload & Templates` | `v1.2.0` | Ready to tag — [milestone](https://github.com/markheydon/solo-dev-board/milestone/8) (30 closed, 0 open) |
+| Planning polish, Reload & Templates | `v1.2 - Planning polish, Reload & Templates` | `v1.2.0` | Complete — [`v1.2.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.2.0) (2026-09-07) |
+| Usable solo workflow across repositories | `v1.3 - Usable solo workflow across repositories` | `v1.3.0` | Open — [milestone](https://github.com/markheydon/solo-dev-board/milestone/9) |
 
-The open milestone is `v1.2 - Planning polish, Reload & Templates`. Tag `v1.2.0` after staging smoke test and GitHub Release publication. Further work stays unmilestoned until the next release is declared.
+The open milestone is `v1.3 - Usable solo workflow across repositories`. Tag `v1.3.0` when the declared slice ships. Further work stays unmilestoned until it is explicitly placed on this milestone.
 
 **Unmilestoned backlog:** [#293](https://github.com/markheydon/solo-dev-board/issues/293) (platform-blocked private user-owned Projects v2 under hosted sign-in); [#391](https://github.com/markheydon/solo-dev-board/issues/391) (Aspire PM settings store); [#498](https://github.com/markheydon/solo-dev-board/issues/498) (persist Actions template source — blocked by #391); [#450](https://github.com/markheydon/solo-dev-board/issues/450) (window-focus refetch — ice-box, later Reload follow-up); ice-box catalogue and hygiene work ([#381](https://github.com/markheydon/solo-dev-board/issues/381), [#397](https://github.com/markheydon/solo-dev-board/issues/397), [#411](https://github.com/markheydon/solo-dev-board/issues/411), [#435](https://github.com/markheydon/solo-dev-board/issues/435)–[#439](https://github.com/markheydon/solo-dev-board/issues/439), [#470](https://github.com/markheydon/solo-dev-board/issues/470)). Closed ice-box direction: [#475](https://github.com/markheydon/solo-dev-board/issues/475) (see [`PRODUCT_OPERATING_SYSTEM.md`](PRODUCT_OPERATING_SYSTEM.md)). See [open issues](https://github.com/markheydon/solo-dev-board/issues?q=is%3Aissue+is%3Aopen).
 
@@ -33,19 +34,16 @@ Implementation phases in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) are hi
 
 ## Key features (remaining open work)
 
-Locked-in `v1.2` delivery is the open queue. Remaining work stays **unmilestoned**.
+Locked-in `v1.3` delivery is the open queue. Remaining work stays **unmilestoned** until promoted.
 
 | Work | Issues | Milestone |
 |------|--------|-----------|
-| Optional board-scoped Daily Focus | [#403](https://github.com/markheydon/solo-dev-board/issues/403) | `v1.2` |
-| Reload from GitHub (keep selection) | [#447](https://github.com/markheydon/solo-dev-board/issues/447), [#449](https://github.com/markheydon/solo-dev-board/issues/449), [#451](https://github.com/markheydon/solo-dev-board/issues/451) | `v1.2` |
-| Hosted GitHub HttpClient split | [#453](https://github.com/markheydon/solo-dev-board/issues/453) | `v1.2` |
-| Custom template repositories | [#292](https://github.com/markheydon/solo-dev-board/issues/292), [#497](https://github.com/markheydon/solo-dev-board/issues/497), [#499](https://github.com/markheydon/solo-dev-board/issues/499) | `v1.2` |
-| Triage action-surface usability | [#492](https://github.com/markheydon/solo-dev-board/issues/492) | `v1.2` |
+| Remap extras onto the recommended taxonomy | [#491](https://github.com/markheydon/solo-dev-board/issues/491), [#519](https://github.com/markheydon/solo-dev-board/issues/519)–[#521](https://github.com/markheydon/solo-dev-board/issues/521) | `v1.3` |
 | Window-focus refetch | [#450](https://github.com/markheydon/solo-dev-board/issues/450) | Unmilestoned (ice-box; later follow-up) |
 | Hosted private Projects v2 | [#293](https://github.com/markheydon/solo-dev-board/issues/293) | Unmilestoned (platform-blocked) |
+| Aspire PM settings store | [#391](https://github.com/markheydon/solo-dev-board/issues/391) | Unmilestoned (platform-blocked) |
 
-Deferred slices ([#290](https://github.com/markheydon/solo-dev-board/issues/290)–[#291](https://github.com/markheydon/solo-dev-board/issues/291)) and Planning ([#272](https://github.com/markheydon/solo-dev-board/issues/272)–[#288](https://github.com/markheydon/solo-dev-board/issues/288)) shipped on `v1.1`. [#292](https://github.com/markheydon/solo-dev-board/issues/292) is now on `v1.2`.
+Deferred slices and Planning shipped on `v1.1`. Reload, custom templates, and Triage Save and next shipped on `v1.2`.
 
 ## Shipped summary
 

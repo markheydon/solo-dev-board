@@ -74,6 +74,32 @@
 - Preview and Confirm list matching names as kept (area prefix) when the nested box is ticked; they are true extras when it is unticked and remove-outside is on.
 - Synchronise extra deletes on the target follow the same keep-versus-delete rule (matching nested copy if a remove-outside control exists there).
 
+## Recommended taxonomy — remap extras (`v1.3`, #491)
+
+When **Remove labels outside taxonomy** is on, Preview lists extras as **remap rows**, not a delete-only list. Apply retags issues and pull requests onto the destination, then deletes the source. One-Click Migration is unchanged.
+
+```
++-------------------------------------------------------------+
+| Preview extras (remove-outside on)                          |
+| Source          Destination                         Action  |
+| story           [type/story        v]               Skip    |
+| epic            [type/epic         v]               Skip    |
+| enhancement     [(choose or skip)  v]               Skip    |
+| documentation   [type/documentation v]              Skip    |
++-------------------------------------------------------------+
+| Confirm: retag then delete mapped sources.                  |
+| Skip / keep leaves that name on the repository.             |
+| [Back]  [Apply remap]                                       |
++-------------------------------------------------------------+
+```
+
+- Destination picker is a `MudSelect` of recommended taxonomy names plus other existing labels on that repository. Suggested leaf matches (`story` → `type/story`) and clear GitHub-default counterparts (`documentation` → `type/documentation`) are pre-selected. Ambiguous defaults (`enhancement`, `question`, `wontfix`) start as skip.
+- Keep `area/*` (DEC-034) excludes those names from the source list when the nested keep control is on.
+- Skip / keep is always valid. Delete-without-remap is a separate, explicit confirmation — not the default for a row that still has a destination.
+- Apply is preview-first. Disable repeat submit while the batch is running. Report per-repository success and failure counts. Do not delete a source on that repository if any retag failed.
+- If the destination name does not exist, create it (or rely on Recommended Taxonomy create-missing) before retagging. Do not rename a source onto a name that already exists.
+- Suggested test ids: `labels-recommended-remap-table`, `labels-recommended-remap-destination-{source}`, `labels-recommended-remap-skip-{source}`, `labels-recommended-remap-apply-button`.
+
 ## Interaction Notes
 - Repository selector sets page-level context and filters all tabs.
 - Action strip adapts to selected tab (e.g., synchronise actions only in Synchronise tab).
