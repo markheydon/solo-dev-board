@@ -136,4 +136,5 @@ The following are explicitly **not** in scope for the current version of SoloDev
 | 2026-09-01 | Added Triage action-surface usability ([#492](https://github.com/markheydon/solo-dev-board/issues/492)) to **`v1.2`**. Screen layout only (Save and next / duplicate / skip); opinionated-workflow integration stays later. | Solo developer |
 | 2026-09-02 | Custom template repositories (#292) specified for **`v1.2`**: one GitHub YAML source, inferred `{{tokens}}`, merged catalogue, localStorage last-used only (DEC-038). Server persistence and parameter profiles (#436) stay later. | Solo developer |
 | 2026-09-04 | Custom template source UI (#292) amended: catalogue `RepositorySelector` plus manual `owner/name` field (DEC-038 amended). Typed-field-only source rejected after PR #501 dogfood. | Solo developer |
+| 2026-09-07 | **`v1.2 - Planning polish, Reload & Templates`** delivery complete (30 closed, 0 open). Ready to tag [`v1.2.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.2.0) after staging smoke test. User guides and changelog updated; window-focus refetch (#450) and server-backed template source (#498) stay later. | Solo developer |
 

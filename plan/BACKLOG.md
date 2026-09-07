@@ -13,7 +13,7 @@ For historical backlog content (pre-migration), see [archive/BACKLOG-2026-07-18.
 | [Project info pane README](PROJECT_README.md) | Canonical copy of the Project #8 info pane text |
 | [Milestones](https://github.com/markheydon/solo-dev-board/milestones) | Release targeting |
 
-## Roadmap status (2026-08-31)
+## Roadmap status (2026-09-07)
 
 | Release | GitHub milestone | Release tag | Status |
 |---------|------------------|-------------|--------|
@@ -23,9 +23,9 @@ For historical backlog content (pre-migration), see [archive/BACKLOG-2026-07-18.
 | Visualisation + Templates | `v0.4 - Board Rules Visualiser + Workflow Templates` | `v0.4.0` | Complete |
 | Production Ready | `v1.0 - Production Ready` | `v1.0.0` | Complete — [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) (2026-08-18) |
 | Cross-Repo Planning & Refinement | `v1.1 - Cross-Repo Planning & Refinement` | `v1.1.0` | Complete — [`v1.1.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.1.0) (2026-08-31) |
-| Planning polish, Reload & Templates | `v1.2 - Planning polish, Reload & Templates` | `v1.2.0` | Open — [milestone](https://github.com/markheydon/solo-dev-board/milestone/8) |
+| Planning polish, Reload & Templates | `v1.2 - Planning polish, Reload & Templates` | `v1.2.0` | Ready to tag — [milestone](https://github.com/markheydon/solo-dev-board/milestone/8) (30 closed, 0 open) |
 
-The open milestone is `v1.2 - Planning polish, Reload & Templates`. Further work stays unmilestoned until the next release is declared.
+The open milestone is `v1.2 - Planning polish, Reload & Templates`. Tag `v1.2.0` after staging smoke test and GitHub Release publication. Further work stays unmilestoned until the next release is declared.
 
 **Unmilestoned backlog:** [#293](https://github.com/markheydon/solo-dev-board/issues/293) (platform-blocked private user-owned Projects v2 under hosted sign-in); [#391](https://github.com/markheydon/solo-dev-board/issues/391) (Aspire PM settings store); [#498](https://github.com/markheydon/solo-dev-board/issues/498) (persist Actions template source — blocked by #391); [#450](https://github.com/markheydon/solo-dev-board/issues/450) (window-focus refetch — ice-box, later Reload follow-up); ice-box catalogue and hygiene work ([#381](https://github.com/markheydon/solo-dev-board/issues/381), [#397](https://github.com/markheydon/solo-dev-board/issues/397), [#411](https://github.com/markheydon/solo-dev-board/issues/411), [#435](https://github.com/markheydon/solo-dev-board/issues/435)–[#439](https://github.com/markheydon/solo-dev-board/issues/439), [#470](https://github.com/markheydon/solo-dev-board/issues/470)). Closed ice-box direction: [#475](https://github.com/markheydon/solo-dev-board/issues/475) (see [`PRODUCT_OPERATING_SYSTEM.md`](PRODUCT_OPERATING_SYSTEM.md)). See [open issues](https://github.com/markheydon/solo-dev-board/issues?q=is%3Aissue+is%3Aopen).
 
