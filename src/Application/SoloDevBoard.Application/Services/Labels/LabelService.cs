@@ -197,6 +197,11 @@ public sealed class LabelService : ILabelManagerService
     }
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// Ensures the destination label exists, then adds it to each labelled item and removes the source.
+    /// The source label is deleted only when every item retag succeeded. This path never calls
+    /// <see cref="ILabelRepository.UpdateLabelAsync"/>, so rename is not used as a merge.
+    /// </remarks>
     public async Task<LabelRemapResultDto> RemapLabelAsync(string owner, string repo, string sourceLabelName, string destinationLabelName, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);

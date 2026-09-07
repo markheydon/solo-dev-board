@@ -124,6 +124,11 @@ public sealed class GitHubLabelRepository : ILabelRepository
     }
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// Calls <c>GET /repos/{owner}/{repo}/issues</c> with <c>state=all</c> and a single label filter.
+    /// GitHub includes pull requests in that list; they are kept so remap retags both issues and pull requests.
+    /// Pages follow <c>Link: rel="next"</c>. The result is not stored in <see cref="GitHubResponseCache"/>.
+    /// </remarks>
     public async Task<IReadOnlyList<LabelledWorkItem>> GetWorkItemsWithLabelAsync(string owner, string repo, string labelName, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
@@ -150,6 +155,7 @@ public sealed class GitHubLabelRepository : ILabelRepository
         return client;
     }
 
+    /// <summary>GitHub issues-list payload used only to read the item number, including pull requests.</summary>
     private sealed record IssueNumberResponseDto
     {
         [JsonPropertyName("number")]
