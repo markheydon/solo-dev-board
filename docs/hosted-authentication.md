@@ -75,6 +75,15 @@ Full OAuth callback and post-login journeys remain manual or staging validation.
 - You can also sign out manually from the app menu at any time when hosted sign-in is enabled.
 - Admission control is applied after authentication, based on allow-list configuration.
 
+## Outbound HTTP clients
+
+Hosted sign-in registers two named `HttpClient` instances:
+
+- **`HostedGitHubOAuthClient`** — OAuth token exchange and refresh against `github.com` (form-encoded requests).
+- **`GitHubApi`** — GitHub REST API calls after sign-in (JSON `Accept` and application `User-Agent` defaults).
+
+Splitting OAuth and API traffic avoids sending REST headers on token endpoints and keeps telemetry and handler configuration scoped per use case ([#453](https://github.com/markheydon/solo-dev-board/issues/453)).
+
 ## Projects v2 access under hosted sign-in
 
 GitHub App sign-in can load **public** Projects v2 boards linked to a repository, but **private user-owned** Projects v2 are often inaccessible to the app token even when you are project admin. GitHub may report linked boards that SoloDevBoard cannot read.
