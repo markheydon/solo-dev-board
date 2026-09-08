@@ -716,9 +716,10 @@ public sealed class LabelsTests
         // Assert
         cut.WaitForAssertion(() =>
         {
-            Assert.Contains("Delete: 1", cut.Markup);
-            Assert.Contains("Labels to delete", cut.Markup);
+            Assert.Contains("Remap: 1", cut.Markup);
+            Assert.Contains("labels-recommended-remap-table", cut.Markup);
             Assert.Contains("dependencies", cut.Markup);
+            Assert.DoesNotContain("Labels to delete", cut.Markup);
         });
 
         await _labelManagerService.Received(1).PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), true, true, Arg.Any<CancellationToken>());

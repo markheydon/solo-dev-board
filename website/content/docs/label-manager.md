@@ -120,29 +120,30 @@ Current built-in strategies:
 
 ### Remove labels outside taxonomy
 
-By default, recommended taxonomy apply only creates and updates labels so existing repository labels are left alone. Turn on **Remove labels outside taxonomy** when you want preview and apply to also delete every label whose name is not in the selected strategy (case-insensitive match).
+By default, recommended taxonomy apply only creates and updates labels so existing repository labels are left alone. Turn on **Remove labels outside taxonomy** when you want preview and apply to handle every label whose name is not in the selected strategy (case-insensitive match).
 
 When that option is on, a nested **Keep `area/*` labels** checkbox appears (on by default). Those labels are listed as kept (area prefix) in preview and are not deleted unless you untick the nested option.
 
 {{< callout type="warning" >}}
-There is no protected allow-list for other extras: GitHub defaults (`bug`, `enhancement`, and similar), Dependabot labels such as `dependencies`, and any other non-strategy label are removed when listed. Preview first.
+There is no protected allow-list for other extras: GitHub defaults (`bug`, `enhancement`, and similar), Dependabot labels such as `dependencies`, and any other non-strategy label are candidates for remap or delete when remove-outside is on. Preview first.
 {{< /callout >}}
 
 When remove-outside is on:
 
-- Preview summary counts include **Delete**, alongside Create, Update, and Skip.
-- Preview lists **Labels to delete** for each repository.
-- When **Keep `area/*` labels** is on, excluded area labels are summarised by count only (no per-label table); they are not deleted.
-- Apply removes listed deletes after you confirm, then reports a deleted count per repository.
-- If a label cannot be deleted (for example it is still applied to open issues or pull requests), SoloDevBoard shows a clear per-label error and continues with the rest of the batch.
+- Preview summary counts include **Remap** for extras, alongside Create, Update, and Skip.
+- Preview lists **Remap extras** as a table with a destination picker per source label, plus **Skip** and **Delete without remap** actions.
+- Suggested destinations pre-fill clear leaf matches (`story` → `type/story`) and obvious GitHub-default counterparts (`documentation` → `type/documentation`). Ambiguous defaults such as `enhancement`, `question`, and `wontfix` start as skip until you choose.
+- **Skip / keep** leaves the source label on the repository. **Delete without remap** removes the label without retagging issues or pull requests; SoloDevBoard asks for explicit confirmation before applying those rows.
+- **Apply remap** runs create and update steps first, then retags issues and pull requests onto each mapped destination and deletes the source only when every retag for that repository succeeded. Per-repository success and failure counts appear in the summary.
+- When **Keep `area/*` labels** is on, excluded area labels are summarised by count only (no per-label table); they are not offered as remap sources.
 
 Leave remove-outside off for routine taxonomy rollout when you only want to add or correct canonical labels.
 
 ### Preview and apply summary
 
-The preview shows the labels that will be created, updated, deleted (when the option is on), and skipped for each selected repository. Labels that already match the selected strategy exactly are skipped, and no redundant API update call is made for those labels.
+The preview shows the labels that will be created, updated, remapped (when remove-outside is on), or skipped for each selected repository. Labels that already match the selected strategy exactly are skipped, and no redundant API update call is made for those labels.
 
-The apply summary is shown per repository and includes created, updated, deleted, and skipped counts. If one repository fails due to a GitHub API error, the summary marks that repository with an error while still showing successful outcomes for other repositories.
+The apply summary is shown per repository and includes created, updated, deleted (when remove-outside is off), remapped, and skipped counts. Remap rows that failed to retag every item keep the source label and list per-item errors. If one repository fails due to a GitHub API error, the summary marks that repository with an error while still showing successful outcomes for other repositories.
 
 Strategies are built in to the application. Custom strategy files that you maintain outside the shipped catalogue remain a later increment.
 
