@@ -1599,6 +1599,32 @@ public sealed class LabelServiceTests
         Assert.Equal("Label still referenced", deleteError.ErrorMessage);
     }
 
+    [Fact]
+    public async Task RemapLabelAsync_WhenItemHasOtherLabels_AddsDestinationAndRemovesSourceOnly()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        ArrangeLabels("story", "type/story");
+        _labelRepository
+            .GetWorkItemsWithLabelAsync("owner", "repo", "story", cancellationToken)
+            .Returns([new LabelledWorkItem { Number = 42 }]);
+
+        await CreateSut().RemapLabelAsync("owner", "repo", "story", "type/story", cancellationToken: cancellationToken);
+
+        await _gitHubService.Received(1).AddLabelsToTriageItemAsync(
+            "owner",
+            "repo",
+            42,
+            Arg.Is<IReadOnlyList<string>>(labels => labels.Count == 1 && labels[0] == "type/story"),
+            cancellationToken);
+        await _gitHubService.Received(1).RemoveLabelFromTriageItemAsync("owner", "repo", 42, "story", cancellationToken);
+        await _labelRepository.DidNotReceive().UpdateLabelAsync(
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<Label>(),
+            Arg.Any<CancellationToken>());
+    }
+
     private LabelService CreateSut() => new(_labelRepository, _gitHubService);
 
     private static LabelledWorkItem CreateLabelledWorkItem(int number, params string[] labelNames)

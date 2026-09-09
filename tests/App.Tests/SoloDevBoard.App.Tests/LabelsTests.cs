@@ -1595,6 +1595,144 @@ public sealed class LabelsTests
         });
     }
 
+    [Fact]
+    public async Task Labels_RecommendedTaxonomy_BeforePreview_DoesNotShowApplyButton()
+    {
+        var repoA = CreateRepository("owner", "repo-a");
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
+        await SelectRepositoriesAsync(cut, repoA);
+        await ActivateTabAsync(cut, "Recommended taxonomy");
+
+        Assert.Empty(cut.FindAll("[data-testid='confirm-apply-taxonomy-button']"));
+        Assert.Empty(cut.FindAll("[data-testid='labels-recommended-remap-apply-button']"));
+    }
+
+    [Fact]
+    public async Task Labels_PreviewRecommendedTaxonomy_WhenRemapExtras_ShowsRemapApplyButtonAndTableTestIds()
+    {
+        var repoA = CreateRepository("owner", "repo-a");
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
+
+        _labelManagerService.PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), true, true, Arg.Any<IProgress<string>?>(), Arg.Any<CancellationToken>()).Returns([
+                new RecommendedTaxonomyRepositoryPreviewDto(
+                    "owner/repo-a",
+                    [],
+                    [],
+                    [],
+                    [
+                        new LabelDto("epic", "5319e7", "Legacy epic label", "owner/repo-a"),
+                        new LabelDto("dependencies", "0366d6", "Dependencies", "owner/repo-a"),
+                    ],
+                    [],
+                    []),
+            ]);
+
+        await using var ctx = CreateContext();
+
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
+        await SelectRepositoriesAsync(cut, repoA);
+        await ActivateTabAsync(cut, "Recommended taxonomy");
+
+        var checkbox = cut.FindComponent<MudCheckBox<bool>>();
+        await cut.InvokeAsync(() => checkbox.Instance.ValueChanged.InvokeAsync(true));
+        cut.Find("[data-testid='preview-taxonomy-button']").Click();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Single(cut.FindAll("[data-testid='labels-recommended-remap-table']"));
+            Assert.NotEmpty(cut.FindAll("[data-testid='labels-recommended-remap-destination-epic']"));
+            Assert.NotEmpty(cut.FindAll("[data-testid='labels-recommended-remap-destination-dependencies']"));
+
+            var applyButton = cut.Find("[data-testid='labels-recommended-remap-apply-button']");
+            Assert.Contains("Apply remap", applyButton.TextContent, StringComparison.Ordinal);
+            Assert.False(applyButton.HasAttribute("disabled"));
+        });
+    }
+
+    [Fact]
+    public async Task Labels_ApplyRecommendedTaxonomy_WhenRemapRowSkipped_DoesNotRemapSkippedLabel()
+    {
+        var repoA = CreateRepository("owner", "repo-a");
+
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>()).Returns([repoA]);
+
+        _labelManagerService.PreviewRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), true, true, Arg.Any<IProgress<string>?>(), Arg.Any<CancellationToken>()).Returns([
+                new RecommendedTaxonomyRepositoryPreviewDto(
+                    "owner/repo-a",
+                    [],
+                    [],
+                    [],
+                    [
+                        new LabelDto("epic", "5319e7", "Legacy epic label", "owner/repo-a"),
+                        new LabelDto("dependencies", "0366d6", "Dependencies", "owner/repo-a"),
+                    ],
+                    [],
+                    []),
+            ]);
+
+        _labelManagerService.ApplyRecommendedTaxonomyWithRemapAsync(
+                Arg.Any<string>(),
+                Arg.Any<IReadOnlyList<string>>(),
+                Arg.Any<IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto>>(),
+                Arg.Any<IReadOnlyDictionary<string, IReadOnlyList<RecommendedTaxonomyRemapActionDto>>>(),
+                true,
+                Arg.Any<IProgress<string>?>(),
+                Arg.Any<CancellationToken>())
+            .Returns(new RecommendedTaxonomyRemapApplyResultDto(
+                [
+                    new RecommendedTaxonomyRepositoryResultDto("owner/repo-a", 0, 0, 0, 0, [], null),
+                ],
+                [
+                    new LabelRemapResultDto("repo-a", "epic", "type/epic", 1, 0, true, false, []),
+                ]));
+
+        _labelManagerService.GetLabelMatrixAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<LabelMatrixRowDto>());
+
+        await using var ctx = CreateContext();
+
+        var cut = ctx.Render<Labels>();
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='repository-autocomplete']"));
+        await SelectRepositoriesAsync(cut, repoA);
+        await ActivateTabAsync(cut, "Recommended taxonomy");
+
+        var checkbox = cut.FindComponent<MudCheckBox<bool>>();
+        await cut.InvokeAsync(() => checkbox.Instance.ValueChanged.InvokeAsync(true));
+        cut.Find("[data-testid='preview-taxonomy-button']").Click();
+
+        cut.WaitForAssertion(() => _ = cut.Find("[data-testid='labels-recommended-remap-destination-dependencies']"));
+
+        var dependenciesAutocomplete = cut.FindComponents<MudAutocomplete<string>>()
+            .Single(autocomplete => autocomplete.Markup.Contains("labels-recommended-remap-destination-dependencies", StringComparison.Ordinal));
+        await cut.InvokeAsync(() => dependenciesAutocomplete.Instance.ValueChanged.InvokeAsync(null));
+
+        cut.Find("[data-testid='labels-recommended-remap-apply-button']").Click();
+
+        cut.WaitForAssertion(() =>
+        {
+            _snackbarProvider.WaitForAssertion(() =>
+                SnackbarTestAssertions.AssertLatestContains(_snackbarProvider, "Applied taxonomy successfully."));
+        });
+
+        await _labelManagerService.Received(1).ApplyRecommendedTaxonomyWithRemapAsync(
+            Arg.Any<string>(),
+            Arg.Any<IReadOnlyList<string>>(),
+            Arg.Any<IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto>>(),
+            Arg.Is<IReadOnlyDictionary<string, IReadOnlyList<RecommendedTaxonomyRemapActionDto>>>(actions =>
+                actions["owner/repo-a"].Single(action => action.SourceName == "epic").DestinationName == "type/epic"
+                && actions["owner/repo-a"].Single(action => action.SourceName == "dependencies").DestinationName == null
+                && !actions["owner/repo-a"].Single(action => action.SourceName == "dependencies").DeleteWithoutRemap),
+            true,
+            Arg.Any<IProgress<string>?>(),
+            Arg.Any<CancellationToken>());
+    }
+
     private BunitContext CreateContext(IDialogService? dialogService = null)
     {
         var ctx = new BunitContext();

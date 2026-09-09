@@ -60,4 +60,41 @@ test.describe('Label Manager shell', () => {
     await expect(page.getByTestId('bulk-delete-labels-button')).toBeDisabled();
     await expect(page.getByTestId('bulk-delete-labels-button')).toHaveText('Delete');
   });
+
+  test('recommended taxonomy remap workflow exposes wireframe test ids when preview is available', async ({ page }) => {
+    await page.goto('/labels');
+
+    await expect(page.getByText('Loading repositories...')).toBeHidden({ timeout: 15_000 });
+    await page.getByRole('tab', { name: 'Recommended taxonomy' }).click();
+    await expect(page.getByTestId('preview-taxonomy-button')).toBeVisible();
+    await expect(page.getByTestId('remove-labels-outside-taxonomy-checkbox')).toBeVisible();
+
+    const loadError = page.getByTestId('label-manager-error-alert');
+    const repositoryAutocomplete = page.getByTestId('repository-autocomplete');
+    await expect(loadError.or(repositoryAutocomplete)).toBeVisible({ timeout: 15_000 });
+
+    if (await loadError.isVisible()) {
+      return;
+    }
+
+    const removeOutsideCheckbox = page.getByTestId('remove-labels-outside-taxonomy-checkbox');
+    if (await removeOutsideCheckbox.isEnabled()) {
+      await removeOutsideCheckbox.click();
+      await expect(page.getByTestId('keep-area-labels-checkbox')).toBeVisible();
+    }
+
+    await expect(page.getByTestId('confirm-apply-taxonomy-button')).toHaveCount(0);
+    await expect(page.getByTestId('labels-recommended-remap-apply-button')).toHaveCount(0);
+
+    await page.getByTestId('preview-taxonomy-button').click();
+
+    const remapTable = page.getByTestId('labels-recommended-remap-table');
+    const confirmApplyButton = page.getByTestId('confirm-apply-taxonomy-button');
+    await expect(remapTable.or(confirmApplyButton)).toBeVisible({ timeout: 15_000 });
+
+    if (await remapTable.isVisible()) {
+      await expect(page.getByTestId('labels-recommended-remap-apply-button')).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Apply remap' })).toBeVisible();
+    }
+  });
 });
