@@ -205,6 +205,34 @@ export async function prepareLabelManagerForCapture(page: Page): Promise<void> {
 }
 
 /**
+ * Prepares Recommended taxonomy Preview with remove-outside on so Remap extras is visible.
+ * Preview only — does not apply taxonomy.
+ * @param page Playwright page.
+ */
+export async function prepareLabelManagerRemapPreviewForCapture(page: Page): Promise<void> {
+  await openFeatureForCapture(page, '/labels');
+  await selectRepositoryInAutocomplete(page, 'repository-autocomplete');
+
+  await page.getByRole('tab', { name: 'Recommended taxonomy' }).click();
+  await expect(page.getByRole('heading', { name: 'Apply recommended taxonomy' })).toBeVisible({
+    timeout: 15_000,
+  });
+
+  const removeOutsideCheckbox = page.getByTestId('remove-labels-outside-taxonomy-checkbox');
+  await expect(removeOutsideCheckbox).toBeEnabled({ timeout: 15_000 });
+  await removeOutsideCheckbox.click();
+  await expect(page.getByTestId('keep-area-labels-checkbox')).toBeVisible({ timeout: 15_000 });
+
+  const previewButton = page.getByTestId('preview-taxonomy-button');
+  await expect(previewButton).toBeEnabled({ timeout: 15_000 });
+  await previewButton.click();
+
+  await expect(page.getByTestId('taxonomy-preview-card')).toBeVisible({ timeout: 90_000 });
+  await expect(page.getByTestId('labels-recommended-remap-table')).toBeVisible({ timeout: 15_000 });
+  await page.waitForTimeout(1_000);
+}
+
+/**
  * Prepares One-Click Migration with the example repository selected and Project board columns enabled.
  * @param page Playwright page.
  */

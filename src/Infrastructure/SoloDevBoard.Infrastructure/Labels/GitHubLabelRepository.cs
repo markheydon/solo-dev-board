@@ -139,10 +139,19 @@ public sealed class GitHubLabelRepository : ILabelRepository
         var endpoint =
             $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/issues?state=all&labels={Uri.EscapeDataString(labelName.Trim())}&per_page=100";
 
-        return await GitHubService.GetPagedAsync<IssueNumberResponseDto, LabelledWorkItem>(
+        return await GitHubService.GetPagedAsync<IssueWithLabelsResponseDto, LabelledWorkItem>(
                 client,
                 endpoint,
-                static dto => dto.Number > 0 ? new LabelledWorkItem { Number = dto.Number } : null,
+                static dto => dto.Number > 0
+                    ? new LabelledWorkItem
+                    {
+                        Number = dto.Number,
+                        LabelNames = dto.Labels
+                            .Where(label => !string.IsNullOrWhiteSpace(label.Name))
+                            .Select(label => label.Name)
+                            .ToArray(),
+                    }
+                    : null,
                 JsonOptions,
                 cancellationToken)
             .ConfigureAwait(false);
@@ -155,11 +164,20 @@ public sealed class GitHubLabelRepository : ILabelRepository
         return client;
     }
 
-    /// <summary>GitHub issues-list payload used only to read the item number, including pull requests.</summary>
-    private sealed record IssueNumberResponseDto
+    /// <summary>GitHub issues-list payload used to read item numbers and current labels, including pull requests.</summary>
+    private sealed record IssueWithLabelsResponseDto
     {
         [JsonPropertyName("number")]
         public int Number { get; init; }
+
+        [JsonPropertyName("labels")]
+        public List<LabelNameResponseDto> Labels { get; init; } = [];
+    }
+
+    private sealed record LabelNameResponseDto
+    {
+        [JsonPropertyName("name")]
+        public string Name { get; init; } = string.Empty;
     }
 
     private sealed record LabelResponseDto

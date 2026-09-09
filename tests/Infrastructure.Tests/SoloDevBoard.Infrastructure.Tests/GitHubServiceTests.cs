@@ -739,6 +739,33 @@ public sealed class GitHubServiceTests
     }
 
     [Fact]
+    public async Task SetLabelsOnTriageItemAsync_ValidLabels_PutsLabelsPayload()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var handler = new QueueMessageHandler([
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("[]", Encoding.UTF8, "application/json"),
+            },
+        ]);
+
+        var sut = CreateSubject(handler);
+
+        await sut.SetLabelsOnTriageItemAsync("owner", "repo", 42, ["type/story", "priority/high"], cancellationToken);
+
+        Assert.Single(handler.Requests);
+        Assert.Equal(HttpMethod.Put, handler.Requests[0].Method);
+        Assert.Equal("https://api.github.com/repos/owner/repo/issues/42/labels", handler.Requests[0].RequestUri!.ToString());
+
+        var payload = await handler.Requests[0].Content!.ReadAsStringAsync(cancellationToken);
+        using var document = JsonDocument.Parse(payload);
+        var labels = document.RootElement.GetProperty("labels");
+        Assert.Equal(2, labels.GetArrayLength());
+        Assert.Equal("type/story", labels[0].GetString());
+        Assert.Equal("priority/high", labels[1].GetString());
+    }
+
+    [Fact]
     public async Task RemoveLabelFromTriageItemAsync_WhenLabelMissing_ReturnsWithoutError()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;

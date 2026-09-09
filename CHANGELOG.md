@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Label Manager** — preview-first remap of extras onto the recommended taxonomy when **Remove labels outside taxonomy** is on, so issues and pull requests keep destination labels before sources are deleted ([#491](https://github.com/markheydon/solo-dev-board/issues/491), [#519](https://github.com/markheydon/solo-dev-board/issues/519), [#520](https://github.com/markheydon/solo-dev-board/issues/520)).
+
 ## [1.2.0] - 2026-09-07
 
 Planning polish, Reload & Templates release. GitHub milestone [`v1.2 - Planning polish, Reload & Templates`](https://github.com/markheydon/solo-dev-board/milestone/8) closed with 30 issues delivered.

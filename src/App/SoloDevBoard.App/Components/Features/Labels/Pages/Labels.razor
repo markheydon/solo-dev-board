@@ -262,16 +262,16 @@
                                            Color="Color.Primary"
                                            Disabled="@(!CanApplyRecommendedTaxonomy)"
                                            OnClick="ApplyRecommendedTaxonomyAsync"
-                                           aria-label="Confirm apply taxonomy"
-                                           data-testid="confirm-apply-taxonomy-button">
+                                           aria-label="@(UsesRemapWorkflow ? "Apply remap" : "Confirm apply taxonomy")"
+                                           data-testid="@(UsesRemapWorkflow ? "labels-recommended-remap-apply-button" : "confirm-apply-taxonomy-button")">
                                     @if (isApplyingRecommendedTaxonomy)
                                     {
                                         <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" aria-hidden="true" />
-                                        <MudText Class="ms-2">Applying...</MudText>
+                                        <MudText Class="ms-2">@(UsesRemapWorkflow ? "Applying remap..." : "Applying...")</MudText>
                                     }
                                     else
                                     {
-                                        <MudText>Confirm</MudText>
+                                        <MudText>@(UsesRemapWorkflow ? "Apply remap" : "Confirm")</MudText>
                                     }
                                 </MudButton>
 
@@ -289,7 +289,7 @@
                     @if (IsRecommendedTaxonomyBusy)
                     {
                         <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="@TaxonomyProgressAriaLabel" data-testid="taxonomy-progress-indicator" />
-                        <MudText Typo="Typo.body2" aria-live="polite" role="status">@TaxonomyProgressMessage</MudText>
+                        <MudText Typo="Typo.body2" aria-live="polite" role="status" data-testid="taxonomy-progress-message">@TaxonomyProgressMessage</MudText>
                     }
 
                     @if (!string.IsNullOrWhiteSpace(SelectedStrategyDescription))
@@ -306,9 +306,10 @@
                                 <MudText Typo="Typo.h6">Taxonomy preview</MudText>
                                 @foreach (var preview in recommendedPreview)
                                 {
+                                    var remapCount = preview.ToRemap.Count;
                                     <MudPaper Class="pa-3" Outlined="true">
                                         <MudText Typo="Typo.subtitle1">@preview.RepositoryFullName</MudText>
-                                        <MudText Typo="Typo.body2">@FormatPreviewActionCounts(preview.ToCreate.Count, preview.ToUpdate.Count, preview.ToDelete.Count, preview.Skipped.Count)</MudText>
+                                        <MudText Typo="Typo.body2">@FormatPreviewActionCounts(preview.ToCreate.Count, preview.ToUpdate.Count, preview.ToDelete.Count, preview.Skipped.Count, UsesRemapWorkflow ? remapCount : 0)</MudText>
 
                                         @if (preview.ToCreate.Count > 0)
                                         {
@@ -320,9 +321,67 @@
                                             <LabelPreviewTable Heading="Labels to update" Labels="preview.ToUpdate" />
                                         }
 
+                                        @if (UsesRemapWorkflow && preview.ToRemap.Count > 0)
+                                        {
+                                            <MudText Typo="Typo.subtitle2" Class="mt-2">Remap extras</MudText>
+                                            <MudText Typo="Typo.caption">These labels are on issues or pull requests. Choose a destination to retag them, select <strong>Keep label</strong> to leave the source unchanged, or use <strong>Delete without remap</strong> when you accept losing label history.</MudText>
+                                            <MudSimpleTable Dense="true" Hover="true" Class="mt-2" data-testid="labels-recommended-remap-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Source</th>
+                                                        <th>Destination</th>
+                                                        <th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var remapRow in GetRemapRows(preview.RepositoryFullName))
+                                                    {
+                                                        <tr>
+                                                            <td>@remapRow.SourceName</td>
+                                                            <td>
+                                                                <MudAutocomplete T="string"
+                                                                                 Value="@remapRow.DestinationName"
+                                                                                 ValueChanged="value => OnRemapDestinationChangedAsync(preview.RepositoryFullName, remapRow.SourceName, value)"
+                                                                                 SearchFunc="@((value, cancellationToken) => SearchRemapDestinationOptionsAsync(preview.RepositoryFullName, remapRow.SourceName, value, cancellationToken))"
+                                                                                 ToStringFunc="FormatRemapDestinationValue"
+                                                                                 Placeholder="Keep label"
+                                                                                 Variant="Variant.Outlined"
+                                                                                 Margin="Margin.Dense"
+                                                                                 MinCharacters="0"
+                                                                                 Clearable="true"
+                                                                                 Immediate="true"
+                                                                                 Strict="true"
+                                                                                 CoerceValue="true"
+                                                                                 CoerceText="false"
+                                                                                 ResetValueOnEmptyText="true"
+                                                                                 Disabled="@(remapRow.DeleteWithoutRemap || isApplyingRecommendedTaxonomy)"
+                                                                                 Adornment="Adornment.Start"
+                                                                                 AdornmentIcon="@Icons.Material.Filled.Search"
+                                                                                 @onkeydown:stopPropagation="true"
+                                                                                 data-testid="@($"labels-recommended-remap-destination-{remapRow.SourceName}")" />
+                                                            </td>
+                                                            <td>
+                                                                <MudButton Variant="Variant.Text"
+                                                                           Size="Size.Small"
+                                                                           Color="Color.Error"
+                                                                           Disabled="@isApplyingRecommendedTaxonomy"
+                                                                           OnClick="() => OnRemapDeleteWithoutRemapAsync(preview.RepositoryFullName, remapRow.SourceName)">
+                                                                    Delete without remap
+                                                                </MudButton>
+                                                                @if (remapRow.DeleteWithoutRemap)
+                                                                {
+                                                                    <MudText Typo="Typo.caption" Color="Color.Error">Will delete without remapping history.</MudText>
+                                                                }
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </MudSimpleTable>
+                                        }
+
                                         @if (preview.ToDelete.Count > 0)
                                         {
-                                            <LabelPreviewTable Heading="Labels to delete" Labels="preview.ToDelete" />
+                                            <LabelPreviewTable Heading="@(UsesRemapWorkflow ? "Unused labels to delete" : "Labels to delete")" Labels="preview.ToDelete" />
                                         }
 
                                         @if (keepAreaLabels && preview.KeptAreaLabels.Count > 0)
@@ -363,6 +422,33 @@
                                             <MudText Typo="Typo.body2">Created: @result.CreatedCount, Updated: @result.UpdatedCount, Deleted: @result.DeletedCount, Skipped: @result.SkippedCount</MudText>
                                         }
                                     </MudPaper>
+                                }
+
+                                @if (recommendedRemapResults.Count > 0)
+                                {
+                                    <MudText Typo="Typo.subtitle1">Remap results</MudText>
+                                    @foreach (var remapResult in recommendedRemapResults)
+                                    {
+                                        <MudPaper Class="pa-3" Outlined="true">
+                                            <MudText Typo="Typo.subtitle2">@remapResult.RepositoryName: @remapResult.SourceLabelName → @(string.IsNullOrWhiteSpace(remapResult.DestinationLabelName) ? "delete" : remapResult.DestinationLabelName)</MudText>
+                                            @if (remapResult.HasErrors)
+                                            {
+                                                <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Outlined">@remapResult.FailedItemCount item(s) failed; source was not deleted.</MudAlert>
+                                                @foreach (var error in remapResult.Errors.Take(3))
+                                                {
+                                                    <MudText Typo="Typo.caption">#@error.ItemNumber: @error.ErrorMessage</MudText>
+                                                }
+                                            }
+                                            else if (remapResult.SourceDeleted)
+                                            {
+                                                <MudText Typo="Typo.body2">Retagged @remapResult.SucceededItemCount item(s) and deleted the source label.</MudText>
+                                            }
+                                            else
+                                            {
+                                                <MudText Typo="Typo.body2">Deleted '@remapResult.SourceLabelName' without remapping.</MudText>
+                                            }
+                                        </MudPaper>
+                                    }
                                 }
                             </MudStack>
                         }

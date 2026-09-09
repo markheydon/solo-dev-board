@@ -53,10 +53,14 @@ public partial class Labels : ComponentBase
     private string selectedStrategyId = string.Empty;
     private IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto> recommendedPreview = [];
     private IReadOnlyList<RecommendedTaxonomyRepositoryResultDto> recommendedApplyResults = [];
+    private IReadOnlyList<LabelRemapResultDto> recommendedRemapResults = [];
+    private Dictionary<string, Dictionary<string, LabelRemapRowState>> recommendedRemapRowsByRepository = new(StringComparer.OrdinalIgnoreCase);
+    private IReadOnlyList<string> recommendedStrategyLabelNames = [];
     private bool showRecommendedPreview;
     private bool removeLabelsOutsideTaxonomy;
     private bool keepAreaLabels = true;
     private bool isPreviewingRecommendedTaxonomy;
+    private string taxonomyProgressDetail = string.Empty;
     private bool isApplyingRecommendedTaxonomy;
     private string syncSourceRepositoryFullName = string.Empty;
     private HashSet<string> syncTargetRepositoryFullNames = new(StringComparer.OrdinalIgnoreCase);
@@ -184,27 +188,21 @@ public partial class Labels : ComponentBase
     private Task OnStrategySelectedAsync(string strategyId)
     {
         selectedStrategyId = strategyId;
-        recommendedPreview = [];
-        showRecommendedPreview = false;
-        recommendedApplyResults = [];
+        ClearRecommendedTaxonomyWorkflow();
         return Task.CompletedTask;
     }
 
     private Task OnRemoveLabelsOutsideTaxonomyChanged(bool value)
     {
         removeLabelsOutsideTaxonomy = value;
-        recommendedPreview = [];
-        showRecommendedPreview = false;
-        recommendedApplyResults = [];
+        ClearRecommendedTaxonomyWorkflow();
         return Task.CompletedTask;
     }
 
     private Task OnKeepAreaLabelsChanged(bool value)
     {
         keepAreaLabels = value;
-        recommendedPreview = [];
-        showRecommendedPreview = false;
-        recommendedApplyResults = [];
+        ClearRecommendedTaxonomyWorkflow();
         syncPreviewResults = [];
         showSyncPreview = false;
         syncApplyResults = [];
@@ -300,9 +298,7 @@ public partial class Labels : ComponentBase
             .OrderBy(repository => repository.FullName, StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
-        recommendedPreview = [];
-        showRecommendedPreview = false;
-        recommendedApplyResults = [];
+        ClearRecommendedTaxonomyWorkflow();
         EnsureSyncSelections();
         return Task.CompletedTask;
     }
@@ -359,12 +355,27 @@ public partial class Labels : ComponentBase
         }
 
         isPreviewingRecommendedTaxonomy = true;
+        taxonomyProgressDetail = "Previewing taxonomy changes...";
         await InvokeAsync(StateHasChanged);
+
+        var progress = new Progress<string>(message =>
+        {
+            taxonomyProgressDetail = message;
+            _ = InvokeAsync(StateHasChanged);
+        });
 
         try
         {
             recommendedApplyResults = [];
-            recommendedPreview = await LabelManagerService.PreviewRecommendedTaxonomyAsync(selectedStrategyId, selectedFullNames, removeLabelsOutsideTaxonomy, keepAreaLabels);
+            recommendedRemapResults = [];
+            recommendedPreview = await LabelManagerService.PreviewRecommendedTaxonomyAsync(
+                selectedStrategyId,
+                selectedFullNames,
+                removeLabelsOutsideTaxonomy,
+                keepAreaLabels,
+                progress);
+            recommendedStrategyLabelNames = ResolveStrategyLabelNames();
+            InitialiseRemapRows(recommendedPreview);
             showRecommendedPreview = true;
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
@@ -391,6 +402,8 @@ public partial class Labels : ComponentBase
         finally
         {
             isPreviewingRecommendedTaxonomy = false;
+            taxonomyProgressDetail = string.Empty;
+            await InvokeAsync(StateHasChanged);
         }
     }
 
@@ -398,6 +411,7 @@ public partial class Labels : ComponentBase
     {
         showRecommendedPreview = false;
         recommendedPreview = [];
+        recommendedRemapRowsByRepository = new Dictionary<string, Dictionary<string, LabelRemapRowState>>(StringComparer.OrdinalIgnoreCase);
         ShowSnackbarFeedback("Taxonomy apply was cancelled.", Severity.Info);
     }
 
@@ -420,28 +434,71 @@ public partial class Labels : ComponentBase
             return;
         }
 
+        if (removeLabelsOutsideTaxonomy && HasRemapExtras() && !await ConfirmDeleteWithoutRemapAsync())
+        {
+            return;
+        }
+
         isApplyingRecommendedTaxonomy = true;
+        taxonomyProgressDetail = "Applying taxonomy changes...";
         await InvokeAsync(StateHasChanged);
+
+        var progress = new Progress<string>(message =>
+        {
+            taxonomyProgressDetail = message;
+            _ = InvokeAsync(StateHasChanged);
+        });
 
         try
         {
-            recommendedApplyResults = await LabelManagerService.ApplyRecommendedTaxonomyAsync(selectedStrategyId, selectedFullNames, removeLabelsOutsideTaxonomy, keepAreaLabels);
+            if (removeLabelsOutsideTaxonomy && HasRemapExtras())
+            {
+                var remapApplyResult = await LabelManagerService.ApplyRecommendedTaxonomyWithRemapAsync(
+                    selectedStrategyId,
+                    selectedFullNames,
+                    recommendedPreview,
+                    BuildRemapActionsByRepository(),
+                    keepAreaLabels,
+                    progress);
+                recommendedApplyResults = remapApplyResult.ApplyResults;
+                recommendedRemapResults = remapApplyResult.RemapResults;
+            }
+            else
+            {
+                recommendedApplyResults = await LabelManagerService.ApplyRecommendedTaxonomyAsync(
+                    selectedStrategyId,
+                    selectedFullNames,
+                    removeLabelsOutsideTaxonomy,
+                    keepAreaLabels,
+                    progress);
+                recommendedRemapResults = [];
+            }
+
             showRecommendedPreview = false;
             recommendedPreview = [];
+            recommendedRemapRowsByRepository = new Dictionary<string, Dictionary<string, LabelRemapRowState>>(StringComparer.OrdinalIgnoreCase);
 
             var failedCount = recommendedApplyResults.Count(result => result.HasError);
             var createdCount = recommendedApplyResults.Sum(result => result.CreatedCount);
             var updatedCount = recommendedApplyResults.Sum(result => result.UpdatedCount);
             var deletedCount = recommendedApplyResults.Sum(result => result.DeletedCount);
             var skippedCount = recommendedApplyResults.Sum(result => result.SkippedCount);
+            var remappedCount = recommendedRemapResults.Count(result => result.SourceDeleted);
+            var remapFailureCount = recommendedRemapResults.Count(result => result.HasErrors);
 
-            if (failedCount == 0)
+            if (failedCount == 0 && remapFailureCount == 0)
             {
-                ShowSnackbarFeedback($"Applied taxonomy successfully. Created {createdCount}, updated {updatedCount}, deleted {deletedCount}, skipped {skippedCount}.", Severity.Success);
+                var message = remappedCount > 0
+                    ? $"Applied taxonomy successfully. Created {createdCount}, updated {updatedCount}, remapped {remappedCount}, deleted {deletedCount}, skipped {skippedCount}."
+                    : $"Applied taxonomy successfully. Created {createdCount}, updated {updatedCount}, deleted {deletedCount}, skipped {skippedCount}.";
+                ShowSnackbarFeedback(message, Severity.Success);
             }
             else
             {
-                ShowSnackbarFeedback($"Applied taxonomy with {failedCount} repository errors. Created {createdCount}, updated {updatedCount}, deleted {deletedCount}, skipped {skippedCount}.", Severity.Warning);
+                var message = remappedCount > 0 || remapFailureCount > 0
+                    ? $"Applied taxonomy with {failedCount + remapFailureCount} error(s). Created {createdCount}, updated {updatedCount}, remapped {remappedCount}, deleted {deletedCount}, skipped {skippedCount}."
+                    : $"Applied taxonomy with {failedCount} repository errors. Created {createdCount}, updated {updatedCount}, deleted {deletedCount}, skipped {skippedCount}.";
+                ShowSnackbarFeedback(message, Severity.Warning);
             }
 
             await LoadLabelsForSelectionAsync();
@@ -454,6 +511,8 @@ public partial class Labels : ComponentBase
         finally
         {
             isApplyingRecommendedTaxonomy = false;
+            taxonomyProgressDetail = string.Empty;
+            await InvokeAsync(StateHasChanged);
         }
     }
 
@@ -1111,9 +1170,12 @@ public partial class Labels : ComponentBase
         ? "Applying taxonomy changes"
         : "Previewing taxonomy changes";
 
-    private string TaxonomyProgressMessage => isApplyingRecommendedTaxonomy
-        ? "Applying taxonomy changes. Duplicate submissions are disabled."
-        : "Previewing taxonomy changes...";
+    private string TaxonomyProgressMessage
+        => string.IsNullOrWhiteSpace(taxonomyProgressDetail)
+            ? isApplyingRecommendedTaxonomy
+                ? "Applying taxonomy changes. Duplicate submissions are disabled."
+                : "Previewing taxonomy changes..."
+            : taxonomyProgressDetail;
 
     private string SyncProgressAriaLabel => isApplyingSync
         ? "Applying synchronisation changes"
@@ -1129,8 +1191,10 @@ public partial class Labels : ComponentBase
         && !string.IsNullOrWhiteSpace(selectedStrategyId);
 
     private bool CanApplyRecommendedTaxonomy => showRecommendedPreview
-        && recommendedPreview.Any(HasRecommendedTaxonomyActions)
+        && (recommendedPreview.Any(HasRecommendedTaxonomyActions) || HasRemapActions())
         && !isApplyingRecommendedTaxonomy;
+
+    private bool UsesRemapWorkflow => removeLabelsOutsideTaxonomy && HasRemapExtras();
 
     private bool CanPreviewLabelSynchronisation => !ShowLoadingState
         && !IsSynchronisationBusy
@@ -1144,7 +1208,16 @@ public partial class Labels : ComponentBase
     private static bool HasRecommendedTaxonomyActions(RecommendedTaxonomyRepositoryPreviewDto preview)
         => preview.ToCreate.Count > 0
             || preview.ToUpdate.Count > 0
-            || preview.ToDelete.Count > 0;
+            || preview.ToDelete.Count > 0
+            || preview.ToRemap.Count > 0;
+
+    private bool HasRemapExtras()
+        => recommendedPreview.Any(preview => preview.ToRemap.Count > 0);
+
+    private bool HasRemapActions()
+        => recommendedRemapRowsByRepository.Values
+            .SelectMany(rows => rows.Values)
+            .Any(row => row.DeleteWithoutRemap || !string.IsNullOrWhiteSpace(row.DestinationName));
 
     private static bool HasLabelSynchronisationActions(LabelSyncRepositoryPreviewDto preview)
         => preview.ToCreate.Count > 0
@@ -1165,8 +1238,17 @@ public partial class Labels : ComponentBase
         => recommendedStrategies.FirstOrDefault(strategy => strategy.Id.Equals(selectedStrategyId, StringComparison.OrdinalIgnoreCase))?.Description
             ?? string.Empty;
 
-    private static string FormatPreviewActionCounts(int createCount, int updateCount, int deleteCount, int skipCount)
-        => $"Create: {createCount}, Update: {updateCount}, Delete: {deleteCount}, Skip: {skipCount}";
+    private static string FormatPreviewActionCounts(int createCount, int updateCount, int deleteCount, int skipCount, int remapCount = 0)
+    {
+        if (remapCount > 0)
+        {
+            return deleteCount > 0
+                ? $"Create: {createCount}, Update: {updateCount}, Remap: {remapCount}, Delete: {deleteCount}, Skip: {skipCount}"
+                : $"Create: {createCount}, Update: {updateCount}, Remap: {remapCount}, Skip: {skipCount}";
+        }
+
+        return $"Create: {createCount}, Update: {updateCount}, Delete: {deleteCount}, Skip: {skipCount}";
+    }
 
     private bool ShowLabelFilter => hasLoadedLabels && rows.Count > 0 && !ShowLoadingState && string.IsNullOrWhiteSpace(errorMessage);
 
@@ -1246,4 +1328,178 @@ public partial class Labels : ComponentBase
         isPreviewingSync = false;
         isApplyingSync = false;
     }
+
+    private void ClearRecommendedTaxonomyWorkflow()
+    {
+        recommendedPreview = [];
+        showRecommendedPreview = false;
+        recommendedApplyResults = [];
+        recommendedRemapResults = [];
+        recommendedRemapRowsByRepository = new Dictionary<string, Dictionary<string, LabelRemapRowState>>(StringComparer.OrdinalIgnoreCase);
+        recommendedStrategyLabelNames = [];
+    }
+
+    private IReadOnlyList<string> ResolveStrategyLabelNames()
+    {
+        if (RecommendedLabelTaxonomyCatalog.TryGetLabels(selectedStrategyId, out var labels))
+        {
+            return labels.Select(label => label.Name).ToArray();
+        }
+
+        return [];
+    }
+
+    private void InitialiseRemapRows(IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto> previews)
+    {
+        recommendedRemapRowsByRepository = new Dictionary<string, Dictionary<string, LabelRemapRowState>>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var preview in previews)
+        {
+            if (preview.ToRemap.Count == 0)
+            {
+                continue;
+            }
+
+            var rows = new Dictionary<string, LabelRemapRowState>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var extra in preview.ToRemap)
+            {
+                var suggestedDestination = LabelRemapSuggestionHelper.SuggestDestination(extra.Name, recommendedStrategyLabelNames);
+                rows[extra.Name] = new LabelRemapRowState(extra.Name, suggestedDestination, false);
+            }
+
+            recommendedRemapRowsByRepository[preview.RepositoryFullName] = rows;
+        }
+    }
+
+    private static IReadOnlyList<string> CollectSurvivingLabelNames(RecommendedTaxonomyRepositoryPreviewDto preview)
+        => preview.ToCreate
+            .Concat(preview.ToUpdate)
+            .Concat(preview.Skipped)
+            .Select(label => label.Name)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+    private static IReadOnlyList<string> CollectOutgoingLabelNames(RecommendedTaxonomyRepositoryPreviewDto preview)
+        => preview.ToRemap
+            .Select(label => label.Name)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+    private IReadOnlyDictionary<string, IReadOnlyList<RecommendedTaxonomyRemapActionDto>> BuildRemapActionsByRepository()
+        => recommendedRemapRowsByRepository.ToDictionary(
+            pair => pair.Key,
+            pair => (IReadOnlyList<RecommendedTaxonomyRemapActionDto>)pair.Value.Values
+                .Select(row => new RecommendedTaxonomyRemapActionDto(row.SourceName, row.DestinationName, row.DeleteWithoutRemap))
+                .ToArray(),
+            StringComparer.OrdinalIgnoreCase);
+
+    private IReadOnlyList<LabelRemapRowState> GetRemapRows(string repositoryFullName)
+    {
+        if (!recommendedRemapRowsByRepository.TryGetValue(repositoryFullName, out var rows))
+        {
+            return [];
+        }
+
+        return rows.Values
+            .OrderBy(row => row.SourceName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private IReadOnlyList<string> GetRemapDestinationOptions(string repositoryFullName, string sourceLabelName)
+    {
+        var preview = recommendedPreview.FirstOrDefault(item => item.RepositoryFullName.Equals(repositoryFullName, StringComparison.OrdinalIgnoreCase));
+        if (preview is null)
+        {
+            return [];
+        }
+
+        return LabelRemapSuggestionHelper.BuildDestinationOptions(
+            sourceLabelName,
+            recommendedStrategyLabelNames,
+            CollectSurvivingLabelNames(preview),
+            CollectOutgoingLabelNames(preview));
+    }
+
+    private Task<IEnumerable<string>> SearchRemapDestinationOptionsAsync(
+        string repositoryFullName,
+        string sourceLabelName,
+        string? value,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var options = GetRemapDestinationOptions(repositoryFullName, sourceLabelName);
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return Task.FromResult<IEnumerable<string>>(options);
+        }
+
+        var filter = value.Trim();
+        return Task.FromResult(options.Where(option => option.Contains(filter, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    private static string FormatRemapDestinationValue(string? destinationName)
+        => destinationName ?? string.Empty;
+
+    private Task OnRemapDestinationChangedAsync(string repositoryFullName, string sourceLabelName, string? destinationName)
+    {
+        if (!recommendedRemapRowsByRepository.TryGetValue(repositoryFullName, out var rows)
+            || !rows.TryGetValue(sourceLabelName, out var row))
+        {
+            return Task.CompletedTask;
+        }
+
+        rows[sourceLabelName] = row with
+        {
+            DestinationName = string.IsNullOrWhiteSpace(destinationName) ? null : destinationName,
+            DeleteWithoutRemap = false,
+        };
+        return Task.CompletedTask;
+    }
+
+    private Task OnRemapDeleteWithoutRemapAsync(string repositoryFullName, string sourceLabelName)
+    {
+        if (!recommendedRemapRowsByRepository.TryGetValue(repositoryFullName, out var rows)
+            || !rows.TryGetValue(sourceLabelName, out var row))
+        {
+            return Task.CompletedTask;
+        }
+
+        rows[sourceLabelName] = row with { DestinationName = null, DeleteWithoutRemap = true };
+        return Task.CompletedTask;
+    }
+
+    private async Task<bool> ConfirmDeleteWithoutRemapAsync()
+    {
+        var deleteTargets = recommendedRemapRowsByRepository
+            .SelectMany(pair => pair.Value.Values
+                .Where(row => row.DeleteWithoutRemap)
+                .Select(row => $"{pair.Key}: {row.SourceName}"))
+            .OrderBy(target => target, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (deleteTargets.Length == 0)
+        {
+            return true;
+        }
+
+        var message = "The following labels will be deleted without remapping issue or pull request history:\n\n"
+            + string.Join('\n', deleteTargets)
+            + "\n\nContinue?";
+
+        var confirmed = await DialogService.ShowMessageBoxAsync(
+            "Delete without remap",
+            message,
+            yesText: "Delete",
+            cancelText: "Cancel");
+
+        return confirmed == true;
+    }
+
+    /// <summary>Represents one remap row in the Recommended taxonomy preview.</summary>
+    /// <param name="SourceName">The extra label to remap or delete.</param>
+    /// <param name="DestinationName">The destination label, or <see langword="null" /> when skipped.</param>
+    /// <param name="DeleteWithoutRemap">Whether the source should be deleted without retagging.</param>
+    private sealed record LabelRemapRowState(string SourceName, string? DestinationName, bool DeleteWithoutRemap);
 }
