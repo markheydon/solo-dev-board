@@ -27,7 +27,20 @@ This is a **substantive refresh of existing pages**, not a new route. Implementa
 
 ## Layout (narrow)
 
-Nav collapses to the existing drawer. ToolBar wraps. Filter field goes full width under actions. No FAB.
+This is a **responsive web** strategy, not a native app. SoloDevBoard stays a Blazor Server site in Safari and Chrome. Dogfood on an iPad mini showed daily use is already acceptable at compact-tablet width; phone-width chrome was the original failure mode (#408, #411).
+
+Use these planning viewports (CSS pixels, not device pixels):
+
+| Class | CSS width | Intent. |
+|-------|-----------|---------|
+| Phone | 390 | Primary actions and chrome must remain usable; no overlapping labels or horizontal page overflow. |
+| Compact tablet | 744 | iPad mini portrait class. Toolbars wrap; stacked tables and selects stay readable. |
+| Large tablet / landscape | 1024 | Drawer may remain collapsed; two-pane pages stack or split without clipping. |
+| Desktop | 1400 | Docs-capture and default Playwright width. |
+
+Nav collapses to the existing drawer. ToolBar wraps. Filter field goes full width under actions. No FAB. Dense grids may stay tables at compact tablet; switch to stacked items only when columns overflow. Touch targets on icon-only controls stay at least the MudBlazor default dense size; do not invent a second mobile navigation pattern.
+
+Tracked as ice-box story [#411](https://github.com/markheydon/solo-dev-board/issues/411) under feature [#527](https://github.com/markheydon/solo-dev-board/issues/527).
 
 ## MudBlazor first
 

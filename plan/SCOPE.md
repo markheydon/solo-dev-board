@@ -71,7 +71,7 @@ The following are explicitly **not** in scope for the current version of SoloDev
 
 - Collaboration and team features — SoloDevBoard is designed for a single developer. No shared sessions, team boards, or collaborative user management are in scope.
 - Non-GitHub providers — GitLab, Bitbucket, Azure DevOps, and other platforms are not supported. GitHub.com is the only supported provider initially.
-- Mobile application — SoloDevBoard is a web application. No native iOS or Android app is planned.
+- Native mobile application — SoloDevBoard is a web application. No native iOS or Android app is planned. Responsive use in mobile browsers is in scope (see Constraints).
 - Real-time collaboration — No shared sessions, shared boards, or live collaboration features.
 - Issue content editing — SoloDevBoard manages metadata (labels, milestones, assignments) but does not provide a full issue editor.
 - GitHub Sponsors, billing-backed entitlement automation, and marketplace monetisation are not in scope for v1.0.0. No integration with GitHub Marketplace, billing APIs, or paid access flows is planned for this release.
@@ -95,6 +95,7 @@ The following are explicitly **not** in scope for the current version of SoloDev
 - **Minimal dependencies:** Prefer the .NET ecosystem and well-established open source libraries. Avoid adding dependencies without a decision log entry ([`plan/DECISIONS.md`](DECISIONS.md)).
 - **UI component library:** MudBlazor is the sole UI component library for the Blazor front-end (see [DEC-009](DECISIONS.md#dec-009-mudblazor-as-the-sole-ui-component-library)). Page chrome follows [DEC-039](DECISIONS.md#dec-039-mudblazor-visual-language-for-page-chrome). Raw HTML form elements are not used where a MudBlazor equivalent exists.
 - **Product mark:** A dedicated logo and brand treatment remain ice-box ([#397](https://github.com/markheydon/solo-dev-board/issues/397)). The GitHub App bar-chart icon is the interim favicon only.
+- **Responsive web (not a native app):** Phone and tablet browsers are in-scope quality for shipped pages. Compact tablet (iPad mini class) is the practical daily-use target; phone-width must remain usable. Tracked as ice-box story [#411](https://github.com/markheydon/solo-dev-board/issues/411) under the visual language feature ([#527](https://github.com/markheydon/solo-dev-board/issues/527) / epic [#526](https://github.com/markheydon/solo-dev-board/issues/526)). A native iOS or Android application remains out of scope.
 
 ---
 
@@ -139,4 +140,5 @@ The following are explicitly **not** in scope for the current version of SoloDev
 | 2026-09-04 | Custom template source UI (#292) amended: catalogue `RepositorySelector` plus manual `owner/name` field (DEC-038 amended). Typed-field-only source rejected after PR #501 dogfood. | Solo developer |
 | 2026-09-07 | **`v1.2 - Planning polish, Reload & Templates`** delivery complete (30 closed, 0 open). Ready to tag [`v1.2.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.2.0) after staging smoke test. User guides and changelog updated; window-focus refetch (#450) and server-backed template source (#498) stay later. | Solo developer |
 | 2026-09-09 | Recorded MudBlazor visual language (DEC-039) as in-scope quality for shipped pages. Dedicated product branding ([#397](https://github.com/markheydon/solo-dev-board/issues/397)) stays ice-box and unmilestoned. | Solo developer |
+| 2026-09-09 | Responsive web on phone and compact tablet (iPad mini class) is in-scope UI quality under epic [#526](https://github.com/markheydon/solo-dev-board/issues/526) / feature [#527](https://github.com/markheydon/solo-dev-board/issues/527), tracked as ice-box story [#411](https://github.com/markheydon/solo-dev-board/issues/411). Native mobile apps stay out of scope. | Solo developer |
 

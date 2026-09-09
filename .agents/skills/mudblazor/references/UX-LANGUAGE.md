@@ -80,6 +80,16 @@ Need a date span (from / to)?
 
 `MainLayout` already supplies `MudLayout`, `MudAppBar`, `MudDrawer`, and `MudMainContent`. Do not nest a second layout shell.
 
+### Narrow viewports (web, not a native app)
+
+SoloDevBoard is used in mobile Safari and Chrome as well as on desktop. There is no native iOS or Android client. Prefer the same chrome recipe at every width:
+
+- **Phone (~390 CSS px):** app bar chips and command labels must not overlap or overflow the viewport. Wrap the toolbar. Put the filter full width under actions. Overflow extra commands into `MudMenu`.
+- **Compact tablet (~744 CSS px, iPad mini portrait):** wrapping toolbars and stacked selects are enough; do not invent a card-only layout unless a grid actually overflows.
+- **Do not** add `MudFab` navigation, a second bottom nav, or a PWA-only shell.
+
+Parked delivery for a systematic pass is [#411](https://github.com/markheydon/solo-dev-board/issues/411) under [#527](https://github.com/markheydon/solo-dev-board/issues/527).
+
 ---
 
 ## Loading, empty, and error (do not mix these up)
