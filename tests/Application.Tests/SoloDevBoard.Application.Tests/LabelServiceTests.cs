@@ -1600,28 +1600,77 @@ public sealed class LabelServiceTests
     }
 
     [Fact]
-    public async Task RemapLabelAsync_WhenItemHasOtherLabels_AddsDestinationAndRemovesSourceOnly()
+    public async Task ApplyRecommendedTaxonomyWithRemapAsync_WhenDeleteWithoutRemapRequested_DeletesSourceWithoutRetagging()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
-        ArrangeLabels("story", "type/story");
+        var previews = new[]
+        {
+            new RecommendedTaxonomyRepositoryPreviewDto(
+                "owner/repo-a",
+                [],
+                [],
+                [],
+                [new LabelDto("legacy", "ededed", "Legacy", "owner/repo-a")],
+                [],
+                []),
+        };
+
+        var remapActions = new Dictionary<string, IReadOnlyList<RecommendedTaxonomyRemapActionDto>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["owner/repo-a"] = [new RecommendedTaxonomyRemapActionDto("legacy", null, true)],
+        };
+
         _labelRepository
-            .GetWorkItemsWithLabelAsync("owner", "repo", "story", cancellationToken)
-            .Returns([new LabelledWorkItem { Number = 42 }]);
+            .GetLabelsAsync("owner", "repo-a", cancellationToken)
+            .Returns([
+                new Label { Name = "bug", Colour = "d73a4a", Description = "Something is not working", RepositoryName = "repo-a" },
+                new Label { Name = "documentation", Colour = "0075ca", Description = "Improvements or additions to documentation", RepositoryName = "repo-a" },
+                new Label { Name = "duplicate", Colour = "cfd3d7", Description = "This issue or pull request already exists", RepositoryName = "repo-a" },
+                new Label { Name = "enhancement", Colour = "a2eeef", Description = "New feature or request", RepositoryName = "repo-a" },
+                new Label { Name = "good first issue", Colour = "7057ff", Description = "Good for newcomers", RepositoryName = "repo-a" },
+                new Label { Name = "help wanted", Colour = "008672", Description = "Extra attention is needed", RepositoryName = "repo-a" },
+                new Label { Name = "invalid", Colour = "e4e669", Description = "This does not appear to be valid", RepositoryName = "repo-a" },
+                new Label { Name = "question", Colour = "d876e3", Description = "Further information is requested", RepositoryName = "repo-a" },
+                new Label { Name = "wontfix", Colour = "ffffff", Description = "This will not be worked on", RepositoryName = "repo-a" },
+                new Label { Name = "legacy", Colour = "ededed", Description = "Legacy", RepositoryName = "repo-a" },
+            ]);
 
-        await CreateSut().RemapLabelAsync("owner", "repo", "story", "type/story", cancellationToken: cancellationToken);
+        _labelRepository
+            .DeleteLabelAsync("owner", "repo-a", "legacy", cancellationToken)
+            .Returns(Task.CompletedTask);
 
-        await _gitHubService.Received(1).AddLabelsToTriageItemAsync(
-            "owner",
-            "repo",
-            42,
-            Arg.Is<IReadOnlyList<string>>(labels => labels.Count == 1 && labels[0] == "type/story"),
-            cancellationToken);
-        await _gitHubService.Received(1).RemoveLabelFromTriageItemAsync("owner", "repo", 42, "story", cancellationToken);
-        await _labelRepository.DidNotReceive().UpdateLabelAsync(
+        var sut = CreateSut();
+
+        var result = await sut.ApplyRecommendedTaxonomyWithRemapAsync(
+            "github-default",
+            ["owner/repo-a"],
+            previews,
+            remapActions,
+            keepAreaLabels: true,
+            cancellationToken: cancellationToken);
+
+        var remapResult = Assert.Single(result.RemapResults);
+        Assert.Equal("legacy", remapResult.SourceLabelName);
+        Assert.False(remapResult.SourceDeleted);
+        Assert.False(remapResult.HasErrors);
+        await _labelRepository.Received(1).DeleteLabelAsync("owner", "repo-a", "legacy", cancellationToken);
+        await _gitHubService.DidNotReceive().SetLabelsOnTriageItemAsync(
             Arg.Any<string>(),
             Arg.Any<string>(),
+            Arg.Any<int>(),
+            Arg.Any<IReadOnlyList<string>>(),
+            Arg.Any<CancellationToken>());
+        await _gitHubService.DidNotReceive().AddLabelsToTriageItemAsync(
             Arg.Any<string>(),
-            Arg.Any<Label>(),
+            Arg.Any<string>(),
+            Arg.Any<int>(),
+            Arg.Any<IReadOnlyList<string>>(),
+            Arg.Any<CancellationToken>());
+        await _gitHubService.DidNotReceive().RemoveLabelFromTriageItemAsync(
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<int>(),
+            Arg.Any<string>(),
             Arg.Any<CancellationToken>());
     }
 

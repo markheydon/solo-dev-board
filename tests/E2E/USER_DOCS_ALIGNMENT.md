@@ -76,7 +76,7 @@ Use this when extending specs so assertions track documented workflows.
 | Three tabs (Labels, Recommended taxonomy, Synchronise) | Tab strip and headings | `docs-capture` |
 | Labels tab bulk delete (select rows, confirm, cancel) | Disabled bulk delete button on shell | Component tests in `LabelsTests` ([#444](https://github.com/markheydon/solo-dev-board/issues/444)) |
 | Optional remove labels outside taxonomy and remap extras | `labels.spec.ts` remove-outside checkbox | `docs-capture` (`remap-extras.png`) + `LabelsTests` remap table / **Apply remap** + `LabelServiceTests` ([#520](https://github.com/markheydon/solo-dev-board/issues/520), [#521](https://github.com/markheydon/solo-dev-board/issues/521)) |
-| Confirm apply shows in-progress feedback | — | Component tests in `LabelsTests` (loading Confirm / Apply remap button and progress indicator) |
+| Confirm apply shows in-progress feedback | — | Component tests in `LabelsTests` (`WhenConfirmed_ShowsInProgressStateUntilApplyCompletes`, `WhenRemapApplyPending_ShowsInProgressStateUntilApplyCompletes`) |
 | No repositories message | Empty-state text | — |
 
 ### Label Manager keep `area/*` automated coverage ([#457](https://github.com/markheydon/solo-dev-board/issues/457))
@@ -98,8 +98,8 @@ Issue [#521](https://github.com/markheydon/solo-dev-board/issues/521) closes the
 |-----------|------------------|----------------------------------|
 | Leaf matches and GitHub-default counterparts pre-fill destinations; ambiguous defaults stay Keep label | `LabelRemapSuggestionHelperTests`, `LabelsTests` | — |
 | Preview lists remap rows and unused extras; keep `area/*` excludes remap sources | `LabelServiceTests` preview matrix, `LabelsTests` remap table | `labels.spec.ts` remap wireframe `data-testid`s when preview is available |
-| Remap rows: destination pickers, keep label, apply disabled until preview, kept rows not remapped | `LabelsTests` Recommended taxonomy remap describe | — |
-| Apply retags then deletes sources; single PUT when current labels known; fallback add/remove when unknown; failed retags keep the source | `LabelServiceTests.RemapLabelAsync_*`, `RecommendedTaxonomyApplySummaryHelperTests`, `LabelsTests` **Apply remap** | — |
+| Remap rows: destination pickers, keep label, delete without remap confirmation, apply disabled until preview, kept rows not remapped | `LabelsTests` Recommended taxonomy remap describe | — |
+| Apply retags then deletes sources; single PUT when current labels known; fallback add/remove when unknown; delete without remap skips retag; failed retags keep the source | `LabelServiceTests.RemapLabelAsync_*`, `ApplyRecommendedTaxonomyWithRemapAsync_WhenDeleteWithoutRemapRequested_*`, `RecommendedTaxonomyApplySummaryHelperTests`, `LabelsTests` **Apply remap** | — |
 | Remap extras screenshot (Recommended taxonomy preview) | — | `docs-capture` (`label-manager/remap-extras.png`) |
 
 ### Label Manager bulk delete automated coverage ([#459](https://github.com/markheydon/solo-dev-board/issues/459))
