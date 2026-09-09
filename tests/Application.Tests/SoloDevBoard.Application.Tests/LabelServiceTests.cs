@@ -720,6 +720,7 @@ public sealed class LabelServiceTests
         Assert.Contains(preview.ToUpdate, label => label.Name == "bug");
         Assert.Contains(preview.Skipped, label => label.Name == "documentation");
         Assert.Empty(preview.ToDelete);
+        Assert.Empty(preview.ToRemap);
     }
 
     [Fact]
@@ -743,11 +744,12 @@ public sealed class LabelServiceTests
             ["owner/repo-a"],
             removeLabelsOutsideTaxonomy: false,
             keepAreaLabels: true,
-            cancellationToken);
+            cancellationToken: cancellationToken);
 
         // Assert
         var preview = Assert.Single(result);
         Assert.Empty(preview.ToDelete);
+        Assert.Empty(preview.ToRemap);
         Assert.Empty(preview.KeptAreaLabels);
         Assert.Contains(preview.Skipped, label => label.Name == "bug");
         Assert.DoesNotContain(preview.ToDelete, label => label.Name == "dependencies");
@@ -770,13 +772,84 @@ public sealed class LabelServiceTests
         var sut = CreateSut();
 
         // Act
-        var result = await sut.PreviewRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, keepAreaLabels: true, cancellationToken);
+        var result = await sut.PreviewRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, keepAreaLabels: true, cancellationToken: cancellationToken);
 
         // Assert
         var preview = Assert.Single(result);
         Assert.Contains(preview.ToDelete, label => label.Name == "dependencies");
         Assert.Contains(preview.ToDelete, label => label.Name == "epic");
         Assert.DoesNotContain(preview.ToDelete, label => label.Name == "bug");
+        Assert.Empty(preview.ToRemap);
+    }
+
+    [Fact]
+    public async Task PreviewRecommendedTaxonomyAsync_WhenRemoveOutsideTaxonomyEnabled_ReturnsUsedExtrasInToRemap()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-a", cancellationToken)
+            .Returns([
+                new Label { Name = "bug", Colour = "d73a4a", Description = "Something is not working", RepositoryName = "repo-a" },
+                new Label { Name = "dependencies", Colour = "0366d6", Description = "Pull requests that update a dependency", RepositoryName = "repo-a" },
+                new Label { Name = "epic", Colour = "5319e7", Description = "Legacy epic label", RepositoryName = "repo-a" },
+            ]);
+
+        _labelRepository
+            .GetWorkItemsWithLabelAsync("owner", "repo-a", "dependencies", cancellationToken)
+            .Returns([new LabelledWorkItem { Number = 42 }]);
+
+        _labelRepository
+            .GetWorkItemsWithLabelAsync("owner", "repo-a", "epic", cancellationToken)
+            .Returns([]);
+
+        var sut = CreateSut();
+
+        // Act
+        var result = await sut.PreviewRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, keepAreaLabels: true, cancellationToken: cancellationToken);
+
+        // Assert
+        var preview = Assert.Single(result);
+        Assert.Contains(preview.ToRemap, label => label.Name == "dependencies");
+        Assert.Contains(preview.ToDelete, label => label.Name == "epic");
+        Assert.DoesNotContain(preview.ToRemap, label => label.Name == "epic");
+        Assert.DoesNotContain(preview.ToDelete, label => label.Name == "dependencies");
+    }
+
+    [Fact]
+    public async Task PreviewRecommendedTaxonomyAsync_WhenClassifyingExtras_ReportsProgressMessages()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        // Arrange
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-a", cancellationToken)
+            .Returns([
+                new Label { Name = "bug", Colour = "d73a4a", Description = "Something is not working", RepositoryName = "repo-a" },
+                new Label { Name = "dependencies", Colour = "0366d6", Description = "Pull requests that update a dependency", RepositoryName = "repo-a" },
+                new Label { Name = "epic", Colour = "5319e7", Description = "Legacy epic label", RepositoryName = "repo-a" },
+            ]);
+
+        _labelRepository
+            .GetWorkItemsWithLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), cancellationToken)
+            .Returns([]);
+
+        var messages = new SynchronousProgressMessageList();
+        var progress = messages.CreateProgress();
+        var sut = CreateSut();
+
+        // Act
+        await sut.PreviewRecommendedTaxonomyAsync(
+            "github-default",
+            ["owner/repo-a"],
+            removeLabelsOutsideTaxonomy: true,
+            keepAreaLabels: true,
+            progress: progress,
+            cancellationToken: cancellationToken);
+
+        // Assert
+        Assert.Contains(messages, message => message.Contains("Previewing taxonomy changes", StringComparison.Ordinal));
+        Assert.Contains(messages, message => message.Contains("Loading labels for owner/repo-a", StringComparison.Ordinal));
+        Assert.Contains(messages, message => message.Contains("Checking extra label usage on owner/repo-a", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -795,7 +868,7 @@ public sealed class LabelServiceTests
         var sut = CreateSut();
 
         // Act
-        var result = await sut.PreviewRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, keepAreaLabels: true, cancellationToken);
+        var result = await sut.PreviewRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, keepAreaLabels: true, cancellationToken: cancellationToken);
 
         // Assert
         var preview = Assert.Single(result);
@@ -819,7 +892,7 @@ public sealed class LabelServiceTests
         var sut = CreateSut();
 
         // Act
-        var result = await sut.PreviewRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, keepAreaLabels: false, cancellationToken);
+        var result = await sut.PreviewRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, keepAreaLabels: false, cancellationToken: cancellationToken);
 
         // Assert
         var preview = Assert.Single(result);
@@ -855,7 +928,7 @@ public sealed class LabelServiceTests
         var sut = CreateSut();
 
         // Act
-        var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, keepAreaLabels: true, cancellationToken);
+        var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, keepAreaLabels: true, cancellationToken: cancellationToken);
 
         // Assert
         var summary = Assert.Single(result);
@@ -899,7 +972,7 @@ public sealed class LabelServiceTests
         var sut = CreateSut();
 
         // Act
-        var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, keepAreaLabels: true, cancellationToken);
+        var result = await sut.ApplyRecommendedTaxonomyAsync("github-default", ["owner/repo-a"], removeLabelsOutsideTaxonomy: true, keepAreaLabels: true, cancellationToken: cancellationToken);
 
         // Assert
         var summary = Assert.Single(result);
@@ -1221,6 +1294,25 @@ public sealed class LabelServiceTests
     }
 
     [Fact]
+    public async Task RemapLabelAsync_WhenRetaggingItems_ReportsProgressMessages()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        ArrangeLabels("story", "type/story");
+        _labelRepository
+            .GetWorkItemsWithLabelAsync("owner", "repo", "story", cancellationToken)
+            .Returns([new LabelledWorkItem { Number = 10 }, new LabelledWorkItem { Number = 11 }]);
+
+        var messages = new SynchronousProgressMessageList();
+        var progress = messages.CreateProgress();
+
+        _ = await CreateSut().RemapLabelAsync("owner", "repo", "story", "type/story", progress, cancellationToken);
+
+        Assert.Contains(messages, message => message.Contains("finding labelled items", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(messages, message => message.Contains("retagging item 1 of 2", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(messages, message => message.Contains("retagging item 2 of 2", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public async Task RemapLabelAsync_ItemsHaveSource_AddsDestinationRemovesSourceAndDeletesSource()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
@@ -1229,7 +1321,7 @@ public sealed class LabelServiceTests
             .GetWorkItemsWithLabelAsync("owner", "repo", "story", cancellationToken)
             .Returns([new LabelledWorkItem { Number = 10 }, new LabelledWorkItem { Number = 11 }]);
 
-        var result = await CreateSut().RemapLabelAsync("owner", "repo", "story", "type/story", cancellationToken);
+        var result = await CreateSut().RemapLabelAsync("owner", "repo", "story", "type/story", cancellationToken: cancellationToken);
 
         Assert.Equal(2, result.SucceededItemCount);
         Assert.Equal(0, result.FailedItemCount);
@@ -1258,7 +1350,7 @@ public sealed class LabelServiceTests
             .GetWorkItemsWithLabelAsync("owner", "repo", "story", cancellationToken)
             .Returns([new LabelledWorkItem { Number = 7 }]);
 
-        var result = await CreateSut().RemapLabelAsync("owner", "repo", "story", "type/story", cancellationToken);
+        var result = await CreateSut().RemapLabelAsync("owner", "repo", "story", "type/story", cancellationToken: cancellationToken);
 
         Assert.True(result.DestinationCreated);
         Assert.Equal("type/story", result.DestinationLabelName);
@@ -1285,7 +1377,7 @@ public sealed class LabelServiceTests
             .When(service => service.AddLabelsToTriageItemAsync("owner", "repo", 11, Arg.Any<IReadOnlyList<string>>(), cancellationToken))
             .Throw(new HttpRequestException("GitHub API failure"));
 
-        var result = await CreateSut().RemapLabelAsync("owner", "repo", "story", "type/story", cancellationToken);
+        var result = await CreateSut().RemapLabelAsync("owner", "repo", "story", "type/story", cancellationToken: cancellationToken);
 
         Assert.Equal(2, result.SucceededItemCount);
         Assert.Equal(1, result.FailedItemCount);
@@ -1306,7 +1398,7 @@ public sealed class LabelServiceTests
             .GetWorkItemsWithLabelAsync("owner", "repo", "story", cancellationToken)
             .Returns([]);
 
-        var result = await CreateSut().RemapLabelAsync("owner", "repo", "story", "type/story", cancellationToken);
+        var result = await CreateSut().RemapLabelAsync("owner", "repo", "story", "type/story", cancellationToken: cancellationToken);
 
         Assert.Equal(0, result.SucceededItemCount);
         Assert.Equal(0, result.FailedItemCount);
@@ -1320,7 +1412,7 @@ public sealed class LabelServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
 
-        var action = async () => await CreateSut().RemapLabelAsync("owner", "repo", "story", "Story", cancellationToken);
+        var action = async () => await CreateSut().RemapLabelAsync("owner", "repo", "story", "Story", cancellationToken: cancellationToken);
 
         _ = await Assert.ThrowsAsync<ArgumentException>(action);
         await _labelRepository.DidNotReceive().GetLabelsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>(), Arg.Any<bool>());
@@ -1334,13 +1426,20 @@ public sealed class LabelServiceTests
             .GetLabelsAsync("owner", "repo", cancellationToken, true)
             .Returns([new Label { Name = "type/story", Colour = "1d76db", Description = "Story", RepositoryName = "repo" }]);
 
-        var action = async () => await CreateSut().RemapLabelAsync("owner", "repo", "story", "type/story", cancellationToken);
+        var action = async () => await CreateSut().RemapLabelAsync("owner", "repo", "story", "type/story", cancellationToken: cancellationToken);
 
         _ = await Assert.ThrowsAsync<KeyNotFoundException>(action);
         await _labelRepository.DidNotReceive().DeleteLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     private LabelService CreateSut() => new(_labelRepository, _gitHubService);
+
+    private sealed class SynchronousProgressMessageList : List<string>, IProgress<string>
+    {
+        public void Report(string value) => Add(value);
+
+        public IProgress<string> CreateProgress() => this;
+    }
 
     private void ArrangeLabels(string sourceName, string destinationName)
     {

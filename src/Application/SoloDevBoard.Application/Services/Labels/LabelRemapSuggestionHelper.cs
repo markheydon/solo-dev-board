@@ -73,21 +73,34 @@ public static class LabelRemapSuggestionHelper
     /// <summary>Builds the destination options for a remap row.</summary>
     /// <param name="sourceLabelName">The source label being remapped.</param>
     /// <param name="strategyLabelNames">The label names in the selected recommended strategy.</param>
-    /// <param name="existingLabelNames">The label names currently present in the repository.</param>
-    /// <returns>A sorted, distinct list of destination candidates excluding the source name.</returns>
+    /// <param name="existingLabelNames">Label names that will remain in the repository after apply (create, update, or skip).</param>
+    /// <param name="excludedLabelNames">Label names that must not be offered as destinations, such as extras slated for deletion.</param>
+    /// <returns>A sorted, distinct list of destination candidates excluding the source and excluded names.</returns>
     public static IReadOnlyList<string> BuildDestinationOptions(
         string sourceLabelName,
         IReadOnlyList<string> strategyLabelNames,
-        IReadOnlyList<string> existingLabelNames)
+        IReadOnlyList<string> existingLabelNames,
+        IReadOnlyList<string>? excludedLabelNames = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceLabelName);
         ArgumentNullException.ThrowIfNull(strategyLabelNames);
         ArgumentNullException.ThrowIfNull(existingLabelNames);
 
+        var excluded = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { sourceLabelName };
+        if (excludedLabelNames is not null)
+        {
+            foreach (var name in excludedLabelNames)
+            {
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    excluded.Add(name);
+                }
+            }
+        }
+
         return strategyLabelNames
             .Concat(existingLabelNames)
-            .Where(name => !string.IsNullOrWhiteSpace(name)
-                && !string.Equals(name, sourceLabelName, StringComparison.OrdinalIgnoreCase))
+            .Where(name => !string.IsNullOrWhiteSpace(name) && !excluded.Contains(name))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
             .ToArray();

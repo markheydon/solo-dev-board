@@ -130,11 +130,12 @@ There is no protected allow-list for other extras: GitHub defaults (`bug`, `enha
 
 When remove-outside is on:
 
-- Preview summary counts include **Remap** for extras, alongside Create, Update, and Skip.
-- Preview lists **Remap extras** as a table with a destination picker per source label, plus **Skip** and **Delete without remap** actions.
-- Suggested destinations pre-fill clear leaf matches (`story` → `type/story`) and obvious GitHub-default counterparts (`documentation` → `type/documentation`). Ambiguous defaults such as `enhancement`, `question`, and `wontfix` start as skip until you choose.
-- **Skip / keep** leaves the source label on the repository. **Delete without remap** removes the label without retagging issues or pull requests; SoloDevBoard asks for explicit confirmation before applying those rows.
-- **Apply remap** runs create and update steps first, then retags issues and pull requests onto each mapped destination and deletes the source only when every retag for that repository succeeded. Per-repository success and failure counts appear in the summary.
+- Preview summary counts include **Remap** for extras on issues or pull requests, **Delete** for unused extras, alongside Create, Update, and Skip.
+- Preview lists **Remap extras** as a table for labels that are on issues or pull requests, with a destination picker per source label and a **Delete without remap** action.
+- Unused extras with no issue or pull request history appear under **Unused labels to delete** and are removed automatically on apply.
+- Suggested destinations pre-fill clear leaf matches (`story` → `type/story`) and obvious GitHub-default counterparts (`documentation` → `type/documentation`). Ambiguous defaults such as `enhancement`, `question`, and `wontfix` start with **Keep label** until you choose a destination. Destination pickers are searchable.
+- **Keep label** leaves the source label on the repository. **Delete without remap** removes the label without retagging issues and pull requests; SoloDevBoard asks for explicit confirmation before applying those rows.
+- **Apply remap** runs create and update steps first, then retags issues and pull requests onto each mapped destination and deletes the source only when every retag for that repository succeeded. Progress messages update while each repository and labelled item is processed. The apply summary **Deleted** count includes source labels removed by remap, delete-without-remap rows, and unused extras. Per-repository success and failure counts appear in the summary.
 - When **Keep `area/*` labels** is on, excluded area labels are summarised by count only (no per-label table); they are not offered as remap sources.
 
 Leave remove-outside off for routine taxonomy rollout when you only want to add or correct canonical labels.

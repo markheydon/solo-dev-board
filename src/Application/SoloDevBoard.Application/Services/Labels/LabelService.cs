@@ -205,7 +205,7 @@ public sealed class LabelService : ILabelManagerService
     /// and the failure is recorded in <see cref="LabelRemapResultDto.Errors"/> without rolling back
     /// the add; callers must surface per-item errors so operators can retry or fix manually.
     /// </remarks>
-    public async Task<LabelRemapResultDto> RemapLabelAsync(string owner, string repo, string sourceLabelName, string destinationLabelName, CancellationToken cancellationToken = default)
+    public async Task<LabelRemapResultDto> RemapLabelAsync(string owner, string repo, string sourceLabelName, string destinationLabelName, IProgress<string>? progress = null, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
         ArgumentException.ThrowIfNullOrWhiteSpace(repo);
@@ -214,11 +214,16 @@ public sealed class LabelService : ILabelManagerService
 
         var sourceName = sourceLabelName.Trim();
         var destinationName = destinationLabelName.Trim();
+        var repositoryFullName = $"{owner}/{repo}";
 
         if (string.Equals(sourceName, destinationName, StringComparison.OrdinalIgnoreCase))
         {
             throw new ArgumentException("Source and destination labels must be different names.", nameof(destinationLabelName));
         }
+
+        ReportPreviewProgress(
+            progress,
+            $"Remapping '{sourceName}' → '{destinationName}' on {repositoryFullName}: finding labelled items...");
 
         var labels = await _labelRepository.GetLabelsAsync(owner, repo, cancellationToken, forceReload: true).ConfigureAwait(false);
         var source = labels.FirstOrDefault(label => string.Equals(label.Name, sourceName, StringComparison.OrdinalIgnoreCase))
@@ -252,9 +257,20 @@ public sealed class LabelService : ILabelManagerService
         var succeededItemCount = 0;
         var errors = new List<LabelRemapItemErrorDto>();
 
-        foreach (var workItem in workItems)
+        if (workItems.Count == 0)
+        {
+            ReportPreviewProgress(
+                progress,
+                $"Remapping '{sourceName}' → '{destinationName}' on {repositoryFullName}: no labelled items found, deleting source label...");
+        }
+
+        for (var itemIndex = 0; itemIndex < workItems.Count; itemIndex++)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            var workItem = workItems[itemIndex];
+            ReportPreviewProgress(
+                progress,
+                $"Remapping '{sourceName}' → '{destinationName}' on {repositoryFullName}: retagging item {itemIndex + 1} of {workItems.Count}...");
 
             try
             {
@@ -429,7 +445,7 @@ public sealed class LabelService : ILabelManagerService
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto>> PreviewRecommendedTaxonomyAsync(string strategyId, IReadOnlyList<string> repositories, bool removeLabelsOutsideTaxonomy = false, bool keepAreaLabels = true, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto>> PreviewRecommendedTaxonomyAsync(string strategyId, IReadOnlyList<string> repositories, bool removeLabelsOutsideTaxonomy = false, bool keepAreaLabels = true, IProgress<string>? progress = null, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(strategyId);
         var normalisedRepositories = NormaliseRepositories(repositories);
@@ -437,12 +453,28 @@ public sealed class LabelService : ILabelManagerService
         var strategyLabels = ResolveRecommendedStrategyLabels(strategyId);
         var previews = new List<RecommendedTaxonomyRepositoryPreviewDto>();
 
-        foreach (var repositoryFullName in normalisedRepositories)
+        ReportPreviewProgress(progress, "Previewing taxonomy changes...");
+
+        for (var repositoryIndex = 0; repositoryIndex < normalisedRepositories.Count; repositoryIndex++)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            var repositoryFullName = normalisedRepositories[repositoryIndex];
             var repository = SplitRepositoryFullName(repositoryFullName);
+            ReportPreviewProgress(
+                progress,
+                normalisedRepositories.Count > 1
+                    ? $"Loading labels for {repositoryFullName} ({repositoryIndex + 1} of {normalisedRepositories.Count})..."
+                    : $"Loading labels for {repositoryFullName}...");
+
             var existing = await _labelRepository.GetLabelsAsync(repository.Owner, repository.Name, cancellationToken).ConfigureAwait(false);
-            previews.Add(BuildRepositoryPreview(repositoryFullName, strategyLabels, existing, removeLabelsOutsideTaxonomy, keepAreaLabels));
+            var preview = BuildRepositoryPreview(repositoryFullName, strategyLabels, existing, removeLabelsOutsideTaxonomy, keepAreaLabels);
+
+            if (removeLabelsOutsideTaxonomy && preview.ToDelete.Count > 0)
+            {
+                preview = await ClassifyExtraLabelsByUsageAsync(repository.Owner, repository.Name, preview, progress, cancellationToken).ConfigureAwait(false);
+            }
+
+            previews.Add(preview);
         }
 
         return previews
@@ -451,7 +483,7 @@ public sealed class LabelService : ILabelManagerService
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<RecommendedTaxonomyRepositoryResultDto>> ApplyRecommendedTaxonomyAsync(string strategyId, IReadOnlyList<string> repositories, bool removeLabelsOutsideTaxonomy = false, bool keepAreaLabels = true, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<RecommendedTaxonomyRepositoryResultDto>> ApplyRecommendedTaxonomyAsync(string strategyId, IReadOnlyList<string> repositories, bool removeLabelsOutsideTaxonomy = false, bool keepAreaLabels = true, IProgress<string>? progress = null, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(strategyId);
         var normalisedRepositories = NormaliseRepositories(repositories);
@@ -459,9 +491,17 @@ public sealed class LabelService : ILabelManagerService
         var strategyLabels = ResolveRecommendedStrategyLabels(strategyId);
         var results = new List<RecommendedTaxonomyRepositoryResultDto>();
 
-        foreach (var repositoryFullName in normalisedRepositories)
+        ReportPreviewProgress(progress, "Applying taxonomy changes...");
+
+        for (var repositoryIndex = 0; repositoryIndex < normalisedRepositories.Count; repositoryIndex++)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            var repositoryFullName = normalisedRepositories[repositoryIndex];
+            ReportPreviewProgress(
+                progress,
+                normalisedRepositories.Count > 1
+                    ? $"Applying changes to {repositoryFullName} ({repositoryIndex + 1} of {normalisedRepositories.Count})..."
+                    : $"Applying changes to {repositoryFullName}...");
 
             var createdCount = 0;
             var updatedCount = 0;
@@ -473,6 +513,11 @@ public sealed class LabelService : ILabelManagerService
                 var repository = SplitRepositoryFullName(repositoryFullName);
                 var existing = await _labelRepository.GetLabelsAsync(repository.Owner, repository.Name, cancellationToken).ConfigureAwait(false);
                 var preview = BuildRepositoryPreview(repositoryFullName, strategyLabels, existing, removeLabelsOutsideTaxonomy, keepAreaLabels);
+
+                if (removeLabelsOutsideTaxonomy && preview.ToDelete.Count > 0)
+                {
+                    preview = await ClassifyExtraLabelsByUsageAsync(repository.Owner, repository.Name, preview, null, cancellationToken).ConfigureAwait(false);
+                }
 
                 foreach (var labelToCreate in preview.ToCreate)
                 {
@@ -614,8 +659,64 @@ public sealed class LabelService : ILabelManagerService
                 .ToArray()
             : [];
 
-        return new RecommendedTaxonomyRepositoryPreviewDto(repositoryFullName, toCreate, toUpdate, toDelete, skipped, keptAreaLabels);
+        return new RecommendedTaxonomyRepositoryPreviewDto(repositoryFullName, toCreate, toUpdate, toDelete, [], skipped, keptAreaLabels);
     }
+
+    /// <summary>Splits extra labels into unused deletes and labelled work items that need remapping.</summary>
+    /// <param name="owner">The GitHub account owner login.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="preview">The repository preview containing candidate extra labels in <see cref="RecommendedTaxonomyRepositoryPreviewDto.ToDelete"/>.</param>
+    /// <param name="progress">Optional callback that receives human-readable progress messages during classification.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A preview with extras moved into <see cref="RecommendedTaxonomyRepositoryPreviewDto.ToRemap"/> when they are in use.</returns>
+    private async Task<RecommendedTaxonomyRepositoryPreviewDto> ClassifyExtraLabelsByUsageAsync(
+        string owner,
+        string repo,
+        RecommendedTaxonomyRepositoryPreviewDto preview,
+        IProgress<string>? progress,
+        CancellationToken cancellationToken)
+    {
+        var toDelete = new List<LabelDto>();
+        var toRemap = new List<LabelDto>();
+        var candidates = preview.ToDelete;
+
+        for (var labelIndex = 0; labelIndex < candidates.Count; labelIndex++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var label = candidates[labelIndex];
+            ReportPreviewProgress(
+                progress,
+                $"Checking extra label usage on {preview.RepositoryFullName} ({labelIndex + 1} of {candidates.Count})...");
+
+            var workItems = await _labelRepository
+                .GetWorkItemsWithLabelAsync(owner, repo, label.Name, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (workItems.Count > 0)
+            {
+                toRemap.Add(label);
+            }
+            else
+            {
+                toDelete.Add(label);
+            }
+        }
+
+        return new RecommendedTaxonomyRepositoryPreviewDto(
+            preview.RepositoryFullName,
+            preview.ToCreate,
+            preview.ToUpdate,
+            toDelete,
+            toRemap,
+            preview.Skipped,
+            preview.KeptAreaLabels);
+    }
+
+    /// <summary>Reports a preview progress message when a listener is attached.</summary>
+    /// <param name="progress">The optional progress listener.</param>
+    /// <param name="message">The message to report.</param>
+    private static void ReportPreviewProgress(IProgress<string>? progress, string message)
+        => progress?.Report(message);
 
     /// <summary>Maps an application label DTO to a domain label record.</summary>
     /// <param name="label">The application label DTO to map.</param>

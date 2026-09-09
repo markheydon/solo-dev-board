@@ -98,7 +98,7 @@ When **Remove labels outside taxonomy** is on, Preview lists extras as **remap r
 - Skip / keep is always valid. Delete-without-remap is a separate, explicit confirmation — not the default for a row that still has a destination.
 - Apply is preview-first. Disable repeat submit while the batch is running. Report per-repository success and failure counts. Do not delete a source on that repository if any retag failed.
 - If the destination name does not exist, create it (or rely on Recommended Taxonomy create-missing) before retagging. Do not rename a source onto a name that already exists.
-- Suggested test ids: `labels-recommended-remap-table`, `labels-recommended-remap-destination-{source}`, `labels-recommended-remap-skip-{source}`, `labels-recommended-remap-apply-button`.
+- Suggested test ids: `labels-recommended-remap-table`, `labels-recommended-remap-destination-{source}`, `labels-recommended-remap-keep-{source}`, `labels-recommended-remap-apply-button`.
 
 ## Interaction Notes
 - Repository selector sets page-level context and filters all tabs.
