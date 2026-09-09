@@ -18,7 +18,7 @@ This directory contains planning-only wireframe references for key SoloDevBoard 
 - [auth-entry-wireframe.md](auth-entry-wireframe.md): Hosted sign-in landing page, PAT connectivity shell indicator, recovery pages, and manual test scenarios for issues #249 and #314.
 - [planning-wireframe.md](planning-wireframe.md): Cross-Repo Planning hub, Daily Focus, Backlog Review, Iteration Planning (stall gate vs capacity meter, #445), and Repo Management for feature #272.
 - [product-site-landing-wireframe.md](product-site-landing-wireframe.md): Public product site landing (`/`), navigation, feature grid, and release version badge.
-- [product-ui-language-wireframe.md](product-ui-language-wireframe.md): Cross-page MudBlazor chrome (header, toolbar, loading, empty, error) for DEC-039.
+- [product-ui-language-wireframe.md](product-ui-language-wireframe.md): Cross-page MudBlazor chrome (header, toolbar, loading, empty, error) for DEC-039, including phone and compact-tablet viewports ([#411](https://github.com/markheydon/solo-dev-board/issues/411)).
 - [product-branding-wireframe.md](product-branding-wireframe.md): Where the product mark lives (app bar, favicon, GitHub App listing) for [#397](https://github.com/markheydon/solo-dev-board/issues/397).
 
 

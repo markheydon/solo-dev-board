@@ -4,6 +4,7 @@
 - [x] Feature #397 updated (branding, ice-box, wireframe, audit AC).
 - [x] Feature: MudBlazor visual language (#527).
 - [x] Story: Apply page chrome across shipped pages (#528).
+- [x] Story: Mobile and narrow-viewport layout (#411, recast from phone-width chore; ice-box child of #527).
 - [x] Enabler: Centralise theme tokens and icons (#529).
 - [x] Test: Brand chrome (#531).
 - [x] Test: Visual language (#530).

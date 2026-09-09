@@ -3,6 +3,7 @@
 ## Testing scope
 
 - **Visual language:** header, toolbar hierarchy, skeleton vs spinner, empty/error alerts on representative pages (Repositories, Labels, Audit, Triage, Planning Daily Focus).
+- **Narrow viewports:** when #411 is un-parked, Playwright shell assertions at 390 and 744 CSS px on representative routes (extend #530 rather than a new Test issue).
 - **Branding:** deferred until #397 is un-parked; then favicon, apple-touch, app-bar mark, static error pages.
 
 ## Quality objectives
