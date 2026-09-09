@@ -1,6 +1,6 @@
 ---
 description: .NET 10 and C# conventions for SoloDevBoard
-globs: "**/*.cs,**/*.csproj"
+globs: "**/*.cs,**/*.csproj,Directory.Packages.props"
 alwaysApply: false
 ---
 

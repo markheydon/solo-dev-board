@@ -8,7 +8,7 @@ Use this reference when selecting data entry and input components.
 - Use `MudNumericField<T>` for constrained numeric values.
 - Use `MudSelect<T>` for known finite choices.
 - Use `MudAutocomplete<T>` for large option sets and type-ahead.
-- Use picker components (`MudDatePicker`, `MudTimePicker`, `MudColorPicker`) for specialised value types.
+- Use picker components (`MudDatePicker`, `MudDateRangePicker`, `MudTimePicker`, `MudColorPicker`) for specialised value types.
 - Use `MudForm` when coordinating validation and submission across multiple fields.
 
 ## Component Coverage
@@ -19,6 +19,7 @@ Use this reference when selecting data entry and input components.
 | `MudCheckBox<T>` | Boolean input or checklist options. | Prefer over raw HTML checkboxes. |
 | `MudColorPicker` | Colour selection with HEX, RGB, or palette style workflows. | Use `@bind-Text` for hex string models. |
 | `MudDatePicker` | Single date capture. | Use for due dates, schedule dates, or report filters. |
+| `MudDateRangePicker` | From/to date span. | Prefer over two independent date pickers. |
 | `MudField` | Shared field shell for custom input experiences. | Use when composing custom field content with consistent label and helper behaviour. |
 | `MudFileUpload<T>` | File selection and upload workflows. | Keep validation explicit for file type and size constraints. |
 | `MudForm` | Coordinated validation and submit flow across fields. | Use `Validate()` and form-level state instead of ad hoc per-control checks. |

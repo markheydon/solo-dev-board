@@ -93,7 +93,8 @@ The following are explicitly **not** in scope for the current version of SoloDev
 - **Open source:** The project is intended to be open source under the MIT Licence.
 - **AI-driven development:** The project is developed with GitHub Copilot as an active collaborator. All planning documents are written to be machine-readable and actionable by AI agents.
 - **Minimal dependencies:** Prefer the .NET ecosystem and well-established open source libraries. Avoid adding dependencies without a decision log entry ([`plan/DECISIONS.md`](DECISIONS.md)).
-- **UI component library:** MudBlazor is the sole UI component library for the Blazor front-end (see [DEC-009](DECISIONS.md#dec-009-mudblazor-as-the-sole-ui-component-library)). Raw HTML form elements are not used where a MudBlazor equivalent exists.
+- **UI component library:** MudBlazor is the sole UI component library for the Blazor front-end (see [DEC-009](DECISIONS.md#dec-009-mudblazor-as-the-sole-ui-component-library)). Page chrome follows [DEC-039](DECISIONS.md#dec-039-mudblazor-visual-language-for-page-chrome). Raw HTML form elements are not used where a MudBlazor equivalent exists.
+- **Product mark:** A dedicated logo and brand treatment remain ice-box ([#397](https://github.com/markheydon/solo-dev-board/issues/397)). The GitHub App bar-chart icon is the interim favicon only.
 
 ---
 
@@ -137,5 +138,5 @@ The following are explicitly **not** in scope for the current version of SoloDev
 | 2026-09-02 | Custom template repositories (#292) specified for **`v1.2`**: one GitHub YAML source, inferred `{{tokens}}`, merged catalogue, localStorage last-used only (DEC-038). Server persistence and parameter profiles (#436) stay later. | Solo developer |
 | 2026-09-04 | Custom template source UI (#292) amended: catalogue `RepositorySelector` plus manual `owner/name` field (DEC-038 amended). Typed-field-only source rejected after PR #501 dogfood. | Solo developer |
 | 2026-09-07 | **`v1.2 - Planning polish, Reload & Templates`** delivery complete (30 closed, 0 open). Ready to tag [`v1.2.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.2.0) after staging smoke test. User guides and changelog updated; window-focus refetch (#450) and server-backed template source (#498) stay later. | Solo developer |
-| 2026-09-07 | Declared **`v1.3 - Usable solo workflow across repositories`** (tag `v1.3.0` when shipped). Theme: dogfood a real multi-repo daily workflow. Locked in: Label Manager remap extras ([#491](https://github.com/markheydon/solo-dev-board/issues/491)). Further issues will be added from use. Ice-box and platform-blocked work stays off this milestone unless promoted. | Solo developer |
+| 2026-09-09 | Recorded MudBlazor visual language (DEC-039) as in-scope quality for shipped pages. Dedicated product branding ([#397](https://github.com/markheydon/solo-dev-board/issues/397)) stays ice-box and unmilestoned. | Solo developer |
 

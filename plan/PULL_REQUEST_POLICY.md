@@ -164,6 +164,8 @@ Dependabot PRs follow [`PROJECT_MANAGEMENT.md`](PROJECT_MANAGEMENT.md) and this 
 
 They do not need a tracking issue or the `[Chore]` title form. Merge only after CI passes and a relevance review.
 
+If the update changes **MudBlazor**, the same pull request must refresh `.agents/skills/mudblazor/` or state that the component catalogue did not change.
+
 Configure those taxonomy labels in [`.github/dependabot.yml`](../.github/dependabot.yml) so new bot PRs are not created with `dependencies` alone.
 
 ---

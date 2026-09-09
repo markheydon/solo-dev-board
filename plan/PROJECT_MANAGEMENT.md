@@ -94,6 +94,7 @@ Follow [`PULL_REQUEST_POLICY.md`](PULL_REQUEST_POLICY.md). Reference the issue i
 - Dependabot updates should be grouped by related package area where practical so each pull request stays reviewable.
 - Low-risk Dependabot patch updates may use GitHub auto-merge, but only after the standard CI workflow has passed successfully.
 - Merge Dependabot pull requests only after the standard CI workflow passes and the package change has been reviewed for relevance and release risk.
+- **MudBlazor:** a pull request that changes the MudBlazor version (Dependabot or manual) must refresh `.agents/skills/mudblazor/` against the current component overview, or state in the PR that the catalogue did not change. Do not merge the bump and “update the skill later”.
 
 ---
 

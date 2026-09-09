@@ -95,7 +95,7 @@ A formal migration to GitHub Spec Kit is planned — see [`plan/SPEC_KIT_MIGRATI
 **Date:** 2026-03-09  
 **Legacy:** [ADR-0012](../adr/archive/0012-switch-to-mudblazor-component-library.md)  
 **Constitution:** [`.github/instructions/blazor.instructions.md`](../.github/instructions/blazor.instructions.md)  
-**Summary:** Use MudBlazor for all Blazor UI. Prefer MudBlazor layout primitives and utility classes before custom CSS. Reject Fluent UI Blazor and raw HTML controls where a MudBlazor equivalent exists (supersedes legacy ADR-0009).
+**Summary:** Use MudBlazor for all Blazor UI. Prefer MudBlazor layout primitives and utility classes before custom CSS. Reject Fluent UI Blazor and raw HTML controls where a MudBlazor equivalent exists (supersedes legacy ADR-0009). Component choice and page chrome follow the `mudblazor` skill; the skill’s baseline version lives only in that skill’s `SKILL.md`.
 
 ---
 
@@ -373,6 +373,15 @@ Test coverage expectations for cache-hit, cache-miss, invalidation, TTL expiry, 
 **Date:** 2026-09-02 (amended 2026-09-04)  
 **Related:** [#292](https://github.com/markheydon/solo-dev-board/issues/292), [DEC-029](#dec-029-cross-repo-planning-board-selection-and-local-settings)  
 **Summary:** Actions Templates may load **one additional GitHub repository** (`owner/name`) as a custom catalogue. The custom source UI uses a single-select **Repository Selector** (same active catalogue as apply targets) **plus** a manual `owner/name` field for repositories outside that list; both resolve to one source value and **Load templates** is explicit. The page lists YAML files at `.github/workflows/*.yml` and `*.yaml` (top-level only), infers `{{token}}` placeholders as required string parameters, and merges those templates into the same browser as built-ins with a source badge. Last-used source is stored in **browser localStorage** and pre-selects the catalogue repo when present, otherwise pre-fills the manual field; load is otherwise session-scoped. Built-in templates always remain visible when a custom file shares a workflow path. Public DTOs must use **stable string template identifiers** so custom paths do not collide with built-in integer ids. Private sources use the existing GitHub token. Server-backed persistence of sources waits on an Aspire product store ([#391](https://github.com/markheydon/solo-dev-board/issues/391)). Reject sidecar manifests, GitHub starter-workflow `properties.json`, appsettings-only registration, multiple concurrent custom sources, and in-app YAML authoring for this increment.
+
+---
+
+### DEC-039: MudBlazor visual language for page chrome
+
+**Status:** Active  
+**Date:** 2026-09-09  
+**Constitution:** [AGENTS.md](../AGENTS.md) (MudBlazor-first UI), [`.agents/skills/mudblazor/references/UX-LANGUAGE.md`](../.agents/skills/mudblazor/references/UX-LANGUAGE.md)  
+**Summary:** Shipped pages must share one visual language: page header plus purpose line, toolbar for commands, `MudPaper`/`MudCard` sections at elevation 1, `MudSkeleton` for content-shaped loading, `MudAlert` for empty and error, snackbars for transient outcomes (DEC-035). Agents choose components via the `mudblazor` skill (baseline version recorded only in that skill). Do not use `MudChat`, FABs, carousels, or charts on operational pages. Custom CSS remains exceptional. Product logo and brand assets stay a separate ice-box feature ([#397](https://github.com/markheydon/solo-dev-board/issues/397)).
 
 ---
 

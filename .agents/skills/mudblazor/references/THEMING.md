@@ -2,6 +2,12 @@
 
 MudBlazor uses a `MudTheme` object passed to `MudThemeProvider`.
 
+## SoloDevBoard canonical theme
+
+Do not copy the sample palettes below into new pages. The live theme is `src/App/SoloDevBoard.App/Themes/SoloDevBoardTheme.cs`, wired through `AppThemeProvider`. Hard-coded hex in Razor is a defect unless it is a GitHub label colour from the API.
+
+Keep reconnect CSS, skip-link CSS, and `.sdb-responsive-grid` as the only expected stylesheets. If CSS vars have not applied yet, reconnect fallbacks must use the same primary, info, and warning hex as `SoloDevBoardTheme`, not MudBlazor's default purple.
+
 ---
 
 ## Basic Custom Theme

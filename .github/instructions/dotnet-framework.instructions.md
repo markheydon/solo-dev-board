@@ -1,6 +1,6 @@
 ---
 description: 'Guidance for working with .NET 10 projects. Includes project structure, C# language version, package management, and best practices.'
-applyTo: '**/*.csproj, **/*.cs'
+applyTo: '**/*.csproj, **/*.cs, Directory.Packages.props'
 ---
 
 # .NET 10 Development
@@ -22,6 +22,7 @@ This repository uses SDK-style projects:
 - Manage packages with `dotnet add package`, `dotnet remove package`, and central package versioning if introduced.
 - Keep package choices aligned with the architecture and avoid unnecessary dependencies.
 - Prefer stable package versions unless pre-release is explicitly required.
+- When changing the `MudBlazor` `<PackageVersion>` in `Directory.Packages.props`, refresh `.agents/skills/mudblazor/` in the same change (see that skill’s `SKILL.md`).
 
 ## C# Language Version
 - Use C# 14 language features where they improve readability and maintainability.
