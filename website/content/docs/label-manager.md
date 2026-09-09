@@ -3,7 +3,7 @@ weight: 40
 title: Label Manager
 landing: true
 landingIcon: label
-landingSubtitle: "Create, edit, synchronise, and enforce label taxonomies across multiple repositories from a single interface."
+landingSubtitle: "Create, edit, remap extras onto a recommended taxonomy, and synchronise labels across repositories."
 guideStatus: Available
 ---
 
@@ -25,7 +25,7 @@ Key goals of the Label Manager:
 Label Manager is the day-to-day tool for governing labels across repositories. It is not intended to replace One-Click Migration.
 
 - Use Label Manager when labels are the thing you want to manage.
-- Use Label Manager when you need repeated operational work such as bulk CRUD, taxonomy rollout, or label re-synchronisation.
+- Use Label Manager when you need repeated operational work such as bulk CRUD, taxonomy rollout, remapping extras onto taxonomy names, or label re-synchronisation.
 - Use One-Click Migration when the goal is to copy repository configuration from a source repository to one or more target repositories.
 - Use One-Click Migration when you want labels to move together with other artefacts such as milestones and project board Status columns.
 
@@ -36,6 +36,7 @@ One-Click Migration covers labels, milestones, and Projects v2 Status columns in
 - You want to add a new `priority-high` label to several repositories at once. Use Label Manager.
 - You want to change an existing label's name, colour, or description across repositories. Use Label Manager.
 - You want to apply a recommended label taxonomy to selected repositories. Use Label Manager.
+- You want to map old labels such as `story` onto `type/story` without wiping those labels off historical issues and pull requests. Use Label Manager with **Remove labels outside taxonomy**.
 - You want a new repository to inherit the labels and milestones from an existing repository in a single guided workflow. Use One-Click Migration.
 
 
@@ -71,7 +72,7 @@ The create and edit dialogs include:
   {{< /tab >}}
 
   {{< tab name="Recommended taxonomy" >}}
-Apply a recommended label taxonomy to the selected repositories. Preview proposed changes, confirm before applying, and review a per-repository summary after completion.
+Apply a recommended label taxonomy to the selected repositories. Preview proposed changes, then choose **Confirm** (create and update only) or **Apply remap** when **Remove labels outside taxonomy** is on and extras sit on issues or pull requests. Review a per-repository summary after completion.
 
 Current built-in strategies:
 
@@ -99,13 +100,13 @@ Select one or more active repositories in the repository selector.
 
 Choose a recommended strategy.
 
-### Optional strict clean-up
+### Optional extra handling
 
-Optionally enable **Remove labels outside taxonomy** (off by default) when you want a strict clean-up.
+Optionally enable **Remove labels outside taxonomy** (off by default) when you want extras remapped or removed instead of left alone.
 
 ### Preview and confirm
 
-Select **Preview** to review proposed changes per repository. Confirm or cancel before any changes are applied. After **Confirm**, the apply button shows a loading state and an in-progress indicator until the operation finishes.
+Select **Preview** to review proposed changes per repository. When **Remap extras** is shown, adjust destinations then choose **Apply remap**. Otherwise choose **Confirm**. **Cancel** leaves the repository unchanged. After apply, the button shows a loading state and an in-progress indicator until the operation finishes.
 
 ### Review the summary
 
@@ -131,20 +132,22 @@ There is no protected allow-list for other extras: GitHub defaults (`bug`, `enha
 When remove-outside is on:
 
 - Preview summary counts include **Remap** for extras on issues or pull requests, **Delete** for unused extras, alongside Create, Update, and Skip.
-- Preview lists **Remap extras** as a table for labels that are on issues or pull requests, with a destination picker per source label and a **Delete without remap** action.
+- Preview lists **Remap extras** as a table for labels that are on issues or pull requests, with a searchable destination picker per source label and a **Delete without remap** action.
 - Unused extras with no issue or pull request history appear under **Unused labels to delete** and are removed automatically on apply.
-- Suggested destinations pre-fill clear leaf matches (`story` → `type/story`) and obvious counterparts for GitHub defaults and automation labels (`bug` → `type/bug`, `documentation` → `type/documentation`, `dependencies` → `type/chore`, `enhancement` → `type/feature`, `wontfix` → `status/ice-box`). Labels such as `duplicate`, `good first issue`, `help wanted`, `invalid`, and `question` start with **Keep label** until you choose a destination. Destination pickers are searchable.
-- **Keep label** leaves the source label on the repository. **Delete without remap** removes the label without retagging issues and pull requests; SoloDevBoard asks for explicit confirmation before applying those rows.
-- **Apply remap** runs create and update steps first, then retags issues and pull requests onto each mapped destination and deletes the source only when every retag for that repository succeeded. Progress messages update while each repository and labelled item is processed. The apply summary **Deleted** count includes source labels removed by remap, delete-without-remap rows, and unused extras. Per-repository success and failure counts appear in the summary.
+- Suggested destinations pre-fill clear leaf matches (`story` → `type/story`) and obvious counterparts for GitHub defaults and automation labels (`bug` → `type/bug`, `documentation` → `type/documentation`, `dependencies` → `type/chore`, `enhancement` → `type/feature`, `wontfix` → `status/ice-box`). Labels such as `duplicate`, `good first issue`, `help wanted`, `invalid`, and `question` start with **Keep label** until you choose a destination.
+- **Keep label** (clear the destination picker) leaves the source label on the repository. **Delete without remap** removes the label without retagging issues and pull requests; SoloDevBoard asks for explicit confirmation before applying those rows.
+- **Apply remap** runs create and update steps first, then retags issues and pull requests onto each mapped destination and deletes the source only when every retag for that repository succeeded. Progress messages update while each repository and labelled item is processed.
 - When **Keep `area/*` labels** is on, excluded area labels are summarised by count only (no per-label table); they are not offered as remap sources.
 
 Leave remove-outside off for routine taxonomy rollout when you only want to add or correct canonical labels.
 
+![Recommended taxonomy preview with Remap extras for markheydon/solo-dev-board](/images/label-manager/remap-extras.png)
+
 ### Preview and apply summary
 
-The preview shows the labels that will be created, updated, remapped (when remove-outside is on), or skipped for each selected repository. Labels that already match the selected strategy exactly are skipped, and no redundant API update call is made for those labels.
+The preview shows the labels that will be created, updated, remapped (when remove-outside is on and extras are in use), unused extras to delete, or skipped for each selected repository. Labels that already match the selected strategy exactly are skipped, and no redundant API update call is made for those labels.
 
-The apply summary is shown per repository and includes created, updated, deleted (when remove-outside is off), remapped, and skipped counts. Remap rows that failed to retag every item keep the source label and list per-item errors. If one repository fails due to a GitHub API error, the summary marks that repository with an error while still showing successful outcomes for other repositories.
+The apply summary is shown per repository and lists Created, Updated, Deleted, and Skipped counts. The **Deleted** count includes unused extras, sources removed after a successful remap, and delete-without-remap rows. When remap ran, a **Remap results** section lists each source and destination (or delete without remap). The completion snackbar also reports a remapped count. Remap rows that failed to retag every item keep the source label and list per-item errors. If one repository fails due to a GitHub API error, the summary marks that repository with an error while still showing successful outcomes for other repositories.
 
 Strategies are built in to the application. Custom strategy files that you maintain outside the shipped catalogue remain a later increment.
 

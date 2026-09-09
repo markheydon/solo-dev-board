@@ -5,6 +5,7 @@ import {
   prepareAuditDashboardForCapture,
   prepareBoardRulesForCapture,
   prepareLabelManagerForCapture,
+  prepareLabelManagerRemapPreviewForCapture,
   prepareMigrationForCapture,
   preparePlanningBacklogForCapture,
   preparePlanningDailyFocusForCapture,
@@ -47,6 +48,12 @@ const loadedStateCaptures: ReadonlyArray<{
     slug: 'label-manager',
     file: 'overview.png',
     prepare: prepareLabelManagerForCapture,
+  },
+  {
+    title: 'Label Manager Recommended taxonomy remap extras preview',
+    slug: 'label-manager',
+    file: 'remap-extras.png',
+    prepare: prepareLabelManagerRemapPreviewForCapture,
   },
   {
     title: 'One-Click Migration with example repository selected',

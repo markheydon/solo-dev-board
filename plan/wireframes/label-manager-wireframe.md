@@ -82,23 +82,23 @@ When **Remove labels outside taxonomy** is on, Preview lists extras as **remap r
 +-------------------------------------------------------------+
 | Preview extras (remove-outside on)                          |
 | Source          Destination                         Action  |
-| story           [type/story        v]               Skip    |
-| epic            [type/epic         v]               Skip    |
-| enhancement     [(choose or skip)  v]               Skip    |
-| documentation   [type/documentation v]              Skip    |
+| story           [type/story        v]               Keep    |
+| epic            [type/epic         v]               Keep    |
+| enhancement     [type/feature      v]               Keep    |
+| question        [Keep label        v]               Keep    |
 +-------------------------------------------------------------+
 | Confirm: retag then delete mapped sources.                  |
-| Skip / keep leaves that name on the repository.             |
-| [Back]  [Apply remap]                                       |
+| Keep label leaves that name on the repository.              |
+| [Cancel]  [Apply remap]                                     |
 +-------------------------------------------------------------+
 ```
 
-- Destination picker is a `MudSelect` of recommended taxonomy names plus other existing labels on that repository. Suggested leaf matches (`story` → `type/story`) and clear GitHub-default counterparts (`documentation` → `type/documentation`) are pre-selected. Ambiguous defaults (`enhancement`, `question`, `wontfix`) start as skip.
+- Destination picker is a searchable `MudAutocomplete` of recommended taxonomy names plus other existing labels on that repository. Suggested leaf matches (`story` → `type/story`) and clear GitHub-default counterparts (`bug` → `type/bug`, `documentation` → `type/documentation`, `dependencies` → `type/chore`, `enhancement` → `type/feature`, `wontfix` → `status/ice-box`) are pre-selected. Ambiguous defaults (`duplicate`, `good first issue`, `help wanted`, `invalid`, `question`) start as **Keep label**.
 - Keep `area/*` (DEC-034) excludes those names from the source list when the nested keep control is on.
-- Skip / keep is always valid. Delete-without-remap is a separate, explicit confirmation — not the default for a row that still has a destination.
+- Keep label is always valid (clear the destination). Delete-without-remap is a separate, explicit confirmation — not the default for a row that still has a destination.
 - Apply is preview-first. Disable repeat submit while the batch is running. Report per-repository success and failure counts. Do not delete a source on that repository if any retag failed.
 - If the destination name does not exist, create it (or rely on Recommended Taxonomy create-missing) before retagging. Do not rename a source onto a name that already exists.
-- Suggested test ids: `labels-recommended-remap-table`, `labels-recommended-remap-destination-{source}`, `labels-recommended-remap-keep-{source}`, `labels-recommended-remap-apply-button`.
+- Suggested test ids: `labels-recommended-remap-table`, `labels-recommended-remap-destination-{source}`, `labels-recommended-remap-apply-button`. Keep label is the empty destination placeholder, not a separate skip control.
 
 ## Interaction Notes
 - Repository selector sets page-level context and filters all tabs.

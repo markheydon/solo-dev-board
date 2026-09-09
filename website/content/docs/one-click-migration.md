@@ -25,16 +25,16 @@ One-Click Migration and Label Manager both help you keep repositories consistent
 - Use One-Click Migration when you want to make one or more target repositories resemble a known-good source repository.
 - Use One-Click Migration when the goal is repository setup transfer rather than ongoing label maintenance.
 - Use Label Manager when you want to manage labels as a living taxonomy across repositories over time.
-- Use Label Manager when you need label-specific operations such as creating, renaming, recolouring, deleting, or re-synchronising labels without treating the whole repository setup as a migration.
+- Use Label Manager when you need label-specific operations such as creating, renaming, recolouring, deleting, remapping extras onto taxonomy names, or re-synchronising labels without treating the whole repository setup as a migration.
 
-One-Click Migration covers labels, milestones, and Projects v2 Status columns (the board-view Status field). It does not copy cards, views, automations, or other custom fields.
+One-Click Migration covers labels, milestones, and Projects v2 Status columns (the board-view Status field). It copies label definitions between repositories; it does not retag historical issues and pull requests. Use Label Manager **Remove labels outside taxonomy** for in-repository remap. One-Click Migration does not copy cards, views, automations, or other custom fields.
 
 ## Example Use Cases
 
 - You create a new repository and want it to inherit the labels, milestones, and Status columns from an existing repository you already run successfully. Use One-Click Migration.
 - You already have several active repositories and want to rename a label, change its colour, or push one new label to all of them. Use Label Manager.
 - You want to compare a source repository with one or more targets, review a preview, choose a conflict strategy, and then apply the result. Use One-Click Migration.
-- You want an ongoing operational tool for label housekeeping and taxonomy enforcement. Use Label Manager.
+- You want an ongoing operational tool for label housekeeping, taxonomy enforcement, or remapping extras onto taxonomy names. Use Label Manager.
 
 ---
 
