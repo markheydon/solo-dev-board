@@ -4,12 +4,12 @@ Map UI patterns to the correct MudBlazor component. Never use a raw HTML element
 
 Decision order for UI composition:
 1. Read `UX-LANGUAGE.md` for page chrome (header, toolbar, loading, empty, error).
-2. Pick a MudBlazor 9.9.0 component from the tables below.
+2. Pick a MudBlazor component from the tables below.
 3. Compose with MudBlazor layout primitives.
 4. Use MudBlazor utility classes in `Class`.
 5. Fall back to isolated CSS only when the first four options cannot satisfy the requirement.
 
-Inventory was checked against the MudBlazor 9.9.0 docs component list. `MudChat` is not in that catalogue — do not use it.
+The last full catalogue check is recorded as a baseline in `../SKILL.md`. `MudChat` is not used here unless current docs and a wireframe say otherwise.
 
 ## Button Semantics and Colour Hierarchy
 

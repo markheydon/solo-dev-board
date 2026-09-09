@@ -200,6 +200,7 @@ When code changes are made, ensure the following are kept in sync:
 | Scope change | `plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md` |
 | New env variable | `docs/getting-started.md`, `docs/deployment.md`, `src/SoloDevBoard.AppHost/README.md` |
 | Layer boundary or composition-root change | `AGENTS.md`, `plan/DECISIONS.md` (DEC-002), `CONTRIBUTING.md`, `.agents/contracts/code-review.md`, `.agents/skills/dotnet-best-practices/SKILL.md`, `plan/ASPIRE_MULTI_PROCESS_FINDINGS.md` when multi-process notes apply |
+| MudBlazor package version change | `.agents/skills/mudblazor/` against https://mudblazor.com/components/overview; update the baseline version in that skill’s `SKILL.md` only |
 | New release | `plan/RELEASE_PLAN.md`, [`CHANGELOG.md`](CHANGELOG.md) |
 
 ---

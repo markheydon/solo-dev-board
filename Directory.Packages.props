@@ -15,6 +15,7 @@
     <PackageVersion Include="Aspire.Hosting.Azure.KeyVault" Version="13.5.3" />
     <PackageVersion Include="Azure.Monitor.OpenTelemetry.AspNetCore" Version="1.6.0" />
     <PackageVersion Include="MessagePack" Version="3.1.8" />
+    <!-- When MudBlazor's version changes, refresh .agents/skills/mudblazor/ in the same PR (see SKILL.md baseline). -->
     <PackageVersion Include="MudBlazor" Version="9.9.0" />
     <PackageVersion Include="Markdig" Version="1.3.2" />
   </ItemGroup>

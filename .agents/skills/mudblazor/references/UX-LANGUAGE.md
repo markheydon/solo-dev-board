@@ -1,8 +1,8 @@
-# SoloDevBoard visual language (MudBlazor 9.9)
+# SoloDevBoard visual language
 
 Agents must choose MudBlazor components using this file together with [COMPONENT-CHOOSER.md](COMPONENT-CHOOSER.md). The app already has working features; the gap is **page chrome that feels considered**, not new widgets or custom CSS.
 
-**Pinned library:** MudBlazor **9.9.0** (`Directory.Packages.props`). Official catalogue: https://mudblazor.com/components/overview — refresh this skill when that package version changes.
+Official catalogue: https://mudblazor.com/components/overview. When MudBlazor is upgraded, follow **After a MudBlazor upgrade** at the end of this file (and the baseline note in `SKILL.md`).
 
 ---
 
@@ -18,7 +18,7 @@ Every authenticated feature page should read as the same product:
 6. **Error** — `MudAlert` `Severity.Error` at the top of the affected section with retry, per [DEC-035](../../../plan/DECISIONS.md#dec-035-transient-feedback-via-snackbar).
 7. **Success** — snackbar, not a second banner that repeats the same text.
 
-Do not introduce `MudFab`, `MudCarousel`, `MudChart`, or decorative `MudTimeline` on operational pages. Those components exist in 9.9.0 and are almost always the wrong choice here.
+Do not introduce `MudFab`, `MudCarousel`, `MudChart`, or decorative `MudTimeline` on operational pages. Those exist in MudBlazor and are almost always the wrong choice here.
 
 ---
 
@@ -113,7 +113,7 @@ Audit Dashboard already uses skeletons well; copy that pattern rather than the s
 
 ---
 
-## Components that exist in 9.9.0 but are usually wrong here
+## Components that exist in MudBlazor but are usually wrong here
 
 | Component | When it is acceptable. | Default. |
 |-----------|------------------------|----------|
@@ -125,12 +125,15 @@ Audit Dashboard already uses skeletons well; copy that pattern rather than the s
 | `MudExitPrompt` | Unsaved triage or migration preview. | Use only when leaving would drop in-progress work. |
 | `MudBreakpointProvider` | Tests or rare layout that must read breakpoints in C#. | Prefer `MudHidden` and `MudGrid` in markup. |
 
-`MudChat` is **not** in the 9.9.0 component catalogue. Do not use it.
+`MudChat` is not used in SoloDevBoard. Do not add it unless current MudBlazor docs show it and a wireframe explicitly calls for a chat transcript.
 
 ---
 
 ## After a MudBlazor upgrade
 
+Do this in the **same** pull request as the package bump (Dependabot or manual). Do not leave it for later.
+
 1. Compare https://mudblazor.com/components/overview with this file and `COMPONENT-CHOOSER.md`.
-2. Update the version pin in this heading and in `SKILL.md`.
+2. Update the baseline version in `../SKILL.md` only (not in every reference file).
 3. Add newly relevant components to the decision tree; do not copy the entire catalogue into every page.
+4. If the catalogue did not change in a way that affects SoloDevBoard, say so in the PR additional notes.

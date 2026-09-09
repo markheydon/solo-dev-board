@@ -7,7 +7,7 @@ applyTo: '**/*.razor, **/*.razor.cs, **/*.razor.css'
 
 This project uses **MudBlazor** as its sole UI component library (see [DEC-009](../../plan/DECISIONS.md#dec-009-mudblazor-as-the-sole-ui-component-library) and [DEC-039](../../plan/DECISIONS.md#dec-039-mudblazor-visual-language-for-page-chrome)).
 
-- **Consult the mudblazor skill first**, especially [UX-LANGUAGE.md](../../.agents/skills/mudblazor/references/UX-LANGUAGE.md) and [COMPONENT-CHOOSER.md](../../.agents/skills/mudblazor/references/COMPONENT-CHOOSER.md), before implementing any new Razor component. The skill is pinned to MudBlazor **9.9.0**.
+- **Consult the mudblazor skill first**, especially [UX-LANGUAGE.md](../../.agents/skills/mudblazor/references/UX-LANGUAGE.md) and [COMPONENT-CHOOSER.md](../../.agents/skills/mudblazor/references/COMPONENT-CHOOSER.md), before implementing any new Razor component. If this change bumps the MudBlazor package, refresh that skill in the same pull request.
 
 - **Never use raw HTML form elements** where a MudBlazor component exists. Use `<MudTextField>`, `<MudSelect>`, `<MudAutocomplete>`, `<MudCheckBox>`, `<MudSwitch>`, `<MudColorPicker>`, etc.
 - **Never use raw `<input>`, `<select>`, `<textarea>`, `<button>`** in Razor components — always use the `<Mud*>` equivalent.

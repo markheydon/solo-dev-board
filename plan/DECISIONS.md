@@ -95,7 +95,7 @@ A formal migration to GitHub Spec Kit is planned — see [`plan/SPEC_KIT_MIGRATI
 **Date:** 2026-03-09  
 **Legacy:** [ADR-0012](../adr/archive/0012-switch-to-mudblazor-component-library.md)  
 **Constitution:** [`.github/instructions/blazor.instructions.md`](../.github/instructions/blazor.instructions.md)  
-**Summary:** Use MudBlazor for all Blazor UI. Prefer MudBlazor layout primitives and utility classes before custom CSS. Reject Fluent UI Blazor and raw HTML controls where a MudBlazor equivalent exists (supersedes legacy ADR-0009). Component choice and page chrome follow the `mudblazor` skill pinned to the NuGet version in `Directory.Packages.props` (9.9.0 as of DEC-039).
+**Summary:** Use MudBlazor for all Blazor UI. Prefer MudBlazor layout primitives and utility classes before custom CSS. Reject Fluent UI Blazor and raw HTML controls where a MudBlazor equivalent exists (supersedes legacy ADR-0009). Component choice and page chrome follow the `mudblazor` skill; the skill’s baseline version lives only in that skill’s `SKILL.md`.
 
 ---
 
@@ -381,7 +381,7 @@ Test coverage expectations for cache-hit, cache-miss, invalidation, TTL expiry, 
 **Status:** Active  
 **Date:** 2026-09-09  
 **Constitution:** [AGENTS.md](../AGENTS.md) (MudBlazor-first UI), [`.agents/skills/mudblazor/references/UX-LANGUAGE.md`](../.agents/skills/mudblazor/references/UX-LANGUAGE.md)  
-**Summary:** Shipped pages must share one visual language: page header plus purpose line, toolbar for commands, `MudPaper`/`MudCard` sections at elevation 1, `MudSkeleton` for content-shaped loading, `MudAlert` for empty and error, snackbars for transient outcomes (DEC-035). Agents choose components from MudBlazor **9.9.0** via the `mudblazor` skill; do not use `MudChat` (not in 9.9.0), FABs, carousels, or charts on operational pages. Custom CSS remains exceptional. Product logo and brand assets stay a separate ice-box feature ([#397](https://github.com/markheydon/solo-dev-board/issues/397)).
+**Summary:** Shipped pages must share one visual language: page header plus purpose line, toolbar for commands, `MudPaper`/`MudCard` sections at elevation 1, `MudSkeleton` for content-shaped loading, `MudAlert` for empty and error, snackbars for transient outcomes (DEC-035). Agents choose components via the `mudblazor` skill (baseline version recorded only in that skill). Do not use `MudChat`, FABs, carousels, or charts on operational pages. Custom CSS remains exceptional. Product logo and brand assets stay a separate ice-box feature ([#397](https://github.com/markheydon/solo-dev-board/issues/397)).
 
 ---
 

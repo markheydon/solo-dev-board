@@ -2,7 +2,7 @@
 
 ## Project overview
 
-**Feature summary:** SoloDevBoard’s features work, but the Blazor UI still reads as a functional catalogue of papers and spinners. This plan splits **brand identity** (ice-box [#397](https://github.com/markheydon/solo-dev-board/issues/397)) from **visual language** (apply MudBlazor 9.9 page chrome so the app feels like one product). Agent guidance is updated in the `mudblazor` skill so future delivery does not keep inventing raw layout.
+**Feature summary:** SoloDevBoard’s features work, but the Blazor UI still reads as a functional catalogue of papers and spinners. This plan splits **brand identity** (ice-box [#397](https://github.com/markheydon/solo-dev-board/issues/397)) from **visual language** (apply MudBlazor page chrome so the app feels like one product). Agent guidance is updated in the `mudblazor` skill so future delivery does not keep inventing raw layout.
 
 **Success criteria:**
 
@@ -46,7 +46,7 @@ graph TD
     FUX --> TUX[Test: Visual language]
 ```
 
-The first pass of the MudBlazor skill (9.9.0 inventory, UX-LANGUAGE.md, chooser updates) is done in this planning change-set so the UX story is not blocked on agent docs.
+The first pass of the MudBlazor skill (UX-LANGUAGE.md and chooser updates) is done in this planning change-set so the UX story is not blocked on agent docs.
 
 ## Priority
 
