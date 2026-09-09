@@ -90,6 +90,15 @@ public interface IGitHubService
     /// <returns>A task that represents the asynchronous label removal operation.</returns>
     Task RemoveLabelFromTriageItemAsync(string owner, string repo, int itemNumber, string labelName, CancellationToken cancellationToken = default);
 
+    /// <summary>Replaces all labels on a triage item with the supplied set.</summary>
+    /// <param name="owner">The GitHub account owner login.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="itemNumber">The repository-scoped item number.</param>
+    /// <param name="labelNames">The complete label set to apply to the item.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous label replacement operation.</returns>
+    Task SetLabelsOnTriageItemAsync(string owner, string repo, int itemNumber, IReadOnlyList<string> labelNames, CancellationToken cancellationToken = default);
+
     /// <summary>Assigns or clears a milestone on a triage item.</summary>
     /// <param name="owner">The GitHub account owner login.</param>
     /// <param name="repo">The repository name.</param>

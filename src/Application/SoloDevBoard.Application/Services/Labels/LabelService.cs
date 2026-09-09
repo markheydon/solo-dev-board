@@ -198,7 +198,8 @@ public sealed class LabelService : ILabelManagerService
 
     /// <inheritdoc/>
     /// <remarks>
-    /// Ensures the destination label exists, then adds it to each labelled item and removes the source.
+    /// Ensures the destination label exists, then retags each labelled item by replacing the source
+    /// with the destination in a single GitHub labels request when current labels are known.
     /// The source label is deleted only when every item retag succeeded. This path never calls
     /// <see cref="ILabelRepository.UpdateLabelAsync"/>, so rename is not used as a merge.
     /// If adding the destination succeeds but removing the source fails, the item keeps both labels
@@ -274,11 +275,7 @@ public sealed class LabelService : ILabelManagerService
 
             try
             {
-                await _gitHubService
-                    .AddLabelsToTriageItemAsync(owner, repo, workItem.Number, [destination.Name], cancellationToken)
-                    .ConfigureAwait(false);
-                await _gitHubService
-                    .RemoveLabelFromTriageItemAsync(owner, repo, workItem.Number, source.Name, cancellationToken)
+                await RetagWorkItemAsync(owner, repo, workItem, source.Name, destination.Name, cancellationToken)
                     .ConfigureAwait(false);
                 succeededItemCount++;
             }
@@ -710,6 +707,44 @@ public sealed class LabelService : ILabelManagerService
             toRemap,
             preview.Skipped,
             preview.KeptAreaLabels);
+    }
+
+    /// <summary>Retags one issue or pull request by swapping a source label for a destination label.</summary>
+    /// <param name="owner">The GitHub account owner login.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="workItem">The labelled work item to retag.</param>
+    /// <param name="sourceLabelName">The source label to remove.</param>
+    /// <param name="destinationLabelName">The destination label to add.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous retag operation.</returns>
+    private async Task RetagWorkItemAsync(
+        string owner,
+        string repo,
+        LabelledWorkItem workItem,
+        string sourceLabelName,
+        string destinationLabelName,
+        CancellationToken cancellationToken)
+    {
+        if (workItem.LabelNames.Count > 0)
+        {
+            var retaggedLabelNames = LabelRemapHelper.BuildRetaggedLabelNames(
+                workItem.LabelNames,
+                sourceLabelName,
+                destinationLabelName);
+
+            await _gitHubService
+                .SetLabelsOnTriageItemAsync(owner, repo, workItem.Number, retaggedLabelNames, cancellationToken)
+                .ConfigureAwait(false);
+
+            return;
+        }
+
+        await _gitHubService
+            .AddLabelsToTriageItemAsync(owner, repo, workItem.Number, [destinationLabelName], cancellationToken)
+            .ConfigureAwait(false);
+        await _gitHubService
+            .RemoveLabelFromTriageItemAsync(owner, repo, workItem.Number, sourceLabelName, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <summary>Reports a preview progress message when a listener is attached.</summary>

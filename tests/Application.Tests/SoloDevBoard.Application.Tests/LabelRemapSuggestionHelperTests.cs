@@ -26,6 +26,14 @@ public sealed class LabelRemapSuggestionHelperTests
     }
 
     [Fact]
+    public void SuggestDestination_WhenDependenciesDefault_ReturnsTypeChore()
+    {
+        var destination = LabelRemapSuggestionHelper.SuggestDestination("dependencies", SoloDevBoardNames);
+
+        Assert.Equal("type/chore", destination);
+    }
+
+    [Fact]
     public void SuggestDestination_WhenAmbiguousEnhancement_ReturnsNull()
     {
         var destination = LabelRemapSuggestionHelper.SuggestDestination("enhancement", SoloDevBoardNames);

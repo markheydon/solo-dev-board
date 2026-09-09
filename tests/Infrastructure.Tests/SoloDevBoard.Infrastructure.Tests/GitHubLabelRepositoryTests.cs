@@ -190,11 +190,18 @@ public sealed class GitHubLabelRepositoryTests
                 [
                   {
                     "number": 10,
-                    "title": "An issue"
+                    "title": "An issue",
+                    "labels": [
+                      { "name": "story" },
+                      { "name": "priority/high" }
+                    ]
                   },
                   {
                     "number": 11,
                     "title": "A pull request",
+                    "labels": [
+                      { "name": "story" }
+                    ],
                     "pull_request": {
                       "url": "https://api.github.com/repos/owner/repo/pulls/11"
                     }
@@ -209,7 +216,9 @@ public sealed class GitHubLabelRepositoryTests
 
         Assert.Equal(2, result.Count);
         Assert.Equal(10, result[0].Number);
+        Assert.Equal(["story", "priority/high"], result[0].LabelNames);
         Assert.Equal(11, result[1].Number);
+        Assert.Equal(["story"], result[1].LabelNames);
         Assert.Single(handler.Requests);
         Assert.Equal(HttpMethod.Get, handler.Requests[0].Method);
         Assert.Equal("https://api.github.com/repos/owner/repo/issues?state=all&labels=story&per_page=100", handler.Requests[0].RequestUri!.ToString());

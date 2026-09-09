@@ -837,7 +837,11 @@ public sealed class LabelsTests
 
             Assert.Contains("Keep label", dependenciesAutocomplete.Markup);
 
-            var allOptions = dependenciesAutocomplete.Instance.SearchFunc(string.Empty, CancellationToken.None).Result?.ToArray() ?? [];
+            var searchFunc = dependenciesAutocomplete.Instance.SearchFunc
+                ?? throw new InvalidOperationException("Remap destination SearchFunc was not configured.");
+            var searchTask = searchFunc(string.Empty, CancellationToken.None)
+                ?? throw new InvalidOperationException("Remap destination search returned no task.");
+            var allOptions = searchTask.GetAwaiter().GetResult()?.ToArray() ?? [];
 
             Assert.Contains("type/test", allOptions);
             Assert.Contains("status/ice-box", allOptions);

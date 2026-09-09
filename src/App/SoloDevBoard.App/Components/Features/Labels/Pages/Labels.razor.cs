@@ -1604,7 +1604,7 @@ public partial class Labels : ComponentBase
                 results.Add(new LabelRemapResultDto(
                     repositoryName,
                     row.SourceName,
-                    row.DestinationName,
+                    row.DestinationName!,
                     0,
                     1,
                     false,
@@ -1628,7 +1628,7 @@ public partial class Labels : ComponentBase
                 results.Add(new LabelRemapResultDto(
                     repositoryName,
                     row.SourceName,
-                    row.DestinationName,
+                    row.DestinationName!,
                     0,
                     1,
                     false,

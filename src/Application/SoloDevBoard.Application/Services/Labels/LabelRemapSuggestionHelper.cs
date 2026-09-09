@@ -13,6 +13,7 @@ public static class LabelRemapSuggestionHelper
     private static readonly Dictionary<string, string> GitHubDefaultCounterparts = new(StringComparer.OrdinalIgnoreCase)
     {
         ["bug"] = "type/bug",
+        ["dependencies"] = "type/chore",
         ["documentation"] = "type/documentation",
     };
 
