@@ -1599,6 +1599,81 @@ public sealed class LabelServiceTests
         Assert.Equal("Label still referenced", deleteError.ErrorMessage);
     }
 
+    [Fact]
+    public async Task ApplyRecommendedTaxonomyWithRemapAsync_WhenDeleteWithoutRemapRequested_DeletesSourceWithoutRetagging()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var previews = new[]
+        {
+            new RecommendedTaxonomyRepositoryPreviewDto(
+                "owner/repo-a",
+                [],
+                [],
+                [],
+                [new LabelDto("legacy", "ededed", "Legacy", "owner/repo-a")],
+                [],
+                []),
+        };
+
+        var remapActions = new Dictionary<string, IReadOnlyList<RecommendedTaxonomyRemapActionDto>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["owner/repo-a"] = [new RecommendedTaxonomyRemapActionDto("legacy", null, true)],
+        };
+
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-a", cancellationToken)
+            .Returns([
+                new Label { Name = "bug", Colour = "d73a4a", Description = "Something is not working", RepositoryName = "repo-a" },
+                new Label { Name = "documentation", Colour = "0075ca", Description = "Improvements or additions to documentation", RepositoryName = "repo-a" },
+                new Label { Name = "duplicate", Colour = "cfd3d7", Description = "This issue or pull request already exists", RepositoryName = "repo-a" },
+                new Label { Name = "enhancement", Colour = "a2eeef", Description = "New feature or request", RepositoryName = "repo-a" },
+                new Label { Name = "good first issue", Colour = "7057ff", Description = "Good for newcomers", RepositoryName = "repo-a" },
+                new Label { Name = "help wanted", Colour = "008672", Description = "Extra attention is needed", RepositoryName = "repo-a" },
+                new Label { Name = "invalid", Colour = "e4e669", Description = "This does not appear to be valid", RepositoryName = "repo-a" },
+                new Label { Name = "question", Colour = "d876e3", Description = "Further information is requested", RepositoryName = "repo-a" },
+                new Label { Name = "wontfix", Colour = "ffffff", Description = "This will not be worked on", RepositoryName = "repo-a" },
+                new Label { Name = "legacy", Colour = "ededed", Description = "Legacy", RepositoryName = "repo-a" },
+            ]);
+
+        _labelRepository
+            .DeleteLabelAsync("owner", "repo-a", "legacy", cancellationToken)
+            .Returns(Task.CompletedTask);
+
+        var sut = CreateSut();
+
+        var result = await sut.ApplyRecommendedTaxonomyWithRemapAsync(
+            "github-default",
+            ["owner/repo-a"],
+            previews,
+            remapActions,
+            keepAreaLabels: true,
+            cancellationToken: cancellationToken);
+
+        var remapResult = Assert.Single(result.RemapResults);
+        Assert.Equal("legacy", remapResult.SourceLabelName);
+        Assert.False(remapResult.SourceDeleted);
+        Assert.False(remapResult.HasErrors);
+        await _labelRepository.Received(1).DeleteLabelAsync("owner", "repo-a", "legacy", cancellationToken);
+        await _gitHubService.DidNotReceive().SetLabelsOnTriageItemAsync(
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<int>(),
+            Arg.Any<IReadOnlyList<string>>(),
+            Arg.Any<CancellationToken>());
+        await _gitHubService.DidNotReceive().AddLabelsToTriageItemAsync(
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<int>(),
+            Arg.Any<IReadOnlyList<string>>(),
+            Arg.Any<CancellationToken>());
+        await _gitHubService.DidNotReceive().RemoveLabelFromTriageItemAsync(
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<int>(),
+            Arg.Any<string>(),
+            Arg.Any<CancellationToken>());
+    }
+
     private LabelService CreateSut() => new(_labelRepository, _gitHubService);
 
     private static LabelledWorkItem CreateLabelledWorkItem(int number, params string[] labelNames)
