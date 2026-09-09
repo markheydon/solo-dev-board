@@ -46,6 +46,26 @@ public sealed class RecommendedTaxonomyApplySummaryHelperTests
     }
 
     [Fact]
+    public void AppendDeleteErrors_WhenRepositoryHasFailures_MergesIntoApplyResult()
+    {
+        var applyResults = new[]
+        {
+            new RecommendedTaxonomyRepositoryResultDto("owner/repo-a", 0, 0, 1, 0, [], null),
+        };
+
+        var merged = RecommendedTaxonomyApplySummaryHelper.AppendDeleteErrors(
+            applyResults,
+            new Dictionary<string, IReadOnlyList<RecommendedTaxonomyLabelDeleteErrorDto>>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["owner/repo-a"] = [new RecommendedTaxonomyLabelDeleteErrorDto("legacy", "GitHub API failure")],
+            });
+
+        Assert.True(merged[0].HasError);
+        Assert.Equal("legacy", merged[0].DeleteErrors[0].LabelName);
+        Assert.Equal("GitHub API failure", merged[0].DeleteErrors[0].ErrorMessage);
+    }
+
+    [Fact]
     public void IsDeleteWithoutRemapSuccess_WhenNoErrorsAndEmptyDestination_ReturnsTrue()
     {
         var result = new LabelRemapResultDto("repo-a", "legacy", string.Empty, 0, 0, false, false, []);

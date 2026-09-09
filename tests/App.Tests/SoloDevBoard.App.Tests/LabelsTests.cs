@@ -415,12 +415,21 @@ public sealed class LabelsTests
                     []),
             ]);
 
-        _labelManagerService.ApplyRecommendedTaxonomyAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), false, true, Arg.Any<IProgress<string>?>(), Arg.Any<CancellationToken>()).Returns([
-                new RecommendedTaxonomyRepositoryResultDto("owner/repo-a", 1, 0, 0, 0, [], null),
-            ]);
-
-        _labelManagerService.RemapLabelAsync("owner", "repo-a", "bug", "type/bug", Arg.Any<IProgress<string>?>(), Arg.Any<CancellationToken>()).Returns(
-            new LabelRemapResultDto("repo-a", "bug", "type/bug", 1, 0, true, false, []));
+        _labelManagerService.ApplyRecommendedTaxonomyWithRemapAsync(
+                Arg.Any<string>(),
+                Arg.Any<IReadOnlyList<string>>(),
+                Arg.Any<IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto>>(),
+                Arg.Any<IReadOnlyDictionary<string, IReadOnlyList<RecommendedTaxonomyRemapActionDto>>>(),
+                true,
+                Arg.Any<IProgress<string>?>(),
+                Arg.Any<CancellationToken>())
+            .Returns(new RecommendedTaxonomyRemapApplyResultDto(
+                [
+                    new RecommendedTaxonomyRepositoryResultDto("owner/repo-a", 1, 0, 1, 0, [], null),
+                ],
+                [
+                    new LabelRemapResultDto("repo-a", "bug", "type/bug", 1, 0, true, false, []),
+                ]));
 
         _labelManagerService.GetLabelMatrixAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<LabelMatrixRowDto>());
 
@@ -454,7 +463,14 @@ public sealed class LabelsTests
                 _snackbarProvider,
                 "Applied taxonomy successfully. Created 1, updated 0, remapped 1, deleted 1, skipped 0."));
 
-        await _labelManagerService.Received(1).RemapLabelAsync("owner", "repo-a", "bug", "type/bug", Arg.Any<IProgress<string>?>(), Arg.Any<CancellationToken>());
+        await _labelManagerService.Received(1).ApplyRecommendedTaxonomyWithRemapAsync(
+            Arg.Any<string>(),
+            Arg.Any<IReadOnlyList<string>>(),
+            Arg.Any<IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto>>(),
+            Arg.Any<IReadOnlyDictionary<string, IReadOnlyList<RecommendedTaxonomyRemapActionDto>>>(),
+            true,
+            Arg.Any<IProgress<string>?>(),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]

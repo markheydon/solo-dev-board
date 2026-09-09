@@ -453,18 +453,15 @@ public partial class Labels : ComponentBase
         {
             if (removeLabelsOutsideTaxonomy && HasRemapExtras())
             {
-                recommendedApplyResults = await LabelManagerService.ApplyRecommendedTaxonomyAsync(
+                var remapApplyResult = await LabelManagerService.ApplyRecommendedTaxonomyWithRemapAsync(
                     selectedStrategyId,
                     selectedFullNames,
-                    false,
+                    recommendedPreview,
+                    BuildRemapActionsByRepository(),
                     keepAreaLabels,
                     progress);
-                recommendedRemapResults = await ApplyRemapPlanAsync(recommendedPreview, progress);
-                var unusedDeletedByRepository = await DeleteUnusedExtraLabelsAsync(recommendedPreview, progress);
-                recommendedApplyResults = RecommendedTaxonomyApplySummaryHelper.EnrichDeletedCounts(
-                    recommendedApplyResults,
-                    recommendedRemapResults,
-                    unusedDeletedByRepository);
+                recommendedApplyResults = remapApplyResult.ApplyResults;
+                recommendedRemapResults = remapApplyResult.RemapResults;
             }
             else
             {
@@ -1389,6 +1386,14 @@ public partial class Labels : ComponentBase
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
+    private IReadOnlyDictionary<string, IReadOnlyList<RecommendedTaxonomyRemapActionDto>> BuildRemapActionsByRepository()
+        => recommendedRemapRowsByRepository.ToDictionary(
+            pair => pair.Key,
+            pair => (IReadOnlyList<RecommendedTaxonomyRemapActionDto>)pair.Value.Values
+                .Select(row => new RecommendedTaxonomyRemapActionDto(row.SourceName, row.DestinationName, row.DeleteWithoutRemap))
+                .ToArray(),
+            StringComparer.OrdinalIgnoreCase);
+
     private IReadOnlyList<LabelRemapRowState> GetRemapRows(string repositoryFullName)
     {
         if (!recommendedRemapRowsByRepository.TryGetValue(repositoryFullName, out var rows))
@@ -1465,48 +1470,6 @@ public partial class Labels : ComponentBase
         return Task.CompletedTask;
     }
 
-    private async Task<IReadOnlyDictionary<string, int>> DeleteUnusedExtraLabelsAsync(
-        IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto> previews,
-        IProgress<string>? progress)
-    {
-        var deletedByRepository = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        var deleteActions = previews
-            .Where(preview => preview.ToDelete.Count > 0)
-            .SelectMany(preview => preview.ToDelete.Select(label => (preview.RepositoryFullName, Label: label)))
-            .ToArray();
-
-        for (var actionIndex = 0; actionIndex < deleteActions.Length; actionIndex++)
-        {
-            var (repositoryFullName, label) = deleteActions[actionIndex];
-            ReportTaxonomyProgress(
-                progress,
-                deleteActions.Length > 1
-                    ? $"Deleting unused label '{label.Name}' on {repositoryFullName} ({actionIndex + 1} of {deleteActions.Length})..."
-                    : $"Deleting unused label '{label.Name}' on {repositoryFullName}...");
-
-            if (!RepositoryFullName.TryParse(repositoryFullName, out var owner, out var repositoryName))
-            {
-                continue;
-            }
-
-            try
-            {
-                await LabelManagerService.DeleteLabelAsync(owner, [repositoryName], label.Name);
-                deletedByRepository[repositoryFullName] = deletedByRepository.GetValueOrDefault(repositoryFullName) + 1;
-            }
-            catch (Exception ex) when (ex is HttpRequestException or KeyNotFoundException or ArgumentException)
-            {
-                Logger.LogWarning(
-                    ex,
-                    "Failed to delete unused extra label {LabelName} from {RepositoryFullName}.",
-                    label.Name,
-                    repositoryFullName);
-            }
-        }
-
-        return deletedByRepository;
-    }
-
     private async Task<bool> ConfirmDeleteWithoutRemapAsync()
     {
         var deleteTargets = recommendedRemapRowsByRepository
@@ -1533,115 +1496,6 @@ public partial class Labels : ComponentBase
 
         return confirmed == true;
     }
-
-    private async Task<IReadOnlyList<LabelRemapResultDto>> ApplyRemapPlanAsync(
-        IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto> previews,
-        IProgress<string>? progress)
-    {
-        var results = new List<LabelRemapResultDto>();
-        var plannedActions = previews
-            .Where(preview => recommendedRemapRowsByRepository.TryGetValue(preview.RepositoryFullName, out _))
-            .SelectMany(preview => recommendedRemapRowsByRepository[preview.RepositoryFullName].Values
-                .Where(row => row.DeleteWithoutRemap || !string.IsNullOrWhiteSpace(row.DestinationName))
-                .Select(row => (Preview: preview, Row: row)))
-            .OrderBy(action => action.Preview.RepositoryFullName, StringComparer.OrdinalIgnoreCase)
-            .ThenBy(action => action.Row.SourceName, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-
-        ReportTaxonomyProgress(progress, "Applying remap plan...");
-
-        for (var actionIndex = 0; actionIndex < plannedActions.Length; actionIndex++)
-        {
-            var (preview, row) = plannedActions[actionIndex];
-            if (!RepositoryFullName.TryParse(preview.RepositoryFullName, out var owner, out var repositoryName))
-            {
-                continue;
-            }
-
-            if (row.DeleteWithoutRemap)
-            {
-                ReportTaxonomyProgress(
-                    progress,
-                    plannedActions.Length > 1
-                        ? $"Deleting '{row.SourceName}' without remap on {preview.RepositoryFullName} ({actionIndex + 1} of {plannedActions.Length})..."
-                        : $"Deleting '{row.SourceName}' without remap on {preview.RepositoryFullName}...");
-
-                try
-                {
-                    await LabelManagerService.DeleteLabelAsync(owner, [repositoryName], row.SourceName);
-                    results.Add(new LabelRemapResultDto(
-                        repositoryName,
-                        row.SourceName,
-                        string.Empty,
-                        0,
-                        0,
-                        false,
-                        false,
-                        []));
-                }
-                catch (Exception ex) when (ex is HttpRequestException or KeyNotFoundException or ArgumentException)
-                {
-                    results.Add(new LabelRemapResultDto(
-                        repositoryName,
-                        row.SourceName,
-                        string.Empty,
-                        0,
-                        1,
-                        false,
-                        false,
-                        [new LabelRemapItemErrorDto(0, ex.Message)]));
-                }
-
-                continue;
-            }
-
-            var outgoingLabelNames = new HashSet<string>(
-                CollectOutgoingLabelNames(preview),
-                StringComparer.OrdinalIgnoreCase);
-
-            if (outgoingLabelNames.Contains(row.DestinationName!))
-            {
-                results.Add(new LabelRemapResultDto(
-                    repositoryName,
-                    row.SourceName,
-                    row.DestinationName!,
-                    0,
-                    1,
-                    false,
-                    false,
-                    [new LabelRemapItemErrorDto(0, $"Cannot remap onto '{row.DestinationName}' because that label is scheduled for deletion.")]));
-                continue;
-            }
-
-            try
-            {
-                var remapResult = await LabelManagerService.RemapLabelAsync(
-                    owner,
-                    repositoryName,
-                    row.SourceName,
-                    row.DestinationName!,
-                    progress);
-                results.Add(remapResult);
-            }
-            catch (Exception ex) when (ex is HttpRequestException or KeyNotFoundException or ArgumentException)
-            {
-                results.Add(new LabelRemapResultDto(
-                    repositoryName,
-                    row.SourceName,
-                    row.DestinationName!,
-                    0,
-                    1,
-                    false,
-                    false,
-                    [new LabelRemapItemErrorDto(0, ex.Message)]));
-            }
-        }
-
-        return results;
-    }
-
-    private static void ReportTaxonomyProgress(IProgress<string>? progress, string message)
-        => progress?.Report(message);
 
     /// <summary>Represents one remap row in the Recommended taxonomy preview.</summary>
     /// <param name="SourceName">The extra label to remap or delete.</param>

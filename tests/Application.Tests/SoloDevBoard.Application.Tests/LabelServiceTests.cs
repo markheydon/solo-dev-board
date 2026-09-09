@@ -1472,6 +1472,133 @@ public sealed class LabelServiceTests
         await _labelRepository.DidNotReceive().DeleteLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
+    [Fact]
+    public async Task ApplyRecommendedTaxonomyWithRemapAsync_WhenRemapAndUnusedDeleteRequested_EnrichesDeletedCounts()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var previews = new[]
+        {
+            new RecommendedTaxonomyRepositoryPreviewDto(
+                "owner/repo-a",
+                [new LabelDto("type/bug", "d73a4a", "Bug", "owner/repo-a")],
+                [],
+                [new LabelDto("legacy", "ededed", "Legacy", "owner/repo-a")],
+                [new LabelDto("bug", "d73a4a", "Bug", "owner/repo-a")],
+                [],
+                []),
+        };
+
+        var remapActions = new Dictionary<string, IReadOnlyList<RecommendedTaxonomyRemapActionDto>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["owner/repo-a"] = [new RecommendedTaxonomyRemapActionDto("bug", "type/bug", false)],
+        };
+
+        var existingLabels = RecommendedLabelTaxonomyCatalog.SoloDevBoard
+            .Where(label => !label.Name.Equals("type/bug", StringComparison.OrdinalIgnoreCase))
+            .Select(label => new Label
+            {
+                Name = label.Name,
+                Colour = label.Colour,
+                Description = label.Description,
+                RepositoryName = "repo-a",
+            })
+            .Concat([new Label { Name = "bug", Colour = "d73a4a", Description = "Bug", RepositoryName = "repo-a" }])
+            .ToArray();
+
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-a", cancellationToken)
+            .Returns(existingLabels);
+
+        _labelRepository
+            .CreateLabelAsync("owner", "repo-a", Arg.Any<Label>(), cancellationToken)
+            .Returns(callInfo => callInfo.ArgAt<Label>(2) with { RepositoryName = "repo-a" });
+
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-a", cancellationToken, true)
+            .Returns([
+                new Label { Name = "bug", Colour = "d73a4a", Description = "Bug", RepositoryName = "repo-a" },
+                new Label { Name = "type/bug", Colour = "d73a4a", Description = "Bug", RepositoryName = "repo-a" },
+            ]);
+
+        _labelRepository
+            .GetWorkItemsWithLabelAsync("owner", "repo-a", "bug", cancellationToken)
+            .Returns([CreateLabelledWorkItem(7, "bug")]);
+
+        _labelRepository
+            .DeleteLabelAsync("owner", "repo-a", Arg.Any<string>(), cancellationToken)
+            .Returns(Task.CompletedTask);
+
+        var sut = CreateSut();
+
+        var result = await sut.ApplyRecommendedTaxonomyWithRemapAsync(
+            RecommendedLabelTaxonomyCatalog.SoloDevBoardStrategyId,
+            ["owner/repo-a"],
+            previews,
+            remapActions,
+            keepAreaLabels: true,
+            cancellationToken: cancellationToken);
+
+        var summary = Assert.Single(result.ApplyResults);
+        Assert.Equal(1, summary.CreatedCount);
+        Assert.Equal(2, summary.DeletedCount);
+        Assert.False(summary.HasError);
+        Assert.True(Assert.Single(result.RemapResults).SourceDeleted);
+        await _labelRepository.Received(1).DeleteLabelAsync("owner", "repo-a", "legacy", cancellationToken);
+    }
+
+    [Fact]
+    public async Task ApplyRecommendedTaxonomyWithRemapAsync_WhenUnusedDeleteFails_RecordsDeleteError()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var previews = new[]
+        {
+            new RecommendedTaxonomyRepositoryPreviewDto(
+                "owner/repo-a",
+                [],
+                [],
+                [new LabelDto("legacy", "ededed", "Legacy", "owner/repo-a")],
+                [],
+                [],
+                []),
+        };
+
+        _labelRepository
+            .GetLabelsAsync("owner", "repo-a", cancellationToken)
+            .Returns([
+                new Label { Name = "bug", Colour = "d73a4a", Description = "Something is not working", RepositoryName = "repo-a" },
+                new Label { Name = "documentation", Colour = "0075ca", Description = "Improvements or additions to documentation", RepositoryName = "repo-a" },
+                new Label { Name = "duplicate", Colour = "cfd3d7", Description = "This issue or pull request already exists", RepositoryName = "repo-a" },
+                new Label { Name = "enhancement", Colour = "a2eeef", Description = "New feature or request", RepositoryName = "repo-a" },
+                new Label { Name = "good first issue", Colour = "7057ff", Description = "Good for newcomers", RepositoryName = "repo-a" },
+                new Label { Name = "help wanted", Colour = "008672", Description = "Extra attention is needed", RepositoryName = "repo-a" },
+                new Label { Name = "invalid", Colour = "e4e669", Description = "This does not appear to be valid", RepositoryName = "repo-a" },
+                new Label { Name = "question", Colour = "d876e3", Description = "Further information is requested", RepositoryName = "repo-a" },
+                new Label { Name = "wontfix", Colour = "ffffff", Description = "This will not be worked on", RepositoryName = "repo-a" },
+                new Label { Name = "legacy", Colour = "ededed", Description = "Legacy", RepositoryName = "repo-a" },
+            ]);
+
+        _labelRepository
+            .DeleteLabelAsync("owner", "repo-a", "legacy", cancellationToken)
+            .Returns(Task.FromException(new HttpRequestException("Label still referenced")));
+
+        var sut = CreateSut();
+
+        var result = await sut.ApplyRecommendedTaxonomyWithRemapAsync(
+            "github-default",
+            ["owner/repo-a"],
+            previews,
+            new Dictionary<string, IReadOnlyList<RecommendedTaxonomyRemapActionDto>>(StringComparer.OrdinalIgnoreCase),
+            keepAreaLabels: true,
+            cancellationToken: cancellationToken);
+
+        var summary = Assert.Single(result.ApplyResults);
+        Assert.True(summary.HasError);
+        Assert.Equal(0, summary.DeletedCount);
+        var deleteError = Assert.Single(summary.DeleteErrors);
+        Assert.Equal("legacy", deleteError.LabelName);
+        Assert.Equal("Label still referenced", deleteError.ErrorMessage);
+    }
+
     private LabelService CreateSut() => new(_labelRepository, _gitHubService);
 
     private static LabelledWorkItem CreateLabelledWorkItem(int number, params string[] labelNames)

@@ -480,6 +480,48 @@ public sealed class LabelService : ILabelManagerService
     }
 
     /// <inheritdoc/>
+    public async Task<RecommendedTaxonomyRemapApplyResultDto> ApplyRecommendedTaxonomyWithRemapAsync(
+        string strategyId,
+        IReadOnlyList<string> repositories,
+        IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto> previews,
+        IReadOnlyDictionary<string, IReadOnlyList<RecommendedTaxonomyRemapActionDto>> remapActionsByRepository,
+        bool keepAreaLabels = true,
+        IProgress<string>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(strategyId);
+        ArgumentNullException.ThrowIfNull(previews);
+        ArgumentNullException.ThrowIfNull(remapActionsByRepository);
+
+        var applyResults = await ApplyRecommendedTaxonomyAsync(
+            strategyId,
+            repositories,
+            removeLabelsOutsideTaxonomy: false,
+            keepAreaLabels,
+            progress,
+            cancellationToken).ConfigureAwait(false);
+
+        var remapResults = await ApplyRemapPlanAsync(
+            previews,
+            remapActionsByRepository,
+            progress,
+            cancellationToken).ConfigureAwait(false);
+
+        var unusedDeleteOutcome = await DeleteUnusedExtraLabelsAsync(previews, progress, cancellationToken).ConfigureAwait(false);
+
+        var enrichedResults = RecommendedTaxonomyApplySummaryHelper.EnrichDeletedCounts(
+            applyResults,
+            remapResults,
+            unusedDeleteOutcome.DeletedByRepository);
+
+        var resultsWithErrors = RecommendedTaxonomyApplySummaryHelper.AppendDeleteErrors(
+            enrichedResults,
+            unusedDeleteOutcome.DeleteErrorsByRepository);
+
+        return new RecommendedTaxonomyRemapApplyResultDto(resultsWithErrors, remapResults);
+    }
+
+    /// <inheritdoc/>
     public async Task<IReadOnlyList<RecommendedTaxonomyRepositoryResultDto>> ApplyRecommendedTaxonomyAsync(string strategyId, IReadOnlyList<string> repositories, bool removeLabelsOutsideTaxonomy = false, bool keepAreaLabels = true, IProgress<string>? progress = null, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(strategyId);
@@ -747,11 +789,196 @@ public sealed class LabelService : ILabelManagerService
             .ConfigureAwait(false);
     }
 
+    /// <summary>Applies remap and delete-without-remap actions from a preview-first taxonomy plan.</summary>
+    /// <param name="previews">The repository previews containing extras to remap.</param>
+    /// <param name="remapActionsByRepository">Remap decisions keyed by owner/repository full name.</param>
+    /// <param name="progress">Optional callback that receives human-readable progress messages during apply.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>Per-label remap outcomes for actions that were executed.</returns>
+    private async Task<IReadOnlyList<LabelRemapResultDto>> ApplyRemapPlanAsync(
+        IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto> previews,
+        IReadOnlyDictionary<string, IReadOnlyList<RecommendedTaxonomyRemapActionDto>> remapActionsByRepository,
+        IProgress<string>? progress,
+        CancellationToken cancellationToken)
+    {
+        var results = new List<LabelRemapResultDto>();
+        var plannedActions = previews
+            .Where(preview => remapActionsByRepository.TryGetValue(preview.RepositoryFullName, out _))
+            .SelectMany(preview => remapActionsByRepository[preview.RepositoryFullName]
+                .Where(action => action.DeleteWithoutRemap || !string.IsNullOrWhiteSpace(action.DestinationName))
+                .Select(action => (Preview: preview, Action: action)))
+            .OrderBy(action => action.Preview.RepositoryFullName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(action => action.Action.SourceName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        ReportPreviewProgress(progress, "Applying remap plan...");
+
+        for (var actionIndex = 0; actionIndex < plannedActions.Length; actionIndex++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var (preview, action) = plannedActions[actionIndex];
+            var repository = SplitRepositoryFullName(preview.RepositoryFullName);
+
+            if (action.DeleteWithoutRemap)
+            {
+                ReportPreviewProgress(
+                    progress,
+                    plannedActions.Length > 1
+                        ? $"Deleting '{action.SourceName}' without remap on {preview.RepositoryFullName} ({actionIndex + 1} of {plannedActions.Length})..."
+                        : $"Deleting '{action.SourceName}' without remap on {preview.RepositoryFullName}...");
+
+                try
+                {
+                    await DeleteLabelAsync(repository.Owner, [repository.Name], action.SourceName, cancellationToken)
+                        .ConfigureAwait(false);
+                    results.Add(new LabelRemapResultDto(
+                        repository.Name,
+                        action.SourceName,
+                        string.Empty,
+                        0,
+                        0,
+                        false,
+                        false,
+                        []));
+                }
+                catch (Exception ex) when (ex is HttpRequestException or KeyNotFoundException or ArgumentException)
+                {
+                    results.Add(new LabelRemapResultDto(
+                        repository.Name,
+                        action.SourceName,
+                        string.Empty,
+                        0,
+                        1,
+                        false,
+                        false,
+                        [new LabelRemapItemErrorDto(0, ex.Message)]));
+                }
+
+                continue;
+            }
+
+            var outgoingLabelNames = new HashSet<string>(
+                CollectOutgoingLabelNames(preview),
+                StringComparer.OrdinalIgnoreCase);
+
+            if (outgoingLabelNames.Contains(action.DestinationName!))
+            {
+                results.Add(new LabelRemapResultDto(
+                    repository.Name,
+                    action.SourceName,
+                    action.DestinationName!,
+                    0,
+                    1,
+                    false,
+                    false,
+                    [new LabelRemapItemErrorDto(0, $"Cannot remap onto '{action.DestinationName}' because that label is scheduled for deletion.")]));
+                continue;
+            }
+
+            try
+            {
+                var remapResult = await RemapLabelAsync(
+                    repository.Owner,
+                    repository.Name,
+                    action.SourceName,
+                    action.DestinationName!,
+                    progress,
+                    cancellationToken).ConfigureAwait(false);
+                results.Add(remapResult);
+            }
+            catch (Exception ex) when (ex is HttpRequestException or KeyNotFoundException or ArgumentException)
+            {
+                results.Add(new LabelRemapResultDto(
+                    repository.Name,
+                    action.SourceName,
+                    action.DestinationName!,
+                    0,
+                    1,
+                    false,
+                    false,
+                    [new LabelRemapItemErrorDto(0, ex.Message)]));
+            }
+        }
+
+        return results;
+    }
+
+    /// <summary>Deletes unused extra labels from preview results and records per-label failures.</summary>
+    /// <param name="previews">The repository previews containing unused extras in <see cref="RecommendedTaxonomyRepositoryPreviewDto.ToDelete"/>.</param>
+    /// <param name="progress">Optional callback that receives human-readable progress messages during apply.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>Successful delete counts and per-repository delete failures.</returns>
+    private async Task<UnusedExtraDeleteOutcome> DeleteUnusedExtraLabelsAsync(
+        IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto> previews,
+        IProgress<string>? progress,
+        CancellationToken cancellationToken)
+    {
+        var deletedByRepository = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var deleteErrorsByRepository = new Dictionary<string, IReadOnlyList<RecommendedTaxonomyLabelDeleteErrorDto>>(StringComparer.OrdinalIgnoreCase);
+        var deleteErrors = new Dictionary<string, List<RecommendedTaxonomyLabelDeleteErrorDto>>(StringComparer.OrdinalIgnoreCase);
+        var deleteActions = previews
+            .Where(preview => preview.ToDelete.Count > 0)
+            .SelectMany(preview => preview.ToDelete.Select(label => (preview.RepositoryFullName, Label: label)))
+            .ToArray();
+
+        for (var actionIndex = 0; actionIndex < deleteActions.Length; actionIndex++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var (repositoryFullName, label) = deleteActions[actionIndex];
+            ReportPreviewProgress(
+                progress,
+                deleteActions.Length > 1
+                    ? $"Deleting unused label '{label.Name}' on {repositoryFullName} ({actionIndex + 1} of {deleteActions.Length})..."
+                    : $"Deleting unused label '{label.Name}' on {repositoryFullName}...");
+
+            try
+            {
+                var repository = SplitRepositoryFullName(repositoryFullName);
+                await DeleteLabelAsync(repository.Owner, [repository.Name], label.Name, cancellationToken)
+                    .ConfigureAwait(false);
+                deletedByRepository[repositoryFullName] = deletedByRepository.GetValueOrDefault(repositoryFullName) + 1;
+            }
+            catch (Exception ex) when (ex is HttpRequestException or KeyNotFoundException or ArgumentException)
+            {
+                if (!deleteErrors.TryGetValue(repositoryFullName, out var repositoryErrors))
+                {
+                    repositoryErrors = [];
+                    deleteErrors[repositoryFullName] = repositoryErrors;
+                }
+
+                repositoryErrors.Add(new RecommendedTaxonomyLabelDeleteErrorDto(label.Name, ex.Message));
+            }
+        }
+
+        foreach (var pair in deleteErrors)
+        {
+            deleteErrorsByRepository[pair.Key] = pair.Value.ToArray();
+        }
+
+        return new UnusedExtraDeleteOutcome(deletedByRepository, deleteErrorsByRepository);
+    }
+
+    /// <summary>Collects extra label names that still need a remap decision.</summary>
+    /// <param name="preview">The repository preview containing extras to remap.</param>
+    /// <returns>Distinct outgoing label names from the remap list.</returns>
+    private static IReadOnlyList<string> CollectOutgoingLabelNames(RecommendedTaxonomyRepositoryPreviewDto preview)
+        => preview.ToRemap
+            .Select(label => label.Name)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
     /// <summary>Reports a preview progress message when a listener is attached.</summary>
     /// <param name="progress">The optional progress listener.</param>
     /// <param name="message">The message to report.</param>
     private static void ReportPreviewProgress(IProgress<string>? progress, string message)
         => progress?.Report(message);
+
+    /// <summary>Outcome of deleting unused extra labels during a remap workflow apply.</summary>
+    /// <param name="DeletedByRepository">Successful delete counts keyed by owner/repository full name.</param>
+    /// <param name="DeleteErrorsByRepository">Per-label delete failures keyed by owner/repository full name.</param>
+    private sealed record UnusedExtraDeleteOutcome(
+        IReadOnlyDictionary<string, int> DeletedByRepository,
+        IReadOnlyDictionary<string, IReadOnlyList<RecommendedTaxonomyLabelDeleteErrorDto>> DeleteErrorsByRepository);
 
     /// <summary>Maps an application label DTO to a domain label record.</summary>
     /// <param name="label">The application label DTO to map.</param>

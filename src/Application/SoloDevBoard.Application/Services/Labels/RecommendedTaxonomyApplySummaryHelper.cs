@@ -42,6 +42,41 @@ public static class RecommendedTaxonomyApplySummaryHelper
             RemapResultMatchesRepository(result, repositoryFullName)
             && (result.SourceDeleted || IsDeleteWithoutRemapSuccess(result)));
 
+    /// <summary>Merges additional per-label delete failures into repository apply results.</summary>
+    /// <param name="applyResults">The apply results to update.</param>
+    /// <param name="deleteErrorsByRepository">Delete failures keyed by owner/repository full name.</param>
+    /// <returns>Apply results with merged delete errors.</returns>
+    public static IReadOnlyList<RecommendedTaxonomyRepositoryResultDto> AppendDeleteErrors(
+        IReadOnlyList<RecommendedTaxonomyRepositoryResultDto> applyResults,
+        IReadOnlyDictionary<string, IReadOnlyList<RecommendedTaxonomyLabelDeleteErrorDto>> deleteErrorsByRepository)
+    {
+        ArgumentNullException.ThrowIfNull(applyResults);
+        ArgumentNullException.ThrowIfNull(deleteErrorsByRepository);
+
+        if (deleteErrorsByRepository.Count == 0)
+        {
+            return applyResults;
+        }
+
+        return applyResults
+            .Select(result =>
+            {
+                if (!deleteErrorsByRepository.TryGetValue(result.RepositoryFullName, out var additionalErrors)
+                    || additionalErrors.Count == 0)
+                {
+                    return result;
+                }
+
+                return result with
+                {
+                    DeleteErrors = result.DeleteErrors
+                        .Concat(additionalErrors)
+                        .ToArray(),
+                };
+            })
+            .ToArray();
+    }
+
     /// <summary>Determines whether a remap result represents a successful delete-without-remap action.</summary>
     /// <param name="result">The remap result to inspect.</param>
     /// <returns><see langword="true" /> when the source label was deleted without remapping.</returns>

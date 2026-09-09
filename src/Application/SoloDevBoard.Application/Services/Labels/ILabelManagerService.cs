@@ -117,6 +117,27 @@ public interface ILabelManagerService
     /// <returns>Success and failure counts for the repository, including whether the source was deleted.</returns>
     Task<LabelRemapResultDto> RemapLabelAsync(string owner, string repo, string sourceLabelName, string destinationLabelName, IProgress<string>? progress = null, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Applies a recommended taxonomy using the preview-first remap workflow: create and update,
+    /// then remap extras according to the supplied plan, then delete unused extras.
+    /// </summary>
+    /// <param name="strategyId">The recommended strategy identifier.</param>
+    /// <param name="repositories">The target repositories in owner/repository format.</param>
+    /// <param name="previews">The preview used to drive remap and unused-extra delete steps.</param>
+    /// <param name="remapActionsByRepository">Remap decisions keyed by owner/repository full name.</param>
+    /// <param name="keepAreaLabels">When <see langword="true" /> and remove-outside is enabled, labels with the <c>area/</c> prefix are kept instead of deleted.</param>
+    /// <param name="progress">Optional callback that receives human-readable progress messages during apply.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>Per-repository apply summaries and per-label remap outcomes.</returns>
+    Task<RecommendedTaxonomyRemapApplyResultDto> ApplyRecommendedTaxonomyWithRemapAsync(
+        string strategyId,
+        IReadOnlyList<string> repositories,
+        IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto> previews,
+        IReadOnlyDictionary<string, IReadOnlyList<RecommendedTaxonomyRemapActionDto>> remapActionsByRepository,
+        bool keepAreaLabels = true,
+        IProgress<string>? progress = null,
+        CancellationToken cancellationToken = default);
+
     /// <summary>Applies a recommended taxonomy to repositories and returns per-repository summaries.</summary>
     /// <param name="strategyId">The recommended strategy identifier.</param>
     /// <param name="repositories">The target repositories in owner/repository format.</param>
