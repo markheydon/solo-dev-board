@@ -5,7 +5,9 @@ applyTo: '**/*.razor, **/*.razor.cs, **/*.razor.css'
 
 ## UI Library — MudBlazor
 
-This project uses **MudBlazor** as its sole UI component library (see [DEC-009](../../plan/DECISIONS.md#dec-009-mudblazor-as-the-sole-ui-component-library)).
+This project uses **MudBlazor** as its sole UI component library (see [DEC-009](../../plan/DECISIONS.md#dec-009-mudblazor-as-the-sole-ui-component-library) and [DEC-039](../../plan/DECISIONS.md#dec-039-mudblazor-visual-language-for-page-chrome)).
+
+- **Consult the mudblazor skill first**, especially [UX-LANGUAGE.md](../../.agents/skills/mudblazor/references/UX-LANGUAGE.md) and [COMPONENT-CHOOSER.md](../../.agents/skills/mudblazor/references/COMPONENT-CHOOSER.md), before implementing any new Razor component. The skill is pinned to MudBlazor **9.9.0**.
 
 - **Never use raw HTML form elements** where a MudBlazor component exists. Use `<MudTextField>`, `<MudSelect>`, `<MudAutocomplete>`, `<MudCheckBox>`, `<MudSwitch>`, `<MudColorPicker>`, etc.
 - **Never use raw `<input>`, `<select>`, `<textarea>`, `<button>`** in Razor components — always use the `<Mud*>` equivalent.
@@ -14,7 +16,6 @@ This project uses **MudBlazor** as its sole UI component library (see [DEC-009](
 - **Never use `<style>` blocks** inside `.razor` files.
 - **Treat `.razor.css` as a last resort.** Only add or extend an isolated stylesheet when the requirement cannot be met with MudBlazor components, component parameters, theming, or utility classes.
 - For any pattern where you cannot find a MudBlazor component or utility-class-based solution, add a brief comment explaining the gap and keep the scoped `.razor.css` fallback minimal.
-- Consult the **mudblazor skill** (`.agents/skills/mudblazor/SKILL.md`) for component usage patterns, layout structure, and known pitfalls before implementing any new Razor component.
 
 ## Blazor Code Style
 

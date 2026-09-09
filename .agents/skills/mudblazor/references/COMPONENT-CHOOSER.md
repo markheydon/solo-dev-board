@@ -3,10 +3,13 @@
 Map UI patterns to the correct MudBlazor component. Never use a raw HTML element where a MudBlazor component exists.
 
 Decision order for UI composition:
-1. Pick a MudBlazor component.
-2. Compose with MudBlazor layout primitives.
-3. Use MudBlazor utility classes in `Class`.
-4. Fall back to isolated CSS only when the first three options cannot satisfy the requirement.
+1. Read `UX-LANGUAGE.md` for page chrome (header, toolbar, loading, empty, error).
+2. Pick a MudBlazor 9.9.0 component from the tables below.
+3. Compose with MudBlazor layout primitives.
+4. Use MudBlazor utility classes in `Class`.
+5. Fall back to isolated CSS only when the first four options cannot satisfy the requirement.
+
+Inventory was checked against the MudBlazor 9.9.0 docs component list. `MudChat` is not in that catalogue — do not use it.
 
 ## Button Semantics and Colour Hierarchy
 
@@ -22,8 +25,15 @@ Use button colour and variant to communicate intent consistently across pages.
 
 | UI Pattern | MudBlazor Component | Notes |
 |------------|---------------------|-------|
-| Page section wrapper | `MudPaper`, `MudCard`, or `MudContainer` | Avoid decorative `<div>` wrappers. |
+| Page title and purpose line | `MudText` `Typo.h5` + `Typo.body2` `Color.Secondary` | Do not use raw `<h1>`/`<p>`. See `UX-LANGUAGE.md`. |
+| Page command strip | `MudToolBar` | Filters and commit actions belong here, not a second paper of buttons. |
+| Page section wrapper | `MudPaper`, `MudCard`, or `MudContainer` | Avoid decorative `<div>` wrappers. One paper per region. |
+| Two resizable panes | `MudSplitPanel` | Prefer for diagram + detail or catalogue + preview. |
+| Multi-step wizard | `MudStepper` | Only for linear apply/preview flows. |
+| Collapsible extra fields | `MudCollapse` or `MudExpansionPanels` | Prefer over showing every advanced field. |
 | Responsive page layout | `MudGrid` + `MudItem` | Prefer over custom grid CSS. |
+| Empty result / setup needed | `MudAlert` | Info for empty; Warning for missing setup. |
+| Content-shaped loading | `MudSkeleton` | Prefer over a lone spinner in an empty paper. |
 | Single-line text input | `MudTextField<T>` | Use `Variant="Variant.Outlined"` |
 | Read-only text / heading | `MudText` | Prefer over styled `<p>` / `<h*>` wrappers when typography is the main concern. |
 | Multi-line text / textarea | `MudTextField<T>` with `Lines="N"` | Not `<textarea>` |
@@ -38,12 +48,13 @@ Use button colour and variant to communicate intent consistently across pages.
 | Radio group | `MudRadioGroup<T>` + `MudRadio<T>` | Not `<input type="radio">` |
 | Colour picker | `MudColorPicker` | First-class; no hand-rolling needed |
 | Date picker | `MudDatePicker` | Not `<input type="date">` |
+| Date range | `MudDateRangePicker` | Not two unrelated date fields. |
 | Time picker | `MudTimePicker` | Not `<input type="time">` |
 | Button (primary action) | `MudButton Variant="Variant.Filled"` | Not `<button>` |
 | Button (secondary/ghost) | `MudButton Variant="Variant.Outlined"` | |
 | Button (text-only link) | `MudButton Variant="Variant.Text"` | |
-| Icon-only button | `MudIconButton` | Not `<button><img></button>` |
-| Floating action button | `MudFab` | |
+| Icon-only button | `MudIconButton` + `MudTooltip` | Always set `aria-label`. Not `<button><img></button>`. |
+| Floating action button | `MudFab` / `MudFabMenu` | Do not use on SoloDevBoard pages. |
 | Data table / grid | `MudDataGrid<T>` | With `PropertyColumn` / `TemplateColumn` |
 | Simple read-only table | `MudTable<T>` | Lighter than DataGrid |
 | Card / panel | `MudCard` or `MudPaper` | Not `<div class="card">` |
@@ -56,7 +67,9 @@ Use button colour and variant to communicate intent consistently across pages.
 | Alert / info banner | `MudAlert` | Not `<div class="alert">` |
 | Notification toast | `ISnackbar.Add(...)` | Service injection; `MudSnackbarProvider` required |
 | Modal dialog | `IDialogService.ShowAsync<T>()` | `MudDialogProvider` required |
-| Tooltip | `MudTooltip` | |
+| Tooltip | `MudTooltip` | Required on icon-only actions. |
+| Unsaved-work leave warning | `MudExitPrompt` | Only when navigation would drop in-progress work. |
+| Documented keyboard shortcut | `MudHotKey` | Triage-style shortcuts; do not invent global chords. |
 | Chip / tag | `MudChip<T>` | |
 | Chip set (multi) | `MudChipSet<T>` | |
 | Badge | `MudBadge` | |
@@ -98,8 +111,9 @@ Use this section for components available in the official MudBlazor overview tha
 | Hierarchical data explorer | `MudTreeView<T>` | Use for nested repository and rule structures. |
 | Drag-and-drop target and reorder region | `MudDropZone<T>` | Useful for visual ordering workflows. |
 | Rotating visual panels | `MudCarousel` | Use sparingly and avoid critical information in carousels. |
-| Conversational message thread view | `MudChat` | Suitable for chat-like audit or assistant interactions. |
 | Themed responsive image display | `MudImage` | Prefer over raw image tags when component features are needed. |
+| Charts and spark lines | `MudChart` | Do not use for GitHub count dashboards. |
+| Speed-dial / FAB menu | `MudFabMenu` | Do not use. |
 | Standard confirmation prompt | `MudMessageBox` | Use for straightforward confirm and acknowledge flows. |
 | Loading-state placeholders | `MudSkeleton` | Improves perceived loading quality on content-heavy views. |
 | Backdrop and blocking layer | `MudOverlay` | Use for blocking busy states and modal emphasis. |

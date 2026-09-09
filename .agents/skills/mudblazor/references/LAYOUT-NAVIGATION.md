@@ -14,7 +14,11 @@ Use this reference when structuring pages, shell layout, and navigation affordan
 | `MudPaper` | Surface container with elevation and padding support. | Use for sections and panels requiring visual separation. |
 | `MudDivider` | Visual separation between content groups. | Prefer over raw `<hr>` elements. |
 | `MudStack` | One-dimensional spacing and alignment layout. | Usually the quickest layout primitive for forms and card internals. |
-| `MudToolBar` | Inline command toolbar in sections or cards. | Useful for local action groups and filter bars. |
+| `MudSplitPanel` | Two resizable panes (catalogue + preview, diagram + detail). | Prefer over nested grids that fight for width. |
+| `MudStepper` | Linear multi-step apply or preview wizards. | Do not replace the app drawer with a stepper. |
+| `MudCollapse` | Show or hide a block of extra fields. | Prefer over always-visible advanced options. |
+| `MudBreakpointProvider` | C# code that must read the current breakpoint. | Prefer `MudHidden` in markup when that is enough. |
+| `MudToolBar` | Inline command toolbar in sections or cards. | Default home for page actions and filters. |
 
 ## Navigation Components
 
@@ -27,8 +31,9 @@ Use this reference when structuring pages, shell layout, and navigation affordan
 
 ## Decision Guidance
 
-- Start page structure with `MudContainer`, `MudStack`, and `MudPaper`.
+- Start page structure with `MudContainer`, a header stack, `MudToolBar`, then `MudPaper`.
 - Add `MudGrid` only when true responsive columns are needed.
+- Use `MudSplitPanel` when two regions must share width and be user-resizable.
 - Use `MudDrawer` and `MudNavMenu` for app shell navigation, not ad hoc link lists.
 - Use `MudMenu` for condensed action sets before introducing custom popovers.
 
@@ -36,4 +41,5 @@ Use this reference when structuring pages, shell layout, and navigation affordan
 
 - For action components in bars and menus, see `BUTTONS.md`.
 - For overlays and transient surfaces, see `FEEDBACK-OVERLAYS.md`.
+- For page chrome and loading states, see `UX-LANGUAGE.md`.
 - For full page shell setup, see `../SKILL.md`.

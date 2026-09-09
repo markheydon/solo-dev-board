@@ -7,9 +7,9 @@ Use this reference for read-heavy views, structured information, and visual pres
 | Component | When to use it. | Notes. |
 |-----------|-----------------|--------|
 | `MudAvatar` | User or entity avatar visuals. | Use in lists, cards, and activity streams. |
-| `MudCard` | Information grouped as card content. | Suitable for dashboard summaries and compact records. |
-| `MudCarousel` | Rotating set of visual slides. | Use sparingly; avoid for critical information. |
-| `MudChat` | Chat-style message thread presentation. | Suitable for conversational or timeline-style interactions. |
+| `MudCard` | Information grouped as card content. | Use for discrete records; use `MudPaper` for page sections. |
+| `MudCarousel` | Rotating set of visual slides. | Do not use for operational content. |
+| `MudChart` | Charts and spark lines. | Do not use for GitHub count dashboards. |
 | `MudChip<T>` | Compact labels, facets, or status indicators. | Works well with filters and taxonomy badges. |
 | `MudChipSet<T>` | Coordinated chip selection groups. | Useful for filter bars and quick selectors. |
 | `MudDataGrid<T>` | Rich tabular data with filtering, sorting, and templates. | Prefer for feature-rich interactive tables. |

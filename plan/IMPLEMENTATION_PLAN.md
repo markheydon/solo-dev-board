@@ -14,6 +14,7 @@ Phases in this document are **historical sequencing for the v1.0 release**. Post
 - **`v1.1 - Cross-Repo Planning & Refinement`** is complete (tag [`v1.1.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.1.0), 2026-08-31).
 - **`v1.2 - Planning polish, Reload & Templates`** is complete (tag [`v1.2.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.2.0), 2026-09-07).
 - **`v1.3 - Usable solo workflow across repositories`** is the current open milestone (tag `v1.3.0` when shipped). Locked in: Label Manager remap extras [#491](https://github.com/markheydon/solo-dev-board/issues/491). Further issues will be added from dogfood.
+- Product visual language (DEC-039) is planned and unmilestoned. Branding [#397](https://github.com/markheydon/solo-dev-board/issues/397) stays ice-box. Neither is a v1.3 close-out gate unless promoted from dogfood.
 - [#293](https://github.com/markheydon/solo-dev-board/issues/293) (hosted private Projects v2), [#391](https://github.com/markheydon/solo-dev-board/issues/391), and [#498](https://github.com/markheydon/solo-dev-board/issues/498) stay unmilestoned platform-blocked backlog. Window-focus refetch [#450](https://github.com/markheydon/solo-dev-board/issues/450) stays unmilestoned and ice-boxed.
 
 For the full feature scope, see [SCOPE.md](SCOPE.md). For open work, see [GitHub Issues](https://github.com/markheydon/solo-dev-board/issues) and [Project #8](https://github.com/users/markheydon/projects/8). The backlog index is at [BACKLOG.md](BACKLOG.md).

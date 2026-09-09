@@ -13,7 +13,9 @@ Use this reference for user feedback, status communication, and transient surfac
 | `MudProgressCircular` and `MudProgressLinear` | Loading and progress indication. | Choose circular for localised loading and linear for process progression. |
 | `MudSkeleton` | Loading placeholders while content hydrates. | Improves perceived performance in content-heavy views. |
 | `ISnackbar` with `MudSnackbarProvider` | Non-blocking global toasts. | Use for operation outcomes and short-lived notifications. |
-| `MudOverlay` | Backdrop or blocking surface overlays. | Useful for busy states and controlled modal emphasis. |
+| `MudOverlay` | Backdrop or blocking surface overlays. | Rare; do not block the whole page for a list fetch. |
+| `MudExitPrompt` | Warn before leaving unsaved work. | Use only when navigation would drop in-progress edits. |
+| `MudHotKey` | Documented keyboard shortcuts. | Keep shortcuts listed in the UI (Triage). |
 
 ## SoloDevBoard convention (DEC-035)
 
@@ -55,6 +57,7 @@ Use this reference for user feedback, status communication, and transient surfac
 - Use snackbar for brief outcomes that do not require immediate action.
 - Use dialog or message box when explicit acknowledgement is required.
 - Use skeletons for content loading states where layout stability matters.
+- See `UX-LANGUAGE.md` before adding a new spinner, overlay, or empty paper.
 
 ## Related References
 

@@ -5,10 +5,12 @@ description: Guide for using the MudBlazor component library in Blazor Server ap
 
 # MudBlazor — Consumer Usage Guide
 
-**MudBlazor** is a Material Design component library for Blazor built entirely in pure C#/Razor — no web components, no shadow DOM. This is the sole UI component library for SoloDevBoard (see [DEC-009](../../plan/DECISIONS.md#dec-009-mudblazor-as-the-sole-ui-component-library)).
+**MudBlazor** is a Material Design component library for Blazor built entirely in pure C#/Razor — no web components, no shadow DOM. This is the sole UI component library for SoloDevBoard (see [DEC-009](../../plan/DECISIONS.md#dec-009-mudblazor-as-the-sole-ui-component-library) and [DEC-039](../../plan/DECISIONS.md#dec-039-mudblazor-visual-language-for-page-chrome)).
+
+**Pinned version:** **9.9.0** (Central Package Management in `Directory.Packages.props`). That is the current NuGet latest as of 2026-09-09. When the package version changes, update this skill against https://mudblazor.com/components/overview before writing new UI.
 
 **Official docs:** https://mudblazor.com/  
-**Component demos:** https://mudblazor.com/components/
+**Component demos:** https://mudblazor.com/components/overview
 
 ---
 
@@ -16,11 +18,12 @@ description: Guide for using the MudBlazor component library in Blazor Server ap
 
 When building or refactoring UI in SoloDevBoard, make decisions in this order:
 
-1. Use an existing MudBlazor component and its parameters.
-2. Compose MudBlazor layout primitives such as `MudStack`, `MudGrid`, `MudItem`, `MudPaper`, `MudContainer`, and `MudSpacer`.
-3. Apply MudBlazor utility classes in the component `Class` attribute for spacing, alignment, display, and sizing.
-4. Use theme configuration or built-in component properties such as `Color`, `Variant`, `Typo`, `Elevation`, `Dense`, and `GutterSize`.
-5. Only then consider isolated `.razor.css`, and only when the requirement cannot be achieved by the options above.
+1. Follow [references/UX-LANGUAGE.md](references/UX-LANGUAGE.md) for page chrome, loading, empty, and error patterns.
+2. Use an existing MudBlazor **9.9** component and its parameters (see [references/COMPONENT-CHOOSER.md](references/COMPONENT-CHOOSER.md)).
+3. Compose MudBlazor layout primitives such as `MudStack`, `MudGrid`, `MudItem`, `MudPaper`, `MudContainer`, `MudToolBar`, `MudSplitPanel`, and `MudSpacer`.
+4. Apply MudBlazor utility classes in the component `Class` attribute for spacing, alignment, display, and sizing.
+5. Use theme configuration or built-in component properties such as `Color`, `Variant`, `Typo`, `Elevation`, `Dense`, and `GutterSize`. Colours and type come from `SoloDevBoardTheme`, not hex literals.
+6. Only then consider isolated `.razor.css`, and only when the requirement cannot be achieved by the options above.
 
 Custom CSS is an exception, not a normal implementation tool. Raw HTML should be limited to framework-owned host elements or cases where MudBlazor genuinely has no suitable equivalent.
 
@@ -113,11 +116,13 @@ Use page-level `MudContainer`, `MudPaper`, `MudStack`, and `MudGrid` composition
 
 ## Component Quick Reference
 
-See [references/COMPONENT-CHOOSER.md](references/COMPONENT-CHOOSER.md) for the full mapping.
+See [references/COMPONENT-CHOOSER.md](references/COMPONENT-CHOOSER.md) for the full mapping. For page-level composition (headers, toolbars, skeletons, empty states), start with [references/UX-LANGUAGE.md](references/UX-LANGUAGE.md).
 
 ### Reference Map
 
 Use these references after the chooser points you to a component family:
+
+- [references/UX-LANGUAGE.md](references/UX-LANGUAGE.md) for how a SoloDevBoard page should feel, and which 9.9 components to avoid.
 
 - [references/INPUTS.md](references/INPUTS.md) for text, selection, picker, and validation-oriented input components.
 - [references/BUTTONS.md](references/BUTTONS.md) for action components, grouped actions, and icon toggle actions.
@@ -272,10 +277,21 @@ Snackbar.Add("No repositories selected.", Severity.Warning);
 
 ## Loading State Pattern
 
+Prefer skeletons that match the eventual layout. Use a spinner only next to the control that is waiting.
+
 ```razor
-@if (_loading)
+@if (_loadingContent)
 {
-    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    <MudStack Spacing="2">
+        <MudSkeleton Height="36px" Width="40%" Animation="Animation.Wave" />
+        <MudSkeleton Height="240px" Animation="Animation.Wave" />
+    </MudStack>
+}
+else if (_loadFailed)
+{
+    <MudAlert Severity="Severity.Error">Could not load this data.
+        <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="@Retry">Try again</MudButton>
+    </MudAlert>
 }
 else
 {

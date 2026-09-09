@@ -208,7 +208,7 @@ When code changes are made, ensure the following are kept in sync:
 
 - Always respond with UK English spelling.
 - When suggesting code, follow the architecture rules above — do not place business logic in Razor components.
-- For Blazor UI work, use MudBlazor components and the official MudBlazor layout patterns first; do not reintroduce bespoke layout structures when the library already provides an equivalent.
+- For Blazor UI work, use MudBlazor components and the official MudBlazor layout patterns first; do not reintroduce bespoke layout structures when the library already provides an equivalent. Follow [DEC-039](plan/DECISIONS.md#dec-039-mudblazor-visual-language-for-page-chrome) and `.agents/skills/mudblazor/references/UX-LANGUAGE.md` for page chrome, loading, and empty states.
 - Prefer MudBlazor layout primitives and utility classes in `Class` attributes for spacing, alignment, sizing, and visibility before creating or extending `.razor.css` files.
 - Treat raw HTML and custom CSS as exceptional escape hatches only. If no MudBlazor component, parameter, or utility class can satisfy the requirement, keep the fallback minimal and explain the reason in the implementation summary or PR notes.
 - When implementing a planned issue, run implementation preflight before creating a feature branch; load linked wireframes and planning artefacts from the issue body.

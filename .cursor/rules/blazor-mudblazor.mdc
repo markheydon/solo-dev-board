@@ -6,4 +6,4 @@ alwaysApply: false
 
 Follow [`.github/instructions/blazor.instructions.md`](.github/instructions/blazor.instructions.md).
 
-For component patterns, read [`.agents/skills/mudblazor/SKILL.md`](.agents/skills/mudblazor/SKILL.md) before implementing.
+For component patterns, read [`.agents/skills/mudblazor/SKILL.md`](.agents/skills/mudblazor/SKILL.md) and [`.agents/skills/mudblazor/references/UX-LANGUAGE.md`](.agents/skills/mudblazor/references/UX-LANGUAGE.md) before implementing.
