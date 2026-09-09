@@ -34,9 +34,30 @@ public sealed class LabelRemapSuggestionHelperTests
     }
 
     [Fact]
-    public void SuggestDestination_WhenAmbiguousEnhancement_ReturnsNull()
+    public void SuggestDestination_WhenEnhancementDefault_ReturnsTypeFeature()
     {
         var destination = LabelRemapSuggestionHelper.SuggestDestination("enhancement", SoloDevBoardNames);
+
+        Assert.Equal("type/feature", destination);
+    }
+
+    [Fact]
+    public void SuggestDestination_WhenWontfixDefault_ReturnsStatusIceBox()
+    {
+        var destination = LabelRemapSuggestionHelper.SuggestDestination("wontfix", SoloDevBoardNames);
+
+        Assert.Equal("status/ice-box", destination);
+    }
+
+    [Theory]
+    [InlineData("duplicate")]
+    [InlineData("good first issue")]
+    [InlineData("help wanted")]
+    [InlineData("invalid")]
+    [InlineData("question")]
+    public void SuggestDestination_WhenAmbiguousGitHubDefault_ReturnsNull(string sourceLabelName)
+    {
+        var destination = LabelRemapSuggestionHelper.SuggestDestination(sourceLabelName, SoloDevBoardNames);
 
         Assert.Null(destination);
     }

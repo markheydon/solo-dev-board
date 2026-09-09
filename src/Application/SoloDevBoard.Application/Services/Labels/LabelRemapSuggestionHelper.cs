@@ -3,18 +3,28 @@ namespace SoloDevBoard.Application.Services.Labels;
 /// <summary>Suggests destination labels when remapping extras onto a recommended taxonomy.</summary>
 public static class LabelRemapSuggestionHelper
 {
+    /// <summary>
+    /// GitHub default labels with no clear SoloDevBoard counterpart; the user should choose or keep the source.
+    /// </summary>
     private static readonly HashSet<string> AmbiguousGitHubDefaults = new(StringComparer.OrdinalIgnoreCase)
     {
-        "enhancement",
+        "duplicate",
+        "good first issue",
+        "help wanted",
+        "invalid",
         "question",
-        "wontfix",
     };
 
+    /// <summary>
+    /// Clear counterparts for GitHub default labels and common automation labels when the strategy includes the destination.
+    /// </summary>
     private static readonly Dictionary<string, string> GitHubDefaultCounterparts = new(StringComparer.OrdinalIgnoreCase)
     {
         ["bug"] = "type/bug",
         ["dependencies"] = "type/chore",
         ["documentation"] = "type/documentation",
+        ["enhancement"] = "type/feature",
+        ["wontfix"] = "status/ice-box",
     };
 
     private static readonly HashSet<string> WorkflowPrefixes = new(StringComparer.OrdinalIgnoreCase)
