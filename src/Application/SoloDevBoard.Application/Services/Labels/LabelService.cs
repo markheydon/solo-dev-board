@@ -767,23 +767,16 @@ public sealed class LabelService : ILabelManagerService
         string destinationLabelName,
         CancellationToken cancellationToken)
     {
-        if (workItem.LabelNames.Count > 0)
+        var destinationAlreadyPresent = workItem.LabelNames.Any(label =>
+            string.Equals(label, destinationLabelName, StringComparison.OrdinalIgnoreCase));
+
+        if (!destinationAlreadyPresent)
         {
-            var retaggedLabelNames = LabelRemapHelper.BuildRetaggedLabelNames(
-                workItem.LabelNames,
-                sourceLabelName,
-                destinationLabelName);
-
             await _gitHubService
-                .SetLabelsOnTriageItemAsync(owner, repo, workItem.Number, retaggedLabelNames, cancellationToken)
+                .AddLabelsToTriageItemAsync(owner, repo, workItem.Number, [destinationLabelName], cancellationToken)
                 .ConfigureAwait(false);
-
-            return;
         }
 
-        await _gitHubService
-            .AddLabelsToTriageItemAsync(owner, repo, workItem.Number, [destinationLabelName], cancellationToken)
-            .ConfigureAwait(false);
         await _gitHubService
             .RemoveLabelFromTriageItemAsync(owner, repo, workItem.Number, sourceLabelName, cancellationToken)
             .ConfigureAwait(false);
