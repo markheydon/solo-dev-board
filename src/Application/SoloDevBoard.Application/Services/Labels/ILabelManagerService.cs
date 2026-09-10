@@ -106,11 +106,11 @@ public interface ILabelManagerService
 
     /// <summary>
     /// Remaps every issue and pull request from a source label onto a destination label in one repository,
-    /// then deletes the source only when every retag succeeded.
+    /// then deletes the source label definition only when every destination add succeeded.
     /// </summary>
     /// <param name="owner">The GitHub account owner login.</param>
     /// <param name="repo">The repository name.</param>
-    /// <param name="sourceLabelName">The label to remove from items after the destination is applied.</param>
+    /// <param name="sourceLabelName">The label to delete from the repository after remap completes.</param>
     /// <param name="destinationLabelName">The label to add to items that currently have the source.</param>
     /// <param name="progress">Optional callback that receives human-readable progress messages during remap.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>

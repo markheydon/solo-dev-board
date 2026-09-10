@@ -198,13 +198,13 @@ public sealed class LabelService : ILabelManagerService
 
     /// <inheritdoc/>
     /// <remarks>
-    /// Ensures the destination label exists, then retags each labelled item by replacing the source
-    /// with the destination in a single GitHub labels request when current labels are known.
-    /// The source label is deleted only when every item retag succeeded. This path never calls
+    /// Ensures the destination label exists, then adds the destination to each labelled item when it
+    /// is not already present. Per-item source removal is not performed; deleting the source label
+    /// definition at the end unlinks it from every issue and pull request in one request.
+    /// The source label is deleted only when every destination add succeeded. This path never calls
     /// <see cref="ILabelRepository.UpdateLabelAsync"/>, so rename is not used as a merge.
-    /// If adding the destination succeeds but removing the source fails, the item keeps both labels
-    /// and the failure is recorded in <see cref="LabelRemapResultDto.Errors"/> without rolling back
-    /// the add; callers must surface per-item errors so operators can retry or fix manually.
+    /// If a destination add fails, the failure is recorded in <see cref="LabelRemapResultDto.Errors"/>
+    /// and the source label is retained so operators can retry or fix manually.
     /// </remarks>
     public async Task<LabelRemapResultDto> RemapLabelAsync(string owner, string repo, string sourceLabelName, string destinationLabelName, IProgress<string>? progress = null, CancellationToken cancellationToken = default)
     {
@@ -275,7 +275,7 @@ public sealed class LabelService : ILabelManagerService
 
             try
             {
-                await RetagWorkItemAsync(owner, repo, workItem, source.Name, destination.Name, cancellationToken)
+                await RetagWorkItemAsync(owner, repo, workItem, destination.Name, cancellationToken)
                     .ConfigureAwait(false);
                 succeededItemCount++;
             }
@@ -751,11 +751,10 @@ public sealed class LabelService : ILabelManagerService
             preview.KeptAreaLabels);
     }
 
-    /// <summary>Retags one issue or pull request by swapping a source label for a destination label.</summary>
+    /// <summary>Adds the destination label to one issue or pull request when it is not already present.</summary>
     /// <param name="owner">The GitHub account owner login.</param>
     /// <param name="repo">The repository name.</param>
     /// <param name="workItem">The labelled work item to retag.</param>
-    /// <param name="sourceLabelName">The source label to remove.</param>
     /// <param name="destinationLabelName">The destination label to add.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>A task that represents the asynchronous retag operation.</returns>
@@ -763,22 +762,19 @@ public sealed class LabelService : ILabelManagerService
         string owner,
         string repo,
         LabelledWorkItem workItem,
-        string sourceLabelName,
         string destinationLabelName,
         CancellationToken cancellationToken)
     {
         var destinationAlreadyPresent = workItem.LabelNames.Any(label =>
             string.Equals(label, destinationLabelName, StringComparison.OrdinalIgnoreCase));
 
-        if (!destinationAlreadyPresent)
+        if (destinationAlreadyPresent)
         {
-            await _gitHubService
-                .AddLabelsToTriageItemAsync(owner, repo, workItem.Number, [destinationLabelName], cancellationToken)
-                .ConfigureAwait(false);
+            return;
         }
 
         await _gitHubService
-            .RemoveLabelFromTriageItemAsync(owner, repo, workItem.Number, sourceLabelName, cancellationToken)
+            .AddLabelsToTriageItemAsync(owner, repo, workItem.Number, [destinationLabelName], cancellationToken)
             .ConfigureAwait(false);
     }
 

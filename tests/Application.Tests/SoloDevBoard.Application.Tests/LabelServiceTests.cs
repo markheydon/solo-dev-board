@@ -1313,7 +1313,7 @@ public sealed class LabelServiceTests
     }
 
     [Fact]
-    public async Task RemapLabelAsync_ItemsHaveSource_AddsDestinationAndRemovesSource()
+    public async Task RemapLabelAsync_ItemsHaveSource_AddsDestinationOnlyAndDeletesSourceLabel()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         ArrangeLabels("story", "type/story");
@@ -1342,8 +1342,7 @@ public sealed class LabelServiceTests
             11,
             Arg.Is<IReadOnlyList<string>>(labels => labels.SequenceEqual(new[] { "type/story" })),
             cancellationToken);
-        await _gitHubService.Received(1).RemoveLabelFromTriageItemAsync("owner", "repo", 10, "story", cancellationToken);
-        await _gitHubService.Received(1).RemoveLabelFromTriageItemAsync("owner", "repo", 11, "story", cancellationToken);
+        await _gitHubService.DidNotReceive().RemoveLabelFromTriageItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
         await _gitHubService.DidNotReceive().SetLabelsOnTriageItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
         await _labelRepository.Received(1).DeleteLabelAsync("owner", "repo", "story", cancellationToken);
         await _labelRepository.DidNotReceive().UpdateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), Arg.Any<CancellationToken>());
@@ -1351,7 +1350,7 @@ public sealed class LabelServiceTests
     }
 
     [Fact]
-    public async Task RemapLabelAsync_DestinationAlreadyPresent_RemovesSourceOnly()
+    public async Task RemapLabelAsync_DestinationAlreadyPresent_SkipsPerItemMutationAndDeletesSourceLabel()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         ArrangeLabels("story", "type/story");
@@ -1364,12 +1363,13 @@ public sealed class LabelServiceTests
         Assert.Equal(1, result.SucceededItemCount);
         Assert.True(result.SourceDeleted);
         await _gitHubService.DidNotReceive().AddLabelsToTriageItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
-        await _gitHubService.Received(1).RemoveLabelFromTriageItemAsync("owner", "repo", 10, "story", cancellationToken);
+        await _gitHubService.DidNotReceive().RemoveLabelFromTriageItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
         await _gitHubService.DidNotReceive().SetLabelsOnTriageItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
+        await _labelRepository.Received(1).DeleteLabelAsync("owner", "repo", "story", cancellationToken);
     }
 
     [Fact]
-    public async Task RemapLabelAsync_WhenCurrentLabelsUnknown_FallsBackToAddAndRemove()
+    public async Task RemapLabelAsync_WhenCurrentLabelsUnknown_AddsDestinationOnly()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         ArrangeLabels("story", "type/story");
@@ -1382,7 +1382,7 @@ public sealed class LabelServiceTests
         Assert.Equal(1, result.SucceededItemCount);
         Assert.True(result.SourceDeleted);
         await _gitHubService.Received(1).AddLabelsToTriageItemAsync("owner", "repo", 10, Arg.Is<IReadOnlyList<string>>(labels => labels.Count == 1 && labels[0] == "type/story"), cancellationToken);
-        await _gitHubService.Received(1).RemoveLabelFromTriageItemAsync("owner", "repo", 10, "story", cancellationToken);
+        await _gitHubService.DidNotReceive().RemoveLabelFromTriageItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
         await _gitHubService.DidNotReceive().SetLabelsOnTriageItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>());
     }
 
@@ -1416,7 +1416,7 @@ public sealed class LabelServiceTests
             7,
             Arg.Is<IReadOnlyList<string>>(labels => labels.SequenceEqual(new[] { "type/story" })),
             cancellationToken);
-        await _gitHubService.Received(1).RemoveLabelFromTriageItemAsync("owner", "repo", 7, "story", cancellationToken);
+        await _gitHubService.DidNotReceive().RemoveLabelFromTriageItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
         await _labelRepository.Received(1).DeleteLabelAsync("owner", "repo", "story", cancellationToken);
         await _labelRepository.DidNotReceive().UpdateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), Arg.Any<CancellationToken>());
     }
@@ -1434,7 +1434,7 @@ public sealed class LabelServiceTests
                 CreateLabelledWorkItem(12, "story"),
             ]);
         _gitHubService
-            .When(service => service.RemoveLabelFromTriageItemAsync("owner", "repo", 11, "story", cancellationToken))
+            .When(service => service.AddLabelsToTriageItemAsync("owner", "repo", 11, Arg.Any<IReadOnlyList<string>>(), cancellationToken))
             .Throw(new HttpRequestException("GitHub API failure"));
 
         var result = await CreateSut().RemapLabelAsync("owner", "repo", "story", "type/story", cancellationToken: cancellationToken);
@@ -1444,7 +1444,8 @@ public sealed class LabelServiceTests
         Assert.False(result.SourceDeleted);
         Assert.True(result.HasErrors);
         Assert.Equal(11, Assert.Single(result.Errors).ItemNumber);
-        await _gitHubService.Received(1).RemoveLabelFromTriageItemAsync("owner", "repo", 12, "story", cancellationToken);
+        await _gitHubService.Received(1).AddLabelsToTriageItemAsync("owner", "repo", 12, Arg.Any<IReadOnlyList<string>>(), cancellationToken);
+        await _gitHubService.DidNotReceive().RemoveLabelFromTriageItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
         await _labelRepository.DidNotReceive().DeleteLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
         await _labelRepository.DidNotReceive().UpdateLabelAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Label>(), Arg.Any<CancellationToken>());
     }
