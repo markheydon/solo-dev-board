@@ -16,6 +16,11 @@ updates:
       - area/infrastructure
     assignees:
       - markheydon
+    ignore:
+      # Microsoft.OpenApi 3.x is not compatible with ASP.NET Core 10; stay on 2.x until a future ASP.NET release.
+      - dependency-name: Microsoft.OpenApi
+        update-types:
+          - version-update:semver-major
     groups:
       test-packages:
         patterns:
