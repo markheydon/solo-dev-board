@@ -21,7 +21,7 @@ test.describe('WCAG 2.1 AA accessibility', () => {
         const response = await page.goto(route.path);
         expect(response?.ok() || response?.status() === 401).toBeTruthy();
 
-        await waitForAccessibilityScanReady(page, route.path);
+        await waitForAccessibilityScanReady(page, route.path, 'light');
         await expectNoCriticalOrSeriousViolations(page, `${route.name} (light)`);
       });
     }
@@ -39,7 +39,7 @@ test.describe('WCAG 2.1 AA accessibility', () => {
         const response = await page.goto(route.path);
         expect(response?.ok() || response?.status() === 401).toBeTruthy();
 
-        await waitForAccessibilityScanReady(page, route.path);
+        await waitForAccessibilityScanReady(page, route.path, 'dark');
 
         await expectNoCriticalOrSeriousViolations(page, `${route.name} (dark)`);
       });

@@ -88,14 +88,32 @@ export async function expectNoCriticalOrSeriousViolationsOnSelector(
   assertNoBlockingViolations(getBlockingViolations(results.violations), context);
 }
 
+const resolvedThemeButtonLabels: Readonly<Record<'light' | 'dark', string>> = {
+  light: 'Theme: light. Activate dark mode.',
+  dark: 'Theme: dark. Activate automatic mode.',
+};
+
+/** Waits until the shell theme preference has been applied to the document. */
+export async function waitForResolvedTheme(page: Page, theme: 'light' | 'dark'): Promise<void> {
+  await expect(page.getByRole('button', { name: resolvedThemeButtonLabels[theme] })).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(page.locator('html')).toHaveCSS('color-scheme', theme);
+}
+
 /** Waits for the page to finish rendering before accessibility scans. */
-export async function waitForAccessibilityScanReady(page: Page, path: string): Promise<void> {
+export async function waitForAccessibilityScanReady(
+  page: Page,
+  path: string,
+  theme: 'light' | 'dark',
+): Promise<void> {
   if (path.startsWith('/auth/connectivity-error')) {
     await expect(page.getByRole('heading', { name: 'GitHub connection problem' })).toBeVisible();
     return;
   }
 
   await expect(page.getByRole('navigation')).toBeVisible();
+  await waitForResolvedTheme(page, theme);
 
   const routePath = path.split('?')[0];
   const loadingTestIds = routeLoadingTestIds[routePath] ?? [];

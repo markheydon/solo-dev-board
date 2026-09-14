@@ -7,7 +7,7 @@ description: Guide for using the MudBlazor component library in Blazor Server ap
 
 **MudBlazor** is a Material Design component library for Blazor built entirely in pure C#/Razor — no web components, no shadow DOM. This is the sole UI component library for SoloDevBoard (see [DEC-009](../../plan/DECISIONS.md#dec-009-mudblazor-as-the-sole-ui-component-library) and [DEC-039](../../plan/DECISIONS.md#dec-039-mudblazor-visual-language-for-page-chrome)).
 
-**Baseline:** This skill was written against MudBlazor **9.9.0**. Do not copy that version into other skill files or into new UI code comments. The installed version is whatever `Directory.Packages.props` says.
+**Baseline:** This skill was written against MudBlazor **9.10.0**. Do not copy that version into other skill files or into new UI code comments. The installed version is whatever `Directory.Packages.props` says.
 
 When the MudBlazor package version changes, refresh this skill against https://mudblazor.com/components/overview **in the same change** (chooser, UX-LANGUAGE, and “do not use” notes). Dependabot pull requests that bump MudBlazor must include that refresh, or an explicit note that the public component catalogue did not change.
 
