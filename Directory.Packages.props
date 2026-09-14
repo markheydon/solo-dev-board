@@ -25,7 +25,7 @@
   <!-- UI -->
   <ItemGroup>
     <!-- When MudBlazor's version changes, refresh .agents/skills/mudblazor/ in the same PR (see SKILL.md baseline). -->
-    <PackageVersion Include="MudBlazor" Version="9.9.0" />
+    <PackageVersion Include="MudBlazor" Version="9.10.0" />
   </ItemGroup>
   <!-- Content and serialisation -->
   <ItemGroup>
