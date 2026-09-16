@@ -1451,6 +1451,35 @@ public sealed class LabelServiceTests
     }
 
     [Fact]
+    public async Task RemapLabelAsync_WhenItemGainsSourceLabelDuringBatch_AddsDestinationBeforeDeletingSource()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        ArrangeLabels("story", "type/story");
+        _labelRepository
+            .GetWorkItemsWithLabelAsync("owner", "repo", "story", cancellationToken)
+            .Returns(
+                [
+                    CreateLabelledWorkItem(10, "story"),
+                    CreateLabelledWorkItem(11, "story"),
+                ],
+                [
+                    CreateLabelledWorkItem(10, "story"),
+                    CreateLabelledWorkItem(11, "story"),
+                    CreateLabelledWorkItem(42, "story"),
+                ]);
+
+        var result = await CreateSut().RemapLabelAsync("owner", "repo", "story", "type/story", cancellationToken: cancellationToken);
+
+        Assert.Equal(3, result.SucceededItemCount);
+        Assert.Equal(0, result.FailedItemCount);
+        Assert.True(result.SourceDeleted);
+        await _gitHubService.Received(1).AddLabelsToTriageItemAsync("owner", "repo", 10, Arg.Any<IReadOnlyList<string>>(), cancellationToken);
+        await _gitHubService.Received(1).AddLabelsToTriageItemAsync("owner", "repo", 11, Arg.Any<IReadOnlyList<string>>(), cancellationToken);
+        await _gitHubService.Received(1).AddLabelsToTriageItemAsync("owner", "repo", 42, Arg.Any<IReadOnlyList<string>>(), cancellationToken);
+        await _labelRepository.Received(1).DeleteLabelAsync("owner", "repo", "story", cancellationToken);
+    }
+
+    [Fact]
     public async Task RemapLabelAsync_NoWorkItems_DeletesSource()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;

@@ -201,6 +201,8 @@ public sealed class LabelService : ILabelManagerService
     /// Ensures the destination label exists, then adds the destination to each labelled item when it
     /// is not already present. Per-item source removal is not performed; deleting the source label
     /// definition at the end unlinks it from every issue and pull request in one request.
+    /// Items that gain the source label after the initial snapshot are retagged before the source
+    /// definition is deleted so concurrent labelling during a long batch does not strip labels.
     /// The source label is deleted only when every destination add succeeded. This path never calls
     /// <see cref="ILabelRepository.UpdateLabelAsync"/>, so rename is not used as a merge.
     /// If a destination add fails, the failure is recorded in <see cref="LabelRemapResultDto.Errors"/>
@@ -257,6 +259,7 @@ public sealed class LabelService : ILabelManagerService
 
         var succeededItemCount = 0;
         var errors = new List<LabelRemapItemErrorDto>();
+        var processedItemNumbers = new HashSet<int>();
 
         if (workItems.Count == 0)
         {
@@ -273,16 +276,25 @@ public sealed class LabelService : ILabelManagerService
                 progress,
                 $"Remapping '{sourceName}' → '{destinationName}' on {repositoryFullName}: retagging item {itemIndex + 1} of {workItems.Count}...");
 
-            try
+            if (await TryRetagWorkItemAsync(owner, repo, workItem, destination.Name, processedItemNumbers, errors, cancellationToken)
+                .ConfigureAwait(false))
             {
-                await RetagWorkItemAsync(owner, repo, workItem, destination.Name, cancellationToken)
-                    .ConfigureAwait(false);
                 succeededItemCount++;
             }
-            catch (Exception ex) when (ex is HttpRequestException or ArgumentException)
-            {
-                errors.Add(new LabelRemapItemErrorDto(workItem.Number, ex.Message));
-            }
+        }
+
+        if (errors.Count == 0)
+        {
+            succeededItemCount += await RetagNewlyLabelledWorkItemsAsync(
+                owner,
+                repo,
+                source.Name,
+                destination.Name,
+                repositoryFullName,
+                processedItemNumbers,
+                errors,
+                progress,
+                cancellationToken).ConfigureAwait(false);
         }
 
         var sourceDeleted = false;
@@ -749,6 +761,94 @@ public sealed class LabelService : ILabelManagerService
             toRemap,
             preview.Skipped,
             preview.KeptAreaLabels);
+    }
+
+    /// <summary>Retags work items that gained the source label after the initial remap snapshot.</summary>
+    /// <param name="owner">The GitHub account owner login.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="sourceLabelName">The source label being remapped.</param>
+    /// <param name="destinationLabelName">The destination label to add.</param>
+    /// <param name="repositoryFullName">The owner/repository full name for progress messages.</param>
+    /// <param name="processedItemNumbers">Item numbers already retagged during the initial batch.</param>
+    /// <param name="errors">Per-item failures collected during retagging.</param>
+    /// <param name="progress">Optional callback that receives human-readable progress messages during apply.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>The number of newly retagged items.</returns>
+    private async Task<int> RetagNewlyLabelledWorkItemsAsync(
+        string owner,
+        string repo,
+        string sourceLabelName,
+        string destinationLabelName,
+        string repositoryFullName,
+        HashSet<int> processedItemNumbers,
+        List<LabelRemapItemErrorDto> errors,
+        IProgress<string>? progress,
+        CancellationToken cancellationToken)
+    {
+        var itemsAfterBatch = await _labelRepository
+            .GetWorkItemsWithLabelAsync(owner, repo, sourceLabelName, cancellationToken)
+            .ConfigureAwait(false);
+
+        var newlyTaggedItems = itemsAfterBatch
+            .Where(item => !processedItemNumbers.Contains(item.Number))
+            .ToArray();
+
+        if (newlyTaggedItems.Length == 0)
+        {
+            return 0;
+        }
+
+        ReportPreviewProgress(
+            progress,
+            $"Remapping '{sourceLabelName}' → '{destinationLabelName}' on {repositoryFullName}: retagging {newlyTaggedItems.Length} item(s) labelled during the batch...");
+
+        var succeededItemCount = 0;
+
+        for (var itemIndex = 0; itemIndex < newlyTaggedItems.Length; itemIndex++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var workItem = newlyTaggedItems[itemIndex];
+
+            if (await TryRetagWorkItemAsync(owner, repo, workItem, destinationLabelName, processedItemNumbers, errors, cancellationToken)
+                .ConfigureAwait(false))
+            {
+                succeededItemCount++;
+            }
+        }
+
+        return succeededItemCount;
+    }
+
+    /// <summary>Attempts to add the destination label to one work item and records failures.</summary>
+    /// <param name="owner">The GitHub account owner login.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="workItem">The labelled work item to retag.</param>
+    /// <param name="destinationLabelName">The destination label to add.</param>
+    /// <param name="processedItemNumbers">Item numbers already retagged during this remap operation.</param>
+    /// <param name="errors">Per-item failures collected during retagging.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns><see langword="true" /> when the item was retagged successfully; otherwise <see langword="false" />.</returns>
+    private async Task<bool> TryRetagWorkItemAsync(
+        string owner,
+        string repo,
+        LabelledWorkItem workItem,
+        string destinationLabelName,
+        HashSet<int> processedItemNumbers,
+        List<LabelRemapItemErrorDto> errors,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await RetagWorkItemAsync(owner, repo, workItem, destinationLabelName, cancellationToken)
+                .ConfigureAwait(false);
+            processedItemNumbers.Add(workItem.Number);
+            return true;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or ArgumentException)
+        {
+            errors.Add(new LabelRemapItemErrorDto(workItem.Number, ex.Message));
+            return false;
+        }
     }
 
     /// <summary>Adds the destination label to one issue or pull request when it is not already present.</summary>
