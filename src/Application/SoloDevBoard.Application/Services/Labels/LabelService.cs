@@ -519,7 +519,11 @@ public sealed class LabelService : ILabelManagerService
             progress,
             cancellationToken).ConfigureAwait(false);
 
-        var unusedDeleteOutcome = await DeleteUnusedExtraLabelsAsync(previews, progress, cancellationToken).ConfigureAwait(false);
+        var refreshedPreviews = await RefreshUnusedExtraDeleteCandidatesAsync(previews, progress, cancellationToken)
+            .ConfigureAwait(false);
+
+        var unusedDeleteOutcome = await DeleteUnusedExtraLabelsAsync(refreshedPreviews, progress, cancellationToken)
+            .ConfigureAwait(false);
 
         var enrichedResults = RecommendedTaxonomyApplySummaryHelper.EnrichDeletedCounts(
             applyResults,
@@ -990,6 +994,42 @@ public sealed class LabelService : ILabelManagerService
         }
 
         return results;
+    }
+
+    /// <summary>Re-classifies preview delete candidates so labels that gained usage after preview are not deleted.</summary>
+    /// <param name="previews">The repository previews from the preview-first workflow.</param>
+    /// <param name="progress">Optional callback that receives human-readable progress messages during apply.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <returns>Previews with <see cref="RecommendedTaxonomyRepositoryPreviewDto.ToDelete"/> refreshed against live usage.</returns>
+    private async Task<IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto>> RefreshUnusedExtraDeleteCandidatesAsync(
+        IReadOnlyList<RecommendedTaxonomyRepositoryPreviewDto> previews,
+        IProgress<string>? progress,
+        CancellationToken cancellationToken)
+    {
+        var refreshed = new List<RecommendedTaxonomyRepositoryPreviewDto>();
+
+        foreach (var preview in previews)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (preview.ToDelete.Count == 0)
+            {
+                refreshed.Add(preview);
+                continue;
+            }
+
+            var repository = SplitRepositoryFullName(preview.RepositoryFullName);
+            var reclassified = await ClassifyExtraLabelsByUsageAsync(
+                repository.Owner,
+                repository.Name,
+                preview,
+                progress,
+                cancellationToken).ConfigureAwait(false);
+
+            refreshed.Add(reclassified);
+        }
+
+        return refreshed;
     }
 
     /// <summary>Deletes unused extra labels from preview results and records per-label failures.</summary>
