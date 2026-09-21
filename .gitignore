@@ -432,3 +432,5 @@ tests/E2E/test-results/
 website/public/
 website/resources/
 website/.hugo_build.lock
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
