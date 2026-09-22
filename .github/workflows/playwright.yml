@@ -70,7 +70,6 @@ jobs:
           -c Release
           -p:RunE2ETests=true
           -p:SkipPlaywrightInstall=true
-          --settings tests/E2E/SoloDevBoard.E2E.Tests/playwright.runsettings
           -- ${{ matrix.mtp_filter_args }}
 
       - name: Upload Playwright report

@@ -6,7 +6,6 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 E2E_PROJECT="tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj"
-RUNSETTINGS="tests/E2E/SoloDevBoard.E2E.Tests/playwright.runsettings"
 CONFIG="Debug"
 HOSTED=false
 EXTRA_ARGS=()
@@ -42,6 +41,5 @@ fi
 dotnet test "$E2E_PROJECT" --no-build -c "$CONFIG" \
   -p:RunE2ETests=true \
   -p:SkipPlaywrightInstall=true \
-  --settings "$RUNSETTINGS" \
   "${FILTER_ARGS[@]}" \
   "${EXTRA_ARGS[@]}"

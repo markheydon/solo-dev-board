@@ -16,6 +16,10 @@ public abstract class SoloDevBoardPageTest : PageTest
     };
 
     /// <inheritdoc />
+    public override Task<BrowserTypeLaunchOptions?> LaunchOptionsAsync() =>
+        Task.FromResult<BrowserTypeLaunchOptions?>(new() { Headless = true });
+
+    /// <inheritdoc />
     public override async ValueTask InitializeAsync()
     {
         // Linux desktop sessions often export BROWSER=xdg-open, which Playwright misreads as a browser name.

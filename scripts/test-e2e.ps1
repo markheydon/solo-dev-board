@@ -12,7 +12,6 @@ $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $config = if ($Release) { "Release" } else { "Debug" }
 $e2eProject = Join-Path $repoRoot "tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj"
-$runSettings = Join-Path $repoRoot "tests/E2E/SoloDevBoard.E2E.Tests/playwright.runsettings"
 $playwrightScript = Join-Path $repoRoot "tests/E2E/SoloDevBoard.E2E.Tests/bin/$config/net10.0/playwright.ps1"
 
 Push-Location $repoRoot
@@ -32,7 +31,6 @@ try {
     dotnet test $e2eProject --no-build -c $config `
         -p:RunE2ETests=true `
         -p:SkipPlaywrightInstall=true `
-        --settings $runSettings `
         @filterArgs `
         @DotnetTestArgs
 }
