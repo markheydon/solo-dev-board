@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>SoloDevBoard.E2E.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="playwright.runsettings" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Deque.AxeCore.Commons" />
+    <PackageReference Include="Deque.AxeCore.Playwright" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.Playwright" />
+    <PackageReference Include="Microsoft.Playwright.Xunit.v3" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="System.Text.RegularExpressions" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\App\SoloDevBoard.App\SoloDevBoard.App.csproj" />
+  </ItemGroup>
+
+  <Target Name="InstallPlaywrightBrowsers" AfterTargets="Build" Condition="'$(SkipPlaywrightInstall)' != 'true' AND '$(DesignTimeBuild)' != 'true'">
+    <Exec WorkingDirectory="$(OutputPath)"
+          Command="pwsh ./playwright.ps1 install chromium"
+          IgnoreStandardErrorWarningFormat="true" />
+  </Target>
+
+</Project>

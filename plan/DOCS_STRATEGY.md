@@ -104,7 +104,7 @@ Rules:
 - Capture with **light theme** at **1400×900** viewport.
 - Use kebab-case PNG filenames and meaningful alt text.
 - Always capture with **docs capture mode** enabled (`DocsCapture:Enabled=true`) so only public repositories and public Projects v2 boards appear. See [DEC-020](DECISIONS.md#dec-020-public-only-docs-capture-mode-for-documentation-screenshots) and [Docs capture mode](../docs/getting-started.md#docs-capture-mode).
-- Prefer the Playwright helper: `cd tests/E2E && npm run capture:docs` against a locally running app with a real PAT.
+- Prefer the Playwright helper: `DOCS_CAPTURE_ENABLED=1 dotnet test tests/E2E/SoloDevBoard.E2E.Tests --filter "Category=DocsCapture"` against a locally running app with a real PAT.
 - Do not commit screenshots that show private repositories, private project boards, or other non-public GitHub content.
 
 ### Screenshot composition
@@ -153,7 +153,7 @@ When Copilot or another AI agent is asked to write or update documentation:
 
 1. **UK English required.** All documentation must use UK English spelling. Run a spell check if possible.
 2. **Accuracy over completeness.** Do not document features that are not yet implemented. Use "Coming Soon" or "Under Development" notices for stubs.
-3. **Sync with code, E2E, and screenshots.** When updating docs, verify that the documented behaviour matches the current implementation and that Playwright specs in `tests/E2E/tests/` assert the same routes, controls, and workflows. Maintain the mapping in [tests/E2E/USER_DOCS_ALIGNMENT.md](../tests/E2E/USER_DOCS_ALIGNMENT.md). If the in-app UI for a published guide or landing tile changed materially, recapture `website/static/images/` in the same docs-update via `cd tests/E2E && npm run capture:docs` (or a focused `-g` filter) against a local app with a real PAT and `DocsCapture:Enabled=true`. Update `tests/E2E/docs-capture/` helpers when the prepare path no longer shows the documented state. Do not leave recapture as a later note. If capture cannot run, report it as blocked.
+3. **Sync with code, E2E, and screenshots.** When updating docs, verify that the documented behaviour matches the current implementation and that Playwright tests in `tests/E2E/SoloDevBoard.E2E.Tests/` assert the same routes, controls, and workflows. Maintain the mapping in [tests/E2E/USER_DOCS_ALIGNMENT.md](../tests/E2E/USER_DOCS_ALIGNMENT.md). If the in-app UI for a published guide or landing tile changed materially, recapture `website/static/images/` in the same docs-update via `DOCS_CAPTURE_ENABLED=1 dotnet test tests/E2E/SoloDevBoard.E2E.Tests --filter "Category=DocsCapture"` (or a focused test filter) against a local app with a real PAT and `DocsCapture:Enabled=true`. Update `DocsCapture/` helpers when the prepare path no longer shows the documented state. Do not leave recapture as a later note. If capture cannot run, report it as blocked.
 4. **Link generously.** Cross-reference related docs, decisions, and planning files. Use relative links within the same docs tree; use GitHub blob URLs when linking from the published site to repository-only files.
 5. **Heading hierarchy.** Use H1 for the page title, H2 for major sections, H3 for subsections. Do not skip levels.
 6. **Code blocks.** All code, commands, and configuration snippets must be in fenced code blocks with the appropriate language identifier.
