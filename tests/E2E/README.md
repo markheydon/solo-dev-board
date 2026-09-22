@@ -37,25 +37,44 @@ Accessibility findings and remediation notes for issue #253 live in [plan/ACCESS
 
 ## Local run
 
+Cross-platform scripts live in [`scripts/`](../../scripts/):
+
+| Script | Scope |
+|--------|--------|
+| `test-unit` | Unit and component tests only (fast default). |
+| `test-e2e` | E2E PAT mode by default; pass `-Hosted` for the hosted login-gate suite. |
+| `test-all` | Full CI parity: unit → E2E PAT → E2E hosted (sequential). |
+
 Build the solution once. The E2E assembly fixture starts SoloDevBoard on HTTP port **5080** with the same placeholder auth configuration as CI.
 
-### Full E2E suite (PAT mode, default)
+### Fast unit/component loop (default)
 
 ```bash
-dotnet build
-dotnet test tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj --filter "Category=E2E"
+./scripts/test-unit.sh
+# Or: dotnet test SoloDevBoard.UnitTests.slnf
+# Avoid: dotnet test SoloDevBoard.slnx (includes E2E under xUnit v3 MTP — slow).
 ```
 
-### Fast unit/component loop (exclude E2E)
+### E2E only (PAT mode, default)
 
 ```bash
-dotnet test --filter "Category!=E2E&Category!=DocsCapture"
+./scripts/test-e2e.sh
 ```
 
-### Hosted mode (login gate only)
+### E2E hosted mode (login gate only)
 
 ```bash
-E2E_AUTH_MODE=hosted dotnet test tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj --filter "Category=E2E&AuthMode=Hosted"
+./scripts/test-e2e.sh -Hosted
+```
+
+### Manual dotnet test (xUnit v3 MTP filter syntax)
+
+Pass filters after `--` using xUnit v3 `--filter-query` (use `&` inside traits for AND):
+
+```bash
+dotnet build tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj -p:RunE2ETests=true -p:SkipPlaywrightInstall=true
+E2E_AUTH_MODE=pat dotnet test tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj \
+  -p:RunE2ETests=true -- --filter-query "/[Category=E2E]"
 ```
 
 ### Reusing an already-running app
@@ -88,7 +107,8 @@ dotnet user-secrets set "DocsCapture:Enabled" "true" --project src/App/SoloDevBo
 5. Capture screenshots:
 
 ```bash
-DOCS_CAPTURE_ENABLED=1 dotnet test tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj --filter "Category=DocsCapture"
+DOCS_CAPTURE_ENABLED=1 dotnet test tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj \
+  -p:RunE2ETests=true -- --filter-query "/[Category=DocsCapture]"
 ```
 
 Images are written to `website/static/images/<feature-slug>/`. See [DOCS_STRATEGY.md](../../plan/DOCS_STRATEGY.md) for the screenshot convention and composition rules (prefer loaded states after selecting `markheydon/solo-dev-board`, not empty shells).
@@ -97,7 +117,7 @@ Images are written to `website/static/images/<feature-slug>/`. See [DOCS_STRATEG
 
 [`.github/workflows/playwright.yml`](../../.github/workflows/playwright.yml) runs two matrix jobs in parallel with **Build and Test** in [`ci.yml`](../../.github/workflows/ci.yml):
 
-- **`pat`** — full E2E suite with PAT mode (`E2E_AUTH_MODE=pat`, filter `Category=E2E`).
-- **`hosted`** — hosted login-gate suite (`AuthEntryHostedTests`, filter `Category=E2E&AuthMode=Hosted`) with placeholder GitHub App credentials and no live OAuth.
+- **`pat`** — full E2E suite with PAT mode (`E2E_AUTH_MODE=pat`, MTP filter `--filter-query "/[Category=E2E]"`).
+- **`hosted`** — hosted login-gate suite (`AuthEntryHostedTests` and `E2eHostedPipelineSanityTests`, MTP filter `--filter-query "/[(Category=E2E)&(AuthMode=Hosted)]"`) with placeholder GitHub App credentials and no live OAuth.
 
 The assembly fixture starts the app on HTTP **port 5080** (not Aspire on 5074). CI installs Chromium with `pwsh …/playwright.ps1 install chromium`. CI uploads the HTML report as a workflow artefact on every run when generated.

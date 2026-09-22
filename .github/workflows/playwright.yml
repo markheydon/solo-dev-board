@@ -25,9 +25,9 @@ jobs:
       matrix:
         include:
           - auth: pat
-            test_filter: Category=E2E
+            mtp_filter_args: --filter-query "/[Category=E2E]"
           - auth: hosted
-            test_filter: Category=E2E&AuthMode=Hosted
+            mtp_filter_args: --filter-query "/[(Category=E2E)&(AuthMode=Hosted)]"
 
     env:
       PLAYWRIGHT_BASE_URL: http://localhost:5080
@@ -53,14 +53,25 @@ jobs:
       - name: Install Playwright browsers
         run: pwsh tests/E2E/SoloDevBoard.E2E.Tests/bin/Release/net10.0/playwright.ps1 install chromium
 
+      - name: Verify Playwright test discovery
+        run: >
+          dotnet test tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj
+          --no-build
+          -c Release
+          -p:RunE2ETests=true
+          -p:SkipPlaywrightInstall=true
+          --list-tests
+          -- ${{ matrix.mtp_filter_args }}
+
       - name: Run Playwright tests
         run: >
           dotnet test tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj
           --no-build
           -c Release
+          -p:RunE2ETests=true
           -p:SkipPlaywrightInstall=true
           --settings tests/E2E/SoloDevBoard.E2E.Tests/playwright.runsettings
-          --filter "${{ matrix.test_filter }}"
+          -- ${{ matrix.mtp_filter_args }}
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v7

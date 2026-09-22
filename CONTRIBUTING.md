@@ -58,7 +58,14 @@ This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.
 
 5. **Run tests:**
    ```bash
-   dotnet test
+   # Fast default — unit and component tests only (E2E excluded).
+   ./scripts/test-unit.sh          # or: .\scripts\test-unit.ps1
+   # Or without scripts:
+   dotnet test SoloDevBoard.UnitTests.slnf
+   # Avoid plain `dotnet test` on SoloDevBoard.slnx — xUnit v3 MTP still includes E2E (slow).
+
+   # Full CI parity before a PR (unit + E2E PAT + E2E hosted):
+   ./scripts/test-all.sh           # or: .\scripts\test-all.ps1
    ```
 
 ---
@@ -104,7 +111,8 @@ When suggesting a feature:
 3. **Testing:**
    - Include unit tests for new functionality (xUnit v3 + NSubstitute)
    - Use the naming convention: `MethodUnderTest_Scenario_ExpectedOutcome`
-   - All tests must pass: `dotnet test`
+   - All tests must pass: `./scripts/test-all` (or `.\scripts\test-all.ps1`) for full CI parity; `./scripts/test-unit` for day-to-day work.
+   - When adding a new non-E2E test project, add it to [`SoloDevBoard.UnitTests.slnf`](SoloDevBoard.UnitTests.slnf).
    - Aim for meaningful test coverage, not just coverage percentage
    - Use Playwright for end-to-end user journeys where unit tests cannot validate the full workflow — see [`tests/E2E/README.md`](tests/E2E/README.md) and [`tests/E2E/CRITICAL_JOURNEYS.md`](tests/E2E/CRITICAL_JOURNEYS.md) for the CI journey inventory, local run steps, and selector conventions.
    - Accessibility regression for primary journeys uses axe-core in Playwright (`AccessibilityTests`); findings are summarised in [`plan/ACCESSIBILITY_AUDIT.md`](plan/ACCESSIBILITY_AUDIT.md).

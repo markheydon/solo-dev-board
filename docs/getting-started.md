@@ -141,6 +141,16 @@ dotnet run --project src/App/SoloDevBoard.App
 
 When you run locally, open **More options → About** to see the MinVer-calculated application version, build commit SHA, and (for pre-release builds) a **Built** timestamp in UK local time. Local builds use the same git-based versioning as CI; staging-style pre-release suffixes appear when your checkout is ahead of the latest `v*` tag.
 
+### Running tests
+
+| Goal | Command |
+|------|---------|
+| Day-to-day (unit/component only) | `./scripts/test-unit.sh` or `.\scripts\test-unit.ps1` |
+| E2E only (PAT mode) | `./scripts/test-e2e.sh` or `.\scripts\test-e2e.ps1` |
+| Full CI parity before a PR | `./scripts/test-all.sh` or `.\scripts\test-all.ps1` |
+
+Use `SoloDevBoard.UnitTests.slnf` or `scripts/test-unit` for the fast path. Plain `dotnet test` on `SoloDevBoard.slnx` still includes Playwright E2E under xUnit v3 MTP and is slow. See [`tests/E2E/README.md`](../tests/E2E/README.md) for E2E prerequisites (PowerShell and a one-time Chromium install).
+
 ---
 
 ## Configuration

@@ -43,5 +43,5 @@ jobs:
       - name: Build solution
         run: dotnet build SoloDevBoard.slnx --no-restore
 
-      - name: Run tests
-        run: dotnet test SoloDevBoard.slnx --no-build --verbosity normal
+      - name: Run unit and component tests
+        run: dotnet test SoloDevBoard.UnitTests.slnf --no-build --verbosity normal
