@@ -78,7 +78,7 @@ public sealed class AccessibilityTests : SoloDevBoardPageTest
     {
         await Page.EmulateMediaAsync(new() { ColorScheme = ColorScheme.Dark });
         await Page.AddInitScriptAsync(
-            $"() => {{ localStorage.setItem('{ThemePreference.StorageKey}', 'system'); }}");
+            $"localStorage.setItem('{ThemePreference.StorageKey}', 'system');");
         await Page.GotoAsync("/");
 
         await Expect(Page.GetByRole(AriaRole.Button, new() { Name = "Theme: automatic (follow system). Activate light mode." })).ToBeVisibleAsync(new() { Timeout = 15_000 });

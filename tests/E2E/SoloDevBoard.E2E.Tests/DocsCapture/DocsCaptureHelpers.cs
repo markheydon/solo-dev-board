@@ -33,7 +33,7 @@ public static class DocsCaptureHelpers
     public static async Task ClearPlanningLocalSettingsAsync(IPage page)
     {
         await page.AddInitScriptAsync(
-            "() => { window.localStorage.removeItem('solo-dev-board.planning-settings'); }");
+            "window.localStorage.removeItem('solo-dev-board.planning-settings');");
     }
 
     /// <summary>
@@ -80,22 +80,20 @@ public static class DocsCaptureHelpers
     {
         await page.AddInitScriptAsync(
             """
-            () => {
-              // Prefer light colour scheme for consistent documentation screenshots.
-              Object.defineProperty(window, 'matchMedia', {
-                writable: true,
-                value: (query) => ({
-                  matches: query.includes('prefers-color-scheme: dark') ? false : false,
-                  media: query,
-                  onchange: null,
-                  addListener: () => undefined,
-                  removeListener: () => undefined,
-                  addEventListener: () => undefined,
-                  removeEventListener: () => undefined,
-                  dispatchEvent: () => false,
-                }),
-              });
-            }
+            // Prefer light colour scheme for consistent documentation screenshots.
+            Object.defineProperty(window, 'matchMedia', {
+              writable: true,
+              value: (query) => ({
+                matches: query.includes('prefers-color-scheme: dark') ? false : false,
+                media: query,
+                onchange: null,
+                addListener: () => undefined,
+                removeListener: () => undefined,
+                addEventListener: () => undefined,
+                removeEventListener: () => undefined,
+                dispatchEvent: () => false,
+              }),
+            });
             """);
 
         await page.GotoAsync("/");

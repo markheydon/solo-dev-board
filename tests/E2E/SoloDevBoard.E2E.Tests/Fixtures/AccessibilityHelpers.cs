@@ -146,7 +146,7 @@ public static class AccessibilityHelpers
     public static async Task SeedThemePreferenceAsync(IPage page, string preference)
     {
         await page.AddInitScriptAsync(
-            $"() => {{ localStorage.setItem('{ThemePreference.StorageKey}', '{preference}'); }}");
+            $"localStorage.setItem('{ThemePreference.StorageKey}', '{preference}');");
     }
 
     private static void AssertNoBlockingViolations(IList<AxeResultItem>? violations, string context)
