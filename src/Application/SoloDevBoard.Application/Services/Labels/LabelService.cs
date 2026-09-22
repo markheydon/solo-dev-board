@@ -592,6 +592,11 @@ public sealed class LabelService : ILabelManagerService
                     updatedCount++;
                 }
 
+                if (removeLabelsOutsideTaxonomy && preview.ToDelete.Count > 0)
+                {
+                    preview = await ClassifyExtraLabelsByUsageAsync(repository.Owner, repository.Name, preview, progress, cancellationToken).ConfigureAwait(false);
+                }
+
                 foreach (var labelToDelete in preview.ToDelete)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
