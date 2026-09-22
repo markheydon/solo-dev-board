@@ -52,7 +52,7 @@
     <PackageVersion Include="AngleSharp" Version="1.8.2" />
     <PackageVersion Include="Deque.AxeCore.Commons" Version="4.13.0" />
     <PackageVersion Include="Deque.AxeCore.Playwright" Version="4.13.0" />
-    <PackageVersion Include="Microsoft.Playwright" Version="1.58.0" />
-    <PackageVersion Include="Microsoft.Playwright.Xunit.v3" Version="1.58.0" />
+    <PackageVersion Include="Microsoft.Playwright" Version="1.62.0" />
+    <PackageVersion Include="Microsoft.Playwright.Xunit.v3" Version="1.62.0" />
   </ItemGroup>
 </Project>
