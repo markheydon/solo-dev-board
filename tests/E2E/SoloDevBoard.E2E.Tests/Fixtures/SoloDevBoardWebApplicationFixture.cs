@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Net;
 
 namespace SoloDevBoard.E2E.Tests.Fixtures;
 

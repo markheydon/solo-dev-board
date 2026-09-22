@@ -1,6 +1,5 @@
 using Microsoft.Playwright;
 using SoloDevBoard.E2E.Tests.Fixtures;
-using static Microsoft.Playwright.Assertions;
 
 namespace SoloDevBoard.E2E.Tests.Tests;
 
@@ -63,7 +62,7 @@ public sealed class AppearanceTests : SoloDevBoardPageTest
                 break;
             }
 
-            await Task.Delay(100);
+            await Task.Delay(100, TestContext.Current.CancellationToken);
         }
 
         Assert.Equal("light", storedValue);

@@ -1,7 +1,6 @@
 using System.Text.Json;
 using Microsoft.Playwright;
 using SoloDevBoard.E2E.Tests.Fixtures;
-using static Microsoft.Playwright.Assertions;
 
 namespace SoloDevBoard.E2E.Tests.Tests;
 
