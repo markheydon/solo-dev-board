@@ -98,10 +98,12 @@ public sealed class SoloDevBoardWebApplicationFixture : IAsyncLifetime
 
         var projectPath = ResolveAppProjectPath();
 
+        var configuration = ResolveBuildConfiguration();
+
         var startInfo = new ProcessStartInfo
         {
             FileName = "dotnet",
-            Arguments = $"run --project \"{projectPath}\" --no-launch-profile --no-build",
+            Arguments = $"run --project \"{projectPath}\" -c {configuration} --no-launch-profile --no-build",
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -173,6 +175,22 @@ public sealed class SoloDevBoardWebApplicationFixture : IAsyncLifetime
         }
 
         throw new TimeoutException($"Timed out waiting for {HealthUri}.");
+    }
+
+    private static string ResolveBuildConfiguration()
+    {
+        var baseDirectory = AppContext.BaseDirectory;
+        if (baseDirectory.Contains($"{Path.DirectorySeparatorChar}Release{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Release";
+        }
+
+        if (baseDirectory.Contains($"{Path.DirectorySeparatorChar}Debug{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Debug";
+        }
+
+        return "Release";
     }
 
     private static string ResolveAppProjectPath()
