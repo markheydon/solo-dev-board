@@ -101,18 +101,6 @@ export async function waitForResolvedTheme(page: Page, theme: 'light' | 'dark'):
   await expect(page.locator('html')).toHaveCSS('color-scheme', theme);
 }
 
-function hasOpaqueBackground(backgroundColor: string): boolean {
-  const rgbaMatch = backgroundColor.match(
-    /^rgba\(\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[\d.]+\s*,\s*([\d.]+)\s*\)$/,
-  );
-
-  if (rgbaMatch) {
-    return Number.parseFloat(rgbaMatch[1]) >= 1;
-  }
-
-  return /^rgb\(\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[\d.]+\s*\)$/.test(backgroundColor);
-}
-
 /**
  * Waits for MudBlazor filled buttons to finish ripple/opacity transitions.
  * Transient rgba backgrounds can report false colour-contrast failures in axe scans.
@@ -127,7 +115,18 @@ async function waitForFilledButtonBackgroundsToSettle(page: Page): Promise<void>
     }
 
     return filledButtons.evaluateAll((buttons) =>
-      buttons.every((button) => hasOpaqueBackground(getComputedStyle(button).backgroundColor)),
+      buttons.every((button) => {
+        const backgroundColor = getComputedStyle(button).backgroundColor;
+        const rgbaMatch = backgroundColor.match(
+          /^rgba\(\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[\d.]+\s*,\s*([\d.]+)\s*\)$/,
+        );
+
+        if (rgbaMatch) {
+          return Number.parseFloat(rgbaMatch[1]) >= 1;
+        }
+
+        return /^rgb\(\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[\d.]+\s*\)$/.test(backgroundColor);
+      }),
     );
   }, { timeout: 5_000 }).toBe(true);
 }
