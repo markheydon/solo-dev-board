@@ -27,7 +27,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-dotnet build "$E2E_PROJECT" -c "$CONFIG" -p:RunE2ETests=true -p:SkipPlaywrightInstall=true
+dotnet build "$E2E_PROJECT" -c "$CONFIG" -p:SkipPlaywrightInstall=true
 pwsh "tests/E2E/SoloDevBoard.E2E.Tests/bin/$CONFIG/net10.0/playwright.ps1" install chromium
 
 if [[ "$HOSTED" == true ]]; then
@@ -39,7 +39,6 @@ else
 fi
 
 dotnet test "$E2E_PROJECT" --no-build -c "$CONFIG" \
-  -p:RunE2ETests=true \
   -p:SkipPlaywrightInstall=true \
   "${FILTER_ARGS[@]}" \
   "${EXTRA_ARGS[@]}"

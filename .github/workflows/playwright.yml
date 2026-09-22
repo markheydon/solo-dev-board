@@ -58,7 +58,6 @@ jobs:
           dotnet test tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj
           --no-build
           -c Release
-          -p:RunE2ETests=true
           -p:SkipPlaywrightInstall=true
           --list-tests
           -- ${{ matrix.mtp_filter_args }}
@@ -68,7 +67,6 @@ jobs:
           dotnet test tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj
           --no-build
           -c Release
-          -p:RunE2ETests=true
           -p:SkipPlaywrightInstall=true
           -- ${{ matrix.mtp_filter_args }}
 

@@ -72,9 +72,9 @@ Build the solution once. The E2E assembly fixture starts SoloDevBoard on HTTP po
 Pass filters after `--` using xUnit v3 `--filter-query` (use `&` inside traits for AND):
 
 ```bash
-dotnet build tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj -p:RunE2ETests=true -p:SkipPlaywrightInstall=true
+dotnet build tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj -p:SkipPlaywrightInstall=true
 E2E_AUTH_MODE=pat dotnet test tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj \
-  -p:RunE2ETests=true -- --filter-query "/[Category=E2E]"
+  -- --filter-query "/[Category=E2E]"
 ```
 
 ### Reusing an already-running app
@@ -108,7 +108,7 @@ dotnet user-secrets set "DocsCapture:Enabled" "true" --project src/App/SoloDevBo
 
 ```bash
 DOCS_CAPTURE_ENABLED=1 dotnet test tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj \
-  -p:RunE2ETests=true -- --filter-query "/[Category=DocsCapture]"
+  -- --filter-query "/[Category=DocsCapture]"
 ```
 
 Images are written to `website/static/images/<feature-slug>/`. See [DOCS_STRATEGY.md](../../plan/DOCS_STRATEGY.md) for the screenshot convention and composition rules (prefer loaded states after selecting `markheydon/solo-dev-board`, not empty shells).
@@ -121,3 +121,5 @@ Images are written to `website/static/images/<feature-slug>/`. See [DOCS_STRATEG
 - **`hosted`** — hosted login-gate suite (`AuthEntryHostedTests` and `E2eHostedPipelineSanityTests`, MTP filter `--filter-query "/[(Category=E2E)&(AuthMode=Hosted)]"`) with placeholder GitHub App credentials and no live OAuth.
 
 The assembly fixture starts the app on HTTP **port 5080** (not Aspire on 5074). CI installs Chromium with `pwsh …/playwright.ps1 install chromium`. CI uploads the HTML report as a workflow artefact on every run when generated.
+
+Playwright launch options (headless Chromium) are configured in `SoloDevBoardPageTest.LaunchOptionsAsync`. Do not pass VSTest `--settings` runsettings under xUnit v3 Microsoft Testing Platform — it breaks MTP test discovery.

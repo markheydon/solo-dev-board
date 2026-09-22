@@ -9,7 +9,6 @@ public sealed class SoloDevBoardWebApplicationFixture : IAsyncLifetime
 {
     private static readonly SemaphoreSlim StartLock = new(1, 1);
     private static SoloDevBoardWebApplicationFixture? sharedInstance;
-    private static int referenceCount;
 
     private Process? process;
     private bool ownsProcess;
@@ -34,36 +33,7 @@ public sealed class SoloDevBoardWebApplicationFixture : IAsyncLifetime
         try
         {
             sharedInstance ??= new SoloDevBoardWebApplicationFixture();
-            referenceCount++;
             await sharedInstance.EnsureProcessStartedAsync();
-        }
-        finally
-        {
-            StartLock.Release();
-        }
-    }
-
-    /// <summary>
-    /// Releases a reference to the shared application instance.
-    /// </summary>
-    public static async Task ReleaseAsync()
-    {
-        await StartLock.WaitAsync();
-        try
-        {
-            if (sharedInstance is null || referenceCount == 0)
-            {
-                return;
-            }
-
-            referenceCount--;
-            if (referenceCount > 0)
-            {
-                return;
-            }
-
-            await sharedInstance.DisposeAsync();
-            sharedInstance = null;
         }
         finally
         {
@@ -80,7 +50,21 @@ public sealed class SoloDevBoardWebApplicationFixture : IAsyncLifetime
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
-        await ReleaseAsync();
+        await StartLock.WaitAsync();
+        try
+        {
+            if (sharedInstance is null)
+            {
+                return;
+            }
+
+            await sharedInstance.DisposeProcessAsync();
+            sharedInstance = null;
+        }
+        finally
+        {
+            StartLock.Release();
+        }
     }
 
     private async Task EnsureProcessStartedAsync()
@@ -97,7 +81,6 @@ public sealed class SoloDevBoardWebApplicationFixture : IAsyncLifetime
         }
 
         var projectPath = ResolveAppProjectPath();
-
         var configuration = ResolveBuildConfiguration();
 
         var startInfo = new ProcessStartInfo

@@ -32,7 +32,7 @@ This repository uses SDK-style projects:
 - Test framework: `xUnit` v3 (`xunit.v3` package; test projects use `<OutputType>Exe</OutputType>`).
 - Mocking framework: `NSubstitute`.
 - Component tests: `bUnit` in the App test project.
-- End-to-end tests: `Microsoft.Playwright` + xUnit v3 in `tests/E2E/SoloDevBoard.E2E.Tests` (opt-in via `scripts/test-e2e` or `-p:RunE2ETests=true`; MTP filters after `--`, e.g. `--filter-query "/[Category=E2E]"`). Use `SoloDevBoard.UnitTests.slnf` or `scripts/test-unit` for the fast path; avoid plain `dotnet test` on the full solution (MTP still includes E2E).
+- End-to-end tests: `Microsoft.Playwright` + xUnit v3 in `tests/E2E/SoloDevBoard.E2E.Tests` (opt-in via `scripts/test-e2e` or `dotnet test` on that project; MTP filters after `--`, e.g. `--filter-query "/[Category=E2E]"`). Use `SoloDevBoard.UnitTests.slnf` or `scripts/test-unit` for the fast path; avoid plain `dotnet test` on the full solution (MTP still includes E2E).
 - AppHost: do not test .NET Aspire AppHost modelling or orchestration.
 - Assertions: xUnit built-in `Assert.*` methods. **Do not use FluentAssertions, AwesomeAssertions, Shouldly, Moq, NUnit, or MSTest** (see [DEC-006](../../plan/DECISIONS.md#dec-006-no-fluentassertions--xunit-built-in-assertions-only) and [DEC-016](../../plan/DECISIONS.md#dec-016-formalised-testing-standard--xunit-v3-nsubstitute-playwright-e2e)).
 - Naming convention: `MethodUnderTest_Scenario_ExpectedOutcome`.

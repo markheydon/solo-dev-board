@@ -16,7 +16,7 @@ $playwrightScript = Join-Path $repoRoot "tests/E2E/SoloDevBoard.E2E.Tests/bin/$c
 
 Push-Location $repoRoot
 try {
-    dotnet build $e2eProject -c $config -p:RunE2ETests=true -p:SkipPlaywrightInstall=true
+    dotnet build $e2eProject -c $config -p:SkipPlaywrightInstall=true
     pwsh $playwrightScript install chromium
 
     if ($Hosted) {
@@ -29,7 +29,6 @@ try {
     }
 
     dotnet test $e2eProject --no-build -c $config `
-        -p:RunE2ETests=true `
         -p:SkipPlaywrightInstall=true `
         @filterArgs `
         @DotnetTestArgs
