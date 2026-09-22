@@ -120,6 +120,6 @@ Images are written to `website/static/images/<feature-slug>/`. See [DOCS_STRATEG
 - **`pat`** — full E2E suite with PAT mode (`E2E_AUTH_MODE=pat`, MTP filter `--filter-query "/[Category=E2E]"`).
 - **`hosted`** — hosted login-gate suite (`AuthEntryHostedTests` and `E2eHostedPipelineSanityTests`, MTP filter `--filter-query "/[(Category=E2E)&(AuthMode=Hosted)]"`) with placeholder GitHub App credentials and no live OAuth.
 
-The assembly fixture starts the app on HTTP **port 5080** (not Aspire on 5074). CI installs Chromium with `pwsh …/playwright.ps1 install chromium`. CI uploads the HTML report as a workflow artefact on every run when generated.
+The assembly fixture starts the app on HTTP **port 5080** (not Aspire on 5074). CI installs Chromium with `pwsh …/playwright.ps1 install chromium`.
 
-Playwright launch options (headless Chromium) are configured in `SoloDevBoardPageTest.LaunchOptionsAsync`. Do not pass VSTest `--settings` runsettings under xUnit v3 Microsoft Testing Platform — it breaks MTP test discovery.
+Playwright launch options (headless Chromium) are configured in `SoloDevBoardPageTest.LaunchOptionsAsync`. Do not pass VSTest `--settings` runsettings under xUnit v3 Microsoft Testing Platform — it breaks MTP test discovery. The Node.js Playwright HTML reporter is not available for `Microsoft.Playwright.Xunit.v3`; test output is in the workflow log and any TRX you configure locally.

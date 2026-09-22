@@ -41,7 +41,7 @@ Use this instruction for authoring and reviewing workflows in this repository.
 - Fail fast on build/test failures.
 - Surface test outputs clearly in logs and artefacts when useful.
 - `ci.yml` builds the full `SoloDevBoard.slnx` but tests only `SoloDevBoard.UnitTests.slnf` (unit/component; E2E excluded).
-- Playwright E2E runs in `.github/workflows/playwright.yml` via `dotnet test` on `SoloDevBoard.E2E.Tests` (PAT/hosted auth matrix with xUnit v3 MTP `--filter-trait`), `pwsh …/playwright.ps1 install chromium`, and upload `playwright-report/` as a workflow artefact when generated. The Blazor app is started by the E2E assembly fixture on HTTP port 5080, not bespoke bash in the workflow (see DEC-040, DEC-041).
+- Playwright E2E runs in `.github/workflows/playwright.yml` via `dotnet test` on `SoloDevBoard.E2E.Tests` (PAT/hosted auth matrix with xUnit v3 MTP `--filter-query`), and `pwsh …/playwright.ps1 install chromium`. The Blazor app is started by the E2E assembly fixture on HTTP port 5080, not bespoke bash in the workflow (see DEC-040, DEC-041). Do not add a `playwright-report/` artefact upload — the C# Playwright test adapter does not emit the Node.js HTML report.
 - `bash-validate.yml` installs ShellCheck from the upstream GitHub release tarball instead of `apt-get`, for the same runner reliability reasons.
 
 ## Deployment Safety
