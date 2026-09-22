@@ -101,6 +101,37 @@ export async function waitForResolvedTheme(page: Page, theme: 'light' | 'dark'):
   await expect(page.locator('html')).toHaveCSS('color-scheme', theme);
 }
 
+function hasOpaqueBackground(backgroundColor: string): boolean {
+  const rgbaMatch = backgroundColor.match(
+    /^rgba\(\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[\d.]+\s*,\s*([\d.]+)\s*\)$/,
+  );
+
+  if (rgbaMatch) {
+    return Number.parseFloat(rgbaMatch[1]) >= 1;
+  }
+
+  return /^rgb\(\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[\d.]+\s*\)$/.test(backgroundColor);
+}
+
+/**
+ * Waits for MudBlazor filled buttons to finish ripple/opacity transitions.
+ * Transient rgba backgrounds can report false colour-contrast failures in axe scans.
+ */
+async function waitForFilledButtonBackgroundsToSettle(page: Page): Promise<void> {
+  const filledButtons = page.locator('button.mud-button-filled');
+
+  await expect.poll(async () => {
+    const count = await filledButtons.count();
+    if (count === 0) {
+      return true;
+    }
+
+    return filledButtons.evaluateAll((buttons) =>
+      buttons.every((button) => hasOpaqueBackground(getComputedStyle(button).backgroundColor)),
+    );
+  }, { timeout: 5_000 }).toBe(true);
+}
+
 /** Waits for the page to finish rendering before accessibility scans. */
 export async function waitForAccessibilityScanReady(
   page: Page,
@@ -136,6 +167,8 @@ export async function waitForAccessibilityScanReady(
     await expect(page.getByTestId('planning-shell')).toBeVisible();
     await expect(page.locator('[aria-label="Loading Planning"]')).toBeHidden({ timeout: 15_000 });
   }
+
+  await waitForFilledButtonBackgroundsToSettle(page);
 }
 
 /** Seeds the browser theme preference before the next navigation. */
