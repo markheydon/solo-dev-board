@@ -49,7 +49,7 @@ Use this instruction for authoring and reviewing workflows in this repository.
 - Require successful CI before deployment.
 - Keep production deploys explicit and auditable.
 - Include rollback-aware operational guidance in deployment comments or documentation.
-- CD uses two tiers via `.github/workflows/cd.yml` and reusable `.github/workflows/aspire-deploy.yml` (DEC-021): **staging** (push to `main`, GitHub App), **production** (push tag `v*`, GitHub App, required reviewers). PAT mode is local or self-hoster `aspire deploy` only — not a hosted CD tier.
+- CD uses two tiers via `.github/workflows/cd.yml` and reusable `.github/workflows/aspire-deploy.yml` (DEC-021): **staging** (push to `main`, GitHub App), **production** (push tag `v*`, GitHub App, required reviewers). PAT mode is local or self-hoster `aspire deploy` only — not a hosted CD tier. The `validate` job in `cd.yml` builds `SoloDevBoard.slnx` but tests only `SoloDevBoard.UnitTests.slnf` (E2E is gated in `playwright.yml`; see DEC-041).
 - Production CD uses `aspire deploy` from `SoloDevBoard.AppHost` with OIDC Azure login and `Parameters__*` environment variables for AppHost secrets.
 - The AppHost uses the Aspire CLI bundle (`AspireUseCliBundle=true`). Install Aspire CLI `13.5.0` (matching `Aspire.AppHost.Sdk`) **before** `dotnet build` in deploy and validate workflows: `curl -sSL https://aspire.dev/install.sh | bash -s -- --version 13.5.0` and add `$HOME/.aspire/bin` to `PATH`. General `ci.yml` builds rely on the SDK `dnx` fallback when no CLI is installed.
 - End-user docs publish to GitHub Pages on `v*` tags only (`hugo-deploy.yml`); pull requests validate Hugo builds without publishing (`hugo-validate.yml`).
