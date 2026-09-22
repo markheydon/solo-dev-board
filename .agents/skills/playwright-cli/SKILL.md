@@ -6,8 +6,6 @@ allowed-tools: Bash(playwright-cli:*) Bash(npx:*) Bash(npm:*)
 
 # Browser Automation with playwright-cli
 
-> **SoloDevBoard E2E tests are C#** (`tests/E2E/SoloDevBoard.E2E.Tests`). Use this skill for exploratory browser automation and locator discovery. `playwright-cli` emits TypeScript snippets — port generated locators into `PageTest` classes before committing. Run committed tests with `dotnet test --filter "Category=E2E"`.
-
 ## Quick start
 
 ```bash
