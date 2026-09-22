@@ -106,7 +106,7 @@ export async function waitForResolvedTheme(page: Page, theme: 'light' | 'dark'):
  * Transient rgba backgrounds can report false colour-contrast failures in axe scans.
  */
 async function waitForFilledButtonBackgroundsToSettle(page: Page): Promise<void> {
-  const filledButtons = page.locator('button.mud-button-filled');
+  const filledButtons = page.locator('button.mud-button-filled:enabled');
 
   await expect.poll(async () => {
     const count = await filledButtons.count();
@@ -117,6 +117,11 @@ async function waitForFilledButtonBackgroundsToSettle(page: Page): Promise<void>
     return filledButtons.evaluateAll((buttons) =>
       buttons.every((button) => {
         const backgroundColor = getComputedStyle(button).backgroundColor;
+
+        if (backgroundColor === 'transparent') {
+          return true;
+        }
+
         const rgbaMatch = backgroundColor.match(
           /^rgba\(\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[\d.]+\s*,\s*([\d.]+)\s*\)$/,
         );
