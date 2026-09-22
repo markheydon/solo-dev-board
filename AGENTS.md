@@ -104,8 +104,8 @@ DTOs are `sealed record` types named `<Entity>Dto`, co-located in `SoloDevBoard.
 The published User Guide (`website/content/docs/`) and Playwright suite (`tests/E2E/`) must stay aligned **like-for-like**:
 
 1. **User guides describe actual application behaviour.** Do not document capabilities that are not shipped. Use scope notes for partial delivery.
-2. **Playwright E2E tests exercise what the guides claim.** Every published page in `website/content/docs/` must map to at least one spec under `tests/E2E/tests/`. Assertions should target routes, controls, labels, and workflows described in the guide.
-3. **Loaded-state journeys use the docs-capture suite.** CI runs with placeholder auth and asserts shells, navigation, and empty or error states. Screenshots and populated UI states are captured manually via `tests/E2E/docs-capture/` with a real PAT — see [tests/E2E/USER_DOCS_ALIGNMENT.md](tests/E2E/USER_DOCS_ALIGNMENT.md).
+2. **Playwright E2E tests exercise what the guides claim.** Every published page in `website/content/docs/` must map to at least one test class under `tests/E2E/SoloDevBoard.E2E.Tests/`. Assertions should target routes, controls, labels, and workflows described in the guide.
+3. **Loaded-state journeys use the docs-capture suite.** CI runs with placeholder auth and asserts shells, navigation, and empty or error states. Screenshots and populated UI states are captured manually via `SoloDevBoard.E2E.Tests/DocsCapture/` with a real PAT and `DOCS_CAPTURE_ENABLED=1` — see [tests/E2E/USER_DOCS_ALIGNMENT.md](tests/E2E/USER_DOCS_ALIGNMENT.md).
 
 Canonical mapping and section-level inventory: [tests/E2E/USER_DOCS_ALIGNMENT.md](tests/E2E/USER_DOCS_ALIGNMENT.md). Update it alongside [tests/E2E/CRITICAL_JOURNEYS.md](tests/E2E/CRITICAL_JOURNEYS.md) when journeys change.
 
@@ -192,8 +192,8 @@ When code changes are made, ensure the following are kept in sync:
 
 | Change | Doc to update |
 |--------|--------------|
-| New end-user feature | `website/content/docs/<feature>.md`, `website/content/_index.md` (and docs landing), matching Playwright spec in `tests/E2E/tests/`, `tests/E2E/USER_DOCS_ALIGNMENT.md`, `tests/E2E/CRITICAL_JOURNEYS.md`, GitHub Issue + Project #8 sync |
-| End-user behaviour change | `website/content/docs/<feature>.md` and matching Playwright spec(s); refresh `tests/E2E/docs-capture/` screenshots when the UI changes materially |
+| New end-user feature | `website/content/docs/<feature>.md`, `website/content/_index.md` (and docs landing), matching Playwright test in `tests/E2E/SoloDevBoard.E2E.Tests/`, `tests/E2E/USER_DOCS_ALIGNMENT.md`, `tests/E2E/CRITICAL_JOURNEYS.md`, GitHub Issue + Project #8 sync |
+| End-user behaviour change | `website/content/docs/<feature>.md` and matching Playwright test(s); refresh docs-capture screenshots when the UI changes materially |
 | New developer / operator guidance | `docs/<topic>.md` and `docs/README.md` as needed |
 | Pull request process | [`plan/PULL_REQUEST_POLICY.md`](plan/PULL_REQUEST_POLICY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 | New decision | `plan/DECISIONS.md` (+ constitution if cross-cutting) |
@@ -202,6 +202,7 @@ When code changes are made, ensure the following are kept in sync:
 | Layer boundary or composition-root change | `AGENTS.md`, `plan/DECISIONS.md` (DEC-002), `CONTRIBUTING.md`, `.agents/contracts/code-review.md`, `.agents/skills/dotnet-best-practices/SKILL.md`, `plan/ASPIRE_MULTI_PROCESS_FINDINGS.md` when multi-process notes apply |
 | MudBlazor package version change | `.agents/skills/mudblazor/` against https://mudblazor.com/components/overview; update the baseline version in that skill’s `SKILL.md` only |
 | New release | `plan/RELEASE_PLAN.md`, [`CHANGELOG.md`](CHANGELOG.md) |
+| New non-E2E test project | [`SoloDevBoard.UnitTests.slnf`](SoloDevBoard.UnitTests.slnf) |
 
 ---
 

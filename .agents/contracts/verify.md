@@ -65,8 +65,11 @@ Validate relevant tests execute successfully on a clean rebuild.
 Suggested command:
 
 ```bash
-dotnet clean SoloDevBoard.slnx && dotnet test SoloDevBoard.slnx
+dotnet clean SoloDevBoard.slnx && dotnet build SoloDevBoard.slnx
+./scripts/test-all.sh
 ```
+
+On Windows PowerShell, use `.\scripts\test-all.ps1` instead. This runs unit/component tests plus E2E PAT and hosted suites (full CI parity).
 
 Confirm:
 

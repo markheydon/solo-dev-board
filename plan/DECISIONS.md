@@ -162,7 +162,7 @@ A formal migration to GitHub Spec Kit is planned — see [`plan/SPEC_KIT_MIGRATI
 **Date:** 2026-07-21  
 **Supersedes:** DEC-004  
 **Constitution:** [AGENTS.md — Testing](../AGENTS.md#testing)  
-**Summary:** Use xUnit v3 for all automated unit and component tests. Use NSubstitute for mocks, stubs, and test doubles. Use built-in xUnit `Assert.*` methods only. Use bUnit for Blazor component tests (DEC-007). Use Playwright for end-to-end tests covering key user journeys — not as a replacement for unit tests. Do not test .NET Aspire AppHost modelling or orchestration. Reject FluentAssertions, AwesomeAssertions, Shouldly, Moq, NUnit, and MSTest.
+**Summary:** Use xUnit v3 for all automated unit and component tests. Use NSubstitute for mocks, stubs, and test doubles. Use built-in xUnit `Assert.*` methods only. Use bUnit for Blazor component tests (DEC-007). Use Playwright for end-to-end tests covering key user journeys via `Microsoft.Playwright` and `Microsoft.Playwright.Xunit.v3` in the `SoloDevBoard.E2E.Tests` project (see DEC-040) — not as a replacement for unit tests. Do not test .NET Aspire AppHost modelling or orchestration. Reject FluentAssertions, AwesomeAssertions, Shouldly, Moq, NUnit, and MSTest.
 
 ---
 
@@ -299,7 +299,7 @@ Test coverage expectations for cache-hit, cache-miss, invalidation, TTL expiry, 
 **Status:** Active  
 **Date:** 2026-08-19  
 **Related:** [DEC-016](#dec-016-formalised-testing-standard--xunit-v3-nsubstitute-playwright-e2e), [DEC-021](#dec-021-two-tier-cd-pipeline)  
-**Summary:** Quality gates use one workflow file per concern with a self-documenting name. `ci.yml` runs .NET restore, format, build, and test only. `playwright.yml` follows the official Playwright GitHub Actions template (matrix for PAT and hosted auth modes, `npx playwright install chromium`, HTML report artefact upload). The official template uses `npx playwright install --with-deps` for all browsers; this repository omits `--with-deps` on GitHub-hosted runners because `apt` can hang during install. The Blazor app is started by Playwright `webServer` in `tests/E2E/playwright.config.ts` so local `npm test` matches CI. Other gates use `{subject}-validate.yml` (for example `bash-validate.yml`, `powershell-validate.yml`, `github-actions-validate.yml`, `github-scripts-validate.yml`, `hugo-validate.yml`). Reject monolithic CI files that mix unrelated jobs or opaque workflow names such as `automation-lint.yml` or `shell.yml`.
+**Summary:** Quality gates use one workflow file per concern with a self-documenting name. `ci.yml` runs .NET restore, format, build, and test only. `playwright.yml` runs the C# E2E project (`dotnet test` on `SoloDevBoard.E2E.Tests`) with a PAT/hosted auth matrix and `pwsh …/playwright.ps1 install chromium` (see DEC-040). The Blazor app is started by the E2E assembly fixture (`dotnet run` on port 5080) so local `dotnet test` matches CI. Other gates use `{subject}-validate.yml` (for example `bash-validate.yml`, `powershell-validate.yml`, `github-actions-validate.yml`, `github-scripts-validate.yml`, `hugo-validate.yml`). Reject monolithic CI files that mix unrelated jobs or opaque workflow names such as `automation-lint.yml` or `shell.yml`.
 
 ---
 
@@ -382,6 +382,26 @@ Test coverage expectations for cache-hit, cache-miss, invalidation, TTL expiry, 
 **Date:** 2026-09-09  
 **Constitution:** [AGENTS.md](../AGENTS.md) (MudBlazor-first UI), [`.agents/skills/mudblazor/references/UX-LANGUAGE.md`](../.agents/skills/mudblazor/references/UX-LANGUAGE.md)  
 **Summary:** Shipped pages must share one visual language: page header plus purpose line, toolbar for commands, `MudPaper`/`MudCard` sections at elevation 1, `MudSkeleton` for content-shaped loading, `MudAlert` for empty and error, snackbars for transient outcomes (DEC-035). Agents choose components via the `mudblazor` skill (baseline version recorded only in that skill). Do not use `MudChat`, FABs, carousels, or charts on operational pages. Custom CSS remains exceptional. Product logo and brand assets stay a separate ice-box feature ([#397](https://github.com/markheydon/solo-dev-board/issues/397)). The same chrome must remain usable in mobile browsers (phone and compact tablet such as iPad mini); that is a responsive-web pass ([#411](https://github.com/markheydon/solo-dev-board/issues/411)), not a native app.
+
+---
+
+### DEC-040: C# Playwright E2E suite
+
+**Status:** Active  
+**Date:** 2026-09-22  
+**Related:** [DEC-016](#dec-016-formalised-testing-standard--xunit-v3-nsubstitute-playwright-e2e), [DEC-030](#dec-030-self-documenting-ci-workflow-split), [DEC-020](#dec-020-public-only-docs-capture-mode-for-documentation-screenshots)  
+**Constitution:** [AGENTS.md — Testing](../AGENTS.md#testing)  
+**Summary:** End-to-end tests live in `tests/E2E/SoloDevBoard.E2E.Tests` as xUnit v3 `PageTest` classes using `Microsoft.Playwright`, `Microsoft.Playwright.Xunit.v3`, and `Deque.AxeCore.Playwright` for accessibility scans. Run via `dotnet test` (filter `Category=E2E` for CI journeys; `Category=DocsCapture` with `DOCS_CAPTURE_ENABLED=1` for manual Hugo screenshots). The assembly fixture starts `SoloDevBoard.App` on HTTP port 5080 with placeholder auth env vars; `PLAYWRIGHT_REUSE_SERVER=1` reuses a running instance. Reject maintaining a separate Node.js Playwright toolchain in this repository for E2E.
+
+---
+
+### DEC-041: Unit/E2E test tiering for local and CI workflows
+
+**Status:** Active  
+**Date:** 2026-09-22  
+**Related:** [DEC-016](#dec-016-formalised-testing-standard--xunit-v3-nsubstitute-playwright-e2e), [DEC-030](#dec-030-self-documenting-ci-workflow-split), [DEC-040](#dec-040-c-playwright-e2e-suite)  
+**Constitution:** [AGENTS.md — Testing](../AGENTS.md#testing)  
+**Summary:** Local and CI test entry points are tiered for speed and full coverage. `SoloDevBoard.UnitTests.slnf` excludes E2E for the fast default (`scripts/test-unit`, `ci.yml` test step). E2E is opt-in locally via `scripts/test-e2e` / `scripts/test-all` or `dotnet test` on `tests/E2E/SoloDevBoard.E2E.Tests`. `ci.yml` builds the full solution but tests only the unit filter; `playwright.yml` owns E2E with xUnit v3 MTP `--filter-query` filters (PAT: `/[Category=E2E]`; hosted: `/[(Category=E2E)&(AuthMode=Hosted)]`). `E2eHostedPipelineSanityTests` guarantees the hosted filter always matches at least one test. Playwright browser install defaults to skipped on build (`SkipPlaywrightInstall=true`). Reject trait-exclusion filters across the full solution as the primary fast path (xUnit v3 MTP exit code 8 when an assembly runs zero tests). Plain `dotnet test` on `SoloDevBoard.slnx` may still run E2E under MTP — prefer the unit filter or scripts.
 
 ---
 

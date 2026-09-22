@@ -26,7 +26,9 @@ updates:
         patterns:
           - bunit
           - coverlet.*
+          - Deque.AxeCore.*
           - Microsoft.NET.Test.Sdk
+          - Microsoft.Playwright*
           - Moq
           - NSubstitute
           - xunit.*
@@ -100,30 +102,6 @@ updates:
       - markheydon
     groups:
       devcontainers:
-        patterns:
-          - "*"
-        update-types:
-          - minor
-          - patch
-
-  - package-ecosystem: npm
-    directory: /tests/E2E
-    schedule:
-      interval: weekly
-      day: monday
-      time: "04:00"
-      timezone: Europe/London
-    open-pull-requests-limit: 5
-    labels:
-      - dependencies
-      - type/chore
-      - priority/low
-      - status/in-review
-      - area/infrastructure
-    assignees:
-      - markheydon
-    groups:
-      npm-dependencies:
         patterns:
           - "*"
         update-types:

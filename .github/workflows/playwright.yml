@@ -25,13 +25,14 @@ jobs:
       matrix:
         include:
           - auth: pat
-            test_command: npx playwright test
+            mtp_filter_args: --filter-query "/[Category=E2E]"
           - auth: hosted
-            test_command: npx playwright test auth-entry-hosted.spec.ts
+            mtp_filter_args: --filter-query "/[(Category=E2E)&(AuthMode=Hosted)]"
 
     env:
       PLAYWRIGHT_BASE_URL: http://localhost:5080
       E2E_AUTH_MODE: ${{ matrix.auth }}
+      BROWSER: ""
 
     steps:
       - name: Checkout repository
@@ -44,38 +45,27 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: lts/*
-          cache: npm
-          cache-dependency-path: tests/E2E/package-lock.json
-
-      - name: Restore and build application
+      - name: Restore and build E2E project
         run: |
-          dotnet restore SoloDevBoard.slnx
-          dotnet build src/App/SoloDevBoard.App/SoloDevBoard.App.csproj --no-restore
-
-      - name: Install dependencies
-        working-directory: tests/E2E
-        env:
-          NODE_OPTIONS: --dns-result-order=ipv4first
-        run: npm ci
+          dotnet restore tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj
+          dotnet build tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj -c Release --no-restore -p:SkipPlaywrightInstall=true
 
       - name: Install Playwright browsers
-        working-directory: tests/E2E
-        env:
-          NODE_OPTIONS: --dns-result-order=ipv4first
-        run: npx playwright install chromium
+        run: pwsh tests/E2E/SoloDevBoard.E2E.Tests/bin/Release/net10.0/playwright.ps1 install chromium
+
+      - name: Verify Playwright test discovery
+        run: >
+          dotnet test tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj
+          --no-build
+          -c Release
+          -p:SkipPlaywrightInstall=true
+          --list-tests
+          -- ${{ matrix.mtp_filter_args }}
 
       - name: Run Playwright tests
-        working-directory: tests/E2E
-        run: ${{ matrix.test_command }}
-
-      - name: Upload Playwright report
-        uses: actions/upload-artifact@v7
-        if: ${{ !cancelled() }}
-        with:
-          name: playwright-report-${{ matrix.auth }}
-          path: tests/E2E/playwright-report/
-          retention-days: 14
+        run: >
+          dotnet test tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj
+          --no-build
+          -c Release
+          -p:SkipPlaywrightInstall=true
+          -- ${{ matrix.mtp_filter_args }}

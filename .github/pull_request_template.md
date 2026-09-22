@@ -25,7 +25,7 @@ Closes #
 
 - [ ] I have performed a self-review of my own code
 - [ ] My changes follow the coding conventions in `AGENTS.md`
-- [ ] All new and existing tests pass (`dotnet test`)
+- [ ] All new and existing tests pass (`./scripts/test-all` or CI: Build and Test + both Playwright matrix jobs)
 - [ ] I have added or updated tests to cover my changes
 - [ ] I have updated relevant documentation in `docs/` or `plan/`
 - [ ] No new compiler warnings have been introduced

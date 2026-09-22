@@ -1,0 +1,13 @@
+{
+  "solution": {
+    "path": "SoloDevBoard.slnx",
+    "projects": [
+      "tests\\App.Tests\\SoloDevBoard.App.Tests\\SoloDevBoard.App.Tests.csproj",
+      "tests\\Application.Tests\\SoloDevBoard.Application.Tests\\SoloDevBoard.Application.Tests.csproj",
+      "tests\\Composition.Tests\\SoloDevBoard.Composition.Tests\\SoloDevBoard.Composition.Tests.csproj",
+      "tests\\Domain.Tests\\SoloDevBoard.Domain.Tests\\SoloDevBoard.Domain.Tests.csproj",
+      "tests\\ServiceDefaults.Tests\\SoloDevBoard.ServiceDefaults.Tests\\SoloDevBoard.ServiceDefaults.Tests.csproj",
+      "tests\\Infrastructure.Tests\\SoloDevBoard.Infrastructure.Tests\\SoloDevBoard.Infrastructure.Tests.csproj"
+    ]
+  }
+}

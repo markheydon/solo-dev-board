@@ -10,6 +10,7 @@
     <Project Path="tests/Infrastructure.Tests/SoloDevBoard.Infrastructure.Tests/SoloDevBoard.Infrastructure.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj" />
     <Project Path="tests/App.Tests/SoloDevBoard.App.Tests/SoloDevBoard.App.Tests.csproj" />
     <Project Path="tests/Application.Tests/SoloDevBoard.Application.Tests/SoloDevBoard.Application.Tests.csproj" />
     <Project Path="tests/Composition.Tests/SoloDevBoard.Composition.Tests/SoloDevBoard.Composition.Tests.csproj" />

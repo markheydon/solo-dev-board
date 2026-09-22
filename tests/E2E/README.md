@@ -1,30 +1,30 @@
 # SoloDevBoard end-to-end tests
 
-Playwright tests for key user journeys. These complement unit and bUnit component tests — they validate complete workflows in a real browser rather than replacing isolated unit coverage.
+C# Playwright tests (`Microsoft.Playwright.Xunit.v3`) for key user journeys. These complement unit and bUnit component tests — they validate complete workflows in a real browser rather than replacing isolated unit coverage.
 
 Critical journeys, priority tiers, and CI constraints are documented in [CRITICAL_JOURNEYS.md](CRITICAL_JOURNEYS.md).
 
-Published user guides must stay aligned with these tests like-for-like. See [USER_DOCS_ALIGNMENT.md](USER_DOCS_ALIGNMENT.md) for the guide-to-spec inventory and screenshot confidentiality rules.
+Published user guides must stay aligned with these tests like-for-like. See [USER_DOCS_ALIGNMENT.md](USER_DOCS_ALIGNMENT.md) for the guide-to-test inventory and screenshot confidentiality rules.
 
 ## Test coverage
 
-| Spec | What it validates |
-|------|-------------------|
-| `smoke.spec.ts` | Health endpoint and home page render |
-| `navigation.spec.ts` | Home feature cards and drawer navigation to all primary routes |
-| `appearance.spec.ts` | Theme control cycles Automatic → Light → Dark and persists preference |
-| `about.spec.ts` | About page metadata via the shell menu |
-| `auth-entry.spec.ts` | PAT-mode welcome redirect and connectivity error page |
-| `auth-entry-hosted.spec.ts` | Hosted-mode login gate, welcome landing, and Blazor negotiate |
-| `audit-dashboard.spec.ts` | Audit Dashboard shell and repository load failure |
-| `repositories.spec.ts` | Repositories command strip, load failure handling, and phone-width overflow guard |
-| `migrate.spec.ts` | One-Click Migration setup shell, columns scope switch, and API failure feedback |
-| `board-rules.spec.ts` | Board Rules selector region, compare mode, Reload from GitHub when the catalogue loads, and repository load failure |
-| `labels.spec.ts` | Label Manager shell, tabs, and repository load failure feedback |
-| `actions-templates.spec.ts` | Built-in template browse/filter/select, custom source region and manual field, and repository error state |
-| `triage.spec.ts` | Triage shell, session-scope Reload from GitHub, inline repository load failure, and disposition controls hidden before a session starts |
-| `planning.spec.ts` | Planning — Daily Focus occupancy, recommendations, stalled Up Next, stalled-review, Backlog Review, and Iteration shells, plus Repos tab threshold, exclusion, and summary regions or chrome error |
-| `accessibility.spec.ts` | WCAG 2.1 AA axe-core scan of Tier 1–2 journeys in light and dark mode; labelled shell controls; isolated snackbar contrast scan |
+| Test class | What it validates |
+|------------|-------------------|
+| `SmokeTests` | Health endpoint and home page render |
+| `NavigationTests` | Home feature cards and drawer navigation to all primary routes |
+| `AppearanceTests` | Theme control cycles Automatic → Light → Dark and persists preference |
+| `AboutTests` | About page metadata via the shell menu |
+| `AuthEntryTests` | PAT-mode welcome redirect and connectivity error page |
+| `AuthEntryHostedTests` | Hosted-mode login gate, welcome landing, and Blazor negotiate |
+| `AuditDashboardTests` | Audit Dashboard shell and repository load failure |
+| `RepositoriesTests` | Repositories command strip, load failure handling, and phone-width overflow guard |
+| `MigrateTests` | One-Click Migration setup shell, columns scope switch, and API failure feedback |
+| `BoardRulesTests` | Board Rules selector region, compare mode, Reload from GitHub when the catalogue loads, and repository load failure |
+| `LabelsTests` | Label Manager shell, tabs, and repository load failure feedback |
+| `ActionsTemplatesTests` | Built-in template browse/filter/select, custom source region and manual field, and repository error state |
+| `TriageTests` | Triage shell, session-scope Reload from GitHub, inline repository load failure, and disposition controls hidden before a session starts |
+| `PlanningTests` | Planning — Daily Focus occupancy, recommendations, stalled Up Next, stalled-review, Backlog Review, and Iteration shells, plus Repos tab threshold, exclusion, and summary regions or chrome error |
+| `AccessibilityTests` | WCAG 2.1 AA axe-core scan of Tier 1–2 journeys in light and dark mode; labelled shell controls; isolated snackbar contrast scan |
 
 Tests are designed to pass in CI with placeholder auth. The PAT job uses `GitHubAuth__PersonalAccessToken=ci-e2e-placeholder`. The hosted job uses placeholder GitHub App credentials and asserts the login gate without live OAuth. Repository-dependent features assert empty or error states rather than live GitHub data.
 
@@ -32,49 +32,66 @@ Accessibility findings and remediation notes for issue #253 live in [plan/ACCESS
 
 ## Prerequisites
 
-- Node.js 20 or later.
-- .NET 10 SDK (Playwright starts the app via `webServer` in [`playwright.config.ts`](playwright.config.ts)).
+- .NET 10 SDK only (no Node.js).
+- PowerShell (`pwsh`) for the first Playwright browser install after build.
 
 ## Local run
 
-Build the application once, then run Playwright from `tests/E2E`. Playwright starts SoloDevBoard with the same placeholder auth configuration as CI.
+Cross-platform scripts live in [`scripts/`](../../scripts/):
 
-### PAT mode (default)
+| Script | Scope |
+|--------|--------|
+| `test-unit` | Unit and component tests only (fast default). |
+| `test-e2e` | E2E PAT mode by default; pass `-Hosted` for the hosted login-gate suite. |
+| `test-all` | Full CI parity: unit → E2E PAT → E2E hosted (sequential). |
+
+Build the solution once. The E2E assembly fixture starts SoloDevBoard on HTTP port **5080** with the same placeholder auth configuration as CI.
+
+### Fast unit/component loop (default)
 
 ```bash
-dotnet build src/App/SoloDevBoard.App/SoloDevBoard.App.csproj
-cd tests/E2E
-npm ci
-npx playwright install --with-deps chromium
-npm test
+./scripts/test-unit.sh
+# Or: dotnet test SoloDevBoard.UnitTests.slnf
+# Avoid: dotnet test SoloDevBoard.slnx (includes E2E under xUnit v3 MTP — slow).
 ```
 
-### Hosted mode (login gate only)
+### E2E only (PAT mode, default)
 
 ```bash
-dotnet build src/App/SoloDevBoard.App/SoloDevBoard.App.csproj
-cd tests/E2E
-E2E_AUTH_MODE=hosted npx playwright test auth-entry-hosted.spec.ts
+./scripts/test-e2e.sh
+```
+
+### E2E hosted mode (login gate only)
+
+```bash
+./scripts/test-e2e.sh -Hosted
+```
+
+### Manual dotnet test (xUnit v3 MTP filter syntax)
+
+Pass filters after `--` using xUnit v3 `--filter-query` (use `&` inside traits for AND):
+
+```bash
+dotnet build tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj -p:SkipPlaywrightInstall=true
+E2E_AUTH_MODE=pat dotnet test tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj \
+  -- --filter-query "/[Category=E2E]"
 ```
 
 ### Reusing an already-running app
 
-By default Playwright starts its own placeholder-configured instance. To point tests at an app you started manually (for example Aspire or a real PAT), set `PLAYWRIGHT_REUSE_SERVER=1` and ensure `PLAYWRIGHT_BASE_URL` matches the running instance.
+By default the fixture starts its own placeholder-configured instance. To point tests at an app you started manually (for example Aspire or a real PAT), set `PLAYWRIGHT_REUSE_SERVER=1` and ensure `PLAYWRIGHT_BASE_URL` matches the running instance.
 
-### Viewing the HTML report
+### Playwright browsers
 
-After a run, open the report locally:
+After the first build, install Chromium if prompted:
 
 ```bash
-cd tests/E2E
-npx playwright show-report
+pwsh tests/E2E/SoloDevBoard.E2E.Tests/bin/Debug/net10.0/playwright.ps1 install chromium
 ```
-
-In CI, download the `playwright-report-pat` or `playwright-report-hosted` artefact from the workflow run and run `npx playwright show-report` inside the extracted folder.
 
 ## Documentation screenshots
 
-Manual screenshot capture for the Hugo user guide lives in `docs-capture/` and is **not** part of the CI suite.
+Manual screenshot capture for the Hugo user guide lives in `SoloDevBoard.E2E.Tests/DocsCapture/` and is **not** part of the CI suite. Tests skip unless `DOCS_CAPTURE_ENABLED=1`.
 
 Prerequisites:
 
@@ -87,11 +104,11 @@ Prerequisites:
 dotnet user-secrets set "DocsCapture:Enabled" "true" --project src/App/SoloDevBoard.App
 ```
 
-3. Capture screenshots:
+5. Capture screenshots:
 
 ```bash
-cd tests/E2E
-npm run capture:docs
+DOCS_CAPTURE_ENABLED=1 dotnet test tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj \
+  -- --filter-query "/[Category=DocsCapture]"
 ```
 
 Images are written to `website/static/images/<feature-slug>/`. See [DOCS_STRATEGY.md](../../plan/DOCS_STRATEGY.md) for the screenshot convention and composition rules (prefer loaded states after selecting `markheydon/solo-dev-board`, not empty shells).
@@ -100,7 +117,9 @@ Images are written to `website/static/images/<feature-slug>/`. See [DOCS_STRATEG
 
 [`.github/workflows/playwright.yml`](../../.github/workflows/playwright.yml) runs two matrix jobs in parallel with **Build and Test** in [`ci.yml`](../../.github/workflows/ci.yml):
 
-- **`pat`** — full suite with PAT mode (`E2E_AUTH_MODE=pat`).
-- **`hosted`** — hosted login-gate suite (`auth-entry-hosted.spec.ts`) with placeholder GitHub App credentials and no live OAuth.
+- **`pat`** — full E2E suite with PAT mode (`E2E_AUTH_MODE=pat`, MTP filter `--filter-query "/[Category=E2E]"`).
+- **`hosted`** — hosted login-gate suite (`AuthEntryHostedTests` and `E2eHostedPipelineSanityTests`, MTP filter `--filter-query "/[(Category=E2E)&(AuthMode=Hosted)]"`) with placeholder GitHub App credentials and no live OAuth.
 
-Playwright starts the app via `webServer` in `playwright.config.ts` on HTTP **port 5080** (not Aspire on 5074). CI installs Chromium with `npx playwright install chromium` only — it does **not** use `--with-deps`, so GitHub-hosted runners never call `apt` for browser OS packages. Local development should still use `npx playwright install --with-deps chromium` so system libraries are present on your machine. CI uploads the HTML report as a workflow artefact on every run.
+The assembly fixture starts the app on HTTP **port 5080** (not Aspire on 5074). CI installs Chromium with `pwsh …/playwright.ps1 install chromium`.
+
+Playwright launch options (headless Chromium) are configured in `SoloDevBoardPageTest.LaunchOptionsAsync`. Do not pass VSTest `--settings` runsettings under xUnit v3 Microsoft Testing Platform — it breaks MTP test discovery. The Node.js Playwright HTML reporter is not available for `Microsoft.Playwright.Xunit.v3`; test output is in the workflow log and any TRX you configure locally.
