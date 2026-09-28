@@ -25,12 +25,12 @@
   <!-- UI -->
   <ItemGroup>
     <!-- When MudBlazor's version changes, refresh .agents/skills/mudblazor/ in the same PR (see SKILL.md baseline). -->
-    <PackageVersion Include="MudBlazor" Version="9.10.0" />
+    <PackageVersion Include="MudBlazor" Version="9.11.0" />
   </ItemGroup>
   <!-- Content and serialisation -->
   <ItemGroup>
     <PackageVersion Include="Markdig" Version="1.4.0" />
-    <PackageVersion Include="MessagePack" Version="3.1.9" />
+    <PackageVersion Include="MessagePack" Version="3.1.10" />
   </ItemGroup>
   <!-- Observability -->
   <ItemGroup>
@@ -44,7 +44,7 @@
   <!-- Testing -->
   <ItemGroup>
     <PackageVersion Include="bunit" Version="2.11.3" />
-    <PackageVersion Include="coverlet.collector" Version="10.0.1" />
+    <PackageVersion Include="coverlet.collector" Version="10.1.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
     <PackageVersion Include="NSubstitute" Version="6.2.0" />
     <PackageVersion Include="xunit.v3" Version="4.0.1" />
@@ -52,7 +52,7 @@
     <PackageVersion Include="AngleSharp" Version="1.8.2" />
     <PackageVersion Include="Deque.AxeCore.Commons" Version="4.13.0" />
     <PackageVersion Include="Deque.AxeCore.Playwright" Version="4.13.0" />
-    <PackageVersion Include="Microsoft.Playwright" Version="1.62.0" />
-    <PackageVersion Include="Microsoft.Playwright.Xunit.v3" Version="1.62.0" />
+    <PackageVersion Include="Microsoft.Playwright" Version="1.63.0" />
+    <PackageVersion Include="Microsoft.Playwright.Xunit.v3" Version="1.63.0" />
   </ItemGroup>
 </Project>
