@@ -44,6 +44,8 @@ updates:
       azure:
         patterns:
           - Azure.*
+          - Microsoft.Azure.*
+          - Aspire.*
         update-types:
           - minor
           - patch
@@ -83,6 +85,14 @@ updates:
       - area/infrastructure
     assignees:
       - markheydon
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - major
+          - minor
+          - patch
 
   - package-ecosystem: devcontainers
     directory: /.devcontainer
