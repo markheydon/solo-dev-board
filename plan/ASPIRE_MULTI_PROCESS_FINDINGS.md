@@ -14,8 +14,10 @@ No code, AppHost, or constitution changes are implied by this document.
 
 The AppHost models **one runnable project**: the Blazor Server UI, named `app`.
 
-```28:40:src/SoloDevBoard.AppHost/AppHost.cs
-var app = builder.AddProject<Projects.SoloDevBoard_App>("app")
+```38:47:src/SoloDevBoard.AppHost/AppHost.cs
+var app = builder.AddDotnetProject(AzureName("app"), "../App/SoloDevBoard.App/SoloDevBoard.App.csproj");
+
+app = app
     .WithHttpHealthCheck("/health")
     .WithExternalHttpEndpoints()
     .WithEnvironment("GitHubAuth__HostedSignInEnabled", hostedSignInEnabled)
@@ -324,7 +326,7 @@ A greenfield “Aspire from day one” would have started at step 2 with an empt
 
 - Current AppHost: `src/SoloDevBoard.AppHost/AppHost.cs`.
 - ADR-0016 / DEC-013, DEC-015, DEC-017.
-- Aspire 13.4.6 docs (CLI `aspire docs`): Azure Functions hosting, runtime configuration, supported triggers, Azure Container App Jobs. Versions in this note were current at the time of writing (2026-08-14); the repo now targets Aspire 13.5.0.
+- Aspire 13.4.6 docs (CLI `aspire docs`): Azure Functions hosting, runtime configuration, supported triggers, Azure Container App Jobs. Versions in this note were current at the time of writing (2026-08-14); the repo now targets Aspire 13.6.0.
 - Package discovery: `Aspire.Hosting.Azure.Functions` 13.4.6 via `aspire integration search azure-functions`.
 
 ---

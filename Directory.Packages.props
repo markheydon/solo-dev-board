@@ -8,10 +8,12 @@
   </ItemGroup>
   <!-- Aspire hosting -->
   <ItemGroup>
-    <PackageVersion Include="Aspire.Hosting.Azure.AppContainers" Version="13.5.4" />
-    <PackageVersion Include="Aspire.Hosting.Azure.ContainerRegistry" Version="13.5.4" />
-    <PackageVersion Include="Aspire.Hosting.Azure.ApplicationInsights" Version="13.5.4" />
-    <PackageVersion Include="Aspire.Hosting.Azure.KeyVault" Version="13.5.4" />
+    <PackageVersion Include="Aspire.Hosting.Azure.AppContainers" Version="13.6.0" />
+    <PackageVersion Include="Aspire.Hosting.Azure.ContainerRegistry" Version="13.6.0" />
+    <PackageVersion Include="Aspire.Hosting.Azure.ApplicationInsights" Version="13.6.0" />
+    <PackageVersion Include="Aspire.Hosting.Azure.KeyVault" Version="13.6.0" />
+    <!-- Project v2 (AddDotnetProject): stable 13.6.0 not published on NuGet yet; pin preview aligned with AppHost SDK. -->
+    <PackageVersion Include="Aspire.Hosting.Dotnet" Version="13.6.0-preview.1.26479.8" />
   </ItemGroup>
   <!-- Application and framework services -->
   <ItemGroup>
@@ -30,7 +32,7 @@
   <!-- Content and serialisation -->
   <ItemGroup>
     <PackageVersion Include="Markdig" Version="1.4.0" />
-    <PackageVersion Include="MessagePack" Version="3.1.10" />
+    <PackageVersion Include="MessagePack" Version="3.1.11" />
   </ItemGroup>
   <!-- Observability -->
   <ItemGroup>
@@ -49,7 +51,7 @@
     <PackageVersion Include="NSubstitute" Version="6.2.0" />
     <PackageVersion Include="xunit.v3" Version="4.0.1" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.0" />
-    <PackageVersion Include="AngleSharp" Version="1.8.2" />
+    <PackageVersion Include="AngleSharp" Version="1.8.3" />
     <PackageVersion Include="Deque.AxeCore.Commons" Version="4.13.0" />
     <PackageVersion Include="Deque.AxeCore.Playwright" Version="4.13.0" />
     <PackageVersion Include="Microsoft.Playwright" Version="1.63.0" />

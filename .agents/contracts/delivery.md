@@ -165,7 +165,7 @@ SoloDevBoard is a **.NET Aspire** distributed application. Local orchestration i
 
 At the start of implement or deliver work, and whenever diagnosing a running app, read [`.agents/skills/aspire/SKILL.md`](../skills/aspire/SKILL.md), then route to [`aspire-orchestration`](../skills/aspire-orchestration/SKILL.md) and [`aspire-monitoring`](../skills/aspire-monitoring/SKILL.md). Leave `aspire-init` and `aspireify` unused unless the AppHost is missing or unwired.
 
-The resource to wait, rebuild, and log is normally **`app`** (`AddProject<…>(AzureName("app"))` in Development).
+The resource to wait, rebuild, and log is normally **`app`** (`AddDotnetProject(AzureName("app"), …)` in Development).
 
 - On exceptions or unexpected UI, inspect with `aspire describe`, then `aspire otel logs app --search "severity:error"` and `aspire logs app`. Do not guess from a dashboard screenshot alone.
 - After C# or Razor fixes while Aspire is running, run `aspire resource app rebuild` then `aspire wait app`. Do not assume hot reload applied the change. Do not restart the whole AppHost for app-only edits. Re-run `aspire start` only when AppHost model or AppHost code changed.

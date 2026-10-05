@@ -34,6 +34,11 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Install Aspire CLI
+        run: |
+          curl -sSL https://aspire.dev/install.sh | bash -s -- --version 13.6.0
+          echo "$HOME/.aspire/bin" >> "$GITHUB_PATH"
+
       - name: Restore dependencies
         run: dotnet restore SoloDevBoard.slnx
 

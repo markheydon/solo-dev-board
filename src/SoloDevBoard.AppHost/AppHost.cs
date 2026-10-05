@@ -35,7 +35,11 @@ var allowedUserLogins = builder.AddParameter("allowed-user-logins")
 var allowedOrgLogins = builder.AddParameter("allowed-org-logins")
     .WithDescription("Comma-separated GitHub organisation logins for hosted admission. Use '-' when using allowed-user-logins instead, or in PAT mode.");
 
-var app = builder.AddProject<Projects.SoloDevBoard_App>(AzureName("app"))
+#pragma warning disable ASPIREDOTNETPROJECT001
+var app = builder.AddDotnetProject(AzureName("app"), "../App/SoloDevBoard.App/SoloDevBoard.App.csproj");
+#pragma warning restore ASPIREDOTNETPROJECT001
+
+app = app
     .WithHttpHealthCheck("/health")
     .WithExternalHttpEndpoints()
     .WithEnvironment("GitHubAuth__HostedSignInEnabled", hostedSignInEnabled)
