@@ -14,8 +14,10 @@ No code, AppHost, or constitution changes are implied by this document.
 
 The AppHost models **one runnable project**: the Blazor Server UI, named `app`.
 
-```28:42:src/SoloDevBoard.AppHost/AppHost.cs
-var app = builder.AddDotnetProject("app", "../App/SoloDevBoard.App/SoloDevBoard.App.csproj")
+```38:47:src/SoloDevBoard.AppHost/AppHost.cs
+var app = builder.AddDotnetProject(AzureName("app"), "../App/SoloDevBoard.App/SoloDevBoard.App.csproj");
+
+app = app
     .WithHttpHealthCheck("/health")
     .WithExternalHttpEndpoints()
     .WithEnvironment("GitHubAuth__HostedSignInEnabled", hostedSignInEnabled)
