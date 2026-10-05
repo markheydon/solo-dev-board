@@ -8,10 +8,10 @@
   </ItemGroup>
   <!-- Aspire hosting -->
   <ItemGroup>
-    <PackageVersion Include="Aspire.Hosting.Azure.AppContainers" Version="13.5.4" />
-    <PackageVersion Include="Aspire.Hosting.Azure.ContainerRegistry" Version="13.5.4" />
-    <PackageVersion Include="Aspire.Hosting.Azure.ApplicationInsights" Version="13.5.4" />
-    <PackageVersion Include="Aspire.Hosting.Azure.KeyVault" Version="13.5.4" />
+    <PackageVersion Include="Aspire.Hosting.Azure.AppContainers" Version="13.6.0" />
+    <PackageVersion Include="Aspire.Hosting.Azure.ContainerRegistry" Version="13.6.0" />
+    <PackageVersion Include="Aspire.Hosting.Azure.ApplicationInsights" Version="13.6.0" />
+    <PackageVersion Include="Aspire.Hosting.Azure.KeyVault" Version="13.6.0" />
   </ItemGroup>
   <!-- Application and framework services -->
   <ItemGroup>
