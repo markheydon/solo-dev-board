@@ -2,7 +2,7 @@
 
 Aspire orchestrates the SoloDevBoard web app for local development, dev containers, Codespaces, and **production deployment to Azure Container Apps** ([DEC-015](../../plan/DECISIONS.md#dec-015-aspire-azure-container-apps-deployment)).
 
-The AppHost opts into the Aspire CLI bundle (`AspireUseCliBundle=true`). Dashboard and DCP orchestration binaries come from the Aspire CLI on `PATH` (or the SDK-paired `Aspire.Cli` via `dnx` when no CLI is installed). Keep your local `aspire` version aligned with `Aspire.AppHost.Sdk` (`13.5.0` today): run `aspire --version` and upgrade with `aspire update --self` when needed.
+The AppHost opts into the Aspire CLI bundle (`AspireUseCliBundle=true`). Dashboard and DCP orchestration binaries come from the Aspire CLI on `PATH` (or the SDK-paired `Aspire.Cli` via `dnx` when no CLI is installed). Keep your local `aspire` version aligned with `Aspire.AppHost.Sdk` (`13.6.0` today): run `aspire --version` and upgrade with `aspire update --self` when needed.
 
 GitHub authentication is configured through **AppHost parameters**. In local development they are injected into the `app` resource as environment variables. In deploy mode, secret parameters are persisted in Azure Key Vault and referenced by the Container App.
 

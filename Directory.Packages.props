@@ -12,6 +12,8 @@
     <PackageVersion Include="Aspire.Hosting.Azure.ContainerRegistry" Version="13.6.0" />
     <PackageVersion Include="Aspire.Hosting.Azure.ApplicationInsights" Version="13.6.0" />
     <PackageVersion Include="Aspire.Hosting.Azure.KeyVault" Version="13.6.0" />
+    <!-- Project v2 (AddDotnetProject): stable 13.6.0 not published on NuGet yet; pin preview aligned with AppHost SDK. -->
+    <PackageVersion Include="Aspire.Hosting.Dotnet" Version="13.6.0-preview.1.26479.8" />
   </ItemGroup>
   <!-- Application and framework services -->
   <ItemGroup>
