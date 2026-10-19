@@ -31,8 +31,8 @@
   </ItemGroup>
   <!-- Content and serialisation -->
   <ItemGroup>
-    <PackageVersion Include="Markdig" Version="1.4.0" />
-    <PackageVersion Include="MessagePack" Version="3.1.11" />
+    <PackageVersion Include="Markdig" Version="1.4.1" />
+    <PackageVersion Include="MessagePack" Version="3.1.12" />
   </ItemGroup>
   <!-- Observability -->
   <ItemGroup>
@@ -51,7 +51,7 @@
     <PackageVersion Include="NSubstitute" Version="6.2.0" />
     <PackageVersion Include="xunit.v3" Version="4.0.2" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.1" />
-    <PackageVersion Include="AngleSharp" Version="1.8.4" />
+    <PackageVersion Include="AngleSharp" Version="1.8.5" />
     <PackageVersion Include="Deque.AxeCore.Commons" Version="4.14.0" />
     <PackageVersion Include="Deque.AxeCore.Playwright" Version="4.14.0" />
     <PackageVersion Include="Microsoft.Playwright" Version="1.63.0" />
