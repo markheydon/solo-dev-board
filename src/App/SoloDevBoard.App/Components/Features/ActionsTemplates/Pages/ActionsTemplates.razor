@@ -220,7 +220,7 @@
                                         <MudButton Variant="@(selectedTemplateId == template.Id ? Variant.Filled : Variant.Outlined)"
                                                    Color="Color.Primary"
                                                    aria-pressed="@(selectedTemplateId == template.Id ? "true" : "false")"
-                                                   aria-labelledby="@GetTemplateHeadingId(template)"
+                                                   aria-label="@GetTemplateSelectButtonAriaLabel(template, selectedTemplateId == template.Id)"
                                                    data-testid="@($"actions-templates-select-{template.Id}")"
                                                    OnClick="() => SelectTemplate(template)">
                                             @(selectedTemplateId == template.Id ? "Selected" : "Select template")
