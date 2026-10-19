@@ -586,6 +586,12 @@ public partial class ActionsTemplates : ComponentBase
     private static string GetTemplateHeadingId(ActionsTemplateDto template)
         => $"actions-templates-heading-{template.Id}";
 
+    private static string GetTemplateSelectButtonAriaLabel(ActionsTemplateDto template, bool isSelected)
+    {
+        var action = isSelected ? "Selected" : "Select template";
+        return $"{action}, {template.Name}";
+    }
+
     private static Color GetStatusColour(ActionsTemplateApplicationStatus status)
         => status switch
         {
