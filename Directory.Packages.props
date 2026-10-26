@@ -8,10 +8,10 @@
   </ItemGroup>
   <!-- Aspire hosting -->
   <ItemGroup>
-    <PackageVersion Include="Aspire.Hosting.Azure.AppContainers" Version="13.6.1" />
-    <PackageVersion Include="Aspire.Hosting.Azure.ContainerRegistry" Version="13.6.1" />
-    <PackageVersion Include="Aspire.Hosting.Azure.ApplicationInsights" Version="13.6.1" />
-    <PackageVersion Include="Aspire.Hosting.Azure.KeyVault" Version="13.6.1" />
+    <PackageVersion Include="Aspire.Hosting.Azure.AppContainers" Version="13.6.4" />
+    <PackageVersion Include="Aspire.Hosting.Azure.ContainerRegistry" Version="13.6.4" />
+    <PackageVersion Include="Aspire.Hosting.Azure.ApplicationInsights" Version="13.6.4" />
+    <PackageVersion Include="Aspire.Hosting.Azure.KeyVault" Version="13.6.4" />
     <!-- Project v2 (AddDotnetProject): stable 13.6.0 not published on NuGet yet; pin preview aligned with AppHost SDK. -->
     <PackageVersion Include="Aspire.Hosting.Dotnet" Version="13.6.1-preview.1.26506.6" />
   </ItemGroup>
