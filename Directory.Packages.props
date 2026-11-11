@@ -4,6 +4,7 @@
   </PropertyGroup>
   <!-- Build -->
   <ItemGroup>
+    <PackageVersion Include="Aspire.Hosting.AppHost" Version="13.6.5" />
     <PackageVersion Include="MinVer" Version="8.0.0" />
   </ItemGroup>
   <!-- Aspire hosting -->
