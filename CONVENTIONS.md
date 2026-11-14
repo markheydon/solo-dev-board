@@ -71,7 +71,7 @@ Use constructor injection throughout; avoid service locator patterns. All public
 
 Sole UI library: MudBlazor ([`adr/adr-0012-switch-to-mudblazor-component-library.md`](adr/adr-0012-switch-to-mudblazor-component-library.md), [`adr/adr-0039-mudblazor-visual-language-for-page-chrome.md`](adr/adr-0039-mudblazor-visual-language-for-page-chrome.md)).
 
-Consult the `mudblazor` and `blazor-blueprint` skills before new UI. Prefer MudBlazor components and utility classes before `.razor.css`. Business logic belongs in Application services, not Razor components. Use code-behind (`.razor.cs`) for non-trivial logic. Use `ISnackbar` for transient feedback and inline alerts for persistent state ([`adr/adr-0035-transient-feedback-via-snackbar.md`](adr/adr-0035-transient-feedback-via-snackbar.md)).
+Consult the `mudblazor` skill before new UI. Prefer MudBlazor components and utility classes before `.razor.css`. Business logic belongs in Application services, not Razor components. Use code-behind (`.razor.cs`) for non-trivial logic. Use `ISnackbar` for transient feedback and inline alerts for persistent state ([`adr/adr-0035-transient-feedback-via-snackbar.md`](adr/adr-0035-transient-feedback-via-snackbar.md)).
 
 ---
 

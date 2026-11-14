@@ -30,10 +30,8 @@ Project skills live in [`.agents/skills/`](.agents/skills/).
 | `create-architectural-decision-record` | Creating or major-updating an ADR |
 | `project-documentation` | Diátaxis and project-aware docs (README, `docs/`, placement) |
 | `code-review` | PR or branch review before merge (see [`.cursor/commands/loop-code-review.md`](.cursor/commands/loop-code-review.md)) |
-| `implementation-guardrails` | Non-trivial implementation, refactors, analyser/build fixes, new abstractions |
+| `implementation-guardrails` | Non-trivial implementation: architecture fit, proportionality, root-cause fixes, build/test discipline |
 | `mudblazor` | Blazor UI pages and components (MudBlazor patterns) |
-| `blazor-blueprint` | Blazor structure and component design beyond single controls |
-| `principal-engineering` | Cross-cutting technical judgment on hard trade-offs |
 
 Onboard **.NET Aspire** using current official documentation (not copied Aspire skills from this repository).
 
