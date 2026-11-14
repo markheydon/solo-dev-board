@@ -234,4 +234,4 @@ Start at Step 0 and work through Step 8.
 | [`plan/archive/PM_RUNBOOK-2026-copilot-era.md`](archive/PM_RUNBOOK-2026-copilot-era.md) | Retired (archived) |
 | [PROJECT_BOARD_DESIGN.md](PROJECT_BOARD_DESIGN.md) | Project #8 field definitions |
 | `.agents/skills/repo-github-issues/SKILL.md` | Issue creation guidance |
-| `.agents/skills/repo-github-project/SKILL.md` | Project board sync guidance |
+| [`plan/PROJECT_BOARD_DESIGN.md`](PROJECT_BOARD_DESIGN.md) | Project board sync guidance (replaces retired `repo-github-project` skill) |
