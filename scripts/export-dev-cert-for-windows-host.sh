@@ -55,5 +55,5 @@ if [[ -n "${host_path}" ]]; then
   echo
   echo "That wslpath command uses the default WSL distro. If it cannot see the file, import ${out} by its Windows path instead."
 else
-  echo "  Import-Certificate -FilePath \"<Windows path to .local\\aspnetcore-localhost.crt>\" -CertStoreLocation Cert:\\CurrentUser\\Root"
+  printf '%s\n' '  Import-Certificate -FilePath "<Windows path to .local\aspnetcore-localhost.crt>" -CertStoreLocation Cert:\CurrentUser\Root'
 fi
