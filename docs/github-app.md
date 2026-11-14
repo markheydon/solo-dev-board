@@ -98,8 +98,8 @@ Admission control still denies users who are not on `allowed-user-logins` / `all
 
 ## Security hygiene (already true in this repo, confirm on the app)
 
-- Store the **client secret** in GitHub Environment secrets and Aspire Key Vault. Never commit it.
-- Rotate the client secret if it leaks; update `GH_APP_CLIENT_SECRET` and redeploy.
+- Store the **client secret** in the tier Azure Key Vault only (see [Azure Key Vault setup](azure-key-vault-setup.md)). Use GitHub Environment **variables** for non-secrets such as `GH_APP_CLIENT_ID`. Never commit secrets.
+- Rotate the client secret if it leaks; add a new version in the tier Key Vault and restart the Container App (see [Azure Key Vault setup](azure-key-vault-setup.md)).
 - Do not generate a GitHub App **private key** unless you add installation-token (bot) flows. Hosted sign-in uses the OAuth client ID and secret only.
 - Keep **Expire user authorization tokens** enabled.
 - After you change permissions, existing installations keep the old set until the owner accepts the new permissions. Plan a short overlap.
@@ -109,7 +109,7 @@ GitHub also recommends webhooks instead of polling, caching tokens, and logging 
 ## After you save the app
 
 1. Confirm **Client ID** matches GitHub Environment variable `GH_APP_CLIENT_ID` on `staging` and `production`.
-2. Confirm a current **Client secret** is stored as `GH_APP_CLIENT_SECRET`.
+2. Confirm a current **Client secret** is stored in the tier Key Vault as `gh-app-client-secret`.
 3. Install the app on every account that owns repositories you will manage.
 4. Smoke hosted sign-in: `/welcome` → **Sign in with GitHub** → authorise screen shows the logo and description → return to the app.
 
