@@ -32,17 +32,31 @@ var authSecretsVaultResourceGroup = builder.AddParameter("auth-secrets-vault-res
     .WithDescription(
         "Resource group that owns the auth-secrets vault. Use '-' to inherit Azure__ResourceGroup at deploy or local Path B.");
 
+var pathBAuthSecretsVaultConfigured = AppHostDeployParameterResolver.HasConfiguredAuthSecretsVault(builder.Configuration);
+
 var hostedSignInEnabled = builder.AddParameter("hosted-sign-in-enabled")
     .WithDescription("Enable GitHub App hosted sign-in at /auth/sign-in. When false, PAT mode is used (default).");
 
-var githubPat = builder.AddParameter("gh-pat", secret: true)
-    .WithDescription("GitHub PAT for PAT mode. Set to '-' via the dashboard for hosted sign-in. Your GitHub login is resolved automatically from the token.");
+var githubPat = pathBAuthSecretsVaultConfigured
+    ? builder.AddParameter(
+        "gh-pat",
+        AppHostDeployParameterResolver.Resolve(builder.Configuration, "gh-pat", "-"),
+        secret: true)
+    : builder.AddParameter("gh-pat", secret: true);
+githubPat = githubPat.WithDescription(
+    "GitHub PAT for PAT mode. Set to '-' via the dashboard for hosted sign-in. Your GitHub login is resolved automatically from the token.");
 
 var ghAppClientId = builder.AddParameter("gh-app-client-id")
     .WithDescription("GitHub App OAuth client ID for hosted sign-in. Set to '-' for PAT mode.");
 
-var ghAppClientSecret = builder.AddParameter("gh-app-client-secret", secret: true)
-    .WithDescription("GitHub App OAuth client secret for hosted sign-in. Set to '-' via the dashboard for PAT mode.");
+var ghAppClientSecret = pathBAuthSecretsVaultConfigured
+    ? builder.AddParameter(
+        "gh-app-client-secret",
+        AppHostDeployParameterResolver.Resolve(builder.Configuration, "gh-app-client-secret", "-"),
+        secret: true)
+    : builder.AddParameter("gh-app-client-secret", secret: true);
+ghAppClientSecret = ghAppClientSecret.WithDescription(
+    "GitHub App OAuth client secret for hosted sign-in. Set to '-' via the dashboard for PAT mode.");
 
 var hostedAdmissionEnabled = builder.AddParameter("hosted-admission-enabled")
     .WithDescription("Enable deny-by-default admission control for hosted sign-in.");
