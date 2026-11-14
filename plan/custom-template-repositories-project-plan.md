@@ -6,7 +6,7 @@
 **Persistence follow-on:** [#498](https://github.com/markheydon/solo-dev-board/issues/498) (blocked by [#391](https://github.com/markheydon/solo-dev-board/issues/391))  
 **Milestone:** `v1.2 - Planning polish, Reload & Templates`  
 **Wireframe:** [`plan/wireframes/workflow-templates-wireframe.md`](wireframes/workflow-templates-wireframe.md)  
-**Decision:** [DEC-038](DECISIONS.md#dec-038-custom-actions-template-sources)
+**Decision:** [DEC-038](adr/adr-0038-custom-actions-template-sources.md)
 
 ## Feature summary
 

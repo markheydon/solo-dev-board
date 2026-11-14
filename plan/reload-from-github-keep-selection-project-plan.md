@@ -49,7 +49,7 @@ graph TD
     D --> E
 ```
 
-There is **no Feature issue** in this tree. #451 is a Story (one delivery unit spanning several pages). A Feature that only parents test #487 would violate [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy) (Features group two or more stories or enablers). Shared enabler #485 sits on the epic because both #449 and #451 need the catalogue force-reload.
+There is **no Feature issue** in this tree. #451 is a Story (one delivery unit spanning several pages). A Feature that only parents test #487 would violate [DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md) (Features group two or more stories or enablers). Shared enabler #485 sits on the epic because both #449 and #451 need the catalogue force-reload.
 
 ## GitHub issues breakdown
 

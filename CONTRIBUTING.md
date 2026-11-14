@@ -120,7 +120,7 @@ When suggesting a feature:
    - Do not test .NET Aspire AppHost modelling or orchestration.
 
 4. **Architecture:**
-   - Follow the clean/layered architecture: Domain, Application, Infrastructure, Composition, and App with strict dependency direction (see [AGENTS.md — Architecture](AGENTS.md#architecture) and [DEC-002](plan/DECISIONS.md#dec-002-layered--clean-architecture)).
+   - Follow the clean/layered architecture: Domain, Application, Infrastructure, Composition, and App with strict dependency direction (see [AGENTS.md — Architecture](AGENTS.md#architecture) and [DEC-002](adr/adr-0004-layered-architecture.md)).
    - Domain has no external dependencies.
    - Infrastructure implements interfaces defined in Application.
    - Composition wires Application and Infrastructure via `AddSoloDevBoard`; App must not reference Infrastructure.
@@ -137,6 +137,7 @@ When suggesting a feature:
    - Title form: `[<Type>] <Imperative summary> (#N)` (for example `[Story] Select a repository and project board to visualise (#183)`).
    - Complete `.github/pull_request_template.md`; do not replace it with a vendor walkthrough.
    - Apply at least `type/` and `priority/` labels, plus `status/in-review` while the PR is open.
+   - For documentation-only or mixed changes, run `./scripts/verify-no-em-dash.sh` to guard against em dashes in product-scope markdown.
    - Ensure all CI checks pass (build, tests, linting).
    - Request a code review from the maintainers.
 
@@ -149,7 +150,7 @@ This is an **open source public repository**. To maintain security:
 - **Never commit secrets, credentials, API keys, or personal information**
 - Use `.gitignore` to exclude local configuration files (`.env`, `*.user`, `secrets.json`)
 - GitHub Tokens must be stored in GitHub Environment secrets (production Aspire deploy), Aspire user secrets (local AppHost), or .NET User Secrets (legacy `dotnet run` path)
-- See [`AGENTS.md#open-source--security`](AGENTS.md#open-source--security) for detailed security guidelines
+- See [`CONVENTIONS.md`](CONVENTIONS.md) and [`SECURITY.md`](SECURITY.md) for detailed security guidelines
 
 ---
 
@@ -161,7 +162,7 @@ When submitting a pull request that changes code, ensure related documentation i
 |--------|------------------------|
 | New end-user feature | `website/content/docs/<feature>.md`, `website/content/_index.md` (and docs landing), GitHub Issue + Project #8 sync |
 | New developer / operator guidance | `docs/<topic>.md` and `docs/README.md` as needed |
-| New decision | `plan/DECISIONS.md` (if architectural decision required; see `repo-decision-log` skill) |
+| New decision | New file under `adr/` (see `create-architectural-decision-record` skill) |
 | Scope change | `plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md` |
 | New env variable | `docs/getting-started.md`, `SoloDevBoard.AppHost/README.md`, `docs/deployment.md` |
 | Tagged release | [`CHANGELOG.md`](CHANGELOG.md) and [`plan/RELEASE_PLAN.md`](plan/RELEASE_PLAN.md) |
@@ -179,6 +180,6 @@ By contributing to SoloDevBoard, you agree that your contributions will be licen
 If you have questions about contributing, feel free to:
 - Open a discussion on GitHub
 - Check existing issues and documentation
-- Review the decision log in [`plan/DECISIONS.md`](plan/DECISIONS.md)
+- Review architectural decisions in [`adr/`](adr/)
 
 Thank you for helping make SoloDevBoard better!

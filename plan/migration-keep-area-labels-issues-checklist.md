@@ -39,7 +39,7 @@ DEC-036: Migration Overwrite **does** follow Label Manager keep-`area/*` (defaul
 ```markdown
 ## Description
 
-Label Manager ([#446](https://github.com/markheydon/solo-dev-board/issues/446), [DEC-034](https://github.com/markheydon/solo-dev-board/blob/main/plan/DECISIONS.md#dec-034-label-manager-recommended-catalogue-omits-area-labels)) keeps `area/*` labels during Recommended taxonomy extra cleanup and Synchronise when **Keep `area/*` labels** is enabled. One-Click Migration still builds label overwrite previews without that rule: `MigrationService.BuildLabelPreview` treats every target-only label as a delete when the conflict strategy is Overwrite, and `KeptAreaLabels` is always empty on migration previews.
+Label Manager ([#446](https://github.com/markheydon/solo-dev-board/issues/446), [DEC-034](https://github.com/markheydon/solo-dev-board/blob/main/adr/adr-0034-label-manager-recommended-catalogue-omits-area-labels.md)) keeps `area/*` labels during Recommended taxonomy extra cleanup and Synchronise when **Keep `area/*` labels** is enabled. One-Click Migration still builds label overwrite previews without that rule: `MigrationService.BuildLabelPreview` treats every target-only label as a delete when the conflict strategy is Overwrite, and `KeptAreaLabels` is always empty on migration previews.
 
 When the source repository omits `area/*` names (for example after the portable SoloDevBoard catalogue change), Overwrite can delete target `area/*` labels even though Label Manager would keep them by default.
 

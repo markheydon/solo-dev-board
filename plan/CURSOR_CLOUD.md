@@ -12,7 +12,7 @@ Cursor Cloud agents often default to **draft** PRs, `cursor/…` branch names, a
 
 ## Toolchain
 
-- The .NET SDK pinned by `global.json` (`10.0.300`) is installed at `~/.dotnet`; the Aspire CLI (`13.6.0`, matching `Aspire.AppHost.Sdk`) is installed as a global tool at `~/.dotnet/tools`. Both are on `PATH` via `~/.bashrc`. Non-login shells (for example `bash -c`) do not source `~/.bashrc`, so invoke the SDK with the absolute path `~/.dotnet/dotnet` when `dotnet`/`aspire` are not already on `PATH`.
+- The .NET SDK pinned by `global.json` (currently `10.0.400` with `rollForward: latestFeature`) is installed at `~/.dotnet`; the Aspire CLI (`13.6.0`, matching `Aspire.AppHost.Sdk`) is installed as a global tool at `~/.dotnet/tools`. Both are on `PATH` via `~/.bashrc`. Non-login shells (for example `bash -c`) do not source `~/.bashrc`, so invoke the SDK with the absolute path `~/.dotnet/dotnet` when `dotnet`/`aspire` are not already on `PATH`.
 - The AppHost sets `AspireUseCliBundle=true`, so Dashboard and DCP come from the CLI bundle. Cloud already installs Aspire CLI `13.6.0`; keep it aligned with `Aspire.AppHost.Sdk` when upgrading.
 - The startup update script only runs `dotnet restore SoloDevBoard.slnx` (this also restores the AppHost). Building, testing, linting, and running are left to you.
 
@@ -41,6 +41,10 @@ Cursor Cloud agents often default to **draft** PRs, `cursor/…` branch names, a
 
 - On a normal dev machine, `aspire certs trust` (or `dotnet dev-certs https --trust`) trusts the cert and browsers stop warning. In this headless Linux VM that does **not** fully work for Chrome: even after installing `libnss3-tools` and importing the cert into `~/.pki/nssdb` as a trusted CA (`certutil ... -t "C,,"`), Chrome still reports `NET::ERR_CERT_INVALID` (a long-standing ASP.NET-dev-cert-on-Chromium-Linux issue). Do not rabbit-hole on it.
 - For in-VM browser testing either click **Advanced → Proceed to localhost (unsafe)** once, or run the app on plain HTTP (`ASPNETCORE_URLS=http://0.0.0.0:5080 dotnet run --project src/App/SoloDevBoard.App --no-launch-profile`). `curl -k` also bypasses the check for scripted checks.
+
+## Dev Container (local / Codespaces)
+
+The dev container uses Aspire feature v3, `dev-agent-tools`, and `cursor-cli` (see [`.devcontainer/devcontainer.json`](../.devcontainer/devcontainer.json)). WSL2 developers exporting the dev HTTPS certificate to the Windows host can run [`scripts/export-dev-cert-for-windows-host.sh`](../scripts/export-dev-cert-for-windows-host.sh).
 
 ---
 
@@ -74,9 +78,9 @@ Cursor Cloud agents often default to **draft** PRs, `cursor/…` branch names, a
 
 Comment `@cursor` or `@cursoragent` at the **start** of a GitHub Issue or Pull Request comment. The agent binds "this issue" / "this PR" to that thread.
 
-Informal **implement this issue** on an issue is the delivery happy path (code, verify, pull request). Chat `/implement-issue` remains the split path that does not open a PR. Phrase tables live in [`.agents/workflows/README.md`](../.agents/workflows/README.md#github-comment-invocation) ([DEC-031](DECISIONS.md#dec-031-github-comment-workflow-invocation)).
+See [ADR-0031](../adr/adr-0031-github-comment-workflow-invocation.md) for historical GitHub comment routing notes (legacy agent workflows retired 2026-11-14).
 
-Each `@cursor` mention on an **issue** starts a new session. Follow-ups that should stay on an existing PR belong on the **pull request** thread (`address the review comments`, `code review this PR`, `fix CI`).
+Each `@cursor` mention on an **issue** starts a new session. Follow-ups that should stay on an existing PR belong on the **pull request** thread.
 
 ---
 

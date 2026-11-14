@@ -20,7 +20,7 @@ Public-release hardening is in scope for v1.0.0, including:
 - GitHub App-first hosted authentication and installation token flow for user-to-server authentication.
 - Hosted access control and explicit authorised-user admission for public deployments. Only users or organisations explicitly authorised by the operator may access the hosted UI.
 - Secure production authentication handling for hosted deployments via Aspire AppHost parameters supplied at deploy time (GitHub Environment secrets).
-- Azure deployment via Aspire to Azure Container Apps with scale-to-zero ([DEC-015](DECISIONS.md#dec-015-aspire-azure-container-apps-deployment)).
+- Azure deployment via Aspire to Azure Container Apps with scale-to-zero ([DEC-015](adr/adr-0018-aspire-azure-container-apps-deployment.md)).
 - OIDC authentication for GitHub Actions to Azure.
 - Operational hardening: response caching, health checks, structured logging, Application Insights telemetry, Dependabot configuration.
 - PAT-only local trusted mode for development and trusted personal self-hosted use (see [docs/getting-started.md](../docs/getting-started.md#pat-only-local-trusted-mode) and [self-hoster PAT deploy](../docs/deployment.md#self-hoster-deployment-pat-mode)).
@@ -33,11 +33,11 @@ A consolidated view of repository health: open issues, stale PRs, GitHub Actions
 
 ### 2. One-Click Migration
 
-Copy labels and milestones from a source repository to one or more target repositories in a single, preview-first action. Project board column migration shipped on milestone **`v1.1`** ([#291](https://github.com/markheydon/solo-dev-board/issues/291)). Label **Overwrite** follows the Label Manager keep-`area/*` rule (default on) so target area labels are not deleted when the source catalogue omits them ([#464](https://github.com/markheydon/solo-dev-board/issues/464), [DEC-036](DECISIONS.md#dec-036-one-click-migration-label-overwrite-keeps-area-by-default)).
+Copy labels and milestones from a source repository to one or more target repositories in a single, preview-first action. Project board column migration shipped on milestone **`v1.1`** ([#291](https://github.com/markheydon/solo-dev-board/issues/291)). Label **Overwrite** follows the Label Manager keep-`area/*` rule (default on) so target area labels are not deleted when the source catalogue omits them ([#464](https://github.com/markheydon/solo-dev-board/issues/464), [DEC-036](adr/adr-0036-one-click-migration-label-overwrite-keeps-area.md)).
 
 ### 3. Label Manager
 
-Create, edit, recolour, delete, and synchronise GitHub labels across multiple repositories from a single interface, using a canonical label taxonomy as the source of truth. **`v1.1` refinements:** bulk delete on the Labels tab ([#444](https://github.com/markheydon/solo-dev-board/issues/444)) and omit this repository's `area/*` labels from the built-in catalogue, with a nested keep option during extra cleanup ([#446](https://github.com/markheydon/solo-dev-board/issues/446), [DEC-034](DECISIONS.md#dec-034-label-manager-recommended-catalogue-omits-area-labels)). **`v1.3`:** preview-first remap of extras onto taxonomy (or other existing) names so issue and pull request history is kept ([#491](https://github.com/markheydon/solo-dev-board/issues/491)). One-Click Migration remains the repo-to-repo catalogue copy path.
+Create, edit, recolour, delete, and synchronise GitHub labels across multiple repositories from a single interface, using a canonical label taxonomy as the source of truth. **`v1.1` refinements:** bulk delete on the Labels tab ([#444](https://github.com/markheydon/solo-dev-board/issues/444)) and omit this repository's `area/*` labels from the built-in catalogue, with a nested keep option during extra cleanup ([#446](https://github.com/markheydon/solo-dev-board/issues/446), [DEC-034](adr/adr-0034-label-manager-recommended-catalogue-omits-area-labels.md)). **`v1.3`:** preview-first remap of extras onto taxonomy (or other existing) names so issue and pull request history is kept ([#491](https://github.com/markheydon/solo-dev-board/issues/491)). One-Click Migration remains the repo-to-repo catalogue copy path.
 
 ### 4. Board Rules Visualiser
 
@@ -49,11 +49,11 @@ A focused, keyboard-friendly interface for triaging incoming GitHub issues one a
 
 ### 6. Actions Templates
 
-Browse, customise, and apply GitHub Actions workflow templates across repositories, with tracking of which repositories have which templates applied. **`v1.2`:** load one additional GitHub `owner/name` as a custom catalogue from `.github/workflows` YAML via a catalogue repository selector or manual `owner/name` field, merge it with built-ins, and remember the last-used source in localStorage ([#292](https://github.com/markheydon/solo-dev-board/issues/292), [DEC-038](DECISIONS.md#dec-038-custom-actions-template-sources)). Server-backed persistence of that source waits on an Aspire product store. Persisted parameter profiles stay later ([#436](https://github.com/markheydon/solo-dev-board/issues/436)).
+Browse, customise, and apply GitHub Actions workflow templates across repositories, with tracking of which repositories have which templates applied. **`v1.2`:** load one additional GitHub `owner/name` as a custom catalogue from `.github/workflows` YAML via a catalogue repository selector or manual `owner/name` field, merge it with built-ins, and remember the last-used source in localStorage ([#292](https://github.com/markheydon/solo-dev-board/issues/292), [DEC-038](adr/adr-0038-custom-actions-template-sources.md)). Server-backed persistence of that source waits on an Aspire product store. Persisted parameter profiles stay later ([#436](https://github.com/markheydon/solo-dev-board/issues/436)).
 
 ### 7. Planning
 
-A UI-based implementation of the two-mode PM operating system from [markheydon/github-workflows](https://github.com/markheydon/github-workflows): a Daily Focus view (board state, stalled items, top priorities), a cross-repository Backlog Review (prioritised work across all repos, neglected repo detection), and an Iteration Planning tool (capacity management, Up Next curation, milestone assignment). Tracked in [#272](https://github.com/markheydon/solo-dev-board/issues/272) on milestone **`v1.1`** ([DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)). **`v1.1` refinement:** keep the stall gate as the only hard disable for Add to Up Next, and keep capacity as a meter plus confirm ([#445](https://github.com/markheydon/solo-dev-board/issues/445)). **`v1.2` follow-through:** optional board-scoped Daily Focus recommendations ([#403](https://github.com/markheydon/solo-dev-board/issues/403)); the default remains all included repositories. **`v1.3`:** use Planning (and the rest of the app) as the maintainer's daily multi-repo workflow; file further gaps from that dogfood rather than inventing a second planning epic up front.
+A UI-based implementation of the two-mode PM operating system from [markheydon/github-workflows](https://github.com/markheydon/github-workflows): a Daily Focus view (board state, stalled items, top priorities), a cross-repository Backlog Review (prioritised work across all repos, neglected repo detection), and an Iteration Planning tool (capacity management, Up Next curation, milestone assignment). Tracked in [#272](https://github.com/markheydon/solo-dev-board/issues/272) on milestone **`v1.1`** ([DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md)). **`v1.1` refinement:** keep the stall gate as the only hard disable for Add to Up Next, and keep capacity as a meter plus confirm ([#445](https://github.com/markheydon/solo-dev-board/issues/445)). **`v1.2` follow-through:** optional board-scoped Daily Focus recommendations ([#403](https://github.com/markheydon/solo-dev-board/issues/403)); the default remains all included repositories. **`v1.3`:** use Planning (and the rest of the app) as the maintainer's daily multi-repo workflow; file further gaps from that dogfood rather than inventing a second planning epic up front.
 
 ### 8. Public product site (GitHub Pages)
 
@@ -61,7 +61,7 @@ The Hugo/Hextra site in `website/` (published at `https://solodevboard.com/`) se
 
 ### 9. Repositories catalogue and OSS identification
 
-The Repositories page lists GitHub repositories available to the authenticated account (search, refresh, visibility and status chips). **`v1.1`** adds first-class open-source identification from the GitHub topic `open-source`, with built-in **Open source** and **Not open source** filters on that page ([#440](https://github.com/markheydon/solo-dev-board/issues/440), [DEC-032](DECISIONS.md#dec-032-oss-catalogue-identification-from-the-github-open-source-topic)). Repository groups ([#381](https://github.com/markheydon/solo-dev-board/issues/381)) and overnight OSS hygiene views ([#438](https://github.com/markheydon/solo-dev-board/issues/438), [#439](https://github.com/markheydon/solo-dev-board/issues/439)) consume that classification later; they are not prerequisites.
+The Repositories page lists GitHub repositories available to the authenticated account (search, refresh, visibility and status chips). **`v1.1`** adds first-class open-source identification from the GitHub topic `open-source`, with built-in **Open source** and **Not open source** filters on that page ([#440](https://github.com/markheydon/solo-dev-board/issues/440), [DEC-032](adr/adr-0032-oss-catalogue-identification-from-open-source-topic.md)). Repository groups ([#381](https://github.com/markheydon/solo-dev-board/issues/381)) and overnight OSS hygiene views ([#438](https://github.com/markheydon/solo-dev-board/issues/438), [#439](https://github.com/markheydon/solo-dev-board/issues/439)) consume that classification later; they are not prerequisites.
 
 ---
 
@@ -92,8 +92,8 @@ The following are explicitly **not** in scope for the current version of SoloDev
 - **UK English:** All user-facing text, code comments, documentation, and commit messages must be written in UK English.
 - **Open source:** The project is intended to be open source under the MIT Licence.
 - **AI-driven development:** The project is developed with GitHub Copilot as an active collaborator. All planning documents are written to be machine-readable and actionable by AI agents.
-- **Minimal dependencies:** Prefer the .NET ecosystem and well-established open source libraries. Avoid adding dependencies without a decision log entry ([`plan/DECISIONS.md`](DECISIONS.md)).
-- **UI component library:** MudBlazor is the sole UI component library for the Blazor front-end (see [DEC-009](DECISIONS.md#dec-009-mudblazor-as-the-sole-ui-component-library)). Page chrome follows [DEC-039](DECISIONS.md#dec-039-mudblazor-visual-language-for-page-chrome). Raw HTML form elements are not used where a MudBlazor equivalent exists.
+- **Minimal dependencies:** Prefer the .NET ecosystem and well-established open source libraries. Avoid adding dependencies without an ADR ([`adr/`](../adr/)).
+- **UI component library:** MudBlazor is the sole UI component library for the Blazor front-end (see [DEC-009](adr/adr-0012-switch-to-mudblazor-component-library.md)). Page chrome follows [DEC-039](adr/adr-0039-mudblazor-visual-language-for-page-chrome.md). Raw HTML form elements are not used where a MudBlazor equivalent exists.
 - **Product mark:** A dedicated logo and brand treatment remain ice-box ([#397](https://github.com/markheydon/solo-dev-board/issues/397)). The GitHub App bar-chart icon is the interim favicon only.
 - **Responsive web (not a native app):** Phone and tablet browsers are in-scope quality for shipped pages. Compact tablet (iPad mini class) is the practical daily-use target; phone-width must remain usable. Tracked as ice-box story [#411](https://github.com/markheydon/solo-dev-board/issues/411) under the visual language feature ([#527](https://github.com/markheydon/solo-dev-board/issues/527) / epic [#526](https://github.com/markheydon/solo-dev-board/issues/526)). A native iOS or Android application remains out of scope.
 
@@ -107,7 +107,7 @@ The following are explicitly **not** in scope for the current version of SoloDev
 > 2. Update `plan/IMPLEMENTATION_PLAN.md` if the phase breakdown is affected.
 > 3. Create or update GitHub Issues for the scope change and sync Project #8.
 > 4. Create a GitHub Issue for the scope change using the `type/feature` or `type/chore` template.
-> 5. If the change affects the architecture, follow `repo-decision-log` — update [`plan/DECISIONS.md`](DECISIONS.md) and/or constitution.
+> 5. If the change affects the architecture, add or update an ADR under `adr/` and update [`CONVENTIONS.md`](../CONVENTIONS.md) or [`AGENTS.md`](../AGENTS.md) when cross-cutting.
 > 6. If the change affects the user-facing docs, update or create the relevant file in `website/content/docs/`.
 > 7. Add a changelog entry at the bottom of this file.
 

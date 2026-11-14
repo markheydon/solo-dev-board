@@ -1,6 +1,6 @@
 # Progress Reviews
 
-This folder holds dated **PM progress review** artefacts — executive summaries written when you run the [`pm-progress-review`](../../.agents/workflows/pm-progress-review.md) workflow.
+This folder holds dated **PM progress review** artefacts from the retired Copilot-era workflow. New progress notes are maintained manually or via future Spec Kit adoption.
 
 **Naming:** Files use `YYYY-MM-DD.md` (ISO date). Titles use **PM Progress Review — {date}**. Older files may still say "Weekly PM Review"; that was the previous naming.
 

@@ -8,10 +8,10 @@ Related artefacts:
 
 - Template: [`.github/pull_request_template.md`](../.github/pull_request_template.md).
 - Labels: [`LABEL_STRATEGY.md`](LABEL_STRATEGY.md).
-- Verify workflow: [`.agents/workflows/verify-and-create-pr.md`](../.agents/workflows/verify-and-create-pr.md) and [`.agents/contracts/verify.md`](../.agents/contracts/verify.md).
-- Branch naming for planned work: [`.agents/contracts/delivery.md`](../.agents/contracts/delivery.md) (Feature Branch).
+- Code review: [`.cursor/commands/loop-code-review.md`](../.cursor/commands/loop-code-review.md) and the `code-review` skill.
+- Conventions: [`CONVENTIONS.md`](../CONVENTIONS.md).
 - Roadmap board: [`PROJECT_BOARD_DESIGN.md`](PROJECT_BOARD_DESIGN.md) — do not add PR cards to Project #8.
-- Decision: [DEC-022](DECISIONS.md#dec-022-canonical-pull-request-policy).
+- Decision: [DEC-022](adr/adr-0022-canonical-pull-request-policy.md).
 
 ---
 
@@ -187,4 +187,4 @@ Before opening a PR:
 
 ## Reviewers
 
-When reviewing a PR for conventions, flag deviations from this file as process issues (title, template, labels, draft, missing `Closes #`). Coding review remains [`.agents/contracts/code-review.md`](../.agents/contracts/code-review.md).
+When reviewing a PR for conventions, flag deviations from this file as process issues (title, template, labels, draft, missing `Closes #`). Coding review remains [`CONVENTIONS.mdcode-review.md`](../CONVENTIONS.mdcode-review.md).

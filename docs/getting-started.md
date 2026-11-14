@@ -123,6 +123,8 @@ On container create, `.devcontainer/map-apphost-secrets.sh` maps any set `SDB_*`
 
 On each container start, `.devcontainer/setup-dev-certs.sh` trusts the ASP.NET HTTPS development certificate and persists `SSL_CERT_DIR` in your shell profile so `aspire doctor` does not warn about partial certificate trust.
 
+On **WSL2**, if the Windows host browser must trust the same development certificate, run `./scripts/export-dev-cert-for-windows-host.sh` from the repository root after certs are set up, then install the exported certificate on Windows as described in the script output.
+
 For hosted sign-in testing (for example refresh-token work), set `SDB_HOSTED_SIGN_IN_ENABLED` to `true` and register `{app-https-url}/auth/callback` on your GitHub App after the first `aspire describe`.
 
 ### Legacy run path (without Aspire orchestration)
@@ -417,7 +419,7 @@ When enabled:
 - Board rules requests for a private project return the unavailable fallback.
 - A startup warning is logged to confirm the mode is active.
 
-This is **screenshot hygiene, not a security boundary**. It does not block write operations and is intentionally unavailable as an Aspire AppHost deploy parameter. Leave it disabled for normal development and all hosted deployments. See [DEC-020](../plan/DECISIONS.md#dec-020-public-only-docs-capture-mode-for-documentation-screenshots).
+This is **screenshot hygiene, not a security boundary**. It does not block write operations and is intentionally unavailable as an Aspire AppHost deploy parameter. Leave it disabled for normal development and all hosted deployments. See [DEC-020](../adr/adr-0020-public-only-docs-capture-mode.md).
 
 
 ### Hosted Admission Control and Local Trusted Modes

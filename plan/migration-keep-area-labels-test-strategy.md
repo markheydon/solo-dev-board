@@ -1,7 +1,7 @@
 # One-Click Migration keep-`area/*` overwrite — test strategy
 
 **Parent enabler:** [#464](https://github.com/markheydon/solo-dev-board/issues/464)  
-**Standards:** xUnit v3 `Assert.*` and NSubstitute only ([DEC-006](DECISIONS.md#dec-006-no-fluentassertions--xunit-built-in-assertions-only), [DEC-016](DECISIONS.md#dec-016-formalised-testing-standard--xunit-v3-nsubstitute-playwright-e2e)).
+**Standards:** xUnit v3 `Assert.*` and NSubstitute only ([DEC-006](adr/adr-0008-remove-fluentassertions.md), [DEC-016](adr/adr-0042-formalised-testing-standard-xunit-v3-nsubstitute-playwright.md)).
 
 ## Scope
 

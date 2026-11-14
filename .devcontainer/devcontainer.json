@@ -1,41 +1,33 @@
 {
 	"name": "Solo Hub Board Dev Container",
-	"image": "mcr.microsoft.com/devcontainers/dotnet:dev-10.0-noble",
-	
+	"image": "mcr.microsoft.com/devcontainers/dotnet:10.0",
 	"features": {
-		"ghcr.io/microsoft/aspire-devcontainer-feature/aspire:2": {},
-		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
-		"ghcr.io/devcontainers/features/github-cli:1": {
-			"version": "2"
-		},
-		"ghcr.io/markheydon/devcontainer-features/copilot-likes:1": {}
+		"ghcr.io/microsoft/aspire-devcontainer-feature/aspire:3": {},
+		"ghcr.io/devcontainers/features/docker-in-docker:4": {},
+		"ghcr.io/devcontainers/features/github-cli:1": {},
+		"ghcr.io/devcontainers/features/azure-cli:1": {},
+		"ghcr.io/markheydon/devcontainer-features/dev-agent-tools:1": {},
+		"ghcr.io/stu-bell/devcontainer-features/cursor-cli:0": {}
 	},
-
 	"hostRequirements": {
-		"cpus": 2,
+		"cpus": 4,
 		"memory": "8gb",
 		"storage": "32gb"
 	},
-
-	"containerEnv": {
-		"SSL_CERT_DIR": "/home/vscode/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
+	"onCreateCommand": "sudo apt-get update && sudo apt-get install -y libnss3-tools",
+	"remoteEnv": {
+		"CURSOR_API_KEY": "${localEnv:CURSOR_API_KEY}",
+		"GH_TOKEN": "${localEnv:GH_TOKEN}",
+		"GH_HOST": "github.com",
+		"SSL_CERT_DIR": "/usr/lib/ssl/certs:/home/vscode/.aspnet/dev-certs/trust"
 	},
-
 	"postCreateCommand": "bash .devcontainer/map-apphost-secrets.sh",
 	"postStartCommand": "bash .devcontainer/setup-dev-certs.sh",
-
 	"customizations": {
 		"vscode": {
 			"extensions": [
+				"microsoft-aspire.aspire-vscode",
 				"ms-dotnettools.csdevkit",
-				"ms-dotnettools.csharp",
-				"ms-dotnettools.vscode-dotnet-runtime",
-				"github.vscode-pull-request-github",
-				"github.vscode-github-actions",
-				"github.copilot",
-				"github.copilot-chat",
-				"editorconfig.editorconfig",
-				"microsoft-aspire.aspire-vscode"
 			]
 		}
 	}

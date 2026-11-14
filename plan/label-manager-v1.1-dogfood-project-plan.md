@@ -4,12 +4,12 @@
 
 Close two Label Manager refinement gaps on milestone **`v1.1`**: stop exporting this repository's `area/*` map through the built-in recommended catalogue, and add multi-select bulk delete on the Labels tab.
 
-Stories (no new Feature parent — catch-up on shipped Feature [#27](https://github.com/markheydon/solo-dev-board/issues/27) per [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)):
+Stories (no new Feature parent — catch-up on shipped Feature [#27](https://github.com/markheydon/solo-dev-board/issues/27) per [DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md)):
 
 - [#446](https://github.com/markheydon/solo-dev-board/issues/446) — keep `area/*` out of built-in taxonomy cleanup.
 - [#444](https://github.com/markheydon/solo-dev-board/issues/444) — bulk delete labels in Label Manager.
 
-Decision: [DEC-034](DECISIONS.md#dec-034-label-manager-recommended-catalogue-omits-area-labels).
+Decision: [DEC-034](adr/adr-0034-label-manager-recommended-catalogue-omits-area-labels.md).
 
 ## Success criteria
 
@@ -66,7 +66,7 @@ graph TD
 ## Implementation references
 
 - Wireframe: [`plan/wireframes/label-manager-wireframe.md`](wireframes/label-manager-wireframe.md)
-- Decision: [DEC-034](DECISIONS.md#dec-034-label-manager-recommended-catalogue-omits-area-labels)
+- Decision: [DEC-034](adr/adr-0034-label-manager-recommended-catalogue-omits-area-labels.md)
 - This repository's areas: [`plan/LABEL_STRATEGY.md`](LABEL_STRATEGY.md)
 - User Guide (update during delivery): [`website/content/docs/label-manager.md`](../website/content/docs/label-manager.md)
 - Catalogue code: `RecommendedLabelTaxonomyCatalog` (`area/dashboard`, `area/migration`, `area/labels`, `area/board-rules`, `area/triage`, `area/actions-templates`, `area/infrastructure`, `area/docs`)

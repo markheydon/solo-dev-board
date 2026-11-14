@@ -102,7 +102,7 @@ solo-dev-board/
 ├── CHANGELOG.md                # Keep a Changelog (release notes source)
 ├── plan/
 │   ├── SCOPE.md                # Project scope and constraints
-│   ├── DECISIONS.md            # Active decision log (repo memory)
+│   ├── DECISIONS.md            # Retired pointer to adr/
 │   ├── IMPLEMENTATION_PLAN.md  # Phased development plan
 │   ├── BACKLOG.md              # Roadmap index (Issues are source of truth)
 │   ├── RELEASE_PLAN.md         # Versioning and release process
@@ -111,11 +111,9 @@ solo-dev-board/
 │   ├── PROJECT_BOARD_DESIGN.md # Project board column and automation design
 │   └── DOCS_STRATEGY.md        # Documentation conventions
 ├── adr/
-│   ├── README.md               # Redirect to plan/DECISIONS.md
-│   └── archive/                # Read-only legacy ADR files
+│   ├── README.md               # ADR conventions
+│   └── adr-NNNN-*.md           # Architectural decisions
 ├── .github/
-│   ├── instructions/            # Path-scoped coding rules (canonical)
-│   ├── prompts/                 # Thin Copilot mirrors → .agents/workflows/
 │   ├── ISSUE_TEMPLATE/          # Issue templates (feature, bug, chore)
 │   ├── pull_request_template.md
 │   └── workflows/
@@ -130,13 +128,11 @@ solo-dev-board/
 │       ├── hugo-validate.yml    # Hugo end-user docs build validation on PR
 │       └── hugo-deploy.yml      # Hugo end-user docs deploy to GitHub Pages
 ├── .agents/
-│   ├── contracts/               # Role boundary contracts (PM, delivery, verify, etc.)
-│   ├── workflows/               # Canonical workflow entry points
-│   └── skills/                  # Shared implementation and workflow skills
+│   └── skills/                  # Agent skills (code review, ADRs, MudBlazor, etc.)
 ├── .cursor/
-│   ├── rules/                   # Thin Cursor mirrors → .github/instructions/
-│   └── commands/                # Thin Cursor mirrors → .agents/workflows/
-└── AGENTS.md                    # Canonical AI collaborator standards
+│   ├── rules/                   # Cursor rules (C#, testing, ADR, markdown)
+│   └── commands/                # Cursor commands (code review loop, dependabot)
+└── AGENTS.md                    # Agent operating instructions
 ```
 
 ---
@@ -166,7 +162,7 @@ End-user documentation is published from `website/` to [GitHub Pages](https://so
 
 ## AI-Driven Development
 
-SoloDevBoard is developed with AI agents as active collaborators. [`AGENTS.md`](AGENTS.md) is the canonical source for architecture, conventions, UK English requirements, and workflow gates. Role contracts in [`.agents/contracts/`](.agents/contracts/), workflow entry points in [`.agents/workflows/`](.agents/workflows/), skills in [`.agents/skills/`](.agents/skills/), and the PM runbook in [`plan/PM_RUNBOOK.md`](plan/PM_RUNBOOK.md) provide structured workflows for planning, implementation, and review. For Cursor Cloud VM development, see [`plan/CURSOR_CLOUD.md`](plan/CURSOR_CLOUD.md).
+SoloDevBoard is developed with AI agents as active collaborators. [`AGENTS.md`](AGENTS.md), [`CONVENTIONS.md`](CONVENTIONS.md), and skills under [`.agents/skills/`](.agents/skills/) define architecture, conventions, and review workflow. For Cursor Cloud VM development, see [`plan/CURSOR_CLOUD.md`](plan/CURSOR_CLOUD.md).
 
 ---
 

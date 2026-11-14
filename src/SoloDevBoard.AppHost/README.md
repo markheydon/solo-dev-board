@@ -1,6 +1,6 @@
 # SoloDevBoard AppHost
 
-Aspire orchestrates the SoloDevBoard web app for local development, dev containers, Codespaces, and **production deployment to Azure Container Apps** ([DEC-015](../../plan/DECISIONS.md#dec-015-aspire-azure-container-apps-deployment)).
+Aspire orchestrates the SoloDevBoard web app for local development, dev containers, Codespaces, and **production deployment to Azure Container Apps** ([DEC-015](../../adr/adr-0018-aspire-azure-container-apps-deployment.md)).
 
 The AppHost opts into the Aspire CLI bundle (`AspireUseCliBundle=true`). Dashboard and DCP orchestration binaries come from the Aspire CLI on `PATH` (or the SDK-paired `Aspire.Cli` via `dnx` when no CLI is installed). Keep your local `aspire` version aligned with `Aspire.AppHost.Sdk` (`13.6.0` today): run `aspire --version` and upgrade with `aspire update --self` when needed.
 
@@ -69,7 +69,7 @@ Application Insights is deploy-time only. Local telemetry uses the Aspire dashbo
 
 ## CD pipeline tiers
 
-GitHub Actions CD deploys to two hosted tiers (see [DEC-021](../../plan/DECISIONS.md#dec-021-two-tier-cd-pipeline) and [docs/deployment.md](../../docs/deployment.md#cd-pipeline-tiers-dec-021)). The app resource group is per GitHub Environment. Staging Azure resources are named with a `-staging` suffix so they do not overwrite Production when both tiers share an RG. PAT mode is for local development and personal self-hosting via local `aspire deploy` only.
+GitHub Actions CD deploys to two hosted tiers (see [DEC-021](../../adr/adr-0021-two-tier-cd-pipeline.md) and [docs/deployment.md](../../docs/deployment.md#cd-pipeline-tiers-dec-021)). The app resource group is per GitHub Environment. Staging Azure resources are named with a `-staging` suffix so they do not overwrite Production when both tiers share an RG. PAT mode is for local development and personal self-hosting via local `aspire deploy` only.
 
 | Tier | Aspire `--environment` | Authentication |
 |---|---|---|
@@ -129,7 +129,7 @@ AppHost parameters map to workflow environment variables with underscores instea
 | `acr-name` | `Parameters__acr_name` / `ACR_NAME` |
 | `acr-resource-group` | `Parameters__acr_resource_group` / `ACR_RESOURCE_GROUP` |
 
-Omit `acr-name` and `acr-resource-group` (or set both to `-`) for Aspire's default registry. When opting in to a shared registry, the AppHost also provisions an `acr-pull` user-assigned identity with `AcrPull` via `WithAcrPullIdentity`. See [Optional shared Container Registry](../../docs/deployment.md#optional-shared-container-registry) and [DEC-025](../../plan/DECISIONS.md#dec-025-optional-shared-azure-container-registry).
+Omit `acr-name` and `acr-resource-group` (or set both to `-`) for Aspire's default registry. When opting in to a shared registry, the AppHost also provisions an `acr-pull` user-assigned identity with `AcrPull` via `WithAcrPullIdentity`. See [Optional shared Container Registry](../../docs/deployment.md#optional-shared-container-registry) and [DEC-025](../../adr/adr-0025-optional-shared-azure-container-registry.md).
 
 Azure deployment settings:
 
@@ -143,4 +143,4 @@ Azure deployment settings:
 
 | Setting | Environment variable | Notes |
 |---|---|---|
-| Docs capture mode | `DocsCapture__Enabled` | Local screenshot hygiene only. Defaults to `false`. Restricts repository and project board catalogues to public GitHub content. **Not** wired as an AppHost parameter and must stay disabled on hosted deployments. See [Docs capture mode](../../docs/getting-started.md#docs-capture-mode) and [DEC-020](../../plan/DECISIONS.md#dec-020-public-only-docs-capture-mode-for-documentation-screenshots). |
+| Docs capture mode | `DocsCapture__Enabled` | Local screenshot hygiene only. Defaults to `false`. Restricts repository and project board catalogues to public GitHub content. **Not** wired as an AppHost parameter and must stay disabled on hosted deployments. See [Docs capture mode](../../docs/getting-started.md#docs-capture-mode) and [DEC-020](../../adr/adr-0020-public-only-docs-capture-mode.md). |

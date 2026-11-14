@@ -118,4 +118,4 @@ GitHub also recommends webhooks instead of polling, caching tokens, and logging 
 - [Hosted Authentication](hosted-authentication.md)
 - [Getting Started — hosted sign-in](getting-started.md#hosted-sign-in-mode-setup)
 - [Deployment](deployment.md)
-- [DEC-012: GitHub App-first hosted authentication](../plan/DECISIONS.md#dec-012-github-app-first-hosted-authentication)
+- [DEC-012: GitHub App-first hosted authentication](../adr/adr-0015-github-app-first-hosted-authentication.md)

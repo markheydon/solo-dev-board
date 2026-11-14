@@ -1,6 +1,6 @@
 # Aspire from the start — multi-process findings
 
-**Status:** Planning findings only. Not a decision. Does not change [DEC-013](DECISIONS.md#dec-013-aspire-for-local-orchestration), [DEC-015](DECISIONS.md#dec-015-aspire-azure-container-apps-deployment), or [SCOPE.md](SCOPE.md).  
+**Status:** Planning findings only. Not a decision. Does not change [DEC-013](adr/adr-0016-consider-aspire-for-local-orchestration-and-future-hosting.md), [DEC-015](adr/adr-0018-aspire-azure-container-apps-deployment.md), or [SCOPE.md](SCOPE.md).  
 **Date:** 2026-08-14  
 **Audience:** Maintainer review before any split of the current single-process AppHost.
 
@@ -29,11 +29,11 @@ app = app
     });
 ```
 
-That matches the incremental path in [ADR-0016](../adr/archive/0016-consider-aspire-for-local-orchestration-and-future-hosting.md): wire the existing web app into Aspire without restructuring the solution. The ADR already names the revisit trigger: *a second runtime or process is added (background worker, API, or service)*.
+That matches the incremental path in [ADR-0016](../adr/0016-consider-aspire-for-local-orchestration-and-future-hosting.md): wire the existing web app into Aspire without restructuring the solution. The ADR already names the revisit trigger: *a second runtime or process is added (background worker, API, or service)*.
 
 Other facts that matter for a later split:
 
-- **Layered libraries are already in place.** `Domain`, `Application`, `Infrastructure`, and `Composition` are class libraries. `SoloDevBoard.Composition` is the DI composition root (`AddSoloDevBoard`); `SoloDevBoard.App` references Application and Composition only — not Infrastructure directly ([DEC-002](DECISIONS.md#dec-002-layered--clean-architecture), clarification 2026-08-30).
+- **Layered libraries are already in place.** `Domain`, `Application`, `Infrastructure`, and `Composition` are class libraries. `SoloDevBoard.Composition` is the DI composition root (`AddSoloDevBoard`); `SoloDevBoard.App` references Application and Composition only — not Infrastructure directly ([DEC-002](adr/adr-0004-layered-architecture.md), clarification 2026-08-30).
 - **`ServiceDefaults` already prepares multi-process Aspire.** HTTP clients get service discovery and standard resilience, but nothing in the solution currently *consumes* another Aspire resource by name.
 - **GitHub is called in-process from Blazor Server.** There is no HTTP API for labels, audit, triage, or migration. Cache is `IMemoryCache` scoped by user login — process-local, lost on scale-to-zero, and not shareable with a worker.
 - **Hosted authentication lives on the web host.** Cookie sign-in, OAuth callback, and admission control are ASP.NET endpoints on `SoloDevBoard.App`. PAT mode injects a token into the same process.
@@ -162,7 +162,7 @@ Functions should call **Application use cases** (scan/write snapshot), not scrap
 | Redis | Only if `webfrontend` and `apiservice` both need a shared hot catalogue cache, or multiple API replicas appear. Not required while ACA `MaxReplicas = 1`. |
 | Azure SQL / Cosmos | Only if scan history, acknowledgements, or ignore-lists become first-class product data. Avoid until a scanner needs queryable history. |
 | Service Bus / Storage Queue | Fan-out across hundreds of repos, or “user clicked Apply FUNDING to 40 repos”. Durable Functions + task hub is the Aspire-supported alternative for fan-out. |
-| User preferences (PM settings) | When SQL/Cosmos or equivalent per-user storage is provisioned for first-class product data. **Interim:** browser `localStorage` per [DEC-029](DECISIONS.md#dec-029-cross-repo-planning-board-selection-and-local-settings) ([#383](https://github.com/markheydon/solo-dev-board/issues/383)). **Refactor:** [#391](https://github.com/markheydon/solo-dev-board/issues/391). |
+| User preferences (PM settings) | When SQL/Cosmos or equivalent per-user storage is provisioned for first-class product data. **Interim:** browser `localStorage` per [DEC-029](adr/adr-0029-cross-repo-planning-board-selection-and-local-settings.md) ([#383](https://github.com/markheydon/solo-dev-board/issues/383)). **Refactor:** [#391](https://github.com/markheydon/solo-dev-board/issues/391). |
 
 Do not add a database solely to look like a starter template. GitHub remains the system of record for live mutations. Persistence is for **derived snapshots**, **job state**, and (when justified) **user preferences** that must outlive a single browser profile.
 
@@ -268,7 +268,7 @@ Token forwarding (web → API) is the hardest design point and should be specifi
 
 PAT mode stays simpler: inject `gh-pat` into API and Functions; web may not need GitHub at all except connectivity UX that then calls the API.
 
-Key Vault stays the publish-mode secret store ([DEC-017](DECISIONS.md#dec-017-key-vault-backed-hosted-auth-secrets)). Each new compute resource that needs secrets gets `WithRoleAssignments` + `WithReference` on the same `auth-secrets` vault (or a dedicated `job-secrets` vault if we want blast-radius separation later).
+Key Vault stays the publish-mode secret store ([DEC-017](adr/adr-0043-key-vault-backed-hosted-auth-secrets.md)). Each new compute resource that needs secrets gets `WithRoleAssignments` + `WithReference` on the same `auth-secrets` vault (or a dedicated `job-secrets` vault if we want blast-radius separation later).
 
 ---
 
