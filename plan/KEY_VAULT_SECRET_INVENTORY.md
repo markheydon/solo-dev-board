@@ -24,3 +24,9 @@ Aspire logical name remains `auth-secrets`; Azure resource names follow [ADR-002
 - `ROADMAP_PROJECT_TOKEN` (GitHub Actions only)
 - Non-secret AppHost parameters (`gh-app-client-id`, allow-lists, feature toggles)
 - `DocsCapture:Enabled` (local App user settings only)
+
+## References
+
+- [ADR-0043](../adr/adr-0043-key-vault-backed-hosted-auth-secrets.md) – hosted auth secrets in Key Vault
+- [ADR-0045](../adr/adr-0045-persistent-key-vault-dual-path-local-secrets.md) – persistent tier vault and local dual path
+- [Azure Key Vault setup](../docs/azure-key-vault-setup.md) – operator migration steps
