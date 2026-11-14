@@ -4,7 +4,7 @@
 
 Label Manager can already create the built-in SoloDevBoard taxonomy and delete extras. Deleting extras **removes the label from every issue and pull request**. This feature adds a **preview-first remap** on an existing repository: map old names onto taxonomy (or other existing) names, apply the destination to every issue and pull request that used the source, then delete the source.
 
-Feature [#491](https://github.com/markheydon/solo-dev-board/issues/491) on milestone **`v1.3 - Usable solo workflow across repositories`**. It extends shipped Label Manager ([#27](https://github.com/markheydon/solo-dev-board/issues/27)) and has no parent Epic ([DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy) catch-up: completing a shipped feature). One-Click Migration stays out of this slice.
+Feature [#491](https://github.com/markheydon/solo-dev-board/issues/491) on milestone **`v1.3 - Usable solo workflow across repositories`**. It extends shipped Label Manager ([#27](https://github.com/markheydon/solo-dev-board/issues/27)) and has no parent Epic ([DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md) catch-up: completing a shipped feature). One-Click Migration stays out of this slice.
 
 `v1.3` is the first post-`v1.2.0` increment: dogfood a usable solo workflow across repositories. Remap is the locked-in start so existing catalogues can adopt the taxonomy without wiping history. Further workflow gaps will be filed from daily use, not invented here.
 

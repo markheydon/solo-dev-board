@@ -6,7 +6,7 @@
 This document describes the phased implementation of SoloDevBoard. Each phase has a clear goal, a set of key tasks, and defined dependencies.
 
 **Note on sequencing:**
-Phases in this document are **historical sequencing for the v1.0 release**. Post-1.0 delivery uses one open milestone at a time ([DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)). Unfinished work from earlier phases remains open until completed, regardless of progress in later phases. Public-release prerequisites from Phase 6 (hosted authentication and admission control) were pulled forward to enable safe hosted validation.
+Phases in this document are **historical sequencing for the v1.0 release**. Post-1.0 delivery uses one open milestone at a time ([DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md)). Unfinished work from earlier phases remains open until completed, regardless of progress in later phases. Public-release prerequisites from Phase 6 (hosted authentication and admission control) were pulled forward to enable safe hosted validation.
 
 **Current roadmap status (2026-09-07):**
 - Phases 1–4 are complete. All six core feature areas are delivered (Label Manager, Audit Dashboard, One-Click Migration, Triage UI, Board Rules Visualiser, Actions Templates).
@@ -155,7 +155,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 - [x] Include built-in templates: CI (dotnet), CD (Aspire deploy to Azure Container Apps), Dependabot
 - [x] Write unit tests for `ActionsTemplateService`
 - [x] Update `website/content/docs/actions-templates.md`
-- [x] Support custom template repositories — one GitHub `owner/name` source via catalogue selector or manual field, merged catalogue, localStorage last-used ([#292](https://github.com/markheydon/solo-dev-board/issues/292), [DEC-038](DECISIONS.md#dec-038-custom-actions-template-sources)).
+- [x] Support custom template repositories — one GitHub `owner/name` source via catalogue selector or manual field, merged catalogue, localStorage last-used ([#292](https://github.com/markheydon/solo-dev-board/issues/292), [DEC-038](adr/adr-0038-custom-actions-template-sources.md)).
 
 ### Dependencies
 
@@ -168,9 +168,9 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Goal:** Deliver Epic 7 — the UI-based implementation of the two-mode PM operating system from [markheydon/github-workflows](https://github.com/markheydon/github-workflows). This phase transforms SoloDevBoard from a collection of individual tools into a cohesive planning environment.
 
-**Milestone:** `v1.1 - Cross-Repo Planning & Refinement` (release tag `v1.1.0`; formerly planned as v1.2.0 — see [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy))
+**Milestone:** `v1.1 - Cross-Repo Planning & Refinement` (release tag `v1.1.0`; formerly planned as v1.2.0 — see [DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md))
 
-**Status:** Complete (2026-08-20). Feature [#272](https://github.com/markheydon/solo-dev-board/issues/272) (no parent epic). Stories #273–#288 plus enablers and tests. Wireframe: `plan/wireframes/planning-wireframe.md`. Plan: `plan/cross-repo-planning-project-plan.md`. Decision: [DEC-029](DECISIONS.md#dec-029-cross-repo-planning-board-selection-and-local-settings). Hardcoding audit: [#423](https://github.com/markheydon/solo-dev-board/issues/423) — [`HARDCODING_AUDIT_v1.1.md`](HARDCODING_AUDIT_v1.1.md).
+**Status:** Complete (2026-08-20). Feature [#272](https://github.com/markheydon/solo-dev-board/issues/272) (no parent epic). Stories #273–#288 plus enablers and tests. Wireframe: `plan/wireframes/planning-wireframe.md`. Plan: `plan/cross-repo-planning-project-plan.md`. Decision: [DEC-029](adr/adr-0029-cross-repo-planning-board-selection-and-local-settings.md). Hardcoding audit: [#423](https://github.com/markheydon/solo-dev-board/issues/423) — [`HARDCODING_AUDIT_v1.1.md`](HARDCODING_AUDIT_v1.1.md).
 
 ### Key Tasks
 
@@ -215,7 +215,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Milestone:** `v1.1 - Cross-Repo Planning & Refinement`
 
-**Status:** Complete (2026-08-23). Feature [#440](https://github.com/markheydon/solo-dev-board/issues/440) (no parent epic). Wireframe: `plan/wireframes/repositories-wireframe.md`. Plan: `plan/oss-catalogue-identification-project-plan.md`. Decision: [DEC-032](DECISIONS.md#dec-032-oss-catalogue-identification-from-the-github-open-source-topic).
+**Status:** Complete (2026-08-23). Feature [#440](https://github.com/markheydon/solo-dev-board/issues/440) (no parent epic). Wireframe: `plan/wireframes/repositories-wireframe.md`. Plan: `plan/oss-catalogue-identification-project-plan.md`. Decision: [DEC-032](adr/adr-0032-oss-catalogue-identification-from-open-source-topic.md).
 
 ### Key Tasks
 
@@ -237,7 +237,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Milestone:** `v1.1 - Cross-Repo Planning & Refinement` (release tag `v1.1.0`)
 
-**Status:** Complete (2026-08-31). Label Manager and Iteration refinements [#446](https://github.com/markheydon/solo-dev-board/issues/446), [#444](https://github.com/markheydon/solo-dev-board/issues/444), and [#445](https://github.com/markheydon/solo-dev-board/issues/445) closed. Toast/snackbar standardisation [#465](https://github.com/markheydon/solo-dev-board/issues/465), migration keep-`area/*` overwrite [#464](https://github.com/markheydon/solo-dev-board/issues/464) with tests [#471](https://github.com/markheydon/solo-dev-board/issues/471), and feedback region relocation [#473](https://github.com/markheydon/solo-dev-board/issues/473) closed. Catch-up on shipped Features [#27](https://github.com/markheydon/solo-dev-board/issues/27), [#88](https://github.com/markheydon/solo-dev-board/issues/88), and [#272](https://github.com/markheydon/solo-dev-board/issues/272) (no new Feature wrappers; [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)). Decisions: [DEC-034](DECISIONS.md#dec-034-label-manager-recommended-catalogue-omits-area-labels), [DEC-035](DECISIONS.md#dec-035-transient-feedback-via-snackbar), [DEC-036](DECISIONS.md#dec-036-one-click-migration-label-overwrite-keeps-area-by-default). Plans: [`plan/label-manager-v1.1-dogfood-project-plan.md`](label-manager-v1.1-dogfood-project-plan.md), [`plan/iteration-planning-stall-capacity-project-plan.md`](iteration-planning-stall-capacity-project-plan.md), [`plan/migration-keep-area-labels-project-plan.md`](migration-keep-area-labels-project-plan.md).
+**Status:** Complete (2026-08-31). Label Manager and Iteration refinements [#446](https://github.com/markheydon/solo-dev-board/issues/446), [#444](https://github.com/markheydon/solo-dev-board/issues/444), and [#445](https://github.com/markheydon/solo-dev-board/issues/445) closed. Toast/snackbar standardisation [#465](https://github.com/markheydon/solo-dev-board/issues/465), migration keep-`area/*` overwrite [#464](https://github.com/markheydon/solo-dev-board/issues/464) with tests [#471](https://github.com/markheydon/solo-dev-board/issues/471), and feedback region relocation [#473](https://github.com/markheydon/solo-dev-board/issues/473) closed. Catch-up on shipped Features [#27](https://github.com/markheydon/solo-dev-board/issues/27), [#88](https://github.com/markheydon/solo-dev-board/issues/88), and [#272](https://github.com/markheydon/solo-dev-board/issues/272) (no new Feature wrappers; [DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md)). Decisions: [DEC-034](adr/adr-0034-label-manager-recommended-catalogue-omits-area-labels.md), [DEC-035](adr/adr-0035-transient-feedback-via-snackbar.md), [DEC-036](adr/adr-0036-one-click-migration-label-overwrite-keeps-area.md). Plans: [`plan/label-manager-v1.1-dogfood-project-plan.md`](label-manager-v1.1-dogfood-project-plan.md), [`plan/iteration-planning-stall-capacity-project-plan.md`](iteration-planning-stall-capacity-project-plan.md), [`plan/migration-keep-area-labels-project-plan.md`](migration-keep-area-labels-project-plan.md).
 
 ### Key Tasks
 
@@ -353,5 +353,5 @@ All locked-in leaves are closed. Shipped as [`v1.1.0`](https://github.com/markhe
 
 - When a phase task is completed, tick it off in this document.
 - When a feature's user-facing doc is written, update the stub notice in `website/content/docs/<feature>.md`.
-- When a new decision is recorded, add it to `plan/DECISIONS.md` per `repo-decision-log`.
+- When a new decision is recorded, add an ADR under `adr/` per `create-architectural-decision-record`.
 - When a new environment variable is introduced, update `docs/getting-started.md` and `docs/deployment.md`.

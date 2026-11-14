@@ -57,7 +57,7 @@ Sprint planning, story points, velocity, burn-downs, agile ceremonies, and team 
 
 ## Open questions (no DEC yet)
 
-- Application-owned persistence ([DEC-029](DECISIONS.md#dec-029-cross-repo-planning-board-selection-and-local-settings) currently uses `localStorage` because there is no database). A journal and feedback registry cannot live there.
+- Application-owned persistence ([DEC-029](adr/adr-0029-cross-repo-planning-board-selection-and-local-settings.md) currently uses `localStorage` because there is no database). A journal and feedback registry cannot live there.
 - How PAT-mode self-hosting provisions that store without dropping the solo operations path.
 - Whether “Idea” is a Product in `Idea` status or a distinct type.
 - Relationship to repository groups ([#381](https://github.com/markheydon/solo-dev-board/issues/381)) — groups must not silently become products.

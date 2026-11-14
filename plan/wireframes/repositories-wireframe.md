@@ -3,7 +3,7 @@
 ## Purpose
 - Provide a clear overview of all repositories managed by SoloDevBoard.
 - Enable efficient repository selection, filtering, and bulk actions.
-- Identify which catalogue members are open-source project repositories (and which are not) without waiting for repository groups ([#440](https://github.com/markheydon/solo-dev-board/issues/440), [DEC-032](../DECISIONS.md#dec-032-oss-catalogue-identification-from-the-github-open-source-topic)).
+- Identify which catalogue members are open-source project repositories (and which are not) without waiting for repository groups ([#440](https://github.com/markheydon/solo-dev-board/issues/440), [DEC-032](adr/adr-0032-oss-catalogue-identification-from-open-source-topic.md)).
 
 ## User Goals
 - View repository details in a structured data grid.

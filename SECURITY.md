@@ -39,4 +39,4 @@ Out of scope: denial-of-service against GitHub.com, issues that require a stolen
 
 ## Secrets in this repository
 
-This repository is public. Never commit personal access tokens, GitHub App client secrets, Azure credentials, or `.env` files. See [`AGENTS.md`](AGENTS.md#open-source--security) and [`CONTRIBUTING.md`](CONTRIBUTING.md#secrets--security).
+This repository is public. Never commit personal access tokens, GitHub App client secrets, Azure credentials, or `.env` files. See [`AGENTS.md`](AGENTS.md) and [`CONTRIBUTING.md`](CONTRIBUTING.md#secrets--security).

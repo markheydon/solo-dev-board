@@ -2,18 +2,18 @@
 
 <!-- AI Collaborator Instructions: This document is a parked execution plan. Do not run specify init or create .specify/ until the user explicitly requests Spec Kit migration. When the user says "execute the Spec Kit migration" or references this file for implementation, follow the steps in order. -->
 
-**Status:** Parked — decision log migration complete; Spec Kit scaffold and adoption remain future work.
+**Status:** Parked — ADR migration complete (2026-11-14); Spec Kit scaffold and adoption remain future work.
 
 **Created:** 2026-07-18.
 
-**Purpose:** Migrate SoloDevBoard from the repo memory model (`AGENTS.md`, `plan/DECISIONS.md`, planning markdown) to **GitHub Spec Kit** for product specifications and constitution, while keeping PM/agent orchestration artefacts outside Spec Kit.
+**Purpose:** Migrate SoloDevBoard from repository markdown (`AGENTS.md`, `CONVENTIONS.md`, `plan/SCOPE.md`, `adr/`) toward **GitHub Spec Kit** for product specifications and constitution where that reduces duplication.
 
 ---
 
 ## Prerequisites
 
-- [ ] [`plan/DECISIONS.md`](DECISIONS.md) migration complete (ADR archive + decision log).
-- [ ] Constitution stable in [`AGENTS.md`](../AGENTS.md) and [`.github/instructions/`](../.github/instructions/).
+- [x] Active decisions live under `adr/` (former `plan/DECISIONS.md` retired).
+- [ ] Constitution stable in [`AGENTS.md`](../AGENTS.md) and [`CONVENTIONS.md`](../CONVENTIONS.md).
 - [ ] Backlog-to-issues Phase 2 complete or explicitly deferred ([`plan/BACKLOG_TO_ISSUES_MIGRATION.md`](BACKLOG_TO_ISSUES_MIGRATION.md)).
 
 **Do not execute the steps below until this plan is explicitly approved.**
@@ -23,14 +23,13 @@
 ## Target mapping
 
 | Repo memory today | Spec Kit target |
-|-------------------|-----------------|
-| `AGENTS.md` + `.github/instructions/` | `.specify/memory/constitution.md` (+ path rules as needed) |
-| `plan/DECISIONS.md` (active entries) | Absorbed into constitution and per-feature specs |
+| --- | --- |
+| `AGENTS.md` + `CONVENTIONS.md` | `.specify/memory/constitution.md` (+ path rules as needed) |
+| `adr/` (product decisions) | Absorbed into constitution and per-feature specs where appropriate |
 | `plan/SCOPE.md` + `plan/wireframes/` | `.specify/specs/<feature>/spec.md` |
 | `plan/IMPLEMENTATION_PLAN.md` | Spec Kit plan artefacts per feature |
-| `adr/archive/` | Remains read-only; **not** ported to Spec Kit |
-| `plan/PM_RUNBOOK.md`, `.agents/` | Stays outside Spec Kit (operator and AI orchestration) |
-| `docs/` (user guides) | Stays end-user facing; link from specs where relevant |
+| `.agents/skills/` | Stays outside Spec Kit (agent orchestration) |
+| `docs/` (operator guides) | Stays end-user facing; link from specs where relevant |
 
 ---
 
@@ -38,7 +37,7 @@
 
 1. **Spec Kit owns product intent** — what to build and why, per feature.
 2. **Constitution owns non-negotiable rules** — architecture, testing bans, deploy model.
-3. **PM runbook and agent contracts stay in `.agents/` and `plan/`** — Spec Kit does not replace daily delivery rituals.
+3. **Agent skills stay in `.agents/`** — Spec Kit does not replace Cursor skills.
 4. **No dual maintenance** — after migration, do not update both `plan/SCOPE.md` feature prose and a spec for the same capability.
 
 ---
@@ -52,7 +51,7 @@
 
 ### Step 2 — Import constitution
 
-- [ ] Draft `.specify/memory/constitution.md` from `AGENTS.md` architecture, testing, UK English, and security sections plus `.github/instructions/` essentials.
+- [ ] Draft `.specify/memory/constitution.md` from `AGENTS.md`, `CONVENTIONS.md`, and essential `adr/` entries.
 - [ ] Slim `AGENTS.md` to pointer: "Constitution: `.specify/memory/constitution.md`" for Spec Kit users, or keep parallel until cut-over is validated.
 
 ### Step 3 — Pilot one feature spec
@@ -63,29 +62,25 @@
 
 ### Step 4 — Update agent gates
 
-- [ ] Replace `repo-decision-log` routing for **feature-scoped** decisions with Spec Kit spec updates.
-- [ ] Update [`AGENTS.md`](../AGENTS.md), [`repo-decision-log`](../.agents/skills/repo-decision-log/SKILL.md), and contracts to reference Spec Kit for new feature work.
+- [ ] Update [`AGENTS.md`](../AGENTS.md) and skills to reference Spec Kit for new feature work.
 - [ ] Update [`plan/DOCS_STRATEGY.md`](DOCS_STRATEGY.md).
 
 ### Step 5 — Retire duplicate planning prose
 
 - [ ] Mark migrated sections of `plan/SCOPE.md` as pointers to specs.
-- [ ] Freeze new entries in `plan/DECISIONS.md` except constitution-level changes until fully absorbed.
 
 ### Step 6 — Validation
 
 - [ ] One feature delivered via Spec Kit only (spec → plan → implement).
-- [ ] Agent workflows (`implement-issue`, `plan-next-issue`) reference Spec Kit paths.
-- [ ] No new ADR or duplicate decision files created.
+- [ ] No duplicate decision files outside Spec Kit and `adr/` for the same rule.
 
 ---
 
 ## Out of scope for Spec Kit migration
 
-- GitHub Project board operations (`repo-github-project` skill).
-- Verify / code-review / weekly PM workflows.
-- End-user Jekyll docs in `docs/`.
-- ADR archive in `adr/archive/`.
+- GitHub Project board automation (`.github/workflows/roadmap-sync.yml`).
+- End-user Hugo site in `website/`.
+- **Active `adr/`** remains the audit trail for architecture unless explicitly absorbed into Spec Kit.
 
 ---
 

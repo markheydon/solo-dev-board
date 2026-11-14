@@ -46,7 +46,7 @@ Turn the Hugo/Hextra site into the **public product site** for SoloDevBoard: mar
 | Domain/rename enabler | #361 | #358 | sub-issue (blocks deploy) |
 | Hugo test issue | #362 | #358 | sub-issue |
 
-Sub-issues and blocking are set by agents via MCP `sub_issue_write` and REST issue-dependencies (`gh api`), not by clicking the GitHub UI. See `.agents/skills/repo-github-gh-cli/SKILL.md`.
+Sub-issues and blocking are set by agents via MCP `sub_issue_write` and REST issue-dependencies (`gh api`), not by clicking the GitHub UI. See [`PROJECT_MANAGEMENT.md`](PROJECT_MANAGEMENT.md#issue-relationships-sub-issues-and-blocking).
 
 ## Implementation references
 

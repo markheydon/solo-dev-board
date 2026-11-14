@@ -8,7 +8,7 @@ The scope covers response caching, health endpoints and hosting probes, structur
 
 ## Test Coverage Expectations (Issue #110)
 
-### GitHub API response caching ([#108](https://github.com/markheydon/solo-dev-board/issues/108), [DEC-018](DECISIONS.md#dec-018-github-api-response-caching-in-infrastructure))
+### GitHub API response caching ([#108](https://github.com/markheydon/solo-dev-board/issues/108), [DEC-018](adr/adr-0044-github-api-response-caching-in-infrastructure.md))
 
 | Scenario | Test layer | Location |
 |---|---|---|
@@ -91,6 +91,6 @@ Not automated in CI (manual or deploy-time verification only):
 
 ## Related Decisions and Documentation
 
-- [DEC-018: GitHub API response caching in Infrastructure](DECISIONS.md#dec-018-github-api-response-caching-in-infrastructure)
+- [DEC-018: GitHub API response caching in Infrastructure](adr-0044-github-api-response-caching-in-infrastructure.md-github-api-response-caching-in-infrastructure)
 - [Deployment — Health checks and Container Apps probes](../docs/deployment.md#health-checks-and-container-apps-probes)
 - [Observability and Telemetry](../docs/observability.md)

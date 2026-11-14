@@ -6,14 +6,14 @@
 
 Extend the shipped One-Click Migration workflow ([#88](https://github.com/markheydon/solo-dev-board/issues/88), labels and milestones) so a solo developer can copy **Projects v2 Status column structure** from a source repository board to one or more target repositories. Tracked as feature [#291](https://github.com/markheydon/solo-dev-board/issues/291) on milestone **`v1.1`**.
 
-ADR-0013 / [DEC-010](DECISIONS.md#dec-010-one-click-migration-scope-and-preview-strategy) deferred this slice because Projects v2 GraphQL was not in the solution. Read and item-write GraphQL now exist (Triage, Board Rules, Cross-Repo Planning). This feature adds **field-structure writes**: Status single-select options, and creating a linked board when a target has none.
+ADR-0013 / [DEC-010](adr/adr-0013-one-click-migration-scope-and-preview-strategy.md) deferred this slice because Projects v2 GraphQL was not in the solution. Read and item-write GraphQL now exist (Triage, Board Rules, Cross-Repo Planning). This feature adds **field-structure writes**: Status single-select options, and creating a linked board when a target has none.
 
 [#291](https://github.com/markheydon/solo-dev-board/issues/291) is promoted from a stub story to a Feature with no parent Epic (DEC-027 catch-up: it completes shipped feature #88 rather than opening a new epic). Closed epic [#87](https://github.com/markheydon/solo-dev-board/issues/87) stays closed.
 
 ### Success criteria
 
 - The Migration page includes a **Project board columns** scope toggle alongside Labels and Milestones.
-- Preview-first apply remains mandatory ([DEC-010](DECISIONS.md#dec-010-one-click-migration-scope-and-preview-strategy)).
+- Preview-first apply remains mandatory ([DEC-010](adr/adr-0013-one-click-migration-scope-and-preview-strategy.md)).
 - Status option names, colours, descriptions, and order on the target Status field match the selected source board after apply, subject to the chosen conflict strategy.
 - A target with no usable linked board can receive a **new** repository-linked Projects v2 board whose Status options match the source.
 - Inaccessible private user-owned boards under GitHub App sign-in reuse the existing warning; [#293](https://github.com/markheydon/solo-dev-board/issues/293) stays out of scope.
@@ -42,7 +42,7 @@ ADR-0013 / [DEC-010](DECISIONS.md#dec-010-one-click-migration-scope-and-preview-
 - The **Status** single-select field only (the board-view columns).
 - Preview and apply of create / update / skip / (safe) delete of Status options.
 - Creating one new linked project on a target when the user chooses “Create a new board” or the target has no supported board.
-- Conflict strategies Skip, Merge, and Overwrite, mapped onto Status options (see [DEC-032](DECISIONS.md#dec-032-project-board-column-migration-is-status-structure-on-projects-v2)).
+- Conflict strategies Skip, Merge, and Overwrite, mapped onto Status options (see [DEC-032](adr/adr-0032-oss-catalogue-identification-from-open-source-topic.md)).
 
 ## Out of scope
 
@@ -68,7 +68,7 @@ graph TD
 ### Layers
 
 - **Domain:** extend Status option records with colour and description where needed; keep GitHub node ids as strings.
-- **Application:** extend `MigrationScopeDto`, preview/result DTOs, and `IMigrationService`. Add an `IProjectBoardStructureRepository` (or equivalent) at the repository boundary returning domain records. Map to DTOs in the migration service only ([DEC-008](DECISIONS.md#dec-008-boundary-data-shapes--dtos-at-applicationapp-boundary)).
+- **Application:** extend `MigrationScopeDto`, preview/result DTOs, and `IMigrationService`. Add an `IProjectBoardStructureRepository` (or equivalent) at the repository boundary returning domain records. Map to DTOs in the migration service only ([DEC-008](adr/adr-0011-boundary-data-shapes.md)).
 - **Infrastructure:** GraphQL `createProjectV2` (with `repositoryId`), Status field discovery, and `updateProjectV2Field` / `createProjectV2Field` as confirmed by the spike. Reuse `GetProjectBoardsForRepositoryAsync` for discovery.
 - **App:** existing `/migrate` page. MudBlazor `MudSwitch`, `MudSelect`, preview tables, `MudAlert`, `ISnackbar`. Prefer utility classes. Do not put GraphQL or conflict math in Razor.
 
@@ -107,5 +107,5 @@ Match options by name, ordinal ignore case.
 
 ## Decisions
 
-- [DEC-010](DECISIONS.md#dec-010-one-click-migration-scope-and-preview-strategy) — preview-first migration.
-- [DEC-032](DECISIONS.md#dec-032-project-board-column-migration-is-status-structure-on-projects-v2) — Status-structure slice definition.
+- [DEC-010](adr/adr-0013-one-click-migration-scope-and-preview-strategy.md) — preview-first migration.
+- [DEC-032](adr/adr-0032-oss-catalogue-identification-from-open-source-topic.md) — Status-structure slice definition.

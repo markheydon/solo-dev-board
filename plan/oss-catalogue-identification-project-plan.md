@@ -4,7 +4,7 @@
 
 Give SoloDevBoard a single, deterministic rule for which catalogue repositories are **open-source project repos**. Classification comes from the GitHub repository topic `open-source`. The Repositories page exposes that rule as built-in **Open source** and **Not open source** filters. Later overnight scanners ([#438](https://github.com/markheydon/solo-dev-board/issues/438), [#439](https://github.com/markheydon/solo-dev-board/issues/439)) and repository groups ([#381](https://github.com/markheydon/solo-dev-board/issues/381)) must consume the same classification.
 
-Parent Feature: [#440](https://github.com/markheydon/solo-dev-board/issues/440). No parent epic. Milestone: **`v1.1 - Cross-Repo Planning & Refinement`**. Decision: [DEC-032](DECISIONS.md#dec-032-oss-catalogue-identification-from-the-github-open-source-topic).
+Parent Feature: [#440](https://github.com/markheydon/solo-dev-board/issues/440). No parent epic. Milestone: **`v1.1 - Cross-Repo Planning & Refinement`**. Decision: [DEC-032](adr/adr-0032-oss-catalogue-identification-from-open-source-topic.md).
 
 ## Success criteria
 
@@ -62,5 +62,5 @@ graph TD
 ## Implementation references
 
 - Wireframe: [`plan/wireframes/repositories-wireframe.md`](wireframes/repositories-wireframe.md)
-- Decision: [DEC-032](DECISIONS.md#dec-032-oss-catalogue-identification-from-the-github-open-source-topic)
+- Decision: [DEC-032](adr/adr-0032-oss-catalogue-identification-from-open-source-topic.md)
 - User Guide (update during delivery): [`website/content/docs/repositories.md`](../website/content/docs/repositories.md)

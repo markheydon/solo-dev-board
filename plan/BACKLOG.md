@@ -2,7 +2,7 @@
 
 **GitHub Issues are the single source of truth for open work.** This page is a roadmap index only — it does not hold a living work queue.
 
-For historical backlog content (pre-migration), see [archive/BACKLOG-2026-07-18.md](archive/BACKLOG-2026-07-18.md). Migration details: [BACKLOG_TO_ISSUES_MIGRATION.md](BACKLOG_TO_ISSUES_MIGRATION.md). Post-1.0 planning is [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy).
+For historical backlog content (pre-migration), see [archive/BACKLOG-2026-07-18.md](archive/BACKLOG-2026-07-18.md). Migration details: [BACKLOG_TO_ISSUES_MIGRATION.md](BACKLOG_TO_ISSUES_MIGRATION.md). Post-1.0 planning is [DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md).
 
 ## Where to find work
 

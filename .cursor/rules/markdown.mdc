@@ -1,0 +1,13 @@
+---
+description: Markdown documentation authoring
+globs: "**/*.md"
+alwaysApply: false
+---
+
+# Markdown Documentation
+
+- Use UK English spelling.
+- Do not use the em dash (U+2014). Use spaced ASCII hyphen ` - ` in prose; use a single `-` for empty UI placeholders (see `CONVENTIONS.md`).
+- For general documentation, use the `project-documentation` skill in `.agents/skills/`.
+- Ground content in `GOALS.md`, `SCOPE.md`, and `CONVENTIONS.md`.
+- For ADRs under `adr/`, use `create-architectural-decision-record` instead of general documentation skills.

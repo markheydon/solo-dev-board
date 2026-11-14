@@ -15,7 +15,7 @@ Every authenticated feature page should read as the same product:
 3. **Primary surface** — one `MudPaper` `Elevation="1"` (or `MudCard` when the block is a discrete record). Do not wrap every field in its own paper.
 4. **Loading** — `MudSkeleton` that matches the eventual layout for content-heavy regions; small `MudProgressCircular` only next to the control that is waiting (selectors, buttons).
 5. **Empty** — `MudAlert` `Severity.Info` (or `Warning` when setup is required) with a single next action, not a blank paper.
-6. **Error** — `MudAlert` `Severity.Error` at the top of the affected section with retry, per [DEC-035](../../../plan/DECISIONS.md#dec-035-transient-feedback-via-snackbar).
+6. **Error** — `MudAlert` `Severity.Error` at the top of the affected section with retry, per [DEC-035](../../../adr/adr-0035-transient-feedback-via-snackbar.md).
 7. **Success** — snackbar, not a second banner that repeats the same text.
 
 Do not introduce `MudFab`, `MudCarousel`, `MudChart`, or decorative `MudTimeline` on operational pages. Those exist in MudBlazor and are almost always the wrong choice here.
@@ -129,7 +129,7 @@ Audit Dashboard already uses skeletons well; copy that pattern rather than the s
 |-----------|------------------------|----------|
 | `MudFab` / `MudFabMenu` | None on current pages. | Do not add a floating action button. |
 | `MudChart` | None. | Do not chart GitHub counts in-app. |
-| `MudCarousel` | None. | Do not rotate operational content. |
+| `MudCarousel` | None. | Do not rotate operational content. Auto-rotate requires `AutoCycle="true"` (9.13+). |
 | `MudStepper` | A single linear apply/preview wizard. | Prefer stacked papers if there are only two steps. |
 | `MudHotKey` | Documented keyboard shortcuts (Triage). | Do not invent undocumented global hotkeys. |
 | `MudExitPrompt` | Unsaved triage or migration preview. | Use only when leaving would drop in-progress work. |

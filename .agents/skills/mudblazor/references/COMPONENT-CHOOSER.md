@@ -25,7 +25,7 @@ Use button colour and variant to communicate intent consistently across pages.
 
 | UI Pattern | MudBlazor Component | Notes |
 |------------|---------------------|-------|
-| Page title and purpose line | `MudText` `Typo.h5` + `Typo.body2` `Color.Secondary` | Do not use raw `<h1>`/`<p>`. See `UX-LANGUAGE.md`. |
+| Page title and purpose line | `MudText` `Typo.h5` + `Typo.body2` `Color.Secondary` | Do not use raw `<h1>`/`<p>`. See `UX-LANGUAGE.md`. Use `Truncate="true"` when the purpose line must share a row with actions (9.12+). |
 | Page command strip | `MudToolBar` | Filters and commit actions belong here, not a second paper of buttons. |
 | Page section wrapper | `MudPaper`, `MudCard`, or `MudContainer` | Avoid decorative `<div>` wrappers. One paper per region. |
 | Two resizable panes | `MudSplitPanel` | Prefer for diagram + detail or catalogue + preview. |
@@ -57,6 +57,7 @@ Use button colour and variant to communicate intent consistently across pages.
 | Floating action button | `MudFab` / `MudFabMenu` | Do not use on SoloDevBoard pages. |
 | Data table / grid | `MudDataGrid<T>` | With `PropertyColumn` / `TemplateColumn` |
 | Simple read-only table | `MudTable<T>` | Lighter than DataGrid |
+| Table row navigation | `MudTable<T>` with `RowHref` / `RowTarget` | Real links (Ctrl+click, middle click, keyboard); prefer over row click handlers (9.13+). |
 | Card / panel | `MudCard` or `MudPaper` | Not `<div class="card">` |
 | Expandable panel | `MudExpansionPanel` | |
 | Tabs | `MudTabs` + `MudTabPanel` | |

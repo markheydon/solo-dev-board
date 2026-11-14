@@ -4,7 +4,7 @@
 
 Make Iteration Planning (`/planning/iteration`) explain **one hard brake** when stalled Up Next items exist, and keep capacity as a **meter plus confirm**, not a second lock.
 
-Story (no new Feature parent — catch-up on shipped Feature [#272](https://github.com/markheydon/solo-dev-board/issues/272) per [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)):
+Story (no new Feature parent — catch-up on shipped Feature [#272](https://github.com/markheydon/solo-dev-board/issues/272) per [DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md)):
 
 - [#445](https://github.com/markheydon/solo-dev-board/issues/445) — separate stall gate from capacity on Iteration Planning.
 

@@ -13,10 +13,10 @@ This document defines the conventions and processes for maintaining SoloDevBoard
 | **Public product site** | `website/` (Hugo / Hextra, GitHub Pages) | Visitors and app users (landing + User Guide) |
 | **Developer / operator docs** | `docs/` | Contributors, self-hosters, and operators |
 | **Maintainer / PM** | `plan/` | Scope, decisions, runbooks, wireframes |
-| **Constitution** | `AGENTS.md`, `.github/instructions/` | AI agents and contributors (always-on rules) |
-| **ADR archive** | `adr/archive/` | Read-only historical records |
+| **Constitution** | `AGENTS.md`, `CONVENTIONS.md` | AI agents and contributors (always-on rules) |
+| **ADRs** | `adr/` | Architectural decision records |
 
-Do not add new files under `adr/` except via archive migration. Record new decisions per [`repo-decision-log`](../.agents/skills/repo-decision-log/SKILL.md).
+Record new decisions with the `create-architectural-decision-record` skill under `adr/`.
 
 ---
 
@@ -47,7 +47,7 @@ docs/                           # Repository / developer / operator docs (not Pa
 
 plan/
 ├── SCOPE.md
-├── DECISIONS.md                # Active decision log (repo memory)
+├── DECISIONS.md                # Retired pointer to adr/
 ├── IMPLEMENTATION_PLAN.md
 ├── BACKLOG.md
 ├── RELEASE_PLAN.md
@@ -60,15 +60,15 @@ plan/
 └── DOCS_STRATEGY.md            # This file
 
 adr/
-├── README.md                   # Redirect to plan/DECISIONS.md
-└── archive/                    # Read-only legacy ADR files
+├── README.md                   # ADR conventions
+└── adr-NNNN-*.md               # Decision records
 
 scripts/
 ├── invoke-hugo-site.sh         # Local Hugo build/serve/preview via Docker or Podman (bash)
 └── Invoke-HugoSite.ps1         # Windows PowerShell equivalent
 ```
 
-End-user guides and the product landing are deployed by GitHub Actions (Hugo) to GitHub Pages on `v*` release tags only. Pull requests validate Hugo builds via `hugo-validate.yml` without publishing. See [DEC-019](DECISIONS.md#dec-019-hugo-hextra-for-end-user-docs-on-github-pages), [DEC-021](DECISIONS.md#dec-021-two-tier-cd-pipeline), and [DEC-023](DECISIONS.md#dec-023-public-product-site-ia-and-canonical-domain).
+End-user guides and the product landing are deployed by GitHub Actions (Hugo) to GitHub Pages on `v*` release tags only. Pull requests validate Hugo builds via `hugo-validate.yml` without publishing. See [DEC-019](adr/adr-0019-hugo-hextra-end-user-docs.md), [DEC-021](adr/adr-0021-two-tier-cd-pipeline.md), and [DEC-023](adr/adr-0023-public-product-site-ia-and-domain.md).
 
 ---
 
@@ -79,7 +79,7 @@ When a new feature is implemented or reaches a stable state:
 1. **User Guide Stub → Full Doc:** Update the stub in `website/content/docs/<feature>.md`. Remove the "Under Development" notice. Write the **Overview**, **How to Use**, and **Configuration** sections with accurate, tested information.
 2. **Site pages:** Update `website/content/_index.md` and `website/content/docs/_index.md` so the feature appears in the feature list and guide index.
 3. **Getting Started / Deployment:** If the feature introduces new configuration (environment variables, AppHost parameters), update `docs/getting-started.md` and `docs/deployment.md`.
-4. **Decisions:** If an architectural decision was made, follow `repo-decision-log` — update `plan/DECISIONS.md` and/or constitution (`AGENTS.md`, instructions).
+4. **Decisions:** If an architectural decision was made, add or update an ADR under `adr/` and update `CONVENTIONS.md` or `AGENTS.md` when rules are cross-cutting.
 5. **Issues:** Close or update the corresponding GitHub Issue and sync Project #8.
 6. **Local preview:** Run `./scripts/invoke-hugo-site.sh serve` (or `build`) before merging `website/` changes. On Windows, use `.\scripts\Invoke-HugoSite.ps1`.
 
@@ -103,7 +103,7 @@ Rules:
 
 - Capture with **light theme** at **1400×900** viewport.
 - Use kebab-case PNG filenames and meaningful alt text.
-- Always capture with **docs capture mode** enabled (`DocsCapture:Enabled=true`) so only public repositories and public Projects v2 boards appear. See [DEC-020](DECISIONS.md#dec-020-public-only-docs-capture-mode-for-documentation-screenshots) and [Docs capture mode](../docs/getting-started.md#docs-capture-mode).
+- Always capture with **docs capture mode** enabled (`DocsCapture:Enabled=true`) so only public repositories and public Projects v2 boards appear. See [DEC-020](adr/adr-0020-public-only-docs-capture-mode.md) and [Docs capture mode](../docs/getting-started.md#docs-capture-mode).
 - Prefer the Playwright helper: `DOCS_CAPTURE_ENABLED=1 dotnet test tests/E2E/SoloDevBoard.E2E.Tests --filter "Category=DocsCapture"` against a locally running app with a real PAT.
 - Do not commit screenshots that show private repositories, private project boards, or other non-public GitHub content.
 
@@ -139,11 +139,10 @@ Changelog entries are grouped by:
 
 ## Cross-linking decisions and planning docs
 
-- Active decisions live in [`plan/DECISIONS.md`](DECISIONS.md).
-- Cross-cutting rules live in [`AGENTS.md`](../AGENTS.md) and [`.github/instructions/`](../.github/instructions/).
-- Legacy full ADR text is in [`adr/archive/`](../adr/archive/) — link via `Legacy:` in decision log entries.
-- Feature docs should reference `plan/DECISIONS.md` (DEC-NNN) rather than archived ADR paths.
-- When a decision is superseded, update its **Status** in `plan/DECISIONS.md` and add a row to the **Superseded legacy** table.
+- Active decisions live in [`adr/`](../adr/).
+- Cross-cutting rules live in [`AGENTS.md`](../AGENTS.md) and [`CONVENTIONS.md`](../CONVENTIONS.md).
+- Feature and plan docs should link to the relevant `adr/adr-NNNN-*.md` file rather than retired DEC-NNN anchors.
+- When a decision is superseded, update the ADR **Status** and add `superseded_by` in the ADR body where appropriate.
 
 ---
 
@@ -171,7 +170,7 @@ When Copilot or another AI agent is asked to write or update documentation:
 > |-------------|---------------------|
 > | New end-user feature implemented | Update `website/content/docs/<feature>.md` to full content; remove "Under Development" notice; refresh site indexes; recapture feature screenshots when the UI changed |
 > | New environment variable | Update `docs/getting-started.md` configuration table and `docs/deployment.md` |
-> | New architectural decision | Follow `repo-decision-log`; update `plan/DECISIONS.md` and constitution if cross-cutting |
+> | New architectural decision | Add an ADR under `adr/`; update `CONVENTIONS.md` or `AGENTS.md` if cross-cutting |
 > | Scope change | Update `plan/SCOPE.md`; update `website/content/_index.md` if the published feature list changes |
 > | New release | Update `plan/RELEASE_PLAN.md` and [`CHANGELOG.md`](../CHANGELOG.md) |
 > | New label | Update `plan/LABEL_STRATEGY.md` |

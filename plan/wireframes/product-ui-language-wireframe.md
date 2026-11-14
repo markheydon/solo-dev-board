@@ -1,7 +1,7 @@
 # Product visual language — page chrome
 
 **Status:** Planning baseline for the UX language feature (sibling of branding [#397](https://github.com/markheydon/solo-dev-board/issues/397)).  
-**Related:** [DEC-039](../DECISIONS.md#dec-039-mudblazor-visual-language-for-page-chrome), [UX-LANGUAGE.md](../../.agents/skills/mudblazor/references/UX-LANGUAGE.md).
+**Related:** [DEC-039](adr/adr-0039-mudblazor-visual-language-for-page-chrome.md), [UX-LANGUAGE.md](../../.agents/skills/mudblazor/references/UX-LANGUAGE.md).
 
 This is a **substantive refresh of existing pages**, not a new route. Implementation must not invent a second app shell.
 

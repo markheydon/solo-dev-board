@@ -27,4 +27,4 @@ Release notes live in [`CHANGELOG.md`](../CHANGELOG.md) at the repository root.
 
 On Windows PowerShell, use `.\scripts\Invoke-HugoSite.ps1 serve`.
 
-See also [DEC-019](../plan/DECISIONS.md#dec-019-hugo-hextra-for-end-user-docs-on-github-pages) and [DOCS_STRATEGY.md](../plan/DOCS_STRATEGY.md).
+See also [DEC-019](../adr/adr-0019-hugo-hextra-end-user-docs.md) and [DOCS_STRATEGY.md](../plan/DOCS_STRATEGY.md).

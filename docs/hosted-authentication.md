@@ -100,7 +100,7 @@ This is a known GitHub platform limitation for GitHub Apps, not a SoloDevBoard c
 ## Documentation References
 
 - See [Getting Started](getting-started.md) for prerequisites and setup, including the PAT versus hosted comparison.
-- See [DEC-011](../plan/DECISIONS.md#dec-011-hosted-access-control-for-public-deployments) and [DEC-012](../plan/DECISIONS.md#dec-012-github-app-first-hosted-authentication) for architectural rationale. Legacy ADR text: [ADR-0014](../adr/archive/0014-hosted-access-control-for-public-deployments.md), [ADR-0015](../adr/archive/0015-github-app-first-hosted-authentication.md).
+- See [DEC-011](../adr/adr-0014-hosted-access-control-for-public-deployments.md) and [DEC-012](../adr/adr-0015-github-app-first-hosted-authentication.md) for architectural rationale. Legacy ADR text: [ADR-0014](../adr/0014-hosted-access-control-for-public-deployments.md), [ADR-0015](../adr/0015-github-app-first-hosted-authentication.md).
 - See [plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md](../plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md) for session and token flow details.
 
 ---

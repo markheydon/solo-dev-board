@@ -23,7 +23,7 @@ SoloDevBoard uses GitHub's native project management tools:
 
 ## Work-item hierarchy (post-1.0)
 
-Follow [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy).
+Follow [DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md).
 
 | Level | When to use | When not to use |
 |-------|-------------|-----------------|
@@ -60,7 +60,7 @@ GitHub sub-issues and issue dependencies are the hierarchy source of truth. Agen
 | Parent / child (Epic → Feature → Story/Enabler/Test) | GitHub MCP `sub_issue_write` |
 | Blocking / blocked-by | REST `POST /repos/{owner}/{repo}/issues/{blocked}/dependencies/blocked_by` via `gh api` |
 
-`gh issue` still has no dedicated subcommands for either ([cli/cli#11757](https://github.com/cli/cli/issues/11757), [cli/cli#10298](https://github.com/cli/cli/issues/10298)). That does **not** mean the user must click Relationships in the UI — use the REST and MCP paths in [`.agents/skills/repo-github-gh-cli/SKILL.md`](../.agents/skills/repo-github-gh-cli/SKILL.md). Mention `#N` in the issue body as well so the graph is readable in comments and search.
+`gh issue` still has no dedicated subcommands for either ([cli/cli#11757](https://github.com/cli/cli/issues/11757), [cli/cli#10298](https://github.com/cli/cli/issues/10298)). That does **not** mean the user must click Relationships in the UI — use GitHub MCP `sub_issue_write` for parent/child links and `gh api` against the issue-dependencies REST API for blocking edges (see [GitHub issue dependencies](https://docs.github.com/en/rest/issues/issue-dependencies)). Mention `#N` in the issue body as well so the graph is readable in comments and search.
 
 ### Issue Lifecycle
 
@@ -72,7 +72,7 @@ Created → [status/todo] → [status/in-progress] → [status/in-review] → [s
                                                PR opened (linked)
 ```
 
-The issue lifecycle labels remain the source of truth for GitHub Issues. The project board may show an additional planning state, **Up Next**, but that state is board-only and does not have a matching GitHub issue label. **Blocked** and **Ice Box** are both board Status options **and** issue labels (`status/blocked`, `status/ice-box`); Roadmap Sync maps labels to board columns ([DEC-028](DECISIONS.md#dec-028-blocked-and-ice-box-project-status-options)).
+The issue lifecycle labels remain the source of truth for GitHub Issues. The project board may show an additional planning state, **Up Next**, but that state is board-only and does not have a matching GitHub issue label. **Blocked** and **Ice Box** are both board Status options **and** issue labels (`status/blocked`, `status/ice-box`); Roadmap Sync maps labels to board columns ([DEC-028](adr/adr-0028-blocked-and-ice-box-project-status-options.md)).
 
 Roadmap date handling follows the same lifecycle:
 
@@ -100,7 +100,7 @@ Follow [`PULL_REQUEST_POLICY.md`](PULL_REQUEST_POLICY.md). Reference the issue i
 
 ## Milestones
 
-Milestones map to **releases**, not ongoing product themes. After v1.0.0, keep **one open milestone** at a time ([DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)).
+Milestones map to **releases**, not ongoing product themes. After v1.0.0, keep **one open milestone** at a time ([DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md)).
 
 ### Naming convention
 
@@ -190,5 +190,5 @@ When using Copilot Chat to manage issues:
 > 2. Apply labels from `LABEL_STRATEGY.md` — minimum: one `type/`, one `priority/`, one `area/`.
 > 3. Assign the issue to the appropriate milestone.
 > 4. Use the user story format in the issue body when creating from planning input.
-> 5. Sync the issue to Project #8 per the `repo-github-project` skill.
-> 6. Set sub-issue parents and blocking relationships via MCP/`gh api` (see `repo-github-gh-cli`). Do not ask the user to click Relationships in the GitHub UI unless those APIs fail.
+> 5. Sync the issue to Project #8 per [`PROJECT_BOARD_DESIGN.md`](PROJECT_BOARD_DESIGN.md) (GitHub MCP or `gh project`).
+> 6. Set sub-issue parents and blocking relationships via MCP/`gh api` as above. Do not ask the user to click Relationships in the GitHub UI unless those APIs fail.
