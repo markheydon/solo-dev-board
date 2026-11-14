@@ -294,3 +294,4 @@ Enable diagnostic settings to Log Analytics per your subscription standards.
 - [Getting Started — authentication paths](getting-started.md)
 - [Secret inventory](../plan/KEY_VAULT_SECRET_INVENTORY.md)
 - [Hosted auth Key Vault pattern](../plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md)
+- [Post-migration Azure cleanup](../plan/POST_KEY_VAULT_MIGRATION_CLEANUP.md) — remove legacy vaults only after production CD succeeds

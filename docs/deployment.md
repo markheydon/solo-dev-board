@@ -304,6 +304,8 @@ az keyvault secret show --vault-name "$VAULT_NAME" --name "gh-app-client-secret"
 
 Each command should print `true`. A deploy can still succeed when secrets are missing or stale; the Container App then fails at runtime until the vault is populated and the app is restarted.
 
+After the **first successful production** CD on a release tag, operators may remove legacy Aspire-provisioned vaults and empty `rg-aspire-*` groups. Wait until staging and production are verified; see [post-migration Azure cleanup](../plan/POST_KEY_VAULT_MIGRATION_CLEANUP.md).
+
 **Shared Azure variables (both environments)**
 
 | Variable | Example | Purpose |
