@@ -149,11 +149,13 @@ public sealed class AppHostDeployParameterResolverTests
         Assert.Contains("auth-secrets-vault-name", exception.Message, StringComparison.Ordinal);
     }
 
+    /// <summary>Must match local-branch rules in <c>AppHost.cs</c> (needVaultForPat / needVaultForClientSecret).</summary>
     [Theory]
     [InlineData(false, false, false, false, false, false)]
-    [InlineData(true, false, false, true, true, true)]
+    [InlineData(false, false, false, true, true, false)]
+    [InlineData(true, false, false, true, false, true)]
     [InlineData(true, true, false, true, false, true)]
-    [InlineData(true, false, true, true, true, false)]
+    [InlineData(true, false, true, true, false, false)]
     [InlineData(true, true, true, true, false, false)]
     [InlineData(true, false, false, false, false, false)]
     public void LocalAuthSecretBinding_WhenHostedSignInAndVaultConfigured_UsesVaultOnlyForUnsetSecrets(
@@ -164,7 +166,7 @@ public sealed class AppHostDeployParameterResolverTests
         bool needVaultForPat,
         bool needVaultForClientSecret)
     {
-        var actualNeedVaultForPat = hostedSignIn && !useLocalPat && vaultConfigured;
+        var actualNeedVaultForPat = !hostedSignIn && !useLocalPat && vaultConfigured;
         var actualNeedVaultForClientSecret = hostedSignIn && !useLocalClientSecret && vaultConfigured;
 
         Assert.Equal(needVaultForPat, actualNeedVaultForPat);
