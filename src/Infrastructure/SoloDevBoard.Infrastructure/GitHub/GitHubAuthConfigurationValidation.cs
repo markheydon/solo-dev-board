@@ -30,7 +30,9 @@ public static class GitHubAuthConfigurationValidation
         {
             throw CreateConfigurationException(
                 "PAT mode is active because GitHubAuth:HostedSignInEnabled is false, but no personal access token is configured. " +
-                "Set the AppHost parameter 'gh-pat' in the Aspire dashboard (or GitHubAuth:PersonalAccessToken for the legacy dotnet run path).");
+                "Set AppHost parameter 'gh-pat' via 'aspire secret set Parameters:gh-pat' (Path A), " +
+                "or configure auth-secrets-vault-name and auth-secrets-vault-resource-group and sign in with Azure CLI (Path B). " +
+                "Legacy dotnet run may use GitHubAuth:PersonalAccessToken in user secrets.");
         }
     }
 
@@ -54,7 +56,8 @@ public static class GitHubAuthConfigurationValidation
         {
             throw CreateConfigurationException(
                 "Hosted sign-in is enabled but GitHub App OAuth credentials are incomplete. " +
-                $"Set the AppHost parameter(s): {string.Join(", ", missingParameters)}.");
+                $"Set AppHost parameter(s): {string.Join(", ", missingParameters)} via aspire secret or the dashboard (Path A), " +
+                "or store them in the configured development Key Vault and use Azure CLI sign-in (Path B).");
         }
 
         if (!admissionOptions.Enabled)

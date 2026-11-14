@@ -14,6 +14,24 @@ string AzureName(string resourceName) =>
 
 var aca = builder.AddAzureContainerAppEnvironment(AzureName("aca"));
 
+var resolvedAuthSecretsVaultName = AppHostDeployParameterResolver.Resolve(builder.Configuration, "auth-secrets-vault-name");
+var resolvedAuthSecretsVaultResourceGroup = AppHostDeployParameterResolver.Resolve(
+    builder.Configuration,
+    "auth-secrets-vault-resource-group");
+if (!AppHostDeployParameterResolver.IsActiveParameterValue(resolvedAuthSecretsVaultResourceGroup))
+{
+    resolvedAuthSecretsVaultResourceGroup = AppHostDeployParameterResolver.ResolveAuthSecretsVaultResourceGroup(builder.Configuration);
+}
+
+var authSecretsVaultName = builder.AddParameter("auth-secrets-vault-name", resolvedAuthSecretsVaultName)
+    .WithDescription(
+        "Azure Key Vault name for auth secret fallback (local Path B) and deploy. " +
+        "Use '-' for local Path A only. Staging defaults to auth-secrets-staging; Production to auth-secrets.");
+
+var authSecretsVaultResourceGroup = builder.AddParameter("auth-secrets-vault-resource-group", resolvedAuthSecretsVaultResourceGroup)
+    .WithDescription(
+        "Resource group that owns the auth-secrets vault. Use '-' to inherit Azure__ResourceGroup at deploy or local Path B.");
+
 var hostedSignInEnabled = builder.AddParameter("hosted-sign-in-enabled")
     .WithDescription("Enable GitHub App hosted sign-in at /auth/sign-in. When false, PAT mode is used (default).");
 
@@ -24,7 +42,7 @@ var ghAppClientId = builder.AddParameter("gh-app-client-id")
     .WithDescription("GitHub App OAuth client ID for hosted sign-in. Set to '-' for PAT mode.");
 
 var ghAppClientSecret = builder.AddParameter("gh-app-client-secret", secret: true)
-    .WithDescription("GitHub App OAuth client secret for hosted sign-in. Set to '-' via the dashboard for hosted sign-in.");
+    .WithDescription("GitHub App OAuth client secret for hosted sign-in. Set to '-' via the dashboard for PAT mode.");
 
 var hostedAdmissionEnabled = builder.AddParameter("hosted-admission-enabled")
     .WithDescription("Enable deny-by-default admission control for hosted sign-in.");
@@ -104,10 +122,10 @@ if (builder.ExecutionContext.IsPublishMode)
         .WithEnvironment("HostedAdmissionControl__AllowedUserLogins", resolvedAllowedUserLogins)
         .WithEnvironment("HostedAdmissionControl__AllowedOrganisationLogins", resolvedAllowedOrgLogins);
 
-    var authSecretsVault = builder.AddAzureKeyVault(AzureName("auth-secrets"));
+    AppHostDeployParameterResolver.EnsureAuthSecretsVaultConfigured(builder.Configuration);
 
-    authSecretsVault.AddSecret("auth-gh-pat", "gh-pat", githubPat);
-    authSecretsVault.AddSecret("auth-gh-app-client-secret", "gh-app-client-secret", ghAppClientSecret);
+    var authSecretsVault = builder.AddAzureKeyVault(AzureName("auth-secrets"))
+        .PublishAsExisting(authSecretsVaultName, authSecretsVaultResourceGroup);
 
     app = app
         .WithRoleAssignments(authSecretsVault, KeyVaultBuiltInRole.KeyVaultSecretsUser)
@@ -139,10 +157,57 @@ if (builder.ExecutionContext.IsPublishMode)
 }
 else
 {
-    app = app
-        .WithEnvironment("GitHubAuth__PersonalAccessToken", githubPat)
-        .WithEnvironment("GitHubAuth__HostedGitHubAppClientSecret", ghAppClientSecret)
-        .WithEnvironment("GitHubAuth__HostedSignInCallbackBaseUri", app.GetEndpoint("https"));
+    var hostedSignIn = AppHostDeployParameterResolver.IsHostedSignInEnabled(builder.Configuration);
+    var resolvedGithubPat = AppHostDeployParameterResolver.Resolve(builder.Configuration, "gh-pat", string.Empty);
+    var resolvedGhAppClientSecret = AppHostDeployParameterResolver.Resolve(builder.Configuration, "gh-app-client-secret", string.Empty);
+    var useLocalPat = AppHostDeployParameterResolver.IsActiveParameterValue(resolvedGithubPat);
+    var useLocalClientSecret = AppHostDeployParameterResolver.IsActiveParameterValue(resolvedGhAppClientSecret);
+    var vaultConfigured = AppHostDeployParameterResolver.HasConfiguredAuthSecretsVault(builder.Configuration);
+
+    var needVaultForPat = !hostedSignIn && !useLocalPat && vaultConfigured;
+    var needVaultForClientSecret = hostedSignIn && !useLocalClientSecret && vaultConfigured;
+
+    if (needVaultForPat || needVaultForClientSecret)
+    {
+        var authSecretsVault = builder.AddAzureKeyVault("auth-secrets")
+            .AsExisting(authSecretsVaultName, authSecretsVaultResourceGroup);
+
+        app = app
+            .WithRoleAssignments(authSecretsVault, KeyVaultBuiltInRole.KeyVaultSecretsUser)
+            .WithReference(authSecretsVault);
+
+        if (needVaultForPat)
+        {
+            app = app.WithEnvironment("GitHubAuth__PersonalAccessToken", authSecretsVault.GetSecret("gh-pat"));
+        }
+        else if (useLocalPat)
+        {
+            app = app.WithEnvironment("GitHubAuth__PersonalAccessToken", githubPat);
+        }
+
+        if (needVaultForClientSecret)
+        {
+            app = app.WithEnvironment("GitHubAuth__HostedGitHubAppClientSecret", authSecretsVault.GetSecret("gh-app-client-secret"));
+        }
+        else if (useLocalClientSecret)
+        {
+            app = app.WithEnvironment("GitHubAuth__HostedGitHubAppClientSecret", ghAppClientSecret);
+        }
+    }
+    else
+    {
+        if (useLocalPat)
+        {
+            app = app.WithEnvironment("GitHubAuth__PersonalAccessToken", githubPat);
+        }
+
+        if (useLocalClientSecret)
+        {
+            app = app.WithEnvironment("GitHubAuth__HostedGitHubAppClientSecret", ghAppClientSecret);
+        }
+    }
+
+    app = app.WithEnvironment("GitHubAuth__HostedSignInCallbackBaseUri", app.GetEndpoint("https"));
 }
 
 builder.Build().Run();

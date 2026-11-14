@@ -54,7 +54,7 @@ Use this path when you want a **personal** SoloDevBoard instance on your own Azu
 ### Deploy locally with `aspire deploy` (recommended for personal instances)
 
 1. Complete [Create a resource group](#1-create-a-resource-group) (OIDC identity is optional for this option).
-2. Log in and export Azure + PAT-mode parameters:
+2. Log in, create or reuse a Key Vault in the app resource group, and store your PAT (see [Azure Key Vault setup](azure-key-vault-setup.md)):
 
 ```bash
 az login
@@ -63,12 +63,16 @@ export Azure__SubscriptionId="$(az account show --query id -o tsv)"
 export Azure__Location="uksouth"
 export Azure__ResourceGroup="rg-solodevboard-prod"
 
+VAULT_NAME="auth-secrets"
+az keyvault create --name "$VAULT_NAME" --resource-group "$Azure__ResourceGroup" \
+  --location "$Azure__Location" --enable-rbac-authorization true
+az keyvault secret set --vault-name "$VAULT_NAME" --name "gh-pat" --value "<your-github-pat>"
+az keyvault secret set --vault-name "$VAULT_NAME" --name "gh-app-client-secret" --value "-"
+
 # PAT-only local trusted mode — no GitHub App
 export Parameters__hosted_sign_in_enabled="false"
 export Parameters__hosted_admission_enabled="true"   # ignored in PAT mode; any value is fine
-export Parameters__gh_pat="<your-github-pat>"
 export Parameters__gh_app_client_id="-"
-export Parameters__gh_app_client_secret="-"
 export Parameters__allowed_user_logins="-"
 export Parameters__allowed_org_logins="-"
 ```
@@ -94,16 +98,18 @@ aspire deploy \
 4. Open the Container App FQDN from the Aspire output or Azure portal. Expect the dashboard shell with a **@login** chip — not the `/welcome` hosted landing page.
 5. Optionally verify PAT connectivity: `curl -sf "https://<fqdn>/health/github"`.
 
-Secret parameters (`gh-pat`, and `gh-app-client-secret` when used) are written to the Aspire-provisioned `auth-secrets` Key Vault and referenced by the Container App. You do not create Key Vault secrets by hand.
+Store `gh-pat` and `gh-app-client-secret` in the tier Key Vault **before** deploy. The AppHost references the existing vault (`PublishAsExisting`); deploy does not copy secrets from GitHub Actions or `Parameters__gh_*`. See [Azure Key Vault setup](azure-key-vault-setup.md).
 
 ### PAT-mode parameter and environment variable cheat sheet
 
 | AppHost parameter | CD / local env var | Self-hoster (PAT) value |
 |---|---|---|
 | `hosted-sign-in-enabled` | `Parameters__hosted_sign_in_enabled` / `HOSTED_SIGN_IN_ENABLED` | `false` |
-| `gh-pat` | `Parameters__gh_pat` / `GH_PAT` | **your PAT** (secret) |
+| `gh-pat` | Key Vault secret `gh-pat` | **your PAT** |
 | `gh-app-client-id` | `Parameters__gh_app_client_id` / `GH_APP_CLIENT_ID` | `-` |
-| `gh-app-client-secret` | `Parameters__gh_app_client_secret` / `GH_APP_CLIENT_SECRET` | `-` |
+| `gh-app-client-secret` | Key Vault secret `gh-app-client-secret` | `-` |
+| `auth-secrets-vault-name` | `Parameters__auth_secrets_vault_name` / `AUTH_SECRETS_VAULT_NAME` | `auth-secrets` |
+| `auth-secrets-vault-resource-group` | `Parameters__auth_secrets_vault_resource_group` / `AUTH_SECRETS_VAULT_RESOURCE_GROUP` | app RG or `Azure__ResourceGroup` |
 | `hosted-admission-enabled` | `Parameters__hosted_admission_enabled` / `HOSTED_ADMISSION_ENABLED` | ignored |
 | `allowed-user-logins` | `Parameters__allowed_user_logins` / `ALLOWED_USER_LOGINS` | `-` |
 | `allowed-org-logins` | `Parameters__allowed_org_logins` / `ALLOWED_ORG_LOGINS` | `-` |
@@ -278,15 +284,15 @@ Create two GitHub Environments in **Settings → Environments**: `staging` and `
 
 | Secret / variable | Value |
 |---|---|
-| Secret `GH_PAT` | `-` |
-| Secret `GH_APP_CLIENT_SECRET` | GitHub App client secret |
+| Variable `AUTH_SECRETS_VAULT_NAME` | `auth-secrets-staging` or `auth-secrets` (optional if set in appsettings for the tier) |
+| Variable `AUTH_SECRETS_VAULT_RESOURCE_GROUP` | *(unset)* — use `AZURE_RESOURCE_GROUP` for the vault RG when the vault lives in the app resource group |
 | Variable `HOSTED_SIGN_IN_ENABLED` | `true` |
 | Variable `HOSTED_ADMISSION_ENABLED` | `true` |
 | Variable `GH_APP_CLIENT_ID` | your client ID |
 | Variable `ALLOWED_USER_LOGINS` | your login(s), or `-` |
 | Variable `ALLOWED_ORG_LOGINS` | org login(s), or `-` |
 
-Secret parameters are written to the Aspire-provisioned `auth-secrets` Key Vault at deploy time and referenced by the Container App. You do not create or manage Key Vault secrets manually for the default deployment path.
+Populate `gh-pat` and `gh-app-client-secret` in each tier's Key Vault before CD runs. GitHub Actions no longer passes `GH_PAT` or `GH_APP_CLIENT_SECRET` to `aspire deploy`. See [Azure Key Vault setup](azure-key-vault-setup.md).
 
 **Shared Azure variables (both environments)**
 
@@ -312,7 +318,8 @@ Configure **your** instance via GitHub Environment secrets and variables (for CD
 
 | You must set (hosted CD) | Purpose |
 |---|---|
-| `GH_APP_CLIENT_ID`, `GH_APP_CLIENT_SECRET` | GitHub App OAuth |
+| `GH_APP_CLIENT_ID` | GitHub App OAuth client ID (non-secret) |
+| Key Vault `gh-app-client-secret` | GitHub App client secret (before deploy) |
 | `ALLOWED_USER_LOGINS` and/or `ALLOWED_ORG_LOGINS` | Admission allow-list |
 | `AZURE_*` secrets and `AZURE_LOCATION`, `AZURE_RESOURCE_GROUP` | Azure deploy target |
 
@@ -424,7 +431,7 @@ Aspire generates and applies Bicep at deploy time. A typical deployment includes
 | Azure Container Apps environment | Hosts the containerised app (Consumption profile) |
 | Container App (`app`) | Runs SoloDevBoard (scale-to-zero enabled) |
 | Azure Container Registry | Stores built container images (Aspire-provisioned per deployment, or optional shared registry — see [Optional shared Container Registry](#optional-shared-container-registry)) |
-| Azure Key Vault (`auth-secrets`, or `auth-secrets-staging`) | Stores hosted auth secret parameters as Key Vault secrets |
+| Azure Key Vault (`auth-secrets`, or `auth-secrets-staging`) | Pre-populated auth secrets referenced at deploy time ([ADR-0045](../adr/adr-0045-persistent-key-vault-dual-path-local-secrets.md)) |
 | Application Insights | Application logs, metrics, and distributed traces |
 | Log Analytics workspace | Container platform logs and Application Insights backing store |
 | Aspire dashboard | Optional operational dashboard (Aspire default) |
@@ -538,6 +545,6 @@ az identity delete --name id-solodevboard-cd --resource-group <acr-resource-grou
 | Secret not visible in Container App settings | Key Vault reference | Expected — inspect the `auth-secrets` vault for secret names; values are resolved at runtime |
 | Home dashboard shown without sign-in | Missing login gate or placeholder deploy parameters | Confirm `/` redirects to `/welcome`; redeploy with `Parameters__*` env vars mapped in CD; verify Container App env shows real client ID and allow-list values. CI Playwright `hosted` job asserts this gate with placeholder credentials. |
 | PAT mode shows `/welcome` or requires sign-in | `hosted-sign-in-enabled` still `true` | Set `HOSTED_SIGN_IN_ENABLED` / `Parameters__hosted_sign_in_enabled` to `false` and redeploy |
-| PAT mode starts but GitHub calls fail | Missing or invalid `GH_PAT` | Set a real PAT with required scopes; confirm `/health/github` and the **@login** chip |
+| PAT mode starts but GitHub calls fail | Missing or invalid `gh-pat` in Key Vault | Set a real PAT in the tier vault with required scopes; confirm `/health/github` and the **@login** chip |
 
 For local development, see [Getting Started](getting-started.md) (including [PAT-only local trusted mode](getting-started.md#pat-only-local-trusted-mode)). For hosted authentication details, see [Hosted Authentication](hosted-authentication.md). For the Key Vault pattern, see [plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md](../plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md).

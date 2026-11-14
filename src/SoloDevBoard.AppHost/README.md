@@ -4,7 +4,7 @@ Aspire orchestrates the SoloDevBoard web app for local development, dev containe
 
 The AppHost opts into the Aspire CLI bundle (`AspireUseCliBundle=true`). Dashboard and DCP orchestration binaries come from the Aspire CLI on `PATH` (or the SDK-paired `Aspire.Cli` via `dnx` when no CLI is installed). Keep your local `aspire` version aligned with `Aspire.AppHost.Sdk` (`13.6.5` today): run `aspire --version` and upgrade with `aspire update --self` when needed.
 
-GitHub authentication is configured through **AppHost parameters**. In local development they are injected into the `app` resource as environment variables. In deploy mode, secret parameters are persisted in Azure Key Vault and referenced by the Container App.
+GitHub authentication is configured through **AppHost parameters**. Local **Path A** injects secret parameters directly (`aspire secret set`). Local **Path B** and **deploy** read pre-populated secrets from an existing Azure Key Vault via `GetSecret` references.
 
 Use `-` on inactive parameters. Shipped defaults are in `src/SoloDevBoard.AppHost/appsettings.json`; staging and production tier defaults are in `appsettings.Staging.json` and `appsettings.Production.json` respectively (hosted sign-in enabled for CD tiers only — no operator hostnames or allow-lists). Operator-specific deploy values (callback URL, custom domain, GitHub App client ID, allow-lists) must be supplied via `Parameters__*` environment variables or GitHub Environment variables — not committed in appsettings. Values saved from the Aspire dashboard are stored in user secrets and **override** those defaults.
 
@@ -86,16 +86,18 @@ The `app` resource registers `GET /health` as the Container App readiness probe 
 
 ### Key Vault-backed auth secrets
 
-In publish/deploy mode, hosted authentication secrets are persisted in an Aspire-provisioned `auth-secrets` Key Vault and injected into the Container App as Key Vault references — not plain-text app settings. This applies to:
+| Key Vault secret name | App configuration key |
+|---|---|
+| `gh-pat` | `GitHubAuth__PersonalAccessToken` |
+| `gh-app-client-secret` | `GitHubAuth__HostedGitHubAppClientSecret` |
 
-| Secret parameter | Key Vault secret name | App configuration key |
-|---|---|---|
-| `gh-pat` | `gh-pat` | `GitHubAuth__PersonalAccessToken` |
-| `gh-app-client-secret` | `gh-app-client-secret` | `GitHubAuth__HostedGitHubAppClientSecret` |
+**Local Path A:** `aspire secret set` on `gh-pat` / `gh-app-client-secret` (no Azure).
 
-Local `aspire start` continues to bind these parameters directly from user secrets or the Aspire dashboard. Deploy-time input is unchanged: supply `Parameters__gh_pat` and `Parameters__gh_app_client_secret` as before.
+**Local Path B:** unset local secrets; set `auth-secrets-vault-name` and `auth-secrets-vault-resource-group`; `az login` with dev vault access.
 
-See [plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md](../../plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md) for the full pattern.
+**Deploy:** `PublishAsExisting` on the tier vault (`auth-secrets` / `auth-secrets-staging` by default in appsettings). Populate secrets in the vault before CD; do not rely on `GH_PAT` / `GH_APP_CLIENT_SECRET` in GitHub Actions.
+
+See [docs/azure-key-vault-setup.md](../docs/azure-key-vault-setup.md) and [plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md](../../plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md).
 
 ### Custom domain
 
@@ -117,9 +119,9 @@ AppHost parameters map to workflow environment variables with underscores instea
 | AppHost parameter | CD environment variable |
 |---|---|
 | `hosted-sign-in-enabled` | `Parameters__hosted_sign_in_enabled` |
-| `gh-pat` | `Parameters__gh_pat` |
 | `gh-app-client-id` | `Parameters__gh_app_client_id` |
-| `gh-app-client-secret` | `Parameters__gh_app_client_secret` |
+| `auth-secrets-vault-name` | `Parameters__auth_secrets_vault_name` / `AUTH_SECRETS_VAULT_NAME` |
+| `auth-secrets-vault-resource-group` | `Parameters__auth_secrets_vault_resource_group` / `AUTH_SECRETS_VAULT_RESOURCE_GROUP` |
 | `hosted-admission-enabled` | `Parameters__hosted_admission_enabled` |
 | `allowed-user-logins` | `Parameters__allowed_user_logins` |
 | `allowed-org-logins` | `Parameters__allowed_org_logins` |

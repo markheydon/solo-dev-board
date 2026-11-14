@@ -98,8 +98,8 @@ jobs:
           Parameters__gh_app_client_id: ${{ vars.GH_APP_CLIENT_ID }}
           Parameters__allowed_user_logins: ${{ vars.ALLOWED_USER_LOGINS }}
           Parameters__allowed_org_logins: ${{ vars.ALLOWED_ORG_LOGINS }}
-          Parameters__gh_pat: ${{ secrets.GH_PAT }}
-          Parameters__gh_app_client_secret: ${{ secrets.GH_APP_CLIENT_SECRET }}
+          Parameters__auth_secrets_vault_name: ${{ vars.AUTH_SECRETS_VAULT_NAME || '-' }}
+          Parameters__auth_secrets_vault_resource_group: ${{ vars.AUTH_SECRETS_VAULT_RESOURCE_GROUP || '-' }}
           Parameters__hosted_callback_base_uri: ${{ vars.HOSTED_CALLBACK_BASE_URI || '-' }}
           Parameters__custom_domain: ${{ vars.CUSTOM_DOMAIN || '-' }}
           Parameters__custom_domain_certificate_name: ${{ vars.CUSTOM_DOMAIN_CERTIFICATE_NAME || '-' }}

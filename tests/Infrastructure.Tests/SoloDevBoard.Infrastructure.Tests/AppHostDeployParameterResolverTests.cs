@@ -74,6 +74,81 @@ public sealed class AppHostDeployParameterResolverTests
         Assert.Contains("acr-resource-group", exception.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void HasConfiguredAuthSecretsVault_WhenNameAndAzureResourceGroupPresent_ReturnsTrue()
+    {
+        var previousRg = Environment.GetEnvironmentVariable("Azure__ResourceGroup");
+
+        try
+        {
+            Environment.SetEnvironmentVariable("Azure__ResourceGroup", "rg-solodevboard-staging");
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Parameters:auth-secrets-vault-name"] = "auth-secrets-staging",
+                    ["Parameters:auth-secrets-vault-resource-group"] = "-",
+                })
+                .Build();
+
+            var actual = DeployParameterResolver.HasConfiguredAuthSecretsVault(configuration);
+
+            Assert.True(actual);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("Azure__ResourceGroup", previousRg);
+        }
+    }
+
+    [Fact]
+    public void IsHostedSignInEnabled_WhenConfigurationTrue_ReturnsTrue()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Parameters:hosted-sign-in-enabled"] = "true",
+            })
+            .Build();
+
+        var actual = DeployParameterResolver.IsHostedSignInEnabled(configuration);
+
+        Assert.True(actual);
+    }
+
+    [Fact]
+    public void EnsureAuthSecretsVaultConfigured_WhenVaultConfigured_DoesNotThrow()
+    {
+        var previousRg = Environment.GetEnvironmentVariable("Azure__ResourceGroup");
+
+        try
+        {
+            Environment.SetEnvironmentVariable("Azure__ResourceGroup", "rg-solodevboard-staging");
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Parameters:auth-secrets-vault-name"] = "auth-secrets-staging",
+                })
+                .Build();
+
+            DeployParameterResolver.EnsureAuthSecretsVaultConfigured(configuration);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("Azure__ResourceGroup", previousRg);
+        }
+    }
+
+    [Fact]
+    public void EnsureAuthSecretsVaultConfigured_WhenVaultNameMissing_ThrowsInvalidOperationException()
+    {
+        var configuration = new ConfigurationBuilder().Build();
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            DeployParameterResolver.EnsureAuthSecretsVaultConfigured(configuration));
+
+        Assert.Contains("auth-secrets-vault-name", exception.Message, StringComparison.Ordinal);
+    }
+
     /// <summary>Test double mirroring AppHost deploy parameter resolution.</summary>
     private static class DeployParameterResolver
     {
@@ -126,6 +201,49 @@ public sealed class AppHostDeployParameterResolverTests
             throw new InvalidOperationException(
                 $"Deploy parameters '{firstParameterName}' and '{secondParameterName}' must both be set or both omitted. " +
                 $"Set Parameters__{firstParameterName.Replace('-', '_')} and Parameters__{secondParameterName.Replace('-', '_')} together, or leave both unset for Aspire's default registry.");
+        }
+
+        public static bool IsHostedSignInEnabled(IConfiguration configuration)
+        {
+            var value = Resolve(configuration, "hosted-sign-in-enabled", "false");
+            return bool.TryParse(value, out var enabled) && enabled;
+        }
+
+        public static string ResolveAuthSecretsVaultResourceGroup(IConfiguration configuration)
+        {
+            var resolved = Resolve(configuration, "auth-secrets-vault-resource-group");
+            if (IsActiveParameterValue(resolved))
+            {
+                return resolved!.Trim();
+            }
+
+            var azureResourceGroup = Environment.GetEnvironmentVariable("Azure__ResourceGroup");
+            if (IsActiveParameterValue(azureResourceGroup))
+            {
+                return azureResourceGroup!.Trim();
+            }
+
+            return "-";
+        }
+
+        public static bool HasConfiguredAuthSecretsVault(IConfiguration configuration)
+        {
+            var vaultName = Resolve(configuration, "auth-secrets-vault-name");
+            var vaultResourceGroup = ResolveAuthSecretsVaultResourceGroup(configuration);
+            return IsActiveParameterValue(vaultName) && IsActiveParameterValue(vaultResourceGroup);
+        }
+
+        public static void EnsureAuthSecretsVaultConfigured(IConfiguration configuration)
+        {
+            if (HasConfiguredAuthSecretsVault(configuration))
+            {
+                return;
+            }
+
+            throw new InvalidOperationException(
+                "Deploy requires Parameters:auth-secrets-vault-name and a resource group " +
+                "(Parameters:auth-secrets-vault-resource-group or Azure__ResourceGroup). " +
+                "Populate the tier Key Vault before deploy. See docs/azure-key-vault-setup.md.");
         }
     }
 }

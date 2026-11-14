@@ -48,3 +48,7 @@ jobs:
 
       - name: Validate Aspire deployment steps
         run: aspire deploy --list-steps --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --environment ${{ matrix.aspire_environment }} --non-interactive
+        env:
+          Azure__SubscriptionId: "00000000-0000-0000-0000-000000000000"
+          Azure__Location: uksouth
+          Azure__ResourceGroup: rg-solodevboard-validate

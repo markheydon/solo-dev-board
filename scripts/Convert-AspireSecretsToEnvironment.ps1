@@ -132,9 +132,7 @@ $SecretMappings = [ordered]@{
     'Azure:ResourceGroup'               = 'Azure__ResourceGroup'
     'Parameters:hosted-sign-in-enabled' = 'Parameters__hosted_sign_in_enabled'
     'Parameters:hosted-admission-enabled' = 'Parameters__hosted_admission_enabled'
-    'Parameters:gh-pat'                 = 'Parameters__gh_pat'
     'Parameters:gh-app-client-id'       = 'Parameters__gh_app_client_id'
-    'Parameters:gh-app-client-secret'   = 'Parameters__gh_app_client_secret'
     'Parameters:allowed-user-logins'    = 'Parameters__allowed_user_logins'
     'Parameters:allowed-org-logins'     = 'Parameters__allowed_org_logins'
 }
@@ -169,9 +167,7 @@ foreach ($mapping in $SecretMappings.GetEnumerator()) {
 $requiredForDeploy = @(
     'Azure__SubscriptionId',
     'Azure__Location',
-    'Azure__ResourceGroup',
-    'Parameters__gh_pat',
-    'Parameters__gh_app_client_secret'
+    'Azure__ResourceGroup'
 )
 
 $missingRequired = @($requiredForDeploy | Where-Object { $_ -notin $setNames })
@@ -182,7 +178,8 @@ if ($missingRequired.Count -gt 0) {
     Write-Warning @(
         'The following deploy inputs are still unset:',
         ($missingRequired -join ', '),
-        'Set them with aspire secret set, pass -ResourceGroup, or assign $env: variables before running aspire deploy.'
+        'Set them with aspire secret set, pass -ResourceGroup, or assign $env: variables before running aspire deploy. ' +
+        'Populate gh-pat and gh-app-client-secret in the tier Key Vault separately (see docs/azure-key-vault-setup.md).'
     ) -join ' '
 }
 

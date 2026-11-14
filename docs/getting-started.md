@@ -157,6 +157,24 @@ Use `SoloDevBoard.UnitTests.slnf` or `scripts/test-unit` for the fast path. Plai
 
 ## Configuration
 
+### Path A: local secrets (no Azure)
+
+Recommended for forks and solo developers. Set secret AppHost parameters once per machine with `aspire secret set` (or Codespaces `SDB_*` secrets). No Azure subscription or Key Vault is required.
+
+### Path B: shared development Key Vault
+
+Recommended for maintainers working across several machines, Dev Containers, or Codespaces without copying PATs. Leave secret parameters unset (or `-`) and configure `auth-secrets-vault-name` plus `auth-secrets-vault-resource-group` in `appsettings.Development.json` (or environment). Sign in with `az login` and ensure your Entra identity has **Key Vault Secrets User** on the dev vault. See [Azure Key Vault setup](azure-key-vault-setup.md).
+
+Local parameter values always override Key Vault when both are set.
+
+### Path A versus Path B (summary)
+
+| | Path A | Path B |
+|---|---|---|
+| Setup | `aspire secret set Parameters:gh-pat "…"` | Populate dev vault; configure vault name/RG |
+| Azure | Not required | `az login` + RBAC on dev vault only |
+| Deploy to Azure | Separate operator steps (vault required) | Same |
+
 SoloDevBoard is configured via `appsettings.json` and environment variables. **Never commit secrets to source control.**
 
 When running via Aspire (`aspire start`), GitHub auth and admission settings are modelled as **AppHost parameters** and injected into the `app` resource as environment variables. See also [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md) for a concise parameter cheat sheet.
@@ -232,6 +250,8 @@ Your GitHub login is resolved automatically from the PAT when the app starts. Pa
 | `hosted-admission-enabled` | no | `true` | `HostedAdmissionControl:Enabled` | ignored | `true` (recommended) |
 | `allowed-user-logins` | no | `-` | `HostedAdmissionControl:AllowedUserLogins` | ignored | **logins or `-`** |
 | `allowed-org-logins` | no | `-` | `HostedAdmissionControl:AllowedOrganisationLogins` | ignored | **logins or `-`** |
+| `auth-secrets-vault-name` | no | `-` | *(orchestration only)* | `-` (Path A) | Path B / deploy |
+| `auth-secrets-vault-resource-group` | no | `-` | *(orchestration only)* | `-` or inherit `Azure__ResourceGroup` at deploy | Path B / deploy |
 
 #### What each parameter does
 
