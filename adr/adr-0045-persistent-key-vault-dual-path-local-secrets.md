@@ -23,3 +23,4 @@ Hosted tiers already store GitHub integration secrets in Azure Key Vault at depl
 
 - [plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md](../plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md)
 - [src/SoloDevBoard.AppHost/AppHost.cs](../src/SoloDevBoard.AppHost/AppHost.cs)
+- [ADR-0018](adr-0018-aspire-azure-container-apps-deployment.md) (deploy secret supply amended, not the ACA deploy path)

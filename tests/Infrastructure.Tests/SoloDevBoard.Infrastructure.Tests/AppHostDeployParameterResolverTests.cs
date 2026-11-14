@@ -149,7 +149,52 @@ public sealed class AppHostDeployParameterResolverTests
         Assert.Contains("auth-secrets-vault-name", exception.Message, StringComparison.Ordinal);
     }
 
-    /// <summary>Test double mirroring AppHost deploy parameter resolution.</summary>
+    [Theory]
+    [InlineData(false, false, false, false, false, false)]
+    [InlineData(true, false, false, true, true, true)]
+    [InlineData(true, true, false, true, false, true)]
+    [InlineData(true, false, true, true, true, false)]
+    [InlineData(true, true, true, true, false, false)]
+    [InlineData(true, false, false, false, false, false)]
+    public void LocalAuthSecretBinding_WhenHostedSignInAndVaultConfigured_UsesVaultOnlyForUnsetSecrets(
+        bool hostedSignIn,
+        bool useLocalPat,
+        bool useLocalClientSecret,
+        bool vaultConfigured,
+        bool needVaultForPat,
+        bool needVaultForClientSecret)
+    {
+        var actualNeedVaultForPat = hostedSignIn && !useLocalPat && vaultConfigured;
+        var actualNeedVaultForClientSecret = hostedSignIn && !useLocalClientSecret && vaultConfigured;
+
+        Assert.Equal(needVaultForPat, actualNeedVaultForPat);
+        Assert.Equal(needVaultForClientSecret, actualNeedVaultForClientSecret);
+    }
+
+    [Theory]
+    [InlineData("-", false)]
+    [InlineData(" ", false)]
+    [InlineData("token", true)]
+    public void Resolve_WhenEnvironmentValueIsInactive_FallsThroughToDefault(string environmentValue, bool expectActive)
+    {
+        var previous = Environment.GetEnvironmentVariable("Parameters__gh_pat");
+
+        try
+        {
+            Environment.SetEnvironmentVariable("Parameters__gh_pat", environmentValue);
+            var configuration = new ConfigurationBuilder().Build();
+
+            var actual = DeployParameterResolver.Resolve(configuration, "gh-pat", "default");
+
+            Assert.Equal(expectActive ? environmentValue.Trim() : "default", actual);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("Parameters__gh_pat", previous);
+        }
+    }
+
+    /// <summary>Test double that must stay aligned with <c>AppHostDeployParameterResolver</c> in SoloDevBoard.AppHost.</summary>
     private static class DeployParameterResolver
     {
         public static string Resolve(IConfiguration configuration, string hyphenatedParameterName, string defaultValue = "-")
@@ -159,21 +204,21 @@ public sealed class AppHostDeployParameterResolverTests
 
             var underscoredName = hyphenatedParameterName.Replace('-', '_');
             var environmentValue = Environment.GetEnvironmentVariable($"Parameters__{underscoredName}");
-            if (!string.IsNullOrWhiteSpace(environmentValue))
+            if (IsActiveParameterValue(environmentValue))
             {
-                return environmentValue;
+                return environmentValue!.Trim();
             }
 
             var hyphenatedConfigurationValue = configuration[$"Parameters:{hyphenatedParameterName}"];
-            if (!string.IsNullOrWhiteSpace(hyphenatedConfigurationValue))
+            if (IsActiveParameterValue(hyphenatedConfigurationValue))
             {
-                return hyphenatedConfigurationValue;
+                return hyphenatedConfigurationValue!.Trim();
             }
 
             var underscoredConfigurationValue = configuration[$"Parameters:{underscoredName}"];
-            if (!string.IsNullOrWhiteSpace(underscoredConfigurationValue))
+            if (IsActiveParameterValue(underscoredConfigurationValue))
             {
-                return underscoredConfigurationValue;
+                return underscoredConfigurationValue!.Trim();
             }
 
             return defaultValue;
@@ -205,12 +250,16 @@ public sealed class AppHostDeployParameterResolverTests
 
         public static bool IsHostedSignInEnabled(IConfiguration configuration)
         {
+            ArgumentNullException.ThrowIfNull(configuration);
+
             var value = Resolve(configuration, "hosted-sign-in-enabled", "false");
             return bool.TryParse(value, out var enabled) && enabled;
         }
 
         public static string ResolveAuthSecretsVaultResourceGroup(IConfiguration configuration)
         {
+            ArgumentNullException.ThrowIfNull(configuration);
+
             var resolved = Resolve(configuration, "auth-secrets-vault-resource-group");
             if (IsActiveParameterValue(resolved))
             {
@@ -228,6 +277,8 @@ public sealed class AppHostDeployParameterResolverTests
 
         public static bool HasConfiguredAuthSecretsVault(IConfiguration configuration)
         {
+            ArgumentNullException.ThrowIfNull(configuration);
+
             var vaultName = Resolve(configuration, "auth-secrets-vault-name");
             var vaultResourceGroup = ResolveAuthSecretsVaultResourceGroup(configuration);
             return IsActiveParameterValue(vaultName) && IsActiveParameterValue(vaultResourceGroup);

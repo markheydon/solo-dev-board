@@ -1,0 +1,6 @@
+{
+  "Parameters": {
+    "auth-secrets-vault-name": "kv-solodevboard-dev",
+    "auth-secrets-vault-resource-group": "rg-solodevboard-dev"
+  }
+}

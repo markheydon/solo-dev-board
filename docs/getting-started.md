@@ -163,7 +163,7 @@ Recommended for forks and solo developers. Set secret AppHost parameters once pe
 
 ### Path B: shared development Key Vault
 
-Recommended for maintainers working across several machines, Dev Containers, or Codespaces without copying PATs. Leave secret parameters unset (or `-`) and configure `auth-secrets-vault-name` plus `auth-secrets-vault-resource-group` in `appsettings.Development.json` (or environment). Sign in with `az login` and ensure your Entra identity has **Key Vault Secrets User** on the dev vault. See [Azure Key Vault setup](azure-key-vault-setup.md).
+Recommended for maintainers working across several machines, Dev Containers, or Codespaces without copying PATs. Configure `auth-secrets-vault-name` plus `auth-secrets-vault-resource-group` in `appsettings.Development.json` (copy from `src/SoloDevBoard.AppHost/appsettings.Development.json.example`) or environment; for hosted sign-in, set mode, client ID, and allow-lists there too. Before `aspire start`, also set `Azure__SubscriptionId`, run `az login`, set **Key Vault Secrets User**, and store Aspire placeholders `aspire secret set Parameters:gh-pat "-"` and `Parameters:gh-app-client-secret "-"` (real values stay in the vault). See [Azure Key Vault setup](azure-key-vault-setup.md#aspire-local-prerequisites-path-b).
 
 Local parameter values always override Key Vault when both are set.
 

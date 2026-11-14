@@ -172,9 +172,9 @@ else
         var authSecretsVault = builder.AddAzureKeyVault("auth-secrets")
             .AsExisting(authSecretsVaultName, authSecretsVaultResourceGroup);
 
-        app = app
-            .WithRoleAssignments(authSecretsVault, KeyVaultBuiltInRole.KeyVaultSecretsUser)
-            .WithReference(authSecretsVault);
+        // Path B local dev: operators grant Key Vault Secrets User manually (see docs/azure-key-vault-setup.md).
+        // Skip WithRoleAssignments here to avoid auth-secrets-roles ARM provisioning on every aspire start.
+        app = app.WithReference(authSecretsVault);
 
         if (needVaultForPat)
         {

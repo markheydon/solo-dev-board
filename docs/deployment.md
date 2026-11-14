@@ -294,6 +294,16 @@ Create two GitHub Environments in **Settings → Environments**: `staging` and `
 
 Populate `gh-pat` and `gh-app-client-secret` in each tier's Key Vault before CD runs. GitHub Actions no longer passes `GH_PAT` or `GH_APP_CLIENT_SECRET` to `aspire deploy`. See [Azure Key Vault setup](azure-key-vault-setup.md).
 
+Verify both secret names exist in the tier vault (hosted sign-in typically uses `-` for `gh-pat` and a real value for `gh-app-client-secret`) before the first CD run after migration:
+
+```bash
+VAULT_NAME="auth-secrets-staging"   # or auth-secrets for production
+az keyvault secret show --vault-name "$VAULT_NAME" --name "gh-pat" --query "attributes.enabled" -o tsv
+az keyvault secret show --vault-name "$VAULT_NAME" --name "gh-app-client-secret" --query "attributes.enabled" -o tsv
+```
+
+Each command should print `true`. A deploy can still succeed when secrets are missing or stale; the Container App then fails at runtime until the vault is populated and the app is restarted.
+
 **Shared Azure variables (both environments)**
 
 | Variable | Example | Purpose |

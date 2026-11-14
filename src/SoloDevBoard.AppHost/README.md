@@ -93,7 +93,7 @@ The `app` resource registers `GET /health` as the Container App readiness probe 
 
 **Local Path A:** `aspire secret set` on `gh-pat` / `gh-app-client-secret` (no Azure).
 
-**Local Path B:** unset local secrets; set `auth-secrets-vault-name` and `auth-secrets-vault-resource-group`; `az login` with dev vault access.
+**Local Path B:** unset local secrets; set `auth-secrets-vault-name` and `auth-secrets-vault-resource-group` in `appsettings.Development.json` (see `appsettings.Development.json.example`); `az login` with dev vault access. Hosted sign-in still needs non-secret parameters locally (client ID, allow-lists).
 
 **Deploy:** `PublishAsExisting` on the tier vault (`auth-secrets` / `auth-secrets-staging` by default in appsettings). Populate secrets in the vault before CD; do not rely on `GH_PAT` / `GH_APP_CLIENT_SECRET` in GitHub Actions.
 

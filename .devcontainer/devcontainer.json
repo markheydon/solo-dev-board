@@ -27,7 +27,7 @@
 		"vscode": {
 			"extensions": [
 				"microsoft-aspire.aspire-vscode",
-				"ms-dotnettools.csdevkit"
+				"ms-dotnettools.csdevkit",
 			]
 		}
 	}
