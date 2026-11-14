@@ -1,8 +1,8 @@
 # SoloDevBoard — Backlog Index
 
-**GitHub Issues are the single source of truth for open work.** This page is a roadmap index only — it does not hold a living work queue.
+**GitHub Issues are the single source of truth for open work.** This page is the canonical roadmap index; it does not hold a living work queue.
 
-For historical backlog content (pre-migration), see [archive/BACKLOG-2026-07-18.md](archive/BACKLOG-2026-07-18.md). Migration details: [BACKLOG_TO_ISSUES_MIGRATION.md](BACKLOG_TO_ISSUES_MIGRATION.md). Post-1.0 planning is [DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md).
+For historical backlog content (pre-migration), see [archive/BACKLOG-2026-07-18.md](archive/BACKLOG-2026-07-18.md). Migration details: [archive/BACKLOG_TO_ISSUES_MIGRATION.md](archive/BACKLOG_TO_ISSUES_MIGRATION.md). Post-1.0 planning is [DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md). Phased v0.x–v1.2 delivery history: [archive/IMPLEMENTATION_PLAN.md](archive/IMPLEMENTATION_PLAN.md).
 
 ## Where to find work
 
@@ -13,7 +13,7 @@ For historical backlog content (pre-migration), see [archive/BACKLOG-2026-07-18.
 | [Project info pane README](PROJECT_README.md) | Canonical copy of the Project #8 info pane text |
 | [Milestones](https://github.com/markheydon/solo-dev-board/milestones) | Release targeting |
 
-## Roadmap status (2026-09-07)
+## Roadmap status (2026-11-14)
 
 | Release | GitHub milestone | Release tag | Status |
 |---------|------------------|-------------|--------|
@@ -24,29 +24,14 @@ For historical backlog content (pre-migration), see [archive/BACKLOG-2026-07-18.
 | Production Ready | `v1.0 - Production Ready` | `v1.0.0` | Complete — [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0) (2026-08-18) |
 | Cross-Repo Planning & Refinement | `v1.1 - Cross-Repo Planning & Refinement` | `v1.1.0` | Complete — [`v1.1.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.1.0) (2026-08-31) |
 | Planning polish, Reload & Templates | `v1.2 - Planning polish, Reload & Templates` | `v1.2.0` | Complete — [`v1.2.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.2.0) (2026-09-07) |
-| Usable solo workflow across repositories | `v1.3 - Usable solo workflow across repositories` | `v1.3.0` | Open — [milestone](https://github.com/markheydon/solo-dev-board/milestone/9) |
+| Usable solo workflow across repositories | `v1.3 - Usable solo workflow across repositories` | `v1.3.0` | Ready to tag — [milestone #9](https://github.com/markheydon/solo-dev-board/milestone/9): 14 closed, 0 open |
 
-The open milestone is `v1.3 - Usable solo workflow across repositories`. Tag `v1.3.0` when the declared slice ships. Further work stays unmilestoned until it is explicitly placed on this milestone.
+There is **no newly declared open milestone** after `v1.3` until you scope the next release and open one on GitHub ([DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md)). Tag `v1.3.0` after staging smoke test and release hygiene; then close milestone #9.
 
-**Unmilestoned backlog:** [#293](https://github.com/markheydon/solo-dev-board/issues/293) (platform-blocked private user-owned Projects v2 under hosted sign-in); [#391](https://github.com/markheydon/solo-dev-board/issues/391) (Aspire PM settings store); [#498](https://github.com/markheydon/solo-dev-board/issues/498) (persist Actions template source — blocked by #391); [#450](https://github.com/markheydon/solo-dev-board/issues/450) (window-focus refetch — ice-box, later Reload follow-up); ice-box catalogue and hygiene work ([#381](https://github.com/markheydon/solo-dev-board/issues/381), [#397](https://github.com/markheydon/solo-dev-board/issues/397), [#411](https://github.com/markheydon/solo-dev-board/issues/411) (mobile layout story under [#527](https://github.com/markheydon/solo-dev-board/issues/527)), [#435](https://github.com/markheydon/solo-dev-board/issues/435)–[#439](https://github.com/markheydon/solo-dev-board/issues/439), [#470](https://github.com/markheydon/solo-dev-board/issues/470)); planned MudBlazor visual language (DEC-039, unmilestoned, not ice-box). Closed ice-box direction: [#475](https://github.com/markheydon/solo-dev-board/issues/475) (see [`PRODUCT_OPERATING_SYSTEM.md`](PRODUCT_OPERATING_SYSTEM.md)). See [open issues](https://github.com/markheydon/solo-dev-board/issues?q=is%3Aissue+is%3Aopen).
-
-Implementation phases in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) are historical sequencing for the v1.0 release only.
-
-## Key features (remaining open work)
-
-Locked-in `v1.3` delivery is the open queue. Remaining work stays **unmilestoned** until promoted.
-
-| Work | Issues | Milestone |
-|------|--------|-----------|
-| Remap extras onto the recommended taxonomy | [#491](https://github.com/markheydon/solo-dev-board/issues/491), [#519](https://github.com/markheydon/solo-dev-board/issues/519)–[#521](https://github.com/markheydon/solo-dev-board/issues/521) | `v1.3` |
-| Window-focus refetch | [#450](https://github.com/markheydon/solo-dev-board/issues/450) | Unmilestoned (ice-box; later follow-up) |
-| Hosted private Projects v2 | [#293](https://github.com/markheydon/solo-dev-board/issues/293) | Unmilestoned (platform-blocked) |
-| Aspire PM settings store | [#391](https://github.com/markheydon/solo-dev-board/issues/391) | Unmilestoned (platform-blocked) |
-
-Deferred slices and Planning shipped on `v1.1`. Reload, custom templates, and Triage Save and next shipped on `v1.2`.
+**Unmilestoned backlog:** [#293](https://github.com/markheydon/solo-dev-board/issues/293) (platform-blocked private user-owned Projects v2 under hosted sign-in); [#391](https://github.com/markheydon/solo-dev-board/issues/391) (Aspire PM settings store); [#498](https://github.com/markheydon/solo-dev-board/issues/498) (persist Actions template source — blocked by #391); [#450](https://github.com/markheydon/solo-dev-board/issues/450) (window-focus refetch — ice-box, later Reload follow-up); ice-box catalogue and hygiene work ([#381](https://github.com/markheydon/solo-dev-board/issues/381), [#397](https://github.com/markheydon/solo-dev-board/issues/397), [#411](https://github.com/markheydon/solo-dev-board/issues/411) (mobile layout story under [#527](https://github.com/markheydon/solo-dev-board/issues/527)), [#435](https://github.com/markheydon/solo-dev-board/issues/435)–[#439](https://github.com/markheydon/solo-dev-board/issues/439), [#470](https://github.com/markheydon/solo-dev-board/issues/470)); planned MudBlazor visual language ([#527](https://github.com/markheydon/solo-dev-board/issues/527), DEC-039). Closed ice-box direction: [#475](https://github.com/markheydon/solo-dev-board/issues/475) (see [`PRODUCT_OPERATING_SYSTEM.md`](PRODUCT_OPERATING_SYSTEM.md)). See [open issues](https://github.com/markheydon/solo-dev-board/issues?q=is%3Aissue+is%3Aopen).
 
 ## Shipped summary
 
-The six core tools (Label Manager, Audit Dashboard, One-Click Migration, Triage UI, Board Rules Visualiser, Actions Templates) plus hosted and self-host hardening shipped in v1.0.0. Planning, OSS catalogue identification, project-board Status migration, and related refinements ship in `v1.1.0`. Duplicate Planning issues #260–#271 were closed as duplicates of the #272–#288 family.
+The six core tools (Label Manager, Audit Dashboard, One-Click Migration, Triage UI, Board Rules Visualiser, Actions Templates) plus hosted and self-host hardening shipped in v1.0.0. Planning, OSS catalogue identification, project-board Status migration, and related refinements shipped in `v1.1.0`. Reload, custom templates, and Triage Save and next shipped on `v1.2`. Label remap ([#491](https://github.com/markheydon/solo-dev-board/issues/491)–[#521](https://github.com/markheydon/solo-dev-board/issues/521)) closed on the `v1.3` milestone.
 
-For phase sequencing history and architecture milestones, see [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). For product boundaries, see [SCOPE.md](SCOPE.md).
+For product boundaries, see [SCOPE.md](SCOPE.md). For release process and tag history, see [RELEASE_PLAN.md](RELEASE_PLAN.md).

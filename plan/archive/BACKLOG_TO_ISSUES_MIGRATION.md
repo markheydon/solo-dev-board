@@ -35,7 +35,7 @@ SCOPE.md                 → product boundaries (what is / isn't in scope)
 IMPLEMENTATION_PLAN.md   → phase sequencing and architecture milestones
 RELEASE_PLAN.md          → versioning and release process
 LABEL_STRATEGY.md        → label taxonomy contract
-plan/archive/PM_RUNBOOK-2026-copilot-era.md  → retired Copilot-era runbook (archived)
+plan/archive/copilot-era/PM_RUNBOOK-2026-copilot-era.md  → retired Copilot-era runbook (archived)
 GitHub Issues            → work items (source of truth)
 GitHub Project #8        → prioritisation, flow, Up Next queue
 GitHub Milestones        → release targeting
@@ -231,7 +231,7 @@ Start at Step 0 and work through Step 8.
 | [RELEASE_PLAN.md](RELEASE_PLAN.md) | Version strategy |
 | [PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md) | Issue/milestone/project conventions |
 | [LABEL_STRATEGY.md](LABEL_STRATEGY.md) | Label taxonomy |
-| [`plan/archive/PM_RUNBOOK-2026-copilot-era.md`](archive/PM_RUNBOOK-2026-copilot-era.md) | Retired (archived) |
+| [`plan/archive/copilot-era/PM_RUNBOOK-2026-copilot-era.md`](copilot-era/PM_RUNBOOK-2026-copilot-era.md) | Retired (archived) |
 | [PROJECT_BOARD_DESIGN.md](PROJECT_BOARD_DESIGN.md) | Project #8 field definitions |
 | `.agents/skills/repo-github-issues/SKILL.md` | Issue creation guidance |
 | [`plan/PROJECT_BOARD_DESIGN.md`](PROJECT_BOARD_DESIGN.md) | Project board sync guidance (replaces retired `repo-github-project` skill) |

@@ -64,7 +64,7 @@ graph TD
 
 ## GitHub issues breakdown
 
-See [cross-repo-planning-issues-checklist.md](cross-repo-planning-issues-checklist.md) for labels, sizes, and blocking edges.
+See [cross-repo-pm-workflow-issues-checklist.md](cross-repo-pm-workflow-issues-checklist.md) for labels, sizes, and blocking edges.
 
 ### Pages and MudBlazor
 

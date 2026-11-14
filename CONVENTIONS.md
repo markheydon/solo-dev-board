@@ -109,7 +109,7 @@ End-user docs ([`website/content/docs/`](website/content/docs/)) and Playwright 
 | End-user behaviour change | User guide pages and matching Playwright tests |
 | New developer / operator guidance | `docs/` |
 | New decision | `adr/` |
-| Scope change | `plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md` |
+| Scope change | `plan/SCOPE.md`, `plan/BACKLOG.md` |
 | New env variable | `docs/getting-started.md`, `docs/deployment.md`, `src/SoloDevBoard.AppHost/README.md` |
 | MudBlazor version bump | `.agents/skills/mudblazor/` |
 | New release | `plan/RELEASE_PLAN.md`, `CHANGELOG.md` |

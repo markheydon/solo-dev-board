@@ -14,7 +14,8 @@
 
 - [x] Active decisions live under `adr/` (former `plan/DECISIONS.md` retired).
 - [ ] Constitution stable in [`AGENTS.md`](../AGENTS.md) and [`CONVENTIONS.md`](../CONVENTIONS.md).
-- [ ] Backlog-to-issues Phase 2 complete or explicitly deferred ([`plan/BACKLOG_TO_ISSUES_MIGRATION.md`](BACKLOG_TO_ISSUES_MIGRATION.md)).
+- [x] Backlog-to-issues Phase 2 complete ([`plan/archive/BACKLOG_TO_ISSUES_MIGRATION.md`](archive/BACKLOG_TO_ISSUES_MIGRATION.md)).
+- [x] `plan/` slimmed for Spec Kit readiness (2026-11-14): Copilot-era bundles and phased plan archived; see [`plan/README.md`](README.md).
 
 **Do not execute the steps below until this plan is explicitly approved.**
 
@@ -27,7 +28,7 @@
 | `AGENTS.md` + `CONVENTIONS.md` | `.specify/memory/constitution.md` (+ path rules as needed) |
 | `adr/` (product decisions) | Absorbed into constitution and per-feature specs where appropriate |
 | `plan/SCOPE.md` + `plan/wireframes/` | `.specify/specs/<feature>/spec.md` |
-| `plan/IMPLEMENTATION_PLAN.md` | Spec Kit plan artefacts per feature |
+| `plan/archive/IMPLEMENTATION_PLAN.md` (retired) | Spec Kit plan artefacts per feature |
 | `.agents/skills/` | Stays outside Spec Kit (agent orchestration) |
 | `docs/` (operator guides) | Stays end-user facing; link from specs where relevant |
 

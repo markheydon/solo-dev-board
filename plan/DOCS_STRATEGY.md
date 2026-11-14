@@ -46,17 +46,19 @@ docs/                           # Repository / developer / operator docs (not Pa
 └── observability.md
 
 plan/
+├── README.md                   # Index of maintainer / PM docs
 ├── SCOPE.md
-├── DECISIONS.md                # Retired pointer to adr/
-├── IMPLEMENTATION_PLAN.md
-├── BACKLOG.md
+├── BACKLOG.md                  # Canonical roadmap index
 ├── RELEASE_PLAN.md
+├── wireframes/                 # UI planning references
+├── archive/                    # Historical phased plan, Copilot-era bundles
+├── DECISIONS.md                # Retired pointer to adr/
 ├── LABEL_STRATEGY.md
-├── PULL_REQUEST_POLICY.md      # Canonical PR title, body, labels, metadata
+├── PULL_REQUEST_POLICY.md
 ├── PROJECT_MANAGEMENT.md
 ├── PROJECT_BOARD_DESIGN.md
-├── PROJECT_README.md           # Canonical Project #8 info pane README
-├── SPEC_KIT_MIGRATION.md       # Parked — future Spec Kit adoption
+├── PROJECT_README.md
+├── SPEC_KIT_MIGRATION.md
 └── DOCS_STRATEGY.md            # This file
 
 adr/
@@ -146,9 +148,9 @@ Changelog entries are grouped by:
 
 ---
 
-## Doc Writer Agent Instructions
+## Documentation agent instructions
 
-When Copilot or another AI agent is asked to write or update documentation:
+When an AI agent or contributor is asked to write or update documentation:
 
 1. **UK English required.** All documentation must use UK English spelling. Run a spell check if possible.
 2. **Accuracy over completeness.** Do not document features that are not yet implemented. Use "Coming Soon" or "Under Development" notices for stubs.

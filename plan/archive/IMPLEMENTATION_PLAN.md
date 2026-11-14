@@ -170,7 +170,7 @@ All planned front-end delivery after ADR-0012 uses MudBlazor as the sole UI comp
 
 **Milestone:** `v1.1 - Cross-Repo Planning & Refinement` (release tag `v1.1.0`; formerly planned as v1.2.0 — see [DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md))
 
-**Status:** Complete (2026-08-20). Feature [#272](https://github.com/markheydon/solo-dev-board/issues/272) (no parent epic). Stories #273–#288 plus enablers and tests. Wireframe: `plan/wireframes/planning-wireframe.md`. Plan: `plan/cross-repo-planning-project-plan.md`. Decision: [DEC-029](adr/adr-0029-cross-repo-planning-board-selection-and-local-settings.md). Hardcoding audit: [#423](https://github.com/markheydon/solo-dev-board/issues/423) — [`HARDCODING_AUDIT_v1.1.md`](HARDCODING_AUDIT_v1.1.md).
+**Status:** Complete (2026-08-20). Feature [#272](https://github.com/markheydon/solo-dev-board/issues/272) (no parent epic). Stories #273–#288 plus enablers and tests. Wireframe: `plan/wireframes/planning-wireframe.md`. Plan: `plan/archive/copilot-era/feature-bundles/cross-repo-pm-workflow-project-plan.md`. Decision: [DEC-029](adr/adr-0029-cross-repo-planning-board-selection-and-local-settings.md). Hardcoding audit: [#423](https://github.com/markheydon/solo-dev-board/issues/423) — [`HARDCODING_AUDIT_v1.1.md`](HARDCODING_AUDIT_v1.1.md).
 
 ### Key Tasks
 
@@ -320,7 +320,7 @@ All locked-in leaves are closed. Shipped as [`v1.1.0`](https://github.com/markhe
 - [x] Handle hosted installation context validation and token lifecycle checks (expiry and failure handling) for hosted requests. _(#103, #111; implemented on 2026-03-13; see plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_
 - [x] Restrict hosted access to operator-managed user and organisation allow-lists, with deny-by-default admission control. _(#103, #117; implemented on 2026-03-16; see ADR-0014, ADR-0015, and plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_
 - [x] Remove or demote the separate OAuth App dependency where GitHub App user authentication satisfies hosted sign-in requirements. _(#103, #113; implemented on 2026-03-16; see ADR-0015 and plan/HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md.)_
-- [x] Define and execute the migration and compatibility path away from the superseded hybrid hosted-authentication plan. _(#103, #118; strategy locked in plan/HOSTED_AUTH_MIGRATION_STRATEGY.md on 2026-03-13.)_
+- [x] Define and execute the migration and compatibility path away from the superseded hybrid hosted-authentication plan. _(#103, #118; strategy locked in plan/archive/HOSTED_AUTH_MIGRATION_STRATEGY.md on 2026-03-13.)_
 - [x] Persist hosted authentication material securely using Azure Key Vault-backed patterns where required. _(#250; see plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md.)_
 - [x] Replace the single-user `ICurrentUserContext` adapter with a per-request, per-user implementation backed by the hosted authentication session when hosted mode is enabled. _(Implemented on 2026-03-13; PAT-only local trusted mode preserved.)_
 - [x] Enable CD pipeline with production environment gate (`.github/workflows/cd.yml` via `aspire deploy`). _(#251)_

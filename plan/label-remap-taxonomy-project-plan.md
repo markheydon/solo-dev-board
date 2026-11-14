@@ -1,5 +1,7 @@
 # Remap existing labels onto the recommended taxonomy — project plan
 
+**Status:** Shipped on milestone `v1.3` (issues [#491](https://github.com/markheydon/solo-dev-board/issues/491)–[#521](https://github.com/markheydon/solo-dev-board/issues/521) closed). Retained until a Spec Kit spec replaces this file ([`SPEC_KIT_MIGRATION.md`](SPEC_KIT_MIGRATION.md)).
+
 ## Feature summary
 
 Label Manager can already create the built-in SoloDevBoard taxonomy and delete extras. Deleting extras **removes the label from every issue and pull request**. This feature adds a **preview-first remap** on an existing repository: map old names onto taxonomy (or other existing) names, apply the destination to every issue and pull request that used the source, then delete the source.

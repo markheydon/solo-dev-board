@@ -104,7 +104,7 @@ The following are explicitly **not** in scope for the current version of SoloDev
 > When this project's scope changes — whether a feature is added, removed, or modified — follow these steps:
 >
 > 1. Update the **In Scope** or **Out of Scope** sections of this file to reflect the change.
-> 2. Update `plan/IMPLEMENTATION_PLAN.md` if the phase breakdown is affected.
+> 2. Update [`plan/BACKLOG.md`](BACKLOG.md) and milestones if release targeting changes; declare a new milestone only per [DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md).
 > 3. Create or update GitHub Issues for the scope change and sync Project #8.
 > 4. Create a GitHub Issue for the scope change using the `type/feature` or `type/chore` template.
 > 5. If the change affects the architecture, add or update an ADR under `adr/` and update [`CONVENTIONS.md`](../CONVENTIONS.md) or [`AGENTS.md`](../AGENTS.md) when cross-cutting.
@@ -141,4 +141,5 @@ The following are explicitly **not** in scope for the current version of SoloDev
 | 2026-09-07 | **`v1.2 - Planning polish, Reload & Templates`** delivery complete (30 closed, 0 open). Ready to tag [`v1.2.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.2.0) after staging smoke test. User guides and changelog updated; window-focus refetch (#450) and server-backed template source (#498) stay later. | Solo developer |
 | 2026-09-09 | Recorded MudBlazor visual language (DEC-039) as in-scope quality for shipped pages. Dedicated product branding ([#397](https://github.com/markheydon/solo-dev-board/issues/397)) stays ice-box and unmilestoned. | Solo developer |
 | 2026-09-09 | Responsive web on phone and compact tablet (iPad mini class) is in-scope UI quality under epic [#526](https://github.com/markheydon/solo-dev-board/issues/526) / feature [#527](https://github.com/markheydon/solo-dev-board/issues/527), tracked as ice-box story [#411](https://github.com/markheydon/solo-dev-board/issues/411). Native mobile apps stay out of scope. | Solo developer |
+| 2026-11-14 | Label remap ([#491](https://github.com/markheydon/solo-dev-board/issues/491)) delivered on `v1.3`; milestone ready to tag. Roadmap status consolidated in [`plan/BACKLOG.md`](BACKLOG.md). | Solo developer |
 

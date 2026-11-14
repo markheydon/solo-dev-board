@@ -7,7 +7,7 @@
 
 This record was migrated from legacy decision log entry DEC-031 during the repository workflow alignment chore (2026-11-14).
 
-Cursor Cloud Agents can start from a GitHub Issue or Pull Request comment when the comment begins with `@cursor` or `@cursoragent`. Copilot-era slash workflows (`deliver-issue`, `implement-issue`, `verify-and-create-pr`, and related commands) were retired on 2026-11-14 in favour of slim `AGENTS.md`, repository skills, and [`.cursor/commands/loop-code-review.md`](../.cursor/commands/loop-code-review.md). Historical routing tables live in [`plan/archive/PM_RUNBOOK-2026-copilot-era.md`](../plan/archive/PM_RUNBOOK-2026-copilot-era.md).
+Cursor Cloud Agents can start from a GitHub Issue or Pull Request comment when the comment begins with `@cursor` or `@cursoragent`. Copilot-era slash workflows (`deliver-issue`, `implement-issue`, `verify-and-create-pr`, and related commands) were retired on 2026-11-14 in favour of slim `AGENTS.md`, repository skills, and [`.cursor/commands/loop-code-review.md`](../.cursor/commands/loop-code-review.md). Historical routing tables live in [`plan/archive/copilot-era/PM_RUNBOOK-2026-copilot-era.md`](../plan/archive/copilot-era/PM_RUNBOOK-2026-copilot-era.md).
 
 ## Decision
 

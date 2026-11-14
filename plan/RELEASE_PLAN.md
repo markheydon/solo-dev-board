@@ -1,5 +1,7 @@
 # SoloDevBoard — Release Plan
 
+**Current milestone and open work:** see [`BACKLOG.md`](BACKLOG.md) (canonical index). This file covers versioning, release process, and historical release scope.
+
 ## Versioning Strategy
 
 SoloDevBoard follows [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`):
@@ -41,7 +43,7 @@ Application version numbers are calculated automatically at build time by [MinVe
 - CI pipeline
 - Azure Container Apps deployment via Aspire
 
-**Target:** End of Phase 1 (see [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md))
+**Target:** End of Phase 1 (see [archive/IMPLEMENTATION_PLAN.md](archive/IMPLEMENTATION_PLAN.md))
 
 ---
 
@@ -113,7 +115,7 @@ Application version numbers are calculated automatically at build time by [MinVe
 - OSS catalogue identification ([#440](https://github.com/markheydon/solo-dev-board/issues/440)) — **complete**
 - Post-release refinements: Label Manager bulk delete and keep-`area/*` ([#444](https://github.com/markheydon/solo-dev-board/issues/444), [#446](https://github.com/markheydon/solo-dev-board/issues/446)), Iteration stall/capacity UX ([#445](https://github.com/markheydon/solo-dev-board/issues/445)), snackbar standardisation ([#465](https://github.com/markheydon/solo-dev-board/issues/465)), migration keep-`area/*` ([#464](https://github.com/markheydon/solo-dev-board/issues/464), [#471](https://github.com/markheydon/solo-dev-board/issues/471)), feedback region cleanup ([#473](https://github.com/markheydon/solo-dev-board/issues/473)) — **complete**
 
-**Out of milestone (backlog):** Private user-owned Projects v2 via hosted sign-in ([#293](https://github.com/markheydon/solo-dev-board/issues/293)) — platform-blocked; see [`plan/GITHUB_PROJECTS_V2_ACCESS.md`](GITHUB_PROJECTS_V2_ACCESS.md). Product operating system overlay ([#475](https://github.com/markheydon/solo-dev-board/issues/475)) — ice-boxed direction; see [`plan/PRODUCT_OPERATING_SYSTEM.md`](PRODUCT_OPERATING_SYSTEM.md). Window-focus refetch ([#450](https://github.com/markheydon/solo-dev-board/issues/450)) stays off `v1.2`.
+Platform-blocked and ice-box items are listed in [`BACKLOG.md`](BACKLOG.md); they are not repeated here.
 
 **Status:** Complete (2026-08-31). Tagged [`v1.1.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.1.0). Production CD and GitHub Pages publish from `v*` tags.
 
@@ -150,7 +152,7 @@ Application version numbers are calculated automatically at build time by [MinVe
 
 **Out of milestone:** Window-focus refetch ([#450](https://github.com/markheydon/solo-dev-board/issues/450), ice-box); hosted private Projects v2 ([#293](https://github.com/markheydon/solo-dev-board/issues/293)); Aspire PM settings store ([#391](https://github.com/markheydon/solo-dev-board/issues/391)); server-backed template source ([#498](https://github.com/markheydon/solo-dev-board/issues/498)); ice-box catalogue and hygiene work unless promoted.
 
-**Status:** Open (declared 2026-09-07). Tag [`v1.3.0`](https://github.com/markheydon/solo-dev-board/releases) when shipped.
+**Status:** Ready to tag (2026-11-14). Milestone #9: 14 closed, 0 open (includes remap [#491](https://github.com/markheydon/solo-dev-board/issues/491)–[#521](https://github.com/markheydon/solo-dev-board/issues/521)). Tag [`v1.3.0`](https://github.com/markheydon/solo-dev-board/releases) after staging smoke test; then close the milestone.
 
 **Target:** Not set — dates follow actual start per Roadmap date guidelines.
 

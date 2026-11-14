@@ -58,6 +58,6 @@ Independent of Label Manager dogfood (#444, #446). Can run in parallel.
 ## Implementation references
 
 - Wireframe: [`plan/wireframes/planning-wireframe.md`](wireframes/planning-wireframe.md)
-- Feature plan: [`plan/cross-repo-planning-project-plan.md`](cross-repo-planning-project-plan.md)
+- Feature plan: [`cross-repo-pm-workflow-project-plan.md`](cross-repo-pm-workflow-project-plan.md)
 - User Guide (update during delivery): [`website/content/docs/planning.md`](../website/content/docs/planning.md)
 - Implementation notes: `IsAddToUpNextDisabled` when `planningView.StalledUpNextItems` is non-empty (`PlanningIterationPanel.razor.cs`)

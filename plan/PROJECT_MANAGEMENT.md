@@ -34,7 +34,7 @@ Follow [DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md).
 
 During catch-up, deferred slices may sit on the milestone as **unlinked stories** that extend already-shipped features (for example [#290](https://github.com/markheydon/solo-dev-board/issues/290) extending Audit Dashboard [#40](https://github.com/markheydon/solo-dev-board/issues/40)). Add Feature parents when planning delivery, not before.
 
-Implementation **phases** in `IMPLEMENTATION_PLAN.md` are historical sequencing for the v1.0 release. The Project board **Phase** field is legacy for closed pre-1.0 milestones only.
+Implementation **phases** in [`archive/IMPLEMENTATION_PLAN.md`](archive/IMPLEMENTATION_PLAN.md) are historical sequencing for the v1.0 release. The Project board **Phase** field is legacy for closed pre-1.0 milestones only.
 
 ---
 
@@ -168,17 +168,6 @@ GitHub Issues are the **canonical** store for all open, deferred, and in-progres
 - When new work is identified, create or update a GitHub Issue and sync Project #8.
 - When an issue is closed, no markdown backlog tick-off is required.
 - When a feature is descoped, close the corresponding issue with a `wontfix` label and update `plan/SCOPE.md` if needed.
-
----
-
-## GitHub Copilot Chat Guidance
-
-When using Copilot Chat to manage issues:
-
-- **"Create an issue for [task]"** → Copilot should draft the issue body using the appropriate template fields, suggest labels from `LABEL_STRATEGY.md`, and suggest the appropriate milestone.
-- **"What issues are open in Phase 2?"** → Copilot should query GitHub Issues filtered by milestone or labels.
-- **"Plan the Triage UI follow-on"** → Copilot should create or update GitHub Issues and sync Project #8.
-- **"Populate Up Next for today"** → Copilot should move the selected stories, enablers, or tests to the board-only **Up Next** state and assign **Focus Order** values in the recommended sequence.
 
 ---
 
