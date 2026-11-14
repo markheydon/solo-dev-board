@@ -78,14 +78,25 @@ Use the `ServerData` delegate for large datasets fetched asynchronously:
     private async Task<GridData<LabelDto>> LoadServerData(GridState<LabelDto> state)
     {
         var items = await LabelService.GetLabelsAsync();
+        // From 9.13.0: without a pager, the grid keeps ServerData row order; apply sort here.
+        var sorted = items.OrderBySortDefinitions(state).ToList();
         return new GridData<LabelDto>
         {
-            Items = items,
-            TotalItems = items.Count
+            Items = sorted,
+            TotalItems = sorted.Count
         };
     }
 }
 ```
+
+### ServerData behaviour (9.12+)
+
+- The grid and table ignore superseded loads and keep the newest finished `ServerData` or autocomplete search result.
+- If a paged load lands past the last page, MudBlazor resets to page one and keeps the loading indicator until fresh data arrives.
+
+### Enum column filtering (9.12+)
+
+Enum `PropertyColumn` filters expose an **is any of** operator whose value is a collection of enum values. Handle it in custom `ServerData` filter logic, or hide it with `Column.FilterOperators` when server filters are not enum-aware.
 
 ---
 

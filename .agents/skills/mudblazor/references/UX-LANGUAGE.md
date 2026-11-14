@@ -129,7 +129,7 @@ Audit Dashboard already uses skeletons well; copy that pattern rather than the s
 |-----------|------------------------|----------|
 | `MudFab` / `MudFabMenu` | None on current pages. | Do not add a floating action button. |
 | `MudChart` | None. | Do not chart GitHub counts in-app. |
-| `MudCarousel` | None. | Do not rotate operational content. |
+| `MudCarousel` | None. | Do not rotate operational content. Auto-rotate requires `AutoCycle="true"` (9.13+). |
 | `MudStepper` | A single linear apply/preview wizard. | Prefer stacked papers if there are only two steps. |
 | `MudHotKey` | Documented keyboard shortcuts (Triage). | Do not invent undocumented global hotkeys. |
 | `MudExitPrompt` | Unsaved triage or migration preview. | Use only when leaving would drop in-progress work. |

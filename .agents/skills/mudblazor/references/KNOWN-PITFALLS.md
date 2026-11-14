@@ -129,7 +129,17 @@ private async Task<IEnumerable<string>> SearchRepos(string value, CancellationTo
 
 ---
 
-## Pitfall 9: MudMenu and MudPopover clipped or hidden
+## Pitfall 9: MudTooltip with `ShowOnFocus` does not open on click or tap
+
+**Symptom:** A tooltip with `ShowOnFocus="true"` appears when tabbing to the control but not when the user clicks, taps, or calls `FocusAsync()`.
+
+**Cause:** From MudBlazor 9.13.0, `ShowOnFocus` tooltips open on keyboard-visible focus only.
+
+**Fix:** Remove `ShowOnFocus` when hover or pointer focus should open the tooltip, or accept keyboard-only behaviour for that control.
+
+---
+
+## Pitfall 10: MudMenu and MudPopover clipped or hidden
 
 **Symptom:** Menu or popover content appears cut off, hidden behind other surfaces, or not visible near container edges.
 
@@ -143,7 +153,7 @@ private async Task<IEnumerable<string>> SearchRepos(string value, CancellationTo
 
 ---
 
-## Pitfall 10: MudForm validation state not updating as expected
+## Pitfall 11: MudForm validation state not updating as expected
 
 **Symptom:** Submit actions proceed while invalid fields are present, or validation messages do not appear until too late.
 
@@ -174,7 +184,7 @@ private async Task<IEnumerable<string>> SearchRepos(string value, CancellationTo
 
 ---
 
-## Pitfall 11: File upload accepted with no guardrails
+## Pitfall 12: File upload accepted with no guardrails
 
 **Symptom:** Unexpected file types or oversized files are processed.
 
@@ -188,7 +198,7 @@ private async Task<IEnumerable<string>> SearchRepos(string value, CancellationTo
 
 ---
 
-## Pitfall 12: Tabs lose intended active panel after rerender
+## Pitfall 13: Tabs lose intended active panel after rerender
 
 **Symptom:** Active tab jumps back unexpectedly after state changes.
 

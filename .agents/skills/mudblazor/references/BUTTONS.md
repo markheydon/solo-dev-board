@@ -11,6 +11,7 @@ Use this reference when choosing between action-oriented MudBlazor components.
 - Use `MudToggleIconButton` when a boolean state needs icon-based on/off feedback.
 - Use `MudScrollToTop` for long pages where users need a fast return to top.
 - Wrap every `MudIconButton` in `MudTooltip` and set `aria-label`.
+- With `ShowOnFocus="true"`, the tooltip opens on keyboard focus only (9.13+); pointer focus no longer opens it.
 
 ## Component Coverage
 
