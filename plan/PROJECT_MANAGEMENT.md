@@ -23,7 +23,7 @@ SoloDevBoard uses GitHub's native project management tools:
 
 ## Work-item hierarchy (post-1.0)
 
-Follow [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy).
+Follow [DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md).
 
 | Level | When to use | When not to use |
 |-------|-------------|-----------------|
@@ -72,7 +72,7 @@ Created → [status/todo] → [status/in-progress] → [status/in-review] → [s
                                                PR opened (linked)
 ```
 
-The issue lifecycle labels remain the source of truth for GitHub Issues. The project board may show an additional planning state, **Up Next**, but that state is board-only and does not have a matching GitHub issue label. **Blocked** and **Ice Box** are both board Status options **and** issue labels (`status/blocked`, `status/ice-box`); Roadmap Sync maps labels to board columns ([DEC-028](DECISIONS.md#dec-028-blocked-and-ice-box-project-status-options)).
+The issue lifecycle labels remain the source of truth for GitHub Issues. The project board may show an additional planning state, **Up Next**, but that state is board-only and does not have a matching GitHub issue label. **Blocked** and **Ice Box** are both board Status options **and** issue labels (`status/blocked`, `status/ice-box`); Roadmap Sync maps labels to board columns ([DEC-028](adr/adr-0028-blocked-and-ice-box-project-status-options.md)).
 
 Roadmap date handling follows the same lifecycle:
 
@@ -100,7 +100,7 @@ Follow [`PULL_REQUEST_POLICY.md`](PULL_REQUEST_POLICY.md). Reference the issue i
 
 ## Milestones
 
-Milestones map to **releases**, not ongoing product themes. After v1.0.0, keep **one open milestone** at a time ([DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)).
+Milestones map to **releases**, not ongoing product themes. After v1.0.0, keep **one open milestone** at a time ([DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md)).
 
 ### Naming convention
 

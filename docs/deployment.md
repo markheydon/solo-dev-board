@@ -108,7 +108,7 @@ Secret parameters (`gh-pat`, and `gh-app-client-secret` when used) are written t
 | `allowed-user-logins` | `Parameters__allowed_user_logins` / `ALLOWED_USER_LOGINS` | `-` |
 | `allowed-org-logins` | `Parameters__allowed_org_logins` / `ALLOWED_ORG_LOGINS` | `-` |
 
-`DocsCapture__Enabled` is a **local-only** application setting for documentation screenshots. It is intentionally **not** an AppHost parameter and must not be enabled on hosted deployments. See [Docs capture mode](getting-started.md#docs-capture-mode) and [DEC-020](../plan/DECISIONS.md#dec-020-public-only-docs-capture-mode-for-documentation-screenshots).
+`DocsCapture__Enabled` is a **local-only** application setting for documentation screenshots. It is intentionally **not** an AppHost parameter and must not be enabled on hosted deployments. See [Docs capture mode](getting-started.md#docs-capture-mode) and [DEC-020](../adr/adr-0020-public-only-docs-capture-mode.md).
 
 See [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md) for the full parameter reference, [Azure Deployment Costs](azure-costs.md) for cost guidance, and [PAT Connectivity](pat-connectivity.md) for shell status and `/health/github`.
 
@@ -123,7 +123,7 @@ Choose an OIDC layout:
 | Path | When to use |
 |---|---|
 | **[Default (no shared ACR)](#2-create-a-github-actions-oidc-identity-default)** | Forks, first-time self-hosters, or anyone who omits `ACR_NAME` / `ACR_RESOURCE_GROUP`. The CD identity lives in the app resource group. |
-| **[Shared ACR (opt-in)](#2-create-a-github-actions-oidc-identity-shared-acr)** | Hosted Staging and Production share one existing registry (see [DEC-025](../plan/DECISIONS.md#dec-025-optional-shared-azure-container-registry)). The CD identity lives in the **ACR resource group**. |
+| **[Shared ACR (opt-in)](#2-create-a-github-actions-oidc-identity-shared-acr)** | Hosted Staging and Production share one existing registry (see [DEC-025](../adr/adr-0025-optional-shared-azure-container-registry.md)). The CD identity lives in the **ACR resource group**. |
 
 ### 1. Create app resource group(s)
 

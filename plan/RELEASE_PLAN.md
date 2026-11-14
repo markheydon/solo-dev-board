@@ -97,7 +97,7 @@ Application version numbers are calculated automatically at build time by [MinVe
 
 **Status:** Complete (2026-08-18). Tagged [`v1.0.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0). Production CD and GitHub Pages publish from `v*` tags.
 
-**Sequencing note:** Selected hosted-authentication and Azure-delivery items were pulled forward to support safe hosted validation. The six core tools shipped in v1.0.0. Post-1.0 delivery uses a single active milestone model ([DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)).
+**Sequencing note:** Selected hosted-authentication and Azure-delivery items were pulled forward to support safe hosted validation. The six core tools shipped in v1.0.0. Post-1.0 delivery uses a single active milestone model ([DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md)).
 
 ---
 
@@ -129,7 +129,7 @@ Application version numbers are calculated automatically at build time by [MinVe
 - Optional board-scoped Daily Focus recommendations ([#403](https://github.com/markheydon/solo-dev-board/issues/403))
 - Reload from GitHub, keep selection ([#447](https://github.com/markheydon/solo-dev-board/issues/447), [#449](https://github.com/markheydon/solo-dev-board/issues/449), [#451](https://github.com/markheydon/solo-dev-board/issues/451))
 - Split hosted GitHub OAuth and API HttpClients ([#453](https://github.com/markheydon/solo-dev-board/issues/453))
-- Custom workflow template repositories ([#292](https://github.com/markheydon/solo-dev-board/issues/292), [DEC-038](DECISIONS.md#dec-038-custom-actions-template-sources)) — one GitHub YAML source via catalogue selector or manual field, merged into Actions Templates; last-used localStorage only
+- Custom workflow template repositories ([#292](https://github.com/markheydon/solo-dev-board/issues/292), [DEC-038](adr/adr-0038-custom-actions-template-sources.md)) — one GitHub YAML source via catalogue selector or manual field, merged into Actions Templates; last-used localStorage only
 - Triage action-surface usability ([#492](https://github.com/markheydon/solo-dev-board/issues/492)) — Save and next / duplicate / skip layout only
 
 **Out of milestone:** Window-focus refetch ([#450](https://github.com/markheydon/solo-dev-board/issues/450), ice-box); hosted private Projects v2 ([#293](https://github.com/markheydon/solo-dev-board/issues/293)); Aspire PM settings store ([#391](https://github.com/markheydon/solo-dev-board/issues/391)); newer ice-box catalogue and hygiene work ([#381](https://github.com/markheydon/solo-dev-board/issues/381), [#397](https://github.com/markheydon/solo-dev-board/issues/397), [#411](https://github.com/markheydon/solo-dev-board/issues/411) mobile layout under [#527](https://github.com/markheydon/solo-dev-board/issues/527), [#435](https://github.com/markheydon/solo-dev-board/issues/435)–[#439](https://github.com/markheydon/solo-dev-board/issues/439), [#470](https://github.com/markheydon/solo-dev-board/issues/470)).

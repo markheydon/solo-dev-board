@@ -1,9 +1,0 @@
----
-description: .NET 10 and C# conventions for SoloDevBoard
-globs: "**/*.cs,**/*.csproj,Directory.Packages.props"
-alwaysApply: false
----
-
-Follow [`.github/instructions/dotnet-framework.instructions.md`](.github/instructions/dotnet-framework.instructions.md).
-
-For implementation quality, read [`.agents/skills/dotnet-best-practices/SKILL.md`](.agents/skills/dotnet-best-practices/SKILL.md).

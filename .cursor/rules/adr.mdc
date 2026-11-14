@@ -1,0 +1,12 @@
+---
+description: Architectural Decision Record authoring
+globs: "adr/*.md"
+alwaysApply: false
+---
+
+# ADRs
+
+- Store ADRs in repository-root `adr/` only.
+- Filename pattern: `adr-NNNN-[title-slug].md` (4-digit sequence).
+- Use the `create-architectural-decision-record` skill in `.agents/skills/create-architectural-decision-record/`.
+- Do not rewrite accepted decisions without documenting status changes.

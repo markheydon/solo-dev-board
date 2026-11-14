@@ -2,7 +2,7 @@
 
 <!-- AI Collaborator Instructions: Migration complete 2026-07-18. This document is retained for history. -->
 
-**Status:** Complete — executed 2026-07-18. Historical numbering in this file (`v0.5.0` for Phase 5, “post-v1” with no milestone) is superseded by [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy) (single `v1.1` milestone; v1.2.0 milestone deleted 2026-08-18).
+**Status:** Complete — executed 2026-07-18. Historical numbering in this file (`v0.5.0` for Phase 5, “post-v1” with no milestone) is superseded by [DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md) (single `v1.1` milestone; v1.2.0 milestone deleted 2026-08-18).
 
 **Created:** 2026-07-18.
 
@@ -14,13 +14,13 @@
 
 ## Prerequisite
 
-**Phase 1 (complete):** Governance consolidated into `AGENTS.md`, role contracts relocated to `.agents/contracts/`, and cross-references updated for tool-agnostic AI collaboration.
+**Phase 1 (complete):** Governance consolidated into `AGENTS.md`, role contracts relocated to `CONVENTIONS.md`, and cross-references updated for tool-agnostic AI collaboration.
 
 **Phase 2 (this plan):** Execute the behavioural migration so that:
 
 - "Add to backlog" means **create or update a GitHub Issue** and sync the project board.
 - Role contracts do not continue writing open work items to `plan/BACKLOG.md`.
-- All AI tools share the same canonical workflow via `AGENTS.md` and `.agents/contracts/`.
+- All AI tools share the same canonical workflow via `AGENTS.md` and `CONVENTIONS.md`.
 
 **Do not re-execute Steps 1–8 below unless a future migration is required.**
 
@@ -35,7 +35,7 @@ SCOPE.md                 → product boundaries (what is / isn't in scope)
 IMPLEMENTATION_PLAN.md   → phase sequencing and architecture milestones
 RELEASE_PLAN.md          → versioning and release process
 LABEL_STRATEGY.md        → label taxonomy contract
-PM_RUNBOOK.md            → daily/weekly operating rhythm
+plan/archive/PM_RUNBOOK-2026-copilot-era.md  → retired Copilot-era runbook (archived)
 GitHub Issues            → work items (source of truth)
 GitHub Project #8        → prioritisation, flow, Up Next queue
 GitHub Milestones        → release targeting
@@ -231,7 +231,7 @@ Start at Step 0 and work through Step 8.
 | [RELEASE_PLAN.md](RELEASE_PLAN.md) | Version strategy |
 | [PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md) | Issue/milestone/project conventions |
 | [LABEL_STRATEGY.md](LABEL_STRATEGY.md) | Label taxonomy |
-| [PM_RUNBOOK.md](PM_RUNBOOK.md) | Daily operating rhythm |
+| [`plan/archive/PM_RUNBOOK-2026-copilot-era.md`](archive/PM_RUNBOOK-2026-copilot-era.md) | Retired (archived) |
 | [PROJECT_BOARD_DESIGN.md](PROJECT_BOARD_DESIGN.md) | Project #8 field definitions |
 | `.agents/skills/repo-github-issues/SKILL.md` | Issue creation guidance |
 | `.agents/skills/repo-github-project/SKILL.md` | Project board sync guidance |

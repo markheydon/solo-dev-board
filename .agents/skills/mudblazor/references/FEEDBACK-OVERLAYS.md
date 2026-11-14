@@ -63,4 +63,4 @@ Use this reference for user feedback, status communication, and transient surfac
 
 - For provider setup and service injection patterns, see `../SKILL.md`.
 - For common provider and popup failures, see `KNOWN-PITFALLS.md`.
-- Decision log: [DEC-035](../../../plan/DECISIONS.md#dec-035-transient-feedback-via-snackbar).
+- Decision log: [DEC-035](../../../adr/adr-0035-transient-feedback-via-snackbar.md).

@@ -33,7 +33,8 @@ public sealed class LabelsTests : SoloDevBoardPageTest
     {
         await Page.GotoAsync("/labels");
 
-        await Expect(Page.GetByText("Loading repositories...")).ToBeHiddenAsync(new() { Timeout = 15_000 });
+        var repositorySelector = Page.GetByTestId("repository-selector-region");
+        await Expect(repositorySelector.GetByText("Loading repositories...")).ToBeHiddenAsync(new() { Timeout = 15_000 });
         await Expect(Page.GetByTestId("labels-reload-from-github-button")).ToBeVisibleAsync();
         await Expect(Page.GetByRole(AriaRole.Button, new() { Name = "Reload from GitHub" })).ToBeVisibleAsync();
     }
@@ -46,7 +47,8 @@ public sealed class LabelsTests : SoloDevBoardPageTest
     {
         await Page.GotoAsync("/labels");
 
-        await Expect(Page.GetByText("Loading repositories...")).ToBeHiddenAsync(new() { Timeout = 15_000 });
+        var repositorySelector = Page.GetByTestId("repository-selector-region");
+        await Expect(repositorySelector.GetByText("Loading repositories...")).ToBeHiddenAsync(new() { Timeout = 15_000 });
         await Expect(Page.GetByTestId("label-manager-feedback-region")).ToBeVisibleAsync();
         await Expect(Page.GetByText(new Regex("GitHub API request failed", RegexOptions.IgnoreCase))).ToBeVisibleAsync();
         await Expect(Page.GetByRole(AriaRole.Button, new() { Name = "Try loading repositories again" })).ToBeVisibleAsync();
@@ -103,7 +105,8 @@ public sealed class LabelsTests : SoloDevBoardPageTest
     {
         await Page.GotoAsync("/labels");
 
-        await Expect(Page.GetByText("Loading repositories...")).ToBeHiddenAsync(new() { Timeout = 15_000 });
+        var repositorySelector = Page.GetByTestId("repository-selector-region");
+        await Expect(repositorySelector.GetByText("Loading repositories...")).ToBeHiddenAsync(new() { Timeout = 15_000 });
         await Page.GetByRole(AriaRole.Tab, new() { Name = "Recommended taxonomy" }).ClickAsync();
         await Expect(Page.GetByTestId("preview-taxonomy-button")).ToBeVisibleAsync();
         await Expect(Page.GetByTestId("remove-labels-outside-taxonomy-checkbox")).ToBeVisibleAsync();

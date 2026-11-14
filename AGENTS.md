@@ -1,257 +1,67 @@
-# AI Collaborator Instructions — SoloDevBoard
+# Agent Instructions
 
-Platform-neutral standards for GitHub Copilot, Cursor, and other AI agents working in this repository.
+Repository-specific operating rules for AI coding agents.
 
-## Project Overview
+## Core Context
 
-**SoloDevBoard** is a .NET 10 Blazor Server application that provides a single pane of glass for solo developers to manage GitHub workloads across multiple repositories.
+Read before non-trivial changes:
 
----
+- [`GOALS.md`](GOALS.md)
+- [`SCOPE.md`](SCOPE.md) (summary; detail in [`plan/SCOPE.md`](plan/SCOPE.md))
+- [`CONVENTIONS.md`](CONVENTIONS.md)
+- [`adr/`](adr/) - accepted decisions
 
-## Language & Framework
+## Language
 
-- **Language:** C# 14
-- **Framework:** .NET 10 / Blazor Server
-- **Target runtime:** `net10.0`
+UK English in documentation, comments, and user-facing text. Do not use the em dash (U+2014); see [`CONVENTIONS.md`](CONVENTIONS.md) (Documentation).
 
-Path-scoped rules live in `.github/instructions/` and are loaded by matching tools when relevant files are in context. Cursor mirrors each instruction file with a rule in `.cursor/rules/`:
+## Tech Stack
 
-| Instruction file | Scope | Cursor rule |
-|------------------|-------|-------------|
-| `blazor.instructions.md` | `**/*.razor`, `**/*.razor.cs`, `**/*.razor.css` | `.cursor/rules/blazor-mudblazor.mdc` |
-| `dotnet-framework.instructions.md` | `**/*.cs`, `**/*.csproj` | `.cursor/rules/dotnet.mdc` |
-| `github-actions-ci-cd-best-practices.instructions.md` | `.github/workflows/**` | `.cursor/rules/github-actions-ci-cd-best-practices.mdc` |
+- .NET 10.0 (LTS), Blazor Server, C# 14.
+- xUnit v3 with Microsoft.Testing.Platform; NSubstitute when mocks are required; built-in asserts only.
+- MudBlazor for UI; Aspire AppHost for local orchestration and Azure Container Apps deployment.
 
----
+## Skills
 
-## UK English Requirement
+Project skills live in [`.agents/skills/`](.agents/skills/).
 
-> **All code comments, string literals, user-facing text, documentation, and commit messages MUST be written in UK English.**
+| Skill | Use when |
+| --- | --- |
+| `create-architectural-decision-record` | Creating or major-updating an ADR |
+| `project-documentation` | Diátaxis and project-aware docs (README, `docs/`, placement) |
+| `code-review` | PR or branch review before merge (see [`.cursor/commands/loop-code-review.md`](.cursor/commands/loop-code-review.md)) |
+| `implementation-guardrails` | Non-trivial implementation: architecture fit, proportionality, root-cause fixes, build/test discipline |
+| `mudblazor` | Blazor UI pages and components (MudBlazor patterns) |
 
-> **All bullet point list items that form complete sentences MUST end with a full stop (`.`).** This applies to all documentation: planning files, user guides, decision log, agent definitions, prompt files, and inline code comments.
+Onboard **.NET Aspire** using current official documentation (not copied Aspire skills from this repository).
 
-Use the following spellings consistently:
-- `colour` (not color)
-- `organise` (not organize)
-- `recognise` (not recognize)
-- `licence` as a noun, `license` as a verb
-- `analyse` (not analyze)
-- `prioritise` (not prioritize)
-- `behaviour` (not behavior)
-- `centre` (not center)
-- `favour` (not favor)
+## Task Routing
 
----
+- **Code** (`src/`, `tests/`): [`CONVENTIONS.md`](CONVENTIONS.md).
+- **Documentation** (`**/*.md` except `adr/`): `project-documentation` skill.
+- **ADRs** (`adr/*.md`): ADR skill only.
 
-## Architecture
+## Not Allowed Without Explicit Instruction
 
-The solution follows a **clean/layered architecture** with the following projects:
+- Add or remove NuGet packages (except central versions in `Directory.Packages.props` when maintaining deps).
+- Modify CI/CD behaviour.
+- Commit secrets or API keys.
 
+## Pull Request Workflow
+
+Follow [`plan/PULL_REQUEST_POLICY.md`](plan/PULL_REQUEST_POLICY.md) and [`.github/pull_request_template.md`](.github/pull_request_template.md).
+
+Before opening a PR:
+
+```bash
+dotnet format SoloDevBoard.slnx --verify-no-changes
+dotnet build SoloDevBoard.slnx -c Release -warnaserror
+dotnet test SoloDevBoard.UnitTests.slnf -c Release --no-build
 ```
-SoloDevBoard.Domain         → Domain entities, value objects, domain events (no external dependencies)
-SoloDevBoard.Application    → Application logic, use cases, service interfaces, DTOs, auth contracts
-SoloDevBoard.Infrastructure → GitHub API clients, persistence, external integrations
-SoloDevBoard.Composition    → DI/pipeline composition root (wires Application + Infrastructure)
-SoloDevBoard.App            → Blazor Server UI (presentation + host-specific auth endpoints)
-```
 
-### Rules
-- **Domain** has no external dependencies.
-- **Application** depends on Domain only.
-- **Infrastructure** depends on Application and Domain (implements interfaces).
-- **Composition** depends on Application and Infrastructure; owns `AddSoloDevBoard` and pipeline wiring.
-- **App** depends on Application and Composition only; **must not reference Infrastructure** (not in `.csproj`, not in `using` statements).
-- Use constructor injection throughout; avoid service locator patterns.
+Title shape: `[Type] Imperative summary (#NNN)` with labels from [`plan/LABEL_STRATEGY.md`](plan/LABEL_STRATEGY.md).
 
-### Boundary Data Shapes (DEC-008)
-
-Two explicit rules govern what types cross each boundary:
-
-1. **Repository boundary (Infrastructure ↔ Application):** `IRepository` interfaces return and accept **domain entity records** (`Label`, `Repository`, etc.). Infrastructure translates external API responses to domain records before crossing this boundary.
-2. **Application→App boundary:** All public Application service interfaces (`I*Service`, `I*Manager`) return and accept **DTO records** (`LabelDto`, `RepositoryDto`, etc.) defined in `SoloDevBoard.Application`. **Domain entities must never appear in the public signature of these interfaces.**
-
-DTOs are `sealed record` types named `<Entity>Dto`, co-located in `SoloDevBoard.Application` alongside the service interface that uses them. Mapping from domain entity to DTO happens in the Application service implementation — not in Razor components, not via AutoMapper.
-
----
-
-## Coding Conventions
-
-- **Nullable reference types:** enabled in all projects (`<Nullable>enable</Nullable>`).
-- **Implicit usings:** enabled (`<ImplicitUsings>enable</ImplicitUsings>`).
-- **Records** for domain entities and value objects wherever immutability is appropriate.
-- **File-scoped namespaces** for all `.cs` files.
-- **Primary constructors** where they improve readability.
-- Prefer `IReadOnlyList<T>` and `IReadOnlyDictionary<TKey, TValue>` over mutable collections in public APIs.
-- All public members must have XML doc comments (`///`).
-- Use `ArgumentNullException.ThrowIfNull()` for guard clauses.
-
----
-
-## Testing
-
-- **Framework:** xUnit v3
-- **Mocking:** NSubstitute
-- **Component tests:** bUnit (App test project only; see [DEC-007](plan/DECISIONS.md#dec-007-bunit-for-blazor-component-testing))
-- **End-to-end tests:** Playwright for key user journeys (see [DEC-016](plan/DECISIONS.md#dec-016-formalised-testing-standard--xunit-v3-nsubstitute-playwright-e2e))
-- **AppHost:** Do not test .NET Aspire AppHost modelling or orchestration.
-- **Naming convention:** `MethodUnderTest_Scenario_ExpectedOutcome`
-- Test projects mirror the structure of source projects.
-- Arrange / Act / Assert sections separated by blank lines (no comments required).
-- Use xUnit's built-in `Assert.*` methods for all assertions. **Do not add FluentAssertions, AwesomeAssertions, Shouldly, Moq, NUnit, or MSTest** (see [DEC-006](plan/DECISIONS.md#dec-006-no-fluentassertions--xunit-built-in-assertions-only) and [DEC-016](plan/DECISIONS.md#dec-016-formalised-testing-standard--xunit-v3-nsubstitute-playwright-e2e)).
-
-### End-user docs and Playwright E2E alignment
-
-The published User Guide (`website/content/docs/`) and Playwright suite (`tests/E2E/`) must stay aligned **like-for-like**:
-
-1. **User guides describe actual application behaviour.** Do not document capabilities that are not shipped. Use scope notes for partial delivery.
-2. **Playwright E2E tests exercise what the guides claim.** Every published page in `website/content/docs/` must map to at least one test class under `tests/E2E/SoloDevBoard.E2E.Tests/`. Assertions should target routes, controls, labels, and workflows described in the guide.
-3. **Loaded-state journeys use the docs-capture suite.** CI runs with placeholder auth and asserts shells, navigation, and empty or error states. Screenshots and populated UI states are captured manually via `SoloDevBoard.E2E.Tests/DocsCapture/` with a real PAT and `DOCS_CAPTURE_ENABLED=1` — see [tests/E2E/USER_DOCS_ALIGNMENT.md](tests/E2E/USER_DOCS_ALIGNMENT.md).
-
-Canonical mapping and section-level inventory: [tests/E2E/USER_DOCS_ALIGNMENT.md](tests/E2E/USER_DOCS_ALIGNMENT.md). Update it alongside [tests/E2E/CRITICAL_JOURNEYS.md](tests/E2E/CRITICAL_JOURNEYS.md) when journeys change.
-
-**Screenshot hygiene (mandatory):** Never commit screenshots showing private repositories, private Projects v2 boards, tokens, or other confidential information. Capture with `DocsCapture:Enabled=true` (public catalogues only), light theme, 1400×900 viewport, and the `markheydon/solo-dev-board` example repository. See [plan/DOCS_STRATEGY.md](plan/DOCS_STRATEGY.md#screenshot-convention), [DEC-020](plan/DECISIONS.md#dec-020-public-only-docs-capture-mode-for-documentation-screenshots), and [docs/getting-started.md](docs/getting-started.md#docs-capture-mode).
-
----
-
-## When Adding a New Feature
-
-Apply the tier that matches the request:
-
-### Always (any code change)
-
-- Follow architecture, coding conventions, UK English, and testing rules in this file and path-scoped instructions.
-- Do not commit secrets or temporary files to the repository.
-
-### Planned feature work (issue exists or user requests full PM workflow)
-
-Follow [`.agents/workflows/plan-next-issue.md`](.agents/workflows/plan-next-issue.md) and [`.agents/contracts/delivery.md`](.agents/contracts/delivery.md). Gates:
-
-- Planning and GitHub issue with acceptance criteria before coding.
-- Wireframe in `plan/wireframes/` before page-producing UI implementation.
-- User guide, decision log or constitution update, tests, and docs sync per the Documentation Sync table below.
-
-### Greenfield "add a feature" (no issue yet)
-
-Create or update planning artefacts and a GitHub issue before implementation — see `plan-next-issue` workflow. Do not implement directly without scope validation.
-
-### Ad-hoc fix or small change
-
-No backlog or issue ceremony required unless scope grows beyond the original request.
-
----
-
-## Label Strategy
-
-Follow the taxonomy in [`plan/LABEL_STRATEGY.md`](plan/LABEL_STRATEGY.md). Apply at least one `type/` and one `priority/` label to new issues and PRs.
-
----
-
-## Infrastructure
-
-- Production deployment uses **Aspire** (`aspire deploy`) from `SoloDevBoard.AppHost` to **Azure Container Apps** ([DEC-015](plan/DECISIONS.md#dec-015-aspire-azure-container-apps-deployment)).
-- Aspire generates and applies deployment Bicep at deploy time; do not maintain hand-authored `infra/*.bicep` for production hosting.
-- Hosted authentication secrets (`gh-pat`, `gh-app-client-secret`) are supplied via AppHost parameters at deploy time and persisted in an Aspire-provisioned Azure Key Vault as Key Vault references on the Container App ([DEC-017](plan/DECISIONS.md#dec-017-key-vault-backed-hosted-auth-secrets)). Other parameters remain plain environment variables.
-- See `docs/deployment.md` for operator deployment instructions.
-
----
-
-## Open Source & Security
-
-This repository is **open source and public**. The following guidelines ensure security and code quality:
-
-### Secrets Management
-
-- **Golden Rule:** Never commit secrets, credentials, API keys, or personal data to this repository.
-- **GitHub Tokens for app runtime:** Must be stored in **GitHub Environment secrets** (production Aspire deploy parameters), **Aspire user secrets** (local AppHost), or .NET User Secrets (legacy `dotnet run` path). Never commit tokens to source control.
-- **GitHub Tokens for repository automation:** Repository-scoped GitHub Actions bridge tokens may be stored in GitHub Secrets when they are used only for repository/project automation workflows (for example, the SoloDevBoard roadmap bridge) and cannot be replaced by `GITHUB_TOKEN`.
-- **Local Development:** Use `dotnet user-secrets` for the legacy `dotnet run` path, or `aspire secret set` for Aspire AppHost. See `docs/getting-started.md` for setup instructions.
-- **App Settings Files:** `appsettings.json` and related files leave sensitive fields empty and instantiate with environment variables or secrets at runtime.
-- **Aspire Deployments:** Secret parameters are supplied from GitHub Environment secrets at deploy time, persisted in an Aspire-provisioned Key Vault, and referenced by the Container App. See `src/SoloDevBoard.AppHost/README.md`, `docs/deployment.md`, and `plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md` for parameter mappings.
-- **CI/CD:** GitHub Actions workflows use OIDC authentication with Azure (no long-lived credentials) and GitHub Environment secrets for AppHost parameters.
-
-### Contributing & Pull Requests
-
-- All contributions are welcome under the MIT license.
-- Ensure no secrets appear in your commits before submitting a PR.
-- Use `.gitignore` to exclude local secrets (`.env`, `secrets.json`, etc.).
-- Review [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
-- **Pull request metadata** (title, template body, labels, linking, draft state, assignee, milestone) follows [`plan/PULL_REQUEST_POLICY.md`](plan/PULL_REQUEST_POLICY.md) ([DEC-022](plan/DECISIONS.md#dec-022-canonical-pull-request-policy)). That file overrides vendor agent defaults when they conflict.
-
-### .gitignore Protections
-
-The repository includes patterns to prevent accidental secret commits:
-- `*.env` — environment variable files
-- `**/secrets.json` — .NET User Secrets
-- `*.user` — Visual Studio user-specific files
-
----
-
-## Documentation Sync
-
-When code changes are made, ensure the following are kept in sync:
-
-| Change | Doc to update |
-|--------|--------------|
-| New end-user feature | `website/content/docs/<feature>.md`, `website/content/_index.md` (and docs landing), matching Playwright test in `tests/E2E/SoloDevBoard.E2E.Tests/`, `tests/E2E/USER_DOCS_ALIGNMENT.md`, `tests/E2E/CRITICAL_JOURNEYS.md`, GitHub Issue + Project #8 sync |
-| End-user behaviour change | `website/content/docs/<feature>.md` and matching Playwright test(s); refresh docs-capture screenshots when the UI changes materially |
-| New developer / operator guidance | `docs/<topic>.md` and `docs/README.md` as needed |
-| Pull request process | [`plan/PULL_REQUEST_POLICY.md`](plan/PULL_REQUEST_POLICY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md) |
-| New decision | `plan/DECISIONS.md` (+ constitution if cross-cutting) |
-| Scope change | `plan/SCOPE.md`, `plan/IMPLEMENTATION_PLAN.md` |
-| New env variable | `docs/getting-started.md`, `docs/deployment.md`, `src/SoloDevBoard.AppHost/README.md` |
-| Layer boundary or composition-root change | `AGENTS.md`, `plan/DECISIONS.md` (DEC-002), `CONTRIBUTING.md`, `.agents/contracts/code-review.md`, `.agents/skills/dotnet-best-practices/SKILL.md`, `plan/ASPIRE_MULTI_PROCESS_FINDINGS.md` when multi-process notes apply |
-| MudBlazor package version change | `.agents/skills/mudblazor/` against https://mudblazor.com/components/overview; update the baseline version in that skill’s `SKILL.md` only |
-| New release | `plan/RELEASE_PLAN.md`, [`CHANGELOG.md`](CHANGELOG.md) |
-| New non-E2E test project | [`SoloDevBoard.UnitTests.slnf`](SoloDevBoard.UnitTests.slnf) |
-
----
-
-## AI Collaborator Behaviour
-
-- Always respond with UK English spelling.
-- When suggesting code, follow the architecture rules above — do not place business logic in Razor components.
-- For Blazor UI work, use MudBlazor components and the official MudBlazor layout patterns first; do not reintroduce bespoke layout structures when the library already provides an equivalent. Follow [DEC-039](plan/DECISIONS.md#dec-039-mudblazor-visual-language-for-page-chrome) and `.agents/skills/mudblazor/references/UX-LANGUAGE.md` for page chrome, loading, and empty states.
-- Prefer MudBlazor layout primitives and utility classes in `Class` attributes for spacing, alignment, sizing, and visibility before creating or extending `.razor.css` files.
-- Treat raw HTML and custom CSS as exceptional escape hatches only. If no MudBlazor component, parameter, or utility class can satisfy the requirement, keep the fallback minimal and explain the reason in the implementation summary or PR notes.
-- When implementing a planned issue, run implementation preflight before creating a feature branch; load linked wireframes and planning artefacts from the issue body.
-- When asked to "add a feature", apply the matching tier in **When Adding a New Feature** above.
-- When reviewing a PR diff, flag any non-UK English spelling in comments or strings.
-- For infrastructure changes, edit the AppHost in `src/SoloDevBoard.AppHost` or add configuration to `src/SoloDevBoard.App`; do not create hand-authored Bicep files (Aspire generates deployment Bicep at deploy time).
-- Do not generate any secrets or credentials in generated files.
-- Do not generate temporary or disposable files in the repository. If a temporary file is required for any reason including (but not limited to) temporary output from tools or testing, it must be created in a temp-style directory away from the repo and cleaned up after use. The rationale is not to restrict an AI's ability to do its work, but to prevent accidental commits of temporary files to the repository.
-
----
-
-## Skills and Workflow
-
-The **`.agents/`** directory holds agent-agnostic AI collaboration artefacts — shared by GitHub Copilot, Cursor, and other tools without tying them to a single vendor layout.
-
-### Skills
-
-Canonical skills live in [`.agents/skills/`](.agents/skills/). See [`.agents/skills/_REGISTRY.md`](.agents/skills/_REGISTRY.md) for the active set, optional companions, and default workflow order.
-
-This repository is a **.NET Aspire** distributed application (`src/SoloDevBoard.AppHost`). Delivery, implement, and live-debug work **must** load the `aspire` skill (then `aspire-orchestration` and `aspire-monitoring` as needed). Do not load every skill up front for PM-only work.
-
-### Execution gates
-
-1. Do not start coding before planning and issue creation are complete.
-2. For page-producing UI work, do not start implementation before the planning wireframe exists in `plan/wireframes/` and is referenced by the relevant planning artefacts or issues.
-3. Do not start coding during `implement-issue` before implementation preflight completes (context loaded, touch map produced, proceed gate satisfied).
-4. Do not close feature work before tests and documentation updates are complete.
-5. Scope-impacting changes must update `plan/SCOPE.md` and `plan/IMPLEMENTATION_PLAN.md` (via Tech Writer agent). New or changed work items must be created or updated as GitHub Issues and synced to Project #8.
-
-### PM operating system
-
-- **Runbook:** [`plan/PM_RUNBOOK.md`](plan/PM_RUNBOOK.md)
-- **Workflows:** [`.agents/workflows/README.md`](.agents/workflows/README.md) (canonical entry points)
-- **Contracts:** [`.agents/contracts/`](.agents/contracts/) (role boundaries)
-- **Tool mirrors:** [`.github/prompts/`](.github/prompts/) and [`.cursor/commands/`](.cursor/commands/) — thin pointers only; never duplicate workflow content
-
-Consult the workflow or contract index when entering a PM or delivery mode. Do not load every skill up front for PM-only work. Delivery must still load Aspire skills as above.
-
-Cloud Agents started from a GitHub Issue or Pull Request comment (`@cursor` or `@cursoragent`) follow **GitHub comment invocation** in [`.agents/workflows/README.md`](.agents/workflows/README.md) ([DEC-031](plan/DECISIONS.md#dec-031-github-comment-workflow-invocation)). Informal "implement this issue" on an issue comment is `deliver-issue`, not the split `implement-issue` path.
-
----
+All agent-authored pull requests require human review before merge.
 
 ## Environment-specific guidance
 

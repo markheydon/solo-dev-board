@@ -11,7 +11,7 @@ This document records the shipped-app and user-guide audit for issue [#423](http
 | Product-behaviour fixtures under `tests/` that imply shipped defaults | Docs-capture helpers and clearly labelled test login fixtures |
 | Example strings: `markheydon`, `solo-dev-board`, `Project #8`, Roadmap Sync identifiers | Marketing About / landing origin narrative (`website/content/about/`, landing `_index.md`) as project story, not app instructions |
 
-Related decisions: [DEC-020](DECISIONS.md#dec-020-public-only-docs-capture-mode-for-documentation-screenshots), [DEC-027](DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy), [DEC-029](DECISIONS.md#dec-029-cross-repo-planning-board-selection-and-local-settings).
+Related decisions: [DEC-020](adr/adr-0020-public-only-docs-capture-mode.md), [DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md), [DEC-029](adr/adr-0029-cross-repo-planning-board-selection-and-local-settings.md).
 
 ## Classification rules
 

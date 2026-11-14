@@ -12,7 +12,7 @@ Aspire deploys the following Azure resources (see [Deployment guide](deployment.
 |---|---|---|
 | Azure Container Apps environment | Hosts containerised workloads on the Consumption profile | Environment + per-use compute |
 | Container App (`app`) | SoloDevBoard Blazor Server application | Consumption (vCPU-seconds, memory, requests) |
-| Azure Container Registry (Basic) | Stores built container images when not using a shared registry ([DEC-025](../plan/DECISIONS.md#dec-025-optional-shared-azure-container-registry)) | Fixed monthly (Basic tier) when Aspire provisions one per deploy |
+| Azure Container Registry (Basic) | Stores built container images when not using a shared registry ([DEC-025](../adr/adr-0025-optional-shared-azure-container-registry.md)) | Fixed monthly (Basic tier) when Aspire provisions one per deploy |
 | Log Analytics workspace | Container platform logs and Application Insights backing store | Per GB ingested |
 | Application Insights | Application logs, metrics, and traces | Per GB ingested (linked workspace) |
 | Managed identities | Image pull and runtime auth | No direct charge |

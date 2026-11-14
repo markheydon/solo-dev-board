@@ -73,7 +73,7 @@ Hosted sign-in now uses GitHub App user authentication only. The separate OAuth 
 
 ## Test Coverage Expectations (Issue #114)
 
-This section documents the test coverage requirements for GitHub App-first hosted authentication, as delivered in [DEC-012](DECISIONS.md#dec-012-github-app-first-hosted-authentication) and related issues.
+This section documents the test coverage requirements for GitHub App-first hosted authentication, as delivered in [DEC-012](adr/adr-0015-github-app-first-hosted-authentication.md) and related issues.
 
 - Hosted sign-in and per-request user context must be covered by unit tests for session establishment, claim mapping, and context resolution.
 - Installation discovery, token issuance, expiry, and failure handling are covered by unit tests and integration tests. Expiry and invalid token scenarios must be tested for explicit failure and no silent fallback.
@@ -81,7 +81,7 @@ This section documents the test coverage requirements for GitHub App-first hoste
 - Unit-test and mocked seams cover session creation, claim mapping, and admission control logic. Environment-dependent tests cover real GitHub App installation, token issuance, and expiry scenarios.
 - Documentation-sensitive regressions are covered by tests ensuring PAT-only local trusted mode is preserved.
 
-See [DEC-012](DECISIONS.md#dec-012-github-app-first-hosted-authentication) and GitHub Issues [#247](https://github.com/markheydon/solo-dev-board/issues/247)–[#250](https://github.com/markheydon/solo-dev-board/issues/250) for references to completed coverage and test boundaries.
+See [DEC-012](adr/adr-0015-github-app-first-hosted-authentication.md) and GitHub Issues [#247](https://github.com/markheydon/solo-dev-board/issues/247)–[#250](https://github.com/markheydon/solo-dev-board/issues/250) for references to completed coverage and test boundaries.
 
 ## Remaining V1 Auth Polish
 

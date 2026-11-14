@@ -6,7 +6,7 @@ This file is **not** applied automatically. After editing it, copy the fenced **
 
 Keep the Project **short description** as a current one-liner (GitHub may refuse to save an empty value). Update it whenever the README focus changes.
 
-Refresh this file during each [PM progress review](../.agents/workflows/pm-progress-review.md) so the public board description does not lag the milestones.
+Refresh this file when milestones change so the public board description does not lag delivery.
 
 ---
 
@@ -36,7 +36,7 @@ SoloDevBoard provides a single pane of glass for solo developers managing GitHub
 | Planning polish, Reload & Templates | `v1.2 - Planning polish, Reload & Templates` | `v1.2.0` | Complete — [`v1.2.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.2.0) (2026-09-07) |
 | Usable solo workflow across repositories | `v1.3 - Usable solo workflow across repositories` | `v1.3.0` | Open — [milestone #9](https://github.com/markheydon/solo-dev-board/milestone/9) |
 
-Post-1.0 model: one open milestone at a time ([DEC-027](https://github.com/markheydon/solo-dev-board/blob/main/plan/DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)).
+Post-1.0 model: one open milestone at a time ([DEC-027](https://github.com/markheydon/solo-dev-board/blob/main/adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md)).
 
 ### Current snapshot
 
@@ -53,7 +53,7 @@ Snapshot date: 7 September 2026.
 | `v1.2 - Planning polish, Reload & Templates` | 32 | 0 | 100% |
 | `v1.3 - Usable solo workflow across repositories` | 0 | open | In progress |
 
-Phase stays blank for `v1.3` and unmilestoned work ([DEC-027](https://github.com/markheydon/solo-dev-board/blob/main/plan/DECISIONS.md#dec-027-post-10-milestone-and-work-item-hierarchy)). GitHub’s `v1.2` closed count includes milestoned pull requests.
+Phase stays blank for `v1.3` and unmilestoned work ([DEC-027](https://github.com/markheydon/solo-dev-board/blob/main/adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md)). GitHub’s `v1.2` closed count includes milestoned pull requests.
 
 ### Key resources
 

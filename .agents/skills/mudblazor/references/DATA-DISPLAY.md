@@ -20,10 +20,10 @@ Use this reference for read-heavy views, structured information, and visual pres
 | `MudPagination` | Page navigation controls for paged content. | Pair with server-side paging logic where needed. |
 | `MudPopover` | Anchored content surface for contextual detail. | Use with care; ensure focus and dismiss behaviour are clear. |
 | `MudSimpleTable` | Low-friction static table rendering. | Good for read-only compact tabular details. |
-| `MudTable<T>` | Data table with moderate capabilities. | Prefer when `MudDataGrid` features are unnecessary. |
+| `MudTable<T>` | Data table with moderate capabilities. | Prefer when `MudDataGrid` features are unnecessary. Use `RowHref` / `RowTarget` (9.13+) for navigable rows instead of row `OnClick` when the row should behave like a link. |
 | `MudTabs` + `MudTabPanel` | Segmented content areas. | Useful for mode switches and detail partitioning. |
 | `MudTimeline` + timeline items | Chronological event display. | Good fit for audit and activity histories. |
-| `MudTreeView<T>` + `MudTreeViewItem<T>` | Hierarchical data and nested structures. | Suitable for file-like trees and rule hierarchies. |
+| `MudTreeView<T>` + `MudTreeViewItem<T>` | Hierarchical data and nested structures. | Suitable for file-like trees and rule hierarchies. Set `Virtualize="true"` on large `Items`-based trees (9.13+). |
 
 ## Table and Grid Guidance
 

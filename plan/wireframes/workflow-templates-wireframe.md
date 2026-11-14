@@ -75,7 +75,7 @@
 
 ## v1.2 — Custom template source (#292)
 
-Product decisions (also [DEC-038](../DECISIONS.md#dec-038-custom-actions-template-sources)):
+Product decisions (also [DEC-038](adr/adr-0038-custom-actions-template-sources.md)):
 
 - One GitHub repository at a time. Multiple concurrent sources are out of this increment.
 - Source selection: catalogue `RepositorySelector` (single-select) **or** manual `owner/name` field; both resolve to one `owner/name` for load.

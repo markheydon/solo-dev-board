@@ -1,0 +1,10 @@
+# C# Conventions
+
+Follow `CONVENTIONS.md` and `AGENTS.md`.
+
+- Use async/await for I/O; propagate `CancellationToken`.
+- Do not use `.Result`, `.Wait()`, or sync-over-async.
+- Add XML documentation to public API members.
+- Prefer property-based `record` types for immutable DTOs; use `class` for services and exceptions.
+- Do not add NuGet packages or change architecture without an ADR and explicit instruction.
+- Do not log secrets, API keys, or tokens.
