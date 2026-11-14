@@ -12,8 +12,8 @@ Cursor Cloud agents often default to **draft** PRs, `cursor/…` branch names, a
 
 ## Toolchain
 
-- The .NET SDK pinned by `global.json` (currently `10.0.400` with `rollForward: latestFeature`) is installed at `~/.dotnet`; the Aspire CLI (`13.6.0`, matching `Aspire.AppHost.Sdk`) is installed as a global tool at `~/.dotnet/tools`. Both are on `PATH` via `~/.bashrc`. Non-login shells (for example `bash -c`) do not source `~/.bashrc`, so invoke the SDK with the absolute path `~/.dotnet/dotnet` when `dotnet`/`aspire` are not already on `PATH`.
-- The AppHost sets `AspireUseCliBundle=true`, so Dashboard and DCP come from the CLI bundle. Cloud already installs Aspire CLI `13.6.0`; keep it aligned with `Aspire.AppHost.Sdk` when upgrading.
+- The .NET SDK pinned by `global.json` (currently `10.0.400` with `rollForward: latestFeature`) is installed at `~/.dotnet`; the Aspire CLI (`13.6.5`, matching `Aspire.AppHost.Sdk`) is installed as a global tool at `~/.dotnet/tools`. Both are on `PATH` via `~/.bashrc`. Non-login shells (for example `bash -c`) do not source `~/.bashrc`, so invoke the SDK with the absolute path `~/.dotnet/dotnet` when `dotnet`/`aspire` are not already on `PATH`.
+- The AppHost sets `AspireUseCliBundle=true`, so Dashboard and DCP come from the CLI bundle. Cloud already installs Aspire CLI `13.6.5`; keep it aligned with `Aspire.AppHost.Sdk` when upgrading.
 - The startup update script only runs `dotnet restore SoloDevBoard.slnx` (this also restores the AppHost). Building, testing, linting, and running are left to you.
 
 ---

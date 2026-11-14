@@ -6,4 +6,4 @@ This folder holds dated **PM progress review** artefacts from the retired Copilo
 
 **Cadence:** Reviews are **not** tied to a weekly calendar. Each review covers the period since the newest prior file in this folder (or project inception if none exists). Long gaps between reviews are normal; do not invent filler reviews for idle periods.
 
-**Invocation:** "Run the PM progress review" or `/pm-progress-review`.
+**Invocation:** Manual only. The retired `/pm-progress-review` workflow is documented in [`plan/archive/PM_RUNBOOK-2026-copilot-era.md`](../archive/PM_RUNBOOK-2026-copilot-era.md).

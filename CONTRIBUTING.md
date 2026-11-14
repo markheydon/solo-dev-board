@@ -120,7 +120,7 @@ When suggesting a feature:
    - Do not test .NET Aspire AppHost modelling or orchestration.
 
 4. **Architecture:**
-   - Follow the clean/layered architecture: Domain, Application, Infrastructure, Composition, and App with strict dependency direction (see [AGENTS.md — Architecture](AGENTS.md#architecture) and [DEC-002](adr/adr-0004-layered-architecture.md)).
+   - Follow the clean/layered architecture: Domain, Application, Infrastructure, Composition, and App with strict dependency direction (see [`CONVENTIONS.md`](CONVENTIONS.md) and [DEC-002](adr/adr-0004-layered-architecture.md)).
    - Domain has no external dependencies.
    - Infrastructure implements interfaces defined in Application.
    - Composition wires Application and Infrastructure via `AddSoloDevBoard`; App must not reference Infrastructure.

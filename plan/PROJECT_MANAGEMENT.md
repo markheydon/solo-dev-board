@@ -60,7 +60,7 @@ GitHub sub-issues and issue dependencies are the hierarchy source of truth. Agen
 | Parent / child (Epic → Feature → Story/Enabler/Test) | GitHub MCP `sub_issue_write` |
 | Blocking / blocked-by | REST `POST /repos/{owner}/{repo}/issues/{blocked}/dependencies/blocked_by` via `gh api` |
 
-`gh issue` still has no dedicated subcommands for either ([cli/cli#11757](https://github.com/cli/cli/issues/11757), [cli/cli#10298](https://github.com/cli/cli/issues/10298)). That does **not** mean the user must click Relationships in the UI — use the REST and MCP paths in [`.agents/skills/repo-github-gh-cli/SKILL.md`](../.agents/skills/repo-github-gh-cli/SKILL.md). Mention `#N` in the issue body as well so the graph is readable in comments and search.
+`gh issue` still has no dedicated subcommands for either ([cli/cli#11757](https://github.com/cli/cli/issues/11757), [cli/cli#10298](https://github.com/cli/cli/issues/10298)). That does **not** mean the user must click Relationships in the UI — use GitHub MCP `sub_issue_write` for parent/child links and `gh api` against the issue-dependencies REST API for blocking edges (see [GitHub issue dependencies](https://docs.github.com/en/rest/issues/issue-dependencies)). Mention `#N` in the issue body as well so the graph is readable in comments and search.
 
 ### Issue Lifecycle
 
@@ -190,5 +190,5 @@ When using Copilot Chat to manage issues:
 > 2. Apply labels from `LABEL_STRATEGY.md` — minimum: one `type/`, one `priority/`, one `area/`.
 > 3. Assign the issue to the appropriate milestone.
 > 4. Use the user story format in the issue body when creating from planning input.
-> 5. Sync the issue to Project #8 per the `repo-github-project` skill.
-> 6. Set sub-issue parents and blocking relationships via MCP/`gh api` (see `repo-github-gh-cli`). Do not ask the user to click Relationships in the GitHub UI unless those APIs fail.
+> 5. Sync the issue to Project #8 per [`PROJECT_BOARD_DESIGN.md`](PROJECT_BOARD_DESIGN.md) (GitHub MCP or `gh project`).
+> 6. Set sub-issue parents and blocking relationships via MCP/`gh api` as above. Do not ask the user to click Relationships in the GitHub UI unless those APIs fail.

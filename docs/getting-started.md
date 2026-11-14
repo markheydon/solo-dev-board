@@ -12,7 +12,7 @@ Before you begin, ensure you have the following installed:
 |---|---|---|
 | [.NET SDK](https://dotnet.microsoft.com/download/dotnet/10.0) | 10.0 or later | Required to build and run the application |
 | Git | Any recent version | Required to clone the repository |
-| Aspire CLI | 13.6.0 (match `Aspire.AppHost.Sdk`) | Required for local orchestration via AppHost; install with `curl -sSL https://aspire.dev/install.sh \| bash -s -- --version 13.6.0` or `dotnet tool install -g Aspire.Cli --version 13.6.0` |
+| Aspire CLI | 13.6.5 (match `Aspire.AppHost.Sdk`) | Required for local orchestration via AppHost; install with `curl -sSL https://aspire.dev/install.sh \| bash -s -- --version 13.6.5` or `dotnet tool install -g Aspire.Cli --version 13.6.5` |
 | A GitHub account | — | Required for GitHub API access |
 | A GitHub Personal Access Token (PAT) **or** GitHub App | — | Required for API authentication (see below) |
 
@@ -121,7 +121,7 @@ Codespaces and dev containers can load AppHost parameters from repository **Code
 
 On container create, `.devcontainer/map-apphost-secrets.sh` maps any set `SDB_*` variables into AppHost parameters with `aspire secret set` (the same user-secrets store as manual `dotnet user-secrets` on the AppHost project). Rebuild the Codespace after adding or changing secrets.
 
-On each container start, `.devcontainer/setup-dev-certs.sh` trusts the ASP.NET HTTPS development certificate and persists `SSL_CERT_DIR` in your shell profile so `aspire doctor` does not warn about partial certificate trust.
+On each container start, `aspire certs trust --non-interactive` (see [`postStartCommand`](../.devcontainer/devcontainer.json)) trusts the ASP.NET HTTPS development certificate. `SSL_CERT_DIR` in `remoteEnv` keeps the trust store visible so `aspire doctor` does not warn about partial certificate trust.
 
 On **WSL2**, if the Windows host browser must trust the same development certificate, run `./scripts/export-dev-cert-for-windows-host.sh` from the repository root after certs are set up, then install the exported certificate on Windows as described in the script output.
 
