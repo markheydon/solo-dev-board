@@ -17,7 +17,7 @@ Refresh this file when milestones change so the public board description does no
 
 SoloDevBoard provides a single pane of glass for solo developers managing GitHub workloads across multiple repositories.
 
-**Status:** On track. Public releases through [v1.3.0](https://github.com/markheydon/solo-dev-board/releases/tag/v1.3.0) (label remap). Active milestone: [**v1.4 - Product chrome and narrow viewports**](https://github.com/markheydon/solo-dev-board/milestones) ([#526](https://github.com/markheydon/solo-dev-board/issues/526), [#527](https://github.com/markheydon/solo-dev-board/issues/527), [#528](https://github.com/markheydon/solo-dev-board/issues/528), [#530](https://github.com/markheydon/solo-dev-board/issues/530), [#411](https://github.com/markheydon/solo-dev-board/issues/411)).
+**Status:** On track. Public releases through [v1.3.0](https://github.com/markheydon/solo-dev-board/releases/tag/v1.3.0) (label remap). Active milestone: [**v1.4 - Product chrome and narrow viewports**](https://github.com/markheydon/solo-dev-board/milestone/10) ([#526](https://github.com/markheydon/solo-dev-board/issues/526), [#527](https://github.com/markheydon/solo-dev-board/issues/527), [#528](https://github.com/markheydon/solo-dev-board/issues/528), [#530](https://github.com/markheydon/solo-dev-board/issues/530), [#411](https://github.com/markheydon/solo-dev-board/issues/411)).
 
 ### Current focus
 
