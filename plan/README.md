@@ -8,8 +8,8 @@ Lean governance, operator notes, and UI wireframes for SoloDevBoard. **Open work
 |-----|---------|
 | [SCOPE.md](SCOPE.md) | In-scope and out-of-scope product boundaries |
 | [BACKLOG.md](BACKLOG.md) | **Canonical** milestone and roadmap index |
-| [RELEASE_PLAN.md](RELEASE_PLAN.md) | Versioning, release process, historical release notes |
-| [SPEC_KIT_MIGRATION.md](SPEC_KIT_MIGRATION.md) | Spec Kit adoption (after `v1.5.0`; `v1.4`/`v1.5` stay on Issues) |
+| [RELEASE_PLAN.md](RELEASE_PLAN.md) | Versioning, [release runbook](RELEASE_PLAN.md#release-runbook), historical release notes |
+| [SPEC_KIT_MIGRATION.md](SPEC_KIT_MIGRATION.md) | Spec Kit adoption (after `v1.4.0`; `v1.4` chrome and branding stay on Issues) |
 
 ## Governance and process
 
@@ -41,11 +41,11 @@ Lean governance, operator notes, and UI wireframes for SoloDevBoard. **Open work
 
 | Doc | Purpose |
 |-----|---------|
-| [product-chrome-ui-quality/](product-chrome-ui-quality/README.md) | **`v1.4`** / **`v1.5`** delivery bundle (restored from archive 2026-11-15) |
+| [product-chrome-ui-quality/](product-chrome-ui-quality/README.md) | **`v1.4`** delivery bundle: chrome, narrow viewports, and branding (restored from archive 2026-11-15) |
 | [label-remap-taxonomy-project-plan.md](label-remap-taxonomy-project-plan.md) | Shipped on `v1.3`; re-archive after Spec Kit cut-over |
 | [wireframes/](wireframes/) | Page layout references ([`CONVENTIONS.md`](../CONVENTIONS.md)) |
 
-**`v1.4`** and **`v1.5`:** Plan mode + existing GitHub Issues only ([`SPEC_KIT_MIGRATION.md`](SPEC_KIT_MIGRATION.md)). **After `v1.5.0`:** new product intent uses Spec Kit (`.specify/specs/`). Re-review what belongs in `plan/` versus `archive/` after `v1.5.0`.
+**`v1.4`** (chrome and branding): Plan mode + existing GitHub Issues only ([`SPEC_KIT_MIGRATION.md`](SPEC_KIT_MIGRATION.md)). **After `v1.4.0`:** new product intent uses Spec Kit (`.specify/specs/`). Re-review what belongs in `plan/` versus `archive/` after `v1.4.0`.
 
 ## Archive
 

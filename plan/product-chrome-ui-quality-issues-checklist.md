@@ -1,6 +1,6 @@
 # Product chrome and UI quality — issue checklist
 
-Historical record of issue creation (complete). Delivery uses the existing tree on milestones **`v1.4`** / **`v1.5`**; do not mint new children via planning prompts. [`product-chrome-ui-quality/README.md`](product-chrome-ui-quality/README.md).
+Historical record of issue creation (complete). Delivery uses the existing tree on milestone **`v1.4`** (chrome and branding); do not mint new children via planning prompts. [`product-chrome-ui-quality/README.md`](product-chrome-ui-quality/README.md).
 
 - [x] Epic: Product chrome and UI quality (#526).
 - [x] Feature #397 updated (branding, ice-box, wireframe, audit AC).

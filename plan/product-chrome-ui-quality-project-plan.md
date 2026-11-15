@@ -1,19 +1,19 @@
 # Product chrome and UI quality — project plan
 
-**Status:** Active pre–Spec Kit bundle (2026-11-15). **Visual language + narrow viewports** ship on milestone **`v1.4`** ([#527](https://github.com/markheydon/solo-dev-board/issues/527), [#528](https://github.com/markheydon/solo-dev-board/issues/528), [#530](https://github.com/markheydon/solo-dev-board/issues/530), [#411](https://github.com/markheydon/solo-dev-board/issues/411)). **Branding** ([#397](https://github.com/markheydon/solo-dev-board/issues/397), [#529](https://github.com/markheydon/solo-dev-board/issues/529), [#531](https://github.com/markheydon/solo-dev-board/issues/531)) is planned for milestone **`v1.5`** when un-parked. Index: [`product-chrome-ui-quality/README.md`](product-chrome-ui-quality/README.md). Cut-over: [`SPEC_KIT_MIGRATION.md`](SPEC_KIT_MIGRATION.md).
+**Status:** Active pre–Spec Kit bundle (2026-11-15). Milestone **`v1.4`** covers visual language and narrow viewports ([#527](https://github.com/markheydon/solo-dev-board/issues/527), [#528](https://github.com/markheydon/solo-dev-board/issues/528), [#530](https://github.com/markheydon/solo-dev-board/issues/530), [#411](https://github.com/markheydon/solo-dev-board/issues/411)) and branding ([#397](https://github.com/markheydon/solo-dev-board/issues/397), [#529](https://github.com/markheydon/solo-dev-board/issues/529), [#531](https://github.com/markheydon/solo-dev-board/issues/531)), pulled forward the same day. There is no `v1.5` milestone. Index: [`product-chrome-ui-quality/README.md`](product-chrome-ui-quality/README.md). Cut-over: [`SPEC_KIT_MIGRATION.md`](SPEC_KIT_MIGRATION.md).
 
 ## Project overview
 
-**Feature summary:** SoloDevBoard’s features work, but the Blazor UI still reads as a functional catalogue of papers and spinners. This plan splits **brand identity** (ice-box [#397](https://github.com/markheydon/solo-dev-board/issues/397)) from **visual language** (apply MudBlazor page chrome so the app feels like one product). Agent guidance is updated in the `mudblazor` skill so future delivery does not keep inventing raw layout. Responsive use in phone and compact-tablet browsers is a parked sibling story under the visual language feature ([#411](https://github.com/markheydon/solo-dev-board/issues/411)), not a third Feature.
+**Feature summary:** SoloDevBoard’s features work, but the Blazor UI still reads as a functional catalogue of papers and spinners. This plan covers **visual language** (MudBlazor page chrome) and **brand identity** ([#397](https://github.com/markheydon/solo-dev-board/issues/397)) on the same milestone. Agent guidance is updated in the `mudblazor` skill so future delivery does not keep inventing raw layout. Responsive use in phone and compact-tablet browsers is a sibling story under the visual language feature ([#411](https://github.com/markheydon/solo-dev-board/issues/411)), not a third Feature.
 
 **Success criteria:**
 
 - Agents pick `MudToolBar`, `MudSkeleton`, `MudAlert`, `MudSplitPanel`, and `MudDateRangePicker` from the skill instead of ad-hoc papers and dual date fields.
 - Shipped pages share header, toolbar, loading, empty, and error patterns (DEC-039).
 - Narrow viewports (phone ~390 CSS px, compact tablet ~744 CSS px) keep the same chrome without overflow or a second navigation pattern.
-- Branding (#397) remains parked until a logo decision; tokens from the styling audit are ready to apply when it is un-parked.
+- Branding (#397) ships on **`v1.4`** with the visual-language work: display name, mark, favicon set, and the token cleanup in #529.
 
-**Key milestones:** **`v1.4.0`** closes the visual-language stream; declare **`v1.5 - Product branding`** when `v1.4` is scoped closed and branding decisions are ready. Spec Kit becomes the default for new features after **`v1.5.0`**.
+**Key milestones:** **`v1.4.0`** closes visual language, narrow viewports, and branding. Do not declare **`v1.5`**. Spec Kit becomes the default for new features after **`v1.4.0`**.
 
 **Risks:** A full-page restyle can churn Playwright locators and docs screenshots. Mitigate by keeping `data-testid` values and treating screenshot recapture as part of the test issue.
 
@@ -63,9 +63,9 @@ The first pass of the MudBlazor skill (UX-LANGUAGE.md and chooser updates) is do
 | Visual language story #528 | `priority/medium` | Milestone **`v1.4`**, `status/todo`. |
 | Mobile layout #411 | `priority/medium` | Milestone **`v1.4`**, child of #527. |
 | Test #530 | `priority/medium` | Milestone **`v1.4`**. |
-| Branding #397 | `priority/low` | `status/ice-box` until **`v1.5`** is declared; then un-park. |
-| Token / CSS enabler #529 | `priority/low` | Child of #397; deliver with **`v1.5`**. |
-| Test #531 | `priority/low` | Child of #397; deliver with **`v1.5`**. |
+| Branding #397 | `priority/low` | Milestone **`v1.4`**, `status/todo` (promoted 2026-11-15). |
+| Token / CSS enabler #529 | `priority/low` | Child of #397; milestone **`v1.4`**. |
+| Test #531 | `priority/low` | Child of #397; milestone **`v1.4`**. |
 
 ## MudBlazor
 

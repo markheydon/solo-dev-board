@@ -21,4 +21,4 @@ Paths in archived files may use pre-2026-11 layouts (`src/App/SoloDevBoard.App`,
 
 Do not add new delivery bundles here; use Issues and Spec Kit specs instead.
 
-**Re-archive review (due after `v1.5.0`):** Decide whether active pre–Spec Kit bundles ([`product-chrome-ui-quality/`](../product-chrome-ui-quality/README.md), [`label-remap-taxonomy-project-plan.md`](../label-remap-taxonomy-project-plan.md)) move back under `archive/` or into `.specify/specs/`. Update [`SPEC_KIT_MIGRATION.md`](../SPEC_KIT_MIGRATION.md) when done.
+**Re-archive review (due after `v1.4.0`):** Decide whether active pre–Spec Kit bundles ([`product-chrome-ui-quality/`](../product-chrome-ui-quality/README.md), [`label-remap-taxonomy-project-plan.md`](../label-remap-taxonomy-project-plan.md)) move back under `archive/` or into `.specify/specs/`. Update [`SPEC_KIT_MIGRATION.md`](../SPEC_KIT_MIGRATION.md) when done.

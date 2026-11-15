@@ -1,6 +1,6 @@
 # Product branding chrome
 
-**Status:** Planning baseline for ice-box feature [#397](https://github.com/markheydon/solo-dev-board/issues/397); target milestone **`v1.5`** when declared. Bundle: [`product-chrome-ui-quality/README.md`](../product-chrome-ui-quality/README.md).  
+**Status:** Planning baseline for [#397](https://github.com/markheydon/solo-dev-board/issues/397) on milestone **`v1.4`** (promoted 2026-11-15). Bundle: [`product-chrome-ui-quality/README.md`](../product-chrome-ui-quality/README.md).  
 **Related:** interim favicon from PR [#398](https://github.com/markheydon/solo-dev-board/pull/398); styling audit on the issue.
 
 Do not implement until brand scope is agreed. This wireframe only shows **where** a mark would live.

@@ -155,76 +155,77 @@ Platform-blocked and ice-box items are listed in [`BACKLOG.md`](BACKLOG.md); the
 
 **Status:** Complete (2026-11-15). Tagged [`v1.3.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.3.0). Milestone #9 closed.
 
+**Documentation gap:** The tag went out without a full User Guide pass or refreshed screenshots for label remap. Clear that gap on the next tag. See [Release runbook](#release-runbook).
+
 **Target:** Not set — dates follow actual start per Roadmap date guidelines.
 
 ---
 
-### v1.4 - Product chrome and narrow viewports
+### v1.4 - Product chrome, branding, and narrow viewports
 
-**Goal:** Shared MudBlazor page chrome on shipped feature pages and a narrow-viewport pass so daily use feels like one product on phone and compact tablet widths.
+**Goal:** Shared MudBlazor page chrome, a narrow-viewport pass, and product identity (display name, logo or mark, favicon set, and token cleanup) so daily use feels like one product.
 
 **Scope:**
-- Epic [#526](https://github.com/markheydon/solo-dev-board/issues/526), feature [#527](https://github.com/markheydon/solo-dev-board/issues/527)
-- Story [#528](https://github.com/markheydon/solo-dev-board/issues/528) (page chrome) and test [#530](https://github.com/markheydon/solo-dev-board/issues/530)
-- Story [#411](https://github.com/markheydon/solo-dev-board/issues/411) (mobile and narrow-viewport layout)
+- Epic [#526](https://github.com/markheydon/solo-dev-board/issues/526)
+- Visual language: feature [#527](https://github.com/markheydon/solo-dev-board/issues/527), story [#528](https://github.com/markheydon/solo-dev-board/issues/528), test [#530](https://github.com/markheydon/solo-dev-board/issues/530) (closed on the milestone)
+- Narrow viewports: story [#411](https://github.com/markheydon/solo-dev-board/issues/411) (closed on the milestone)
+- Branding, pulled forward on 2026-11-15 (no separate `v1.5` milestone): feature [#397](https://github.com/markheydon/solo-dev-board/issues/397), enabler [#529](https://github.com/markheydon/solo-dev-board/issues/529), test [#531](https://github.com/markheydon/solo-dev-board/issues/531)
 
-**Out of milestone:** Product branding ([#397](https://github.com/markheydon/solo-dev-board/issues/397), [#529](https://github.com/markheydon/solo-dev-board/issues/529), [#531](https://github.com/markheydon/solo-dev-board/issues/531)); ice-box catalogue features; platform-blocked chores ([#293](https://github.com/markheydon/solo-dev-board/issues/293), [#391](https://github.com/markheydon/solo-dev-board/issues/391), [#498](https://github.com/markheydon/solo-dev-board/issues/498)).
+**Delivery mode:** Pre–Spec Kit legacy path (existing issues only; no new child-issue prompts). See [`SPEC_KIT_MIGRATION.md`](SPEC_KIT_MIGRATION.md).
 
-**Status:** Active (2026-11-15). Single open milestone per DEC-027.
+**Out of milestone:** Ice-box catalogue features; platform-blocked chores ([#293](https://github.com/markheydon/solo-dev-board/issues/293), [#391](https://github.com/markheydon/solo-dev-board/issues/391), [#498](https://github.com/markheydon/solo-dev-board/issues/498)).
+
+**Status:** Active (2026-11-15). Single open milestone per DEC-027. GitHub milestone [#10](https://github.com/markheydon/solo-dev-board/milestone/10).
+
+**After `v1.4.0`:** Spec Kit becomes the default for new feature work; re-review `plan/` archiving per [`SPEC_KIT_MIGRATION.md`](SPEC_KIT_MIGRATION.md).
 
 **Planning bundle:** [`product-chrome-ui-quality/README.md`](product-chrome-ui-quality/README.md).
 
-**Target:** Not set — dates follow actual start per Roadmap date guidelines.
+**Target:** Not set. Dates follow actual start per Roadmap date guidelines.
 
 ---
 
-### v1.5 - Product branding (planned)
+### v1.5
 
-**Goal:** Ship product identity (display name, logo/mark, favicon set, and token cleanup) as the second stream under epic [#526](https://github.com/markheydon/solo-dev-board/issues/526), after visual language ships on `v1.4`.
-
-**Scope (when milestone is declared):**
-
-- Feature [#397](https://github.com/markheydon/solo-dev-board/issues/397) (un-park when ready)
-- Enabler [#529](https://github.com/markheydon/solo-dev-board/issues/529)
-- Test [#531](https://github.com/markheydon/solo-dev-board/issues/531)
-
-**Delivery mode:** Same pre–Spec Kit legacy path as `v1.4` (existing issues only; no new child-issue prompts). See [`SPEC_KIT_MIGRATION.md`](SPEC_KIT_MIGRATION.md).
-
-**Out of milestone:** Ice-box catalogue work; platform-blocked [#293](https://github.com/markheydon/solo-dev-board/issues/293), [#391](https://github.com/markheydon/solo-dev-board/issues/391), [#498](https://github.com/markheydon/solo-dev-board/issues/498).
-
-**Status:** Not declared — opens when `v1.4` is scoped closed and branding decisions are ready.
-
-**After `v1.5.0`:** Spec Kit becomes the default for new feature work; re-review `plan/` archiving per [`SPEC_KIT_MIGRATION.md`](SPEC_KIT_MIGRATION.md).
-
-**Target:** Not set.
+Not declared. Product branding was folded into **`v1.4`** on 2026-11-15. Do not open a `v1.5 - Product branding` milestone.
 
 ---
 
-## Release Process
+## Release runbook
+
+This is the release checklist. Do not tag until every item below is done, or the release notes name an explicit waiver. `v1.3.0` skipped the User Guide and screenshot pass; that miss is why this list is mandatory.
 
 ```
-Feature branch → Pull Request → CI passes → Code review → Merge to main → CD deploys to staging → Tag release → CD deploys to production + Pages publish
+Feature branch → Pull Request → CI passes → Code review → Merge to main → CD deploys to staging → User Guide and screenshots on main → Tag release → CD deploys to production + Pages publish
 ```
 
-### Step-by-Step
+GitHub Pages publishes the public site only from the `v*` tag. A guide update that lands after the tag does not appear on solodevboard.com until the next tag.
 
-1. **Merge to `main`:** All features for the release are merged via PRs with the CI pipeline passing. CD deploys automatically to the **staging** Azure Container Apps environment.
-2. **Final smoke test:** Verify the deployment to the staging environment is healthy. Open **More options → About** and confirm the version shows a `staging` pre-release suffix, the **Built** timestamp reflects the latest deploy, and the **Build** commit SHA matches the latest commit on `main` for that deploy.
-3. **Update documentation:** Ensure all user-facing docs on `main` reflect the released features (validated by `hugo-validate` on PRs; not published until tagged).
-4. **Tag the release:**
+### Before the tag
+
+1. **Milestone scope:** Every issue on the milestone is closed, or explicitly moved off with a note in this file.
+2. **Merge to `main`:** Release work is merged via PRs with CI passing. CD deploys to the **staging** Azure Container Apps environment.
+3. **Staging smoke test:** Open **More options → About**. Confirm a `staging` pre-release suffix, a **Built** timestamp for this deploy, and a **Build** SHA that matches `main`.
+4. **User Guide (required):** On `main`, before the tag:
+   - Update every page under `website/content/docs/` whose shipped behaviour changed, plus `website/content/_index.md` and `website/content/docs/_index.md` when the feature list or guide index changes.
+   - When shared chrome, navigation, theme, or the product display name changed, review **every** published guide page and landing tile, not only the feature that shipped.
+   - Catch up any guide or screenshot debt from the previous tag. For the next tag after `v1.3.0`, that includes label remap and any chrome already on `main`.
+   - Recapture screenshots for every guide image whose screen changed. Follow [Screenshot convention](DOCS_STRATEGY.md#screenshot-convention): light theme, 1400×900, drawer collapsed, docs capture mode, public catalogues only, loaded states with `markheydon/solo-dev-board`. Prefer `DOCS_CAPTURE_ENABLED=1 dotnet test tests/SoloDevBoard.E2E.Tests --filter "Category=DocsCapture"` against a local app with a real PAT and `DocsCapture:Enabled=true`. If capture cannot run, say so in the release notes and do not pretend the images are current.
+   - When chrome, navigation, or theme changed across the app, recapture the whole of `website/static/images/`, because landing tiles and guide heroes share those shots.
+   - Update [`tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md`](../tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md) when routes or capture files change.
+   - Run `./scripts/invoke-hugo-site.sh build` (or rely on `hugo-validate` on the docs PR). Pages still does not publish until the tag.
+5. **Changelog and this file:** Move `[Unreleased]` notes in [`CHANGELOG.md`](../CHANGELOG.md) into a dated `## [X.Y.Z]` section. Set this release's **Status** to the tag and date.
+6. **Operator docs:** If configuration or deploy steps changed, update `docs/` in the same change. See [`DOCS_STRATEGY.md`](DOCS_STRATEGY.md).
+
+### Tag and publish
+
+7. **Tag the release** (example):
    ```bash
-   git tag -a v0.2.0 -m "Release v0.2.0 - Core Features"
-   git push origin v0.2.0
+   git tag -a v1.4.0 -m "Release v1.4.0 - Product chrome, branding, and narrow viewports"
+   git push origin v1.4.0
    ```
-5. **Create a GitHub Release:**
-   - Navigate to the repository on GitHub → Releases → Draft a new release.
-   - Select the tag created above.
-   - Use the release title format: `v0.2.0 - Core Features`.
-   - Write release notes describing what's new, what's fixed, and any known issues.
-   - Attach build artefacts if applicable.
-   - Publish the release.
-   - Pushing the `v*` tag triggers production CD and GitHub Pages publish automatically.
-6. **Close the milestone:** Close the corresponding GitHub milestone (e.g. "Phase 2 — v0.2.0").
+8. **Create a GitHub Release** from that tag. Title format: `v1.4.0 - Product chrome, branding, and narrow viewports`. Notes cover what is new, what is fixed, known issues, and any waived docs item. Pushing the `v*` tag triggers production CD and GitHub Pages publish.
+9. **Close the milestone** after the tag exists and the milestone issues are closed.
 
 ### Hotfix Process
 
@@ -232,7 +233,8 @@ For urgent bug fixes between releases:
 1. Branch from `main`: `git checkout -b hotfix/describe-the-fix`.
 2. Fix and test.
 3. PR to `main` with label `type/bug` and `priority/critical`.
-4. After merging, tag a patch release: `v0.2.1`.
+4. After merging, tag a patch release: `v1.4.1`.
+5. If the patch changes visible UI or documented behaviour, repeat the User Guide and screenshot items before the patch tag. A code-only patch with no visible or documented change can skip screenshot recapture; say that in the release notes.
 
 ---
 
@@ -263,6 +265,7 @@ gh release create v0.2.0 \
 
 ## AI Collaborator Instructions
 
+- Follow the [Release runbook](#release-runbook) before tagging. Do not tag while the User Guide or screenshots are still outstanding.
 - When a phase is complete, update the **Target** section of the relevant release entry to reflect the actual completion date.
 - When a new GitHub Release is created, update the milestone status in `plan/PROJECT_MANAGEMENT.md`.
 - When drafting release notes, pull completed items from closed GitHub Issues on the relevant milestone.

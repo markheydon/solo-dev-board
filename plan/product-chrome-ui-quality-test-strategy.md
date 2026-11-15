@@ -1,12 +1,12 @@
 # Product chrome and UI quality — test strategy
 
-**Delivery:** **`v1.4`** (#530, #411); **`v1.5`** (#531). [`product-chrome-ui-quality/README.md`](product-chrome-ui-quality/README.md).
+**Delivery:** **`v1.4`** (#530, #411, #531). [`product-chrome-ui-quality/README.md`](product-chrome-ui-quality/README.md).
 
 ## Testing scope
 
 - **Visual language:** header, toolbar hierarchy, skeleton vs spinner, empty/error alerts on representative pages (Repositories, Labels, Audit, Triage, Planning Daily Focus).
 - **Narrow viewports:** Playwright shell assertions at 390 and 744 CSS px on representative routes as part of **`v1.4`** (extend #530).
-- **Branding:** favicon, apple-touch, app-bar mark, static error pages as part of **`v1.5`** when #397 is un-parked.
+- **Branding:** favicon, apple-touch, app-bar mark, static error pages as part of **`v1.4`** with #397.
 
 ## Quality objectives
 

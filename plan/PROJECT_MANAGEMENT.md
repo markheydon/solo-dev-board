@@ -40,10 +40,10 @@ Implementation **phases** in [`archive/IMPLEMENTATION_PLAN.md`](archive/IMPLEMEN
 
 | When | How to plan and implement |
 |------|---------------------------|
-| **`v1.4`** and **`v1.5`** (product chrome epic [#526](https://github.com/markheydon/solo-dev-board/issues/526)) | **Legacy / Plan mode:** use the **existing** issue → sub-issue tree and [`product-chrome-ui-quality/`](product-chrome-ui-quality/README.md) bundle. Implement with normal branches and PRs linked to issues. Do **not** run Copilot-era prompts that mint new children. Do **not** use Spec Kit as the planning gate. |
-| **After `v1.5.0`** | **Spec Kit default** for new or promoted features: `.specify/specs/<feature>/` and the `/speckit-*` workflow. Avoid prompt-driven Epic → Feature → Story explosion; prefer one spec per capability and lightweight GitHub tracking. |
+| **`v1.4`** (product chrome epic [#526](https://github.com/markheydon/solo-dev-board/issues/526), including branding [#397](https://github.com/markheydon/solo-dev-board/issues/397)) | **Legacy / Plan mode:** use the **existing** issue → sub-issue tree and [`product-chrome-ui-quality/`](product-chrome-ui-quality/README.md) bundle. Implement with normal branches and PRs linked to issues. Do **not** run Copilot-era prompts that mint new children. Do **not** use Spec Kit as the planning gate. |
+| **After `v1.4.0`** | **Spec Kit default** for new or promoted features: `.specify/specs/<feature>/` and the `/speckit-*` workflow. Avoid prompt-driven Epic → Feature → Story explosion; prefer one spec per capability and lightweight GitHub tracking. |
 
-Full cut-over rules: [`SPEC_KIT_MIGRATION.md`](SPEC_KIT_MIGRATION.md). **`v1.5`** is declared only when **`v1.4`** is scoped closed ([DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md)).
+Full cut-over rules: [`SPEC_KIT_MIGRATION.md`](SPEC_KIT_MIGRATION.md). Branding ships on **`v1.4`**. Do not declare a separate **`v1.5`** ([DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md)).
 
 ---
 
@@ -130,7 +130,7 @@ The descriptive suffix names the milestone theme; it is not repeated in the rele
 | `v1.1 - Cross-Repo Planning & Refinement` | `v1.1.0` | Closed | Shipped 2026-08-31 — **91 closed, 0 open**. |
 | `v1.2 - Planning polish, Reload & Templates` | `v1.2.0` | Closed | Shipped 2026-09-07 — [`v1.2.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.2.0). |
 | `v1.3 - Label remap onto the recommended taxonomy` | `v1.3.0` | Closed | Shipped 2026-11-15 — label remap [#491](https://github.com/markheydon/solo-dev-board/issues/491) and fixes. |
-| `v1.4 - Product chrome and narrow viewports` | `v1.4.0` | Open | Declared 2026-11-15 — [#526](https://github.com/markheydon/solo-dev-board/issues/526), [#527](https://github.com/markheydon/solo-dev-board/issues/527), [#528](https://github.com/markheydon/solo-dev-board/issues/528), [#530](https://github.com/markheydon/solo-dev-board/issues/530), [#411](https://github.com/markheydon/solo-dev-board/issues/411). |
+| `v1.4 - Product chrome, branding, and narrow viewports` | `v1.4.0` | Open | Declared 2026-11-15. Chrome [#526](https://github.com/markheydon/solo-dev-board/issues/526), [#527](https://github.com/markheydon/solo-dev-board/issues/527), [#528](https://github.com/markheydon/solo-dev-board/issues/528), [#530](https://github.com/markheydon/solo-dev-board/issues/530), [#411](https://github.com/markheydon/solo-dev-board/issues/411). Branding pulled forward the same day: [#397](https://github.com/markheydon/solo-dev-board/issues/397), [#529](https://github.com/markheydon/solo-dev-board/issues/529), [#531](https://github.com/markheydon/solo-dev-board/issues/531). |
 
 The unused `v1.2.0 - Cross-Repo Planning` milestone was closed then **deleted** on 2026-08-18 after work moved to `v1.1 - Cross-Repo Planning & Refinement`. The current `v1.2` milestone is a later, different increment (Planning polish, Reload, and templates), not a revival of that deleted planning-only bucket.
 

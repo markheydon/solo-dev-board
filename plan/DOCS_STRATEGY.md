@@ -52,7 +52,7 @@ plan/
 ├── BACKLOG.md                  # Canonical roadmap index
 ├── RELEASE_PLAN.md
 ├── wireframes/                 # UI planning references
-├── product-chrome-ui-quality/  # v1.4 / v1.5 delivery bundle (pre–Spec Kit)
+├── product-chrome-ui-quality/  # v1.4 delivery bundle (pre–Spec Kit)
 ├── archive/                    # Historical phased plan, Copilot-era bundles
 ├── DECISIONS.md                # Retired pointer to adr/
 ├── LABEL_STRATEGY.md
@@ -176,7 +176,7 @@ When an AI agent or contributor is asked to write or update documentation:
 > | New environment variable | Update `docs/getting-started.md` configuration table and `docs/deployment.md` |
 > | New architectural decision | Add an ADR under `adr/`; update `CONVENTIONS.md` or `AGENTS.md` if cross-cutting |
 > | Scope change | Update `plan/SCOPE.md`; update `website/content/_index.md` if the published feature list changes |
-> | New release | Update `plan/RELEASE_PLAN.md` and [`CHANGELOG.md`](../CHANGELOG.md) |
+> | New release | Follow the [release runbook](RELEASE_PLAN.md#release-runbook): User Guide pass and screenshot recapture **before** the tag, then update `plan/RELEASE_PLAN.md` and [`CHANGELOG.md`](../CHANGELOG.md) |
 > | New label | Update `plan/LABEL_STRATEGY.md` |
 > | New board column or rule | Update `plan/PROJECT_BOARD_DESIGN.md` |
 > | Project #8 info pane / phase status | Update `plan/PROJECT_README.md` and paste into the project info pane |

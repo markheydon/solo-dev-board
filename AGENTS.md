@@ -39,14 +39,14 @@ Onboard **.NET Aspire** using current official documentation (not copied Aspire 
 ## Task Routing
 
 - **Code** (`src/`, `tests/`): [`CONVENTIONS.md`](CONVENTIONS.md).
-- **`v1.4` / `v1.5` product chrome** ([#526](https://github.com/markheydon/solo-dev-board/issues/526) tree): normal Plan mode and [`plan/product-chrome-ui-quality/`](plan/product-chrome-ui-quality/README.md); **do not** use Spec Kit as the planning gate; **do not** mint new child issues via planning prompts ([`plan/SPEC_KIT_MIGRATION.md`](plan/SPEC_KIT_MIGRATION.md)).
-- **Spec Kit features** (`specs/<feature>/`): default for **new work after `v1.5.0`**; Spec Kit workflow and [constitution](.specify/memory/constitution.md); product code still follows `CONVENTIONS.md` and `implementation-guardrails`.
+- **`v1.4` product chrome and branding** ([#526](https://github.com/markheydon/solo-dev-board/issues/526) tree, including [#397](https://github.com/markheydon/solo-dev-board/issues/397)): normal Plan mode and [`plan/product-chrome-ui-quality/`](plan/product-chrome-ui-quality/README.md); **do not** use Spec Kit as the planning gate; **do not** mint new child issues via planning prompts ([`plan/SPEC_KIT_MIGRATION.md`](plan/SPEC_KIT_MIGRATION.md)).
+- **Spec Kit features** (`specs/<feature>/`): default for **new work after `v1.4.0`**; Spec Kit workflow and [constitution](.specify/memory/constitution.md); product code still follows `CONVENTIONS.md` and `implementation-guardrails`.
 - **Documentation** (`**/*.md` except `adr/`): `project-documentation` skill.
 - **ADRs** (`adr/*.md`): ADR skill only.
 
 ## Spec-driven features (Spec Kit)
 
-Feature intent lives under `specs/<feature>/` (`spec.md`, `plan.md`, `tasks.md`, and related artefacts). **Not used for `v1.4` or `v1.5` delivery** unless the user explicitly overrides. Resolve the active feature directory from [`.specify/feature.json`](.specify/feature.json) or:
+Feature intent lives under `specs/<feature>/` (`spec.md`, `plan.md`, `tasks.md`, and related artefacts). **Not used for `v1.4` delivery** (chrome or branding) unless the user explicitly overrides. Resolve the active feature directory from [`.specify/feature.json`](.specify/feature.json) or:
 
 ```bash
 .specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks
@@ -90,6 +90,10 @@ dotnet test SoloDevBoard.UnitTests.slnf -c Release --no-build
 Title shape: `[Type] Imperative summary (#NNN)` with labels from [`plan/LABEL_STRATEGY.md`](plan/LABEL_STRATEGY.md).
 
 All agent-authored pull requests require human review before merge.
+
+## Release checklist
+
+When asked to cut a release or tag, follow the [release runbook](plan/RELEASE_PLAN.md#release-runbook) in full. Do not tag while the User Guide or screenshots are still outstanding. That pass includes every guide page affected by the release, a full recapture when shared chrome, navigation, theme, or the product name changed, and any guide or screenshot debt left by the previous tag. GitHub Pages publishes only from the `v*` tag, so the guide updates must be on `main` first.
 
 ## Environment-specific guidance
 
