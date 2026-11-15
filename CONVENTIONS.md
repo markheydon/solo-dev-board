@@ -78,7 +78,7 @@ Consult the `mudblazor` skill before new UI. Prefer MudBlazor components and uti
 ## Testing
 
 - **xUnit v3** with Microsoft.Testing.Platform; **NSubstitute** for mocks; **built-in `Assert` only** (no Moq, FluentAssertions, NUnit, or MSTest).
-- **bUnit** in App test project only; **Playwright** E2E in `tests/SoloDevBoard.E2E.Tests`.
+- **bUnit** in `SoloDevBoard.Web.Tests` only; **Playwright** E2E in `tests/SoloDevBoard.E2E.Tests`.
 - Fast path: `dotnet test SoloDevBoard.UnitTests.slnf` or `./scripts/test-unit.sh`. Full parity: `./scripts/test-all.sh`.
 - Do not test AppHost modelling or orchestration.
 - Naming: `MethodUnderTest_Scenario_ExpectedOutcome`; Arrange / Act / Assert with blank lines.

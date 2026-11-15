@@ -53,8 +53,9 @@ Feature screenshots live under `static/images/<feature-slug>/` and are reference
 
 Capture conventions (light theme, 1400×900, docs capture mode, kebab-case filenames, loaded-state composition with `markheydon/solo-dev-board`) are documented in [DOCS_STRATEGY.md](../plan/DOCS_STRATEGY.md#screenshot-convention). To regenerate:
 
-```powershell
+```bash
 # App running locally with a real PAT and DocsCapture:Enabled=true
-cd tests/E2E
-npm run capture:docs
+DOCS_CAPTURE_ENABLED=1 dotnet test tests/SoloDevBoard.E2E.Tests --filter "Category=DocsCapture"
 ```
+
+See [DOCS_STRATEGY.md](../plan/DOCS_STRATEGY.md#screenshot-convention) for composition rules.
