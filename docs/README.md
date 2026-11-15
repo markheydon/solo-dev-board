@@ -1,6 +1,6 @@
 # SoloDevBoard developer and operator documentation
 
-This folder holds **repository-centric** documentation for contributors, self-hosters, and operators.
+This folder holds **repository-centric** documentation for contributors, self-hosters, and operators. UI conventions, theme tokens, and MudBlazor patterns live in [`CONVENTIONS.md`](../CONVENTIONS.md) and [`.agents/skills/mudblazor/`](../.agents/skills/mudblazor/).
 
 The public product site (landing, User Guide, About) is published from [`website/`](../website/) via Hugo and GitHub Pages:
 `https://solodevboard.com/`.

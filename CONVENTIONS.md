@@ -76,6 +76,13 @@ Sole UI library: MudBlazor ([`adr/adr-0012-switch-to-mudblazor-component-library
 
 Consult the `mudblazor` skill before new UI. Prefer MudBlazor components and utility classes before `.razor.css`. Business logic belongs in Application services, not Razor components. Use code-behind (`.razor.cs`) for non-trivial logic. Use `ISnackbar` for transient feedback and inline alerts for persistent state ([`adr/adr-0035-transient-feedback-via-snackbar.md`](adr/adr-0035-transient-feedback-via-snackbar.md)).
 
+**Theme and chrome tokens** ([`THEMING.md`](.agents/skills/mudblazor/references/THEMING.md) in the mudblazor skill):
+
+- Brand and semantic colours live only in [`src/SoloDevBoard.Web/Themes/SoloDevBoardTheme.cs`](src/SoloDevBoard.Web/Themes/SoloDevBoardTheme.cs), wired through `AppThemeProvider`. Do not hard-code hex in Razor except GitHub label colours returned from the API.
+- Default grey for new GitHub labels (data, not brand) is [`LabelDefaults.DefaultColour`](src/SoloDevBoard.Web/Components/Features/Labels/LabelDefaults.cs) in the Labels feature.
+- Shell toolbar icons (menu, search, overflow, warning, theme toggle) use [`AppIcons`](src/SoloDevBoard.Web/Theming/AppIcons.cs). Drawer nav icons in `NavMenu` remain ad hoc `Icons.Material.Filled.*` until branding centralises them. The theme toggle is the only deliberate non-Filled icon set (`Rounded` / `Outlined` via `ThemePreferenceExtensions`).
+- Isolated CSS is limited to Blazor circuit reconnect, the skip link, and `.sdb-responsive-grid` unless MudBlazor adds a replacement. Fallback hex in reconnect CSS and theme flash JavaScript must match `SoloDevBoardTheme`; [`SoloDevBoardThemeFallbackTests`](tests/SoloDevBoard.Web.Tests/SoloDevBoardThemeFallbackTests.cs) and [`ThemePreferenceConstantsTests`](tests/SoloDevBoard.Web.Tests/ThemePreferenceConstantsTests.cs) lock those values. Do not override `.mud-*` selectors when a component parameter, theme token, or utility class suffices.
+
 ---
 
 ## Testing
@@ -115,6 +122,7 @@ End-user docs ([`website/content/docs/`](website/content/docs/)) and Playwright 
 | Scope change | `plan/SCOPE.md`, `plan/BACKLOG.md` |
 | New env variable | `docs/getting-started.md`, `docs/deployment.md`, `src/SoloDevBoard.AppHost/README.md` |
 | MudBlazor version bump | `.agents/skills/mudblazor/` |
+| Theme tokens, shell icons, or allowed `.razor.css` exceptions | `CONVENTIONS.md` (Blazor), `.agents/skills/mudblazor/references/THEMING.md`, theme fallback tests when hex changes |
 | New release | `plan/RELEASE_PLAN.md`, `CHANGELOG.md` |
 
 ---

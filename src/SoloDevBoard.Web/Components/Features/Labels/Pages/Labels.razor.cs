@@ -709,7 +709,7 @@ public partial class Labels : ComponentBase
             LabelOperationMode.Create,
             string.Empty,
             string.Empty,
-            "#ededed",
+            LabelDefaults.DefaultColour,
             string.Empty,
             selectedFullNames,
             selectedFullNames,

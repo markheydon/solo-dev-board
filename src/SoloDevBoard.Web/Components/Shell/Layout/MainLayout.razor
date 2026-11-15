@@ -11,7 +11,7 @@
 
 <MudLayout>
     <MudAppBar Elevation="1">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu"
+        <MudIconButton Icon="@AppIcons.Menu"
                        Color="Color.Inherit"
                        Edge="Edge.Start"
                        aria-label="Toggle navigation drawer"
@@ -48,7 +48,7 @@
                            aria-label="@ThemePreferenceService.Current.GetButtonAriaLabel()"
                            OnClick="@OnThemeButtonClick" />
         }
-        <MudMenu Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" AriaLabel="More options">
+        <MudMenu Icon="@AppIcons.OverflowVertical" Color="Color.Inherit" AriaLabel="More options">
             <MudMenuItem Href="https://solodevboard.com/docs/"
                          Target="_blank"
                          Icon="@Icons.Material.Filled.MenuBook">User Guide</MudMenuItem>

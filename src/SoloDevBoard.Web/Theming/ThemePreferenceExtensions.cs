@@ -1,5 +1,3 @@
-using MudBlazor;
-
 namespace SoloDevBoard.Web.Theming;
 
 /// <summary>UI helpers for <see cref="ThemePreference"/> values.</summary>
@@ -21,10 +19,10 @@ public static class ThemePreferenceExtensions
     /// <returns>The Material icon identifier.</returns>
     public static string GetButtonIcon(this ThemePreference preference) => preference switch
     {
-        ThemePreference.System => Icons.Material.Rounded.AutoMode,
-        ThemePreference.Light => Icons.Material.Outlined.LightMode,
-        ThemePreference.Dark => Icons.Material.Outlined.DarkMode,
-        _ => Icons.Material.Rounded.AutoMode,
+        ThemePreference.System => AppIcons.ThemeAutomatic,
+        ThemePreference.Light => AppIcons.ThemeLight,
+        ThemePreference.Dark => AppIcons.ThemeDark,
+        _ => AppIcons.ThemeAutomatic,
     };
 
     /// <summary>Gets the accessible name for the theme button.</summary>
