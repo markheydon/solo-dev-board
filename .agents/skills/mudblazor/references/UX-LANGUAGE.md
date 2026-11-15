@@ -88,7 +88,7 @@ SoloDevBoard is used in mobile Safari and Chrome as well as on desktop. There is
 - **Compact tablet (~744 CSS px, iPad mini portrait):** wrapping toolbars and stacked selects are enough; do not invent a card-only layout unless a grid actually overflows.
 - **Do not** add `MudFab` navigation, a second bottom nav, or a PWA-only shell.
 
-Parked delivery for a systematic pass is [#411](https://github.com/markheydon/solo-dev-board/issues/411) under [#527](https://github.com/markheydon/solo-dev-board/issues/527).
+Narrow-viewport delivery is [#411](https://github.com/markheydon/solo-dev-board/issues/411) on milestone `v1.4`, under [#527](https://github.com/markheydon/solo-dev-board/issues/527).
 
 ---
 

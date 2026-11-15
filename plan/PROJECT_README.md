@@ -17,11 +17,11 @@ Refresh this file when milestones change so the public board description does no
 
 SoloDevBoard provides a single pane of glass for solo developers managing GitHub workloads across multiple repositories.
 
-**Status:** On track. Public releases [v1.0.0](https://github.com/markheydon/solo-dev-board/releases/tag/v1.0.0), [v1.1.0](https://github.com/markheydon/solo-dev-board/releases/tag/v1.1.0), and [v1.2.0](https://github.com/markheydon/solo-dev-board/releases/tag/v1.2.0). [`v1.3`](https://github.com/markheydon/solo-dev-board/milestone/9) is ready to tag (`v1.3.0`) — 14 closed, 0 open.
+**Status:** On track. Public releases through [v1.3.0](https://github.com/markheydon/solo-dev-board/releases/tag/v1.3.0) (label remap). Active milestone: [**v1.4 - Product chrome and narrow viewports**](https://github.com/markheydon/solo-dev-board/milestones) ([#526](https://github.com/markheydon/solo-dev-board/issues/526), [#527](https://github.com/markheydon/solo-dev-board/issues/527), [#528](https://github.com/markheydon/solo-dev-board/issues/528), [#530](https://github.com/markheydon/solo-dev-board/issues/530), [#411](https://github.com/markheydon/solo-dev-board/issues/411)).
 
 ### Current focus
 
-Tag **`v1.3.0`** after staging smoke test, then declare the next milestone when scope is ready ([DEC-027](https://github.com/markheydon/solo-dev-board/blob/main/adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md)). Day-to-day work is unmilestoned backlog and dogfood unless promoted to a new milestone. Do not start platform-blocked [#293](https://github.com/markheydon/solo-dev-board/issues/293), [#391](https://github.com/markheydon/solo-dev-board/issues/391), or [#498](https://github.com/markheydon/solo-dev-board/issues/498) without an explicit decision.
+Deliver shared MudBlazor page chrome and narrow-viewport layout on **`v1.4`** ([DEC-027](https://github.com/markheydon/solo-dev-board/blob/main/adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md)). Ice-box catalogue work stays unmilestoned until promoted from [plan/BACKLOG.md](https://github.com/markheydon/solo-dev-board/blob/main/plan/BACKLOG.md). Do not start platform-blocked [#293](https://github.com/markheydon/solo-dev-board/issues/293), [#391](https://github.com/markheydon/solo-dev-board/issues/391), or [#498](https://github.com/markheydon/solo-dev-board/issues/498) without an explicit decision.
 
 ### Release history
 

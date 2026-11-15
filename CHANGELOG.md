@@ -7,9 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-15
+
+Label remap onto the recommended taxonomy. GitHub milestone [`v1.3 - Label remap onto the recommended taxonomy`](https://github.com/markheydon/solo-dev-board/milestone/9) closed with 14 issues delivered.
+
 ### Added
 
 - **Label Manager** — preview-first remap of extras onto the recommended taxonomy when **Remove labels outside taxonomy** is on, so issues and pull requests keep destination labels before sources are deleted ([#491](https://github.com/markheydon/solo-dev-board/issues/491), [#519](https://github.com/markheydon/solo-dev-board/issues/519), [#520](https://github.com/markheydon/solo-dev-board/issues/520)).
+
+### Changed
+
+- **Hosted deployment** — staging and production CD use persistent tier Key Vaults (`auth-secrets-staging`, `auth-secrets`) with `PublishAsExisting` secret references ([ADR-0045](adr/adr-0045-persistent-key-vault-dual-path-local-secrets.md), [#583](https://github.com/markheydon/solo-dev-board/pull/583)). This release is the first production deploy on that path.
+
+### Fixed
+
+- **Label Manager** — remap apply no longer deletes extra labels when usage changed mid-batch; unused-label checks run before delete on remap and direct taxonomy apply ([#548](https://github.com/markheydon/solo-dev-board/issues/548), [#550](https://github.com/markheydon/solo-dev-board/issues/550), [#556](https://github.com/markheydon/solo-dev-board/issues/556)).
+
+### Known limitations (not in this release)
+
+- Persisted default workflow template parameter profiles ([#436](https://github.com/markheydon/solo-dev-board/issues/436)) remain planned for a later release.
+- Server-backed persistence for the custom Actions template source waits on an Aspire product store ([#498](https://github.com/markheydon/solo-dev-board/issues/498), blocked by [#391](https://github.com/markheydon/solo-dev-board/issues/391)).
+- Private user-owned Projects v2 under hosted GitHub App sign-in remain platform-blocked ([#293](https://github.com/markheydon/solo-dev-board/issues/293)).
+- Repositories Add / Remove / Bulk / Edit / More actions remain stubs ([#435](https://github.com/markheydon/solo-dev-board/issues/435)).
+- Full GitHub Project v2 automation-rule retrieval remains a later Board Rules slice ([#437](https://github.com/markheydon/solo-dev-board/issues/437)).
+- Window-focus refetch after Reload from GitHub remains ice-boxed ([#450](https://github.com/markheydon/solo-dev-board/issues/450)).
+- MudBlazor page chrome ([#528](https://github.com/markheydon/solo-dev-board/issues/528)) and narrow-viewport layout ([#411](https://github.com/markheydon/solo-dev-board/issues/411)) are scoped on milestone **`v1.4`** ([#526](https://github.com/markheydon/solo-dev-board/issues/526), [#527](https://github.com/markheydon/solo-dev-board/issues/527)).
 
 ## [1.2.0] - 2026-09-07
 
