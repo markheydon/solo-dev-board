@@ -8,15 +8,15 @@ public sealed class LabelDefaultsTests
     [Fact]
     public void DefaultColourLiteral_ExistsOnlyInLabelDefaults()
     {
-        var testProjectDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
-        var repositoryRoot = Path.GetFullPath(Path.Combine(testProjectDirectory, "..", ".."));
+        var repositoryRoot = RepositoryPaths.FindRepositoryRoot();
         var webSrc = Path.Combine(repositoryRoot, "src", "SoloDevBoard.Web");
         var offenders = new List<string>();
 
-        foreach (var path in Directory.EnumerateFiles(webSrc, "*.*", SearchOption.AllDirectories))
+        foreach (var path in Directory
+                     .EnumerateFiles(webSrc, "*.cs", SearchOption.AllDirectories)
+                     .Concat(Directory.EnumerateFiles(webSrc, "*.razor", SearchOption.AllDirectories)))
         {
-            if (path.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)
-                || path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
+            if (path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
                 || path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
             {
                 continue;

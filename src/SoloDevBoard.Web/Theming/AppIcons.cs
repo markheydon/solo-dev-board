@@ -3,7 +3,7 @@ using MudBlazor;
 namespace SoloDevBoard.Web.Theming;
 
 /// <summary>Shared Material icon names for shell and toolbar chrome.</summary>
-public static class AppIcons
+internal static class AppIcons
 {
     /// <summary>Navigation drawer and app-bar chrome.</summary>
     public const string Menu = Icons.Material.Filled.Menu;

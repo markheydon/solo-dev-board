@@ -7,14 +7,7 @@ namespace SoloDevBoard.Web.Tests;
 /// <summary>CSS and asset fallbacks must match <see cref="SoloDevBoardTheme"/> light palette values.</summary>
 public sealed class SoloDevBoardThemeFallbackTests
 {
-    private static string RepositoryRoot
-    {
-        get
-        {
-            var testProjectDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
-            return Path.GetFullPath(Path.Combine(testProjectDirectory, "..", ".."));
-        }
-    }
+    private static readonly string RepositoryRoot = RepositoryPaths.FindRepositoryRoot();
 
     private static PaletteLight LightPalette =>
         (PaletteLight)SoloDevBoardTheme.MudTheme.PaletteLight!;
@@ -47,6 +40,8 @@ public sealed class SoloDevBoardThemeFallbackTests
         Assert.Contains($"var(--mud-palette-lines-default, {LightHex(p => p.LinesDefault)})", css, StringComparison.Ordinal);
         Assert.Contains($"var(--mud-palette-error, {LightHex(p => p.Error)})", css, StringComparison.Ordinal);
         Assert.Contains($"var(--mud-palette-text-secondary, {LightHex(p => p.TextSecondary)})", css, StringComparison.Ordinal);
+        Assert.Contains($"var(--mud-palette-text-primary, {LightHex(p => p.TextPrimary)})", css, StringComparison.Ordinal);
+        Assert.Contains($"var(--mud-palette-surface, {LightHex(p => p.Surface)})", css, StringComparison.Ordinal);
         Assert.Contains(
             $"var(--mud-default-borderradius, {SoloDevBoardTheme.MudTheme.LayoutProperties.DefaultBorderRadius})",
             css,

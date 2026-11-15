@@ -47,9 +47,9 @@
     width: min(480px, 100%);
     border-radius: var(--mud-default-borderradius, 6px);
     border: 1px solid color-mix(in srgb, var(--mud-palette-lines-default, #d0d7de) 70%, transparent);
-    background: var(--mud-palette-surface, #fff);
+    background: var(--mud-palette-surface, #f6f8fa);
     box-shadow: var(--mud-elevation-24, 0 16px 30px rgba(0, 0, 0, 0.28));
-    color: var(--mud-palette-text-primary, #1f2937);
+    color: var(--mud-palette-text-primary, #24292e);
     padding: 20px 20px 18px;
 }
 
