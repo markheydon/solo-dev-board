@@ -39,13 +39,14 @@ Onboard **.NET Aspire** using current official documentation (not copied Aspire 
 ## Task Routing
 
 - **Code** (`src/`, `tests/`): [`CONVENTIONS.md`](CONVENTIONS.md).
-- **Spec Kit features** (`specs/<feature>/`): Spec Kit workflow and [constitution](.specify/memory/constitution.md); product code still follows `CONVENTIONS.md` and `implementation-guardrails`.
+- **`v1.4` / `v1.5` product chrome** ([#526](https://github.com/markheydon/solo-dev-board/issues/526) tree): normal Plan mode and [`plan/product-chrome-ui-quality/`](plan/product-chrome-ui-quality/README.md); **do not** use Spec Kit as the planning gate; **do not** mint new child issues via planning prompts ([`plan/SPEC_KIT_MIGRATION.md`](plan/SPEC_KIT_MIGRATION.md)).
+- **Spec Kit features** (`specs/<feature>/`): default for **new work after `v1.5.0`**; Spec Kit workflow and [constitution](.specify/memory/constitution.md); product code still follows `CONVENTIONS.md` and `implementation-guardrails`.
 - **Documentation** (`**/*.md` except `adr/`): `project-documentation` skill.
 - **ADRs** (`adr/*.md`): ADR skill only.
 
 ## Spec-driven features (Spec Kit)
 
-Feature intent lives under `specs/<feature>/` (`spec.md`, `plan.md`, `tasks.md`, and related artefacts). Resolve the active feature directory from [`.specify/feature.json`](.specify/feature.json) or:
+Feature intent lives under `specs/<feature>/` (`spec.md`, `plan.md`, `tasks.md`, and related artefacts). **Not used for `v1.4` or `v1.5` delivery** unless the user explicitly overrides. Resolve the active feature directory from [`.specify/feature.json`](.specify/feature.json) or:
 
 ```bash
 .specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks

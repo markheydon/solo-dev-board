@@ -21,7 +21,7 @@ SoloDevBoard provides a single pane of glass for solo developers managing GitHub
 
 ### Current focus
 
-Deliver shared MudBlazor page chrome and narrow-viewport layout on **`v1.4`** ([DEC-027](https://github.com/markheydon/solo-dev-board/blob/main/adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md)). Ice-box catalogue work stays unmilestoned until promoted from [plan/BACKLOG.md](https://github.com/markheydon/solo-dev-board/blob/main/plan/BACKLOG.md). Do not start platform-blocked [#293](https://github.com/markheydon/solo-dev-board/issues/293), [#391](https://github.com/markheydon/solo-dev-board/issues/391), or [#498](https://github.com/markheydon/solo-dev-board/issues/498) without an explicit decision.
+Deliver shared MudBlazor page chrome and narrow-viewport layout on **`v1.4`** using the existing issue tree ([DEC-027](https://github.com/markheydon/solo-dev-board/blob/main/adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md)); plan **`v1.5 - Product branding`** ([#397](https://github.com/markheydon/solo-dev-board/issues/397) and children) when `v1.4` closes. Spec Kit is the default for **new** features after **`v1.5.0`** ([plan/SPEC_KIT_MIGRATION.md](https://github.com/markheydon/solo-dev-board/blob/main/plan/SPEC_KIT_MIGRATION.md)). Ice-box catalogue work stays unmilestoned until promoted from [plan/BACKLOG.md](https://github.com/markheydon/solo-dev-board/blob/main/plan/BACKLOG.md). Do not start platform-blocked [#293](https://github.com/markheydon/solo-dev-board/issues/293), [#391](https://github.com/markheydon/solo-dev-board/issues/391), or [#498](https://github.com/markheydon/solo-dev-board/issues/498) without an explicit decision.
 
 ### Release history
 

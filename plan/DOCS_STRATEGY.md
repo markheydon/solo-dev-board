@@ -52,6 +52,7 @@ plan/
 ├── BACKLOG.md                  # Canonical roadmap index
 ├── RELEASE_PLAN.md
 ├── wireframes/                 # UI planning references
+├── product-chrome-ui-quality/  # v1.4 / v1.5 delivery bundle (pre–Spec Kit)
 ├── archive/                    # Historical phased plan, Copilot-era bundles
 ├── DECISIONS.md                # Retired pointer to adr/
 ├── LABEL_STRATEGY.md

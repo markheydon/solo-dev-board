@@ -172,7 +172,31 @@ Platform-blocked and ice-box items are listed in [`BACKLOG.md`](BACKLOG.md); the
 
 **Status:** Active (2026-11-15). Single open milestone per DEC-027.
 
+**Planning bundle:** [`product-chrome-ui-quality/README.md`](product-chrome-ui-quality/README.md).
+
 **Target:** Not set — dates follow actual start per Roadmap date guidelines.
+
+---
+
+### v1.5 - Product branding (planned)
+
+**Goal:** Ship product identity (display name, logo/mark, favicon set, and token cleanup) as the second stream under epic [#526](https://github.com/markheydon/solo-dev-board/issues/526), after visual language ships on `v1.4`.
+
+**Scope (when milestone is declared):**
+
+- Feature [#397](https://github.com/markheydon/solo-dev-board/issues/397) (un-park when ready)
+- Enabler [#529](https://github.com/markheydon/solo-dev-board/issues/529)
+- Test [#531](https://github.com/markheydon/solo-dev-board/issues/531)
+
+**Delivery mode:** Same pre–Spec Kit legacy path as `v1.4` (existing issues only; no new child-issue prompts). See [`SPEC_KIT_MIGRATION.md`](SPEC_KIT_MIGRATION.md).
+
+**Out of milestone:** Ice-box catalogue work; platform-blocked [#293](https://github.com/markheydon/solo-dev-board/issues/293), [#391](https://github.com/markheydon/solo-dev-board/issues/391), [#498](https://github.com/markheydon/solo-dev-board/issues/498).
+
+**Status:** Not declared — opens when `v1.4` is scoped closed and branding decisions are ready.
+
+**After `v1.5.0`:** Spec Kit becomes the default for new feature work; re-review `plan/` archiving per [`SPEC_KIT_MIGRATION.md`](SPEC_KIT_MIGRATION.md).
+
+**Target:** Not set.
 
 ---
 

@@ -1,8 +1,8 @@
 # Spec Kit Migration Plan
 
-<!-- AI Collaborator Instructions: This document is a parked execution plan. Do not run specify init or create .specify/ until the user explicitly requests Spec Kit migration. When the user says "execute the Spec Kit migration" or references this file for implementation, follow the steps in order. -->
+<!-- AI Collaborator Instructions: Follow the pre–Spec Kit cut-over below before running specify/plan/tasks for new features. Execute the migration checklist when the user requests full Spec Kit adoption after v1.5.0 (or follow Step 3 as a pilot on v1.5 if approved). -->
 
-**Status:** Parked — ADR migration complete (2026-11-14); Spec Kit scaffold and adoption remain future work.
+**Status:** Scaffold present (`.specify/`); **full adoption starts after `v1.5.0`**. Until then, deliver **`v1.4`** and **`v1.5`** via legacy Issues + `plan/` bundles, not Spec Kit.
 
 **Created:** 2026-07-18.
 
@@ -16,8 +16,26 @@
 - [ ] Constitution stable in [`AGENTS.md`](../AGENTS.md) and [`CONVENTIONS.md`](../CONVENTIONS.md).
 - [x] Backlog-to-issues Phase 2 complete ([`plan/archive/BACKLOG_TO_ISSUES_MIGRATION.md`](archive/BACKLOG_TO_ISSUES_MIGRATION.md)).
 - [x] `plan/` slimmed for Spec Kit readiness (2026-11-14): Copilot-era bundles and phased plan archived; see [`plan/README.md`](README.md).
+- [x] Pre–Spec Kit cut-over agreed (2026-11-15): finish **`v1.4`** and **`v1.5`** on existing GitHub Issue trees before Spec Kit becomes the default for new work.
 
-**Do not execute the steps below until this plan is explicitly approved.**
+**Execute the migration checklist below after `v1.5.0` is tagged** (or when the user explicitly approves an earlier pilot, for example constitution import during `v1.5`).
+
+---
+
+## Pre–Spec Kit delivery cut-over (2026-11-15)
+
+| Phase | Milestone | Delivery mode | Product intent |
+| --- | --- | --- | --- |
+| **Now** | **`v1.4 - Product chrome and narrow viewports`** | Normal Plan mode; **existing** epic [#526](https://github.com/markheydon/solo-dev-board/issues/526) and children ([#527](https://github.com/markheydon/solo-dev-board/issues/527), [#528](https://github.com/markheydon/solo-dev-board/issues/528), [#530](https://github.com/markheydon/solo-dev-board/issues/530), [#411](https://github.com/markheydon/solo-dev-board/issues/411)) | [`product-chrome-ui-quality/`](product-chrome-ui-quality/README.md) bundle + wireframes |
+| **Next** | **`v1.5 - Product branding`** (declare when `v1.4` closes) | Same legacy mode; **do not** re-run prompts that split new child issues | Branding [#397](https://github.com/markheydon/solo-dev-board/issues/397), enabler [#529](https://github.com/markheydon/solo-dev-board/issues/529), test [#531](https://github.com/markheydon/solo-dev-board/issues/531) |
+| **After `v1.5.0`** | Next promoted feature | **Spec Kit default:** `/speckit-specify` → plan → tasks → implement | `.specify/specs/<feature>/`; at most one tracking issue, not a generated subtree |
+
+### Rules for agents
+
+1. **Do not** run Spec Kit specify/plan/tasks for **`v1.4`** or **`v1.5`** scope unless the user explicitly overrides (for example a post-ship archival spec).
+2. **Do not** use Copilot-era planning prompts to mint new Epic → Feature → Story trees for work that already has issues.
+3. **Do** use Spec Kit for **new** or **ice-box promoted** capabilities after cut-over, typically a single Feature or Story worth of intent, not prompt-driven decomposition.
+4. **Re-archive review:** After **`v1.5.0`**, review active `plan/` feature bundles ([`product-chrome-ui-quality/`](product-chrome-ui-quality/README.md), [`label-remap-taxonomy-project-plan.md`](label-remap-taxonomy-project-plan.md), wireframes) and move superseded prose to [`archive/`](archive/README.md) or into `.specify/specs/` as appropriate. Record outcome in this file.
 
 ---
 
@@ -57,9 +75,10 @@
 
 ### Step 3 — Pilot one feature spec
 
-- [ ] Pick a small in-scope feature (or next greenfield story).
-- [ ] Create `.specify/specs/<feature>/spec.md` from existing wireframe + `plan/SCOPE.md` excerpt.
+- [ ] Pick the first **post–`v1.5.0`** promoted feature (or an explicitly approved pilot).
+- [ ] Create `.specify/specs/<feature>/spec.md` from `plan/SCOPE.md`, wireframes, or a slim issue body.
 - [ ] Run Spec Kit plan/implement flow once end-to-end; capture gaps in this doc.
+- [ ] Optional: optional Spec Kit pilot **during `v1.5`** for branding only if the user wants validation before cut-over; still close #397/#529/#531 on Issues.
 
 ### Step 4 — Update agent gates
 

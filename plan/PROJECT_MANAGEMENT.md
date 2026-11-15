@@ -36,6 +36,15 @@ During catch-up, deferred slices may sit on the milestone as **unlinked stories*
 
 Implementation **phases** in [`archive/IMPLEMENTATION_PLAN.md`](archive/IMPLEMENTATION_PLAN.md) are historical sequencing for the v1.0 release. The Project board **Phase** field is legacy for closed pre-1.0 milestones only.
 
+### Delivery mode: GitHub Issues vs Spec Kit (2026-11-15)
+
+| When | How to plan and implement |
+|------|---------------------------|
+| **`v1.4`** and **`v1.5`** (product chrome epic [#526](https://github.com/markheydon/solo-dev-board/issues/526)) | **Legacy / Plan mode:** use the **existing** issue → sub-issue tree and [`product-chrome-ui-quality/`](product-chrome-ui-quality/README.md) bundle. Implement with normal branches and PRs linked to issues. Do **not** run Copilot-era prompts that mint new children. Do **not** use Spec Kit as the planning gate. |
+| **After `v1.5.0`** | **Spec Kit default** for new or promoted features: `.specify/specs/<feature>/` and the `/speckit-*` workflow. Avoid prompt-driven Epic → Feature → Story explosion; prefer one spec per capability and lightweight GitHub tracking. |
+
+Full cut-over rules: [`SPEC_KIT_MIGRATION.md`](SPEC_KIT_MIGRATION.md). **`v1.5`** is declared only when **`v1.4`** is scoped closed ([DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md)).
+
 ---
 
 ## Issues

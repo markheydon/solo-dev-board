@@ -9,7 +9,7 @@ Lean governance, operator notes, and UI wireframes for SoloDevBoard. **Open work
 | [SCOPE.md](SCOPE.md) | In-scope and out-of-scope product boundaries |
 | [BACKLOG.md](BACKLOG.md) | **Canonical** milestone and roadmap index |
 | [RELEASE_PLAN.md](RELEASE_PLAN.md) | Versioning, release process, historical release notes |
-| [SPEC_KIT_MIGRATION.md](SPEC_KIT_MIGRATION.md) | Parked plan for GitHub Spec Kit adoption |
+| [SPEC_KIT_MIGRATION.md](SPEC_KIT_MIGRATION.md) | Spec Kit adoption (after `v1.5.0`; `v1.4`/`v1.5` stay on Issues) |
 
 ## Governance and process
 
@@ -31,7 +31,7 @@ Lean governance, operator notes, and UI wireframes for SoloDevBoard. **Open work
 | [CURSOR_CLOUD.md](CURSOR_CLOUD.md) | Cursor Cloud VM and secrets mapping |
 | [KEY_VAULT_SECRET_INVENTORY.md](KEY_VAULT_SECRET_INVENTORY.md) | Key Vault secret names |
 | [HOSTED_AUTH_KEY_VAULT_PATTERN.md](HOSTED_AUTH_KEY_VAULT_PATTERN.md) | Hosted auth secrets pattern |
-| [POST_KEY_VAULT_MIGRATION_CLEANUP.md](POST_KEY_VAULT_MIGRATION_CLEANUP.md) | Post-migration Azure cleanup |
+| [archive/POST_KEY_VAULT_MIGRATION_CLEANUP.md](archive/POST_KEY_VAULT_MIGRATION_CLEANUP.md) | Post-migration Azure cleanup (complete 2026-11-15) |
 | [HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md](HOSTED_AUTH_SESSION_AND_TOKEN_FLOW.md) | Hosted session and token flow |
 | [GITHUB_PROJECTS_V2_ACCESS.md](GITHUB_PROJECTS_V2_ACCESS.md) | Hosted private Projects v2 limitation |
 | [ACCESSIBILITY_AUDIT.md](ACCESSIBILITY_AUDIT.md) | WCAG expectations for E2E |
@@ -41,10 +41,11 @@ Lean governance, operator notes, and UI wireframes for SoloDevBoard. **Open work
 
 | Doc | Purpose |
 |-----|---------|
-| [label-remap-taxonomy-project-plan.md](label-remap-taxonomy-project-plan.md) | Shipped on `v1.3`; kept until Spec Kit spec replaces it |
+| [product-chrome-ui-quality/](product-chrome-ui-quality/README.md) | **`v1.4`** / **`v1.5`** delivery bundle (restored from archive 2026-11-15) |
+| [label-remap-taxonomy-project-plan.md](label-remap-taxonomy-project-plan.md) | Shipped on `v1.3`; re-archive after Spec Kit cut-over |
 | [wireframes/](wireframes/) | Page layout references ([`CONVENTIONS.md`](../CONVENTIONS.md)) |
 
-New feature work should use GitHub Issues; after Spec Kit adoption, product intent moves to `.specify/specs/` per [SPEC_KIT_MIGRATION.md](SPEC_KIT_MIGRATION.md).
+**`v1.4`** and **`v1.5`:** Plan mode + existing GitHub Issues only ([`SPEC_KIT_MIGRATION.md`](SPEC_KIT_MIGRATION.md)). **After `v1.5.0`:** new product intent uses Spec Kit (`.specify/specs/`). Re-review what belongs in `plan/` versus `archive/` after `v1.5.0`.
 
 ## Archive
 

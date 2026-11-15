@@ -1,5 +1,7 @@
 # Post-migration Azure cleanup (ADR-0045)
 
+**Status:** Complete (2026-11-15). Executed after production CD on release tag `v1.3.0` and operator verification on staging, production, and local Path B. Retained as a historical checklist for subscriptions that still hold legacy Aspire vaults or empty `rg-aspire-*` groups.
+
 Operator checklist for removing leftover resources after **persistent** tier Key Vaults (`auth-secrets-staging`, `auth-secrets`) are proven in CD. Do not run this immediately after merging ADR-0045; wait until a **production** release deploy succeeds.
 
 ## When to run
@@ -12,7 +14,7 @@ Complete this cleanup only when **all** of the following are true:
 
 ## What the old resources were
 
-Before [ADR-0045](../adr/adr-0045-persistent-key-vault-dual-path-local-secrets.md), Aspire **provisioned** per-tier Key Vaults with random suffixes and stored `gh-pat` and `gh-app-client-secret` there. CD no longer creates those vaults; deploy uses `PublishAsExisting` on fixed names documented in [Azure Key Vault setup](../docs/azure-key-vault-setup.md).
+Before [ADR-0045](../../adr/adr-0045-persistent-key-vault-dual-path-local-secrets.md), Aspire **provisioned** per-tier Key Vaults with random suffixes and stored `gh-pat` and `gh-app-client-secret` there. CD no longer creates those vaults; deploy uses `PublishAsExisting` on fixed names documented in [Azure Key Vault setup](../../docs/azure-key-vault-setup.md).
 
 | Legacy resource | Typical location | Status after migration |
 | --- | --- | --- |
@@ -79,7 +81,7 @@ Replace names with those returned by `az group list` in your subscription.
 
 | Resource | Reason |
 | --- | --- |
-| `auth-secrets-staging`, `auth-secrets` | Active tier vaults ([KEY_VAULT_SECRET_INVENTORY.md](KEY_VAULT_SECRET_INVENTORY.md)) |
+| `auth-secrets-staging`, `auth-secrets` | Active tier vaults ([KEY_VAULT_SECRET_INVENTORY.md](../KEY_VAULT_SECRET_INVENTORY.md)) |
 | `rg-solodevboard-stage`, `rg-solodevboard-prod` | Tier app resource groups |
 | `rg-solodevboard-dev`, `kv-solodevboard-dev` | Optional local Path B dev vault |
 | `rg-platform-shared` (if used) | Shared ACR when `ACR_NAME` / `ACR_RESOURCE_GROUP` are set |
@@ -87,6 +89,6 @@ Replace names with those returned by `az group list` in your subscription.
 
 ## References
 
-- [docs/deployment.md](../docs/deployment.md) — CD tiers and Key Vault migration
-- [docs/azure-key-vault-setup.md](../docs/azure-key-vault-setup.md) — populate and RBAC
-- [ADR-0045](../adr/adr-0045-persistent-key-vault-dual-path-local-secrets.md)
+- [docs/deployment.md](../../docs/deployment.md) — CD tiers and Key Vault migration
+- [docs/azure-key-vault-setup.md](../../docs/azure-key-vault-setup.md) — populate and RBAC
+- [ADR-0045](../../adr/adr-0045-persistent-key-vault-dual-path-local-secrets.md)
