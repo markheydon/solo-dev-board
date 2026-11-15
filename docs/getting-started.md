@@ -456,6 +456,21 @@ In production, secret AppHost parameters are supplied from the GitHub `productio
 
 ---
 
+## Product feature work (Spec Kit)
+
+After [`v1.4.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.4.0), **new product capabilities** are planned and implemented through **GitHub Spec Kit**, not new markdown delivery bundles under `plan/`.
+
+| Topic | Location |
+| --- | --- |
+| Feature intent (`spec.md`, `plan.md`, `tasks.md`) | `specs/<feature>/` in the repository |
+| Quality gates and principles | [`.specify/memory/constitution.md`](../.specify/memory/constitution.md) |
+| Agent workflow | [AGENTS.md](../AGENTS.md) (`/speckit-*` commands via Cursor) |
+| Maintainer cut-over and archive rules | [plan/SPEC_KIT_MIGRATION.md](../plan/SPEC_KIT_MIGRATION.md) |
+
+Shipped increments (`v1.4` chrome and branding, `v1.3` label remap, and earlier milestones) remain documented via GitHub Issues and archived plans under [`plan/archive/`](../plan/archive/README.md).
+
+---
+
 ## Deploying to Azure
 
 Solo Dev Board deploys to Azure Container Apps via Aspire. See the [Deployment guide](deployment.md) for prerequisites, one-time OIDC bootstrap, GitHub Environment configuration, and first deploy steps. For a **personal instance with a PAT** (no GitHub App), start with [Self-hoster deployment (PAT mode)](deployment.md#self-hoster-deployment-pat-mode). For logs, metrics, and traces after deployment, see the [Observability guide](observability.md).

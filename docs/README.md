@@ -20,6 +20,12 @@ Release notes live in [`CHANGELOG.md`](../CHANGELOG.md) at the repository root.
 | [Azure Deployment Costs](azure-costs.md) | Resource charges, SKUs, and cost optimisation for self-hosted Azure deployments. |
 | [Observability](observability.md) | Structured logging, Application Insights telemetry, and operational diagnostics. |
 
+## Product feature work (Spec Kit)
+
+From **`v1.4.0`** onward, new capabilities are specified with **GitHub Spec Kit** under `specs/<feature>/` (workflow skills: `/speckit-specify`, `/speckit-plan`, `/speckit-tasks`, and related commands). Non-negotiable rules live in [`.specify/memory/constitution.md`](../.specify/memory/constitution.md) and [AGENTS.md](../AGENTS.md). Maintainer cut-over notes: [plan/SPEC_KIT_MIGRATION.md](../plan/SPEC_KIT_MIGRATION.md).
+
+Operator guides in this folder describe **how to run and deploy** the app; they do not replace per-feature specs.
+
 ## Previewing the end-user site locally
 
 ```bash

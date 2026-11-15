@@ -1,6 +1,6 @@
 # Product branding chrome
 
-**Status:** Implemented with [#397](https://github.com/markheydon/solo-dev-board/issues/397) on milestone **`v1.4`**. Bundle: [`product-chrome-ui-quality/README.md`](../product-chrome-ui-quality/README.md).
+**Status:** Implemented with [#397](https://github.com/markheydon/solo-dev-board/issues/397); shipped [`v1.4.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.4.0). Bundle: [`archive/product-chrome-ui-quality/README.md`](../archive/product-chrome-ui-quality/README.md).
 
 ## Naming split
 

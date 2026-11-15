@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-15
+
+Product chrome, branding, and narrow viewports. GitHub milestone [`v1.4 - Product chrome, branding, and narrow viewports`](https://github.com/markheydon/solo-dev-board/milestone/10) closed with 11 issues delivered. User Guide screenshots recaptured for shared chrome and branding. Maintainer docs updated for **Spec Kit** as the default for new feature work ([`plan/SPEC_KIT_MIGRATION.md`](plan/SPEC_KIT_MIGRATION.md)).
+
+### Added
+
+- **Product identity** — spoken display name **Solo Dev Board**, Solo family mark on the app bar and welcome page, and an updated favicon set ([#397](https://github.com/markheydon/solo-dev-board/issues/397), [#531](https://github.com/markheydon/solo-dev-board/issues/531)).
+
+### Changed
+
+- **Visual language** — shared MudBlazor page chrome across shipped feature pages ([#527](https://github.com/markheydon/solo-dev-board/issues/527), [#528](https://github.com/markheydon/solo-dev-board/issues/528), [#530](https://github.com/markheydon/solo-dev-board/issues/530)).
+- **Narrow viewports** — phone- and compact-tablet-friendly layout on representative routes ([#411](https://github.com/markheydon/solo-dev-board/issues/411)).
+- **Theming** — centralised theme tokens and removal of redundant MudBlazor CSS overrides ([#529](https://github.com/markheydon/solo-dev-board/issues/529)).
+
+### Known limitations (not in this release)
+
+- Persisted default workflow template parameter profiles ([#436](https://github.com/markheydon/solo-dev-board/issues/436)) remain planned for a later release.
+- Server-backed persistence for the custom Actions template source waits on an Aspire product store ([#498](https://github.com/markheydon/solo-dev-board/issues/498), blocked by [#391](https://github.com/markheydon/solo-dev-board/issues/391)).
+- Private user-owned Projects v2 under hosted GitHub App sign-in remain platform-blocked ([#293](https://github.com/markheydon/solo-dev-board/issues/293)).
+- Repositories Add / Remove / Bulk / Edit / More actions remain stubs ([#435](https://github.com/markheydon/solo-dev-board/issues/435)).
+- Full GitHub Project v2 automation-rule retrieval remains a later Board Rules slice ([#437](https://github.com/markheydon/solo-dev-board/issues/437)).
+- Window-focus refetch after Reload from GitHub remains ice-boxed ([#450](https://github.com/markheydon/solo-dev-board/issues/450)).
+
 ## [1.3.0] - 2026-11-15
 
 Label remap onto the recommended taxonomy. GitHub milestone [`v1.3 - Label remap onto the recommended taxonomy`](https://github.com/markheydon/solo-dev-board/milestone/9) closed with 14 issues delivered.
@@ -31,7 +54,6 @@ Label remap onto the recommended taxonomy. GitHub milestone [`v1.3 - Label remap
 - Repositories Add / Remove / Bulk / Edit / More actions remain stubs ([#435](https://github.com/markheydon/solo-dev-board/issues/435)).
 - Full GitHub Project v2 automation-rule retrieval remains a later Board Rules slice ([#437](https://github.com/markheydon/solo-dev-board/issues/437)).
 - Window-focus refetch after Reload from GitHub remains ice-boxed ([#450](https://github.com/markheydon/solo-dev-board/issues/450)).
-- MudBlazor page chrome ([#528](https://github.com/markheydon/solo-dev-board/issues/528)) and narrow-viewport layout ([#411](https://github.com/markheydon/solo-dev-board/issues/411)) are scoped on milestone **`v1.4`** ([#526](https://github.com/markheydon/solo-dev-board/issues/526), [#527](https://github.com/markheydon/solo-dev-board/issues/527)).
 
 ## [1.2.0] - 2026-09-07
 
