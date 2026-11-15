@@ -1,4 +1,5 @@
 using SoloDevBoard.Application.Services.Audit;
+using SoloDevBoard.Application.Services.Common;
 
 namespace SoloDevBoard.Application.Tests;
 
@@ -60,6 +61,7 @@ public sealed class AuditDashboardMarkdownExporterTests
         Assert.Contains("[Open run](https://github.com/owner/repo-a/actions/runs/123)", markdown);
         Assert.Contains("| Label consistency warnings | 1 |", markdown);
         Assert.Contains("## Label consistency warnings", markdown);
+        Assert.Contains($"Compared against the {ProductBranding.DisplayName} canonical taxonomy.", markdown);
         Assert.Contains("| owner/repo-a | type/bug | Missing | Missing from the repository. |", markdown);
     }
 

@@ -163,7 +163,7 @@ public sealed class AuditDashboardMarkdownExporter : IAuditDashboardMarkdownExpo
     {
         builder.AppendLine("## Label consistency warnings");
         builder.AppendLine();
-        builder.AppendLine("Compared against the SoloDevBoard canonical taxonomy. Extra repository labels are not reported.");
+        builder.AppendLine($"Compared against the {ProductBranding.DisplayName} canonical taxonomy. Extra repository labels are not reported.");
         builder.AppendLine();
 
         if (labelConsistencyLoadFailed)
