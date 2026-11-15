@@ -142,17 +142,35 @@ Platform-blocked and ice-box items are listed in [`BACKLOG.md`](BACKLOG.md); the
 
 ---
 
-### v1.3 - Usable solo workflow across repositories
+### v1.3 - Label remap onto the recommended taxonomy
 
-**Goal:** Formalise a usable daily workflow across multiple GitHub repositories for a solo developer, starting from real use of the shipped app rather than a second invented planning epic.
+**Goal:** Let existing repository catalogues adopt the recommended label taxonomy without wiping issue and pull request history.
 
 **Scope:**
-- Label Manager remap of extras onto the recommended taxonomy without wiping issue and pull request history ([#491](https://github.com/markheydon/solo-dev-board/issues/491))
-- Further issues added from dogfood (Planning, Triage, and related surfaces) as they are filed and explicitly placed on this milestone
+- Label Manager preview-first remap of extras onto taxonomy (or other existing) names ([#491](https://github.com/markheydon/solo-dev-board/issues/491), [#519](https://github.com/markheydon/solo-dev-board/issues/519)–[#521](https://github.com/markheydon/solo-dev-board/issues/521))
+- Remap apply and delete safety fixes ([#548](https://github.com/markheydon/solo-dev-board/issues/548), [#550](https://github.com/markheydon/solo-dev-board/issues/550), [#556](https://github.com/markheydon/solo-dev-board/issues/556))
+- Production deploy on persistent tier Key Vaults ([ADR-0045](adr/adr-0045-persistent-key-vault-dual-path-local-secrets.md), [#583](https://github.com/markheydon/solo-dev-board/pull/583)) shipped with this tag
 
-**Out of milestone:** Window-focus refetch ([#450](https://github.com/markheydon/solo-dev-board/issues/450), ice-box); hosted private Projects v2 ([#293](https://github.com/markheydon/solo-dev-board/issues/293)); Aspire PM settings store ([#391](https://github.com/markheydon/solo-dev-board/issues/391)); server-backed template source ([#498](https://github.com/markheydon/solo-dev-board/issues/498)); ice-box catalogue and hygiene work unless promoted.
+**Out of milestone:** Further solo-workflow ideas from dogfood were not added to this increment.
 
-**Status:** Ready to tag (2026-11-14). Milestone #9: 14 closed, 0 open (includes remap [#491](https://github.com/markheydon/solo-dev-board/issues/491)–[#521](https://github.com/markheydon/solo-dev-board/issues/521)). Tag [`v1.3.0`](https://github.com/markheydon/solo-dev-board/releases) after staging smoke test; then close the milestone.
+**Status:** Complete (2026-11-15). Tagged [`v1.3.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.3.0). Milestone #9 closed.
+
+**Target:** Not set — dates follow actual start per Roadmap date guidelines.
+
+---
+
+### v1.4 - Product chrome and narrow viewports
+
+**Goal:** Shared MudBlazor page chrome on shipped feature pages and a narrow-viewport pass so daily use feels like one product on phone and compact tablet widths.
+
+**Scope:**
+- Epic [#526](https://github.com/markheydon/solo-dev-board/issues/526), feature [#527](https://github.com/markheydon/solo-dev-board/issues/527)
+- Story [#528](https://github.com/markheydon/solo-dev-board/issues/528) (page chrome) and test [#530](https://github.com/markheydon/solo-dev-board/issues/530)
+- Story [#411](https://github.com/markheydon/solo-dev-board/issues/411) (mobile and narrow-viewport layout)
+
+**Out of milestone:** Product branding ([#397](https://github.com/markheydon/solo-dev-board/issues/397), [#529](https://github.com/markheydon/solo-dev-board/issues/529), [#531](https://github.com/markheydon/solo-dev-board/issues/531)); ice-box catalogue features; platform-blocked chores ([#293](https://github.com/markheydon/solo-dev-board/issues/293), [#391](https://github.com/markheydon/solo-dev-board/issues/391), [#498](https://github.com/markheydon/solo-dev-board/issues/498)).
+
+**Status:** Active (2026-11-15). Single open milestone per DEC-027.
 
 **Target:** Not set — dates follow actual start per Roadmap date guidelines.
 

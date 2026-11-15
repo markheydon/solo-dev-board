@@ -40,7 +40,7 @@ Use these planning viewports (CSS pixels, not device pixels):
 
 Nav collapses to the existing drawer. ToolBar wraps. Filter field goes full width under actions. No FAB. Dense grids may stay tables at compact tablet; switch to stacked items only when columns overflow. Touch targets on icon-only controls stay at least the MudBlazor default dense size; do not invent a second mobile navigation pattern.
 
-Tracked as ice-box story [#411](https://github.com/markheydon/solo-dev-board/issues/411) under feature [#527](https://github.com/markheydon/solo-dev-board/issues/527).
+Narrow-viewport delivery is story [#411](https://github.com/markheydon/solo-dev-board/issues/411) on milestone **`v1.4`**, under feature [#527](https://github.com/markheydon/solo-dev-board/issues/527).
 
 ## MudBlazor first
 
