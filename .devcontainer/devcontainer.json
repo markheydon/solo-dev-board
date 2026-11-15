@@ -6,6 +6,7 @@
 		"ghcr.io/devcontainers/features/docker-in-docker:4": {},
 		"ghcr.io/devcontainers/features/github-cli:1": {},
 		"ghcr.io/devcontainers/features/azure-cli:1": {},
+		"ghcr.io/markheydon/devcontainer-features/spec-kit:1": {},
 		"ghcr.io/markheydon/devcontainer-features/dev-agent-tools:1": {},
 		"ghcr.io/stu-bell/devcontainer-features/cursor-cli:0": {}
 	},
@@ -27,7 +28,7 @@
 		"vscode": {
 			"extensions": [
 				"microsoft-aspire.aspire-vscode",
-				"ms-dotnettools.csdevkit",
+				"ms-dotnettools.csdevkit"
 			]
 		}
 	}
