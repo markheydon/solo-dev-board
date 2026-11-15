@@ -61,6 +61,15 @@ Microsoft.OpenApi's versions are aligned to specific .NET versions therefore the
         update-types:
           - version-update:semver-major
 
+### LTS repos: Microsoft.Extensions.* major versions
+
+While the app targets the current LTS runtime (e.g. net10.0), do not take `Microsoft.Extensions.*` semver-major updates (11.x while on .NET 10). A `microsoft-extensions` group with `update-types: [minor, patch]` is not enough: Dependabot still opens **individual** PRs for majors. Add a job-level ignore:
+
+    ignore:
+      - dependency-name: "Microsoft.Extensions.*"
+        update-types:
+          - version-update:semver-major
+
 ## Notes
 
 - The `update-types` option for groups supports a different set of levels than other uses of `update-types`. Supported values: `minor`, `patch`, and `major`.

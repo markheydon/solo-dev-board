@@ -12,6 +12,11 @@ updates:
       - type/chore
     assignees:
       - markheydon
+    # Group update-types only affect grouped PRs; semver-major still opens individual PRs without ignore (see GitHub docs example 4).
+    ignore:
+      - dependency-name: "Microsoft.Extensions.*"
+        update-types:
+          - version-update:semver-major
     groups:
       test-packages:
         patterns:
