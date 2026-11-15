@@ -1,4 +1,4 @@
-# Azure Key Vault setup for SoloDevBoard
+# Azure Key Vault setup for Solo Dev Board
 
 > **Audience:** Operators and team maintainers. Solo local developers can skip this document if they use [Path A in Getting Started](getting-started.md#path-a-local-secrets-no-azure).
 

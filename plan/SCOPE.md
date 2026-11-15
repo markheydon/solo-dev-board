@@ -1,18 +1,18 @@
-# SoloDevBoard — Project Scope
+# Solo Dev Board — Project Scope
 
 <!-- AI Collaborator Instructions: When scope changes, update this file and create/close GitHub issues accordingly. Add a new entry to the changelog at the bottom of this file noting the date and nature of the scope change. -->
 
 ## Project Vision
 
-SoloDevBoard is a **single pane of glass** for solo developers who maintain multiple GitHub repositories. The goal is to eliminate context-switching and reduce the friction of routine GitHub housekeeping tasks — triaging issues, managing labels, auditing project health, and deploying workflow configurations — by surfacing everything in one cohesive, AI-friendly application.
+Solo Dev Board is a **single pane of glass** for solo developers who maintain multiple GitHub repositories. The goal is to eliminate context-switching and reduce the friction of routine GitHub housekeeping tasks — triaging issues, managing labels, auditing project health, and deploying workflow configurations — by surfacing everything in one cohesive, AI-friendly application.
 
-> **Motivating context:** SoloDevBoard was directly inspired by the AI-driven PM workflow built in the companion repository [markheydon/github-workflows](https://github.com/markheydon/github-workflows). That system uses VS Code Copilot agents and prompts to manage cross-repo workloads across two operating modes — a weekly **PM Mode** (scan all repos, triage issues and PRs, curate the project board) and a daily **Work Mode** (pick the next item from a pre-curated board). SoloDevBoard's long-term destination is to provide a proper visual interface for everything that system does today via text prompts and scripts: daily focus views, cross-repo backlog prioritisation, iteration planning, label strategy enforcement, workflow migration, and issue triage. Each intermediate phase delivers individual tooling features; Epic 7 (Cross-Repo Planning, Phase 5) closes the loop by bringing the planning intelligence into the UI.
+> **Motivating context:** Solo Dev Board was directly inspired by the AI-driven PM workflow built in the companion repository [markheydon/github-workflows](https://github.com/markheydon/github-workflows). That system uses VS Code Copilot agents and prompts to manage cross-repo workloads across two operating modes — a weekly **PM Mode** (scan all repos, triage issues and PRs, curate the project board) and a daily **Work Mode** (pick the next item from a pre-curated board). Solo Dev Board's long-term destination is to provide a proper visual interface for everything that system does today via text prompts and scripts: daily focus views, cross-repo backlog prioritisation, iteration planning, label strategy enforcement, workflow migration, and issue triage. Each intermediate phase delivers individual tooling features; Epic 7 (Cross-Repo Planning, Phase 5) closes the loop by bringing the planning intelligence into the UI.
 
 ---
 
 ## In Scope
 
-The following features define the current scope of SoloDevBoard:
+The following features define the current scope of Solo Dev Board:
 
 ### Production-Readiness Infrastructure and Authentication (v1.0.0)
 
@@ -67,13 +67,13 @@ The Repositories page lists GitHub repositories available to the authenticated a
 
 ## Out of Scope
 
-The following are explicitly **not** in scope for the current version of SoloDevBoard:
+The following are explicitly **not** in scope for the current version of Solo Dev Board:
 
-- Collaboration and team features — SoloDevBoard is designed for a single developer. No shared sessions, team boards, or collaborative user management are in scope.
+- Collaboration and team features — Solo Dev Board is designed for a single developer. No shared sessions, team boards, or collaborative user management are in scope.
 - Non-GitHub providers — GitLab, Bitbucket, Azure DevOps, and other platforms are not supported. GitHub.com is the only supported provider initially.
-- Native mobile application — SoloDevBoard is a web application. No native iOS or Android app is planned. Responsive use in mobile browsers is in scope (see Constraints).
+- Native mobile application — Solo Dev Board is a web application. No native iOS or Android app is planned. Responsive use in mobile browsers is in scope (see Constraints).
 - Real-time collaboration — No shared sessions, shared boards, or live collaboration features.
-- Issue content editing — SoloDevBoard manages metadata (labels, milestones, assignments) but does not provide a full issue editor.
+- Issue content editing — Solo Dev Board manages metadata (labels, milestones, assignments) but does not provide a full issue editor.
 - GitHub Sponsors, billing-backed entitlement automation, and marketplace monetisation are not in scope for v1.0.0. No integration with GitHub Marketplace, billing APIs, or paid access flows is planned for this release.
 - **Product operating system (deferred).** A future product-catalogue overlay (ideas, journal, feedback, research, product roadmaps) is recorded in [`plan/PRODUCT_OPERATING_SYSTEM.md`](PRODUCT_OPERATING_SYSTEM.md) and ice-boxed as [#475](https://github.com/markheydon/solo-dev-board/issues/475). It is **not** in scope for `v1.1`. GitHub remains the delivery spine; a product may start with no repo and is expected to gain one or more repos unless cancelled or abandoned. PAT-only operations remain in scope independently of that overlay.
 
@@ -94,7 +94,7 @@ The following are explicitly **not** in scope for the current version of SoloDev
 - **AI-driven development:** The project is developed with GitHub Copilot as an active collaborator. All planning documents are written to be machine-readable and actionable by AI agents.
 - **Minimal dependencies:** Prefer the .NET ecosystem and well-established open source libraries. Avoid adding dependencies without an ADR ([`adr/`](../adr/)).
 - **UI component library:** MudBlazor is the sole UI component library for the Blazor front-end (see [DEC-009](adr/adr-0012-switch-to-mudblazor-component-library.md)). Page chrome follows [DEC-039](adr/adr-0039-mudblazor-visual-language-for-page-chrome.md). Raw HTML form elements are not used where a MudBlazor equivalent exists.
-- **Product mark:** Display name, logo or mark, and favicon set are in scope on milestone **`v1.4`** ([#397](https://github.com/markheydon/solo-dev-board/issues/397), [#529](https://github.com/markheydon/solo-dev-board/issues/529), [#531](https://github.com/markheydon/solo-dev-board/issues/531)). The GitHub App bar-chart icon remains the interim favicon until that work ships.
+- **Product mark:** Display name **Solo Dev Board**, Solo family seal (favicon / GitHub App / public-site logo), and related copy ship on milestone **`v1.4`** ([#397](https://github.com/markheydon/solo-dev-board/issues/397), [#529](https://github.com/markheydon/solo-dev-board/issues/529), [#531](https://github.com/markheydon/solo-dev-board/issues/531)). Code identifiers remain `SoloDevBoard`. See [`plan/wireframes/product-branding-wireframe.md`](wireframes/product-branding-wireframe.md).
 - **Responsive web (not a native app):** Phone and tablet browsers are in-scope quality for shipped pages. Compact tablet (iPad mini class) is the practical daily-use target; phone-width must remain usable. Tracked on milestone **`v1.4`** as story [#411](https://github.com/markheydon/solo-dev-board/issues/411) under the visual language feature ([#527](https://github.com/markheydon/solo-dev-board/issues/527) / epic [#526](https://github.com/markheydon/solo-dev-board/issues/526)). A native iOS or Android application remains out of scope.
 
 ---

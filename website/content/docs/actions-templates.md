@@ -9,7 +9,7 @@ guideStatus: Partially Available
 
 ## Overview
 
-The Actions Templates feature allows you to browse, apply, and customise GitHub Actions workflow templates across your repositories, all from within SoloDevBoard. Rather than manually copying YAML files between repositories, you can manage templates centrally and push them where needed.
+The Actions Templates feature allows you to browse, apply, and customise GitHub Actions workflow templates across your repositories, all from within Solo Dev Board. Rather than manually copying YAML files between repositories, you can manage templates centrally and push them where needed.
 
 ![Actions Templates showing the custom template source section and a selected template YAML preview for markheydon/solo-dev-board](/images/actions-templates/overview.png)
 
@@ -50,7 +50,7 @@ The apply **Repository selector** at the top of the page is independent of the c
 2. Selecting a catalogue repository fills the manual field with that `owner/name` but does not load templates until you select **Load templates**.
 3. Select **Load templates** to fetch workflow YAML from the top level of `.github/workflows` in that repository (`*.yml` and `*.yaml` only; nested folders are not scanned).
 4. Custom templates appear in the same card grid as built-ins, each with a source badge showing the repository you loaded.
-5. SoloDevBoard remembers the last-used source in your browser. On your next visit it pre-selects the catalogue repository when it is still in your list, otherwise it pre-fills the manual field, shows a last-used caption, and loads that catalogue automatically.
+5. Solo Dev Board remembers the last-used source in your browser. On your next visit it pre-selects the catalogue repository when it is still in your list, otherwise it pre-fills the manual field, shows a last-used caption, and loads that catalogue automatically.
 
 If the apply catalogue cannot be loaded, the source repository selector is hidden and you can still type an `owner/name` and select **Load templates**.
 

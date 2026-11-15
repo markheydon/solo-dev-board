@@ -56,7 +56,7 @@ Key goals of the Repositories page:
 
 ### What is coming later
 
-- **Add** — add repositories to a managed SoloDevBoard catalogue beyond the live GitHub listing.
+- **Add** — add repositories to a managed Solo Dev Board catalogue beyond the live GitHub listing.
 - **Remove** — remove selected repositories from that catalogue.
 - **Bulk actions** — run multi-repository operations from the command strip.
 - **Edit** (row action) — edit repository metadata or catalogue settings for a single repository.

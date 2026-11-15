@@ -2,11 +2,13 @@
 @layout LandingLayout
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using SoloDevBoard.Application.Services.Common
 
-<PageTitle>Welcome — SoloDevBoard</PageTitle>
+<PageTitle>Welcome - @ProductBranding.DisplayName</PageTitle>
 
 <MudStack Spacing="4" AlignItems="AlignItems.Center" Class="text-center">
-    <MudText Typo="Typo.h4">SoloDevBoard</MudText>
+    <BrandMark Size="72" />
+    <MudText Typo="Typo.h4" data-testid="welcome-product-name">@ProductBranding.DisplayName</MudText>
     <MudText Typo="Typo.body1">
         Your single pane of glass for GitHub workloads.
     </MudText>

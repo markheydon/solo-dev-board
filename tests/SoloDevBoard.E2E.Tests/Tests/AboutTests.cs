@@ -28,7 +28,7 @@ public sealed class AboutTests : SoloDevBoardPageTest
 
         await Expect(Page).ToHaveURLAsync(new Regex("/about$"));
         await Expect(Page).ToHaveTitleAsync(new Regex("About"));
-        await Expect(Page.GetByTestId("about-application-name")).ToContainTextAsync("SoloDevBoard");
+        await Expect(Page.GetByTestId("about-application-name")).ToContainTextAsync("Solo Dev Board");
         await Expect(Page.GetByTestId("about-version")).Not.ToBeEmptyAsync();
 
         var versionText = await Page.GetByTestId("about-version").TextContentAsync();

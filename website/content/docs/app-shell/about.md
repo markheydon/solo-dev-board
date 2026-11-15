@@ -4,7 +4,7 @@ title: About
 landingIcon: info
 ---
 
-The About page provides essential information about the SoloDevBoard application, including its version, runtime environment, and repository link.
+The About page provides essential information about the Solo Dev Board application, including its version, runtime environment, and repository link.
 
 ![About page showing version, runtime, and authentication details](/images/about/overview.png)
 
@@ -17,7 +17,7 @@ The About page provides essential information about the SoloDevBoard application
 - .NET runtime version currently in use.
 - GitHub authentication mode (hosted sign-in or PAT-only local trusted mode).
 - Current GitHub identity (`@login`) for the active authentication mode.
-- Link to the SoloDevBoard GitHub repository.
+- Link to the Solo Dev Board GitHub repository.
 
 {{< callout type="important" >}}
 Authentication details reflect the **active** mode for this session (hosted sign-in or PAT). Switching mode requires signing out or changing local configuration — the About page does not change credentials by itself.

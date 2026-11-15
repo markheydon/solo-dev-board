@@ -2,7 +2,7 @@
 
 # Observability and Telemetry
 
-SoloDevBoard emits structured logs, metrics, and distributed traces so operators can diagnose production behaviour without relying on ad hoc console output.
+Solo Dev Board emits structured logs, metrics, and distributed traces so operators can diagnose production behaviour without relying on ad hoc console output.
 
 ---
 
@@ -35,7 +35,7 @@ See [Deployment](deployment.md) for the full operator guide.
 
 ## Health endpoints
 
-SoloDevBoard exposes operational health endpoints for container orchestration and post-deploy smoke checks:
+Solo Dev Board exposes operational health endpoints for container orchestration and post-deploy smoke checks:
 
 | Endpoint | Type | When to use |
 |---|---|---|
@@ -82,7 +82,7 @@ Telemetry must never contain credentials, tokens, cookies, or personal data beyo
 
 ### Built-in safeguards
 
-SoloDevBoard applies the following defaults in `SoloDevBoard.ServiceDefaults`:
+Solo Dev Board applies the following defaults in `SoloDevBoard.ServiceDefaults`:
 
 - **Inbound URL redaction:** Known OAuth-related query-string keys are replaced with `[Redacted]` on ASP.NET Core request spans before `url.full` is set.
 - **Outbound URL redaction:** Outbound `HttpClient` spans rely on the OpenTelemetry HTTP instrumenter's default behaviour, which redacts all query-string values.

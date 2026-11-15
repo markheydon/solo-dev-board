@@ -36,6 +36,6 @@ public sealed class AuthEntryTests : SoloDevBoardPageTest
         await Page.GotoAsync("/welcome");
 
         await Expect(Page).ToHaveURLAsync(new Regex("/$"));
-        await Expect(Page).ToHaveTitleAsync(new Regex("Home — SoloDevBoard"));
+        await Expect(Page).ToHaveTitleAsync(new Regex("Home - Solo Dev Board"));
     }
 }

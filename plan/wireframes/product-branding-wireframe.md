@@ -1,29 +1,40 @@
 # Product branding chrome
 
-**Status:** Planning baseline for [#397](https://github.com/markheydon/solo-dev-board/issues/397) on milestone **`v1.4`** (promoted 2026-11-15). Bundle: [`product-chrome-ui-quality/README.md`](../product-chrome-ui-quality/README.md).  
-**Related:** interim favicon from PR [#398](https://github.com/markheydon/solo-dev-board/pull/398); styling audit on the issue.
+**Status:** Implemented with [#397](https://github.com/markheydon/solo-dev-board/issues/397) on milestone **`v1.4`**. Bundle: [`product-chrome-ui-quality/README.md`](../product-chrome-ui-quality/README.md).
 
-Do not implement until brand scope is agreed. This wireframe only shows **where** a mark would live.
+## Naming split
 
-## Surfaces that must share one asset set
+| Layer | Value |
+| --- | --- |
+| Spoken / wordmark / docs | **Solo Dev Board** (`ProductBranding.DisplayName`) |
+| Solution, namespaces, C# identifiers | `SoloDevBoard` |
+| Repository slug | `solo-dev-board` |
+| Public domain | `solodevboard.com` |
+| Label Manager strategy id | `solodevboard` |
+| Label Manager strategy display name | Solo Dev Board |
+| GitHub App listing **name** | `SoloDevBoard` (uniqueness); description uses Solo Dev Board |
+| HTTP User-Agent product token | `SoloDevBoard/...` |
+
+## Surfaces that share one asset set
 
 ```
-Browser tab     [favicon.svg]  SoloDevBoard
-App bar         [32px mark] SoloDevBoard
-Apple touch     icon-512 equivalent
-GitHub App      listing icon (same SVG)
-Public site     optional wordmark in header (Hextra displayLogo)
+Browser tab     [favicon.svg]  Solo Dev Board
+App bar         [32px mark] Solo Dev Board
+Welcome         [72px mark] Solo Dev Board
+Apple touch     favicon.png / icon-512.png
+GitHub App      docs/assets/github-app/icon.svg + icon-512.png
+Public site     website/static/images/logo.svg (Hextra displayLogo)
 ```
 
-Until a dedicated logo is chosen, keep the bar-chart GitHub App mark from `docs/assets/github-app/`. Duplicate SVG copies in `wwwroot` and `docs/assets` should become one source.
+Master art: Solo family seal (primary green field, three board columns, solid solo focus disc on the middle column). Copies live under `wwwroot` and `website/static/images` because each host needs its own static root; geometry and `#167c38` fill stay in sync via tests.
 
 ## App bar (with mark)
 
 ```
-[menu] [logo 32] SoloDevBoard                    [theme] [more]
+[menu] [logo 32] Solo Dev Board                    [theme] [more]
 ```
 
-The mark is `MudImage` or inline SVG styled with theme primary, not a second competing colour.
+The mark is `BrandMark` (`MudImage` of `favicon.svg`), decorative when the wordmark is visible (`alt=""`).
 
 ## Out of scope here
 
@@ -32,5 +43,5 @@ The mark is `MudImage` or inline SVG styled with theme primary, not a second com
 
 ## Accessibility
 
-- Favicon and app-bar mark are decorative when the word SoloDevBoard is visible; `alt=""`.
+- Favicon and app-bar mark are decorative when the word Solo Dev Board is visible; `alt=""`.
 - Touch icon must remain distinguishable at 180px.

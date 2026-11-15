@@ -2,17 +2,17 @@
 
 # PAT Connectivity
 
-This guide explains how SoloDevBoard surfaces GitHub personal access token (PAT) connectivity in **PAT-only local trusted mode**. It complements [Hosted Authentication](hosted-authentication.md), which covers session-based sign-in for multi-user and public deployments.
+This guide explains how Solo Dev Board surfaces GitHub personal access token (PAT) connectivity in **PAT-only local trusted mode**. It complements [Hosted Authentication](hosted-authentication.md), which covers session-based sign-in for multi-user and public deployments.
 
 For configuration, mode comparison, and when to choose PAT versus hosted sign-in, start with [Getting Started — PAT-only local trusted mode](getting-started.md#pat-only-local-trusted-mode). For a personal Azure instance using the same mode, see [Self-hoster deployment (PAT mode)](deployment.md#self-hoster-deployment-pat-mode).
 
 ## Overview
 
-When `GitHubAuth:HostedSignInEnabled` is `false`, SoloDevBoard authenticates to GitHub using a configured personal access token. The application validates that token at startup and surfaces connectivity status in the shell before you reach feature workflows.
+When `GitHubAuth:HostedSignInEnabled` is `false`, Solo Dev Board authenticates to GitHub using a configured personal access token. The application validates that token at startup and surfaces connectivity status in the shell before you reach feature workflows.
 
 ## Startup validation
 
-- On startup, SoloDevBoard calls GitHub `GET /user` with the configured PAT — even when `GitHubAuth:OwnerLogin` is already set.
+- On startup, Solo Dev Board calls GitHub `GET /user` with the configured PAT — even when `GitHubAuth:OwnerLogin` is already set.
 - If the token is missing, invalid, expired, or revoked, the application fails fast with an operator-facing message.
 - Update the token via Aspire parameters (`gh-pat`), user secrets, or Key Vault references, then restart the application.
 

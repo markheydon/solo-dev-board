@@ -4,7 +4,9 @@ title: Appearance
 landingIcon: brightness_auto
 ---
 
-SoloDevBoard supports three theme modes so you can match your operating system preference or choose a fixed light or dark appearance.
+Solo Dev Board supports three theme modes so you can match your operating system preference or choose a fixed light or dark appearance.
+
+The app bar also shows the product mark (the green Solo family seal) beside the **Solo Dev Board** name on signed-in pages. The hosted welcome page uses a larger mark above the sign-in action; browser tabs use the same favicon.
 
 ![App bar theme control on the Home page](/images/appearance/theme-toggle.png)
 
@@ -38,6 +40,6 @@ The button's accessible name describes the current mode and the mode that will b
 
 ## Persistence
 
-Your selected theme mode is stored in the browser and restored on the next visit. Clearing site data for SoloDevBoard resets the preference to **Automatic**.
+Your selected theme mode is stored in the browser and restored on the next visit. Clearing site data for Solo Dev Board resets the preference to **Automatic**.
 
 The hosted sign-in landing page uses the same stored preference but does not include a theme button in the app bar.

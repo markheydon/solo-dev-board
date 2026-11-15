@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using MudBlazor.Services;
 using SoloDevBoard.Application.Authentication;
+using SoloDevBoard.Application.Services.Common;
 using SoloDevBoard.Web.Components.Features.Auth.Pages;
 
 namespace SoloDevBoard.Web.Tests;
@@ -32,6 +33,8 @@ public sealed class WelcomePageTests : BunitContext
 
         // Assert
         Assert.Contains("Sign in with GitHub", cut.Markup);
+        Assert.Equal(ProductBranding.DisplayName, cut.Find("[data-testid='welcome-product-name']").TextContent.Trim());
+        Assert.NotEmpty(cut.FindAll("[data-testid='brand-mark']"));
         var signInButton = cut.Find("[data-testid='welcome-sign-in']");
         Assert.Equal("/auth/sign-in", signInButton.GetAttribute("href"));
     }

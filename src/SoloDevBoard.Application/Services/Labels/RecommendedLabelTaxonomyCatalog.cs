@@ -1,3 +1,5 @@
+using SoloDevBoard.Application.Services.Common;
+
 namespace SoloDevBoard.Application.Services.Labels;
 
 /// <summary>Provides the built-in recommended label taxonomies shared by Label Manager and Audit Dashboard.</summary>
@@ -57,7 +59,7 @@ public static class RecommendedLabelTaxonomyCatalog
     /// <summary>Gets the available built-in recommended strategies.</summary>
     public static IReadOnlyList<RecommendedLabelStrategyDto> Strategies { get; } =
     [
-        new(SoloDevBoardStrategyId, "SoloDevBoard", "The SoloDevBoard canonical taxonomy covering type, priority, status, and size labels."),
+        new(SoloDevBoardStrategyId, ProductBranding.DisplayName, $"The {ProductBranding.DisplayName} canonical taxonomy covering type, priority, status, and size labels."),
         new(GitHubDefaultStrategyId, "GitHub default", "GitHub's default label set for new repositories."),
     ];
 

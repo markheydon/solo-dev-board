@@ -1,4 +1,4 @@
-# SoloDevBoard developer and operator documentation
+# Solo Dev Board developer and operator documentation
 
 This folder holds **repository-centric** documentation for contributors, self-hosters, and operators. UI conventions, theme tokens, and MudBlazor patterns live in [`CONVENTIONS.md`](../CONVENTIONS.md) and [`.agents/skills/mudblazor/`](../.agents/skills/mudblazor/).
 

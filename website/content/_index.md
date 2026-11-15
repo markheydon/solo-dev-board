@@ -1,13 +1,13 @@
 ---
 layout: hextra-home
-title: SoloDevBoard
+title: Solo Dev Board
 ---
 
 {{< release-badge >}}
 
 <div class="hx:mt-6 hx:mb-6">
 {{< hextra/hero-headline >}}
-  SoloDevBoard
+  Solo Dev Board
 {{< /hextra/hero-headline >}}
 </div>
 
@@ -18,11 +18,11 @@ title: SoloDevBoard
 </div>
 
 <p class="hx:text-base hx:leading-7 hx:text-gray-700 hx:dark:text-gray-300 hx:mb-4">
-  If you keep several repositories, GitHub spreads the work across tabs: issues here, labels there, project boards somewhere else. SoloDevBoard is an open-source Blazor app you run locally or self-host — one place to audit those repositories, synchronise labels, triage incoming work, and see how your boards behave.
+  If you keep several repositories, GitHub spreads the work across tabs: issues here, labels there, project boards somewhere else. Solo Dev Board is an open-source Blazor app you run locally or self-host — one place to audit those repositories, synchronise labels, triage incoming work, and see how your boards behave.
 </p>
 
 <p class="hx:text-base hx:leading-7 hx:text-gray-700 hx:dark:text-gray-300 hx:mb-4">
-  The project grew out of the AI-driven PM workflow in <a href="https://github.com/markheydon/github-workflows">markheydon/github-workflows</a>: a weekly or fortnightly <strong>PM Mode</strong> to scan and curate work, and a daily <strong>Work Mode</strong> to pick the next item and execute. SoloDevBoard is the visual interface for that operating system — including <strong>Planning</strong> alongside audit, labels, triage, and related tools.
+  The project grew out of the AI-driven PM workflow in <a href="https://github.com/markheydon/github-workflows">markheydon/github-workflows</a>: a weekly or fortnightly <strong>PM Mode</strong> to scan and curate work, and a daily <strong>Work Mode</strong> to pick the next item and execute. Solo Dev Board is the visual interface for that operating system — including <strong>Planning</strong> alongside audit, labels, triage, and related tools.
 </p>
 
 <p class="hx:text-base hx:leading-7 hx:text-gray-700 hx:dark:text-gray-300 hx:mb-8">

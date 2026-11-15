@@ -1,6 +1,7 @@
 @page "/audit-dashboard"
 
-<PageTitle>Audit Dashboard — SoloDevBoard</PageTitle>
+@using SoloDevBoard.Application.Services.Common
+<PageTitle>Audit Dashboard - @ProductBranding.DisplayName</PageTitle>
 
 <MudStack Spacing="3">
     <MudStack Spacing="1">
@@ -356,7 +357,7 @@
                             </TitleContent>
                             <ChildContent>
                                 <MudText Typo="Typo.body2" Class="mb-2">
-                                    Compared with the SoloDevBoard canonical taxonomy. Extra repository labels are not reported.
+                                    Compared with the @ProductBranding.DisplayName canonical taxonomy. Extra repository labels are not reported.
                                     Use
                                     <MudLink Href="/labels">Label Manager</MudLink>
                                     to apply the taxonomy.
@@ -370,7 +371,7 @@
                                 }
                                 else if (labelConsistencyWarnings.Count == 0)
                                 {
-                                    <MudText Typo="Typo.body2" data-testid="audit-label-consistency-empty">Labels match the SoloDevBoard taxonomy — great!</MudText>
+                                    <MudText Typo="Typo.body2" data-testid="audit-label-consistency-empty">Labels match the @ProductBranding.DisplayName taxonomy - great!</MudText>
                                 }
                                 else
                                 {

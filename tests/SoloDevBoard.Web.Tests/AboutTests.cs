@@ -57,6 +57,14 @@ public sealed class AboutTests : BunitContext
     }
 
     [Fact]
+    public void AboutPage_Rendered_DisplaysProductDisplayName()
+    {
+        var cut = Render<About>();
+
+        Assert.Equal(ProductBranding.DisplayName, cut.Find("[data-testid='about-application-name']").TextContent.Trim());
+    }
+
+    [Fact]
     public void AboutPage_RenderedWithMockedVersionService_DisplaysVersionFromService()
     {
         // Act

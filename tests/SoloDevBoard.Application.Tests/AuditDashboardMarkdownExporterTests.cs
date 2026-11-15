@@ -1,4 +1,5 @@
 using SoloDevBoard.Application.Services.Audit;
+using SoloDevBoard.Application.Services.Common;
 
 namespace SoloDevBoard.Application.Tests;
 
@@ -60,6 +61,7 @@ public sealed class AuditDashboardMarkdownExporterTests
         Assert.Contains("[Open run](https://github.com/owner/repo-a/actions/runs/123)", markdown);
         Assert.Contains("| Label consistency warnings | 1 |", markdown);
         Assert.Contains("## Label consistency warnings", markdown);
+        Assert.Contains($"Compared against the {ProductBranding.DisplayName} canonical taxonomy.", markdown);
         Assert.Contains("| owner/repo-a | type/bug | Missing | Missing from the repository. |", markdown);
     }
 
@@ -89,7 +91,7 @@ public sealed class AuditDashboardMarkdownExporterTests
         Assert.Contains("No unlabelled issues — great!", markdown);
         Assert.Contains("No stale pull requests — great!", markdown);
         Assert.Contains("No failing workflows — great!", markdown);
-        Assert.Contains("Labels match the SoloDevBoard taxonomy — great!", markdown);
+        Assert.Contains("Labels match the Solo Dev Board taxonomy - great!", markdown);
     }
 
     [Fact]
@@ -120,7 +122,7 @@ public sealed class AuditDashboardMarkdownExporterTests
         Assert.Contains("Workflow health could not be loaded for this export.", markdown);
         Assert.Contains("Label consistency could not be loaded for this export.", markdown);
         Assert.DoesNotContain("No failing workflows — great!", markdown);
-        Assert.DoesNotContain("Labels match the SoloDevBoard taxonomy — great!", markdown);
+        Assert.DoesNotContain("Labels match the Solo Dev Board taxonomy - great!", markdown);
     }
 
     [Fact]

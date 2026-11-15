@@ -2,11 +2,11 @@
 
 # Hosted Authentication
 
-This guide explains the hosted sign-in model for SoloDevBoard, including user and operator expectations, prerequisites, and local trusted mode notes.
+This guide explains the hosted sign-in model for Solo Dev Board, including user and operator expectations, prerequisites, and local trusted mode notes.
 
 ## Overview
 
-SoloDevBoard supports a GitHub App-first hosted authentication model for production deployments. This model provides secure, session-based access and enables operator-managed admission control.
+Solo Dev Board supports a GitHub App-first hosted authentication model for production deployments. This model provides secure, session-based access and enables operator-managed admission control.
 
 ## Accessing Hosted Sign-In
 
@@ -86,7 +86,7 @@ Splitting OAuth and API traffic avoids sending REST headers on token endpoints a
 
 ## Projects v2 access under hosted sign-in
 
-GitHub App sign-in can load **public** Projects v2 boards linked to a repository, but **private user-owned** Projects v2 are often inaccessible to the app token even when you are project admin. GitHub may report linked boards that SoloDevBoard cannot read.
+GitHub App sign-in can load **public** Projects v2 boards linked to a repository, but **private user-owned** Projects v2 are often inaccessible to the app token even when you are project admin. GitHub may report linked boards that Solo Dev Board cannot read.
 
 When this happens, Board Rules and Triage show a warning naming how many linked boards could not be loaded. Supported boards that are accessible are still available.
 
@@ -95,7 +95,7 @@ When this happens, Board Rules and Triage show a warning naming how many linked 
 - Use **PAT mode** with the `read:project` scope for full user-level Projects v2 access.
 - Make the linked project **public** if GitHub App sign-in must remain the only auth path.
 
-This is a known GitHub platform limitation for GitHub Apps, not a SoloDevBoard configuration defect. See [plan/GITHUB_PROJECTS_V2_ACCESS.md](../plan/GITHUB_PROJECTS_V2_ACCESS.md) and [Unlocking GitHub Apps: Why Bots Need Access to Private Projects v2](https://devactivity.com/posts/apps-tools/unlocking-github-apps-why-bots-need-access-to-private-projects-v2-for-enhanced-productivity/).
+This is a known GitHub platform limitation for GitHub Apps, not a Solo Dev Board configuration defect. See [plan/GITHUB_PROJECTS_V2_ACCESS.md](../plan/GITHUB_PROJECTS_V2_ACCESS.md) and [Unlocking GitHub Apps: Why Bots Need Access to Private Projects v2](https://devactivity.com/posts/apps-tools/unlocking-github-apps-why-bots-need-access-to-private-projects-v2-for-enhanced-productivity/).
 
 ## Documentation References
 

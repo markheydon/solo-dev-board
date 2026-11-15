@@ -7,7 +7,7 @@ cascade:
     reversePagination: false
 ---
 
-Guides for using SoloDevBoard in the app. Developer and operator material (local setup, deployment, hosted authentication, observability, and related topics) lives in the repository [`docs/`](https://github.com/markheydon/solo-dev-board/tree/main/docs) folder and is not published on this site.
+Guides for using Solo Dev Board in the app. Developer and operator material (local setup, deployment, hosted authentication, observability, and related topics) lives in the repository [`docs/`](https://github.com/markheydon/solo-dev-board/tree/main/docs) folder and is not published on this site.
 
 ## Features
 
