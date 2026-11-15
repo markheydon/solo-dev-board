@@ -1,6 +1,6 @@
 namespace SoloDevBoard.Application.Services.Planning;
 
-/// <summary>A ranked Daily Focus recommendation at the Application→App boundary.</summary>
+/// <summary>A ranked Daily Focus recommendation at the Application→Web boundary.</summary>
 /// <param name="Rank">The 1-based rank in the top-three list.</param>
 /// <param name="RepositoryFullName">The repository in <c>owner/name</c> form.</param>
 /// <param name="Number">The repository-scoped issue or pull request number.</param>

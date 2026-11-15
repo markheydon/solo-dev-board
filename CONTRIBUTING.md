@@ -120,10 +120,10 @@ When suggesting a feature:
    - Do not test .NET Aspire AppHost modelling or orchestration.
 
 4. **Architecture:**
-   - Follow the clean/layered architecture: Domain, Application, Infrastructure, Composition, and App with strict dependency direction (see [`CONVENTIONS.md`](CONVENTIONS.md) and [DEC-002](adr/adr-0004-layered-architecture.md)).
+   - Follow the clean/layered architecture: Domain, Application, Infrastructure, Composition, and Web with strict dependency direction (see [`CONVENTIONS.md`](CONVENTIONS.md) and [DEC-002](adr/adr-0004-layered-architecture.md)).
    - Domain has no external dependencies.
    - Infrastructure implements interfaces defined in Application.
-   - Composition wires Application and Infrastructure via `AddSoloDevBoard`; App must not reference Infrastructure.
+   - Composition wires Application and Infrastructure via `AddSoloDevBoard`; Web must not reference Infrastructure.
    - No business logic in Razor components.
    - Prefer immutable records for domain entities.
 
@@ -164,7 +164,7 @@ When submitting a pull request that changes code, ensure related documentation i
 | New developer / operator guidance | `docs/<topic>.md` and `docs/README.md` as needed |
 | New decision | New file under `adr/` (see `create-architectural-decision-record` skill) |
 | Scope change | `plan/SCOPE.md`, `plan/BACKLOG.md` |
-| New env variable | `docs/getting-started.md`, `SoloDevBoard.AppHost/README.md`, `docs/deployment.md` |
+| New env variable | `docs/getting-started.md`, `src/SoloDevBoard.AppHost/README.md`, `docs/deployment.md` |
 | Tagged release | [`CHANGELOG.md`](CHANGELOG.md) and [`plan/RELEASE_PLAN.md`](plan/RELEASE_PLAN.md) |
 
 ---

@@ -1,6 +1,6 @@
 namespace SoloDevBoard.Application.Services.Triage;
 
-/// <summary>Represents a triage queue item at the Application→App boundary.</summary>
+/// <summary>Represents a triage queue item at the Application→Web boundary.</summary>
 /// <param name="ItemType">The triage item type.</param>
 /// <param name="Id">The GitHub node identifier represented as an integer ID.</param>
 /// <param name="Number">The repository-scoped number of the issue or pull request.</param>

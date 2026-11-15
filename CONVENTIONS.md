@@ -3,7 +3,7 @@
 # Conventions
 
 **Project:** SoloDevBoard  
-**Last updated:** 2026-11-14
+**Last updated:** 2026-11-15
 
 When in doubt, follow this file. Significant architecture changes need an ADR.
 
@@ -11,20 +11,23 @@ When in doubt, follow this file. Significant architecture changes need an ADR.
 
 ## Project structure
 
+Projects live under `src/` and `tests/` with `SoloDevBoard.*` directory names. `SoloDevBoard.slnx` groups them into solution folders (`src/Layers`, `src/Aspire`, `tests/Unit`, `tests/E2E`) for navigation only; paths on disk are flat.
+
 ```
 src/
-├── SoloDevBoard.Web/
+├── SoloDevBoard.Web/              # Blazor Server UI (presentation)
 ├── SoloDevBoard.Application/
-├── SoloDevBoard.Composition/
+├── SoloDevBoard.Composition/      # DI composition root (`AddSoloDevBoard`)
 ├── SoloDevBoard.Domain/
 ├── SoloDevBoard.Infrastructure/
-├── SoloDevBoard.AppHost/
+├── SoloDevBoard.AppHost/          # Aspire orchestration and Azure deploy model
 └── SoloDevBoard.ServiceDefaults/
 
 tests/
-├── SoloDevBoard.Web.Tests/, SoloDevBoard.Application.Tests/, ...
-├── SoloDevBoard.Infrastructure.Tests/, SoloDevBoard.ServiceDefaults.Tests/
-└── SoloDevBoard.E2E.Tests/
+├── SoloDevBoard.Web.Tests/        # bUnit component tests
+├── SoloDevBoard.Application.Tests/, SoloDevBoard.Infrastructure.Tests/, ...
+├── SoloDevBoard.Composition.Tests/, SoloDevBoard.ServiceDefaults.Tests/
+└── SoloDevBoard.E2E.Tests/        # Playwright journeys
 ```
 
 Page-producing UI work should align with wireframes in [`plan/wireframes/`](plan/wireframes/) when the change introduces or materially alters a user-facing page.

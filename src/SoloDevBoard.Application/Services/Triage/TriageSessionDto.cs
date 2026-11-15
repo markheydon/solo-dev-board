@@ -1,6 +1,6 @@
 namespace SoloDevBoard.Application.Services.Triage;
 
-/// <summary>Represents session state shared between Application and App layers for triage workflow.</summary>
+/// <summary>Represents session state shared between Application and Web layers for triage workflow.</summary>
 /// <param name="SessionId">The unique identifier for the triage session.</param>
 /// <param name="OwnerLogin">The repository owner login.</param>
 /// <param name="RepositoryName">The repository name.</param>

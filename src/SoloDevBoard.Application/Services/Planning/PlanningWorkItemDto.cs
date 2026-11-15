@@ -1,6 +1,6 @@
 namespace SoloDevBoard.Application.Services.Planning;
 
-/// <summary>Cross-repository PM work item at the Application→App boundary.</summary>
+/// <summary>Cross-repository PM work item at the Application→Web boundary.</summary>
 /// <param name="ItemType">Whether the item is an issue or pull request.</param>
 /// <param name="Number">The repository-scoped item number.</param>
 /// <param name="Title">The item title.</param>

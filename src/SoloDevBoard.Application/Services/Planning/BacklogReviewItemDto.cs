@@ -1,6 +1,6 @@
 namespace SoloDevBoard.Application.Services.Planning;
 
-/// <summary>A Backlog Review row at the Application→App boundary.</summary>
+/// <summary>A Backlog Review row at the Application→Web boundary.</summary>
 /// <param name="ItemType">Whether the item is an issue or pull request.</param>
 /// <param name="RepositoryFullName">The repository in <c>owner/name</c> form.</param>
 /// <param name="Number">The repository-scoped issue or pull request number.</param>

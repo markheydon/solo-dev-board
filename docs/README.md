@@ -16,6 +16,7 @@ Release notes live in [`CHANGELOG.md`](../CHANGELOG.md) at the repository root.
 | [Hosted Authentication](hosted-authentication.md) | Hosted sign-in, operator allow-lists, and fallback modes. |
 | [GitHub App listing](github-app.md) | Logo, callback URLs, permissions, and listing copy for the hosted-sign-in GitHub App. |
 | [PAT Connectivity](pat-connectivity.md) | PAT validation, shell status, recovery UX, and `/health/github`. |
+| [Azure Key Vault setup](azure-key-vault-setup.md) | Shared dev vault (Path B) and deploy-time secret references. |
 | [Azure Deployment Costs](azure-costs.md) | Resource charges, SKUs, and cost optimisation for self-hosted Azure deployments. |
 | [Observability](observability.md) | Structured logging, Application Insights telemetry, and operational diagnostics. |
 

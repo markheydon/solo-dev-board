@@ -42,6 +42,7 @@ docs/                           # Repository / developer / operator docs (not Pa
 ├── hosted-authentication.md
 ├── github-app.md
 ├── pat-connectivity.md
+├── azure-key-vault-setup.md
 ├── azure-costs.md
 └── observability.md
 

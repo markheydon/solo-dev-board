@@ -2,6 +2,8 @@
 
 Material here is **historical or superseded**. Active planning uses [GitHub Issues](https://github.com/markheydon/solo-dev-board/issues), [Project #8](https://github.com/users/markheydon/projects/8), and the lean docs in the parent [`plan/`](../README.md) folder. New feature intent will move to GitHub Spec Kit when adopted ([`SPEC_KIT_MIGRATION.md`](../SPEC_KIT_MIGRATION.md)).
 
+Paths in archived files may use pre-2026-11 layouts (`src/App/SoloDevBoard.App`, nested `src/Application/`, or `tests/App.Tests/`). Current equivalents are `src/SoloDevBoard.Web/`, `src/SoloDevBoard.Application/`, and `tests/SoloDevBoard.Web.Tests/` (see [ADR-0004](../../adr/adr-0004-layered-architecture.md)).
+
 ## What lives here
 
 | Location | Contents |

@@ -6,7 +6,7 @@
 
 ## What Is SoloDevBoard?
 
- SoloDevBoard is a **.NET 10 Blazor Server** application that consolidates your GitHub repository management into a single, unified interface. If you maintain multiple GitHub repositories as a solo developer, SoloDevBoard eliminates the context-switching between repository tabs, project boards, settings pages, and workflow runs.
+SoloDevBoard is a **.NET 10 Blazor Server** application that consolidates your GitHub repository management into a single, unified interface. If you maintain multiple GitHub repositories as a solo developer, SoloDevBoard eliminates the context-switching between repository tabs, project boards, settings pages, and workflow runs.
 
 
 | Feature | Description | Status |
@@ -79,6 +79,7 @@ Aspire is used for both local orchestration and production deployment to Azure C
 
 ```
 solo-dev-board/
+├── GOALS.md, SCOPE.md, CONVENTIONS.md, AGENTS.md  # Scope and contributor constitution
 ├── src/SoloDevBoard.Web/         # Blazor Server UI (presentation layer)
 ├── src/SoloDevBoard.Application/ # Use cases and service interfaces
 ├── src/SoloDevBoard.Composition/ # DI composition root
@@ -89,11 +90,7 @@ solo-dev-board/
 ├── tests/
 │   ├── SoloDevBoard.Web.Tests/   # bUnit component tests
 │   └── SoloDevBoard.*.Tests/     # Unit tests per layer; SoloDevBoard.E2E.Tests for Playwright
-├── docs/                       # Developer / operator documentation
-│   ├── README.md               # Index for repository-centric docs
-│   ├── getting-started.md      # Setup and configuration guide
-│   ├── deployment.md           # Azure Container Apps deployment guide
-│   └── github-app.md           # Hosted-sign-in GitHub App listing checklist
+├── docs/                       # Developer / operator documentation (see docs/README.md)
 ├── website/                    # Public product site (Hugo / Hextra → GitHub Pages)
 │   ├── hugo.yaml               # Hugo site configuration
 │   └── content/                # Landing, User Guide, and About pages

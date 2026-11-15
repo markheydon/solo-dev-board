@@ -1,22 +1,22 @@
-# ADR-0011: Boundary Data Shapes — DTOs at the Application→App Boundary
+# ADR-0011: Boundary Data Shapes — DTOs at the Application→Web Boundary
 
 **Date:** 2026-03-08
-**Status:** Accepted
+**Status:** Accepted (amended 2026-11-15: presentation layer terminology aligned with `SoloDevBoard.Web`)
 
 ---
 
 ## Context
 
-[ADR-0004](0004-layered-architecture.md) defines the four-layer architecture and establishes which projects may depend on which. It is explicit on **dependency direction** (Application depends on Domain; App depends on Application) but entirely silent on **what data shapes cross each boundary**. This gap is architecturally significant: without a rule, any code — human or AI-generated — may pass domain entities all the way through to the Blazor UI layer, which violates the original intent of Clean Architecture and accumulates coupling over time.
+[ADR-0004](0004-layered-architecture.md) defines the four-layer architecture and establishes which projects may depend on which. It is explicit on **dependency direction** (Application depends on Domain; Web depends on Application) but entirely silent on **what data shapes cross each boundary**. This gap is architecturally significant: without a rule, any code — human or AI-generated — may pass domain entities all the way through to the Blazor UI layer, which violates the original intent of Clean Architecture and accumulates coupling over time.
 
-The question was surfaced during implementation of `ILabelManagerService`, which in its initial stub form returns `IReadOnlyList<Label>` — a domain entity type — to the `App` layer. Given that SoloDevBoard is developed primarily by AI delivery agents (see [ADR-0010](0010-bunit-component-testing.md)), the absence of an explicit rule creates a material risk of **AI model drift**: each subsequent agent session may make a different choice, producing an inconsistent codebase.
+The question was surfaced during implementation of `ILabelManagerService`, which in its initial stub form returns `IReadOnlyList<Label>` — a domain entity type — to the Web layer. Given that SoloDevBoard is developed primarily by AI delivery agents (see [ADR-0010](0010-bunit-component-testing.md)), the absence of an explicit rule creates a material risk of **AI model drift**: each subsequent agent session may make a different choice, producing an inconsistent codebase.
 
 ### Options Considered
 
 | Option | Description | Assessment |
 |--------|-------------|------------|
 | **Domain entities all the way up** | Application service interfaces return domain entities; Razor components bind directly to `Label`, `Repository`, etc. | Simple, no mapping code. But couples presentation layer directly to domain model. Any domain change ripples into Razor components. |
-| **DTOs at the Application→App boundary** | Repositories and internal Application services operate with domain entities. Public-facing Application service interfaces (called by `App`) return dedicated DTO/ViewModel records defined in the Application layer. | Explicit boundary. Domain model changes do not leak into UI. Aligns with both Uncle Bob's original article and the two dominant .NET reference implementations. |
+| **DTOs at the Application→Web boundary** | Repositories and internal Application services operate with domain entities. Public-facing Application service interfaces (called by `SoloDevBoard.Web`) return dedicated DTO/ViewModel records defined in the Application layer. | Explicit boundary. Domain model changes do not leak into UI. Aligns with both Uncle Bob's original article and the two dominant .NET reference implementations. |
 | **Full CQRS with separate read/write models** | Separate query models (projections) and command models. Read side never touches domain entities. | Maximum flexibility. Overkill for a solo-developer tool with a small domain. Introduces significant boilerplate with no proportionate benefit at this scale. |
 
 ---
@@ -27,7 +27,7 @@ The question was surfaced during implementation of `ILabelManagerService`, which
 
 1. **Repository boundary (Infrastructure ↔ Application):** `IRepository` interfaces return and accept **domain entity records** (`Label`, `Repository`, etc.). Infrastructure implementations translate external API responses (e.g. `LabelResponseDto` from the GitHub REST API) into domain records before crossing this boundary. The Application layer is permitted — and expected — to work directly with domain entities internally.
 
-2. **Application→App boundary:** All public Application service interfaces (`ILabelManagerService`, `IRepositoryService`, etc.) — the interfaces called directly by Blazor components and pages — return and accept **dedicated DTO records** defined in the `SoloDevBoard.Application` layer. Domain entities must not appear in the return types or parameters of these interfaces.
+2. **Application→Web boundary:** All public Application service interfaces (`ILabelManagerService`, `IRepositoryService`, etc.) — the interfaces called directly by Blazor components and pages — return and accept **dedicated DTO records** defined in the `SoloDevBoard.Application` layer. Domain entities must not appear in the return types or parameters of these interfaces.
 
 DTOs are named `<Entity>Dto` (e.g. `LabelDto`, `RepositoryDto`) and are defined as `sealed record` types with `init`-only properties, co-located in the Application layer alongside the service interface that uses them.
 
@@ -40,7 +40,7 @@ DTOs are named `<Entity>Dto` (e.g. `LabelDto`, `RepositoryDto`) and are defined 
         ↓  Label (domain entity) — crosses ILabelRepository boundary
 [Application — internal]
         ↓  LabelDto (Application DTO) — crosses ILabelManagerService boundary
-[App — Blazor components]
+[Web — Blazor components]
 ```
 
 ---
@@ -53,7 +53,7 @@ Robert C. Martin's 2012 "Clean Architecture" article explicitly states:
 
 > *"We don't want to cheat and pass Entity objects across the boundaries… When we pass data across a boundary, it is always in the form that is most convenient for the inner circle."*
 
-Passing a `Label` domain entity through `ILabelManagerService` to a Razor component is precisely the "cheat" Uncle Bob warned against. Domain entities are inner-circle objects; the App layer is outer-circle. A DTO defined in the Application layer is the correct "most convenient form for the inner circle" — it is shaped by the use-case, not by the domain model.
+Passing a `Label` domain entity through `ILabelManagerService` to a Razor component is precisely the "cheat" Uncle Bob warned against. Domain entities are inner-circle objects; the Web layer is outer-circle. A DTO defined in the Application layer is the correct "most convenient form for the inner circle" — it is shaped by the use-case, not by the domain model.
 
 ### Alignment with Dominant .NET Reference Implementations
 
