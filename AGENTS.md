@@ -10,6 +10,7 @@ Read before non-trivial changes:
 - [`SCOPE.md`](SCOPE.md) (summary; detail in [`plan/SCOPE.md`](plan/SCOPE.md))
 - [`CONVENTIONS.md`](CONVENTIONS.md)
 - [`adr/`](adr/) - accepted decisions
+- [`.specify/memory/constitution.md`](.specify/memory/constitution.md) - when doing Spec Kit feature work (principles and quality gates)
 
 ## Language
 
@@ -23,7 +24,7 @@ UK English in documentation, comments, and user-facing text. Do not use the em d
 
 ## Skills
 
-Project skills live in [`.agents/skills/`](.agents/skills/).
+**Project skills** live in [`.agents/skills/`](.agents/skills/). **Spec Kit workflow skills** live in [`.cursor/skills/`](.cursor/skills/) (`speckit-*`); invoke them via `/speckit-specify`, `/speckit-plan`, and the other `/speckit-*` commands.
 
 | Skill | Use when |
 | --- | --- |
@@ -38,8 +39,34 @@ Onboard **.NET Aspire** using current official documentation (not copied Aspire 
 ## Task Routing
 
 - **Code** (`src/`, `tests/`): [`CONVENTIONS.md`](CONVENTIONS.md).
+- **Spec Kit features** (`specs/<feature>/`): Spec Kit workflow and [constitution](.specify/memory/constitution.md); product code still follows `CONVENTIONS.md` and `implementation-guardrails`.
 - **Documentation** (`**/*.md` except `adr/`): `project-documentation` skill.
 - **ADRs** (`adr/*.md`): ADR skill only.
+
+## Spec-driven features (Spec Kit)
+
+Feature intent lives under `specs/<feature>/` (`spec.md`, `plan.md`, `tasks.md`, and related artefacts). Resolve the active feature directory from [`.specify/feature.json`](.specify/feature.json) or:
+
+```bash
+.specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks
+```
+
+Typical flow (analyze and converge are optional):
+
+```text
+/speckit-constitution → /speckit-specify → /speckit-plan → /speckit-tasks
+  → (optional) do-analyse-after-tasks → do-implement → (optional) do-converge-after-implement
+  → (optional) loop-code-review
+```
+
+| Cursor command | Role |
+| --- | --- |
+| [do-analyse-after-tasks.md](.cursor/commands/do-analyse-after-tasks.md) | Looped pre-implementation audit of spec/plan/tasks (`/speckit-analyze`) |
+| [do-implement.md](.cursor/commands/do-implement.md) | Implement `tasks.md` with branch, build/test, and PR conventions |
+| [do-converge-after-implement.md](.cursor/commands/do-converge-after-implement.md) | Looped post-implement gap pass (`/speckit-converge` + follow-up tasks) |
+| [loop-code-review.md](.cursor/commands/loop-code-review.md) | Looped merge-readiness review of the branch diff |
+
+Do **not** edit `.specify/` templates, integration manifests, or Spec Kit skill files unless the user explicitly asks. Editing files under the active `specs/<feature>/` directory is normal during specify, plan, tasks, analyze, and converge.
 
 ## Not Allowed Without Explicit Instruction
 
