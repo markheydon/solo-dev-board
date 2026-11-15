@@ -2,7 +2,7 @@
 
 Reference for operators migrating authentication secrets. Do not commit secret values.
 
-## Application secrets (SoloDevBoard.App)
+## Application secrets (SoloDevBoard.Web)
 
 | Key Vault secret name | Configuration key | PAT mode | Hosted sign-in | Genuinely secret |
 |----------------------|-------------------|----------|----------------|------------------|

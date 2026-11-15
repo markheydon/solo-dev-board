@@ -70,7 +70,7 @@ The library provides all components required by Phase 1–3 of SoloDevBoard:
 
 ## Consequences
 
-- `Microsoft.FluentUI.AspNetCore.Components` is added to `SoloDevBoard.App.csproj`.
+- `Microsoft.FluentUI.AspNetCore.Components` is added to `SoloDevBoard.Web.csproj`.
 - `AddFluentUIComponents()` is called in `Program.cs` to register required services.
 - `@using Microsoft.FluentUI.AspNetCore.Components` is added to `_Imports.razor`.
 - Five provider components (`FluentToastProvider`, `FluentDialogProvider`, `FluentMessageBarProvider`, `FluentTooltipProvider`, `FluentKeyCodeProvider`) are added to `MainLayout.razor` to enable notification and interaction services.

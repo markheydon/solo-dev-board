@@ -47,15 +47,15 @@ jobs:
 
       - name: Restore and build E2E project
         run: |
-          dotnet restore tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj
-          dotnet build tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj -c Release --no-restore -p:SkipPlaywrightInstall=true
+          dotnet restore tests/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj
+          dotnet build tests/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj -c Release --no-restore -p:SkipPlaywrightInstall=true
 
       - name: Install Playwright browsers
-        run: pwsh tests/E2E/SoloDevBoard.E2E.Tests/bin/Release/net10.0/playwright.ps1 install chromium
+        run: pwsh tests/SoloDevBoard.E2E.Tests/bin/Release/net10.0/playwright.ps1 install chromium
 
       - name: Verify Playwright test discovery
         run: >
-          dotnet test tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj
+          dotnet test tests/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj
           --no-build
           -c Release
           -p:SkipPlaywrightInstall=true
@@ -64,7 +64,7 @@ jobs:
 
       - name: Run Playwright tests
         run: >
-          dotnet test tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj
+          dotnet test tests/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj
           --no-build
           -c Release
           -p:SkipPlaywrightInstall=true

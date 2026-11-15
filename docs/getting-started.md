@@ -133,8 +133,8 @@ If you prefer to run directly without Aspire:
 
 ```bash
 # PAT mode
-dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-pat>" --project src/App/SoloDevBoard.App
-dotnet run --project src/App/SoloDevBoard.App
+dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-pat>" --project src/SoloDevBoard.Web
+dotnet run --project src/SoloDevBoard.Web
 
 # Or hosted sign-in mode (requires GitHub App configuration)
 ```
@@ -151,7 +151,7 @@ When you run locally, open **More options → About** to see the MinVer-calculat
 | E2E only (PAT mode) | `./scripts/test-e2e.sh` or `.\scripts\test-e2e.ps1` |
 | Full CI parity before a PR | `./scripts/test-all.sh` or `.\scripts\test-all.ps1` |
 
-Use `SoloDevBoard.UnitTests.slnf` or `scripts/test-unit` for the fast path. Plain `dotnet test` on `SoloDevBoard.slnx` still includes Playwright E2E under xUnit v3 MTP and is slow. See [`tests/E2E/README.md`](../tests/E2E/README.md) for E2E prerequisites (PowerShell and a one-time Chromium install).
+Use `SoloDevBoard.UnitTests.slnf` or `scripts/test-unit` for the fast path. Plain `dotnet test` on `SoloDevBoard.slnx` still includes Playwright E2E under xUnit v3 MTP and is slow. See [`tests/SoloDevBoard.E2E.Tests/README.md`](../tests/SoloDevBoard.E2E.Tests/README.md) for E2E prerequisites (PowerShell and a one-time Chromium install).
 
 ---
 
@@ -313,7 +313,7 @@ See [Hosted Authentication Guide](hosted-authentication.md) for operator expecta
 
 ### `appsettings.json`
 
-Located at `src/App/SoloDevBoard.App/appsettings.json`. The relevant sections are:
+Located at `src/SoloDevBoard.Web/appsettings.json`. The relevant sections are:
 
 ```json
 {
@@ -419,7 +419,7 @@ Leave `PersonalAccessToken` empty in `appsettings.json` and supply it via an env
 To set PAT-only values for the **legacy `dotnet run` path** (without Aspire), use .NET User Secrets on the app project. Only the PAT is required; owner login is resolved automatically:
 
 ```bash
-dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-token>" --project src/App/SoloDevBoard.App
+dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-token>" --project src/SoloDevBoard.Web
 ```
 
 ### Docs capture mode
@@ -429,7 +429,7 @@ Use docs capture mode when taking screenshots for the published user guide so pr
 Enable it locally with user secrets or an environment variable:
 
 ```bash
-dotnet user-secrets set "DocsCapture:Enabled" "true" --project src/App/SoloDevBoard.App
+dotnet user-secrets set "DocsCapture:Enabled" "true" --project src/SoloDevBoard.Web
 ```
 
 When enabled:

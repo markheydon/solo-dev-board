@@ -73,11 +73,11 @@ bUnit is published under the **MIT licence**, consistent with SoloDevBoard's ope
 
 ## Consequences
 
-- `bunit` NuGet package is added to `SoloDevBoard.App.Tests.csproj`.
-- `Microsoft.AspNetCore.App` FrameworkReference is added to `SoloDevBoard.App.Tests.csproj` (required for Blazor component types such as `ComponentBase`).
-- `SoloDevBoard.App` project reference is added to `SoloDevBoard.App.Tests.csproj`.
+- `bunit` NuGet package is added to `SoloDevBoard.Web.Tests.csproj`.
+- `Microsoft.AspNetCore.App` FrameworkReference is added to `SoloDevBoard.Web.Tests.csproj` (required for Blazor component types such as `ComponentBase`).
+- `SoloDevBoard.Web` project reference is added to `SoloDevBoard.Web.Tests.csproj`.
 - Component test classes inherit from `Bunit.BunitContext` and call `Services.AddFluentUIComponents()` with `JSInterop.Mode = JSRuntimeMode.Loose` in the constructor. Components are rendered with `Render<T>()` (bUnit 2.x API).
 - Test class naming follows the standard convention: `{ComponentName}Tests` with `sealed` modifier.
-- The `PlaceholderTests.cs` file in `SoloDevBoard.App.Tests` is retained until component tests cover each page.
+- The `PlaceholderTests.cs` file in `SoloDevBoard.Web.Tests` is retained until component tests cover each page.
 - End-to-end testing (Playwright or similar) is deferred as a post-Phase 1 decision. Manual human review covers visual, UX, and browser-compatibility concerns in the interim.
-- As each new Blazor page is implemented, a corresponding component test class is added to `tests/App.Tests/SoloDevBoard.App.Tests/` covering at minimum: loading state, error state, empty state, and data state.
+- As each new Blazor page is implemented, a corresponding component test class is added to `tests/SoloDevBoard.Web.Tests/` covering at minimum: loading state, error state, empty state, and data state.

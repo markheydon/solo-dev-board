@@ -1,20 +1,26 @@
 <Solution>
-  <Folder Name="/src/">
-    <Project Path="src/App/SoloDevBoard.App/SoloDevBoard.App.csproj" />
-    <Project Path="src/Application/SoloDevBoard.Application/SoloDevBoard.Application.csproj" />
-    <Project Path="src/Composition/SoloDevBoard.Composition/SoloDevBoard.Composition.csproj" />
-    <Project Path="src/Domain/SoloDevBoard.Domain/SoloDevBoard.Domain.csproj" />
-    <Project Path="src/Infrastructure/SoloDevBoard.Infrastructure/SoloDevBoard.Infrastructure.csproj" />
+  <Folder Name="/src/" />
+  <Folder Name="/src/Layers/">
+    <Project Path="src/SoloDevBoard.Domain/SoloDevBoard.Domain.csproj" />
+    <Project Path="src/SoloDevBoard.Application/SoloDevBoard.Application.csproj" />
+    <Project Path="src/SoloDevBoard.Infrastructure/SoloDevBoard.Infrastructure.csproj" />
+    <Project Path="src/SoloDevBoard.Composition/SoloDevBoard.Composition.csproj" />
+    <Project Path="src/SoloDevBoard.Web/SoloDevBoard.Web.csproj" />
+  </Folder>
+  <Folder Name="/src/Aspire/">
     <Project Path="src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj" />
     <Project Path="src/SoloDevBoard.ServiceDefaults/SoloDevBoard.ServiceDefaults.csproj" />
-    <Project Path="tests/Infrastructure.Tests/SoloDevBoard.Infrastructure.Tests/SoloDevBoard.Infrastructure.Tests.csproj" />
   </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj" />
-    <Project Path="tests/App.Tests/SoloDevBoard.App.Tests/SoloDevBoard.App.Tests.csproj" />
-    <Project Path="tests/Application.Tests/SoloDevBoard.Application.Tests/SoloDevBoard.Application.Tests.csproj" />
-    <Project Path="tests/Composition.Tests/SoloDevBoard.Composition.Tests/SoloDevBoard.Composition.Tests.csproj" />
-    <Project Path="tests/Domain.Tests/SoloDevBoard.Domain.Tests/SoloDevBoard.Domain.Tests.csproj" />
-    <Project Path="tests/ServiceDefaults.Tests/SoloDevBoard.ServiceDefaults.Tests/SoloDevBoard.ServiceDefaults.Tests.csproj" />
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/Unit/">
+    <Project Path="tests/SoloDevBoard.Domain.Tests/SoloDevBoard.Domain.Tests.csproj" />
+    <Project Path="tests/SoloDevBoard.Application.Tests/SoloDevBoard.Application.Tests.csproj" />
+    <Project Path="tests/SoloDevBoard.Infrastructure.Tests/SoloDevBoard.Infrastructure.Tests.csproj" />
+    <Project Path="tests/SoloDevBoard.Composition.Tests/SoloDevBoard.Composition.Tests.csproj" />
+    <Project Path="tests/SoloDevBoard.Web.Tests/SoloDevBoard.Web.Tests.csproj" />
+    <Project Path="tests/SoloDevBoard.ServiceDefaults.Tests/SoloDevBoard.ServiceDefaults.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/E2E/">
+    <Project Path="tests/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj" />
   </Folder>
 </Solution>

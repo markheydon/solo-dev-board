@@ -42,6 +42,7 @@ docs/                           # Repository / developer / operator docs (not Pa
 ├── hosted-authentication.md
 ├── github-app.md
 ├── pat-connectivity.md
+├── azure-key-vault-setup.md
 ├── azure-costs.md
 └── observability.md
 
@@ -106,7 +107,7 @@ Rules:
 - Capture with **light theme** at **1400×900** viewport.
 - Use kebab-case PNG filenames and meaningful alt text.
 - Always capture with **docs capture mode** enabled (`DocsCapture:Enabled=true`) so only public repositories and public Projects v2 boards appear. See [DEC-020](adr/adr-0020-public-only-docs-capture-mode.md) and [Docs capture mode](../docs/getting-started.md#docs-capture-mode).
-- Prefer the Playwright helper: `DOCS_CAPTURE_ENABLED=1 dotnet test tests/E2E/SoloDevBoard.E2E.Tests --filter "Category=DocsCapture"` against a locally running app with a real PAT.
+- Prefer the Playwright helper: `DOCS_CAPTURE_ENABLED=1 dotnet test tests/SoloDevBoard.E2E.Tests --filter "Category=DocsCapture"` against a locally running app with a real PAT.
 - Do not commit screenshots that show private repositories, private project boards, or other non-public GitHub content.
 
 ### Screenshot composition
@@ -121,7 +122,7 @@ Prefer screenshots that show a feature **in a useful, populated state**, not jus
 - The Repositories page loads its grid automatically; capture it with the repository list populated (optionally filtered to the example repository).
 - **Collapse the app navigation drawer** before capture so feature content fills the viewport. Expanded nav screenshots obscure the feature in landing cards and user-guide hero images; refresh captures with the drawer collapsed when updating `website/static/images/` or landing tiles.
 
-The Playwright docs-capture suite in `tests/E2E/docs-capture/` encodes these composition rules. Extend it when adding new feature guides rather than capturing ad hoc empty states.
+The Playwright docs-capture suite in `tests/SoloDevBoard.E2E.Tests/docs-capture/` encodes these composition rules. Extend it when adding new feature guides rather than capturing ad hoc empty states.
 
 ---
 
@@ -154,7 +155,7 @@ When an AI agent or contributor is asked to write or update documentation:
 
 1. **UK English required.** All documentation must use UK English spelling. Run a spell check if possible.
 2. **Accuracy over completeness.** Do not document features that are not yet implemented. Use "Coming Soon" or "Under Development" notices for stubs.
-3. **Sync with code, E2E, and screenshots.** When updating docs, verify that the documented behaviour matches the current implementation and that Playwright tests in `tests/E2E/SoloDevBoard.E2E.Tests/` assert the same routes, controls, and workflows. Maintain the mapping in [tests/E2E/USER_DOCS_ALIGNMENT.md](../tests/E2E/USER_DOCS_ALIGNMENT.md). If the in-app UI for a published guide or landing tile changed materially, recapture `website/static/images/` in the same docs-update via `DOCS_CAPTURE_ENABLED=1 dotnet test tests/E2E/SoloDevBoard.E2E.Tests --filter "Category=DocsCapture"` (or a focused test filter) against a local app with a real PAT and `DocsCapture:Enabled=true`. Update `DocsCapture/` helpers when the prepare path no longer shows the documented state. Do not leave recapture as a later note. If capture cannot run, report it as blocked.
+3. **Sync with code, E2E, and screenshots.** When updating docs, verify that the documented behaviour matches the current implementation and that Playwright tests in `tests/SoloDevBoard.E2E.Tests/` assert the same routes, controls, and workflows. Maintain the mapping in [tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md](../tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md). If the in-app UI for a published guide or landing tile changed materially, recapture `website/static/images/` in the same docs-update via `DOCS_CAPTURE_ENABLED=1 dotnet test tests/SoloDevBoard.E2E.Tests --filter "Category=DocsCapture"` (or a focused test filter) against a local app with a real PAT and `DocsCapture:Enabled=true`. Update `DocsCapture/` helpers when the prepare path no longer shows the documented state. Do not leave recapture as a later note. If capture cannot run, report it as blocked.
 4. **Link generously.** Cross-reference related docs, decisions, and planning files. Use relative links within the same docs tree; use GitHub blob URLs when linking from the published site to repository-only files.
 5. **Heading hierarchy.** Use H1 for the page title, H2 for major sections, H3 for subsections. Do not skip levels.
 6. **Code blocks.** All code, commands, and configuration snippets must be in fenced code blocks with the appropriate language identifier.

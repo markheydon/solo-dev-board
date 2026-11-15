@@ -22,7 +22,7 @@ Cursor Cloud agents often default to **draft** PRs, `cursor/…` branch names, a
 
 - Build: `dotnet build SoloDevBoard.slnx`.
 - Test (xUnit v3 + NSubstitute, fully offline — GitHub is mocked): `dotnet test SoloDevBoard.slnx`.
-- End-to-end (Playwright): see [`tests/E2E/README.md`](../tests/E2E/README.md).
+- End-to-end (Playwright): see [`tests/SoloDevBoard.E2E.Tests/README.md`](../tests/SoloDevBoard.E2E.Tests/README.md).
 - Lint is `dotnet format SoloDevBoard.slnx --verify-no-changes` (same check CI runs in `.github/workflows/ci.yml`). `EnforceCodeStyleInBuild` is on, so style violations also surface during build.
 
 ---
@@ -33,14 +33,14 @@ Cursor Cloud agents often default to **draft** PRs, `cursor/…` branch names, a
 - If a build fails with `MSB3491`/`CS2012` (file locks), run `aspire stop` first — Aspire holds locks on `bin/`/`obj/` while running. See the `aspire-orchestration` skill.
 - Query logs/traces without the dashboard via `aspire logs app`, `aspire otel`, or the Aspire MCP server (see below).
 - Health endpoint: `GET /health` returns `Healthy`. The Home page (`/`) is static navigation and renders without any GitHub call.
-- A direct `dotnet run --project src/App/SoloDevBoard.App --no-launch-profile` (with `ASPNETCORE_URLS`) still works as a fallback, but Aspire is the preferred path and matches how the app is developed.
+- A direct `dotnet run --project src/SoloDevBoard.Web --no-launch-profile` (with `ASPNETCORE_URLS`) still works as a fallback, but Aspire is the preferred path and matches how the app is developed.
 
 ---
 
 ## HTTPS dev certificate (in-VM browser caveat)
 
 - On a normal dev machine, `aspire certs trust` (or `dotnet dev-certs https --trust`) trusts the cert and browsers stop warning. In this headless Linux VM that does **not** fully work for Chrome: even after installing `libnss3-tools` and importing the cert into `~/.pki/nssdb` as a trusted CA (`certutil ... -t "C,,"`), Chrome still reports `NET::ERR_CERT_INVALID` (a long-standing ASP.NET-dev-cert-on-Chromium-Linux issue). Do not rabbit-hole on it.
-- For in-VM browser testing either click **Advanced → Proceed to localhost (unsafe)** once, or run the app on plain HTTP (`ASPNETCORE_URLS=http://0.0.0.0:5080 dotnet run --project src/App/SoloDevBoard.App --no-launch-profile`). `curl -k` also bypasses the check for scripted checks.
+- For in-VM browser testing either click **Advanced → Proceed to localhost (unsafe)** once, or run the app on plain HTTP (`ASPNETCORE_URLS=http://0.0.0.0:5080 dotnet run --project src/SoloDevBoard.Web --no-launch-profile`). `curl -k` also bypasses the check for scripted checks.
 
 ## Dev Container (local / Codespaces)
 
@@ -56,7 +56,7 @@ The dev container uses Aspire feature v3, `dev-agent-tools`, and `cursor-cli` (s
 
 ## AppHost parameters and secrets
 
-The AppHost binds authentication from **AppHost** configuration (`src/SoloDevBoard.AppHost/AppHost.cs`), not from `SoloDevBoard.App` `appsettings`. Secret parameters are `gh-pat` and `gh-app-client-secret`; non-secret parameters include `hosted-sign-in-enabled`, `gh-app-client-id`, admission allow-lists, and (Path B only) `auth-secrets-vault-name` / `auth-secrets-vault-resource-group`. Shipped defaults live in `src/SoloDevBoard.AppHost/appsettings.json` (PAT mode by default).
+The AppHost binds authentication from **AppHost** configuration (`src/SoloDevBoard.AppHost/AppHost.cs`), not from `SoloDevBoard.Web` `appsettings`. Secret parameters are `gh-pat` and `gh-app-client-secret`; non-secret parameters include `hosted-sign-in-enabled`, `gh-app-client-id`, admission allow-lists, and (Path B only) `auth-secrets-vault-name` / `auth-secrets-vault-resource-group`. Shipped defaults live in `src/SoloDevBoard.AppHost/appsettings.json` (PAT mode by default).
 
 Two paths matter in Cloud VMs and Codespaces:
 
@@ -113,4 +113,4 @@ Each `@cursor` mention on an **issue** starts a new session. Follow-ups that sho
 - Data-driven pages (Audit Dashboard, Repositories, Label Manager, Migration) call `/user/repos` and need a **GitHub user PAT** with `repo`, `read:org`, `workflow`, and `read:project` scopes (or hosted sign-in with equivalent OAuth access).
 - **Path A:** a genuine user PAT in `Parameters:gh-pat` (for example via `SDB_GH_PAT`) supplies `GitHubAuth__PersonalAccessToken` directly.
 - **Path B:** the PAT comes from Key Vault secret `gh-pat` when local parameters are placeholders (`-`) and vault metadata is configured. If startup fails with `401 Bad credentials` while the vault has a good token, check for a **local override** (legacy `SDB_GH_PAT`, Codespaces secrets, or an old user-secrets value) before rotating the vault.
-- **Installation token caveat:** the ambient `gh` CLI token is often a GitHub App **installation** token. It may work for repo-scoped URLs but returns `403` on `/user` and `/user/repos`. Do not rely on it as `gh-pat` for full app flows unless you set `GitHubAuth:OwnerLogin` on the App project as a deliberate dev shortcut.
+- **Installation token caveat:** the ambient `gh` CLI token is often a GitHub App **installation** token. It may work for repo-scoped URLs but returns `403` on `/user` and `/user/repos`. Do not rely on it as `gh-pat` for full app flows unless you set `GitHubAuth:OwnerLogin` on the Web project as a deliberate dev shortcut.

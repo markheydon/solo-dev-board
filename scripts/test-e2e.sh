@@ -5,7 +5,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-E2E_PROJECT="tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj"
+E2E_PROJECT="tests/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj"
 CONFIG="Debug"
 HOSTED=false
 EXTRA_ARGS=()
@@ -28,7 +28,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 dotnet build "$E2E_PROJECT" -c "$CONFIG" -p:SkipPlaywrightInstall=true
-pwsh "tests/E2E/SoloDevBoard.E2E.Tests/bin/$CONFIG/net10.0/playwright.ps1" install chromium
+pwsh "tests/SoloDevBoard.E2E.Tests/bin/$CONFIG/net10.0/playwright.ps1" install chromium
 
 if [[ "$HOSTED" == true ]]; then
   export E2E_AUTH_MODE=hosted

@@ -6,7 +6,7 @@ This document records the WCAG 2.1 AA accessibility audit for SoloDevBoard prima
 
 | Included | Excluded |
 |----------|----------|
-| Tier 1 and Tier 2 journeys from [CRITICAL_JOURNEYS.md](../tests/E2E/CRITICAL_JOURNEYS.md) | Hosted sign-in / admission-control denial (CI PAT mode) |
+| Tier 1 and Tier 2 journeys from [CRITICAL_JOURNEYS.md](../tests/SoloDevBoard.E2E.Tests/CRITICAL_JOURNEYS.md) | Hosted sign-in / admission-control denial (CI PAT mode) |
 | Application shell (app bar, drawer, skip link, theme) | Live GitHub catalogue mutations |
 | PAT connectivity error page | Azure Container Apps probe UI |
 | Light-mode default theme (axe in CI) | Manual screen-reader walkthrough of every dialog |
@@ -18,7 +18,7 @@ Standard: **WCAG 2.1 Level A and AA**, automated with [axe-core](https://github.
 1. Run axe against each audited route with tags `wcag2a`, `wcag2aa`, `wcag21a`, and `wcag21aa`.
 2. Treat **critical** and **serious** confirmed violations as blocking.
 3. Exclude transient `.mud-snackbar` overlays from page scans (snackbars animate and can produce false colour-contrast failures mid-transition).
-4. Keep regression coverage in `tests/E2E/SoloDevBoard.E2E.Tests/Tests/AccessibilityTests` (CI `e2e` job).
+4. Keep regression coverage in `tests/SoloDevBoard.E2E.Tests/Tests/AccessibilityTests` (CI `e2e` job).
 
 ## Routes audited
 
@@ -63,13 +63,13 @@ Axe reported **incomplete** (needs review) items after remediation — no remain
 
 | Spec | Asserts |
 |------|---------|
-| `tests/E2E/SoloDevBoard.E2E.Tests/Tests/AccessibilityTests` | Each audited route has no critical/serious axe violations in **light and dark** mode; shell exposes skip link and labelled navigation controls; warning snackbar passes an isolated axe scan. |
-| `tests/E2E/fixtures/accessibility.ts` | Shared axe helpers, route list, shell-ready wait, and dark-mode toggle helper. |
+| `tests/SoloDevBoard.E2E.Tests/Tests/AccessibilityTests` | Each audited route has no critical/serious axe violations in **light and dark** mode; shell exposes skip link and labelled navigation controls; warning snackbar passes an isolated axe scan. |
+| `tests/SoloDevBoard.E2E.Tests/fixtures/accessibility.ts` | Shared axe helpers, route list, shell-ready wait, and dark-mode toggle helper. |
 
 ## Operator notes
 
-- Run accessibility E2E with the same host as other Playwright tests — see [tests/E2E/README.md](../tests/E2E/README.md).
-- Palette changes live in `src/App/SoloDevBoard.App/Themes/SoloDevBoardTheme.cs`. Re-run the accessibility suite after theme edits.
+- Run accessibility E2E with the same host as other Playwright tests — see [tests/SoloDevBoard.E2E.Tests/README.md](../tests/SoloDevBoard.E2E.Tests/README.md).
+- Palette changes live in `src/SoloDevBoard.Web/Themes/SoloDevBoardTheme.cs`. Re-run the accessibility suite after theme edits.
 - Dialog-heavy flows (label create/edit, board-rule detail) should be re-checked manually or with targeted axe scans when those UIs change substantially.
 
 ## Acceptance criteria mapping

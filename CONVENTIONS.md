@@ -3,7 +3,7 @@
 # Conventions
 
 **Project:** SoloDevBoard  
-**Last updated:** 2026-11-14
+**Last updated:** 2026-11-15
 
 When in doubt, follow this file. Significant architecture changes need an ADR.
 
@@ -11,20 +11,23 @@ When in doubt, follow this file. Significant architecture changes need an ADR.
 
 ## Project structure
 
+Projects live under `src/` and `tests/` with `SoloDevBoard.*` directory names. `SoloDevBoard.slnx` groups them into solution folders (`src/Layers`, `src/Aspire`, `tests/Unit`, `tests/E2E`) for navigation only; paths on disk are flat.
+
 ```
 src/
-├── App/SoloDevBoard.App/
-├── Application/SoloDevBoard.Application/
-├── Composition/SoloDevBoard.Composition/
-├── Domain/SoloDevBoard.Domain/
-├── Infrastructure/SoloDevBoard.Infrastructure/
-├── SoloDevBoard.AppHost/
+├── SoloDevBoard.Web/              # Blazor Server UI (presentation)
+├── SoloDevBoard.Application/
+├── SoloDevBoard.Composition/      # DI composition root (`AddSoloDevBoard`)
+├── SoloDevBoard.Domain/
+├── SoloDevBoard.Infrastructure/
+├── SoloDevBoard.AppHost/          # Aspire orchestration and Azure deploy model
 └── SoloDevBoard.ServiceDefaults/
 
 tests/
-├── Application.Tests/, App.Tests/, Composition.Tests/, Domain.Tests/
-├── Infrastructure.Tests/, ServiceDefaults.Tests/
-└── E2E/SoloDevBoard.E2E.Tests/
+├── SoloDevBoard.Web.Tests/        # bUnit component tests
+├── SoloDevBoard.Application.Tests/, SoloDevBoard.Infrastructure.Tests/, ...
+├── SoloDevBoard.Composition.Tests/, SoloDevBoard.ServiceDefaults.Tests/
+└── SoloDevBoard.E2E.Tests/        # Playwright journeys
 ```
 
 Page-producing UI work should align with wireframes in [`plan/wireframes/`](plan/wireframes/) when the change introduces or materially alters a user-facing page.
@@ -39,7 +42,7 @@ Clean/layered boundaries (see [`adr/adr-0004-layered-architecture.md`](adr/adr-0
 - **Application** depends on Domain only.
 - **Infrastructure** implements Application interfaces and depends on Application and Domain.
 - **Composition** is the sole DI composition root (`AddSoloDevBoard`).
-- **App** depends on Application and Composition only; it must not reference Infrastructure (not in `.csproj`, not in `using` statements).
+- **Web** depends on Application and Composition only; it must not reference Infrastructure (not in `.csproj`, not in `using` statements).
 
 **Boundary data shapes** ([`adr/adr-0011-boundary-data-shapes.md`](adr/adr-0011-boundary-data-shapes.md)): repository interfaces return domain entity records; public Application service interfaces (`I*Service`, `I*Manager`) return and accept **DTO records** only. Mapping happens in Application services, not Razor components and not via AutoMapper.
 
@@ -78,12 +81,12 @@ Consult the `mudblazor` skill before new UI. Prefer MudBlazor components and uti
 ## Testing
 
 - **xUnit v3** with Microsoft.Testing.Platform; **NSubstitute** for mocks; **built-in `Assert` only** (no Moq, FluentAssertions, NUnit, or MSTest).
-- **bUnit** in App test project only; **Playwright** E2E in `tests/E2E/SoloDevBoard.E2E.Tests`.
+- **bUnit** in `SoloDevBoard.Web.Tests` only; **Playwright** E2E in `tests/SoloDevBoard.E2E.Tests`.
 - Fast path: `dotnet test SoloDevBoard.UnitTests.slnf` or `./scripts/test-unit.sh`. Full parity: `./scripts/test-all.sh`.
 - Do not test AppHost modelling or orchestration.
 - Naming: `MethodUnderTest_Scenario_ExpectedOutcome`; Arrange / Act / Assert with blank lines.
 
-End-user docs ([`website/content/docs/`](website/content/docs/)) and Playwright E2E must stay aligned per [`tests/E2E/USER_DOCS_ALIGNMENT.md`](tests/E2E/USER_DOCS_ALIGNMENT.md).
+End-user docs ([`website/content/docs/`](website/content/docs/)) and Playwright E2E must stay aligned per [`tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md`](tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md).
 
 ---
 
@@ -105,7 +108,7 @@ End-user docs ([`website/content/docs/`](website/content/docs/)) and Playwright 
 
 | Change | Doc to update |
 | --- | --- |
-| New end-user feature | `website/content/docs/`, matching E2E tests, `tests/E2E/USER_DOCS_ALIGNMENT.md`, `tests/E2E/CRITICAL_JOURNEYS.md` |
+| New end-user feature | `website/content/docs/`, matching E2E tests, `tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md`, `tests/SoloDevBoard.E2E.Tests/CRITICAL_JOURNEYS.md` |
 | End-user behaviour change | User guide pages and matching Playwright tests |
 | New developer / operator guidance | `docs/` |
 | New decision | `adr/` |

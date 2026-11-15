@@ -1,0 +1,9 @@
+@namespace SoloDevBoard.Web.Components.Shell
+@using SoloDevBoard.Web.Theming
+@implements IAsyncDisposable
+
+<MudThemeProvider @ref="_themeProvider"
+                  Theme="@Theme"
+                  IsDarkMode="_isDarkMode"
+                  IsDarkModeChanged="OnIsDarkModeChangedAsync"
+                  ObserveSystemDarkModeChange="@_observeSystem" />

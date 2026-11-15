@@ -5,7 +5,7 @@ Applies to: [ADR-0043](../adr/adr-0043-key-vault-backed-hosted-auth-secrets.md),
 
 ## Purpose
 
-Define how GitHub integration secrets reach `SoloDevBoard.App` via Azure Key Vault for hosted tiers and optional local fallback, while preserving **Path A** local parameters for solo developers.
+Define how GitHub integration secrets reach `SoloDevBoard.Web` via Azure Key Vault for hosted tiers and optional local fallback, while preserving **Path A** local parameters for solo developers.
 
 ## Scope
 
@@ -31,7 +31,7 @@ flowchart LR
     B --> C[GetSecret refs]
     C --> D[Container App secretRef]
     D --> E[GitHubAuth__* env vars]
-    E --> F[SoloDevBoard.App]
+    E --> F[SoloDevBoard.Web]
 ```
 
 Populate vaults before CD; see [docs/azure-key-vault-setup.md](../docs/azure-key-vault-setup.md).

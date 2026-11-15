@@ -67,8 +67,9 @@ var allowedUserLogins = builder.AddParameter("allowed-user-logins")
 var allowedOrgLogins = builder.AddParameter("allowed-org-logins")
     .WithDescription("Comma-separated GitHub organisation logins for hosted admission. Use '-' when using allowed-user-logins instead, or in PAT mode.");
 
+// Aspire/Azure resource name remains "app"; the .NET project is SoloDevBoard.Web.
 #pragma warning disable ASPIREDOTNETPROJECT001
-var app = builder.AddDotnetProject(AzureName("app"), "../App/SoloDevBoard.App/SoloDevBoard.App.csproj");
+var app = builder.AddDotnetProject(AzureName("app"), "../SoloDevBoard.Web/SoloDevBoard.Web.csproj");
 #pragma warning restore ASPIREDOTNETPROJECT001
 
 app = app

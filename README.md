@@ -6,7 +6,7 @@
 
 ## What Is SoloDevBoard?
 
- SoloDevBoard is a **.NET 10 Blazor Server** application that consolidates your GitHub repository management into a single, unified interface. If you maintain multiple GitHub repositories as a solo developer, SoloDevBoard eliminates the context-switching between repository tabs, project boards, settings pages, and workflow runs.
+SoloDevBoard is a **.NET 10 Blazor Server** application that consolidates your GitHub repository management into a single, unified interface. If you maintain multiple GitHub repositories as a solo developer, SoloDevBoard eliminates the context-switching between repository tabs, project boards, settings pages, and workflow runs.
 
 
 | Feature | Description | Status |
@@ -67,8 +67,8 @@ Open the `app` resource URL shown by `aspire describe` in your browser.
 
 **Optional legacy path (without Aspire):**
 ```bash
-dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-pat>" --project src/App/SoloDevBoard.App
-dotnet run --project src/App/SoloDevBoard.App
+dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-pat>" --project src/SoloDevBoard.Web
+dotnet run --project src/SoloDevBoard.Web
 ```
 
 For **hosted sign-in mode** (GitHub App), see [docs/getting-started.md](docs/getting-started.md#hosted-sign-in-mode-setup) or [`src/SoloDevBoard.AppHost/README.md`](src/SoloDevBoard.AppHost/README.md).
@@ -79,20 +79,18 @@ Aspire is used for both local orchestration and production deployment to Azure C
 
 ```
 solo-dev-board/
+├── GOALS.md, SCOPE.md, CONVENTIONS.md, AGENTS.md  # Scope and contributor constitution
+├── src/SoloDevBoard.Web/         # Blazor Server UI (presentation layer)
+├── src/SoloDevBoard.Application/ # Use cases and service interfaces
+├── src/SoloDevBoard.Composition/ # DI composition root
+├── src/SoloDevBoard.Domain/      # Domain entities and value objects
+├── src/SoloDevBoard.Infrastructure/ # GitHub API clients, external integrations
 ├── src/SoloDevBoard.AppHost/     # Aspire AppHost (local orchestration and Azure deployment)
 ├── src/SoloDevBoard.ServiceDefaults/  # Aspire service defaults (telemetry, health checks)
-├── src/
-│   ├── App/                    # Blazor Server UI (presentation layer)
-│   ├── Application/            # Use cases and service interfaces
-│   ├── Domain/                 # Domain entities and value objects
-│   └── Infrastructure/         # GitHub API clients, external integrations
 ├── tests/
-│   └── App.Tests/              # xUnit test projects
-├── docs/                       # Developer / operator documentation
-│   ├── README.md               # Index for repository-centric docs
-│   ├── getting-started.md      # Setup and configuration guide
-│   ├── deployment.md           # Azure Container Apps deployment guide
-│   └── github-app.md           # Hosted-sign-in GitHub App listing checklist
+│   ├── SoloDevBoard.Web.Tests/   # bUnit component tests
+│   └── SoloDevBoard.*.Tests/     # Unit tests per layer; SoloDevBoard.E2E.Tests for Playwright
+├── docs/                       # Developer / operator documentation (see docs/README.md)
 ├── website/                    # Public product site (Hugo / Hextra → GitHub Pages)
 │   ├── hugo.yaml               # Hugo site configuration
 │   └── content/                # Landing, User Guide, and About pages

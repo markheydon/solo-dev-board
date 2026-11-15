@@ -1,7 +1,7 @@
 # ADR-0004: Use Layered / Clean Architecture
 
-**Date:** 2025-01-01
-**Status:** Accepted
+**Date:** 2025-01-01  
+**Status:** Accepted (amended 2026-11-15: presentation project renamed `SoloDevBoard.App` → `SoloDevBoard.Web`)
 
 ---
 
@@ -17,7 +17,7 @@ The following architectural patterns were considered:
 
 | Option | Description |
 |--------|-------------|
-| **Layered / Clean Architecture** | Explicit layers: App → Application → Domain + Infrastructure. Dependencies point inward. |
+| **Layered / Clean Architecture** | Explicit layers: Web → Application → Domain + Infrastructure. Dependencies point inward. |
 | **Vertical Slice Architecture** | Each feature is a self-contained slice. Minimal shared abstractions. |
 | **Modular Monolith** | Feature modules with internal layering. |
 | **Minimal / Script-style** | Single project, no layering. Pragmatic for a small solo tool. |
@@ -29,7 +29,7 @@ The following architectural patterns were considered:
 **Use a layered / clean architecture with four projects:**
 
 ```
-SoloDevBoard.App             → Blazor Server UI (presentation layer)
+SoloDevBoard.Web             → Blazor Server UI (presentation layer)
 SoloDevBoard.Application     → Application logic, use cases, service interfaces
 SoloDevBoard.Domain          → Domain entities, value objects, domain events
 SoloDevBoard.Infrastructure  → GitHub API clients, external integrations
@@ -55,9 +55,9 @@ Vertical Slice Architecture is a good choice for larger teams where feature owne
 - **Domain** → no dependencies on other projects or external NuGet packages (only the BCL).
 - **Application** → depends on `Domain` only.
 - **Infrastructure** → depends on `Application` and `Domain`; implements interfaces defined in `Application`.
-- **App** → depends on `Application`; uses Blazor Server; does not reference `Infrastructure` directly (uses DI).
+- **Web** → depends on `Application` and `Composition`; uses Blazor Server; does not reference `Infrastructure` directly (uses DI via Composition).
 
-Dependency injection is configured in `SoloDevBoard.App/Program.cs`, where `Infrastructure` implementations are registered against `Application` interfaces.
+Dependency injection is configured via `SoloDevBoard.Composition` (`AddSoloDevBoard` in `SoloDevBoard.Web/Program.cs`).
 
 ---
 
@@ -66,5 +66,5 @@ Dependency injection is configured in `SoloDevBoard.App/Program.cs`, where `Infr
 - The solution contains four projects plus one or more test projects.
 - All domain entities are defined as C# records in `SoloDevBoard.Domain`.
 - All service interfaces (e.g. `IGitHubService`, `ILabelRepository`) are defined in `SoloDevBoard.Application`.
-- Razor components in `SoloDevBoard.App` only call application services — they do not contain business logic.
-- New features follow the same structure: Domain record → Application interface → Infrastructure implementation → App component.
+- Razor components in `SoloDevBoard.Web` only call application services — they do not contain business logic.
+- New features follow the same structure: Domain record → Application interface → Infrastructure implementation → Web component.

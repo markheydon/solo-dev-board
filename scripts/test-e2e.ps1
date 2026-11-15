@@ -11,8 +11,8 @@ param(
 $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $config = if ($Release) { "Release" } else { "Debug" }
-$e2eProject = Join-Path $repoRoot "tests/E2E/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj"
-$playwrightScript = Join-Path $repoRoot "tests/E2E/SoloDevBoard.E2E.Tests/bin/$config/net10.0/playwright.ps1"
+$e2eProject = Join-Path $repoRoot "tests/SoloDevBoard.E2E.Tests/SoloDevBoard.E2E.Tests.csproj"
+$playwrightScript = Join-Path $repoRoot "tests/SoloDevBoard.E2E.Tests/bin/$config/net10.0/playwright.ps1"
 
 Push-Location $repoRoot
 try {

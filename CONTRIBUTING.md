@@ -50,8 +50,8 @@ This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.
 
    **Legacy path (without Aspire):**
    ```bash
-   dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-github-pat>" --project src/App/SoloDevBoard.App
-   dotnet run --project src/App/SoloDevBoard.App
+   dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-github-pat>" --project src/SoloDevBoard.Web
+   dotnet run --project src/SoloDevBoard.Web
    ```
 
    See [docs/getting-started.md](docs/getting-started.md) for hosted sign-in mode and Azure deployment.
@@ -114,16 +114,16 @@ When suggesting a feature:
    - All tests must pass: `./scripts/test-all` (or `.\scripts\test-all.ps1`) for full CI parity; `./scripts/test-unit` for day-to-day work.
    - When adding a new non-E2E test project, add it to [`SoloDevBoard.UnitTests.slnf`](SoloDevBoard.UnitTests.slnf).
    - Aim for meaningful test coverage, not just coverage percentage
-   - Use Playwright for end-to-end user journeys where unit tests cannot validate the full workflow — see [`tests/E2E/README.md`](tests/E2E/README.md) and [`tests/E2E/CRITICAL_JOURNEYS.md`](tests/E2E/CRITICAL_JOURNEYS.md) for the CI journey inventory, local run steps, and selector conventions.
+   - Use Playwright for end-to-end user journeys where unit tests cannot validate the full workflow — see [`tests/SoloDevBoard.E2E.Tests/README.md`](tests/SoloDevBoard.E2E.Tests/README.md) and [`tests/SoloDevBoard.E2E.Tests/CRITICAL_JOURNEYS.md`](tests/SoloDevBoard.E2E.Tests/CRITICAL_JOURNEYS.md) for the CI journey inventory, local run steps, and selector conventions.
    - Accessibility regression for primary journeys uses axe-core in Playwright (`AccessibilityTests`); findings are summarised in [`plan/ACCESSIBILITY_AUDIT.md`](plan/ACCESSIBILITY_AUDIT.md).
    - Prefer `data-testid` attributes on loading, error, and empty UI states when adding journeys that will run in CI with placeholder auth.
    - Do not test .NET Aspire AppHost modelling or orchestration.
 
 4. **Architecture:**
-   - Follow the clean/layered architecture: Domain, Application, Infrastructure, Composition, and App with strict dependency direction (see [`CONVENTIONS.md`](CONVENTIONS.md) and [DEC-002](adr/adr-0004-layered-architecture.md)).
+   - Follow the clean/layered architecture: Domain, Application, Infrastructure, Composition, and Web with strict dependency direction (see [`CONVENTIONS.md`](CONVENTIONS.md) and [DEC-002](adr/adr-0004-layered-architecture.md)).
    - Domain has no external dependencies.
    - Infrastructure implements interfaces defined in Application.
-   - Composition wires Application and Infrastructure via `AddSoloDevBoard`; App must not reference Infrastructure.
+   - Composition wires Application and Infrastructure via `AddSoloDevBoard`; Web must not reference Infrastructure.
    - No business logic in Razor components.
    - Prefer immutable records for domain entities.
 
@@ -164,7 +164,7 @@ When submitting a pull request that changes code, ensure related documentation i
 | New developer / operator guidance | `docs/<topic>.md` and `docs/README.md` as needed |
 | New decision | New file under `adr/` (see `create-architectural-decision-record` skill) |
 | Scope change | `plan/SCOPE.md`, `plan/BACKLOG.md` |
-| New env variable | `docs/getting-started.md`, `SoloDevBoard.AppHost/README.md`, `docs/deployment.md` |
+| New env variable | `docs/getting-started.md`, `src/SoloDevBoard.AppHost/README.md`, `docs/deployment.md` |
 | Tagged release | [`CHANGELOG.md`](CHANGELOG.md) and [`plan/RELEASE_PLAN.md`](plan/RELEASE_PLAN.md) |
 
 ---

@@ -49,8 +49,8 @@ The following options were considered:
 
 ## Consequences
 
-- All UI components are written as Razor components (`.razor` files) in the `SoloDevBoard.App` project.
+- All UI components are written as Razor components (`.razor` files) in the `SoloDevBoard.Web` project.
 - No JavaScript framework is introduced. JavaScript interop is used only when strictly necessary (e.g. for third-party visualisation components).
-- The `SoloDevBoard.App` project references `SoloDevBoard.Application` for service interfaces.
+- The `SoloDevBoard.Web` project references `SoloDevBoard.Application` for service interfaces.
 - Production hosting uses Azure Container Apps via Aspire deployment (ADR-0018). The app runs as a container image rather than an App Service zip deploy.
 - With scale-to-zero enabled, idle containers stop and Blazor Server SignalR circuits may need to reconnect after cold starts. This trade-off is accepted for cost control on a low-traffic solo-developer tool.

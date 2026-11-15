@@ -1,0 +1,67 @@
+﻿@inherits LayoutComponentBase
+@namespace SoloDevBoard.Web.Components.Shell.Layout
+@using SoloDevBoard.Web.Theming
+
+<AppThemeProvider Theme="@_theme" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<a href="#main-content" class="skip-to-content">Skip to main content</a>
+
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                       Color="Color.Inherit"
+                       Edge="Edge.Start"
+                       aria-label="Toggle navigation drawer"
+                       OnClick="@((e) => DrawerToggle())" />
+        <MudText Typo="Typo.h5" Class="ml-3">SoloDevBoard</MudText>
+        <MudSpacer />
+        @if (_showPatConnectionStatus && _patConnectionStatus is not null)
+        {
+            <MudChip T="string"
+                     Color="@(_patConnectionStatus.IsConnected ? Color.Success : Color.Warning)"
+                     Variant="Variant.Text"
+                     Icon="@Icons.Material.Filled.Link"
+                     aria-label="@_patConnectionStatus.StatusMessage"
+                     data-testid="shell-github-connection-status">
+                @ConnectionChipText
+            </MudChip>
+        }
+        @if (ThemePreferenceService.IsInitialised)
+        {
+            <MudIconButton Icon="@ThemePreferenceService.Current.GetButtonIcon()"
+                           Color="Color.Inherit"
+                           aria-label="@ThemePreferenceService.Current.GetButtonAriaLabel()"
+                           OnClick="@OnThemeButtonClick" />
+        }
+        <MudMenu Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" AriaLabel="More options">
+            <MudMenuItem Href="https://solodevboard.com/docs/"
+                         Target="_blank"
+                         Icon="@Icons.Material.Filled.MenuBook">User Guide</MudMenuItem>
+            <MudMenuItem Href="/about" Icon="@Icons.Material.Filled.Info">About</MudMenuItem>
+            @if (_showSignOut)
+            {
+                <MudMenuItem Href="/auth/sign-out" Icon="@Icons.Material.Filled.Logout" data-testid="shell-sign-out">Sign out</MudMenuItem>
+            }
+        </MudMenu>
+    </MudAppBar>
+    <MudDrawer id="nav-drawer"
+               @bind-Open="_drawerOpen"
+               ClipMode="DrawerClipMode.Always"
+               Elevation="2"
+               aria-label="Primary navigation">
+        <NavMenu />
+    </MudDrawer>
+    <MudMainContent id="main-content" Class="pt-16 pa-4" tabIndex="-1">
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
