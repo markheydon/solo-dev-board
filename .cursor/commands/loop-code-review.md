@@ -6,7 +6,15 @@ Repeat this cycle until the review is clear of actionable findings:
 
 1. **Review** - In a **new subagent** (Task), read and follow [.agents/skills/code-review/SKILL.md](../../.agents/skills/code-review/SKILL.md). Use the default diff (merge-base with the repository default branch, including committed, staged, and unstaged work) unless the user scoped the run differently. The subagent must return findings only; it must not implement fixes.
 2. **Fix** - In this session, implement every finding you agree with using minimal, convention-matching diffs. Skip nits you would not block merge on; note them briefly if useful.
-3. **Verify** - From the repo root, run `dotnet clean Repo.slnx`, `dotnet build Repo.slnx -c Release -warnaserror`, and `dotnet test Repo.slnx -c Release --no-build` per [AGENTS.md](../../AGENTS.md). Fix any failures before the next loop.
+3. **Verify** - From the repo root, run per [AGENTS.md](../../AGENTS.md):
+
+   ```shell
+   dotnet format SoloDevBoard.slnx --verify-no-changes
+   dotnet build SoloDevBoard.slnx -c Release -warnaserror
+   dotnet test SoloDevBoard.UnitTests.slnf -c Release --no-build
+   ```
+
+   Fix any failures before the next loop.
 4. **Commit** - When a loop produced code changes, create a commit with a message that reflects the review fixes (invoking this command counts as explicit permission to commit).
 
 Start the next loop only after steps 2–4 are done (or step 1 returned no significant issues).
