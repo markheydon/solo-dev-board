@@ -4,13 +4,13 @@ MudBlazor uses a `MudTheme` object passed to `MudThemeProvider`.
 
 ## SoloDevBoard canonical theme
 
-Do not copy the sample palettes below into new pages. The live theme is `src/SoloDevBoard.Web/Themes/SoloDevBoardTheme.cs`, wired through `AppThemeProvider`. Hard-coded hex in Razor is a defect unless it is a GitHub label colour from the API.
+Do not copy the sample palettes below into new pages. The live theme is `src/SoloDevBoard.Web/Themes/SoloDevBoardTheme.cs`, wired through `AppThemeProvider`. Hard-coded hex in Razor is a defect unless it is a GitHub label colour from the API (default new-label grey: `LabelDefaults.DefaultColour` in the Labels feature).
 
 Keep reconnect CSS, skip-link CSS, and `.sdb-responsive-grid` as the only expected stylesheets. If CSS vars have not applied yet, reconnect fallbacks must use the same primary, info, and warning hex as `SoloDevBoardTheme`, not MudBlazor's default purple. `SoloDevBoardThemeFallbackTests` in the Web test project locks those fallbacks to the light palette.
 
 The app theme uses the system font stack in `SoloDevBoardTheme`; do not add a Google Fonts Roboto link to `App.razor` unless branding deliberately switches typography.
 
-Chrome toolbar icons (menu, search, overflow, warning, theme toggle) live in `SoloDevBoard.Web.Theming.AppIcons`. Page nav icons in `NavMenu` stay ad hoc `Icons.Material.Filled.*`.
+Chrome toolbar icons (menu, search, overflow, warning, theme toggle) live in `SoloDevBoard.Web.Theming.AppIcons`. Page nav icons in `NavMenu` stay ad hoc `Icons.Material.Filled.*`. Theme toggle icons are the only deliberate non-Filled Material variants (`Rounded.AutoMode`, `Outlined.LightMode`, `Outlined.DarkMode`), resolved via `ThemePreferenceExtensions.GetButtonIcon`.
 
 ---
 

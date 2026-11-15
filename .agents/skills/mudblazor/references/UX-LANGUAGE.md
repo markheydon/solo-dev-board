@@ -117,7 +117,7 @@ Audit Dashboard already uses skeletons well; copy that pattern rather than the s
 
 ## Colour and icons
 
-- Semantic colour comes from `Color.*` / `Severity.*` and `SoloDevBoardTheme`. Do not hard-code hex except GitHub label colours (data, not brand).
+- Semantic colour comes from `Color.*` / `Severity.*` and `SoloDevBoardTheme`. Do not hard-code hex except GitHub label colours (data, not brand); use `LabelDefaults.DefaultColour` for the default new-label grey.
 - `Color.Primary` is for the one commit action in a region. `Color.Secondary` is reload / preview. `Color.Error` is destructive. `Variant.Text` is cancel.
 - Icons are `Icons.Material.Filled` unless the control is the theme toggle (use `AppIcons.ThemeAutomatic`, `AppIcons.ThemeLight`, and `AppIcons.ThemeDark` via `ThemePreferenceExtensions`). Shell chrome (menu, search, overflow, warning) uses `AppIcons`. Pair every `MudIconButton` with `MudTooltip` and an `aria-label`.
 
