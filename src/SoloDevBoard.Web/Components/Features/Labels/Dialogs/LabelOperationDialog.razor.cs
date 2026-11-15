@@ -14,7 +14,7 @@ public partial class LabelOperationDialog
         LabelOperationMode.Create,
         string.Empty,
         string.Empty,
-        "#ededed",
+        LabelDefaults.DefaultColour,
         string.Empty,
         [],
         [],
@@ -59,7 +59,7 @@ public partial class LabelOperationDialog
 
         model.LabelName = Content.LabelName;
         model.Colour = string.IsNullOrWhiteSpace(Content.Colour)
-            ? "#ededed"
+            ? LabelDefaults.DefaultColour
             : Content.Colour.StartsWith('#')
                 ? Content.Colour
                 : $"#{Content.Colour}";
@@ -163,13 +163,13 @@ public partial class LabelOperationDialog
 
         return candidate.Length == 6 && candidate.All(Uri.IsHexDigit)
             ? $"#{candidate}"
-            : "#ededed";
+            : LabelDefaults.DefaultColour;
     }
 
     /// <summary>Represents form state and validation for label operation dialogs.</summary>
     private sealed class LabelOperationFormModel
     {
-        private string colour = "#ededed";
+        private string colour = LabelDefaults.DefaultColour;
 
         [Required(ErrorMessage = "Label name is required.")]
         public string LabelName { get; set; } = string.Empty;

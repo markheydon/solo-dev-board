@@ -46,45 +46,27 @@
                     <MudMenu Label="Actions"
                              Variant="Variant.Outlined"
                              Color="Color.Primary"
-                             StartIcon="@Icons.Material.Filled.MoreVert">
+                             StartIcon="@AppIcons.OverflowVertical">
                         <MudMenuItem OnClick="AddRepository">Add</MudMenuItem>
                         <MudMenuItem OnClick="RemoveSelectedRepositories">Remove</MudMenuItem>
                         <MudMenuItem OnClick="OpenBulkActions">Bulk actions</MudMenuItem>
                     </MudMenu>
                 </MudHidden>
-
-                <MudSpacer />
-
-                <MudHidden Breakpoint="Breakpoint.SmAndDown">
-                    <MudTextField @bind-Value="repositorySearchTerm"
-                                  Label="Search repositories"
-                                  Variant="Variant.Outlined"
-                                  Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Filled.Search"
-                                  Immediate="true"
-                                  Clearable="true"
-                                  Disabled="isLoading"
-                                  Class="mud-width-full"
-                                  Style="max-width: 280px;" />
-                </MudHidden>
             </MudToolBar>
 
-            <MudHidden Breakpoint="Breakpoint.MdAndUp">
-                <MudTextField @bind-Value="repositorySearchTerm"
-                              Label="Search repositories"
-                              Variant="Variant.Outlined"
-                              Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Filled.Search"
-                              Immediate="true"
-                              Clearable="true"
-                              Disabled="isLoading"
-                              Class="mud-width-full" />
-            </MudHidden>
+            <MudTextField @bind-Value="repositorySearchTerm"
+                          Label="Search repositories"
+                          Variant="Variant.Outlined"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@AppIcons.Search"
+                          Immediate="true"
+                          Clearable="true"
+                          Disabled="isLoading"
+                          Class="mud-width-full" />
 
-        <MudToggleGroup @bind-Value="catalogueFilter"
+            <MudToggleGroup @bind-Value="catalogueFilter"
                         T="RepositoryCatalogueFilter"
                         Color="Color.Primary"
-                        Class="mt-3"
                         aria-label="Catalogue filter"
                         data-testid="repositories-catalogue-filter">
             <MudToggleItem Value="RepositoryCatalogueFilter.All"
@@ -204,7 +186,7 @@
                                                    aria-label="Edit repository" />
                                 </MudTooltip>
                                 <MudTooltip Text="More actions">
-                                    <MudIconButton Icon="@Icons.Material.Filled.MoreHoriz"
+                                    <MudIconButton Icon="@AppIcons.OverflowHorizontal"
                                                    Color="Color.Default"
                                                    Size="Size.Small"
                                                    OnClick="() => OpenRepositoryMoreActions(context.Item)"

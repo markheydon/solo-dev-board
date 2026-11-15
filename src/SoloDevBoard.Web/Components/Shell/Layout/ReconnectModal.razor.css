@@ -40,13 +40,13 @@
     align-items: center;
     justify-content: center;
     padding: 24px;
-    background: radial-gradient(90% 60% at 80% 0%, color-mix(in srgb, var(--mud-palette-primary, #594AE2) 12%, transparent), transparent 60%), radial-gradient(80% 55% at 0% 100%, color-mix(in srgb, var(--mud-palette-info, #2196f3) 16%, transparent), transparent 62%), rgba(8, 12, 20, 0.5);
+    background: radial-gradient(90% 60% at 80% 0%, color-mix(in srgb, var(--mud-palette-primary, #167c38) 12%, transparent), transparent 60%), radial-gradient(80% 55% at 0% 100%, color-mix(in srgb, var(--mud-palette-info, #0969da) 16%, transparent), transparent 62%), rgba(8, 12, 20, 0.5);
 }
 
 .components-reconnect-surface {
     width: min(480px, 100%);
-    border-radius: var(--mud-default-borderradius, 12px);
-    border: 1px solid color-mix(in srgb, var(--mud-palette-lines-default, #e0e0e0) 70%, transparent);
+    border-radius: var(--mud-default-borderradius, 6px);
+    border: 1px solid color-mix(in srgb, var(--mud-palette-lines-default, #d0d7de) 70%, transparent);
     background: var(--mud-palette-surface, #fff);
     box-shadow: var(--mud-elevation-24, 0 16px 30px rgba(0, 0, 0, 0.28));
     color: var(--mud-palette-text-primary, #1f2937);
@@ -71,8 +71,8 @@
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    background: var(--mud-palette-warning, #f59e0b);
-    box-shadow: 0 0 0 6px color-mix(in srgb, var(--mud-palette-warning, #f59e0b) 25%, transparent);
+    background: var(--mud-palette-warning, #9a6700);
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--mud-palette-warning, #9a6700) 25%, transparent);
 }
 
 .components-reconnect-supporting,
@@ -83,7 +83,7 @@
 }
 
 .components-reconnect-supporting {
-    color: var(--mud-palette-text-secondary, #52607a);
+    color: var(--mud-palette-text-secondary, #57606a);
     margin-bottom: 14px;
 }
 
@@ -92,7 +92,7 @@
 }
 
 .components-reconnect-danger {
-    color: var(--mud-palette-error, #b00020);
+    color: var(--mud-palette-error, #cf222e);
 }
 
 .components-reconnect-actions {
@@ -161,7 +161,7 @@ dialog[open].components-resume-failed .components-resume-failed-visible {
         width: 9px;
         height: 9px;
         border-radius: 50%;
-        background-color: var(--mud-palette-primary, #594AE2);
+        background-color: var(--mud-palette-primary, #167c38);
         animation: reconnect-pulse 1.2s infinite ease-in-out both;
     }
 
@@ -191,7 +191,7 @@ dialog[open].components-resume-failed .components-resume-failed-visible {
     padding: 8px 16px;
     border: 1px solid transparent;
     border-radius: 999px;
-    background-color: var(--mud-palette-primary, #594AE2);
+    background-color: var(--mud-palette-primary, #167c38);
     color: #fff;
     font-size: 0.875rem;
     font-weight: 600;

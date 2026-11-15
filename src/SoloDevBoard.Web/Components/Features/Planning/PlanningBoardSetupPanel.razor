@@ -70,7 +70,7 @@
             @if (report.Issues.Any(issue => issue.Severity == PlanningBoardCompatibilitySeverity.Warning))
             {
                 <MudExpansionPanel Text="Recommended improvements"
-                                   Icon="@Icons.Material.Filled.WarningAmber"
+                                   Icon="@AppIcons.WarningAmber"
                                    data-testid="planning-board-setup-warnings-panel">
                     <MudStack Spacing="2">
                         @foreach (var issue in report.Issues.Where(issue => issue.Severity == PlanningBoardCompatibilitySeverity.Warning))

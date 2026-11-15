@@ -78,7 +78,7 @@
             {
                 <MudExpansionPanels data-testid="planning-board-compatibility-summary">
                     <MudExpansionPanel Text="@FormatBoardCompatibilitySummary()"
-                                       Icon="@Icons.Material.Filled.Warning">
+                                       Icon="@AppIcons.Warning">
                         <MudStack Spacing="2">
                             @foreach (var issue in ChromeState.BoardCompatibilityReport!.Issues.Take(3))
                             {
@@ -117,7 +117,7 @@
                     <MudTabPanel data-testid="planning-board-setup-tab">
                         <TabContent>
                             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="text-nowrap">
-                                <MudIcon Icon="@Icons.Material.Filled.Warning"
+                                <MudIcon Icon="@AppIcons.Warning"
                                          Color="Color.Warning"
                                          Size="Size.Small" />
                                 <span>Board setup</span>
