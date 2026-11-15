@@ -22,6 +22,10 @@ indent_size = 2
 [*.{json,yml,yaml}]
 indent_size = 2
 
+# Dev Containers rewrites this lockfile; its JSON writer omits a final newline
+[.devcontainer/devcontainer-lock.json]
+insert_final_newline = false
+
 # Trailing spaces are significant in Markdown (line-break syntax)
 [*.md]
 trim_trailing_whitespace = false
