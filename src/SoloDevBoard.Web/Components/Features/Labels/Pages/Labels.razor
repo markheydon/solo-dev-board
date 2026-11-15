@@ -24,7 +24,7 @@
 
             @if (isLoadingRepositories)
             {
-                <MudStack Spacing="2" aria-live="polite" role="status" data-testid="labels-repositories-loading-state">
+                <MudStack Spacing="2" aria-live="polite" role="status" data-testid="labels-repository-selector-loading-state">
                     <MudSkeleton Height="56px" Animation="Animation.Wave" />
                     <MudSkeleton Height="36px" Width="220px" Animation="Animation.Wave" />
                     <MudSkeleton Height="20px" Width="340px" Animation="Animation.Wave" />
@@ -140,7 +140,7 @@
                     <MudPaper Class="pa-4" Outlined="true" aria-label="Labels results" data-testid="labels-results-region">
                         @if (ShowLoadingState)
                         {
-                            <MudStack Spacing="2" aria-live="polite" role="status" data-testid="@(isLoadingRepositories ? "labels-repositories-loading-state" : "labels-loading-state")">
+                            <MudStack Spacing="2" aria-live="polite" role="status" data-testid="labels-loading-state">
                                 <MudSkeleton Height="48px" Animation="Animation.Wave" />
                                 <MudSkeleton Height="200px" Animation="Animation.Wave" />
                             </MudStack>

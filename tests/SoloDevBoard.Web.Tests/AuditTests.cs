@@ -19,7 +19,7 @@ public sealed class AuditTests
     private readonly IRepositoryService _repositoryService = Substitute.For<IRepositoryService>();
 
     [Fact]
-    public async Task Audit_InitialRender_ShowsPageHeaderAndReloadAction()
+    public async Task Audit_InitialRender_ShowsPageHeaderAndRepositoryLoadingSkeleton()
     {
         // Arrange
         var tcs = new TaskCompletionSource<IReadOnlyList<RepositoryDto>>();
