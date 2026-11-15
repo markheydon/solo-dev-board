@@ -56,22 +56,44 @@ The dev container uses Aspire feature v3, `dev-agent-tools`, and `cursor-cli` (s
 
 ## AppHost parameters and secrets
 
-- The AppHost defines these parameters (see `src/SoloDevBoard.AppHost/AppHost.cs`): `hosted-sign-in-enabled`, `gh-pat` (secret), `gh-app-client-id`, `gh-app-client-secret` (secret), `hosted-admission-enabled`, `allowed-user-logins`, `allowed-org-logins`. Non-secret defaults live in `src/SoloDevBoard.AppHost/appsettings.json` (PAT mode by default).
-- **Cloud Secrets → Aspire parameters mapping.** The parameter names contain hyphens, and a direct `Parameters__<name>` env var is impossible because environment-variable names cannot contain hyphens (the Cursor Secrets panel rejects them with a sync `400`). Instead, add Cursor secrets with hyphen-free names and let the startup update script map them into AppHost user secrets:
+The AppHost binds authentication from **AppHost** configuration (`src/SoloDevBoard.AppHost/AppHost.cs`), not from `SoloDevBoard.App` `appsettings`. Secret parameters are `gh-pat` and `gh-app-client-secret`; non-secret parameters include `hosted-sign-in-enabled`, `gh-app-client-id`, admission allow-lists, and (Path B only) `auth-secrets-vault-name` / `auth-secrets-vault-resource-group`. Shipped defaults live in `src/SoloDevBoard.AppHost/appsettings.json` (PAT mode by default).
 
-  | Cursor secret (hyphen-free) | AppHost parameter |
-  |---|---|
-  | `SDB_GH_PAT` | `gh-pat` |
-  | `SDB_GH_APP_CLIENT_ID` | `gh-app-client-id` |
-  | `SDB_GH_APP_CLIENT_SECRET` | `gh-app-client-secret` |
-  | `SDB_HOSTED_SIGN_IN_ENABLED` | `hosted-sign-in-enabled` |
-  | `SDB_HOSTED_ADMISSION_ENABLED` | `hosted-admission-enabled` |
-  | `SDB_ALLOWED_USER_LOGINS` | `allowed-user-logins` |
-  | `SDB_ALLOWED_ORG_LOGINS` | `allowed-org-logins` |
+Two paths matter in Cloud VMs and Codespaces:
 
-  The update script runs `dotnet user-secrets set "Parameters:<name>" "$SDB_…"` for each variable that is set (guarded, idempotent), so provided secrets are picked up automatically on every session. That writes to the same AppHost user-secrets store as `aspire secret set Parameters:<name> "…"` (see `UserSecretsId` on `SoloDevBoard.AppHost.csproj`); Codespaces and dev containers use `aspire secret set` in `.devcontainer/map-apphost-secrets.sh` for consistency with Aspire CLI conventions. Values persist in AppHost user secrets; removing a Cursor secret does not clear a previously-mapped value, so run `aspire secret delete Parameters:<name> --apphost src/SoloDevBoard.AppHost` (or `dotnet user-secrets remove "Parameters:<name>" --project src/SoloDevBoard.AppHost`) if you need to clear one.
-- When no `SDB_*` secrets are provided, the persisted AppHost user secrets fall back to placeholder values (`gh-pat` = the ambient `gh` installation token, `gh-app-client-secret` = `-`) so `aspire start` still boots. When `SDB_GH_PAT` is set, the update script maps it into `Parameters:gh-pat`, giving the app a genuine user PAT for full functionality.
-- **Path B (optional):** omit `SDB_*` secrets, configure `auth-secrets-vault-name` / `auth-secrets-vault-resource-group` in `appsettings.Development.json`, run `az login`, and use a shared dev Key Vault. See [docs/azure-key-vault-setup.md](../docs/azure-key-vault-setup.md) and [getting-started — Path B](../docs/getting-started.md#path-b-shared-development-key-vault).
+| Path | Where `gh-pat` / client secret come from | Typical audience |
+| --- | --- | --- |
+| **A — local secrets** | AppHost user secrets or dashboard (`aspire secret set`) | Solo developers, agents without Azure |
+| **B — shared dev Key Vault** | Azure Key Vault via Aspire `AsExisting` + `GetSecret` | Maintainers across machines, Codespaces, Cursor Cloud |
+
+Path B is documented in [docs/azure-key-vault-setup.md](../docs/azure-key-vault-setup.md) and [getting-started — Path B](../docs/getting-started.md#path-b-shared-development-key-vault). **Precedence on current `main`:** if AppHost user secrets hold a *real* value for `Parameters:gh-pat` (anything other than `-`), local **Path A wins** and Key Vault is not used for the PAT, even when vault name and resource group are configured. The same applies to `gh-app-client-secret` in hosted sign-in mode. Stale repo or Cursor secrets that map into those parameters therefore override fresher secrets in the dev vault until you clear or replace them with placeholders.
+
+### Path B in Cloud and Codespaces (recommended for maintainers)
+
+1. Copy vault settings into **gitignored** `src/SoloDevBoard.AppHost/appsettings.Development.json` (start from `appsettings.Development.json.example`). Include `auth-secrets-vault-name` and `auth-secrets-vault-resource-group`, plus mode and allow-lists as needed. Do not put PAT or client secret values in that file.
+2. In the same shell as `aspire start`, set `Azure__SubscriptionId` (and `Azure__Location` to match the vault region). Run `az login` with an identity that has **Key Vault Secrets User** on the dev vault.
+3. Set Aspire **placeholders** only: `aspire secret set Parameters:gh-pat "-"` and `aspire secret set Parameters:gh-app-client-secret "-"` (see the Key Vault setup guide). Real credentials live in the vault secret names `gh-pat` and `gh-app-client-secret`.
+4. **Stop mapping legacy Cloud secrets into secret parameters.** Remove `SDB_GH_PAT` and `SDB_GH_APP_CLIENT_SECRET` from Cursor Cloud secrets and from GitHub Codespaces repository secrets if you use Path B. Codespaces still runs `.devcontainer/map-apphost-secrets.sh` on create; any `SDB_GH_PAT` present rewrites `Parameters:gh-pat` and forces Path A. If user secrets already contain an old PAT, delete them (`aspire secret delete Parameters:gh-pat --apphost src/SoloDevBoard.AppHost`) after removing the repo secret, then set `-` and rebuild or remap.
+5. Confirm with `aspire describe`: `gh-pat` / `gh-app-client-secret` parameters should be **Running** with placeholder `-`; `app` should start using vault-backed env injection when `needVaultForPat` or `needVaultForClientSecret` applies.
+
+Hosted sign-in on Path B still requires non-secret parameters locally (`hosted-sign-in-enabled`, `gh-app-client-id`, allow-lists). Only the two secret parameters move to Key Vault.
+
+### Path A — Cursor and Codespaces secret mapping (legacy)
+
+Parameter names contain hyphens, so a direct `Parameters__<name>` environment variable is awkward (Cursor Secrets rejects hyphenated names with sync `400`). Hyphen-free **Cursor Cloud** secrets and **Codespaces** repository secrets (`SDB_*`) are mapped into AppHost user secrets on session or container create:
+
+| Cloud secret (hyphen-free) | AppHost parameter | Path B |
+| --- | --- | --- |
+| `SDB_GH_PAT` | `gh-pat` | **Do not set** (use vault) |
+| `SDB_GH_APP_CLIENT_SECRET` | `gh-app-client-secret` | **Do not set** (use vault) |
+| `SDB_GH_APP_CLIENT_ID` | `gh-app-client-id` | OK (non-secret) |
+| `SDB_HOSTED_SIGN_IN_ENABLED` | `hosted-sign-in-enabled` | OK |
+| `SDB_HOSTED_ADMISSION_ENABLED` | `hosted-admission-enabled` | OK |
+| `SDB_ALLOWED_USER_LOGINS` | `allowed-user-logins` | OK |
+| `SDB_ALLOWED_ORG_LOGINS` | `allowed-org-logins` | OK |
+
+Cursor startup maps via `dotnet user-secrets set "Parameters:<name>" …` when each `SDB_*` variable is set. Codespaces and dev containers use `aspire secret set` in `.devcontainer/map-apphost-secrets.sh`. Both write the same AppHost user-secrets store (`UserSecretsId` on `SoloDevBoard.AppHost.csproj`). Values persist: removing a Cloud secret does not clear a previously mapped value; use `aspire secret delete` or `dotnet user-secrets remove` when migrating to Path B.
+
+When no `SDB_*` secrets are provided and Path B is not configured, behaviour depends on what is already in user secrets. An old mapped PAT may still be present and can be invalid even when the dev vault has a newer token.
 
 ---
 
@@ -87,7 +109,8 @@ Each `@cursor` mention on an **issue** starts a new session. Follow-ups that sho
 
 ## GitHub authentication caveat (important)
 
-- In the default PAT mode the app **fails fast at startup** unless a token is configured, and it resolves your login from the token via `/user` unless `GitHubAuth:OwnerLogin` is set.
-- All data-driven pages (Audit Dashboard, Repositories, Label Manager, Migration) list repositories through the authenticated `/user/repos` endpoint. This needs a **GitHub user PAT** with `repo`, `read:org`, `workflow`, and `read:project` scopes.
-- When `SDB_GH_PAT` holds a genuine user PAT, the login auto-resolves from the token via `/user`, no App-level `GitHubAuth:OwnerLogin` override is required, and all data-driven pages work end-to-end.
-- Fallback caveat: the ambient `gh` CLI token in the VM is often a GitHub App **installation** token — it can reach repo-scoped endpoints (`/repos/{owner}/{repo}/...`) but returns `403 "Resource not accessible by integration"` on `/user` and `/user/repos`. If `SDB_GH_PAT` is removed and `gh-pat` falls back to that installation token, the app still boots but **cannot** exercise the repo-list flows; set `GitHubAuth:OwnerLogin` on `src/App/SoloDevBoard.App` (or restore a real user PAT via `SDB_GH_PAT`) to unblock demos.
+- In PAT mode the app **fails fast at startup** when the configured token cannot pass `GET /user` (invalid, expired, or wrong token type). Startup resolves your login from that probe unless `GitHubAuth:OwnerLogin` is set.
+- Data-driven pages (Audit Dashboard, Repositories, Label Manager, Migration) call `/user/repos` and need a **GitHub user PAT** with `repo`, `read:org`, `workflow`, and `read:project` scopes (or hosted sign-in with equivalent OAuth access).
+- **Path A:** a genuine user PAT in `Parameters:gh-pat` (for example via `SDB_GH_PAT`) supplies `GitHubAuth__PersonalAccessToken` directly.
+- **Path B:** the PAT comes from Key Vault secret `gh-pat` when local parameters are placeholders (`-`) and vault metadata is configured. If startup fails with `401 Bad credentials` while the vault has a good token, check for a **local override** (legacy `SDB_GH_PAT`, Codespaces secrets, or an old user-secrets value) before rotating the vault.
+- **Installation token caveat:** the ambient `gh` CLI token is often a GitHub App **installation** token. It may work for repo-scoped URLs but returns `403` on `/user` and `/user/repos`. Do not rely on it as `gh-pat` for full app flows unless you set `GitHubAuth:OwnerLogin` on the App project as a deliberate dev shortcut.
