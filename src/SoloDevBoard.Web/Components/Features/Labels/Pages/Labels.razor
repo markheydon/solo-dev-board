@@ -3,8 +3,10 @@
 <PageTitle>Label Manager</PageTitle>
 
 <MudStack Spacing="3">
-    <MudText Typo="Typo.h4">Label Manager</MudText>
-    <MudText Typo="Typo.body1">View labels across selected repositories and organise taxonomy and synchronisation workflows by mode.</MudText>
+    <MudStack Spacing="1">
+        <MudText Typo="Typo.h5">Label Manager</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">View labels across selected repositories and organise taxonomy and synchronisation workflows by mode.</MudText>
+    </MudStack>
 
     <MudPaper Class="pa-4" Elevation="1" data-testid="repository-selector-region">
         <MudStack Spacing="2">
@@ -22,9 +24,10 @@
 
             @if (isLoadingRepositories)
             {
-                <MudStack AlignItems="AlignItems.Center" Spacing="1" aria-live="polite" role="status">
-                    <MudProgressCircular Indeterminate="true" Color="Color.Primary" aria-label="Loading repositories" />
-                    <MudText Typo="Typo.body2">Loading repositories...</MudText>
+                <MudStack Spacing="2" aria-live="polite" role="status" data-testid="labels-repository-selector-loading-state">
+                    <MudSkeleton Height="56px" Animation="Animation.Wave" />
+                    <MudSkeleton Height="36px" Width="220px" Animation="Animation.Wave" />
+                    <MudSkeleton Height="20px" Width="340px" Animation="Animation.Wave" />
                 </MudStack>
             }
             else if (!string.IsNullOrWhiteSpace(errorMessage) && hasRepositoryLoadFailure)
@@ -44,9 +47,9 @@
             }
             else if (availableRepositories.Count == 0)
             {
-                <MudStack Spacing="1" aria-live="polite" data-testid="label-manager-repositories-empty-state">
-                    <MudText Typo="Typo.body2">No active repositories are available for label analysis.</MudText>
-                </MudStack>
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" aria-live="polite" data-testid="label-manager-repositories-empty-state">
+                    No active repositories are available for label analysis.
+                </MudAlert>
             }
             else
             {
@@ -90,7 +93,7 @@
                         </MudStack>
                     }
 
-                    <MudStack Row="true" Spacing="1" data-testid="labels-action-strip">
+                    <MudToolBar Gutters="false" Dense="true" Class="pl-0 gap-2 flex-wrap" data-testid="labels-action-strip">
                         <MudButton Variant="Variant.Filled"
                                    Color="Color.Primary"
                                    data-testid="new-label-button"
@@ -114,7 +117,7 @@
                                    OnClick="ShowBulkDeleteConfirmDialogAsync">
                             Delete
                         </MudButton>
-                    </MudStack>
+                    </MudToolBar>
 
                     @if (isBulkDeletingLabels)
                     {
@@ -137,17 +140,17 @@
                     <MudPaper Class="pa-4" Outlined="true" aria-label="Labels results" data-testid="labels-results-region">
                         @if (ShowLoadingState)
                         {
-                            <MudStack AlignItems="AlignItems.Center" Spacing="1" aria-live="polite" role="status" data-testid="@(isLoadingRepositories ? "labels-repositories-loading-state" : "labels-loading-state")">
-                                <MudProgressCircular Indeterminate="true" Color="Color.Primary" aria-label="Loading labels" />
-                                <MudText Typo="Typo.body2">@(isLoadingRepositories ? "Loading repositories..." : "Loading labels...")</MudText>
+                            <MudStack Spacing="2" aria-live="polite" role="status" data-testid="labels-loading-state">
+                                <MudSkeleton Height="48px" Animation="Animation.Wave" />
+                                <MudSkeleton Height="200px" Animation="Animation.Wave" />
                             </MudStack>
                         }
                         else if (hasLoadedLabels && filteredRows.Count == 0)
                         {
-                            <MudStack Spacing="1" aria-live="polite" data-testid="labels-empty-state">
-                                <MudText Typo="Typo.h6">No labels found</MudText>
+                            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" aria-live="polite" data-testid="labels-empty-state">
+                                <MudText Typo="Typo.subtitle2">No labels found</MudText>
                                 <MudText Typo="Typo.body2">No labels were returned for the selected repositories.</MudText>
-                            </MudStack>
+                            </MudAlert>
                         }
                         else if (hasLoadedLabels)
                         {

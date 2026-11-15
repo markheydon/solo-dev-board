@@ -9,6 +9,11 @@ namespace SoloDevBoard.E2E.Tests.Tests;
 [Trait("Category", "E2E")]
 public sealed class LabelsTests : SoloDevBoardPageTest
 {
+    private async Task ExpectRepositorySelectorFinishedLoadingAsync()
+    {
+        var repositorySelector = Page.GetByTestId("repository-selector-region");
+        await Expect(repositorySelector.GetByTestId("labels-repository-selector-loading-state")).ToBeHiddenAsync(new() { Timeout = 15_000 });
+    }
     /// <summary>
     /// Verifies the page renders taxonomy controls before any repository data is available.
     /// </summary>
@@ -33,8 +38,7 @@ public sealed class LabelsTests : SoloDevBoardPageTest
     {
         await Page.GotoAsync("/labels");
 
-        var repositorySelector = Page.GetByTestId("repository-selector-region");
-        await Expect(repositorySelector.GetByText("Loading repositories...")).ToBeHiddenAsync(new() { Timeout = 15_000 });
+        await ExpectRepositorySelectorFinishedLoadingAsync();
         await Expect(Page.GetByTestId("labels-reload-from-github-button")).ToBeVisibleAsync();
         await Expect(Page.GetByRole(AriaRole.Button, new() { Name = "Reload from GitHub" })).ToBeVisibleAsync();
     }
@@ -47,8 +51,7 @@ public sealed class LabelsTests : SoloDevBoardPageTest
     {
         await Page.GotoAsync("/labels");
 
-        var repositorySelector = Page.GetByTestId("repository-selector-region");
-        await Expect(repositorySelector.GetByText("Loading repositories...")).ToBeHiddenAsync(new() { Timeout = 15_000 });
+        await ExpectRepositorySelectorFinishedLoadingAsync();
         await Expect(Page.GetByTestId("label-manager-feedback-region")).ToBeVisibleAsync();
         await Expect(Page.GetByText(new Regex("GitHub API request failed", RegexOptions.IgnoreCase))).ToBeVisibleAsync();
         await Expect(Page.GetByRole(AriaRole.Button, new() { Name = "Try loading repositories again" })).ToBeVisibleAsync();
@@ -105,8 +108,7 @@ public sealed class LabelsTests : SoloDevBoardPageTest
     {
         await Page.GotoAsync("/labels");
 
-        var repositorySelector = Page.GetByTestId("repository-selector-region");
-        await Expect(repositorySelector.GetByText("Loading repositories...")).ToBeHiddenAsync(new() { Timeout = 15_000 });
+        await ExpectRepositorySelectorFinishedLoadingAsync();
         await Page.GetByRole(AriaRole.Tab, new() { Name = "Recommended taxonomy" }).ClickAsync();
         await Expect(Page.GetByTestId("preview-taxonomy-button")).ToBeVisibleAsync();
         await Expect(Page.GetByTestId("remove-labels-outside-taxonomy-checkbox")).ToBeVisibleAsync();

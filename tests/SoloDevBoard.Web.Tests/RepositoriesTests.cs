@@ -50,9 +50,27 @@ public sealed class RepositoriesTests
         var cut = ctx.Render<Repositories>();
 
         // Assert
-        Assert.Contains("Loading repositories", cut.Markup);
+        Assert.NotEmpty(cut.FindAll("[data-testid='repositories-loading-state'] .mud-skeleton"));
         Assert.DoesNotContain("Unable to load repositories", cut.Markup);
         Assert.DoesNotContain("No repositories found", cut.Markup);
+    }
+
+    [Fact]
+    public async Task Repositories_InitialRender_ShowsPageHeaderAndToolbar()
+    {
+        // Arrange
+        var tcs = new TaskCompletionSource<IReadOnlyList<RepositoryDto>>();
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>()).Returns(tcs.Task);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Repositories>();
+
+        // Assert
+        Assert.Contains("mud-typography-h5", cut.Markup);
+        Assert.Contains("Repository command strip", cut.Markup);
+        Assert.Contains("Reload from GitHub", cut.Markup);
     }
 
     [Fact]

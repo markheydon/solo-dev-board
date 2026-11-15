@@ -2,10 +2,12 @@
 @using SoloDevBoard.Application.Services.Planning
 
 <MudStack Spacing="3" data-testid="planning-daily-focus-page">
-    <MudText Typo="Typo.h5">Daily Focus</MudText>
-    <MudText Typo="Typo.body1">
-        Occupancy and active load are for the selected planning board. Recommended today ranks unblocked work from all included repositories by default, or from the selected planning board when you turn on the option below. Stalled Up Next items are shown when they exceed the stall threshold. Pull requests awaiting review for @stallDaysThreshold or more days are listed below.
-    </MudText>
+    <MudStack Spacing="1">
+        <MudText Typo="Typo.h5">Daily Focus</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            See board occupancy, recommended work for today, stalled Up Next items, and pull requests awaiting review.
+        </MudText>
+    </MudStack>
 
     @if (ChromeState is null)
     {
@@ -17,9 +19,10 @@
     }
     else if (ChromeState.IsLoading)
     {
-        <MudText Typo="Typo.body2" data-testid="planning-daily-focus-loading">
-            Loading planning boards, occupancy, and recommendations.
-        </MudText>
+        <MudStack Spacing="2" data-testid="planning-daily-focus-loading">
+            <MudSkeleton Height="48px" Animation="Animation.Wave" />
+            <MudSkeleton Height="160px" Animation="Animation.Wave" />
+        </MudStack>
     }
     else if (!ChromeState.HasPlanningBoardSelected)
     {

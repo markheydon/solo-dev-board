@@ -31,7 +31,7 @@ public sealed class LabelsTests
         var cut = ctx.Render<Labels>();
 
         // Assert
-        Assert.Contains("Loading repositories", cut.Markup);
+        Assert.NotEmpty(cut.FindAll("[data-testid='labels-repository-selector-loading-state'] .mud-skeleton"));
     }
 
     [Fact]

@@ -3,9 +3,11 @@
 @implements IDisposable
 
 <MudStack Spacing="3" data-testid="planning-repos-page">
-    <MudText Typo="Typo.h5">Repo Management</MudText>
-    <MudText Typo="Typo.body1">
-        Control which repositories feed PM recommendations and set planning thresholds.
+    <MudStack Spacing="1">
+        <MudText Typo="Typo.h5">Repo Management</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">Control repository participation and planning thresholds for recommendations.</MudText>
+    </MudStack>
+    <MudText Typo="Typo.body2">
         Board occupancy on the selected planning board still counts mapped Issue and Pull Request cards.
     </MudText>
 

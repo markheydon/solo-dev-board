@@ -29,7 +29,7 @@ public sealed class BoardRulesTests
         var cut = ctx.Render<BoardRules>();
 
         // Assert
-        Assert.Contains("Loading repositories", cut.Markup);
+        Assert.NotEmpty(cut.FindAll("[data-testid='board-rules-repositories-loading-state'] .mud-skeleton"));
     }
 
     [Fact]

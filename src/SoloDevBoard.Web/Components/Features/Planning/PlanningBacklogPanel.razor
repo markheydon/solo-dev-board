@@ -2,10 +2,12 @@
 @using SoloDevBoard.Application.Services.Planning
 
 <MudStack Spacing="3" data-testid="planning-backlog-page">
-    <MudText Typo="Typo.h5">Backlog Review</MudText>
-    <MudText Typo="Typo.body1">
-        Open issues and pull requests from included repositories, grouped by urgency.
-        Rows open GitHub in a new tab. Adding items to Up Next happens on the Planning tab.
+    <MudStack Spacing="1">
+        <MudText Typo="Typo.h5">Backlog Review</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">Review open issues and pull requests from included repositories, grouped by urgency.</MudText>
+    </MudStack>
+    <MudText Typo="Typo.body2">
+        Rows open GitHub in a new tab. Adding items to Up Next happens on the Iteration Planning tab.
     </MudText>
 
     @if (ChromeState is null)
