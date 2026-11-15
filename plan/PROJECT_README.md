@@ -21,17 +21,17 @@ SoloDevBoard provides a single pane of glass for solo developers managing GitHub
 
 ### Current focus
 
-Promote the next capability from the ice-box or unmilestoned backlog using **GitHub Spec Kit** (`specs/<feature>/`, `/speckit-specify` → plan → tasks → implement). See [plan/SPEC_KIT_MIGRATION.md](https://github.com/markheydon/solo-dev-board/blob/main/plan/SPEC_KIT_MIGRATION.md). Do **not** mint new Epic → Feature → Story trees via Copilot-era planning prompts. Ice-box items stay unmilestoned until promoted from [plan/BACKLOG.md](https://github.com/markheydon/solo-dev-board/blob/main/plan/BACKLOG.md). Do not start platform-blocked [#293](https://github.com/markheydon/solo-dev-board/issues/293), [#391](https://github.com/markheydon/solo-dev-board/issues/391), or [#498](https://github.com/markheydon/solo-dev-board/issues/498) without an explicit decision.
+Promote the next capability from the ice box using **GitHub Spec Kit** (`specs/<feature>/`, `/speckit-specify` → plan → tasks → implement). See [plan/SPEC_KIT_MIGRATION.md](https://github.com/markheydon/solo-dev-board/blob/main/plan/SPEC_KIT_MIGRATION.md). Do **not** mint new Epic → Feature → Story trees via Copilot-era planning prompts. Ice-box items stay unmilestoned until you promote the GitHub issue. Do not start platform-blocked [#293](https://github.com/markheydon/solo-dev-board/issues/293), [#391](https://github.com/markheydon/solo-dev-board/issues/391), or [#498](https://github.com/markheydon/solo-dev-board/issues/498) without an explicit decision.
 
 ### Release history
 
-See [plan/BACKLOG.md](https://github.com/markheydon/solo-dev-board/blob/main/plan/BACKLOG.md) for the milestone table.
+Shipped releases are in [plan/RELEASE_PLAN.md](https://github.com/markheydon/solo-dev-board/blob/main/plan/RELEASE_PLAN.md). Open work is on GitHub Issues, not in a markdown queue.
 
 ### Key resources
 
 - [Repository](https://github.com/markheydon/solo-dev-board)
-- [Backlog index](https://github.com/markheydon/solo-dev-board/blob/main/plan/BACKLOG.md)
 - [GitHub Issues](https://github.com/markheydon/solo-dev-board/issues)
 - [Milestones](https://github.com/markheydon/solo-dev-board/milestones)
+- [Release plan](https://github.com/markheydon/solo-dev-board/blob/main/plan/RELEASE_PLAN.md)
 - [User Guide](https://solodevboard.com/docs/)
 ```

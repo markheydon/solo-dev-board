@@ -7,7 +7,7 @@ Lean governance, operator notes, and UI wireframes for SoloDevBoard. **Open work
 | Doc | Purpose |
 |-----|---------|
 | [SCOPE.md](SCOPE.md) | In-scope and out-of-scope product boundaries |
-| [BACKLOG.md](BACKLOG.md) | **Canonical** milestone and roadmap index |
+| [BACKLOG.md](BACKLOG.md) | Pointer to GitHub Issues, Project #8, and milestones (not a work queue) |
 | [RELEASE_PLAN.md](RELEASE_PLAN.md) | Versioning, [release runbook](RELEASE_PLAN.md#release-runbook), historical release notes |
 | [SPEC_KIT_MIGRATION.md](SPEC_KIT_MIGRATION.md) | Spec Kit adoption — **default for new features** since `v1.4.0` |
 

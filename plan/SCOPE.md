@@ -104,7 +104,7 @@ The following are explicitly **not** in scope for the current version of Solo De
 > When this project's scope changes — whether a feature is added, removed, or modified — follow these steps:
 >
 > 1. Update the **In Scope** or **Out of Scope** sections of this file to reflect the change.
-> 2. Update [`plan/BACKLOG.md`](BACKLOG.md) and milestones if release targeting changes; declare a new milestone only per [DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md).
+> 2. If release targeting changes, update the GitHub milestone. Declare a new milestone only per [ADR-0027](../adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md). Do not copy the change into [`plan/BACKLOG.md`](BACKLOG.md).
 > 3. Create or update GitHub Issues for the scope change and sync Project #8.
 > 4. Create a GitHub Issue for the scope change using the `type/feature` or `type/chore` template.
 > 5. If the change affects the architecture, add or update an ADR under `adr/` and update [`CONVENTIONS.md`](../CONVENTIONS.md) or [`AGENTS.md`](../AGENTS.md) when cross-cutting.

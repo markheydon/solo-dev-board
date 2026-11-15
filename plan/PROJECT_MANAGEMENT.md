@@ -43,7 +43,7 @@ Implementation **phases** in [`archive/IMPLEMENTATION_PLAN.md`](archive/IMPLEMEN
 | **Shipped increments** (`v1.4` chrome [#526](https://github.com/markheydon/solo-dev-board/issues/526) and earlier milestones) | **Historical:** Issues + `plan/archive/` bundles. Do not revive Copilot-era prompts to mint new children. |
 | **Now (`v1.4.0` tagged)** | **Spec Kit default** for new or promoted features: `specs/<feature>/` and the `/speckit-*` workflow. Avoid prompt-driven Epic → Feature → Story explosion; prefer one spec per capability and lightweight GitHub tracking. |
 
-Full cut-over rules: [`SPEC_KIT_MIGRATION.md`](SPEC_KIT_MIGRATION.md). Do not declare a separate **`v1.5`** ([DEC-027](adr/adr-0027-post-1-0-milestone-and-work-item-hierarchy.md)).
+Full cut-over rules: [`SPEC_KIT_MIGRATION.md`](SPEC_KIT_MIGRATION.md). Branding shipped inside `v1.4`; do not open a separate branding milestone ([`RELEASE_PLAN.md`](RELEASE_PLAN.md)).
 
 ---
 
@@ -173,7 +173,7 @@ SoloDevBoard uses a single **GitHub Projects (v2)** board called "SoloDevBoard".
 
 ## GitHub Issues as Source of Truth
 
-GitHub Issues are the **canonical** store for all open, deferred, and in-progress work. [`plan/BACKLOG.md`](BACKLOG.md) is a slim roadmap index linking to Issues, milestones, and Project #8 — it is not a living work queue.
+GitHub Issues are the **canonical** store for all open, deferred, and in-progress work. [`plan/BACKLOG.md`](BACKLOG.md) only points at Issues, Project #8, and milestones. Do not copy open issues or milestone status into that file.
 
 - When new work is identified, create or update a GitHub Issue and sync Project #8.
 - When an issue is closed, no markdown backlog tick-off is required.

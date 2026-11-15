@@ -120,7 +120,7 @@ End-user docs ([`website/content/docs/`](website/content/docs/)) and Playwright 
 | End-user behaviour change | User guide pages and matching Playwright tests |
 | New developer / operator guidance | `docs/` |
 | New decision | `adr/` |
-| Scope change | `plan/SCOPE.md`, `plan/BACKLOG.md` |
+| Scope change | `plan/SCOPE.md`, and a GitHub issue when the work changes |
 | New env variable | `docs/getting-started.md`, `docs/deployment.md`, `src/SoloDevBoard.AppHost/README.md` |
 | MudBlazor version bump | `.agents/skills/mudblazor/` |
 | Theme tokens, shell icons, or allowed `.razor.css` exceptions | `CONVENTIONS.md` (Blazor), `.agents/skills/mudblazor/references/THEMING.md`, theme fallback tests when hex changes |

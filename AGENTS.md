@@ -39,14 +39,14 @@ Onboard **.NET Aspire** using current official documentation (not copied Aspire 
 ## Task Routing
 
 - **Code** (`src/`, `tests/`): [`CONVENTIONS.md`](CONVENTIONS.md).
-- **`v1.4` product chrome and branding** ([#526](https://github.com/markheydon/solo-dev-board/issues/526) tree, including [#397](https://github.com/markheydon/solo-dev-board/issues/397)): normal Plan mode and [`plan/product-chrome-ui-quality/`](plan/product-chrome-ui-quality/README.md); **do not** use Spec Kit as the planning gate; **do not** mint new child issues via planning prompts ([`plan/SPEC_KIT_MIGRATION.md`](plan/SPEC_KIT_MIGRATION.md)).
-- **Spec Kit features** (`specs/<feature>/`): default for **new work after `v1.4.0`**; Spec Kit workflow and [constitution](.specify/memory/constitution.md); product code still follows `CONVENTIONS.md` and `implementation-guardrails`.
+- **New product work:** Spec Kit (`specs/<feature>/`) and the [constitution](.specify/memory/constitution.md). Product code still follows `CONVENTIONS.md` and `implementation-guardrails`. Do not mint Epic → Feature → Story trees from planning prompts ([`plan/SPEC_KIT_MIGRATION.md`](plan/SPEC_KIT_MIGRATION.md)).
+- **Shipped increments** (including `v1.4` chrome and branding): historical issues and [`plan/archive/`](plan/archive/README.md). Do not reopen those bundles or mint new children unless the user explicitly asks.
 - **Documentation** (`**/*.md` except `adr/`): `project-documentation` skill.
-- **ADRs** (`adr/*.md`): ADR skill only.
+- **ADRs** (`adr/*.md`): ADR skill only. Record the decision. Do not append release status to an accepted ADR.
 
 ## Spec-driven features (Spec Kit)
 
-Feature intent lives under `specs/<feature>/` (`spec.md`, `plan.md`, `tasks.md`, and related artefacts). **Not used for `v1.4` delivery** (chrome or branding) unless the user explicitly overrides. Resolve the active feature directory from [`.specify/feature.json`](.specify/feature.json) or:
+Feature intent lives under `specs/<feature>/` (`spec.md`, `plan.md`, `tasks.md`, and related artefacts). Shipped pre-Spec Kit increments stay in GitHub history and [`plan/archive/`](plan/archive/README.md). Do not start a Spec Kit pass for them unless the user asks for a post-ship archival spec. Resolve the active feature directory from [`.specify/feature.json`](.specify/feature.json) or:
 
 ```bash
 .specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks

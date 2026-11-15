@@ -163,7 +163,7 @@ When submitting a pull request that changes code, ensure related documentation i
 | New end-user feature | `website/content/docs/<feature>.md`, `website/content/_index.md` (and docs landing), GitHub Issue + Project #8 sync |
 | New developer / operator guidance | `docs/<topic>.md` and `docs/README.md` as needed |
 | New decision | New file under `adr/` (see `create-architectural-decision-record` skill) |
-| Scope change | `plan/SCOPE.md`, `plan/BACKLOG.md` |
+| Scope change | `plan/SCOPE.md`, and a GitHub issue when the work changes |
 | New env variable | `docs/getting-started.md`, `src/SoloDevBoard.AppHost/README.md`, `docs/deployment.md` |
 | Tagged release | [`CHANGELOG.md`](CHANGELOG.md) and [`plan/RELEASE_PLAN.md`](plan/RELEASE_PLAN.md) |
 

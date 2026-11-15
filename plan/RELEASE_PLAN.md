@@ -1,6 +1,6 @@
 # SoloDevBoard — Release Plan
 
-**Current milestone and open work:** see [`BACKLOG.md`](BACKLOG.md) (canonical index). This file covers versioning, release process, and historical release scope.
+**Open work:** [GitHub Issues](https://github.com/markheydon/solo-dev-board/issues). **Which release is open:** [milestones](https://github.com/markheydon/solo-dev-board/milestones). This file covers versioning, the release runbook, and historical release scope.
 
 ## Versioning Strategy
 
@@ -115,7 +115,7 @@ Application version numbers are calculated automatically at build time by [MinVe
 - OSS catalogue identification ([#440](https://github.com/markheydon/solo-dev-board/issues/440)) — **complete**
 - Post-release refinements: Label Manager bulk delete and keep-`area/*` ([#444](https://github.com/markheydon/solo-dev-board/issues/444), [#446](https://github.com/markheydon/solo-dev-board/issues/446)), Iteration stall/capacity UX ([#445](https://github.com/markheydon/solo-dev-board/issues/445)), snackbar standardisation ([#465](https://github.com/markheydon/solo-dev-board/issues/465)), migration keep-`area/*` ([#464](https://github.com/markheydon/solo-dev-board/issues/464), [#471](https://github.com/markheydon/solo-dev-board/issues/471)), feedback region cleanup ([#473](https://github.com/markheydon/solo-dev-board/issues/473)) — **complete**
 
-Platform-blocked and ice-box items are listed in [`BACKLOG.md`](BACKLOG.md); they are not repeated here.
+Platform-blocked and ice-box items stay on GitHub Issues; they are not repeated here.
 
 **Status:** Complete (2026-08-31). Tagged [`v1.1.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.1.0). Production CD and GitHub Pages publish from `v*` tags.
 

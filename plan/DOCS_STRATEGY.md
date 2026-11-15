@@ -50,7 +50,7 @@ docs/                           # Repository / developer / operator docs (not Pa
 plan/
 ├── README.md                   # Index of maintainer / PM docs
 ├── SCOPE.md
-├── BACKLOG.md                  # Canonical roadmap index
+├── BACKLOG.md                  # Pointer to Issues (not a work queue)
 ├── RELEASE_PLAN.md
 ├── wireframes/                 # UI planning references
 ├── archive/product-chrome-ui-quality/  # v1.4 delivery bundle (shipped; archived)

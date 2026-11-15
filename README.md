@@ -102,7 +102,7 @@ solo-dev-board/
 │   ├── SCOPE.md                # Project scope and constraints
 │   ├── DECISIONS.md            # Retired pointer to adr/
 │   ├── README.md               # Index of plan/ docs
-│   ├── BACKLOG.md              # Canonical roadmap index (Issues are source of truth)
+│   ├── BACKLOG.md              # Pointer to Issues (not a work queue)
 │   ├── archive/                # Historical plans and Copilot-era bundles
 │   ├── RELEASE_PLAN.md         # Versioning and release process
 │   ├── LABEL_STRATEGY.md       # GitHub label taxonomy

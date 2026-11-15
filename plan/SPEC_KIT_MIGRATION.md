@@ -89,7 +89,7 @@ There is no `v1.5` milestone. Do not declare one for branding.
 
 ### Step 4 — Update agent gates
 
-- [ ] Update [`AGENTS.md`](../AGENTS.md) and skills — **deferred** (out of scope for release doc PR).
+- [x] [`AGENTS.md`](../AGENTS.md) task routing points at Spec Kit for new work and [`plan/archive/`](archive/README.md) for shipped increments (2026-11-15). Slimming `AGENTS.md` to a pointer stays in Step 2.
 - [x] Update [`plan/DOCS_STRATEGY.md`](DOCS_STRATEGY.md).
 
 ### Step 5 — Retire duplicate planning prose
