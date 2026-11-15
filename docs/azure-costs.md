@@ -1,8 +1,8 @@
 > **Audience:** Developers and operators. This guide is repository documentation and is not part of the published end-user site in `website/`.
 
-# Azure Deployment Costs for SoloDevBoard
+# Azure Deployment Costs for Solo Dev Board
 
-Self-hosting SoloDevBoard on Azure incurs charges for the resources Aspire provisions at deploy time. With scale-to-zero enabled, compute charges apply mainly when the app is handling requests.
+Self-hosting Solo Dev Board on Azure incurs charges for the resources Aspire provisions at deploy time. With scale-to-zero enabled, compute charges apply mainly when the app is handling requests.
 
 ## Resources Deployed
 
@@ -11,7 +11,7 @@ Aspire deploys the following Azure resources (see [Deployment guide](deployment.
 | Resource | Purpose | Pricing model |
 |---|---|---|
 | Azure Container Apps environment | Hosts containerised workloads on the Consumption profile | Environment + per-use compute |
-| Container App (`app`) | SoloDevBoard Blazor Server application | Consumption (vCPU-seconds, memory, requests) |
+| Container App (`app`) | Solo Dev Board Blazor Server application | Consumption (vCPU-seconds, memory, requests) |
 | Azure Container Registry (Basic) | Stores built container images when not using a shared registry ([DEC-025](../adr/adr-0025-optional-shared-azure-container-registry.md)) | Fixed monthly (Basic tier) when Aspire provisions one per deploy |
 | Log Analytics workspace | Container platform logs and Application Insights backing store | Per GB ingested |
 | Application Insights | Application logs, metrics, and traces | Per GB ingested (linked workspace) |

@@ -1,14 +1,14 @@
 # Goals
 
-**Project:** SoloDevBoard  
+**Project:** Solo Dev Board (code identifiers remain `SoloDevBoard`)  
 **Owner:** Mark Heydon  
-**Last updated:** 2026-11-14
+**Last updated:** 2026-11-15
 
 ---
 
 ## Why this exists
 
-Solo developers maintaining multiple GitHub repositories waste time context-switching between tabs, boards, settings, and workflow runs. SoloDevBoard provides one Blazor Server application to triage issues, manage labels, audit health, migrate configuration, and plan work across repositories.
+Solo developers maintaining multiple GitHub repositories waste time context-switching between tabs, boards, settings, and workflow runs. Solo Dev Board provides one Blazor Server application to triage issues, manage labels, audit health, migrate configuration, and plan work across repositories.
 
 ---
 
@@ -23,7 +23,7 @@ Solo developers maintaining multiple GitHub repositories waste time context-swit
 
 ## Success looks like
 
-- A solo developer can complete routine GitHub housekeeping without leaving SoloDevBoard for most tasks.
+- A solo developer can complete routine GitHub housekeeping without leaving Solo Dev Board for most tasks.
 - CI and CD stay fast, observable, and documented (`ci.yml`, `playwright.yml`, Aspire deploy).
 - Architectural choices are traceable through `adr/` rather than scattered notes.
 

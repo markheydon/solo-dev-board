@@ -1,12 +1,12 @@
-# SoloDevBoard
+# Solo Dev Board
 
 [![CI](https://github.com/markheydon/solo-dev-board/actions/workflows/ci.yml/badge.svg)](https://github.com/markheydon/solo-dev-board/actions/workflows/ci.yml)
 
 > **A single pane of glass for solo developers managing GitHub workloads across multiple repositories.**
 
-## What Is SoloDevBoard?
+## What Is Solo Dev Board?
 
-SoloDevBoard is a **.NET 10 Blazor Server** application that consolidates your GitHub repository management into a single, unified interface. If you maintain multiple GitHub repositories as a solo developer, SoloDevBoard eliminates the context-switching between repository tabs, project boards, settings pages, and workflow runs.
+Solo Dev Board is a **.NET 10 Blazor Server** application that consolidates your GitHub repository management into a single, unified interface. If you maintain multiple GitHub repositories as a solo developer, Solo Dev Board eliminates the context-switching between repository tabs, project boards, settings pages, and workflow runs.
 
 
 | Feature | Description | Status |
@@ -41,7 +41,7 @@ Ensure you have the following installed:
 
 ### Run Locally
 
-SoloDevBoard uses **Aspire for local orchestration and production deployment** to Azure Container Apps. Two authentication modes are available: **PAT-only local trusted mode** (default, for solo local development and trusted personal self-hosting) and **hosted sign-in** (GitHub App, for shared or public deployments). See [Getting Started — PAT-only local trusted mode](docs/getting-started.md#pat-only-local-trusted-mode) for the mode comparison.
+Solo Dev Board uses **Aspire for local orchestration and production deployment** to Azure Container Apps. Two authentication modes are available: **PAT-only local trusted mode** (default, for solo local development and trusted personal self-hosting) and **hosted sign-in** (GitHub App, for shared or public deployments). See [Getting Started — PAT-only local trusted mode](docs/getting-started.md#pat-only-local-trusted-mode) for the mode comparison.
 
 **Quick start with Aspire (recommended):**
 
@@ -138,7 +138,7 @@ solo-dev-board/
 
 ## Contributing
 
-SoloDevBoard welcomes contributions from all developers. Please read [`CONTRIBUTING.md`](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md).
+Solo Dev Board welcomes contributions from all developers. Please read [`CONTRIBUTING.md`](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 To contribute:
 
@@ -161,7 +161,7 @@ End-user documentation is published from `website/` to [GitHub Pages](https://so
 
 ## AI-Driven Development
 
-SoloDevBoard is developed with AI agents as active collaborators. [`AGENTS.md`](AGENTS.md), [`CONVENTIONS.md`](CONVENTIONS.md), and skills under [`.agents/skills/`](.agents/skills/) define architecture, conventions, and review workflow. For Cursor Cloud VM development, see [`plan/CURSOR_CLOUD.md`](plan/CURSOR_CLOUD.md).
+Solo Dev Board is developed with AI agents as active collaborators. [`AGENTS.md`](AGENTS.md), [`CONVENTIONS.md`](CONVENTIONS.md), and skills under [`.agents/skills/`](.agents/skills/) define architecture, conventions, and review workflow. For Cursor Cloud VM development, see [`plan/CURSOR_CLOUD.md`](plan/CURSOR_CLOUD.md).
 
 ---
 
@@ -171,4 +171,4 @@ Please report vulnerabilities privately as described in [`SECURITY.md`](SECURITY
 
 ## Licence
 
-SoloDevBoard is released under the [MIT Licence](LICENSE).
+Solo Dev Board is released under the [MIT Licence](LICENSE).

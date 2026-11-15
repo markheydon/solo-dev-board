@@ -6,6 +6,8 @@ landingIcon: brightness_auto
 
 Solo Dev Board supports three theme modes so you can match your operating system preference or choose a fixed light or dark appearance.
 
+The app bar also shows the product mark (the green Solo family seal) beside the **Solo Dev Board** name on signed-in pages. The hosted welcome page uses a larger mark above the sign-in action; browser tabs use the same favicon.
+
 ![App bar theme control on the Home page](/images/appearance/theme-toggle.png)
 
 ## Theme modes

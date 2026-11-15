@@ -1,6 +1,6 @@
 > **Audience:** Developers and operators. This guide is repository documentation and is not part of the published end-user site in `website/`.
 
-This guide walks you through the prerequisites and steps required to run SoloDevBoard locally and deploy it to Azure.
+This guide walks you through the prerequisites and steps required to run Solo Dev Board locally and deploy it to Azure.
 
 ---
 
@@ -18,7 +18,7 @@ Before you begin, ensure you have the following installed:
 
 ### GitHub Authentication
 
-SoloDevBoard supports two **mutually exclusive** authentication modes. Choose one before configuring AppHost parameters:
+Solo Dev Board supports two **mutually exclusive** authentication modes. Choose one before configuring AppHost parameters:
 
 | Mode | When to use | What you configure |
 |---|---|---|
@@ -31,7 +31,7 @@ Parameters for the mode you are **not** using can be left unset (or set to `-` w
 
 | | PAT-only local trusted mode | Hosted sign-in |
 |---|---|---|
-| **Who authenticates** | Nobody signs in to SoloDevBoard — the app uses one configured token for all GitHub API calls | Each visitor signs in with GitHub at `/auth/sign-in` (landing at `/welcome`) |
+| **Who authenticates** | Nobody signs in to Solo Dev Board — the app uses one configured token for all GitHub API calls | Each visitor signs in with GitHub at `/auth/sign-in` (landing at `/welcome`) |
 | **Identity** | Your login is resolved automatically from the PAT at startup | Per-user session claims (login, access token, installation, organisations) |
 | **Admission control** | Not applicable — anyone who can reach the app acts as the PAT owner | Operator allow-lists (`allowed-user-logins` / `allowed-org-logins`); deny-by-default |
 | **GitHub App required?** | No | Yes |
@@ -68,7 +68,7 @@ Uses a GitHub App for OAuth sign-in at `/auth/sign-in`, with operator-managed al
 
 ## Running Locally
 
-SoloDevBoard uses **Aspire for local orchestration**, which provides standardised behaviour across local machines, dev containers, and Codespaces. Aspire is the **recommended path** for all new development.
+Solo Dev Board uses **Aspire for local orchestration**, which provides standardised behaviour across local machines, dev containers, and Codespaces. Aspire is the **recommended path** for all new development.
 
 1. **Clone the repository:**
 
@@ -175,7 +175,7 @@ Local parameter values always override Key Vault when both are set.
 | Azure | Not required | `az login` + RBAC on dev vault only |
 | Deploy to Azure | Separate operator steps (vault required) | Same |
 
-SoloDevBoard is configured via `appsettings.json` and environment variables. **Never commit secrets to source control.**
+Solo Dev Board is configured via `appsettings.json` and environment variables. **Never commit secrets to source control.**
 
 When running via Aspire (`aspire start`), GitHub auth and admission settings are modelled as **AppHost parameters** and injected into the `app` resource as environment variables. See also [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md) for a concise parameter cheat sheet.
 
@@ -219,7 +219,7 @@ Also update your GitHub App callback URL to `{app-https-url}/auth/callback` afte
 
 ### Startup validation
 
-On startup, SoloDevBoard validates configuration for the **active mode** and fails fast if required settings for that mode are missing. Check the `app` resource logs in the Aspire dashboard or your IDE output.
+On startup, Solo Dev Board validates configuration for the **active mode** and fails fast if required settings for that mode are missing. Check the `app` resource logs in the Aspire dashboard or your IDE output.
 
 | Active mode | Required settings |
 |---|---|
@@ -255,9 +255,9 @@ Your GitHub login is resolved automatically from the PAT when the app starts. Pa
 
 #### What each parameter does
 
-**`hosted-sign-in-enabled`** — Selects the authentication mode. When `false` (the default), SoloDevBoard runs in PAT mode: a single configured token is used for all GitHub API calls and your login is resolved automatically from that token. When `true`, SoloDevBoard uses GitHub App OAuth sign-in at `/auth/sign-in`; each user authenticates with their own GitHub identity and session.
+**`hosted-sign-in-enabled`** — Selects the authentication mode. When `false` (the default), Solo Dev Board runs in PAT mode: a single configured token is used for all GitHub API calls and your login is resolved automatically from that token. When `true`, Solo Dev Board uses GitHub App OAuth sign-in at `/auth/sign-in`; each user authenticates with their own GitHub identity and session.
 
-**`gh-pat`** — Your GitHub personal access token for PAT mode. Set to `-` for hosted sign-in. SoloDevBoard uses this for every GitHub API request on your behalf in PAT mode. Required scopes: `repo`, `read:org`, `workflow`, `read:project`, and `project` when you apply One-Click Migration project board columns. Your login is resolved automatically from the token.
+**`gh-pat`** — Your GitHub personal access token for PAT mode. Set to `-` for hosted sign-in. Solo Dev Board uses this for every GitHub API request on your behalf in PAT mode. Required scopes: `repo`, `read:org`, `workflow`, `read:project`, and `project` when you apply One-Click Migration project board columns. Your login is resolved automatically from the token.
 
 **`gh-app-client-id`** — The OAuth Client ID from your GitHub App settings. Set to `-` for PAT mode. Required for hosted sign-in.
 
@@ -288,7 +288,7 @@ Your GitHub login is resolved automatically from the PAT at startup. You can als
 
 1. **Create or reuse a GitHub App** at [GitHub → Settings → Developer settings → GitHub Apps](https://github.com/settings/apps). Note the **Client ID** and generate a **Client secret**. Apply the [GitHub App listing](github-app.md) checklist (logo, homepage, callback URLs, expiring user tokens, and minimum permissions).
 2. **Start Aspire once** to allocate an HTTPS endpoint, then run `aspire describe` and note the `app` resource HTTPS URL.
-3. **Register the callback URL** on your GitHub App: `{https-endpoint}/auth/callback` (for example, `https://localhost:17123/auth/callback`). SoloDevBoard sets `GitHubAuth:HostedSignInCallbackBaseUri` from the Aspire endpoint automatically.
+3. **Register the callback URL** on your GitHub App: `{https-endpoint}/auth/callback` (for example, `https://localhost:17123/auth/callback`). Solo Dev Board sets `GitHubAuth:HostedSignInCallbackBaseUri` from the Aspire endpoint automatically.
 4. **Install the GitHub App** on the users or organisations you want to test with.
 5. **Configure AppHost parameters:**
 
@@ -374,7 +374,7 @@ Located at `src/SoloDevBoard.Web/appsettings.json`. The relevant sections are:
 
 #### GitHub API performance
 
-SoloDevBoard reduces GitHub API usage in two ways:
+Solo Dev Board reduces GitHub API usage in two ways:
 
 - **Catalogue caching (DEC-018):** Repository, label, and milestone lists are cached in memory for the configured TTLs above. Label and milestone caches invalidate after corresponding mutations.
 - **Audit dashboard snapshot:** The Audit page fetches open issues and open pull requests first, then loads workflow health indicators separately so KPI cards appear before the slower GitHub Actions API responds. Each selected repository is queried once per resource type per load.
@@ -458,7 +458,7 @@ In production, secret AppHost parameters are supplied from the GitHub `productio
 
 ## Deploying to Azure
 
-SoloDevBoard deploys to Azure Container Apps via Aspire. See the [Deployment guide](deployment.md) for prerequisites, one-time OIDC bootstrap, GitHub Environment configuration, and first deploy steps. For a **personal instance with a PAT** (no GitHub App), start with [Self-hoster deployment (PAT mode)](deployment.md#self-hoster-deployment-pat-mode). For logs, metrics, and traces after deployment, see the [Observability guide](observability.md).
+Solo Dev Board deploys to Azure Container Apps via Aspire. See the [Deployment guide](deployment.md) for prerequisites, one-time OIDC bootstrap, GitHub Environment configuration, and first deploy steps. For a **personal instance with a PAT** (no GitHub App), start with [Self-hoster deployment (PAT mode)](deployment.md#self-hoster-deployment-pat-mode). For logs, metrics, and traces after deployment, see the [Observability guide](observability.md).
 
 Summary:
 

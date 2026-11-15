@@ -2,7 +2,7 @@
 
 # Conventions
 
-**Project:** SoloDevBoard  
+**Project:** Solo Dev Board (code identifiers remain `SoloDevBoard`)  
 **Last updated:** 2026-11-15
 
 When in doubt, follow this file. Significant architecture changes need an ADR.
@@ -106,6 +106,7 @@ End-user docs ([`website/content/docs/`](website/content/docs/)) and Playwright 
 
 ## Documentation
 
+- **Product naming:** Use **Solo Dev Board** in spoken copy, user-facing strings, and prose in `docs/` and `website/`. Keep `SoloDevBoard` for solution names, project paths, C# identifiers, and the GitHub App listing **name** (uniqueness). See [`plan/wireframes/product-branding-wireframe.md`](plan/wireframes/product-branding-wireframe.md).
 - UK English in docs, comments, and user-facing strings (`colour`, `organise`, `behaviour`, etc.).
 - Do not use the em dash (Unicode U+2014); use spaced ASCII hyphen ` - ` in prose. Run [`scripts/verify-no-em-dash.sh`](scripts/verify-no-em-dash.sh) before large doc edits.
 - User-facing product docs: Hugo site under `website/`. Developer/operator docs: `docs/`.

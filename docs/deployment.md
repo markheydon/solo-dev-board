@@ -1,8 +1,8 @@
 > **Audience:** Developers and operators. This guide is repository documentation and is not part of the published end-user site in `website/`.
 
-# Deploying SoloDevBoard to Azure
+# Deploying Solo Dev Board to Azure
 
-SoloDevBoard deploys to **Azure Container Apps** via **Aspire** (`aspire deploy` from `src/SoloDevBoard.AppHost`). The AppHost is the single source of truth for local orchestration and production deployment.
+Solo Dev Board deploys to **Azure Container Apps** via **Aspire** (`aspire deploy` from `src/SoloDevBoard.AppHost`). The AppHost is the single source of truth for local orchestration and production deployment.
 
 Scale-to-zero is enabled (`MinReplicas = 0`) to minimise idle hosting costs. Expect cold starts and Blazor Server SignalR reconnects after idle periods.
 
@@ -41,7 +41,7 @@ The public product site in `website/` is published to GitHub Pages on `v*` relea
 
 ## Self-hoster deployment (PAT mode)
 
-Use this path when you want a **personal** SoloDevBoard instance on your own Azure subscription without setting up a GitHub App. Authentication stays in **PAT-only local trusted mode**: the Container App uses one configured PAT for all GitHub API calls, and there is no `/auth/sign-in` flow.
+Use this path when you want a **personal** Solo Dev Board instance on your own Azure subscription without setting up a GitHub App. Authentication stays in **PAT-only local trusted mode**: the Container App uses one configured PAT for all GitHub API calls, and there is no `/auth/sign-in` flow.
 
 > **Trust boundary:** Anyone who can reach the Container App URL acts as the PAT owner. Prefer a private network, IP restrictions, or a URL you alone use. For shared or public endpoints, use [hosted sign-in](hosted-authentication.md) instead. Local PAT setup is documented in [Getting Started — PAT-only local trusted mode](getting-started.md#pat-only-local-trusted-mode).
 
@@ -441,7 +441,7 @@ Aspire generates and applies Bicep at deploy time. A typical deployment includes
 | Resource | Purpose |
 |---|---|
 | Azure Container Apps environment | Hosts the containerised app (Consumption profile) |
-| Container App (`app`) | Runs SoloDevBoard (scale-to-zero enabled) |
+| Container App (`app`) | Runs Solo Dev Board (scale-to-zero enabled) |
 | Azure Container Registry | Stores built container images (Aspire-provisioned per deployment, or optional shared registry — see [Optional shared Container Registry](#optional-shared-container-registry)) |
 | Azure Key Vault (`auth-secrets`, or `auth-secrets-staging`) | Pre-populated auth secrets referenced at deploy time ([ADR-0045](../adr/adr-0045-persistent-key-vault-dual-path-local-secrets.md)) |
 | Application Insights | Application logs, metrics, and distributed traces |
@@ -472,7 +472,7 @@ Operator bootstrap and RBAC for a shared registry are in [One-time Azure setup �
 
 ## Health checks and Container Apps probes
 
-SoloDevBoard exposes two HTTP health endpoints via `SoloDevBoard.ServiceDefaults`:
+Solo Dev Board exposes two HTTP health endpoints via `SoloDevBoard.ServiceDefaults`:
 
 | Endpoint | Purpose | Checks included |
 |---|---|---|
@@ -488,7 +488,7 @@ Both endpoints return `200 OK` with a `Healthy` body when checks pass. They are 
 | **Liveness** | `/alive` | Confirms the ASP.NET Core host is running. A failure here indicates the container should be restarted. |
 | **Readiness** | `/health` | Confirms the app finished startup and can serve requests. Used by Azure Container Apps after scale-from-zero and during deployments. |
 
-SoloDevBoard deliberately does **not** include GitHub API or other external dependency checks in health probes. External outages should surface as application errors and telemetry, not as container restarts or traffic withdrawal.
+Solo Dev Board deliberately does **not** include GitHub API or other external dependency checks in health probes. External outages should surface as application errors and telemetry, not as container restarts or traffic withdrawal.
 
 ### Azure Container Apps configuration
 
