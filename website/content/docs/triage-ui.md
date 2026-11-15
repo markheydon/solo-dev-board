@@ -59,7 +59,7 @@ The action surface uses one primary commit per disposition instead of separate p
 - **Process:** Search for a label in the **Quick label** field, optionally set milestone and project board fields, then click **Save and next** (or press **Enter** / **L**) to apply filled values and advance.
 - **Duplicate:** Switch to the **Duplicate** disposition (or press **D**), enter a reference (`#123` or a full URL), then click **Close as duplicate and next** (or press **Enter** / **L**, or **D** again when the reference is valid).
 - **Skip:** Switch to **Skip**, optionally add a reason, then click **Skip and next** (or press **Enter** / **L**). Press **S** to skip from **Process** or **Duplicate** without changing disposition.
-- When the repository exposes a canonical `duplicate` label, SoloDevBoard applies it as part of duplicate closure.
+- When the repository exposes a canonical `duplicate` label, Solo Dev Board applies it as part of duplicate closure.
 - Keyboard shortcuts do not fire while you are typing in autocomplete or text fields.
 - Primary success and failure feedback for triage actions appears as snackbar toasts in the bottom-right corner. Repository load failures appear inline in the session scope region with a retry action. Choose **Reload from GitHub** in the session scope header to refresh the catalogue and planning options without clearing your repository selection or active session.
 

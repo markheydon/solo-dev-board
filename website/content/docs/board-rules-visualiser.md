@@ -31,8 +31,8 @@ Key goals of the Board Rules Visualiser:
 ### Select a repository and project board
 
 1. Open **Board Rules Visualiser** from the navigation menu or dashboard.
-2. Use the repository search box to choose one active repository. SoloDevBoard reuses the same repository selector pattern as Label Manager and Migration.
-3. After a repository is selected, SoloDevBoard loads GitHub Project v2 boards linked to that repository.
+2. Use the repository search box to choose one active repository. Solo Dev Board reuses the same repository selector pattern as Label Manager and Migration.
+3. After a repository is selected, Solo Dev Board loads GitHub Project v2 boards linked to that repository.
 4. Choose a supported project board from the **Project board** dropdown. Supported boards must expose a **Status** field.
 5. When a board is selected, the visualisation area displays board states and the supported transitions between adjacent columns.
 
@@ -65,9 +65,9 @@ Key goals of the Board Rules Visualiser:
 ### Empty and unsupported states
 
 - **No repository selected:** The visualisation area prompts you to choose a repository and project board.
-- **No supported boards:** If the repository has no GitHub Project v2 board with a Status field, SoloDevBoard explains why the visualiser cannot continue and does not show the diagram state. Use **Try again** after you add a Status field on GitHub; your repository selection is kept.
+- **No supported boards:** If the repository has no GitHub Project v2 board with a Status field, Solo Dev Board explains why the visualiser cannot continue and does not show the diagram state. Use **Try again** after you add a Status field on GitHub; your repository selection is kept.
 - **Reload from GitHub:** Use **Reload from GitHub** in the selector header to bust the repository catalogue cache and refetch project boards while keeping your repository and comparison selections. It remains available when the catalogue fails to load and is disabled only while a reload is in progress.
-- **Some linked boards inaccessible:** If GitHub reports more linked project boards than SoloDevBoard can load, a warning explains how many could not be read. This commonly happens for **private user-owned** Projects v2 boards under hosted GitHub App sign-in: GitHub may list the board as linked while the App token cannot read it. Public linked boards still load. Use PAT mode with the `read:project` scope, or make the project public.
+- **Some linked boards inaccessible:** If GitHub reports more linked project boards than Solo Dev Board can load, a warning explains how many could not be read. This commonly happens for **private user-owned** Projects v2 boards under hosted GitHub App sign-in: GitHub may list the board as linked while the App token cannot read it. Public linked boards still load. Use PAT mode with the `read:project` scope, or make the project public.
 
 {{< callout type="important" >}}
 Private user-owned Projects v2 boards often need PAT mode with `read:project`, or a public project, when hosted GitHub App sign-in cannot read them.

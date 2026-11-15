@@ -1,6 +1,6 @@
-# SoloDevBoard public product site (Hugo)
+# Solo Dev Board public product site (Hugo)
 
-This directory is the Hugo site that publishes SoloDevBoard's **public product site** to GitHub Pages using the [Hextra](https://imfing.github.io/hextra/) theme:
+This directory is the Hugo site that publishes Solo Dev Board's **public product site** to GitHub Pages using the [Hextra](https://imfing.github.io/hextra/) theme:
 
 - `/` — product landing
 - `/docs/` — User Guide (in-app features)

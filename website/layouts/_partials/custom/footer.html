@@ -1,7 +1,7 @@
 {{- $version := site.Params.releaseVersion | default "unreleased" -}}
 <div class="hx:mx-auto hx:flex hx:max-w-screen-xl hx:flex-col hx:items-center hx:gap-2 hx:px-6 hx:py-8 hx:text-center hx:text-sm hx:text-gray-600 hx:dark:text-gray-400">
   {{- if site.Params.footer.displayCopyright }}
-  <div>© {{ now.Year }} SoloDevBoard</div>
+  <div>© {{ now.Year }} Solo Dev Board</div>
   {{- end }}
   <div>Open source under the MIT licence. Setup, Aspire, and Azure deployment live in the repository <code>docs/</code> folder.</div>
   {{- if and $version (ne $version "unreleased") }}

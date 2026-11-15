@@ -4,7 +4,7 @@
 
 The production hosted instance uses a **GitHub App** for user sign-in (`/auth/sign-in`) and GitHub API calls on the signed-in user's behalf. GitHub shows the app name, logo, homepage, and requested permissions on the authorise and install screens. A bare registration works, but a thin listing looks untrusted.
 
-This page is the operator checklist for that listing. It follows [GitHub's GitHub App best practices](https://docs.github.com/en/apps/creating-github-apps/about-creating-github-apps/best-practices-for-creating-a-github-app) and maps them to how SoloDevBoard actually behaves.
+This page is the operator checklist for that listing. It follows [GitHub's GitHub App best practices](https://docs.github.com/en/apps/creating-github-apps/about-creating-github-apps/best-practices-for-creating-a-github-app) and maps them to how Solo Dev Board actually behaves.
 
 You cannot apply most of these settings from this repository. Open **[GitHub → Settings → Developer settings → GitHub Apps](https://github.com/settings/apps)** and edit the app used by staging and production.
 
@@ -15,16 +15,16 @@ Upload the square icon from this repository:
 - Source: [`docs/assets/github-app/icon.svg`](assets/github-app/icon.svg)
 - Upload file (at least 200×200 px): [`docs/assets/github-app/icon-512.png`](assets/github-app/icon-512.png)
 
-GitHub crops logos to a square. Use the PNG, not the SVG. After upload, set the **badge background colour** to `#167c38` so it matches the SoloDevBoard primary green.
+GitHub crops logos to a square. Use the PNG, not the SVG. After upload, set the **badge background colour** to `#167c38` so it matches the Solo Dev Board primary green.
 
-The Blazor app reuses the same mark as an interim favicon (`wwwroot/favicon.svg` and `wwwroot/favicon.png`). A dedicated product logo remains ice-box work — see GitHub issue #397.
+The Blazor app, public site, and this listing share the same Solo family mark (`wwwroot/favicon.svg` / `favicon.png`, and `website/static/images/logo.svg`). After changing the PNG in this repository, re-upload it on the GitHub App settings page.
 
 Suggested listing copy (UK English):
 
 | Field | Suggested value |
 |-------|-----------------|
 | **GitHub App name** | `SoloDevBoard` (must be unique on GitHub; add a suffix such as `SoloDevBoard Hosted` if the short name is taken) |
-| **Description** | `Sign in to SoloDevBoard to audit repositories, manage labels, triage issues, and apply workflow templates from one place.` |
+| **Description** | `Sign in to Solo Dev Board to audit repositories, manage labels, triage issues, and apply workflow templates from one place.` |
 | **Homepage URL** | `https://solodevboard.com/` |
 
 ## Identifying and authorising users
@@ -34,11 +34,11 @@ Hosted sign-in is an OAuth **authorization code** flow against this GitHub App. 
 | Setting | Value |
 |---------|--------|
 | **Callback URL** | One entry per public origin, each ending `/auth/callback`. Register **all** of them (GitHub allows up to ten). Do **not** enable wildcard matching. |
-| **Expire user authorization tokens** | **On** (required). SoloDevBoard already refreshes user access tokens. On current GitHub App settings this is **Optional features → User-to-server token expiration** (leave it enabled; do not click **Opt-out**). |
+| **Expire user authorization tokens** | **On** (required). Solo Dev Board already refreshes user access tokens. On current GitHub App settings this is **Optional features → User-to-server token expiration** (leave it enabled; do not click **Opt-out**). |
 | **Request user authorization (OAuth) during installation** | **On**. The hosted app needs a user-to-server token (`ghu_…`), not only an installation token. |
 | **Enable Device Flow** | **Off**. Device flow is for CLIs and headless clients and increases phishing risk. |
 | **Setup URL** | Leave blank if OAuth-during-install is on (GitHub sends users through the callback instead). Otherwise use `https://solodevboard.com/`. |
-| **Webhook Active** | **Off** for v1. SoloDevBoard polls the GitHub API; it does not consume app webhooks. Re-enable only when a webhook receiver exists. |
+| **Webhook Active** | **Off** for v1. Solo Dev Board polls the GitHub API; it does not consume app webhooks. Re-enable only when a webhook receiver exists. |
 
 ### Callback URLs to register
 
@@ -53,7 +53,7 @@ Match each callback origin with `HOSTED_CALLBACK_BASE_URI` on the corresponding 
 
 ## Permissions
 
-Choose the **minimum** permissions SoloDevBoard needs. Installation and user tokens are both limited by these settings. Prefer **Read-only** unless a feature writes.
+Choose the **minimum** permissions Solo Dev Board needs. Installation and user tokens are both limited by these settings. Prefer **Read-only** unless a feature writes.
 
 ### Repository permissions
 
@@ -83,7 +83,7 @@ Private user-owned Projects v2 still often fail under GitHub App tokens even wit
 | Permission | Access | Why |
 |------------|--------|-----|
 | Profile | Read and write | `GET /user` for the signed-in login. GitHub App **Account** permissions offer only **No access** or **Read and write** for Profile; there is no read-only option. |
-| Email addresses | No access | SoloDevBoard does not use email. |
+| Email addresses | No access | Solo Dev Board does not use email. |
 
 Hosted OAuth scopes requested by the app are `read:user read:org` ([`GitHubAuth:HostedSignInScopes`](getting-started.md)). Repository work uses the GitHub App's repository permissions on the user-to-server token, not extra OAuth scopes.
 

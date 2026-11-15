@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using MudBlazor.Services;
 using NSubstitute;
 using SoloDevBoard.Application.Authentication;
+using SoloDevBoard.Application.Services.Common;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Web.Components.Shell.Layout;
 using SoloDevBoard.Web.Theming;
@@ -35,6 +36,15 @@ public sealed class MainLayoutThemeTests : BunitContext
         _themePreferenceService.IsInitialised.Returns(true);
         _themePreferenceService.InitialiseAsync().Returns(Task.CompletedTask);
         _themePreferenceService.CycleAsync().Returns(Task.CompletedTask);
+    }
+
+    [Fact]
+    public void MainLayout_WhenRendered_ShowsBrandMarkAndDisplayName()
+    {
+        var cut = Render<MainLayout>();
+
+        Assert.NotEmpty(cut.FindAll("[data-testid='brand-mark']"));
+        Assert.Contains(ProductBranding.DisplayName, cut.Markup, StringComparison.Ordinal);
     }
 
     [Theory]

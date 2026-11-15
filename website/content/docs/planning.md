@@ -9,7 +9,7 @@ guideStatus: Available
 
 ## Overview
 
-The Planning feature brings a structured, two-mode operating system into SoloDevBoard so you can plan and execute work across your own GitHub repositories from one visual interface.
+The Planning feature brings a structured, two-mode operating system into Solo Dev Board so you can plan and execute work across your own GitHub repositories from one visual interface.
 
 ![Planning — Daily Focus with SoloDevBoard Roadmap occupancy and recommendations](/images/planning/daily-focus.png)
 
@@ -32,11 +32,11 @@ Open **Planning** from the Home card or the navigation drawer. The hub redirects
 
 ### Opinionated conventions
 
-Planning is intentionally opinionated about **how** work is labelled and how a planning board is shaped. You choose which repositories and which Projects v2 board to use; SoloDevBoard does not hard-code a maintainer project or repository.
+Planning is intentionally opinionated about **how** work is labelled and how a planning board is shaped. You choose which repositories and which Projects v2 board to use; Solo Dev Board does not hard-code a maintainer project or repository.
 
 For best results, align your board and labels with these product conventions:
 
-- **SoloDevBoard label taxonomy** — prefixes such as `type/`, `priority/`, and `status/` (including `status/blocked` and `status/ice-box`). The Label Manager **SoloDevBoard** recommended strategy applies this set.
+- **Solo Dev Board label taxonomy** - prefixes such as `type/`, `priority/`, and `status/` (including `status/blocked` and `status/ice-box`). The Label Manager **Solo Dev Board** recommended strategy applies this set.
 - **Status display names** — columns matched by name, including `Up Next`, `In Progress`, `Blocked`, and `Ice Box` (plus review-equivalent names where Daily Focus looks for stalled reviews).
 - **Focus Order** — optional Projects v2 number field used when Iteration Planning writes ordered Up Next items.
 
@@ -110,7 +110,7 @@ After a board is selected, Daily Focus also lists pull requests that have been w
 
 Detection uses two modes:
 
-1. **Board column** — if the selected board has an **In Review** Status, or a clearly equivalent name such as **Waiting on review** or **Code Review**, SoloDevBoard uses time in that column (Status-changed time when GitHub provides it).
+1. **Board column** — if the selected board has an **In Review** Status, or a clearly equivalent name such as **Waiting on review** or **Code Review**, Solo Dev Board uses time in that column (Status-changed time when GitHub provides it).
 2. **Pending review fallback** — if there is no such column, it uses open, non-draft pull requests with a pending review (`REVIEW_REQUIRED` or requested reviewers) that are at least the stall threshold old.
 
 Each row shows the repository (`owner/name`), pull request number, age in days, and an **Open** link to GitHub. Excluded repositories are omitted from this list.
@@ -336,6 +336,6 @@ Persisted fields:
 | Stall days | Stall threshold for Up Next and review pull requests (default 3). |
 | Neglect days | Repository neglect threshold for Backlog Review (default 14). |
 
-Clearing site data for SoloDevBoard resets Planning settings to defaults. Settings do not sync across browsers or devices.
+Clearing site data for Solo Dev Board resets Planning settings to defaults. Settings do not sync across browsers or devices.
 
 There are no `appsettings.json` entries for Planning user preferences.

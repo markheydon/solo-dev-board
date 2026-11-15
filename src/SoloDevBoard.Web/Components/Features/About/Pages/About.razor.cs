@@ -8,7 +8,6 @@ namespace SoloDevBoard.Web.Components.Features.About.Pages;
 public partial class About : ComponentBase
 {
     private const string RepositoryAddress = "https://github.com/markheydon/solo-dev-board";
-    private const string ProductName = "SoloDevBoard";
 
     private GitHubAuthenticationSummary? _authenticationSummary;
 
@@ -20,7 +19,7 @@ public partial class About : ComponentBase
     [Inject]
     public IGitHubAuthenticationSummaryService AuthenticationSummaryService { get; set; } = default!;
 
-    private string ApplicationName => ProductName;
+    private string ApplicationName => ProductBranding.DisplayName;
 
     private string Version => AppVersionService.Version;
 

@@ -72,11 +72,25 @@ public sealed class SoloDevBoardThemeFallbackTests
         {
             new[] { "src", "SoloDevBoard.Web", "wwwroot", "favicon.svg" },
             new[] { "docs", "assets", "github-app", "icon.svg" },
+            new[] { "website", "static", "images", "logo.svg" },
         })
         {
             var svg = ReadRepoFile(relativeParts);
             Assert.Contains($"fill=\"{primary}\"", svg, StringComparison.OrdinalIgnoreCase);
         }
+    }
+
+    [Fact]
+    public void BrandMarkSvgs_ShareSoloFamilySealGeometry()
+    {
+        var favicon = ReadRepoFile("src", "SoloDevBoard.Web", "wwwroot", "favicon.svg");
+        var githubApp = ReadRepoFile("docs", "assets", "github-app", "icon.svg");
+        var publicSite = ReadRepoFile("website", "static", "images", "logo.svg");
+
+        Assert.Equal(favicon, githubApp);
+        Assert.Equal(favicon, publicSite);
+        Assert.Contains("<circle cx=\"256\" cy=\"188\" r=\"56\"", favicon, StringComparison.Ordinal);
+        Assert.Contains("aria-label=\"Solo Dev Board\"", favicon, StringComparison.Ordinal);
     }
 
     private static string ReadRepoFile(params string[] relativeParts) =>

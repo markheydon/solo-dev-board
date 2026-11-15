@@ -1,0 +1,20 @@
+@namespace SoloDevBoard.Web.Components.Shell
+@using SoloDevBoard.Application.Services.Common
+
+<MudImage Src="@ProductBranding.MarkPath"
+          Width="@Size"
+          Height="@Size"
+          Alt=""
+          Class="@Class"
+          ObjectFit="ObjectFit.Contain"
+          data-testid="brand-mark" />
+
+@code {
+    /// <summary>Pixel width and height of the mark.</summary>
+    [Parameter]
+    public int Size { get; set; } = 32;
+
+    /// <summary>Optional MudBlazor utility classes.</summary>
+    [Parameter]
+    public string? Class { get; set; }
+}

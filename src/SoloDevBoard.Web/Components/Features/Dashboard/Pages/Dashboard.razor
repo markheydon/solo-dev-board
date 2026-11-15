@@ -1,10 +1,11 @@
 @page "/"
 
-<PageTitle>Home — SoloDevBoard</PageTitle>
+@using SoloDevBoard.Application.Services.Common
+<PageTitle>Home - @ProductBranding.DisplayName</PageTitle>
 
 <MudStack Spacing="3">
     <MudText Typo="Typo.h4">Home</MudText>
-    <MudText Typo="Typo.body2" Color="Color.Secondary">Navigate to each SoloDevBoard feature from a single starting point.</MudText>
+    <MudText Typo="Typo.body2" Color="Color.Secondary">Navigate to each @ProductBranding.DisplayName feature from a single starting point.</MudText>
 
     <MudGrid>
         @foreach (var feature in features)
@@ -33,7 +34,7 @@
     private static readonly IReadOnlyList<FeatureCardModel> features =
     [
         new("Audit Dashboard", "Consolidated overview of repository health and delivery signals.", "/audit-dashboard"),
-        new("Repositories", "View and manage the GitHub repositories connected to SoloDevBoard.", "/repositories"),
+        new("Repositories", $"View and manage the GitHub repositories connected to {ProductBranding.DisplayName}.", "/repositories"),
         new("One-Click Migration", "Copy labels, milestones, and board configuration across repositories.", "/migrate"),
         new("Label Manager", "Manage and synchronise labels across repositories.", "/labels"),
         new("Board Rules Visualiser", "Inspect project automation flow and board behaviour.", "/board-rules"),

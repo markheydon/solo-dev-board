@@ -1,5 +1,6 @@
 ﻿@inherits LayoutComponentBase
 @namespace SoloDevBoard.Web.Components.Shell.Layout
+@using SoloDevBoard.Application.Services.Common
 @using SoloDevBoard.Web.Theming
 
 <AppThemeProvider Theme="@_theme" />
@@ -16,8 +17,9 @@
                        Edge="Edge.Start"
                        aria-label="Toggle navigation drawer"
                        OnClick="@((e) => DrawerToggle())" />
-        <MudText Typo="Typo.h5" Class="ml-3 text-truncate d-none d-sm-inline">SoloDevBoard</MudText>
-        <MudText Typo="Typo.h6" Class="ml-3 text-truncate d-inline d-sm-none" Style="max-width: 7rem;">SoloDevBoard</MudText>
+        <BrandMark Size="32" Class="ml-3" />
+        <MudText Typo="Typo.h5" Class="ml-2 text-truncate d-none d-sm-inline">@ProductBranding.DisplayName</MudText>
+        <MudText Typo="Typo.h6" Class="ml-2 text-truncate d-inline d-sm-none" Style="max-width: 8.5rem;">@ProductBranding.DisplayName</MudText>
         <MudSpacer />
         @if (_showPatConnectionStatus && _patConnectionStatus is not null)
         {

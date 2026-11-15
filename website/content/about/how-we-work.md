@@ -5,7 +5,7 @@ weight: 20
 
 ## AI-collaborator experiment
 
-SoloDevBoard began as a deliberate experiment in **AI-fully-controlled delivery**: planning artefacts, GitHub issues, wireframes, implementation, tests, and documentation are produced in-repo with AI agents as active collaborators, under human direction.
+Solo Dev Board began as a deliberate experiment in **AI-fully-controlled delivery**: planning artefacts, GitHub issues, wireframes, implementation, tests, and documentation are produced in-repo with AI agents as active collaborators, under human direction.
 
 That is not a marketing claim about autonomous software — it describes how the repository is actually organised:
 

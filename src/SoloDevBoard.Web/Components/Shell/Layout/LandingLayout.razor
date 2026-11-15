@@ -1,5 +1,6 @@
 @inherits LayoutComponentBase
 @namespace SoloDevBoard.Web.Components.Shell.Layout
+@using SoloDevBoard.Application.Services.Common
 
 <AppThemeProvider Theme="@_theme" />
 <MudPopoverProvider />
@@ -8,7 +9,8 @@
 
 <MudLayout>
     <MudAppBar Elevation="1">
-        <MudText Typo="Typo.h5" Class="ml-3">SoloDevBoard</MudText>
+        <BrandMark Size="32" Class="ml-3" />
+        <MudText Typo="Typo.h5" Class="ml-2">@ProductBranding.DisplayName</MudText>
     </MudAppBar>
     <MudMainContent Class="pt-16 pa-4 d-flex justify-center">
         <MudContainer MaxWidth="MaxWidth.Small" Class="py-8">

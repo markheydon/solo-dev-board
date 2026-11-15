@@ -378,7 +378,7 @@ public sealed class AuditTests
             Assert.Single(cut.FindAll("[data-testid='audit-summary-table']"));
             Assert.Contains("Needs triage", cut.Markup);
             Assert.DoesNotContain("Unable to load audit summary", cut.Markup);
-            Assert.Contains("Labels match the SoloDevBoard taxonomy — great!", cut.Markup);
+            Assert.Contains("Labels match the Solo Dev Board taxonomy - great!", cut.Markup);
             var labelConsistencyLoadFailed = (bool)typeof(Audit)
                 .GetField("labelConsistencyLoadFailed", BindingFlags.Instance | BindingFlags.NonPublic)!
                 .GetValue(cut.Instance)!;
@@ -414,7 +414,7 @@ public sealed class AuditTests
             Assert.Contains("No unlabelled issues — great!", cut.Markup);
             Assert.Contains("No stale pull requests — great!", cut.Markup);
             Assert.Contains("No failing workflows — great!", cut.Markup);
-            Assert.Contains("Labels match the SoloDevBoard taxonomy — great!", cut.Markup);
+            Assert.Contains("Labels match the Solo Dev Board taxonomy - great!", cut.Markup);
         });
     }
 

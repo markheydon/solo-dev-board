@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Solo Dev Board">
+  <!-- Solo family seal: green field, three board columns, solid solo focus disc on the middle column.
+       Primary green matches SoloDevBoardTheme light Primary. Full-bleed square for GitHub App crop. -->
+  <rect width="512" height="512" fill="#167c38"/>
+  <rect x="108" y="200" width="64" height="188" rx="18" fill="#ffffff"/>
+  <rect x="224" y="200" width="64" height="188" rx="18" fill="#ffffff"/>
+  <rect x="340" y="200" width="64" height="188" rx="18" fill="#ffffff"/>
+  <circle cx="256" cy="188" r="56" fill="#ffffff"/>
+</svg>

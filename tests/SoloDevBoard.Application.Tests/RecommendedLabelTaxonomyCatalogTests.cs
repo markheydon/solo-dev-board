@@ -1,3 +1,4 @@
+using SoloDevBoard.Application.Services.Common;
 using SoloDevBoard.Application.Services.Labels;
 
 namespace SoloDevBoard.Application.Tests;
@@ -5,6 +6,17 @@ namespace SoloDevBoard.Application.Tests;
 /// <summary>Unit tests for <see cref="RecommendedLabelTaxonomyCatalog"/>.</summary>
 public sealed class RecommendedLabelTaxonomyCatalogTests
 {
+    [Fact]
+    public void Strategies_SoloDevBoardDisplayName_MatchesProductBranding()
+    {
+        var strategy = Assert.Single(
+            RecommendedLabelTaxonomyCatalog.Strategies,
+            item => item.Id == RecommendedLabelTaxonomyCatalog.SoloDevBoardStrategyId);
+
+        Assert.Equal(ProductBranding.DisplayName, strategy.Name);
+        Assert.Contains(ProductBranding.DisplayName, strategy.Description, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void TryGetLabels_WhenStrategyIdIsSoloDevBoard_ReturnsCanonicalTaxonomy()
     {

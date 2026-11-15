@@ -27,7 +27,7 @@ public sealed class SmokeTests : SoloDevBoardPageTest
     public async Task HomePage_RendersDashboardNavigation()
     {
         await Page.GotoAsync("/");
-        await Expect(Page).ToHaveTitleAsync(new Regex("Home — SoloDevBoard"));
+        await Expect(Page).ToHaveTitleAsync(new Regex("Home - Solo Dev Board"));
         await Expect(Page.GetByRole(AriaRole.Navigation)).ToBeVisibleAsync();
     }
 }

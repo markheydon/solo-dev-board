@@ -60,7 +60,7 @@ To change the repository set, adjust the selector and load again.
 
 ## Label consistency
 
-Label consistency compares each selected repository against the SoloDevBoard canonical taxonomy used by Label Manager:
+Label consistency compares each selected repository against the Solo Dev Board canonical taxonomy used by Label Manager:
 
 - **Missing** — a taxonomy label is not present in the repository.
 - **Divergent** — the label exists but its colour or description differs from the taxonomy.
@@ -74,4 +74,4 @@ When a health category has no items, the dashboard shows a positive empty-state 
 - "No unlabelled issues — great."
 - "No stale pull requests — great."
 - "No failing workflows — great."
-- "Labels match the SoloDevBoard taxonomy — great."
+- "Labels match the Solo Dev Board taxonomy - great."

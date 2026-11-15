@@ -1,11 +1,12 @@
 @page "/about"
+@using SoloDevBoard.Application.Services.Common
 
 <PageTitle>About</PageTitle>
 
 <MudStack Spacing="3">
     <MudStack Spacing="1">
         <MudText Typo="Typo.h5">About</MudText>
-        <MudText Typo="Typo.body2" Color="Color.Secondary">Version and runtime information for the current SoloDevBoard deployment.</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">Version and runtime information for the current @ProductBranding.DisplayName deployment.</MudText>
     </MudStack>
 
     <MudPaper Class="pa-4" Elevation="1">

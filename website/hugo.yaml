@@ -1,6 +1,6 @@
-# SoloDevBoard public product site (Hextra).
+# Solo Dev Board public product site (Hextra).
 baseURL: "https://solodevboard.com/"
-title: "SoloDevBoard"
+title: "Solo Dev Board"
 locale: en-gb
 defaultContentLanguage: en-gb
 enableRobotsTXT: true
@@ -54,7 +54,11 @@ params:
 
   navbar:
     displayTitle: true
-    displayLogo: false
+    displayLogo: true
+    logo:
+      path: images/logo.svg
+      width: 32
+      height: 32
     width: wide
 
   theme:

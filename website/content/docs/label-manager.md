@@ -58,7 +58,7 @@ Select one or more label rows in the grid, then choose **Delete** on the action 
 - A confirmation dialog asks **Are you sure?** and lists each selected label with the repositories where it will be removed.
 - Choose **No** or cancel to leave labels and your selection unchanged.
 - Choose **Yes, delete** to remove each selected label from every selected repository that currently contains it. Repositories that do not have a label are skipped for that name.
-- If GitHub returns an error for one label or repository, SoloDevBoard continues with the remaining items and reports per-item failures.
+- If GitHub returns an error for one label or repository, Solo Dev Board continues with the remaining items and reports per-item failures.
 - While the batch is running, duplicate submissions are disabled and an in-progress indicator is shown.
 
 Per-row **Delete** remains available for deleting a single label name through the existing repository-scoped dialog.
@@ -76,8 +76,8 @@ Apply a recommended label taxonomy to the selected repositories. Preview propose
 
 Current built-in strategies:
 
-- `SoloDevBoard` strategy.
-- `GitHub default` strategy.
+- **Solo Dev Board** strategy (id `solodevboard`).
+- **GitHub default** strategy.
   {{< /tab >}}
 
   {{< tab name="Synchronise" >}}
@@ -116,8 +116,8 @@ Review the per-repository summary after apply completes.
 
 Current built-in strategies:
 
-- `SoloDevBoard` strategy — portable workflow prefixes (`type/`, `priority/`, `status/`, and `size/`). It does not include `area/*` labels; those describe SoloDevBoard's own feature map on this repository and are not exported to other repositories.
-- `GitHub default` strategy.
+- **Solo Dev Board** strategy (id `solodevboard`) - portable workflow prefixes (`type/`, `priority/`, `status/`, and `size/`). It does not include `area/*` labels; those describe Solo Dev Board's own feature map on this repository and are not exported to other repositories.
+- **GitHub default** strategy.
 
 ### Remove labels outside taxonomy
 
@@ -135,7 +135,7 @@ When remove-outside is on:
 - Preview lists **Remap extras** as a table for labels that are on issues or pull requests, with a searchable destination picker per source label and a **Delete without remap** action.
 - Unused extras with no issue or pull request history appear under **Unused labels to delete** and are removed automatically on apply.
 - Suggested destinations pre-fill clear leaf matches (`story` → `type/story`) and obvious counterparts for GitHub defaults and automation labels (`bug` → `type/bug`, `documentation` → `type/documentation`, `dependencies` → `type/chore`, `enhancement` → `type/feature`, `wontfix` → `status/ice-box`). Labels such as `duplicate`, `good first issue`, `help wanted`, `invalid`, and `question` start with **Keep label** until you choose a destination.
-- **Keep label** (clear the destination picker) leaves the source label on the repository. **Delete without remap** removes the label without retagging issues and pull requests; SoloDevBoard asks for explicit confirmation before applying those rows.
+- **Keep label** (clear the destination picker) leaves the source label on the repository. **Delete without remap** removes the label without retagging issues and pull requests; Solo Dev Board asks for explicit confirmation before applying those rows.
 - **Apply remap** runs create and update steps first, then retags issues and pull requests onto each mapped destination and deletes the source only when every retag for that repository succeeded. Progress messages update while each repository and labelled item is processed.
 - When **Keep `area/*` labels** is on, excluded area labels are summarised by count only (no per-label table); they are not offered as remap sources.
 

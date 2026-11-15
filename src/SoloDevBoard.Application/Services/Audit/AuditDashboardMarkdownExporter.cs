@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using SoloDevBoard.Application.Services.Common;
 
 namespace SoloDevBoard.Application.Services.Audit;
 
@@ -174,7 +175,7 @@ public sealed class AuditDashboardMarkdownExporter : IAuditDashboardMarkdownExpo
 
         if (warnings.Count == 0)
         {
-            builder.AppendLine("Labels match the SoloDevBoard taxonomy — great!");
+            builder.AppendLine($"Labels match the {ProductBranding.DisplayName} taxonomy - great!");
             builder.AppendLine();
             return;
         }

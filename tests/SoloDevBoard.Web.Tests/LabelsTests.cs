@@ -1956,7 +1956,7 @@ public sealed class LabelsTests
         ctx.Services.AddTestGitHubAuthenticationRecovery();
 
         _labelManagerService.GetRecommendedLabelStrategiesAsync(Arg.Any<CancellationToken>()).Returns([
-                new RecommendedLabelStrategyDto("solodevboard", "SoloDevBoard", "SoloDevBoard canonical taxonomy"),
+                new RecommendedLabelStrategyDto("solodevboard", "Solo Dev Board", "Solo Dev Board canonical taxonomy"),
                 new RecommendedLabelStrategyDto("github-default", "GitHub default", "GitHub default labels"),
             ]);
 
