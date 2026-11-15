@@ -18,7 +18,9 @@ Paths in archived files may use pre-2026-11 layouts (`src/App/SoloDevBoard.App`,
 | [`HARDCODING_AUDIT_v1.1.md`](HARDCODING_AUDIT_v1.1.md) | v1.1 maintainer-identity audit ([#423](https://github.com/markheydon/solo-dev-board/issues/423)). |
 | [`ASPIRE_MULTI_PROCESS_FINDINGS.md`](ASPIRE_MULTI_PROCESS_FINDINGS.md) | Optional future Aspire multi-process notes (not a decision). |
 | [`POST_KEY_VAULT_MIGRATION_CLEANUP.md`](POST_KEY_VAULT_MIGRATION_CLEANUP.md) | ADR-0045 legacy Key Vault and empty Aspire resource group cleanup (complete 2026-11-15). |
+| [`label-remap-taxonomy-project-plan.md`](label-remap-taxonomy-project-plan.md) | Label remap delivery bundle (shipped `v1.3.0`). |
+| [`product-chrome-ui-quality/`](product-chrome-ui-quality/README.md) | Product chrome, branding, and narrow viewports (shipped `v1.4.0`). |
 
-Do not add new delivery bundles here; use Issues and Spec Kit specs instead.
+Do not add new delivery bundles here; use Spec Kit specs (`specs/<feature>/`) instead.
 
-**Re-archive review (due after `v1.4.0`):** Decide whether active pre–Spec Kit bundles ([`product-chrome-ui-quality/`](../product-chrome-ui-quality/README.md), [`label-remap-taxonomy-project-plan.md`](../label-remap-taxonomy-project-plan.md)) move back under `archive/` or into `.specify/specs/`. Update [`SPEC_KIT_MIGRATION.md`](../SPEC_KIT_MIGRATION.md) when done.
+**Re-archive review (2026-11-15):** Shipped pre–Spec Kit bundles moved from active `plan/` per [`SPEC_KIT_MIGRATION.md`](../SPEC_KIT_MIGRATION.md). Post-ship archival specs under `specs/` remain optional.

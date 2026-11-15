@@ -155,7 +155,7 @@ Platform-blocked and ice-box items are listed in [`BACKLOG.md`](BACKLOG.md); the
 
 **Status:** Complete (2026-11-15). Tagged [`v1.3.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.3.0). Milestone #9 closed.
 
-**Documentation gap:** The tag went out without a full User Guide pass or refreshed screenshots for label remap. Clear that gap on the next tag. See [Release runbook](#release-runbook).
+**Documentation gap:** The tag went out without a full User Guide pass or refreshed screenshots for label remap. Cleared on **`v1.4.0`** (full `website/static/images/` recapture). See [Release runbook](#release-runbook).
 
 **Target:** Not set — dates follow actual start per Roadmap date guidelines.
 
@@ -175,13 +175,13 @@ Platform-blocked and ice-box items are listed in [`BACKLOG.md`](BACKLOG.md); the
 
 **Out of milestone:** Ice-box catalogue features; platform-blocked chores ([#293](https://github.com/markheydon/solo-dev-board/issues/293), [#391](https://github.com/markheydon/solo-dev-board/issues/391), [#498](https://github.com/markheydon/solo-dev-board/issues/498)).
 
-**Status:** Active (2026-11-15). Single open milestone per DEC-027. GitHub milestone [#10](https://github.com/markheydon/solo-dev-board/milestone/10).
+**Status:** Complete (2026-11-15). Tagged [`v1.4.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.4.0). Milestone [#10](https://github.com/markheydon/solo-dev-board/milestone/10) closed. User Guide and full screenshot pass on `main` before tag.
 
-**After `v1.4.0`:** Spec Kit becomes the default for new feature work; re-review `plan/` archiving per [`SPEC_KIT_MIGRATION.md`](SPEC_KIT_MIGRATION.md).
+**After `v1.4.0`:** Spec Kit is the default for new feature work; `plan/` delivery bundles for shipped increments live under [`archive/`](archive/README.md) (see [`SPEC_KIT_MIGRATION.md`](SPEC_KIT_MIGRATION.md)).
 
-**Planning bundle:** [`product-chrome-ui-quality/README.md`](product-chrome-ui-quality/README.md).
+**Planning bundle (archived):** [`archive/product-chrome-ui-quality/README.md`](archive/product-chrome-ui-quality/README.md).
 
-**Target:** Not set. Dates follow actual start per Roadmap date guidelines.
+**Target:** Shipped 2026-11-15.
 
 ---
 

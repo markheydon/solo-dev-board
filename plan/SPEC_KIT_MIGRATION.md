@@ -1,8 +1,8 @@
 # Spec Kit Migration Plan
 
-<!-- AI Collaborator Instructions: Follow the pre–Spec Kit cut-over below before running specify/plan/tasks for new features. Execute the migration checklist when the user requests full Spec Kit adoption after v1.4.0. -->
+<!-- AI Collaborator Instructions: Use Spec Kit for new feature work. Legacy v1.4 delivery is complete; shipped bundles live under plan/archive/. -->
 
-**Status:** Scaffold present (`.specify/`); **full adoption starts after `v1.4.0`**. Until then, deliver **`v1.4`** (page chrome, narrow viewports, and branding) via legacy Issues + `plan/` bundles, not Spec Kit.
+**Status:** **Cut-over active** (2026-11-15, with [`v1.4.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.4.0)). New capabilities use **Spec Kit** by default. Scaffold: `.specify/`, feature dirs: `specs/<feature>/`.
 
 **Created:** 2026-07-18.
 
@@ -13,12 +13,11 @@
 ## Prerequisites
 
 - [x] Active decisions live under `adr/` (former `plan/DECISIONS.md` retired).
-- [ ] Constitution stable in [`AGENTS.md`](../AGENTS.md) and [`CONVENTIONS.md`](../CONVENTIONS.md).
+- [ ] Constitution stable in [`AGENTS.md`](../AGENTS.md) and [`CONVENTIONS.md`](../CONVENTIONS.md) (parallel `.specify/memory/constitution.md` exists; slimming `AGENTS.md` deferred).
 - [x] Backlog-to-issues Phase 2 complete ([`plan/archive/BACKLOG_TO_ISSUES_MIGRATION.md`](archive/BACKLOG_TO_ISSUES_MIGRATION.md)).
 - [x] `plan/` slimmed for Spec Kit readiness (2026-11-14): Copilot-era bundles and phased plan archived; see [`plan/README.md`](README.md).
-- [x] Pre–Spec Kit cut-over agreed (2026-11-15), revised the same day: finish **`v1.4`**, including branding pulled forward from a planned `v1.5`, on the existing GitHub Issue tree before Spec Kit becomes the default for new work.
-
-**Execute the migration checklist below after `v1.4.0` is tagged** (or when the user explicitly approves an earlier pilot).
+- [x] Pre–Spec Kit cut-over agreed (2026-11-15): finish **`v1.4`**, then adopt Spec Kit for new work.
+- [x] **`v1.4.0` tagged** (2026-11-15); re-archive review recorded below.
 
 ---
 
@@ -26,17 +25,26 @@
 
 | Phase | Milestone | Delivery mode | Product intent |
 | --- | --- | --- | --- |
-| **Now** | **`v1.4 - Product chrome, branding, and narrow viewports`** | Normal Plan mode; **existing** epic [#526](https://github.com/markheydon/solo-dev-board/issues/526) and children. Chrome: [#527](https://github.com/markheydon/solo-dev-board/issues/527), [#528](https://github.com/markheydon/solo-dev-board/issues/528), [#530](https://github.com/markheydon/solo-dev-board/issues/530), [#411](https://github.com/markheydon/solo-dev-board/issues/411). Branding (pulled forward 2026-11-15): [#397](https://github.com/markheydon/solo-dev-board/issues/397), [#529](https://github.com/markheydon/solo-dev-board/issues/529), [#531](https://github.com/markheydon/solo-dev-board/issues/531) | [`product-chrome-ui-quality/`](product-chrome-ui-quality/README.md) bundle + wireframes |
-| **After `v1.4.0`** | Next promoted feature | **Spec Kit default:** `/speckit-specify` → plan → tasks → implement | `.specify/specs/<feature>/`; at most one tracking issue, not a generated subtree |
+| **Complete** | **`v1.4 - Product chrome, branding, and narrow viewports`** | Legacy Issues + `plan/archive/product-chrome-ui-quality/` | Shipped [`v1.4.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.4.0) |
+| **Now** | Next promoted feature | **Spec Kit default:** `/speckit-specify` → plan → tasks → implement | `specs/<feature>/`; at most one tracking issue, not a generated subtree |
 
 There is no `v1.5` milestone. Do not declare one for branding.
 
 ### Rules for agents
 
-1. **Do not** run Spec Kit specify/plan/tasks for **`v1.4`** scope (chrome or branding) unless the user explicitly overrides (for example a post-ship archival spec).
-2. **Do not** use Copilot-era planning prompts to mint new Epic → Feature → Story trees for work that already has issues.
-3. **Do** use Spec Kit for **new** or **ice-box promoted** capabilities after cut-over, typically a single Feature or Story worth of intent, not prompt-driven decomposition.
-4. **Re-archive review:** After **`v1.4.0`**, review active `plan/` feature bundles ([`product-chrome-ui-quality/`](product-chrome-ui-quality/README.md), [`label-remap-taxonomy-project-plan.md`](label-remap-taxonomy-project-plan.md), wireframes) and move superseded prose to [`archive/`](archive/README.md) or into `.specify/specs/` as appropriate. Record outcome in this file.
+1. **Do** use Spec Kit for **new** or **ice-box promoted** capabilities.
+2. **Do not** use Copilot-era planning prompts to mint new Epic → Feature → Story trees.
+3. **Do not** maintain duplicate feature prose in `plan/SCOPE.md` and a spec for the same capability.
+4. **Historical `v1.4`:** do not re-open Spec Kit specify/plan/tasks for chrome/branding unless the user explicitly requests a post-ship archival spec.
+
+### Re-archive review (2026-11-15, with `v1.4.0`)
+
+| Artefact | Outcome |
+| --- | --- |
+| [`archive/product-chrome-ui-quality/`](archive/product-chrome-ui-quality/README.md) | Archived (shipped `v1.4.0`) |
+| [`archive/label-remap-taxonomy-project-plan.md`](archive/label-remap-taxonomy-project-plan.md) | Archived (shipped `v1.3.0`) |
+| [`wireframes/`](wireframes/) | Retained as implemented UI references |
+| New specs under `specs/` | Deferred until first post-`v1.4.0` feature pilot |
 
 ---
 
@@ -46,7 +54,7 @@ There is no `v1.5` milestone. Do not declare one for branding.
 | --- | --- |
 | `AGENTS.md` + `CONVENTIONS.md` | `.specify/memory/constitution.md` (+ path rules as needed) |
 | `adr/` (product decisions) | Absorbed into constitution and per-feature specs where appropriate |
-| `plan/SCOPE.md` + `plan/wireframes/` | `.specify/specs/<feature>/spec.md` |
+| `plan/SCOPE.md` + `plan/wireframes/` | `specs/<feature>/spec.md` |
 | `plan/archive/IMPLEMENTATION_PLAN.md` (retired) | Spec Kit plan artefacts per feature |
 | `.agents/skills/` | Stays outside Spec Kit (agent orchestration) |
 | `docs/` (operator guides) | Stays end-user facing; link from specs where relevant |
@@ -62,38 +70,35 @@ There is no `v1.5` milestone. Do not declare one for branding.
 
 ---
 
-## Execution checklist (when approved)
+## Execution checklist
 
 ### Step 1 — Initialise Spec Kit
 
-- [ ] Run `specify init` (or equivalent) at repository root.
-- [ ] Add `.specify/` to contributor docs; document CLI prerequisites in `docs/getting-started.md` if needed.
+- [x] Scaffold present (`.specify/` on `main`, PR #590).
+- [x] Contributor pointers in [`docs/getting-started.md`](../docs/getting-started.md) and [`docs/README.md`](../docs/README.md).
+- [x] Maintainer pointers in [`plan/README.md`](README.md), [`plan/DOCS_STRATEGY.md`](DOCS_STRATEGY.md).
 
 ### Step 2 — Import constitution
 
-- [ ] Draft `.specify/memory/constitution.md` from `AGENTS.md`, `CONVENTIONS.md`, and essential `adr/` entries.
-- [ ] Slim `AGENTS.md` to pointer: "Constitution: `.specify/memory/constitution.md`" for Spec Kit users, or keep parallel until cut-over is validated.
+- [x] `.specify/memory/constitution.md` drafted (PR #590).
+- [ ] Slim `AGENTS.md` to a pointer-only constitution gate — **deferred** (explicit follow-up).
 
 ### Step 3 — Pilot one feature spec
 
-- [ ] Pick the first **post–`v1.4.0`** promoted feature (or an explicitly approved pilot).
-- [ ] Create `.specify/specs/<feature>/spec.md` from `plan/SCOPE.md`, wireframes, or a slim issue body.
-- [ ] Run Spec Kit plan/implement flow once end-to-end; capture gaps in this doc.
-- [ ] Branding (#397, #529, #531) stays on the existing issue tree through `v1.4`. Do not pilot Spec Kit on that work unless the user explicitly overrides.
+- [ ] First **post–`v1.4.0`** promoted feature — **deferred** until backlog promotion.
 
 ### Step 4 — Update agent gates
 
-- [ ] Update [`AGENTS.md`](../AGENTS.md) and skills to reference Spec Kit for new feature work.
-- [ ] Update [`plan/DOCS_STRATEGY.md`](DOCS_STRATEGY.md).
+- [ ] Update [`AGENTS.md`](../AGENTS.md) and skills — **deferred** (out of scope for release doc PR).
+- [x] Update [`plan/DOCS_STRATEGY.md`](DOCS_STRATEGY.md).
 
 ### Step 5 — Retire duplicate planning prose
 
-- [ ] Mark migrated sections of `plan/SCOPE.md` as pointers to specs.
+- [x] Shipped increments archived under `plan/archive/`; [`plan/SCOPE.md`](SCOPE.md) keeps boundaries only.
 
 ### Step 6 — Validation
 
-- [ ] One feature delivered via Spec Kit only (spec → plan → implement).
-- [ ] No duplicate decision files outside Spec Kit and `adr/` for the same rule.
+- [ ] One feature delivered via Spec Kit only — **deferred** (pilot feature).
 
 ---
 
@@ -107,8 +112,8 @@ There is no `v1.5` milestone. Do not declare one for branding.
 
 ## Invocation
 
-When ready to execute, give the agent:
+When ready to execute the remaining checklist (pilot feature, `AGENTS.md` slimming):
 
 ```text
-Execute plan/SPEC_KIT_MIGRATION.md — [any constraints, e.g. pilot feature name].
+Execute plan/SPEC_KIT_MIGRATION.md — [constraints, e.g. pilot feature name].
 ```
