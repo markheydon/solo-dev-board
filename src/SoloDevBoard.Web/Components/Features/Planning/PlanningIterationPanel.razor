@@ -2,19 +2,23 @@
 @using SoloDevBoard.Application.Services.Planning
 
 <MudStack Spacing="3" data-testid="planning-planning-page">
-    <MudStack Row="true" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Spacing="1">
-        <MudText Typo="Typo.h5">Iteration Planning</MudText>
-        @if (planningView is not null && !isLoadingView)
-        {
-            <MudIconButton Icon="@Icons.Material.Filled.Refresh"
-                           aria-label="Refresh Iteration Planning"
-                           Disabled="isLoadingView"
-                           OnClick="RefreshPlanningViewAsync"
-                           data-testid="planning-planning-refresh" />
-        }
+    <MudStack Spacing="1">
+        <MudStack Row="true" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Spacing="1">
+            <MudText Typo="Typo.h5">Iteration Planning</MudText>
+            @if (planningView is not null && !isLoadingView)
+            {
+                <MudTooltip Text="Refresh Iteration Planning">
+                    <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                                   aria-label="Refresh Iteration Planning"
+                                   Disabled="isLoadingView"
+                                   OnClick="RefreshPlanningViewAsync"
+                                   data-testid="planning-planning-refresh" />
+                </MudTooltip>
+            }
+        </MudStack>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">Move items from included repositories to Up Next on the selected planning board.</MudText>
     </MudStack>
-    <MudText Typo="Typo.body1">
-        Select issues and pull requests from included repositories and move them to Up Next on the selected planning board.
+    <MudText Typo="Typo.body2">
         When the board exposes a Focus Order field, items with a <code>type/story</code>, <code>type/enabler</code>, or <code>type/test</code> label receive the next sequential value on add.
         Feature and Epic cards, and items without one of those type labels, move to Up Next without Focus Order.
     </MudText>

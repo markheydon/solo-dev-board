@@ -34,7 +34,7 @@ public sealed class ActionsTemplatesTests
         var cut = ctx.Render<ActionsTemplates>();
 
         // Assert
-        Assert.Contains("Loading workflow templates", cut.Markup);
+        Assert.NotEmpty(cut.FindAll("[data-testid='actions-templates-loading-state'] .mud-skeleton"));
     }
 
     [Fact]

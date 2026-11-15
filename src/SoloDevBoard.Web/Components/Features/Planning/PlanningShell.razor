@@ -2,7 +2,10 @@
 @using MudBlazor
 
 <MudStack Spacing="3" data-testid="planning-shell">
-    <MudText Typo="Typo.h4">Planning</MudText>
+    <MudStack Spacing="1">
+        <MudText Typo="Typo.h4">Planning</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">Daily focus, backlog, iteration, board setup, and repository participation for your planning boards.</MudText>
+    </MudStack>
 
     @if (ChromeState.IsLoading)
     {
@@ -61,11 +64,13 @@
                         }
                         · Refreshed @FormatLastRefreshed(ChromeState.LastRefreshedAtUtc)
                     </MudText>
-                    <MudIconButton Icon="@Icons.Material.Filled.Refresh"
-                                   aria-label="Refresh Planning data"
-                                   Disabled="ChromeState.IsLoading || ChromeState.IsRefreshing"
-                                   OnClick="RefreshAsync"
-                                   data-testid="planning-refresh-button" />
+                    <MudTooltip Text="Refresh Planning data">
+                        <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                                       aria-label="Refresh Planning data"
+                                       Disabled="ChromeState.IsLoading || ChromeState.IsRefreshing"
+                                       OnClick="RefreshAsync"
+                                       data-testid="planning-refresh-button" />
+                    </MudTooltip>
                 </MudStack>
             </MudStack>
 

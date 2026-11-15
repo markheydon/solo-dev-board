@@ -507,7 +507,7 @@ public sealed class PlanningDailyFocusTests
         cut.WaitForAssertion(() =>
         {
             Assert.Contains("Loading Planning", cut.Markup);
-            Assert.Contains("Loading planning boards, occupancy, and recommendations.", cut.Markup);
+            Assert.NotEmpty(cut.FindAll("[data-testid='planning-daily-focus-loading'] .mud-skeleton"));
         });
 
         repositoriesReady.SetResult([CreateRepository("owner", "repo-a")]);

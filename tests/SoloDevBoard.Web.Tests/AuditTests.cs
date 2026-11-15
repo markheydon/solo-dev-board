@@ -19,6 +19,23 @@ public sealed class AuditTests
     private readonly IRepositoryService _repositoryService = Substitute.For<IRepositoryService>();
 
     [Fact]
+    public async Task Audit_InitialRender_ShowsPageHeaderAndReloadAction()
+    {
+        // Arrange
+        var tcs = new TaskCompletionSource<IReadOnlyList<RepositoryDto>>();
+        _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>()).Returns(tcs.Task);
+
+        await using var ctx = CreateContext();
+
+        // Act
+        var cut = ctx.Render<Audit>();
+
+        // Assert
+        Assert.Contains("mud-typography-h5", cut.Markup);
+        Assert.NotEmpty(cut.FindAll("[data-testid='audit-feedback-region'] .mud-skeleton"));
+    }
+
+    [Fact]
     public async Task Audit_WhileServiceIsLoading_ShowsFeedbackRegionSkeleton()
     {
         // Arrange

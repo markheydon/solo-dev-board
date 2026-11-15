@@ -101,10 +101,13 @@ public sealed class MainLayoutThemeTests : BunitContext
 
         cut.WaitForAssertion(() =>
         {
-            var chip = cut.Find("[data-testid='shell-github-connection-status']");
+            var chip = cut.FindAll("[data-testid='shell-github-connection-status'], [data-testid='shell-github-connection-status-compact']").First();
             Assert.Equal("Connected as @markheydon.", chip.GetAttribute("aria-label"));
-            Assert.Contains("@markheydon", chip.TextContent, StringComparison.Ordinal);
-            Assert.DoesNotContain("Connected as", chip.TextContent, StringComparison.Ordinal);
+            if (string.Equals(chip.GetAttribute("data-testid"), "shell-github-connection-status", StringComparison.Ordinal))
+            {
+                Assert.Contains("@markheydon", chip.TextContent, StringComparison.Ordinal);
+                Assert.DoesNotContain("Connected as", chip.TextContent, StringComparison.Ordinal);
+            }
         });
     }
 

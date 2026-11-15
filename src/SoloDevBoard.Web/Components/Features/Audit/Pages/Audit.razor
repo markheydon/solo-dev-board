@@ -3,10 +3,12 @@
 <PageTitle>Audit Dashboard — SoloDevBoard</PageTitle>
 
 <MudStack Spacing="3">
-    <MudText Typo="Typo.h4">Audit Dashboard</MudText>
-    <MudText Typo="Typo.body1">Review repository health signals across your active repositories.</MudText>
+    <MudStack Spacing="1">
+        <MudText Typo="Typo.h5">Audit Dashboard</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">Review repository health signals across your active repositories.</MudText>
+    </MudStack>
 
-    <MudPaper Class="pa-4" Outlined="true" data-testid="audit-command-surface">
+    <MudPaper Class="pa-4" Elevation="1" data-testid="audit-command-surface">
         <MudStack Spacing="2">
             <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Wrap="Wrap.Wrap" Spacing="2">
                 <MudText Typo="Typo.h6">Repository selector</MudText>
@@ -30,21 +32,21 @@
             }
             else if (!string.IsNullOrWhiteSpace(repositoryLoadErrorMessage))
             {
-                <MudStack Spacing="2" aria-live="assertive" role="alert" data-testid="audit-feedback-region">
-                    <MudText Typo="Typo.h6">Unable to load repositories</MudText>
+                <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" aria-live="assertive" role="alert" data-testid="audit-feedback-region">
+                    <MudText Typo="Typo.subtitle2">Unable to load repositories</MudText>
                     <MudText Typo="Typo.body2">@repositoryLoadErrorMessage</MudText>
-                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="RetryLoadRepositoriesAsync"
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" Class="mt-2" OnClick="RetryLoadRepositoriesAsync"
                                data-testid="audit-reload-repositories-button">
                         Try again
                     </MudButton>
-                </MudStack>
+                </MudAlert>
             }
             else if (repositoryOptions.Count == 0)
             {
-                <MudStack Spacing="1" aria-live="polite" data-testid="audit-feedback-region">
-                    <MudText Typo="Typo.h6">No repositories found</MudText>
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" aria-live="polite" data-testid="audit-feedback-region">
+                    <MudText Typo="Typo.subtitle2">No repositories found</MudText>
                     <MudText Typo="Typo.body2">No active repositories were returned for this account.</MudText>
-                </MudStack>
+                </MudAlert>
             }
             else
             {
@@ -113,21 +115,23 @@
         }
         else if (!string.IsNullOrWhiteSpace(auditLoadErrorMessage))
         {
-            <MudPaper Class="pa-4" Elevation="1" aria-live="assertive" role="alert" data-testid="audit-feedback-region">
-                <MudStack Spacing="2">
-                    <MudText Typo="Typo.h6">Unable to load audit summary</MudText>
+            <MudPaper Class="pa-4" Elevation="1" data-testid="audit-feedback-region">
+                <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" aria-live="assertive" role="alert">
+                    <MudText Typo="Typo.subtitle2">Unable to load audit summary</MudText>
                     <MudText Typo="Typo.body2">@auditLoadErrorMessage</MudText>
-                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="RetryLoadAuditDataAsync"
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" Class="mt-2" OnClick="RetryLoadAuditDataAsync"
                                data-testid="audit-retry-load-button">
                         Try again
                     </MudButton>
-                </MudStack>
+                </MudAlert>
             </MudPaper>
         }
         else if (!hasLoadedAuditSummary)
         {
             <MudPaper Class="pa-4" Elevation="1" data-testid="audit-feedback-region">
-                <MudText Typo="Typo.body2">Select one or more repositories, then load the audit summary.</MudText>
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                    Select one or more repositories, then load the audit summary.
+                </MudAlert>
             </MudPaper>
         }
         else

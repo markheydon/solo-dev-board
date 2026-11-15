@@ -16,18 +16,30 @@
                        Edge="Edge.Start"
                        aria-label="Toggle navigation drawer"
                        OnClick="@((e) => DrawerToggle())" />
-        <MudText Typo="Typo.h5" Class="ml-3">SoloDevBoard</MudText>
+        <MudText Typo="Typo.h5" Class="ml-3 text-truncate d-none d-sm-inline">SoloDevBoard</MudText>
+        <MudText Typo="Typo.h6" Class="ml-3 text-truncate d-inline d-sm-none" Style="max-width: 7rem;">SoloDevBoard</MudText>
         <MudSpacer />
         @if (_showPatConnectionStatus && _patConnectionStatus is not null)
         {
-            <MudChip T="string"
-                     Color="@(_patConnectionStatus.IsConnected ? Color.Success : Color.Warning)"
-                     Variant="Variant.Text"
-                     Icon="@Icons.Material.Filled.Link"
-                     aria-label="@_patConnectionStatus.StatusMessage"
-                     data-testid="shell-github-connection-status">
-                @ConnectionChipText
-            </MudChip>
+            <MudHidden Breakpoint="Breakpoint.SmAndDown" Invert="true">
+                <MudChip T="string"
+                         Color="@(_patConnectionStatus.IsConnected ? Color.Success : Color.Warning)"
+                         Variant="Variant.Text"
+                         Icon="@Icons.Material.Filled.Link"
+                         aria-label="@_patConnectionStatus.StatusMessage"
+                         data-testid="shell-github-connection-status-compact">
+                </MudChip>
+            </MudHidden>
+            <MudHidden Breakpoint="Breakpoint.SmAndDown">
+                <MudChip T="string"
+                         Color="@(_patConnectionStatus.IsConnected ? Color.Success : Color.Warning)"
+                         Variant="Variant.Text"
+                         Icon="@Icons.Material.Filled.Link"
+                         aria-label="@_patConnectionStatus.StatusMessage"
+                         data-testid="shell-github-connection-status">
+                    @ConnectionChipText
+                </MudChip>
+            </MudHidden>
         }
         @if (ThemePreferenceService.IsInitialised)
         {

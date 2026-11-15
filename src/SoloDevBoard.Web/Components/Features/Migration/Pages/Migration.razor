@@ -5,8 +5,10 @@
 <PageTitle>One-Click Migration</PageTitle>
 
 <MudStack Spacing="3">
-    <MudText Typo="Typo.h4">One-Click Migration</MudText>
-    <MudText Typo="Typo.body1">Run labels, milestones, and project board Status columns migration from one source repository to one or more target repositories.</MudText>
+    <MudStack Spacing="1">
+        <MudText Typo="Typo.h5">One-Click Migration</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">Run labels, milestones, and project board Status columns migration from one source repository to one or more target repositories.</MudText>
+    </MudStack>
     <MudText Typo="Typo.body2">Choose the migration scope that matches your repository setup transfer.</MudText>
 
     <MudPaper Class="pa-4" Elevation="1" data-testid="migration-workflow-controls-card">
@@ -25,23 +27,24 @@
 
             @if (isLoadingRepositories)
             {
-                <MudStack AlignItems="AlignItems.Center" Spacing="1" aria-live="polite" role="status">
-                    <MudProgressCircular Indeterminate="true" Color="Color.Primary" aria-label="Loading repositories" />
-                    <MudText Typo="Typo.body2">Loading repositories...</MudText>
+                <MudStack Spacing="2" aria-live="polite" role="status" data-testid="migration-repositories-loading-state">
+                    <MudSkeleton Height="56px" Animation="Animation.Wave" />
+                    <MudSkeleton Height="120px" Animation="Animation.Wave" />
                 </MudStack>
             }
             else if (hasRepositoryLoadFailure)
             {
-                <MudStack Spacing="1" aria-live="assertive" role="alert" data-testid="migration-repositories-load-error">
-                    <MudText Typo="Typo.h6">Unable to load repositories</MudText>
+                <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" aria-live="assertive" role="alert" data-testid="migration-repositories-load-error">
+                    <MudText Typo="Typo.subtitle2">Unable to load repositories</MudText>
                     <MudText Typo="Typo.body2">@repositoryLoadErrorMessage</MudText>
                     <MudButton Variant="Variant.Filled"
                                Color="Color.Secondary"
+                               Class="mt-2"
                                OnClick="RetryLoadRepositoriesAsync"
                                data-testid="migration-reload-repositories-button">
                         Try loading repositories again
                     </MudButton>
-                </MudStack>
+                </MudAlert>
             }
             else
             {
