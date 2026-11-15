@@ -12,11 +12,7 @@ public sealed class LabelsTests : SoloDevBoardPageTest
     private async Task ExpectRepositorySelectorFinishedLoadingAsync()
     {
         var repositorySelector = Page.GetByTestId("repository-selector-region");
-        var loadedState = Page.GetByTestId("labels-reload-from-github-button")
-            .Or(repositorySelector.GetByTestId("label-manager-error-alert"))
-            .Or(Page.GetByTestId("repository-autocomplete"))
-            .Or(Page.GetByTestId("label-manager-repositories-empty-state"));
-        await Expect(loadedState).ToBeVisibleAsync(new() { Timeout = 15_000 });
+        await Expect(repositorySelector.GetByTestId("labels-repository-selector-loading-state")).ToBeHiddenAsync(new() { Timeout = 15_000 });
     }
     /// <summary>
     /// Verifies the page renders taxonomy controls before any repository data is available.
