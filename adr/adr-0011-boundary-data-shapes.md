@@ -82,7 +82,7 @@ The following existing stubs violate this rule and must be updated before any co
 
 | File | Current (incorrect) | Required |
 |------|---------------------|----------|
-| `src/Application/SoloDevBoard.Application/Services/ILabelManagerService.cs` | Returns `IReadOnlyList<Label>` | Must return `IReadOnlyList<LabelDto>` |
+| `src/SoloDevBoard.Application/Services/ILabelManagerService.cs` | Returns `IReadOnlyList<Label>` | Must return `IReadOnlyList<LabelDto>` |
 
 A `LabelDto` record must be created in the Application layer as part of this retrospective fix.
 

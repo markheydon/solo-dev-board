@@ -73,6 +73,6 @@ graph TD
 
 - Wireframe: [`plan/wireframes/label-manager-wireframe.md`](wireframes/label-manager-wireframe.md)
 - User Guide (update during the story): [`website/content/docs/label-manager.md`](../website/content/docs/label-manager.md)
-- E2E alignment: [`tests/E2E/USER_DOCS_ALIGNMENT.md`](../tests/E2E/USER_DOCS_ALIGNMENT.md)
+- E2E alignment: [`tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md`](../tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md)
 - Application: `ILabelManagerService` / `LabelService`; repository: `ILabelRepository`
 - Existing issue labelling: `IGitHubService.AddLabelsToTriageItemAsync` (reuse or extend; do not put GitHub HTTP in App)

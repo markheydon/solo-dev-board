@@ -18,4 +18,4 @@ Keep these points in mind:
 - Use `--apphost <path>` when multiple AppHosts exist and the user is asking about one specific app.
 - Do not guess frontend endpoints without first consulting Aspire state.
 - If multiple frontends exist, use Aspire state to disambiguate which URL Playwright should use.
-- Run end-to-end tests with the commands in [`tests/E2E/README.md`](../../../../tests/E2E/README.md).
+- Run end-to-end tests with the commands in [`tests/SoloDevBoard.E2E.Tests/README.md`](../../../../tests/SoloDevBoard.E2E.Tests/README.md).

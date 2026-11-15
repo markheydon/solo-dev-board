@@ -36,7 +36,7 @@ Out of scope for this tranche: caching issues, pull requests, workflow runs, Gra
 | Workflow run pagination honours configured max page limit | Unit (mocked HTTP) | `GitHubServiceTests.cs` |
 | Audit dashboard snapshot returns immutable collections | Unit | `AuditDashboardServiceTests.cs` |
 | Audit dashboard snapshot skips unavailable repository resources and continues | Unit | `AuditDashboardServiceTests.cs` |
-| Audit page loads dashboard data via snapshot API | Component (bUnit) | `tests/App.Tests/.../AuditTests.cs` |
+| Audit page loads dashboard data via snapshot API | Component (bUnit) | `tests/SoloDevBoard.Web.Tests/.../AuditTests.cs` |
 
 Volatile-data Infrastructure caching (issues, pull requests, workflow runs) remains out of scope for V1. GraphQL project board `first: 50` limits are documented in [getting-started.md](../docs/getting-started.md#github-api-performance).
 
@@ -49,11 +49,11 @@ Volatile-data Infrastructure caching (issues, pull requests, workflow runs) rema
 | GitHub PAT connectivity health check: valid PAT, invalid PAT, E2E placeholder skip | Unit | `tests/Infrastructure.Tests/.../GitHubPatConnectivityHealthCheckTests.cs` |
 | Hosted sign-in mode skips PAT connectivity probe | Unit | `GitHubPatConnectivityHealthCheckTests.cs` |
 | Health endpoints bypass hosted admission control middleware | Unit | `HostedAdmissionControlMiddlewareTests.cs` |
-| E2E smoke: `/health` returns `Healthy` before browser tests run | E2E | `tests/E2E/SoloDevBoard.E2E.Tests/Tests/SmokeTests`, `.github/workflows/playwright.yml` |
+| E2E smoke: `/health` returns `Healthy` before browser tests run | E2E | `tests/SoloDevBoard.E2E.Tests/Tests/SmokeTests`, `.github/workflows/playwright.yml` |
 
 Hosting probe wiring (`.WithHttpHealthCheck("/health")` on the AppHost `app` resource) is validated by manual deploy verification and operator documentation in [docs/deployment.md](../docs/deployment.md). AppHost orchestration modelling is not unit-tested per repository policy.
 
-`/health/github` is registered in `SoloDevBoard.App` for optional PAT connectivity monitoring. It is excluded from the default Azure Container Apps readiness probe so external GitHub outages do not trigger container restarts.
+`/health/github` is registered in `SoloDevBoard.Web` for optional PAT connectivity monitoring. It is excluded from the default Azure Container Apps readiness probe so external GitHub outages do not trigger container restarts.
 
 ### Structured logging and telemetry ([#107](https://github.com/markheydon/solo-dev-board/issues/107))
 
@@ -77,9 +77,9 @@ The following automated checks are proportionate to current repository tooling a
 |---|---|---|
 | `dotnet build` and `dotnet test` on every PR and push to `main` | `.github/workflows/ci.yml` (`build-and-test` job) | Regression gate for all unit and component tests, including operational hardening coverage above. |
 | `dotnet format --verify-no-changes` | `ci.yml` | Prevents formatting drift in test and production code. |
-| E2E `webServer` waits for `GET /health` before Playwright suite | `playwright.yml`, `tests/E2E/playwright.config.ts` | Confirms the app host starts and readiness endpoint responds in a realistic PAT-mode configuration. |
-| Playwright smoke test for `/health` | `tests/E2E/SoloDevBoard.E2E.Tests/Tests/SmokeTests` | Lightweight post-startup health assertion in the browser test harness. |
-| Playwright critical user journey suite | `tests/E2E/CRITICAL_JOURNEYS.md`, `tests/E2E/SoloDevBoard.E2E.Tests/Tests/*.spec.ts`, `.github/workflows/playwright.yml` | Feature shell, navigation, and placeholder-auth error-state coverage for v1.0.0 release readiness (issue #255). |
+| E2E `webServer` waits for `GET /health` before Playwright suite | `playwright.yml`, `tests/SoloDevBoard.E2E.Tests/playwright.config.ts` | Confirms the app host starts and readiness endpoint responds in a realistic PAT-mode configuration. |
+| Playwright smoke test for `/health` | `tests/SoloDevBoard.E2E.Tests/Tests/SmokeTests` | Lightweight post-startup health assertion in the browser test harness. |
+| Playwright critical user journey suite | `tests/SoloDevBoard.E2E.Tests/CRITICAL_JOURNEYS.md`, `tests/SoloDevBoard.E2E.Tests/Tests/*.spec.ts`, `.github/workflows/playwright.yml` | Feature shell, navigation, and placeholder-auth error-state coverage for v1.0.0 release readiness (issue #255). |
 
 Not automated in CI (manual or deploy-time verification only):
 

@@ -101,8 +101,8 @@ MudBlazor is the de-facto standard Blazor component library in the community. Co
 
 ### Immediate Actions (Delivery Agent)
 
-1. **Remove** `Microsoft.FluentUI.AspNetCore.Components` and related packages from `SoloDevBoard.App.csproj`.
-2. **Add** `MudBlazor` NuGet package to `SoloDevBoard.App.csproj`.
+1. **Remove** `Microsoft.FluentUI.AspNetCore.Components` and related packages from `SoloDevBoard.Web.csproj`.
+2. **Add** `MudBlazor` NuGet package to `SoloDevBoard.Web.csproj`.
 3. **Update `Program.cs`** — replace `AddFluentUIComponents()` with `builder.Services.AddMudServices()`.
 4. **Update `_Imports.razor`** — replace `@using Microsoft.FluentUI.AspNetCore.Components` with `@using MudBlazor`.
 5. **Update `MainLayout.razor`** — replace Fluent UI provider components and layout structure with MudBlazor equivalents (`MudThemeProvider`, `MudPopoverProvider`, `MudDialogProvider`, `MudSnackbarProvider`, `MudLayout`, `MudAppBar`, `MudDrawer`, `MudMainContent`).

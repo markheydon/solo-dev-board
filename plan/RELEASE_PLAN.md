@@ -14,7 +14,7 @@ During the pre-1.0 development phase (`0.x.y`), minor version bumps may include 
 
 ### Build-time versioning (MinVer)
 
-Application version numbers are calculated automatically at build time by [MinVer](https://github.com/adamralph/minver) from git tags on `SoloDevBoard.App`. The About page and GitHub API user-agent both read this stamped assembly metadata.
+Application version numbers are calculated automatically at build time by [MinVer](https://github.com/adamralph/minver) from git tags on `SoloDevBoard.Web`. The About page and GitHub API user-agent both read this stamped assembly metadata.
 
 | Deploy tier | Git state | Example About version | Example built at | Example build metadata |
 |---|---|---|---|---|

@@ -105,7 +105,7 @@
       "args": [
         "watch",
         "--project",
-        "${workspaceFolder}/src/App/SoloDevBoard.App/SoloDevBoard.App.csproj",
+        "${workspaceFolder}/src/SoloDevBoard.Web/SoloDevBoard.Web.csproj",
         "run"
       ],
       "problemMatcher": [
@@ -139,7 +139,7 @@
       "args": [
         "watch",
         "--project",
-        "${workspaceFolder}/src/App/SoloDevBoard.App/SoloDevBoard.App.csproj",
+        "${workspaceFolder}/src/SoloDevBoard.Web/SoloDevBoard.Web.csproj",
         "run"
       ],
       "options": {

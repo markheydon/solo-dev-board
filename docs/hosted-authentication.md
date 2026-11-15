@@ -59,7 +59,7 @@ CI runs a dedicated Playwright matrix job (`hosted` in [`.github/workflows/playw
 - The welcome landing shows the **Sign in with GitHub** action.
 - `POST /_blazor/negotiate` succeeds so the Blazor circuit can start before sign-in.
 
-Full OAuth callback and post-login journeys remain manual or staging validation. See [tests/E2E/CRITICAL_JOURNEYS.md](../tests/E2E/CRITICAL_JOURNEYS.md).
+Full OAuth callback and post-login journeys remain manual or staging validation. See [tests/SoloDevBoard.E2E.Tests/CRITICAL_JOURNEYS.md](../tests/SoloDevBoard.E2E.Tests/CRITICAL_JOURNEYS.md).
 
 ## Local Trusted Modes
 
