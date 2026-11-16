@@ -1,6 +1,6 @@
 # Aspire from the start — multi-process findings
 
-**Status:** Planning findings only. Not a decision. Does not change [DEC-013](adr/adr-0016-consider-aspire-for-local-orchestration-and-future-hosting.md), [DEC-015](adr/adr-0018-aspire-azure-container-apps-deployment.md), or [SCOPE.md](SCOPE.md).  
+**Status:** Archived planning findings. **Compute and snapshot storage choice** for overnight inventory is decided in [ADR-0046](../../adr/adr-0046-overnight-inventory-functions-and-sql.md) (Azure Functions, Azure SQL `inventory`, Functions host storage). This file remains background on a possible future `apiservice` split. Does not change [SCOPE.md](../../SCOPE.md).  
 **Date:** 2026-08-14  
 **Audience:** Maintainer review before any split of the current single-process AppHost.
 

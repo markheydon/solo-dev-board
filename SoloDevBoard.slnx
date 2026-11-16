@@ -9,6 +9,7 @@
   </Folder>
   <Folder Name="/src/Aspire/">
     <Project Path="src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj" />
+    <Project Path="src/SoloDevBoard.Functions/SoloDevBoard.Functions.csproj" />
     <Project Path="src/SoloDevBoard.ServiceDefaults/SoloDevBoard.ServiceDefaults.csproj" />
   </Folder>
   <Folder Name="/tests/" />
