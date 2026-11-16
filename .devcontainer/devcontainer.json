@@ -15,7 +15,7 @@
 		"memory": "8gb",
 		"storage": "32gb"
 	},
-	"onCreateCommand": "sudo apt-get update && sudo apt-get install -y libnss3-tools",
+	"onCreateCommand": "sudo apt-get update && sudo apt-get install -y libnss3-tools azure-functions-core-tools-4",
 	"remoteEnv": {
 		"SSL_CERT_DIR": "/usr/lib/ssl/certs:/home/vscode/.aspnet/dev-certs/trust",
 		"CURSOR_API_KEY": "${localEnv:CURSOR_API_KEY}",
