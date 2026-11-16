@@ -446,7 +446,7 @@ Aspire generates and applies Bicep at deploy time. A typical deployment includes
 | Azure SQL (`sql`) / database (`inventory`) | Derived repository snapshots for inventory features |
 | Azure Storage (`storage` / `storagestaging` on Staging) | Functions host storage (not product snapshot blobs) |
 | Azure Container Registry | Stores built container images (Aspire-provisioned per deployment, or optional shared registry — see [Optional shared Container Registry](#optional-shared-container-registry)) |
-| Azure Key Vault (`auth-secrets`, or `auth-secrets-staging`) | Pre-populated auth secrets referenced at deploy time ([ADR-0045](../adr/adr-0045-persistent-key-vault-dual-path-local-secrets.md)); web `app` reads auth secrets; worker auth wiring lands with scanners |
+| Azure Key Vault (`auth-secrets`, or `auth-secrets-staging`) | Pre-populated auth secrets referenced at deploy time ([ADR-0045](../adr/adr-0045-persistent-key-vault-dual-path-local-secrets.md)); `app` and `functions` receive vault references (PAT binding on publish; scanner runtime still deferred — [ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md)) |
 | Application Insights | Application logs, metrics, and distributed traces |
 | Log Analytics workspace | Container platform logs and Application Insights backing store |
 | Aspire dashboard | Optional operational dashboard (Aspire default) |
