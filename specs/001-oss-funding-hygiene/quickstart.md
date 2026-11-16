@@ -44,7 +44,7 @@ aspire logs inventory-migrations
 3. Open **Open Source** from the main nav (route from wireframe).  
 4. Save a non-empty canonical `FUNDING.yml` text when prompted.
 
-**Expect**: Page does not list funding statuses until a run exists; empty state explains no inventory yet (FR-003 scenario 3).
+**Expect**: Page does not list funding statuses until a run exists; empty state explains no inventory yet (US1 acceptance scenario 3). When no canonical standard and no run exist, the no-standard prompt takes precedence over an empty funding table.
 
 ---
 
@@ -58,7 +58,7 @@ aspire logs inventory-migrations
 aspire logs functions
 ```
 
-**Expect**: Queue message processed; run transitions to completed or partial; page shows new `last finished` time after refresh.
+**Expect**: Web enqueues through the `inventory-queues` client (no storage connection string read in Infrastructure). Functions host storage receives `inventory-scan-request`. Run transitions to completed or partial; page shows new `last finished` time after refresh.
 
 Repeat scan while a run is active.
 
@@ -111,7 +111,20 @@ After a completed run, inspect snapshot rows for one non-fork repository (SQL or
 - `LicenceName` is the repository licence when the repository has one.
 - A fork is still checked. Its checklist is filled without the community profile call, which GitHub does not serve for forks.
 
-## 9. Regression gates (agent)
+## 9. Performance smoke (SC-002, SC-004)
+
+1. Seed or complete an inventory run covering **at least 500** open-source catalogue rows (test data or a large operator catalogue).
+2. Open **Open Source** with browser devtools closed; time from navigation to summary chips and first page of rows visible.
+
+**Expect**: Stored read completes within **5 seconds** (SC-002) with a **warm** catalogue cache; repeat once after clearing the repository catalogue cache (or first visit after cold start) and confirm the page still meets 5 s or performs only one catalogue list refresh without per-repo funding calls.
+
+3. With the same catalogue size, click **Scan now** once.
+
+**Expect**: Snackbar or inline acknowledgement within **5 seconds** (SC-004); page remains interactive while the run continues.
+
+---
+
+## 10. Regression gates (agent)
 
 ```bash
 dotnet format SoloDevBoard.slnx --verify-no-changes

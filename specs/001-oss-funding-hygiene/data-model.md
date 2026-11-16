@@ -15,7 +15,7 @@ All entities below are scoped by **`OperatorKey`** (string, required, indexed):
 |------|--------|--------|
 | PAT | `user:{ownerLogin}` | `GitHubAuthOptions.OwnerLogin` / PAT resolution |
 | Hosted (Web) | `installation:{installationId}` | Installation id from interactive sign-in claims or `GitHubAuth__InstallationId` on Web (same id Functions uses for that tenant) |
-| Hosted (Functions) | `installation:{installationId}` | `gh-app-installation-id` when set, otherwise discovery at Functions startup for timer multi-target |
+| Hosted (Functions) | `installation:{installationId}` | `GitHubAuth__InstallationId` from `gh-app-installation-id` (required for hosted unattended inventory in v1). When unset, hosted inventory is unavailable (FR-015, SC-008). No multi-installation discovery in v1. |
 
 Unique constraints that involve "latest run" are enforced per `OperatorKey`.
 
@@ -46,13 +46,14 @@ One row per started pass (scheduled or manual).
 | `OperatorKey` | string | FK partition |
 | `Trigger` | enum | `Scheduled`, `Manual` |
 | `AccessKind` | enum | `PersonalAccessToken`, `Installation` |
-| `StartedAtUtc` | DateTimeOffset | Required |
+| `StartedAtUtc` | DateTimeOffset? | Null while `Outcome = Queued`; set when promoted to `InProgress` |
 | `FinishedAtUtc` | DateTimeOffset? | Null while in progress |
 | `Outcome` | enum | `Queued`, `InProgress`, `Completed`, `Partial`, `Failed` |
 | `WasRateLimited` | bool | FR-013 |
 | `StandardContentHashAtStart` | string | Hash compared for this run |
 | `IntendedRepositoryCount` | int | Open-source scope count at start |
 | `CheckedRepositoryCount` | int | Repositories with a definitive funding or failure row |
+| `ResumeAfterRepositoryFullName` | string? | Catalogue-order cursor: next run starts after this full name (wrap). Null on first run or after `Completed`. |
 | `IsSuperseded` | bool | True when a newer finished run exists for operator |
 
 **State transitions**:
@@ -116,13 +117,15 @@ All checklist columns are null when `ScanState` is `NotScanned` or `NotVisible`.
 
 ## InventoryRunRequest (queue / coalescing)
 
-Transient message shape (not necessarily a SQL table in v1):
+Transient message on queue `inventory-scan-request`, published with the Aspire `QueueServiceClient` for resource `inventory-queues` (not a SQL table in v1):
 
 | Field | Type | Purpose |
 |-------|------|---------|
-| `OperatorKey` | string | Target partition |
-| `RequestedAtUtc` | DateTimeOffset | Audit |
-| `requestedByLogin` | string | GitHub login of operator who clicked scan now (audit only; matches [inventory-queue-message.json](./contracts/inventory-queue-message.json)) |
+| `version` | int | Schema version (const 1) |
+| `operatorKey` | string | Target partition |
+| `requestedAtUtc` | DateTimeOffset | Audit |
+| `trigger` | string | Always `Manual` for scan now |
+| `requestedByLogin` | string? | GitHub login of operator who clicked scan now (audit only; matches [inventory-queue-message.json](./contracts/inventory-queue-message.json)) |
 
 Coalescing rule: if `InventoryRun` exists with `Outcome` in (`Queued`, `InProgress`) for operator, return already-underway without a second queue message.
 
@@ -132,7 +135,7 @@ Coalescing rule: if `InventoryRun` exists with `Outcome` in (`Queued`, `InProgre
 
 | DTO | Source |
 |-----|--------|
-| `OpenSourceFundingPageDto` | **Displayed run**: latest finished `Completed` or `Partial` run (not superseded) plus snapshots; **latest attempt** may be `Failed` for banner only. Application merges catalogue ids not in snapshots as synthetic rows with DTO `RowScanState.NotYetScanned` (not stored on `RepositoryInventorySnapshot`; FR-002). |
+| `OpenSourceFundingPageDto` | **Displayed run header**: latest finished `Completed` or `Partial` run (not superseded). **Row facts**: for each catalogue repository, the newest `RepositoryInventorySnapshot` for that `OperatorKey` and full name across retained rows (so a later partial run does not hide facts from an earlier finished pass). Repositories with no snapshot show `RowScanState.NotYetScanned` (FR-002). **Latest attempt** may be `Failed` for banner only. |
 | `FundingSummaryCountsDto` | Aggregates match/differ/missing/not scanned; excludes archived from attention count (FR-012) |
 | `StaleStateDto` | `FinishedAtUtc` older than 36 hours (FR-004) |
 
@@ -142,4 +145,4 @@ Mapping stays in Application services per ADR-0011.
 
 ## Retention
 
-When a new run reaches `Completed` or `Partial`, mark prior runs `IsSuperseded = true`. Optionally delete old snapshot rows in a background step; **must not** delete the last successful/partial run on a failed attempt (spec assumptions). Implement retention as delete snapshots for superseded runs only after the new run commits.
+When a new run reaches `Completed` or `Partial`, mark prior runs `IsSuperseded = true`. **Do not delete** snapshot rows for repositories the new run did not re-check; the page merge uses per-repository latest snapshots. Prune only when a repository drops from the catalogue or when a newer snapshot for the same repository commits (same operator). A failed attempt **must not** erase the last successful or partial run header or existing snapshots (spec assumptions).

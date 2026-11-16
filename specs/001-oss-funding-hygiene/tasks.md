@@ -21,6 +21,16 @@ description: "Task list for OSS funding file hygiene implementation"
 
 Single layered repo: `src/`, `tests/` at repository root (see [plan.md](./plan.md)).
 
+## Implementation progress (branch snapshot)
+
+Work has started on `001-oss-funding-hygiene` before all paperwork gates complete. **Reconcile checkboxes before opening a PR.** Gates that still block merge:
+
+| Gate | Task | Status |
+|------|------|--------|
+| Human package approval | T002 | Confirm before treating package edits as approved |
+| Open Source wireframe | T003 | Not present under `plan/wireframes/` |
+| Extension ADR (queue + App install wiring) | T004a | ADR-0046 exists; T004a record still required per plan Complexity Tracking |
+
 ---
 
 ## Phase 1: Setup (Shared Infrastructure)
@@ -28,9 +38,9 @@ Single layered repo: `src/`, `tests/` at repository root (see [plan.md](./plan.m
 **Purpose**: Projects, packages, and wireframe gate before feature code.
 
 - [ ] T001 Add `src/SoloDevBoard.Inventory.Migrations/SoloDevBoard.Inventory.Migrations.csproj` referencing `SoloDevBoard.Infrastructure` and register in `SoloDevBoard.slnx` only (migrations assembly has no unit-test surface; constitution III)
-- [ ] T002 [P] Add central package versions in `Directory.Packages.props` for **all** new packages (EF/Aspire, queue extensions, storage clients, any JWT helper) per [research.md](./research.md); obtain explicit human approval before edit (AGENTS.md package gate; blocks T011)
-- [ ] T004a Record architecture decisions for EF migrations project, storage-queue scan now, ACA Job bundle, hosted scope, and GitHub App installation auth in a new ADR via `create-architectural-decision-record` (**blocks Phase 2 AppHost wiring**; extends ADR-0046; do not edit the accepted ADR body)
+- [ ] T002 [P] Add central package versions in `Directory.Packages.props` for **all** new packages (EF/Aspire, queue extensions, storage clients, any JWT helper) per [research.md](./research.md); obtain explicit human approval before edit (AGENTS.md package gate; **blocks all of Phase 2 and T029**)
 - [ ] T003 [P] Create feature wireframe `plan/wireframes/open-source-wireframe.md` and add an index entry in `plan/wireframes/README.md` aligned with [spec.md](./spec.md) US4 and constitution IV (purpose line, toolbar, table, empty/stale/partial states, UK English labels)
+- [ ] T004a Record architecture decisions for EF migrations project, storage-queue scan now, ACA Job bundle, hosted scope, and GitHub App installation auth in a new ADR via `create-architectural-decision-record` (**blocks Phase 2 AppHost wiring**; extends ADR-0046; do not edit the accepted ADR body)
 - [ ] T004 [P] Document new queue and CRON bindings in `src/SoloDevBoard.AppHost/README.md` cross-linking [contracts/apphost-inventory-parameters.md](./contracts/apphost-inventory-parameters.md) and [quickstart.md](./quickstart.md)
 
 ---
@@ -43,14 +53,15 @@ Single layered repo: `src/`, `tests/` at repository root (see [plan.md](./plan.m
 
 - [ ] T005 Add Domain entities under `src/SoloDevBoard.Domain/Entities/Inventory/` with persisted `RepositoryScanState` (`Checked`, `NotScanned`, `NotVisible`); add Application `RowScanState` DTO enum including `NotYetScanned` for synthetic rows only (constitution II)
 - [ ] T006 Implement `InventoryDbContext` and Fluent API entity configuration in `src/SoloDevBoard.Infrastructure/Inventory/` for entities from T005 with `OperatorKey` indexes, `(InventoryRunId, RepositoryFullName)` uniqueness, and filtered unique index enforcing one active (`Queued` or `InProgress`) run per `OperatorKey`
-- [ ] T007 Add `IOperatorKeyResolver` and `IOperatorInventoryTargetProvider` in `src/SoloDevBoard.Application/`: PAT → `user:{ownerLogin}`; hosted Web → `installation:{id}` from sign-in or `GitHubAuth__InstallationId`; Functions timer → all installation targets from parameter or discovery (research hosted scope section)
-- [ ] T008 [P] Add Application interfaces in `src/SoloDevBoard.Application/`: repositories, `IOpenSourceFundingService`, `ICanonicalFundingStandardService`, `IInventoryRunCommandService`, `IInventoryScanOrchestrator`, and Application port `IInventoryScanQueue` (Infrastructure adapter in T035) per [contracts/application-services.md](./contracts/application-services.md)
+- [ ] T007 Add `IOperatorKeyResolver` and `IOperatorInventoryTargetProvider` in `src/SoloDevBoard.Application/`: PAT → `user:{ownerLogin}`; hosted Web → `installation:{id}` from sign-in or `GitHubAuth__InstallationId`; Functions timer → configured `installation:{id}` when `gh-app-installation-id` is set (single-tenant default; no multi-installation fan-out in v1)
+- [ ] T008 [P] Add Application interfaces in `src/SoloDevBoard.Application/`: repositories, `IOpenSourceFundingService`, `ICanonicalFundingStandardService`, `IInventoryRunCommandService`, `IInventoryScanOrchestrator`, `IInventoryCatalogueClient`, `IGitHubOpenSourceInventoryScanner`, `IInventoryOperatorCredentials`, and Application port `IInventoryScanQueue` (Infrastructure adapter in T035) per [contracts/application-services.md](./contracts/application-services.md)
+- [ ] T030a Implement `IInventoryCatalogueClient` as adapter over `IRepositoryService` (open-source filter), shared by Web funding page merge and Functions orchestrator (FR-007a); hosted mode uses the same operator login as interactive catalogue listing (not `GET /installation/repositories` for scope)
 - [ ] T009 Implement EF repositories in `src/SoloDevBoard.Infrastructure/Inventory/` for runs, snapshots, and canonical standard (including latest-run query on `(OperatorKey, FinishedAtUtc DESC)` and supersede flag updates)
 - [ ] T010 Create initial EF migration in `src/SoloDevBoard.Inventory.Migrations/` reflecting [data-model.md](./data-model.md) (table prefix optional in Infrastructure configuration)
-- [ ] T011 Add `ProjectReference` to `SoloDevBoard.Inventory.Migrations` on AppHost; wire `Aspire.Hosting.EntityFrameworkCore`; `AddEFMigrations` on `app` with `.WithMigrationsProject<Projects.SoloDevBoard_Inventory_Migrations>()`, `.WithReference(inventory)`, `.WaitFor(inventory)`, `.RunDatabaseUpdateOnStart()`, publish bundle + ACA Job per [contracts/apphost-inventory-parameters.md](./contracts/apphost-inventory-parameters.md) in `src/SoloDevBoard.AppHost/AppHost.cs` (confirm resource ordering against Aspire 13.6 docs; avoid circular wait with `app` child)
+- [ ] T011 Add `ProjectReference` to `SoloDevBoard.Inventory.Migrations` on AppHost; wire `Aspire.Hosting.EntityFrameworkCore`; `AddEFMigrations` on `app` with `.WithMigrationsProject<Projects.SoloDevBoard_Inventory_Migrations>()`, `.WithReference(inventory)`, `.WaitFor(inventory)`, `.RunDatabaseUpdateOnStart()`, publish bundle + ACA Job per [contracts/apphost-inventory-parameters.md](./contracts/apphost-inventory-parameters.md) in `src/SoloDevBoard.AppHost/AppHost.cs`; add `storage.AddQueues("inventory-queues")` and Web `WithReference`/`WaitFor` on that resource (confirm resource ordering against Aspire 13.6 docs; avoid circular wait with `app` child)
 - [ ] T012 Add `WaitForCompletion(inventory-migrations)` (or equivalent) on `app` and `functions` in `src/SoloDevBoard.AppHost/AppHost.cs` after migration resource is defined
-- [ ] T013 Register `AddSqlServerDbContext<InventoryDbContext>`, queue client, repositories, and all Application inventory service implementations inside `src/SoloDevBoard.Composition/` via `AddSoloDevBoard` (constitution I; Web MUST NOT reference Infrastructure)
-- [ ] T014 [P] Ensure `src/SoloDevBoard.Web/Program.cs` and `src/SoloDevBoard.Functions/Program.cs` call `AddSoloDevBoard` only (no `InventoryDbContext`, Infrastructure usings, or duplicate EF registration)
+- [ ] T013 Register `AddSqlServerDbContext<InventoryDbContext>("inventory")` in `AddSoloDevBoardHost` in `src/SoloDevBoard.Composition/SoloDevBoardServiceCollectionExtensions.cs`; register `AddAzureQueueServiceClient("inventory-queues")` on Web via a Web-only extension on the same composition type; register repositories and Application inventory services in `AddSoloDevBoard` (constitution I and VI; Web MUST NOT reference Infrastructure)
+- [ ] T014 [P] Ensure `src/SoloDevBoard.Web/Program.cs` and `src/SoloDevBoard.Functions/Program.cs` call `AddSoloDevBoardHost()` (and Web calls queue client registration) only, with no direct `InventoryDbContext`, Infrastructure usings, or `GetConnectionString` for inventory or queues (**depends on T013**)
 
 **Checkpoint**: `aspire start` applies migrations; `inventory` SQL healthy; Web and Functions start after migrations.
 
@@ -65,9 +76,9 @@ Single layered repo: `src/`, `tests/` at repository root (see [plan.md](./plan.m
 ### Implementation for User Story 1
 
 - [ ] T015 [P] [US1] Add Application DTO records alongside services in `src/SoloDevBoard.Application/Services/OpenSource/` (`OpenSourceFundingPageDto`, `InventoryRunSummaryDto`, `RepositoryFundingRowDto`, `FundingSummaryCountsDto`) per [contracts/application-services.md](./contracts/application-services.md)
-- [ ] T016 [US1] Implement `IOpenSourceFundingService` in `src/SoloDevBoard.Application/Services/OpenSource/OpenSourceFundingService.cs`: **displayed run** = latest finished `Completed` or `Partial` (non-superseded) for the **current operator identity only** (FR-017; never surface another credential's snapshot as current); **latest attempt** for failed banner; merge cached open-source catalogue ids as `RowScanState.NotYetScanned` rows (distinct from run `NotScanned`); optional single catalogue cache refresh when cold (spec assumptions); hosted availability fields per contract
+- [ ] T016 [US1] Implement `IOpenSourceFundingService` in `src/SoloDevBoard.Application/Services/OpenSource/OpenSourceFundingService.cs`: **displayed run header** = latest finished `Completed` or `Partial` (non-superseded) for the **current operator identity only** (FR-017; never surface another credential's snapshot as current); **latest attempt** for failed banner; **per-repo rows** = newest retained snapshot per catalogue full name (FR-004); catalogue via T030a; merge catalogue ids with no snapshot as `RowScanState.NotYetScanned` (distinct from run `NotScanned`); optional single catalogue cache refresh when cold (spec assumptions); hosted availability fields per contract
 - [ ] T017 [US1] Implement stale detection (`FinishedAtUtc` older than 36 hours) and partial-run presentation in `OpenSourceFundingService` (FR-004)
-- [ ] T018 [US1] Implement `FundingSummaryCountsDto` aggregation excluding archived repositories from needs-attention count (FR-008, FR-012) in `src/SoloDevBoard.Application/Services/OpenSource/`
+- [ ] T018 [US1] Implement `FundingSummaryCountsDto` aggregation including `NotCompared` and excluding archived repositories from needs-attention count (counts only non-archived `Missing` and `Differs`; FR-008, FR-012) in `src/SoloDevBoard.Application/Services/OpenSource/`
 - [ ] T019 [P] [US1] Create Blazor components under `src/SoloDevBoard.Web/Components/Features/OpenSource/` (use `mudblazor` skill): summary chips, run metadata (scheduled vs manual, outcome, stale flag, **`AccessKind`** on displayed run per FR-016), repository table with archived/fork/private trait chips, **`FundingStatus.notCompared`** label when DTO indicates FR-003, **`FundingPlatforms`** when present (FR-013), **`WasRateLimited`** on displayed run metadata when true (FR-013, US3 scenario 4), GitHub link per row, `data-testid` on toolbar/table/scan-now, accessible names on icon-only links, `MudSkeleton` while loading, virtualised or paged table for ≤500 rows (SC-002)
 - [ ] T020 [US1] Implement empty, stale, failed-latest-attempt, standard-drift (`StandardDriftWarning` + compared-at labelling, FR-019), and hosted-unavailable banners using MudBlazor `MudAlert` per wireframe (one outcome → snackbar **or** inline alert, not both)
 - [ ] T021 [US1] Render `NotScanned` rows with short `FailureReason` and preserve successful rows on partial runs (FR-003 scenario 5) in Open Source funding table components
@@ -87,7 +98,7 @@ Single layered repo: `src/`, `tests/` at repository root (see [plan.md](./plan.m
 - [ ] T022 [P] [US2] Add `CanonicalFundingStandardDto`, `SaveCanonicalFundingStandardRequest` in `src/SoloDevBoard.Application/Services/OpenSource/`
 - [ ] T023 [US2] Implement `ICanonicalFundingStandardService` in `src/SoloDevBoard.Application/Services/OpenSource/CanonicalFundingStandardService.cs` with upsert on `OperatorKey`; reject empty or whitespace-only `Content` (FR-010); set `SavedAtUtc` and `ContentHash` (SHA-256 of normalised content)
 - [ ] T024 [US2] Implement `FundingFileComparer` in `src/SoloDevBoard.Application/Services/OpenSource/FundingFileComparer.cs`: CRLF→LF when line endings are uniform; mixed CRLF/LF or leading BOM is differs; ignore at most one trailing newline; 64 KiB max compare size (FR-010)
-- [ ] T025 [US2] Persist `StandardContentHashAtStart` on each `InventoryRun` when a run starts and set `StandardDriftWarning` on `OpenSourceFundingPageDto` when current standard hash differs from hash used for displayed run (FR-019)
+- [ ] T025 [US2] Set `StandardDriftWarning` on `OpenSourceFundingPageDto` when current standard hash differs from hash used for displayed run (FR-019). Persist `StandardContentHashAtStart` on `InventoryRun` at promotion to `InProgress` (implemented with T034, not at `Queued` only)
 - [ ] T026 [US2] MudBlazor canonical editor component in `src/SoloDevBoard.Web/Components/Features/OpenSource/CanonicalFundingStandardEditor.razor` with validation message for empty standard; block treating repos as match/differ when no standard saved (US2 scenario 1)
 - [ ] T027 [US2] When no canonical standard exists, show prompt on Open Source page before funding match/differ labels (integrate editor + page DTO in `src/SoloDevBoard.Web/Components/Features/OpenSource/`)
 
@@ -103,22 +114,20 @@ Single layered repo: `src/`, `tests/` at repository root (see [plan.md](./plan.m
 
 ### Implementation for User Story 3
 
-- [ ] T028 [P] [US3] Add AppHost parameters per [contracts/apphost-inventory-parameters.md](./contracts/apphost-inventory-parameters.md) (`inventory-scheduled-cron`, `gh-app-id`, `gh-app-private-key`, optional `gh-app-installation-id`, `hosted-inventory-enabled` on Web) in `src/SoloDevBoard.AppHost/AppHost.cs`
+- [ ] T028 [P] [US3] Add AppHost parameters per [contracts/apphost-inventory-parameters.md](./contracts/apphost-inventory-parameters.md) (`inventory-scheduled-cron`, `gh-app-id`, `gh-app-private-key`, optional `gh-app-installation-id`, `hosted-inventory-enabled` on Web + Functions) in `src/SoloDevBoard.AppHost/AppHost.cs`; publish mode Key Vault `GetSecret` bindings for `gh-app-id` and `gh-app-private-key` per T051
 - [ ] T029 [US3] Implement `IGitHubInstallationTokenProvider` in `src/SoloDevBoard.Infrastructure/GitHub/` with async mint and in-memory cache until expiry (Functions only receives private key; FR-015)
-- [ ] T029a [US3] Register Functions-only per-target scope factory (one `OperatorKey` per queue/timer message); supply cached installation or PAT token to existing GitHub clients without sync `.Wait()` in `GetAccessToken()`
-- [ ] T030 [US3] Implement scope from **cached linked catalogue** with `open-source` topic only (FR-007); per repo use installation token when hosted and mark `NotVisible` when content API returns not accessible (FR-016); include archived, fork, private when in catalogue (FR-008)
+- [ ] T029a [US3] Implement `IInventoryOperatorCredentials` and register Functions-only per-target scope factory (one `OperatorKey` per queue/timer message); supply cached installation or PAT token to existing GitHub clients without sync `.Wait()` in `GetAccessToken()`
+- [ ] T030 [US3] Walk scope from T030a; per repo probe `GET /repos/{owner}/{repo}` and persist `NotVisible` on 404/403 before funding file fetches (FR-016); include archived, fork, private traits from catalogue (FR-008); write explicit `NotScanned` snapshot rows for unchecked tail on `Partial` runs (US3 scenario 5)
 - [ ] T031 [US3] Implement `IGitHubOpenSourceInventoryScanner` in `src/SoloDevBoard.Infrastructure/Inventory/` fetching `.github/FUNDING.yml` then root `FUNDING.yml` (precedence FR-009); note extra root path when both exist; optional organisation default note without counting as match (FR-011)
 - [ ] T032 [US3] Record `FundingPlatforms` from line-scan of `platforms:` keys (no YAML parser); when no standard saved at run start, persist `FundingStatus.NotCompared` for repos with a funding file (FR-003); empty/invalid text → differs when standard exists; unreadable or >64 KiB → `NotScanned` with reason
 - [ ] T033 [US3] Persist Community Standards fields on `RepositoryInventorySnapshot` in `src/SoloDevBoard.Infrastructure/Inventory/` per [data-model.md](./data-model.md) (FR-014): `HasDescription` (non-empty description), `HasReadme` (project README only; no organisation-only column); for code of conduct, contributing, licence, security policy, issue templates, and pull request template record `*InRepository` and `*OrganisationOnly` (`OrganisationOnly` true only when absent from the project repository and present via owner `.github` default; `InRepository` true requires `OrganisationOnly` false); `LicenceName` is the project licence when `LicenceInRepository` else the owner-default name; all checklist columns null when `ScanState` is `NotScanned` or `NotVisible`; non-fork repos use community profile classification per [research.md](./research.md); forks skip profile and probe files via Contents API; security policy probes `SECURITY.md` in `.github/`, root, `docs/`, then owner `.github` when missing in project repo; do not store file bodies
-- [ ] T034 [US3] Implement `IInventoryScanOrchestrator` in `src/SoloDevBoard.Application/Services/OpenSource/InventoryScanOrchestrator.cs`: promote `Queued`→`InProgress`; shared entry for timer and queue so scheduled and manual triggers do not both walk the catalogue (spec edge case: one completes, the other skipped or coalesced); set `WasRateLimited` on the run when throttling retried inside the same pass (US3 scenario 4, FR-013); respect Functions `functionTimeout` minus safety margin for `Partial`; rate-limit window documented in `host.json`; supersede prior finished runs without deleting last good snapshot on failure
+- [ ] T034 [US3] Implement `IInventoryScanOrchestrator` in `src/SoloDevBoard.Application/Services/OpenSource/InventoryScanOrchestrator.cs`: promote `Queued`→`InProgress` and set `StandardContentHashAtStart` at promotion; shared entry for timer and queue so scheduled and manual triggers do not both walk the catalogue (spec edge case: one completes, the other skipped or coalesced); set `WasRateLimited` on the run when throttling retried inside the same pass (US3 scenario 4, FR-013); respect `host.json` `functionTimeout` (default 10 min on Consumption) minus **120 s** safety margin for `Partial`; persist `ResumeAfterRepositoryFullName` and tail `NotScanned` rows on partial finish; resume next run after that cursor (rotate on wrap, US3 scenario 5); supersede prior run headers without deleting snapshots for repos not re-checked (data-model retention)
 - [ ] T034a [US3] Recover stuck `Queued`/`InProgress` runs older than timeout plus grace (mark `Failed` with reason) so filtered unique index does not block future runs; unit test in T048
-- [ ] T035 [US3] Implement `IInventoryScanQueue` in `src/SoloDevBoard.Infrastructure/Inventory/` enqueueing JSON matching [contracts/inventory-queue-message.json](./contracts/inventory-queue-message.json) to queue `inventory-scan-request`
-- [ ] T036 [US3] Implement `IInventoryRunCommandService.RequestScanNowAsync`: insert or keep single `Queued`/`InProgress` per operator (DB filtered unique index); enqueue; return `AlreadyUnderway` or `Unavailable` when hosted inventory not configured (FR-005, FR-015)
+- [ ] T035 [US3] Implement `IInventoryScanQueue` in `src/SoloDevBoard.Infrastructure/Inventory/` enqueueing JSON matching [contracts/inventory-queue-message.json](./contracts/inventory-queue-message.json) to queue `inventory-scan-request` with `CreateIfNotExists` and default base64 message encoding
+- [ ] T036 [US3] Implement `IInventoryRunCommandService.RequestScanNowAsync`: insert or keep single `Queued`/`InProgress` per operator (DB filtered unique index); enqueue; on enqueue failure mark run `Failed` or delete `Queued` row so the index is not wedged; return `AlreadyUnderway` or `Unavailable` when hosted inventory not configured (FR-005, FR-015)
 - [ ] T037 [US3] Replace `InventoryPlaceholderTimerFunction.cs` with `InventoryTimerFunction.cs` using `[TimerTrigger("%Inventory__ScheduledCron%")]` enumerating operators from T007; when hosted credential missing or mint fails, write `Failed` run with reason for page banner (FR-015)
-- [ ] T038 [US3] Add `InventoryQueueFunction.cs` queue trigger processing scan messages and invoking `IInventoryScanOrchestrator` in `src/SoloDevBoard.Functions/`
-- [ ] T039 [US3] Wire Web storage queue connection in AppHost and register queue client in Composition only; Blazor uses `IInventoryRunCommandService` (T046), not queue types (constitution I)
-- [ ] T040 [US3] Mark repositories outside installation visibility as `ScanState.NotVisible` with unset funding/checklist fields (FR-016; US3 acceptance scenario 8)
-- [ ] T041 [US3] Confirm Functions `Program.cs` PAT binding for PAT mode unchanged from ADR-0046 (covered by T014; no duplicate `AddSoloDevBoard` edits)
+- [ ] T038 [US3] Add shared `InventoryFunctionsWorker.cs` plus `InventoryQueueFunction.cs` (`[QueueTrigger("inventory-scan-request")]` with no `Connection`) and wire both timer and queue handlers to resolve one scope per message and invoke `IInventoryScanOrchestrator` in `src/SoloDevBoard.Functions/`
+- [ ] T039 [US3] Confirm Blazor uses `IInventoryRunCommandService` (T046), not queue types (constitution I); AppHost queue wiring lives in T011/T013 only
 
 **Checkpoint**: Manual and scheduled runs persist snapshots; page shows new last-finished time after refresh; coalescing and partial runs match US3.
 
@@ -147,13 +156,13 @@ Single layered repo: `src/`, `tests/` at repository root (see [plan.md](./plan.m
 **Purpose**: Tests, docs, secrets inventory, and validation gates.
 
 - [ ] T047 [P] Add Application unit tests for `FundingFileComparer` (uniform line endings, mixed endings, BOM, trailing newline, size limit) in `tests/SoloDevBoard.Application.Tests/OpenSource/`
-- [ ] T048 [P] Add Application unit tests for scan-now and timer coalescing (`Queued`/`InProgress` races, timer firing while manual run in progress, T034a recovery), **FR-017** operator partition and credential-identity rules (wrong `OperatorKey` never returned as displayed run; PAT vs hosted snapshots do not bleed), and catalogue scope plus not-visible mapping in `tests/SoloDevBoard.Application.Tests/OpenSource/` (include `OpenSourceFundingService` display rules from T016)
-- [ ] T049 [P] Add Infrastructure unit tests for funding path precedence and snapshot mapping in `tests/SoloDevBoard.Infrastructure.Tests/Inventory/`; assert Community Standards dual columns (`*InRepository` / `*OrganisationOnly`) and fork vs non-fork probe paths per T033 (FR-014, SC-007 stored facts without live GitHub on page load)
+- [ ] T048 [P] Add Application unit tests for scan-now and timer coalescing (`Queued`/`InProgress` races, timer firing while manual run in progress, T034a recovery), **FR-017** operator partition and credential-identity rules (wrong `OperatorKey` never returned as displayed run; PAT vs hosted snapshots do not bleed), catalogue scope via T030a (not installation list), partial-run resume index, and not-visible mapping in `tests/SoloDevBoard.Application.Tests/OpenSource/` (include `OpenSourceFundingService` display rules from T016)
+- [ ] T049 [P] Add Infrastructure unit tests for funding path precedence, repository metadata `NotVisible` vs missing-file 404, and snapshot mapping in `tests/SoloDevBoard.Infrastructure.Tests/Inventory/`; assert Community Standards dual columns (`*InRepository` / `*OrganisationOnly`) and fork vs non-fork probe paths per T033 (FR-014, FR-016, SC-007 stored facts without live GitHub on page load)
 - [ ] T050 [P] Add bUnit tests for empty, stale, and partial states in `tests/SoloDevBoard.Web.Tests/` under `OpenSource/`
 - [ ] T051 Update `plan/KEY_VAULT_SECRET_INVENTORY.md` with `gh-app-id` and `gh-app-private-key` publish secrets per [research.md](./research.md) open dependency
 - [ ] T052 [US4] Update user guide under `website/content/docs/`, `tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md`, and `tests/SoloDevBoard.E2E.Tests/CRITICAL_JOURNEYS.md` for Open Source funding journey with US4 (constitution III; not deferred polish)
 - [ ] T052a [US4] Add Playwright test for Open Source nav → funding view (include axe pass for page chrome if tier allows per existing E2E conventions) in `tests/SoloDevBoard.E2E.Tests/`
-- [ ] T053 Run validation steps in [quickstart.md](./quickstart.md) including SC-002/SC-004 timing notes; confirm `dotnet format`, Release build, and `SoloDevBoard.UnitTests.slnf` pass
+- [ ] T053 Run validation steps in [quickstart.md](./quickstart.md) including seeded 500-row Open Source load timing (SC-002) and scan-now ACK timing with a large catalogue (SC-004); confirm `dotnet format`, Release build, and `SoloDevBoard.UnitTests.slnf` pass
 
 ---
 
@@ -178,7 +187,7 @@ Single layered repo: `src/`, `tests/` at repository root (see [plan.md](./plan.m
 ### Parallel Opportunities
 
 - Phase 1: T002, T003, T004 in parallel after T001
-- Phase 2: T008 parallel with T006; T014 parallel with T011 after T010
+- Phase 2: T008 parallel with T006; T014 after T013 (parallel with T011/T012 once T010 completes)
 - Phase 3: T015 parallel with T019
 - Phase 7: T047–T052 largely parallel
 
@@ -198,6 +207,7 @@ Then T016 → T017 → T018 wire service; T020–T021 complete states
 
 ```text
 T028: AppHost parameters (parallel with T029 installation token provider)
+T030a → T030: Catalogue adapter then scope walk
 T031–T033: Scanner implementation
 T037–T038: Functions triggers after T034 orchestrator exists
 ```

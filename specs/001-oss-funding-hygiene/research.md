@@ -23,7 +23,28 @@ Phase 0 decisions for `/speckit-plan`. User input emphasises a **daily overnight
 | `Migrate()` at Web startup in production | Hides failures in the web replica, races with Functions on first deploy, and bypasses observable migration health in the dashboard. |
 | Migrations inside Infrastructure next to `DbContext` | Valid for small teams; rejected here because the user explicitly asked for a migrations project and AppHost `WithMigrationsProject`. |
 
-**Packages** (implementation phase, central versions in `Directory.Packages.props`): `Aspire.Hosting.EntityFrameworkCore` on AppHost; `Aspire.Microsoft.EntityFrameworkCore.SqlServer` on Web and Functions; `Microsoft.EntityFrameworkCore.Design` on Migrations project.
+**Packages** (implementation phase, central versions in `Directory.Packages.props`): `Aspire.Hosting.EntityFrameworkCore` on AppHost; `Aspire.Microsoft.EntityFrameworkCore.SqlServer` on the composition host that calls `AddSqlServerDbContext`; `Aspire.Azure.Storage.Queues` on the composition host that calls `AddAzureQueueServiceClient`; `Microsoft.EntityFrameworkCore.Design` on Migrations project.
+
+---
+
+## Aspire client integrations (constitution 1.1.1, principle VI)
+
+**Decision**: Register modelled-resource clients in the host composition root `AddSoloDevBoardHost` (and a Web-only sibling on the same type when the worker must not take the dependency).
+
+- Inventory SQL: `builder.AddSqlServerDbContext<InventoryDbContext>("inventory")`. The name is the AppHost database resource. Web and Functions both call this, because both `WithReference(inventory)`. Repositories inject `InventoryDbContext`.
+- Scan-now publish: AppHost adds `storage.AddQueues("inventory-queues")` on the existing storage account. Web `WithReference` and `WaitFor` that queues resource. Web calls `builder.AddAzureQueueServiceClient("inventory-queues")`. `AzureInventoryScanQueue` takes `QueueServiceClient` and uses `GetQueueClient("inventory-scan-request")`. It does not read `ConnectionStrings:storage` and does not call `new QueueClient(connectionString, ...)`.
+- Scan-now consume: Functions keep `WithHostStorage(storage)`. The queue trigger omits `Connection`, so the worker uses the host storage connection Aspire sets (`AzureWebJobsStorage`). Functions do not `WithReference` the storage account or the queues resource for this feature, and they do not register `AddAzureQueueServiceClient`.
+
+**Rationale**: Constitution 1.1.1 requires the documented client integration and DI for referenced resources, and forbids assembling connection strings in Application and Infrastructure. SQL already follows `AddSqlServerDbContext`. The queue publish path is the same rule for Azure Queue Storage (`connect-to-azure-queue-storage`). The Functions trigger is the Aspire Functions host-storage integration, which is how the worker receives the account. A second queues client on Functions would require a reference the trigger does not use.
+
+**Alternatives considered**:
+
+| Alternative | Rejection |
+|-------------|-----------|
+| `GetConnectionString("storage")` and `new QueueClient` in Infrastructure | Forbidden by principle VI. Bypasses queue health checks and traces. |
+| `QueueTrigger(..., Connection = "ConnectionStrings:storage")` | Reads the Aspire-injected storage connection by name. The host-storage binding is the worker path. |
+| `AddAzureQueueServiceClient` on Functions as well as Web | Extra reference and health check on a process that already consumes the queue through the trigger. |
+| Register `AddSqlServerDbContext` inside `AddSoloDevBoard(IServiceCollection, IConfiguration)` | That method has no `IHostApplicationBuilder`. Principle VI names `Program.cs` or `AddSoloDevBoardHost`. |
 
 ---
 
@@ -47,7 +68,7 @@ Phase 0 decisions for `/speckit-plan`. User input emphasises a **daily overnight
 
 ## Scan now and single active run
 
-**Decision**: Implement manual scan via an **Azure Storage queue** message (`inventory-scan-request`) written from the Web app and processed by a **Queue-triggered** function. Coalesce duplicate requests per operator while a run is **Queued** or **InProgress** (spec FR-005). Timer and manual triggers share the same orchestrator entry so only one catalogue walk runs at a time (spec edge case: scheduled run while manual in progress).
+**Decision**: Implement manual scan via an **Azure Storage queue** message (`inventory-scan-request`) written from the Web app with the injected `QueueServiceClient` and processed by a **Queue-triggered** function on host storage. Coalesce duplicate requests per operator while a run is **Queued** or **InProgress** (spec FR-005). Timer and manual triggers share the same orchestrator entry so only one catalogue walk runs at a time (spec edge case: scheduled run while manual in progress). See [Aspire client integrations](#aspire-client-integrations-constitution-111-principle-vi).
 
 **Rationale**: ADR-0046 already provisions storage for Functions host storage; queues reuse that account. Decouples "acknowledge within 5 seconds" (SC-004) from catalogue walk duration.
 
@@ -65,11 +86,13 @@ Phase 0 decisions for `/speckit-plan`. User input emphasises a **daily overnight
 
 **Open dependency**: Confirm App private key storage name in Key Vault alongside existing `gh-pat` / `gh-app-client-secret` entries (`plan/KEY_VAULT_SECRET_INVENTORY.md` update in implement phase).
 
-**Hosted inventory scope (FR-007, FR-016, SC-008)**: The unattended walk MUST NOT use "all repos visible to the installation" as the scope list. Scope is always the operator's **linked open-source catalogue** (same SQL or cache the Repositories page uses). For each catalogue entry, the scanner uses the installation token when hosted; repositories the installation cannot access are persisted as `NotVisible` with unset funding fields. That preserves rows for linked repos outside the installation without widening scope to unknown repos.
+**Hosted inventory scope (FR-007, FR-007a, FR-016, SC-008)**: The unattended walk MUST NOT use "all repos visible to the installation" as the scope list. Scope is always the operator's **linked open-source catalogue** (same `IRepositoryService` / warmed Infrastructure catalogue cache the Repositories page uses). Implement `IInventoryCatalogueClient` as a thin adapter over that service, not over `GET /installation/repositories`. For each catalogue entry, the scanner uses the installation token when hosted; repositories the installation cannot access are persisted as `NotVisible` with unset funding fields after a repository metadata probe (spec FR-016). That preserves rows for linked repos outside the installation without widening scope to unknown repos.
 
-**Web `OperatorKey` in hosted mode**: Interactive pages resolve `installation:{installationId}` from the signed-in session (installation id stored at sign-in or read from `GitHubAuth__InstallationId` bound to Web for the single-tenant deployment). Functions resolve the same partition for scan-now queue messages built on Web. Timer jobs iterate every configured installation target from T007.
+**Web `OperatorKey` in hosted mode**: Interactive pages resolve `installation:{installationId}` from the signed-in session (installation id stored at sign-in or read from `GitHubAuth__InstallationId` bound to Web for the single-tenant deployment). Functions resolve the same partition for scan-now queue messages built on Web. Timer jobs target the configured installation id when `gh-app-installation-id` is set (single-tenant default); multi-installation discovery remains out of scope unless spec is updated.
 
 **Installation tokens**: Mint installation access tokens asynchronously inside `IGitHubInstallationTokenProvider` before the scanner scope walk; cache until expiry inside the Functions worker scope. Do not call GitHub synchronously from `ICurrentUserContext.GetAccessToken()`.
+
+**Hosted catalogue listing (FR-007a)**: Scope comes from `IRepositoryService` with the operator's linked repositories. In hosted mode, resolve the same operator login used for interactive catalogue refresh (installation-bound or configured owner), using a PAT-equivalent list call that returns topics, not `GET /installation/repositories` as the scope source. Content and metadata probes still use the installation token from T029a.
 
 ---
 

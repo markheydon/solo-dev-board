@@ -36,7 +36,7 @@ Task<FundingSummaryCountsDto> GetFundingSummaryAsync(CancellationToken cancellat
 
 **`InventoryRunSummaryDto`** (record): `StartedAtUtc`, `FinishedAtUtc?`, `Trigger` (scheduled/manual), `AccessKind`, `Outcome`, `WasRateLimited`, `CheckedRepositoryCount`, `IntendedRepositoryCount`, `StandardContentHashAtStart`.
 
-**`FundingSummaryCountsDto`** (record): `Matches`, `Differs`, `Missing`, `NotScanned`, `NotYetScanned`, `NotVisible`; needs-attention total excludes archived (FR-012).
+**`FundingSummaryCountsDto`** (record): `Matches`, `Differs`, `Missing`, `NotCompared`, `NotScanned`, `NotYetScanned`, `NotVisible`; needs-attention total excludes archived and counts only non-archived `Missing` and `Differs` (FR-012).
 
 ---
 
@@ -70,7 +70,7 @@ Task<RequestInventoryRunResultDto> RequestScanNowAsync(CancellationToken cancell
 |-----------|----------------|
 | `IInventoryRunRepository` | CRUD runs and snapshots |
 | `ICanonicalFundingStandardRepository` | Operator standard row |
-| `IInventoryScanQueue` | Enqueue manual scan messages (Infrastructure implementation; registered in Composition; not injected into Blazor) |
+| `IInventoryScanQueue` | Enqueue manual scan messages. Infrastructure implementation takes `QueueServiceClient` from DI (`AddAzureQueueServiceClient("inventory-queues")` on the Web host). It does not call `GetConnectionString` or `new QueueClient(connectionString, ...)`. Not injected into Blazor. |
 | `IGitHubOpenSourceInventoryScanner` | Per-repo GitHub fetch. Funding facts plus Community Standards facts from [data-model.md](../data-model.md): `HasDescription`, `HasReadme`, and for the six health files an in-repository flag and an organisation-only flag, with one `LicenceName`. These fields are persisted on the snapshot and are not members of `RepositoryFundingRowDto`. |
 | `IGitHubInstallationTokenProvider` | Installation JWT for Functions hosted path |
 
@@ -78,6 +78,6 @@ Task<RequestInventoryRunResultDto> RequestScanNowAsync(CancellationToken cancell
 
 ## Functions host (internal)
 
-No HTTP API. Queue and timer handlers resolve the same Application/Infrastructure graph via `AddSoloDevBoard` as ADR-0046 requires. Scanner entry point: `IInventoryScanOrchestrator.RunAsync(operatorKey, trigger, cancellationToken)`.
+No HTTP API. Queue and timer handlers resolve the same Application/Infrastructure graph via `AddSoloDevBoardHost` (SQL client integration, then `AddSoloDevBoard`). Functions do not register the queue client. The queue trigger uses host storage from `WithHostStorage` and omits `Connection`. Scanner entry point: `IInventoryScanOrchestrator.RunAsync(operatorKey, trigger, cancellationToken)`.
 
 **Unattended GitHub access**: Functions register a host-specific scoped factory: one DI scope per `OperatorKey` from the queue message or timer target. `IGitHubInstallationTokenProvider` mints and caches installation tokens asynchronously before each walk. PAT mode uses static PAT from configuration without blocking calls in `GetAccessToken()`.
