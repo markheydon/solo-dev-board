@@ -105,6 +105,18 @@ Solo Dev Board uses **Aspire for local orchestration**, which provides standardi
    aspire start --isolated --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
    ```
 
+### Resources started by Aspire
+
+Local `aspire start` runs the Blazor **`app`** resource plus the overnight inventory stack from [ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md):
+
+| Resource | Role |
+|---|---|
+| `functions` | Azure Functions timer placeholder (future scanners) |
+| `sql` / `inventory` | Snapshot database (`RunAsContainer`; requires Docker) |
+| `storage` | Functions host storage (Azurite locally) |
+
+GitHub AppHost parameters primarily configure the web app; deploy also provisions vault access for `functions`. See [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md).
+
 ### GitHub Codespaces secrets
 
 Codespaces and dev containers can load AppHost parameters from repository **Codespaces secrets** using the same `SDB_*` names as the Cursor Cloud Environment (see [`plan/CURSOR_CLOUD.md`](../plan/CURSOR_CLOUD.md)). Add them at **Settings → Secrets and variables → Codespaces** for your repository.
@@ -177,7 +189,7 @@ Local parameter values always override Key Vault when both are set.
 
 Solo Dev Board is configured via `appsettings.json` and environment variables. **Never commit secrets to source control.**
 
-When running via Aspire (`aspire start`), GitHub auth and admission settings are modelled as **AppHost parameters** and injected into the `app` resource as environment variables. See also [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md) for a concise parameter cheat sheet.
+When running via Aspire (`aspire start`), GitHub auth and admission settings are modelled as **AppHost parameters** and injected into the `app` resource as environment variables (see [Resources started by Aspire](#resources-started-by-aspire) for the full resource graph). See also [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md) for a concise parameter cheat sheet.
 
 ### Choose your authentication mode
 

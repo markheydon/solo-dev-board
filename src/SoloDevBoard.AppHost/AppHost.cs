@@ -12,7 +12,26 @@ string AzureName(string resourceName) =>
         ? $"{resourceName}-staging"
         : resourceName;
 
+// Storage account names must be alphanumeric only (no hyphen suffix used in Staging).
+string AzureStorageResourceName() =>
+    string.Equals(builder.Environment.EnvironmentName, "Staging", StringComparison.OrdinalIgnoreCase)
+        ? "storagestaging"
+        : "storage";
+
 var aca = builder.AddAzureContainerAppEnvironment(AzureName("aca"));
+
+var sql = builder.AddAzureSqlServer(AzureName("sql"))
+    .RunAsContainer(container => container.WithDataVolume("inventory-sql-data"));
+
+var inventory = sql.AddDatabase("inventory");
+
+var storage = builder.AddAzureStorage(AzureStorageResourceName())
+    .RunAsEmulator();
+
+var functions = builder.AddAzureFunctionsProject(AzureName("functions"), "../SoloDevBoard.Functions/SoloDevBoard.Functions.csproj")
+    .WithHostStorage(storage)
+    .WithReference(inventory)
+    .WaitFor(inventory);
 
 var resolvedAuthSecretsVaultName = AppHostDeployParameterResolver.Resolve(builder.Configuration, "auth-secrets-vault-name");
 var resolvedAuthSecretsVaultResourceGroup = AppHostDeployParameterResolver.Resolve(
@@ -73,6 +92,7 @@ var app = builder.AddDotnetProject(AzureName("app"), "../SoloDevBoard.Web/SoloDe
 #pragma warning restore ASPIREDOTNETPROJECT001
 
 app = app
+    .WithReference(inventory)
     .WithHttpHealthCheck("/health")
     .WithExternalHttpEndpoints()
     .WithEnvironment("GitHubAuth__HostedSignInEnabled", hostedSignInEnabled)
@@ -142,12 +162,21 @@ if (builder.ExecutionContext.IsPublishMode)
     var authSecretsVault = builder.AddAzureKeyVault(AzureName("auth-secrets"))
         .PublishAsExisting(authSecretsVaultName, authSecretsVaultResourceGroup);
 
+    var appInsights = builder.AddAzureApplicationInsights(AzureName("app-insights"));
+
     app = app
         .WithRoleAssignments(authSecretsVault, KeyVaultBuiltInRole.KeyVaultSecretsUser)
         .WithReference(authSecretsVault)
         .WithEnvironment("GitHubAuth__PersonalAccessToken", authSecretsVault.GetSecret("gh-pat"))
         .WithEnvironment("GitHubAuth__HostedGitHubAppClientSecret", authSecretsVault.GetSecret("gh-app-client-secret"))
-        .WithReference(builder.AddAzureApplicationInsights(AzureName("app-insights")));
+        .WithReference(appInsights);
+
+    functions = functions
+        .WithReference(appInsights)
+        .WithRoleAssignments(authSecretsVault, KeyVaultBuiltInRole.KeyVaultSecretsUser)
+        .WithReference(authSecretsVault)
+        .WithEnvironment("GitHubAuth__HostedSignInEnabled", "false")
+        .WithEnvironment("GitHubAuth__PersonalAccessToken", authSecretsVault.GetSecret("gh-pat"));
 
     var resolvedCallbackBaseUri = AppHostDeployParameterResolver.Resolve(builder.Configuration, "hosted-callback-base-uri");
     if (AppHostDeployParameterResolver.IsActiveParameterValue(resolvedCallbackBaseUri))
@@ -190,14 +219,19 @@ else
         // Path B local dev: operators grant Key Vault Secrets User manually (see docs/azure-key-vault-setup.md).
         // Skip WithRoleAssignments here to avoid auth-secrets-roles ARM provisioning on every aspire start.
         app = app.WithReference(authSecretsVault);
+        functions = functions
+            .WithReference(authSecretsVault)
+            .WithEnvironment("GitHubAuth__HostedSignInEnabled", "false");
 
         if (needVaultForPat)
         {
             app = app.WithEnvironment("GitHubAuth__PersonalAccessToken", authSecretsVault.GetSecret("gh-pat"));
+            functions = functions.WithEnvironment("GitHubAuth__PersonalAccessToken", authSecretsVault.GetSecret("gh-pat"));
         }
         else if (useLocalPat)
         {
             app = app.WithEnvironment("GitHubAuth__PersonalAccessToken", githubPat);
+            functions = functions.WithEnvironment("GitHubAuth__PersonalAccessToken", githubPat);
         }
 
         if (needVaultForClientSecret)
@@ -211,9 +245,12 @@ else
     }
     else
     {
+        functions = functions.WithEnvironment("GitHubAuth__HostedSignInEnabled", "false");
+
         if (useLocalPat)
         {
             app = app.WithEnvironment("GitHubAuth__PersonalAccessToken", githubPat);
+            functions = functions.WithEnvironment("GitHubAuth__PersonalAccessToken", githubPat);
         }
 
         if (useLocalClientSecret)

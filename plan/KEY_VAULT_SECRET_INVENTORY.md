@@ -14,8 +14,8 @@ Reference for operators migrating authentication secrets. Do not commit secret v
 | Vault (illustrative) | Resource group | Consumers |
 |---------------------|----------------|-----------|
 | `kv-solodevboard-dev` | `rg-solodevboard-dev` | Local Path B (`aspire start` fallback) |
-| `auth-secrets-staging` | Operator app RG for staging | Staging Container App |
-| `auth-secrets` | Operator app RG for production | Production Container App |
+| `auth-secrets-staging` | Operator app RG for staging | Staging Container App (`app`); Functions worker (`functions`) |
+| `auth-secrets` | Operator app RG for production | Production Container App (`app`); Functions worker (`functions`) |
 
 Aspire logical name remains `auth-secrets`; Azure resource names follow [ADR-0021](../adr/adr-0021-two-tier-cd-pipeline.md) staging suffix rules.
 

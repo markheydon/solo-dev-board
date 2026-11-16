@@ -12,8 +12,17 @@
     <PackageVersion Include="Aspire.Hosting.Azure.ContainerRegistry" Version="13.6.5" />
     <PackageVersion Include="Aspire.Hosting.Azure.ApplicationInsights" Version="13.6.5" />
     <PackageVersion Include="Aspire.Hosting.Azure.KeyVault" Version="13.6.5" />
+    <PackageVersion Include="Aspire.Hosting.Azure.Functions" Version="13.6.5" />
+    <PackageVersion Include="Aspire.Hosting.Azure.Sql" Version="13.6.5" />
+    <PackageVersion Include="Aspire.Hosting.Azure.Storage" Version="13.6.5" />
     <!-- Project v2 (AddDotnetProject): stable 13.6.0 not published on NuGet yet; pin preview aligned with AppHost SDK. -->
     <PackageVersion Include="Aspire.Hosting.Dotnet" Version="13.6.5-preview.1.26559.7" />
+  </ItemGroup>
+  <!-- Azure Functions worker -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker" Version="2.52.0" />
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" Version="4.3.1" />
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.7" />
   </ItemGroup>
   <!-- Application and framework services -->
   <ItemGroup>
