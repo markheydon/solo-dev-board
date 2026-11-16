@@ -1,0 +1,174 @@
+@using SoloDevBoard.Application.Services.OpenSource
+
+<MudPaper Class="pa-4" Elevation="1" data-testid="open-source-funding-section">
+    <MudStack Spacing="3">
+        <MudToolBar Gutters="false" Dense="true" Class="pl-0 gap-2 flex-wrap" aria-label="Open source funding toolbar" data-testid="open-source-funding-toolbar">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       OnClick="ScanNowAsync"
+                       Disabled="isLoading || isScanRequestInFlight"
+                       data-testid="open-source-scan-now-button">
+                Scan now
+            </MudButton>
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Secondary"
+                       OnClick="OpenStandardEditor"
+                       Disabled="isLoading"
+                       data-testid="open-source-edit-standard-button">
+                Edit standard
+            </MudButton>
+            <MudSpacer />
+            <MudTextField @bind-Value="searchTerm"
+                          Label="Search repositories"
+                          Variant="Variant.Outlined"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Immediate="true"
+                          Clearable="true"
+                          Class="flex-grow-1"
+                          Style="max-width: 320px;" />
+        </MudToolBar>
+
+        @if (isLoading)
+        {
+            <MudStack Spacing="2" aria-live="polite" role="status">
+                <MudSkeleton Height="40px" Animation="Animation.Wave" />
+                <MudSkeleton Height="240px" Animation="Animation.Wave" data-testid="open-source-funding-table" />
+            </MudStack>
+        }
+        else
+        {
+            @if (!string.IsNullOrWhiteSpace(inlineAlert))
+            {
+                <MudAlert Severity="alertSeverity" Variant="Variant.Outlined" Dense="false">@inlineAlert</MudAlert>
+            }
+
+            @if (fundingPage?.HostedInventoryUnavailableMessage is { Length: > 0 } unavailable)
+            {
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">@unavailable</MudAlert>
+            }
+
+            @if (fundingPage?.LatestAttemptFailed == true && !string.IsNullOrWhiteSpace(fundingPage.HostedInventoryLastFailureReason))
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">
+                    Latest inventory attempt failed: @fundingPage.HostedInventoryLastFailureReason
+                </MudAlert>
+            }
+
+            @if (fundingPage?.IsStale == true && fundingPage.DisplayedRun?.FinishedAtUtc is { } finishedAt)
+            {
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+                    Results are stale. Last finished at @finishedAt.ToLocalTime().ToString("g") (local time).
+                </MudAlert>
+            }
+
+            @if (fundingPage?.StandardDriftWarning == true)
+            {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                    Visible statuses were compared when the inventory last finished
+                    @(fundingPage.StandardComparedAtUtc is { } comparedAt
+                        ? $" on {comparedAt.ToLocalTime():g} (local time)"
+                        : string.Empty).
+                    Your standard has changed since then.
+                </MudAlert>
+            }
+
+            @if (fundingPage?.DisplayedRun is null)
+            {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                    No inventory has finished yet. Use Scan now to queue the first walk, or wait for the nightly schedule.
+                </MudAlert>
+            }
+            else
+            {
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Last finished @fundingPage.DisplayedRun.FinishedAtUtc?.ToLocalTime().ToString("g") (local time)
+                    · @FormatTrigger(fundingPage.DisplayedRun.Trigger)
+                    · @FormatOutcome(fundingPage.DisplayedRun.Outcome)
+                    · @FormatAccess(fundingPage.DisplayedRun.AccessKind)
+                    @if (fundingPage.DisplayedRun.WasRateLimited)
+                    {
+                        <span> · Rate limited during run</span>
+                    }
+                </MudText>
+            }
+
+            @if (summary is not null)
+            {
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="gap-1">
+                    <MudChip T="string" Variant="Variant.Outlined" Size="Size.Small">Matches @summary.Matches</MudChip>
+                    <MudChip T="string" Variant="Variant.Outlined" Size="Size.Small">Differs @summary.Differs</MudChip>
+                    <MudChip T="string" Variant="Variant.Outlined" Size="Size.Small">Missing @summary.Missing</MudChip>
+                    <MudChip T="string" Variant="Variant.Outlined" Size="Size.Small">Not compared @summary.NotCompared</MudChip>
+                    <MudChip T="string" Variant="Variant.Outlined" Size="Size.Small" Color="Color.Warning">Needs attention @summary.NeedsAttention</MudChip>
+                    <MudChip T="string" Variant="Variant.Outlined" Size="Size.Small">Not scanned @summary.NotScanned</MudChip>
+                    <MudChip T="string" Variant="Variant.Outlined" Size="Size.Small">Not yet scanned @summary.NotYetScanned</MudChip>
+                    <MudChip T="string" Variant="Variant.Outlined" Size="Size.Small">Not visible @summary.NotVisible</MudChip>
+                </MudStack>
+            }
+
+            @if (fundingPage?.Standard is null)
+            {
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+                    Set a canonical funding file before match and differ labels are meaningful.
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="OpenStandardEditor">Set standard</MudButton>
+                </MudAlert>
+            }
+
+            <MudTable Items="FilteredRows"
+                      Hover="true"
+                      Dense="true"
+                      Breakpoint="Breakpoint.Sm"
+                      data-testid="open-source-funding-table"
+                      aria-label="Open source funding file status">
+                <HeaderContent>
+                    <MudTh>Repository</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Compared path</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Repository">
+                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                            <MudText Typo="Typo.body2">@context.RepositoryFullName</MudText>
+                            @if (context.IsArchived)
+                            {
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">Archived</MudChip>
+                            }
+                            @if (context.IsFork)
+                            {
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">Fork</MudChip>
+                            }
+                            @if (context.IsPrivate)
+                            {
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">Private</MudChip>
+                            }
+                        </MudStack>
+                    </MudTd>
+                    <MudTd DataLabel="Status">
+                        <MudText Typo="Typo.body2">@context.StatusLabel</MudText>
+                        @if (!string.IsNullOrWhiteSpace(context.FailureOrVisibilityReason))
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@context.FailureOrVisibilityReason</MudText>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(context.ExtraFundingPathNote))
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@context.ExtraFundingPathNote</MudText>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="Compared path">@(context.ComparedPath ?? "-")</MudTd>
+                    <MudTd DataLabel="Actions">
+                        <MudIconButton Icon="@Icons.Material.Filled.OpenInNew"
+                                       Href="@context.GitHubUrl"
+                                       Target="_blank"
+                                       Rel="noopener noreferrer"
+                                       aria-label="@($"Open {context.RepositoryFullName} on GitHub")" />
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Typo="Typo.body2">No open-source repositories match the current filters.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        }
+    </MudStack>
+</MudPaper>

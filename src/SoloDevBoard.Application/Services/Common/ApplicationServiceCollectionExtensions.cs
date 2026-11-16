@@ -5,6 +5,7 @@ using SoloDevBoard.Application.Services.Audit;
 using SoloDevBoard.Application.Services.BoardRules;
 using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Migration;
+using SoloDevBoard.Application.Services.OpenSource;
 using SoloDevBoard.Application.Services.Planning;
 using SoloDevBoard.Application.Services.Repositories;
 using SoloDevBoard.Application.Services.Triage;
@@ -41,6 +42,10 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IBacklogReviewService, BacklogReviewService>();
         services.AddScoped<IIterationPlanningService, IterationPlanningService>();
         services.AddScoped<IPlanningBoardCompatibilityService, PlanningBoardCompatibilityService>();
+        services.AddScoped<IOpenSourceFundingService, OpenSourceFundingService>();
+        services.AddScoped<ICanonicalFundingStandardService, CanonicalFundingStandardService>();
+        services.AddScoped<IInventoryRunCommandService, InventoryRunCommandService>();
+        services.AddScoped<IInventoryScanOrchestrator, InventoryScanOrchestrator>();
 
         return services;
     }

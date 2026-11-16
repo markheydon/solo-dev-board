@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/" />
   <Folder Name="/src/Layers/">
+    <Project Path="src/SoloDevBoard.Inventory.Migrations/SoloDevBoard.Inventory.Migrations.csproj" />
     <Project Path="src/SoloDevBoard.Domain/SoloDevBoard.Domain.csproj" />
     <Project Path="src/SoloDevBoard.Application/SoloDevBoard.Application.csproj" />
     <Project Path="src/SoloDevBoard.Infrastructure/SoloDevBoard.Infrastructure.csproj" />

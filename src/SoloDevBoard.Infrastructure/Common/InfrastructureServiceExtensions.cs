@@ -11,6 +11,7 @@ using SoloDevBoard.Application.Services.Labels;
 using SoloDevBoard.Application.Services.Migration;
 using SoloDevBoard.Infrastructure.GitHub;
 using SoloDevBoard.Infrastructure.Identity;
+using SoloDevBoard.Infrastructure.Inventory;
 using SoloDevBoard.Infrastructure.Labels;
 using SoloDevBoard.Infrastructure.Migration;
 using SoloDevBoard.Infrastructure.Milestones;
@@ -121,6 +122,7 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IMilestoneRepository, GitHubMilestoneRepository>();
         services.AddScoped<IProjectBoardStructureRepository, GitHubProjectBoardStructureRepository>();
         services.AddScoped<IWorkflowFileRepository, GitHubWorkflowFileRepository>();
+        services.AddInventoryInfrastructure(configuration);
 
         return services;
     }

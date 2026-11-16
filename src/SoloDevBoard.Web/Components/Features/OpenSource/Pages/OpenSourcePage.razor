@@ -1,0 +1,18 @@
+@page "/open-source"
+@using SoloDevBoard.Application.Services.OpenSource
+@using SoloDevBoard.Web.Components.Features.OpenSource
+
+<PageTitle>Open source</PageTitle>
+
+<MudStack Spacing="3">
+    <MudStack Spacing="1">
+        <MudText Typo="Typo.h5">Open source</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Funding file hygiene for linked open-source repositories. This page reads the latest stored inventory;
+            it does not scan GitHub while you browse. Repository classification stays on the Repositories page
+            (GitHub topic <code>open-source</code>).
+        </MudText>
+    </MudStack>
+
+    <OpenSourceFundingHygiene />
+</MudStack>

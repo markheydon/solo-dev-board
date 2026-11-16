@@ -9,8 +9,13 @@
     <PackageReference Include="Aspire.Hosting.Azure.Sql" />
     <PackageReference Include="Aspire.Hosting.Azure.Storage" />
     <PackageReference Include="Aspire.Hosting.Dotnet" />
+    <PackageReference Include="Aspire.Hosting.EntityFrameworkCore" />
     <PackageReference Include="MessagePack" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SoloDevBoard.Inventory.Migrations\SoloDevBoard.Inventory.Migrations.csproj" IsAspireProjectResource="false" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -20,6 +25,7 @@
     <Nullable>enable</Nullable>
     <UserSecretsId>a8f3c2e1-4b5d-6e7f-8a9b-0c1d2e3f4a5b</UserSecretsId>
     <AspireUseCliBundle>true</AspireUseCliBundle>
+    <NoWarn>$(NoWarn);ASPIREPROJECTS001</NoWarn>
   </PropertyGroup>
 
 </Project>

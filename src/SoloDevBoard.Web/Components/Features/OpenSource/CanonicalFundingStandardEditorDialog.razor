@@ -1,0 +1,25 @@
+@using SoloDevBoard.Application.Services.OpenSource
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">Canonical funding file</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Paste the FUNDING.yml text you want every open-source repository to match. Empty or whitespace-only content is rejected.
+            </MudText>
+            <MudTextField @bind-Value="content"
+                          Label="FUNDING.yml"
+                          Variant="Variant.Outlined"
+                          Lines="16"
+                          FullWidth="true"
+                          Error="!string.IsNullOrWhiteSpace(validationMessage)"
+                          ErrorText="@validationMessage" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveAsync" Disabled="isSaving">Save</MudButton>
+    </DialogActions>
+</MudDialog>

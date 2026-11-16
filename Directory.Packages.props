@@ -15,8 +15,23 @@
     <PackageVersion Include="Aspire.Hosting.Azure.Functions" Version="13.6.5" />
     <PackageVersion Include="Aspire.Hosting.Azure.Sql" Version="13.6.5" />
     <PackageVersion Include="Aspire.Hosting.Azure.Storage" Version="13.6.5" />
+    <!-- Stable 13.6.5 not published on NuGet yet; pin preview aligned with AppHost SDK. -->
+    <PackageVersion Include="Aspire.Hosting.EntityFrameworkCore" Version="13.6.5-preview.1.26559.7" />
     <!-- Project v2 (AddDotnetProject): stable 13.6.0 not published on NuGet yet; pin preview aligned with AppHost SDK. -->
     <PackageVersion Include="Aspire.Hosting.Dotnet" Version="13.6.5-preview.1.26559.7" />
+  </ItemGroup>
+  <!-- Entity Framework Core and inventory -->
+  <ItemGroup>
+    <PackageVersion Include="Aspire.Azure.Storage.Queues" Version="13.6.5" />
+    <PackageVersion Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="13.6.5" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.14">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageVersion>
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.14" />
+    <PackageVersion Include="Azure.Storage.Queues" Version="12.24.0" />
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues" Version="5.5.3" />
+    <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.16.0" />
   </ItemGroup>
   <!-- Azure Functions worker -->
   <ItemGroup>
@@ -30,6 +45,7 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.15" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.3" />
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.11.0" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.15" />
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.3" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.11.0" />
   </ItemGroup>

@@ -87,7 +87,8 @@ if (hostedSignInEnabled)
 }
 
 // Add our services via the shared composition root.
-builder.Services.AddSoloDevBoard(builder.Configuration);
+builder.AddSoloDevBoardHost();
+builder.AddSoloDevBoardWebInventoryQueues();
 
 var app = builder.Build();
 app.MapDefaultEndpoints();

@@ -28,9 +28,27 @@ var inventory = sql.AddDatabase("inventory");
 var storage = builder.AddAzureStorage(AzureStorageResourceName())
     .RunAsEmulator();
 
+var inventoryQueues = storage.AddQueues("inventory-queues");
+
+var inventoryScheduleCron = builder.AddParameter("inventory-scheduled-cron", "0 0 2 * * *")
+    .WithDescription("UTC CRON for nightly open-source inventory (six-field Azure Functions format).");
+
+var ghAppId = builder.AddParameter("gh-app-id", "-")
+    .WithDescription("GitHub App id for installation inventory tokens on the Functions worker.");
+
+var ghAppPrivateKey = builder.AddParameter("gh-app-private-key", secret: true)
+    .WithDescription("GitHub App PEM private key for installation inventory tokens (Functions only).");
+
+var ghAppInstallationId = builder.AddParameter("gh-app-installation-id", "-")
+    .WithDescription("Hosted installation id for inventory partition (Web read + Functions scan).");
+
 var functions = builder.AddAzureFunctionsProject(AzureName("functions"), "../SoloDevBoard.Functions/SoloDevBoard.Functions.csproj")
     .WithHostStorage(storage)
     .WithReference(inventory)
+    .WithEnvironment("Inventory__ScheduledCron", inventoryScheduleCron)
+    .WithEnvironment("GitHubAuth__GitHubAppId", ghAppId)
+    .WithEnvironment("GitHubAuth__GitHubAppPrivateKey", ghAppPrivateKey)
+    .WithEnvironment("GitHubAuth__InstallationId", ghAppInstallationId)
     .WaitFor(inventory);
 
 var resolvedAuthSecretsVaultName = AppHostDeployParameterResolver.Resolve(builder.Configuration, "auth-secrets-vault-name");
@@ -91,8 +109,28 @@ var allowedOrgLogins = builder.AddParameter("allowed-org-logins")
 var app = builder.AddDotnetProject(AzureName("app"), "../SoloDevBoard.Web/SoloDevBoard.Web.csproj");
 #pragma warning restore ASPIREDOTNETPROJECT001
 
-app = app
+var inventoryMigrations = app.AddEFMigrations("inventory-migrations")
+    .WithMigrationsProject("../SoloDevBoard.Inventory.Migrations/SoloDevBoard.Inventory.Migrations.csproj")
     .WithReference(inventory)
+    .WaitFor(inventory)
+    .RunDatabaseUpdateOnStart();
+
+if (builder.ExecutionContext.IsPublishMode)
+{
+    inventoryMigrations = inventoryMigrations
+        .PublishAsMigrationBundle(publishContainer: true)
+        .PublishAsAzureContainerAppJob();
+}
+
+functions = functions.WaitForCompletion(inventoryMigrations);
+
+app = ResourceBuilderExtensions.WithReference(app, inventory);
+app = ResourceBuilderExtensions.WithReference(app, inventoryQueues);
+app = app
+    .WaitFor(inventoryQueues)
+    .WithEnvironment("Inventory__ScheduledCron", inventoryScheduleCron)
+    .WithEnvironment("GitHubAuth__InstallationId", ghAppInstallationId)
+    .WaitForCompletion(inventoryMigrations)
     .WithHttpHealthCheck("/health")
     .WithExternalHttpEndpoints()
     .WithEnvironment("GitHubAuth__HostedSignInEnabled", hostedSignInEnabled)

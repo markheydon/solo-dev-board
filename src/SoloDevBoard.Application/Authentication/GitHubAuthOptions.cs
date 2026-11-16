@@ -17,6 +17,9 @@ public sealed class GitHubAuthOptions
     /// <summary>GitHub App private key in PEM format.</summary>
     public string GitHubAppPrivateKey { get; set; } = string.Empty;
 
+    /// <summary>GitHub App installation id for single-tenant hosted inventory.</summary>
+    public string InstallationId { get; set; } = string.Empty;
+
     /// <summary>
     /// Gets or sets a value that indicates whether hosted sign-in mode is enabled.
     /// </summary>
