@@ -442,8 +442,11 @@ Aspire generates and applies Bicep at deploy time. A typical deployment includes
 |---|---|
 | Azure Container Apps environment | Hosts the containerised app (Consumption profile) |
 | Container App (`app`) | Runs Solo Dev Board (scale-to-zero enabled) |
+| Azure Functions (`functions`) | Overnight inventory worker (timer placeholder until scanners ship; [ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md)) |
+| Azure SQL (`sql`) / database (`inventory`) | Derived repository snapshots for inventory features |
+| Azure Storage (`storage` / `storagestaging` on Staging) | Functions host storage (not product snapshot blobs) |
 | Azure Container Registry | Stores built container images (Aspire-provisioned per deployment, or optional shared registry — see [Optional shared Container Registry](#optional-shared-container-registry)) |
-| Azure Key Vault (`auth-secrets`, or `auth-secrets-staging`) | Pre-populated auth secrets referenced at deploy time ([ADR-0045](../adr/adr-0045-persistent-key-vault-dual-path-local-secrets.md)) |
+| Azure Key Vault (`auth-secrets`, or `auth-secrets-staging`) | Pre-populated auth secrets referenced at deploy time ([ADR-0045](../adr/adr-0045-persistent-key-vault-dual-path-local-secrets.md)); web `app` reads auth secrets; worker auth wiring lands with scanners |
 | Application Insights | Application logs, metrics, and distributed traces |
 | Log Analytics workspace | Container platform logs and Application Insights backing store |
 | Aspire dashboard | Optional operational dashboard (Aspire default) |

@@ -9,7 +9,7 @@ Aspire orchestrates the SoloDevBoard web app, overnight inventory worker, and ba
 | `sql` / `inventory` | Azure SQL snapshot store (local SQL container via `RunAsContainer` with Docker volume `inventory-sql-data`) |
 | `storage` / `storagestaging` (Staging) | Functions host storage (Azurite locally) |
 
-The web app receives a connection reference to `inventory` but does not register a SQL client until a feature reads snapshots. The Functions worker calls the same `AddSoloDevBoard` composition root as the web app.
+The web app receives a connection reference to `inventory` but does not register a SQL client until a feature reads snapshots. The Functions worker is a timer placeholder only; it uses Aspire `ServiceDefaults` until the first inventory scanner wires `AddSoloDevBoard` and GitHub credentials per [ADR-0046](../../adr/adr-0046-overnight-inventory-functions-and-sql.md).
 
 The AppHost opts into the Aspire CLI bundle (`AspireUseCliBundle=true`). Dashboard and DCP orchestration binaries come from the Aspire CLI on `PATH` (or the SDK-paired `Aspire.Cli` via `dnx` when no CLI is installed). Keep your local `aspire` version aligned with `Aspire.AppHost.Sdk` (`13.6.5` today): run `aspire --version` and upgrade with `aspire update --self` when needed.
 
