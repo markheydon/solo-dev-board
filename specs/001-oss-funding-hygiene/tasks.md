@@ -27,9 +27,9 @@ Work has started on `001-oss-funding-hygiene` before all paperwork gates complet
 
 | Gate | Task | Status |
 |------|------|--------|
-| Human package approval | T002 | Confirm before treating package edits as approved |
-| Open Source wireframe | T003 | Not present under `plan/wireframes/` |
-| Extension ADR (queue + App install wiring) | T004a | ADR-0046 exists; T004a record still required per plan Complexity Tracking |
+| Human package approval | T002 | Applied in `Directory.Packages.props` (implement run) |
+| Open Source wireframe | T003 | `plan/wireframes/open-source-wireframe.md` |
+| Extension ADR (queue + App install wiring) | T004a | `adr/adr-0047-oss-funding-inventory-topology.md` (Accepted) |
 
 ---
 
