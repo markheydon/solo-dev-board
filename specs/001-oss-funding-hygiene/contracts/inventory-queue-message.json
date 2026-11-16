@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://solo-dev-board.dev/schemas/inventory-scan-request.v1.json",
+  "title": "InventoryScanRequest",
+  "description": "Azure Storage queue payload for manual open-source inventory runs (scan now).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "operatorKey", "requestedAtUtc", "trigger"],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1
+    },
+    "operatorKey": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Partition key, e.g. user:octocat or installation:12345"
+    },
+    "requestedAtUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "trigger": {
+      "type": "string",
+      "enum": ["Manual"]
+    },
+    "requestedByLogin": {
+      "type": "string",
+      "description": "GitHub login of the operator who clicked scan now (audit only)"
+    }
+  }
+}
