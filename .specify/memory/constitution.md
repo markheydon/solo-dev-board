@@ -1,11 +1,10 @@
 <!--
 Sync Impact Report
-- Version change: (placeholder scaffold) → 1.0.0
-- Modified principles: N/A (initial ratification from brownfield analysis)
-- Added sections: Core Principles (5); Platform and Security Constraints; Delivery Workflow and Quality Gates; Governance
-- Removed sections: Template placeholder tokens
-- Deferred items: resolve-template.sh failed (Python stdlib `json` unavailable); scaffold taken from `.specify/templates/constitution-template.md`
-- Archive note: `plan/archive/` informed wording only; no mandatory legacy PM workflows
+- Version change: 1.1.0 → 1.1.1
+- Modified principles: VI (wording aligned with official Aspire client-integration guidance)
+- Added sections: none
+- Removed sections: none
+- Follow-up: none
 -->
 
 # SoloDevBoard Constitution
@@ -58,9 +57,24 @@ Service defaults MUST keep health checks, structured logging, and OpenTelemetry 
 
 **Rationale:** Blazor Server multi-repo workloads amplify GitHub latency; caching and async discipline are product requirements, not optimisations of last resort.
 
+### VI. Aspire modelled resource connections via dependency injection
+
+For resources **modelled in the AppHost** and wired with **`WithReference`**, Aspire injects connection details into the consuming project's **configuration** (and, for projects, service-discovery endpoints). Application and Infrastructure code MUST use the **recommended Aspire client integrations** for that resource type (for example `AddSqlServerClient` / `AddSqlServerDbContext`, `AddRedisClient`, `AddAzureBlobServiceClient`), registered in the **host composition root** (`Program.cs` or `AddSoloDevBoardHost`), with a **`connectionName` that matches the referenced AppHost resource** (database, cache, storage, and so on).
+
+Downstream code MUST resolve **typed clients through dependency injection** (constructor or method injection): for example `SqlConnection`, EF Core `DbContext`, `IConnectionMultiplexer`, or Azure SDK clients registered by those integrations. **Application and Infrastructure MUST NOT** read Aspire-injected environment variables, assemble connection strings, call `GetConnectionString` outside client-integration registration, or instantiate provider clients manually (for example `new SqlConnection(...)`, bespoke Redis or storage wiring). The documented manual env-var fallbacks in Aspire docs are **not** permitted in `src/` for referenced resources.
+
+Relational data in this repository MUST follow the **EF Core client integration** pattern already used for inventory (`AddSqlServerDbContext<TContext>(connectionName)`). Raw `SqlConnection` is acceptable only where EF is not used and the SQL client integration is registered for the same connection name. **Peer compute** referenced from the AppHost MUST use **`IHttpClientFactory`**, Aspire service discovery, and `WithReference` wiring (via `SoloDevBoard.ServiceDefaults` where applicable), not hard-coded base URLs.
+
+The **AppHost** MUST declare resources, apply **`WithReference`**, and use **`WaitFor`** when startup ordering depends on resource health, so consumers receive configuration and discovery values before handling traffic. Specs, plans, and reviews that describe “connecting” to a modelled resource MUST assume this **client-integration + DI** path, not parallel connection mechanisms.
+
+Agents and contributors MUST consult the **`aspire` skill** (`.agents/skills/aspire/` and sub-skills) and **`aspire docs`** (`connect-to-*`, AppHost `WithReference`) before introducing new resource consumers.
+
+**Rationale:** Microsoft documents client integrations and DI resolution as the default C# path; manual connection assembly bypasses health checks, telemetry, and the configuration graph `WithReference` maintains. Ad hoc wiring diverges from the AppHost model, breaks local versus publish parity, and reintroduces secret handling that Aspire and Key Vault integration already centralise (ADR-0018, ADR-0043).
+
 ## Platform and Security Constraints
 
 - **Stack (fixed for v1.x):** .NET 10 LTS (`net10.0`), C# 14, Blazor Server, MudBlazor, Aspire AppHost for local orchestration and Azure Container Apps deployment (ADR-0001, ADR-0012, ADR-0018). Replacing Blazor Server with a SPA stack requires a major ADR and scope revision (GOALS kill criteria).
+- **Aspire connections:** Resource access in `src/` MUST comply with **Principle VI**; AppHost changes alone do not satisfy compliance if consuming code still resolves connections outside DI.
 - **Quality bar on build:** Nullable reference types and implicit usings enabled; `dotnet format SoloDevBoard.slnx --verify-no-changes` and `dotnet build SoloDevBoard.slnx -c Release -warnaserror` MUST pass before merge-quality work ships.
 - **Secrets:** Credentials MUST NOT be committed. Runtime secrets use Aspire user secrets, Key Vault at deploy, or documented operator paths (ADR-0043, ADR-0045). GitHub Actions CD MUST use OIDC for Azure, not long-lived cloud keys in source control.
 - **Hosted access:** Public deployments MUST enforce operator-managed admission control (deny-by-default) before repository data loads (ADR-0014).
@@ -74,7 +88,7 @@ Service defaults MUST keep health checks, structured logging, and OpenTelemetry 
 - **Pull requests:** MUST follow `plan/PULL_REQUEST_POLICY.md` (title shape, template body, labels). Agent-authored PRs MUST receive human review before merge.
 - **Pre-merge verification (minimum):** `dotnet format` verify, Release build with warnings as errors, `dotnet test SoloDevBoard.UnitTests.slnf -c Release --no-build` when code or tests change; Playwright-impacting UI changes MUST consider `playwright.yml` tiers and journey docs.
 - **Historical artefacts:** Material under `plan/archive/` (Copilot-era bundles, weekly PM notes, retired implementation plans) MAY inform context but MUST NOT be mandated as ongoing process. Open work lives in GitHub Issues and Project #8, not new archive bundles.
-- **Agent skills:** `.agents/skills/` (e.g. `implementation-guardrails`, `mudblazor`, `code-review`) supplement the constitution during implementation; they do not replace ADRs or quality gates.
+- **Agent skills:** `.agents/skills/` (e.g. `implementation-guardrails`, `mudblazor`, `aspire`, `code-review`) supplement the constitution during implementation; they do not replace ADRs or quality gates.
 
 ## Governance
 
@@ -93,4 +107,4 @@ This constitution is the **non-negotiable governance layer** for Spec Kit-driven
 
 **Runtime guidance:** Use `AGENTS.md` and `CONVENTIONS.md` for command sequences, file placement, and documentation sync tables; use `adr/` for decision history; use `.agents/skills/` during implementation.
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-15
+**Version**: 1.1.1 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-16
