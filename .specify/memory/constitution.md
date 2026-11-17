@@ -1,11 +1,12 @@
 <!--
 Sync Impact Report
-- Version change: (placeholder scaffold) → 1.0.0
-- Modified principles: N/A (initial ratification from brownfield analysis)
-- Added sections: Core Principles (5); Platform and Security Constraints; Delivery Workflow and Quality Gates; Governance
-- Removed sections: Template placeholder tokens
-- Deferred items: resolve-template.sh failed (Python stdlib `json` unavailable); scaffold taken from `.specify/templates/constitution-template.md`
-- Archive note: `plan/archive/` informed wording only; no mandatory legacy PM workflows
+- Version change: 1.0.0 → 1.1.0
+- Modified principles: III (Formal testing standard) - AppHost testing boundary clarified; V (Performance-conscious I/O) - ServiceDefaults scope and Aspire telemetry cross-reference
+- Added principles: VI (AppHost as the single environment model); VII (Local-first orchestration and graceful capability degradation)
+- Added sections: n/a (expanded Platform and Security Constraints; expanded Delivery Workflow and Quality Gates)
+- Removed sections: none
+- Template resolution: resolve-template.sh failed (invalid extension registry); structure preserved from ratified v1.0.0 scaffold
+- Deferred items: none (placeholders fully resolved)
 -->
 
 # SoloDevBoard Constitution
@@ -32,7 +33,7 @@ New abstractions (projects, interfaces, frameworks) MUST pass a proportionality 
 
 Automated tests MUST use **xUnit v3** (Microsoft.Testing.Platform), **NSubstitute** for doubles, and **built-in `Assert` only**. **bUnit** is limited to `SoloDevBoard.Web.Tests`; **Playwright** E2E lives in `SoloDevBoard.E2E.Tests`. Moq, FluentAssertions, NUnit, MSTest, and AwesomeAssertions are banned.
 
-Tests MUST follow `MethodUnderTest_Scenario_ExpectedOutcome` naming with Arrange / Act / Assert sections. .NET Aspire AppHost modelling MUST NOT be unit-tested. Fast CI and local paths MUST use `SoloDevBoard.UnitTests.slnf` (ADR-0041); E2E is owned by `playwright.yml` with category filters, not as the default `dotnet test` on the full solution.
+Tests MUST follow `MethodUnderTest_Scenario_ExpectedOutcome` naming with Arrange / Act / Assert sections. The distributed Aspire AppHost application graph (resource declarations, references, publish model) MUST NOT be unit-tested. Extracted deterministic deploy and parameter resolution helpers MAY be unit-tested when documented as staying aligned with AppHost (for example the `AppHostDeployParameterResolver` pattern in Infrastructure tests). Fast CI and local paths MUST use `SoloDevBoard.UnitTests.slnf` (ADR-0041); E2E is owned by `playwright.yml` with category filters, not as the default `dotnet test` on the full solution.
 
 Published end-user guides under `website/content/docs/` MUST stay aligned with Playwright coverage per `tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md` and `CRITICAL_JOURNEYS.md`. New or changed user-facing behaviour MUST update the guide, journey inventory, and tests in the same change when the behaviour is user-visible.
 
@@ -54,27 +55,65 @@ All I/O-bound Application and Infrastructure APIs MUST be async and MUST accept 
 
 Read-heavy GitHub catalogue data (repositories, labels, milestones) MUST be cached in Infrastructure with scoped `IMemoryCache` keys tied to the current user's owner login; invalidate on matching mutations (ADR-0044). Application-layer DTO caching, distributed cache for this tranche, and caching of issues, pull requests, workflow runs, or GraphQL project queries are out of scope until a follow-up ADR.
 
-Service defaults MUST keep health checks, structured logging, and OpenTelemetry export via `SoloDevBoard.ServiceDefaults` for hosted and Aspire paths. CI MUST stay split across focused workflows (ADR-0030) rather than one monolithic pipeline.
+Every compute project in the AppHost graph MUST call `AddServiceDefaults()` and reference `SoloDevBoard.ServiceDefaults` (see Principle VI). Health checks, structured logging, and OpenTelemetry export MUST remain enabled on hosted and Aspire paths. Logging patterns SHOULD remain compatible with Aspire telemetry where practical, avoiding patterns that surface benign noise as dashboard errors. CI MUST stay split across focused workflows (ADR-0030) rather than one monolithic pipeline.
 
 **Rationale:** Blazor Server multi-repo workloads amplify GitHub latency; caching and async discipline are product requirements, not optimisations of last resort.
 
+### VI. AppHost as the single environment model
+
+**Single graph:** The resource graph, Azure deploy targeting, AppHost parameters, and production deploy automation MUST be declared in `SoloDevBoard.AppHost`. Parallel hand-maintained production infrastructure for the same concerns MUST NOT be reintroduced (ADR-0018 supersedes hand-maintained Bicep for Azure Container Apps).
+
+**Aspire-first local development:** Local development MUST treat `aspire start` via AppHost as the standard path; direct `dotnet run` on Web MAY remain only as a documented fallback (ADR-0016).
+
+**ServiceDefaults:** Every compute project in the AppHost graph MUST call `AddServiceDefaults()` and reference `SoloDevBoard.ServiceDefaults` (Principle V).
+
+**New resources:** Additional Azure resources or compute projects in AppHost MUST pass the proportionality gate (Principle II) and MUST have an ADR when the change is material (ADR-0016 revisit triggers; ADR-0046 as precedent for SQL, Functions, and storage).
+
+**Aspire-referenced resource access (DI):** For every backing service modelled in AppHost and passed with `WithReference`, consuming hosts (Web, Functions, future workers) MUST register access only through the matching Aspire client integration (or an abstraction registered from that integration), using the same resource name as in AppHost (for example `inventory`). Application and Infrastructure code MUST obtain SQL and data contexts, connection factories, and cloud clients via constructor injection of those registered services (prefer `DbDataSource`, EF `DbContext`, or factory patterns; a single long-lived `SqlConnection` type is not mandated). They MUST NOT construct clients from hand-maintained connection strings, duplicate configuration keys, or ad hoc `IConfiguration` lookups that bypass the Aspire-injected configuration shape. `AddSoloDevBoard` remains the application DI composition root (Principle I); Aspire resource client registration MAY occur in host `Program.cs` before `AddSoloDevBoard`. Test projects MAY use fakes or containers; these MUST rules apply to production host code paths only.
+
+**Wiring:** Hardcoded endpoint URLs MUST NOT be passed in `WithEnvironment` where AppHost endpoint references or `WithReference` apply (align with aspireify-style endpoint expressions).
+
+**Rationale:** One orchestration and deploy surface prevents environment drift; upcoming inventory work (ADR-0046) depends on consistent SQL wiring; aligns with layered architecture and constructor injection.
+
+### VII. Local-first orchestration and graceful capability degradation
+
+**Minimal friction for solo local use:** A solo developer MUST be able to run the product locally via Aspire (for example `aspire start` or `aspire run` on the AppHost) with only user-facing web compute plus GitHub credentials, without an Azure subscription, without mandatory provisioning of auxiliary AppHost resources (SQL, Azure Functions, storage emulators, scheduled workers, or other full-experience infrastructure), and without a GitHub App. Credentials MAY be supplied via Aspire parameters, environment variables, user secrets, or an optional existing dev Key Vault (ADR-0045); none of these paths MUST force the full resource graph.
+
+**Two orchestration postures, one product:** The product retains the existing mutually exclusive authentication pair documented in `docs/getting-started.md` (PAT-only local trusted mode with `HostedSignInEnabled` false, and hosted sign-in with GitHub App OAuth and operator admission control). A third authentication or deployment mode MUST NOT be introduced.
+
+- **PAT-only local trusted mode:** AppHost models a **lean AppHost graph**: the web app, and optionally Key Vault bindings for secrets only. This is the default path for contributors, dogfooding, and trusted personal use (including localhost and private networks).
+- **Hosted sign-in with full experience posture:** When hosted sign-in and production-style deployment are in use (including a future commercial multi-tenant hosted offering), AppHost MAY and SHOULD model the **full AppHost graph** needed for scheduled work, persistence, and background processing (for example inventory scanner per ADR-0046).
+- **Trusted personal deployment:** A solo operator MAY deploy to their own Azure subscription while remaining in PAT-only local trusted mode (`docs/deployment.md` self-hoster path). That deployment MUST NOT be treated as permission to expose a PAT-backed instance on an untrusted public multi-user endpoint; admission control and GitHub App sign-in remain the path for shared or public hosting. Where feasible, trusted personal Azure deployments SHOULD still default to the lean AppHost graph unless the operator explicitly opts into full-experience resources.
+
+Governance text MUST use **PAT-only local trusted mode**, **hosted sign-in**, **lean AppHost graph**, and **full experience posture** consistently. Product modes named “simple mode”, “PAT mode”, or “hosted mode” MUST NOT appear in governance text.
+
+**Feature parity through graceful degradation:** Every user-facing capability in the product’s in-scope basic feature set MUST remain reachable in PAT-only local trusted mode with the lean AppHost graph. Features that depend on background infrastructure MUST still be usable in lean posture via on-demand, in-process, or otherwise resource-light behaviour where technically feasible (for example an inventory-style scanner runs on demand in lean posture; scheduled overnight scans and durable snapshot stores require the full experience posture and its AppHost resources). The UI and Application layer MUST NOT present blocking copy such as “not available in PAT-only mode”, “not available in PAT mode”, or equivalent hard denial for in-scope features. Where behaviour differs because infrastructure is absent, the product MUST explain the difference in capability (for example no schedule, no cross-session snapshot history) and MUST offer the best available alternative in lean posture. Spec Kit feature specs and tasks MUST call out lean-posture behaviour whenever a feature adds AppHost resources or scheduled work.
+
+**Commercial hosted offering (directional):** The product MAY evolve a commercial hosted service with subscriptions on top of the hosted sign-in full experience posture. That MUST NOT remove or erode the lean PAT-only path for open-source contributors and solo developers running locally.
+
+**Security boundary:** PAT-only local trusted mode provides no multi-user isolation. Constitutional emphasis is minimal resources and maximal feature reach in **trusted** lean use, not encouraging PAT credentials on shared public URLs.
+
+**Rationale:** Solo contributors and open-source use stay low-friction; hosted and commercial paths scale orchestration without forking the product into incompatible modes; graceful degradation keeps the in-scope feature set honest without hard gates (ADR-0018, ADR-0045, ADR-0046).
+
 ## Platform and Security Constraints
 
-- **Stack (fixed for v1.x):** .NET 10 LTS (`net10.0`), C# 14, Blazor Server, MudBlazor, Aspire AppHost for local orchestration and Azure Container Apps deployment (ADR-0001, ADR-0012, ADR-0018). Replacing Blazor Server with a SPA stack requires a major ADR and scope revision (GOALS kill criteria).
+- **Stack (fixed for v1.x):** .NET 10 LTS (`net10.0`), C# 14, Blazor Server, MudBlazor, Aspire AppHost for local orchestration and Azure Container Apps deployment (ADR-0001, ADR-0012, ADR-0018). Azure Functions, SQL, and storage belong in the graph when modelled in AppHost for full-experience workloads (ADR-0046). Replacing Blazor Server with a SPA stack requires a major ADR and scope revision (GOALS kill criteria).
 - **Quality bar on build:** Nullable reference types and implicit usings enabled; `dotnet format SoloDevBoard.slnx --verify-no-changes` and `dotnet build SoloDevBoard.slnx -c Release -warnaserror` MUST pass before merge-quality work ships.
-- **Secrets:** Credentials MUST NOT be committed. Runtime secrets use Aspire user secrets, Key Vault at deploy, or documented operator paths (ADR-0043, ADR-0045). GitHub Actions CD MUST use OIDC for Azure, not long-lived cloud keys in source control.
+- **Secrets and parameters:** GitHub and auth configuration for runnable environments MUST flow through AppHost parameters and `WithEnvironment` into apps (`GitHubAuth__*`, sentinel placeholders per existing app conventions). Credentials MUST NOT be committed. Tier deploy auth secrets follow ADR-0045 (persistent Key Vault, `PublishAsExisting`; routine CD MUST NOT revive passing tier `gh-pat` / `gh-app-client-secret` via GitHub `Parameters__*` after migration). The application MUST read secrets from configuration; in-app Key Vault clients MUST NOT be added unless a new ADR says otherwise (ADR-0045). Runtime secrets MAY also use Aspire user secrets or documented operator paths (ADR-0043). GitHub Actions CD MUST use OIDC for Azure, not long-lived cloud keys in source control.
+- **Toolchain alignment:** `Aspire.AppHost.Sdk`, `Aspire.Hosting.*` packages, and the documented Aspire CLI version MUST stay on a single release family when upgraded (for example the 13.6.5 family per `docs/getting-started.md` and `plan/CURSOR_CLOUD.md`).
 - **Hosted access:** Public deployments MUST enforce operator-managed admission control (deny-by-default) before repository data loads (ADR-0014).
 - **Documentation language:** UK English in user-facing strings, comments, and docs; the Unicode em dash (U+2014) MUST NOT appear in repository prose.
 - **Decisions:** Significant architecture or technology choices MUST be recorded under `adr/`; rejected options in archive or legacy logs do not override active ADRs.
-- **Out of product scope unless replanned:** Non-GitHub providers, team collaboration features, native mobile clients, marketplace monetisation in v1.0 (see `SCOPE.md` / `plan/SCOPE.md`).
+- **Out of product scope unless replanned:** Non-GitHub providers, team collaboration features, native mobile clients, marketplace monetisation in v1.0 (see `SCOPE.md` / `plan/SCOPE.md`). Operator-hosted commercial SaaS on Azure is an allowed future direction and is not a kill criterion.
 
 ## Delivery Workflow and Quality Gates
 
-- **Spec Kit ownership:** Feature intent for new work flows through Spec Kit artefacts (`spec.md`, `plan.md`, `tasks.md` under `.specify/`). Those artefacts MUST NOT contradict this constitution. Detailed day-to-day coding rules remain in `AGENTS.md` and `CONVENTIONS.md` and MUST be kept consistent with amended principles.
+- **Spec Kit ownership:** Feature intent for new work flows through Spec Kit artefacts (`spec.md`, `plan.md`, `tasks.md` under `specs/<feature>/`). Those artefacts MUST NOT contradict this constitution. Detailed day-to-day coding rules remain in `AGENTS.md` and `CONVENTIONS.md` and MUST be kept consistent with amended principles.
+- **AppHost documentation sync:** New or changed AppHost parameters, auth modes, resource references, or deploy steps that affect operators or developers MUST update `docs/getting-started.md`, `docs/deployment.md`, and `src/SoloDevBoard.AppHost/README.md` in the same change when behaviour is operator-facing (mirroring `CONVENTIONS.md` documentation sync).
 - **Pull requests:** MUST follow `plan/PULL_REQUEST_POLICY.md` (title shape, template body, labels). Agent-authored PRs MUST receive human review before merge.
 - **Pre-merge verification (minimum):** `dotnet format` verify, Release build with warnings as errors, `dotnet test SoloDevBoard.UnitTests.slnf -c Release --no-build` when code or tests change; Playwright-impacting UI changes MUST consider `playwright.yml` tiers and journey docs.
 - **Historical artefacts:** Material under `plan/archive/` (Copilot-era bundles, weekly PM notes, retired implementation plans) MAY inform context but MUST NOT be mandated as ongoing process. Open work lives in GitHub Issues and Project #8, not new archive bundles.
-- **Agent skills:** `.agents/skills/` (e.g. `implementation-guardrails`, `mudblazor`, `code-review`) supplement the constitution during implementation; they do not replace ADRs or quality gates.
+- **Agent skills:** `.agents/skills/` (e.g. `implementation-guardrails`, `mudblazor`, `code-review`, Aspire workflow skills) supplement the constitution during implementation; they do not replace ADRs or quality gates. Aspireify ceremony, aspire-orchestration CLI troubleshooting, and Playwright port differences remain operational detail in skills and docs, not constitution text.
 
 ## Governance
 
@@ -93,4 +132,4 @@ This constitution is the **non-negotiable governance layer** for Spec Kit-driven
 
 **Runtime guidance:** Use `AGENTS.md` and `CONVENTIONS.md` for command sequences, file placement, and documentation sync tables; use `adr/` for decision history; use `.agents/skills/` during implementation.
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-15
+**Version**: 1.1.0 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-17
