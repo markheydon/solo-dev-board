@@ -12,9 +12,11 @@ Aspire deploys the following Azure resources (see [Deployment guide](deployment.
 |---|---|---|
 | Azure Container Apps environment | Hosts containerised workloads on the Consumption profile | Environment + per-use compute |
 | Container App (`app`) | Solo Dev Board Blazor Server application | Consumption (vCPU-seconds, memory, requests) |
-| Azure Functions (`functions`) | Overnight inventory placeholder (timer); future scanners ([ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md)) | Per execution + linked storage |
-| Azure SQL (`sql` / database `inventory`) | Derived repository snapshot store for catalogue roll-ups | Serverless GP tier; Aspire default includes free-limit auto-pause |
-| Azure Storage (`storage` / `storagestaging` on Staging) | Functions host storage (not product data) | Account + transactions |
+| Azure Functions (`functions`) | Overnight inventory placeholder (timer); future scanners ([ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md)) | Per execution + linked storage; **full experience deploy only** |
+| Azure SQL (`sql` / database `inventory`) | Derived repository snapshot store for catalogue roll-ups | Serverless GP tier; Aspire default includes free-limit auto-pause; **full experience deploy only** |
+| Azure Storage (`storage` / `storagestaging` on Staging) | Functions host storage (not product data) | Account + transactions; **full experience deploy only** |
+
+[PAT-only self-host](deployment.md#self-hoster-deployment-pat-mode) deploy uses the lean graph: Container App, Key Vault, telemetry, and registry only (lower idle cost than hosted sign-in tiers).
 | Azure Container Registry (Basic) | Stores built container images when not using a shared registry ([DEC-025](../adr/adr-0025-optional-shared-azure-container-registry.md)) | Fixed monthly (Basic tier) when Aspire provisions one per deploy |
 | Log Analytics workspace | Container platform logs and Application Insights backing store | Per GB ingested |
 | Application Insights | Application logs, metrics, and traces | Per GB ingested (linked workspace) |

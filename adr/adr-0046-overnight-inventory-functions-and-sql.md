@@ -76,7 +76,7 @@ Governance for wiring lives in constitution Principle VI; this addendum names pa
 
 **AppHost (hosting only, `src/SoloDevBoard.AppHost/`):**
 
-- Graph and references: `AppHost.cs` declares `inventory` (`AddAzureSqlServer` → `AddDatabase("inventory")`), `storage` (`AddAzureStorage` with `RunAsEmulator` / deploy account), `functions` (`AddAzureFunctionsProject` with `WithHostStorage(storage)` and `WithReference(inventory)`), and `app` (`AddDotnetProject` with `WithReference(inventory)`). Resource logical name for SQL access is **`inventory`** everywhere.
+- Graph and references: `FullExperienceAppHostGraph` declares `inventory` (`AddAzureSqlServer` → `AddDatabase("inventory")`), `storage` (`AddAzureStorage` with `RunAsEmulator` / deploy account), `functions` (`AddAzureFunctionsProject` with `WithHostStorage(storage)` and `WithReference(inventory)`), and `app` (`AddDotnetProject` with `WithReference(inventory)`). Resource logical name for SQL access is **`inventory`** everywhere. The lean graph (`LeanAppHostGraph`) models `app` only.
 - Hosting packages stay on the 13.6.5 family in `Directory.Packages.props`; do not add client integration packages to the AppHost project.
 
 **Consuming compute hosts (client packages, `Program.cs` only):**
@@ -92,6 +92,10 @@ Governance for wiring lives in constitution Principle VI; this addendum names pa
 
 - `SoloDevBoard.Composition` (`AddSoloDevBoard`) remains the application DI root for domain services; it MUST NOT reference `Aspire.*` client packages.
 - Application and Infrastructure consume SQL only through types registered by the host (interfaces and factories defined in Application, implemented in Infrastructure).
+
+### Local graph posture (addendum, 2026-11-17)
+
+Constitution v1.1.0 Principle VII: **PAT-only local trusted mode** uses a **lean AppHost graph** (`app` only, optional dev Key Vault). SQL, Functions, and storage are modelled when `hosted-sign-in-enabled` is `true` (local full experience testing, hosted CD, and full experience deploy). AppHost source is split across `AppHost.cs`, `LeanAppHostGraph`, and `FullExperienceAppHostGraph` for readability. Deploy posture follows the same `hosted-sign-in-enabled` gate (PAT self-host deploy stays lean).
 
 ---
 
