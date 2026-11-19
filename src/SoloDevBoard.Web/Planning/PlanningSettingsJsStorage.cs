@@ -11,18 +11,19 @@ public sealed class PlanningSettingsJsStorage(IJSRuntime jsRuntime) : IPlanningS
     private IJSObjectReference? module;
 
     /// <inheritdoc/>
-    public async Task<string?> GetStoredJsonAsync()
+    public async Task<string?> GetStoredJsonAsync(CancellationToken cancellationToken = default)
     {
         var moduleReference = await GetModuleAsync().ConfigureAwait(false);
-        return await moduleReference.InvokeAsync<string?>("getSettingsJson").ConfigureAwait(false);
+        return await moduleReference.InvokeAsync<string?>("getSettingsJson", cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public async Task SetStoredJsonAsync(string json)
+    public async Task SetStoredJsonAsync(string json, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(json);
 
         var moduleReference = await GetModuleAsync().ConfigureAwait(false);
+        _ = cancellationToken;
         await moduleReference.InvokeVoidAsync("setSettingsJson", json).ConfigureAwait(false);
     }
 

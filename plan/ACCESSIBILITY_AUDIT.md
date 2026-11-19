@@ -6,7 +6,7 @@ This document records the WCAG 2.1 AA accessibility audit for SoloDevBoard prima
 
 | Included | Excluded |
 |----------|----------|
-| Tier 1 and Tier 2 journeys from [CRITICAL_JOURNEYS.md](../tests/SoloDevBoard.E2E.Tests/CRITICAL_JOURNEYS.md) | Hosted sign-in / admission-control denial (CI PAT mode) |
+| Tier 1 and Tier 2 journeys from [CRITICAL_JOURNEYS.md](../tests/SoloDevBoard.E2E.Tests/CRITICAL_JOURNEYS.md) | Hosted sign-in / admission-control denial (CI PAT-only local trusted mode) |
 | Application shell (app bar, drawer, skip link, theme) | Live GitHub catalogue mutations |
 | PAT connectivity error page | Azure Container Apps probe UI |
 | Light-mode default theme (axe in CI) | Manual screen-reader walkthrough of every dialog |

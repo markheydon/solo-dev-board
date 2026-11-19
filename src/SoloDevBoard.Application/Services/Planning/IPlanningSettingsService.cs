@@ -5,9 +5,10 @@ public interface IPlanningSettingsService
 {
     /// <summary>Loads persisted settings, falling back to defaults when storage is missing or invalid.</summary>
     /// <returns>The effective PM settings.</returns>
-    Task<PlanningSettingsDto> GetSettingsAsync();
+    Task<PlanningSettingsDto> GetSettingsAsync(CancellationToken cancellationToken = default);
 
     /// <summary>Persists the supplied settings to browser storage.</summary>
     /// <param name="settings">The settings to store.</param>
-    Task SaveSettingsAsync(PlanningSettingsDto settings);
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    Task SaveSettingsAsync(PlanningSettingsDto settings, CancellationToken cancellationToken = default);
 }

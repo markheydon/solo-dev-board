@@ -4,7 +4,7 @@ Reference for operators migrating authentication secrets. Do not commit secret v
 
 ## Application secrets (SoloDevBoard.Web)
 
-| Key Vault secret name | Configuration key | PAT mode | Hosted sign-in | Genuinely secret |
+| Key Vault secret name | Configuration key | PAT-only local trusted mode | Hosted sign-in | Genuinely secret |
 |----------------------|-------------------|----------|----------------|------------------|
 | `gh-pat` | `GitHubAuth:PersonalAccessToken` | Required | `-` / omitted | Yes |
 | `gh-app-client-secret` | `GitHubAuth:HostedGitHubAppClientSecret` | `-` / omitted | Required | Yes |

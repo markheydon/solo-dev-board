@@ -5,9 +5,10 @@ public interface IPlanningSettingsStorage
 {
     /// <summary>Gets the stored JSON payload.</summary>
     /// <returns>The stored JSON, or <see langword="null"/> when unset.</returns>
-    Task<string?> GetStoredJsonAsync();
+    Task<string?> GetStoredJsonAsync(CancellationToken cancellationToken = default);
 
     /// <summary>Persists the JSON payload.</summary>
     /// <param name="json">The serialised settings JSON.</param>
-    Task SetStoredJsonAsync(string json);
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    Task SetStoredJsonAsync(string json, CancellationToken cancellationToken = default);
 }

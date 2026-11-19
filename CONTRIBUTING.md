@@ -54,7 +54,7 @@ This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.
    dotnet run --project src/SoloDevBoard.Web
    ```
 
-   See [docs/getting-started.md](docs/getting-started.md) for hosted sign-in mode and Azure deployment.
+   See [docs/getting-started.md](docs/getting-started.md) for hosted sign-in and Azure deployment.
 
 5. **Run tests:**
    ```bash

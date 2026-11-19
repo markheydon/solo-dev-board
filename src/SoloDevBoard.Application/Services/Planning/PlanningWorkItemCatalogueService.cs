@@ -22,7 +22,7 @@ public sealed class PlanningWorkItemCatalogueService(
     /// </remarks>
     public async Task<PlanningWorkItemCatalogueResultDto> GetCatalogueAsync(CancellationToken cancellationToken = default)
     {
-        var settings = await pmSettingsService.GetSettingsAsync().ConfigureAwait(false);
+        var settings = await pmSettingsService.GetSettingsAsync(cancellationToken).ConfigureAwait(false);
         var excludedRepositories = new HashSet<string>(
             settings.ExcludedRepositories,
             StringComparer.OrdinalIgnoreCase);

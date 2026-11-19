@@ -118,5 +118,5 @@ One-Click Migration is configured entirely through the UI workflow. There are no
 ### Authentication for project board columns
 
 {{< callout type="important" >}}
-Reading linked boards requires the same Projects access as Triage (`read:project` for PAT mode). Applying Status column changes additionally requires write access to Projects (`project` scope for PAT mode, or repository/organisation **Projects: Write** for hosted GitHub App sign-in on accessible boards).
+Reading linked boards requires the same Projects access as Triage (`read:project` for PAT-only local trusted mode). Applying Status column changes additionally requires write access to Projects (`project` scope for PAT-only local trusted mode, or repository/organisation **Projects: Write** for hosted GitHub App sign-in on accessible boards).
 {{< /callout >}}

@@ -74,7 +74,7 @@ During **Process**, milestone and project board fields are part of the same meta
 If GitHub reports linked project boards that cannot be loaded, a warning appears above the project board selector. This commonly happens for **private user-owned** Projects v2 boards under hosted GitHub App sign-in: GitHub may list the board as linked while the App token cannot read it. Public linked boards still appear in the selector.
 
 {{< callout type="important" >}}
-To access private boards, use PAT mode with the `read:project` scope, or make the project public.
+To access private boards, use PAT-only local trusted mode with the `read:project` scope, or make the project public.
 {{< /callout >}}
 
 ## Session Completion Summary and Skip/Revisit Workflow

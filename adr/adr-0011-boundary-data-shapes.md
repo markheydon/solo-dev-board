@@ -1,7 +1,7 @@
 # ADR-0011: Boundary Data Shapes — DTOs at the Application→Web Boundary
 
 **Date:** 2026-03-08
-**Status:** Accepted (amended 2026-11-15: presentation layer terminology aligned with `SoloDevBoard.Web`)
+**Status:** Accepted (amended 2026-11-15: presentation layer terminology aligned with `SoloDevBoard.Web`; amended 2026-11-19: `IGitHubService` gateway carve-out)
 
 ---
 
@@ -86,9 +86,13 @@ The following existing stubs violate this rule and must be updated before any co
 
 A `LabelDto` record must be created in the Application layer as part of this retrospective fix.
 
+### Amendments (2026-11-19)
+
+**`IGitHubService` gateway carve-out:** `IGitHubService` is an Application-layer port to GitHub used only from Application service implementations and Infrastructure. It may use domain entity types in its public signature (and occasional use-case DTOs such as `BoardRulesDefinitionDto` where already established). Blazor components and other Web code must not inject `IGitHubService`; they consume feature facades (`I*Service`, `I*Manager`) that return DTOs. This aligns the ADR with Constitution v1.1.1 Principle II without duplicating the entire GitHub surface as DTOs.
+
 ### Ongoing Rules for All Future Work
 
-- **Domain types are internal to Application.** They must not appear in the public signature of any `I*Service` or `I*Manager` interface.
+- **Domain types are internal to Application beyond the Web boundary.** They must not appear in the public signature of any `I*Service` or `I*Manager` interface **called directly from Web**. Repository interfaces and `IGitHubService` remain domain-typed per the two-tier rule above.
 - **DTOs live in Application.** A `<Entity>Dto` record is defined in `SoloDevBoard.Application`, co-located with the service interface that uses it.
 - **Mapping happens in Application.** The Application service implementation maps from domain entity to DTO before returning. No mapping logic belongs in Razor components.
 - **Repositories remain domain-typed.** `ILabelRepository`, `IRepositoryRepository`, etc., may freely use domain entities in their signatures — this is the correct inner-circle contract.

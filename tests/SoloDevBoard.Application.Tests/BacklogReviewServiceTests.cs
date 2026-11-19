@@ -14,7 +14,7 @@ public sealed class BacklogReviewServiceTests
 
     public BacklogReviewServiceTests()
     {
-        _pmSettingsService.GetSettingsAsync().Returns(PlanningSettingsDefaults.Create());
+        _pmSettingsService.GetSettingsAsync(Arg.Any<CancellationToken>()).Returns(PlanningSettingsDefaults.Create());
     }
 
     [Fact]

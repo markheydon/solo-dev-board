@@ -6,9 +6,9 @@ Self-hosting Solo Dev Board on Azure incurs charges for the resources Aspire pro
 
 ## Resources Deployed
 
-Aspire deploys resources according to deploy posture (`hosted-sign-in-enabled`). See the [Deployment guide](deployment.md) (including [self-hoster PAT deploy](deployment.md#self-hoster-deployment-pat-mode)) and [Observability guide](observability.md).
+Aspire deploys resources according to deploy posture (`hosted-sign-in-enabled`). See the [Deployment guide](deployment.md) (including [self-hoster PAT deploy](deployment.md#self-hoster-deployment-pat-only-local-trusted-mode)) and [Observability guide](observability.md).
 
-[PAT-only self-host](deployment.md#self-hoster-deployment-pat-mode) uses the **lean** graph: shared resources below, without SQL, Functions, or the inventory storage account. Staging, Production, and other full-experience deploys add the inventory stack ([ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md)).
+[PAT-only self-host](deployment.md#self-hoster-deployment-pat-only-local-trusted-mode) uses the **lean** graph: shared resources below, without SQL, Functions, or the inventory storage account. Staging, Production, and other full-experience deploys add the inventory stack ([ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md)).
 
 | Resource | Purpose | Pricing model |
 |---|---|---|
@@ -54,7 +54,7 @@ For exact, up-to-date pricing, use the [Azure Pricing Calculator](https://azure.
 
 ## Related documentation
 
-- [Self-hoster deployment (PAT mode)](deployment.md#self-hoster-deployment-pat-mode) — personal Azure instance without a GitHub App.
+- [Self-hoster deployment (PAT-only local trusted mode)](deployment.md#self-hoster-deployment-pat-only-local-trusted-mode) — personal Azure instance without a GitHub App.
 - [Getting Started — PAT-only local trusted mode](getting-started.md#pat-only-local-trusted-mode) — local configuration and trust boundary.
 - [Observability](observability.md) — Application Insights and operational diagnostics after deploy.
 

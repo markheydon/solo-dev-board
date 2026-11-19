@@ -23,7 +23,7 @@ Public-release hardening is in scope for v1.0.0, including:
 - Azure deployment via Aspire to Azure Container Apps with scale-to-zero ([DEC-015](adr/adr-0018-aspire-azure-container-apps-deployment.md)).
 - OIDC authentication for GitHub Actions to Azure.
 - Operational hardening: response caching, health checks, structured logging, Application Insights telemetry, Dependabot configuration.
-- PAT-only local trusted mode for development and trusted personal self-hosted use (see [docs/getting-started.md](../docs/getting-started.md#pat-only-local-trusted-mode) and [self-hoster PAT deploy](../docs/deployment.md#self-hoster-deployment-pat-mode)).
+- PAT-only local trusted mode for development and trusted personal self-hosted use (see [docs/getting-started.md](../docs/getting-started.md#pat-only-local-trusted-mode) and [self-hoster PAT deploy](../docs/deployment.md#self-hoster-deployment-pat-only-local-trusted-mode)).
 - Separate OAuth App registration is not the intended default end state; it is only a fallback if GitHub App user authentication proves insufficient for hosted sign-in requirements.
 - Hosted authentication is secure-by-default, with deny-by-default admission control.
 

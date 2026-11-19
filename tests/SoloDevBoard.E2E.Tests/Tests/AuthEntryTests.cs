@@ -4,7 +4,7 @@ using SoloDevBoard.E2E.Tests.Fixtures;
 namespace SoloDevBoard.E2E.Tests.Tests;
 
 /// <summary>
-/// Authentication entry tests for PAT mode.
+/// Authentication entry tests for PAT-only local trusted mode.
 /// </summary>
 [Trait("Category", "E2E")]
 public sealed class AuthEntryTests : SoloDevBoardPageTest
@@ -15,7 +15,7 @@ public sealed class AuthEntryTests : SoloDevBoardPageTest
     [Fact]
     public async Task PatConnectivityErrorPage_ReturnsTokenRejectedStatusAndGuidance()
     {
-        Skip.If(E2eAuthMode.IsHosted, "PAT mode only");
+        Skip.If(E2eAuthMode.IsHosted, "PAT-only local trusted mode only");
 
         var response = await Page.GotoAsync("/auth/connectivity-error?reason=token-rejected");
 
@@ -26,12 +26,12 @@ public sealed class AuthEntryTests : SoloDevBoardPageTest
     }
 
     /// <summary>
-    /// Verifies the welcome page redirects to home in PAT mode.
+    /// Verifies the welcome page redirects to home in PAT-only local trusted mode.
     /// </summary>
     [Fact]
     public async Task WelcomePage_RedirectsToHomeInPatMode()
     {
-        Skip.If(E2eAuthMode.IsHosted, "PAT mode only");
+        Skip.If(E2eAuthMode.IsHosted, "PAT-only local trusted mode only");
 
         await Page.GotoAsync("/welcome");
 

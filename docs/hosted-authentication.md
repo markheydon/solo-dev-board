@@ -12,7 +12,7 @@ Solo Dev Board supports a GitHub App-first hosted authentication model for produ
 
 - Unauthenticated visitors are shown a dedicated landing page at `/welcome` with a **Sign in with GitHub** action.
 - The OAuth handshake starts at `/auth/sign-in` when you choose to sign in from the landing page.
-- You must have a valid GitHub App installation and be listed in the operator-managed allow-list to access hosted mode.
+- You must have a valid GitHub App installation and be listed in the operator-managed allow-list to access hosted sign-in.
 - Sign-in establishes a session with mapped claims for your GitHub login, access token, installation ID, and organisation memberships.
 - Signing out returns you to `/welcome`.
 
@@ -64,7 +64,7 @@ Full OAuth callback and post-login journeys remain manual or staging validation.
 ## Local Trusted Modes
 
 - **PAT-only local trusted mode** remains available for development and trusted personal self-hosting. It does not require hosted sign-in infrastructure. See [Getting Started — PAT-only local trusted mode](getting-started.md#pat-only-local-trusted-mode) and [PAT Connectivity](pat-connectivity.md).
-- To run a personal Azure instance with a PAT (no GitHub App), follow [Self-hoster deployment (PAT mode)](deployment.md#self-hoster-deployment-pat-mode).
+- To run a personal Azure instance with a PAT (no GitHub App), follow [Self-hoster deployment (PAT-only local trusted mode)](deployment.md#self-hoster-deployment-pat-only-local-trusted-mode).
 
 ## Session and Token Flow
 
@@ -92,7 +92,7 @@ When this happens, Board Rules and Triage show a warning naming how many linked 
 
 **Workarounds:**
 
-- Use **PAT mode** with the `read:project` scope for full user-level Projects v2 access.
+- Use **PAT-only local trusted mode** with the `read:project` scope for full user-level Projects v2 access.
 - Make the linked project **public** if GitHub App sign-in must remain the only auth path.
 
 This is a known GitHub platform limitation for GitHub Apps, not a Solo Dev Board configuration defect. See [plan/GITHUB_PROJECTS_V2_ACCESS.md](../plan/GITHUB_PROJECTS_V2_ACCESS.md) and [Unlocking GitHub Apps: Why Bots Need Access to Private Projects v2](https://devactivity.com/posts/apps-tools/unlocking-github-apps-why-bots-need-access-to-private-projects-v2-for-enhanced-productivity/).

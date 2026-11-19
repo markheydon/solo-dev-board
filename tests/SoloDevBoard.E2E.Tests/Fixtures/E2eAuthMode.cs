@@ -30,12 +30,12 @@ public static class E2eAuthMode
     }
 
     /// <summary>
-    /// Returns true when the suite is running in hosted sign-in mode.
+    /// Returns true when the suite is running in hosted sign-in.
     /// </summary>
     public static bool IsHosted => Current == E2eAuthModeValue.Hosted;
 
     /// <summary>
-    /// Returns true when the suite is running in PAT mode.
+    /// Returns true when the suite is running in PAT-only local trusted mode.
     /// </summary>
     public static bool IsPat => Current == E2eAuthModeValue.Pat;
 }

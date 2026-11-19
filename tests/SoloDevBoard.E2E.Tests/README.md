@@ -42,7 +42,7 @@ Cross-platform scripts live in [`scripts/`](../../scripts/):
 | Script | Scope |
 |--------|--------|
 | `test-unit` | Unit and component tests only (fast default). |
-| `test-e2e` | E2E PAT mode by default; pass `-Hosted` for the hosted login-gate suite. |
+| `test-e2e` | E2E PAT-only local trusted mode by default; pass `-Hosted` for the hosted login-gate suite. |
 | `test-all` | Full CI parity: unit → E2E PAT → E2E hosted (sequential). |
 
 Build the solution once. The E2E assembly fixture starts SoloDevBoard on HTTP port **5080** with the same placeholder auth configuration as CI.
@@ -55,13 +55,13 @@ Build the solution once. The E2E assembly fixture starts SoloDevBoard on HTTP po
 # Avoid: dotnet test SoloDevBoard.slnx (includes E2E under xUnit v3 MTP — slow).
 ```
 
-### E2E only (PAT mode, default)
+### E2E only (PAT-only local trusted mode, default)
 
 ```bash
 ./scripts/test-e2e.sh
 ```
 
-### E2E hosted mode (login gate only)
+### E2E hosted sign-in (login gate only)
 
 ```bash
 ./scripts/test-e2e.sh -Hosted
@@ -117,7 +117,7 @@ Images are written to `website/static/images/<feature-slug>/`. See [DOCS_STRATEG
 
 [`.github/workflows/playwright.yml`](../../.github/workflows/playwright.yml) runs two matrix jobs in parallel with **Build and Test** in [`ci.yml`](../../.github/workflows/ci.yml):
 
-- **`pat`** — full E2E suite with PAT mode (`E2E_AUTH_MODE=pat`, MTP filter `--filter-query "/[Category=E2E]"`).
+- **`pat`** — full E2E suite with PAT-only local trusted mode (`E2E_AUTH_MODE=pat`, MTP filter `--filter-query "/[Category=E2E]"`).
 - **`hosted`** — hosted login-gate suite (`AuthEntryHostedTests` and `E2eHostedPipelineSanityTests`, MTP filter `--filter-query "/[(Category=E2E)&(AuthMode=Hosted)]"`) with placeholder GitHub App credentials and no live OAuth.
 
 The assembly fixture starts the app on HTTP **port 5080** (not Aspire on 5074). CI installs Chromium with `pwsh …/playwright.ps1 install chromium`.

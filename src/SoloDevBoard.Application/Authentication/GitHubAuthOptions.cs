@@ -5,7 +5,7 @@ public sealed class GitHubAuthOptions
 {
     public const string SectionName = "GitHubAuth";
 
-    /// <summary>GitHub owner login used for owner-scoped repository operations. When empty, resolved from the PAT at startup in PAT mode.</summary>
+    /// <summary>GitHub owner login used for owner-scoped repository operations. When empty, resolved from the PAT at startup in PAT-only local trusted mode.</summary>
     public string OwnerLogin { get; set; } = string.Empty;
 
     /// <summary>Personal access token for GitHub API authentication.</summary>
@@ -18,7 +18,7 @@ public sealed class GitHubAuthOptions
     public string GitHubAppPrivateKey { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets a value that indicates whether hosted sign-in mode is enabled.
+    /// Gets or sets a value that indicates whether hosted sign-in is enabled.
     /// </summary>
     /// <value>
     /// <see langword="true" /> to resolve the current user from per-request hosted authentication claims; otherwise, <see langword="false" />.
@@ -27,7 +27,7 @@ public sealed class GitHubAuthOptions
     public bool HostedSignInEnabled { get; set; }
 
     /// <summary>
-    /// Gets or sets the claim type used to read the authenticated GitHub owner login in hosted mode.
+    /// Gets or sets the claim type used to read the authenticated GitHub owner login when hosted sign-in is enabled.
     /// </summary>
     /// <value>The hosted authentication claim type for owner login.</value>
     public string HostedOwnerLoginClaimType { get; set; } = HostedAuthClaimTypes.OwnerLogin;

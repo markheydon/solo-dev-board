@@ -4,7 +4,7 @@
 
 This guide explains how Solo Dev Board surfaces GitHub personal access token (PAT) connectivity in **PAT-only local trusted mode**. It complements [Hosted Authentication](hosted-authentication.md), which covers session-based sign-in for multi-user and public deployments.
 
-For configuration, mode comparison, and when to choose PAT versus hosted sign-in, start with [Getting Started — PAT-only local trusted mode](getting-started.md#pat-only-local-trusted-mode). For a personal Azure instance using the same mode, see [Self-hoster deployment (PAT mode)](deployment.md#self-hoster-deployment-pat-mode).
+For configuration, mode comparison, and when to choose PAT versus hosted sign-in, start with [Getting Started — PAT-only local trusted mode](getting-started.md#pat-only-local-trusted-mode). For a personal Azure instance using the same mode, see [Self-hoster deployment (PAT-only local trusted mode)](deployment.md#self-hoster-deployment-pat-only-local-trusted-mode).
 
 ## Overview
 
@@ -18,7 +18,7 @@ When `GitHubAuth:HostedSignInEnabled` is `false`, Solo Dev Board authenticates t
 
 ## Shell status indicator
 
-- In PAT mode, the application shell shows a **GitHub handle chip** (link icon plus `@login`) in the app bar. The accessible name remains **Connected as @login**.
+- In PAT-only local trusted mode, the application shell shows a **GitHub handle chip** (link icon plus `@login`) in the app bar. The accessible name remains **Connected as @login**.
 - This is the single connectivity indicator for the deployment; it is not repeated on individual feature pages.
 - The chip refreshes when you navigate between pages so runtime connectivity changes are reflected after recovery attempts.
 - This confirms GitHub connectivity before you open Repositories, Labels, or other feature pages.
@@ -49,7 +49,7 @@ Use `/health/github` when you want Container Apps or external monitoring to veri
 ## Documentation references
 
 - See [Getting Started — PAT-only local trusted mode](getting-started.md#pat-only-local-trusted-mode) for configuration and mode comparison.
-- See [Self-hoster deployment (PAT mode)](deployment.md#self-hoster-deployment-pat-mode) for deploying a personal Azure instance with a PAT.
+- See [Self-hoster deployment (PAT-only local trusted mode)](deployment.md#self-hoster-deployment-pat-only-local-trusted-mode) for deploying a personal Azure instance with a PAT.
 - See [Hosted Authentication](hosted-authentication.md) for the hosted sign-in model.
 - See [plan/wireframes/auth-entry-wireframe.md](../../plan/wireframes/auth-entry-wireframe.md) for layout reference.
 

@@ -29,7 +29,7 @@ public static class GitHubAuthConfigurationValidation
         if (!AuthConfigurationPlaceholders.IsConfigured(authOptions.PersonalAccessToken))
         {
             throw CreateConfigurationException(
-                "PAT mode is active because GitHubAuth:HostedSignInEnabled is false, but no personal access token is configured. " +
+                "PAT-only local trusted mode is active because GitHubAuth:HostedSignInEnabled is false, but no personal access token is configured. " +
                 "Set AppHost parameter 'gh-pat' via 'aspire secret set Parameters:gh-pat' (Path A), " +
                 "or configure auth-secrets-vault-name and auth-secrets-vault-resource-group and sign in with Azure CLI (Path B). " +
                 "Legacy dotnet run may use GitHubAuth:PersonalAccessToken in user secrets.");

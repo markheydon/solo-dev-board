@@ -47,7 +47,7 @@ public sealed class PlanningChromeCoordinatorTests
     public async Task CancelPendingLoad_WhenLoadIsInFlight_StopsFurtherRepositoryUpdates()
     {
         var repositoryTask = new TaskCompletionSource<IReadOnlyList<RepositoryDto>>();
-        _pmSettingsService.GetSettingsAsync()
+        _pmSettingsService.GetSettingsAsync(Arg.Any<CancellationToken>())
             .Returns(PlanningSettingsDefaults.Create());
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>())
             .Returns(repositoryTask.Task);
@@ -122,7 +122,7 @@ public sealed class PlanningChromeCoordinatorTests
             isLoading: false);
         coordinator.SetBacklogReview("PVT_board", EmptyBacklogResult(), null, isLoading: false);
 
-        await coordinator.SaveSettingsAsync(PlanningSettingsDefaults.Create());
+        await coordinator.SaveSettingsAsync(PlanningSettingsDefaults.Create(), TestContext.Current.CancellationToken);
 
         Assert.Null(coordinator.DailyFocusRecommendations);
         Assert.Null(coordinator.DailyFocusStalledReviews);
@@ -132,7 +132,7 @@ public sealed class PlanningChromeCoordinatorTests
     [Fact]
     public async Task EnsureLoadedAsync_WhenRepositoryFetchFails_DoesNotMarkLoaded()
     {
-        _pmSettingsService.GetSettingsAsync()
+        _pmSettingsService.GetSettingsAsync(Arg.Any<CancellationToken>())
             .Returns(PlanningSettingsDefaults.Create());
         _repositoryService.GetActiveRepositoriesAsync(Arg.Any<CancellationToken>())
             .ThrowsAsync(new InvalidOperationException("GitHub unavailable"));
@@ -167,7 +167,7 @@ public sealed class PlanningChromeCoordinatorTests
 
     private void ConfigureSuccessfulLoad(bool delayRepositoryFetch = false)
     {
-        _pmSettingsService.GetSettingsAsync()
+        _pmSettingsService.GetSettingsAsync(Arg.Any<CancellationToken>())
             .Returns(PlanningSettingsDefaults.Create());
 
         if (delayRepositoryFetch)

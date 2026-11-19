@@ -27,9 +27,9 @@ public static class LinkedProjectBoardVisibility
 
         if (inaccessibleLinkedProjectCount >= totalLinkedProjectCount)
         {
-            return $"GitHub reports {totalLinkedProjectCount} linked project {boardNoun}, but none could be loaded with the current sign-in. Private user-owned projects are commonly inaccessible to GitHub App sign-in; use PAT mode with the read:project scope or make the project public.";
+            return $"GitHub reports {totalLinkedProjectCount} linked project {boardNoun}, but none could be loaded with the current sign-in. Private user-owned projects are commonly inaccessible to GitHub App sign-in; use PAT-only local trusted mode with the read:project scope or make the project public.";
         }
 
-        return $"GitHub reports {totalLinkedProjectCount} linked project {boardNoun}, but {inaccessibleLinkedProjectCount} {inaccessibleNoun} could not be loaded with the current sign-in. Private user-owned projects are commonly inaccessible to GitHub App sign-in; use PAT mode with the read:project scope or make the project public.";
+        return $"GitHub reports {totalLinkedProjectCount} linked project {boardNoun}, but {inaccessibleLinkedProjectCount} {inaccessibleNoun} could not be loaded with the current sign-in. Private user-owned projects are commonly inaccessible to GitHub App sign-in; use PAT-only local trusted mode with the read:project scope or make the project public.";
     }
 }

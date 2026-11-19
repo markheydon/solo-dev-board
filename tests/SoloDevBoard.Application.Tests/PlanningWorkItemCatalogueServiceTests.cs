@@ -23,7 +23,7 @@ public sealed class PlanningWorkItemCatalogueServiceTests
 
     public PlanningWorkItemCatalogueServiceTests()
     {
-        _pmSettingsService.GetSettingsAsync().Returns(PlanningSettingsDefaults.Create());
+        _pmSettingsService.GetSettingsAsync(Arg.Any<CancellationToken>()).Returns(PlanningSettingsDefaults.Create());
         _sut = new PlanningWorkItemCatalogueService(
             _gitHubService,
             _pmSettingsService,
@@ -101,7 +101,7 @@ public sealed class PlanningWorkItemCatalogueServiceTests
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
 
-        _pmSettingsService.GetSettingsAsync().Returns(new PlanningSettingsDto(
+        _pmSettingsService.GetSettingsAsync(Arg.Any<CancellationToken>()).Returns(new PlanningSettingsDto(
             PlanningBoardNodeId: null,
             ExcludedRepositories: ["owner/excluded"],
             Capacity: PlanningSettingsDefaults.Capacity,

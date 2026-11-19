@@ -13,9 +13,9 @@ public sealed class PlanningSettingsService(IPlanningSettingsStorage storage, IL
     };
 
     /// <inheritdoc/>
-    public async Task<PlanningSettingsDto> GetSettingsAsync()
+    public async Task<PlanningSettingsDto> GetSettingsAsync(CancellationToken cancellationToken = default)
     {
-        var storedJson = await storage.GetStoredJsonAsync().ConfigureAwait(false);
+        var storedJson = await storage.GetStoredJsonAsync(cancellationToken).ConfigureAwait(false);
         if (string.IsNullOrWhiteSpace(storedJson))
         {
             return PlanningSettingsDefaults.Create();
@@ -34,13 +34,13 @@ public sealed class PlanningSettingsService(IPlanningSettingsStorage storage, IL
     }
 
     /// <inheritdoc/>
-    public async Task SaveSettingsAsync(PlanningSettingsDto settings)
+    public async Task SaveSettingsAsync(PlanningSettingsDto settings, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(settings);
 
         var normalised = Normalise(settings);
         var json = JsonSerializer.Serialize(ToStorageModel(normalised), JsonOptions);
-        await storage.SetStoredJsonAsync(json).ConfigureAwait(false);
+        await storage.SetStoredJsonAsync(json, cancellationToken).ConfigureAwait(false);
     }
 
     private static PlanningSettingsDto Normalise(PlanningSettingsDto settings)
