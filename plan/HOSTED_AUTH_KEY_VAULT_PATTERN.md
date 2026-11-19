@@ -38,6 +38,6 @@ Populate vaults before CD; see [docs/azure-key-vault-setup.md](../docs/azure-key
 
 ## References
 
-- [AppHost](../src/SoloDevBoard.AppHost/AppHost.cs)
+- [AppHost](../src/SoloDevBoard.AppHost/README.md)
 - [Secret inventory](KEY_VAULT_SECRET_INVENTORY.md)
 - [Deployment guide](../docs/deployment.md)

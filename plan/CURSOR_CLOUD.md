@@ -30,6 +30,7 @@ Cursor Cloud agents often default to **draft** PRs, `cursor/…` branch names, a
 ## Running the app (Aspire — the standard path)
 
 - Start: `aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --non-interactive` (runs in the background). Then `aspire ps` for the dashboard URL/token, `aspire describe` for the `app` resource URL (proxied at `https://localhost:5074`), and `aspire stop` to release file locks before rebuilding.
+- Default shipped parameters model the **lean** AppHost graph (`app` only). Set `hosted-sign-in-enabled` to `true` when you need the full inventory stack locally (Docker for SQL, Azurite, Functions). See [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md).
 - If a build fails with `MSB3491`/`CS2012` (file locks), run `aspire stop` first — Aspire holds locks on `bin/`/`obj/` while running. See the `aspire-orchestration` skill.
 - Query logs/traces without the dashboard via `aspire logs app`, `aspire otel`, or the Aspire MCP server (see below).
 - Health endpoint: `GET /health` returns `Healthy`. The Home page (`/`) is static navigation and renders without any GitHub call.
@@ -56,7 +57,7 @@ The dev container uses Aspire feature v3, `dev-agent-tools`, and `cursor-cli` (s
 
 ## AppHost parameters and secrets
 
-The AppHost binds authentication from **AppHost** configuration (`src/SoloDevBoard.AppHost/AppHost.cs`), not from `SoloDevBoard.Web` `appsettings`. Secret parameters are `gh-pat` and `gh-app-client-secret`; non-secret parameters include `hosted-sign-in-enabled`, `gh-app-client-id`, admission allow-lists, and (Path B only) `auth-secrets-vault-name` / `auth-secrets-vault-resource-group`. Shipped defaults live in `src/SoloDevBoard.AppHost/appsettings.json` (PAT mode by default).
+The AppHost binds authentication from **AppHost** configuration (`src/SoloDevBoard.AppHost/`, not `SoloDevBoard.Web` `appsettings`). Graph and parameter wiring are documented in [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md). Secret parameters are `gh-pat` and `gh-app-client-secret`; non-secret parameters include `hosted-sign-in-enabled`, `gh-app-client-id`, admission allow-lists, and (Path B only) `auth-secrets-vault-name` / `auth-secrets-vault-resource-group`. Shipped defaults live in `src/SoloDevBoard.AppHost/appsettings.json` (PAT-only local trusted mode by default).
 
 Two paths matter in Cloud VMs and Codespaces:
 
