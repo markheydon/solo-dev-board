@@ -5,7 +5,7 @@ using SoloDevBoard.E2E.Tests.Fixtures;
 namespace SoloDevBoard.E2E.Tests.Tests;
 
 /// <summary>
-/// Authentication entry tests for hosted sign-in mode.
+/// Authentication entry tests for hosted sign-in.
 /// </summary>
 [Trait("Category", "E2E")]
 [Trait("AuthMode", "Hosted")]

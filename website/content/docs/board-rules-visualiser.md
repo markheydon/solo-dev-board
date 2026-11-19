@@ -67,10 +67,10 @@ Key goals of the Board Rules Visualiser:
 - **No repository selected:** The visualisation area prompts you to choose a repository and project board.
 - **No supported boards:** If the repository has no GitHub Project v2 board with a Status field, Solo Dev Board explains why the visualiser cannot continue and does not show the diagram state. Use **Try again** after you add a Status field on GitHub; your repository selection is kept.
 - **Reload from GitHub:** Use **Reload from GitHub** in the selector header to bust the repository catalogue cache and refetch project boards while keeping your repository and comparison selections. It remains available when the catalogue fails to load and is disabled only while a reload is in progress.
-- **Some linked boards inaccessible:** If GitHub reports more linked project boards than Solo Dev Board can load, a warning explains how many could not be read. This commonly happens for **private user-owned** Projects v2 boards under hosted GitHub App sign-in: GitHub may list the board as linked while the App token cannot read it. Public linked boards still load. Use PAT mode with the `read:project` scope, or make the project public.
+- **Some linked boards inaccessible:** If GitHub reports more linked project boards than Solo Dev Board can load, a warning explains how many could not be read. This commonly happens for **private user-owned** Projects v2 boards under hosted GitHub App sign-in: GitHub may list the board as linked while the App token cannot read it. Public linked boards still load. Use PAT-only local trusted mode with the `read:project` scope, or make the project public.
 
 {{< callout type="important" >}}
-Private user-owned Projects v2 boards often need PAT mode with `read:project`, or a public project, when hosted GitHub App sign-in cannot read them.
+Private user-owned Projects v2 boards often need PAT-only local trusted mode with `read:project`, or a public project, when hosted GitHub App sign-in cannot read them.
 {{< /callout >}}
 
 - **Loading:** Progress indicators appear in the repository selector, project board selector, or comparison selector sections while data is loading. Reload from GitHub and **Try again** show section-scoped loading in the board selector areas without hiding your repository pickers.

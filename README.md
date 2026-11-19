@@ -71,9 +71,9 @@ dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-pat>" --project 
 dotnet run --project src/SoloDevBoard.Web
 ```
 
-For **hosted sign-in mode** (GitHub App), see [docs/getting-started.md](docs/getting-started.md#hosted-sign-in-mode-setup) or [`src/SoloDevBoard.AppHost/README.md`](src/SoloDevBoard.AppHost/README.md).
+For **hosted sign-in** (GitHub App), see [docs/getting-started.md](docs/getting-started.md#hosted-sign-in-setup) or [`src/SoloDevBoard.AppHost/README.md`](src/SoloDevBoard.AppHost/README.md).
 
-Aspire is used for both local orchestration and production deployment to Azure Container Apps. See [docs/deployment.md](docs/deployment.md) for Azure deployment instructions, including the [self-hoster PAT path](docs/deployment.md#self-hoster-deployment-pat-mode) for a personal instance on your own subscription.
+Aspire is used for both local orchestration and production deployment to Azure Container Apps. See [docs/deployment.md](docs/deployment.md) for Azure deployment instructions, including the [self-hoster PAT path](docs/deployment.md#self-hoster-deployment-pat-only-local-trusted-mode) for a personal instance on your own subscription.
 
 ## Project Structure
 

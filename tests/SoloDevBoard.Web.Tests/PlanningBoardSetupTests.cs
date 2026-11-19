@@ -177,9 +177,9 @@ public sealed class PlanningBoardSetupTests
     {
         public string? StoredJson { get; set; }
 
-        public Task<string?> GetStoredJsonAsync() => Task.FromResult(StoredJson);
+        public Task<string?> GetStoredJsonAsync(CancellationToken cancellationToken = default) => Task.FromResult(StoredJson);
 
-        public Task SetStoredJsonAsync(string json)
+        public Task SetStoredJsonAsync(string json, CancellationToken cancellationToken = default)
         {
             StoredJson = json;
             return Task.CompletedTask;

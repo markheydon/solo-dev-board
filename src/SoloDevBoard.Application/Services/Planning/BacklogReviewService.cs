@@ -39,7 +39,7 @@ public sealed class BacklogReviewService : IBacklogReviewService
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentException.ThrowIfNullOrWhiteSpace(projectId);
 
-        var settings = await _pmSettingsService.GetSettingsAsync().ConfigureAwait(false);
+        var settings = await _pmSettingsService.GetSettingsAsync(cancellationToken).ConfigureAwait(false);
         var neglectDays = settings.NeglectDays > 0 ? settings.NeglectDays : PlanningSettingsDefaults.NeglectDays;
 
         var workItemsTask = _workItemCatalogueService.GetCatalogueAsync(cancellationToken);

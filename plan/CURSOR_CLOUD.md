@@ -66,7 +66,7 @@ Two paths matter in Cloud VMs and Codespaces:
 | **A — local secrets** | AppHost user secrets or dashboard (`aspire secret set`) | Solo developers, agents without Azure |
 | **B — shared dev Key Vault** | Azure Key Vault via Aspire `AsExisting` + `GetSecret` | Maintainers across machines, Codespaces, Cursor Cloud |
 
-Path B is documented in [docs/azure-key-vault-setup.md](../docs/azure-key-vault-setup.md) and [getting-started — Path B](../docs/getting-started.md#path-b-shared-development-key-vault). **Precedence on current `main`:** if AppHost user secrets hold a *real* value for `Parameters:gh-pat` (anything other than `-`), local **Path A wins** and Key Vault is not used for the PAT, even when vault name and resource group are configured. The same applies to `gh-app-client-secret` in hosted sign-in mode. Stale repo or Cursor secrets that map into those parameters therefore override fresher secrets in the dev vault until you clear or replace them with placeholders.
+Path B is documented in [docs/azure-key-vault-setup.md](../docs/azure-key-vault-setup.md) and [getting-started — Path B](../docs/getting-started.md#path-b-shared-development-key-vault). **Precedence on current `main`:** if AppHost user secrets hold a *real* value for `Parameters:gh-pat` (anything other than `-`), local **Path A wins** and Key Vault is not used for the PAT, even when vault name and resource group are configured. The same applies to `gh-app-client-secret` in hosted sign-in. Stale repo or Cursor secrets that map into those parameters therefore override fresher secrets in the dev vault until you clear or replace them with placeholders.
 
 ### Path B in Cloud and Codespaces (recommended for maintainers)
 
@@ -110,7 +110,7 @@ Each `@cursor` mention on an **issue** starts a new session. Follow-ups that sho
 
 ## GitHub authentication caveat (important)
 
-- In PAT mode the app **fails fast at startup** when the configured token cannot pass `GET /user` (invalid, expired, or wrong token type). Startup resolves your login from that probe unless `GitHubAuth:OwnerLogin` is set.
+- In PAT-only local trusted mode the app **fails fast at startup** when the configured token cannot pass `GET /user` (invalid, expired, or wrong token type). Startup resolves your login from that probe unless `GitHubAuth:OwnerLogin` is set.
 - Data-driven pages (Audit Dashboard, Repositories, Label Manager, Migration) call `/user/repos` and need a **GitHub user PAT** with `repo`, `read:org`, `workflow`, and `read:project` scopes (or hosted sign-in with equivalent OAuth access).
 - **Path A:** a genuine user PAT in `Parameters:gh-pat` (for example via `SDB_GH_PAT`) supplies `GitHubAuth__PersonalAccessToken` directly.
 - **Path B:** the PAT comes from Key Vault secret `gh-pat` when local parameters are placeholders (`-`) and vault metadata is configured. If startup fails with `401 Bad credentials` while the vault has a good token, check for a **local override** (legacy `SDB_GH_PAT`, Codespaces secrets, or an old user-secrets value) before rotating the vault.

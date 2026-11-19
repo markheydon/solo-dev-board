@@ -86,21 +86,21 @@ Find a user object ID: `az ad signed-in-user show --query id -o tsv`.
 
 Both secret names should exist in every vault. Set the **inactive** mode's secret to a single hyphen (`-`), matching the AppHost parameter convention.
 
-**PAT mode (default local trusted mode)**
+**PAT-only local trusted mode (default)**
 
 ```bash
 az keyvault secret set --vault-name "$DEV_VAULT" --name "gh-pat" --value "<your-github-pat>"
 az keyvault secret set --vault-name "$DEV_VAULT" --name "gh-app-client-secret" --value "-"
 ```
 
-**Hosted sign-in mode (GitHub App)**
+**Hosted sign-in (GitHub App)**
 
 ```bash
 az keyvault secret set --vault-name "$DEV_VAULT" --name "gh-pat" --value "-"
 az keyvault secret set --vault-name "$DEV_VAULT" --name "gh-app-client-secret" --value "<github-app-client-secret>"
 ```
 
-Staging and production CD tiers use hosted sign-in: store a real `gh-app-client-secret` and `-` for `gh-pat` unless you intentionally run PAT on a self-hosted deploy (see [deployment — PAT self-hoster](deployment.md#self-hoster-deployment-pat-mode)).
+Staging and production CD tiers use hosted sign-in: store a real `gh-app-client-secret` and `-` for `gh-pat` unless you intentionally run PAT on a self-hosted deploy (see [deployment — PAT self-hoster](deployment.md#self-hoster-deployment-pat-only-local-trusted-mode)).
 
 ### Aspire local prerequisites (Path B)
 
@@ -126,7 +126,7 @@ aspire secret set Parameters:gh-pat "-"
 aspire secret set Parameters:gh-app-client-secret "-"
 ```
 
-The vault supplies the real `gh-app-client-secret` for hosted sign-in (or `gh-pat` for PAT mode). These placeholders only satisfy Aspire’s parameter resources; they are not a second copy of your GitHub credentials.
+The vault supplies the real `gh-app-client-secret` for hosted sign-in (or `gh-pat` for PAT-only local trusted mode). These placeholders only satisfy Aspire’s parameter resources; they are not a second copy of your GitHub credentials.
 
 To confirm parameters are ready: `aspire describe` should show `gh-pat` and `gh-app-client-secret` as **Running**, not **ValueMissing**.
 
@@ -145,7 +145,7 @@ Use `aspire describe` or the dashboard **Resources** list. Judge success by **`a
 | `auth-secrets` | May show provisioning briefly | `AsExisting` reference to your dev vault. |
 | `azure-environment` | May show **Failed** if a child Azure step failed earlier | Often harmless when `app` is healthy. |
 
-In **`app` console logs**, expect: `GitHub auth: hosted sign-in mode is active` (hosted) or PAT mode message. If `app` is **Starting** forever, open logs for `Waiting for value from Aspire.Hosting.Azure.AzureKeyVaultSecretReference` (check `az login` and **Secrets User**).
+In **`app` console logs**, expect: `GitHub auth: hosted sign-in is active` (hosted) or the PAT-only local trusted mode message. If `app` is **Starting** forever, open logs for `Waiting for value from Aspire.Hosting.Azure.AzureKeyVaultSecretReference` (check `az login` and **Secrets User**).
 
 If parameters are **ValueMissing**, complete steps 1–2 above before chasing Azure resources.
 
@@ -158,7 +158,7 @@ cp src/SoloDevBoard.AppHost/appsettings.Development.json.example \
    src/SoloDevBoard.AppHost/appsettings.Development.json
 ```
 
-**PAT mode — minimal file** (other defaults come from `appsettings.json`):
+**PAT-only local trusted mode — minimal file** (other defaults come from `appsettings.json`):
 
 ```json
 {
@@ -169,7 +169,7 @@ cp src/SoloDevBoard.AppHost/appsettings.Development.json.example \
 }
 ```
 
-**Hosted sign-in mode — full non-secret Parameters block** (client secret is **not** here; it comes from the vault):
+**Hosted sign-in — full non-secret Parameters block** (client secret is **not** here; it comes from the vault):
 
 ```json
 {
@@ -213,7 +213,7 @@ export Parameters__allowed_org_logins="-"
 aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 ```
 
-8. Confirm `app` logs: PAT mode or hosted sign-in mode active (see [Startup validation](getting-started.md#startup-validation)).
+8. Confirm `app` logs: PAT-only local trusted mode or hosted sign-in active (see [Startup validation](getting-started.md#startup-validation)).
 
 Quick vault checks before `aspire start` (use the same shell where you created the vault, or re-export names):
 

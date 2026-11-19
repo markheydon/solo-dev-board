@@ -45,9 +45,9 @@ Set `gh-pat` to your token. Set all hosted-sign-in parameters to `-`:
 | `allowed-user-logins` | `-` |
 | `allowed-org-logins` | `-` |
 
-See [docs/getting-started.md — PAT-only local trusted mode](../docs/getting-started.md#pat-only-local-trusted-mode) for the mode comparison and local setup. For a personal Azure instance with the same mode, see [Self-hoster deployment (PAT mode)](../docs/deployment.md#self-hoster-deployment-pat-mode).
+See [docs/getting-started.md — PAT-only local trusted mode](../docs/getting-started.md#pat-only-local-trusted-mode) for the mode comparison and local setup. For a personal Azure instance with the same mode, see [Self-hoster deployment (PAT-only local trusted mode)](../docs/deployment.md#self-hoster-deployment-pat-only-local-trusted-mode).
 
-### Hosted sign-in mode (GitHub App)
+### Hosted sign-in (GitHub App)
 
 Set `gh-pat` to `-`. Configure GitHub App credentials and allow-lists:
 
@@ -66,7 +66,7 @@ See [docs/getting-started.md](../docs/getting-started.md) for full setup and [Sw
 
 ## Parameter reference
 
-| Parameter | Secret | Default | PAT mode | Hosted sign-in |
+| Parameter | Secret | Default | PAT-only local trusted mode | Hosted sign-in |
 |---|---|---|---|---|
 | `hosted-sign-in-enabled` | no | `false` | `false` | `true` |
 | `gh-pat` | yes | *(none)* | **your PAT** | `-` (dashboard) |
@@ -93,7 +93,7 @@ Application Insights is deploy-time only. Local telemetry uses the Aspire dashbo
 
 ## CD pipeline tiers
 
-GitHub Actions CD deploys to two hosted tiers (see [DEC-021](../../adr/adr-0021-two-tier-cd-pipeline.md) and [docs/deployment.md](../../docs/deployment.md#cd-pipeline-tiers-dec-021)). The app resource group is per GitHub Environment. Staging Azure resources are named with a `-staging` suffix so they do not overwrite Production when both tiers share an RG. PAT mode is for local development and personal self-hosting via local `aspire deploy` only.
+GitHub Actions CD deploys to two hosted tiers (see [DEC-021](../../adr/adr-0021-two-tier-cd-pipeline.md) and [docs/deployment.md](../../docs/deployment.md#cd-pipeline-tiers-dec-021)). The app resource group is per GitHub Environment. Staging Azure resources are named with a `-staging` suffix so they do not overwrite Production when both tiers share an RG. PAT-only local trusted mode is for local development and personal self-hosting via local `aspire deploy` only.
 
 | Tier | Aspire `--environment` | Authentication |
 |---|---|---|

@@ -23,13 +23,13 @@ public sealed class GitHubAuthConfigurationValidator(
         if (_authOptions.HostedSignInEnabled)
         {
             _logger.LogInformation(
-                "GitHub auth: hosted sign-in mode is active. Admission control is {AdmissionState}.",
+                "GitHub auth: hosted sign-in is active. Admission control is {AdmissionState}.",
                 _admissionOptions.Enabled ? "enabled" : "disabled");
         }
         else
         {
             _logger.LogInformation(
-                "GitHub auth: PAT mode is active. Owner login will be resolved from the personal access token when needed.");
+                "GitHub auth: PAT-only local trusted mode is active. Owner login will be resolved from the personal access token when needed.");
         }
 
         return Task.CompletedTask;

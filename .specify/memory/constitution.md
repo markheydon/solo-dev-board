@@ -1,12 +1,11 @@
 <!--
 Sync Impact Report
-- Version change: 1.0.0 → 1.1.0
-- Modified principles: III (Formal testing standard) - AppHost testing boundary clarified; V (Performance-conscious I/O) - ServiceDefaults scope and Aspire telemetry cross-reference
-- Added principles: VI (AppHost as the single environment model); VII (Local-first orchestration and graceful capability degradation)
-- Added sections: n/a (expanded Platform and Security Constraints; expanded Delivery Workflow and Quality Gates)
+- Version change: 1.1.0 → 1.1.1
+- Modified principles: II (Boundary data shapes) - IGitHubService and I*Repository gateway carve-out aligned with ADR-0011 amendment
+- Added principles: none
+- Added sections: none
 - Removed sections: none
-- Template resolution: resolve-template.sh failed (invalid extension registry); structure preserved from ratified v1.0.0 scaffold
-- Deferred items: none (placeholders fully resolved)
+- Deferred items: none
 -->
 
 # SoloDevBoard Constitution
@@ -23,7 +22,7 @@ Business logic MUST live in Application services, not in Razor components. Web c
 
 ### II. Boundary data shapes and proportional design
 
-Repository interfaces MUST return domain entity records. Public Application service interfaces (`I*Service`, `I*Manager`) consumed by **Web** MUST accept and return **Application DTO records** only (`<Entity>Dto`); domain types MUST NOT appear on those public surfaces. Mapping belongs in Application services, not Razor or AutoMapper.
+Repository interfaces MUST return domain entity records. Public Application service interfaces (`I*Service`, `I*Manager`) consumed by **Web** MUST accept and return **Application DTO records** only (`<Entity>Dto`); domain types MUST NOT appear on those public surfaces. The internal GitHub gateway `IGitHubService` and repository interfaces (`I*Repository`) MAY remain domain-typed and MUST be consumed only from Application and Infrastructure; **Web** MUST NOT inject or reference `IGitHubService`. Mapping belongs in Application services, not Razor or AutoMapper.
 
 New abstractions (projects, interfaces, frameworks) MUST pass a proportionality check: the smallest correct home wins; speculative layers and copy-paste vertical slices are rejected. Features that materially alter user-facing pages SHOULD align with wireframes under `plan/wireframes/` when present.
 
@@ -132,4 +131,4 @@ This constitution is the **non-negotiable governance layer** for Spec Kit-driven
 
 **Runtime guidance:** Use `AGENTS.md` and `CONVENTIONS.md` for command sequences, file placement, and documentation sync tables; use `adr/` for decision history; use `.agents/skills/` during implementation.
 
-**Version**: 1.1.0 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-17
+**Version**: 1.1.1 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-19

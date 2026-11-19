@@ -4,7 +4,7 @@ This note records a known platform limitation affecting SoloDevBoard when using 
 
 ## Summary
 
-GitHub can report that a repository has more linked Projects v2 boards than SoloDevBoard can load. In hosted mode, **private user-owned Projects v2** are commonly returned as inaccessible (`null` nodes with `Resource not accessible by integration`), while **public** linked projects continue to work.
+GitHub can report that a repository has more linked Projects v2 boards than SoloDevBoard can load. When hosted sign-in is enabled, **private user-owned Projects v2** are commonly returned as inaccessible (`null` nodes with `Resource not accessible by integration`), while **public** linked projects continue to work.
 
 This is not a SoloDevBoard parsing defect. It is a GitHub authentication and authorisation boundary for GitHub Apps.
 
@@ -33,14 +33,14 @@ Reference discussion: [Unlocking GitHub Apps: Why Bots Need Access to Private Pr
 
 - SoloDevBoard counts linked project boards reported by GitHub, including inaccessible entries.
 - Accessible supported boards (those with a Status field) are still shown.
-- When `inaccessibleLinkedProjectCount > 0`, Board Rules and Triage show a warning explaining that some linked boards could not be loaded and suggesting PAT mode (`read:project`) or making the project public.
+- When `inaccessibleLinkedProjectCount > 0`, Board Rules and Triage show a warning explaining that some linked boards could not be loaded and suggesting PAT-only local trusted mode (`read:project`) or making the project public.
 
 ## Workarounds today
 
 | Mode | Private user-owned Projects v2 |
 |------|--------------------------------|
 | Hosted GitHub App sign-in | Not supported by GitHub |
-| PAT mode with `read:project` | Supported as the signed-in user |
+| PAT-only local trusted mode with `read:project` | Supported as the signed-in user |
 | Make the project public | Supported under GitHub App sign-in |
 
 ## Future work

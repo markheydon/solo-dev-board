@@ -3,9 +3,9 @@
 # Conventions
 
 **Project:** Solo Dev Board (code identifiers remain `SoloDevBoard`)  
-**Last updated:** 2026-11-15
+**Last updated:** 2026-11-19
 
-When in doubt, follow this file. Significant architecture changes need an ADR.
+When in doubt, follow [`.specify/memory/constitution.md`](.specify/memory/constitution.md) for governance and this file for day-to-day coding detail. Significant architecture changes need an ADR.
 
 ---
 
@@ -44,7 +44,7 @@ Clean/layered boundaries (see [`adr/adr-0004-layered-architecture.md`](adr/adr-0
 - **Composition** is the sole DI composition root (`AddSoloDevBoard`).
 - **Web** depends on Application and Composition only; it must not reference Infrastructure (not in `.csproj`, not in `using` statements).
 
-**Boundary data shapes** ([`adr/adr-0011-boundary-data-shapes.md`](adr/adr-0011-boundary-data-shapes.md)): repository interfaces return domain entity records; public Application service interfaces (`I*Service`, `I*Manager`) return and accept **DTO records** only. Mapping happens in Application services, not Razor components and not via AutoMapper.
+**Boundary data shapes** ([`adr/adr-0011-boundary-data-shapes.md`](adr/adr-0011-boundary-data-shapes.md)): repository interfaces and `IGitHubService` return and accept domain entity records and are used only inside Application and Infrastructure. Public Application service interfaces (`I*Service`, `I*Manager`) **consumed by Web** return and accept **DTO records** only; Web must not inject `IGitHubService`. Mapping happens in Application services, not Razor components and not via AutoMapper.
 
 Use constructor injection throughout; avoid service locator patterns. All public members require XML documentation (`///`). Use `ArgumentNullException.ThrowIfNull()` for guard clauses.
 

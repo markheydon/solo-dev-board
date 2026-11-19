@@ -12,7 +12,7 @@ public sealed class PlanningSettingsServiceTests
         var storage = new FakePlanningSettingsStorage();
         var service = CreateService(storage);
 
-        var settings = await service.GetSettingsAsync();
+        var settings = await service.GetSettingsAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(PlanningSettingsDefaults.Create(), settings);
     }
@@ -26,7 +26,7 @@ public sealed class PlanningSettingsServiceTests
         };
         var service = CreateService(storage);
 
-        var settings = await service.GetSettingsAsync();
+        var settings = await service.GetSettingsAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(PlanningSettingsDefaults.Create(), settings);
     }
@@ -40,7 +40,7 @@ public sealed class PlanningSettingsServiceTests
         };
         var service = CreateService(storage);
 
-        var settings = await service.GetSettingsAsync();
+        var settings = await service.GetSettingsAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(PlanningSettingsDefaults.Create(), settings);
     }
@@ -62,7 +62,7 @@ public sealed class PlanningSettingsServiceTests
         };
         var service = CreateService(storage);
 
-        var settings = await service.GetSettingsAsync();
+        var settings = await service.GetSettingsAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal("PVT_board123", settings.PlanningBoardNodeId);
         Assert.Equal(["owner/dotfiles", "owner/personal-site"], settings.ExcludedRepositories);
@@ -80,7 +80,7 @@ public sealed class PlanningSettingsServiceTests
         };
         var service = CreateService(storage);
 
-        var settings = await service.GetSettingsAsync();
+        var settings = await service.GetSettingsAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(PlanningSettingsDefaults.Create(), settings);
     }
@@ -98,7 +98,7 @@ public sealed class PlanningSettingsServiceTests
         };
         var service = CreateService(storage);
 
-        var settings = await service.GetSettingsAsync();
+        var settings = await service.GetSettingsAsync(TestContext.Current.CancellationToken);
 
         Assert.Null(settings.PlanningBoardNodeId);
         Assert.Empty(settings.ExcludedRepositories);
@@ -120,7 +120,7 @@ public sealed class PlanningSettingsServiceTests
         };
         var service = CreateService(storage);
 
-        var settings = await service.GetSettingsAsync();
+        var settings = await service.GetSettingsAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal("PVT_board123", settings.PlanningBoardNodeId);
         Assert.Empty(settings.ExcludedRepositories);
@@ -144,7 +144,7 @@ public sealed class PlanningSettingsServiceTests
         };
         var service = CreateService(storage);
 
-        var settings = await service.GetSettingsAsync();
+        var settings = await service.GetSettingsAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(PlanningSettingsDefaults.Capacity, settings.Capacity);
         Assert.Equal(PlanningSettingsDefaults.StallDays, settings.StallDays);
@@ -164,7 +164,7 @@ public sealed class PlanningSettingsServiceTests
         };
         var service = CreateService(storage);
 
-        var settings = await service.GetSettingsAsync();
+        var settings = await service.GetSettingsAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(["owner/dotfiles", "owner/personal-site"], settings.ExcludedRepositories);
     }
@@ -181,7 +181,7 @@ public sealed class PlanningSettingsServiceTests
             4,
             30);
 
-        await service.SaveSettingsAsync(settings);
+        await service.SaveSettingsAsync(settings, TestContext.Current.CancellationToken);
 
         Assert.Contains("\"planningBoardNodeId\":\"PVT_board123\"", storage.StoredJson, StringComparison.Ordinal);
         Assert.Contains("\"capacity\":12", storage.StoredJson, StringComparison.Ordinal);
@@ -196,7 +196,8 @@ public sealed class PlanningSettingsServiceTests
     {
         var service = CreateService(new FakePlanningSettingsStorage());
 
-        await Assert.ThrowsAsync<ArgumentNullException>(() => service.SaveSettingsAsync(null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            service.SaveSettingsAsync(null!, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -211,8 +212,8 @@ public sealed class PlanningSettingsServiceTests
             2,
             7);
 
-        await service.SaveSettingsAsync(expected);
-        var actual = await service.GetSettingsAsync();
+        await service.SaveSettingsAsync(expected, TestContext.Current.CancellationToken);
+        var actual = await service.GetSettingsAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(expected.PlanningBoardNodeId, actual.PlanningBoardNodeId);
         Assert.Equal(expected.ExcludedRepositories, actual.ExcludedRepositories);
@@ -232,16 +233,18 @@ public sealed class PlanningSettingsServiceTests
             ["owner/dotfiles", "owner/personal-site"],
             PlanningSettingsDefaults.Capacity,
             PlanningSettingsDefaults.StallDays,
-            PlanningSettingsDefaults.NeglectDays));
+            PlanningSettingsDefaults.NeglectDays),
+            TestContext.Current.CancellationToken);
 
         await service.SaveSettingsAsync(new PlanningSettingsDto(
             "PVT_board123",
             ["owner/personal-site"],
             PlanningSettingsDefaults.Capacity,
             PlanningSettingsDefaults.StallDays,
-            PlanningSettingsDefaults.NeglectDays));
+            PlanningSettingsDefaults.NeglectDays),
+            TestContext.Current.CancellationToken);
 
-        var settings = await service.GetSettingsAsync();
+        var settings = await service.GetSettingsAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(["owner/personal-site"], settings.ExcludedRepositories);
         Assert.DoesNotContain("owner/dotfiles", settings.ExcludedRepositories);
@@ -260,7 +263,7 @@ public sealed class PlanningSettingsServiceTests
         };
         var service = CreateService(storage);
 
-        var settings = await service.GetSettingsAsync();
+        var settings = await service.GetSettingsAsync(TestContext.Current.CancellationToken);
 
         Assert.True(settings.LimitRecommendationsToPlanningBoard);
     }
@@ -278,7 +281,7 @@ public sealed class PlanningSettingsServiceTests
             PlanningSettingsDefaults.NeglectDays,
             LimitRecommendationsToPlanningBoard: true);
 
-        await service.SaveSettingsAsync(settings);
+        await service.SaveSettingsAsync(settings, TestContext.Current.CancellationToken);
 
         Assert.Contains("\"limitRecommendationsToPlanningBoard\":true", storage.StoredJson, StringComparison.Ordinal);
     }
@@ -290,9 +293,9 @@ public sealed class PlanningSettingsServiceTests
     {
         public string? StoredJson { get; set; }
 
-        public Task<string?> GetStoredJsonAsync() => Task.FromResult(StoredJson);
+        public Task<string?> GetStoredJsonAsync(CancellationToken cancellationToken = default) => Task.FromResult(StoredJson);
 
-        public Task SetStoredJsonAsync(string json)
+        public Task SetStoredJsonAsync(string json, CancellationToken cancellationToken = default)
         {
             StoredJson = json;
             return Task.CompletedTask;

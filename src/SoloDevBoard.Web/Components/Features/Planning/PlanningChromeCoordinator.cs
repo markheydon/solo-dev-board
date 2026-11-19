@@ -100,11 +100,12 @@ public sealed class PlanningChromeCoordinator
 
     /// <summary>Persists updated PM settings and refreshes the in-memory chrome snapshot.</summary>
     /// <param name="settings">The settings to save.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>A task that completes when settings are saved.</returns>
-    public async Task SaveSettingsAsync(PlanningSettingsDto settings)
+    public async Task SaveSettingsAsync(PlanningSettingsDto settings, CancellationToken cancellationToken = default)
     {
-        await _pmSettingsService.SaveSettingsAsync(settings).ConfigureAwait(false);
-        State.Settings = await _pmSettingsService.GetSettingsAsync().ConfigureAwait(false);
+        await _pmSettingsService.SaveSettingsAsync(settings, cancellationToken).ConfigureAwait(false);
+        State.Settings = await _pmSettingsService.GetSettingsAsync(cancellationToken).ConfigureAwait(false);
         ClearDailyFocusStalledReviews();
         ClearDailyFocusRecommendations();
         ClearBacklogReview();
@@ -296,7 +297,7 @@ public sealed class PlanningChromeCoordinator
 
         try
         {
-            State.Settings = await _pmSettingsService.GetSettingsAsync().ConfigureAwait(false);
+            State.Settings = await _pmSettingsService.GetSettingsAsync(cancellationToken).ConfigureAwait(false);
             cancellationToken.ThrowIfCancellationRequested();
 
             State.ActiveRepositories = await _repositoryService.GetActiveRepositoriesAsync(cancellationToken)
@@ -325,7 +326,7 @@ public sealed class PlanningChromeCoordinator
                         PlanningBoardNodeId = string.IsNullOrWhiteSpace(selectedPlanningBoardId)
                             ? null
                             : selectedPlanningBoardId,
-                    }).ConfigureAwait(false);
+                    }, cancellationToken).ConfigureAwait(false);
                 }
             }
 

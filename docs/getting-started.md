@@ -50,7 +50,7 @@ Create a PAT at [GitHub → Settings → Developer settings → Personal access 
 - `read:org` (read-only access to organisation data, if applicable)
 - `workflow` (to manage GitHub Actions workflows)
 - `read:project` (read-only access to GitHub Projects; required for Triage and Migration board discovery)
-- `project` (write access to GitHub Projects; required when applying One-Click Migration **Project board columns** scope in PAT mode)
+- `project` (write access to GitHub Projects; required when applying One-Click Migration **Project board columns** scope in PAT-only local trusted mode)
 
 **Quick local setup (Aspire):**
 
@@ -59,9 +59,9 @@ aspire secret set Parameters:gh-pat "<your-token>"
 aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 ```
 
-Your GitHub login is resolved automatically from the PAT. Full parameter tables and mode-switching steps are under [Configuration](#configuration) below. For runtime connectivity status and recovery, see [PAT Connectivity](pat-connectivity.md). To run a **personal hosted instance** on your own Azure subscription with the same PAT mode, see [Self-hoster deployment (PAT mode)](deployment.md#self-hoster-deployment-pat-mode).
+Your GitHub login is resolved automatically from the PAT. Full parameter tables and mode-switching steps are under [Configuration](#configuration) below. For runtime connectivity status and recovery, see [PAT Connectivity](pat-connectivity.md). To run a **personal hosted instance** on your own Azure subscription with the same PAT-only local trusted mode, see [Self-hoster deployment (PAT-only local trusted mode)](deployment.md#self-hoster-deployment-pat-only-local-trusted-mode).
 
-#### Hosted sign-in mode
+#### Hosted sign-in
 
 Uses a GitHub App for OAuth sign-in at `/auth/sign-in`, with operator-managed allow-lists for users and organisations. Recommended for production and multi-tenant deployments. See [Hosted Authentication Guide](hosted-authentication.md) for the full operator and local testing walkthrough.
 
@@ -146,11 +146,11 @@ For hosted sign-in testing (for example refresh-token work), set `SDB_HOSTED_SIG
 If you prefer to run directly without Aspire:
 
 ```bash
-# PAT mode
+# PAT-only local trusted mode
 dotnet user-secrets set "GitHubAuth:PersonalAccessToken" "<your-pat>" --project src/SoloDevBoard.Web
 dotnet run --project src/SoloDevBoard.Web
 
-# Or hosted sign-in mode (requires GitHub App configuration)
+# Or hosted sign-in (requires GitHub App configuration)
 ```
 
 > **Recommendation:** Aspire is the standardised path for local development. It ensures consistent behaviour across all environments and prepares you for production deployment to Azure Container Apps.
@@ -162,7 +162,7 @@ When you run locally, open **More options → About** to see the MinVer-calculat
 | Goal | Command |
 |------|---------|
 | Day-to-day (unit/component only) | `./scripts/test-unit.sh` or `.\scripts\test-unit.ps1` |
-| E2E only (PAT mode) | `./scripts/test-e2e.sh` or `.\scripts\test-e2e.ps1` |
+| E2E only (PAT-only local trusted mode) | `./scripts/test-e2e.sh` or `.\scripts\test-e2e.ps1` |
 | Full CI parity before a PR | `./scripts/test-all.sh` or `.\scripts\test-all.ps1` |
 
 Use `SoloDevBoard.UnitTests.slnf` or `scripts/test-unit` for the fast path. Plain `dotnet test` on `SoloDevBoard.slnx` still includes Playwright E2E under xUnit v3 MTP and is slow. See [`tests/SoloDevBoard.E2E.Tests/README.md`](../tests/SoloDevBoard.E2E.Tests/README.md) for E2E prerequisites (PowerShell and a one-time Chromium install).
@@ -197,7 +197,7 @@ When running via Aspire (`aspire start`), GitHub auth and admission settings are
 
 **PAT-only local trusted mode (default)** — leave `hosted-sign-in-enabled` as `false`. Set `gh-pat` to your token. Set all hosted-sign-in parameters to `-`. This is the path for local development and trusted personal self-hosting; it does not depend on hosted sign-in infrastructure.
 
-**Hosted sign-in mode** — set `hosted-sign-in-enabled` to `true`, configure GitHub App OAuth credentials and allow-lists, and set `gh-pat` to `-`.
+**Hosted sign-in** — set `hosted-sign-in-enabled` to `true`, configure GitHub App OAuth credentials and allow-lists, and set `gh-pat` to `-`.
 
 Values saved from the Aspire dashboard **Parameters** tab are stored in AppHost user secrets and persist across restarts.
 
@@ -244,10 +244,10 @@ Setting inactive-mode parameters to `-` is still recommended when switching mode
 
 Example log on success:
 
-- `GitHub auth: PAT mode is active. Owner login will be resolved from the personal access token when needed.`
-- `GitHub auth: hosted sign-in mode is active. Admission control is enabled.`
+- `GitHub auth: PAT-only local trusted mode is active. Owner login will be resolved from the personal access token when needed.`
+- `GitHub auth: hosted sign-in is active. Admission control is enabled.`
 
-On first `aspire start`, open the Aspire dashboard and go to **Resources → Parameters**. With the default PAT mode, you only need to set:
+On first `aspire start`, open the Aspire dashboard and go to **Resources → Parameters**. With the default PAT-only local trusted mode, you only need to set:
 
 1. `gh-pat` — your GitHub personal access token (secret)
 
@@ -255,7 +255,7 @@ Your GitHub login is resolved automatically from the PAT when the app starts. Pa
 
 ### AppHost parameters (Aspire)
 
-| AppHost parameter | Secret | Default | App config key | PAT mode | Hosted sign-in |
+| AppHost parameter | Secret | Default | App config key | PAT-only local trusted mode | Hosted sign-in |
 |---|---|---|---|---|---|
 | `hosted-sign-in-enabled` | no | `false` | `GitHubAuth:HostedSignInEnabled` | leave `false` | set `true` |
 | `gh-pat` | yes | *(none)* | `GitHubAuth:PersonalAccessToken` | **your PAT** | `-` (set in dashboard) |
@@ -269,23 +269,23 @@ Your GitHub login is resolved automatically from the PAT when the app starts. Pa
 
 #### What each parameter does
 
-**`hosted-sign-in-enabled`** — Selects the authentication mode. When `false` (the default), Solo Dev Board runs in PAT mode: a single configured token is used for all GitHub API calls and your login is resolved automatically from that token. When `true`, Solo Dev Board uses GitHub App OAuth sign-in at `/auth/sign-in`; each user authenticates with their own GitHub identity and session.
+**`hosted-sign-in-enabled`** — Selects the authentication mode. When `false` (the default), Solo Dev Board runs in PAT-only local trusted mode: a single configured token is used for all GitHub API calls and your login is resolved automatically from that token. When `true`, Solo Dev Board uses GitHub App OAuth sign-in at `/auth/sign-in`; each user authenticates with their own GitHub identity and session.
 
-**`gh-pat`** — Your GitHub personal access token for PAT mode. Set to `-` for hosted sign-in. Solo Dev Board uses this for every GitHub API request on your behalf in PAT mode. Required scopes: `repo`, `read:org`, `workflow`, `read:project`, and `project` when you apply One-Click Migration project board columns. Your login is resolved automatically from the token.
+**`gh-pat`** — Your GitHub personal access token for PAT-only local trusted mode. Set to `-` for hosted sign-in. Solo Dev Board uses this for every GitHub API request on your behalf in PAT-only local trusted mode. Required scopes: `repo`, `read:org`, `workflow`, `read:project`, and `project` when you apply One-Click Migration project board columns. Your login is resolved automatically from the token.
 
-**`gh-app-client-id`** — The OAuth Client ID from your GitHub App settings. Set to `-` for PAT mode. Required for hosted sign-in.
+**`gh-app-client-id`** — The OAuth Client ID from your GitHub App settings. Set to `-` for PAT-only local trusted mode. Required for hosted sign-in.
 
-**`gh-app-client-secret`** — The OAuth Client secret from your GitHub App settings. Set to `-` for PAT mode. Required for hosted sign-in.
+**`gh-app-client-secret`** — The OAuth Client secret from your GitHub App settings. Set to `-` for PAT-only local trusted mode. Required for hosted sign-in.
 
-**`hosted-admission-enabled`** — Controls whether hosted sign-in enforces an allow-list. When `true` (the default), only GitHub users or organisations listed in the allow-list parameters can use the app after signing in; everyone else receives a 403. Only applies when hosted sign-in is enabled. Ignored in PAT mode.
+**`hosted-admission-enabled`** — Controls whether hosted sign-in enforces an allow-list. When `true` (the default), only GitHub users or organisations listed in the allow-list parameters can use the app after signing in; everyone else receives a 403. Only applies when hosted sign-in is enabled. Ignored in PAT-only local trusted mode.
 
-**`allowed-user-logins`** — Comma-separated GitHub user logins permitted after hosted sign-in (for example, `markheydon`). When admission control is enabled, set this **or** `allowed-org-logins` with real logins. Use `-` on the parameter you are not using — Aspire requires a value for every parameter, and `-` means "this list is not in use". Unset or `-` on both lists means nobody is admitted. Ignored in PAT mode.
+**`allowed-user-logins`** — Comma-separated GitHub user logins permitted after hosted sign-in (for example, `markheydon`). When admission control is enabled, set this **or** `allowed-org-logins` with real logins. Use `-` on the parameter you are not using — Aspire requires a value for every parameter, and `-` means "this list is not in use". Unset or `-` on both lists means nobody is admitted. Ignored in PAT-only local trusted mode.
 
-**`allowed-org-logins`** — Comma-separated GitHub organisation logins whose members are permitted after hosted sign-in (for example, `my-org`). Use `-` when you are only using `allowed-user-logins`. A user is admitted if their login or any organisation membership matches an active entry on either list. Ignored in PAT mode.
+**`allowed-org-logins`** — Comma-separated GitHub organisation logins whose members are permitted after hosted sign-in (for example, `my-org`). Use `-` when you are only using `allowed-user-logins`. A user is admitted if their login or any organisation membership matches an active entry on either list. Ignored in PAT-only local trusted mode.
 
 **Auto-derived (not an AppHost parameter):** `GitHubAuth:HostedSignInCallbackBaseUri` — Set automatically from the app's Aspire HTTPS endpoint. Your GitHub App callback URL must be `{this-url}/auth/callback`. Run `aspire describe` to find the current value after each start if the port changes.
 
-`GitHubAuth:OwnerLogin` can still be set explicitly on the legacy `dotnet run` path to override the login resolved from a PAT. When omitted in PAT mode, it is derived automatically from the token.
+`GitHubAuth:OwnerLogin` can still be set explicitly on the legacy `dotnet run` path to override the login resolved from a PAT. When omitted in PAT-only local trusted mode, it is derived automatically from the token.
 
 Non-secret defaults are in `src/SoloDevBoard.AppHost/appsettings.json`. Secret values are stored via `aspire secret set` or the AppHost user secrets store (`UserSecretsId` on `src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj`).
 
@@ -298,7 +298,7 @@ aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 
 Your GitHub login is resolved automatically from the PAT at startup. You can also set the token via the Aspire dashboard **Parameters** tab on first run. After the app starts, confirm the shell shows **@login** with a link icon — see [PAT Connectivity](pat-connectivity.md).
 
-#### Hosted sign-in mode setup
+#### Hosted sign-in setup
 
 1. **Create or reuse a GitHub App** at [GitHub → Settings → Developer settings → GitHub Apps](https://github.com/settings/apps). Note the **Client ID** and generate a **Client secret**. Apply the [GitHub App listing](github-app.md) checklist (logo, homepage, callback URLs, expiring user tokens, and minimum permissions).
 2. **Start Aspire once** to allocate an HTTPS endpoint, then run `aspire describe` and note the `app` resource HTTPS URL.
@@ -458,11 +458,11 @@ This is **screenshot hygiene, not a security boundary**. It does not block write
 
 ### Hosted Admission Control and Local Trusted Modes
 
-- Hosted sign-in mode requires `HostedGitHubAppClientId` and `HostedGitHubAppClientSecret` so the `/auth/sign-in` and `/auth/callback` handshake can establish a hosted session.
+- Hosted sign-in requires `HostedGitHubAppClientId` and `HostedGitHubAppClientSecret` so the `/auth/sign-in` and `/auth/callback` handshake can establish a hosted session.
 - When `HostedAdmissionControl:Enabled` is true, hosted deployments deny all access by default unless the authenticated user's login or organisation is explicitly listed in the allow-lists.
 - All denied admission attempts are logged for operator review.
 - The claim type for organisation logins can be set using `HostedOrganisationLoginsClaimType` to match your identity provider's claim mapping.
-- PAT-only local trusted mode is always available for local development and trusted self-hosted use, independent of hosted admission control. See [PAT-only local trusted mode](#pat-only-local-trusted-mode) above and [Self-hoster deployment (PAT mode)](deployment.md#self-hoster-deployment-pat-mode) for Azure.
+- PAT-only local trusted mode is always available for local development and trusted self-hosted use, independent of hosted admission control. See [PAT-only local trusted mode](#pat-only-local-trusted-mode) above and [Self-hoster deployment (PAT-only local trusted mode)](deployment.md#self-hoster-deployment-pat-only-local-trusted-mode) for Azure.
 
 ### Production secrets (GitHub Actions)
 
@@ -487,7 +487,7 @@ Shipped increments (`v1.4` chrome and branding, `v1.3` label remap, and earlier 
 
 ## Deploying to Azure
 
-Solo Dev Board deploys to Azure Container Apps via Aspire. See the [Deployment guide](deployment.md) for prerequisites, one-time OIDC bootstrap, GitHub Environment configuration, and first deploy steps. For a **personal instance with a PAT** (no GitHub App), start with [Self-hoster deployment (PAT mode)](deployment.md#self-hoster-deployment-pat-mode). For logs, metrics, and traces after deployment, see the [Observability guide](observability.md).
+Solo Dev Board deploys to Azure Container Apps via Aspire. See the [Deployment guide](deployment.md) for prerequisites, one-time OIDC bootstrap, GitHub Environment configuration, and first deploy steps. For a **personal instance with a PAT** (no GitHub App), start with [Self-hoster deployment (PAT-only local trusted mode)](deployment.md#self-hoster-deployment-pat-only-local-trusted-mode). For logs, metrics, and traces after deployment, see the [Observability guide](observability.md).
 
 Summary:
 

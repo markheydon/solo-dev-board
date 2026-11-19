@@ -10,14 +10,14 @@ Choose an authentication mode **before** you deploy:
 
 | Path | Authentication | Best for |
 |---|---|---|
-| **[Self-hoster (PAT mode)](#self-hoster-deployment-pat-mode)** | One personal access token; no GitHub App | A personal instance on your own Azure subscription |
+| **[Self-hoster (PAT-only local trusted mode)](#self-hoster-deployment-pat-only-local-trusted-mode)** | One personal access token; no GitHub App | A personal instance on your own Azure subscription |
 | **[Hosted sign-in](#deploy-from-github-actions)** | GitHub App OAuth + allow-lists | Shared or public production deployments |
 
 Both paths use the same Aspire / Azure Container Apps stack. Only the AppHost parameters and GitHub Environment secrets differ.
 
 ## CD pipeline tiers (DEC-021)
 
-GitHub Actions CD (`.github/workflows/cd.yml`) deploys to two hosted tiers. Aspire `--environment` does **not** suffix Azure resource names on its own; the AppHost suffixes Staging resources (`aca-staging`, `app-staging`, and so on) so they do not overwrite Production when both tiers target the **same** app resource group. Production keeps the original names (`aca`, `app`) so an existing production Container App is not recreated. The **app resource group** is an operator choice per GitHub Environment — use one RG for both tiers or separate RGs. Both tiers use GitHub App hosted sign-in. PAT-only mode is for local development and personal self-hosting via local `aspire deploy` only — not as a hosted CD tier.
+GitHub Actions CD (`.github/workflows/cd.yml`) deploys to two hosted tiers. Aspire `--environment` does **not** suffix Azure resource names on its own; the AppHost suffixes Staging resources (`aca-staging`, `app-staging`, and so on) so they do not overwrite Production when both tiers target the **same** app resource group. Production keeps the original names (`aca`, `app`) so an existing production Container App is not recreated. The **app resource group** is an operator choice per GitHub Environment — use one RG for both tiers or separate RGs. Both tiers use GitHub App hosted sign-in. PAT-only local trusted mode is for local development and personal self-hosting via local `aspire deploy` only — not as a hosted CD tier.
 
 | Tier | Trigger | GitHub Environment | Aspire `--environment` | Authentication |
 |---|---|---|---|---|
@@ -35,11 +35,11 @@ The public product site in `website/` is published to GitHub Pages on `v*` relea
 | Azure subscription | With permission to create resources in a resource group |
 | [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) | Logged in with `az login` |
 | GitHub repository admin access | To configure environments, secrets, and workflows (skip if you only deploy with local `aspire deploy`) |
-| GitHub Personal Access Token **or** GitHub App | PAT for [self-hoster mode](#self-hoster-deployment-pat-mode); GitHub App for [hosted sign-in](hosted-authentication.md) |
+| GitHub Personal Access Token **or** GitHub App | PAT for [self-hoster deploy](#self-hoster-deployment-pat-only-local-trusted-mode); GitHub App for [hosted sign-in](hosted-authentication.md) |
 
 ---
 
-## Self-hoster deployment (PAT mode)
+## Self-hoster deployment (PAT-only local trusted mode)
 
 Use this path when you want a **personal** Solo Dev Board instance on your own Azure subscription without setting up a GitHub App. Authentication stays in **PAT-only local trusted mode**: the Container App uses one configured PAT for all GitHub API calls, and there is no `/auth/sign-in` flow.
 
@@ -71,7 +71,7 @@ az keyvault secret set --vault-name "$VAULT_NAME" --name "gh-app-client-secret" 
 
 # PAT-only local trusted mode — no GitHub App
 export Parameters__hosted_sign_in_enabled="false"
-export Parameters__hosted_admission_enabled="true"   # ignored in PAT mode; any value is fine
+export Parameters__hosted_admission_enabled="true"   # ignored in PAT-only local trusted mode; any value is fine
 export Parameters__gh_app_client_id="-"
 export Parameters__allowed_user_logins="-"
 export Parameters__allowed_org_logins="-"
@@ -459,7 +459,7 @@ Aspire generates and applies Bicep at deploy time. The graph matches **hosted si
 | Azure SQL (`sql`) / database (`inventory`) | Derived repository snapshots for inventory features |
 | Azure Storage (`storage` / `storagestaging` on Staging) | Functions host storage (not product snapshot blobs) |
 
-[PAT self-host](#self-hoster-deployment-pat-mode) deploy omits SQL, Functions, and storage; the Container App and Key Vault still deploy. Vault bindings on publish apply to `app` (and `functions` when present).
+[PAT self-host](#self-hoster-deployment-pat-only-local-trusted-mode) deploy omits SQL, Functions, and storage; the Container App and Key Vault still deploy. Vault bindings on publish apply to `app` (and `functions` when present).
 
 See [Azure Deployment Costs](azure-costs.md) for cost guidance.
 
@@ -568,7 +568,7 @@ az identity delete --name id-solodevboard-cd --resource-group <acr-resource-grou
 | Callback URL mismatch | Stale GitHub App setting | Update callback to `https://<aca-fqdn>/auth/callback` (hosted sign-in only) |
 | Secret not visible in Container App settings | Key Vault reference | Expected — inspect the `auth-secrets` vault for secret names; values are resolved at runtime |
 | Home dashboard shown without sign-in | Missing login gate or placeholder deploy parameters | Confirm `/` redirects to `/welcome`; redeploy with `Parameters__*` env vars mapped in CD; verify Container App env shows real client ID and allow-list values. CI Playwright `hosted` job asserts this gate with placeholder credentials. |
-| PAT mode shows `/welcome` or requires sign-in | `hosted-sign-in-enabled` still `true` | Set `HOSTED_SIGN_IN_ENABLED` / `Parameters__hosted_sign_in_enabled` to `false` and redeploy |
-| PAT mode starts but GitHub calls fail | Missing or invalid `gh-pat` in Key Vault | Set a real PAT in the tier vault with required scopes; confirm `/health/github` and the **@login** chip |
+| PAT-only local trusted mode shows `/welcome` or requires sign-in | `hosted-sign-in-enabled` still `true` | Set `HOSTED_SIGN_IN_ENABLED` / `Parameters__hosted_sign_in_enabled` to `false` and redeploy |
+| PAT-only local trusted mode starts but GitHub calls fail | Missing or invalid `gh-pat` in Key Vault | Set a real PAT in the tier vault with required scopes; confirm `/health/github` and the **@login** chip |
 
 For local development, see [Getting Started](getting-started.md) (including [PAT-only local trusted mode](getting-started.md#pat-only-local-trusted-mode)). For hosted authentication details, see [Hosted Authentication](hosted-authentication.md). For the Key Vault pattern, see [plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md](../plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md).

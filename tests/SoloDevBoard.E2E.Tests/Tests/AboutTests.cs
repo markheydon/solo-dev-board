@@ -4,7 +4,7 @@ using SoloDevBoard.E2E.Tests.Fixtures;
 namespace SoloDevBoard.E2E.Tests.Tests;
 
 /// <summary>
-/// About page tests for PAT mode.
+/// About page tests for PAT-only local trusted mode.
 /// </summary>
 [Trait("Category", "E2E")]
 public sealed class AboutTests : SoloDevBoardPageTest
@@ -15,7 +15,7 @@ public sealed class AboutTests : SoloDevBoardPageTest
     [Fact]
     public async Task AboutPage_ShowsDeploymentMetadataFromShellMenu()
     {
-        Skip.If(E2eAuthMode.IsHosted, "PAT mode only");
+        Skip.If(E2eAuthMode.IsHosted, "PAT-only local trusted mode only");
 
         await Page.GotoAsync("/");
 
