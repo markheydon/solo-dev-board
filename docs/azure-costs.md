@@ -6,27 +6,31 @@ Self-hosting Solo Dev Board on Azure incurs charges for the resources Aspire pro
 
 ## Resources Deployed
 
-Aspire deploys the following Azure resources (see [Deployment guide](deployment.md), including the [self-hoster PAT path](deployment.md#self-hoster-deployment-pat-mode) for a personal instance, and [Observability guide](observability.md)):
+Aspire deploys resources according to deploy posture (`hosted-sign-in-enabled`). See the [Deployment guide](deployment.md) (including [self-hoster PAT deploy](deployment.md#self-hoster-deployment-pat-mode)) and [Observability guide](observability.md).
+
+[PAT-only self-host](deployment.md#self-hoster-deployment-pat-mode) uses the **lean** graph: shared resources below, without SQL, Functions, or the inventory storage account. Staging, Production, and other full-experience deploys add the inventory stack ([ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md)).
 
 | Resource | Purpose | Pricing model |
 |---|---|---|
 | Azure Container Apps environment | Hosts containerised workloads on the Consumption profile | Environment + per-use compute |
 | Container App (`app`) | Solo Dev Board Blazor Server application | Consumption (vCPU-seconds, memory, requests) |
-| Azure Functions (`functions`) | Overnight inventory placeholder (timer); future scanners ([ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md)) | Per execution + linked storage |
-| Azure SQL (`sql` / database `inventory`) | Derived repository snapshot store for catalogue roll-ups | Serverless GP tier; Aspire default includes free-limit auto-pause |
-| Azure Storage (`storage` / `storagestaging` on Staging) | Functions host storage (not product data) | Account + transactions |
 | Azure Container Registry (Basic) | Stores built container images when not using a shared registry ([DEC-025](../adr/adr-0025-optional-shared-azure-container-registry.md)) | Fixed monthly (Basic tier) when Aspire provisions one per deploy |
+| Azure Key Vault (`auth-secrets`) | Auth secrets at deploy time ([ADR-0045](../adr/adr-0045-persistent-key-vault-dual-path-local-secrets.md)) | Operations + optional HSM SKUs; secret operations are low volume |
 | Log Analytics workspace | Container platform logs and Application Insights backing store | Per GB ingested |
 | Application Insights | Application logs, metrics, and traces | Per GB ingested (linked workspace) |
 | Managed identities | Image pull and runtime auth | No direct charge |
+| Azure Functions (`functions`) | Overnight inventory placeholder (timer); future scanners ([ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md)) | Per execution + linked storage; **full experience deploy only** |
+| Azure SQL (`sql` / database `inventory`) | Derived repository snapshot store for catalogue roll-ups | Serverless GP tier; Aspire default includes free-limit auto-pause; **full experience deploy only** |
+| Azure Storage (`storage` / `storagestaging` on Staging) | Functions host storage (not product data) | Account + transactions; **full experience deploy only** |
 
 ## Cost profile with scale-to-zero
 
 | Scenario | Approximate monthly cost (UK South, early 2026) |
 |---|---|
-| Idle / no traffic | Low to moderate — ACR Basic (~£4–5) per Aspire-provisioned registry, minimal Log Analytics, plus always-on storage account and SQL free tier while within limits |
-| Light personal use | Typically lower than an always-on App Service B1 (~£11–13) |
-| Sustained daily use | Consumption compute adds up; monitor in Azure Cost Management |
+| Idle / no traffic (lean PAT self-host deploy) | Low - ACR Basic (~£4–5) when Aspire provisions a registry, minimal Log Analytics ingestion; no inventory SQL, Functions, or storage baseline |
+| Idle / no traffic (full experience deploy) | Low to moderate - lean baseline plus storage account and SQL serverless while within free-tier limits |
+| Light personal use (either posture) | Typically lower than an always-on App Service B1 (~£11–13) |
+| Sustained daily use (either posture) | Consumption compute adds up; monitor in Azure Cost Management |
 
 > **Note:** Figures are estimates. Use the [Azure Pricing Calculator](https://azure.microsoft.com/en-gb/pricing/calculator/) for up-to-date costs.
 
@@ -46,7 +50,7 @@ Aspire deploys the following Azure resources (see [Deployment guide](deployment.
 
 ## Azure Pricing Calculator
 
-For exact, up-to-date pricing, use the [Azure Pricing Calculator](https://azure.microsoft.com/en-gb/pricing/calculator/). Select UK South and add Container Apps, Azure SQL Database (serverless), Storage, Functions, Container Registry (Basic), and Log Analytics.
+For exact, up-to-date pricing, use the [Azure Pricing Calculator](https://azure.microsoft.com/en-gb/pricing/calculator/). Select UK South and add Container Apps, Container Registry (Basic), Key Vault, Application Insights, and Log Analytics for every deploy. For **full experience** deploys, also add Azure SQL Database (serverless), Storage, and Functions.
 
 ## Related documentation
 

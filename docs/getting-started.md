@@ -107,7 +107,9 @@ Solo Dev Board uses **Aspire for local orchestration**, which provides standardi
 
 ### Resources started by Aspire
 
-Local `aspire start` runs the Blazor **`app`** resource plus the overnight inventory stack from [ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md):
+Local `aspire start` uses the **lean AppHost graph** by default: only the Blazor **`app`** resource (PAT-only local trusted mode). No Docker, SQL, Functions, or Azurite are required for day-to-day contributor work.
+
+When `hosted-sign-in-enabled` is `true`, the AppHost models the **full experience graph** from [ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md):
 
 | Resource | Role |
 |---|---|
@@ -115,7 +117,7 @@ Local `aspire start` runs the Blazor **`app`** resource plus the overnight inven
 | `sql` / `inventory` | Snapshot database (`RunAsContainer`; requires Docker) |
 | `storage` | Functions host storage (Azurite locally) |
 
-GitHub AppHost parameters primarily configure the web app; deploy also provisions vault access for `functions`. See [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md).
+Optional dev Key Vault (Path B) applies in both postures. See [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md).
 
 ### GitHub Codespaces secrets
 

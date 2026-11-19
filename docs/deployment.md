@@ -436,21 +436,30 @@ aspire deploy --list-steps \
 
 ## Resources provisioned by Aspire
 
-Aspire generates and applies Bicep at deploy time. A typical deployment includes:
+Aspire generates and applies Bicep at deploy time. The graph matches **hosted sign-in** (`hosted-sign-in-enabled` `true` for Staging and Production CD) vs **PAT-only local trusted mode** self-host (`hosted-sign-in-enabled` `false`).
+
+### Shared on every deploy
 
 | Resource | Purpose |
 |---|---|
 | Azure Container Apps environment | Hosts the containerised app (Consumption profile) |
 | Container App (`app`) | Runs Solo Dev Board (scale-to-zero enabled) |
-| Azure Functions (`functions`) | Overnight inventory worker (timer placeholder until scanners ship; [ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md)) |
-| Azure SQL (`sql`) / database (`inventory`) | Derived repository snapshots for inventory features |
-| Azure Storage (`storage` / `storagestaging` on Staging) | Functions host storage (not product snapshot blobs) |
 | Azure Container Registry | Stores built container images (Aspire-provisioned per deployment, or optional shared registry — see [Optional shared Container Registry](#optional-shared-container-registry)) |
-| Azure Key Vault (`auth-secrets`, or `auth-secrets-staging`) | Pre-populated auth secrets referenced at deploy time ([ADR-0045](../adr/adr-0045-persistent-key-vault-dual-path-local-secrets.md)); `app` and `functions` receive vault references (PAT binding on publish; scanner runtime still deferred — [ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md)) |
+| Azure Key Vault (`auth-secrets`, or `auth-secrets-staging`) | Pre-populated auth secrets referenced at deploy time ([ADR-0045](../adr/adr-0045-persistent-key-vault-dual-path-local-secrets.md)) |
 | Application Insights | Application logs, metrics, and distributed traces |
 | Log Analytics workspace | Container platform logs and Application Insights backing store |
 | Aspire dashboard | Optional operational dashboard (Aspire default) |
 | Managed identities | Image pull and runtime authentication |
+
+### Full experience deploy only (hosted sign-in tiers)
+
+| Resource | Purpose |
+|---|---|
+| Azure Functions (`functions`) | Overnight inventory worker (timer placeholder until scanners ship; [ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md)) |
+| Azure SQL (`sql`) / database (`inventory`) | Derived repository snapshots for inventory features |
+| Azure Storage (`storage` / `storagestaging` on Staging) | Functions host storage (not product snapshot blobs) |
+
+[PAT self-host](#self-hoster-deployment-pat-mode) deploy omits SQL, Functions, and storage; the Container App and Key Vault still deploy. Vault bindings on publish apply to `app` (and `functions` when present).
 
 See [Azure Deployment Costs](azure-costs.md) for cost guidance.
 
