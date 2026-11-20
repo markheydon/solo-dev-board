@@ -1,9 +1,25 @@
 {
   "plugins": {
+    "dotnet-agent-skills/dotnet-blazor": {
+      "enabled": true
+    },
+    "dotnet-agent-skills/dotnet-test": {
+      "enabled": true
+    },
+    "dotnet-agent-skills/dotnet-nuget": {
+      "enabled": true
+    },
+    "dotnet-agent-skills/dotnet-data": {
+      "enabled": true
+    },
+    "dotnet-agent-skills/dotnet": {
+      "enabled": true
+    },
     "aspire-skills/aspire": {
-      "enabled": true,
-      "gitUrl": "https://github.com/microsoft/aspire-skills",
-      "gitRef": "e529b608336cd41c1b1262aa76d00d9e4ef1bff8"
+      "enabled": true
+    },
+    "github": {
+      "enabled": true
     }
   }
 }
