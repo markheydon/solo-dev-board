@@ -426,6 +426,7 @@ FodyWeavers.xsd
 **/wwwroot/lib/
 
 # Playwright files
+/.playwright/
 .playwright-mcp/
 tests/SoloDevBoard.E2E.Tests/test-results/
 

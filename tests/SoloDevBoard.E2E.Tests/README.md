@@ -33,7 +33,8 @@ Accessibility findings and remediation notes for issue #253 live in [plan/ACCESS
 ## Prerequisites
 
 - .NET 10 SDK only (no Node.js).
-- PowerShell (`pwsh`) for the first Playwright browser install after build.
+- PowerShell (`pwsh`) to run `playwright.ps1 install chromium` when browsers are not yet installed.
+- **Dev container / Codespaces:** `postCreate` runs [`.devcontainer/install-playwright-browsers.sh`](../../.devcontainer/install-playwright-browsers.sh) automatically (`install chromium` and `install-deps chromium` via the C# driver only).
 
 ## Local run
 
@@ -83,11 +84,13 @@ By default the fixture starts its own placeholder-configured instance. To point 
 
 ### Playwright browsers
 
-After the first build, install Chromium if prompted:
+Outside the dev container, or if `~/.cache/ms-playwright` was cleared, install Chromium after building the E2E project:
 
 ```bash
 pwsh tests/SoloDevBoard.E2E.Tests/bin/Debug/net10.0/playwright.ps1 install chromium
 ```
+
+Or run `./scripts/test-e2e.sh`, which builds and installs before testing.
 
 ## Documentation screenshots
 

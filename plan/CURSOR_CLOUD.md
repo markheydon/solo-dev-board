@@ -21,8 +21,8 @@ Cursor Cloud agents often default to **draft** PRs, `cursor/…` branch names, a
 ## Build, test, lint
 
 - Build: `dotnet build SoloDevBoard.slnx`.
-- Test (xUnit v3 + NSubstitute, fully offline — GitHub is mocked): `dotnet test SoloDevBoard.slnx`.
-- End-to-end (Playwright): see [`tests/SoloDevBoard.E2E.Tests/README.md`](../tests/SoloDevBoard.E2E.Tests/README.md).
+- Test (xUnit v3 + NSubstitute, fully offline — GitHub is mocked): `dotnet test SoloDevBoard.slnx` (includes Playwright E2E and is slow). Prefer `dotnet test SoloDevBoard.UnitTests.slnf` for a fast loop.
+- End-to-end (Playwright): Chromium is installed on dev container create via `.devcontainer/install-playwright-browsers.sh` (C# `playwright.ps1`, not npm). See [`tests/SoloDevBoard.E2E.Tests/README.md`](../tests/SoloDevBoard.E2E.Tests/README.md).
 - Lint is `dotnet format SoloDevBoard.slnx --verify-no-changes` (same check CI runs in `.github/workflows/ci.yml`). `EnforceCodeStyleInBuild` is on, so style violations also surface during build.
 
 ---
@@ -45,7 +45,7 @@ Cursor Cloud agents often default to **draft** PRs, `cursor/…` branch names, a
 
 ## Dev Container (local / Codespaces)
 
-The dev container uses Aspire feature v3, `dev-agent-tools`, and `cursor-cli` (see [`.devcontainer/devcontainer.json`](../.devcontainer/devcontainer.json)). Aspire workflow skills load from the **aspire-skills** Cursor plugin in [`.cursor/settings.json`](../.cursor/settings.json); `dotnet-inspect` and other project skills live under [`.agents/skills/`](../.agents/skills/). See [`docs/maintaining-agent-skills.md`](../docs/maintaining-agent-skills.md) to bump the plugin pin or refresh companions (no npm `playwright-cli` skill in this project). WSL2 developers exporting the dev HTTPS certificate to the Windows host can run [`scripts/export-dev-cert-for-windows-host.sh`](../scripts/export-dev-cert-for-windows-host.sh).
+The dev container uses Aspire feature v3, `dev-agent-tools`, and `cursor-cli` (see [`.devcontainer/devcontainer.json`](../.devcontainer/devcontainer.json)). On create, `install-playwright-browsers.sh` installs Chromium for C# E2E so full-solution `dotnet test` does not fail on a missing browser binary. Aspire workflow skills load from the **aspire-skills** Cursor plugin in [`.cursor/settings.json`](../.cursor/settings.json); `dotnet-inspect` and other project skills live under [`.agents/skills/`](../.agents/skills/). See [`docs/maintaining-agent-skills.md`](../docs/maintaining-agent-skills.md) to bump the plugin pin or refresh companions (no npm `playwright-cli` skill in this project). WSL2 developers exporting the dev HTTPS certificate to the Windows host can run [`scripts/export-dev-cert-for-windows-host.sh`](../scripts/export-dev-cert-for-windows-host.sh).
 
 ---
 

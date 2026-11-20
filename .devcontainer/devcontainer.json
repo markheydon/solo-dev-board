@@ -22,7 +22,7 @@
 		"GH_TOKEN": "${localEnv:GH_TOKEN}",
 		"GH_HOST": "github.com"
 	},
-	"postCreateCommand": "bash .devcontainer/map-apphost-secrets.sh",
+	"postCreateCommand": "bash .devcontainer/map-apphost-secrets.sh && bash .devcontainer/install-playwright-browsers.sh",
 	"postStartCommand": "aspire certs trust --non-interactive",
 	"customizations": {
 		"vscode": {

@@ -129,6 +129,8 @@ Codespaces and dev containers can load AppHost parameters from repository **Code
 
 On container create, `.devcontainer/map-apphost-secrets.sh` maps any set `SDB_*` variables into AppHost parameters with `aspire secret set` (the same user-secrets store as manual `dotnet user-secrets` on the AppHost project). Rebuild the Codespace after adding or changing secrets.
 
+On the same create step, `.devcontainer/install-playwright-browsers.sh` builds the E2E project, installs Chromium via the C# Playwright driver (`pwsh …/playwright.ps1 install chromium`), and runs `install-deps chromium` for Ubuntu libraries Playwright needs. No Node.js is required. After a container rebuild, `dotnet test SoloDevBoard.slnx` includes Playwright E2E and should not fail for missing browsers (the run is still slow compared with the unit filter).
+
 On each container start, `aspire certs trust --non-interactive` (see [`postStartCommand`](../.devcontainer/devcontainer.json)) trusts the ASP.NET HTTPS development certificate. `SSL_CERT_DIR` in `remoteEnv` keeps the trust store visible so `aspire doctor` does not warn about partial certificate trust.
 
 On **WSL2**, if the Windows host browser must trust the same development certificate, run `./scripts/export-dev-cert-for-windows-host.sh` from the repository root after certs are set up, then install the exported certificate on Windows as described in the script output.
@@ -159,7 +161,7 @@ When you run locally, open **More options → About** to see the MinVer-calculat
 | E2E only (PAT-only local trusted mode) | `./scripts/test-e2e.sh` or `.\scripts\test-e2e.ps1` |
 | Full CI parity before a PR | `./scripts/test-all.sh` or `.\scripts\test-all.ps1` |
 
-Use `SoloDevBoard.UnitTests.slnf` or `scripts/test-unit` for the fast path. Plain `dotnet test` on `SoloDevBoard.slnx` still includes Playwright E2E under xUnit v3 MTP and is slow. See [`tests/SoloDevBoard.E2E.Tests/README.md`](../tests/SoloDevBoard.E2E.Tests/README.md) for E2E prerequisites (PowerShell and a one-time Chromium install).
+Use `SoloDevBoard.UnitTests.slnf` or `scripts/test-unit` for the fast path. Plain `dotnet test` on `SoloDevBoard.slnx` still includes Playwright E2E under xUnit v3 MTP and is slow. In the dev container, Chromium is installed on create; outside the container see [`tests/SoloDevBoard.E2E.Tests/README.md`](../tests/SoloDevBoard.E2E.Tests/README.md) for a one-time `playwright.ps1 install chromium` step.
 
 ---
 
