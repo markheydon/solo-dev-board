@@ -7,7 +7,7 @@
 
 ## Context
 
-The AppHost models the Blazor Server project (`SoloDevBoard.Web`) as a single Aspire compute resource. That resource was named `app` from the first Aspire wiring ([ADR-0018](adr-0018-aspire-azure-container-apps-deployment.md), [ADR-0021](adr-0021-two-tier-cd-pipeline.md), [ADR-0046](adr-0046-overnight-inventory-functions-and-sql.md)). Upcoming inventory work adds `functions`, `inventory`, and `storage` alongside user-facing HTTP compute. Aspire and aspireify guidance prefer **role-based** resource names (`api`, `worker`, `web`) over generic `app`, which reads as “the whole product” once multiple compute roles exist.
+The AppHost models the Blazor Server project (`SoloDevBoard.Web`) as a single Aspire compute resource. That resource was named `app` from the first Aspire wiring ([ADR-0018](adr-0018-aspire-azure-container-apps-deployment.md), [ADR-0021](adr-0021-two-tier-cd-pipeline.md), [ADR-0046](adr-0046-overnight-inventory-functions-and-sql.md)). Generic `app` reads as “the whole product” and does not match the project folder or Aspire role-based naming (`api`, `worker`, `web`). [ADR-0046](adr-0046-overnight-inventory-functions-and-sql.md) is **Withdrawn**; additional compute roles would require a future **binding** ADR before they ship.
 
 Staging and production Azure Container App names follow the logical Aspire name via `AppHostAzureNaming` (`web` / `web-staging`).
 
@@ -28,7 +28,7 @@ Reject keeping generic `app` for the multi-compute graph and reject `webfrontend
 
 ### Positive
 
-- Dashboard, `aspire describe`, `aspire wait web`, and operator docs align with project folder `SoloDevBoard.Web` and with `functions` as a sibling role.
+- Dashboard, `aspire describe`, `aspire wait web`, and operator docs align with project folder `SoloDevBoard.Web` and with a clear HTTP compute role if further workers are added later.
 - Service discovery env vars use `services__web__*` if another resource gains `WithReference(web)` later.
 
 ### Negative
@@ -42,7 +42,7 @@ Reject keeping generic `app` for the multi-compute graph and reject `webfrontend
 
 | Option | Rejection |
 |--------|-----------|
-| Keep `app` | Weak role clarity when `functions` ships; acceptable only while a single compute resource exists. |
+| Keep `app` | Weak role clarity when additional compute resources ship; poor fit once multiple roles exist. |
 | `webfrontend` | Starter-template name; verbose and implies a separate `apiservice`, which ADR-0046 defers. |
 | `blazor` | Non-standard across Aspire graphs; couples hosting name to UI framework. |
 

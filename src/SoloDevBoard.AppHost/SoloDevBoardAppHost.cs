@@ -31,10 +31,10 @@ internal sealed class SoloDevBoardAppHost
     public IResourceBuilder<AzureContainerAppEnvironmentResource>? ContainerAppEnvironment { get; private set; }
 
     /// <summary>
-    /// Returns <see langword="true" /> when hosted sign-in enables the hosted graph (web compute; inventory deferred).
+    /// Returns <see langword="true" /> when hosted sign-in is enabled (hosted graph: web compute only).
     /// </summary>
-    public bool UseFullExperiencePosture =>
-        AppHostPostureResolver.UseFullExperiencePosture(Builder.Configuration);
+    public bool UseHostedSignInPosture =>
+        AppHostPostureResolver.UseHostedSignInPosture(Builder.Configuration);
 
     /// <summary>Declares parameters used by every graph.</summary>
     public void AddSharedParameters() => Parameters = AppHostParameters.AddShared(Builder);
@@ -43,9 +43,9 @@ internal sealed class SoloDevBoardAppHost
     public void ConfigureLeanLocalRun() => LeanAppHostGraph.ConfigureLocalRun(this);
 
     /// <summary>Models hosted sign-in locally (web compute; optional dev Key Vault).</summary>
-    public void ConfigureFullExperienceLocalRun() => FullExperienceAppHostGraph.ConfigureLocalRun(this);
+    public void ConfigureHostedSignInLocalRun() => HostedSignInAppHostGraph.ConfigureLocalRun(this);
 
-    /// <summary>Models Azure deploy for lean or full experience posture.</summary>
+    /// <summary>Models Azure deploy for lean or hosted sign-in posture.</summary>
     public void ConfigurePublish() => AppHostPublishProfile.Configure(this);
 
     /// <summary>Creates the web project resource with shared auth environment bindings.</summary>

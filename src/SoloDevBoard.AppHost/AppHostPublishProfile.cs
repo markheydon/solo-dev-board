@@ -13,9 +13,9 @@ internal static class AppHostPublishProfile
     {
         ArgumentNullException.ThrowIfNull(host);
 
-        if (host.UseFullExperiencePosture)
+        if (host.UseHostedSignInPosture)
         {
-            FullExperienceAppHostGraph.ConfigurePublishInfrastructure(host);
+            HostedSignInAppHostGraph.ConfigurePublishInfrastructure(host);
         }
         else
         {
@@ -85,7 +85,7 @@ internal static class AppHostPublishProfile
         var resolvedHostedSignInEnabled = AppHostDeployParameterResolver.Resolve(
             builder.Configuration,
             "hosted-sign-in-enabled",
-            host.UseFullExperiencePosture ? "true" : "false");
+            host.UseHostedSignInPosture ? "true" : "false");
         var resolvedHostedAdmissionEnabled = AppHostDeployParameterResolver.Resolve(
             builder.Configuration,
             "hosted-admission-enabled",

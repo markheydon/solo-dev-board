@@ -4,7 +4,7 @@ using Aspire.Hosting.Dotnet;
 /// Hosted sign-in AppHost graph: web compute with GitHub App OAuth and admission control.
 /// Inventory SQL, Functions, and storage are not modelled (ADR-0046 Withdrawn).
 /// </summary>
-internal static class FullExperienceAppHostGraph
+internal static class HostedSignInAppHostGraph
 {
     /// <summary>Configures local run for hosted sign-in with optional dev Key Vault.</summary>
     /// <param name="host">AppHost orchestrator.</param>

@@ -149,7 +149,7 @@ public sealed class AppHostDeployParameterResolverTests
         Assert.Contains("auth-secrets-vault-name", exception.Message, StringComparison.Ordinal);
     }
 
-    /// <summary>Must match local-branch rules in <c>AppHost.cs</c> (needVaultForPat / needVaultForClientSecret).</summary>
+    /// <summary>Must match vault binding rules in <c>LeanAppHostGraph</c> and <c>HostedSignInAppHostGraph</c>.</summary>
     [Theory]
     [InlineData(false, false, false, false, false, false)]
     [InlineData(false, false, false, true, true, false)]
