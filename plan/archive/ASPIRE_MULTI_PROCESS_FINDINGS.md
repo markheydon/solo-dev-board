@@ -1,6 +1,6 @@
 # Aspire from the start — multi-process findings
 
-**Status:** Archived planning findings. **Compute and snapshot storage choice** for overnight inventory is decided in [ADR-0046](../../adr/adr-0046-overnight-inventory-functions-and-sql.md) (Azure Functions, Azure SQL `inventory`, Functions host storage). This file remains background on a possible future `apiservice` split. Does not change [SCOPE.md](../../SCOPE.md).  
+**Status:** Archived planning findings. Overnight inventory was proposed in [ADR-0046](../../adr/adr-0046-overnight-inventory-functions-and-sql.md) (Azure Functions and Azure SQL); that ADR is **Withdrawn** and persistence is under reconsideration. This file remains background on a possible future `apiservice` split. Does not change [SCOPE.md](../../SCOPE.md).  
 **Date:** 2026-08-14  
 **Audience:** Maintainer review before any split of the current single-process AppHost.
 

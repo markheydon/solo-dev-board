@@ -18,7 +18,7 @@ Solo developers maintaining multiple GitHub repositories waste time context-swit
 - **G2:** Deliver practical multi-repo tooling (Label Manager, One-Click Migration, Planning, Actions Templates, Audit, Triage).
 - **G3:** Keep end-user documentation and Playwright E2E coverage aligned for every published guide page.
 - **G4:** Dogfood the app as the maintainer's daily solo-developer workflow across public repositories.
-- **G5:** Preserve **lean local parity** alongside G1: a solo developer MUST be able to run the product locally via Aspire with only web compute plus GitHub credentials (PAT-only local trusted mode and a lean AppHost graph), without mandatory SQL, Functions, storage, or Azure subscription, while every in-scope user-facing capability remains reachable through graceful degradation (on-demand or in-process alternatives where infrastructure is absent). Full-experience AppHost resources (scheduled inventory, durable snapshots) stay optional for hosted sign-in and production-style deployment (constitution Principle VII; ADR-0046).
+- **G5:** Preserve **lean local parity** alongside G1: a solo developer MUST be able to run the product locally via Aspire with only web compute plus GitHub credentials (PAT-only local trusted mode and a lean AppHost graph), without mandatory SQL, Functions, storage, or Azure subscription, while every in-scope user-facing capability remains reachable through graceful degradation (on-demand or in-process alternatives where infrastructure is absent). Hosted sign-in today uses the same **web-only** AppHost graph; optional background or persistence resources require a future binding ADR (constitution Principle VII; [ADR-0046](adr/adr-0046-overnight-inventory-functions-and-sql.md) withdrawn).
 
 ---
 

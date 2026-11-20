@@ -453,15 +453,11 @@ Aspire generates and applies Bicep at deploy time. The graph matches **hosted si
 | Aspire dashboard | Optional operational dashboard (Aspire default) |
 | Managed identities | Image pull and runtime authentication |
 
-### Full experience deploy only (hosted sign-in tiers)
+### Inventory stack (not deployed)
 
-| Resource | Purpose |
-|---|---|
-| Azure Functions (`functions`) | Overnight inventory worker (timer placeholder until scanners ship; [ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md)) |
-| Azure SQL (`sql`) / database (`inventory`) | Derived repository snapshots for inventory features |
-| Azure Storage (`storage` / `storagestaging` on Staging) | Functions host storage (not product snapshot blobs) |
+Hosted sign-in Staging and Production deploys **web compute only** (same infrastructure baseline as lean PAT self-host for Azure resources). Overnight inventory (Azure Functions, SQL, storage) was described in [ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md), which is **Withdrawn**; AppHost does not provision `functions`, `inventory`, or `storage` until a future ADR records a replacement approach.
 
-[PAT self-host](#self-hoster-deployment-pat-only-local-trusted-mode) deploy omits SQL, Functions, and storage; the Container App and Key Vault still deploy. Vault bindings on publish apply to `web` (and `functions` when present).
+[PAT self-host](#self-hoster-deployment-pat-only-local-trusted-mode) and hosted sign-in deploy both provision the Container App (`web`) and tier Key Vault. Vault bindings on publish apply to `web` only.
 
 See [Azure Deployment Costs](azure-costs.md) for cost guidance.
 
@@ -591,7 +587,7 @@ The operator running `az keyvault secret set` needs **Key Vault Secrets Officer*
 | Home dashboard shown without sign-in | Missing login gate or placeholder deploy parameters | Confirm `/` redirects to `/welcome`; redeploy with `Parameters__*` env vars mapped in CD; verify Container App env shows real client ID and allow-list values. CI Playwright `hosted` job asserts this gate with placeholder credentials. |
 | PAT-only local trusted mode shows `/welcome` or requires sign-in | `hosted-sign-in-enabled` still `true` | Set `HOSTED_SIGN_IN_ENABLED` / `Parameters__hosted_sign_in_enabled` to `false` and redeploy |
 | PAT-only local trusted mode starts but GitHub calls fail | Missing or invalid `gh-pat` in Key Vault | Set a real PAT in the tier vault with required scopes; confirm `/health/github` and the **@login** chip |
-| `provision-sql-staging` / `ProvisioningDisabled` / `RegionDoesNotAllowProvisioning` | Partner or programme subscription SQL region block | Confirm with `az sql server create` in the target region. Open a **Service and subscription limits** support request for SQL in UK South, or see [plan/UK_SOUTH_TIER_MIGRATION.md](../plan/UK_SOUTH_TIER_MIGRATION.md). |
+| `provision-sql-staging` / `ProvisioningDisabled` / `RegionDoesNotAllowProvisioning` | Historical: full graph with Azure SQL (withdrawn [ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md)) | Current CD does not provision SQL. If a future ADR reintroduces SQL, see [plan/UK_SOUTH_TIER_MIGRATION.md](../plan/UK_SOUTH_TIER_MIGRATION.md) for subscription region limits. |
 | `InvalidResourceLocation` after changing `AZURE_LOCATION` | Same resource names still exist in the old region in the app RG | Greenfield delete of the app RG (see [UK South tier relocation](#uk-south-tier-relocation)) or align location with existing resources. |
 | `provision-auth-secrets-staging` Key Vault `ResourceNotFound` | Vault missing, soft-deleted, or RBAC propagation lag | Confirm vault in the app RG; purge and recreate; re-run CD after Contributor + UAA on the app RG are restored. |
 

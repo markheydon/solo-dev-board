@@ -30,7 +30,7 @@ Cursor Cloud agents often default to **draft** PRs, `cursor/…` branch names, a
 ## Running the app (Aspire — the standard path)
 
 - Start: `aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --non-interactive` (runs in the background). Then `aspire ps` for the dashboard URL/token, `aspire describe` for the `web` resource URL (proxied at `https://localhost:5074`), and `aspire stop` to release file locks before rebuilding.
-- Default shipped parameters model the **lean** AppHost graph (`web` only). Set `hosted-sign-in-enabled` to `true` when you need the full inventory stack locally (Docker for SQL, Azurite, Functions). See [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md).
+- Default shipped parameters model the **lean** AppHost graph (`web` only). Set `hosted-sign-in-enabled` to `true` to exercise hosted OAuth and admission locally (still `web` only; no inventory SQL, Functions, or Azurite). See [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md).
 - If a build fails with `MSB3491`/`CS2012` (file locks), run `aspire stop` first — Aspire holds locks on `bin/`/`obj/` while running. See the `aspire-orchestration` skill.
 - Query logs/traces without the dashboard via `aspire logs web`, `aspire otel`, or the Aspire MCP server (see below).
 - Health endpoint: `GET /health` returns `Healthy`. The Home page (`/`) is static navigation and renders without any GitHub call.

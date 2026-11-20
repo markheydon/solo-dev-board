@@ -86,7 +86,7 @@ solo-dev-board/
 ├── src/SoloDevBoard.Domain/      # Domain entities and value objects
 ├── src/SoloDevBoard.Infrastructure/ # GitHub API clients, external integrations
 ├── src/SoloDevBoard.AppHost/     # Aspire AppHost (local orchestration and Azure deployment)
-├── src/SoloDevBoard.Functions/   # Azure Functions worker (overnight inventory; timer placeholder)
+├── src/SoloDevBoard.Functions/   # Ice-boxed Functions placeholder (not in AppHost; ADR-0046 withdrawn)
 ├── src/SoloDevBoard.ServiceDefaults/  # Aspire service defaults (telemetry, health checks)
 ├── tests/
 │   ├── SoloDevBoard.Web.Tests/   # bUnit component tests

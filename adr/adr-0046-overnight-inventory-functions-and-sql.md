@@ -1,7 +1,17 @@
 # ADR-0046: Overnight inventory via Azure Functions and Azure SQL
 
 **Date:** 2026-11-15  
-**Status:** Accepted
+**Status:** Withdrawn (2026-11-20: Azure SQL inventory stack not implemented; overnight inventory and application persistence under reconsideration)
+
+## Status history
+
+| Date | Status | Notes |
+| --- | --- | --- |
+| 2026-11-15 | Accepted | Chosen Azure Functions worker plus Azure SQL `inventory` |
+| 2026-11-17 | Accepted | Addenda: lean vs full graph posture; Blazor resource renamed `web` per [ADR-0047](adr-0047-apphost-blazor-resource-name-web.md) |
+| 2026-11-20 | Withdrawn | AppHost never modelled SQL, Functions, or inventory storage (subscription provisioning limits and deliberate deferral). Persistence for derived snapshots is **not decided**; may abandon an application database entirely. **Do not implement** this ADR. A future ADR may record a replacement approach without reinstating this document as binding. |
+
+The sections below record the accepted rationale as of 2026-11-15 for historical context only.
 
 ---
 

@@ -9,7 +9,7 @@ The AppHost models **two resource graphs** (constitution Principle VII). Selecti
 | **Lean AppHost graph** | `hosted-sign-in-enabled` is `false` (default) | `web` only locally; optional dev Key Vault (`auth-secrets`) on Path B |
 | **Hosted sign-in graph** | `hosted-sign-in-enabled` is `true` | `web` only (same deploy surface as lean; hosted OAuth and admission via publish profile) |
 
-Inventory SQL, Azure Functions, and storage from [ADR-0046](../../adr/adr-0046-overnight-inventory-functions-and-sql.md) are **not** modelled in AppHost until Azure SQL is provisionable on the operator subscription. Hosted staging and production CD therefore deploy web compute only (matching v1.4.0), with `hosted-sign-in-enabled` and admission control still enforced on the Container App.
+Inventory SQL, Azure Functions, and storage from [ADR-0046](../../adr/adr-0046-overnight-inventory-functions-and-sql.md) are **not** modelled in AppHost ([ADR-0046](../../adr/adr-0046-overnight-inventory-functions-and-sql.md) **Withdrawn**; persistence under reconsideration). Hosted staging and production CD deploy **web** compute only, with `hosted-sign-in-enabled` and admission control still enforced on the Container App.
 
 ### AppHost source layout
 

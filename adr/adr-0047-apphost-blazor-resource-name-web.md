@@ -45,3 +45,9 @@ Reject keeping generic `app` for the multi-compute graph and reject `webfrontend
 | Keep `app` | Weak role clarity when `functions` ships; acceptable only while a single compute resource exists. |
 | `webfrontend` | Starter-template name; verbose and implies a separate `apiservice`, which ADR-0046 defers. |
 | `blazor` | Non-standard across Aspire graphs; couples hosting name to UI framework. |
+
+---
+
+## Addendum (2026-11-20)
+
+[ADR-0046](adr-0046-overnight-inventory-functions-and-sql.md) is **Withdrawn**; the overnight inventory stack (`functions`, `inventory`, `storage`) is not modelled in AppHost and persistence is under reconsideration. The **`web`** logical name remains correct for the Blazor Container App. If inventory work resumes with multiple compute roles, role-based naming (`web`, `functions`, and so on) still applies; see [adr/README.md](README.md#index).

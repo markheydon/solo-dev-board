@@ -28,11 +28,13 @@ See [deployment.md — UK South tier relocation](../docs/deployment.md#uk-south-
 
 Repeat Phase 1 for `rg-solodevboard-prod` and vault `auth-secrets`. Deploy production via push of a `v*` release tag.
 
-## Partner / programme subscription — Azure SQL
+## Partner / programme subscription — Azure SQL (historical)
+
+> **Note:** Current AppHost CD does not provision Azure SQL ([ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md) withdrawn). Keep this section for reference if a future ADR reintroduces an application database.
 
 On some benefit-style subscriptions, **new Azure SQL logical servers may be blocked in UK South and UK West** (`RegionDoesNotAllowProvisioning` / `ProvisioningDisabled`). Other regions (for example **Sweden Central** or **Germany West Central**) may still accept servers in the same subscription.
 
-Until Microsoft enables SQL in your target region, CD with the **full experience** graph (`HOSTED_SIGN_IN_ENABLED=true`) can fail on `provision-sql-staging` even when the app resource group and Key Vault are correct in UK South. Open an Azure support request with issue type **Service and subscription limits** (SQL Database / region access), or plan a separate SQL region strategy (future AppHost work; not covered here).
+When SQL was modelled in AppHost, CD could fail on `provision-sql-staging` even when the app resource group and Key Vault were correct in UK South. Open an Azure support request with issue type **Service and subscription limits** (SQL Database / region access), or plan a separate SQL region strategy (future AppHost work).
 
 ## Cleanup
 

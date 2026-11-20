@@ -2,7 +2,7 @@ using Aspire.Hosting.Dotnet;
 
 /// <summary>
 /// Hosted sign-in AppHost graph: web compute with GitHub App OAuth and admission control.
-/// Inventory SQL, Functions, and storage are deferred until Azure SQL is available on the subscription (ADR-0046).
+/// Inventory SQL, Functions, and storage are not modelled (ADR-0046 Withdrawn).
 /// </summary>
 internal static class FullExperienceAppHostGraph
 {

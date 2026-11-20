@@ -14,8 +14,8 @@ Reference for operators migrating authentication secrets. Do not commit secret v
 | Vault (illustrative) | Resource group | Consumers |
 |---------------------|----------------|-----------|
 | `kv-solodevboard-dev` | `rg-solodevboard-dev` | Local Path B (`aspire start` fallback) |
-| `auth-secrets-staging` | Operator app RG for staging | Staging Container App (`web`); Functions worker (`functions`) |
-| `auth-secrets` | Operator app RG for production | Production Container App (`web`); Functions worker (`functions`) |
+| `auth-secrets-staging` | Operator app RG for staging | Staging Container App (`web`) only (Functions not deployed) |
+| `auth-secrets` | Operator app RG for production | Production Container App (`web`) only (Functions not deployed) |
 
 Tier vaults must be created in the **same Azure region** as `AZURE_LOCATION` / `Azure__Location` for that GitHub Environment. Recreating a vault after relocation is described in [UK_SOUTH_TIER_MIGRATION.md](UK_SOUTH_TIER_MIGRATION.md).
 
