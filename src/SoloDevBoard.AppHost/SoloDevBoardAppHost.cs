@@ -51,9 +51,7 @@ internal sealed class SoloDevBoardAppHost
     /// <summary>Creates the web project resource with shared auth environment bindings.</summary>
     internal IResourceBuilder<DotnetProjectResource> CreateWebApp()
     {
-#pragma warning disable ASPIREDOTNETPROJECT001
         var app = Builder.AddDotnetProject(Naming.AzureName("web"), "../SoloDevBoard.Web/SoloDevBoard.Web.csproj");
-#pragma warning restore ASPIREDOTNETPROJECT001
 
         return app
             .WithHttpHealthCheck("/health")

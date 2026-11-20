@@ -15,7 +15,7 @@ Inventory SQL, Azure Functions, and storage from [ADR-0046](../../adr/adr-0046-o
 
 [`AppHost.cs`](AppHost.cs) is the entry point. Graph and deploy logic lives in sibling types: `LeanAppHostGraph`, `FullExperienceAppHostGraph`, `AppHostPublishProfile`, `AppHostParameters`, and `SoloDevBoardAppHost` (orchestrator).
 
-The AppHost opts into the Aspire CLI bundle (`AspireUseCliBundle=true`). Dashboard and DCP orchestration binaries come from the Aspire CLI on `PATH` (or the SDK-paired `Aspire.Cli` via `dnx` when no CLI is installed). Keep your local `aspire` version aligned with `Aspire.AppHost.Sdk` (`17.0.0` today): run `aspire --version` and upgrade with `aspire update --self` when needed.
+The AppHost opts into the Aspire CLI bundle (`AspireUseCliBundle=true`). Dashboard and DCP orchestration binaries come from the Aspire CLI on `PATH` (or the SDK-paired `Aspire.Cli` via `dnx` when no CLI is installed). Keep your local `aspire` version aligned with the AppHost hosting packages (`17.0.0` today): run `aspire --version` and upgrade with `aspire update --self` when needed.
 
 GitHub authentication is configured through **AppHost parameters**. Local **Path A** injects secret parameters directly (`aspire secret set`). Local **Path B** and **deploy** read pre-populated secrets from an existing Azure Key Vault via `GetSecret` references.
 

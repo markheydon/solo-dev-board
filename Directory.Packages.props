@@ -8,6 +8,7 @@
   </ItemGroup>
   <!-- Aspire hosting -->
   <ItemGroup>
+    <PackageVersion Include="Aspire.Hosting.AppHost" Version="17.0.0" />
     <PackageVersion Include="Aspire.Hosting.Azure.AppContainers" Version="17.0.0" />
     <PackageVersion Include="Aspire.Hosting.Azure.ContainerRegistry" Version="17.0.0" />
     <PackageVersion Include="Aspire.Hosting.Azure.ApplicationInsights" Version="17.0.0" />
