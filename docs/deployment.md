@@ -17,7 +17,9 @@ Both paths use the same Aspire / Azure Container Apps stack. Only the AppHost pa
 
 ## CD pipeline tiers (DEC-021)
 
-GitHub Actions CD (`.github/workflows/cd.yml`) deploys to two hosted tiers. Aspire `--environment` does **not** suffix Azure resource names on its own; the AppHost suffixes Staging resources (`aca-staging`, `app-staging`, and so on) so they do not overwrite Production when both tiers target the **same** app resource group. Production keeps the original names (`aca`, `app`) so an existing production Container App is not recreated. The **app resource group** is an operator choice per GitHub Environment — use one RG for both tiers or separate RGs. Both tiers use GitHub App hosted sign-in. PAT-only local trusted mode is for local development and personal self-hosting via local `aspire deploy` only — not as a hosted CD tier.
+GitHub Actions CD (`.github/workflows/cd.yml`) deploys to two hosted tiers. Aspire `--environment` does **not** suffix Azure resource names on its own; the AppHost suffixes Staging resources (`aca-staging`, `web-staging`, and so on) so they do not overwrite Production when both tiers target the **same** app resource group. Production keeps the original names (`aca`, `web`) so an existing production Container App is not recreated. The **app resource group** is an operator choice per GitHub Environment — use one RG for both tiers or separate RGs. Both tiers use GitHub App hosted sign-in. PAT-only local trusted mode is for local development and personal self-hosting via local `aspire deploy` only — not as a hosted CD tier.
+
+Environments deployed before [ADR-0047](../adr/adr-0047-apphost-blazor-resource-name-web.md) may still have Container Apps named `app` / `app-staging`. The next successful deploy after that ADR provisions **`web` / `web-staging`** as new ACA identities; retire or delete legacy Container Apps and update saved Kusto filters (`ContainerAppName_s`) when you cut over.
 
 | Tier | Trigger | GitHub Environment | Aspire `--environment` | Authentication |
 |---|---|---|---|---|
@@ -443,7 +445,7 @@ Aspire generates and applies Bicep at deploy time. The graph matches **hosted si
 | Resource | Purpose |
 |---|---|
 | Azure Container Apps environment | Hosts the containerised app (Consumption profile) |
-| Container App (`app`) | Runs Solo Dev Board (scale-to-zero enabled) |
+| Container App (`web`) | Runs Solo Dev Board (scale-to-zero enabled) |
 | Azure Container Registry | Stores built container images (Aspire-provisioned per deployment, or optional shared registry — see [Optional shared Container Registry](#optional-shared-container-registry)) |
 | Azure Key Vault (`auth-secrets`, or `auth-secrets-staging`) | Pre-populated auth secrets referenced at deploy time ([ADR-0045](../adr/adr-0045-persistent-key-vault-dual-path-local-secrets.md)) |
 | Application Insights | Application logs, metrics, and distributed traces |
@@ -459,7 +461,7 @@ Aspire generates and applies Bicep at deploy time. The graph matches **hosted si
 | Azure SQL (`sql`) / database (`inventory`) | Derived repository snapshots for inventory features |
 | Azure Storage (`storage` / `storagestaging` on Staging) | Functions host storage (not product snapshot blobs) |
 
-[PAT self-host](#self-hoster-deployment-pat-only-local-trusted-mode) deploy omits SQL, Functions, and storage; the Container App and Key Vault still deploy. Vault bindings on publish apply to `app` (and `functions` when present).
+[PAT self-host](#self-hoster-deployment-pat-only-local-trusted-mode) deploy omits SQL, Functions, and storage; the Container App and Key Vault still deploy. Vault bindings on publish apply to `web` (and `functions` when present).
 
 See [Azure Deployment Costs](azure-costs.md) for cost guidance.
 
@@ -469,7 +471,7 @@ See [Azure Deployment Costs](azure-costs.md) for cost guidance.
 
 Leave `ACR_NAME` and `ACR_RESOURCE_GROUP` **unset** unless you already manage a registry you want Staging and Production to share. When both are omitted, Aspire provisions a registry in the app resource group — the default for forks and self-hosters.
 
-When both are set (repository-level GitHub variables recommended), the AppHost uses `PublishAsExisting`, `WithAzureContainerRegistry`, and `WithAcrPullIdentity` so `aspire deploy` pushes to your existing ACR instead of creating one per tier. The `acr-pull` user-assigned identity (or `acr-pull-staging` on Staging) receives `AcrPull` on the shared registry in a separate Bicep module, which avoids a cross-resource-group Bicep scope error ([Aspire #11256](https://github.com/dotnet/aspire/issues/11256)). Image repositories remain distinct (`app` vs `app-staging` from the AppHost `AzureName` suffix).
+When both are set (repository-level GitHub variables recommended), the AppHost uses `PublishAsExisting`, `WithAzureContainerRegistry`, and `WithAcrPullIdentity` so `aspire deploy` pushes to your existing ACR instead of creating one per tier. The `acr-pull` user-assigned identity (or `acr-pull-staging` on Staging) receives `AcrPull` on the shared registry in a separate Bicep module, which avoids a cross-resource-group Bicep scope error ([Aspire #11256](https://github.com/dotnet/aspire/issues/11256)). Image repositories remain distinct (`web` vs `web-staging` from the AppHost `AzureName` suffix).
 
 | AppHost parameter | CD / local env var | When opting in |
 |---|---|---|
@@ -504,7 +506,7 @@ Solo Dev Board deliberately does **not** include GitHub API or other external de
 
 ### Azure Container Apps configuration
 
-The AppHost registers the readiness probe path for the `app` resource:
+The AppHost registers the readiness probe path for the `web` resource:
 
 ```csharp
 .WithHttpHealthCheck("/health")
@@ -580,7 +582,7 @@ The operator running `az keyvault secret set` needs **Key Vault Secrets Officer*
 | Deploy fails with BCP139 on `aca` / `aca-staging` Bicep | Shared ACR in another resource group on an unfixed AppHost | Upgrade to a build that uses `WithAcrPullIdentity` for shared ACR (see [Optional shared Container Registry](#optional-shared-container-registry)). Do not rely on default `WithAzureContainerRegistry` alone for cross-RG registries. |
 | Deploy fails: acr-name / acr-resource-group mismatch | Only one ACR parameter set | Set both `ACR_NAME` and `ACR_RESOURCE_GROUP`, or omit both for Aspire's default registry. |
 | Aspire deploy fails with `CertificateNotFound` | `CUSTOM_DOMAIN` set but `CUSTOM_DOMAIN_CERTIFICATE_NAME` does not exist in that Container Apps environment | List certificates on the **production** (or staging) ACA environment and set the variable to the certificate **name**, not the hostname. Leave the cert name unset until the managed certificate exists. |
-| Staging disappears after a Production deploy | Both tiers targeted Container App `app` in the shared resource group | Do not re-run staging CD on unfixed `main`. Deploy Staging only after the AppHost `-staging` resource-name suffix is merged, so it provisions `app-staging`. Production stays on `app`. |
+| Staging disappears after a Production deploy | Both tiers targeted Container App `web` in the shared resource group | Do not re-run staging CD on unfixed `main`. Deploy Staging only after the AppHost `-staging` resource-name suffix is merged, so it provisions `web-staging`. Production stays on `web`. |
 | Missing parameter prompt in CI | Secret not mapped | Add `Parameters__*` env vars to the deploy step |
 | Cold start / SignalR disconnect | Scale-to-zero idle | Expected; refresh the page or wait for the container to warm up |
 | 403 after sign-in | Allow-list | Update `ALLOWED_USER_LOGINS` or `ALLOWED_ORG_LOGINS` |

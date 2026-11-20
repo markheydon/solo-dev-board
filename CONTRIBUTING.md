@@ -46,7 +46,7 @@ This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.
    aspire describe
    ```
 
-   Open the `app` resource URL from `aspire describe`.
+   Open the `web` resource URL from `aspire describe`.
 
    **Legacy path (without Aspire):**
    ```bash

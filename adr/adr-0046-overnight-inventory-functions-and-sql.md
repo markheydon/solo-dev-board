@@ -9,7 +9,7 @@
 
 Cross-repository features such as Community Standards health ([#438](https://github.com/markheydon/solo-dev-board/issues/438)), FUNDING.yml checks ([#439](https://github.com/markheydon/solo-dev-board/issues/439)), and repository catalogue roll-ups require enumerating hundreds or thousands of repositories and issuing many per-repo GitHub API calls. Driving that work from Blazor Server page loads conflicts with circuit timeouts, scale-to-zero on Azure Container Apps, and GitHub rate limits.
 
-The AppHost today models a single compute resource (`app`, the Blazor site) per [ADR-0018](adr-0018-aspire-azure-container-apps-deployment.md). [ADR-0016](adr-0016-consider-aspire-for-local-orchestration-and-future-hosting.md) names a second runtime as the revisit trigger. Planning notes in [`plan/archive/ASPIRE_MULTI_PROCESS_FINDINGS.md`](../plan/archive/ASPIRE_MULTI_PROCESS_FINDINGS.md) compared Azure Functions, scheduled Container App Jobs, blob storage, and SQL, but deliberately stopped short of a decision.
+The AppHost today models a single compute resource (`web`, the Blazor site; [ADR-0047](adr-0047-apphost-blazor-resource-name-web.md)) per [ADR-0018](adr-0018-aspire-azure-container-apps-deployment.md). [ADR-0016](adr-0016-consider-aspire-for-local-orchestration-and-future-hosting.md) names a second runtime as the revisit trigger. Planning notes in [`plan/archive/ASPIRE_MULTI_PROCESS_FINDINGS.md`](../plan/archive/ASPIRE_MULTI_PROCESS_FINDINGS.md) compared Azure Functions, scheduled Container App Jobs, blob storage, and SQL, but deliberately stopped short of a decision.
 
 `SoloDevBoard.Composition` already exposes `AddSoloDevBoard` for any host so Application and Infrastructure GitHub logic is not duplicated in a worker.
 
@@ -76,7 +76,7 @@ Governance for wiring lives in constitution Principle VI; this addendum names pa
 
 **AppHost (hosting only, `src/SoloDevBoard.AppHost/`):**
 
-- Graph and references: `FullExperienceAppHostGraph` declares `inventory` (`AddAzureSqlServer` → `AddDatabase("inventory")`), `storage` (`AddAzureStorage` with `RunAsEmulator` / deploy account), `functions` (`AddAzureFunctionsProject` with `WithHostStorage(storage)` and `WithReference(inventory)`), and `app` (`AddDotnetProject` with `WithReference(inventory)`). Resource logical name for SQL access is **`inventory`** everywhere. The lean graph (`LeanAppHostGraph`) models `app` only.
+- Graph and references: `FullExperienceAppHostGraph` declares `inventory` (`AddAzureSqlServer` → `AddDatabase("inventory")`), `storage` (`AddAzureStorage` with `RunAsEmulator` / deploy account), `functions` (`AddAzureFunctionsProject` with `WithHostStorage(storage)` and `WithReference(inventory)`), and `web` (`AddDotnetProject` with `WithReference(inventory)`). Resource logical name for SQL access is **`inventory`** everywhere. The lean graph (`LeanAppHostGraph`) models `web` only.
 - Hosting packages stay on the 13.6.5 family in `Directory.Packages.props`; do not add client integration packages to the AppHost project.
 
 **Consuming compute hosts (client packages, `Program.cs` only):**
@@ -95,11 +95,15 @@ Governance for wiring lives in constitution Principle VI; this addendum names pa
 
 ### Local graph posture (addendum, 2026-11-17)
 
-Constitution v1.1.0 Principle VII: **PAT-only local trusted mode** uses a **lean AppHost graph** (`app` only, optional dev Key Vault). SQL, Functions, and storage are modelled when `hosted-sign-in-enabled` is `true` (local full experience testing, hosted CD, and full experience deploy). AppHost source is split across `AppHost.cs`, `LeanAppHostGraph`, and `FullExperienceAppHostGraph` for readability. Deploy posture follows the same `hosted-sign-in-enabled` gate (PAT self-host deploy stays lean).
+Constitution v1.1.0 Principle VII: **PAT-only local trusted mode** uses a **lean AppHost graph** (`web` only, optional dev Key Vault; see [ADR-0047](adr-0047-apphost-blazor-resource-name-web.md)). SQL, Functions, and storage are modelled when `hosted-sign-in-enabled` is `true` (local full experience testing, hosted CD, and full experience deploy). AppHost source is split across `AppHost.cs`, `LeanAppHostGraph`, and `FullExperienceAppHostGraph` for readability. Deploy posture follows the same `hosted-sign-in-enabled` gate (PAT self-host deploy stays lean).
+
+### Blazor resource name (addendum, 2026-11-20)
+
+Per [ADR-0047](adr-0047-apphost-blazor-resource-name-web.md), the Blazor `AddDotnetProject` logical name is **`web`** (supersedes earlier `app` naming in this ADR's implementation notes). Full-experience graph wiring uses `web` with `WithReference(inventory)`; the lean graph models **`web`** only.
 
 ---
 
 ## References
 
-- [ADR-0016](adr-0016-consider-aspire-for-local-orchestration-and-future-hosting.md), [ADR-0018](adr-0018-aspire-azure-container-apps-deployment.md), [ADR-0043](adr-0043-key-vault-backed-hosted-auth-secrets.md)
+- [ADR-0016](adr-0016-consider-aspire-for-local-orchestration-and-future-hosting.md), [ADR-0018](adr-0018-aspire-azure-container-apps-deployment.md), [ADR-0043](adr-0043-key-vault-backed-hosted-auth-secrets.md), [ADR-0047](adr-0047-apphost-blazor-resource-name-web.md)
 - [`plan/archive/ASPIRE_MULTI_PROCESS_FINDINGS.md`](../plan/archive/ASPIRE_MULTI_PROCESS_FINDINGS.md)

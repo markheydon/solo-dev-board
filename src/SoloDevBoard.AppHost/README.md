@@ -6,8 +6,8 @@ The AppHost models **two resource graphs** (constitution Principle VII). Selecti
 
 | Posture | When | Resources modelled |
 |---|---|---|
-| **Lean AppHost graph** | `hosted-sign-in-enabled` is `false` (default) | `app` only locally; optional dev Key Vault (`auth-secrets`) on Path B |
-| **Hosted sign-in graph** | `hosted-sign-in-enabled` is `true` | `app` only (same deploy surface as lean; hosted OAuth and admission via publish profile) |
+| **Lean AppHost graph** | `hosted-sign-in-enabled` is `false` (default) | `web` only locally; optional dev Key Vault (`auth-secrets`) on Path B |
+| **Hosted sign-in graph** | `hosted-sign-in-enabled` is `true` | `web` only (same deploy surface as lean; hosted OAuth and admission via publish profile) |
 
 Inventory SQL, Azure Functions, and storage from [ADR-0046](../../adr/adr-0046-overnight-inventory-functions-and-sql.md) are **not** modelled in AppHost until Azure SQL is provisionable on the operator subscription. Hosted staging and production CD therefore deploy web compute only (matching v1.4.0), with `hosted-sign-in-enabled` and admission control still enforced on the Container App.
 
@@ -76,7 +76,7 @@ aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 aspire describe
 ```
 
-Open the `app` resource URL shown by `aspire describe`.
+Open the `web` resource URL shown by `aspire describe`.
 
 Default local run uses the **lean graph** (web only). Set `hosted-sign-in-enabled` to `true` to exercise hosted OAuth and admission locally (still web only; no Docker SQL). Path A and Path B Key Vault auth work in **both** postures; see [Key Vault-backed auth secrets](#key-vault-backed-auth-secrets).
 
@@ -97,7 +97,7 @@ Deployment uses `aspire deploy` to Azure Container Apps with scale-to-zero. Appl
 
 ### Health probes
 
-The `app` resource registers `GET /health` as the Container App readiness probe (`.WithHttpHealthCheck("/health")`). A separate `GET /alive` liveness endpoint is also available for manual checks but is not wired as an additional ACA probe in the default AppHost model. Neither probe calls GitHub or other external dependencies — see [Health checks and Container Apps probes](../docs/deployment.md#health-checks-and-container-apps-probes) for the design rationale.
+The `web` resource registers `GET /health` as the Container App readiness probe (`.WithHttpHealthCheck("/health")`). A separate `GET /alive` liveness endpoint is also available for manual checks but is not wired as an additional ACA probe in the default AppHost model. Neither probe calls GitHub or other external dependencies — see [Health checks and Container Apps probes](../docs/deployment.md#health-checks-and-container-apps-probes) for the design rationale.
 
 ### Key Vault-backed auth secrets
 

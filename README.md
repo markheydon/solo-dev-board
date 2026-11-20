@@ -63,7 +63,7 @@ aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 aspire describe
 ```
 
-Open the `app` resource URL shown by `aspire describe` in your browser.
+Open the `web` resource URL shown by `aspire describe` in your browser.
 
 **Optional legacy path (without Aspire):**
 ```bash

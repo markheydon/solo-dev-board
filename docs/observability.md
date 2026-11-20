@@ -24,10 +24,10 @@ Aspire provisions observability resources during `aspire deploy`:
 
 | Resource | Purpose |
 |---|---|
-| **Application Insights** (`app-insights`) | APM, logs, metrics, and traces for the `app` container |
+| **Application Insights** (`app-insights`) | APM, logs, metrics, and traces for the `web` container |
 | **Log Analytics workspace** | Backing store for Application Insights telemetry and Container Apps platform logs |
 
-The AppHost wires the Application Insights connection string into the `app` resource as `APPLICATIONINSIGHTS_CONNECTION_STRING`. No manual secret mapping is required in the CD workflow.
+The AppHost wires the Application Insights connection string into the `web` resource as `APPLICATIONINSIGHTS_CONNECTION_STRING`. No manual secret mapping is required in the CD workflow.
 
 See [Deployment](deployment.md) for the full operator guide.
 
@@ -126,7 +126,7 @@ When Application Insights is unavailable (for example, during a misconfiguration
 ```kusto
 ContainerAppConsoleLogs_CL
 | where TimeGenerated > ago(1h)
-| where ContainerAppName_s == "app"
+| where ContainerAppName_s == "web"
 | order by TimeGenerated desc
 ```
 
@@ -140,7 +140,7 @@ Run the AppHost and open the Aspire dashboard:
 aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 ```
 
-Structured logs, traces, and metrics for the `app` resource appear in the dashboard via OTLP. The AppHost registers Application Insights only in publish/deploy mode, so no Azure credentials or deployment metadata are required for local runs. Application Insights export is inactive locally.
+Structured logs, traces, and metrics for the `web` resource appear in the dashboard via OTLP. The AppHost registers Application Insights only in publish/deploy mode, so no Azure credentials or deployment metadata are required for local runs. Application Insights export is inactive locally.
 
 ---
 

@@ -29,10 +29,10 @@ Cursor Cloud agents often default to **draft** PRs, `cursor/…` branch names, a
 
 ## Running the app (Aspire — the standard path)
 
-- Start: `aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --non-interactive` (runs in the background). Then `aspire ps` for the dashboard URL/token, `aspire describe` for the `app` resource URL (proxied at `https://localhost:5074`), and `aspire stop` to release file locks before rebuilding.
-- Default shipped parameters model the **lean** AppHost graph (`app` only). Set `hosted-sign-in-enabled` to `true` when you need the full inventory stack locally (Docker for SQL, Azurite, Functions). See [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md).
+- Start: `aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --non-interactive` (runs in the background). Then `aspire ps` for the dashboard URL/token, `aspire describe` for the `web` resource URL (proxied at `https://localhost:5074`), and `aspire stop` to release file locks before rebuilding.
+- Default shipped parameters model the **lean** AppHost graph (`web` only). Set `hosted-sign-in-enabled` to `true` when you need the full inventory stack locally (Docker for SQL, Azurite, Functions). See [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md).
 - If a build fails with `MSB3491`/`CS2012` (file locks), run `aspire stop` first — Aspire holds locks on `bin/`/`obj/` while running. See the `aspire-orchestration` skill.
-- Query logs/traces without the dashboard via `aspire logs app`, `aspire otel`, or the Aspire MCP server (see below).
+- Query logs/traces without the dashboard via `aspire logs web`, `aspire otel`, or the Aspire MCP server (see below).
 - Health endpoint: `GET /health` returns `Healthy`. The Home page (`/`) is static navigation and renders without any GitHub call.
 - A direct `dotnet run --project src/SoloDevBoard.Web --no-launch-profile` (with `ASPNETCORE_URLS`) still works as a fallback, but Aspire is the preferred path and matches how the app is developed.
 
@@ -74,7 +74,7 @@ Path B is documented in [docs/azure-key-vault-setup.md](../docs/azure-key-vault-
 2. In the same shell as `aspire start`, set `Azure__SubscriptionId` (and `Azure__Location` to match the vault region). Run `az login` with an identity that has **Key Vault Secrets User** on the dev vault.
 3. Set Aspire **placeholders** only: `aspire secret set Parameters:gh-pat "-"` and `aspire secret set Parameters:gh-app-client-secret "-"` (see the Key Vault setup guide). Real credentials live in the vault secret names `gh-pat` and `gh-app-client-secret`.
 4. **Stop mapping legacy Cloud secrets into secret parameters.** Remove `SDB_GH_PAT` and `SDB_GH_APP_CLIENT_SECRET` from Cursor Cloud secrets and from GitHub Codespaces repository secrets if you use Path B. Codespaces still runs `.devcontainer/map-apphost-secrets.sh` on create; any `SDB_GH_PAT` present rewrites `Parameters:gh-pat` and forces Path A. If user secrets already contain an old PAT, delete them (`aspire secret delete Parameters:gh-pat --apphost src/SoloDevBoard.AppHost`) after removing the repo secret, then set `-` and rebuild or remap.
-5. Confirm with `aspire describe`: `gh-pat` / `gh-app-client-secret` parameters should be **Running** with placeholder `-`; `app` should start using vault-backed env injection when `needVaultForPat` or `needVaultForClientSecret` applies.
+5. Confirm with `aspire describe`: `gh-pat` / `gh-app-client-secret` parameters should be **Running** with placeholder `-`; `web` should start using vault-backed env injection when `needVaultForPat` or `needVaultForClientSecret` applies.
 
 Hosted sign-in on Path B still requires non-secret parameters locally (`hosted-sign-in-enabled`, `gh-app-client-id`, allow-lists). Only the two secret parameters move to Key Vault.
 

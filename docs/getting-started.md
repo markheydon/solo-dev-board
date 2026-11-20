@@ -97,7 +97,7 @@ Solo Dev Board uses **Aspire for local orchestration**, which provides standardi
    aspire describe
    ```
 
-6. Open the `app` resource URL shown by `aspire describe`.
+6. Open the `web` resource URL shown by `aspire describe`.
 
 7. **For a worktree or Codespaces session, use isolation to avoid port and state clashes:**
 
@@ -107,12 +107,13 @@ Solo Dev Board uses **Aspire for local orchestration**, which provides standardi
 
 ### Resources started by Aspire
 
-Local `aspire start` uses the **lean AppHost graph** by default: only the Blazor **`app`** resource (PAT-only local trusted mode). No Docker, SQL, Functions, or Azurite are required for day-to-day contributor work.
+Local `aspire start` uses the **lean AppHost graph** by default: only the Blazor **`web`** resource (PAT-only local trusted mode). No Docker, SQL, Functions, or Azurite are required for day-to-day contributor work.
 
 When `hosted-sign-in-enabled` is `true`, the AppHost models the **full experience graph** from [ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md):
 
 | Resource | Role |
 |---|---|
+| `web` | Blazor Server UI (user-facing HTTP) |
 | `functions` | Azure Functions timer placeholder (future scanners) |
 | `sql` / `inventory` | Snapshot database (`RunAsContainer`; requires Docker) |
 | `storage` | Functions host storage (Azurite locally) |
@@ -191,7 +192,7 @@ Local parameter values always override Key Vault when both are set.
 
 Solo Dev Board is configured via `appsettings.json` and environment variables. **Never commit secrets to source control.**
 
-When running via Aspire (`aspire start`), GitHub auth and admission settings are modelled as **AppHost parameters** and injected into the `app` resource as environment variables (see [Resources started by Aspire](#resources-started-by-aspire) for the full resource graph). See also [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md) for a concise parameter cheat sheet.
+When running via Aspire (`aspire start`), GitHub auth and admission settings are modelled as **AppHost parameters** and injected into the `web` resource as environment variables (see [Resources started by Aspire](#resources-started-by-aspire) for the full resource graph). See also [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md) for a concise parameter cheat sheet.
 
 ### Choose your authentication mode
 
@@ -233,7 +234,7 @@ Also update your GitHub App callback URL to `{app-https-url}/auth/callback` afte
 
 ### Startup validation
 
-On startup, Solo Dev Board validates configuration for the **active mode** and fails fast if required settings for that mode are missing. Check the `app` resource logs in the Aspire dashboard or your IDE output.
+On startup, Solo Dev Board validates configuration for the **active mode** and fails fast if required settings for that mode are missing. Check the `web` resource logs in the Aspire dashboard or your IDE output.
 
 | Active mode | Required settings |
 |---|---|
@@ -301,7 +302,7 @@ Your GitHub login is resolved automatically from the PAT at startup. You can als
 #### Hosted sign-in setup
 
 1. **Create or reuse a GitHub App** at [GitHub → Settings → Developer settings → GitHub Apps](https://github.com/settings/apps). Note the **Client ID** and generate a **Client secret**. Apply the [GitHub App listing](github-app.md) checklist (logo, homepage, callback URLs, expiring user tokens, and minimum permissions).
-2. **Start Aspire once** to allocate an HTTPS endpoint, then run `aspire describe` and note the `app` resource HTTPS URL.
+2. **Start Aspire once** to allocate an HTTPS endpoint, then run `aspire describe` and note the `web` resource HTTPS URL.
 3. **Register the callback URL** on your GitHub App: `{https-endpoint}/auth/callback` (for example, `https://localhost:17123/auth/callback`). Solo Dev Board sets `GitHubAuth:HostedSignInCallbackBaseUri` from the Aspire endpoint automatically.
 4. **Install the GitHub App** on the users or organisations you want to test with.
 5. **Configure AppHost parameters:**
@@ -321,7 +322,7 @@ Set non-secret values via the dashboard, `appsettings.json`, or user secrets:
 }
 ```
 
-6. **Restart Aspire** and open `/auth/sign-in` on the `app` URL.
+6. **Restart Aspire** and open `/auth/sign-in` on the `web` URL.
 
 See [Hosted Authentication Guide](hosted-authentication.md) for operator expectations, admission control, and production deployment notes.
 

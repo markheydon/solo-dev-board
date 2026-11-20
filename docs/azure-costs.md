@@ -13,7 +13,7 @@ Aspire deploys resources according to deploy posture (`hosted-sign-in-enabled`).
 | Resource | Purpose | Pricing model |
 |---|---|---|
 | Azure Container Apps environment | Hosts containerised workloads on the Consumption profile | Environment + per-use compute |
-| Container App (`app`) | Solo Dev Board Blazor Server application | Consumption (vCPU-seconds, memory, requests) |
+| Container App (`web`) | Solo Dev Board Blazor Server application | Consumption (vCPU-seconds, memory, requests) |
 | Azure Container Registry (Basic) | Stores built container images when not using a shared registry ([DEC-025](../adr/adr-0025-optional-shared-azure-container-registry.md)) | Fixed monthly (Basic tier) when Aspire provisions one per deploy |
 | Azure Key Vault (`auth-secrets`) | Auth secrets at deploy time ([ADR-0045](../adr/adr-0045-persistent-key-vault-dual-path-local-secrets.md)) | Operations + optional HSM SKUs; secret operations are low volume |
 | Log Analytics workspace | Container platform logs and Application Insights backing store | Per GB ingested |

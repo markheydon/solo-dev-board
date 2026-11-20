@@ -52,7 +52,7 @@ internal sealed class SoloDevBoardAppHost
     internal IResourceBuilder<DotnetProjectResource> CreateWebApp()
     {
 #pragma warning disable ASPIREDOTNETPROJECT001
-        var app = Builder.AddDotnetProject(Naming.AzureName("app"), "../SoloDevBoard.Web/SoloDevBoard.Web.csproj");
+        var app = Builder.AddDotnetProject(Naming.AzureName("web"), "../SoloDevBoard.Web/SoloDevBoard.Web.csproj");
 #pragma warning restore ASPIREDOTNETPROJECT001
 
         return app
