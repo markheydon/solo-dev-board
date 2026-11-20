@@ -162,7 +162,7 @@ End-user documentation is published from `website/` to [GitHub Pages](https://so
 
 ## AI-Driven Development
 
-Solo Dev Board is developed with AI agents as active collaborators. [`AGENTS.md`](AGENTS.md), [`CONVENTIONS.md`](CONVENTIONS.md), and skills under [`.agents/skills/`](.agents/skills/) define architecture, conventions, and review workflow. For Cursor Cloud VM development, see [`plan/CURSOR_CLOUD.md`](plan/CURSOR_CLOUD.md).
+Solo Dev Board is developed with AI agents as active collaborators. [`AGENTS.md`](AGENTS.md), [`CONVENTIONS.md`](CONVENTIONS.md), project skills under [`.agents/skills/`](.agents/skills/), and the Aspire skills plugin in [`.cursor/settings.json`](.cursor/settings.json) define architecture, conventions, and review workflow. For Cursor Cloud VM development, see [`plan/CURSOR_CLOUD.md`](plan/CURSOR_CLOUD.md).
 
 ---
 
