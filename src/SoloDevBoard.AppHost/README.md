@@ -7,18 +7,9 @@ The AppHost models **two resource graphs** (constitution Principle VII). Selecti
 | Posture | When | Resources modelled |
 |---|---|---|
 | **Lean AppHost graph** | `hosted-sign-in-enabled` is `false` (default) | `app` only locally; optional dev Key Vault (`auth-secrets`) on Path B |
-| **Full experience graph** | `hosted-sign-in-enabled` is `true` | `app`, `functions`, `sql` / `inventory`, `storage` (and ACA env on deploy) |
+| **Hosted sign-in graph** | `hosted-sign-in-enabled` is `true` | `app` only (same deploy surface as lean; hosted OAuth and admission via publish profile) |
 
-### Full experience resources
-
-| Resource | Role |
-|---|---|
-| `app` | Blazor Server UI (external HTTP) |
-| `functions` | Azure Functions isolated worker (timer placeholder; future overnight scans) |
-| `sql` / `inventory` | Azure SQL snapshot store (local SQL container via `RunAsContainer` with Docker volume `inventory-sql-data`) |
-| `storage` / `storagestaging` (Staging) | Functions host storage (Azurite locally) |
-
-In the full experience graph, the web app receives a connection reference to `inventory` but does not register a SQL client until a feature reads snapshots. The Functions worker is a timer placeholder only; it uses Aspire `ServiceDefaults` until the first inventory scanner wires `AddSoloDevBoard` and GitHub credentials per [ADR-0046](../../adr/adr-0046-overnight-inventory-functions-and-sql.md).
+Inventory SQL, Azure Functions, and storage from [ADR-0046](../../adr/adr-0046-overnight-inventory-functions-and-sql.md) are **not** modelled in AppHost until Azure SQL is provisionable on the operator subscription. Hosted staging and production CD therefore deploy web compute only (matching v1.4.0), with `hosted-sign-in-enabled` and admission control still enforced on the Container App.
 
 ### AppHost source layout
 
@@ -87,7 +78,7 @@ aspire describe
 
 Open the `app` resource URL shown by `aspire describe`.
 
-Default local run uses the **lean graph** (web only). Set `hosted-sign-in-enabled` to `true` when you need the full inventory stack locally (requires Docker for SQL). Path A and Path B Key Vault auth work in **both** postures; see [Key Vault-backed auth secrets](#key-vault-backed-auth-secrets).
+Default local run uses the **lean graph** (web only). Set `hosted-sign-in-enabled` to `true` to exercise hosted OAuth and admission locally (still web only; no Docker SQL). Path A and Path B Key Vault auth work in **both** postures; see [Key Vault-backed auth secrets](#key-vault-backed-auth-secrets).
 
 Application Insights is deploy-time only. Local telemetry uses the Aspire dashboard via OTLP; no Azure subscription or deployment metadata is required.
 

@@ -552,6 +552,25 @@ az identity delete --name id-solodevboard-cd --resource-group <acr-resource-grou
 
 ---
 
+## UK South tier relocation
+
+Operator procedure for rebuilding **staging** and **production** app resource groups in **UK South** after they were created in another region (for example UK West). Key Vaults and resource groups cannot change region in place; you delete the app resource group, recreate it in UK South, recreate the tier vault with the same name, restore secrets, and re-grant RBAC before CD.
+
+Full checklist: [plan/UK_SOUTH_TIER_MIGRATION.md](../plan/UK_SOUTH_TIER_MIGRATION.md).
+
+- Set `AZURE_LOCATION=uksouth` on both GitHub Environments before CD.
+- Tier vaults (`auth-secrets-staging`, `auth-secrets`) must be created in the **same region** as `Azure__Location` for that tier.
+- Purge soft-deleted vaults before reusing a vault name.
+- Shared ACR (`ACR_NAME` / `ACR_RESOURCE_GROUP`) may remain in another region (for example UK West); Container Apps in UK South can pull from it.
+
+### Permissions after app RG recreate
+
+Deleting `rg-solodevboard-stage` or `rg-solodevboard-prod` removes **Contributor** and **User Access Administrator** role assignments on that group for `id-solodevboard-cd`. Recreating the group does not restore them. After each recreate, assign both roles on the new group scope before `aspire deploy` (shared-ACR layout: identity in the ACR resource group). See [shared ACR OIDC setup](#2-create-a-github-actions-oidc-identity-shared-acr).
+
+The operator running `az keyvault secret set` needs **Key Vault Secrets Officer** on each new tier vault. Aspire deploy assigns **Key Vault Secrets User** to app and Functions managed identities when CD holds **User Access Administrator** on the app resource group.
+
+---
+
 ## Troubleshooting
 
 | Symptom | Likely cause | Action |
@@ -570,5 +589,8 @@ az identity delete --name id-solodevboard-cd --resource-group <acr-resource-grou
 | Home dashboard shown without sign-in | Missing login gate or placeholder deploy parameters | Confirm `/` redirects to `/welcome`; redeploy with `Parameters__*` env vars mapped in CD; verify Container App env shows real client ID and allow-list values. CI Playwright `hosted` job asserts this gate with placeholder credentials. |
 | PAT-only local trusted mode shows `/welcome` or requires sign-in | `hosted-sign-in-enabled` still `true` | Set `HOSTED_SIGN_IN_ENABLED` / `Parameters__hosted_sign_in_enabled` to `false` and redeploy |
 | PAT-only local trusted mode starts but GitHub calls fail | Missing or invalid `gh-pat` in Key Vault | Set a real PAT in the tier vault with required scopes; confirm `/health/github` and the **@login** chip |
+| `provision-sql-staging` / `ProvisioningDisabled` / `RegionDoesNotAllowProvisioning` | Partner or programme subscription SQL region block | Confirm with `az sql server create` in the target region. Open a **Service and subscription limits** support request for SQL in UK South, or see [plan/UK_SOUTH_TIER_MIGRATION.md](../plan/UK_SOUTH_TIER_MIGRATION.md). |
+| `InvalidResourceLocation` after changing `AZURE_LOCATION` | Same resource names still exist in the old region in the app RG | Greenfield delete of the app RG (see [UK South tier relocation](#uk-south-tier-relocation)) or align location with existing resources. |
+| `provision-auth-secrets-staging` Key Vault `ResourceNotFound` | Vault missing, soft-deleted, or RBAC propagation lag | Confirm vault in the app RG; purge and recreate; re-run CD after Contributor + UAA on the app RG are restored. |
 
 For local development, see [Getting Started](getting-started.md) (including [PAT-only local trusted mode](getting-started.md#pat-only-local-trusted-mode)). For hosted authentication details, see [Hosted Authentication](hosted-authentication.md). For the Key Vault pattern, see [plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md](../plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md).
