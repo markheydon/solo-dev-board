@@ -24,7 +24,7 @@ UK English in documentation, comments, and user-facing text. Do not use the em d
 
 ## Skills
 
-**Project skills** live in [`.agents/skills/`](.agents/skills/). **Spec Kit workflow skills** live in [`.cursor/skills/`](.cursor/skills/) (`speckit-*`); invoke them via `/speckit-specify`, `/speckit-plan`, and the other `/speckit-*` commands.
+**Project skills** live in [`.agents/skills/`](.agents/skills/). Aspire workflow and `dotnet-inspect` companions are **vendored in git** (Aspire 17 does not populate them for Cursor via `aspire agent init`). Refresh them per [`docs/maintaining-agent-skills.md`](docs/maintaining-agent-skills.md). **Spec Kit workflow skills** live in [`.cursor/skills/`](.cursor/skills/) (`speckit-*`); invoke them via `/speckit-specify`, `/speckit-plan`, and the other `/speckit-*` commands.
 
 | Skill | Use when |
 | --- | --- |

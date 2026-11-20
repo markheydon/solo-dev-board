@@ -45,7 +45,7 @@ Cursor Cloud agents often default to **draft** PRs, `cursor/…` branch names, a
 
 ## Dev Container (local / Codespaces)
 
-The dev container uses Aspire feature v3, `dev-agent-tools`, and `cursor-cli` (see [`.devcontainer/devcontainer.json`](../.devcontainer/devcontainer.json)). WSL2 developers exporting the dev HTTPS certificate to the Windows host can run [`scripts/export-dev-cert-for-windows-host.sh`](../scripts/export-dev-cert-for-windows-host.sh).
+The dev container uses Aspire feature v3, `dev-agent-tools`, and `cursor-cli` (see [`.devcontainer/devcontainer.json`](../.devcontainer/devcontainer.json)). Aspire and `dotnet-inspect` agent skills are vendored under `.agents/skills/` in the repo; see [`docs/maintaining-agent-skills.md`](../docs/maintaining-agent-skills.md) to refresh them (no npm `playwright-cli` skill in this project). WSL2 developers exporting the dev HTTPS certificate to the Windows host can run [`scripts/export-dev-cert-for-windows-host.sh`](../scripts/export-dev-cert-for-windows-host.sh).
 
 ---
 
