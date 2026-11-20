@@ -1,7 +1,10 @@
 {
   "appHost": {
-    "language": "csharp",
-    "path": "src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj"
+    "path": "src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj",
+    "language": "csharp"
+  },
+  "sdk": {
+    "version": "17.0.0"
   },
   "channel": "stable"
 }

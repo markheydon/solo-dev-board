@@ -51,7 +51,7 @@ Volatile-data Infrastructure caching (issues, pull requests, workflow runs) rema
 | Health endpoints bypass hosted admission control middleware | Unit | `HostedAdmissionControlMiddlewareTests.cs` |
 | E2E smoke: `/health` returns `Healthy` before browser tests run | E2E | `tests/SoloDevBoard.E2E.Tests/Tests/SmokeTests`, `.github/workflows/playwright.yml` |
 
-Hosting probe wiring (`.WithHttpHealthCheck("/health")` on the AppHost `app` resource) is validated by manual deploy verification and operator documentation in [docs/deployment.md](../docs/deployment.md). AppHost orchestration modelling is not unit-tested per repository policy.
+Hosting probe wiring (`.WithHttpHealthCheck("/health")` on the AppHost `web` resource) is validated by manual deploy verification and operator documentation in [docs/deployment.md](../docs/deployment.md). AppHost orchestration modelling is not unit-tested per repository policy.
 
 `/health/github` is registered in `SoloDevBoard.Web` for optional PAT connectivity monitoring. It is excluded from the default Azure Container Apps readiness probe so external GitHub outages do not trigger container restarts.
 

@@ -6,25 +6,16 @@ The AppHost models **two resource graphs** (constitution Principle VII). Selecti
 
 | Posture | When | Resources modelled |
 |---|---|---|
-| **Lean AppHost graph** | `hosted-sign-in-enabled` is `false` (default) | `app` only locally; optional dev Key Vault (`auth-secrets`) on Path B |
-| **Full experience graph** | `hosted-sign-in-enabled` is `true` | `app`, `functions`, `sql` / `inventory`, `storage` (and ACA env on deploy) |
+| **Lean AppHost graph** | `hosted-sign-in-enabled` is `false` (default) | `web` only locally; optional dev Key Vault (`auth-secrets`) on Path B |
+| **Hosted sign-in graph** | `hosted-sign-in-enabled` is `true` | `web` only (same deploy surface as lean; hosted OAuth and admission via publish profile) |
 
-### Full experience resources
-
-| Resource | Role |
-|---|---|
-| `app` | Blazor Server UI (external HTTP) |
-| `functions` | Azure Functions isolated worker (timer placeholder; future overnight scans) |
-| `sql` / `inventory` | Azure SQL snapshot store (local SQL container via `RunAsContainer` with Docker volume `inventory-sql-data`) |
-| `storage` / `storagestaging` (Staging) | Functions host storage (Azurite locally) |
-
-In the full experience graph, the web app receives a connection reference to `inventory` but does not register a SQL client until a feature reads snapshots. The Functions worker is a timer placeholder only; it uses Aspire `ServiceDefaults` until the first inventory scanner wires `AddSoloDevBoard` and GitHub credentials per [ADR-0046](../../adr/adr-0046-overnight-inventory-functions-and-sql.md).
+Inventory SQL, Azure Functions, and storage from [ADR-0046](../../adr/adr-0046-overnight-inventory-functions-and-sql.md) are **not** modelled in AppHost ([ADR-0046](../../adr/adr-0046-overnight-inventory-functions-and-sql.md) **Withdrawn**; persistence under reconsideration). Hosted staging and production CD deploy **web** compute only, with `hosted-sign-in-enabled` and admission control still enforced on the Container App.
 
 ### AppHost source layout
 
-[`AppHost.cs`](AppHost.cs) is the entry point. Graph and deploy logic lives in sibling types: `LeanAppHostGraph`, `FullExperienceAppHostGraph`, `AppHostPublishProfile`, `AppHostParameters`, and `SoloDevBoardAppHost` (orchestrator).
+[`AppHost.cs`](AppHost.cs) is the entry point. Graph and deploy logic lives in sibling types: `LeanAppHostGraph`, `HostedSignInAppHostGraph`, `AppHostPublishProfile`, `AppHostParameters`, and `SoloDevBoardAppHost` (orchestrator).
 
-The AppHost opts into the Aspire CLI bundle (`AspireUseCliBundle=true`). Dashboard and DCP orchestration binaries come from the Aspire CLI on `PATH` (or the SDK-paired `Aspire.Cli` via `dnx` when no CLI is installed). Keep your local `aspire` version aligned with `Aspire.AppHost.Sdk` (`13.6.5` today): run `aspire --version` and upgrade with `aspire update --self` when needed.
+The AppHost opts into the Aspire CLI bundle (`AspireUseCliBundle=true`). Dashboard and DCP orchestration binaries come from the Aspire CLI on `PATH` (or the SDK-paired `Aspire.Cli` via `dnx` when no CLI is installed). Keep your local `aspire` version aligned with the AppHost hosting packages (`17.0.0` today): run `aspire --version` and upgrade with `aspire update --self` when needed.
 
 GitHub authentication is configured through **AppHost parameters**. Local **Path A** injects secret parameters directly (`aspire secret set`). Local **Path B** and **deploy** read pre-populated secrets from an existing Azure Key Vault via `GetSecret` references.
 
@@ -85,9 +76,9 @@ aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 aspire describe
 ```
 
-Open the `app` resource URL shown by `aspire describe`.
+Open the `web` resource URL shown by `aspire describe`.
 
-Default local run uses the **lean graph** (web only). Set `hosted-sign-in-enabled` to `true` when you need the full inventory stack locally (requires Docker for SQL). Path A and Path B Key Vault auth work in **both** postures; see [Key Vault-backed auth secrets](#key-vault-backed-auth-secrets).
+Default local run uses the **lean graph** (web only). Set `hosted-sign-in-enabled` to `true` to exercise hosted OAuth and admission locally (still web only; no Docker SQL). Path A and Path B Key Vault auth work in **both** postures; see [Key Vault-backed auth secrets](#key-vault-backed-auth-secrets).
 
 Application Insights is deploy-time only. Local telemetry uses the Aspire dashboard via OTLP; no Azure subscription or deployment metadata is required.
 
@@ -106,7 +97,7 @@ Deployment uses `aspire deploy` to Azure Container Apps with scale-to-zero. Appl
 
 ### Health probes
 
-The `app` resource registers `GET /health` as the Container App readiness probe (`.WithHttpHealthCheck("/health")`). A separate `GET /alive` liveness endpoint is also available for manual checks but is not wired as an additional ACA probe in the default AppHost model. Neither probe calls GitHub or other external dependencies — see [Health checks and Container Apps probes](../docs/deployment.md#health-checks-and-container-apps-probes) for the design rationale.
+The `web` resource registers `GET /health` as the Container App readiness probe (`.WithHttpHealthCheck("/health")`). A separate `GET /alive` liveness endpoint is also available for manual checks but is not wired as an additional ACA probe in the default AppHost model. Neither probe calls GitHub or other external dependencies — see [Health checks and Container Apps probes](../docs/deployment.md#health-checks-and-container-apps-probes) for the design rationale.
 
 ### Key Vault-backed auth secrets
 

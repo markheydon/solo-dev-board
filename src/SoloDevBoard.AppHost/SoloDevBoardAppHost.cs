@@ -1,4 +1,3 @@
-using Aspire.Hosting.Azure;
 using Aspire.Hosting.Azure.AppContainers;
 using Aspire.Hosting.Dotnet;
 
@@ -28,17 +27,14 @@ internal sealed class SoloDevBoardAppHost
     /// <summary>Blazor web compute resource.</summary>
     public IResourceBuilder<DotnetProjectResource> App { get; private set; } = null!;
 
-    /// <summary>Azure Functions worker when the full experience graph is modelled.</summary>
-    public IResourceBuilder<AzureFunctionsProjectResource>? Functions { get; private set; }
-
     /// <summary>Azure Container Apps environment when publishing.</summary>
     public IResourceBuilder<AzureContainerAppEnvironmentResource>? ContainerAppEnvironment { get; private set; }
 
     /// <summary>
-    /// Returns <see langword="true" /> when hosted sign-in enables the full experience graph.
+    /// Returns <see langword="true" /> when hosted sign-in is enabled (hosted graph: web compute only).
     /// </summary>
-    public bool UseFullExperiencePosture =>
-        AppHostPostureResolver.UseFullExperiencePosture(Builder.Configuration);
+    public bool UseHostedSignInPosture =>
+        AppHostPostureResolver.UseHostedSignInPosture(Builder.Configuration);
 
     /// <summary>Declares parameters used by every graph.</summary>
     public void AddSharedParameters() => Parameters = AppHostParameters.AddShared(Builder);
@@ -46,18 +42,16 @@ internal sealed class SoloDevBoardAppHost
     /// <summary>Models PAT-only local trusted mode: web compute and optional dev Key Vault.</summary>
     public void ConfigureLeanLocalRun() => LeanAppHostGraph.ConfigureLocalRun(this);
 
-    /// <summary>Models hosted sign-in locally with the full inventory stack and optional dev Key Vault.</summary>
-    public void ConfigureFullExperienceLocalRun() => FullExperienceAppHostGraph.ConfigureLocalRun(this);
+    /// <summary>Models hosted sign-in locally (web compute; optional dev Key Vault).</summary>
+    public void ConfigureHostedSignInLocalRun() => HostedSignInAppHostGraph.ConfigureLocalRun(this);
 
-    /// <summary>Models Azure deploy for lean or full experience posture.</summary>
+    /// <summary>Models Azure deploy for lean or hosted sign-in posture.</summary>
     public void ConfigurePublish() => AppHostPublishProfile.Configure(this);
 
     /// <summary>Creates the web project resource with shared auth environment bindings.</summary>
     internal IResourceBuilder<DotnetProjectResource> CreateWebApp()
     {
-#pragma warning disable ASPIREDOTNETPROJECT001
-        var app = Builder.AddDotnetProject(Naming.AzureName("app"), "../SoloDevBoard.Web/SoloDevBoard.Web.csproj");
-#pragma warning restore ASPIREDOTNETPROJECT001
+        var app = Builder.AddDotnetProject(Naming.AzureName("web"), "../SoloDevBoard.Web/SoloDevBoard.Web.csproj");
 
         return app
             .WithHttpHealthCheck("/health")
@@ -77,10 +71,6 @@ internal sealed class SoloDevBoardAppHost
     /// <summary>Stores the web app builder.</summary>
     /// <param name="app">Web app resource builder.</param>
     internal void SetApp(IResourceBuilder<DotnetProjectResource> app) => App = app;
-
-    /// <summary>Stores the Functions worker builder.</summary>
-    /// <param name="functions">Functions resource builder.</param>
-    internal void SetFunctions(IResourceBuilder<AzureFunctionsProjectResource> functions) => Functions = functions;
 
     /// <summary>Stores the Container Apps environment builder.</summary>
     /// <param name="aca">Container App environment resource builder.</param>

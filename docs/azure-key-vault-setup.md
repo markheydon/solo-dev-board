@@ -136,16 +136,16 @@ Same Entra user as portal, with **Key Vault Secrets User** (or Officer) on the d
 
 ### Reading the Aspire dashboard (Path B)
 
-Use `aspire describe` or the dashboard **Resources** list. Judge success by **`app`**, not every Azure row.
+Use `aspire describe` or the dashboard **Resources** list. Judge success by **`web`**, not every Azure row.
 
 | Resource | Healthy local Path B | Notes |
 | --- | --- | --- |
-| `app` | **Running** + HTTPS URL | Open this URL for SoloDevBoard. |
+| `web` | **Running** + HTTPS URL | Open this URL for SoloDevBoard. |
 | `gh-pat` / `gh-app-client-secret` | **Running** (not ValueMissing) | Placeholders `-` in user secrets; real values from Key Vault. |
 | `auth-secrets` | May show provisioning briefly | `AsExisting` reference to your dev vault. |
-| `azure-environment` | May show **Failed** if a child Azure step failed earlier | Often harmless when `app` is healthy. |
+| `azure-environment` | May show **Failed** if a child Azure step failed earlier | Often harmless when `web` is healthy. |
 
-In **`app` console logs**, expect: `GitHub auth: hosted sign-in is active` (hosted) or the PAT-only local trusted mode message. If `app` is **Starting** forever, open logs for `Waiting for value from Aspire.Hosting.Azure.AzureKeyVaultSecretReference` (check `az login` and **Secrets User**).
+In **`web` console logs**, expect: `GitHub auth: hosted sign-in is active` (hosted) or the PAT-only local trusted mode message. If `web` is **Starting** forever, open logs for `Waiting for value from Aspire.Hosting.Azure.AzureKeyVaultSecretReference` (check `az login` and **Secrets User**).
 
 If parameters are **ValueMissing**, complete steps 1–2 above before chasing Azure resources.
 
@@ -213,7 +213,7 @@ export Parameters__allowed_org_logins="-"
 aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 ```
 
-8. Confirm `app` logs: PAT-only local trusted mode or hosted sign-in active (see [Startup validation](getting-started.md#startup-validation)).
+8. Confirm `web` logs: PAT-only local trusted mode or hosted sign-in active (see [Startup validation](getting-started.md#startup-validation)).
 
 Quick vault checks before `aspire start` (use the same shell where you created the vault, or re-export names):
 

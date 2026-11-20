@@ -14,3 +14,7 @@ GitHub Actions CD uses two protected GitHub Environments — `staging` and `prod
 ## Notes
 
 See git history of `plan/DECISIONS.md` for full rationale, related links, and clarifications prior to migration.
+
+### Addendum (2026-11-20)
+
+[ADR-0047](adr-0047-apphost-blazor-resource-name-web.md) renames the Blazor Container App logical resource from `app` to `web`. Staging suffix is `web-staging`; Production is `web`. Other staged names are unchanged (`aca-staging`, `auth-secrets-staging`, `app-insights-staging`, and production counterparts).

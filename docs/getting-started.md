@@ -12,7 +12,7 @@ Before you begin, ensure you have the following installed:
 |---|---|---|
 | [.NET SDK](https://dotnet.microsoft.com/download/dotnet/10.0) | 10.0 or later | Required to build and run the application |
 | Git | Any recent version | Required to clone the repository |
-| Aspire CLI | 13.6.5 (match `Aspire.AppHost.Sdk`) | Required for local orchestration via AppHost; install with `curl -sSL https://aspire.dev/install.sh \| bash -s -- --version 13.6.5` or `dotnet tool install -g Aspire.Cli --version 13.6.5` |
+| Aspire CLI | 17.0.0 (match AppHost `Aspire.Hosting.*` packages) | Required for local orchestration via AppHost; install with `curl -sSL https://aspire.dev/install.sh \| bash -s -- --version 17.0.0` or `dotnet tool install -g Aspire.Cli --version 17.0.0` |
 | A GitHub account | — | Required for GitHub API access |
 | A GitHub Personal Access Token (PAT) **or** GitHub App | — | Required for API authentication (see below) |
 
@@ -97,7 +97,7 @@ Solo Dev Board uses **Aspire for local orchestration**, which provides standardi
    aspire describe
    ```
 
-6. Open the `app` resource URL shown by `aspire describe`.
+6. Open the `web` resource URL shown by `aspire describe`.
 
 7. **For a worktree or Codespaces session, use isolation to avoid port and state clashes:**
 
@@ -107,17 +107,11 @@ Solo Dev Board uses **Aspire for local orchestration**, which provides standardi
 
 ### Resources started by Aspire
 
-Local `aspire start` uses the **lean AppHost graph** by default: only the Blazor **`app`** resource (PAT-only local trusted mode). No Docker, SQL, Functions, or Azurite are required for day-to-day contributor work.
+Local `aspire start` uses the **lean AppHost graph** by default: only the Blazor **`web`** resource (PAT-only local trusted mode). No Docker, SQL, Functions, or Azurite are required for day-to-day contributor work.
 
-When `hosted-sign-in-enabled` is `true`, the AppHost models the **full experience graph** from [ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md):
+When `hosted-sign-in-enabled` is `true`, the AppHost still models **`web` only** for compute: hosted GitHub App OAuth, admission control, and optional dev Key Vault (Path B). No Docker, SQL, Azure Functions, or Azurite are required locally.
 
-| Resource | Role |
-|---|---|
-| `functions` | Azure Functions timer placeholder (future scanners) |
-| `sql` / `inventory` | Snapshot database (`RunAsContainer`; requires Docker) |
-| `storage` | Functions host storage (Azurite locally) |
-
-Optional dev Key Vault (Path B) applies in both postures. See [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md).
+Overnight inventory and durable snapshot storage were proposed in [ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md) (withdrawn); they are **not** wired in AppHost. See [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md).
 
 ### GitHub Codespaces secrets
 
@@ -134,6 +128,8 @@ Codespaces and dev containers can load AppHost parameters from repository **Code
 | `SDB_ALLOWED_ORG_LOGINS` | `allowed-org-logins` |
 
 On container create, `.devcontainer/map-apphost-secrets.sh` maps any set `SDB_*` variables into AppHost parameters with `aspire secret set` (the same user-secrets store as manual `dotnet user-secrets` on the AppHost project). Rebuild the Codespace after adding or changing secrets.
+
+On the same create step, `.devcontainer/install-aspire-cli.sh` installs Aspire CLI `17.0.0` under `~/.aspire/bin` (prepended on `PATH`) so `dotnet build SoloDevBoard.slnx` resolves the CLI bundle AppHost expects, then `.devcontainer/install-playwright-browsers.sh` builds the E2E project, installs Chromium via the C# Playwright driver (`pwsh …/playwright.ps1 install chromium`), and runs `install-deps chromium` for Ubuntu libraries Playwright needs. No Node.js is required. After a container rebuild, `dotnet test SoloDevBoard.slnx` includes Playwright E2E and should not fail for missing browsers (the run is still slow compared with the unit filter).
 
 On each container start, `aspire certs trust --non-interactive` (see [`postStartCommand`](../.devcontainer/devcontainer.json)) trusts the ASP.NET HTTPS development certificate. `SSL_CERT_DIR` in `remoteEnv` keeps the trust store visible so `aspire doctor` does not warn about partial certificate trust.
 
@@ -165,7 +161,7 @@ When you run locally, open **More options → About** to see the MinVer-calculat
 | E2E only (PAT-only local trusted mode) | `./scripts/test-e2e.sh` or `.\scripts\test-e2e.ps1` |
 | Full CI parity before a PR | `./scripts/test-all.sh` or `.\scripts\test-all.ps1` |
 
-Use `SoloDevBoard.UnitTests.slnf` or `scripts/test-unit` for the fast path. Plain `dotnet test` on `SoloDevBoard.slnx` still includes Playwright E2E under xUnit v3 MTP and is slow. See [`tests/SoloDevBoard.E2E.Tests/README.md`](../tests/SoloDevBoard.E2E.Tests/README.md) for E2E prerequisites (PowerShell and a one-time Chromium install).
+Use `SoloDevBoard.UnitTests.slnf` or `scripts/test-unit` for the fast path. Plain `dotnet test` on `SoloDevBoard.slnx` still includes Playwright E2E under xUnit v3 MTP and is slow. In the dev container, Chromium is installed on create; outside the container see [`tests/SoloDevBoard.E2E.Tests/README.md`](../tests/SoloDevBoard.E2E.Tests/README.md) for a one-time `playwright.ps1 install chromium` step.
 
 ---
 
@@ -191,7 +187,7 @@ Local parameter values always override Key Vault when both are set.
 
 Solo Dev Board is configured via `appsettings.json` and environment variables. **Never commit secrets to source control.**
 
-When running via Aspire (`aspire start`), GitHub auth and admission settings are modelled as **AppHost parameters** and injected into the `app` resource as environment variables (see [Resources started by Aspire](#resources-started-by-aspire) for the full resource graph). See also [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md) for a concise parameter cheat sheet.
+When running via Aspire (`aspire start`), GitHub auth and admission settings are modelled as **AppHost parameters** and injected into the `web` resource as environment variables (see [Resources started by Aspire](#resources-started-by-aspire) for the full resource graph). See also [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md) for a concise parameter cheat sheet.
 
 ### Choose your authentication mode
 
@@ -233,7 +229,7 @@ Also update your GitHub App callback URL to `{app-https-url}/auth/callback` afte
 
 ### Startup validation
 
-On startup, Solo Dev Board validates configuration for the **active mode** and fails fast if required settings for that mode are missing. Check the `app` resource logs in the Aspire dashboard or your IDE output.
+On startup, Solo Dev Board validates configuration for the **active mode** and fails fast if required settings for that mode are missing. Check the `web` resource logs in the Aspire dashboard or your IDE output.
 
 | Active mode | Required settings |
 |---|---|
@@ -301,7 +297,7 @@ Your GitHub login is resolved automatically from the PAT at startup. You can als
 #### Hosted sign-in setup
 
 1. **Create or reuse a GitHub App** at [GitHub → Settings → Developer settings → GitHub Apps](https://github.com/settings/apps). Note the **Client ID** and generate a **Client secret**. Apply the [GitHub App listing](github-app.md) checklist (logo, homepage, callback URLs, expiring user tokens, and minimum permissions).
-2. **Start Aspire once** to allocate an HTTPS endpoint, then run `aspire describe` and note the `app` resource HTTPS URL.
+2. **Start Aspire once** to allocate an HTTPS endpoint, then run `aspire describe` and note the `web` resource HTTPS URL.
 3. **Register the callback URL** on your GitHub App: `{https-endpoint}/auth/callback` (for example, `https://localhost:17123/auth/callback`). Solo Dev Board sets `GitHubAuth:HostedSignInCallbackBaseUri` from the Aspire endpoint automatically.
 4. **Install the GitHub App** on the users or organisations you want to test with.
 5. **Configure AppHost parameters:**
@@ -321,7 +317,7 @@ Set non-secret values via the dashboard, `appsettings.json`, or user secrets:
 }
 ```
 
-6. **Restart Aspire** and open `/auth/sign-in` on the `app` URL.
+6. **Restart Aspire** and open `/auth/sign-in` on the `web` URL.
 
 See [Hosted Authentication Guide](hosted-authentication.md) for operator expectations, admission control, and production deployment notes.
 

@@ -17,7 +17,9 @@ Both paths use the same Aspire / Azure Container Apps stack. Only the AppHost pa
 
 ## CD pipeline tiers (DEC-021)
 
-GitHub Actions CD (`.github/workflows/cd.yml`) deploys to two hosted tiers. Aspire `--environment` does **not** suffix Azure resource names on its own; the AppHost suffixes Staging resources (`aca-staging`, `app-staging`, and so on) so they do not overwrite Production when both tiers target the **same** app resource group. Production keeps the original names (`aca`, `app`) so an existing production Container App is not recreated. The **app resource group** is an operator choice per GitHub Environment — use one RG for both tiers or separate RGs. Both tiers use GitHub App hosted sign-in. PAT-only local trusted mode is for local development and personal self-hosting via local `aspire deploy` only — not as a hosted CD tier.
+GitHub Actions CD (`.github/workflows/cd.yml`) deploys to two hosted tiers. Aspire `--environment` does **not** suffix Azure resource names on its own; the AppHost suffixes Staging resources (`aca-staging`, `web-staging`, and so on) so they do not overwrite Production when both tiers target the **same** app resource group. Production keeps the original names (`aca`, `web`) so an existing production Container App is not recreated. The **app resource group** is an operator choice per GitHub Environment — use one RG for both tiers or separate RGs. Both tiers use GitHub App hosted sign-in. PAT-only local trusted mode is for local development and personal self-hosting via local `aspire deploy` only — not as a hosted CD tier.
+
+Environments deployed before [ADR-0047](../adr/adr-0047-apphost-blazor-resource-name-web.md) may still have Container Apps named `app` / `app-staging`. The next successful deploy after that ADR provisions **`web` / `web-staging`** as new ACA identities; retire or delete legacy Container Apps and update saved Kusto filters (`ContainerAppName_s`) when you cut over.
 
 | Tier | Trigger | GitHub Environment | Aspire `--environment` | Authentication |
 |---|---|---|---|---|
@@ -443,7 +445,7 @@ Aspire generates and applies Bicep at deploy time. The graph matches **hosted si
 | Resource | Purpose |
 |---|---|
 | Azure Container Apps environment | Hosts the containerised app (Consumption profile) |
-| Container App (`app`) | Runs Solo Dev Board (scale-to-zero enabled) |
+| Container App (`web`) | Runs Solo Dev Board (scale-to-zero enabled) |
 | Azure Container Registry | Stores built container images (Aspire-provisioned per deployment, or optional shared registry — see [Optional shared Container Registry](#optional-shared-container-registry)) |
 | Azure Key Vault (`auth-secrets`, or `auth-secrets-staging`) | Pre-populated auth secrets referenced at deploy time ([ADR-0045](../adr/adr-0045-persistent-key-vault-dual-path-local-secrets.md)) |
 | Application Insights | Application logs, metrics, and distributed traces |
@@ -451,15 +453,11 @@ Aspire generates and applies Bicep at deploy time. The graph matches **hosted si
 | Aspire dashboard | Optional operational dashboard (Aspire default) |
 | Managed identities | Image pull and runtime authentication |
 
-### Full experience deploy only (hosted sign-in tiers)
+### Inventory stack (not deployed)
 
-| Resource | Purpose |
-|---|---|
-| Azure Functions (`functions`) | Overnight inventory worker (timer placeholder until scanners ship; [ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md)) |
-| Azure SQL (`sql`) / database (`inventory`) | Derived repository snapshots for inventory features |
-| Azure Storage (`storage` / `storagestaging` on Staging) | Functions host storage (not product snapshot blobs) |
+Hosted sign-in Staging and Production deploys **web compute only** (same infrastructure baseline as lean PAT self-host for Azure resources). Overnight inventory (Azure Functions, SQL, storage) was described in [ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md), which is **Withdrawn**; AppHost does not provision `functions`, `inventory`, or `storage` until a future ADR records a replacement approach.
 
-[PAT self-host](#self-hoster-deployment-pat-only-local-trusted-mode) deploy omits SQL, Functions, and storage; the Container App and Key Vault still deploy. Vault bindings on publish apply to `app` (and `functions` when present).
+[PAT self-host](#self-hoster-deployment-pat-only-local-trusted-mode) and hosted sign-in deploy both provision the Container App (`web`) and tier Key Vault. Vault bindings on publish apply to `web` only.
 
 See [Azure Deployment Costs](azure-costs.md) for cost guidance.
 
@@ -469,7 +467,7 @@ See [Azure Deployment Costs](azure-costs.md) for cost guidance.
 
 Leave `ACR_NAME` and `ACR_RESOURCE_GROUP` **unset** unless you already manage a registry you want Staging and Production to share. When both are omitted, Aspire provisions a registry in the app resource group — the default for forks and self-hosters.
 
-When both are set (repository-level GitHub variables recommended), the AppHost uses `PublishAsExisting`, `WithAzureContainerRegistry`, and `WithAcrPullIdentity` so `aspire deploy` pushes to your existing ACR instead of creating one per tier. The `acr-pull` user-assigned identity (or `acr-pull-staging` on Staging) receives `AcrPull` on the shared registry in a separate Bicep module, which avoids a cross-resource-group Bicep scope error ([Aspire #11256](https://github.com/dotnet/aspire/issues/11256)). Image repositories remain distinct (`app` vs `app-staging` from the AppHost `AzureName` suffix).
+When both are set (repository-level GitHub variables recommended), the AppHost uses `PublishAsExisting`, `WithAzureContainerRegistry`, and `WithAcrPullIdentity` so `aspire deploy` pushes to your existing ACR instead of creating one per tier. The `acr-pull` user-assigned identity (or `acr-pull-staging` on Staging) receives `AcrPull` on the shared registry in a separate Bicep module, which avoids a cross-resource-group Bicep scope error ([Aspire #11256](https://github.com/dotnet/aspire/issues/11256)). Image repositories remain distinct (`web` vs `web-staging` from the AppHost `AzureName` suffix).
 
 | AppHost parameter | CD / local env var | When opting in |
 |---|---|---|
@@ -504,7 +502,7 @@ Solo Dev Board deliberately does **not** include GitHub API or other external de
 
 ### Azure Container Apps configuration
 
-The AppHost registers the readiness probe path for the `app` resource:
+The AppHost registers the readiness probe path for the `web` resource:
 
 ```csharp
 .WithHttpHealthCheck("/health")
@@ -552,6 +550,25 @@ az identity delete --name id-solodevboard-cd --resource-group <acr-resource-grou
 
 ---
 
+## UK South tier relocation
+
+Operator procedure for rebuilding **staging** and **production** app resource groups in **UK South** after they were created in another region (for example UK West). Key Vaults and resource groups cannot change region in place; you delete the app resource group, recreate it in UK South, recreate the tier vault with the same name, restore secrets, and re-grant RBAC before CD.
+
+Full checklist: [plan/UK_SOUTH_TIER_MIGRATION.md](../plan/UK_SOUTH_TIER_MIGRATION.md).
+
+- Set `AZURE_LOCATION=uksouth` on both GitHub Environments before CD.
+- Tier vaults (`auth-secrets-staging`, `auth-secrets`) must be created in the **same region** as `Azure__Location` for that tier.
+- Purge soft-deleted vaults before reusing a vault name.
+- Shared ACR (`ACR_NAME` / `ACR_RESOURCE_GROUP`) may remain in another region (for example UK West); Container Apps in UK South can pull from it.
+
+### Permissions after app RG recreate
+
+Deleting `rg-solodevboard-stage` or `rg-solodevboard-prod` removes **Contributor** and **User Access Administrator** role assignments on that group for `id-solodevboard-cd`. Recreating the group does not restore them. After each recreate, assign both roles on the new group scope before `aspire deploy` (shared-ACR layout: identity in the ACR resource group). See [shared ACR OIDC setup](#2-create-a-github-actions-oidc-identity-shared-acr).
+
+The operator running `az keyvault secret set` needs **Key Vault Secrets Officer** on each new tier vault. Aspire deploy assigns **Key Vault Secrets User** to app and Functions managed identities when CD holds **User Access Administrator** on the app resource group.
+
+---
+
 ## Troubleshooting
 
 | Symptom | Likely cause | Action |
@@ -561,7 +578,7 @@ az identity delete --name id-solodevboard-cd --resource-group <acr-resource-grou
 | Deploy fails with BCP139 on `aca` / `aca-staging` Bicep | Shared ACR in another resource group on an unfixed AppHost | Upgrade to a build that uses `WithAcrPullIdentity` for shared ACR (see [Optional shared Container Registry](#optional-shared-container-registry)). Do not rely on default `WithAzureContainerRegistry` alone for cross-RG registries. |
 | Deploy fails: acr-name / acr-resource-group mismatch | Only one ACR parameter set | Set both `ACR_NAME` and `ACR_RESOURCE_GROUP`, or omit both for Aspire's default registry. |
 | Aspire deploy fails with `CertificateNotFound` | `CUSTOM_DOMAIN` set but `CUSTOM_DOMAIN_CERTIFICATE_NAME` does not exist in that Container Apps environment | List certificates on the **production** (or staging) ACA environment and set the variable to the certificate **name**, not the hostname. Leave the cert name unset until the managed certificate exists. |
-| Staging disappears after a Production deploy | Both tiers targeted Container App `app` in the shared resource group | Do not re-run staging CD on unfixed `main`. Deploy Staging only after the AppHost `-staging` resource-name suffix is merged, so it provisions `app-staging`. Production stays on `app`. |
+| Staging disappears after a Production deploy | Both tiers targeted Container App `web` in the shared resource group | Do not re-run staging CD on unfixed `main`. Deploy Staging only after the AppHost `-staging` resource-name suffix is merged, so it provisions `web-staging`. Production stays on `web`. |
 | Missing parameter prompt in CI | Secret not mapped | Add `Parameters__*` env vars to the deploy step |
 | Cold start / SignalR disconnect | Scale-to-zero idle | Expected; refresh the page or wait for the container to warm up |
 | 403 after sign-in | Allow-list | Update `ALLOWED_USER_LOGINS` or `ALLOWED_ORG_LOGINS` |
@@ -570,5 +587,8 @@ az identity delete --name id-solodevboard-cd --resource-group <acr-resource-grou
 | Home dashboard shown without sign-in | Missing login gate or placeholder deploy parameters | Confirm `/` redirects to `/welcome`; redeploy with `Parameters__*` env vars mapped in CD; verify Container App env shows real client ID and allow-list values. CI Playwright `hosted` job asserts this gate with placeholder credentials. |
 | PAT-only local trusted mode shows `/welcome` or requires sign-in | `hosted-sign-in-enabled` still `true` | Set `HOSTED_SIGN_IN_ENABLED` / `Parameters__hosted_sign_in_enabled` to `false` and redeploy |
 | PAT-only local trusted mode starts but GitHub calls fail | Missing or invalid `gh-pat` in Key Vault | Set a real PAT in the tier vault with required scopes; confirm `/health/github` and the **@login** chip |
+| `provision-sql-staging` / `ProvisioningDisabled` / `RegionDoesNotAllowProvisioning` | Historical: full graph with Azure SQL (withdrawn [ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md)) | Current CD does not provision SQL. If a future ADR reintroduces SQL, see [plan/UK_SOUTH_TIER_MIGRATION.md](../plan/UK_SOUTH_TIER_MIGRATION.md) for subscription region limits. |
+| `InvalidResourceLocation` after changing `AZURE_LOCATION` | Same resource names still exist in the old region in the app RG | Greenfield delete of the app RG (see [UK South tier relocation](#uk-south-tier-relocation)) or align location with existing resources. |
+| `provision-auth-secrets-staging` Key Vault `ResourceNotFound` | Vault missing, soft-deleted, or RBAC propagation lag | Confirm vault in the app RG; purge and recreate; re-run CD after Contributor + UAA on the app RG are restored. |
 
 For local development, see [Getting Started](getting-started.md) (including [PAT-only local trusted mode](getting-started.md#pat-only-local-trusted-mode)). For hosted authentication details, see [Hosted Authentication](hosted-authentication.md). For the Key Vault pattern, see [plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md](../plan/HOSTED_AUTH_KEY_VAULT_PATTERN.md).

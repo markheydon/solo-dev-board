@@ -24,7 +24,7 @@ UK English in documentation, comments, and user-facing text. Do not use the em d
 
 ## Skills
 
-**Project skills** live in [`.agents/skills/`](.agents/skills/). **Spec Kit workflow skills** live in [`.cursor/skills/`](.cursor/skills/) (`speckit-*`); invoke them via `/speckit-specify`, `/speckit-plan`, and the other `/speckit-*` commands.
+**Project skills** (authored for this repository) live in [`.agents/skills/`](.agents/skills/). **Aspire workflow skills** (`aspire`, `aspire-init`, `aspireify`, `aspire-orchestration`, `aspire-monitoring`, `aspire-deployment`, `aspire-project-v2-migration`, `aspire-terminals`) load from the Cursor **aspire-skills** plugin pinned in [`.cursor/settings.json`](.cursor/settings.json) (Aspire 17 marketplace model). Bump the plugin `gitRef` per [`docs/maintaining-agent-skills.md`](docs/maintaining-agent-skills.md). **`dotnet-inspect`** remains vendored under `.agents/skills/dotnet-inspect/`. **Spec Kit workflow skills** live in [`.cursor/skills/`](.cursor/skills/) (`speckit-*`); invoke them via `/speckit-specify`, `/speckit-plan`, and the other `/speckit-*` commands.
 
 | Skill | Use when |
 | --- | --- |
@@ -33,8 +33,9 @@ UK English in documentation, comments, and user-facing text. Do not use the em d
 | `code-review` | PR or branch review before merge (see [`.cursor/commands/loop-code-review.md`](.cursor/commands/loop-code-review.md)) |
 | `implementation-guardrails` | Non-trivial implementation: architecture fit, proportionality, root-cause fixes, build/test discipline |
 | `mudblazor` | Blazor UI pages and components (MudBlazor patterns) |
+| Aspire plugin skills (see above) | AppHost wiring, CLI lifecycle, logs and deploy, terminals |
 
-Onboard **.NET Aspire** using current official documentation (not copied Aspire skills from this repository).
+Official Aspire reference: [aspire.dev](https://aspire.dev/).
 
 ## Task Routing
 

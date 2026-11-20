@@ -6,9 +6,9 @@ if (builder.ExecutionContext.IsPublishMode)
 {
     host.ConfigurePublish();
 }
-else if (host.UseFullExperiencePosture)
+else if (host.UseHostedSignInPosture)
 {
-    host.ConfigureFullExperienceLocalRun();
+    host.ConfigureHostedSignInLocalRun();
 }
 else
 {

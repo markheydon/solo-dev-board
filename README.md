@@ -63,7 +63,7 @@ aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj
 aspire describe
 ```
 
-Open the `app` resource URL shown by `aspire describe` in your browser.
+Open the `web` resource URL shown by `aspire describe` in your browser.
 
 **Optional legacy path (without Aspire):**
 ```bash
@@ -86,7 +86,7 @@ solo-dev-board/
 ├── src/SoloDevBoard.Domain/      # Domain entities and value objects
 ├── src/SoloDevBoard.Infrastructure/ # GitHub API clients, external integrations
 ├── src/SoloDevBoard.AppHost/     # Aspire AppHost (local orchestration and Azure deployment)
-├── src/SoloDevBoard.Functions/   # Azure Functions worker (overnight inventory; timer placeholder)
+├── src/SoloDevBoard.Functions/   # Ice-boxed Functions placeholder (not in AppHost; ADR-0046 withdrawn)
 ├── src/SoloDevBoard.ServiceDefaults/  # Aspire service defaults (telemetry, health checks)
 ├── tests/
 │   ├── SoloDevBoard.Web.Tests/   # bUnit component tests
@@ -162,7 +162,7 @@ End-user documentation is published from `website/` to [GitHub Pages](https://so
 
 ## AI-Driven Development
 
-Solo Dev Board is developed with AI agents as active collaborators. [`AGENTS.md`](AGENTS.md), [`CONVENTIONS.md`](CONVENTIONS.md), and skills under [`.agents/skills/`](.agents/skills/) define architecture, conventions, and review workflow. For Cursor Cloud VM development, see [`plan/CURSOR_CLOUD.md`](plan/CURSOR_CLOUD.md).
+Solo Dev Board is developed with AI agents as active collaborators. [`AGENTS.md`](AGENTS.md), [`CONVENTIONS.md`](CONVENTIONS.md), project skills under [`.agents/skills/`](.agents/skills/), and the Aspire skills plugin in [`.cursor/settings.json`](.cursor/settings.json) define architecture, conventions, and review workflow. For Cursor Cloud VM development, see [`plan/CURSOR_CLOUD.md`](plan/CURSOR_CLOUD.md).
 
 ---
 

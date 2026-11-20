@@ -17,12 +17,13 @@
 	},
 	"onCreateCommand": "sudo apt-get update && sudo apt-get install -y libnss3-tools azure-functions-core-tools-4",
 	"remoteEnv": {
+		"PATH": "/home/vscode/.aspire/bin:${containerEnv:PATH}",
 		"SSL_CERT_DIR": "/usr/lib/ssl/certs:/home/vscode/.aspnet/dev-certs/trust",
 		"CURSOR_API_KEY": "${localEnv:CURSOR_API_KEY}",
 		"GH_TOKEN": "${localEnv:GH_TOKEN}",
 		"GH_HOST": "github.com"
 	},
-	"postCreateCommand": "bash .devcontainer/map-apphost-secrets.sh",
+	"postCreateCommand": "bash .devcontainer/map-apphost-secrets.sh && bash .devcontainer/install-aspire-cli.sh && bash .devcontainer/install-playwright-browsers.sh",
 	"postStartCommand": "aspire certs trust --non-interactive",
 	"customizations": {
 		"vscode": {

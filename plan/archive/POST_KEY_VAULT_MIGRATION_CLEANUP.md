@@ -1,6 +1,6 @@
 # Post-migration Azure cleanup (ADR-0045)
 
-**Status:** Complete (2026-11-15). Executed after production CD on release tag `v1.3.0` and operator verification on staging, production, and local Path B. Retained as a historical checklist for subscriptions that still hold legacy Aspire vaults or empty `rg-aspire-*` groups.
+**Status:** Complete (2026-11-15). Executed after production CD on release tag `v1.3.0` and operator verification on staging, production, and local Path B. Retained as a historical checklist for subscriptions that still hold legacy Aspire vaults or empty `rg-aspire-*` groups. UK South tier relocation (2026-11) reused the same persistent vault name pattern; see [UK_SOUTH_TIER_MIGRATION.md](../UK_SOUTH_TIER_MIGRATION.md).
 
 Operator checklist for removing leftover resources after **persistent** tier Key Vaults (`auth-secrets-staging`, `auth-secrets`) are proven in CD. Do not run this immediately after merging ADR-0045; wait until a **production** release deploy succeeds.
 

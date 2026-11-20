@@ -1,33 +1,73 @@
 ---
 name: dotnet-inspect
-description: Find evidence for .NET packages, platform libraries, assemblies, APIs, dependencies, SourceLink/source, and API version diffs.
+version: 0.28.0
+description: Find and share evidence instead of guessing about .NET packages, libraries, APIs, dependencies, source, performance, and version changes.
 ---
 
-# dotnet-inspect
+# dotnet-inspect: .NET Metadata and IL Analysis Tool
 
-Use dotnet-inspect for evidence instead of guesses about .NET packages, platform libraries, local assemblies, APIs, dependencies, SourceLink/source, or version-to-version API changes.
+Use dotnet-inspect to find evidence about compiled .NET code: discover APIs,
+follow relationships into implementation and source, investigate risks, and
+explain what changed. Skills teach basic tasks, command entrances and common
+arguments; installed evidence supplies the depth. Facts support judgment, not
+an automatic quality or safety verdict.
 
-Invoke with `dnx` (like `npx`); always pass `-y` and `--` to avoid interactive prompts:
+Run `dnx dotnet-inspect -y -- <command-or-target>`. `-y` skips confirmation;
+`--` passes the remaining arguments to dotnet-inspect. If intent or result space
+is unclear, use a bare target and let the router choose. Otherwise start directly.
+Use `skill <name>` for a focused workflow only when the question needs it.
 
-```bash
-dnx dotnet-inspect -y -- <command>
-```
+## Common starts
 
-This bundled skill is intentionally only a bootstrapper. For non-trivial work, first run the version-matched embedded guide. It always matches the installed tool, so prefer it whenever commands, output modes, section names, or workflow guidance differ:
+| Question | Evidence you can pursue | Start here |
+| -------- | ----------------------- | ---------- |
+| Where does an API live? | Public types and members across installed .NET Runtime, ASP.NET Core, and .NET Standard populations, including Microsoft.Extensions; explicit package, project and prefix scopes extend the search. | `find JsonSerializer -n 5 --table`, `find ControllerBase -n 5 --table`, or `find OptionsBuilder -n 5 --table`. For package APIs: `find IChatClient --package Microsoft.Extensions.AI.Abstractions -n 5 --table`; use `--project path/to/project` or `--package-prefix PREFIX` with a symbol pattern. Add `--members` for member names. |
+| Which package or library should I inspect? | Package identity, versions, contents and documents; Library-grain discovery and public API shape. | `find --packages Foo` or `find --packages 'Foo.*'`, then `package <exact-id>` for its Library tree or `package <exact-id> -S "Package Info"` for package facts. Use `package Foo --versions -n 1` for the newest listed version or `package Foo@latest --versions` for a fresh check. Use `find --libraries ./bin --where "references=System.Text.Json"` for Libraries, then `library path/to.dll`. |
+| Can I search a whole Library's API many times without rerunning the tool? | One JSON API Reference per Library: every public Type and Member as a one-line record with documentation ID, structured signature, name family, summary and SourceLink location, plus lookups such as parameter and return types. | `library Foo -S "API Reference" -o foo.api.json`, then `grep` and `jq` the file; add `--all` for every declaration. Write it with `-o`: it is large (megabytes), `-o` replaces a file only when the write completes, and a nonzero exit means partial or aborted. Do not read the whole file into context. |
+| How do I call this API? | Signatures, overloads, nullable annotations, defaults, documentation and related Findings. | `type Type --package Foo`, then `member Type --package Foo -m Name -S "Member Index"`. Select `Name:N` (1-based) or stable `Name~digest`; add `--all` for hidden/non-public declarations. A selected overload defaults to Signature; `-S "Finding Census" --json` correlates its Facts and annotated source. |
+| How is this code organized, and where should I investigate? | Library metrics, architectural families, namespace cycles, explaining Type edges and concentrated call paths. | `library Foo -S "Library Metrics"`, then discover related sections with `library -D`. Load `skill project-analysis` for a bounded orientation or evidence-backed deep dive, not an inspect-everything checklist. |
+| Who depends on, extends, implements or calls this API? | Dependency graphs, receiver extensions, implementors, subclasses, callers and cross-package call-use clusters. | `depends Type`, `extensions Type`, `type Interface -S Implementers`, or `type Base -S "Derived Types"`, with an explicit scope where needed. Load `skill relationships` to follow calls and distinguish direct declarations from transitive or live applicability evidence. |
+| Which dependencies need attention? | Direct/transitive declarations, platform-provided references, licenses, version lag, vulnerabilities and update impediments. | `depends --package Foo@version --tfm net10.0`; for a restored project use `depends --project path/to/project -S "Pruning,Latest Versions" --tfm net10.0`. Explicit `-S Licenses` inventories dependency licenses, excluding explicit roots; load `skill relationships` for acquisition and completeness boundaries. Load `skill project-analysis` for the dependency-risk workflow; platform pruning and API compatibility are different questions. |
+| What has changed across an ecosystem? | Network-backed recent package activity, current advisory context and evidenced security releases across the ecosystem's declared package population. | `package activity --ecosystem aspire`; add `--security-only` for security activity. Read the report's time window and coverage before interpreting an empty result. |
+| Does a performance or correctness signal deserve a deeper look? | Allocation candidates, leverage and callers; unsafe operations, exceptions, resource lifetimes and exact Member/IL locations. | `library Foo -S "Performance:*"` or `library Foo -S "Unsafe Code"`. Load `skill performance` or `skill correctness` to trace a candidate. Static evidence is not measured runtime cost, and incomplete analysis is not proof of absence. |
+| Can I read the implementation and establish its provenance? | Authored source, PDB/SourceLink evidence, decompiled C#, annotated IL, raw metadata and package signals. | `type Type --package Foo -S Source` selects authored-first source with fallback context. Load `skill sourcelink` for provenance, `skill decompiler` for implementation fidelity, `skill metadata` for ECMA-335 tables, or `skill signals` for package evidence. Decompiled text is not the original source. |
+| What changed beyond the public API? | Assessed breaks, the complete API change population, implementation/body differences, structural similarity, analysis shifts, changed literals and version history. | `diff --package Foo@old..new --breaking`; load `skill compatibility` for the other evidence paths, including `match` for exact body comparisons or similar-member discovery. `diff --history --package Foo@old..new --type Type --members --major-versions` traces checkpoints, not every intermediate version. An assessed subset is not the complete change population. |
+| Can I find packages by what their libraries contain? | Bounded package discovery using dependencies, references, metadata and decoded string literals. | Discover a facet with `explain literal`, then read `explain <path> .hal --json` using the returned path. Follow its CLI binding and required context. Load `skill query` for composition and work limits; reaching a candidate limit is not family-wide completeness. |
+| Can I retain and share the environment or investigation? | Workspace packets as portable currency between CLI and website: declarations, immutable Package edits, live inventory and admitted saved inspections. | `workspace --register-ecosystem runtime` authors a packet without acquisition; add `--share url` for an activation URL. Load `skill query` for both website/CLI handoffs and the registration-to-Find-to-Package workflow. `workspace --packet "$w"` validates a packet; `--inventory` explicitly realizes inventory. Ordinary inspection commands consume admitted `--workspace "$w"` context. Apply `-w "$w"` or raw packet input to replay Workspace inventory, saved Package Libraries, Type API or Member overview; other saved facets/queries fail visibly. Saved Member overview does not admit Count. |
+| What does this extracted Workspace declaration actually establish? | Declared Package/target fields and, only with the actual parent, qualified path, context and focus. | `workspace component list --packet "$w"` obtains descriptors and edit paths. `explain --component component.json` explains one extracted descriptor; add `--parent-packet "$w"` only for parent-dependent questions. `--packet`/`--parent-packet` take the packet value, not a file path; missing parent facts remain unavailable, not false. |
+| Does this package provide its own usage guidance? | Package-authored skills selected from restored project dependencies. | `project path/to/project -S Skills`, then load `skill package-skills` to select and read relevant guidance. Use `skill private-feeds` for authenticated/custom feeds and offline acquisition. |
 
-```bash
-dnx dotnet-inspect -y -- skill
-```
+## Follow the evidence
 
-## Seed commands
+- When you do not know the capability, bare `explain` gives routing hints and `explain <task-text>` searches installed capabilities. Follow a returned exact path or binding; a search miss does not prove the tool lacks the capability. Use command help or the relevant focused skill to recover. When the route is known, use `-D` for sections and `-Q` for facets/operators directly; neither requires a detour through the root.
+- On Member, `member --explain` explains the command; `member Type Method --explain` explains the resolved group or exact selector. Add `-E` to retain ordinary stdout and put the explanation on stderr, or `-E .tips` for contextual suggestions. These are Member gestures, not universal flags.
+- Use `explain vocabularies --json` for legal-value discovery. For supported vocabulary, query-space, facet and discovery readings, request `.hal --json`: `_embedded` is included data, `_links` supplies navigation. Cache the response, select locally with jq, preserve `scope` (profile, population and completeness), `data_scope` and applicable data states where emitted, and follow hrefs unchanged only for missing knowledge. Unselected values are unknown, not false. Do not fetch a contract or another copy merely to confirm an answered question.
+- Preserve package/version, selected Library, TFM/RID and exact Type/Member identities. Read diagnostics, completion and boundaries before interpreting empty output. Platform queries use installed packs when available, otherwise package-backed sources; for a non-conventional install verify `<root>/packs` and set process-scoped `DOTNET_ROOT`, not `PATH`. `--project` reads restored assets: restore/build first when dependencies changed.
+- Start with ordinary domain output. Use `--table`, `--tsv`, `--jsonl` or `--json` when needed; load `skill query` for section/field selection, row limits, envelopes and Share. Stop when the requested answer has sufficient evidence, or name the missing evidence. Unpinned packages use latest stable; `--preview` opts into prereleases. Quote generics and patterns, such as `'List<T>'` and `-S "Async*"`.
 
-| Goal | Command |
-| ---- | ------- |
-| Find where an API lives | `find Pattern` |
-| Inspect types or members | `type Type --package Foo`, then `member Type --package Foo` |
-| Compare versions | `diff --package Foo@old..new --breaking` |
-| Inspect package or library signals | `package Foo -S Signals` or `library Foo -S Signals` |
-| Locate source or implementation | `source Type --package Foo` or `member Type Member:1 -S "Decompiled Source"` |
-| Explore relationships | `depends Type`, `extensions Type`, `implements Interface` |
+## Interpret fixed text
 
-After `find`, reuse the package, library, or platform scope it reports. Quote generic type names such as `'List<T>'`; use `<T>`, not `<>`.
+- `[Text omitted: required containment]`: a complete value or document was not shared because it carried a text concern; this does not imply malicious intent.
+- `REDACTED`: a URL query or credential-bearing path segment was removed.
+- `<unparsable-url>`: no original locator was shown because an authority-like value could not be parsed into URL components.
+- `<absent>` or `(absent)`: a requested package document was not present; this is not containment or redaction.
+- `\u202E`, `\U0001F600`, `\^[`, and similar backslash forms preserve source text as reversible visual spellings. Do not decode them into live control or format characters before display or persistence.
+
+## Skills
+
+Targeted skills are available for more advanced topics. Print one with `dotnet-inspect skill <name>` when a task needs it, or run `dotnet-inspect skill list` to see them all.
+
+| Skill | Use it for |
+| ----- | ---------- |
+| query | Discover dotnet-inspect capabilities and query rules, select inspection sections, and shape answers with common formats, projections and limits; follow installed explanation for deeper contracts. |
+| package-skills | Discover version-matched agent skills in restored NuGet dependencies or an exact package, select relevant guidance and load it without changing the repository; persist skills only when explicitly requested. |
+| private-feeds | Inspect packages from private or folder NuGet feeds using explicit sources, mapping and noninteractive authentication; preserve source authority and distinguish failures from package absence. |
+| compatibility | Compare .NET library versions for API breaks, implementation changes and static analysis shifts; follow exact API correspondence and history without treating comparisons as safe-upgrade verdicts. |
+| correctness | Investigate .NET exception handling, unsafe operations, interop boundaries and pooled-resource ownership using exact Member and IL evidence; static findings do not establish overall safety. |
+| signals | Check NuGet package and .NET library provenance, advisories, compatibility metadata and unsafe/interop declarations; investigate focused audit evidence while keeping observations distinct from trust verdicts. |
+| sourcelink | Locate .NET source files and Member spans through Portable PDB and SourceLink data, then read checksum-matched content locally or remotely while preserving provenance and availability boundaries. |
+| metadata | Inspect raw ECMA-335 metadata in a .NET assembly; discover tables and heaps, read decoded rows and handles, locate exact coordinates and project bounded machine-readable results. |
+| decompiler | Read .NET method and type implementations as authored-first source, decompiled C#, annotated source or IL; interpret reconstruction fidelity and locate exact code coordinates. Use --offline to prohibit network acquisition. |
+| performance | Find high-leverage .NET methods with allocation and repetition evidence, trace candidate costs through calls and IL, and select focused profiling or benchmark follow-ups rather than claiming measured wins. |
+| relationships | Trace .NET package and Type dependencies, implementors, subclasses, extensions, calls and callers; use scoped graph evidence to explain connections without claiming unverified coverage. |
+| project-analysis | Review .NET projects, packages and libraries as a quick orientation or evidence-bounded deep dive; explain dependencies, structure, performance candidates and ownership concerns without treating metrics as verdicts. |

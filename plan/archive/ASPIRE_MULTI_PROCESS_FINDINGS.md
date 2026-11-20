@@ -1,6 +1,6 @@
 # Aspire from the start — multi-process findings
 
-**Status:** Archived planning findings. **Compute and snapshot storage choice** for overnight inventory is decided in [ADR-0046](../../adr/adr-0046-overnight-inventory-functions-and-sql.md) (Azure Functions, Azure SQL `inventory`, Functions host storage). This file remains background on a possible future `apiservice` split. Does not change [SCOPE.md](../../SCOPE.md).  
+**Status:** Archived planning findings. Overnight inventory was proposed in [ADR-0046](../../adr/adr-0046-overnight-inventory-functions-and-sql.md) (Azure Functions and Azure SQL); that ADR is **Withdrawn** and persistence is under reconsideration. This file remains background on a possible future `apiservice` split. Does not change [SCOPE.md](../../SCOPE.md).  
 **Date:** 2026-08-14  
 **Audience:** Maintainer review before any split of the current single-process AppHost.
 
@@ -326,7 +326,7 @@ A greenfield “Aspire from day one” would have started at step 2 with an empt
 
 - Current AppHost: `src/SoloDevBoard.AppHost/AppHost.cs`.
 - ADR-0016 / DEC-013, DEC-015, DEC-017.
-- Aspire 13.4.6 docs (CLI `aspire docs`): Azure Functions hosting, runtime configuration, supported triggers, Azure Container App Jobs. Versions in this note were current at the time of writing (2026-08-14); the repo now targets Aspire 13.6.5.
+- Aspire 13.4.6 docs (CLI `aspire docs`): Azure Functions hosting, runtime configuration, supported triggers, Azure Container App Jobs. Versions in this note were current at the time of writing (2026-08-14); the repo now targets Aspire **17.0.0** (web-only AppHost graph; inventory stack withdrawn per ADR-0046).
 - Package discovery: `Aspire.Hosting.Azure.Functions` 13.4.6 via `aspire integration search azure-functions`.
 
 ---

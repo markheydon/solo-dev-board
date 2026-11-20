@@ -1,0 +1,9 @@
+{
+  "plugins": {
+    "aspire-skills/aspire": {
+      "enabled": true,
+      "gitUrl": "https://github.com/microsoft/aspire-skills",
+      "gitRef": "e529b608336cd41c1b1262aa76d00d9e4ef1bff8"
+    }
+  }
+}

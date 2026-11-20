@@ -12,8 +12,8 @@ Cursor Cloud agents often default to **draft** PRs, `cursor/…` branch names, a
 
 ## Toolchain
 
-- The .NET SDK pinned by `global.json` (currently `10.0.400` with `rollForward: latestFeature`) is installed at `~/.dotnet`; the Aspire CLI (`13.6.5`, matching `Aspire.AppHost.Sdk`) is installed as a global tool at `~/.dotnet/tools`. Both are on `PATH` via `~/.bashrc`. Non-login shells (for example `bash -c`) do not source `~/.bashrc`, so invoke the SDK with the absolute path `~/.dotnet/dotnet` when `dotnet`/`aspire` are not already on `PATH`.
-- The AppHost sets `AspireUseCliBundle=true`, so Dashboard and DCP come from the CLI bundle. Cloud already installs Aspire CLI `13.6.5`; keep it aligned with `Aspire.AppHost.Sdk` when upgrading.
+- The .NET SDK pinned by `global.json` (currently `10.0.400` with `rollForward: latestFeature`) is installed at `~/.dotnet`; the Aspire CLI (`17.0.0`, matching AppHost `Aspire.Hosting.*` packages) is installed as a global tool at `~/.dotnet/tools`. Both are on `PATH` via `~/.bashrc`. Non-login shells (for example `bash -c`) do not source `~/.bashrc`, so invoke the SDK with the absolute path `~/.dotnet/dotnet` when `dotnet`/`aspire` are not already on `PATH`.
+- The AppHost sets `AspireUseCliBundle=true`, so Dashboard and DCP come from the CLI bundle. Cloud already installs Aspire CLI `17.0.0`; keep it aligned with AppHost hosting package versions when upgrading. Dev Containers run [`.devcontainer/install-aspire-cli.sh`](../.devcontainer/install-aspire-cli.sh) on create (CLI `17.0.0` under `~/.aspire/bin`, prepended on `PATH` via `devcontainer.json`) so MSBuild does not resolve the older feature-shipped CLI at `/usr/local/bin`.
 - The startup update script only runs `dotnet restore SoloDevBoard.slnx` (this also restores the AppHost). Building, testing, linting, and running are left to you.
 
 ---
@@ -21,18 +21,18 @@ Cursor Cloud agents often default to **draft** PRs, `cursor/…` branch names, a
 ## Build, test, lint
 
 - Build: `dotnet build SoloDevBoard.slnx`.
-- Test (xUnit v3 + NSubstitute, fully offline — GitHub is mocked): `dotnet test SoloDevBoard.slnx`.
-- End-to-end (Playwright): see [`tests/SoloDevBoard.E2E.Tests/README.md`](../tests/SoloDevBoard.E2E.Tests/README.md).
+- Test (xUnit v3 + NSubstitute, fully offline — GitHub is mocked): `dotnet test SoloDevBoard.slnx` (includes Playwright E2E and is slow). Prefer `dotnet test SoloDevBoard.UnitTests.slnf` for a fast loop.
+- End-to-end (Playwright): Chromium is installed on dev container create via `.devcontainer/install-playwright-browsers.sh` (C# `playwright.ps1`, not npm). See [`tests/SoloDevBoard.E2E.Tests/README.md`](../tests/SoloDevBoard.E2E.Tests/README.md).
 - Lint is `dotnet format SoloDevBoard.slnx --verify-no-changes` (same check CI runs in `.github/workflows/ci.yml`). `EnforceCodeStyleInBuild` is on, so style violations also surface during build.
 
 ---
 
 ## Running the app (Aspire — the standard path)
 
-- Start: `aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --non-interactive` (runs in the background). Then `aspire ps` for the dashboard URL/token, `aspire describe` for the `app` resource URL (proxied at `https://localhost:5074`), and `aspire stop` to release file locks before rebuilding.
-- Default shipped parameters model the **lean** AppHost graph (`app` only). Set `hosted-sign-in-enabled` to `true` when you need the full inventory stack locally (Docker for SQL, Azurite, Functions). See [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md).
+- Start: `aspire start --apphost src/SoloDevBoard.AppHost/SoloDevBoard.AppHost.csproj --non-interactive` (runs in the background). Then `aspire ps` for the dashboard URL/token, `aspire describe` for the `web` resource URL (proxied at `https://localhost:5074`), and `aspire stop` to release file locks before rebuilding.
+- Default shipped parameters model the **lean** AppHost graph (`web` only). Set `hosted-sign-in-enabled` to `true` to exercise hosted OAuth and admission locally (still `web` only; no inventory SQL, Functions, or Azurite). See [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md).
 - If a build fails with `MSB3491`/`CS2012` (file locks), run `aspire stop` first — Aspire holds locks on `bin/`/`obj/` while running. See the `aspire-orchestration` skill.
-- Query logs/traces without the dashboard via `aspire logs app`, `aspire otel`, or the Aspire MCP server (see below).
+- Query logs/traces without the dashboard via `aspire logs web`, `aspire otel`, or the Aspire MCP server (see below).
 - Health endpoint: `GET /health` returns `Healthy`. The Home page (`/`) is static navigation and renders without any GitHub call.
 - A direct `dotnet run --project src/SoloDevBoard.Web --no-launch-profile` (with `ASPNETCORE_URLS`) still works as a fallback, but Aspire is the preferred path and matches how the app is developed.
 
@@ -45,7 +45,7 @@ Cursor Cloud agents often default to **draft** PRs, `cursor/…` branch names, a
 
 ## Dev Container (local / Codespaces)
 
-The dev container uses Aspire feature v3, `dev-agent-tools`, and `cursor-cli` (see [`.devcontainer/devcontainer.json`](../.devcontainer/devcontainer.json)). WSL2 developers exporting the dev HTTPS certificate to the Windows host can run [`scripts/export-dev-cert-for-windows-host.sh`](../scripts/export-dev-cert-for-windows-host.sh).
+The dev container uses Aspire feature v3, `dev-agent-tools`, and `cursor-cli` (see [`.devcontainer/devcontainer.json`](../.devcontainer/devcontainer.json)). On create, `install-playwright-browsers.sh` installs Chromium for C# E2E so full-solution `dotnet test` does not fail on a missing browser binary. Aspire workflow skills load from the **aspire-skills** Cursor plugin in [`.cursor/settings.json`](../.cursor/settings.json); `dotnet-inspect` and other project skills live under [`.agents/skills/`](../.agents/skills/). See [`docs/maintaining-agent-skills.md`](../docs/maintaining-agent-skills.md) to bump the plugin pin or refresh companions (no npm `playwright-cli` skill in this project). WSL2 developers exporting the dev HTTPS certificate to the Windows host can run [`scripts/export-dev-cert-for-windows-host.sh`](../scripts/export-dev-cert-for-windows-host.sh).
 
 ---
 
@@ -74,7 +74,7 @@ Path B is documented in [docs/azure-key-vault-setup.md](../docs/azure-key-vault-
 2. In the same shell as `aspire start`, set `Azure__SubscriptionId` (and `Azure__Location` to match the vault region). Run `az login` with an identity that has **Key Vault Secrets User** on the dev vault.
 3. Set Aspire **placeholders** only: `aspire secret set Parameters:gh-pat "-"` and `aspire secret set Parameters:gh-app-client-secret "-"` (see the Key Vault setup guide). Real credentials live in the vault secret names `gh-pat` and `gh-app-client-secret`.
 4. **Stop mapping legacy Cloud secrets into secret parameters.** Remove `SDB_GH_PAT` and `SDB_GH_APP_CLIENT_SECRET` from Cursor Cloud secrets and from GitHub Codespaces repository secrets if you use Path B. Codespaces still runs `.devcontainer/map-apphost-secrets.sh` on create; any `SDB_GH_PAT` present rewrites `Parameters:gh-pat` and forces Path A. If user secrets already contain an old PAT, delete them (`aspire secret delete Parameters:gh-pat --apphost src/SoloDevBoard.AppHost`) after removing the repo secret, then set `-` and rebuild or remap.
-5. Confirm with `aspire describe`: `gh-pat` / `gh-app-client-secret` parameters should be **Running** with placeholder `-`; `app` should start using vault-backed env injection when `needVaultForPat` or `needVaultForClientSecret` applies.
+5. Confirm with `aspire describe`: `gh-pat` / `gh-app-client-secret` parameters should be **Running** with placeholder `-`; `web` should start using vault-backed env injection when `needVaultForPat` or `needVaultForClientSecret` applies.
 
 Hosted sign-in on Path B still requires non-secret parameters locally (`hosted-sign-in-enabled`, `gh-app-client-id`, allow-lists). Only the two secret parameters move to Key Vault.
 

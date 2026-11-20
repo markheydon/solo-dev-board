@@ -17,7 +17,7 @@ superseded_by: ""
 
 ## Status
 
-**Proposed** | Accepted | Rejected | Superseded | Deprecated
+**Proposed** | Accepted | Active | Rejected | Superseded | Withdrawn | Deprecated
 
 ## Context
 

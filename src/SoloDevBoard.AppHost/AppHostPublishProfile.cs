@@ -13,9 +13,9 @@ internal static class AppHostPublishProfile
     {
         ArgumentNullException.ThrowIfNull(host);
 
-        if (host.UseFullExperiencePosture)
+        if (host.UseHostedSignInPosture)
         {
-            FullExperienceAppHostGraph.ConfigurePublishInfrastructure(host);
+            HostedSignInAppHostGraph.ConfigurePublishInfrastructure(host);
         }
         else
         {
@@ -85,7 +85,7 @@ internal static class AppHostPublishProfile
         var resolvedHostedSignInEnabled = AppHostDeployParameterResolver.Resolve(
             builder.Configuration,
             "hosted-sign-in-enabled",
-            host.UseFullExperiencePosture ? "true" : "false");
+            host.UseHostedSignInPosture ? "true" : "false");
         var resolvedHostedAdmissionEnabled = AppHostDeployParameterResolver.Resolve(
             builder.Configuration,
             "hosted-admission-enabled",
@@ -114,18 +114,6 @@ internal static class AppHostPublishProfile
             .WithEnvironment("GitHubAuth__PersonalAccessToken", authSecretsVault.GetSecret("gh-pat"))
             .WithEnvironment("GitHubAuth__HostedGitHubAppClientSecret", authSecretsVault.GetSecret("gh-app-client-secret"))
             .WithReference(appInsights);
-
-        if (host.Functions is not null)
-        {
-            var functions = host.Functions
-                .WithReference(appInsights)
-                .WithRoleAssignments(authSecretsVault, KeyVaultBuiltInRole.KeyVaultSecretsUser)
-                .WithReference(authSecretsVault)
-                .WithEnvironment("GitHubAuth__HostedSignInEnabled", "false")
-                .WithEnvironment("GitHubAuth__PersonalAccessToken", authSecretsVault.GetSecret("gh-pat"));
-
-            host.SetFunctions(functions);
-        }
 
         var resolvedCallbackBaseUri = AppHostDeployParameterResolver.Resolve(builder.Configuration, "hosted-callback-base-uri");
         if (AppHostDeployParameterResolver.IsActiveParameterValue(resolvedCallbackBaseUri))
