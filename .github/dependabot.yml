@@ -12,9 +12,11 @@ updates:
       - type/chore
     assignees:
       - markheydon
-    # Group update-types only affect grouped PRs; semver-major still opens individual PRs without ignore (see GitHub docs example 4).
     ignore:
       - dependency-name: "Microsoft.Extensions.*"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "Aspire.*"
         update-types:
           - version-update:semver-major
     groups:
@@ -37,11 +39,16 @@ updates:
         update-types:
           - minor
           - patch
+      aspire:
+        patterns:
+          - Aspire.*
+        update-types:
+          - minor
+          - patch
       azure:
         patterns:
           - Azure.*
           - Microsoft.Azure.*
-          - Aspire.*
         update-types:
           - minor
           - patch
