@@ -28,7 +28,6 @@ Lean governance, operator notes, and UI wireframes for SoloDevBoard. **Open work
 
 | Doc | Purpose |
 |-----|---------|
-| [CURSOR_CLOUD.md](CURSOR_CLOUD.md) | Cursor Cloud VM and secrets mapping |
 | [KEY_VAULT_SECRET_INVENTORY.md](KEY_VAULT_SECRET_INVENTORY.md) | Key Vault secret names |
 | [HOSTED_AUTH_KEY_VAULT_PATTERN.md](HOSTED_AUTH_KEY_VAULT_PATTERN.md) | Hosted auth secrets pattern |
 | [archive/POST_KEY_VAULT_MIGRATION_CLEANUP.md](archive/POST_KEY_VAULT_MIGRATION_CLEANUP.md) | Post-migration Azure cleanup (complete 2026-11-15) |

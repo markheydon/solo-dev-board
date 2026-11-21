@@ -21,9 +21,9 @@
       "integrity": "sha256:13cc35114ffce44250896ef60baed7c70bc7ce18c7365105d5f70b5f76500042"
     },
     "ghcr.io/markheydon/devcontainer-features/spec-kit:1": {
-      "version": "1.0.7",
-      "resolved": "ghcr.io/markheydon/devcontainer-features/spec-kit@sha256:109a727922a91ea30585b7ab7e470a466967508b515668bd6f8b85cdafe6fcd3",
-      "integrity": "sha256:109a727922a91ea30585b7ab7e470a466967508b515668bd6f8b85cdafe6fcd3"
+      "version": "1.0.8",
+      "resolved": "ghcr.io/markheydon/devcontainer-features/spec-kit@sha256:bdfed96da71c2336dddf4cfbee5baddd4b8d3c64fdee62166fa67aaf1c79bbe1",
+      "integrity": "sha256:bdfed96da71c2336dddf4cfbee5baddd4b8d3c64fdee62166fa67aaf1c79bbe1"
     },
     "ghcr.io/microsoft/aspire-devcontainer-feature/aspire:3": {
       "version": "3.1.0",

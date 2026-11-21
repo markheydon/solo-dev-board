@@ -115,7 +115,7 @@ Overnight inventory and durable snapshot storage were proposed in [ADR-0046](../
 
 ### GitHub Codespaces secrets
 
-Codespaces and dev containers can load AppHost parameters from repository **Codespaces secrets** using the same `SDB_*` names as the Cursor Cloud Environment (see [`plan/CURSOR_CLOUD.md`](../plan/CURSOR_CLOUD.md)). Add them at **Settings → Secrets and variables → Codespaces** for your repository.
+Codespaces and dev containers can expose repository **Codespaces secrets** as hyphen-free `SDB_*` environment variables (see the table below). Add them at **Settings → Secrets and variables → Codespaces** for your repository. Map values into AppHost parameters manually when you use Path A (below).
 
 | Codespaces secret | AppHost parameter |
 |---|---|
@@ -127,11 +127,13 @@ Codespaces and dev containers can load AppHost parameters from repository **Code
 | `SDB_ALLOWED_USER_LOGINS` | `allowed-user-logins` |
 | `SDB_ALLOWED_ORG_LOGINS` | `allowed-org-logins` |
 
-On container create, `.devcontainer/map-apphost-secrets.sh` maps any set `SDB_*` variables into AppHost parameters with `aspire secret set` (the same user-secrets store as manual `dotnet user-secrets` on the AppHost project). Rebuild the Codespace after adding or changing secrets.
+Codespaces inject configured secrets as `SDB_*` environment variables in the dev container. They are **not** written into AppHost parameters automatically. For Path A, map each value yourself with `aspire secret set Parameters:<name> "…" --apphost src/SoloDevBoard.AppHost` (same user-secrets store as `dotnet user-secrets` on the AppHost project). Re-run mapping when you add or change Codespaces secrets or need a fresh codespace.
 
-On the same create step, `.devcontainer/install-aspire-cli.sh` installs Aspire CLI `17.0.0` under `~/.aspire/bin` (prepended on `PATH`) so `dotnet build SoloDevBoard.slnx` resolves the CLI bundle AppHost expects, then `.devcontainer/install-playwright-browsers.sh` builds the E2E project, installs Chromium via the C# Playwright driver (`pwsh …/playwright.ps1 install chromium`), and runs `install-deps chromium` for Ubuntu libraries Playwright needs. No Node.js is required. After a container rebuild, `dotnet test SoloDevBoard.slnx` includes Playwright E2E and should not fail for missing browsers (the run is still slow compared with the unit filter).
+On container **create**, [`onCreateCommand`](../.devcontainer/devcontainer.json) runs [`.devcontainer/setup-dotnet-dev-cert.sh`](../.devcontainer/setup-dotnet-dev-cert.sh) (HTTPS development certificate and system trust store) and installs `libnss3-tools` and Azure Functions Core Tools. A named Docker volume mounts at `~/.dotnet/corefx/cryptography/x509stores` so the certificate store survives rebuilds. The Aspire dev container feature (v3) installs the CLI under `~/.aspire/bin`, which `remoteEnv` prepends to `PATH` so `dotnet build SoloDevBoard.slnx` resolves the CLI bundle AppHost expects.
 
-On each container start, `aspire certs trust --non-interactive` (see [`postStartCommand`](../.devcontainer/devcontainer.json)) trusts the ASP.NET HTTPS development certificate. `SSL_CERT_DIR` in `remoteEnv` keeps the trust store visible so `aspire doctor` does not warn about partial certificate trust.
+On **postCreate**, `.devcontainer/install-playwright-browsers.sh` builds the E2E project, installs Chromium via the C# Playwright driver (`pwsh …/playwright.ps1 install chromium`), and runs `install-deps chromium` for Ubuntu libraries Playwright needs. No Node.js is required. After a container rebuild, `dotnet test SoloDevBoard.slnx` includes Playwright E2E and should not fail for missing browsers (the run is still slow compared with the unit filter).
+
+On each container **start**, `aspire certs trust --non-interactive` (see [`postStartCommand`](../.devcontainer/devcontainer.json)) trusts the ASP.NET HTTPS development certificate. `SSL_CERT_DIR` in `remoteEnv` keeps the trust store visible so `aspire doctor` does not warn about partial certificate trust.
 
 On **WSL2**, if the Windows host browser must trust the same development certificate, run `./scripts/export-dev-cert-for-windows-host.sh` from the repository root after certs are set up, then install the exported certificate on Windows as described in the script output.
 
@@ -169,7 +171,7 @@ Use `SoloDevBoard.UnitTests.slnf` or `scripts/test-unit` for the fast path. Plai
 
 ### Path A: local secrets (no Azure)
 
-Recommended for forks and solo developers. Set secret AppHost parameters once per machine with `aspire secret set` (or Codespaces `SDB_*` secrets). No Azure subscription or Key Vault is required.
+Recommended for forks and solo developers. Set secret AppHost parameters once per machine with `aspire secret set`. In Codespaces you can copy values from `SDB_*` environment variables into parameters manually (see [GitHub Codespaces secrets](#github-codespaces-secrets) above). No Azure subscription or Key Vault is required.
 
 ### Path B: shared development Key Vault
 

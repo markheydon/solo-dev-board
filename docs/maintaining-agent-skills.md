@@ -151,4 +151,4 @@ After a refresh:
 
 - [`AGENTS.md`](../AGENTS.md) - task routing and skills index
 - [Aspire skills (official)](https://aspire.dev/get-started/aspire-skills/)
-- [`plan/CURSOR_CLOUD.md`](../plan/CURSOR_CLOUD.md) - Cloud VM and dev container notes
+- [`docs/getting-started.md`](getting-started.md) - local setup, dev containers, and Codespaces

@@ -98,4 +98,4 @@ When asked to cut a release or tag, follow the [release runbook](plan/RELEASE_PL
 
 ## Environment-specific guidance
 
-For Cursor Cloud VM development (Aspire lifecycle, secrets mapping, MCP, HTTPS caveats), see [`plan/CURSOR_CLOUD.md`](plan/CURSOR_CLOUD.md). Standard local setup remains in [`docs/getting-started.md`](docs/getting-started.md).
+Dev Containers, Codespaces, Aspire orchestration, and AppHost parameters: [`docs/getting-started.md`](docs/getting-started.md).
