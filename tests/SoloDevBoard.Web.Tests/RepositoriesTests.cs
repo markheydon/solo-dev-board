@@ -454,6 +454,172 @@ public sealed class RepositoriesTests
     }
 
     [Fact]
+    public async Task Repositories_InitialRender_DoesNotStartCollection()
+    {
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>())
+            .Returns([CreateRepository("owner", "repo-a")]);
+
+        await using var ctx = CreateContext();
+        ctx.Render<Repositories>();
+
+        await _snapshotCollectionService.DidNotReceive().StartAsync(Arg.Any<CancellationToken>());
+        await _snapshotCollectionService.Received().GetStatusAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Repositories_ReloadFromGitHub_DoesNotStartCollection()
+    {
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>())
+            .Returns([CreateRepository("owner", "repo-a")]);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Repositories>();
+
+        cut.WaitForAssertion(() => Assert.Contains("repo-a", cut.Markup));
+
+        await cut.Find("[data-testid='repositories-reload-from-github-button']").ClickAsync(
+            new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+
+        cut.WaitForAssertion(() => Assert.Contains("Loaded 1 repositories.", cut.Markup));
+        await _snapshotCollectionService.DidNotReceive().StartAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Repositories_InitialRender_DoesNotExposeRunHistory()
+    {
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>())
+            .Returns([CreateRepository("owner", "repo-a")]);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Repositories>();
+
+        cut.WaitForAssertion(() => Assert.Contains("Loaded 1 repositories.", cut.Markup));
+        Assert.DoesNotContain("run history", cut.Markup, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("previous runs", cut.Markup, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Repositories_SucceededSnapshot_ShowsFinishTimeInFeedback()
+    {
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>())
+            .Returns([CreateRepository("owner", "repo-a")]);
+
+        await using var ctx = CreateContext();
+        _snapshotCollectionService.GetStatusAsync(Arg.Any<CancellationToken>())
+            .Returns(new OperatorSnapshotStatusDto
+            {
+                Kind = OperatorSnapshotStatusKind.Succeeded,
+                LastSuccessfulCollectionAt = DateTimeOffset.Parse("2026-11-23T16:14:55Z"),
+                SnapshotRepositoryCount = 3,
+                DurabilityKind = OperatorSnapshotDurabilityKind.LocalMachine,
+            });
+        var cut = ctx.Render<Repositories>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Snapshot saved at", cut.Markup);
+            Assert.Contains("3 repositories included", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task Repositories_SucceededWithZeroRepositories_ShowsZeroIncludedCopy()
+    {
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>())
+            .Returns([]);
+
+        await using var ctx = CreateContext();
+        _snapshotCollectionService.GetStatusAsync(Arg.Any<CancellationToken>())
+            .Returns(new OperatorSnapshotStatusDto
+            {
+                Kind = OperatorSnapshotStatusKind.Succeeded,
+                LastSuccessfulCollectionAt = DateTimeOffset.Parse("2026-11-23T16:14:55Z"),
+                SnapshotRepositoryCount = 0,
+                DurabilityKind = OperatorSnapshotDurabilityKind.LocalMachine,
+            });
+        var cut = ctx.Render<Repositories>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Snapshot saved at", cut.Markup);
+            Assert.Contains("0 repositories included", cut.Markup);
+            Assert.DoesNotContain("No snapshot exists.", cut.Markup);
+        });
+    }
+
+    [Fact]
+    public async Task Repositories_NeverRunVsZeroSuccess_ShowDistinctCopy()
+    {
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>())
+            .Returns([]);
+
+        _snapshotCollectionService.GetStatusAsync(Arg.Any<CancellationToken>())
+            .Returns(new OperatorSnapshotStatusDto
+            {
+                Kind = OperatorSnapshotStatusKind.NeverRun,
+                DurabilityKind = OperatorSnapshotDurabilityKind.LocalMachine,
+            });
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Repositories>();
+
+        cut.WaitForAssertion(() => Assert.Contains("No snapshot exists.", cut.Markup));
+    }
+
+    [Fact]
+    public async Task Repositories_InProgressPolling_RefreshesStatusWithoutCatalogueReload()
+    {
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>())
+            .Returns([CreateRepository("owner", "repo-a")]);
+
+        await using var ctx = CreateContext();
+
+        var statusReads = 0;
+        _snapshotCollectionService.GetStatusAsync(Arg.Any<CancellationToken>())
+            .Returns(_ =>
+            {
+                statusReads++;
+                return new OperatorSnapshotStatusDto
+                {
+                    Kind = OperatorSnapshotStatusKind.InProgress,
+                    RunStartedAt = DateTimeOffset.Parse("2025-06-01T12:00:00Z"),
+                    RepositoriesRecordedThisRun = statusReads,
+                };
+            });
+
+        var cut = ctx.Render<Repositories>();
+
+        cut.WaitForAssertion(
+            () => Assert.Contains("recorded so far", cut.Markup),
+            timeout: TimeSpan.FromSeconds(5));
+
+        await _repositoryService.Received(1).GetRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>());
+        Assert.True(statusReads >= 2);
+    }
+
+    [Fact]
+    public async Task Repositories_HostedBlobDurability_UsesStandardNeverRunCopy()
+    {
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>())
+            .Returns([CreateRepository("owner", "repo-a")]);
+
+        await using var ctx = CreateContext();
+        _snapshotCollectionService.GetStatusAsync(Arg.Any<CancellationToken>())
+            .Returns(new OperatorSnapshotStatusDto
+            {
+                Kind = OperatorSnapshotStatusKind.NeverRun,
+                DurabilityKind = OperatorSnapshotDurabilityKind.HostedBlob,
+            });
+        var cut = ctx.Render<Repositories>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("No snapshot exists.", cut.Markup);
+            Assert.DoesNotContain("PAT-only", cut.Markup, StringComparison.OrdinalIgnoreCase);
+        });
+    }
+
+    [Fact]
     public async Task Repositories_CollectSnapshot_UnsafeOperatorLogin_ShowsStorageSafetyFeedback()
     {
         _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>())

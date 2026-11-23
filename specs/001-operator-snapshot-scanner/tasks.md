@@ -54,7 +54,7 @@ Single project layout: `src/`, `tests/` at repository root (see [plan.md](plan.m
 - [X] T015 Wire store adapters, collection service, and coordinator singleton construction in `src/SoloDevBoard.Composition/SoloDevBoardServiceCollectionExtensions.cs` (no connection string lookup in Composition)
 - [X] T016 Register conditional `AddAzureBlobContainerClient("operator-snapshots")`, durability options, and pass `IHostApplicationLifetime.ApplicationStopping` into the coordinator from `src/SoloDevBoard.Web/Program.cs` (blob adapter registered before `AddSoloDevBoard`; file adapter via `TryAdd` per [contracts/operator-snapshot-store.md](contracts/operator-snapshot-store.md))
 - [X] T017 [P] Add store contract tests (isolation, unsafe keys, conditional save, never run vs failed-first, in-progress to interrupted on read; unknown `data-model.md` `schemaVersion` must not delete the body) in `tests/SoloDevBoard.Infrastructure.Tests/` using fake file system and fake blob per [quickstart.md](quickstart.md)
-- [ ] T018 [P] Add application tests for failed run keeping last success, interruption read path, and empty success vs never run in `tests/SoloDevBoard.Application.Tests/`
+- [X] T018 [P] Add application tests for failed run keeping last success, interruption read path, and empty success vs never run in `tests/SoloDevBoard.Application.Tests/`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel.
 
@@ -73,7 +73,7 @@ Single project layout: `src/`, `tests/` at repository root (see [plan.md](plan.m
 - [X] T021 [P] [US1] Add **Collect snapshot** control calling `StartAsync` in `src/SoloDevBoard.Web/Components/Features/Repositories/Pages/Repositories.razor` per [contracts/repositories-page.md](contracts/repositories-page.md)
 - [X] T022 [US1] Ensure page open and **Reload from GitHub** do not call `StartAsync` in `src/SoloDevBoard.Web/Components/Features/Repositories/Pages/Repositories.razor`
 - [X] T023 [US1] Render succeeded state copy (finish time, snapshot count, no entry list) in `MudAlert` on `Repositories.razor` per [contracts/repositories-page.md](contracts/repositories-page.md)
-- [ ] T024 [P] [US1] Add bUnit tests: open does not collect, reload does not collect, success status sentences (SC-003 finish time), and no run-history affordance (spec FR-013) in `tests/SoloDevBoard.Web.Tests/` for Repositories page
+- [X] T024 [P] [US1] Add bUnit tests: open does not collect, reload does not collect, success status sentences (SC-003 finish time), and no run-history affordance (spec FR-013) in `tests/SoloDevBoard.Web.Tests/` for Repositories page
 
 **Checkpoint**: User Story 1 deliverable - collect and read success status on one machine with local file adapter.
 
@@ -89,7 +89,7 @@ Single project layout: `src/`, `tests/` at repository root (see [plan.md](plan.m
 
 - [X] T025 [US2] Map `IsPrivate` to `data-model.md` `RepositoryEntry.visibility` (`public` | `private`), `IsArchived` to `RepositoryEntry.archived`, and `IsFork` to `RepositoryEntry.fork` in the collection success path in `src/SoloDevBoard.Application/Services/Snapshots/`
 - [X] T026 [US2] Collapse duplicate `data-model.md` `RepositoryEntry.githubId` values to one entry during success write in `src/SoloDevBoard.Application/Services/Snapshots/`
-- [ ] T027 [P] [US2] Add application or infrastructure test proving private, archived, fork, and both flags round-trip in JSON in `tests/SoloDevBoard.Application.Tests/` or `tests/SoloDevBoard.Infrastructure.Tests/`
+- [X] T027 [P] [US2] Add application or infrastructure test proving private, archived, fork, and both flags round-trip in JSON in `tests/SoloDevBoard.Application.Tests/` or `tests/SoloDevBoard.Infrastructure.Tests/`
 
 **Checkpoint**: Full catalogue fidelity for later features reading the document.
 
@@ -108,7 +108,7 @@ Single project layout: `src/`, `tests/` at repository root (see [plan.md](plan.m
 - [X] T030 [US3] Add `PeriodicTimer` (~1s) polling `GetStatusAsync` while in progress and dispose on component teardown in `src/SoloDevBoard.Web/Components/Features/Repositories/Pages/Repositories.razor`
 - [X] T031 [US3] Disable **Collect snapshot** while status is `InProgress` in `Repositories.razor`
 - [X] T032 [US3] Render in-progress copy with start time and recorded count in `MudAlert` on `Repositories.razor` per [contracts/repositories-page.md](contracts/repositories-page.md)
-- [ ] T033 [P] [US3] Add tests in `tests/SoloDevBoard.Web.Tests/` or `tests/SoloDevBoard.Application.Tests/`: in-progress status refreshes without full reload; operator can use another in-product page while a walk runs (spec FR-008, SC-007)
+- [X] T033 [P] [US3] Add tests in `tests/SoloDevBoard.Web.Tests/` or `tests/SoloDevBoard.Application.Tests/`: in-progress status refreshes without full reload; operator can use another in-product page while a walk runs (spec FR-008, SC-007)
 
 **Checkpoint**: Progress visible without blocking the circuit or the rest of the product.
 
@@ -124,7 +124,7 @@ Single project layout: `src/`, `tests/` at repository root (see [plan.md](plan.m
 
 - [X] T034 [US4] Map missing document to `NeverRun` DTO without inventing finish time or count in `GetStatusAsync` in `src/SoloDevBoard.Application/Services/Snapshots/`
 - [X] T035 [US4] Map success with zero `repositories` length to succeeded UI with count zero in `Repositories.razor` per [contracts/repositories-page.md](contracts/repositories-page.md)
-- [ ] T036 [P] [US4] Extend bUnit tests for never-run vs zero-success copy in `tests/SoloDevBoard.Web.Tests/`
+- [X] T036 [P] [US4] Extend bUnit tests for never-run vs zero-success copy in `tests/SoloDevBoard.Web.Tests/`
 
 **Checkpoint**: Operator and later features can tell absence from empty success.
 
@@ -141,7 +141,7 @@ Single project layout: `src/`, `tests/` at repository root (see [plan.md](plan.m
 - [X] T037 [US5] Map exceptions to `data-model.md` `run.reason` values `signInOrToken`, `rateLimit`, and `unexpected` (optional `data-model.md` `run.detail` one line: exception type and status code only, no body, token, or secret) in collection task in `src/SoloDevBoard.Application/Services/Snapshots/` per [research.md](research.md)
 - [X] T038 [US5] On failure, update `run` only and preserve `repositories` and `lastSuccessfulCollectionAt` in `src/SoloDevBoard.Application/Services/Snapshots/`
 - [X] T039 [US5] Render failed state with operator-facing sentences in `MudAlert` on `Repositories.razor` per [contracts/repositories-page.md](contracts/repositories-page.md); when `lastSuccessfulCollectionAt` exists, show last success finish time and count (spec FR-006)
-- [ ] T040 [P] [US5] Add application tests for each failure reason keeping last success in `tests/SoloDevBoard.Application.Tests/`
+- [X] T040 [P] [US5] Add application tests for each failure reason keeping last success in `tests/SoloDevBoard.Application.Tests/`
 
 **Checkpoint**: Failed refresh does not wipe the kept snapshot.
 
@@ -158,7 +158,7 @@ Single project layout: `src/`, `tests/` at repository root (see [plan.md](plan.m
 - [X] T041 [US6] On host stopping cancellation, attempt terminal save with `data-model.md` `run.status` `interrupted` and `run.reason` `siteStopped` in coordinator in `src/SoloDevBoard.Application/Services/Snapshots/`
 - [X] T042 [US6] Implement store `GetAsync` path that rewrites stale `inProgress` to `interrupted` when no live task in `src/SoloDevBoard.Infrastructure/Snapshots/` per [contracts/operator-snapshot-store.md](contracts/operator-snapshot-store.md)
 - [X] T043 [US6] Render interrupted copy in `MudAlert` on `Repositories.razor` per [contracts/repositories-page.md](contracts/repositories-page.md); when `lastSuccessfulCollectionAt` exists, show last success finish time and count (spec FR-006)
-- [ ] T044 [P] [US6] Extend store and application tests for in-progress document without live task becoming `interrupted` and allowing new start in `tests/SoloDevBoard.Infrastructure.Tests/` and `tests/SoloDevBoard.Application.Tests/`
+- [X] T044 [P] [US6] Extend store and application tests for in-progress document without live task becoming `interrupted` and allowing new start in `tests/SoloDevBoard.Infrastructure.Tests/` and `tests/SoloDevBoard.Application.Tests/`
 
 **Checkpoint**: No stuck in-progress after a stop.
 
@@ -175,8 +175,8 @@ Single project layout: `src/`, `tests/` at repository root (see [plan.md](plan.m
 ### Implementation for User Story 7
 
 - [X] T045 [US7] Ensure all store operations key only on sanitised `ICurrentUserContext.OwnerLogin` with no login argument from Web in `src/SoloDevBoard.Application/Services/Snapshots/` and Infrastructure adapters
-- [ ] T046 [P] [US7] Strengthen two-login isolation assertions in store contract tests in `tests/SoloDevBoard.Infrastructure.Tests/`
-- [ ] T047 [US7] Verify hosted claim and PAT owner login paths use distinct keys in integration-style unit test in `tests/SoloDevBoard.Infrastructure.Tests/` (no live GitHub)
+- [X] T046 [P] [US7] Strengthen two-login isolation assertions in store contract tests in `tests/SoloDevBoard.Infrastructure.Tests/`
+- [X] T047 [US7] Verify hosted claim and PAT owner login paths use distinct keys in integration-style unit test in `tests/SoloDevBoard.Infrastructure.Tests/` (no live GitHub)
 
 **Checkpoint**: Private catalogue data stays per operator.
 
@@ -195,7 +195,7 @@ Single project layout: `src/`, `tests/` at repository root (see [plan.md](plan.m
 - [X] T050 [US8] Add hosted sign-in storage to `src/SoloDevBoard.AppHost/HostedSignInAppHostGraph.cs` only after T001: `AddAzureStorage("operator-snapshot-storage").RunAsEmulator()`, `AddBlobContainer("operator-snapshots", "operator-snapshots")`, `WithReference` from web; publish omits `RunAsEmulator` per [research.md](research.md)
 - [X] T051 [US8] Confirm `src/SoloDevBoard.AppHost/LeanAppHostGraph.cs` remains without storage, Azurite, SQL, or Functions
 - [X] T052 [P] [US8] Update `docs/getting-started.md`, `docs/deployment.md`, and `src/SoloDevBoard.AppHost/README.md` for hosted storage in the same change as T050
-- [ ] T053 [P] [US8] Add bUnit assertions for durability copy variants in `tests/SoloDevBoard.Web.Tests/`
+- [X] T053 [P] [US8] Add bUnit assertions for durability copy variants in `tests/SoloDevBoard.Web.Tests/`
 
 **Checkpoint**: Lean and hosted operator-facing durability matches spec.
 
@@ -205,12 +205,12 @@ Single project layout: `src/`, `tests/` at repository root (see [plan.md](plan.m
 
 **Purpose**: User guide, E2E alignment, chrome, and merge gates.
 
-- [ ] T054 [P] Update shipped behaviour in `website/content/docs/repositories.md` and `tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md`; **same change** as T055 (constitution Principle III)
+- [X] T054 [P] Update shipped behaviour in `website/content/docs/repositories.md` and `tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md`; **same change** as T055 (constitution Principle III)
 - [ ] T055 Recapture `website` screenshot `repositories/overview.png` after command strip and status region ship; **same change** as T054 (do not merge Repositories UI without both)
-- [ ] T056 Update Playwright repositories command-strip and 390px overflow tests in `tests/SoloDevBoard.E2E.Tests/` if new control changes assertions (no live GitHub collection journey)
+- [X] T056 Update Playwright repositories command-strip and 390px overflow tests in `tests/SoloDevBoard.E2E.Tests/` if new control changes assertions (no live GitHub collection journey)
 - [X] T057 Ensure **Collect snapshot** stays visible on narrow viewports (not overflow-only) in `Repositories.razor` per [contracts/repositories-page.md](contracts/repositories-page.md)
 - [X] T058 Run `dotnet format SoloDevBoard.slnx --verify-no-changes`, `dotnet build SoloDevBoard.slnx -c Release -warnaserror`, and `dotnet test SoloDevBoard.UnitTests.slnf -c Release --no-build` per [plan.md](plan.md)
-- [ ] T059 Walk [quickstart.md](quickstart.md) lean sections 1-2 manually and record any gaps in the PR test plan
+- [X] T059 Walk [quickstart.md](quickstart.md) lean sections 1-2 manually and record any gaps in the PR test plan
 
 ---
 

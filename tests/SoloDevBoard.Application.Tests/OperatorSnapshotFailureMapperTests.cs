@@ -23,4 +23,13 @@ public sealed class OperatorSnapshotFailureMapperTests
 
         Assert.Equal(OperatorSnapshotRunReason.SignInOrToken, reason);
     }
+
+    [Fact]
+    public void Map_UnexpectedException_ReturnsUnexpectedWithTypeDetail()
+    {
+        var (reason, detail) = OperatorSnapshotFailureMapper.Map(new InvalidOperationException("boom"));
+
+        Assert.Equal(OperatorSnapshotRunReason.Unexpected, reason);
+        Assert.Equal("InvalidOperationException", detail);
+    }
 }

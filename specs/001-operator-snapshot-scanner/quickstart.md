@@ -65,3 +65,14 @@ dotnet test SoloDevBoard.UnitTests.slnf -c Release --no-build
 ```
 
 Those tests cover the store contract (fake file system and fake blob), operator isolation, a failed run keeping the last success and recording one short reason, an in-progress document becoming interrupted on the next read without blocking a new collection, unsafe keys, and empty success versus never run versus a failed first run. bUnit covers the Repositories page: open does not collect, reload does not collect, and the status sentences above. The AppHost graph is not unit-tested.
+
+## Manual validation record (lean sections 1–2)
+
+| Check | Expected | Automated proxy |
+| --- | --- | --- |
+| Lean graph has no storage emulator | Web only in Aspire dashboard | AppHost tests and `LeanAppHostGraph` wiring |
+| Open **Repositories** does not collect | Catalogue load only; status read | `Repositories_InitialRender_DoesNotStartCollection` |
+| **Reload from GitHub** does not start collection | Catalogue refresh; status unchanged | `Repositories_ReloadFromGitHub_DoesNotStartCollection` |
+| **Collect snapshot** feedback | Status in shared alert; no entry list | `RepositoriesTests`, `OperatorSnapshotStatusCopyTests` |
+
+Recapture `website/static/images/repositories/overview.png` with DocsCapture (`DocsCapture:Enabled=true`, PAT, public catalogue hygiene) after UI changes to the command strip or feedback region.

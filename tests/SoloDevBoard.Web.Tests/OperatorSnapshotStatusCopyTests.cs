@@ -47,4 +47,40 @@ public sealed class OperatorSnapshotStatusCopyTests
             Severity.Error,
             OperatorSnapshotStatusCopy.ResolveCombinedSeverity(status, statusUnavailable: false, Severity.Success));
     }
+
+    [Fact]
+    public void BuildSnapshotSuffix_SucceededWithZero_CountIsZero()
+    {
+        var status = new OperatorSnapshotStatusDto
+        {
+            Kind = OperatorSnapshotStatusKind.Succeeded,
+            LastSuccessfulCollectionAt = SampleUtc,
+            SnapshotRepositoryCount = 0,
+            DurabilityKind = OperatorSnapshotDurabilityKind.HostedBlob,
+        };
+
+        var suffix = OperatorSnapshotStatusCopy.BuildSnapshotSuffix(status, statusUnavailable: false);
+
+        Assert.Contains("0 repositories", suffix);
+        Assert.Contains("Snapshot saved at", suffix);
+    }
+
+    [Theory]
+    [InlineData(OperatorSnapshotDurabilityKind.LocalMachine)]
+    [InlineData(OperatorSnapshotDurabilityKind.EphemeralContainerDisk)]
+    [InlineData(OperatorSnapshotDurabilityKind.HostedBlob)]
+    public void BuildSnapshotSuffix_NeverRun_DoesNotMentionDurability(OperatorSnapshotDurabilityKind durability)
+    {
+        var status = new OperatorSnapshotStatusDto
+        {
+            Kind = OperatorSnapshotStatusKind.NeverRun,
+            DurabilityKind = durability,
+        };
+
+        var suffix = OperatorSnapshotStatusCopy.BuildSnapshotSuffix(status, statusUnavailable: false);
+
+        Assert.Equal("No snapshot exists.", suffix);
+        Assert.DoesNotContain("blob", suffix, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("PAT-only", suffix, StringComparison.OrdinalIgnoreCase);
+    }
 }
