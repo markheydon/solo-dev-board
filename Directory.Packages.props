@@ -19,8 +19,8 @@
   <!-- Aspire Azure storage clients -->
   <ItemGroup>
     <PackageVersion Include="Aspire.Azure.Storage.Blobs" Version="17.0.0" />
-    <PackageVersion Include="Azure.Storage.Blobs" Version="12.29.2" />
-    <PackageVersion Include="Azure.Extensions.AspNetCore.DataProtection.Blobs" Version="1.5.2" />
+    <PackageVersion Include="Azure.Storage.Blobs" Version="12.30.2" />
+    <PackageVersion Include="Azure.Extensions.AspNetCore.DataProtection.Blobs" Version="1.5.5" />
   </ItemGroup>
   <!-- Azure Functions worker -->
   <ItemGroup>
