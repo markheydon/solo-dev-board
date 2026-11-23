@@ -7,6 +7,77 @@ namespace SoloDevBoard.Infrastructure.Tests;
 public sealed class OperatorSnapshotBlobStoreTests
 {
     [Fact]
+    public async Task GetAsync_UnsafeLogin_ReturnsUnsafeKey()
+    {
+        var container = new FakeOperatorSnapshotBlobContainer();
+        var store = CreateStore(container, new TestLiveTaskRegistry());
+
+        var result = await store.GetAsync("../evil", CancellationToken.None);
+
+        Assert.IsType<OperatorSnapshotGetResult.UnsafeKey>(result);
+    }
+
+    [Fact]
+    public async Task GetAsync_MissingDocument_IsNotFound()
+    {
+        var container = new FakeOperatorSnapshotBlobContainer();
+        var store = CreateStore(container, new TestLiveTaskRegistry());
+
+        var result = await store.GetAsync("never-run", CancellationToken.None);
+
+        Assert.IsType<OperatorSnapshotGetResult.NotFound>(result);
+    }
+
+    [Fact]
+    public async Task GetAsync_FailedFirstRun_IsDistinctFromNeverRun()
+    {
+        var container = new FakeOperatorSnapshotBlobContainer();
+        var store = CreateStore(container, new TestLiveTaskRegistry());
+
+        var failedFirst = new OperatorSnapshotDocument
+        {
+            OperatorLogin = "octocat",
+            Run = new OperatorSnapshotRun
+            {
+                Status = OperatorSnapshotRunStatus.Failed,
+                StartedAt = DateTimeOffset.UtcNow,
+                FinishedAt = DateTimeOffset.UtcNow,
+                Reason = OperatorSnapshotRunReason.Unexpected,
+            },
+            Repositories = [],
+        };
+
+        await store.SaveAsync("octocat", failedFirst, OperatorSnapshotConcurrencyToken.None, CancellationToken.None);
+        var result = await store.GetAsync("octocat", CancellationToken.None);
+
+        var found = Assert.IsType<OperatorSnapshotGetResult.Found>(result);
+        Assert.Equal(OperatorSnapshotRunStatus.Failed, found.Document.Run.Status);
+        Assert.Empty(found.Document.Repositories);
+    }
+
+    [Fact]
+    public async Task GetAsync_UnsupportedSchema_ReturnsUnsupportedSchema()
+    {
+        var container = new FakeOperatorSnapshotBlobContainer();
+        var store = CreateStore(container, new TestLiveTaskRegistry());
+        var blob = container.GetBlobClient("octocat.json");
+        var payload =
+            """
+            {"schemaVersion":99,"operatorLogin":"octocat","revision":1,"run":{"status":"succeeded"},"repositories":[]}
+            """;
+        await blob.UploadAsync(
+            payload,
+            new OperatorSnapshotBlobUploadConditions(null, IfNoneMatchAll: true),
+            CancellationToken.None);
+
+        var result = await store.GetAsync("octocat", CancellationToken.None);
+
+        Assert.IsType<OperatorSnapshotGetResult.UnsupportedSchema>(result);
+        var download = await blob.DownloadAsync(CancellationToken.None);
+        Assert.Equal(payload, download.Content);
+    }
+
+    [Fact]
     public async Task SaveAndGet_TwoLogins_AreIsolated()
     {
         var container = new FakeOperatorSnapshotBlobContainer();

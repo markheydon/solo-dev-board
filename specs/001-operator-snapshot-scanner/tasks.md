@@ -336,3 +336,7 @@ To execute: `/speckit-git-commit`
 
 - [X] T060 Complete store contract tests promised by T017: conditional-save concurrency conflict, unsupported `schemaVersion` read without deleting the file body, never-run versus failed-first semantics, and blob adapter coverage with a fake container in `tests/SoloDevBoard.Infrastructure.Tests/` per `contracts/operator-snapshot-store.md` and `quickstart.md` (partial)
 - [X] T061 Increment live `repositoriesRecorded` during the paged catalogue fetch in `OperatorSnapshotCollectionCoordinator` (or a narrow walk callback) so the in-progress count rises before the walk finishes for multi-repository accounts per FR-007, US3/AC2, and SC-004 (partial)
+
+## Phase 13: Convergence
+
+- [X] T062 Mirror remaining file-side store contract tests on the blob adapter in `tests/SoloDevBoard.Infrastructure.Tests/OperatorSnapshotBlobStoreTests.cs`: unsafe login rejection, missing document (never run), failed-first versus never-run, and unsupported `schemaVersion` read, per `contracts/operator-snapshot-store.md` shared adapter checklist (partial)
