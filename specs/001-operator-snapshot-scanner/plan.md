@@ -30,6 +30,8 @@ Technical approach: one Application store port, a file adapter for PAT-only loca
 
 **Scale/Scope**: One document and one live walk per operator. The Repositories page is the only new surface. No worker project, no scanner page, no settings page, no run log.
 
+**UI layout**: **Collect snapshot** and the collection status region extend the existing command strip and feedback area on `/repositories` (see `plan/wireframes/repositories-wireframe.md` for the baseline layout; normative copy and behaviour in [contracts/repositories-page.md](contracts/repositories-page.md)).
+
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*

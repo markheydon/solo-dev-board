@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-23
 
-**Status**: Draft
+**Status**: Specified (ready for implementation)
 
 **Input**: User description: "Specify an enabler that collects one current snapshot for the signed-in solo developer (the operator), covering every repository linked to their personal GitHub account, public and private. The operator starts a collection and reads its status on the existing Repositories page. Later features read that snapshot. This specification does not design Community Standards or FUNDING pages."
 
