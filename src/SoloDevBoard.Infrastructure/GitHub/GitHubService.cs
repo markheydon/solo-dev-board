@@ -47,7 +47,10 @@ public sealed class GitHubService : IGitHubService
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<Repository>> GetRepositoriesAsync(CancellationToken cancellationToken = default, bool forceReload = false)
+    public async Task<IReadOnlyList<Repository>> GetRepositoriesAsync(
+        CancellationToken cancellationToken = default,
+        bool forceReload = false,
+        IProgress<int>? collectionProgress = null)
     {
         if (forceReload)
         {
@@ -66,7 +69,8 @@ public sealed class GitHubService : IGitHubService
                         endpoint,
                         static dto => dto.ToDomain(),
                         JsonOptions,
-                        ct)
+                        ct,
+                        collectionProgress: collectionProgress)
                     .ConfigureAwait(false);
 
                 return ApplyDocsCaptureRepositoryFilter(repositories);
@@ -1569,15 +1573,17 @@ public sealed class GitHubService : IGitHubService
     /// A function mapping a DTO to a domain entity. Return <see langword="null"/> to exclude an item
     /// from the results (e.g. to filter pull requests out of an issues response).
     /// </param>
-    /// <param name="jsonOptions"></param>
+    /// <param name="jsonOptions">The JSON serialisation options.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
+    /// <param name="collectionProgress">Optional reporter invoked after each page with the running item count.</param>
     /// <returns>A read-only list of all mapped domain entities across all pages.</returns>
     internal static async Task<IReadOnlyList<TDomain>> GetPagedAsync<TDto, TDomain>(
         HttpClient client,
         string initialEndpoint,
         Func<TDto, TDomain?> map,
         JsonSerializerOptions jsonOptions,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        IProgress<int>? collectionProgress = null)
         where TDomain : class
     {
         return await AccumulatePagedAsync<TDomain>(
@@ -1601,7 +1607,9 @@ public sealed class GitHubService : IGitHubService
 
                     return pageResults;
                 },
-                cancellationToken)
+                cancellationToken,
+                maxPages: int.MaxValue,
+                onAccumulatedCount: collectionProgress is null ? null : count => collectionProgress.Report(count))
             .ConfigureAwait(false);
     }
 
@@ -1648,13 +1656,15 @@ public sealed class GitHubService : IGitHubService
     /// <param name="readPageAsync">A function that reads and maps items from a single page response.</param>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <param name="maxPages">The maximum number of pages to fetch.</param>
+    /// <param name="onAccumulatedCount">Optional callback invoked after each page with the running accumulated count.</param>
     /// <returns>A read-only list of all items across the fetched pages.</returns>
     internal static async Task<IReadOnlyList<TItem>> AccumulatePagedAsync<TItem>(
         HttpClient client,
         string initialEndpoint,
         Func<HttpResponseMessage, CancellationToken, Task<IReadOnlyList<TItem>>> readPageAsync,
         CancellationToken cancellationToken,
-        int maxPages = int.MaxValue)
+        int maxPages = int.MaxValue,
+        Action<int>? onAccumulatedCount = null)
     {
         var results = new List<TItem>();
         string? nextUrl = initialEndpoint;
@@ -1668,6 +1678,7 @@ public sealed class GitHubService : IGitHubService
 
             var pageItems = await readPageAsync(response, cancellationToken).ConfigureAwait(false);
             results.AddRange(pageItems);
+            onAccumulatedCount?.Invoke(results.Count);
             nextUrl = GetNextPageUrl(response);
         }
 

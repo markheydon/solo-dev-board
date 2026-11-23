@@ -1,6 +1,4 @@
 using Azure;
-using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Logging;
 using SoloDevBoard.Application.Services.Snapshots;
 
@@ -9,19 +7,19 @@ namespace SoloDevBoard.Infrastructure.Snapshots;
 /// <summary>Blob-based <see cref="IOperatorSnapshotStore"/> using conditional uploads.</summary>
 public sealed class BlobOperatorSnapshotStore : IOperatorSnapshotStore
 {
-    private readonly BlobContainerClient _containerClient;
+    private readonly IOperatorSnapshotBlobContainer _container;
     private readonly IOperatorSnapshotLiveTaskRegistry _liveTasks;
     private readonly TimeProvider _timeProvider;
     private readonly ILogger<BlobOperatorSnapshotStore> _logger;
 
     /// <summary>Initialises the blob store.</summary>
     public BlobOperatorSnapshotStore(
-        BlobContainerClient containerClient,
+        IOperatorSnapshotBlobContainer container,
         IOperatorSnapshotLiveTaskRegistry liveTasks,
         TimeProvider timeProvider,
         ILogger<BlobOperatorSnapshotStore> logger)
     {
-        _containerClient = containerClient ?? throw new ArgumentNullException(nameof(containerClient));
+        _container = container ?? throw new ArgumentNullException(nameof(container));
         _liveTasks = liveTasks ?? throw new ArgumentNullException(nameof(liveTasks));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -36,25 +34,24 @@ public sealed class BlobOperatorSnapshotStore : IOperatorSnapshotStore
             return new OperatorSnapshotGetResult.UnsafeKey();
         }
 
-        var blob = _containerClient.GetBlobClient($"{sanitised}.json");
+        var blob = _container.GetBlobClient($"{sanitised}.json");
         if (!await blob.ExistsAsync(cancellationToken).ConfigureAwait(false))
         {
             return new OperatorSnapshotGetResult.NotFound();
         }
 
-        var download = await blob.DownloadContentAsync(cancellationToken).ConfigureAwait(false);
-        var document = OperatorSnapshotJson.Deserialise(download.Value.Content.ToString());
+        var download = await blob.DownloadAsync(cancellationToken).ConfigureAwait(false);
+        var document = OperatorSnapshotJson.Deserialise(download.Content);
         if (document is null || document.SchemaVersion != OperatorSnapshotDocumentConstants.CurrentSchemaVersion)
         {
             return new OperatorSnapshotGetResult.UnsupportedSchema();
         }
 
-        var etag = download.Value.Details.ETag.ToString();
+        var etag = download.Etag;
         document = await MaybeRewriteInterruptedAsync(document, sanitised, etag, cancellationToken).ConfigureAwait(false);
         if (document.Run.Status == OperatorSnapshotRunStatus.Interrupted)
         {
-            var props = await blob.GetPropertiesAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
-            etag = props.Value.ETag.ToString();
+            etag = await blob.GetEtagAsync(cancellationToken).ConfigureAwait(false);
         }
 
         var token = new OperatorSnapshotConcurrencyToken(document.Revision, etag);
@@ -74,7 +71,7 @@ public sealed class BlobOperatorSnapshotStore : IOperatorSnapshotStore
             return new OperatorSnapshotSaveResult.UnsafeKey();
         }
 
-        var blob = _containerClient.GetBlobClient($"{sanitised}.json");
+        var blob = _container.GetBlobClient($"{sanitised}.json");
         var exists = await blob.ExistsAsync(cancellationToken).ConfigureAwait(false);
 
         if (exists && expectedToken.Revision == 0)
@@ -88,13 +85,12 @@ public sealed class BlobOperatorSnapshotStore : IOperatorSnapshotStore
         }
 
         long currentRevision = 0;
-        ETag? etag = null;
+        string? etag = null;
         if (exists)
         {
-            var props = await blob.GetPropertiesAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
-            etag = props.Value.ETag;
-            var existingJson = await blob.DownloadContentAsync(cancellationToken).ConfigureAwait(false);
-            var existing = OperatorSnapshotJson.Deserialise(existingJson.Value.Content.ToString());
+            etag = await blob.GetEtagAsync(cancellationToken).ConfigureAwait(false);
+            var existingJson = await blob.DownloadAsync(cancellationToken).ConfigureAwait(false);
+            var existing = OperatorSnapshotJson.Deserialise(existingJson.Content);
             if (existing is null)
             {
                 return new OperatorSnapshotSaveResult.ConcurrencyConflict();
@@ -113,21 +109,13 @@ public sealed class BlobOperatorSnapshotStore : IOperatorSnapshotStore
 
         try
         {
-            var conditions = new BlobRequestConditions();
-            if (exists)
-            {
-                conditions.IfMatch = expectedToken.BlobEtag is not null ? new ETag(expectedToken.BlobEtag) : etag;
-            }
-            else
-            {
-                conditions.IfNoneMatch = ETag.All;
-            }
+            var conditions = exists
+                ? new OperatorSnapshotBlobUploadConditions(
+                    expectedToken.BlobEtag ?? etag,
+                    IfNoneMatchAll: false)
+                : new OperatorSnapshotBlobUploadConditions(null, IfNoneMatchAll: true);
 
-            await blob.UploadAsync(
-                    BinaryData.FromString(payload),
-                    new BlobUploadOptions { Conditions = conditions },
-                    cancellationToken)
-                .ConfigureAwait(false);
+            await blob.UploadAsync(payload, conditions, cancellationToken).ConfigureAwait(false);
             return new OperatorSnapshotSaveResult.Succeeded();
         }
         catch (RequestFailedException ex) when (ex.Status == 412)

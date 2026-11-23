@@ -93,7 +93,10 @@ public sealed class OperatorSnapshotCollectionCoordinator : IOperatorSnapshotLiv
             IReadOnlyList<Repository> repositories;
             try
             {
-                repositories = await github.GetRepositoriesAsync(cancellationToken, forceReload: true).ConfigureAwait(false);
+                var liveProgress = new Progress<int>(count => UpdateRecordedCount(sanitisedLogin, count));
+                repositories = await github
+                    .GetRepositoriesAsync(cancellationToken, forceReload: true, collectionProgress: liveProgress)
+                    .ConfigureAwait(false);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

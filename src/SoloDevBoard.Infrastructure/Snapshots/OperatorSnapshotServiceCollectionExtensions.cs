@@ -19,6 +19,7 @@ public static class OperatorSnapshotInfrastructureRegistration
     /// <summary>Registers the blob adapter as the primary store implementation.</summary>
     public static IServiceCollection AddOperatorSnapshotBlobStore(this IServiceCollection services)
     {
+        services.TryAddScoped<IOperatorSnapshotBlobContainer, AzureOperatorSnapshotBlobContainer>();
         services.AddScoped<IOperatorSnapshotStore, BlobOperatorSnapshotStore>();
         return services;
     }

@@ -14,7 +14,11 @@ public interface IGitHubService
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
     /// <returns>A read-only list of repositories visible to the authenticated user.</returns>
     /// <param name="forceReload">When <see langword="true" />, bypasses any cached repository catalogue before loading.</param>
-    Task<IReadOnlyList<Repository>> GetRepositoriesAsync(CancellationToken cancellationToken = default, bool forceReload = false);
+    /// <param name="collectionProgress">Optional progress reporter invoked after each fetched page with the running catalogue count.</param>
+    Task<IReadOnlyList<Repository>> GetRepositoriesAsync(
+        CancellationToken cancellationToken = default,
+        bool forceReload = false,
+        IProgress<int>? collectionProgress = null);
 
     /// <summary>Retrieves active repositories accessible to the authenticated GitHub user.</summary>
     /// <param name="cancellationToken">A token to observe for cancellation requests.</param>

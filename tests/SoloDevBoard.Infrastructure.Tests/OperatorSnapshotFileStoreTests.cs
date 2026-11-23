@@ -44,6 +44,87 @@ public sealed class OperatorSnapshotFileStoreTests
     }
 
     [Fact]
+    public async Task GetAsync_MissingDocument_IsNotFound()
+    {
+        var root = CreateTempDirectory();
+        var store = CreateStore(root, new TestLiveTaskRegistry());
+
+        var result = await store.GetAsync("never-run", CancellationToken.None);
+
+        Assert.IsType<OperatorSnapshotGetResult.NotFound>(result);
+    }
+
+    [Fact]
+    public async Task GetAsync_FailedFirstRun_IsDistinctFromNeverRun()
+    {
+        var root = CreateTempDirectory();
+        var store = CreateStore(root, new TestLiveTaskRegistry());
+
+        var failedFirst = new OperatorSnapshotDocument
+        {
+            OperatorLogin = "octocat",
+            Run = new OperatorSnapshotRun
+            {
+                Status = OperatorSnapshotRunStatus.Failed,
+                StartedAt = DateTimeOffset.UtcNow,
+                FinishedAt = DateTimeOffset.UtcNow,
+                Reason = OperatorSnapshotRunReason.Unexpected,
+            },
+            Repositories = [],
+        };
+
+        await store.SaveAsync("octocat", failedFirst, OperatorSnapshotConcurrencyToken.None, CancellationToken.None);
+        var result = await store.GetAsync("octocat", CancellationToken.None);
+
+        var found = Assert.IsType<OperatorSnapshotGetResult.Found>(result);
+        Assert.Equal(OperatorSnapshotRunStatus.Failed, found.Document.Run.Status);
+        Assert.Empty(found.Document.Repositories);
+    }
+
+    [Fact]
+    public async Task SaveAsync_StaleToken_ReturnsConcurrencyConflict_LeavesPriorDocument()
+    {
+        var root = CreateTempDirectory();
+        var store = CreateStore(root, new TestLiveTaskRegistry());
+        var success = BuildDocument("octocat", OperatorSnapshotRunStatus.Succeeded);
+
+        Assert.IsType<OperatorSnapshotSaveResult.Succeeded>(
+            await store.SaveAsync("octocat", success, OperatorSnapshotConcurrencyToken.None, CancellationToken.None));
+
+        var staleFailure = BuildDocument("octocat", OperatorSnapshotRunStatus.Failed);
+        var conflict = await store.SaveAsync("octocat", staleFailure, OperatorSnapshotConcurrencyToken.None, CancellationToken.None);
+
+        Assert.IsType<OperatorSnapshotSaveResult.ConcurrencyConflict>(conflict);
+
+        var read = await store.GetAsync("octocat", CancellationToken.None);
+        var found = Assert.IsType<OperatorSnapshotGetResult.Found>(read);
+        Assert.Equal(OperatorSnapshotRunStatus.Succeeded, found.Document.Run.Status);
+        Assert.NotEmpty(found.Document.Repositories);
+    }
+
+    [Fact]
+    public async Task GetAsync_UnsupportedSchema_LeavesFileBodyUnchanged()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var root = CreateTempDirectory();
+        var store = CreateStore(root, new TestLiveTaskRegistry());
+        var payload =
+            """
+            {"schemaVersion":99,"operatorLogin":"octocat","revision":1,"run":{"status":"succeeded"},"repositories":[]}
+            """;
+
+        var path = Path.Combine(root, "octocat.json");
+        await File.WriteAllTextAsync(path, payload, cancellationToken);
+
+        var before = await File.ReadAllTextAsync(path, cancellationToken);
+        var result = await store.GetAsync("octocat", cancellationToken);
+        var after = await File.ReadAllTextAsync(path, cancellationToken);
+
+        Assert.IsType<OperatorSnapshotGetResult.UnsupportedSchema>(result);
+        Assert.Equal(before, after);
+    }
+
+    [Fact]
     public async Task GetAsync_StaleInProgress_WithoutLiveTask_BecomesInterrupted()
     {
         var root = CreateTempDirectory();
