@@ -15,16 +15,20 @@
     <PackageVersion Include="Aspire.Hosting.Azure.KeyVault" Version="17.0.0" />
     <PackageVersion Include="Aspire.Hosting.Dotnet" Version="17.0.0" />
     <PackageVersion Include="Aspire.Hosting.Azure.Storage" Version="17.0.0" />
+    <PackageVersion Include="Aspire.Hosting.Azure.Functions" Version="17.0.0" />
   </ItemGroup>
   <!-- Aspire Azure storage clients -->
   <ItemGroup>
     <PackageVersion Include="Aspire.Azure.Storage.Blobs" Version="17.0.0" />
-    <PackageVersion Include="Azure.Storage.Blobs" Version="12.29.2" />
+    <PackageVersion Include="Aspire.Azure.Storage.Queues" Version="17.0.0" />
+    <PackageVersion Include="Azure.Storage.Blobs" Version="12.30.2" />
+    <PackageVersion Include="Azure.Storage.Queues" Version="12.28.2" />
   </ItemGroup>
   <!-- Azure Functions worker -->
   <ItemGroup>
     <PackageVersion Include="Microsoft.Azure.Functions.Worker" Version="2.52.0" />
     <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" Version="4.3.1" />
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues" Version="5.5.5" />
     <PackageVersion Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.1.0" />
   </ItemGroup>
   <!-- Application and framework services -->

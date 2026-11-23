@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Application.Identity;
 
 namespace SoloDevBoard.Application.Services.Snapshots;
@@ -11,6 +12,8 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
     private readonly OperatorSnapshotCollectionCoordinator _coordinator;
     private readonly OperatorSnapshotDurabilityOptions _durabilityOptions;
     private readonly TimeProvider _timeProvider;
+    private readonly IOperatorSnapshotScheduleFactsService _scheduleFacts;
+    private readonly IHostedSignInRecordStore _signInRecords;
 
     /// <summary>Initialises the service.</summary>
     public OperatorSnapshotCollectionService(
@@ -18,13 +21,17 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
         IOperatorSnapshotStore store,
         OperatorSnapshotCollectionCoordinator coordinator,
         IOptions<OperatorSnapshotDurabilityOptions> durabilityOptions,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        IOperatorSnapshotScheduleFactsService scheduleFacts,
+        IHostedSignInRecordStore signInRecords)
     {
         _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
         _store = store ?? throw new ArgumentNullException(nameof(store));
         _coordinator = coordinator ?? throw new ArgumentNullException(nameof(coordinator));
         _durabilityOptions = durabilityOptions?.Value ?? throw new ArgumentNullException(nameof(durabilityOptions));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
+        _scheduleFacts = scheduleFacts ?? throw new ArgumentNullException(nameof(scheduleFacts));
+        _signInRecords = signInRecords ?? throw new ArgumentNullException(nameof(signInRecords));
     }
 
     /// <inheritdoc/>
@@ -39,6 +46,13 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
 
         var get = await _store.GetAsync(ownerLogin, cancellationToken).ConfigureAwait(false);
         if (_coordinator.HasLiveTask(sanitised))
+        {
+            return OperatorSnapshotStartResult.AlreadyInProgress;
+        }
+
+        if (get is OperatorSnapshotGetResult.Found foundBeforeStart
+            && (!string.IsNullOrEmpty(foundBeforeStart.Document.QueuedOccasion)
+                || foundBeforeStart.Document.Run.Status == OperatorSnapshotRunStatus.InProgress))
         {
             return OperatorSnapshotStartResult.AlreadyInProgress;
         }
@@ -74,6 +88,11 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
             LastSuccessfulCollectionAt = baseDocument.LastSuccessfulCollectionAt,
             Repositories = baseDocument.Repositories,
             LaterFacts = baseDocument.LaterFacts,
+            Trigger = OperatorSnapshotCollectionTrigger.Operator,
+            QueuedOccasion = null,
+            PassExecuting = false,
+            PassLeaseUntil = null,
+            AttemptsUsed = null,
             Run = new OperatorSnapshotRun
             {
                 Status = OperatorSnapshotRunStatus.InProgress,
@@ -126,21 +145,32 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
 
         return get switch
         {
-            OperatorSnapshotGetResult.NotFound => new OperatorSnapshotStatusDto
-            {
-                Kind = OperatorSnapshotStatusKind.NeverRun,
-                DurabilityKind = _durabilityOptions.DurabilityKind,
-            },
-            OperatorSnapshotGetResult.Found found => MapFound(found.Document, ownerLogin),
-            _ => new OperatorSnapshotStatusDto
-            {
-                Kind = OperatorSnapshotStatusKind.NeverRun,
-                DurabilityKind = _durabilityOptions.DurabilityKind,
-            },
+            OperatorSnapshotGetResult.NotFound => await MapScheduleAsync(
+                new OperatorSnapshotStatusDto
+                {
+                    Kind = OperatorSnapshotStatusKind.NeverRun,
+                    DurabilityKind = _durabilityOptions.DurabilityKind,
+                },
+                null,
+                ownerLogin,
+                cancellationToken).ConfigureAwait(false),
+            OperatorSnapshotGetResult.Found found => await MapFoundAsync(found.Document, ownerLogin, cancellationToken).ConfigureAwait(false),
+            _ => await MapScheduleAsync(
+                new OperatorSnapshotStatusDto
+                {
+                    Kind = OperatorSnapshotStatusKind.NeverRun,
+                    DurabilityKind = _durabilityOptions.DurabilityKind,
+                },
+                null,
+                ownerLogin,
+                cancellationToken).ConfigureAwait(false),
         };
     }
 
-    private OperatorSnapshotStatusDto MapFound(OperatorSnapshotDocument document, string ownerLogin)
+    private async Task<OperatorSnapshotStatusDto> MapFoundAsync(
+        OperatorSnapshotDocument document,
+        string ownerLogin,
+        CancellationToken cancellationToken)
     {
         var sanitised = OperatorLoginSanitiser.Sanitise(ownerLogin);
         var liveOverlay = false;
@@ -182,7 +212,7 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
             repositoriesRecordedThisRun = recorded;
         }
 
-        return new OperatorSnapshotStatusDto
+        var dto = new OperatorSnapshotStatusDto
         {
             Kind = kind,
             RunStartedAt = runStartedAt,
@@ -193,6 +223,52 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
             Reason = document.Run.Reason,
             Detail = document.Run.Detail,
             DurabilityKind = _durabilityOptions.DurabilityKind,
+        };
+
+        return await MapScheduleAsync(dto, document, ownerLogin, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<OperatorSnapshotStatusDto> MapScheduleAsync(
+        OperatorSnapshotStatusDto dto,
+        OperatorSnapshotDocument? document,
+        string ownerLogin,
+        CancellationToken cancellationToken)
+    {
+        HostedSignInRecordForSchedule? signIn = null;
+        if (_durabilityOptions.DurabilityKind == OperatorSnapshotDurabilityKind.HostedBlob)
+        {
+            var read = await _signInRecords.GetAsync(ownerLogin, cancellationToken).ConfigureAwait(false);
+            if (read is HostedSignInRecordReadResult.Found found)
+            {
+                signIn = new HostedSignInRecordForSchedule(
+                    found.Record.OperatorLogin,
+                    found.Record.CompletedAt,
+                    found.Record.CredentialUnusable,
+                    found.Record.OrganisationLogins);
+            }
+        }
+
+        var facts = _scheduleFacts.Compute(
+            document ?? new OperatorSnapshotDocument(),
+            signIn,
+            _timeProvider.GetUtcNow());
+
+        return new OperatorSnapshotStatusDto
+        {
+            Kind = dto.Kind,
+            RunStartedAt = dto.RunStartedAt,
+            RunFinishedAt = dto.RunFinishedAt,
+            RepositoriesRecordedThisRun = dto.RepositoriesRecordedThisRun,
+            LastSuccessfulCollectionAt = dto.LastSuccessfulCollectionAt,
+            SnapshotRepositoryCount = dto.SnapshotRepositoryCount,
+            Reason = dto.Reason,
+            Detail = dto.Detail,
+            DurabilityKind = dto.DurabilityKind,
+            Trigger = facts.Trigger ?? document?.Trigger,
+            SchedulePosture = facts.SchedulePosture,
+            QueuedForOccasion = facts.QueuedForOccasion,
+            NextOccasionAtUtc = facts.NextOccasionAtUtc,
+            NoScheduleReason = facts.NoScheduleReason,
         };
     }
 

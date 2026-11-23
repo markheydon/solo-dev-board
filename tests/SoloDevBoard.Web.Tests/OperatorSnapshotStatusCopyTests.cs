@@ -16,9 +16,13 @@ public sealed class OperatorSnapshotStatusCopyTests
         {
             Kind = OperatorSnapshotStatusKind.NeverRun,
             DurabilityKind = OperatorSnapshotDurabilityKind.LocalMachine,
+            SchedulePosture = OperatorSnapshotSchedulePosture.Lean,
+            NoScheduleReason = OperatorSnapshotNoScheduleReason.Lean,
         };
 
-        Assert.Equal("No snapshot exists.", OperatorSnapshotStatusCopy.BuildSnapshotSuffix(status, statusUnavailable: false));
+        Assert.Equal(
+            "Nothing collects on a schedule. The snapshot is kept on this machine rather than promised on another machine. No snapshot exists.",
+            OperatorSnapshotStatusCopy.BuildSnapshotSuffix(status, statusUnavailable: false));
     }
 
     [Fact]
@@ -30,6 +34,8 @@ public sealed class OperatorSnapshotStatusCopyTests
             LastSuccessfulCollectionAt = SampleUtc,
             SnapshotRepositoryCount = 42,
             DurabilityKind = OperatorSnapshotDurabilityKind.LocalMachine,
+            SchedulePosture = OperatorSnapshotSchedulePosture.Lean,
+            NoScheduleReason = OperatorSnapshotNoScheduleReason.Lean,
         };
 
         var suffix = OperatorSnapshotStatusCopy.BuildSnapshotSuffix(status, statusUnavailable: false);
@@ -57,6 +63,9 @@ public sealed class OperatorSnapshotStatusCopyTests
             LastSuccessfulCollectionAt = SampleUtc,
             SnapshotRepositoryCount = 0,
             DurabilityKind = OperatorSnapshotDurabilityKind.HostedBlob,
+            SchedulePosture = OperatorSnapshotSchedulePosture.Hosted,
+            NoScheduleReason = OperatorSnapshotNoScheduleReason.None,
+            NextOccasionAtUtc = new DateTimeOffset(2026, 11, 24, 5, 0, 0, TimeSpan.Zero),
         };
 
         var suffix = OperatorSnapshotStatusCopy.BuildSnapshotSuffix(status, statusUnavailable: false);
@@ -75,11 +84,13 @@ public sealed class OperatorSnapshotStatusCopyTests
         {
             Kind = OperatorSnapshotStatusKind.NeverRun,
             DurabilityKind = durability,
+            SchedulePosture = OperatorSnapshotSchedulePosture.Lean,
+            NoScheduleReason = OperatorSnapshotNoScheduleReason.Lean,
         };
 
         var suffix = OperatorSnapshotStatusCopy.BuildSnapshotSuffix(status, statusUnavailable: false);
 
-        Assert.Equal("No snapshot exists.", suffix);
+        Assert.Contains("No snapshot exists.", suffix);
         Assert.DoesNotContain("blob", suffix, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("PAT-only", suffix, StringComparison.OrdinalIgnoreCase);
     }

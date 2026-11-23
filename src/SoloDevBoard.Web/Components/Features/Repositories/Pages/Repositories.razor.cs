@@ -9,7 +9,7 @@ namespace SoloDevBoard.Web.Components.Features.Repositories.Pages;
 /// <summary>Displays repositories available to the authenticated GitHub account.</summary>
 public partial class Repositories : ComponentBase, IAsyncDisposable
 {
-    private static readonly TimeSpan SnapshotUiPollInterval = TimeSpan.FromMilliseconds(400);
+    private static readonly TimeSpan SnapshotUiPollInterval = TimeSpan.FromSeconds(1);
 
     /// <summary>Gets or sets the application service used to retrieve repositories.</summary>
     [Inject]
@@ -46,7 +46,10 @@ public partial class Repositories : ComponentBase, IAsyncDisposable
     private CancellationTokenSource? statusPollCts;
 
     private bool IsCollectSnapshotDisabled =>
-        isLoading || awaitingInitialSnapshotStatus || snapshotStatus?.Kind == OperatorSnapshotStatusKind.InProgress;
+        isLoading
+        || awaitingInitialSnapshotStatus
+        || snapshotStatus?.Kind == OperatorSnapshotStatusKind.InProgress
+        || !string.IsNullOrEmpty(snapshotStatus?.QueuedForOccasion);
 
     private IReadOnlyList<RepositoryDto> FilteredRepositories
     {

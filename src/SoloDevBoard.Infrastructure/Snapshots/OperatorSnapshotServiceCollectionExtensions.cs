@@ -13,6 +13,7 @@ public static class OperatorSnapshotInfrastructureRegistration
         services.TryAddScoped<SnapshotCollectionCredentialSlot>();
         services.TryAddSingleton<ISnapshotCollectionCredentialScopeFactory, SnapshotCollectionCredentialScopeFactory>();
         services.TryAddScoped<IOperatorSnapshotStore, FileOperatorSnapshotStore>();
+        services.AddLeanScheduledCollection();
         return services;
     }
 

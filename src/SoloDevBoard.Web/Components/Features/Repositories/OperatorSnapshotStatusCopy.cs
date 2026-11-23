@@ -12,6 +12,37 @@ internal static class OperatorSnapshotStatusCopy
     internal static string FormatLocalTime(DateTimeOffset utc)
         => utc.ToLocalTime().ToString("g", UnitedKingdomCulture);
 
+    /// <summary>Schedule sentence for the status alert.</summary>
+    internal static string? BuildScheduleClause(OperatorSnapshotStatusDto? status)
+    {
+        if (status is null)
+        {
+            return null;
+        }
+
+        if (status.SchedulePosture == OperatorSnapshotSchedulePosture.Lean)
+        {
+            return "Nothing collects on a schedule. The snapshot is kept on this machine rather than promised on another machine.";
+        }
+
+        return status.NoScheduleReason switch
+        {
+            OperatorSnapshotNoScheduleReason.CredentialUnusable =>
+                "No scheduled collection will run until you sign in again.",
+            OperatorSnapshotNoScheduleReason.OutsideWindow =>
+                "No scheduled collection will run until you sign in again.",
+            OperatorSnapshotNoScheduleReason.NotAllowed =>
+                "No scheduled collection will run because you are not allowed to use the product.",
+            _ when status.QueuedForOccasion is not null && status.Kind != OperatorSnapshotStatusKind.InProgress =>
+                "Next scheduled collection: 05:00 UTC.",
+            _ when status.NextOccasionAtUtc is { } next && next.UtcDateTime.TimeOfDay == TimeSpan.FromHours(5) =>
+                next.UtcDateTime.Date == DateTime.UtcNow.Date
+                    ? "Next scheduled collection: 05:00 UTC."
+                    : "Next scheduled collection: 05:00 UTC on the following UTC day.",
+            _ => null,
+        };
+    }
+
     /// <summary>Short clause appended to the catalogue feedback line (same alert).</summary>
     internal static string BuildSnapshotSuffix(OperatorSnapshotStatusDto? status, bool statusUnavailable)
     {
@@ -25,11 +56,13 @@ internal static class OperatorSnapshotStatusCopy
             return string.Empty;
         }
 
-        return status.Kind switch
+        var schedule = BuildScheduleClause(status);
+
+        var runClause = status.Kind switch
         {
             OperatorSnapshotStatusKind.NeverRun => "No snapshot exists.",
             OperatorSnapshotStatusKind.InProgress when status.RunStartedAt is { } started =>
-                $"Saving snapshot… started at {FormatLocalTime(started)}; {status.RepositoriesRecordedThisRun} recorded so far.",
+                BuildInProgressSuffix(status, started),
             OperatorSnapshotStatusKind.Succeeded when status.LastSuccessfulCollectionAt is { } finished =>
                 $"Snapshot saved at {FormatLocalTime(finished)} ({status.SnapshotRepositoryCount} repositories included).",
             OperatorSnapshotStatusKind.Succeeded when status.RunFinishedAt is { } finished =>
@@ -40,6 +73,18 @@ internal static class OperatorSnapshotStatusCopy
                 BuildInterruptedSuffix(status, interruptedAt),
             _ => string.Empty,
         };
+
+        if (string.IsNullOrEmpty(schedule))
+        {
+            return runClause;
+        }
+
+        if (string.IsNullOrEmpty(runClause))
+        {
+            return schedule;
+        }
+
+        return $"{schedule} {runClause}";
     }
 
     internal static Severity ResolveCombinedSeverity(
@@ -67,6 +112,15 @@ internal static class OperatorSnapshotStatusCopy
         };
     }
 
+    private static string BuildInProgressSuffix(OperatorSnapshotStatusDto status, DateTimeOffset started)
+    {
+        var trigger = status.Trigger == OperatorSnapshotCollectionTrigger.Daily
+            ? "The daily occasion started it."
+            : "You started it.";
+        return
+            $"{trigger} Saving snapshot… started at {FormatLocalTime(started)}; {status.RepositoriesRecordedThisRun} recorded so far.";
+    }
+
     private static string BuildFailedSuffix(OperatorSnapshotStatusDto status, DateTimeOffset failedAt)
     {
         var reason = status.Reason switch
@@ -84,8 +138,9 @@ internal static class OperatorSnapshotStatusCopy
 
     private static string BuildInterruptedSuffix(OperatorSnapshotStatusDto status, DateTimeOffset interruptedAt)
     {
-        var message =
-            $"Snapshot was not finished at {FormatLocalTime(interruptedAt)} because the site stopped before it completed.";
+        var message = status.Reason == OperatorSnapshotRunReason.ScheduledCollectionStopped
+            ? $"Snapshot was not finished at {FormatLocalTime(interruptedAt)} because the scheduled collection stopped before it finished."
+            : $"Snapshot was not finished at {FormatLocalTime(interruptedAt)} because the site stopped before it completed.";
         return AppendLastSuccessSuffix(status, message);
     }
 

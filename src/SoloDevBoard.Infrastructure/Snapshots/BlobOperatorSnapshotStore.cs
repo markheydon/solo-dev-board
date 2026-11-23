@@ -140,6 +140,23 @@ public sealed class BlobOperatorSnapshotStore : IOperatorSnapshotStore
             return document;
         }
 
+        var isDailyPassExecuting = document.Trigger == OperatorSnapshotCollectionTrigger.Daily
+            && (document.PassExecuting
+                || (document.PassLeaseUntil is { } leaseUntil && leaseUntil > _timeProvider.GetUtcNow()));
+
+        if (isDailyPassExecuting)
+        {
+            if (document.PassExecuting
+                && document.PassLeaseUntil is { } expired
+                && expired <= _timeProvider.GetUtcNow())
+            {
+                return await RewriteDailyPassInterruptedAsync(document, sanitisedLogin, etag, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            return document;
+        }
+
         var interrupted = new OperatorSnapshotDocument
         {
             SchemaVersion = document.SchemaVersion,
@@ -148,6 +165,11 @@ public sealed class BlobOperatorSnapshotStore : IOperatorSnapshotStore
             LastSuccessfulCollectionAt = document.LastSuccessfulCollectionAt,
             Repositories = document.Repositories,
             LaterFacts = document.LaterFacts,
+            Trigger = document.Trigger,
+            QueuedOccasion = document.QueuedOccasion,
+            PassExecuting = false,
+            PassLeaseUntil = null,
+            AttemptsUsed = document.AttemptsUsed,
             Run = new OperatorSnapshotRun
             {
                 Status = OperatorSnapshotRunStatus.Interrupted,
@@ -155,6 +177,51 @@ public sealed class BlobOperatorSnapshotStore : IOperatorSnapshotStore
                 FinishedAt = _timeProvider.GetUtcNow(),
                 RepositoriesRecorded = document.Run.RepositoriesRecorded,
                 Reason = OperatorSnapshotRunReason.SiteStopped,
+                Detail = null,
+            },
+        };
+
+        var save = await SaveAsync(
+                sanitisedLogin,
+                interrupted,
+                new OperatorSnapshotConcurrencyToken(document.Revision, etag),
+                cancellationToken)
+            .ConfigureAwait(false);
+        if (save is OperatorSnapshotSaveResult.Succeeded)
+        {
+            interrupted.Revision = document.Revision + 1;
+            return interrupted;
+        }
+
+        return document;
+    }
+
+    private async Task<OperatorSnapshotDocument> RewriteDailyPassInterruptedAsync(
+        OperatorSnapshotDocument document,
+        string sanitisedLogin,
+        string etag,
+        CancellationToken cancellationToken)
+    {
+        var interrupted = new OperatorSnapshotDocument
+        {
+            SchemaVersion = document.SchemaVersion,
+            OperatorLogin = document.OperatorLogin,
+            Revision = document.Revision,
+            LastSuccessfulCollectionAt = document.LastSuccessfulCollectionAt,
+            Repositories = document.Repositories,
+            LaterFacts = document.LaterFacts,
+            Trigger = document.Trigger,
+            QueuedOccasion = null,
+            PassExecuting = false,
+            PassLeaseUntil = null,
+            AttemptsUsed = document.AttemptsUsed,
+            Run = new OperatorSnapshotRun
+            {
+                Status = OperatorSnapshotRunStatus.Interrupted,
+                StartedAt = document.Run.StartedAt,
+                FinishedAt = _timeProvider.GetUtcNow(),
+                RepositoriesRecorded = document.Run.RepositoriesRecorded,
+                Reason = OperatorSnapshotRunReason.ScheduledCollectionStopped,
                 Detail = null,
             },
         };

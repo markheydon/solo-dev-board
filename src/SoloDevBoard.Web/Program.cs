@@ -9,6 +9,7 @@ using MudBlazor;
 using MudBlazor.Services;
 using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Application.Services.Planning;
+using SoloDevBoard.Application.Services.Snapshots;
 using SoloDevBoard.Web.Authentication;
 using SoloDevBoard.Web.Components.Features.ActionsTemplates;
 using SoloDevBoard.Web.Components.Features.Planning;
@@ -91,6 +92,11 @@ if (useOperatorSnapshotBlob)
     builder.AddAzureBlobContainerClient("operator-snapshots");
 }
 
+if (hostedSignInEnabled && useOperatorSnapshotBlob)
+{
+    builder.AddHostedSignInRecordBlobIfConfigured();
+}
+
 builder.AddOperatorSnapshotHost(useOperatorSnapshotBlob);
 
 // Add our services via the shared composition root.
@@ -163,6 +169,7 @@ if (hostedSignInEnabled)
     app.MapGet("/auth/callback", static async (
         HttpContext context,
         HostedGitHubAuthGateway authGateway,
+        IHostedSignInRecordStore signInRecords,
         ILogger<Program> logger) =>
     {
         if (!TryReadAndClearStateCookie(context, out var state, out var returnUrl))
@@ -221,6 +228,22 @@ if (hostedSignInEnabled)
                 principal,
                 authenticationProperties)
             .ConfigureAwait(false);
+
+        var sanitised = OperatorLoginSanitiser.Sanitise(session.OwnerLogin);
+        if (sanitised is not null)
+        {
+            var record = new HostedSignInRecord
+            {
+                SchemaVersion = 1,
+                OperatorLogin = sanitised,
+                CompletedAt = DateTimeOffset.UtcNow,
+                OrganisationLogins = session.OrganisationLogins,
+                RefreshToken = session.RefreshToken,
+                RefreshTokenExpiresAt = session.RefreshTokenExpiresAtUtc,
+                CredentialUnusable = false,
+            };
+            await signInRecords.UpsertAsync(record, expectedEtag: null, context.RequestAborted).ConfigureAwait(false);
+        }
 
         return Results.Redirect(returnUrl);
     }).AllowAnonymous();

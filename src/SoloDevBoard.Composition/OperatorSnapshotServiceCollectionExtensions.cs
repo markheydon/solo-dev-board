@@ -21,6 +21,11 @@ public static class OperatorSnapshotServiceCollectionExtensions
         services.AddSingleton<IOperatorSnapshotLiveTaskRegistry>(static sp =>
             sp.GetRequiredService<OperatorSnapshotCollectionCoordinator>());
         services.AddScoped<IOperatorSnapshotCollectionService, OperatorSnapshotCollectionService>();
+        services.AddSingleton<IScheduledCollectionEnvironment, ScheduledCollectionEnvironment>();
+        services.AddSingleton<HostedCollectionEligibilityEvaluator>();
+        services.AddSingleton<IOperatorSnapshotScheduleFactsService, OperatorSnapshotScheduleFactsService>();
+        services.AddSingleton<IDailyOccasionService, DailyOccasionService>();
+        services.AddSingleton<IDailySnapshotCollectionPassService, DailySnapshotCollectionPassService>();
         return services;
     }
 }

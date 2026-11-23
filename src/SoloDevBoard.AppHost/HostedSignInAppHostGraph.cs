@@ -1,8 +1,9 @@
 using Aspire.Hosting.Dotnet;
+using Azure.Provisioning.Storage;
 
 /// <summary>
 /// Hosted sign-in AppHost graph: web compute with GitHub App OAuth and admission control.
-/// Operator snapshot blob storage is modelled (ADR-0048); withdrawn ADR-0046 inventory SQL and Functions are not.
+/// Operator snapshot blob storage is modelled (ADR-0048); scheduled collection uses ADR-0049 Functions worker.
 /// </summary>
 internal static class HostedSignInAppHostGraph
 {
@@ -15,11 +16,26 @@ internal static class HostedSignInAppHostGraph
         var storage = host.Builder.AddAzureStorage("operator-snapshot-storage")
             .RunAsEmulator(azurite => azurite.WithDataVolume());
         var snapshots = storage.AddBlobContainer("operator-snapshots", "operator-snapshots");
+        var hostedSignIns = storage.AddBlobContainer("hosted-sign-ins", "hosted-sign-ins");
+        var collectionSchedule = storage.AddBlobContainer("collection-schedule", "collection-schedule");
+        var queues = storage.AddQueues("operator-snapshot-queues");
+
+        var functions = host.Builder
+            .AddAzureFunctionsProject(
+                host.Naming.AzureName("snapshot-scheduler"),
+                "../SoloDevBoard.Functions/SoloDevBoard.Functions.csproj")
+            .WithHostStorage(storage)
+            .WithReference(snapshots)
+            .WithReference(hostedSignIns)
+            .WithReference(collectionSchedule)
+            .WithReference(queues)
+            .WaitFor(storage);
 
         var app = host.CreateWebApp();
-        app = app.WithReference(snapshots).WaitFor(snapshots);
+        app = app.WithReference(snapshots).WithReference(hostedSignIns).WaitFor(snapshots);
         app = WireLocalHostedSignInAuth(host, app);
         app = app.WithEnvironment("GitHubAuth__HostedSignInCallbackBaseUri", app.GetEndpoint("https"));
+        _ = functions;
         host.SetApp(app);
     }
 
@@ -34,8 +50,28 @@ internal static class HostedSignInAppHostGraph
 
         var storage = host.Builder.AddAzureStorage("operator-snapshot-storage");
         var snapshots = storage.AddBlobContainer("operator-snapshots", "operator-snapshots");
+        var hostedSignIns = storage.AddBlobContainer("hosted-sign-ins", "hosted-sign-ins");
+        var collectionSchedule = storage.AddBlobContainer("collection-schedule", "collection-schedule");
+        var queues = storage.AddQueues("operator-snapshot-queues");
 
-        var app = host.CreateWebApp().WithReference(snapshots);
+        var functions = host.Builder
+            .AddAzureFunctionsProject(
+                host.Naming.AzureName("snapshot-scheduler"),
+                "../SoloDevBoard.Functions/SoloDevBoard.Functions.csproj")
+            .WithHostStorage(storage)
+            .WithReference(snapshots)
+            .WithReference(hostedSignIns)
+            .WithReference(collectionSchedule)
+            .WithReference(queues);
+
+        functions.WithRoleAssignments(
+            storage,
+            StorageBuiltInRole.StorageBlobDataContributor,
+            StorageBuiltInRole.StorageQueueDataContributor,
+            StorageBuiltInRole.StorageTableDataContributor,
+            StorageBuiltInRole.StorageAccountContributor);
+
+        var app = host.CreateWebApp().WithReference(snapshots).WithReference(hostedSignIns);
         host.SetApp(app);
     }
 

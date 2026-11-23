@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
+using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Application.Services.Snapshots;
@@ -209,7 +210,13 @@ public sealed class OperatorSnapshotCollectionServiceTests
             store,
             coordinator,
             Options.Create(new OperatorSnapshotDurabilityOptions { DurabilityKind = OperatorSnapshotDurabilityKind.LocalMachine }),
-            TimeProvider.System);
+            TimeProvider.System,
+            new OperatorSnapshotScheduleFactsService(
+                new ScheduledCollectionEnvironment(
+                    Options.Create(new GitHubAuthOptions()),
+                    Options.Create(new OperatorSnapshotDurabilityOptions { DurabilityKind = OperatorSnapshotDurabilityKind.LocalMachine })),
+                new HostedCollectionEligibilityEvaluator(Options.Create(new HostedAdmissionControlOptions()))),
+            new TestHostedSignInRecordStore());
     }
 
     private static OperatorSnapshotCollectionCoordinator CreateCoordinatorWithGithub(IGitHubService github)
@@ -254,5 +261,20 @@ public sealed class OperatorSnapshotCollectionServiceTests
     {
         public object? GetService(Type serviceType)
             => serviceType == typeof(IGitHubService) ? github : null;
+    }
+
+    private sealed class TestHostedSignInRecordStore : IHostedSignInRecordStore
+    {
+        public Task<IReadOnlyList<HostedSignInRecord>> ListAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<HostedSignInRecord>>([]);
+
+        public Task<HostedSignInRecordReadResult> GetAsync(string operatorLogin, CancellationToken cancellationToken = default)
+            => Task.FromResult<HostedSignInRecordReadResult>(new HostedSignInRecordReadResult.NotFound());
+
+        public Task<HostedSignInRecordWriteResult> UpsertAsync(
+            HostedSignInRecord record,
+            string? expectedEtag,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<HostedSignInRecordWriteResult>(new HostedSignInRecordWriteResult.Succeeded(string.Empty));
     }
 }

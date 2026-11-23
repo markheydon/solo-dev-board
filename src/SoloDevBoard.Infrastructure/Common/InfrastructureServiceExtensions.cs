@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Application.GitHub;
@@ -127,6 +128,8 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IMilestoneRepository, GitHubMilestoneRepository>();
         services.AddScoped<IProjectBoardStructureRepository, GitHubProjectBoardStructureRepository>();
         services.AddScoped<IWorkflowFileRepository, GitHubWorkflowFileRepository>();
+        services.AddHttpClient("HostedGitHubOAuthClient");
+        services.TryAddSingleton<IHostedGitHubOAuthTokenExchange, HostedGitHubOAuthTokenExchange>();
 
         return services;
     }

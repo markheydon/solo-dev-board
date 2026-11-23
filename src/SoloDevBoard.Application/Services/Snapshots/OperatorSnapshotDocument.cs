@@ -23,4 +23,19 @@ public sealed class OperatorSnapshotDocument
 
     /// <summary>Reserved object for later feature facts.</summary>
     public Dictionary<string, object?> LaterFacts { get; set; } = [];
+
+    /// <summary>What started the current run, or absent for legacy documents.</summary>
+    public OperatorSnapshotCollectionTrigger? Trigger { get; set; }
+
+    /// <summary>UTC date (<c>yyyy-MM-dd</c>) when queued for a daily occasion, or null.</summary>
+    public string? QueuedOccasion { get; set; }
+
+    /// <summary>True only while a daily pass is executing inside the worker.</summary>
+    public bool PassExecuting { get; set; }
+
+    /// <summary>Renewed while <see cref="PassExecuting"/> is true; liveness of the pass.</summary>
+    public DateTimeOffset? PassLeaseUntil { get; set; }
+
+    /// <summary>Daily attempt count, up to four (first pass plus three further tries).</summary>
+    public int? AttemptsUsed { get; set; }
 }

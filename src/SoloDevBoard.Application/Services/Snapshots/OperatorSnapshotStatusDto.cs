@@ -29,4 +29,19 @@ public sealed class OperatorSnapshotStatusDto
 
     /// <summary>Where the snapshot is kept for operator copy.</summary>
     public OperatorSnapshotDurabilityKind DurabilityKind { get; init; }
+
+    /// <summary>What started the current or last run, if known.</summary>
+    public OperatorSnapshotCollectionTrigger? Trigger { get; init; }
+
+    /// <summary>Whether scheduled collection is modelled.</summary>
+    public OperatorSnapshotSchedulePosture SchedulePosture { get; init; }
+
+    /// <summary>UTC date when waiting to start today's daily occasion, if any.</summary>
+    public string? QueuedForOccasion { get; init; }
+
+    /// <summary>Next 05:00 UTC that would queue them, if any.</summary>
+    public DateTimeOffset? NextOccasionAtUtc { get; init; }
+
+    /// <summary>Why no next occasion is scheduled, when applicable.</summary>
+    public OperatorSnapshotNoScheduleReason NoScheduleReason { get; init; }
 }

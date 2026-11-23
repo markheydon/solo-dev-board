@@ -143,6 +143,11 @@ public sealed class OperatorSnapshotCollectionCoordinator : IOperatorSnapshotLiv
                         successDocument.Revision = doc.Revision + 1;
                         successDocument.OperatorLogin = sanitisedLogin;
                         successDocument.LaterFacts = doc.LaterFacts;
+                        successDocument.Trigger = doc.Trigger ?? OperatorSnapshotCollectionTrigger.Operator;
+                        successDocument.QueuedOccasion = null;
+                        successDocument.PassExecuting = false;
+                        successDocument.PassLeaseUntil = null;
+                        successDocument.AttemptsUsed = null;
                         successDocument.Run.StartedAt = doc.Run.Status == OperatorSnapshotRunStatus.InProgress
                             ? doc.Run.StartedAt
                             : GetStartedAt(sanitisedLogin);

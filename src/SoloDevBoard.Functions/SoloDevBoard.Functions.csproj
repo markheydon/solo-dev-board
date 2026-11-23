@@ -10,12 +10,16 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Aspire.Azure.Storage.Blobs" />
+    <PackageReference Include="Aspire.Azure.Storage.Queues" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\SoloDevBoard.Composition\SoloDevBoard.Composition.csproj" />
     <ProjectReference Include="..\SoloDevBoard.ServiceDefaults\SoloDevBoard.ServiceDefaults.csproj" />
   </ItemGroup>
 
