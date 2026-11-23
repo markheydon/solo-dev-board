@@ -13,7 +13,16 @@ updates:
     assignees:
       - markheydon
     ignore:
+      - dependency-name: "Microsoft.AspNetCore.*"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "Microsoft.EntityFrameworkCore.*"
+        update-types:
+          - version-update:semver-major
       - dependency-name: "Microsoft.Extensions.*"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "Npgsql.*"
         update-types:
           - version-update:semver-major
       - dependency-name: "Aspire.*"
@@ -33,9 +42,27 @@ updates:
         update-types:
           - minor
           - patch
+      aspnetcore:
+        patterns:
+          - Microsoft.AspNetCore.*
+        update-types:
+          - minor
+          - patch
+      entity-framework:
+        patterns:
+          - Microsoft.EntityFrameworkCore.*
+        update-types:
+          - minor
+          - patch
       microsoft-extensions:
         patterns:
           - Microsoft.Extensions.*
+        update-types:
+          - minor
+          - patch
+      npgsql:
+        patterns:
+          - Npgsql.*
         update-types:
           - minor
           - patch

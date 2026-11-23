@@ -62,14 +62,32 @@ Microsoft.OpenApi's versions are aligned to specific .NET versions therefore the
         update-types:
           - version-update:semver-major
 
-### LTS repos: Microsoft.Extensions.* major versions
+### LTS repos: .NET platform train major versions
 
-While the app targets the current LTS runtime (e.g. net10.0), do not take `Microsoft.Extensions.*` semver-major updates (11.x while on .NET 10). A `microsoft-extensions` group with `update-types: [minor, patch]` is not enough: Dependabot still opens **individual** PRs for majors. Add a job-level ignore:
+While the app targets the current LTS runtime (e.g. `net10.0`), NuGet packages that share the runtime major (10.x) must not jump to the next train (11.x) until you retarget the framework. That includes at least:
+
+- `Microsoft.AspNetCore.*`
+- `Microsoft.EntityFrameworkCore.*`
+- `Microsoft.Extensions.*`
+- `Npgsql.*` (Npgsql and Npgsql.EntityFrameworkCore.PostgreSQL version with .NET)
+
+Groups limited to `minor` + `patch` are not enough: Dependabot still opens **individual** or **multi-dependency** PRs for semver-majors. Add job-level ignores (pattern from [dotnet/aspire dependabot](https://github.com/dotnet/aspire/blob/main/.github/dependabot.yml)):
 
     ignore:
+      - dependency-name: "Microsoft.AspNetCore.*"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "Microsoft.EntityFrameworkCore.*"
+        update-types:
+          - version-update:semver-major
       - dependency-name: "Microsoft.Extensions.*"
         update-types:
           - version-update:semver-major
+      - dependency-name: "Npgsql.*"
+        update-types:
+          - version-update:semver-major
+
+Add matching `aspnetcore`, `entity-framework`, `npgsql`, and `microsoft-extensions` groups with `update-types: [minor, patch]` only. Do not add `System.*` unless the repo pins `System.*` packages in central management.
 
 ### Repos with Aspire hosting packages (`Aspire.*`)
 
