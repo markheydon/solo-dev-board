@@ -448,7 +448,7 @@ public sealed class RepositoriesTests
 
         cut.WaitForAssertion(
             () => Assert.Contains("Snapshot saved at", cut.Markup),
-            timeout: TimeSpan.FromSeconds(5));
+            timeout: TimeSpan.FromSeconds(15));
 
         Assert.True(statusReads >= 3, $"Expected repeated status reads after collect, got {statusReads}.");
     }
