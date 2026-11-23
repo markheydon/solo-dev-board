@@ -330,3 +330,7 @@ src/SoloDevBoard.Infrastructure/Snapshots/   # T022 occasion marker, T023 queue 
 
 - [X] T074 Extend `HostedCollectionEligibilityEvaluator.IsEligibleAtFill` in `src/SoloDevBoard.Application/Services/Snapshots/HostedCollectionEligibilityEvaluator.cs` to refuse fill when any collection is `inProgress` (not only `trigger` daily) or when `queuedOccasion` is set for any date (previous occasion still queued) per FR-008, US4/AC1, and `data-model.md` fill rule (contradicts)
 - [X] T075 Wire `DailySnapshotQueueInvocation.UpdateVisibilityAsync` (and explicit completion if required) in `src/SoloDevBoard.Functions/DailyCollectionFunctions.cs` to renew Azure queue visibility while `passExecuting` per `specs/002-scheduled-snapshot-collection/research.md` queue table and `contracts/daily-collection-schedule.md`; stop using no-op delegates so long passes are not misclassified as redelivery interruptions (partial)
+
+## Phase 12: Convergence
+
+- [X] T076 Exclude operators whose `HostedSignInRecord.completedAt` is after today's 05:00 UTC occasion from that UTC day's fill (`HostedCollectionEligibilityEvaluator.IsEligibleAtFill`) and from naming today as `NextOccasionAtUtc` before the following day (`OperatorSnapshotScheduleFactsService.TryComputeNextOccasion`); add Application unit tests for late fill (e.g. 05:10) and in-window page facts per FR-016, US7/AC4, and SC-008 (partial)

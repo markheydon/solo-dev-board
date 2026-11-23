@@ -27,6 +27,11 @@ public sealed class HostedCollectionEligibilityEvaluator(IOptions<HostedAdmissio
             return false;
         }
 
+        if (signInRecord.CompletedAt > GetOccasionStartUtc(occasionInstant))
+        {
+            return false;
+        }
+
         if (!IsAllowedByAdmission(signInRecord))
         {
             return false;
@@ -65,6 +70,13 @@ public sealed class HostedCollectionEligibilityEvaluator(IOptions<HostedAdmissio
         }
 
         return IsAllowedByAdmission(signInRecord);
+    }
+
+    /// <summary>05:00 UTC on the calendar day of <paramref name="occasionOrNow"/>.</summary>
+    internal static DateTimeOffset GetOccasionStartUtc(DateTimeOffset occasionOrNow)
+    {
+        var date = occasionOrNow.UtcDateTime.Date;
+        return new DateTimeOffset(date.Year, date.Month, date.Day, 5, 0, 0, TimeSpan.Zero);
     }
 
     private static bool IsInsideSignInWindow(DateTimeOffset completedAt, DateTimeOffset occasionInstant)

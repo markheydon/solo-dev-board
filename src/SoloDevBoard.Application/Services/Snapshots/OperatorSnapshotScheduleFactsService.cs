@@ -105,6 +105,7 @@ public sealed class OperatorSnapshotScheduleFactsService(
     {
         var todayOccasion = GetTodayOccasionAt(utcNow);
         if (utcNow <= todayOccasion.AddMinutes(15)
+            && signInRecord.CompletedAt <= todayOccasion
             && IsInsideSignInWindow(signInRecord.CompletedAt, utcNow <= todayOccasion ? todayOccasion : utcNow))
         {
             nextOccasion = todayOccasion;

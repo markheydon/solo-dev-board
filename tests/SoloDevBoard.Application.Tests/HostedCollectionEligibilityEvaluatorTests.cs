@@ -51,6 +51,18 @@ public sealed class HostedCollectionEligibilityEvaluatorTests
     }
 
     [Fact]
+    public void IsEligibleAtFill_WhenSignInCompletedAfterTodaysOccasionStart_ReturnsFalse()
+    {
+        var fillInstant = new DateTimeOffset(2026, 11, 23, 5, 10, 0, TimeSpan.Zero);
+        var signIn = EligibleSignIn();
+        signIn.CompletedAt = fillInstant;
+
+        var eligible = CreateSut().IsEligibleAtFill(signIn, snapshot: null, fillInstant);
+
+        Assert.False(eligible);
+    }
+
+    [Fact]
     public void IsEligibleAtFill_WhenEligibleAndNoBlockingFlags_ReturnsTrue()
     {
         var snapshot = new OperatorSnapshotDocument
