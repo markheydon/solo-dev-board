@@ -24,8 +24,17 @@ public static class OperatorSnapshotServiceCollectionExtensions
         services.AddSingleton<IScheduledCollectionEnvironment, ScheduledCollectionEnvironment>();
         services.AddSingleton<HostedCollectionEligibilityEvaluator>();
         services.AddSingleton<IOperatorSnapshotScheduleFactsService, OperatorSnapshotScheduleFactsService>();
-        services.AddSingleton<IDailyOccasionService, DailyOccasionService>();
-        services.AddSingleton<IDailySnapshotCollectionPassService, DailySnapshotCollectionPassService>();
+        return services;
+    }
+
+    /// <summary>Registers timer and queue workers that depend on scoped snapshot storage.</summary>
+    /// <param name="services">Service collection.</param>
+    public static IServiceCollection AddOperatorSnapshotScheduledCollectionWorkerServices(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        services.AddScoped<IDailyOccasionService, DailyOccasionService>();
+        services.AddScoped<IDailySnapshotCollectionPassService, DailySnapshotCollectionPassService>();
         return services;
     }
 }

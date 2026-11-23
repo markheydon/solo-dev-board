@@ -21,5 +21,6 @@ if (useHosted)
 builder.AddHostedScheduledCollectionWorkerIfConfigured();
 builder.Services.AddSoloDevBoard(builder.Configuration);
 OperatorSnapshotServiceCollectionExtensions.AddOperatorSnapshotServices(builder.Services);
+OperatorSnapshotServiceCollectionExtensions.AddOperatorSnapshotScheduledCollectionWorkerServices(builder.Services);
 
 builder.Build().Run();
