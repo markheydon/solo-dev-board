@@ -1,7 +1,7 @@
 # Scope
 
 **Project:** Solo Dev Board (code identifiers remain `SoloDevBoard`)  
-**Last updated:** 2026-11-15
+**Last updated:** 2026-11-23
 
 ---
 
@@ -19,3 +19,4 @@ The authoritative in-scope and out-of-scope feature list, assumptions, constrain
 | --- | --- | --- |
 | 2026-11-14 | Root summary added; detail remains in plan/SCOPE.md | Template alignment |
 | 2026-11-15 | Root summary uses spoken display name; identifiers noted | #397 branding alignment |
+| 2026-11-23 | Operator snapshot on Repositories reflected in [plan/SCOPE.md](plan/SCOPE.md) | ADR-0048 ([#610](https://github.com/markheydon/solo-dev-board/issues/610)) |

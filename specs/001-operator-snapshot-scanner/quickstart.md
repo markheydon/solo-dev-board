@@ -8,7 +8,7 @@ Validation guide for [spec.md](spec.md). Behavioural detail is in [data-model.md
 - GitHub credentials for PAT-only local trusted mode, as in [docs/getting-started.md](../../docs/getting-started.md). No Azure subscription.
 - Do not start Azurite, SQL, or Functions. The lean graph must not include them.
 
-Packages `Aspire.Hosting.Azure.Storage`, `Aspire.Azure.Storage.Blobs`, and `Azure.Storage.Blobs` are not part of this validation until an explicit package add lands. Lean checks below do not need them.
+Lean checks in sections 1–2 use PAT-only local trusted mode only. They do not start Azurite or other storage resources. Section 3 covers hosted sign-in blob mode after [ADR-0048](../../adr/adr-0048-hosted-operator-snapshot-blob-storage.md) is accepted.
 
 ## 1. Lean `aspire start` has no storage emulator
 
@@ -44,9 +44,7 @@ To see interruption: start a collection and stop the AppHost before it finishes.
 
 ## 3. How hosted blob mode differs
 
-Do this only after `adr/adr-0048-hosted-operator-snapshot-blob-storage.md` is **Accepted** and the approved packages are referenced. Until then, do not add the storage resource, and do not expect a blob.
-
-Hosted sign-in (`HostedSignInEnabled` true), after that ADR:
+Hosted sign-in (`HostedSignInEnabled` true), with [ADR-0048](../../adr/adr-0048-hosted-operator-snapshot-blob-storage.md) accepted:
 
 - Local `aspire start` includes `operator-snapshot-storage` running as the Azurite emulator (`RunAsEmulator` with `WithDataVolume()`) and the `operator-snapshots` container referenced by `web`. The lean graph does not. Snapshot blobs are stored on a named Docker data volume so they survive `aspire stop` and a new `aspire start` on the same machine. A container runtime (for example Docker) is required for this graph. Normal `aspire stop` keeps the volume; `aspire stop --force --volumes` removes Aspire-managed volumes and wipes local Azurite snapshot data.
 - Web calls `AddAzureBlobContainerClient("operator-snapshots")` because Aspire injected that connection. The file under `data/operator-snapshots` is not the hosted store.

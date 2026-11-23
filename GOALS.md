@@ -2,7 +2,7 @@
 
 **Project:** Solo Dev Board (code identifiers remain `SoloDevBoard`)  
 **Owner:** Mark Heydon  
-**Last updated:** 2026-11-17
+**Last updated:** 2026-11-23
 
 ---
 
@@ -18,7 +18,7 @@ Solo developers maintaining multiple GitHub repositories waste time context-swit
 - **G2:** Deliver practical multi-repo tooling (Label Manager, One-Click Migration, Planning, Actions Templates, Audit, Triage).
 - **G3:** Keep the end-user User Guide accurate for every published page (shipped behaviour only, locked by unit or bUnit tests in the same change). Playwright E2E covers the browser shell, accessibility scans, and guide screenshots.
 - **G4:** Dogfood the app as the maintainer's daily solo-developer workflow across public repositories.
-- **G5:** Preserve **lean local parity** alongside G1: a solo developer MUST be able to run the product locally via Aspire with only web compute plus GitHub credentials (PAT-only local trusted mode and a lean AppHost graph), without mandatory SQL, Functions, storage, or Azure subscription, while every in-scope user-facing capability remains reachable through graceful degradation (on-demand or in-process alternatives where infrastructure is absent). Hosted sign-in today uses the same **web-only** AppHost graph; optional background or persistence resources require a future binding ADR (constitution Principle VII; [ADR-0046](adr/adr-0046-overnight-inventory-functions-and-sql.md) withdrawn).
+- **G5:** Preserve **lean local parity** alongside G1: a solo developer MUST be able to run the product locally via Aspire with only web compute plus GitHub credentials (PAT-only local trusted mode and a lean AppHost graph), without mandatory SQL, Functions, storage emulators, or Azure subscription, while every in-scope user-facing capability remains reachable through graceful degradation (on-demand or in-process alternatives where infrastructure is absent). **Hosted sign-in** uses a separate AppHost graph (`web` plus operator snapshot blob storage per [ADR-0048](adr/adr-0048-hosted-operator-snapshot-blob-storage.md)); the lean graph stays web-only. Further background or persistence resources still require a binding ADR (constitution Principle VII; [ADR-0046](adr/adr-0046-overnight-inventory-functions-and-sql.md) withdrawn).
 
 ---
 
@@ -50,3 +50,4 @@ See [`SCOPE.md`](SCOPE.md) and [`plan/SCOPE.md`](plan/SCOPE.md) for out-of-scope
 | --- | --- | --- |
 | 2026-11-14 | Initial goals from legacy AGENTS.md / plan scope | Repo workflow alignment chore |
 | 2026-11-17 | Added G5 lean local parity; success criterion for lean Aspire graph | Constitution v1.1.0 and ADR-0046 follow-up |
+| 2026-11-23 | G5: hosted sign-in graph includes operator snapshot storage (ADR-0048); lean graph unchanged | Operator snapshot collection ([#610](https://github.com/markheydon/solo-dev-board/issues/610)) |
