@@ -148,6 +148,24 @@ public sealed class DailySnapshotCollectionPassService(
                 return;
             }
 
+            if (found.Document.Trigger == OperatorSnapshotCollectionTrigger.Daily
+                && found.Document.Run.Status == OperatorSnapshotRunStatus.InProgress
+                && !found.Document.PassExecuting
+                && !coordinator.HasLiveTask(message.OperatorLogin)
+                && found.Document.Run.Reason is OperatorSnapshotRunReason.RateLimit or OperatorSnapshotRunReason.Unexpected
+                && (found.Document.AttemptsUsed ?? 1) < 4)
+            {
+                await queuePublisher.EnqueueAsync(
+                    new DailySnapshotQueueMessage
+                    {
+                        OccasionDate = message.OccasionDate,
+                        OperatorLogin = message.OperatorLogin,
+                        Kind = "retry",
+                    },
+                    cancellationToken).ConfigureAwait(false);
+                return;
+            }
+
             if (found.Document.Run.Status is OperatorSnapshotRunStatus.Failed)
             {
                 found.Document.PassExecuting = false;
@@ -156,18 +174,6 @@ public sealed class DailySnapshotCollectionPassService(
                 if (found.Document.Run.Reason == OperatorSnapshotRunReason.SignInOrToken)
                 {
                     await MarkCredentialUnusableAsync(message.OperatorLogin, cancellationToken).ConfigureAwait(false);
-                }
-                else if (found.Document.Run.Reason is OperatorSnapshotRunReason.RateLimit or OperatorSnapshotRunReason.Unexpected
-                         && (found.Document.AttemptsUsed ?? 1) < 4)
-                {
-                    await queuePublisher.EnqueueAsync(
-                        new DailySnapshotQueueMessage
-                        {
-                            OccasionDate = message.OccasionDate,
-                            OperatorLogin = message.OperatorLogin,
-                            Kind = "retry",
-                        },
-                        cancellationToken).ConfigureAwait(false);
                 }
 
                 return;

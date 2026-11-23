@@ -334,3 +334,7 @@ src/SoloDevBoard.Infrastructure/Snapshots/   # T022 occasion marker, T023 queue 
 ## Phase 12: Convergence
 
 - [X] T076 Exclude operators whose `HostedSignInRecord.completedAt` is after today's 05:00 UTC occasion from that UTC day's fill (`HostedCollectionEligibilityEvaluator.IsEligibleAtFill`) and from naming today as `NextOccasionAtUtc` before the following day (`OperatorSnapshotScheduleFactsService.TryComputeNextOccasion`); add Application unit tests for late fill (e.g. 05:10) and in-window page facts per FR-016, US7/AC4, and SC-008 (partial)
+
+## Phase 13: Convergence
+
+- [X] T077 When a daily pass fails with `rateLimit` or `unexpected` and `attemptsUsed` &lt; 4, persist `run.status` `inProgress` with `passExecuting` false (not terminal `failed`) before enqueueing a `retry` message in `src/SoloDevBoard.Application/Services/Snapshots/DailySnapshotCollectionPassService.cs` (and the shared walk failure path if required); update `src/SoloDevBoard.Infrastructure/Snapshots/BlobOperatorSnapshotStore.MaybeRewriteInterruptedAsync` so a daily document in that retry-wait state is not rewritten to `siteStopped` on web read per `data-model.md` transitions, `contracts/daily-collection-schedule.md`, `research.md`, FR-008, FR-020, US6/AC12, and SC-012 (contradicts)

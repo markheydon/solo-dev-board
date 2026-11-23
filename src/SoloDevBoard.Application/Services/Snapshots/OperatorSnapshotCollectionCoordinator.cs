@@ -184,15 +184,45 @@ public sealed class OperatorSnapshotCollectionCoordinator : IOperatorSnapshotLiv
                 cancellationToken,
                 (doc, currentToken) =>
                 {
-                    doc.Run = new OperatorSnapshotRun
+                    var attempts = doc.AttemptsUsed ?? 1;
+                    var retryableDaily = doc.Trigger == OperatorSnapshotCollectionTrigger.Daily
+                        && doc.PassExecuting
+                        && reason is OperatorSnapshotRunReason.RateLimit or OperatorSnapshotRunReason.Unexpected
+                        && attempts < 4;
+
+                    doc.PassExecuting = false;
+                    doc.PassLeaseUntil = null;
+
+                    if (retryableDaily)
                     {
-                        Status = OperatorSnapshotRunStatus.Failed,
-                        StartedAt = doc.Run.StartedAt,
-                        FinishedAt = finishedAt,
-                        RepositoriesRecorded = doc.Run.RepositoriesRecorded,
-                        Reason = reason,
-                        Detail = detail,
-                    };
+                        doc.Run = new OperatorSnapshotRun
+                        {
+                            Status = OperatorSnapshotRunStatus.InProgress,
+                            StartedAt = doc.Run.StartedAt,
+                            FinishedAt = null,
+                            RepositoriesRecorded = doc.Run.RepositoriesRecorded,
+                            Reason = reason,
+                            Detail = detail,
+                        };
+                    }
+                    else
+                    {
+                        if (doc.Trigger == OperatorSnapshotCollectionTrigger.Daily)
+                        {
+                            doc.QueuedOccasion = null;
+                        }
+
+                        doc.Run = new OperatorSnapshotRun
+                        {
+                            Status = OperatorSnapshotRunStatus.Failed,
+                            StartedAt = doc.Run.StartedAt,
+                            FinishedAt = finishedAt,
+                            RepositoriesRecorded = doc.Run.RepositoriesRecorded,
+                            Reason = reason,
+                            Detail = detail,
+                        };
+                    }
+
                     doc.Revision++;
                     return (doc, currentToken);
                 })

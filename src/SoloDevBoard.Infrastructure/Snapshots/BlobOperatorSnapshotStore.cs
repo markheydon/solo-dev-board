@@ -157,6 +157,11 @@ public sealed class BlobOperatorSnapshotStore : IOperatorSnapshotStore
             return document;
         }
 
+        if (document.Trigger == OperatorSnapshotCollectionTrigger.Daily && !document.PassExecuting)
+        {
+            return document;
+        }
+
         var interrupted = new OperatorSnapshotDocument
         {
             SchemaVersion = document.SchemaVersion,

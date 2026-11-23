@@ -90,6 +90,46 @@ public sealed class OperatorSnapshotCollectionCoordinatorTests
     }
 
     [Fact]
+    public async Task Walk_DailyRateLimit_KeepsInProgressForRetry()
+    {
+        var store = new InMemoryOperatorSnapshotStore();
+        store.Seed(Login, new OperatorSnapshotDocument
+        {
+            OperatorLogin = Login,
+            Revision = 5,
+            Trigger = OperatorSnapshotCollectionTrigger.Daily,
+            PassExecuting = true,
+            AttemptsUsed = 1,
+            Repositories = [],
+            Run = new OperatorSnapshotRun
+            {
+                Status = OperatorSnapshotRunStatus.InProgress,
+                StartedAt = DateTimeOffset.Parse("2026-06-01T12:00:00Z"),
+                RepositoriesRecorded = 0,
+            },
+        });
+
+        var coordinator = CreateCoordinator(store, CreateFailingGitHub(HttpStatusCode.TooManyRequests));
+
+        Assert.True(coordinator.TryBegin(
+            Login,
+            Login,
+            "token",
+            new OperatorSnapshotConcurrencyToken(5, null),
+            (login, ct) => store.GetAsync(login, ct),
+            (login, doc, token, ct) => SaveAsync(store, login, doc, token, ct)));
+
+        await WaitForIdleAsync(coordinator);
+
+        var document = store.GetDocument(Login);
+        Assert.NotNull(document);
+        Assert.Equal(OperatorSnapshotRunStatus.InProgress, document.Run.Status);
+        Assert.False(document.PassExecuting);
+        Assert.Equal(OperatorSnapshotRunReason.RateLimit, document.Run.Reason);
+        Assert.Null(document.Run.FinishedAt);
+    }
+
+    [Fact]
     public async Task Walk_UnexpectedFailure_KeepsPriorRepositories()
     {
         var store = new InMemoryOperatorSnapshotStore();
