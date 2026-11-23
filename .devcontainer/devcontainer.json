@@ -2,7 +2,7 @@
 	"name": "Solo Hub Board Dev Container",
 	"image": "mcr.microsoft.com/devcontainers/dotnet:10.0",
 	"features": {
-		"ghcr.io/microsoft/aspire-devcontainer-feature/aspire:3": {},
+		"ghcr.io/markheydon/devcontainer-features/aspire-cli:1": {},
 		"ghcr.io/devcontainers/features/docker-in-docker:4": {},
 		"ghcr.io/devcontainers/features/github-cli:1": {},
 		"ghcr.io/devcontainers/features/azure-cli:1": {},
@@ -22,10 +22,8 @@
 		"memory": "8gb",
 		"storage": "32gb"
 	},
-	"onCreateCommand": "bash .devcontainer/setup-dotnet-dev-cert.sh && sudo apt-get update && sudo apt-get install -y libnss3-tools azure-functions-core-tools-4",
+	"onCreateCommand": "bash .devcontainer/setup-dotnet-dev-cert.sh && sudo apt-get update && sudo apt-get install -y azure-functions-core-tools-4",
 	"remoteEnv": {
-		"PATH": "/home/vscode/.aspire/bin:${containerEnv:PATH}",
-		"SSL_CERT_DIR": "/usr/lib/ssl/certs:/home/vscode/.aspnet/dev-certs/trust",
 		"CURSOR_API_KEY": "${localEnv:CURSOR_API_KEY}",
 		"GH_TOKEN": "${localEnv:GH_TOKEN}",
 		"GH_HOST": "github.com"
