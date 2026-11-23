@@ -38,8 +38,7 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
         }
 
         var get = await _store.GetAsync(ownerLogin, cancellationToken).ConfigureAwait(false);
-        if (get is OperatorSnapshotGetResult.Found { Document.Run.Status: OperatorSnapshotRunStatus.InProgress }
-            && _coordinator.HasLiveTask(sanitised))
+        if (_coordinator.HasLiveTask(sanitised))
         {
             return OperatorSnapshotStartResult.AlreadyInProgress;
         }
@@ -105,7 +104,18 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
             ReadForCoordinatorAsync,
             PersistTerminalAsync);
 
-        return started ? OperatorSnapshotStartResult.Started : OperatorSnapshotStartResult.AlreadyInProgress;
+        if (!started)
+        {
+            await TryRevertStrayInProgressStartAsync(
+                    ownerLogin,
+                    baseDocument,
+                    get is OperatorSnapshotGetResult.Found,
+                    cancellationToken)
+                .ConfigureAwait(false);
+            return OperatorSnapshotStartResult.AlreadyInProgress;
+        }
+
+        return OperatorSnapshotStartResult.Started;
     }
 
     /// <inheritdoc/>
@@ -184,6 +194,45 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
             Detail = document.Run.Detail,
             DurabilityKind = _durabilityOptions.DurabilityKind,
         };
+    }
+
+    private async Task TryRevertStrayInProgressStartAsync(
+        string ownerLogin,
+        OperatorSnapshotDocument priorDocument,
+        bool hadPriorDocument,
+        CancellationToken cancellationToken)
+    {
+        if (!hadPriorDocument)
+        {
+            return;
+        }
+
+        var current = await _store.GetAsync(ownerLogin, cancellationToken).ConfigureAwait(false);
+        if (current is not OperatorSnapshotGetResult.Found found
+            || found.Document.Run.Status != OperatorSnapshotRunStatus.InProgress)
+        {
+            return;
+        }
+
+        var restored = new OperatorSnapshotDocument
+        {
+            SchemaVersion = priorDocument.SchemaVersion,
+            OperatorLogin = priorDocument.OperatorLogin,
+            LastSuccessfulCollectionAt = priorDocument.LastSuccessfulCollectionAt,
+            Repositories = priorDocument.Repositories,
+            LaterFacts = priorDocument.LaterFacts,
+            Run = new OperatorSnapshotRun
+            {
+                Status = priorDocument.Run.Status,
+                StartedAt = priorDocument.Run.StartedAt,
+                FinishedAt = priorDocument.Run.FinishedAt,
+                RepositoriesRecorded = priorDocument.Run.RepositoriesRecorded,
+                Reason = priorDocument.Run.Reason,
+                Detail = priorDocument.Run.Detail,
+            },
+        };
+
+        await _store.SaveAsync(ownerLogin, restored, found.Token, cancellationToken).ConfigureAwait(false);
     }
 
     private Task<OperatorSnapshotGetResult> ReadForCoordinatorAsync(string sanitisedLogin, CancellationToken cancellationToken)

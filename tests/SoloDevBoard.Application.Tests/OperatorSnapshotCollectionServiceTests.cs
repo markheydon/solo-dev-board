@@ -1,6 +1,9 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using SoloDevBoard.Application.Identity;
+using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Application.Services.Snapshots;
 using SoloDevBoard.Application.Tests.Support;
 
@@ -8,6 +11,39 @@ namespace SoloDevBoard.Application.Tests;
 
 public sealed class OperatorSnapshotCollectionServiceTests
 {
+    [Fact]
+    public async Task StartAsync_WhenWalkIsLive_ReturnsAlreadyInProgress()
+    {
+        var store = new InMemoryOperatorSnapshotStore();
+        var walkGate = new TaskCompletionSource();
+        var github = Substitute.For<IGitHubService>();
+        github.GetRepositoriesAsync(
+                Arg.Any<CancellationToken>(),
+                Arg.Any<bool>(),
+                Arg.Any<IProgress<int>?>())
+            .Returns(call => WaitForWalkThenReturnEmptyAsync(walkGate, call.Arg<CancellationToken>()));
+
+        var coordinator = CreateCoordinatorWithGithub(github);
+        var userContext = Substitute.For<ICurrentUserContext>();
+        userContext.OwnerLogin.Returns("octocat");
+        userContext.GetAccessToken().Returns("token");
+        var service = CreateService(userContext, store, coordinator);
+
+        var first = await service.StartAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(OperatorSnapshotStartResult.Started, first);
+        Assert.True(coordinator.HasLiveTask("octocat"));
+
+        var second = await service.StartAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(OperatorSnapshotStartResult.AlreadyInProgress, second);
+
+        walkGate.SetResult();
+        await WaitForCoordinatorIdleAsync(coordinator);
+
+        var document = store.GetDocument("octocat");
+        Assert.NotNull(document);
+        Assert.Equal(OperatorSnapshotRunStatus.Succeeded, document.Run.Status);
+    }
+
     [Fact]
     public async Task StartAsync_UnsafeOwnerLogin_ReturnsUnsafeOperatorLogin()
     {
@@ -149,11 +185,20 @@ public sealed class OperatorSnapshotCollectionServiceTests
         Assert.Equal(OperatorSnapshotRunReason.RateLimit, status.Reason);
     }
 
+    private static async Task<IReadOnlyList<Domain.Entities.Repositories.Repository>> WaitForWalkThenReturnEmptyAsync(
+        TaskCompletionSource walkGate,
+        CancellationToken cancellationToken)
+    {
+        await walkGate.Task.WaitAsync(cancellationToken);
+        return [];
+    }
+
     private static OperatorSnapshotCollectionService CreateService(
         ICurrentUserContext userContext,
-        IOperatorSnapshotStore store)
+        IOperatorSnapshotStore store,
+        OperatorSnapshotCollectionCoordinator? coordinator = null)
     {
-        var coordinator = new OperatorSnapshotCollectionCoordinator(
+        coordinator ??= new OperatorSnapshotCollectionCoordinator(
             Substitute.For<ISnapshotCollectionCredentialScopeFactory>(),
             TimeProvider.System,
             new OperatorSnapshotApplicationStopping(CancellationToken.None),
@@ -165,5 +210,49 @@ public sealed class OperatorSnapshotCollectionServiceTests
             coordinator,
             Options.Create(new OperatorSnapshotDurabilityOptions { DurabilityKind = OperatorSnapshotDurabilityKind.LocalMachine }),
             TimeProvider.System);
+    }
+
+    private static OperatorSnapshotCollectionCoordinator CreateCoordinatorWithGithub(IGitHubService github)
+    {
+        var scopeFactory = Substitute.For<ISnapshotCollectionCredentialScopeFactory>();
+        scopeFactory.CreateScope(Arg.Any<string>(), Arg.Any<string>())
+            .Returns(_ => new GitHubServiceScope(github));
+
+        return new OperatorSnapshotCollectionCoordinator(
+            scopeFactory,
+            TimeProvider.System,
+            new OperatorSnapshotApplicationStopping(CancellationToken.None),
+            NullLogger<OperatorSnapshotCollectionCoordinator>.Instance);
+    }
+
+    private static async Task WaitForCoordinatorIdleAsync(OperatorSnapshotCollectionCoordinator coordinator)
+    {
+        var deadline = DateTimeOffset.UtcNow.AddSeconds(5);
+        while (DateTimeOffset.UtcNow < deadline)
+        {
+            if (!coordinator.HasLiveTask("octocat"))
+            {
+                return;
+            }
+
+            await Task.Delay(25);
+        }
+
+        Assert.Fail("Coordinator did not finish the walk in time.");
+    }
+
+    private sealed class GitHubServiceScope(IGitHubService github) : IServiceScope
+    {
+        public IServiceProvider ServiceProvider { get; } = new GitHubServiceProvider(github);
+
+        public void Dispose()
+        {
+        }
+    }
+
+    private sealed class GitHubServiceProvider(IGitHubService github) : IServiceProvider
+    {
+        public object? GetService(Type serviceType)
+            => serviceType == typeof(IGitHubService) ? github : null;
     }
 }

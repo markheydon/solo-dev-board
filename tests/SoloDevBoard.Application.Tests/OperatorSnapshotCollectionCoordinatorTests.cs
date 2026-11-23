@@ -45,6 +45,51 @@ public sealed class OperatorSnapshotCollectionCoordinatorTests
     }
 
     [Fact]
+    public async Task Walk_Success_PreservesLaterFacts()
+    {
+        var store = new InMemoryOperatorSnapshotStore();
+        var lastSuccess = DateTimeOffset.Parse("2026-01-01T10:00:00Z");
+        store.Seed(Login, new OperatorSnapshotDocument
+        {
+            OperatorLogin = Login,
+            Revision = 5,
+            LastSuccessfulCollectionAt = lastSuccess,
+            LaterFacts = new Dictionary<string, object?> { ["extension"] = "keep-me" },
+            Repositories = [],
+            Run = new OperatorSnapshotRun
+            {
+                Status = OperatorSnapshotRunStatus.InProgress,
+                StartedAt = DateTimeOffset.Parse("2026-01-02T10:00:00Z"),
+                RepositoriesRecorded = 0,
+            },
+        });
+
+        var github = Substitute.For<IGitHubService>();
+        github.GetRepositoriesAsync(
+                Arg.Any<CancellationToken>(),
+                Arg.Any<bool>(),
+                Arg.Any<IProgress<int>?>())
+            .Returns([]);
+
+        var coordinator = CreateCoordinator(store, github);
+
+        Assert.True(coordinator.TryBegin(
+            Login,
+            Login,
+            "token",
+            new OperatorSnapshotConcurrencyToken(5, null),
+            (login, ct) => store.GetAsync(login, ct),
+            (login, doc, token, ct) => SaveAsync(store, login, doc, token, ct)));
+
+        await WaitForIdleAsync(coordinator);
+
+        var document = store.GetDocument(Login);
+        Assert.NotNull(document);
+        Assert.Equal(OperatorSnapshotRunStatus.Succeeded, document.Run.Status);
+        Assert.Equal("keep-me", document.LaterFacts["extension"]);
+    }
+
+    [Fact]
     public async Task Walk_UnexpectedFailure_KeepsPriorRepositories()
     {
         var store = new InMemoryOperatorSnapshotStore();

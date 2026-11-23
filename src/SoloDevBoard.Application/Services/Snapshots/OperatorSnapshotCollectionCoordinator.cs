@@ -131,7 +131,6 @@ public sealed class OperatorSnapshotCollectionCoordinator : IOperatorSnapshotLiv
                 },
                 LastSuccessfulCollectionAt = successAt,
                 Repositories = entries,
-                LaterFacts = [],
             };
 
             await ApplyWithRetryAsync(
@@ -143,6 +142,7 @@ public sealed class OperatorSnapshotCollectionCoordinator : IOperatorSnapshotLiv
                     {
                         successDocument.Revision = doc.Revision + 1;
                         successDocument.OperatorLogin = sanitisedLogin;
+                        successDocument.LaterFacts = doc.LaterFacts;
                         successDocument.Run.StartedAt = doc.Run.Status == OperatorSnapshotRunStatus.InProgress
                             ? doc.Run.StartedAt
                             : GetStartedAt(sanitisedLogin);
