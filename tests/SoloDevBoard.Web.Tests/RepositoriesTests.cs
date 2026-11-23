@@ -453,6 +453,27 @@ public sealed class RepositoriesTests
         Assert.True(statusReads >= 3, $"Expected repeated status reads after collect, got {statusReads}.");
     }
 
+    [Fact]
+    public async Task Repositories_CollectSnapshot_UnsafeOperatorLogin_ShowsStorageSafetyFeedback()
+    {
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>())
+            .Returns([CreateRepository("owner", "repo-a")]);
+
+        _snapshotCollectionService.StartAsync(Arg.Any<CancellationToken>())
+            .Returns(OperatorSnapshotStartResult.UnsafeOperatorLogin);
+
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<Repositories>();
+
+        cut.WaitForAssertion(() => Assert.Contains("Loaded 1 repositories.", cut.Markup));
+
+        await cut.Find("[data-testid='repositories-collect-snapshot-button']").ClickAsync(
+            new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+
+        cut.WaitForAssertion(
+            () => Assert.Contains("could not be stored safely", cut.Markup, StringComparison.OrdinalIgnoreCase));
+    }
+
     private static RepositoryDto CreateRepository(string owner, string name)
         => new(1, name, $"{owner}/{name}", string.Empty, string.Empty, false, false, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, [], false);
 
