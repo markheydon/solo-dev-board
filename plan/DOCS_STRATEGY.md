@@ -13,11 +13,15 @@ This document defines the conventions and processes for maintaining SoloDevBoard
 | **Public product site** | `website/` (Hugo / Hextra, GitHub Pages) | Visitors and app users (landing + User Guide) |
 | **Developer / operator docs** | `docs/` | Contributors, self-hosters, and operators |
 | **Maintainer / PM** | `plan/` | Scope, decisions, runbooks, wireframes |
-| **Feature intent (Spec Kit)** | `specs/<feature>/` (`.specify/` workflow) | Maintainers and agents planning **new** capabilities after `v1.4.0` |
+| **Feature intent (Spec Kit)** | `specs/<feature>/spec.md` | Long-lived product contract for **new** capabilities after `v1.4.0`; maintain when accepted behaviour changes |
+| **Spec Kit delivery record** | `specs/<feature>/` (`plan.md`, `tasks.md`, `research.md`, `quickstart.md`, checklists) | Delivery and audit artefacts for that increment; stay in git, not co-maintained with code after delivery |
+| **Spec Kit shapes (when needed)** | `specs/<feature>/data-model.md`, `contracts/` | Maintained only while they are the authoritative contract shape not owned elsewhere |
 | **Constitution** | `AGENTS.md`, `CONVENTIONS.md`, `.specify/memory/constitution.md` | AI agents and contributors (always-on rules) |
 | **ADRs** | `adr/` | Architectural decision records |
 
 Record new decisions with the `create-architectural-decision-record` skill under `adr/`.
+
+**Shipped operator behaviour** lives in `website/content/docs/` plus the locking unit or bUnit tests (constitution Principle III). **Architecture** lives in `adr/`. Post-delivery rules for Spec Kit directories (living spec, brownfield) are in [`.specify/memory/constitution.md`](../.specify/memory/constitution.md) (Delivery Workflow: Post-delivery persistence); do not duplicate that policy here.
 
 ---
 
@@ -178,7 +182,7 @@ When an AI agent or contributor is asked to write or update documentation:
 > | New architectural decision | Add an ADR under `adr/`; update `CONVENTIONS.md` or `AGENTS.md` if cross-cutting |
 > | Scope change | Update `plan/SCOPE.md`; update `website/content/_index.md` if the published feature list changes |
 > | New release | Follow the [release runbook](RELEASE_PLAN.md#release-runbook): User Guide pass and screenshot recapture **before** the tag, then update `plan/RELEASE_PLAN.md` and [`CHANGELOG.md`](../CHANGELOG.md) |
-> | New product feature (after `v1.4.0`) | Spec Kit spec under `specs/<feature>/` plus User Guide when the feature ships; do not add new `plan/` delivery bundles — see [`SPEC_KIT_MIGRATION.md`](SPEC_KIT_MIGRATION.md) |
+> | New product feature (after `v1.4.0`) | Maintain product intent in `specs/<feature>/spec.md`; keep delivery artefacts in the same directory as the increment record; add User Guide when the feature ships; do not add new `plan/` delivery bundles — see [`SPEC_KIT_MIGRATION.md`](SPEC_KIT_MIGRATION.md) and constitution post-delivery persistence |
 > | New label | Update `plan/LABEL_STRATEGY.md` |
 > | New board column or rule | Update `plan/PROJECT_BOARD_DESIGN.md` |
 > | Project #8 info pane / phase status | Update `plan/PROJECT_README.md` and paste into the project info pane |

@@ -1,12 +1,10 @@
 <!--
 Sync Impact Report
-- Version change: 1.1.2 → 1.2.0
-- Modified principles: III (Formal testing standard and docs alignment), IV (Consistent product chrome and accessible UX)
-- Added principles: none
-- Added sections: none
+- Version change: 1.2.0 → 1.3.0
+- Modified principles: none
+- Added sections: none (material expansion within Delivery Workflow and Quality Gates; Governance hierarchy refined)
 - Removed sections: none
 - Deferred items: none
-- Follow-up: align GOALS.md G3, CONVENTIONS.md, CONTRIBUTING.md, E2E inventory docs with narrowed Playwright contract (same PR as constitution)
 -->
 
 # SoloDevBoard Constitution
@@ -108,7 +106,16 @@ Governance text MUST use **PAT-only local trusted mode**, **hosted sign-in**, **
 
 ## Delivery Workflow and Quality Gates
 
-- **Spec Kit ownership:** Feature intent for new work flows through Spec Kit artefacts (`spec.md`, `plan.md`, `tasks.md` under `specs/<feature>/`). Those artefacts MUST NOT contradict this constitution. Detailed day-to-day coding rules remain in `AGENTS.md` and `CONVENTIONS.md` and MUST be kept consistent with amended principles.
+- **Spec Kit ownership:** Feature intent for new work flows through Spec Kit artefacts under `specs/<feature>/`. The constitution governs **how** those artefacts are owned and maintained; it MUST NOT absorb per-feature product requirements. New work MUST use Spec Kit. Detailed day-to-day coding rules remain in `AGENTS.md` and `CONVENTIONS.md` and MUST be kept consistent with amended principles. Contributors MUST NOT maintain duplicate capability prose in both `plan/SCOPE.md` and a Spec Kit spec for the same feature; one authoritative product-intent home applies per capability (under `specs/` for Spec Kit work, or scope docs only where no Spec Kit directory exists yet).
+- **Post-delivery persistence (living spec, brownfield):** Completed feature directories under `specs/<feature>/` MUST remain in version control. This project does **not** use constitution-only retirement of feature artefacts; feature specs are not gitignored after delivery.
+  - **`spec.md`** is the long-lived product contract for intended operator-visible behaviour and acceptance for that feature. After delivery and converge, **`spec.md` remains maintainable** when accepted requirements change.
+  - **`plan.md`, `tasks.md`, `research.md`, `quickstart.md`, and checklists** are delivery and audit artefacts. Once delivery for that increment is complete, contributors MUST NOT treat them as co-equal sources of truth or keep them synchronised with every post-ship tweak. They MAY be updated only when running a new Spec Kit delivery loop for that feature (spec revision → plan → tasks → implement → converge).
+  - **`data-model.md` and files under `contracts/`** MAY remain maintained after delivery only while they state shapes or interfaces that later features or the constitution still treat as the authoritative contract and that are not duplicated elsewhere. When behaviour stabilises, prefer updating **`spec.md` first**; change derived shapes only when the contract change requires it.
+  - **Flow-forward** (a new `specs/NNN-*` directory) applies to new capabilities or materially separable acceptance boundaries, not to every small change to an already-delivered feature. For an in-place requirement change to a delivered feature, revise that feature's **`spec.md` first**, then derive a **delta** plan and task list for the delivery loop.
+  - **Flow-back** (editing plan, tasks, and spec interchangeably without reconciling to **`spec.md`**) is forbidden as an ongoing convention: accepted intent changes MUST be reflected in **`spec.md`** before or alongside implementation. Lower-level artefacts or code MUST NOT contradict a **`spec.md`** meant to remain trustworthy.
+  - **Converge** and **analyze** do not choose persistence strategy. Converge append-only updates to **`tasks.md`** MUST NOT be interpreted as permission to let implementation replace documented intent in **`spec.md`**.
+  - **Pre–Spec Kit shipped increments** (`plan/archive/`, issues, guides, tests) do not require retrospective Spec Kit directories unless explicitly requested. Historic delivery bundles MUST NOT be revived as mandatory process (see Historical artefacts below).
+  - Spec Kit specs for **new** work MUST NOT contradict the accuracy contract for **already shipped** operator behaviour: published guides under `website/content/docs/` and locking unit or bUnit tests (Principle III) remain authoritative for what operators see today; **`spec.md`** must align when extending or changing that behaviour.
 - **AppHost documentation sync:** New or changed AppHost parameters, auth modes, resource references, or deploy steps that affect operators or developers MUST update `docs/getting-started.md`, `docs/deployment.md`, and `src/SoloDevBoard.AppHost/README.md` in the same change when behaviour is operator-facing (mirroring `CONVENTIONS.md` documentation sync).
 - **Pull requests:** MUST follow `plan/PULL_REQUEST_POLICY.md` (title shape, template body, labels). Agent-authored PRs MUST receive human review before merge.
 - **Pre-merge verification (minimum):** `dotnet format` verify, Release build with warnings as errors, `dotnet test SoloDevBoard.UnitTests.slnf -c Release --no-build` when code or tests change. Run or update Playwright E2E (`playwright.yml`) when the PR touches shell chrome, auth entry, the axe route list, theme script or storage, narrow-viewport layout checks, or docs-capture assets; otherwise the unit filter remains the default gate.
@@ -121,10 +128,11 @@ This constitution is the **non-negotiable governance layer** for Spec Kit-driven
 
 **Hierarchy when guidance conflicts:**
 
-1. This constitution (principles and MUST rules).
-2. Active ADRs in `adr/` for the specific decision domain.
-3. `AGENTS.md`, `CONVENTIONS.md`, and `plan/PULL_REQUEST_POLICY.md` for operational detail.
-4. Per-feature Spec Kit specs and plans (MUST comply with 1–3).
+1. This constitution (principles and MUST rules), including how Spec Kit artefacts are owned and maintained.
+2. Active ADRs in `adr/` for architecture and technology choices in the relevant decision domain.
+3. For **shipped** operator-visible behaviour: published end-user guides under `website/content/docs/` and the locking unit or bUnit tests that define that behaviour (Principle III).
+4. `AGENTS.md`, `CONVENTIONS.md`, and `plan/PULL_REQUEST_POLICY.md` for operational detail.
+5. Per-feature Spec Kit work under `specs/<feature>/` (MUST comply with 1–4). Among Spec Kit artefacts for a feature, **`spec.md`** is the **feature-intent authority** for product and acceptance intent. **`plan.md`, `tasks.md`,** and other delivery derivations (`research.md`, checklists, and similar) are **subordinate** records of how intent was planned and executed; they MUST NOT be treated as co-equal with **`spec.md`** after delivery for that increment completes.
 
 **Amendments:** Changes MUST go through `/speckit-constitution`, bump `CONSTITUTION_VERSION` using semantic versioning (MAJOR for removed or redefined principles; MINOR for new principles or material expansions; PATCH for clarifications only), set `LAST_AMENDED_DATE` to the amendment date, and include a Sync Impact Report comment until the amended file is committed.
 
@@ -132,4 +140,4 @@ This constitution is the **non-negotiable governance layer** for Spec Kit-driven
 
 **Runtime guidance:** Use `AGENTS.md` and `CONVENTIONS.md` for command sequences, file placement, and documentation sync tables; use `adr/` for decision history; use project skills in `.agents/skills/` and Aspire plugin skills per `AGENTS.md` during implementation.
 
-**Version**: 1.2.0 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-23
+**Version**: 1.3.0 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-23

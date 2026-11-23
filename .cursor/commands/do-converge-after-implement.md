@@ -55,7 +55,7 @@ Start the next loop only after steps 2–3 are done (or step 1 reported `converg
 
 ## Stop condition
 
-- **All clear** — `/speckit-converge` reports **converged** (no append to `tasks.md`). Summarise what was checked and suggest [loop-code-review.md](./loop-code-review.md) or PR polish if the branch is not merge-ready yet.
+- **All clear** — `/speckit-converge` reports **converged** (no append to `tasks.md`). Summarise what was checked. When all tasks in `tasks.md` are complete, suggest [close-spec-kit-feature.md](./close-spec-kit-feature.md) to mark the increment delivered in `spec.md`, then [loop-code-review.md](./loop-code-review.md) or PR polish if the branch is not merge-ready yet.
 - **Cap** — After **6** complete converge cycles (converge → implement when needed → verify), stop. Summarise remaining gaps, what you implemented, and whether another loop is worthwhile or accepting the current state is reasonable.
 
 ## Isolation

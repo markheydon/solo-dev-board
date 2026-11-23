@@ -63,7 +63,7 @@ There is no `v1.5` milestone. Do not declare one for branding.
 
 ## Agreed principles
 
-1. **Spec Kit owns product intent** — what to build and why, per feature.
+1. **Spec Kit owns product intent** — what to build and why, per feature. During delivery, intent flows through `spec.md`, `plan.md`, and `tasks.md`. After the increment is delivered, **`spec.md`** remains the maintained intent home; **`plan.md`** and **`tasks.md`** stay in the feature directory as the delivery record for that increment (see constitution Post-delivery persistence).
 2. **Constitution owns non-negotiable rules** — architecture, testing bans, deploy model.
 3. **Agent skills stay in `.agents/`** — Spec Kit does not replace Cursor skills.
 4. **No dual maintenance** — after migration, do not update both `plan/SCOPE.md` feature prose and a spec for the same capability.
