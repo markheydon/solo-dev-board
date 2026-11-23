@@ -105,6 +105,7 @@ builder.AddOperatorSnapshotHost(useOperatorSnapshotBlob);
 
 if (hostedSignInEnabled && useOperatorSnapshotBlob)
 {
+    builder.Services.AddScoped<IDailyCollectionScheduler, DailyCollectionScheduler>();
     builder.Services.AddSingleton<IHostedRefreshTokenExchanger, HostedRefreshTokenExchanger>();
     builder.Services.AddHostedService<DailyCollectionBackgroundService>();
 }

@@ -24,7 +24,6 @@ public static class OperatorSnapshotServiceCollectionExtensions
         services.AddScoped<OperatorSnapshotEligibility>();
         services.AddScoped<OperatorSnapshotScheduleStatusBuilder>();
         services.AddScoped<IHostedSignInRecordService, HostedSignInRecordService>();
-        services.AddScoped<IDailyCollectionScheduler, DailyCollectionScheduler>();
         services.AddScoped<IOperatorSnapshotCollectionService, OperatorSnapshotCollectionService>();
         return services;
     }
