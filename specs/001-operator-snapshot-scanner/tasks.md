@@ -206,7 +206,7 @@ Single project layout: `src/`, `tests/` at repository root (see [plan.md](plan.m
 **Purpose**: User guide, E2E alignment, chrome, and merge gates.
 
 - [X] T054 [P] Update shipped behaviour in `website/content/docs/repositories.md` and `tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md`; **same change** as T055 (constitution Principle III)
-- [ ] T055 Recapture `website` screenshot `repositories/overview.png` after command strip and status region ship; **same change** as T054 (do not merge Repositories UI without both)
+- [X] T055 Recapture `website` screenshot `repositories/overview.png` after command strip and status region ship; **same change** as T054 (do not merge Repositories UI without both)
 - [X] T056 Update Playwright repositories command-strip and 390px overflow tests in `tests/SoloDevBoard.E2E.Tests/` if new control changes assertions (no live GitHub collection journey)
 - [X] T057 Ensure **Collect snapshot** stays visible on narrow viewports (not overflow-only) in `Repositories.razor` per [contracts/repositories-page.md](contracts/repositories-page.md)
 - [X] T058 Run `dotnet format SoloDevBoard.slnx --verify-no-changes`, `dotnet build SoloDevBoard.slnx -c Release -warnaserror`, and `dotnet test SoloDevBoard.UnitTests.slnf -c Release --no-build` per [plan.md](plan.md)
