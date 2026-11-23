@@ -15,6 +15,11 @@
       "resolved": "ghcr.io/devcontainers/features/github-cli@sha256:bd7ab48a832228f633239277552c30b353867fef2e5b037e064b4e64f0b843f2",
       "integrity": "sha256:bd7ab48a832228f633239277552c30b353867fef2e5b037e064b4e64f0b843f2"
     },
+    "ghcr.io/markheydon/devcontainer-features/aspire-cli:1": {
+      "version": "1.0.1",
+      "resolved": "ghcr.io/markheydon/devcontainer-features/aspire-cli@sha256:0199dc49a5a831a1d0b9adc96ab9114722e6c9a261b5a58840c5e27308678947",
+      "integrity": "sha256:0199dc49a5a831a1d0b9adc96ab9114722e6c9a261b5a58840c5e27308678947"
+    },
     "ghcr.io/markheydon/devcontainer-features/dev-agent-tools:1": {
       "version": "1.1.0",
       "resolved": "ghcr.io/markheydon/devcontainer-features/dev-agent-tools@sha256:13cc35114ffce44250896ef60baed7c70bc7ce18c7365105d5f70b5f76500042",
@@ -24,11 +29,6 @@
       "version": "1.0.8",
       "resolved": "ghcr.io/markheydon/devcontainer-features/spec-kit@sha256:bdfed96da71c2336dddf4cfbee5baddd4b8d3c64fdee62166fa67aaf1c79bbe1",
       "integrity": "sha256:bdfed96da71c2336dddf4cfbee5baddd4b8d3c64fdee62166fa67aaf1c79bbe1"
-    },
-    "ghcr.io/microsoft/aspire-devcontainer-feature/aspire:3": {
-      "version": "3.1.0",
-      "resolved": "ghcr.io/microsoft/aspire-devcontainer-feature/aspire@sha256:37d8d2210dde60108de6cd03a61c6ec6fff0b5b1a5162dfe060084e8d5d5d457",
-      "integrity": "sha256:37d8d2210dde60108de6cd03a61c6ec6fff0b5b1a5162dfe060084e8d5d5d457"
     },
     "ghcr.io/stu-bell/devcontainer-features/cursor-cli:0": {
       "version": "0.1.0",
