@@ -11,6 +11,12 @@ These do not write the record:
 - A daily collection's token refresh, except the ciphertext and expiry fields.
 - PAT-only local trusted mode.
 
+## Fill eligibility
+
+The filler evaluates `data-model.md` Eligibility at the occasion instant for the UTC date being filled. A record with `completedAt` strictly after that instant is excluded for that occasion (a sign-in completed at 05:08 UTC is not queued when grace fill runs at 05:10 UTC the same day). Completing sign-in does not enqueue the same day.
+
+The filler reads each operator's kept snapshot. A login with run status `inProgress` is excluded, including a hand-started collection at fill time.
+
 ## Admission at 05:00 UTC
 
 The filler reads `HostedAdmissionControlOptions` as they are configured at the fill instant.

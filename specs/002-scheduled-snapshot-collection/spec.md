@@ -19,6 +19,7 @@
 - Q: If today's collection is queued for someone but has not started, can they still start that collection themselves? → A: No. While they are queued, or a collection is in progress, the start control does not start one. They wait for the queue.
 - Q: If the product stops while someone is still on today's queue, including waiting at the back for another try, what should happen to that queued work when the product is running again? → A: Queued work still runs after the product is back, including a further try waiting at the back. A collection that was in progress when the product stopped is interrupted and does not rejoin the queue.
 - Q: While a daily collection is waiting at the back of the queue for another try, what should the Repositories page show for that run? → A: Show the same daily run as in progress until it succeeds, fails, or is interrupted, including while it waits at the back. Do not list the tries.
+- Terminology: **Lean local posture** in this spec is the product wording for constitution VII **PAT-only local trusted mode** (engineering and plan tasks use the latter where configuration is named).
 
 ## User Scenarios & Testing *(mandatory)*
 

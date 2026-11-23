@@ -63,11 +63,15 @@ Application code does not read this blob. The ASP.NET Core data-protection host 
 
 ## Eligibility at a fill instant
 
+Occasion instant for `occasionDate` D is D at 05:00:00 UTC. Grace fill (first tick at or before 05:15:00 UTC) uses the same instant, not the tick time.
+
 Include a sign-in record when:
 
 - `completedAt` is at or after the occasion instant minus 30 days (exactly 30 days is included; older is excluded);
+- `completedAt` is at or before the occasion instant (strictly after excludes the login for that occasion; FR-016);
 - `scheduleHold` is false;
-- the login is not already on the current queue and does not hold `activeLogin`;
+- the login is not already on the current occasion queue and does not hold `activeLogin`;
+- that operator's kept snapshot run is not `inProgress` (hand-started or daily; FR-008);
 - admission allows the record: if admission is off, yes; if admission is on, the user login is listed or one saved organisation login is listed. Both lists empty allows nobody.
 
 Do not include a login that has no sign-in record.

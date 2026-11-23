@@ -42,6 +42,8 @@ Each row is one or more tests. A single happy-path case does not cover the rows 
 | Saved organisation removed from the list; user login not listed | Not queued | Application |
 | User login still listed after that organisation is removed | Queued | Application |
 | Clock at 05:10 UTC, no occasion document | Queue filled then | Application |
+| Sign-in completes at 05:08 UTC same day, grace fill at 05:10 UTC | That login not queued until next 05:00 UTC; hand start still works (FR-016) | Application |
+| Hand-started collection `inProgress` at fill instant | No queue entry for that login (FR-008) | Application |
 | Clock at 05:16 UTC, no occasion document | Not filled | Application |
 | Occasion already filled, tick again before 05:15 UTC | Not filled a second time | Application |
 | Two fillers race the conditional create | One document, each login once | Infrastructure |
@@ -54,11 +56,15 @@ Each row is one or more tests. A single happy-path case does not cover the rows 
 | Incomplete sign-in | Record unchanged | Application |
 | Host stop during a pass | Interrupted, not requeued, previous success kept | Application |
 | Host stop during `waiting` or `retryWaiting` | Entry remains; retry wait is not marked interrupted | Application |
+| Scheduler tick or `GetStatusAsync` only | No collection started (FR-010) | Application |
+| Two hosted operators, each with snapshots and status | Second operator sees none of the first operator's repository entries, finish time, or collection status from daily or hand runs (SC-003) | Application |
 | Hand `StartAsync` while queued or in progress | `Queued` or `AlreadyInProgress`; no second walk | Application |
 | Hand success after a daily success | Replaces the snapshot; `startedBy` is operator; no further tries | Application |
+| Repositories page open or catalogue reload while daily run in progress | Collection does not start; operator can still reload catalogue (FR-010, FR-011) | Web bUnit |
 | Lean posture across 05:00 UTC | Scheduler absent; no occasion document; page explains no schedule and that the snapshot stays on this machine | Web bUnit and composition registration test |
 | Hosted page before any run, operator eligible today | Alert names today at 05:00 UTC; no control for the time or the 30 days | Web bUnit |
 | Hosted page under schedule hold | Failure reason shown; no "tonight" or next 05:00 claim | Web bUnit |
+| Daily run in progress on Repositories | Recorded count rises without reload (SC-006); relies on existing feature 001 status polling | Web bUnit |
 
 ## Manual Aspire check (not the unit gate)
 
