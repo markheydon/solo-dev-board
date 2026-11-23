@@ -34,7 +34,8 @@ Key goals of the Repositories page:
 1. Open **Repositories** from the left navigation menu.
 2. Use the search field to filter repositories by name if needed.
 3. Use **Reload from GitHub** to reload the catalogue after connectivity changes without clearing your search or filter.
-4. Review status chips (Connected or Archived) and visibility chips (Public or Private).
+4. Use **Collect snapshot** when you want a durable copy of the catalogue for later analysis across sign-in sessions (hosted) or on disk (local PAT). While a collection is running, status updates in the feedback alert below the command strip.
+5. Review status chips (Connected or Archived) and visibility chips (Public or Private).
 
 ### Filter open-source project repositories
 
@@ -50,6 +51,7 @@ Key goals of the Repositories page:
 - View accessible repositories in a responsive data grid.
 - Search repositories by name.
 - Reload the catalogue from the command strip with **Reload from GitHub**.
+- Save a repository catalogue snapshot with **Collect snapshot** (status appears in the shared feedback alert with the catalogue load message).
 - Filter the catalogue to **Open source** or **Not open source** using the built-in toggle group.
 - See connection status and visibility at a glance.
 - Use the phone-width stacked grid layout without horizontal overflow.
@@ -68,11 +70,11 @@ Until those ship, each control opens an informational snackbar stating that the 
 
 ### Page layout
 
-- **Command strip** — **Reload from GitHub** (live), plus Add, Remove, and Bulk actions (stubs). On mobile the stub actions are grouped into a compact actions menu.
+- **Command strip** — **Reload from GitHub** and **Collect snapshot** (live), plus Add, Remove, and Bulk actions (stubs). On mobile the stub actions are grouped into a compact actions menu; **Collect snapshot** stays visible, not only inside the overflow menu.
 - **Search field** — Filter repositories by name.
 - **Catalogue filter** — Exclusive toggle group with **All**, **Open source**, and **Not open source**. The filter is not persisted across page reloads.
 - **Data grid** — Repository name, status chips, visibility chips, and stub row actions. On phone-width viewports the grid stacks each field so names wrap, chips stay fully visible, and row actions remain tappable without horizontal overflow.
-- **Feedback region** — Loading, empty, success, error, filter-empty, and catalogue status messages. Placeholder stub actions use snackbar toasts only.
+- **Feedback region** — One alert under the command card carries catalogue load messages and snapshot collection status (for example whether a snapshot exists, is in progress, succeeded, failed, or was interrupted). Placeholder stub actions use snackbar toasts only.
 
 ### Empty and error states
 

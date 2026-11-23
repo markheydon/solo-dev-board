@@ -455,9 +455,11 @@ Aspire generates and applies Bicep at deploy time. The graph matches **hosted si
 
 ### Inventory stack (not deployed)
 
-Hosted sign-in Staging and Production deploys **web compute only** (same infrastructure baseline as lean PAT self-host for Azure resources). Overnight inventory (Azure Functions, SQL, storage) was described in [ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md), which is **Withdrawn**; AppHost does not provision `functions`, `inventory`, or `storage` until a future ADR records a replacement approach.
+Hosted sign-in Staging and Production deploy **web** compute plus the operator snapshot storage account and `operator-snapshots` blob container ([ADR-0048](../adr/adr-0048-hosted-operator-snapshot-blob-storage.md)). Lean PAT deploy remains web-only with on-disk snapshot files. Overnight inventory (Azure Functions, SQL, and the withdrawn ADR-0046 inventory stack) is **not** provisioned; AppHost does not deploy `functions`, `inventory`, or SQL until a future ADR records a replacement approach ([ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md) **Withdrawn**).
 
 [PAT self-host](#self-hoster-deployment-pat-only-local-trusted-mode) and hosted sign-in deploy both provision the Container App (`web`) and tier Key Vault. Vault bindings on publish apply to `web` only.
+
+Operator snapshot collection uses in-process single-flight logic per replica. Scale the hosted `web` Container App to more than one replica only when you accept that a second replica might start a overlapping walk; blob conditional writes still protect the document, but the product does not yet coordinate walks across replicas.
 
 See [Azure Deployment Costs](azure-costs.md) for cost guidance.
 

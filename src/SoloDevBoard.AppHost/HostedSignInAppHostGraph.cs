@@ -2,7 +2,7 @@ using Aspire.Hosting.Dotnet;
 
 /// <summary>
 /// Hosted sign-in AppHost graph: web compute with GitHub App OAuth and admission control.
-/// Inventory SQL, Functions, and storage are not modelled (ADR-0046 Withdrawn).
+/// Operator snapshot blob storage is modelled (ADR-0048); withdrawn ADR-0046 inventory SQL and Functions are not.
 /// </summary>
 internal static class HostedSignInAppHostGraph
 {

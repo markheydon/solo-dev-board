@@ -111,7 +111,7 @@ Local `aspire start` uses the **lean AppHost graph** by default: only the Blazor
 
 When `hosted-sign-in-enabled` is `true`, the AppHost still models **`web` only** for compute: hosted GitHub App OAuth, admission control, and optional dev Key Vault (Path B). No Docker, SQL, Azure Functions, or Azurite are required locally.
 
-Overnight inventory and durable snapshot storage were proposed in [ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md) (withdrawn); they are **not** wired in AppHost. See [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md).
+Withdrawn [ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md) overnight inventory (SQL, Functions, and a separate inventory stack) is **not** wired in AppHost. When `hosted-sign-in-enabled` is `true`, [ADR-0048](../adr/adr-0048-hosted-operator-snapshot-blob-storage.md) adds **operator snapshot** blob storage (`operator-snapshots`) for durable hosted collections; lean PAT mode keeps snapshots in a local file under the web content root. See [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md).
 
 ### GitHub Codespaces secrets
 

@@ -8,4 +8,7 @@ public enum OperatorSnapshotStartResult
 
     /// <summary>Another walk is already in progress for this operator.</summary>
     AlreadyInProgress,
+
+    /// <summary>The operator login cannot be used as a safe snapshot storage key.</summary>
+    UnsafeOperatorLogin,
 }

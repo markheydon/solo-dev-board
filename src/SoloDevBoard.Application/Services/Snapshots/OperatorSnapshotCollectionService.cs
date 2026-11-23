@@ -34,7 +34,7 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
         var sanitised = OperatorLoginSanitiser.Sanitise(ownerLogin);
         if (sanitised is null)
         {
-            return OperatorSnapshotStartResult.AlreadyInProgress;
+            return OperatorSnapshotStartResult.UnsafeOperatorLogin;
         }
 
         var get = await _store.GetAsync(ownerLogin, cancellationToken).ConfigureAwait(false);
@@ -87,7 +87,12 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
         };
 
         var save = await _store.SaveAsync(ownerLogin, inProgress, token, cancellationToken).ConfigureAwait(false);
-        if (save is OperatorSnapshotSaveResult.ConcurrencyConflict or OperatorSnapshotSaveResult.UnsafeKey)
+        if (save is OperatorSnapshotSaveResult.UnsafeKey)
+        {
+            return OperatorSnapshotStartResult.UnsafeOperatorLogin;
+        }
+
+        if (save is OperatorSnapshotSaveResult.ConcurrencyConflict)
         {
             return OperatorSnapshotStartResult.AlreadyInProgress;
         }
@@ -97,7 +102,6 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
             ownerLogin,
             accessToken,
             new OperatorSnapshotConcurrencyToken(inProgress.Revision, token.BlobEtag),
-            PersistInProgressAsync,
             ReadForCoordinatorAsync,
             PersistTerminalAsync);
 
@@ -184,16 +188,6 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
 
     private Task<OperatorSnapshotGetResult> ReadForCoordinatorAsync(string sanitisedLogin, CancellationToken cancellationToken)
         => _store.GetAsync(sanitisedLogin, cancellationToken);
-
-    private async Task<bool> PersistInProgressAsync(
-        string sanitisedLogin,
-        OperatorSnapshotDocument document,
-        OperatorSnapshotConcurrencyToken token,
-        CancellationToken cancellationToken)
-    {
-        var result = await _store.SaveAsync(sanitisedLogin, document, token, cancellationToken).ConfigureAwait(false);
-        return result is OperatorSnapshotSaveResult.Succeeded;
-    }
 
     private async Task<bool> PersistTerminalAsync(
         string sanitisedLogin,

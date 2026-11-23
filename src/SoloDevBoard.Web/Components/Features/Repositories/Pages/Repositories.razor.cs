@@ -93,7 +93,17 @@ public partial class Repositories : ComponentBase, IAsyncDisposable
     {
         try
         {
-            await SnapshotCollectionService.StartAsync();
+            var start = await SnapshotCollectionService.StartAsync();
+            if (start == OperatorSnapshotStartResult.UnsafeOperatorLogin)
+            {
+                var catalogueLine = catalogueFeedbackLine ?? feedbackMessage;
+                feedbackMessage =
+                    $"{catalogueLine.TrimEnd()} Snapshot could not start because your sign-in could not be stored safely.";
+                feedbackSeverity = Severity.Error;
+                StateHasChanged();
+                return;
+            }
+
             await RefreshSnapshotStatusOnUiAsync();
             await EnsureStatusPollingAsync();
             await WaitForSnapshotSettlementOnUiAsync();

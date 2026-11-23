@@ -52,7 +52,6 @@ public sealed class OperatorSnapshotCollectionCoordinator : IOperatorSnapshotLiv
         string ownerLogin,
         string accessToken,
         OperatorSnapshotConcurrencyToken startToken,
-        Func<string, OperatorSnapshotDocument, OperatorSnapshotConcurrencyToken, CancellationToken, Task<bool>> persistInProgressAsync,
         Func<string, CancellationToken, Task<OperatorSnapshotGetResult>> readDocumentAsync,
         Func<string, OperatorSnapshotDocument, OperatorSnapshotConcurrencyToken, CancellationToken, Task<bool>> persistTerminalAsync)
     {
@@ -66,7 +65,6 @@ public sealed class OperatorSnapshotCollectionCoordinator : IOperatorSnapshotLiv
             ownerLogin,
             accessToken,
             startToken,
-            persistInProgressAsync,
             readDocumentAsync,
             persistTerminalAsync);
         return true;
@@ -77,7 +75,6 @@ public sealed class OperatorSnapshotCollectionCoordinator : IOperatorSnapshotLiv
         string ownerLogin,
         string accessToken,
         OperatorSnapshotConcurrencyToken startToken,
-        Func<string, OperatorSnapshotDocument, OperatorSnapshotConcurrencyToken, CancellationToken, Task<bool>> persistInProgressAsync,
         Func<string, CancellationToken, Task<OperatorSnapshotGetResult>> readDocumentAsync,
         Func<string, OperatorSnapshotDocument, OperatorSnapshotConcurrencyToken, CancellationToken, Task<bool>> persistTerminalAsync)
     {
