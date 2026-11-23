@@ -79,7 +79,7 @@ The following automated checks are proportionate to current repository tooling a
 | `dotnet format --verify-no-changes` | `ci.yml` | Prevents formatting drift in test and production code. |
 | E2E harness waits for `GET /health` before Playwright suite | `.github/workflows/playwright.yml`, `tests/SoloDevBoard.E2E.Tests/Fixtures/SoloDevBoardWebApplicationFixture.cs` | Confirms the app host starts and readiness endpoint responds in a realistic PAT-mode configuration. |
 | Playwright smoke test for `/health` | `tests/SoloDevBoard.E2E.Tests/Tests/SmokeTests` | Lightweight post-startup health assertion in the browser test harness. |
-| Playwright critical user journey suite | `tests/SoloDevBoard.E2E.Tests/CRITICAL_JOURNEYS.md`, `tests/SoloDevBoard.E2E.Tests/Tests/*.spec.ts`, `.github/workflows/playwright.yml` | Feature shell, navigation, and placeholder-auth error-state coverage for v1.0.0 release readiness (issue #255). |
+| Playwright critical user journey suite | `tests/SoloDevBoard.E2E.Tests/CRITICAL_JOURNEYS.md`, `tests/SoloDevBoard.E2E.Tests/Tests/*.cs`, `.github/workflows/playwright.yml` | Browser shell, navigation, accessibility, and placeholder-auth error-state coverage for v1.0.0 release readiness (issue #255). |
 
 Not automated in CI (manual or deploy-time verification only):
 

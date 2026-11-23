@@ -2,7 +2,7 @@
 
 This document defines the highest-priority SoloDevBoard user journeys covered by Playwright end-to-end tests in CI. It satisfies the journey-identification acceptance criterion for issue [#255](https://github.com/markheydon/solo-dev-board/issues/255) and complements [DEC-016](../../adr/adr-0042-formalised-testing-standard-xunit-v3-nsubstitute-playwright.md).
 
-Published user guides in `website/content/docs/` must map to these journeys like-for-like. See [USER_DOCS_ALIGNMENT.md](USER_DOCS_ALIGNMENT.md) for the full guide-to-spec inventory and screenshot hygiene rules.
+User guides stay accurate via the User Guide plus locking unit or bUnit tests in the same change; this file defines **CI browser journeys** only. See [USER_DOCS_ALIGNMENT.md](USER_DOCS_ALIGNMENT.md) for the guide inventory, locking tests, and screenshot hygiene.
 
 ## CI constraints
 
@@ -56,15 +56,16 @@ For data-driven journeys against a real GitHub account, run the PAT suite locall
 
 ## Adding a new journey
 
-1. Confirm the journey belongs in Tier 1 or Tier 2 for CI, or document it in Tier 3 with rationale.
-2. Add or extend a spec under `tests/`.
-3. Prefer `data-testid` attributes on loading, error, and empty states — mirror existing feature pages.
-4. Update the coverage table in [README.md](README.md) and this document.
-5. Keep assertions resilient to placeholder auth unless the CI job is extended with secrets.
+1. **Behaviour-only changes:** update the User Guide and locking unit or bUnit tests; do not add new Tier 2 feature-shell specs unless shell chrome or routes change.
+2. **New user-facing routes:** add Tier 1 navigation and axe coverage; update [USER_DOCS_ALIGNMENT.md](USER_DOCS_ALIGNMENT.md); add docs-capture when a screenshot is required.
+3. Confirm remaining browser journeys belong in Tier 1 or Tier 2 for CI, or document them in Tier 3 with rationale.
+4. Prefer accessible names; use `data-testid` when roles or labels are unstable for E2E or bUnit.
+5. Update the coverage table in [README.md](README.md) and this document when CI browser coverage changes.
+6. Keep assertions resilient to placeholder auth unless the CI job is extended with secrets.
 
 ## Related documentation
 
-- [tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md](USER_DOCS_ALIGNMENT.md) — user guide to Playwright spec mapping and screenshot hygiene.
+- [tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md](USER_DOCS_ALIGNMENT.md) — user guide accuracy inventory, locking tests, and screenshot hygiene.
 - [tests/SoloDevBoard.E2E.Tests/README.md](README.md) — local run and CI overview.
 - [plan/OPERATIONAL_HARDENING_TEST_COVERAGE.md](../../plan/OPERATIONAL_HARDENING_TEST_COVERAGE.md) — health and operational E2E expectations.
 - [CONTRIBUTING.md](../../CONTRIBUTING.md) — contributor testing guidance.

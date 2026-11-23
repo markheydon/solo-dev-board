@@ -1,12 +1,12 @@
 <!--
 Sync Impact Report
-- Version change: 1.1.1 → 1.1.2
-- Modified principles: none
+- Version change: 1.1.2 → 1.2.0
+- Modified principles: III (Formal testing standard and docs alignment), IV (Consistent product chrome and accessible UX)
 - Added principles: none
 - Added sections: none
 - Removed sections: none
 - Deferred items: none
-- Clarifications: Delivery Workflow — Aspire workflow skills via Cursor plugin (`.cursor/settings.json`), not vendored under `.agents/skills/`
+- Follow-up: align GOALS.md G3, CONVENTIONS.md, CONTRIBUTING.md, E2E inventory docs with narrowed Playwright contract (same PR as constitution)
 -->
 
 # SoloDevBoard Constitution
@@ -35,9 +35,9 @@ Automated tests MUST use **xUnit v3** (Microsoft.Testing.Platform), **NSubstitut
 
 Tests MUST follow `MethodUnderTest_Scenario_ExpectedOutcome` naming with Arrange / Act / Assert sections. The distributed Aspire AppHost application graph (resource declarations, references, publish model) MUST NOT be unit-tested. Extracted deterministic deploy and parameter resolution helpers MAY be unit-tested when documented as staying aligned with AppHost (for example the `AppHostDeployParameterResolver` pattern in Infrastructure tests). Fast CI and local paths MUST use `SoloDevBoard.UnitTests.slnf` (ADR-0041); E2E is owned by `playwright.yml` with category filters, not as the default `dotnet test` on the full solution.
 
-Published end-user guides under `website/content/docs/` MUST stay aligned with Playwright coverage per `tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md` and `CRITICAL_JOURNEYS.md`. New or changed user-facing behaviour MUST update the guide, journey inventory, and tests in the same change when the behaviour is user-visible.
+Published end-user guides under `website/content/docs/` MUST describe shipped behaviour only and MUST be updated in the same change when user-visible behaviour changes. That behaviour MUST be locked by unit or bUnit tests in the same change; the guide and those tests are the primary accuracy contract. The inventory in `tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md` MUST list each guide page, its locking tests, screenshot assets, and optional Playwright shell or axe coverage; a guide section with no locking test is documentation debt. Playwright E2E MUST be updated in the same change only when the work affects routes or navigation, auth entry, theme persistence across reload, viewport or layout checks, axe-scanned pages, or docs-capture screenshots. Playwright MUST NOT be treated as proof of loaded-state feature workflows (ADR-0040, ADR-0042).
 
-**Rationale:** ADR-0042, ADR-0040, ADR-0041, and ADR-0010 define a tiered pyramid (232 test C# files today) that keeps CI under 15 minutes while protecting shell, feature chrome, and accessibility journeys.
+**Rationale:** ADR-0042, ADR-0040, ADR-0041, and ADR-0010 define a tiered pyramid: unit and bUnit tests specify feature behaviour; Playwright protects the real browser, shell, accessibility scans, and screenshot capture under `playwright.yml`, keeping the default `dotnet test` path fast while CI still guards cross-cutting chrome.
 
 ### IV. Consistent product chrome and accessible UX
 
@@ -45,7 +45,7 @@ All operational pages MUST share one MudBlazor visual language (ADR-0039): page 
 
 Agents and contributors MUST consult the `mudblazor` skill before new UI. Prefer MudBlazor components and utilities before `.razor.css`. Custom CSS is exceptional. `MudChat`, FABs, carousels, and charts MUST NOT appear on operational pages. Icon-only controls MUST have accessible names. Primary journeys MUST remain usable on narrow viewports (responsive web, not native apps).
 
-WCAG 2.1 Level A and AA violations classified **critical** or **serious** by axe in CI MUST be fixed before merge. Stable `data-testid` hooks MUST be preserved or wrapped when restructuring chrome to avoid unnecessary E2E churn.
+WCAG 2.1 Level A and AA violations classified **critical** or **serious** by axe in CI MUST be fixed before merge.
 
 **Rationale:** Archive QA bundles (e.g. product chrome UI quality) and live E2E specs encode chrome as a cross-feature contract, not per-page taste.
 
@@ -111,7 +111,7 @@ Governance text MUST use **PAT-only local trusted mode**, **hosted sign-in**, **
 - **Spec Kit ownership:** Feature intent for new work flows through Spec Kit artefacts (`spec.md`, `plan.md`, `tasks.md` under `specs/<feature>/`). Those artefacts MUST NOT contradict this constitution. Detailed day-to-day coding rules remain in `AGENTS.md` and `CONVENTIONS.md` and MUST be kept consistent with amended principles.
 - **AppHost documentation sync:** New or changed AppHost parameters, auth modes, resource references, or deploy steps that affect operators or developers MUST update `docs/getting-started.md`, `docs/deployment.md`, and `src/SoloDevBoard.AppHost/README.md` in the same change when behaviour is operator-facing (mirroring `CONVENTIONS.md` documentation sync).
 - **Pull requests:** MUST follow `plan/PULL_REQUEST_POLICY.md` (title shape, template body, labels). Agent-authored PRs MUST receive human review before merge.
-- **Pre-merge verification (minimum):** `dotnet format` verify, Release build with warnings as errors, `dotnet test SoloDevBoard.UnitTests.slnf -c Release --no-build` when code or tests change; Playwright-impacting UI changes MUST consider `playwright.yml` tiers and journey docs.
+- **Pre-merge verification (minimum):** `dotnet format` verify, Release build with warnings as errors, `dotnet test SoloDevBoard.UnitTests.slnf -c Release --no-build` when code or tests change. Run or update Playwright E2E (`playwright.yml`) when the PR touches shell chrome, auth entry, the axe route list, theme script or storage, narrow-viewport layout checks, or docs-capture assets; otherwise the unit filter remains the default gate.
 - **Historical artefacts:** Material under `plan/archive/` (Copilot-era bundles, weekly PM notes, retired implementation plans) MAY inform context but MUST NOT be mandated as ongoing process. Open work lives in GitHub Issues and Project #8, not new archive bundles.
 - **Agent skills:** Project skills in `.agents/skills/` (e.g. `implementation-guardrails`, `mudblazor`, `code-review`) and Aspire workflow skills from the Cursor aspire-skills plugin (`.cursor/settings.json`) supplement the constitution during implementation; they do not replace ADRs or quality gates. Aspireify ceremony, aspire-orchestration CLI troubleshooting, and Playwright port differences remain operational detail in skills and docs, not constitution text.
 
@@ -132,4 +132,4 @@ This constitution is the **non-negotiable governance layer** for Spec Kit-driven
 
 **Runtime guidance:** Use `AGENTS.md` and `CONVENTIONS.md` for command sequences, file placement, and documentation sync tables; use `adr/` for decision history; use project skills in `.agents/skills/` and Aspire plugin skills per `AGENTS.md` during implementation.
 
-**Version**: 1.1.2 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-20
+**Version**: 1.2.0 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-23
