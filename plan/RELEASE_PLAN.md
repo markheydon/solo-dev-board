@@ -212,7 +212,7 @@ GitHub Pages publishes the public site only from the `v*` tag. A guide update th
    - Catch up any guide or screenshot debt from the previous tag. For the next tag after `v1.3.0`, that includes label remap and any chrome already on `main`.
    - Recapture screenshots for every guide image whose screen changed. Follow [Screenshot convention](DOCS_STRATEGY.md#screenshot-convention): light theme, 1400×900, drawer collapsed, docs capture mode, public catalogues only, loaded states with `markheydon/solo-dev-board`. Prefer `DOCS_CAPTURE_ENABLED=1 dotnet test tests/SoloDevBoard.E2E.Tests --filter "Category=DocsCapture"` against a local app with a real PAT and `DocsCapture:Enabled=true`. If capture cannot run, say so in the release notes and do not pretend the images are current.
    - When chrome, navigation, or theme changed across the app, recapture the whole of `website/static/images/`, because landing tiles and guide heroes share those shots.
-   - Update [`tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md`](../tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md) when routes or capture files change.
+   - Update [`tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md`](../tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md) when routes, locking-test pointers, or capture files change.
    - Run `./scripts/invoke-hugo-site.sh build` (or rely on `hugo-validate` on the docs PR). Pages still does not publish until the tag.
 5. **Changelog and this file:** Move `[Unreleased]` notes in [`CHANGELOG.md`](../CHANGELOG.md) into a dated `## [X.Y.Z]` section. Set this release's **Status** to the tag and date.
 6. **Operator docs:** If configuration or deploy steps changed, update `docs/` in the same change. See [`DOCS_STRATEGY.md`](DOCS_STRATEGY.md).

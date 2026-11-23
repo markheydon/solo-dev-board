@@ -1,10 +1,10 @@
 # SoloDevBoard end-to-end tests
 
-C# Playwright tests (`Microsoft.Playwright.Xunit.v3`) for key user journeys. These complement unit and bUnit component tests — they validate complete workflows in a real browser rather than replacing isolated unit coverage.
+C# Playwright tests (`Microsoft.Playwright.Xunit.v3`) for the real browser: application shell, auth entry, layout, theme persistence, accessibility scans, and optional Hugo screenshot capture. Feature behaviour is specified in unit and bUnit tests; Playwright does not replace those workflows under CI placeholder auth.
 
 Critical journeys, priority tiers, and CI constraints are documented in [CRITICAL_JOURNEYS.md](CRITICAL_JOURNEYS.md).
 
-Published user guides must stay aligned with these tests like-for-like. See [USER_DOCS_ALIGNMENT.md](USER_DOCS_ALIGNMENT.md) for the guide-to-test inventory and screenshot confidentiality rules.
+The User Guide accuracy inventory (locking checks, screenshots, shell coverage) lives in [USER_DOCS_ALIGNMENT.md](USER_DOCS_ALIGNMENT.md).
 
 ## Test coverage
 

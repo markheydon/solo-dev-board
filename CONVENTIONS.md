@@ -93,7 +93,7 @@ Consult the `mudblazor` skill before new UI. Prefer MudBlazor components and uti
 - Do not test AppHost modelling or orchestration.
 - Naming: `MethodUnderTest_Scenario_ExpectedOutcome`; Arrange / Act / Assert with blank lines.
 
-End-user docs ([`website/content/docs/`](website/content/docs/)) and Playwright E2E must stay aligned per [`tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md`](tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md).
+End-user docs ([`website/content/docs/`](website/content/docs/)) must match shipped behaviour and locking unit or bUnit tests in the same change. [`tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md`](tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md) inventories each guide page, locking tests, screenshots, and optional Playwright shell or axe coverage.
 
 ---
 
@@ -116,8 +116,9 @@ End-user docs ([`website/content/docs/`](website/content/docs/)) and Playwright 
 
 | Change | Doc to update |
 | --- | --- |
-| New end-user feature | `website/content/docs/`, matching E2E tests, `tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md`, `tests/SoloDevBoard.E2E.Tests/CRITICAL_JOURNEYS.md` |
-| End-user behaviour change | User guide pages and matching Playwright tests |
+| New end-user feature (new route or page) | `website/content/docs/`, locking unit or bUnit tests, inventory row in `tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md`; add Playwright navigation or axe coverage and docs-capture when the route is user-facing |
+| End-user behaviour change (existing page) | User guide pages and locking unit or bUnit tests |
+| Shell, auth entry, theme, layout, or axe route change | Matching Playwright E2E specs and `tests/SoloDevBoard.E2E.Tests/CRITICAL_JOURNEYS.md` when CI browser coverage changes |
 | New developer / operator guidance | `docs/` |
 | New decision | `adr/` |
 | Scope change | `plan/SCOPE.md`, and a GitHub issue when the work changes |

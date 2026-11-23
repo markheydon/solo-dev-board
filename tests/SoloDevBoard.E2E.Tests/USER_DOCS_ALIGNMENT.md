@@ -1,301 +1,55 @@
-# User guide and Playwright E2E alignment
+# User guide accuracy inventory
 
-This document maps published User Guide pages in `website/content/docs/` to Playwright coverage in `tests/SoloDevBoard.E2E.Tests/`. It is the canonical inventory for keeping documentation, application behaviour, and automated journeys aligned like-for-like.
+This document maps published User Guide pages in `website/content/docs/` to **locking checks** (unit and bUnit), optional Playwright shell and axe coverage, and Hugo screenshot assets. It is the canonical inventory for keeping documentation accurate; feature workflows are proved in `tests/SoloDevBoard.Web.Tests` and layer unit tests, not in CI Playwright under placeholder auth.
 
 The Hugo **product landing** at `/` on the public site is not the Blazor in-app home. Playwright asserts the in-app shell only; Hugo route checks run in `hugo-build.yml`.
 
 ## Alignment contract
 
-Three artefacts must stay in sync for every shipped end-user feature:
+Four artefacts stay in sync for every shipped end-user feature:
 
-1. **Application behaviour** — what SoloDevBoard actually does in the UI.
-2. **User guide** — what `website/content/docs/<feature>.md` tells users they can do.
-3. **Playwright E2E** — what `tests/SoloDevBoard.E2E.Tests/Tests/*.spec.ts` asserts in CI (and, where applicable, what `tests/SoloDevBoard.E2E.Tests/DocsCapture/` records for screenshots).
+1. **Application behaviour** - what SoloDevBoard actually does in the UI.
+2. **User guide** - what `website/content/docs/<feature>.md` tells users they can do (shipped behaviour only).
+3. **Locking checks** - unit or bUnit tests updated in the same change that specify that behaviour.
+4. **Optional Playwright and docs-capture** - CI shell, navigation, auth entry, layout, axe scans, and manual screenshots where listed below. E2E does **not** exercise every workflow the guide describes when CI uses placeholder auth.
 
 Rules:
 
 - **User guides describe real behaviour only.** Do not document planned or stubbed capabilities without a scope note. Remove or update docs when behaviour changes.
-- **E2E tests exercise what the guides claim.** Every published guide page must map to at least one Playwright spec. Assertions should target UI elements, routes, labels, and workflows described in the guide.
-- **CI uses placeholder auth.** Repository-dependent journeys assert shells, navigation, and empty or error states unless a job is extended with live secrets. Loaded-state behaviour is validated via the docs-capture suite (manual, real PAT) and unit/component tests.
+- **Locking checks are the primary regression contract** for guide accuracy. A guide section with no named locking check is documentation debt.
+- **Playwright updates** follow constitution triggers: routes, navigation, auth entry, theme persistence, viewport or layout checks, axe-scanned pages, or docs-capture assets. Loaded-state workflows use locking tests and optional `DocsCapture/` with a real PAT.
+- **CI uses placeholder auth.** Playwright feature specs assert shells, navigation, and empty or error states unless a job is extended with live secrets.
 - **Screenshots follow public-only hygiene.** Never commit images showing private repositories, private Projects v2 boards, tokens, or other confidential information. Capture with `DocsCapture:Enabled=true` and the conventions in [plan/DOCS_STRATEGY.md](../../plan/DOCS_STRATEGY.md#screenshot-convention).
 
-When you add or change an end-user feature, update the user guide, the relevant Playwright spec(s), this mapping, and [CRITICAL_JOURNEYS.md](CRITICAL_JOURNEYS.md) in the same pull request.
+When you add or change end-user behaviour, update the user guide and locking tests in the same pull request, and update this inventory row. Update Playwright or [CRITICAL_JOURNEYS.md](CRITICAL_JOURNEYS.md) only when browser CI coverage changes.
 
 ## Coverage matrix
 
-| User guide / site page | App route(s) | Playwright spec (CI) | Docs-capture screenshot | CI tier | Notes |
-|------------|--------------|----------------------|-------------------------|---------|-------|
-| [Product landing](../../website/content/_index.md) (Hugo `/` only) | — | — (Hugo `hugo-build.yml` route check) | — | — | Short product-and-project landing (Learn more → About; whole-card feature tiles link to User Guide pages); not the Blazor app. |
-| [In-app home dashboard](../../website/content/docs/) | `/` | `SmokeTests`, `NavigationTests`, `AccessibilityTests` | `dashboard/home.png` | Tier 1 | In-app home lists eight feature cards; About and Appearance are reached via the app bar. |
-| [Audit Dashboard](../../website/content/docs/audit-dashboard.md) | `/audit-dashboard` | `AuditDashboardTests`, `AccessibilityTests` | `audit-dashboard/overview.png` | Tier 2 | Guide describes KPI cards, health sections (including label consistency), auto-refresh, export, and **Reload from GitHub** when repositories load; CI asserts shell, reload/try-again feedback region, and repository load failure. |
-| [Repositories](../../website/content/docs/repositories.md) | `/repositories` | `RepositoriesTests`, `AccessibilityTests` | `repositories/overview.png` | Tier 2 | Guide is Partially Available: live catalogue view/search/**Reload from GitHub** and Open source / Not open source filters; Add, Remove, Bulk actions, Edit, and More remain stubs ([#435](https://github.com/markheydon/solo-dev-board/issues/435)). CI asserts reload, search, catalogue filter controls, error-state retry, placeholder snackbar a11y, and no horizontal overflow at 390px. |
-| [One-Click Migration](../../website/content/docs/one-click-migration.md) | `/migrate` | `MigrateTests`, `AccessibilityTests` | `one-click-migration/overview.png` | Tier 2 | Guide is Available: labels, milestones, and Projects v2 Status columns with keep/ignore `area/*` controls; **Reload from GitHub** keeps migration pickers. CI asserts setup shell, reload control, columns scope, nested ignore/keep `area/*` controls, disabled preview, and API failure feedback. |
-| [Label Manager](../../website/content/docs/label-manager.md) | `/labels` | `LabelsTests`, `AccessibilityTests` | `label-manager/overview.png`, `label-manager/remap-extras.png` | Tier 2 | Guide describes three tabs, Labels-tab bulk delete ([#444](https://github.com/markheydon/solo-dev-board/issues/444)), taxonomy workflows, optional **Remove labels outside taxonomy** with preview-first remap extras ([#520](https://github.com/markheydon/solo-dev-board/issues/520)), nested **Keep `area/*` labels** ([#446](https://github.com/markheydon/solo-dev-board/issues/446)), and **Reload from GitHub** in the repository selector; CI asserts tab strip, reload control, remove-outside control, sync keep-area control, disabled bulk delete, remap wireframe `data-testid`s when preview is available, and repository load failure feedback. Remap table, destination pickers, and **Apply remap** are loaded-state (`docs-capture` plus `LabelsTests`). Empty-repository copy is covered by `LabelsTests`. |
-| [Board Rules Visualiser](../../website/content/docs/board-rules-visualiser.md) | `/board-rules` | `BoardRulesTests`, `AccessibilityTests` | `board-rules-visualiser/overview.png` | Tier 2 | Guide is Partially Available: compare mode, Reload from GitHub, unsupported-board Try again, and board selection now; full GitHub automation-rule retrieval later ([#437](https://github.com/markheydon/solo-dev-board/issues/437)). CI asserts selector region, compare toggle, Reload from GitHub in the header after the initial catalogue load (including placeholder-auth error states), and repository load failure retry. Unsupported-board Try again and compare-mode reload keep-selection are covered in bUnit. |
-| [Triage UI](../../website/content/docs/triage-ui.md) | `/triage` | `TriageTests`, `AccessibilityTests` | `triage-ui/overview.png` | Tier 2 | Guide describes disposition-based Save and next flow, shortcuts, milestones, project board actions, and **Reload from GitHub** in session scope; CI asserts session-scope reload control, inline repository load failure with retry, and disposition controls hidden before a session starts. |
-| [Actions Templates](../../website/content/docs/actions-templates.md) | `/actions-templates` | `ActionsTemplatesTests`, `AccessibilityTests` | `actions-templates/overview.png` | Tier 2 | Guide is Partially Available: browse, custom template repositories, parameterise, apply, drift, and **Reload from GitHub** now; persisted parameter profiles ([#436](https://github.com/markheydon/solo-dev-board/issues/436)) later. CI asserts built-in template browse/filter/select, reload control, built-in-only catalogue with empty custom source, custom source region and manual field shells (catalogue selector when repositories load), invalid custom source error with built-ins visible, and repository error state ([#499](https://github.com/markheydon/solo-dev-board/issues/499)). |
-| [Planning](../../website/content/docs/planning.md) | `/planning`, `/planning/daily-focus`, `/planning/backlog`, `/planning/iteration`, `/planning/repos`, `/planning/board-setup` (conditional) | `PlanningTests`, `AccessibilityTests` | `planning/daily-focus.png`, `planning/backlog.png`, `planning/iteration.png`, `planning/repos.png` | Tier 2 | Guide documents Daily Focus occupancy, recommendations, stalled Up Next, stalled review pull requests, Backlog Review grouping, Iteration (capacity, stall gate, Up Next batch, bulk milestone, candidate picker; [#283](https://github.com/markheydon/solo-dev-board/issues/283)–[#286](https://github.com/markheydon/solo-dev-board/issues/286)), conditional Board setup compatibility ([#445](https://github.com/markheydon/solo-dev-board/issues/445)), and Repo Management. User Guide sidebar and feature table follow app drawer order; Appearance and About live under a separate **App shell** Hugo section so prev/next stops at the last feature. CI asserts shell, tab strip, Daily Focus occupancy, recommendation, stalled Up Next, and stalled-review regions or empty/error/warning copy, Backlog filters and all grouping panels (including awaiting triage, epics near completion, and neglected repositories) or empty/error/warning copy, Planning Up Next and candidate regions or empty/error/warning copy, and Repos regions (including per-repository summary) or chrome error. |
-| [Appearance](../../website/content/docs/app-shell/appearance.md) | App bar (all shell pages) | `AppearanceTests`, `AccessibilityTests` | `appearance/theme-toggle.png` | Tier 1 | Guide describes Automatic → Light → Dark cycling and persistence; not a drawer route. Lives under User Guide **App shell** (`/docs/app-shell/`) with About; prev/next does not continue from feature guides. |
-| [About (in-app)](../../website/content/docs/app-shell/about.md) | `/about` | `AboutTests`, `AccessibilityTests` | `about/overview.png` | Tier 1 | Guide describes More options menu access (User Guide external link and About route) and metadata fields. Not the Hugo `/about/` narrative section. Lives under User Guide **App shell** with Appearance. |
+Locking checks are unit or bUnit classes in `tests/SoloDevBoard.Web.Tests` or layer unit test projects unless Notes say otherwise. When the same class name exists in E2E (for example `RepositoriesTests`), this column always means the Web.Tests class.
+
+| User guide / site page | App route(s) | Locking checks | Playwright spec (CI) | Docs-capture screenshot | CI tier | Notes |
+|------------|--------------|----------------|----------------------|-------------------------|---------|-------|
+| [Product landing](../../website/content/_index.md) (Hugo `/` only) | - | - | - | - | - | Product landing on the public site; not the Blazor app. Hugo route check: `.github/workflows/hugo-build.yml`. |
+| [In-app home dashboard](../../website/content/docs/) | `/` | `DashboardTests` | `SmokeTests`, `NavigationTests`, `AccessibilityTests` | `dashboard/home.png` | Tier 1 | In-app home lists eight feature cards; About and Appearance are reached via the app bar. |
+| [Audit Dashboard](../../website/content/docs/audit-dashboard.md) | `/audit-dashboard` | `AuditTests` | `AuditDashboardTests`, `AccessibilityTests` | `audit-dashboard/overview.png` | Tier 2 | KPIs, health sections, export, and loaded catalogue behaviour: `AuditTests`. CI Playwright: shell and repository load failure. |
+| [Repositories](../../website/content/docs/repositories.md) | `/repositories` | `RepositoriesTests` | `RepositoriesTests`, `AccessibilityTests` | `repositories/overview.png` | Tier 2 | Partially Available guide ([#435](https://github.com/markheydon/solo-dev-board/issues/435)); catalogue and filters: bUnit. CI Playwright: command strip, error retry, overflow at 390px. |
+| [One-Click Migration](../../website/content/docs/one-click-migration.md) | `/migrate` | `MigrationTests` | `MigrateTests`, `AccessibilityTests` | `one-click-migration/overview.png` | Tier 2 | Migration workflows: `MigrationTests`. CI Playwright: setup shell and API failure feedback. |
+| [Label Manager](../../website/content/docs/label-manager.md) | `/labels` | `LabelsTests`, `LabelServiceTests` (Application) | `LabelsTests`, `AccessibilityTests` | `label-manager/overview.png`, `label-manager/remap-extras.png` | Tier 2 | Bulk delete, remap, apply: bUnit and Application tests ([#444](https://github.com/markheydon/solo-dev-board/issues/444), [#520](https://github.com/markheydon/solo-dev-board/issues/520)). CI Playwright: tab strip and placeholder-auth error shell. |
+| [Board Rules Visualiser](../../website/content/docs/board-rules-visualiser.md) | `/board-rules` | `BoardRulesTests` | `BoardRulesTests`, `AccessibilityTests` | `board-rules-visualiser/overview.png` | Tier 2 | Compare mode, reload keep-selection, unsupported-board retry: bUnit ([#437](https://github.com/markheydon/solo-dev-board/issues/437)). CI Playwright: selector shell and repository error. |
+| [Triage UI](../../website/content/docs/triage-ui.md) | `/triage` | `TriageTests` | `TriageTests`, `AccessibilityTests` | `triage-ui/overview.png` | Tier 2 | Session flow and dispositions: bUnit. CI Playwright: reload control and shell before session. |
+| [Actions Templates](../../website/content/docs/actions-templates.md) | `/actions-templates` | `ActionsTemplatesTests` | `ActionsTemplatesTests`, `AccessibilityTests` | `actions-templates/overview.png` | Tier 2 | Template browse, apply, custom source: bUnit ([#436](https://github.com/markheydon/solo-dev-board/issues/436), [#499](https://github.com/markheydon/solo-dev-board/issues/499)). CI Playwright: built-in catalogue shell and repository error. |
+| [Planning](../../website/content/docs/planning.md) | `/planning`, `/planning/daily-focus`, `/planning/backlog`, `/planning/iteration`, `/planning/repos`, `/planning/board-setup` (conditional) | `PlanningDailyFocusTests`, `PlanningBacklogTests`, `PlanningIterationTests`, `PlanningReposTests`, `PlanningBoardSetupTests`, `PlanningChromeCoordinatorTests` | `PlanningTests`, `AccessibilityTests` | `planning/daily-focus.png`, `planning/backlog.png`, `planning/iteration.png`, `planning/repos.png` | Tier 2 | Tab workflows ([#283](https://github.com/markheydon/solo-dev-board/issues/283)–[#286](https://github.com/markheydon/solo-dev-board/issues/286)): bUnit. CI Playwright: shared shell and placeholder empty or error regions. |
+| [Appearance](../../website/content/docs/app-shell/appearance.md) | App bar (all shell pages) | `MainLayoutThemeTests`, `ThemePreferenceServiceTests`, `ThemePreferenceConstantsTests` | `AppearanceTests`, `AccessibilityTests` | `appearance/theme-toggle.png` | Tier 1 | Theme cycling and persistence: bUnit; reload persistence: Playwright. |
+| [About (in-app)](../../website/content/docs/app-shell/about.md) | `/about` | `AboutTests` | `AboutTests`, `AccessibilityTests` | `about/overview.png` | Tier 1 | Metadata fields: bUnit. Not the Hugo `/about/` narrative section. |
 
 ### Auth and entry journeys (operator docs, not user guide)
 
 These journeys are documented in `docs/hosted-authentication.md` and `docs/pat-connectivity.md` rather than the published user site:
 
-| Journey | Playwright spec | CI job |
-|---------|-----------------|--------|
-| PAT-mode welcome redirect and connectivity error page | `AuthEntryTests` | `pat` |
-| Hosted sign-in login gate | `AuthEntryHostedTests` | `hosted` |
-
-## Guide section → assertion mapping
-
-Use this when extending specs so assertions track documented workflows.
-
-### Audit Dashboard
-
-| Guide section | CI assertion | Loaded-state validation |
-|---------------|--------------|-------------------------|
-| Accessing (`/audit-dashboard`) | `AuditDashboardTests` URL and title | `docs-capture` |
-| Repository selector and load failure | Feedback region, "Unable to load repositories" | `prepareAuditDashboardForCapture` |
-| KPI cards, health sections (including label consistency), auto-refresh, export | — | `docs-capture` + unit/component tests |
-
-### Board Rules Visualiser
-
-| Guide section | CI assertion | Loaded-state validation |
-|---------------|--------------|-------------------------|
-| Accessing (`/board-rules`) | `BoardRulesTests` URL, title, selector region, and compare toggle | `docs-capture` |
-| Reload from GitHub in selector header | `board-rules-reload-from-github-button` after initial catalogue load, including repository error states | `BoardRulesTests` Reload, compare-mode reload, and section-scoped `board-rules-boards-loading-state` / `board-rules-comparison-boards-loading-state` |
-| Unsupported-board Try again | — | `BoardRulesTests` `BoardRules_UnsupportedBoardsTryAgain_ShowsSectionScopedBoardsLoadingState` and `BoardRules_ComparisonUnsupportedBoardsTryAgain_ShowsSectionScopedComparisonBoardsLoadingState` |
-| Compare mode | Compare toggle and comparison selector region | `docs-capture` + `BoardRulesTests` compare mode |
-| Repository and project board load failure | `board-rules-error-alert` and `board-rules-reload-repositories-button` | — |
-
-### Label Manager
-
-| Guide section | CI assertion | Loaded-state validation |
-|---------------|--------------|-------------------------|
-| Three tabs (Labels, Recommended taxonomy, Synchronise) | Tab strip and headings | `docs-capture` |
-| Labels tab bulk delete (select rows, confirm, cancel) | Disabled bulk delete button on shell | Component tests in `LabelsTests` ([#444](https://github.com/markheydon/solo-dev-board/issues/444)) |
-| Optional remove labels outside taxonomy and remap extras | `LabelsTests` remove-outside checkbox | `docs-capture` (`remap-extras.png`) + `LabelsTests` remap table / **Apply remap** + `LabelServiceTests` ([#520](https://github.com/markheydon/solo-dev-board/issues/520), [#521](https://github.com/markheydon/solo-dev-board/issues/521)) |
-| Confirm apply shows in-progress feedback | — | Component tests in `LabelsTests` (`WhenConfirmed_ShowsInProgressStateUntilApplyCompletes`, `WhenRemapApplyPending_ShowsInProgressStateUntilApplyCompletes`) |
-| No repositories message | Empty-state text | — |
-
-### Label Manager keep `area/*` automated coverage ([#457](https://github.com/markheydon/solo-dev-board/issues/457))
-
-Issue [#457](https://github.com/markheydon/solo-dev-board/issues/457) closes the test slice for story [#446](https://github.com/markheydon/solo-dev-board/issues/446) (keep `area/*` labels out of built-in taxonomy cleanup). Keep this mapping aligned with [label-manager.md](../../website/content/docs/label-manager.md).
-
-| Behaviour | Unit / component | Playwright (CI placeholder auth) |
-|-----------|------------------|----------------------------------|
-| Built-in recommended catalogue excludes `area/*` names | `LabelServiceTests.GetRecommendedTaxonomyAsync` | — |
-| Remove-outside off leaves extras undeleted | `LabelServiceTests.PreviewRecommendedTaxonomyAsync_WhenRemoveOutsideTaxonomyDisabled_ReturnsNoLabelsToDelete` | — |
-| Remove-outside on with keep on/off and Synchronise extra deletes | `LabelServiceTests` preview/apply/sync matrix | — |
-| Nested keep checkbox enablement, default checked, preview caption | `LabelsTests` Recommended taxonomy and Synchronise tabs | `LabelsTests` remove-outside enables `keep-area-labels-checkbox` when repositories are selected; Synchronise `sync-keep-area-labels-checkbox` |
-
-### Label Manager remap extras automated coverage ([#521](https://github.com/markheydon/solo-dev-board/issues/521))
-
-Issue [#521](https://github.com/markheydon/solo-dev-board/issues/521) closes the test slice for story [#520](https://github.com/markheydon/solo-dev-board/issues/520) (preview-first remap extras). Keep this mapping aligned with [label-manager.md](../../website/content/docs/label-manager.md).
-
-| Behaviour | Unit / component | Playwright (CI placeholder auth) |
-|-----------|------------------|----------------------------------|
-| Leaf matches and GitHub-default counterparts pre-fill destinations; ambiguous defaults stay Keep label | `LabelRemapSuggestionHelperTests`, `LabelsTests` | — |
-| Preview lists remap rows and unused extras; keep `area/*` excludes remap sources | `LabelServiceTests` preview matrix, `LabelsTests` remap table | `LabelsTests` remap wireframe `data-testid`s when preview is available |
-| Remap rows: destination pickers, keep label, delete without remap confirmation, apply disabled until preview, kept rows not remapped | `LabelsTests` Recommended taxonomy remap describe | — |
-| Apply retags then deletes sources; additive POST of destination when absent, then batch delete of source label definition (no per-item PUT or remove); delete without remap skips retag; failed retags keep the source | `LabelServiceTests.RemapLabelAsync_*`, `ApplyRecommendedTaxonomyWithRemapAsync_WhenDeleteWithoutRemapRequested_*`, `RecommendedTaxonomyApplySummaryHelperTests`, `LabelsTests` **Apply remap** | — |
-| Remap extras screenshot (Recommended taxonomy preview) | — | `docs-capture` (`label-manager/remap-extras.png`) |
-
-### Label Manager bulk delete automated coverage ([#459](https://github.com/markheydon/solo-dev-board/issues/459))
-
-Issue [#459](https://github.com/markheydon/solo-dev-board/issues/459) closes the test slice for story [#444](https://github.com/markheydon/solo-dev-board/issues/444) (Labels-tab bulk delete). Keep this mapping aligned with [label-manager.md](../../website/content/docs/label-manager.md).
-
-| Behaviour | Unit / component | Playwright (CI placeholder auth) |
-|-----------|------------------|----------------------------------|
-| Bulk delete continues after per-repository GitHub errors | `LabelServiceTests.BulkDeleteLabelsAsync_OneDeleteFails_RecordsErrorAndContinues` | — |
-| Bulk delete skips repositories without the selected label | `LabelServiceTests.BulkDeleteLabelsAsync_LabelMissingInRepository_CountsAsSkippedAndContinues` | — |
-| Bulk Delete disabled with no selection; confirm lists names/repos; cancel keeps selection; success refreshes grid; disable while in flight | `LabelsTests` bulk delete describe | `LabelsTests` disabled bulk delete button on shell |
-
-### Repositories
-
-| Guide section | CI assertion | Loaded-state validation |
-|---------------|--------------|-------------------------|
-| Accessing (`/repositories`) | `RepositoriesTests` URL and title | `docs-capture` |
-| Command strip, search, catalogue filter, and load failure | Refresh control, search field, catalogue filter toggle group, error state with retry | `prepareRepositoriesForCapture` |
-| Filter open-source project repositories (All / Open source / Not open source) | `RepositoriesTests` catalogue filter `data-testid`s on the shell | `RepositoriesTests` (bUnit) for filtered rows and search AND filter |
-| Empty and error states (filter-empty copy) | — | `RepositoriesTests` (bUnit) for Open source, Not open source, and combined search empty messages |
-| Stub Add / Remove / Bulk actions / Edit / More | `AccessibilityTests` placeholder snackbar on Add | — (tracked by [#435](https://github.com/markheydon/solo-dev-board/issues/435)) |
-| Phone-width stacked grid without horizontal overflow | `RepositoriesTests` 390×844 viewport overflow check (error-state shell in CI) | `docs-capture` plus component tests for long names and chips |
-
-### OSS catalogue identification automated coverage ([#443](https://github.com/markheydon/solo-dev-board/issues/443))
-
-Issue [#443](https://github.com/markheydon/solo-dev-board/issues/443) closes the test slice for feature [#440](https://github.com/markheydon/solo-dev-board/issues/440) (parent feature for open-source catalogue classification and Repositories filters). Keep this mapping aligned with [repositories.md](../../website/content/docs/repositories.md).
-
-| Behaviour | Unit / component | Playwright (CI placeholder auth) |
-|-----------|------------------|----------------------------------|
-| Canonical `open-source` topic matcher (case-insensitive; `oss` alone does not match) | `OpenSourceTopicTests` | — |
-| GitHub list-repos `topics` mapped onto domain `Repository` | `GitHubServiceTests` | — |
-| `RepositoryDto.IsOpenSource` and catalogue filter helpers | `RepositoryServiceTests`, `RepositoryCatalogueFiltersTests` | — |
-| Default All list unchanged; Open source and Not open source filters | `RepositoriesTests` | `RepositoriesTests` catalogue filter controls visible on shell |
-| Filter combined with name search | `RepositoriesTests` | — |
-| Filter-empty and combined search-and-filter empty copy | `RepositoriesTests` | — |
-| Repositories overview screenshot (catalogue filter strip visible) | — | `docs-capture` (`repositories/overview.png`; refresh manually when the filter strip changes materially) |
-
-### One-Click Migration
-
-| Guide section | CI assertion | Loaded-state validation |
-|---------------|--------------|-------------------------|
-| Accessing (`/migrate`) | `MigrateTests` URL and title | `docs-capture` |
-| Migration setup shell and disabled preview | Workflow controls card, columns scope switch, disabled preview button | `docs-capture` |
-| Repository load failure | Feedback region and GitHub API failure message | — |
-| Project board columns scope, board selectors, preview lock, inaccessible-board warning | `MigrationTests` (bUnit) | `docs-capture` |
-| Conflict strategies and Status overwrite warning | `MigrationTests` (bUnit) | `docs-capture` |
-| Preview tables and apply summary for Status columns | — | `docs-capture` + Application tests |
-
-### Project board column migration automated coverage ([#415](https://github.com/markheydon/solo-dev-board/issues/415))
-
-Issue [#415](https://github.com/markheydon/solo-dev-board/issues/415) closes the test slice for feature [#291](https://github.com/markheydon/solo-dev-board/issues/291) (parent feature for Projects v2 Status column migration). Keep this mapping aligned with [one-click-migration.md](../../website/content/docs/one-click-migration.md).
-
-| Behaviour | Unit / component | Playwright (CI placeholder auth) |
-|-----------|------------------|----------------------------------|
-| Skip / Merge / Overwrite conflict matrix for Status options | `MigrationServiceTests` | — |
-| Create-new board path and preserve target option ids on name match | `MigrationServiceTests` | — |
-| Overwrite does not delete options still referenced by items | `MigrationServiceTests` | — |
-| Overwrite keep `area/*` preview and apply behaviour | `MigrationServiceTests` | — |
-| Ignore source `area/*` preview and apply behaviour | `MigrationServiceTests` | — |
-| Missing Status field and inaccessible boards | `MigrationServiceTests`, `GitHubServiceTests` | — |
-| GraphQL discovery, `createProjectV2`, and update payload retains existing option ids | `GitHubServiceTests` | — |
-| Columns scope switch, board selectors, preview locked until boards chosen | `MigrationTests` | `MigrateTests` columns scope switch |
-| Overwrite warning copy, keep `area/*` nested control, and inaccessible-board alert | `MigrationTests` | `MigrateTests` keep `area/*` control when Overwrite selected |
-| Ignore `area/*` nested control (default on) for Labels scope | `MigrationTests` | `MigrateTests` ignore `area/*` control when Labels selected |
-| Setup shell, disabled preview, API failure feedback | — | `MigrateTests` |
-| Migration overview screenshot with board selectors | — | `docs-capture` (`one-click-migration/overview.png`) |
-
-### Actions Templates
-
-| Guide section | CI assertion | Loaded-state validation |
-|---------------|--------------|-------------------------|
-| Accessing (`/actions-templates`) | `ActionsTemplatesTests` URL via `goto`, browser region, grid, built-in card | `docs-capture` |
-| Custom template source (catalogue selector, manual `owner/name`, Load templates) | `actions-templates-custom-source-region` and `actions-templates-custom-source-field` (selector autocomplete when repositories load) | `ActionsTemplatesTests` dual picker, selector/manual sync, last-used restore, and load; `docs-capture` (`actions-templates/overview.png`) with the source section populated |
-| Browse, search, and select built-in templates | Search box, `.NET CI` heading, selected card | `docs-capture` |
-| Apply repository selector load failure | `actions-templates-repositories-error-state` and "Unable to load repositories" | — |
-| Source badges, inferred `{{token}}` parameters, apply, and drift | — | Unit/component tests; `docs-capture` for populated YAML preview |
-| Persisted parameter profiles | — | Later ([#436](https://github.com/markheydon/solo-dev-board/issues/436)) |
-
-### Custom template repositories automated coverage ([#499](https://github.com/markheydon/solo-dev-board/issues/499))
-
-Issue [#499](https://github.com/markheydon/solo-dev-board/issues/499) closes the test slice for story [#292](https://github.com/markheydon/solo-dev-board/issues/292) (custom workflow template repositories). Keep this mapping aligned with [actions-templates.md](../../website/content/docs/actions-templates.md).
-
-| Behaviour | Unit / component | Playwright (CI placeholder auth) |
-|-----------|------------------|----------------------------------|
-| String ids (`builtin:…`, `custom:owner/repo:path`) and `{{token}}` inference | `ActionsTemplateCatalogueSupportTests`, `ActionsTemplateServiceTests` | — |
-| Merge custom templates with built-ins; empty `.github/workflows`; mapped GitHub and format errors | `ActionsTemplateServiceTests` | — |
-| Dual source picker, selector/manual sync, Load, source badge, last-used pre-fill, error leaves built-ins visible | `ActionsTemplatesTests` | `ActionsTemplatesTests` built-in-only catalogue, invalid source error shell |
-| Apply and drift parity for custom templates | `ActionsTemplateServiceTests` | — |
-
-### Appearance
-
-| Guide section | CI assertion | Loaded-state validation |
-|---------------|--------------|-------------------------|
-| Theme button in app bar | `AppearanceTests`, `AccessibilityTests` labelled control | `docs-capture` |
-| Automatic → Light → Dark → Automatic cycle | `AppearanceTests` | — |
-| Browser persistence | `AppearanceTests` localStorage check | — |
-
-### About
-
-| Guide section | CI assertion |
-|---------------|--------------|
-| More options → User Guide | `AboutTests` menu link to `https://solodevboard.com/docs/` |
-| More options → About | `AboutTests` navigation |
-| Version, build, .NET, auth mode, login, repository link | `AboutTests` `data-testid` fields |
-
-### Planning (Daily Focus, Backlog Review, Iteration, and Repo Management)
-
-| Guide section | CI assertion | Loaded-state validation |
-|---------------|--------------|-------------------------|
-| Drawer or Home → Planning → Daily Focus | `PlanningTests` URL, title, shell, tab strip | `docs-capture` (`planning/daily-focus.png`) |
-| Planning board selector, status line, and refresh | `PlanningTests` shared chrome `data-testid`s | `docs-capture` |
-| Occupancy chips, active load, empty board, or catalogue error | `planning-daily-focus-board-state` / empty or error copy, or chrome error | `docs-capture` |
-| Stalled Up Next rows, none-stalled sentence, or catalogue error | `planning-daily-focus-stalled` when occupancy region is visible | `docs-capture` |
-| Recommended today list, scope switch, shortfall copy, empty copy, warning, or catalogue error | `planning-daily-focus-recommendations` heading, `planning-limit-recommendations-switch`, empty or error copy when occupancy loaded | `docs-capture` |
-| Stalled review pull requests, empty stall copy, or stall load error | `planning-daily-focus-stalled-reviews` / empty or error copy when occupancy loaded | `docs-capture` |
-| Planning thresholds | `planning-thresholds-region`, capacity field, or chrome error | `docs-capture` (`planning/repos.png`) |
-| Repository participation summary | `planning-participation-summary` | `docs-capture` |
-| Included repositories table or empty state | `planning-included-table` / `planning-no-included-text` | `docs-capture` |
-| Excluded repositories and quick exclude | `planning-exclusions-region`, exclude autocomplete | `docs-capture` |
-| Per-repository summary table, empty state, load error, or partial failure | `planning-repository-summary-table` / `planning-repository-summary-empty` / `planning-repository-summary-error` / `planning-repository-summary-partial-failure` | `docs-capture` |
-| Backlog Review filters, urgency panels, empty copy, warning, or catalogue error | `PlanningTests` `Planning` describe — `planning-backlog-filters` / `planning-backlog-panels` / empty or error copy, or chrome error | `docs-capture` (`planning/backlog.png`) |
-| Awaiting triage, epics near completion, and neglected repositories | `PlanningTests` `Backlog Review` describe — `planning-backlog-awaiting-triage`, `planning-backlog-epics`, and `planning-backlog-neglected` when panels load | `docs-capture` |
-| Iteration Planning Up Next, candidates, empty copy, warning, or catalogue error | `PlanningTests` `Iteration Planning` describe — `planning-planning-up-next` / `planning-planning-candidates` / empty or error copy, or chrome error | `docs-capture` (`planning/iteration.png`) |
-| Capacity, stalled gate, and bulk milestone | `PlanningIterationTests` (bUnit); CI shell asserts capacity region and conditional stall gate | `docs-capture` |
-
-### Iteration Planning stall versus capacity automated coverage ([#458](https://github.com/markheydon/solo-dev-board/issues/458))
-
-Issue [#458](https://github.com/markheydon/solo-dev-board/issues/458) closes the test slice for story [#445](https://github.com/markheydon/solo-dev-board/issues/445) (separate stall gate from capacity). Keep this mapping aligned with [planning.md](../../website/content/docs/planning.md).
-
-| Behaviour | Unit / component | Playwright (CI placeholder auth) |
-|-----------|------------------|----------------------------------|
-| Stalled Up Next disables Add; error stall alert without capacity wording; candidate pause line | `PlanningIterationTests` stall gate describe | `PlanningTests` conditional stall gate and pause line when loaded |
-| Capacity at limit keeps Add enabled; exceed-capacity confirm still shown | `PlanningIterationTests` at-capacity describe | — |
-| Under capacity without stall shows no stall alert and enabled Add | `PlanningIterationTests.PlanningIteration_WhenUnderCapacityWithoutStall_DoesNotShowStallGateAlertAndEnablesAdd` | — |
-| Soft capacity copy in Up Next does not require resolving items before add | `PlanningIterationTests.PlanningIteration_WhenAtCapacityWithoutStall_ShowsSoftCapacityStatusInUpNext` | — |
-
-Placeholder-auth CI usually loads Iteration Planning without a stalled Up Next item, so stall-gate alert and pause-line assertions in `PlanningTests` are conditional when a loaded board happens to show stalled work. Populated stall UI and disable-Add behaviour are covered in `PlanningIterationTests` (bUnit). PAT docs-capture can validate loaded stall screenshots when needed.
-
-| Board setup compatibility tab, chrome summary, and Recheck | `PlanningBoardSetupTests` (bUnit); Playwright shell in board setup work | `docs-capture` (future) |
-
-### Daily Focus automated coverage ([#385](https://github.com/markheydon/solo-dev-board/issues/385))
-
-Issue [#385](https://github.com/markheydon/solo-dev-board/issues/385) closes the Daily Focus test slice for stories [#273](https://github.com/markheydon/solo-dev-board/issues/273)–[#276](https://github.com/markheydon/solo-dev-board/issues/276). Keep this mapping alongside the Planning rows above.
-
-| Behaviour | Unit / component | Playwright (CI placeholder auth) |
-|-----------|------------------|----------------------------------|
-| Column counts and active load (Up Next + In Progress) | `DailyFocusBoardStateMapperTests`, `DailyFocusBoardStateServiceTests` | `PlanningTests` `Daily Focus` describe — occupancy region or empty/error copy |
-| Inclusive 3-day Up Next stall | `DailyFocusBoardStateMapperTests` | `PlanningTests` `Planning` describe — `planning-daily-focus-stalled` when occupancy loads |
-| Top-three priority ranking | `DailyFocusRecommendationMapperTests`, `DailyFocusRecommendationServiceTests` | `PlanningTests` `Planning` describe — recommendations region or error/warning |
-| Stalled review pull requests | `DailyFocusStalledReviewDetectorTests`, `DailyFocusStalledReviewServiceTests` | `PlanningTests` `Planning` describe — `planning-daily-focus-stalled-reviews` or error |
-| Route shell, loading, empty board, GitHub retry, inaccessible-board warning | `PlanningDailyFocusTests` | `PlanningTests` `Daily Focus` describe — route shell and no-board/empty/error copy |
-
-Docs-capture screenshots for all four Planning tabs live under `website/static/images/planning/` (`daily-focus.png`, `backlog.png`, `planning.png`, `repos.png`). Capture prefers the public **SoloDevBoard Roadmap** board with `DocsCapture:Enabled=true`.
-
-### Repo Management automated coverage ([#388](https://github.com/markheydon/solo-dev-board/issues/388))
-
-Issue [#388](https://github.com/markheydon/solo-dev-board/issues/388) closes the Repo Management test slice for stories [#287](https://github.com/markheydon/solo-dev-board/issues/287) and [#288](https://github.com/markheydon/solo-dev-board/issues/288). Keep this mapping alongside the Planning rows above.
-
-| Behaviour | Unit / component | Playwright (CI placeholder auth) |
-|-----------|------------------|----------------------------------|
-| Planning thresholds (capacity, stall days, neglect days) | `PlanningSettingsDefaultsTests`, `PlanningSettingsServiceTests` | `PlanningTests` `Repo Management` describe — threshold fields and regions |
-| Repository participation and exclusions | `PlanningReposTests` | `PlanningTests` `Repo Management` describe — participation summary, included table, exclusions |
-| Per-repository summary table, empty state, load error, or partial failure | `PlanningReposTests` | `PlanningTests` `Repo Management` and `Planning` describes — summary region or error/empty/loading |
-| Route shell and no-board instructional copy | `PlanningReposTests` | `PlanningTests` `Repo Management` describe — route shell and board selector alert |
-
-### Backlog Review automated coverage ([#386](https://github.com/markheydon/solo-dev-board/issues/386))
-
-Issue [#386](https://github.com/markheydon/solo-dev-board/issues/386) closes the Backlog Review test slice for stories [#280](https://github.com/markheydon/solo-dev-board/issues/280)–[#279](https://github.com/markheydon/solo-dev-board/issues/279) (parent feature [#277](https://github.com/markheydon/solo-dev-board/issues/277), delivered in PR [#419](https://github.com/markheydon/solo-dev-board/pull/419)). Keep this mapping alongside the Planning rows above.
-
-| Behaviour | Unit / component | Playwright (CI placeholder auth) |
-|-----------|------------------|----------------------------------|
-| Urgent, Ready to start, and Blocked/deferred panels | `BacklogReviewGroupingTests`, `BacklogReviewServiceTests` | `PlanningTests` `Planning` and `Backlog Review` describes — urgency panel `data-testid`s |
-| Awaiting triage (missing `type/` or `priority/`) | `BacklogReviewGroupingTests` | `PlanningTests` `Backlog Review` describe — `planning-backlog-awaiting-triage` |
-| Urgent items deduplicated from Ready to start | `BacklogReviewGroupingTests` | Unit/component only (row membership) |
-| Issue versus pull request kind chips | `PlanningBacklogTests` | Unit/component only (row chips); `docs-capture` when table rows render |
-| Epics near completion | `BacklogReviewGroupingTests`, `PlanningBacklogTests` | `PlanningTests` `Backlog Review` describe — `planning-backlog-epics` panel or empty/unavailable copy |
-| Neglected repositories | `BacklogReviewGroupingTests`, `PlanningBacklogTests` | `PlanningTests` `Backlog Review` describe — `planning-backlog-neglected` panel or empty copy |
-| Route shell, no-board copy, catalogue empty, filter empty, partial-failure warning, GitHub retry | `PlanningBacklogTests` | `PlanningTests` `Backlog Review` describe — route shell and no-board/empty/error/warning copy |
-
-### Iteration Planning automated coverage ([#387](https://github.com/markheydon/solo-dev-board/issues/387))
-
-Issue [#387](https://github.com/markheydon/solo-dev-board/issues/387) closes the Iteration Planning test slice for stories [#283](https://github.com/markheydon/solo-dev-board/issues/283)–[#286](https://github.com/markheydon/solo-dev-board/issues/286). Keep this mapping alongside the Planning rows above.
-
-| Behaviour | Unit / component | Playwright (CI placeholder auth) |
-|-----------|------------------|----------------------------------|
-| Focus Order sequencing for story, enabler, and test labels | `PlanningFocusOrderSequencerTests` | Unit/component only |
-| Up Next and candidate mapping | `IterationPlanningViewMapperTests` | Unit/component only |
-| Add to Up Next writes (status, triage add, Focus Order) | `IterationPlanningServiceTests` | Unit/component only |
-| Active load capacity flag and at-capacity warning | `IterationPlanningViewMapperTests`, `PlanningIterationTests` | Unit/component only |
-| Capacity exceeded confirmation dialog before add | `PlanningIterationTests` | Unit/component only |
-| Stalled Up Next gate disables add | `PlanningIterationTests` | Unit/component only |
-| Bulk milestone skip when milestone missing on a repository | `PlanningBulkMilestoneAssignerTests`, `IterationPlanningServiceTests` | Unit/component only |
-| Add to Up Next success and failure snackbars | `PlanningIterationTests` | Unit/component only |
-| Route shell, no-board copy, Up Next and candidate regions, empty copy, load error, partial failure | `PlanningIterationTests` | `PlanningTests` `Iteration Planning` describe — route shell and no-board/empty/error/warning copy |
-
-See [CRITICAL_JOURNEYS.md](CRITICAL_JOURNEYS.md) Tier 2 — Planning row — for the journey-level summary.
+| Journey | Locking checks | Playwright spec | CI job |
+|---------|----------------|-----------------|--------|
+| PAT-mode welcome redirect and connectivity error page | `WelcomePageTests`, `PatConnectivityErrorPageRendererTests` | `AuthEntryTests` | `pat` |
+| Hosted sign-in login gate | `WelcomePageTests`, `HostedAuthenticationRecoveryRouteTests`, middleware tests in Infrastructure | `AuthEntryHostedTests` | `hosted` |
 
 ## Screenshot hygiene
 
@@ -306,6 +60,8 @@ See [CRITICAL_JOURNEYS.md](CRITICAL_JOURNEYS.md) Tier 2 — Planning row — for
 ## When guides or journeys change
 
 1. Update the User Guide page under `website/content/docs/`.
-2. Update `website/content/_index.md` and `website/content/docs/_index.md` when the published feature list changes.
-3. Update the relevant Playwright spec(s) and this file.
-4. Refresh docs-capture screenshots when the UI changes materially.
+2. Update locking unit or bUnit tests in the same pull request.
+3. Update `website/content/_index.md` and `website/content/docs/_index.md` when the published feature list changes.
+4. Update this inventory row (locking checks, screenshots, Playwright column if shell coverage changed).
+5. Update Playwright specs and [CRITICAL_JOURNEYS.md](CRITICAL_JOURNEYS.md) only when routes, shell chrome, auth entry, axe routes, theme, layout checks, or docs-capture change.
+6. Refresh docs-capture screenshots when the UI changes materially.

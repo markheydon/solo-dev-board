@@ -18,7 +18,7 @@ That is not a marketing claim about autonomous software — it describes how the
 
 - Features are planned with acceptance criteria before implementation.
 - Page-producing UI work references wireframes in `plan/wireframes/`.
-- User Guide pages stay aligned with Playwright coverage (see `tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md` in the repository).
+- User Guide pages describe shipped behaviour only and are locked by unit or bUnit tests in the same change; Playwright covers the browser shell, accessibility, and screenshots (see `tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md` in the repository).
 - Releases are tagged (`v*`) so the public site and deployed app describe the same version.
 
 ## Contributing
