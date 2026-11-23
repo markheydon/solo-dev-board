@@ -12,6 +12,15 @@ public sealed class FakeOperatorSnapshotBlobContainer : IOperatorSnapshotBlobCon
     public IOperatorSnapshotBlobClient GetBlobClient(string blobName)
         => new FakeBlobClient(_blobs, blobName);
 
+    /// <inheritdoc/>
+    public Task<IReadOnlyList<string>> ListBlobNamesAsync(string prefix, CancellationToken cancellationToken = default)
+    {
+        var names = _blobs.Keys
+            .Where(name => name.StartsWith(prefix, StringComparison.Ordinal))
+            .ToList();
+        return Task.FromResult<IReadOnlyList<string>>(names);
+    }
+
     private sealed class FakeBlobClient(Dictionary<string, BlobState> blobs, string name) : IOperatorSnapshotBlobClient
     {
         public Task<bool> ExistsAsync(CancellationToken cancellationToken = default)

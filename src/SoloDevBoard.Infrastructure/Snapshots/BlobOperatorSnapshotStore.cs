@@ -9,6 +9,7 @@ public sealed class BlobOperatorSnapshotStore : IOperatorSnapshotStore
 {
     private readonly IOperatorSnapshotBlobContainer _container;
     private readonly IOperatorSnapshotLiveTaskRegistry _liveTasks;
+    private readonly IOperatorSnapshotInProgressReadPolicy _inProgressReadPolicy;
     private readonly TimeProvider _timeProvider;
     private readonly ILogger<BlobOperatorSnapshotStore> _logger;
 
@@ -16,11 +17,13 @@ public sealed class BlobOperatorSnapshotStore : IOperatorSnapshotStore
     public BlobOperatorSnapshotStore(
         IOperatorSnapshotBlobContainer container,
         IOperatorSnapshotLiveTaskRegistry liveTasks,
+        IOperatorSnapshotInProgressReadPolicy inProgressReadPolicy,
         TimeProvider timeProvider,
         ILogger<BlobOperatorSnapshotStore> logger)
     {
         _container = container ?? throw new ArgumentNullException(nameof(container));
         _liveTasks = liveTasks ?? throw new ArgumentNullException(nameof(liveTasks));
+        _inProgressReadPolicy = inProgressReadPolicy ?? throw new ArgumentNullException(nameof(inProgressReadPolicy));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -136,6 +139,11 @@ public sealed class BlobOperatorSnapshotStore : IOperatorSnapshotStore
         CancellationToken cancellationToken)
     {
         if (document.Run.Status != OperatorSnapshotRunStatus.InProgress || _liveTasks.HasLiveTask(sanitisedLogin))
+        {
+            return document;
+        }
+
+        if (!await _inProgressReadPolicy.ShouldRewriteStaleInProgressAsync(sanitisedLogin, cancellationToken).ConfigureAwait(false))
         {
             return document;
         }

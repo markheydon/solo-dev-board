@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
+using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.GitHub;
 using SoloDevBoard.Application.Services.Snapshots;
@@ -204,10 +205,21 @@ public sealed class OperatorSnapshotCollectionServiceTests
             new OperatorSnapshotApplicationStopping(CancellationToken.None),
             Substitute.For<Microsoft.Extensions.Logging.ILogger<OperatorSnapshotCollectionCoordinator>>());
 
+        var signInStore = new NoOpOperatorSignInRecordStore();
+        var queueStore = new NoOpDailyOccasionQueueStore();
+        var scheduleBuilder = new OperatorSnapshotScheduleStatusBuilder(
+            signInStore,
+            queueStore,
+            new OperatorSnapshotEligibility(Options.Create(new HostedAdmissionControlOptions())),
+            Options.Create(new OperatorSnapshotDurabilityOptions { DurabilityKind = OperatorSnapshotDurabilityKind.LocalMachine }),
+            TimeProvider.System);
+
         return new OperatorSnapshotCollectionService(
             userContext,
             store,
             coordinator,
+            queueStore,
+            scheduleBuilder,
             Options.Create(new OperatorSnapshotDurabilityOptions { DurabilityKind = OperatorSnapshotDurabilityKind.LocalMachine }),
             TimeProvider.System);
     }

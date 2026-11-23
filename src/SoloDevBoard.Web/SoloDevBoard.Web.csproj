@@ -20,6 +20,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Aspire.Azure.Storage.Blobs" />
+		<PackageReference Include="Azure.Extensions.AspNetCore.DataProtection.Blobs" />
 		<PackageReference Include="Markdig" />
 		<PackageReference Include="MinVer">
 			<PrivateAssets>all</PrivateAssets>

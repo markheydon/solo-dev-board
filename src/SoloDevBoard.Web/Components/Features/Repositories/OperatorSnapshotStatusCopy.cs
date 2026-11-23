@@ -25,11 +25,13 @@ internal static class OperatorSnapshotStatusCopy
             return string.Empty;
         }
 
-        return status.Kind switch
+        var scheduleClause = BuildScheduleClause(status);
+        var runClause = status.Kind switch
         {
             OperatorSnapshotStatusKind.NeverRun => "No snapshot exists.",
+            OperatorSnapshotStatusKind.InProgress when status.QueuedBeforeStart => scheduleClause,
             OperatorSnapshotStatusKind.InProgress when status.RunStartedAt is { } started =>
-                $"Saving snapshot… started at {FormatLocalTime(started)}; {status.RepositoriesRecordedThisRun} recorded so far.",
+                BuildInProgressClause(status, started),
             OperatorSnapshotStatusKind.Succeeded when status.LastSuccessfulCollectionAt is { } finished =>
                 $"Snapshot saved at {FormatLocalTime(finished)} ({status.SnapshotRepositoryCount} repositories included).",
             OperatorSnapshotStatusKind.Succeeded when status.RunFinishedAt is { } finished =>
@@ -40,6 +42,18 @@ internal static class OperatorSnapshotStatusCopy
                 BuildInterruptedSuffix(status, interruptedAt),
             _ => string.Empty,
         };
+
+        if (string.IsNullOrWhiteSpace(scheduleClause) || runClause.Contains(scheduleClause, StringComparison.Ordinal))
+        {
+            return runClause;
+        }
+
+        if (string.IsNullOrWhiteSpace(runClause))
+        {
+            return scheduleClause;
+        }
+
+        return $"{runClause} {scheduleClause}";
     }
 
     internal static Severity ResolveCombinedSeverity(
@@ -65,6 +79,46 @@ internal static class OperatorSnapshotStatusCopy
             OperatorSnapshotStatusKind.Succeeded => catalogueSeverity == Severity.Error ? catalogueSeverity : Severity.Success,
             _ => catalogueSeverity,
         };
+    }
+
+    private static string BuildInProgressClause(OperatorSnapshotStatusDto status, DateTimeOffset started)
+    {
+        if (status.StartedBy == OperatorSnapshotRunStartedBy.DailyOccasion)
+        {
+            return
+                $"Saving snapshot from the daily collection at 05:00 UTC… started at {FormatLocalTime(started)}; {status.RepositoriesRecordedThisRun} recorded so far.";
+        }
+
+        return $"Saving snapshot… started at {FormatLocalTime(started)}; {status.RepositoriesRecordedThisRun} recorded so far.";
+    }
+
+    private static string BuildScheduleClause(OperatorSnapshotStatusDto status)
+    {
+        return status.Schedule switch
+        {
+            OperatorSnapshotScheduleKind.NoneLean =>
+                "Nothing collects on a schedule. The snapshot is kept on this machine rather than promised on another machine.",
+            OperatorSnapshotScheduleKind.NoneUntilSignIn =>
+                "No scheduled collection will run until you sign in again.",
+            OperatorSnapshotScheduleKind.NoneNotAllowed when status.Reason == OperatorSnapshotRunReason.SignInOrToken =>
+                "No scheduled collection will run until you sign in again.",
+            OperatorSnapshotScheduleKind.NoneNotAllowed =>
+                "No scheduled collection will run because you are not allowed, your sign-in is too old, or stored access is waiting after a failure.",
+            OperatorSnapshotScheduleKind.NextOccasion when status.NextOccasionAt is { } next =>
+                BuildNextOccasionClause(status, next),
+            _ => string.Empty,
+        };
+    }
+
+    private static string BuildNextOccasionClause(OperatorSnapshotStatusDto status, DateTimeOffset nextOccasion)
+    {
+        var dayLabel = nextOccasion.UtcDateTime.Date == DateTime.UtcNow.Date ? "today" : "the following day";
+        if (status.QueuedBeforeStart)
+        {
+            return $"The next scheduled collection is {dayLabel} at 05:00 UTC.";
+        }
+
+        return $"The next scheduled collection is {dayLabel} at 05:00 UTC.";
     }
 
     private static string BuildFailedSuffix(OperatorSnapshotStatusDto status, DateTimeOffset failedAt)

@@ -19,5 +19,13 @@ internal static class OperatorSnapshotJson
         => JsonSerializer.Serialize(document, Options);
 
     internal static OperatorSnapshotDocument? Deserialise(string json)
-        => JsonSerializer.Deserialize<OperatorSnapshotDocument>(json, Options);
+    {
+        var document = JsonSerializer.Deserialize<OperatorSnapshotDocument>(json, Options);
+        if (document is not null && document.Run.StartedBy is null)
+        {
+            document.Run.StartedBy = OperatorSnapshotRunStartedBy.Operator;
+        }
+
+        return document;
+    }
 }

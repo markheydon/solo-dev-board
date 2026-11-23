@@ -5,6 +5,9 @@ public interface IOperatorSnapshotBlobContainer
 {
     /// <summary>Gets a blob client for the named blob.</summary>
     IOperatorSnapshotBlobClient GetBlobClient(string blobName);
+
+    /// <summary>Lists blob names with the given prefix.</summary>
+    Task<IReadOnlyList<string>> ListBlobNamesAsync(string prefix, CancellationToken cancellationToken = default);
 }
 
 /// <summary>Blob-level operations used by the operator snapshot store.</summary>

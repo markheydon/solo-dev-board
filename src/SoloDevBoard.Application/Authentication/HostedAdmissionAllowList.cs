@@ -1,6 +1,4 @@
-using SoloDevBoard.Application.Authentication;
-
-namespace SoloDevBoard.Infrastructure.Identity;
+namespace SoloDevBoard.Application.Authentication;
 
 /// <summary>Parses hosted admission allow-list configuration values.</summary>
 public static class HostedAdmissionAllowList
@@ -9,17 +7,7 @@ public static class HostedAdmissionAllowList
 
     /// <summary>Returns <see langword="true" /> when the allow-list has at least one active entry.</summary>
     public static bool HasConfiguredEntries(string? value)
-    {
-        foreach (var entry in EnumerateEntries(value))
-        {
-            if (AuthConfigurationPlaceholders.IsConfigured(entry))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
+        => BuildNormalisedSet(value).Count > 0;
 
     /// <summary>Returns a normalised set of active allow-list entries.</summary>
     public static HashSet<string> BuildNormalisedSet(string? value)

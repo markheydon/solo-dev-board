@@ -34,7 +34,7 @@ Key goals of the Repositories page:
 1. Open **Repositories** from the left navigation menu.
 2. Use the search field to filter repositories by name if needed.
 3. Use **Reload from GitHub** to reload the catalogue after connectivity changes without clearing your search or filter.
-4. Use **Collect snapshot** when you want a durable copy of the catalogue for later analysis across sign-in sessions (hosted deployments) or on disk (local PAT). Collection runs only when you choose the button, not on a schedule. While a collection is running, status updates in the feedback alert below the command strip and the button stays disabled until the run finishes or is interrupted.
+4. Use **Collect snapshot** when you want a durable copy of the catalogue for later analysis across sign-in sessions (hosted deployments) or on disk (local PAT). In hosted sign-in, the same collection can also run once each day at 05:00 UTC when you are eligible; the shared feedback alert explains the next occasion or why no scheduled collection will run. In the lean local posture nothing collects on a schedule and the snapshot stays on this machine. While a collection is running, status updates in the feedback alert below the command strip and the button stays disabled until the run finishes, you are queued for the daily occasion, or the run is interrupted.
 5. Review status chips (Connected or Archived) and visibility chips (Public or Private).
 
 ### Filter open-source project repositories

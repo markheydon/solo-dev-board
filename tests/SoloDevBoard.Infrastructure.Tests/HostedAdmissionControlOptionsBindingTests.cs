@@ -1,7 +1,5 @@
 using Microsoft.Extensions.Configuration;
 using SoloDevBoard.Application.Authentication;
-using SoloDevBoard.Infrastructure.Identity;
-
 namespace SoloDevBoard.Infrastructure.Tests;
 
 public sealed class HostedAdmissionControlOptionsBindingTests

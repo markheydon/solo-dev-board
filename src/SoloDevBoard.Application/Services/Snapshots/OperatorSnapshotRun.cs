@@ -20,4 +20,7 @@ public sealed class OperatorSnapshotRun
 
     /// <summary>One-line diagnostic detail for unexpected failures only.</summary>
     public string? Detail { get; set; }
+
+    /// <summary>Who started this run, or null when absent on older documents.</summary>
+    public OperatorSnapshotRunStartedBy? StartedBy { get; set; }
 }

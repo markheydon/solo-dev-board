@@ -148,6 +148,7 @@ public sealed class OperatorSnapshotBlobStoreTests
         => new(
             container,
             registry,
+            new AlwaysRewriteStaleInProgressPolicy(),
             TimeProvider.System,
             NullLogger<BlobOperatorSnapshotStore>.Instance);
 

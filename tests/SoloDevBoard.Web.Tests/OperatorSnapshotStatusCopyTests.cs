@@ -65,6 +65,20 @@ public sealed class OperatorSnapshotStatusCopyTests
         Assert.Contains("Snapshot saved at", suffix);
     }
 
+    [Fact]
+    public void BuildSnapshotSuffix_WhenLeanPosture_IncludesNoScheduleCopy()
+    {
+        var status = new OperatorSnapshotStatusDto
+        {
+            Kind = OperatorSnapshotStatusKind.NeverRun,
+            Schedule = OperatorSnapshotScheduleKind.NoneLean,
+            DurabilityKind = OperatorSnapshotDurabilityKind.LocalMachine,
+        };
+
+        var suffix = OperatorSnapshotStatusCopy.BuildSnapshotSuffix(status, statusUnavailable: false);
+        Assert.Contains("Nothing collects on a schedule", suffix, StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData(OperatorSnapshotDurabilityKind.LocalMachine)]
     [InlineData(OperatorSnapshotDurabilityKind.EphemeralContainerDisk)]

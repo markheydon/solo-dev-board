@@ -11,6 +11,23 @@ public sealed class AzureOperatorSnapshotBlobContainer(BlobContainerClient conta
     public IOperatorSnapshotBlobClient GetBlobClient(string blobName)
         => new AzureOperatorSnapshotBlobClient(containerClient.GetBlobClient(blobName));
 
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<string>> ListBlobNamesAsync(string prefix, CancellationToken cancellationToken = default)
+    {
+        var names = new List<string>();
+        await foreach (var item in containerClient
+                           .GetBlobsAsync(BlobTraits.None, BlobStates.None, prefix, cancellationToken)
+                           .ConfigureAwait(false))
+        {
+            if (!string.IsNullOrWhiteSpace(item.Name))
+            {
+                names.Add(item.Name);
+            }
+        }
+
+        return names;
+    }
+
     private sealed class AzureOperatorSnapshotBlobClient(BlobClient blobClient) : IOperatorSnapshotBlobClient
     {
         public async Task<bool> ExistsAsync(CancellationToken cancellationToken = default)

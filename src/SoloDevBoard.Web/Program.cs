@@ -1,7 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
+using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
@@ -9,11 +11,13 @@ using MudBlazor;
 using MudBlazor.Services;
 using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Application.Services.Planning;
+using SoloDevBoard.Application.Services.Snapshots;
 using SoloDevBoard.Web.Authentication;
 using SoloDevBoard.Web.Components.Features.ActionsTemplates;
 using SoloDevBoard.Web.Components.Features.Planning;
 using SoloDevBoard.Web.Components.Shell;
 using SoloDevBoard.Web.Planning;
+using SoloDevBoard.Web.Snapshots;
 using SoloDevBoard.Web.Theming;
 
 const string HostedSignInStateCookieName = "solo-dev-board.hosted-sign-in-state";
@@ -89,9 +93,21 @@ var useOperatorSnapshotBlob = !string.IsNullOrWhiteSpace(builder.Configuration["
 if (useOperatorSnapshotBlob)
 {
     builder.AddAzureBlobContainerClient("operator-snapshots");
+    builder.Services.AddDataProtection()
+        .PersistKeysToAzureBlobStorage(sp =>
+        {
+            var container = sp.GetRequiredService<BlobContainerClient>();
+            return container.GetBlobClient("schedule/data-protection-keys.xml");
+        });
 }
 
 builder.AddOperatorSnapshotHost(useOperatorSnapshotBlob);
+
+if (hostedSignInEnabled && useOperatorSnapshotBlob)
+{
+    builder.Services.AddSingleton<IHostedRefreshTokenExchanger, HostedRefreshTokenExchanger>();
+    builder.Services.AddHostedService<DailyCollectionBackgroundService>();
+}
 
 // Add our services via the shared composition root.
 builder.Services.AddSoloDevBoard(builder.Configuration);
@@ -160,9 +176,10 @@ if (hostedSignInEnabled)
         return Results.Redirect(authoriseUrl);
     }).AllowAnonymous();
 
-    app.MapGet("/auth/callback", static async (
+    app.MapGet("/auth/callback", async (
         HttpContext context,
         HostedGitHubAuthGateway authGateway,
+        IHostedSignInRecordService signInRecordService,
         ILogger<Program> logger) =>
     {
         if (!TryReadAndClearStateCookie(context, out var state, out var returnUrl))
@@ -221,6 +238,17 @@ if (hostedSignInEnabled)
                 principal,
                 authenticationProperties)
             .ConfigureAwait(false);
+
+        if (useOperatorSnapshotBlob)
+        {
+            await signInRecordService.RecordCompletedSignInAsync(
+                    session.OwnerLogin,
+                    session.OrganisationLogins,
+                    session.RefreshToken,
+                    session.RefreshTokenExpiresAtUtc,
+                    context.RequestAborted)
+                .ConfigureAwait(false);
+        }
 
         return Results.Redirect(returnUrl);
     }).AllowAnonymous();

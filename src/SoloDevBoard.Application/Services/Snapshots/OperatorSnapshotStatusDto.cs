@@ -29,4 +29,16 @@ public sealed class OperatorSnapshotStatusDto
 
     /// <summary>Where the snapshot is kept for operator copy.</summary>
     public OperatorSnapshotDurabilityKind DurabilityKind { get; init; }
+
+    /// <summary>Who started the current or last run.</summary>
+    public OperatorSnapshotRunStartedBy? StartedBy { get; init; }
+
+    /// <summary>True when queued before the first daily pass.</summary>
+    public bool QueuedBeforeStart { get; init; }
+
+    /// <summary>Schedule statement kind.</summary>
+    public OperatorSnapshotScheduleKind Schedule { get; init; }
+
+    /// <summary>Next 05:00 UTC occasion when <see cref="Schedule"/> is <see cref="OperatorSnapshotScheduleKind.NextOccasion"/>.</summary>
+    public DateTimeOffset? NextOccasionAt { get; init; }
 }

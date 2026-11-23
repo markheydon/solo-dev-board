@@ -146,6 +146,7 @@ public sealed class OperatorSnapshotCollectionCoordinator : IOperatorSnapshotLiv
                         successDocument.Run.StartedAt = doc.Run.Status == OperatorSnapshotRunStatus.InProgress
                             ? doc.Run.StartedAt
                             : GetStartedAt(sanitisedLogin);
+                        successDocument.Run.StartedBy = doc.Run.StartedBy;
                         return (successDocument, currentToken);
                     })
                 .ConfigureAwait(false);
@@ -187,6 +188,7 @@ public sealed class OperatorSnapshotCollectionCoordinator : IOperatorSnapshotLiv
                         RepositoriesRecorded = doc.Run.RepositoriesRecorded,
                         Reason = reason,
                         Detail = detail,
+                        StartedBy = doc.Run.StartedBy,
                     };
                     doc.Revision++;
                     return (doc, currentToken);
@@ -217,6 +219,7 @@ public sealed class OperatorSnapshotCollectionCoordinator : IOperatorSnapshotLiv
                         RepositoriesRecorded = doc.Run.RepositoriesRecorded,
                         Reason = OperatorSnapshotRunReason.SiteStopped,
                         Detail = null,
+                        StartedBy = doc.Run.StartedBy,
                     };
                     doc.Revision++;
                     return (doc, currentToken);

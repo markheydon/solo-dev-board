@@ -46,7 +46,10 @@ public partial class Repositories : ComponentBase, IAsyncDisposable
     private CancellationTokenSource? statusPollCts;
 
     private bool IsCollectSnapshotDisabled =>
-        isLoading || awaitingInitialSnapshotStatus || snapshotStatus?.Kind == OperatorSnapshotStatusKind.InProgress;
+        isLoading
+        || awaitingInitialSnapshotStatus
+        || snapshotStatus?.Kind == OperatorSnapshotStatusKind.InProgress
+        || snapshotStatus?.QueuedBeforeStart == true;
 
     private IReadOnlyList<RepositoryDto> FilteredRepositories
     {

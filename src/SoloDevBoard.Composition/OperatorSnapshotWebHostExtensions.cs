@@ -21,6 +21,11 @@ public static class OperatorSnapshotWebHostExtensions
         if (useBlobStore)
         {
             builder.Services.AddOperatorSnapshotBlobStore();
+            builder.Services.AddOperatorSnapshotScheduleServices();
+        }
+        else
+        {
+            builder.Services.AddOperatorSnapshotScheduleLeanStubs();
         }
 
         var durabilityKind = useBlobStore

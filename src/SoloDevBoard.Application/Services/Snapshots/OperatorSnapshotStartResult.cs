@@ -11,4 +11,7 @@ public enum OperatorSnapshotStartResult
 
     /// <summary>The operator login cannot be used as a safe snapshot storage key.</summary>
     UnsafeOperatorLogin,
+
+    /// <summary>The operator is queued for the daily occasion.</summary>
+    Queued,
 }

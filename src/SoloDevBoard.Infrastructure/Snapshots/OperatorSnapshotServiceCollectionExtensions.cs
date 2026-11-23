@@ -13,6 +13,7 @@ public static class OperatorSnapshotInfrastructureRegistration
         services.TryAddScoped<SnapshotCollectionCredentialSlot>();
         services.TryAddSingleton<ISnapshotCollectionCredentialScopeFactory, SnapshotCollectionCredentialScopeFactory>();
         services.TryAddScoped<IOperatorSnapshotStore, FileOperatorSnapshotStore>();
+        services.TryAddSingleton<IOperatorSnapshotInProgressReadPolicy, AlwaysRewriteStaleInProgressPolicy>();
         return services;
     }
 
@@ -20,7 +21,17 @@ public static class OperatorSnapshotInfrastructureRegistration
     public static IServiceCollection AddOperatorSnapshotBlobStore(this IServiceCollection services)
     {
         services.TryAddScoped<IOperatorSnapshotBlobContainer, AzureOperatorSnapshotBlobContainer>();
+        services.TryAddSingleton<IOperatorSnapshotInProgressReadPolicy, HostedOperatorSnapshotInProgressReadPolicy>();
         services.AddScoped<IOperatorSnapshotStore, BlobOperatorSnapshotStore>();
+        return services;
+    }
+
+    /// <summary>Registers schedule blob stores for hosted sign-in.</summary>
+    public static IServiceCollection AddOperatorSnapshotScheduleStores(this IServiceCollection services)
+    {
+        services.TryAddSingleton<ISignInRecordRefreshTokenProtector, SignInRecordRefreshTokenProtector>();
+        services.AddScoped<IOperatorSignInRecordStore, OperatorSignInRecordBlobStore>();
+        services.AddScoped<IDailyOccasionQueueStore, DailyOccasionQueueBlobStore>();
         return services;
     }
 }
