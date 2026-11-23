@@ -78,7 +78,7 @@ aspire describe
 
 Open the `web` resource URL shown by `aspire describe`.
 
-Default local run uses the **lean graph** (web only). Set `hosted-sign-in-enabled` to `true` to exercise hosted OAuth and admission locally (still web only; no Docker SQL). Path A and Path B Key Vault auth work in **both** postures; see [Key Vault-backed auth secrets](#key-vault-backed-auth-secrets).
+Default local run uses the **lean graph** (web only). Set `hosted-sign-in-enabled` to `true` to exercise hosted OAuth, admission, and operator snapshot blob storage (Azurite emulator locally; no Docker SQL or Functions). Path A and Path B Key Vault auth work in **both** postures; see [Key Vault-backed auth secrets](#key-vault-backed-auth-secrets).
 
 Application Insights is deploy-time only. Local telemetry uses the Aspire dashboard via OTLP; no Azure subscription or deployment metadata is required.
 

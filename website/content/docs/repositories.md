@@ -34,7 +34,7 @@ Key goals of the Repositories page:
 1. Open **Repositories** from the left navigation menu.
 2. Use the search field to filter repositories by name if needed.
 3. Use **Reload from GitHub** to reload the catalogue after connectivity changes without clearing your search or filter.
-4. Use **Collect snapshot** when you want a durable copy of the catalogue for later analysis across sign-in sessions (hosted) or on disk (local PAT). While a collection is running, status updates in the feedback alert below the command strip.
+4. Use **Collect snapshot** when you want a durable copy of the catalogue for later analysis across sign-in sessions (hosted deployments) or on disk (local PAT). Collection runs only when you choose the button, not on a schedule. While a collection is running, status updates in the feedback alert below the command strip and the button stays disabled until the run finishes or is interrupted.
 5. Review status chips (Connected or Archived) and visibility chips (Public or Private).
 
 ### Filter open-source project repositories
@@ -95,3 +95,10 @@ If open-source filters look wrong:
 
 - Confirm the repository has the `open-source` topic on GitHub (topics are stored in lowercase).
 - Use **Reload from GitHub** after changing topics on GitHub so the catalogue picks up the latest list-repos payload.
+
+If **Collect snapshot** fails or looks stuck:
+
+- Confirm GitHub authentication is working (the live catalogue loaded successfully).
+- Read the snapshot sentence in the feedback alert. Failures mention rate limits, sign-in problems, or an unexpected error; fix connectivity and try again.
+- If the app stopped before a run finished, status shows interrupted. Use **Collect snapshot** again. A previous successful snapshot is kept when one existed.
+- The snapshot is catalogue metadata for later product features. The grid still shows the live GitHub list, not a separate snapshot-only view.

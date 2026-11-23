@@ -109,9 +109,9 @@ Solo Dev Board uses **Aspire for local orchestration**, which provides standardi
 
 Local `aspire start` uses the **lean AppHost graph** by default: only the Blazor **`web`** resource (PAT-only local trusted mode). No Docker, SQL, Functions, or Azurite are required for day-to-day contributor work.
 
-When `hosted-sign-in-enabled` is `true`, the AppHost still models **`web` only** for compute: hosted GitHub App OAuth, admission control, and optional dev Key Vault (Path B). No Docker, SQL, Azure Functions, or Azurite are required locally.
+When `hosted-sign-in-enabled` is `true`, the AppHost models **`web`** plus **operator snapshot** blob storage ([ADR-0048](../adr/adr-0048-hosted-operator-snapshot-blob-storage.md)): hosted GitHub App OAuth, admission control, optional dev Key Vault (Path B), and an Azurite emulator locally (`RunAsEmulator()`). No Docker, SQL, or Azure Functions are required.
 
-Withdrawn [ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md) overnight inventory (SQL, Functions, and a separate inventory stack) is **not** wired in AppHost. When `hosted-sign-in-enabled` is `true`, [ADR-0048](../adr/adr-0048-hosted-operator-snapshot-blob-storage.md) adds **operator snapshot** blob storage (`operator-snapshots`) for durable hosted collections; lean PAT mode keeps snapshots in a local file under the web content root. See [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md).
+Withdrawn [ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md) overnight inventory (SQL, Functions, and a separate inventory stack) is **not** wired in AppHost. Lean PAT mode keeps operator snapshots in a local file under the web content root (`data/operator-snapshots/`). See [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md) for both graphs.
 
 ### GitHub Codespaces secrets
 
