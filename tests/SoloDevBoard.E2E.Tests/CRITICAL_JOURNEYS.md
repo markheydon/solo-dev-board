@@ -2,7 +2,7 @@
 
 This document defines the highest-priority SoloDevBoard user journeys covered by Playwright end-to-end tests in CI. It satisfies the journey-identification acceptance criterion for issue [#255](https://github.com/markheydon/solo-dev-board/issues/255) and complements [DEC-016](../../adr/adr-0042-formalised-testing-standard-xunit-v3-nsubstitute-playwright.md).
 
-User guides stay accurate via the User Guide plus locking unit or bUnit tests in the same change; this file defines **CI browser journeys** only. See [USER_DOCS_ALIGNMENT.md](USER_DOCS_ALIGNMENT.md) for the guide inventory, locking tests, and screenshot hygiene.
+User guides stay accurate via the User Guide plus locking unit or bUnit tests in the same change; this file defines **CI browser journeys** only. See [USER_DOCS_ALIGNMENT.md](USER_DOCS_ALIGNMENT.md) for the guide inventory, locking checks, and screenshot hygiene.
 
 ## CI constraints
 
@@ -65,7 +65,7 @@ For data-driven journeys against a real GitHub account, run the PAT suite locall
 
 ## Related documentation
 
-- [tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md](USER_DOCS_ALIGNMENT.md) — user guide accuracy inventory, locking tests, and screenshot hygiene.
+- [tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md](USER_DOCS_ALIGNMENT.md) - user guide accuracy inventory, locking checks, and screenshot hygiene.
 - [tests/SoloDevBoard.E2E.Tests/README.md](README.md) — local run and CI overview.
 - [plan/OPERATIONAL_HARDENING_TEST_COVERAGE.md](../../plan/OPERATIONAL_HARDENING_TEST_COVERAGE.md) — health and operational E2E expectations.
 - [CONTRIBUTING.md](../../CONTRIBUTING.md) — contributor testing guidance.

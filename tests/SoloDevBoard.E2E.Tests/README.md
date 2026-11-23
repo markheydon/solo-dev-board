@@ -4,7 +4,7 @@ C# Playwright tests (`Microsoft.Playwright.Xunit.v3`) for the real browser: appl
 
 Critical journeys, priority tiers, and CI constraints are documented in [CRITICAL_JOURNEYS.md](CRITICAL_JOURNEYS.md).
 
-The User Guide accuracy inventory (locking tests, screenshots, shell coverage) lives in [USER_DOCS_ALIGNMENT.md](USER_DOCS_ALIGNMENT.md).
+The User Guide accuracy inventory (locking checks, screenshots, shell coverage) lives in [USER_DOCS_ALIGNMENT.md](USER_DOCS_ALIGNMENT.md).
 
 ## Test coverage
 

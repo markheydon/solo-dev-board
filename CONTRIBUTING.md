@@ -115,7 +115,7 @@ When suggesting a feature:
    - When adding a new non-E2E test project, add it to [`SoloDevBoard.UnitTests.slnf`](SoloDevBoard.UnitTests.slnf).
    - Aim for meaningful test coverage, not just coverage percentage
    - User-visible behaviour changes MUST update the User Guide and locking unit or bUnit tests in the same pull request.
-   - Use Playwright only where unit or bUnit tests cannot see the real browser: shell, auth entry, layout, theme persistence, accessibility scans, and docs-capture screenshots — see [`tests/SoloDevBoard.E2E.Tests/README.md`](tests/SoloDevBoard.E2E.Tests/README.md) and [`tests/SoloDevBoard.E2E.Tests/CRITICAL_JOURNEYS.md`](tests/SoloDevBoard.E2E.Tests/CRITICAL_JOURNEYS.md).
+   - Use Playwright only where unit or bUnit tests cannot see the real browser: shell, auth entry, layout, theme persistence, accessibility scans, and docs-capture screenshots - see [`tests/SoloDevBoard.E2E.Tests/README.md`](tests/SoloDevBoard.E2E.Tests/README.md) and [`tests/SoloDevBoard.E2E.Tests/CRITICAL_JOURNEYS.md`](tests/SoloDevBoard.E2E.Tests/CRITICAL_JOURNEYS.md).
    - Accessibility regression for primary journeys uses axe-core in Playwright (`AccessibilityTests`); findings are summarised in [`plan/ACCESSIBILITY_AUDIT.md`](plan/ACCESSIBILITY_AUDIT.md).
    - Prefer accessible names for controls; add `data-testid` when roles or labels are unstable for E2E or bUnit assertions.
    - Do not test .NET Aspire AppHost modelling or orchestration.
