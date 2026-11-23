@@ -474,9 +474,11 @@ After [`v1.4.0`](https://github.com/markheydon/solo-dev-board/releases/tag/v1.4.
 
 | Topic | Location |
 | --- | --- |
-| Feature intent (`spec.md`, `plan.md`, `tasks.md`) | `specs/<feature>/` in the repository |
+| Feature intent (`spec.md`) | `specs/<feature>/spec.md` (long-lived contract; maintained when accepted behaviour changes) |
+| Delivery record (`plan.md`, `tasks.md`, and related artefacts) | Same `specs/<feature>/` directory; kept in git as the increment audit trail, not co-maintained with every post-ship tweak |
+| Post-delivery persistence rules | [`.specify/memory/constitution.md`](../.specify/memory/constitution.md) (Delivery Workflow) |
 | Quality gates and principles | [`.specify/memory/constitution.md`](../.specify/memory/constitution.md) |
-| Agent workflow | [AGENTS.md](../AGENTS.md) (`/speckit-*` commands via Cursor) |
+| Agent workflow | [AGENTS.md](../AGENTS.md) (`/speckit-*` commands and `.cursor/commands/` via Cursor) |
 | Maintainer cut-over and archive rules | [plan/SPEC_KIT_MIGRATION.md](../plan/SPEC_KIT_MIGRATION.md) |
 
 Shipped increments (`v1.4` chrome and branding, `v1.3` label remap, and earlier milestones) remain documented via GitHub Issues and archived plans under [`plan/archive/`](../plan/archive/README.md).

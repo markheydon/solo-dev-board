@@ -47,7 +47,9 @@ Official Aspire reference: [aspire.dev](https://aspire.dev/).
 
 ## Spec-driven features (Spec Kit)
 
-Feature intent lives under `specs/<feature>/` (`spec.md`, `plan.md`, `tasks.md`, and related artefacts). Shipped pre-Spec Kit increments stay in GitHub history and [`plan/archive/`](plan/archive/README.md). Do not start a Spec Kit pass for them unless the user asks for a post-ship archival spec. Resolve the active feature directory from [`.specify/feature.json`](.specify/feature.json) or:
+Feature work lives under `specs/<feature>/`. **`spec.md`** is the feature-intent authority for product and acceptance intent; **`plan.md`, `tasks.md`,** and other delivery derivations are subordinate records for that increment and MUST NOT be kept in sync with every post-ship tweak once delivery completes. See [`.specify/memory/constitution.md`](.specify/memory/constitution.md) (Post-delivery persistence).
+
+Shipped pre-Spec Kit increments stay in GitHub history and [`plan/archive/`](plan/archive/README.md). Do not start a Spec Kit pass for them unless the user asks for a post-ship archival spec. Resolve the active feature directory from [`.specify/feature.json`](.specify/feature.json) or:
 
 ```bash
 .specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks
@@ -58,7 +60,7 @@ Typical flow (analyze and converge are optional):
 ```text
 /speckit-constitution → /speckit-specify → /speckit-plan → /speckit-tasks
   → (optional) do-analyse-after-tasks → do-implement → (optional) do-converge-after-implement
-  → (optional) loop-code-review
+  → (optional) close-spec-kit-feature → (optional) loop-code-review
 ```
 
 | Cursor command | Role |
@@ -66,6 +68,7 @@ Typical flow (analyze and converge are optional):
 | [do-analyse-after-tasks.md](.cursor/commands/do-analyse-after-tasks.md) | Looped pre-implementation audit of spec/plan/tasks (`/speckit-analyze`) |
 | [do-implement.md](.cursor/commands/do-implement.md) | Implement `tasks.md` with branch, build/test, and PR conventions |
 | [do-converge-after-implement.md](.cursor/commands/do-converge-after-implement.md) | Looped post-implement gap pass (`/speckit-converge` + follow-up tasks) |
+| [close-spec-kit-feature.md](.cursor/commands/close-spec-kit-feature.md) | Mark the increment delivered in `spec.md` when all tasks are done; report doc and ADR gaps without rewriting delivery artefacts |
 | [loop-code-review.md](.cursor/commands/loop-code-review.md) | Looped merge-readiness review of the branch diff |
 
 Do **not** edit `.specify/` templates, integration manifests, or Spec Kit skill files unless the user explicitly asks. Editing files under the active `specs/<feature>/` directory is normal during specify, plan, tasks, analyze, and converge.
