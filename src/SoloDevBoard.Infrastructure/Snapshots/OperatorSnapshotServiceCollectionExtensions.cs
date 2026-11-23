@@ -11,7 +11,7 @@ public static class OperatorSnapshotInfrastructureRegistration
     public static IServiceCollection AddOperatorSnapshotInfrastructureServices(this IServiceCollection services)
     {
         services.TryAddScoped<SnapshotCollectionCredentialSlot>();
-        services.TryAddScoped<ISnapshotCollectionCredentialScopeFactory, SnapshotCollectionCredentialScopeFactory>();
+        services.TryAddSingleton<ISnapshotCollectionCredentialScopeFactory, SnapshotCollectionCredentialScopeFactory>();
         services.TryAddScoped<IOperatorSnapshotStore, FileOperatorSnapshotStore>();
         return services;
     }
