@@ -19,14 +19,16 @@
                     Reload from GitHub
                 </MudButton>
 
-                <MudButton Variant="Variant.Filled"
-                           Color="Color.Primary"
-                           OnClick="CollectSnapshotAsync"
-                           Disabled="@IsCollectSnapshotDisabled"
-                           data-testid="repositories-collect-snapshot-button"
-                           aria-label="Collect snapshot">
-                    Collect snapshot
-                </MudButton>
+                <MudTooltip Text="Save a local copy of your repository list for planning and offline use. Runs only when you press the button.">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               OnClick="CollectSnapshotAsync"
+                               Disabled="@IsCollectSnapshotDisabled"
+                               data-testid="repositories-collect-snapshot-button"
+                               aria-label="Collect snapshot">
+                        Collect snapshot
+                    </MudButton>
+                </MudTooltip>
 
                 <MudHidden Breakpoint="Breakpoint.SmAndDown">
                     <MudButton Variant="Variant.Outlined"
@@ -88,18 +90,13 @@
                            Text="Not open source"
                            data-testid="repositories-catalogue-filter-not-open-source" />
         </MudToggleGroup>
+
         </MudStack>
     </MudPaper>
 
-    <MudPaper Class="pa-3" Elevation="0" Outlined="true" aria-live="polite" role="status">
+    <MudPaper Class="pa-3" Elevation="0" Outlined="true" aria-live="polite" role="status" data-testid="repositories-page-feedback">
         <MudAlert Severity="@feedbackSeverity" Dense="true" Variant="Variant.Text">
             @feedbackMessage
-        </MudAlert>
-    </MudPaper>
-
-    <MudPaper Class="pa-3" Elevation="0" Outlined="true" aria-live="polite" role="status" data-testid="repositories-snapshot-status">
-        <MudAlert Severity="@snapshotStatusSeverity" Dense="true" Variant="Variant.Text">
-            @snapshotStatusMessage
         </MudAlert>
     </MudPaper>
 

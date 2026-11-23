@@ -14,27 +14,17 @@ While status is `InProgress` and the component is alive, a timer refreshes `GetS
 
 ## Status copy
 
-UK English. No em dash. Times shown in the operator's local presentation of the stored UTC timestamps, with a readable date and time.
+UK English. No em dash. Format date and time with `en-GB` (for example `23/11/2026 16:14`), using the server local offset from stored UTC until browser locale is available.
 
-| State | What the operator sees |
+One persistent `MudAlert` under the command card carries **both** catalogue load feedback (for example "Loaded N repositories.") **and** a snapshot clause in the same line when snapshot status is known. Do not use a second alert for snapshots. Do not show schedule or durability copy on this page. The **Collect snapshot** control may use a short tooltip. Do not use a snackbar to repeat collection status.
+
+| State | Snapshot clause (appended to catalogue feedback) |
 | --- | --- |
-| Never run | No snapshot is kept. No finish time and no snapshot count. |
-| In progress | Collection in progress. Started at {time}. Repositories recorded so far: {count}. |
-| Succeeded | Collection succeeded. Finished at {time}. Repositories in the snapshot: {count}. Count may be zero. |
-| Failed | Collection failed at {time}. Then one of: a sign-in or token problem; a GitHub rate limit; an unexpected error. If `detail` is present, show that one line after the reason. If a last success exists, also show its finish time and count. |
-| Interrupted | Collection interrupted at {time}. The site stopped before the collection finished. If a last success exists, also show its finish time and count. |
-
-Place this in a `MudAlert` (persistent status), not a snackbar. A snackbar may confirm that a collection was accepted, and must not repeat the persistent alert.
-
-## Durability and schedule
-
-Always include: "Nothing collects on a schedule."
-
-| `DurabilityKind` | Additional sentence |
-| --- | --- |
-| `LocalMachine` | The snapshot is kept on this machine rather than promised on another machine. |
-| `EphemeralContainerDisk` | The snapshot is kept on this container's disk. A restart can drop the snapshot. |
-| `HostedBlob` | The snapshot is kept for this signed-in operator and remains after a restart. |
+| Never run | No snapshot exists. |
+| In progress | Saving snapshot… started at {time}; {count} recorded so far. |
+| Succeeded | Snapshot saved at {time} ({count} repositories included). Count may be zero. |
+| Failed | Snapshot could not be saved at {time}. Plain-language reason. Optional `detail`. Last success when one exists. |
+| Interrupted | Snapshot was not finished at {time} because the site stopped before it completed. Last success when one exists. |
 
 Do not say the feature is unavailable in PAT-only local trusted mode.
 

@@ -9,6 +9,8 @@ namespace SoloDevBoard.Web.Components.Features.Repositories.Pages;
 /// <summary>Displays repositories available to the authenticated GitHub account.</summary>
 public partial class Repositories : ComponentBase, IAsyncDisposable
 {
+    private static readonly TimeSpan SnapshotUiPollInterval = TimeSpan.FromMilliseconds(400);
+
     /// <summary>Gets or sets the application service used to retrieve repositories.</summary>
     [Inject]
     public IRepositoryService RepositoryService { get; set; } = default!;
@@ -34,16 +36,17 @@ public partial class Repositories : ComponentBase, IAsyncDisposable
     private string? errorMessage;
     private string feedbackMessage = "Loading repositories...";
     private Severity feedbackSeverity = Severity.Info;
-    private string snapshotStatusMessage = "Loading collection status...";
-    private Severity snapshotStatusSeverity = Severity.Info;
+    private string? catalogueFeedbackLine;
     private OperatorSnapshotStatusDto? snapshotStatus;
+    private bool awaitingInitialSnapshotStatus = true;
+    private bool snapshotStatusUnavailable;
     private string? repositorySearchTerm;
     private RepositoryCatalogueFilter catalogueFilter = RepositoryCatalogueFilter.All;
     private PeriodicTimer? statusPollTimer;
     private CancellationTokenSource? statusPollCts;
 
     private bool IsCollectSnapshotDisabled =>
-        isLoading || snapshotStatus?.Kind == OperatorSnapshotStatusKind.InProgress;
+        isLoading || awaitingInitialSnapshotStatus || snapshotStatus?.Kind == OperatorSnapshotStatusKind.InProgress;
 
     private IReadOnlyList<RepositoryDto> FilteredRepositories
     {
@@ -67,39 +70,33 @@ public partial class Repositories : ComponentBase, IAsyncDisposable
     /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
-        await StopStatusPollingAsync().ConfigureAwait(false);
+        await StopStatusPollingAsync();
     }
 
     protected override async Task OnInitializedAsync()
     {
-        await RefreshSnapshotStatusAsync().ConfigureAwait(false);
-        await LoadRepositoriesAsync().ConfigureAwait(false);
-        await EnsureStatusPollingAsync().ConfigureAwait(false);
+        await RefreshSnapshotStatusAsync();
+        await LoadRepositoriesAsync();
+        ApplyCombinedFeedback();
+        StateHasChanged();
+        await EnsureStatusPollingAsync();
     }
 
     private async Task ReloadAsync()
     {
-        SetFeedback("Reloading repositories from GitHub.", Severity.Info);
-        await LoadRepositoriesAsync(forceReload: true).ConfigureAwait(false);
-        await RefreshSnapshotStatusAsync().ConfigureAwait(false);
+        ShowTransientFeedback("Reloading repositories from GitHub.", Severity.Info);
+        await LoadRepositoriesAsync(forceReload: true);
+        await RefreshSnapshotStatusOnUiAsync();
     }
 
     private async Task CollectSnapshotAsync()
     {
         try
         {
-            var result = await SnapshotCollectionService.StartAsync().ConfigureAwait(false);
-            if (result == OperatorSnapshotStartResult.AlreadyInProgress)
-            {
-                Snackbar.Add("A collection is already in progress.", Severity.Info);
-            }
-            else
-            {
-                Snackbar.Add("Collection started.", Severity.Success);
-            }
-
-            await RefreshSnapshotStatusAsync().ConfigureAwait(false);
-            await EnsureStatusPollingAsync().ConfigureAwait(false);
+            await SnapshotCollectionService.StartAsync();
+            await RefreshSnapshotStatusOnUiAsync();
+            await EnsureStatusPollingAsync();
+            await WaitForSnapshotSettlementOnUiAsync();
         }
         catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
         {
@@ -111,7 +108,9 @@ public partial class Repositories : ComponentBase, IAsyncDisposable
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to start operator snapshot collection.");
-            Snackbar.Add("Could not start collection.", Severity.Error);
+            snapshotStatusUnavailable = true;
+            ApplyCombinedFeedback();
+            StateHasChanged();
         }
     }
 
@@ -163,46 +162,96 @@ public partial class Repositories : ComponentBase, IAsyncDisposable
         };
     }
 
-    private void SetFeedback(string message, Severity severity)
+    private void ShowTransientFeedback(string message, Severity severity)
     {
         feedbackMessage = message;
         feedbackSeverity = severity;
     }
 
+    private void SetCatalogueFeedback(string message, Severity severity)
+    {
+        catalogueFeedbackLine = message;
+        feedbackMessage = message;
+        feedbackSeverity = severity;
+        ApplyCombinedFeedback();
+    }
+
     private void ApplySnapshotStatus(OperatorSnapshotStatusDto status)
     {
         snapshotStatus = status;
-        snapshotStatusMessage = OperatorSnapshotStatusCopy.BuildStatusMessage(status);
-        snapshotStatusSeverity = status.Kind switch
+        snapshotStatusUnavailable = false;
+        ApplyCombinedFeedback();
+    }
+
+    private void ApplyCombinedFeedback()
+    {
+        if (isLoading || !string.IsNullOrEmpty(errorMessage))
         {
-            OperatorSnapshotStatusKind.Succeeded => Severity.Success,
-            OperatorSnapshotStatusKind.Failed => Severity.Error,
-            OperatorSnapshotStatusKind.Interrupted => Severity.Warning,
-            OperatorSnapshotStatusKind.InProgress => Severity.Info,
-            _ => Severity.Normal,
-        };
+            return;
+        }
+
+        var catalogueLine = catalogueFeedbackLine ?? feedbackMessage;
+        var suffix = OperatorSnapshotStatusCopy.BuildSnapshotSuffix(snapshotStatus, snapshotStatusUnavailable);
+        feedbackMessage = string.IsNullOrEmpty(suffix)
+            ? catalogueLine
+            : $"{catalogueLine.TrimEnd()} {suffix}";
+        var catalogueSeverity = catalogueFeedbackLine is null
+            ? feedbackSeverity
+            : repositories.Count == 0 ? Severity.Info : Severity.Success;
+        feedbackSeverity = OperatorSnapshotStatusCopy.ResolveCombinedSeverity(
+            snapshotStatus,
+            snapshotStatusUnavailable,
+            catalogueSeverity);
     }
 
     private async Task RefreshSnapshotStatusAsync()
     {
         try
         {
-            var status = await SnapshotCollectionService.GetStatusAsync().ConfigureAwait(false);
+            var status = await SnapshotCollectionService.GetStatusAsync();
             ApplySnapshotStatus(status);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to read operator snapshot status.");
-            snapshotStatusMessage = "Collection status is unavailable.";
-            snapshotStatusSeverity = Severity.Warning;
+            snapshotStatus = null;
+            snapshotStatusUnavailable = true;
+            ApplyCombinedFeedback();
         }
+        finally
+        {
+            awaitingInitialSnapshotStatus = false;
+        }
+    }
+
+    private async Task RefreshSnapshotStatusOnUiAsync()
+    {
+        await RefreshSnapshotStatusAsync();
+        StateHasChanged();
+    }
+
+    private async Task WaitForSnapshotSettlementOnUiAsync()
+    {
+        if (snapshotStatus?.Kind != OperatorSnapshotStatusKind.InProgress)
+        {
+            return;
+        }
+
+        var deadline = DateTimeOffset.UtcNow.AddMinutes(2);
+        while (snapshotStatus?.Kind == OperatorSnapshotStatusKind.InProgress && DateTimeOffset.UtcNow < deadline)
+        {
+            await Task.Delay(SnapshotUiPollInterval);
+            await RefreshSnapshotStatusOnUiAsync();
+        }
+
+        await StopStatusPollingAsync();
     }
 
     private async Task EnsureStatusPollingAsync()
     {
         if (snapshotStatus?.Kind != OperatorSnapshotStatusKind.InProgress)
         {
-            await StopStatusPollingAsync().ConfigureAwait(false);
+            await StopStatusPollingAsync();
             return;
         }
 
@@ -220,23 +269,25 @@ public partial class Repositories : ComponentBase, IAsyncDisposable
     {
         try
         {
-            while (statusPollTimer is not null && await statusPollTimer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false))
+            do
             {
-                await InvokeAsync(async () =>
+                await InvokeAsync(RefreshSnapshotStatusOnUiAsync);
+                if (snapshotStatus?.Kind != OperatorSnapshotStatusKind.InProgress)
                 {
-                    await RefreshSnapshotStatusAsync().ConfigureAwait(false);
-                    if (snapshotStatus?.Kind != OperatorSnapshotStatusKind.InProgress)
-                    {
-                        await StopStatusPollingAsync().ConfigureAwait(false);
-                    }
-
-                    StateHasChanged();
-                }).ConfigureAwait(false);
+                    await StopStatusPollingAsync();
+                    break;
+                }
             }
+            while (statusPollTimer is not null
+                   && await statusPollTimer.WaitForNextTickAsync(cancellationToken));
         }
         catch (OperationCanceledException)
         {
             // Expected when the component is disposed.
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Snapshot status polling failed.");
         }
     }
 
@@ -244,7 +295,7 @@ public partial class Repositories : ComponentBase, IAsyncDisposable
     {
         if (statusPollCts is not null)
         {
-            await statusPollCts.CancelAsync().ConfigureAwait(false);
+            await statusPollCts.CancelAsync();
             statusPollCts.Dispose();
             statusPollCts = null;
         }
@@ -262,12 +313,12 @@ public partial class Repositories : ComponentBase, IAsyncDisposable
     {
         isLoading = true;
         errorMessage = null;
-        SetFeedback("Loading repositories...", Severity.Info);
+        ShowTransientFeedback("Loading repositories...", Severity.Info);
 
         try
         {
             repositories = await RepositoryService.GetRepositoriesAsync(forceReload: forceReload);
-            SetFeedback(
+            SetCatalogueFeedback(
                 repositories.Count == 0
                     ? "No repositories are connected yet."
                     : $"Loaded {repositories.Count} repositories.",
@@ -283,19 +334,23 @@ public partial class Repositories : ComponentBase, IAsyncDisposable
         catch (HttpRequestException ex)
         {
             errorMessage = $"GitHub API request failed. {ex.Message}";
-            SetFeedback(errorMessage, Severity.Error);
+            ShowTransientFeedback(errorMessage, Severity.Error);
             repositories = [];
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to load repositories.");
             errorMessage = "An unexpected error occurred while loading repositories.";
-            SetFeedback(errorMessage, Severity.Error);
+            ShowTransientFeedback(errorMessage, Severity.Error);
             repositories = [];
         }
         finally
         {
             isLoading = false;
+            if (string.IsNullOrEmpty(errorMessage))
+            {
+                ApplyCombinedFeedback();
+            }
         }
     }
 }

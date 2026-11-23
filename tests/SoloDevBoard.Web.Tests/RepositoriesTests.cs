@@ -31,7 +31,7 @@ public sealed class RepositoriesTests
         Assert.Contains("Repository command strip", cut.Markup);
         Assert.Contains("Reload from GitHub", cut.Markup);
         Assert.Contains("Collect snapshot", cut.Markup);
-        Assert.Contains("No snapshot is kept", cut.Markup);
+        Assert.Contains("repositories-page-feedback", cut.Markup);
         Assert.True(
             cut.Markup.Contains("Bulk actions", StringComparison.Ordinal) ||
             cut.Markup.Contains("Actions", StringComparison.Ordinal));
@@ -76,7 +76,7 @@ public sealed class RepositoriesTests
         Assert.Contains("Repository command strip", cut.Markup);
         Assert.Contains("Reload from GitHub", cut.Markup);
         Assert.Contains("Collect snapshot", cut.Markup);
-        Assert.Contains("No snapshot is kept", cut.Markup);
+        Assert.Contains("repositories-page-feedback", cut.Markup);
     }
 
     [Fact]
@@ -371,7 +371,7 @@ public sealed class RepositoriesTests
             Assert.Single(cut.FindAll("[data-testid='repositories-reload-from-github-button']"));
             Assert.Contains("Reload from GitHub", cut.Markup);
             Assert.Contains("Collect snapshot", cut.Markup);
-            Assert.Contains("No snapshot is kept", cut.Markup);
+            Assert.Contains("repositories-page-feedback", cut.Markup);
         });
     }
 
@@ -403,6 +403,54 @@ public sealed class RepositoriesTests
         });
 
         await _repositoryService.Received(1).GetRepositoriesAsync(Arg.Any<CancellationToken>(), true);
+    }
+
+    [Fact]
+    public async Task Repositories_CollectSnapshot_UpdatesCombinedFeedbackWithoutReload()
+    {
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>())
+            .Returns([CreateRepository("owner", "repo-a")]);
+
+        await using var ctx = CreateContext();
+
+        var statusReads = 0;
+        _snapshotCollectionService.GetStatusAsync(Arg.Any<CancellationToken>())
+            .Returns(_ =>
+            {
+                statusReads++;
+                return statusReads switch
+                {
+                    1 => new OperatorSnapshotStatusDto { Kind = OperatorSnapshotStatusKind.NeverRun },
+                    2 or 3 => new OperatorSnapshotStatusDto
+                    {
+                        Kind = OperatorSnapshotStatusKind.InProgress,
+                        RunStartedAt = DateTimeOffset.Parse("2025-06-01T12:00:00Z"),
+                        RepositoriesRecordedThisRun = 1,
+                    },
+                    _ => new OperatorSnapshotStatusDto
+                    {
+                        Kind = OperatorSnapshotStatusKind.Succeeded,
+                        LastSuccessfulCollectionAt = DateTimeOffset.Parse("2025-06-01T12:00:01Z"),
+                        SnapshotRepositoryCount = 1,
+                    },
+                };
+            });
+
+        _snapshotCollectionService.StartAsync(Arg.Any<CancellationToken>())
+            .Returns(OperatorSnapshotStartResult.Started);
+
+        var cut = ctx.Render<Repositories>();
+
+        cut.WaitForAssertion(() => Assert.Contains("No snapshot exists.", cut.Markup));
+
+        await cut.Find("[data-testid='repositories-collect-snapshot-button']").ClickAsync(
+            new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+
+        cut.WaitForAssertion(
+            () => Assert.Contains("Snapshot saved at", cut.Markup),
+            timeout: TimeSpan.FromSeconds(5));
+
+        Assert.True(statusReads >= 3, $"Expected repeated status reads after collect, got {statusReads}.");
     }
 
     private static RepositoryDto CreateRepository(string owner, string name)

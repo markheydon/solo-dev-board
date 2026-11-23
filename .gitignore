@@ -435,6 +435,9 @@ tests/SoloDevBoard.E2E.Tests/test-results/
 **/appsettings.Development.json
 .local/
 
+# PAT-scoped operator snapshots (file adapter; per machine)
+src/SoloDevBoard.Web/data/operator-snapshots/
+
 # Hugo end-user documentation site
 website/public/
 website/resources/
