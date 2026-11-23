@@ -1,33 +1,40 @@
 # Contract: hosted sign-in record
 
-## When a record is written
+Normative JSON for one operator's durable hosted sign-in. Field rules are in [data-model.md](../data-model.md). The auth cookie remains the interactive session. This blob is the copy the scheduled collection reads when the operator is signed out and the web app is not running.
 
-The OAuth callback that completes hosted sign-in calls one Application method with the owner login, the completion time (`TimeProvider`), the organisation logins already loaded for that sign-in, and the refresh token plus expiry. That call clears `scheduleHold`.
+Container: `hosted-sign-ins`. Blob name: `{sanitised-login}.json`. Media type: `application/json`. Property names are camel case.
 
-These do not write the record:
+Lean posture does not write this blob. Sign-out does not delete it.
 
-- A sign-in attempt that does not complete.
-- Cookie validation that refreshes an access token for an open session.
-- A daily collection's token refresh, except the ciphertext and expiry fields.
-- PAT-only local trusted mode.
+## Example
 
-## Admission at 05:00 UTC
+```json
+{
+  "schemaVersion": 1,
+  "operatorLogin": "octocat",
+  "completedAt": "2026-11-23T18:04:00Z",
+  "organisationLogins": ["contoso"],
+  "refreshToken": "stored-secret",
+  "refreshTokenExpiresAt": "2026-12-23T18:04:00Z",
+  "credentialUnusable": false
+}
+```
 
-The filler reads `HostedAdmissionControlOptions` as they are configured at the fill instant.
+`refreshToken` in real blobs is the GitHub refresh token. Tests and examples use a placeholder. Logs, snapshot documents, and queue messages must not contain it.
 
-| Admission | Rule |
-| --- | --- |
-| Off (`Enabled` false) | Do not refuse a sign-in record because of the lists. Do not invent records for people who have not signed in. |
-| On, both lists empty | Nobody is eligible. |
-| On, user login listed | Eligible if the window and hold rules pass. |
-| On, only a saved organisation login is listed | Eligible if the window and hold rules pass. |
-| On, user removed and no saved organisation remains listed | Not eligible. |
-| On, organisation removed and the user login is still listed | Still eligible. |
+## Writes
 
-Organisation logins on the record are not refreshed from GitHub at fill time.
+| Event | Writer | Effect |
+| --- | --- | --- |
+| Hosted sign-in completes | Web | Insert or replace `completedAt`, `organisationLogins`, refresh token fields. Set `credentialUnusable` false. |
+| Sign-in does not complete | None | No write. Window and wait flag unchanged. |
+| Sign-out | None | Cookie cleared. Blob kept. |
+| Daily pass fails `signInOrToken` | Functions worker | Set `credentialUnusable` true. Do not change `completedAt`. |
+| Refresh during a daily pass returns a new refresh token | Functions worker | Replace refresh token fields under the blob etag. |
+| Hand-started collection fails `signInOrToken` | Web, existing behaviour | Does not by itself set `credentialUnusable`. The wait in this feature follows a daily failure only. |
 
-## Secrets
+Conditional replace uses the blob etag. A stale writer does not publish over a newer sign-in.
 
-Application logs, snapshot JSON, status DTOs, and exception `detail` lines must not contain the refresh token, the access token, or the data-protection payload. Infrastructure protects the refresh token before the blob write and unprotects it only in the drain step that exchanges it.
+## Reads
 
-The key ring blob is created by the data-protection registration in the web host when the blob connection is present. Lean startup must not require that connection.
+The worker lists this container at occasion fill. It does not call GitHub to discover who signed in or which organisations they belong to. Admission uses `organisationLogins` on the blob and the allow lists in the worker's configuration at fill time.

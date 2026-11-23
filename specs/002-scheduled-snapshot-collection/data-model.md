@@ -1,96 +1,129 @@
 # Data model: Scheduled snapshot collection
 
-Extends the operator snapshot document in [specs/001-operator-snapshot-scanner/data-model.md](../001-operator-snapshot-scanner/data-model.md). Schema version stays `1`. New snapshot fields are optional on read. Schedule state is not stored inside the snapshot document and is not created on the lean file adapter.
+The operator snapshot document from [specs/001-operator-snapshot-scanner/data-model.md](../001-operator-snapshot-scanner/data-model.md) stays the single current snapshot per operator. This feature adds fields on that document, a hosted sign-in blob, and schedule blobs the worker uses. There is still no application database and no run history.
 
-Blob names below are inside the existing container `operator-snapshots`. `{sanitised}` uses the same login grammar as the snapshot blob. The `schedule/` prefix cannot collide with `{sanitised}.json`.
+Lean posture uses the file adapter only. It does not write sign-in blobs, occasion markers, or queue messages. Hand-started collection is unchanged there.
 
-## Sign-in record
+## Snapshot document (additive)
 
-Path: `schedule/sign-ins/{sanitised}.json`
-
-Written only when a hosted sign-in completes. A sign-in that does not complete does not create or update it. A silent refresh during a daily collection may replace the protected refresh token and its expiry only.
+`schemaVersion` stays `1`. New properties are absent on documents written before this feature. Readers treat absence as the hand-started behaviour from feature 001.
 
 | Field | JSON | Type | Rules |
 | --- | --- | --- | --- |
-| Operator login | `operatorLogin` | string | Sanitised GitHub login. Matches the blob name. |
-| Completed at | `completedAt` | string (ISO-8601 UTC) | Start of the 30-day window. Replaced only by a later completed sign-in. |
-| Organisation logins | `organisationLogins` | array of strings | Logins saved from that completed sign-in. Replaced as a set only by the next completed sign-in. Empty array is valid. |
-| Protected refresh token | `protectedRefreshToken` | string | Data-protection ciphertext. Never a plaintext token, never copied onto the snapshot, never returned on a DTO. |
-| Refresh token expires at | `refreshTokenExpiresAt` | string or `null` | UTC expiry when GitHub supplied one. |
-| Schedule hold | `scheduleHold` | boolean | `true` after a daily run fails with `signInOrToken`. Cleared only by the next completed sign-in. A rate limit, unexpected error, interruption, or missed day does not set it. |
+| Trigger | `trigger` | string or absent | `operator` or `daily`. Absent means `operator` for documents already stored. Set when a run is queued or started. A newer run replaces it. |
+| Queued occasion | `queuedOccasion` | string (`yyyy-MM-dd`) or `null` | The UTC date of the daily occasion this operator is waiting on, before their pass has started. `null` when they are not waiting to start. Not set for a hand-started run. |
+| Pass executing | `passExecuting` | boolean | `true` only while a daily pass is inside the worker. `false` when they are queued and have not started, when a further try is waiting at the back, and when the run is terminal. Absent means `false`. |
+| Pass lease until | `passLeaseUntil` | string (ISO-8601 UTC) or `null` | Renewed about every 10 seconds while `passExecuting` is `true`. A reader treats the pass as dead when this is missing or earlier than now. `null` when no pass is executing. |
+| Attempts used | `attemptsUsed` | number | Daily run only. `1` on the first pass. Each further try increments it, up to `4` (first pass plus 3 further tries). Absent means no daily attempt accounting. Not used for a hand-started run. |
 
-There is no history of previous sign-ins.
+`run.status` values stay `inProgress`, `succeeded`, `failed`, and `interrupted`.
 
-## Occasion queue
+`run.reason` gains `scheduledCollectionStopped`. Existing values stay `signInOrToken`, `rateLimit`, `siteStopped`, and `unexpected`.
 
-Path: `schedule/occasion.json` (single document, replaced for each filled UTC date)
+### How the page should read the combination
 
-| Field | JSON | Type | Rules |
+| `queuedOccasion` | `passExecuting` | `run.status` | Operator-visible state |
 | --- | --- | --- | --- |
-| Occasion date | `occasionDate` | string `yyyy-MM-dd` | The UTC date of 05:00. One fill per date. |
-| Filled at | `filledAt` | string (ISO-8601 UTC) | When this document was created. Not rewritten when a later tick sees it. |
-| Entries | `entries` | array | Ordered. The head is the next daily collection. The operator-facing API does not return this array. |
-| Active login | `activeLogin` | string or `null` | Sanitised login of the pass that holds the lease. `null` when no daily pass is running. |
-| Lease until | `leaseUntil` | string or `null` | UTC. Renewed while that pass runs. An expired lease means that pass is interrupted and is not requeued. |
+| today, not started | `false` | previous terminal status, or absent run | Not in progress. Still today's 05:00 UTC occasion. Start control does not start another. |
+| set | `true` | `inProgress` | In progress. Daily occasion started it. |
+| `null` | `false` | `inProgress` | In progress, further try waiting at the back. Tries are not listed. |
+| `null` | `false` | `interrupted` and reason `scheduledCollectionStopped` | Interrupted because the scheduled collection stopped. Does not rejoin the queue. |
+| `null` | `false` | `interrupted` and reason `siteStopped` | Hand-started run. The site stopped. |
+| `null` | `false` | `failed` or `succeeded` | Terminal, as feature 001, plus trigger copy. |
 
-### Queue entry
+Waiting on the queue is not a new `run.status`. The previous run stays visible until the pass starts. A further try keeps `inProgress` so the page does not show a failure between tries.
 
-| Field | JSON | Type | Rules |
-| --- | --- | --- | --- |
-| Login | `login` | string | Sanitised operator login. At most one entry per login. |
-| State | `state` | string | `waiting` or `retryWaiting`. |
-| Attempts completed | `attemptsCompleted` | number | `0` before the first pass. Incremented when a rate limit or unexpected error sends the entry to the back. Further tries stop after this value reaches `3` (three further tries after the first pass). |
-
-`waiting` is not an in-progress snapshot run. `retryWaiting` is still the same snapshot run, stored as `inProgress`, until that run succeeds, fails, or a later pass is interrupted.
-
-Removing an entry does not delete the snapshot document.
-
-## Snapshot run (additive)
-
-On `run` in the existing snapshot document:
-
-| Field | JSON | Type | Rules |
-| --- | --- | --- | --- |
-| Started by | `startedBy` | string or absent | `operator` or `dailyOccasion`. Absent on documents written before this feature; readers treat absent as `operator`. Set when a run starts and left unchanged for that run, including further tries. |
-
-No other snapshot fields change. `repositories` and `lastSuccessfulCollectionAt` still change only on success. Failed and interrupted runs still keep the previous success. Tokens, queue position, and try counts are not stored on the snapshot.
-
-## Data-protection key
-
-Path: `schedule/data-protection-keys.xml`
-
-Application code does not read this blob. The ASP.NET Core data-protection host persists it so every web replica shares one key ring. It is not an operator document.
-
-## Eligibility at a fill instant
-
-Include a sign-in record when:
-
-- `completedAt` is at or after the occasion instant minus 30 days (exactly 30 days is included; older is excluded);
-- `scheduleHold` is false;
-- the login is not already on the current queue and does not hold `activeLogin`;
-- admission allows the record: if admission is off, yes; if admission is on, the user login is listed or one saved organisation login is listed. Both lists empty allows nobody.
-
-Do not include a login that has no sign-in record.
-
-## State transitions
+### Transitions (daily)
 
 ```text
-sign-in completes --> record upserted, scheduleHold false, window restarts
-05:00 UTC (or first tick at or before 05:15) --> occasion document created once
-entry waiting --> pass starts --> snapshot inProgress, startedBy dailyOccasion
-pass success --> entry removed, snapshot succeeded
-pass rateLimit or unexpected, attemptsCompleted < 3
-    --> entry moved to back as retryWaiting, snapshot stays inProgress
-pass rateLimit or unexpected, attemptsCompleted reaches 3
-    --> entry removed, snapshot failed with that one reason
-pass signInOrToken --> entry removed, scheduleHold true, snapshot failed
-pass interrupted (shutdown or expired lease) --> entry removed, snapshot interrupted
-product stops while waiting or retryWaiting --> entry remains, snapshot not marked interrupted
-next UTC date fill --> new occasion document; previous date is not replayed
+eligible at fill --> queuedOccasion = today (status unchanged)
+                 --> pass starts --> inProgress, passExecuting, trigger = daily
+                       --> success --> succeeded, clear queue flags, attempts stop
+                       --> signInOrToken --> failed, no requeue, credentialUnusable
+                       --> rateLimit or unexpected, attemptsUsed < 4
+                             --> inProgress, passExecuting false, new tail message
+                       --> rateLimit or unexpected, attemptsUsed = 4 --> failed
+                       --> worker dies while passExecuting
+                             --> interrupted / scheduledCollectionStopped, no requeue
+queued or retry waiting, worker dies --> flags unchanged, message remains, not interrupted
 ```
 
-Hand-started `StartAsync` uses `startedBy = operator`, does not read or write the occasion document except to refuse when this login is queued or a collection is already in progress, and does not receive further tries.
+A hand-started start is refused while `queuedOccasion` is set or `run.status` is `inProgress` (including a retry waiting at the back). A daily fill does not add a second entry when `queuedOccasion` is already that date, or when a daily run is still `inProgress`, or when the previous occasion's queue entry is still there.
 
-## Isolation
+Repositories and `lastSuccessfulCollectionAt` still change only on success. Identity, sanitised keys, and etag rules are unchanged. Unsafe keys are not queued.
 
-Status reads for the signed-in operator return that operator's snapshot and that operator's schedule statement only. They do not return other logins, the queue, or ciphertext.
+## Hosted sign-in record
+
+One JSON blob per operator in container `hosted-sign-ins`. Blob name `{sanitised-login}.json`. Same login grammar as the snapshot. Written only by the web host when a hosted sign-in completes. Updated by the worker when a refresh token rotates or a daily pass sets `credentialUnusable`. Conditional write on etag. Not created in lean posture. Not deleted on sign-out.
+
+| Field | JSON | Type | Rules |
+| --- | --- | --- | --- |
+| Schema version | `schemaVersion` | number | `1`. |
+| Operator login | `operatorLogin` | string | Sanitised GitHub login. |
+| Completed at | `completedAt` | string (ISO-8601 UTC) | Latest completed hosted sign-in. A sign-in that does not complete does not write. |
+| Organisation logins | `organisationLogins` | array of strings | Logins saved from that completed sign-in. Replaced on the next completed sign-in. Not refreshed from GitHub at 05:00 UTC. |
+| Refresh token | `refreshToken` | string | Secret. Never copied to the snapshot, the queue, or logs. |
+| Refresh token expires | `refreshTokenExpiresAt` | string or `null` | UTC expiry when GitHub sent one. |
+| Credential unusable | `credentialUnusable` | boolean | `true` after a daily pass fails with `signInOrToken`. Cleared only by the next completed sign-in, which also sets `completedAt`. |
+
+The 30-day window is `completedAt` compared with the occasion instant (05:00 UTC, or the later fill instant inside the grace window). A `completedAt` exactly 30 days earlier is inside. Older is outside. A successful collection does not change `completedAt`.
+
+## Occasion marker
+
+One JSON blob per UTC date in container `collection-schedule`, name `occasions/{yyyy-MM-dd}.json`. Created once with `IfNoneMatch = *` while the worker holds the fill lease.
+
+| Field | JSON | Type | Rules |
+| --- | --- | --- | --- |
+| Occasion date | `occasionDate` | string (`yyyy-MM-dd`) | The UTC date. |
+| Filled at | `filledAt` | string (ISO-8601 UTC) | When the queue was filled. Inside 05:00:00 to 05:15:00 UTC inclusive. |
+| Operators | `operators` | array of strings | Logins enqueued for this occasion, once each. |
+
+No marker is written for a missed day. The marker is not an operator-visible log. The Repositories page does not list it.
+
+If the marker exists and a listed login is still `queuedOccasion` for that date with no queue message (worker died during fill), host start may enqueue the missing login again. It must not create a second marker and must not add a login who was not on the marker.
+
+## Queue message
+
+Queue `daily-snapshot-collection`. JSON text body. No token, no repository list.
+
+| Field | JSON | Type | Rules |
+| --- | --- | --- | --- |
+| Occasion date | `occasionDate` | string (`yyyy-MM-dd`) | The occasion being collected. |
+| Operator login | `operatorLogin` | string | Sanitised login. |
+| Kind | `kind` | string | `initial` or `retry`. Retries are a new message at the tail, not a platform redelivery. |
+
+## Schedule leases
+
+Both blobs live in `collection-schedule`. They are lease targets, not operator-facing documents.
+
+| Blob | Holder | Rule |
+| --- | --- | --- |
+| `runner` | The fill tick, then whichever copy is running the one daily pass | Only one filler and only one daily pass at a time. Released between passes so the next account can run. A copy that cannot acquire it re-sends its message to the tail. |
+| (none per login) | `passLeaseUntil` on the snapshot | Liveness of the executing pass. Avoids a second blob per operator. |
+
+## Status facts returned to the page
+
+`OperatorSnapshotStatusDto` gains facts. The page owns UK English. Application does not return sentences.
+
+| Fact | Meaning |
+| --- | --- |
+| `Trigger` | `operator`, `daily`, or none when never run. |
+| `SchedulePosture` | `lean` or `hosted`. |
+| `QueuedForOccasion` | UTC date when they are waiting to start, else none. |
+| `NextOccasionAtUtc` | The next 05:00 UTC that will queue them, or none. |
+| `NoScheduleReason` | None, `lean`, `credentialUnusable`, `outsideWindow`, `notAllowed`. |
+
+`NextOccasionAtUtc` is today at 05:00 UTC when that instant has not passed and they would be eligible. It stays today when they are already queued for today. It is the following day at 05:00 UTC when today's window was missed or skipped and they would still be eligible then. It is none when the reason is `credentialUnusable`, `outsideWindow`, `notAllowed`, or `lean`.
+
+Lean posture always uses `SchedulePosture = lean`, `NoScheduleReason = lean`, and no next occasion, including a personal Azure deploy that did not model the worker.
+
+## Who writes what
+
+| Type | Home | Notes |
+| --- | --- | --- |
+| Snapshot fields above | Application document, Infrastructure store | Same port as feature 001. |
+| Sign-in record | Application model, Infrastructure blob adapter | Web writes on completed sign-in. Worker updates token rotation and `credentialUnusable`. |
+| Occasion marker and `runner` lease | Infrastructure, Functions host only | Web does not reference `collection-schedule`. |
+| Queue messages | Infrastructure via injected `QueueServiceClient` | Functions host only. |
+| Eligibility and fill | Application | `TimeProvider`, sign-in records, admission options, snapshot flags. |
+| Token exchange | Application port, Infrastructure HTTP | Shared by web and the worker. Triggers stay thin. |

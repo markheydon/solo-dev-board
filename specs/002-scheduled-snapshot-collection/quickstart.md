@@ -1,75 +1,76 @@
 # Quickstart: Scheduled snapshot collection
 
-Validation guide for implementers. Behaviours are proved by unit and bUnit tests with `TimeProvider`. Do not wait for a real 05:00 UTC and do not boot the AppHost project under `dotnet test`.
+Validation for this feature. Shapes live in [data-model.md](data-model.md) and [contracts/](contracts/). AppHost method names live in [research.md](research.md). This is not the implementation.
 
 ## Prerequisites
 
-- .NET 10 SDK.
-- Feature 001 operator snapshot collection already in the tree (hand start, one snapshot, file and blob stores).
-- Binding ADR for the hosted schedule store accepted before token-persistence code (see [research.md](research.md)).
-- Explicit approval before adding `Azure.Extensions.AspNetCore.DataProtection.Blobs`.
+- .NET 10 SDK and Aspire CLI 17.0.0, as in `docs/getting-started.md`.
+- ADR-0049 Accepted before any AppHost edit.
+- Package add approved for the Aspire 17.0.0 packages named in research. Planning does not add them.
+- Lean checks use PAT-only local trusted mode (no hosted sign-in).
+- Hosted checks use hosted sign-in. That graph already starts Azurite for snapshot blobs. This feature also starts the Functions worker there. Lean `aspire start` must not.
 
-Lean checks use PAT-only configuration (`HostedSignInEnabled` false) and the file store. Hosted checks use an in-memory or fake blob store of the kind `OperatorSnapshotBlobStoreTests` already uses. They do not require Azurite for the unit gate.
+## 1. Lean posture does not schedule
 
-## Commands
+1. Start the lean AppHost (`aspire start` with hosted sign-in off).
+2. Confirm the resource list has `web` and does not have the Functions project, `operator-snapshot-storage`, or a queue.
+3. Open `/repositories`. Confirm the status alert says that nothing collects on a schedule, and that the snapshot is kept on this machine rather than promised on another machine.
+4. Leave the page open across a test clock at 05:00 UTC without choosing **Collect snapshot**. Confirm no run starts.
+5. Choose **Collect snapshot** and confirm a hand-started collection can still finish, and the run is not described as the daily occasion.
 
-```bash
-dotnet test SoloDevBoard.UnitTests.slnf -c Release
-```
+Automated stand-in: Application tests with a lean posture flag and `TimeProvider` set to 05:00 UTC assert no fill and no queue message. bUnit asserts the two sentences and that **Collect snapshot** still calls start.
 
-Narrow runs during work:
+## 2. Web stays scaled to zero
 
-```bash
-dotnet test tests/SoloDevBoard.Application.Tests -c Release --filter OperatorSnapshot
-dotnet test tests/SoloDevBoard.Infrastructure.Tests -c Release --filter OperatorSnapshot
-dotnet test tests/SoloDevBoard.Web.Tests -c Release --filter Repositories
-```
+On the hosted publish model, confirm the web Container App still has minimum replicas 0 and maximum replicas 1, including when a custom domain is configured. Confirm the Functions resource is a separate project on the hosted graph only, with no HTTP reference from `web` and no `WaitFor` between them. Confirm lean publish does not include the Functions project or the storage account.
 
-Use the repository's xUnit v3 / Microsoft.Testing.Platform filter syntax if `--filter` is not the MTP form in this solution. Test names follow `MethodUnderTest_Scenario_ExpectedOutcome`. NSubstitute for doubles. Built-in `Assert` only.
+There is no unit test of the AppHost graph. Review `HostedSignInAppHostGraph` and `LeanAppHostGraph` against [research.md](research.md).
 
-## Scenarios
+## 3. Occasion window
 
-Each row is one or more tests. A single happy-path case does not cover the rows below it.
+Application tests, fake clock, no Azure:
 
-| Scenario | Expected outcome | Where |
+| Clock (UTC) | Marker | Expected |
 | --- | --- | --- |
-| Two eligible sign-ins, both signed out, clock at 05:00 UTC | Both queued once; collections run one at a time; each success matches a hand-started snapshot for that login | Application |
-| Third person signed in inside 30 days but removed from admission | Not queued | Application |
-| Sign-in exactly 30 days before 05:00 UTC | Queued | Application |
-| Sign-in older than 30 days, or never completed | Not queued, even if the user login is listed | Application |
-| Admission on, both lists empty | Nobody queued | Application |
-| Admission off | Only in-window sign-ins without a hold are queued | Application |
-| Saved organisation removed from the list; user login not listed | Not queued | Application |
-| User login still listed after that organisation is removed | Queued | Application |
-| Clock at 05:10 UTC, no occasion document | Queue filled then | Application |
-| Clock at 05:16 UTC, no occasion document | Not filled | Application |
-| Occasion already filled, tick again before 05:15 UTC | Not filled a second time | Application |
-| Two fillers race the conditional create | One document, each login once | Infrastructure |
-| Second replica while a lease is valid | Does not start another daily walk | Application |
-| Expired lease | That pass becomes interrupted and is not requeued | Application |
-| Rate limit with another login already queued | Failed attempt goes to the back; the other login runs first; status stays in progress and does not list tries | Application |
-| Fourth failure (first pass plus 3 further tries) | One failed reason; next eligible day can queue again | Application |
-| Sign-in or token failure on any try | No requeue; hold set; later 05:00 UTC skips until a completed sign-in | Application |
-| Completed sign-in after the hold | Hold cleared; window restarts at that sign-in; no collection starts because of the sign-in | Application |
-| Incomplete sign-in | Record unchanged | Application |
-| Host stop during a pass | Interrupted, not requeued, previous success kept | Application |
-| Host stop during `waiting` or `retryWaiting` | Entry remains; retry wait is not marked interrupted | Application |
-| Hand `StartAsync` while queued or in progress | `Queued` or `AlreadyInProgress`; no second walk | Application |
-| Hand success after a daily success | Replaces the snapshot; `startedBy` is operator; no further tries | Application |
-| Lean posture across 05:00 UTC | Scheduler absent; no occasion document; page explains no schedule and that the snapshot stays on this machine | Web bUnit and composition registration test |
-| Hosted page before any run, operator eligible today | Alert names today at 05:00 UTC; no control for the time or the 30 days | Web bUnit |
-| Hosted page under schedule hold | Failure reason shown; no "tonight" or next 05:00 claim | Web bUnit |
+| 04:59 | absent | No fill. |
+| 05:00 | absent | Marker created. Each eligible login queued once. |
+| 05:10 | absent | Fill at 05:10. |
+| 05:10 | already present | No second fill. |
+| 05:16 | absent | No fill. The day is missed. |
+| After 05:15, marker present, messages still queued | present | No new marker. Existing messages still run. |
 
-## Manual Aspire check (not the unit gate)
+Include two eligible people and assert one pass at a time. Include a login allowed but never signed in, a login outside 30 days, a login no longer allowed, and a login with `credentialUnusable`. None of those are queued. A sign-in exactly 30 days before the occasion is queued. Organisation allowance uses the saved logins, with no GitHub membership call.
 
-After implementation, with hosted sign-in and the existing storage emulator:
+## 4. Crash, retry, and the start control
 
-1. `aspire start` on `src/SoloDevBoard.AppHost` (orchestration skill; do not add resources first).
-2. Complete hosted sign-in for one allowed user.
-3. Confirm a sign-in blob exists under `schedule/sign-ins/` and the snapshot blob has no refresh token.
-4. Advance or temporarily invoke the filler through the test seam only. Do not change production code to run at the current minute.
-5. Confirm the lean AppHost graph still has no storage resource (`LeanAppHostGraph`).
+Store and Application tests:
 
-## Docs
+- Worker stops while a pass is executing: next read is `interrupted` with `scheduledCollectionStopped`, and no new queue message.
+- Worker stops while the login is only queued, or waiting at the back: not interrupted, and the message still runs.
+- Web process stops during a daily pass that is still renewing its lease: the snapshot is not rewritten to `siteStopped`.
+- Rate limit then success on the next try: one run, one snapshot, the other queued login runs before the retry.
+- Four failed attempts (`rateLimit` or `unexpected`): one failed run, next eligible day can start.
+- `signInOrToken`: no retry message, later occasions skip until a completed sign-in clears the flag.
+- `StartAsync` while queued or in progress does not start a second walk. After the terminal state, a hand-started success replaces the daily snapshot and does not get three further tries.
 
-Update `website/content/docs/repositories.md` in the same change as the bUnit assertions that lock the new sentences. Leave Playwright collection journeys unadded.
+## 5. Page
+
+bUnit, hosted posture:
+
+- Before any run, eligible: the alert names 05:00 UTC and does not pretend a snapshot exists.
+- After a credential failure: the failure is shown and the alert does not promise tonight.
+- Queued before the pass starts: not "Saving snapshot…".
+- Retry waiting: in progress, no try list.
+- No button changes the time, the frequency, or the 30 days. No retry button.
+
+Update `website/content/docs/repositories.md` in the same change as the page. Do not add a Playwright test that waits for the clock or calls GitHub.
+
+## 6. Commands before a pull request
+
+```bash
+dotnet format SoloDevBoard.slnx --verify-no-changes
+dotnet build SoloDevBoard.slnx -c Release -warnaserror
+dotnet test SoloDevBoard.UnitTests.slnf -c Release --no-build
+```
+
+Hosted `aspire start` is the manual check that the Functions worker and Azurite come up with `web`, and that stopping `web` leaves the worker running. Do not point that check at production GitHub.

@@ -1,33 +1,50 @@
 # Contract: Repositories schedule copy
 
-Route remains `/repositories`. No new page and no control that changes 05:00 UTC, the daily cadence, or the 30 days. **Reload from GitHub** still does not start a collection.
+Extends [specs/001-operator-snapshot-scanner/contracts/repositories-page.md](../../001-operator-snapshot-scanner/contracts/repositories-page.md). Route remains `/repositories`. No new page, no settings page, no retry control.
 
-This contract adds schedule copy to the existing snapshot alert. It replaces the feature 001 sentence that forbade schedule copy on this page. Durability and schedule share that one alert. Do not add a second alert or a snackbar for the same fact.
+Feature 001 said this page does not show schedule copy. This feature replaces that sentence. Durability copy for a local or ephemeral file remains. Schedule copy is added in the same status alert, not a second alert and not a snackbar.
 
-## Start control
+## Actions
 
-**Collect snapshot** stays in the command strip on narrow viewports. It is disabled when status is `InProgress` or `QueuedBeforeStart` is true. Choosing it while disabled does nothing. A daily failure does not add a retry button.
+| Control | Behaviour |
+| --- | --- |
+| **Reload from GitHub** | Unchanged. Does not start a collection and does not change the snapshot or the queue. |
+| **Collect snapshot** | Still calls `StartAsync` when the operator is not queued and no collection for them is in progress. While `queuedOccasion` is set, or the run is `inProgress` (including a further try waiting at the back), the control does not start a collection. Visible label and accessible name stay **Collect snapshot**. |
+| Page open | `GetStatusAsync` only. Does not call `StartAsync`. Does not fill the daily queue. |
 
-## Copy
+The in-progress poll (about once a second, disposed with the component) stays. It must show the recorded count rising, and whether the operator or the daily occasion started the run, without a full reload.
 
-UK English. No em dash. The occasion time is the literal `05:00 UTC`. Do not convert that clock time to the operator's zone. Finish times of runs stay on the existing `en-GB` local formatting.
+## Schedule clause
 
-| Situation | What the alert adds |
+UK English. No em dash. Times already on the page stay `en-GB` local formatting of stored UTC. The occasion itself is written as the literal **05:00 UTC**, not converted to the operator's zone.
+
+One schedule sentence is included in the same `MudAlert` as the catalogue line and the snapshot clause.
+
+| Facts | Sentence |
 | --- | --- |
 | Lean posture | Nothing collects on a schedule. The snapshot is kept on this machine rather than promised on another machine. |
-| Hosted, next occasion will queue them, including before any run | The next scheduled collection is {today or the following day} at 05:00 UTC. |
-| Hosted, queued before the first pass | The same 05:00 UTC occasion. Do not say the day was missed. Do not say the run is in progress. |
-| Hosted, daily run in progress, including a further try waiting at the back | In progress, started by the daily collection, start time, recorded count. Do not list tries. Do not say failed. |
-| Hosted, hand-started run | Started by the operator. Do not call it the daily occasion. |
-| Hosted, schedule hold after sign-in or token failure | The failed run and that reason. No scheduled collection will run until they sign in again. Do not name a 05:00 UTC occasion. |
-| Hosted, sign-in older than 30 days, or the next 05:00 UTC would fall outside the window | No scheduled collection will run until they sign in again. |
-| Hosted, not allowed | No scheduled collection will run because they are not allowed. |
-| Hosted, rate limit, unexpected error, or interruption, and a later day will still queue them | That outcome, and the next occasion as 05:00 UTC. |
+| Hosted, next occasion will queue them | Next scheduled collection: 05:00 UTC. |
+| Hosted, queued for today and the pass has not started | Next scheduled collection: 05:00 UTC. Do not say the day was missed. Do not show the run as in progress until the pass starts. |
+| Hosted, `credentialUnusable` | No scheduled collection will run until you sign in again. Show the failed daily run and the sign-in or token reason. Do not say a collection will run tonight or at the next 05:00 UTC. |
+| Hosted, outside the 30-day window | No scheduled collection will run until you sign in again. |
+| Hosted, not allowed | No scheduled collection will run because you are not allowed to use the product. |
+| Hosted, today's window missed or skipped, still eligible tomorrow | Next scheduled collection: 05:00 UTC on the following UTC day. The sentence still says 05:00 UTC. |
 
-When they are allowed to start by hand, the page still shows that **Collect snapshot** is available, except while queued or in progress.
+There is no control to change the time, how often, or the 30 days.
 
-Live updates stay on the existing poll while the component is alive and the kind is `InProgress`. Leaving the page does not cancel a daily walk.
+## Run clause additions
+
+| State | Extra words |
+| --- | --- |
+| In progress, trigger `daily` | Say the daily occasion started it. |
+| In progress, trigger `operator` | Say you started it. Do not call it the daily occasion. |
+| Further try waiting | Same in-progress sentence. Do not list tries. Do not show failed. |
+| Interrupted, `scheduledCollectionStopped` | The scheduled collection stopped before it finished. Do not say the site stopped. |
+| Interrupted, `siteStopped` | Unchanged: the site stopped before it completed. |
+| Succeeded or failed | Keep the feature 001 sentence. Where the run has a trigger, the operator can tell which start it was from the in-progress and terminal copy above. A successful daily run uses the same saved-at sentence as a hand-started success. |
+
+Last successful snapshot time stays beside a failed or interrupted run, as feature 001.
 
 ## Guide
 
-`website/content/docs/repositories.md` currently says collection runs only when the operator chooses the button and not on a schedule. The same change updates that page so hosted sign-in and the lean posture match this contract, and updates the locking bUnit tests and `tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md` if the inventory row changes. Recapture `repositories/overview.png` only when the visible command strip or alert text in that shot changes. Do not add a Playwright journey that performs a GitHub collection.
+`website/content/docs/repositories.md` gains this schedule behaviour in the same implementation change, locked by the Repositories bUnit tests and the inventory row in `tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md`. Update the overview screenshot only when the status region's visible text changes enough that the published image would be wrong. Do not add a Playwright test that waits for 05:00 UTC or collects against GitHub.
