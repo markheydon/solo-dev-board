@@ -13,6 +13,7 @@
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
+*.swp
 
 # Mono auto generated files
 mono_crash.*
@@ -438,5 +439,6 @@ tests/SoloDevBoard.E2E.Tests/test-results/
 website/public/
 website/resources/
 website/.hugo_build.lock
+
 # Playwright CLI output (may contain credentials)
 .playwright-cli/
