@@ -7,7 +7,7 @@ The AppHost models **two resource graphs** (constitution Principle VII). Selecti
 | Posture | When | Resources modelled |
 |---|---|---|
 | **Lean AppHost graph** | `hosted-sign-in-enabled` is `false` (default) | `web` only locally; optional dev Key Vault (`auth-secrets`) on Path B |
-| **Hosted sign-in graph** | `hosted-sign-in-enabled` is `true` | `web` plus operator snapshot blob storage ([ADR-0048](../../adr/adr-0048-hosted-operator-snapshot-blob-storage.md)); Azurite locally via `RunAsEmulator()` |
+| **Hosted sign-in graph** | `hosted-sign-in-enabled` is `true` | `web` plus operator snapshot blob storage ([ADR-0048](../../adr/adr-0048-hosted-operator-snapshot-blob-storage.md)); Azurite locally via `RunAsEmulator()` with `WithDataVolume()` |
 
 Withdrawn [ADR-0046](../../adr/adr-0046-overnight-inventory-functions-and-sql.md) inventory SQL, Azure Functions, and the planned inventory stack are **not** modelled. Hosted staging and production CD deploy **web**, the snapshot storage account, and admission control on the Container App. Lean graphs stay **web** only; snapshot files live under the web content root.
 
@@ -78,7 +78,7 @@ aspire describe
 
 Open the `web` resource URL shown by `aspire describe`.
 
-Default local run uses the **lean graph** (web only). Set `hosted-sign-in-enabled` to `true` to exercise hosted OAuth, admission, and operator snapshot blob storage (Azurite emulator locally; no Docker SQL or Functions). Path A and Path B Key Vault auth work in **both** postures; see [Key Vault-backed auth secrets](#key-vault-backed-auth-secrets).
+Default local run uses the **lean graph** (web only). Set `hosted-sign-in-enabled` to `true` to exercise hosted OAuth, admission, and operator snapshot blob storage (Azurite emulator locally with a named data volume; a container runtime is required; no SQL or Functions). Normal `aspire stop` keeps snapshot blobs on that volume; `aspire stop --force --volumes` wipes them. Path A and Path B Key Vault auth work in **both** postures; see [Key Vault-backed auth secrets](#key-vault-backed-auth-secrets).
 
 Application Insights is deploy-time only. Local telemetry uses the Aspire dashboard via OTLP; no Azure subscription or deployment metadata is required.
 

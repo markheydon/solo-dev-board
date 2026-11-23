@@ -194,7 +194,7 @@ Single project layout: `src/`, `tests/` at repository root (see [plan.md](plan.m
 - [X] T049 [US8] Render schedule sentence and durability-specific second sentence in `Repositories.razor` per [contracts/repositories-page.md](contracts/repositories-page.md) (no "PAT-only" denial phrasing)
 - [X] T050 [US8] Add hosted sign-in storage to `src/SoloDevBoard.AppHost/HostedSignInAppHostGraph.cs` only after T001: `AddAzureStorage("operator-snapshot-storage").RunAsEmulator()`, `AddBlobContainer("operator-snapshots", "operator-snapshots")`, `WithReference` from web; publish omits `RunAsEmulator` per [research.md](research.md)
 - [X] T051 [US8] Confirm `src/SoloDevBoard.AppHost/LeanAppHostGraph.cs` remains without storage, Azurite, SQL, or Functions
-- [ ] T052 [P] [US8] Update `docs/getting-started.md`, `docs/deployment.md`, and `src/SoloDevBoard.AppHost/README.md` for hosted storage in the same change as T050
+- [X] T052 [P] [US8] Update `docs/getting-started.md`, `docs/deployment.md`, and `src/SoloDevBoard.AppHost/README.md` for hosted storage in the same change as T050
 - [ ] T053 [P] [US8] Add bUnit assertions for durability copy variants in `tests/SoloDevBoard.Web.Tests/`
 
 **Checkpoint**: Lean and hosted operator-facing durability matches spec.

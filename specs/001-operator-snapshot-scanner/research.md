@@ -28,7 +28,7 @@ Resource names (the client `connectionName` is the AppHost resource name):
 - Storage account: `operator-snapshot-storage`
 - Blob container resource: `operator-snapshots` (container name `operator-snapshots`)
 
-Hosted sign-in local run, after the ADR is accepted: `AddAzureStorage("operator-snapshot-storage").RunAsEmulator().AddBlobContainer("operator-snapshots", "operator-snapshots")`, then `WithReference` that container from `web` and `WaitFor` it. Publish for hosted sign-in uses the same storage and container resources without `RunAsEmulator`, with `WithReference` from `web`. Default blob data-contributor role from `AddAzureStorage` is enough; do not add a second storage account.
+Hosted sign-in local run, after the ADR is accepted: `AddAzureStorage("operator-snapshot-storage").RunAsEmulator(azurite => azurite.WithDataVolume()).AddBlobContainer("operator-snapshots", "operator-snapshots")`, then `WithReference` that container from `web` and `WaitFor` it. The data volume persists snapshot blobs across AppHost restarts on the same machine (US8 / FR-020). Publish for hosted sign-in uses the same storage and container resources without `RunAsEmulator`, with `WithReference` from `web`. Default blob data-contributor role from `AddAzureStorage` is enough; do not add a second storage account.
 
 Lean graph (`LeanAppHostGraph`, PAT-only local trusted mode, and lean personal Azure publish) does not gain storage, Azurite, SQL, Functions, or an `apiservice`. `aspire start` on that graph stays web-only.
 

@@ -64,6 +64,7 @@ Withdrawn ADR-0046 chose Azure SQL and Functions for overnight inventory. That p
 - **IMP-001**: Accept this ADR before any AppHost storage edit.
 - **IMP-002**: Package versions: `Aspire.Hosting.Azure.Storage` 17.0.0, `Aspire.Azure.Storage.Blobs` 17.0.0, `Azure.Storage.Blobs` 12.29.2 (aligned to the Aspire client).
 - **IMP-003**: Publish hosted sign-in omits `RunAsEmulator()`.
+- **IMP-004**: Local `RunAsEmulator` must call `WithDataVolume()` so hosted snapshot blobs survive AppHost restarts during local testing, aligned with US8 / FR-020.
 
 ## References
 

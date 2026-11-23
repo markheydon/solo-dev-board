@@ -48,9 +48,10 @@ Do this only after `adr/adr-0048-hosted-operator-snapshot-blob-storage.md` is **
 
 Hosted sign-in (`HostedSignInEnabled` true), after that ADR:
 
-- Local `aspire start` includes `operator-snapshot-storage` running as the emulator (`RunAsEmulator`) and the `operator-snapshots` container referenced by `web`. The lean graph does not.
+- Local `aspire start` includes `operator-snapshot-storage` running as the Azurite emulator (`RunAsEmulator` with `WithDataVolume()`) and the `operator-snapshots` container referenced by `web`. The lean graph does not. Snapshot blobs are stored on a named Docker data volume so they survive `aspire stop` and a new `aspire start` on the same machine. A container runtime (for example Docker) is required for this graph. Normal `aspire stop` keeps the volume; `aspire stop --force --volumes` removes Aspire-managed volumes and wipes local Azurite snapshot data.
 - Web calls `AddAzureBlobContainerClient("operator-snapshots")` because Aspire injected that connection. The file under `data/operator-snapshots` is not the hosted store.
 - One blob per operator: container `operator-snapshots`, blob `{github-login}.json`, using the hosted owner-login claim. Two signed-in users get two blobs. A restart or a new sign-in still shows the same snapshot. Container disk is not the durability path.
+- **Manual check (US8)**: Finish one collection, run `aspire stop`, then `aspire start` again. Sign in and open **Repositories**. The same snapshot (finish time and repository entries) must still be there.
 - Publish of hosted sign-in provisions the storage account (no emulator). Lean personal Azure publish does not. On that lean deploy the page says the snapshot is on the container disk and a restart can drop it. Container Apps disk is ephemeral.
 
 ## Automated checks

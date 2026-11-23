@@ -13,7 +13,7 @@ Choose an authentication mode **before** you deploy:
 | **[Self-hoster (PAT-only local trusted mode)](#self-hoster-deployment-pat-only-local-trusted-mode)** | One personal access token; no GitHub App | A personal instance on your own Azure subscription |
 | **[Hosted sign-in](#deploy-from-github-actions)** | GitHub App OAuth + allow-lists | Shared or public production deployments |
 
-Both paths use the same Aspire / Azure Container Apps baseline (Container Apps environment, `web`, Key Vault, telemetry, and registry). **Hosted sign-in** deploy also provisions operator snapshot blob storage ([ADR-0048](../adr/adr-0048-hosted-operator-snapshot-blob-storage.md)); **PAT-only self-host** stays web-only with on-disk snapshot files. Only the AppHost parameters and GitHub Environment secrets differ.
+Both paths use the same Aspire / Azure Container Apps baseline (Container Apps environment, `web`, Key Vault, telemetry, and registry). **Hosted sign-in** deploy also provisions operator snapshot blob storage ([ADR-0048](../adr/adr-0048-hosted-operator-snapshot-blob-storage.md)); **PAT-only self-host** stays web-only with on-disk snapshot files. Local hosted sign-in testing uses the Azurite emulator with a named data volume (`WithDataVolume()`); see [Getting started — Resources started by Aspire](getting-started.md#resources-started-by-aspire). Only the AppHost parameters and GitHub Environment secrets differ.
 
 ## CD pipeline tiers (DEC-021)
 

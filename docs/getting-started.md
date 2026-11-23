@@ -109,7 +109,7 @@ Solo Dev Board uses **Aspire for local orchestration**, which provides standardi
 
 Local `aspire start` uses the **lean AppHost graph** by default: only the Blazor **`web`** resource (PAT-only local trusted mode). No Docker, SQL, Functions, or Azurite are required for day-to-day contributor work.
 
-When `hosted-sign-in-enabled` is `true`, the AppHost models **`web`** plus **operator snapshot** blob storage ([ADR-0048](../adr/adr-0048-hosted-operator-snapshot-blob-storage.md)): hosted GitHub App OAuth, admission control, optional dev Key Vault (Path B), and an Azurite emulator locally (`RunAsEmulator()`). No Docker, SQL, or Azure Functions are required.
+When `hosted-sign-in-enabled` is `true`, the AppHost models **`web`** plus **operator snapshot** blob storage ([ADR-0048](../adr/adr-0048-hosted-operator-snapshot-blob-storage.md)): hosted GitHub App OAuth, admission control, optional dev Key Vault (Path B), and an Azurite emulator locally (`RunAsEmulator()` with `WithDataVolume()` so snapshot blobs persist across AppHost restarts on the same machine). That emulator runs as a container; you need a container runtime (for example Docker in the dev container). No SQL or Azure Functions are required. Normal `aspire stop` keeps the emulator data volume; `aspire stop --force --volumes` deletes Aspire-managed volumes and wipes local snapshot blobs.
 
 Withdrawn [ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md) overnight inventory (SQL, Functions, and a separate inventory stack) is **not** wired in AppHost. Lean PAT mode keeps operator snapshots in a local file under the web content root (`data/operator-snapshots/`). See [`src/SoloDevBoard.AppHost/README.md`](../src/SoloDevBoard.AppHost/README.md) for both graphs.
 

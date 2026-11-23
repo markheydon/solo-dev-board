@@ -12,7 +12,8 @@ internal static class HostedSignInAppHostGraph
     {
         ArgumentNullException.ThrowIfNull(host);
 
-        var storage = host.Builder.AddAzureStorage("operator-snapshot-storage").RunAsEmulator();
+        var storage = host.Builder.AddAzureStorage("operator-snapshot-storage")
+            .RunAsEmulator(azurite => azurite.WithDataVolume());
         var snapshots = storage.AddBlobContainer("operator-snapshots", "operator-snapshots");
 
         var app = host.CreateWebApp();
