@@ -37,14 +37,12 @@ public sealed class HostedCollectionEligibilityEvaluator(IOptions<HostedAdmissio
             return true;
         }
 
-        var occasionDate = occasionInstant.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
-        if (string.Equals(snapshot.QueuedOccasion, occasionDate, StringComparison.Ordinal))
+        if (!string.IsNullOrEmpty(snapshot.QueuedOccasion))
         {
             return false;
         }
 
-        if (snapshot.Run.Status == OperatorSnapshotRunStatus.InProgress
-            && snapshot.Trigger == OperatorSnapshotCollectionTrigger.Daily)
+        if (snapshot.Run.Status == OperatorSnapshotRunStatus.InProgress)
         {
             return false;
         }

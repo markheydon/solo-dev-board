@@ -1,4 +1,6 @@
 using System.Text.Json;
+using Azure.Storage.Queues;
+using Azure.Storage.Queues.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using SoloDevBoard.Application.Services.Snapshots;
@@ -9,8 +11,11 @@ namespace SoloDevBoard.Functions;
 public sealed class DailyCollectionFunctions(
     IDailyOccasionService dailyOccasion,
     IDailySnapshotCollectionPassService passService,
+    QueueServiceClient queueServiceClient,
     ILogger<DailyCollectionFunctions> logger)
 {
+    private const string QueueName = "daily-snapshot-collection";
+
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     [Function(nameof(DailyOccasionFillTimer))]
@@ -27,10 +32,11 @@ public sealed class DailyCollectionFunctions(
 
     [Function(nameof(DailySnapshotQueueConsumer))]
     public async Task DailySnapshotQueueConsumer(
-        [QueueTrigger("daily-snapshot-collection", Connection = "operator-snapshot-queues")] string rawMessage,
+        [QueueTrigger(QueueName, Connection = "operator-snapshot-queues")] QueueMessage queueMessage,
         FunctionContext context)
     {
         var cancellationToken = context.CancellationToken;
+        var rawMessage = queueMessage.Body.ToString();
         var message = JsonSerializer.Deserialize<DailySnapshotQueueMessage>(rawMessage, JsonOptions);
         if (message is null)
         {
@@ -38,13 +44,29 @@ public sealed class DailyCollectionFunctions(
             return;
         }
 
+        var queueClient = queueServiceClient.GetQueueClient(QueueName);
+        var receipt = new QueueReceipt(queueMessage.MessageId, queueMessage.PopReceipt);
+
         var invocation = new DailySnapshotQueueInvocation
         {
             Message = message,
-            CompleteAsync = _ => Task.CompletedTask,
-            UpdateVisibilityAsync = (_, _) => Task.CompletedTask,
+            CompleteAsync = ct => queueClient.DeleteMessageAsync(receipt.MessageId, receipt.PopReceipt, ct),
+            UpdateVisibilityAsync = async (visibility, ct) =>
+            {
+                var updated = await queueClient
+                    .UpdateMessageAsync(receipt.MessageId, receipt.PopReceipt, rawMessage, visibility, ct)
+                    .ConfigureAwait(false);
+                receipt.PopReceipt = updated.Value.PopReceipt;
+            },
         };
 
         await passService.HandleQueueMessageAsync(invocation, cancellationToken).ConfigureAwait(false);
+    }
+
+    private sealed class QueueReceipt(string messageId, string popReceipt)
+    {
+        public string MessageId { get; } = messageId;
+
+        public string PopReceipt { get; set; } = popReceipt;
     }
 }

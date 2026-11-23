@@ -325,3 +325,8 @@ src/SoloDevBoard.Infrastructure/Snapshots/   # T022 occasion marker, T023 queue 
 - Do not unit-test AppHost graph (constitution); review graphs against research.md
 - UK English in operator-facing strings; no em dash
 - Tokens must not appear in snapshot JSON, queue messages, or logs
+
+## Phase 11: Convergence
+
+- [X] T074 Extend `HostedCollectionEligibilityEvaluator.IsEligibleAtFill` in `src/SoloDevBoard.Application/Services/Snapshots/HostedCollectionEligibilityEvaluator.cs` to refuse fill when any collection is `inProgress` (not only `trigger` daily) or when `queuedOccasion` is set for any date (previous occasion still queued) per FR-008, US4/AC1, and `data-model.md` fill rule (contradicts)
+- [X] T075 Wire `DailySnapshotQueueInvocation.UpdateVisibilityAsync` (and explicit completion if required) in `src/SoloDevBoard.Functions/DailyCollectionFunctions.cs` to renew Azure queue visibility while `passExecuting` per `specs/002-scheduled-snapshot-collection/research.md` queue table and `contracts/daily-collection-schedule.md`; stop using no-op delegates so long passes are not misclassified as redelivery interruptions (partial)
