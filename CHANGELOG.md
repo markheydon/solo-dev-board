@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Operator repository snapshot** — on-demand **Collect snapshot** on the Repositories page ([#610](https://github.com/markheydon/solo-dev-board/issues/610), [ADR-0048](adr/adr-0048-hosted-operator-snapshot-blob-storage.md)): run status in the catalogue feedback alert, one JSON document per operator (file under `data/operator-snapshots/` on lean paths; `operator-snapshots` blob container when hosted sign-in is enabled).
+
+### Changed
+
+- **Aspire resource graphs** — hosted sign-in local run and Staging/Production deploy model operator snapshot blob storage (Azurite with a data volume locally); PAT-only lean graph remains `web` only ([docs/getting-started.md](docs/getting-started.md#resources-started-by-aspire), [docs/deployment.md](docs/deployment.md)).
+
 ## [1.4.0] - 2026-11-15
 
 Product chrome, branding, and narrow viewports. GitHub milestone [`v1.4 - Product chrome, branding, and narrow viewports`](https://github.com/markheydon/solo-dev-board/milestone/10) closed with 11 issues delivered. User Guide screenshots recaptured for shared chrome and branding. Maintainer docs updated for **Spec Kit** as the default for new feature work ([`plan/SPEC_KIT_MIGRATION.md`](plan/SPEC_KIT_MIGRATION.md)).

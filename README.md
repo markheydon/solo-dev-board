@@ -13,7 +13,7 @@ Solo Dev Board is a **.NET 10 Blazor Server** application that consolidates your
 |---------|-------------|--------|
 | **Audit Dashboard** | Consolidated view of issues, open PRs, workflow health, and label consistency across selected repositories. | Available |
 | **Label Manager** | Create, edit, synchronise, and enforce label taxonomies across multiple repositories from a single interface. | Available |
-| **Repositories** | View, search, refresh, and filter repositories accessible to your GitHub account (including open-source topic filters). Add, remove, bulk, and row catalogue actions remain stubs. | Partially Available |
+| **Repositories** | View, search, refresh, and filter repositories accessible to your GitHub account (including open-source topic filters). On-demand **Collect snapshot** saves a per-operator catalogue JSON (local file on lean paths; Azure Blob when hosted sign-in is enabled). Add, remove, bulk, and row catalogue actions remain stubs. | Partially Available |
 | **One-Click Migration** | Migrate labels, milestones, and Projects v2 Status columns from one repository to another in a single preview-first action. | Available |
 | **Board Rules Visualiser** | Visualise supported board states and transitions for GitHub Project v2 boards. Full GitHub automation-rule retrieval remains a later slice. | Partially Available |
 | **Triage UI** | Keyboard-friendly interface for triaging incoming issues quickly. | Available |

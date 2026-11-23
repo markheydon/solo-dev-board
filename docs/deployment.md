@@ -13,7 +13,7 @@ Choose an authentication mode **before** you deploy:
 | **[Self-hoster (PAT-only local trusted mode)](#self-hoster-deployment-pat-only-local-trusted-mode)** | One personal access token; no GitHub App | A personal instance on your own Azure subscription |
 | **[Hosted sign-in](#deploy-from-github-actions)** | GitHub App OAuth + allow-lists | Shared or public production deployments |
 
-Both paths use the same Aspire / Azure Container Apps stack. Only the AppHost parameters and GitHub Environment secrets differ.
+Both paths use the same Aspire / Azure Container Apps baseline (Container Apps environment, `web`, Key Vault, telemetry, and registry). **Hosted sign-in** deploy also provisions operator snapshot blob storage ([ADR-0048](../adr/adr-0048-hosted-operator-snapshot-blob-storage.md)); **PAT-only self-host** stays web-only with on-disk snapshot files. Local hosted sign-in testing uses the Azurite emulator with a named data volume (`WithDataVolume()`); see [Getting started — Resources started by Aspire](getting-started.md#resources-started-by-aspire). Only the AppHost parameters and GitHub Environment secrets differ.
 
 ## CD pipeline tiers (DEC-021)
 
@@ -453,11 +453,21 @@ Aspire generates and applies Bicep at deploy time. The graph matches **hosted si
 | Aspire dashboard | Optional operational dashboard (Aspire default) |
 | Managed identities | Image pull and runtime authentication |
 
-### Inventory stack (not deployed)
+### Hosted sign-in only
 
-Hosted sign-in Staging and Production deploys **web compute only** (same infrastructure baseline as lean PAT self-host for Azure resources). Overnight inventory (Azure Functions, SQL, storage) was described in [ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md), which is **Withdrawn**; AppHost does not provision `functions`, `inventory`, or `storage` until a future ADR records a replacement approach.
+| Resource | Purpose |
+|---|---|
+| Azure Storage account and `operator-snapshots` blob container | Durable per-operator repository catalogue snapshots ([ADR-0048](../adr/adr-0048-hosted-operator-snapshot-blob-storage.md)) |
+
+Staging and Production CD, and local `aspire start` with `hosted-sign-in-enabled` `true`, use this graph. Lean PAT deploy (`hosted-sign-in-enabled` `false`) does not provision storage; snapshots persist under the web content root on disk.
+
+### Overnight inventory (not deployed)
+
+Overnight inventory (Azure Functions, SQL, and the withdrawn ADR-0046 inventory stack) is **not** provisioned. AppHost does not deploy `functions`, `inventory`, or SQL until a future ADR records a replacement approach ([ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md) **Withdrawn**).
 
 [PAT self-host](#self-hoster-deployment-pat-only-local-trusted-mode) and hosted sign-in deploy both provision the Container App (`web`) and tier Key Vault. Vault bindings on publish apply to `web` only.
+
+Operator snapshot collection uses in-process single-flight logic per replica. Scale the hosted `web` Container App to more than one replica only when you accept that a second replica might start an overlapping walk; blob conditional writes still protect the document, but the product does not yet coordinate walks across replicas.
 
 See [Azure Deployment Costs](azure-costs.md) for cost guidance.
 

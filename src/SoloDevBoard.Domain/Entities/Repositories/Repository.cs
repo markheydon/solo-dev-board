@@ -6,6 +6,15 @@ public sealed record Repository : IAggregate
     /// <summary>Gets the unique GitHub identifier of the repository.</summary>
     public int Id { get; init; }
 
+    /// <summary>Gets the GitHub repository id from the list API as a 64-bit value.</summary>
+    public long GitHubId { get; init; }
+
+    /// <summary>Gets the owner login from the list API.</summary>
+    public string OwnerLogin { get; init; } = string.Empty;
+
+    /// <summary>Gets a value indicating whether the repository is a fork.</summary>
+    public bool IsFork { get; init; }
+
     /// <summary>Gets the short repository name.</summary>
     public string Name { get; init; } = string.Empty;
 

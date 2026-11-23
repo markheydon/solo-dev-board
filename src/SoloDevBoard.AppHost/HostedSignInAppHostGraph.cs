@@ -2,7 +2,7 @@ using Aspire.Hosting.Dotnet;
 
 /// <summary>
 /// Hosted sign-in AppHost graph: web compute with GitHub App OAuth and admission control.
-/// Inventory SQL, Functions, and storage are not modelled (ADR-0046 Withdrawn).
+/// Operator snapshot blob storage is modelled (ADR-0048); withdrawn ADR-0046 inventory SQL and Functions are not.
 /// </summary>
 internal static class HostedSignInAppHostGraph
 {
@@ -12,16 +12,32 @@ internal static class HostedSignInAppHostGraph
     {
         ArgumentNullException.ThrowIfNull(host);
 
+        var storage = host.Builder.AddAzureStorage("operator-snapshot-storage")
+            .RunAsEmulator(azurite => azurite.WithDataVolume());
+        var snapshots = storage.AddBlobContainer("operator-snapshots", "operator-snapshots");
+
         var app = host.CreateWebApp();
+        app = app.WithReference(snapshots).WaitFor(snapshots);
         app = WireLocalHostedSignInAuth(host, app);
         app = app.WithEnvironment("GitHubAuth__HostedSignInCallbackBaseUri", app.GetEndpoint("https"));
         host.SetApp(app);
     }
 
-    /// <summary>Adds Azure deploy infrastructure for hosted sign-in (web compute only).</summary>
+    /// <summary>Adds Azure deploy infrastructure for hosted sign-in, including operator snapshot storage.</summary>
     /// <param name="host">AppHost orchestrator.</param>
-    public static void ConfigurePublishInfrastructure(SoloDevBoardAppHost host) =>
-        LeanAppHostGraph.ConfigurePublishInfrastructure(host);
+    public static void ConfigurePublishInfrastructure(SoloDevBoardAppHost host)
+    {
+        ArgumentNullException.ThrowIfNull(host);
+
+        var aca = host.Builder.AddAzureContainerAppEnvironment(host.Naming.AzureName("aca"));
+        host.SetContainerAppEnvironment(aca);
+
+        var storage = host.Builder.AddAzureStorage("operator-snapshot-storage");
+        var snapshots = storage.AddBlobContainer("operator-snapshots", "operator-snapshots");
+
+        var app = host.CreateWebApp().WithReference(snapshots);
+        host.SetApp(app);
+    }
 
     private static IResourceBuilder<DotnetProjectResource> WireLocalHostedSignInAuth(
         SoloDevBoardAppHost host,

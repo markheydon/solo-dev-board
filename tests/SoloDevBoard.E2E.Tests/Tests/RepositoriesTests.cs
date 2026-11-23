@@ -20,6 +20,7 @@ public sealed class RepositoriesTests : SoloDevBoardPageTest
         await Expect(Page).ToHaveTitleAsync(new Regex("Repositories"));
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Repositories", Exact = true })).ToBeVisibleAsync();
         await Expect(Page.GetByTestId("repositories-reload-from-github-button")).ToBeVisibleAsync();
+        await Expect(Page.GetByTestId("repositories-collect-snapshot-button")).ToBeVisibleAsync();
         await Expect(Page.GetByLabel("Search repositories")).ToBeVisibleAsync();
         await Expect(Page.GetByTestId("repositories-catalogue-filter")).ToBeVisibleAsync();
         await Expect(Page.GetByTestId("repositories-catalogue-filter-all")).ToBeVisibleAsync();
@@ -43,6 +44,7 @@ public sealed class RepositoriesTests : SoloDevBoardPageTest
         await Expect(Page.GetByTestId("repositories-loading-state")).ToBeHiddenAsync(new() { Timeout = 15_000 });
         await Expect(Page.GetByTestId("repositories-error-state")).ToBeVisibleAsync();
         await Expect(Page.GetByRole(AriaRole.Button, new() { Name = "Actions" })).ToBeVisibleAsync();
+        await Expect(Page.GetByTestId("repositories-collect-snapshot-button")).ToBeVisibleAsync();
 
         var hasHorizontalOverflow = await Page.EvaluateAsync<bool>(
             "() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1");

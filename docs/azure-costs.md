@@ -8,7 +8,7 @@ Self-hosting Solo Dev Board on Azure incurs charges for the resources Aspire pro
 
 Aspire deploys resources according to deploy posture (`hosted-sign-in-enabled`). See the [Deployment guide](deployment.md) (including [self-hoster PAT deploy](deployment.md#self-hoster-deployment-pat-only-local-trusted-mode)) and [Observability guide](observability.md).
 
-[PAT-only self-host](deployment.md#self-hoster-deployment-pat-only-local-trusted-mode) and **hosted sign-in** Staging/Production use the same Azure resource set in AppHost today: shared resources in the table below (`web` only). Overnight inventory (SQL, Functions, storage) is not deployed ([ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md) withdrawn).
+[PAT-only self-host](deployment.md#self-hoster-deployment-pat-only-local-trusted-mode) provisions the shared resources in the table below only. **Hosted sign-in** Staging and Production add an Azure Storage account and `operator-snapshots` blob container for operator catalogue snapshots ([ADR-0048](../adr/adr-0048-hosted-operator-snapshot-blob-storage.md)). Withdrawn overnight inventory (SQL, Functions, separate storage stack) is not deployed ([ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md) withdrawn).
 
 | Resource | Purpose | Pricing model |
 |---|---|---|
@@ -19,6 +19,7 @@ Aspire deploys resources according to deploy posture (`hosted-sign-in-enabled`).
 | Log Analytics workspace | Container platform logs and Application Insights backing store | Per GB ingested |
 | Application Insights | Application logs, metrics, and traces | Per GB ingested (linked workspace) |
 | Managed identities | Image pull and runtime auth | No direct charge |
+| Azure Storage account (`operator-snapshot-storage`) | Hosted sign-in only: durable operator snapshot JSON ([ADR-0048](../adr/adr-0048-hosted-operator-snapshot-blob-storage.md)) | Storage + minimal transaction volume (one blob per signed-in operator) |
 
 ## Cost profile with scale-to-zero
 
@@ -46,7 +47,7 @@ Aspire deploys resources according to deploy posture (`hosted-sign-in-enabled`).
 
 ## Azure Pricing Calculator
 
-For exact, up-to-date pricing, use the [Azure Pricing Calculator](https://azure.microsoft.com/en-gb/pricing/calculator/). Select UK South and add Container Apps, Container Registry (Basic), Key Vault, Application Insights, and Log Analytics for every deploy.
+For exact, up-to-date pricing, use the [Azure Pricing Calculator](https://azure.microsoft.com/en-gb/pricing/calculator/). Select UK South and add Container Apps, Container Registry (Basic), Key Vault, Application Insights, and Log Analytics for every deploy. Add a general-purpose v2 Storage account when costing **hosted sign-in** (not PAT self-host).
 
 ## Related documentation
 

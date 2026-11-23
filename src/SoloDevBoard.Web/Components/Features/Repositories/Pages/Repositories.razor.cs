@@ -2,16 +2,22 @@ using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.Repositories;
+using SoloDevBoard.Application.Services.Snapshots;
 using SoloDevBoard.Web.Authentication;
-
 namespace SoloDevBoard.Web.Components.Features.Repositories.Pages;
 
 /// <summary>Displays repositories available to the authenticated GitHub account.</summary>
-public partial class Repositories : ComponentBase
+public partial class Repositories : ComponentBase, IAsyncDisposable
 {
+    private static readonly TimeSpan SnapshotUiPollInterval = TimeSpan.FromMilliseconds(400);
+
     /// <summary>Gets or sets the application service used to retrieve repositories.</summary>
     [Inject]
     public IRepositoryService RepositoryService { get; set; } = default!;
+
+    /// <summary>Gets or sets the operator snapshot collection service.</summary>
+    [Inject]
+    public IOperatorSnapshotCollectionService SnapshotCollectionService { get; set; } = default!;
 
     /// <summary>Gets or sets the logger for repository page diagnostics.</summary>
     [Inject]
@@ -30,8 +36,17 @@ public partial class Repositories : ComponentBase
     private string? errorMessage;
     private string feedbackMessage = "Loading repositories...";
     private Severity feedbackSeverity = Severity.Info;
+    private string? catalogueFeedbackLine;
+    private OperatorSnapshotStatusDto? snapshotStatus;
+    private bool awaitingInitialSnapshotStatus = true;
+    private bool snapshotStatusUnavailable;
     private string? repositorySearchTerm;
     private RepositoryCatalogueFilter catalogueFilter = RepositoryCatalogueFilter.All;
+    private PeriodicTimer? statusPollTimer;
+    private CancellationTokenSource? statusPollCts;
+
+    private bool IsCollectSnapshotDisabled =>
+        isLoading || awaitingInitialSnapshotStatus || snapshotStatus?.Kind == OperatorSnapshotStatusKind.InProgress;
 
     private IReadOnlyList<RepositoryDto> FilteredRepositories
     {
@@ -52,15 +67,61 @@ public partial class Repositories : ComponentBase
         }
     }
 
+    /// <inheritdoc/>
+    public async ValueTask DisposeAsync()
+    {
+        await StopStatusPollingAsync();
+    }
+
     protected override async Task OnInitializedAsync()
     {
+        await RefreshSnapshotStatusAsync();
         await LoadRepositoriesAsync();
+        ApplyCombinedFeedback();
+        StateHasChanged();
+        await EnsureStatusPollingAsync();
     }
 
     private async Task ReloadAsync()
     {
-        SetFeedback("Reloading repositories from GitHub.", Severity.Info);
+        ShowTransientFeedback("Reloading repositories from GitHub.", Severity.Info);
         await LoadRepositoriesAsync(forceReload: true);
+        await RefreshSnapshotStatusOnUiAsync();
+    }
+
+    private async Task CollectSnapshotAsync()
+    {
+        try
+        {
+            var start = await SnapshotCollectionService.StartAsync();
+            if (start == OperatorSnapshotStartResult.UnsafeOperatorLogin)
+            {
+                var catalogueLine = catalogueFeedbackLine ?? feedbackMessage;
+                feedbackMessage =
+                    $"{catalogueLine.TrimEnd()} Snapshot could not start because your sign-in could not be stored safely.";
+                feedbackSeverity = Severity.Error;
+                StateHasChanged();
+                return;
+            }
+
+            await RefreshSnapshotStatusOnUiAsync();
+            await EnsureStatusPollingAsync();
+            await WaitForSnapshotSettlementOnUiAsync();
+        }
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
+        {
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to start operator snapshot collection.");
+            snapshotStatusUnavailable = true;
+            ApplyCombinedFeedback();
+            StateHasChanged();
+        }
     }
 
     private void AddRepository()
@@ -111,10 +172,146 @@ public partial class Repositories : ComponentBase
         };
     }
 
-    private void SetFeedback(string message, Severity severity)
+    private void ShowTransientFeedback(string message, Severity severity)
     {
         feedbackMessage = message;
         feedbackSeverity = severity;
+    }
+
+    private void SetCatalogueFeedback(string message, Severity severity)
+    {
+        catalogueFeedbackLine = message;
+        feedbackMessage = message;
+        feedbackSeverity = severity;
+        ApplyCombinedFeedback();
+    }
+
+    private void ApplySnapshotStatus(OperatorSnapshotStatusDto status)
+    {
+        snapshotStatus = status;
+        snapshotStatusUnavailable = false;
+        ApplyCombinedFeedback();
+    }
+
+    private void ApplyCombinedFeedback()
+    {
+        if (isLoading || !string.IsNullOrEmpty(errorMessage))
+        {
+            return;
+        }
+
+        var catalogueLine = catalogueFeedbackLine ?? feedbackMessage;
+        var suffix = OperatorSnapshotStatusCopy.BuildSnapshotSuffix(snapshotStatus, snapshotStatusUnavailable);
+        feedbackMessage = string.IsNullOrEmpty(suffix)
+            ? catalogueLine
+            : $"{catalogueLine.TrimEnd()} {suffix}";
+        var catalogueSeverity = catalogueFeedbackLine is null
+            ? feedbackSeverity
+            : repositories.Count == 0 ? Severity.Info : Severity.Success;
+        feedbackSeverity = OperatorSnapshotStatusCopy.ResolveCombinedSeverity(
+            snapshotStatus,
+            snapshotStatusUnavailable,
+            catalogueSeverity);
+    }
+
+    private async Task RefreshSnapshotStatusAsync()
+    {
+        try
+        {
+            var status = await SnapshotCollectionService.GetStatusAsync();
+            ApplySnapshotStatus(status);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to read operator snapshot status.");
+            snapshotStatus = null;
+            snapshotStatusUnavailable = true;
+            ApplyCombinedFeedback();
+        }
+        finally
+        {
+            awaitingInitialSnapshotStatus = false;
+        }
+    }
+
+    private async Task RefreshSnapshotStatusOnUiAsync()
+    {
+        await RefreshSnapshotStatusAsync();
+        StateHasChanged();
+    }
+
+    private async Task WaitForSnapshotSettlementOnUiAsync()
+    {
+        if (snapshotStatus?.Kind != OperatorSnapshotStatusKind.InProgress)
+        {
+            return;
+        }
+
+        var deadline = DateTimeOffset.UtcNow.AddMinutes(2);
+        while (snapshotStatus?.Kind == OperatorSnapshotStatusKind.InProgress && DateTimeOffset.UtcNow < deadline)
+        {
+            await Task.Delay(SnapshotUiPollInterval);
+            await RefreshSnapshotStatusOnUiAsync();
+        }
+
+        await StopStatusPollingAsync();
+    }
+
+    private async Task EnsureStatusPollingAsync()
+    {
+        if (snapshotStatus?.Kind != OperatorSnapshotStatusKind.InProgress)
+        {
+            await StopStatusPollingAsync();
+            return;
+        }
+
+        if (statusPollTimer is not null)
+        {
+            return;
+        }
+
+        statusPollCts = new CancellationTokenSource();
+        statusPollTimer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+        _ = PollStatusLoopAsync(statusPollCts.Token);
+    }
+
+    private async Task PollStatusLoopAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            do
+            {
+                await InvokeAsync(RefreshSnapshotStatusOnUiAsync);
+                if (snapshotStatus?.Kind != OperatorSnapshotStatusKind.InProgress)
+                {
+                    await StopStatusPollingAsync();
+                    break;
+                }
+            }
+            while (statusPollTimer is not null
+                   && await statusPollTimer.WaitForNextTickAsync(cancellationToken));
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected when the component is disposed.
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Snapshot status polling failed.");
+        }
+    }
+
+    private async Task StopStatusPollingAsync()
+    {
+        if (statusPollCts is not null)
+        {
+            await statusPollCts.CancelAsync();
+            statusPollCts.Dispose();
+            statusPollCts = null;
+        }
+
+        statusPollTimer?.Dispose();
+        statusPollTimer = null;
     }
 
     private void ShowPlaceholderFeedback(string message)
@@ -126,12 +323,12 @@ public partial class Repositories : ComponentBase
     {
         isLoading = true;
         errorMessage = null;
-        SetFeedback("Loading repositories...", Severity.Info);
+        ShowTransientFeedback("Loading repositories...", Severity.Info);
 
         try
         {
             repositories = await RepositoryService.GetRepositoriesAsync(forceReload: forceReload);
-            SetFeedback(
+            SetCatalogueFeedback(
                 repositories.Count == 0
                     ? "No repositories are connected yet."
                     : $"Loaded {repositories.Count} repositories.",
@@ -147,19 +344,23 @@ public partial class Repositories : ComponentBase
         catch (HttpRequestException ex)
         {
             errorMessage = $"GitHub API request failed. {ex.Message}";
-            SetFeedback(errorMessage, Severity.Error);
+            ShowTransientFeedback(errorMessage, Severity.Error);
             repositories = [];
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to load repositories.");
             errorMessage = "An unexpected error occurred while loading repositories.";
-            SetFeedback(errorMessage, Severity.Error);
+            ShowTransientFeedback(errorMessage, Severity.Error);
             repositories = [];
         }
         finally
         {
             isLoading = false;
+            if (string.IsNullOrEmpty(errorMessage))
+            {
+                ApplyCombinedFeedback();
+            }
         }
     }
 }
