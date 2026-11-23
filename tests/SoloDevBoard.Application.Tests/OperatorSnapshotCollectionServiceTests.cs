@@ -145,6 +145,34 @@ public sealed class OperatorSnapshotCollectionServiceTests
     }
 
     [Fact]
+    public async Task GetStatusAsync_QueuedForToday_DoesNotShowInProgress()
+    {
+        var store = new InMemoryOperatorSnapshotStore();
+        store.Seed("octocat", new OperatorSnapshotDocument
+        {
+            OperatorLogin = "octocat",
+            QueuedOccasion = "2026-11-23",
+            PassExecuting = false,
+            Trigger = OperatorSnapshotCollectionTrigger.Daily,
+            Repositories = [],
+            Run = new OperatorSnapshotRun
+            {
+                Status = OperatorSnapshotRunStatus.Failed,
+                FinishedAt = null,
+            },
+        });
+
+        var userContext = Substitute.For<ICurrentUserContext>();
+        userContext.OwnerLogin.Returns("octocat");
+        var service = CreateService(userContext, store);
+
+        var status = await service.GetStatusAsync(TestContext.Current.CancellationToken);
+
+        Assert.NotEqual(OperatorSnapshotStatusKind.InProgress, status.Kind);
+        Assert.Equal(OperatorSnapshotStatusKind.NeverRun, status.Kind);
+    }
+
+    [Fact]
     public async Task GetStatusAsync_FailedRun_KeepsLastSuccessfulSnapshotMetadata()
     {
         var store = new InMemoryOperatorSnapshotStore();

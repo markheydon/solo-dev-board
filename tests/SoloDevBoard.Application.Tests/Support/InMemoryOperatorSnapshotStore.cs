@@ -52,6 +52,11 @@ internal sealed class InMemoryOperatorSnapshotStore : IOperatorSnapshotStore
             LastSuccessfulCollectionAt = document.LastSuccessfulCollectionAt,
             Repositories = document.Repositories.ToList(),
             LaterFacts = new Dictionary<string, object?>(document.LaterFacts),
+            Trigger = document.Trigger,
+            QueuedOccasion = document.QueuedOccasion,
+            PassExecuting = document.PassExecuting,
+            PassLeaseUntil = document.PassLeaseUntil,
+            AttemptsUsed = document.AttemptsUsed,
             Run = new OperatorSnapshotRun
             {
                 Status = document.Run.Status,

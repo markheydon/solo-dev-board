@@ -184,7 +184,11 @@ public sealed class DailyOccasionService(
             SchemaVersion = OperatorSnapshotDocumentConstants.CurrentSchemaVersion,
             Repositories = [],
             LaterFacts = [],
-            Run = new OperatorSnapshotRun(),
+            Run = new OperatorSnapshotRun
+            {
+                Status = OperatorSnapshotRunStatus.Failed,
+                FinishedAt = null,
+            },
         };
 
         document.QueuedOccasion = occasionDate;

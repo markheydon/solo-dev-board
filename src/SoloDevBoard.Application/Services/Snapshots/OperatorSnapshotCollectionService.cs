@@ -183,14 +183,7 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
             liveOverlay = true;
         }
 
-        var kind = document.Run.Status switch
-        {
-            OperatorSnapshotRunStatus.InProgress => OperatorSnapshotStatusKind.InProgress,
-            OperatorSnapshotRunStatus.Succeeded => OperatorSnapshotStatusKind.Succeeded,
-            OperatorSnapshotRunStatus.Failed => OperatorSnapshotStatusKind.Failed,
-            OperatorSnapshotRunStatus.Interrupted => OperatorSnapshotStatusKind.Interrupted,
-            _ => OperatorSnapshotStatusKind.NeverRun,
-        };
+        var kind = ResolveStatusKind(document);
 
         if (document.LastSuccessfulCollectionAt is null &&
             document.Run.Status is OperatorSnapshotRunStatus.Failed or OperatorSnapshotRunStatus.Interrupted)
@@ -322,5 +315,30 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
     {
         var result = await _store.SaveAsync(sanitisedLogin, document, token, cancellationToken);
         return result is OperatorSnapshotSaveResult.Succeeded;
+    }
+
+    private static OperatorSnapshotStatusKind ResolveStatusKind(OperatorSnapshotDocument document)
+    {
+        if (!string.IsNullOrEmpty(document.QueuedOccasion) && !document.PassExecuting)
+        {
+            return document.Run.Status switch
+            {
+                OperatorSnapshotRunStatus.Succeeded => OperatorSnapshotStatusKind.Succeeded,
+                OperatorSnapshotRunStatus.Failed when document.LastSuccessfulCollectionAt is not null
+                    || document.Run.FinishedAt is not null
+                    => OperatorSnapshotStatusKind.Failed,
+                OperatorSnapshotRunStatus.Interrupted => OperatorSnapshotStatusKind.Interrupted,
+                _ => OperatorSnapshotStatusKind.NeverRun,
+            };
+        }
+
+        return document.Run.Status switch
+        {
+            OperatorSnapshotRunStatus.InProgress => OperatorSnapshotStatusKind.InProgress,
+            OperatorSnapshotRunStatus.Succeeded => OperatorSnapshotStatusKind.Succeeded,
+            OperatorSnapshotRunStatus.Failed => OperatorSnapshotStatusKind.Failed,
+            OperatorSnapshotRunStatus.Interrupted => OperatorSnapshotStatusKind.Interrupted,
+            _ => OperatorSnapshotStatusKind.NeverRun,
+        };
     }
 }

@@ -338,3 +338,7 @@ src/SoloDevBoard.Infrastructure/Snapshots/   # T022 occasion marker, T023 queue 
 ## Phase 13: Convergence
 
 - [X] T077 When a daily pass fails with `rateLimit` or `unexpected` and `attemptsUsed` &lt; 4, persist `run.status` `inProgress` with `passExecuting` false (not terminal `failed`) before enqueueing a `retry` message in `src/SoloDevBoard.Application/Services/Snapshots/DailySnapshotCollectionPassService.cs` (and the shared walk failure path if required); update `src/SoloDevBoard.Infrastructure/Snapshots/BlobOperatorSnapshotStore.MaybeRewriteInterruptedAsync` so a daily document in that retry-wait state is not rewritten to `siteStopped` on web read per `data-model.md` transitions, `contracts/daily-collection-schedule.md`, `research.md`, FR-008, FR-020, US6/AC12, and SC-012 (contradicts)
+
+## Phase 14: Convergence
+
+- [X] T078 When `queuedOccasion` is set and `passExecuting` is false, present queue-waiting status (not `OperatorSnapshotStatusKind.InProgress`) in `OperatorSnapshotCollectionService.MapFoundAsync` and stop persisting default `run.status` `inProgress` on queue-only snapshot creates in `DailyOccasionService.TrySetQueuedOccasionAsync` per `data-model.md` queued-not-started row, FR-006, US5/AC9, and `contracts/repositories-schedule-copy.md` (contradicts)
