@@ -14,6 +14,7 @@ using SoloDevBoard.Infrastructure.Identity;
 using SoloDevBoard.Infrastructure.Labels;
 using SoloDevBoard.Infrastructure.Migration;
 using SoloDevBoard.Infrastructure.Milestones;
+using SoloDevBoard.Infrastructure.Snapshots;
 using SoloDevBoard.Infrastructure.Workflows;
 
 namespace SoloDevBoard.Infrastructure.Common;
@@ -87,6 +88,7 @@ public static class InfrastructureServiceExtensions
             GitHubApiHeaders.ApplyRestDefaults(client);
         });
         services.AddHttpContextAccessor();
+        services.AddScoped<SnapshotCollectionCredentialSlot>();
         services.AddScoped<SingleUserCurrentUserContext>();
         services.AddScoped<HostedUserCurrentUserContext>();
         services.AddScoped<IHostedAdmissionEvaluator, AllowListHostedAdmissionEvaluator>();
@@ -94,9 +96,13 @@ public static class InfrastructureServiceExtensions
         {
             var authOptions = serviceProvider.GetRequiredService<IOptions<GitHubAuthOptions>>().Value;
 
-            return authOptions.HostedSignInEnabled
-                ? serviceProvider.GetRequiredService<HostedUserCurrentUserContext>()
+            var inner = authOptions.HostedSignInEnabled
+                ? (ICurrentUserContext)serviceProvider.GetRequiredService<HostedUserCurrentUserContext>()
                 : serviceProvider.GetRequiredService<SingleUserCurrentUserContext>();
+
+            return new SnapshotAwareCurrentUserContext(
+                serviceProvider.GetRequiredService<SnapshotCollectionCredentialSlot>(),
+                inner);
         });
         services.AddScoped<IGitHubConnectivityStatusService, GitHubConnectivityStatusService>();
         services.AddTransient<GitHubAuthHandler>();

@@ -9,7 +9,6 @@ using MudBlazor;
 using MudBlazor.Services;
 using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Application.Services.Planning;
-using SoloDevBoard.Composition;
 using SoloDevBoard.Web.Authentication;
 using SoloDevBoard.Web.Components.Features.ActionsTemplates;
 using SoloDevBoard.Web.Components.Features.Planning;
@@ -86,6 +85,14 @@ if (hostedSignInEnabled)
     builder.Services.AddAuthorization();
 }
 
+var useOperatorSnapshotBlob = !string.IsNullOrWhiteSpace(builder.Configuration["ConnectionStrings:operator-snapshots"]);
+if (useOperatorSnapshotBlob)
+{
+    builder.AddAzureBlobContainerClient("operator-snapshots");
+}
+
+builder.AddOperatorSnapshotHost(useOperatorSnapshotBlob);
+
 // Add our services via the shared composition root.
 builder.Services.AddSoloDevBoard(builder.Configuration);
 
@@ -112,7 +119,7 @@ if (hostedSignInEnabled)
 {
     app.UseAuthentication();
     app.UseAuthorization();
-    app.UseSoloDevBoardInfrastructure();
+    SoloDevBoard.Composition.SoloDevBoardApplicationBuilderExtensions.UseSoloDevBoardInfrastructure(app);
 }
 
 app.UseAntiforgery();

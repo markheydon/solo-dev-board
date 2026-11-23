@@ -4,6 +4,7 @@ using MudBlazor;
 using MudBlazor.Services;
 using NSubstitute;
 using SoloDevBoard.Application.Services.Repositories;
+using SoloDevBoard.Application.Services.Snapshots;
 using SoloDevBoard.Web.Components.Features.Repositories.Pages;
 
 namespace SoloDevBoard.Web.Tests;
@@ -12,6 +13,7 @@ namespace SoloDevBoard.Web.Tests;
 public sealed class RepositoriesTests
 {
     private readonly IRepositoryService _repositoryService = Substitute.For<IRepositoryService>();
+    private readonly IOperatorSnapshotCollectionService _snapshotCollectionService = Substitute.For<IOperatorSnapshotCollectionService>();
 
     [Fact]
     public async Task Repositories_InitialRender_ShowsPrimaryCommandSurface()
@@ -28,6 +30,8 @@ public sealed class RepositoriesTests
         // Assert
         Assert.Contains("Repository command strip", cut.Markup);
         Assert.Contains("Reload from GitHub", cut.Markup);
+        Assert.Contains("Collect snapshot", cut.Markup);
+        Assert.Contains("No snapshot is kept", cut.Markup);
         Assert.True(
             cut.Markup.Contains("Bulk actions", StringComparison.Ordinal) ||
             cut.Markup.Contains("Actions", StringComparison.Ordinal));
@@ -71,6 +75,8 @@ public sealed class RepositoriesTests
         Assert.Contains("mud-typography-h5", cut.Markup);
         Assert.Contains("Repository command strip", cut.Markup);
         Assert.Contains("Reload from GitHub", cut.Markup);
+        Assert.Contains("Collect snapshot", cut.Markup);
+        Assert.Contains("No snapshot is kept", cut.Markup);
     }
 
     [Fact]
@@ -364,6 +370,8 @@ public sealed class RepositoriesTests
         {
             Assert.Single(cut.FindAll("[data-testid='repositories-reload-from-github-button']"));
             Assert.Contains("Reload from GitHub", cut.Markup);
+            Assert.Contains("Collect snapshot", cut.Markup);
+            Assert.Contains("No snapshot is kept", cut.Markup);
         });
     }
 
@@ -407,6 +415,9 @@ public sealed class RepositoriesTests
         ctx.Services.AddMudServices();
         ctx.Services.AddTestGitHubAuthenticationRecovery();
         ctx.Services.AddScoped(_ => _repositoryService);
+        _snapshotCollectionService.GetStatusAsync(Arg.Any<CancellationToken>())
+            .Returns(new OperatorSnapshotStatusDto { Kind = OperatorSnapshotStatusKind.NeverRun });
+        ctx.Services.AddScoped(_ => _snapshotCollectionService);
 
         ctx.Render<MudPopoverProvider>();
         ctx.Render<MudDialogProvider>();

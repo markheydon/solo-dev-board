@@ -2,16 +2,20 @@ using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.Repositories;
+using SoloDevBoard.Application.Services.Snapshots;
 using SoloDevBoard.Web.Authentication;
-
 namespace SoloDevBoard.Web.Components.Features.Repositories.Pages;
 
 /// <summary>Displays repositories available to the authenticated GitHub account.</summary>
-public partial class Repositories : ComponentBase
+public partial class Repositories : ComponentBase, IAsyncDisposable
 {
     /// <summary>Gets or sets the application service used to retrieve repositories.</summary>
     [Inject]
     public IRepositoryService RepositoryService { get; set; } = default!;
+
+    /// <summary>Gets or sets the operator snapshot collection service.</summary>
+    [Inject]
+    public IOperatorSnapshotCollectionService SnapshotCollectionService { get; set; } = default!;
 
     /// <summary>Gets or sets the logger for repository page diagnostics.</summary>
     [Inject]
@@ -30,8 +34,16 @@ public partial class Repositories : ComponentBase
     private string? errorMessage;
     private string feedbackMessage = "Loading repositories...";
     private Severity feedbackSeverity = Severity.Info;
+    private string snapshotStatusMessage = "Loading collection status...";
+    private Severity snapshotStatusSeverity = Severity.Info;
+    private OperatorSnapshotStatusDto? snapshotStatus;
     private string? repositorySearchTerm;
     private RepositoryCatalogueFilter catalogueFilter = RepositoryCatalogueFilter.All;
+    private PeriodicTimer? statusPollTimer;
+    private CancellationTokenSource? statusPollCts;
+
+    private bool IsCollectSnapshotDisabled =>
+        isLoading || snapshotStatus?.Kind == OperatorSnapshotStatusKind.InProgress;
 
     private IReadOnlyList<RepositoryDto> FilteredRepositories
     {
@@ -52,15 +64,55 @@ public partial class Repositories : ComponentBase
         }
     }
 
+    /// <inheritdoc/>
+    public async ValueTask DisposeAsync()
+    {
+        await StopStatusPollingAsync().ConfigureAwait(false);
+    }
+
     protected override async Task OnInitializedAsync()
     {
-        await LoadRepositoriesAsync();
+        await RefreshSnapshotStatusAsync().ConfigureAwait(false);
+        await LoadRepositoriesAsync().ConfigureAwait(false);
+        await EnsureStatusPollingAsync().ConfigureAwait(false);
     }
 
     private async Task ReloadAsync()
     {
         SetFeedback("Reloading repositories from GitHub.", Severity.Info);
-        await LoadRepositoriesAsync(forceReload: true);
+        await LoadRepositoriesAsync(forceReload: true).ConfigureAwait(false);
+        await RefreshSnapshotStatusAsync().ConfigureAwait(false);
+    }
+
+    private async Task CollectSnapshotAsync()
+    {
+        try
+        {
+            var result = await SnapshotCollectionService.StartAsync().ConfigureAwait(false);
+            if (result == OperatorSnapshotStartResult.AlreadyInProgress)
+            {
+                Snackbar.Add("A collection is already in progress.", Severity.Info);
+            }
+            else
+            {
+                Snackbar.Add("Collection started.", Severity.Success);
+            }
+
+            await RefreshSnapshotStatusAsync().ConfigureAwait(false);
+            await EnsureStatusPollingAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is HostedAuthenticationRequiredException or GitHubPatConnectivityRequiredException)
+        {
+            if (GitHubAuthRecovery.TryInitiateRecovery(ex))
+            {
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to start operator snapshot collection.");
+            Snackbar.Add("Could not start collection.", Severity.Error);
+        }
     }
 
     private void AddRepository()
@@ -115,6 +167,90 @@ public partial class Repositories : ComponentBase
     {
         feedbackMessage = message;
         feedbackSeverity = severity;
+    }
+
+    private void ApplySnapshotStatus(OperatorSnapshotStatusDto status)
+    {
+        snapshotStatus = status;
+        snapshotStatusMessage = OperatorSnapshotStatusCopy.BuildStatusMessage(status);
+        snapshotStatusSeverity = status.Kind switch
+        {
+            OperatorSnapshotStatusKind.Succeeded => Severity.Success,
+            OperatorSnapshotStatusKind.Failed => Severity.Error,
+            OperatorSnapshotStatusKind.Interrupted => Severity.Warning,
+            OperatorSnapshotStatusKind.InProgress => Severity.Info,
+            _ => Severity.Normal,
+        };
+    }
+
+    private async Task RefreshSnapshotStatusAsync()
+    {
+        try
+        {
+            var status = await SnapshotCollectionService.GetStatusAsync().ConfigureAwait(false);
+            ApplySnapshotStatus(status);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to read operator snapshot status.");
+            snapshotStatusMessage = "Collection status is unavailable.";
+            snapshotStatusSeverity = Severity.Warning;
+        }
+    }
+
+    private async Task EnsureStatusPollingAsync()
+    {
+        if (snapshotStatus?.Kind != OperatorSnapshotStatusKind.InProgress)
+        {
+            await StopStatusPollingAsync().ConfigureAwait(false);
+            return;
+        }
+
+        if (statusPollTimer is not null)
+        {
+            return;
+        }
+
+        statusPollCts = new CancellationTokenSource();
+        statusPollTimer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+        _ = PollStatusLoopAsync(statusPollCts.Token);
+    }
+
+    private async Task PollStatusLoopAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (statusPollTimer is not null && await statusPollTimer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false))
+            {
+                await InvokeAsync(async () =>
+                {
+                    await RefreshSnapshotStatusAsync().ConfigureAwait(false);
+                    if (snapshotStatus?.Kind != OperatorSnapshotStatusKind.InProgress)
+                    {
+                        await StopStatusPollingAsync().ConfigureAwait(false);
+                    }
+
+                    StateHasChanged();
+                }).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected when the component is disposed.
+        }
+    }
+
+    private async Task StopStatusPollingAsync()
+    {
+        if (statusPollCts is not null)
+        {
+            await statusPollCts.CancelAsync().ConfigureAwait(false);
+            statusPollCts.Dispose();
+            statusPollCts = null;
+        }
+
+        statusPollTimer?.Dispose();
+        statusPollTimer = null;
     }
 
     private void ShowPlaceholderFeedback(string message)

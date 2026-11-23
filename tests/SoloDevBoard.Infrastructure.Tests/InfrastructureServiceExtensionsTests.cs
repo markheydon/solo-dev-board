@@ -8,6 +8,7 @@ using SoloDevBoard.Application.Services.Common;
 using SoloDevBoard.Infrastructure.Common;
 using SoloDevBoard.Infrastructure.GitHub;
 using SoloDevBoard.Infrastructure.Identity;
+using SoloDevBoard.Infrastructure.Snapshots;
 
 namespace SoloDevBoard.Infrastructure.Tests;
 
@@ -35,7 +36,7 @@ public sealed class InfrastructureServiceExtensionsTests
         var admissionEvaluator = scope.ServiceProvider.GetRequiredService<IHostedAdmissionEvaluator>();
 
         // Assert
-        Assert.IsType<HostedUserCurrentUserContext>(currentUserContext);
+        Assert.IsType<SnapshotAwareCurrentUserContext>(currentUserContext);
         Assert.IsType<AllowListHostedAdmissionEvaluator>(admissionEvaluator);
     }
 
@@ -60,7 +61,7 @@ public sealed class InfrastructureServiceExtensionsTests
         var currentUserContext = scope.ServiceProvider.GetRequiredService<ICurrentUserContext>();
 
         // Assert
-        Assert.IsType<SingleUserCurrentUserContext>(currentUserContext);
+        Assert.IsType<SnapshotAwareCurrentUserContext>(currentUserContext);
     }
 
     [Fact]

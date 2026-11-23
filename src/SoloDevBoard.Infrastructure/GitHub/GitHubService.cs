@@ -1739,6 +1739,12 @@ public sealed class GitHubService : IGitHubService
         [JsonPropertyName("archived")]
         public bool IsArchived { get; init; }
 
+        [JsonPropertyName("fork")]
+        public bool IsFork { get; init; }
+
+        [JsonPropertyName("owner")]
+        public RepositoryOwnerDto? Owner { get; init; }
+
         [JsonPropertyName("created_at")]
         public DateTimeOffset CreatedAt { get; init; }
 
@@ -1751,16 +1757,32 @@ public sealed class GitHubService : IGitHubService
         public Repository ToDomain() => new()
         {
             Id = ConvertGitHubIdToInt(Id),
+            GitHubId = Id,
             Name = Name,
             FullName = FullName,
+            OwnerLogin = Owner?.Login ?? ExtractOwnerLoginFromFullName(FullName),
             Description = Description ?? string.Empty,
             Url = Url,
             IsPrivate = IsPrivate,
             IsArchived = IsArchived,
+            IsFork = IsFork,
             CreatedAt = CreatedAt,
             UpdatedAt = UpdatedAt,
             Topics = Topics,
         };
+    }
+
+    /// <summary>Owner fragment of a repository list response.</summary>
+    private sealed record RepositoryOwnerDto
+    {
+        [JsonPropertyName("login")]
+        public string Login { get; init; } = string.Empty;
+    }
+
+    private static string ExtractOwnerLoginFromFullName(string fullName)
+    {
+        var slashIndex = fullName.IndexOf('/', StringComparison.Ordinal);
+        return slashIndex > 0 ? fullName[..slashIndex] : string.Empty;
     }
 
     /// <summary>
