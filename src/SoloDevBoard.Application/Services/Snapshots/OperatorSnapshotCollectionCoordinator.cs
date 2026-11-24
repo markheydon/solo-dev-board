@@ -244,13 +244,23 @@ public sealed class OperatorSnapshotCollectionCoordinator : IOperatorSnapshotLiv
                 cancellationToken,
                 (doc, currentToken) =>
                 {
+                    var dailyPass = doc.Trigger == OperatorSnapshotCollectionTrigger.Daily && doc.PassExecuting;
+                    if (dailyPass)
+                    {
+                        doc.PassExecuting = false;
+                        doc.PassLeaseUntil = null;
+                        doc.QueuedOccasion = null;
+                    }
+
                     doc.Run = new OperatorSnapshotRun
                     {
                         Status = OperatorSnapshotRunStatus.Interrupted,
                         StartedAt = doc.Run.StartedAt,
                         FinishedAt = finishedAt,
                         RepositoriesRecorded = doc.Run.RepositoriesRecorded,
-                        Reason = OperatorSnapshotRunReason.SiteStopped,
+                        Reason = dailyPass
+                            ? OperatorSnapshotRunReason.ScheduledCollectionStopped
+                            : OperatorSnapshotRunReason.SiteStopped,
                         Detail = null,
                     };
                     doc.Revision++;

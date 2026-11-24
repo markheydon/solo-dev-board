@@ -246,7 +246,15 @@ if (hostedSignInEnabled)
             var expectedEtag = existingSignIn is HostedSignInRecordReadResult.Found existing
                 ? existing.Etag
                 : null;
-            await signInRecords.UpsertAsync(record, expectedEtag, context.RequestAborted).ConfigureAwait(false);
+            var upsert = await signInRecords.UpsertAsync(record, expectedEtag, context.RequestAborted).ConfigureAwait(false);
+            if (upsert is HostedSignInRecordWriteResult.ConcurrencyConflict)
+            {
+                var reread = await signInRecords.GetAsync(sanitised, context.RequestAborted).ConfigureAwait(false);
+                if (reread is HostedSignInRecordReadResult.Found found)
+                {
+                    await signInRecords.UpsertAsync(record, found.Etag, context.RequestAborted).ConfigureAwait(false);
+                }
+            }
         }
 
         return Results.Redirect(returnUrl);

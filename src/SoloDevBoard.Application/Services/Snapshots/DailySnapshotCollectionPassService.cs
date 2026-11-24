@@ -210,6 +210,13 @@ public sealed class DailySnapshotCollectionPassService(
 
             if (found.Document.Run.Status is OperatorSnapshotRunStatus.Interrupted)
             {
+                if (found.Document.PassExecuting)
+                {
+                    found.Document.PassExecuting = false;
+                    found.Document.PassLeaseUntil = null;
+                    await snapshotStore.SaveAsync(message.OperatorLogin, found.Document, found.Token, cancellationToken).ConfigureAwait(false);
+                }
+
                 return;
             }
 
@@ -287,7 +294,16 @@ public sealed class DailySnapshotCollectionPassService(
         }
 
         found.Record.CredentialUnusable = true;
-        await signInRecords.UpsertAsync(found.Record, found.Etag, cancellationToken).ConfigureAwait(false);
+        var upsert = await signInRecords.UpsertAsync(found.Record, found.Etag, cancellationToken).ConfigureAwait(false);
+        if (upsert is HostedSignInRecordWriteResult.ConcurrencyConflict)
+        {
+            var reread = await signInRecords.GetAsync(login, cancellationToken).ConfigureAwait(false);
+            if (reread is HostedSignInRecordReadResult.Found retry)
+            {
+                retry.Record.CredentialUnusable = true;
+                await signInRecords.UpsertAsync(retry.Record, retry.Etag, cancellationToken).ConfigureAwait(false);
+            }
+        }
     }
 
     private Task<OperatorSnapshotGetResult> ReadAsync(string login, CancellationToken cancellationToken)

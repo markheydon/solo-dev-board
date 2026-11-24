@@ -187,6 +187,70 @@ public sealed class OperatorSnapshotCollectionCoordinatorTests
     }
 
     [Fact]
+    public async Task Walk_DailyShutdown_ClearsPassExecutingAndRecordsScheduledStop()
+    {
+        using var stoppingCts = new CancellationTokenSource();
+        var store = new InMemoryOperatorSnapshotStore();
+        store.Seed(Login, new OperatorSnapshotDocument
+        {
+            OperatorLogin = Login,
+            Revision = 5,
+            Trigger = OperatorSnapshotCollectionTrigger.Daily,
+            PassExecuting = true,
+            PassLeaseUntil = DateTimeOffset.UtcNow.AddMinutes(5),
+            QueuedOccasion = "2026-11-23",
+            Repositories = [],
+            Run = new OperatorSnapshotRun
+            {
+                Status = OperatorSnapshotRunStatus.InProgress,
+                StartedAt = DateTimeOffset.Parse("2026-06-01T12:00:00Z"),
+                RepositoriesRecorded = 0,
+            },
+        });
+
+        var github = Substitute.For<IGitHubService>();
+        github.GetRepositoriesAsync(
+                Arg.Any<CancellationToken>(),
+                Arg.Any<bool>(),
+                Arg.Any<IProgress<int>?>())
+            .Returns(async callInfo =>
+            {
+                await Task.Delay(Timeout.Infinite, callInfo.Arg<CancellationToken>()).ConfigureAwait(false);
+                return [];
+            });
+
+        var scopeFactory = Substitute.For<ISnapshotCollectionCredentialScopeFactory>();
+        scopeFactory.CreateScope(Arg.Any<string>(), Arg.Any<string>())
+            .Returns(_ => new GitHubServiceScope(github));
+
+        var coordinator = new OperatorSnapshotCollectionCoordinator(
+            scopeFactory,
+            TimeProvider.System,
+            new OperatorSnapshotApplicationStopping(stoppingCts.Token),
+            NullLogger<OperatorSnapshotCollectionCoordinator>.Instance);
+
+        Assert.True(coordinator.TryBegin(
+            Login,
+            Login,
+            "token",
+            new OperatorSnapshotConcurrencyToken(5, null),
+            (login, ct) => store.GetAsync(login, ct),
+            (login, doc, token, ct) => SaveAsync(store, login, doc, token, ct)));
+
+        await Task.Delay(50, TestContext.Current.CancellationToken);
+        stoppingCts.Cancel();
+        await WaitForIdleAsync(coordinator);
+
+        var document = store.GetDocument(Login);
+        Assert.NotNull(document);
+        Assert.Equal(OperatorSnapshotRunStatus.Interrupted, document.Run.Status);
+        Assert.Equal(OperatorSnapshotRunReason.ScheduledCollectionStopped, document.Run.Reason);
+        Assert.False(document.PassExecuting);
+        Assert.Null(document.PassLeaseUntil);
+        Assert.Null(document.QueuedOccasion);
+    }
+
+    [Fact]
     public async Task Walk_UnexpectedFailure_KeepsPriorRepositories()
     {
         var store = new InMemoryOperatorSnapshotStore();
