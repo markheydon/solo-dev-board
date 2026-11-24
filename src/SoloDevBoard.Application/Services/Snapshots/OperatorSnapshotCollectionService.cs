@@ -50,8 +50,10 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
             return OperatorSnapshotStartResult.AlreadyInProgress;
         }
 
+        var todayOccasionDate = _timeProvider.GetUtcNow().ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
         if (get is OperatorSnapshotGetResult.Found foundBeforeStart
-            && (!string.IsNullOrEmpty(foundBeforeStart.Document.QueuedOccasion)
+            && ((!string.IsNullOrEmpty(foundBeforeStart.Document.QueuedOccasion)
+                  && string.Equals(foundBeforeStart.Document.QueuedOccasion, todayOccasionDate, StringComparison.Ordinal))
                 || foundBeforeStart.Document.Run.Status == OperatorSnapshotRunStatus.InProgress))
         {
             return OperatorSnapshotStartResult.AlreadyInProgress;

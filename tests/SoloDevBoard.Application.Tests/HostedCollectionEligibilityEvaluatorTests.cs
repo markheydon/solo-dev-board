@@ -21,12 +21,27 @@ public sealed class HostedCollectionEligibilityEvaluatorTests
     };
 
     [Fact]
-    public void IsEligibleAtFill_WhenQueuedOccasionSetForAnotherDay_ReturnsFalse()
+    public void IsEligibleAtFill_WhenQueuedOccasionSetForAnotherDay_ReturnsTrue()
     {
         var snapshot = new OperatorSnapshotDocument
         {
             OperatorLogin = "octocat",
             QueuedOccasion = "2026-11-22",
+            Run = new OperatorSnapshotRun { Status = OperatorSnapshotRunStatus.Succeeded },
+        };
+
+        var eligible = CreateSut().IsEligibleAtFill(EligibleSignIn(), snapshot, Occasion);
+
+        Assert.True(eligible);
+    }
+
+    [Fact]
+    public void IsEligibleAtFill_WhenQueuedOccasionSetForToday_ReturnsFalse()
+    {
+        var snapshot = new OperatorSnapshotDocument
+        {
+            OperatorLogin = "octocat",
+            QueuedOccasion = "2026-11-23",
             Run = new OperatorSnapshotRun { Status = OperatorSnapshotRunStatus.Succeeded },
         };
 

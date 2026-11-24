@@ -173,13 +173,14 @@ public sealed class OperatorSnapshotCollectionServiceTests
     }
 
     [Fact]
-    public async Task StartAsync_WhenQueuedOccasionSet_ReturnsAlreadyInProgress()
+    public async Task StartAsync_WhenQueuedOccasionSetForToday_ReturnsAlreadyInProgress()
     {
+        var todayOccasion = DateTimeOffset.UtcNow.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
         var store = new InMemoryOperatorSnapshotStore();
         store.Seed("octocat", new OperatorSnapshotDocument
         {
             OperatorLogin = "octocat",
-            QueuedOccasion = "2026-11-23",
+            QueuedOccasion = todayOccasion,
             PassExecuting = false,
             Run = new OperatorSnapshotRun { Status = OperatorSnapshotRunStatus.Failed },
         });
@@ -192,6 +193,29 @@ public sealed class OperatorSnapshotCollectionServiceTests
         var result = await service.StartAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(OperatorSnapshotStartResult.AlreadyInProgress, result);
+    }
+
+    [Fact]
+    public async Task StartAsync_WhenQueuedOccasionSetForAnotherDay_StartsCollection()
+    {
+        var staleOccasion = DateTimeOffset.UtcNow.AddDays(-1).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+        var store = new InMemoryOperatorSnapshotStore();
+        store.Seed("octocat", new OperatorSnapshotDocument
+        {
+            OperatorLogin = "octocat",
+            QueuedOccasion = staleOccasion,
+            PassExecuting = false,
+            Run = new OperatorSnapshotRun { Status = OperatorSnapshotRunStatus.Failed },
+        });
+
+        var userContext = Substitute.For<ICurrentUserContext>();
+        userContext.OwnerLogin.Returns("octocat");
+        userContext.GetAccessToken().Returns("token");
+        var service = CreateService(userContext, store);
+
+        var result = await service.StartAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(OperatorSnapshotStartResult.Started, result);
     }
 
     [Fact]

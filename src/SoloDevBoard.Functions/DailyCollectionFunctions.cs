@@ -26,6 +26,11 @@ public sealed class DailyCollectionFunctions(
         _ = timerInfo;
         var cancellationToken = context.CancellationToken;
         var result = await dailyOccasion.TryFillDailyOccasionAsync(cancellationToken).ConfigureAwait(false);
+        if (result == DailyOccasionFillResult.Filled)
+        {
+            await dailyOccasion.RepairMissingInitialMessagesAsync(cancellationToken).ConfigureAwait(false);
+        }
+
         logger.LogInformation("Daily occasion fill result: {Result} at {UtcNow}", result, DateTimeOffset.UtcNow);
     }
 

@@ -42,7 +42,9 @@ public sealed class HostedCollectionEligibilityEvaluator(IOptions<HostedAdmissio
             return true;
         }
 
-        if (!string.IsNullOrEmpty(snapshot.QueuedOccasion))
+        var occasionDate = occasionInstant.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+        if (!string.IsNullOrEmpty(snapshot.QueuedOccasion)
+            && string.Equals(snapshot.QueuedOccasion, occasionDate, StringComparison.Ordinal))
         {
             return false;
         }
