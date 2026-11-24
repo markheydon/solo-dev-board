@@ -136,6 +136,51 @@ public sealed class DailySnapshotCollectionPassServiceTests
     }
 
     [Fact]
+    public async Task HandleQueueMessage_WhenOccasionAlreadyFinished_CompletesWithoutStartingPass()
+    {
+        var occasionStart = new DateTimeOffset(2026, 11, 23, 5, 30, 0, TimeSpan.Zero);
+        var store = new InMemoryOperatorSnapshotStore();
+        store.Seed("octocat", new OperatorSnapshotDocument
+        {
+            OperatorLogin = "octocat",
+            Trigger = OperatorSnapshotCollectionTrigger.Daily,
+            LastSuccessfulCollectionAt = occasionStart,
+            Run = new OperatorSnapshotRun
+            {
+                Status = OperatorSnapshotRunStatus.Succeeded,
+                FinishedAt = occasionStart,
+            },
+        });
+
+        var queue = new RecordingDailyQueuePublisher();
+        var completed = false;
+        var sut = CreateSut(store, queue);
+        await sut.HandleQueueMessageAsync(
+            new DailySnapshotQueueInvocation
+            {
+                Message = new DailySnapshotQueueMessage
+                {
+                    OperatorLogin = "octocat",
+                    OccasionDate = "2026-11-23",
+                    Kind = "initial",
+                },
+                CompleteAsync = _ =>
+                {
+                    completed = true;
+                    return Task.CompletedTask;
+                },
+                UpdateVisibilityAsync = (_, _) => Task.CompletedTask,
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(completed);
+        Assert.Empty(queue.Messages);
+        var document = store.GetDocument("octocat");
+        Assert.Equal(OperatorSnapshotRunStatus.Succeeded, document!.Run.Status);
+        Assert.Equal(occasionStart, document.LastSuccessfulCollectionAt);
+    }
+
+    [Fact]
     public async Task HandleQueueMessage_WhenRunnerLeaseBusy_RequeuesSamePayload()
     {
         var store = new InMemoryOperatorSnapshotStore();

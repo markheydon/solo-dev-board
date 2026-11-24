@@ -39,6 +39,12 @@ public sealed class DailySnapshotCollectionPassService(
             return;
         }
 
+        if (IsOccasionAlreadyFinished(found.Document, message))
+        {
+            await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
         if (found.Document.PassExecuting)
         {
             var nowUtc = timeProvider.GetUtcNow();
@@ -225,6 +231,36 @@ public sealed class DailySnapshotCollectionPassService(
                 await runner.TryRenewAsync(cancellationToken).ConfigureAwait(false);
             }
         }
+    }
+
+    private static bool IsOccasionAlreadyFinished(OperatorSnapshotDocument document, DailySnapshotQueueMessage message)
+    {
+        if (document.Run.Status != OperatorSnapshotRunStatus.Succeeded
+            || document.Trigger != OperatorSnapshotCollectionTrigger.Daily
+            || !string.IsNullOrEmpty(document.QueuedOccasion))
+        {
+            return false;
+        }
+
+        if (document.LastSuccessfulCollectionAt is not { } finishedAt
+            || !TryGetOccasionStartUtc(message.OccasionDate, out var occasionStart))
+        {
+            return false;
+        }
+
+        return finishedAt >= occasionStart;
+    }
+
+    private static bool TryGetOccasionStartUtc(string occasionDate, out DateTimeOffset occasionStart)
+    {
+        if (!DateOnly.TryParse(occasionDate, System.Globalization.CultureInfo.InvariantCulture, out var date))
+        {
+            occasionStart = default;
+            return false;
+        }
+
+        occasionStart = new DateTimeOffset(date.Year, date.Month, date.Day, 5, 0, 0, TimeSpan.Zero);
+        return true;
     }
 
     private static bool IsDailyRetryWaitState(OperatorSnapshotDocument document) =>
