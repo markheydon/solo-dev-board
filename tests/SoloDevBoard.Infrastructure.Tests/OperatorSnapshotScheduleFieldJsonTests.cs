@@ -31,6 +31,47 @@ public sealed class OperatorSnapshotScheduleFieldJsonTests
     }
 
     [Fact]
+    public async Task RoundTrip_RetainedRun_RestoresPriorTerminalRunFields()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "operator-snapshot-retained", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        var store = CreateStore(root);
+
+        var document = new OperatorSnapshotDocument
+        {
+            OperatorLogin = "octocat",
+            Trigger = OperatorSnapshotCollectionTrigger.Daily,
+            AttemptsUsed = 2,
+            RetainedRun = new OperatorSnapshotRetainedRun
+            {
+                Trigger = OperatorSnapshotCollectionTrigger.Operator,
+                Run = new OperatorSnapshotRun
+                {
+                    Status = OperatorSnapshotRunStatus.Succeeded,
+                    FinishedAt = DateTimeOffset.Parse("2026-11-22T12:00:00Z"),
+                },
+            },
+            Run = new OperatorSnapshotRun
+            {
+                Status = OperatorSnapshotRunStatus.InProgress,
+                Reason = OperatorSnapshotRunReason.RateLimit,
+            },
+        };
+
+        Assert.IsType<OperatorSnapshotSaveResult.Succeeded>(
+            await store.SaveAsync("octocat", document, OperatorSnapshotConcurrencyToken.None, TestContext.Current.CancellationToken));
+
+        var read = await store.GetAsync("octocat", TestContext.Current.CancellationToken);
+        var found = Assert.IsType<OperatorSnapshotGetResult.Found>(read);
+        Assert.NotNull(found.Document.RetainedRun);
+        Assert.Equal(OperatorSnapshotCollectionTrigger.Operator, found.Document.RetainedRun!.Trigger);
+        Assert.Equal(OperatorSnapshotRunStatus.Succeeded, found.Document.RetainedRun.Run.Status);
+
+        var json = await File.ReadAllTextAsync(Path.Combine(root, "octocat.json"), TestContext.Current.CancellationToken);
+        Assert.Contains("retainedRun", json, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task RoundTrip_ScheduledCollectionStoppedReason_PreservesEnum()
     {
         var root = Path.Combine(Path.GetTempPath(), "operator-snapshot-reason", Guid.NewGuid().ToString("N"));

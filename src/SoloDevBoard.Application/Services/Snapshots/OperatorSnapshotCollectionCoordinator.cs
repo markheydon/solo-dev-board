@@ -148,6 +148,8 @@ public sealed class OperatorSnapshotCollectionCoordinator : IOperatorSnapshotLiv
                         successDocument.PassExecuting = false;
                         successDocument.PassLeaseUntil = null;
                         successDocument.AttemptsUsed = null;
+                        successDocument.RetainedRun = null;
+                        successDocument.PendingRetryNotBeforeUtc = null;
                         successDocument.Run.StartedAt = doc.Run.Status == OperatorSnapshotRunStatus.InProgress
                             ? doc.Run.StartedAt
                             : GetStartedAt(sanitisedLogin);
@@ -195,6 +197,11 @@ public sealed class OperatorSnapshotCollectionCoordinator : IOperatorSnapshotLiv
 
                     if (retryableDaily)
                     {
+                        doc.PendingRetryNotBeforeUtc = DailySnapshotRetryNotBefore.Compute(
+                            finishedAt,
+                            reason,
+                            attempts,
+                            exception);
                         doc.Run = new OperatorSnapshotRun
                         {
                             Status = OperatorSnapshotRunStatus.InProgress,
@@ -210,6 +217,8 @@ public sealed class OperatorSnapshotCollectionCoordinator : IOperatorSnapshotLiv
                         if (doc.Trigger == OperatorSnapshotCollectionTrigger.Daily)
                         {
                             doc.QueuedOccasion = null;
+                            doc.RetainedRun = null;
+                            doc.PendingRetryNotBeforeUtc = null;
                         }
 
                         doc.Run = new OperatorSnapshotRun
@@ -250,6 +259,8 @@ public sealed class OperatorSnapshotCollectionCoordinator : IOperatorSnapshotLiv
                         doc.PassExecuting = false;
                         doc.PassLeaseUntil = null;
                         doc.QueuedOccasion = null;
+                        doc.RetainedRun = null;
+                        doc.PendingRetryNotBeforeUtc = null;
                     }
 
                     doc.Run = new OperatorSnapshotRun

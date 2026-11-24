@@ -54,9 +54,9 @@ public sealed class OperatorSnapshotScheduleFactsService(
                 CredentialUnusable = signInRecord.CredentialUnusable,
                 OrganisationLogins = signInRecord.OrganisationLogins,
             };
-            if (!_eligibility.WouldBeEligibleForSchedule(scheduleRecord, occasionInstant))
+            if (!_eligibility.IsEligibleAtRun(scheduleRecord, utcNow))
             {
-                noSchedule = !IsInsideSignInWindow(signInRecord.CompletedAt, occasionInstant)
+                noSchedule = !IsInsideSignInWindow(signInRecord.CompletedAt, utcNow)
                     ? OperatorSnapshotNoScheduleReason.OutsideWindow
                     : OperatorSnapshotNoScheduleReason.NotAllowed;
             }

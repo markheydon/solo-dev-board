@@ -139,4 +139,26 @@ public sealed class HostedCollectionEligibilityEvaluatorTests
 
         Assert.False(CreateSut().IsEligibleAtFill(EligibleSignIn(), snapshot, Occasion));
     }
+
+    [Fact]
+    public void IsEligibleAtRun_UsesCurrentInstant_NotOccasionInstant()
+    {
+        var fillInstant = new DateTimeOffset(2026, 11, 23, 5, 10, 0, TimeSpan.Zero);
+        var runInstant = new DateTimeOffset(2026, 11, 24, 6, 0, 0, TimeSpan.Zero);
+        var signIn = EligibleSignIn();
+        signIn.CompletedAt = fillInstant.AddDays(-30);
+
+        Assert.True(CreateSut().IsEligibleAtFill(signIn, snapshot: null, fillInstant));
+        Assert.False(CreateSut().IsEligibleAtRun(signIn, runInstant));
+    }
+
+    [Fact]
+    public void IsEligibleAtRun_WhenInsideThirtyDaysOfNow_ReturnsTrue()
+    {
+        var now = new DateTimeOffset(2026, 11, 24, 6, 0, 0, TimeSpan.Zero);
+        var signIn = EligibleSignIn();
+        signIn.CompletedAt = now.AddDays(-30);
+
+        Assert.True(CreateSut().IsEligibleAtRun(signIn, now));
+    }
 }

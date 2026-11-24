@@ -175,6 +175,8 @@ public sealed class BlobOperatorSnapshotStore : IOperatorSnapshotStore
             PassExecuting = false,
             PassLeaseUntil = null,
             AttemptsUsed = document.AttemptsUsed,
+            RetainedRun = document.RetainedRun,
+            PendingRetryNotBeforeUtc = document.PendingRetryNotBeforeUtc,
             Run = new OperatorSnapshotRun
             {
                 Status = OperatorSnapshotRunStatus.Interrupted,
@@ -220,6 +222,8 @@ public sealed class BlobOperatorSnapshotStore : IOperatorSnapshotStore
             PassExecuting = false,
             PassLeaseUntil = null,
             AttemptsUsed = document.AttemptsUsed,
+            RetainedRun = null,
+            PendingRetryNotBeforeUtc = null,
             Run = new OperatorSnapshotRun
             {
                 Status = OperatorSnapshotRunStatus.Interrupted,

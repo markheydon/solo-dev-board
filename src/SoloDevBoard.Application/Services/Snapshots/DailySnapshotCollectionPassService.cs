@@ -12,6 +12,7 @@ public sealed class DailySnapshotCollectionPassService(
     IDailySnapshotQueuePublisher queuePublisher,
     IDailyCollectionRunnerLease runnerLease,
     OperatorSnapshotCollectionCoordinator coordinator,
+    HostedCollectionEligibilityEvaluator eligibility,
     TimeProvider timeProvider,
     ILogger<DailySnapshotCollectionPassService> logger) : IDailySnapshotCollectionPassService
 {
@@ -68,17 +69,29 @@ public sealed class DailySnapshotCollectionPassService(
             return;
         }
 
-        await using var runner = await runnerLease.TryAcquireAsync(TimeSpan.FromSeconds(60), cancellationToken).ConfigureAwait(false);
-        if (runner is null)
+        if (await TryDeferForNotBeforeAsync(message, invocation, cancellationToken).ConfigureAwait(false))
         {
-            await queuePublisher.EnqueueAsync(message, cancellationToken).ConfigureAwait(false);
-            await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
             return;
         }
 
         var signIn = await signInRecords.GetAsync(message.OperatorLogin, cancellationToken).ConfigureAwait(false);
         if (signIn is not HostedSignInRecordReadResult.Found record)
         {
+            await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        if (!eligibility.IsEligibleAtRun(record.Record, timeProvider.GetUtcNow()))
+        {
+            await WithdrawByRunRulesAsync(found, cancellationToken).ConfigureAwait(false);
+            await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        await using var runner = await runnerLease.TryAcquireAsync(TimeSpan.FromSeconds(60), cancellationToken).ConfigureAwait(false);
+        if (runner is null)
+        {
+            await queuePublisher.EnqueueAsync(message, cancellationToken).ConfigureAwait(false);
             await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -108,6 +121,15 @@ public sealed class DailySnapshotCollectionPassService(
         attempts = string.Equals(message.Kind, "retry", StringComparison.Ordinal) ? attempts + 1 : 1;
 
         var inProgress = Clone(found.Document);
+        if (!string.Equals(message.Kind, "retry", StringComparison.Ordinal) && IsTerminalRun(inProgress.Run))
+        {
+            inProgress.RetainedRun = new OperatorSnapshotRetainedRun
+            {
+                Trigger = inProgress.Trigger,
+                Run = CloneRun(inProgress.Run),
+            };
+        }
+
         inProgress.Trigger = OperatorSnapshotCollectionTrigger.Daily;
         inProgress.QueuedOccasion = null;
         inProgress.PassExecuting = true;
@@ -175,6 +197,8 @@ public sealed class DailySnapshotCollectionPassService(
                 found.Document.PassExecuting = false;
                 found.Document.PassLeaseUntil = null;
                 found.Document.AttemptsUsed = null;
+                found.Document.RetainedRun = null;
+                found.Document.PendingRetryNotBeforeUtc = null;
                 found.Document.Trigger = OperatorSnapshotCollectionTrigger.Daily;
                 await snapshotStore.SaveAsync(message.OperatorLogin, found.Document, found.Token, cancellationToken).ConfigureAwait(false);
                 return;
@@ -187,12 +211,17 @@ public sealed class DailySnapshotCollectionPassService(
                 && found.Document.Run.Reason is OperatorSnapshotRunReason.RateLimit or OperatorSnapshotRunReason.Unexpected
                 && (found.Document.AttemptsUsed ?? 1) < 4)
             {
+                var notBeforeUtc = found.Document.PendingRetryNotBeforeUtc ?? timeProvider.GetUtcNow();
+                var notBeforeIso = DailySnapshotRetryNotBefore.ToIso8601Utc(notBeforeUtc);
+                found.Document.PendingRetryNotBeforeUtc = null;
+                await snapshotStore.SaveAsync(message.OperatorLogin, found.Document, found.Token, cancellationToken).ConfigureAwait(false);
                 await queuePublisher.EnqueueAsync(
                     new DailySnapshotQueueMessage
                     {
                         OccasionDate = message.OccasionDate,
                         OperatorLogin = message.OperatorLogin,
                         Kind = "retry",
+                        NotBefore = notBeforeIso,
                     },
                     cancellationToken).ConfigureAwait(false);
                 return;
@@ -202,6 +231,8 @@ public sealed class DailySnapshotCollectionPassService(
             {
                 found.Document.PassExecuting = false;
                 found.Document.PassLeaseUntil = null;
+                found.Document.RetainedRun = null;
+                found.Document.PendingRetryNotBeforeUtc = null;
                 await snapshotStore.SaveAsync(message.OperatorLogin, found.Document, found.Token, cancellationToken).ConfigureAwait(false);
                 if (found.Document.Run.Reason == OperatorSnapshotRunReason.SignInOrToken)
                 {
@@ -269,6 +300,69 @@ public sealed class DailySnapshotCollectionPassService(
         && !document.PassExecuting
         && document.Run.Reason is OperatorSnapshotRunReason.RateLimit or OperatorSnapshotRunReason.Unexpected;
 
+    private static bool IsTerminalRun(OperatorSnapshotRun run) =>
+        run.Status is OperatorSnapshotRunStatus.Succeeded
+            or OperatorSnapshotRunStatus.Failed
+            or OperatorSnapshotRunStatus.Interrupted;
+
+    private async Task<bool> TryDeferForNotBeforeAsync(
+        DailySnapshotQueueMessage message,
+        DailySnapshotQueueInvocation invocation,
+        CancellationToken cancellationToken)
+    {
+        if (!string.Equals(message.Kind, "retry", StringComparison.Ordinal)
+            || !DailySnapshotRetryNotBefore.TryParseIso8601Utc(message.NotBefore, out var notBefore))
+        {
+            return false;
+        }
+
+        if (notBefore <= timeProvider.GetUtcNow())
+        {
+            return false;
+        }
+
+        await queuePublisher.EnqueueAsync(message, cancellationToken).ConfigureAwait(false);
+        await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
+        return true;
+    }
+
+    private async Task WithdrawByRunRulesAsync(OperatorSnapshotGetResult.Found found, CancellationToken cancellationToken)
+    {
+        var document = Clone(found.Document);
+
+        if (IsDailyRetryWaitState(document))
+        {
+            RestoreFromRetainedRun(document);
+        }
+        else if (!string.IsNullOrEmpty(document.QueuedOccasion) && !document.PassExecuting)
+        {
+            document.QueuedOccasion = null;
+        }
+
+        await snapshotStore.SaveAsync(found.Document.OperatorLogin, document, found.Token, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static void RestoreFromRetainedRun(OperatorSnapshotDocument document)
+    {
+        if (document.RetainedRun is { } retained)
+        {
+            document.Trigger = retained.Trigger;
+            document.Run = CloneRun(retained.Run);
+        }
+        else
+        {
+            document.Trigger = null;
+            document.Run = new OperatorSnapshotRun();
+        }
+
+        document.RetainedRun = null;
+        document.AttemptsUsed = null;
+        document.PassExecuting = false;
+        document.PassLeaseUntil = null;
+        document.PendingRetryNotBeforeUtc = null;
+        document.QueuedOccasion = null;
+    }
+
     private async Task TryRevertFailedPassStartAsync(
         OperatorSnapshotDocument priorDocument,
         OperatorSnapshotGetResult.Found current,
@@ -290,6 +384,8 @@ public sealed class DailySnapshotCollectionPassService(
         document.PassExecuting = false;
         document.PassLeaseUntil = null;
         document.QueuedOccasion = null;
+        document.RetainedRun = null;
+        document.PendingRetryNotBeforeUtc = null;
         document.Run = new OperatorSnapshotRun
         {
             Status = OperatorSnapshotRunStatus.Interrupted,
@@ -307,6 +403,8 @@ public sealed class DailySnapshotCollectionPassService(
         document.PassExecuting = false;
         document.PassLeaseUntil = null;
         document.QueuedOccasion = null;
+        document.RetainedRun = null;
+        document.PendingRetryNotBeforeUtc = null;
         document.Run = new OperatorSnapshotRun
         {
             Status = OperatorSnapshotRunStatus.Failed,
@@ -403,14 +501,24 @@ public sealed class DailySnapshotCollectionPassService(
         PassExecuting = source.PassExecuting,
         PassLeaseUntil = source.PassLeaseUntil,
         AttemptsUsed = source.AttemptsUsed,
-        Run = new OperatorSnapshotRun
-        {
-            Status = source.Run.Status,
-            StartedAt = source.Run.StartedAt,
-            FinishedAt = source.Run.FinishedAt,
-            RepositoriesRecorded = source.Run.RepositoriesRecorded,
-            Reason = source.Run.Reason,
-            Detail = source.Run.Detail,
-        },
+        RetainedRun = source.RetainedRun is null
+            ? null
+            : new OperatorSnapshotRetainedRun
+            {
+                Trigger = source.RetainedRun.Trigger,
+                Run = CloneRun(source.RetainedRun.Run),
+            },
+        PendingRetryNotBeforeUtc = source.PendingRetryNotBeforeUtc,
+        Run = CloneRun(source.Run),
+    };
+
+    private static OperatorSnapshotRun CloneRun(OperatorSnapshotRun source) => new()
+    {
+        Status = source.Status,
+        StartedAt = source.StartedAt,
+        FinishedAt = source.FinishedAt,
+        RepositoriesRecorded = source.RepositoriesRecorded,
+        Reason = source.Reason,
+        Detail = source.Detail,
     };
 }

@@ -55,6 +55,24 @@ public sealed class HostedCollectionEligibilityEvaluator(IOptions<HostedAdmissio
         return true;
     }
 
+    /// <summary>Returns true when the login may start a queued pass at <paramref name="nowUtc"/> (dequeue run rules).</summary>
+    public bool IsEligibleAtRun(HostedSignInRecord signInRecord, DateTimeOffset nowUtc)
+    {
+        ArgumentNullException.ThrowIfNull(signInRecord);
+
+        if (signInRecord.CredentialUnusable)
+        {
+            return false;
+        }
+
+        if (!IsInsideSignInWindow(signInRecord.CompletedAt, nowUtc))
+        {
+            return false;
+        }
+
+        return IsAllowedByAdmission(signInRecord);
+    }
+
     /// <summary>Admission verdict for schedule facts (no snapshot flags).</summary>
     public bool WouldBeEligibleForSchedule(HostedSignInRecord signInRecord, DateTimeOffset occasionInstant)
     {

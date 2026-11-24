@@ -38,4 +38,14 @@ public sealed class OperatorSnapshotDocument
 
     /// <summary>Daily attempt count, up to four (first pass plus three further tries).</summary>
     public int? AttemptsUsed { get; set; }
+
+    /// <summary>
+    /// Terminal run held while a daily occasion is in flight; restored if a further try is withdrawn by run rules.
+    /// </summary>
+    public OperatorSnapshotRetainedRun? RetainedRun { get; set; }
+
+    /// <summary>
+    /// UTC instant when a further try may be enqueued; set on a retryable daily failure and cleared when the retry is queued.
+    /// </summary>
+    public DateTimeOffset? PendingRetryNotBeforeUtc { get; set; }
 }

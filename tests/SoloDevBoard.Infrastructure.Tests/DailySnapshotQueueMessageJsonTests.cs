@@ -11,6 +11,22 @@ public sealed class DailySnapshotQueueMessageJsonTests
     };
 
     [Fact]
+    public void Serialise_RetryMessage_IncludesNotBefore()
+    {
+        var message = new DailySnapshotQueueMessage
+        {
+            OccasionDate = "2026-11-23",
+            OperatorLogin = "octocat",
+            Kind = "retry",
+            NotBefore = "2026-11-23T05:47:00.0000000Z",
+        };
+
+        var json = JsonSerializer.Serialize(message, JsonOptions);
+
+        Assert.Contains("notBefore", json, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Serialise_DailySnapshotQueueMessage_ExcludesRefreshToken()
     {
         var message = new DailySnapshotQueueMessage

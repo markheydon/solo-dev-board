@@ -112,6 +112,43 @@ public sealed class OperatorSnapshotStatusCopyTests
     }
 
     [Fact]
+    public void BuildScheduleClause_WhenRemovedFromQueueNotAllowed_StatesReasonWithoutInProgress()
+    {
+        var status = new OperatorSnapshotStatusDto
+        {
+            Kind = OperatorSnapshotStatusKind.Succeeded,
+            DurabilityKind = OperatorSnapshotDurabilityKind.HostedBlob,
+            SchedulePosture = OperatorSnapshotSchedulePosture.Hosted,
+            NoScheduleReason = OperatorSnapshotNoScheduleReason.NotAllowed,
+        };
+
+        var schedule = OperatorSnapshotStatusCopy.BuildScheduleClause(status);
+        var suffix = OperatorSnapshotStatusCopy.BuildSnapshotSuffix(status, statusUnavailable: false);
+
+        Assert.Contains("not allowed", schedule, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Saving snapshot", suffix, StringComparison.Ordinal);
+        Assert.DoesNotContain("interrupted", suffix, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void BuildScheduleClause_WhenRemovedFromQueueOutsideWindow_StatesSignInAgainWithoutInProgress()
+    {
+        var status = new OperatorSnapshotStatusDto
+        {
+            Kind = OperatorSnapshotStatusKind.Succeeded,
+            DurabilityKind = OperatorSnapshotDurabilityKind.HostedBlob,
+            SchedulePosture = OperatorSnapshotSchedulePosture.Hosted,
+            NoScheduleReason = OperatorSnapshotNoScheduleReason.OutsideWindow,
+        };
+
+        var schedule = OperatorSnapshotStatusCopy.BuildScheduleClause(status);
+        var suffix = OperatorSnapshotStatusCopy.BuildSnapshotSuffix(status, statusUnavailable: false);
+
+        Assert.Contains("sign in again", schedule, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Saving snapshot", suffix, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void BuildSnapshotSuffix_QueuedBeforePass_StartsWithScheduleNotSaving()
     {
         var status = new OperatorSnapshotStatusDto

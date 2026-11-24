@@ -1174,10 +1174,57 @@ public sealed class GitHubService : IGitHubService
         }
 
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-        throw new HttpRequestException(
+        var failure = new HttpRequestException(
             $"GitHub API request failed with status code {(int)response.StatusCode} ({response.StatusCode}). Response body: {responseBody}",
             null,
             response.StatusCode);
+        if (response.StatusCode == HttpStatusCode.TooManyRequests)
+        {
+            var retryDelay = TryParseGitHubRetryDelay(response);
+            if (retryDelay is { } delay && delay > TimeSpan.Zero)
+            {
+                failure.Data[SoloDevBoard.Application.Services.Snapshots.DailySnapshotRetryNotBefore.GitHubRetryDelayDataKey] = delay;
+            }
+        }
+
+        throw failure;
+    }
+
+    private static TimeSpan? TryParseGitHubRetryDelay(HttpResponseMessage response)
+    {
+        if (response.Headers.RetryAfter is { } retryAfter)
+        {
+            if (retryAfter.Delta is { } deltaSeconds && deltaSeconds > TimeSpan.Zero)
+            {
+                return deltaSeconds;
+            }
+
+            if (retryAfter.Date is { } retryDate)
+            {
+                var delay = retryDate - DateTimeOffset.UtcNow;
+                if (delay > TimeSpan.Zero)
+                {
+                    return delay;
+                }
+            }
+        }
+
+        if (response.Headers.TryGetValues("X-RateLimit-Reset", out var resetValues))
+        {
+            var resetRaw = resetValues.FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(resetRaw)
+                && long.TryParse(resetRaw, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var unixSeconds))
+            {
+                var resetAt = DateTimeOffset.FromUnixTimeSeconds(unixSeconds);
+                var delay = resetAt - DateTimeOffset.UtcNow;
+                if (delay > TimeSpan.Zero)
+                {
+                    return delay;
+                }
+            }
+        }
+
+        return null;
     }
 
     private const string RepositoryLinkedProjectBoardDiscoveryQuery =

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Application.Services.Snapshots;
@@ -181,6 +182,169 @@ public sealed class DailySnapshotCollectionPassServiceTests
     }
 
     [Fact]
+    public async Task HandleQueueMessage_WhenRunRulesFailForQueuedEntry_ClearsQueuedOccasionOnly()
+    {
+        var lastSuccess = new DateTimeOffset(2026, 11, 20, 8, 0, 0, TimeSpan.Zero);
+        var store = new InMemoryOperatorSnapshotStore();
+        store.Seed("octocat", new OperatorSnapshotDocument
+        {
+            OperatorLogin = "octocat",
+            QueuedOccasion = "2026-11-23",
+            LastSuccessfulCollectionAt = lastSuccess,
+            Run = new OperatorSnapshotRun
+            {
+                Status = OperatorSnapshotRunStatus.Succeeded,
+                FinishedAt = lastSuccess,
+            },
+        });
+
+        var signIns = new InMemoryHostedSignInRecordStore();
+        signIns.Seed(new HostedSignInRecord
+        {
+            OperatorLogin = "octocat",
+            CompletedAt = DateTimeOffset.UtcNow.AddDays(-40),
+            RefreshToken = "refresh",
+            CredentialUnusable = false,
+        });
+
+        var completed = false;
+        var sut = CreateSut(store, signIns: signIns);
+        await sut.HandleQueueMessageAsync(
+            new DailySnapshotQueueInvocation
+            {
+                Message = new DailySnapshotQueueMessage
+                {
+                    OperatorLogin = "octocat",
+                    OccasionDate = "2026-11-23",
+                    Kind = "initial",
+                },
+                CompleteAsync = _ =>
+                {
+                    completed = true;
+                    return Task.CompletedTask;
+                },
+                UpdateVisibilityAsync = (_, _) => Task.CompletedTask,
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(completed);
+        var document = store.GetDocument("octocat");
+        Assert.NotNull(document);
+        Assert.Null(document.QueuedOccasion);
+        Assert.Equal(OperatorSnapshotRunStatus.Succeeded, document.Run.Status);
+        Assert.Equal(lastSuccess, document.LastSuccessfulCollectionAt);
+    }
+
+    [Fact]
+    public async Task HandleQueueMessage_WhenRetryNotBeforeStillAhead_RequeuesWithoutStartingPass()
+    {
+        var store = new InMemoryOperatorSnapshotStore();
+        store.Seed("octocat", new OperatorSnapshotDocument
+        {
+            OperatorLogin = "octocat",
+            Trigger = OperatorSnapshotCollectionTrigger.Daily,
+            QueuedOccasion = null,
+            Run = new OperatorSnapshotRun
+            {
+                Status = OperatorSnapshotRunStatus.InProgress,
+                Reason = OperatorSnapshotRunReason.RateLimit,
+            },
+        });
+
+        var queue = new RecordingDailyQueuePublisher();
+        var completed = false;
+        var sut = CreateSut(store, queue);
+        var notBefore = DateTimeOffset.UtcNow.AddMinutes(5);
+        await sut.HandleQueueMessageAsync(
+            new DailySnapshotQueueInvocation
+            {
+                Message = new DailySnapshotQueueMessage
+                {
+                    OperatorLogin = "octocat",
+                    OccasionDate = "2026-11-23",
+                    Kind = "retry",
+                    NotBefore = DailySnapshotRetryNotBefore.ToIso8601Utc(notBefore),
+                },
+                CompleteAsync = _ =>
+                {
+                    completed = true;
+                    return Task.CompletedTask;
+                },
+                UpdateVisibilityAsync = (_, _) => Task.CompletedTask,
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(completed);
+        var requeued = Assert.Single(queue.Messages);
+        Assert.Equal("retry", requeued.Kind);
+        Assert.Equal(DailySnapshotRetryNotBefore.ToIso8601Utc(notBefore), requeued.NotBefore);
+        Assert.Equal(OperatorSnapshotRunStatus.InProgress, store.GetDocument("octocat")!.Run.Status);
+    }
+
+    [Fact]
+    public async Task HandleQueueMessage_WhenRunRulesFailForRetryWaiting_RestoresRetainedRun()
+    {
+        var priorSuccess = new DateTimeOffset(2026, 11, 20, 8, 0, 0, TimeSpan.Zero);
+        var store = new InMemoryOperatorSnapshotStore();
+        store.Seed("octocat", new OperatorSnapshotDocument
+        {
+            OperatorLogin = "octocat",
+            Trigger = OperatorSnapshotCollectionTrigger.Daily,
+            AttemptsUsed = 2,
+            RetainedRun = new OperatorSnapshotRetainedRun
+            {
+                Trigger = OperatorSnapshotCollectionTrigger.Operator,
+                Run = new OperatorSnapshotRun
+                {
+                    Status = OperatorSnapshotRunStatus.Succeeded,
+                    FinishedAt = priorSuccess,
+                },
+            },
+            Run = new OperatorSnapshotRun
+            {
+                Status = OperatorSnapshotRunStatus.InProgress,
+                Reason = OperatorSnapshotRunReason.Unexpected,
+            },
+        });
+
+        var signIns = new InMemoryHostedSignInRecordStore();
+        signIns.Seed(new HostedSignInRecord
+        {
+            OperatorLogin = "octocat",
+            CompletedAt = DateTimeOffset.UtcNow.AddDays(-40),
+            RefreshToken = "refresh",
+        });
+
+        var completed = false;
+        var sut = CreateSut(store, signIns: signIns);
+        await sut.HandleQueueMessageAsync(
+            new DailySnapshotQueueInvocation
+            {
+                Message = new DailySnapshotQueueMessage
+                {
+                    OperatorLogin = "octocat",
+                    OccasionDate = "2026-11-23",
+                    Kind = "retry",
+                },
+                CompleteAsync = _ =>
+                {
+                    completed = true;
+                    return Task.CompletedTask;
+                },
+                UpdateVisibilityAsync = (_, _) => Task.CompletedTask,
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(completed);
+        var document = store.GetDocument("octocat");
+        Assert.NotNull(document);
+        Assert.Equal(OperatorSnapshotCollectionTrigger.Operator, document.Trigger);
+        Assert.Equal(OperatorSnapshotRunStatus.Succeeded, document.Run.Status);
+        Assert.Null(document.AttemptsUsed);
+        Assert.Null(document.RetainedRun);
+    }
+
+    [Fact]
     public async Task HandleQueueMessage_WhenRunnerLeaseBusy_RequeuesSamePayload()
     {
         var store = new InMemoryOperatorSnapshotStore();
@@ -223,17 +387,21 @@ public sealed class DailySnapshotCollectionPassServiceTests
     private static DailySnapshotCollectionPassService CreateSut(
         InMemoryOperatorSnapshotStore store,
         RecordingDailyQueuePublisher? queue = null,
-        IDailyCollectionRunnerLease? runner = null)
+        IDailyCollectionRunnerLease? runner = null,
+        InMemoryHostedSignInRecordStore? signIns = null)
     {
         queue ??= new RecordingDailyQueuePublisher();
-        var signIns = new InMemoryHostedSignInRecordStore();
-        signIns.Seed(new HostedSignInRecord
+        if (signIns is null)
         {
-            OperatorLogin = "octocat",
-            CompletedAt = DateTimeOffset.UtcNow.AddDays(-1),
-            RefreshToken = "refresh",
-            CredentialUnusable = false,
-        });
+            signIns = new InMemoryHostedSignInRecordStore();
+            signIns.Seed(new HostedSignInRecord
+            {
+                OperatorLogin = "octocat",
+                CompletedAt = DateTimeOffset.UtcNow.AddDays(-1),
+                RefreshToken = "refresh",
+                CredentialUnusable = false,
+            });
+        }
 
         var tokenExchange = Substitute.For<IHostedGitHubOAuthTokenExchange>();
         tokenExchange.RefreshAccessTokenAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
@@ -255,6 +423,7 @@ public sealed class DailySnapshotCollectionPassServiceTests
                 TimeProvider.System,
                 new OperatorSnapshotApplicationStopping(CancellationToken.None),
                 NullLogger<OperatorSnapshotCollectionCoordinator>.Instance),
+            new HostedCollectionEligibilityEvaluator(Options.Create(new HostedAdmissionControlOptions { Enabled = false })),
             TimeProvider.System,
             NullLogger<DailySnapshotCollectionPassService>.Instance);
     }

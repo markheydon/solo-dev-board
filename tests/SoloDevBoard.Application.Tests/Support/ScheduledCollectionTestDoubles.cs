@@ -27,6 +27,7 @@ internal sealed class RecordingDailyQueuePublisher : IDailySnapshotQueuePublishe
             OccasionDate = message.OccasionDate,
             OperatorLogin = message.OperatorLogin,
             Kind = message.Kind,
+            NotBefore = message.NotBefore,
         });
         return Task.CompletedTask;
     }

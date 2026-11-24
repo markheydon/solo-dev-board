@@ -33,4 +33,7 @@ public sealed class DailySnapshotQueueMessage
 
     /// <summary><c>initial</c> or <c>retry</c>.</summary>
     public string Kind { get; set; } = "initial";
+
+    /// <summary>Retries only: earliest UTC instant the pass may start (ISO-8601 in JSON).</summary>
+    public string? NotBefore { get; set; }
 }
