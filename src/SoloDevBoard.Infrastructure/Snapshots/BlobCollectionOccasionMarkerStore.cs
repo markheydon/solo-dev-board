@@ -28,7 +28,7 @@ public sealed class BlobCollectionOccasionMarkerStore(CollectionScheduleBlobCont
         var content = await blob.DownloadContentAsync(cancellationToken).ConfigureAwait(false);
         var marker = JsonSerializer.Deserialize<OccasionMarker>(content.Value.Content.ToString(), JsonOptions);
         return marker is null
-            ? new OccasionMarkerReadResult.NotFound()
+            ? new OccasionMarkerReadResult.Unreadable()
             : new OccasionMarkerReadResult.Found(marker);
     }
 

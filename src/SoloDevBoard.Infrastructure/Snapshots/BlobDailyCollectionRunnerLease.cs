@@ -1,3 +1,5 @@
+using Azure;
+using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using SoloDevBoard.Application.Services.Snapshots;
 
@@ -10,19 +12,22 @@ public sealed class BlobDailyCollectionRunnerLease(CollectionScheduleBlobContain
     public async Task<IAsyncDisposable?> TryAcquireAsync(TimeSpan duration, CancellationToken cancellationToken = default)
     {
         var blob = container.Client.GetBlobClient("runner");
-        await blob.UploadAsync(
-                BinaryData.Empty,
-                overwrite: true,
-                cancellationToken)
-            .ConfigureAwait(false);
-
         var leaseClient = blob.GetBlobLeaseClient();
         try
         {
+            if (!await blob.ExistsAsync(cancellationToken).ConfigureAwait(false))
+            {
+                await blob.UploadAsync(
+                        BinaryData.Empty,
+                        new BlobUploadOptions { Conditions = new BlobRequestConditions { IfNoneMatch = ETag.All } },
+                        cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
             await leaseClient.AcquireAsync(duration, cancellationToken: cancellationToken).ConfigureAwait(false);
             return new ReleaseOnDispose(leaseClient);
         }
-        catch (Azure.RequestFailedException)
+        catch (RequestFailedException)
         {
             return null;
         }

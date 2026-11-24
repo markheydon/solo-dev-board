@@ -31,6 +31,9 @@ public abstract record OccasionMarkerReadResult
 
     /// <summary>Marker absent.</summary>
     public sealed record NotFound : OccasionMarkerReadResult;
+
+    /// <summary>Marker blob exists but could not be read.</summary>
+    public sealed record Unreadable : OccasionMarkerReadResult;
 }
 
 /// <summary>Marker create outcomes.</summary>

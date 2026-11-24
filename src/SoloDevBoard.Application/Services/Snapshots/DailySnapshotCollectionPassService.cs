@@ -84,7 +84,14 @@ public sealed class DailySnapshotCollectionPassService(
             accessToken = exchange.AccessToken;
             record.Record.RefreshToken = exchange.RefreshToken;
             record.Record.RefreshTokenExpiresAt = exchange.RefreshTokenExpiresAtUtc;
-            await signInRecords.UpsertAsync(record.Record, record.Etag, cancellationToken).ConfigureAwait(false);
+            var upsert = await signInRecords.UpsertAsync(record.Record, record.Etag, cancellationToken).ConfigureAwait(false);
+            if (upsert is HostedSignInRecordWriteResult.ConcurrencyConflict)
+            {
+                logger.LogWarning("Daily pass could not persist refreshed token for {Login}.", message.OperatorLogin);
+                await WriteSignInFailureAsync(found, cancellationToken).ConfigureAwait(false);
+                await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
+                return;
+            }
         }
         catch (Exception ex)
         {

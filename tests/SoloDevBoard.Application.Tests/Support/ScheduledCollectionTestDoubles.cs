@@ -35,12 +35,22 @@ internal sealed class RecordingDailyQueuePublisher : IDailySnapshotQueuePublishe
 internal sealed class InMemoryOccasionMarkerStore : ICollectionOccasionMarkerStore
 {
     private readonly Dictionary<string, OccasionMarker> _markers = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _unreadable = new(StringComparer.Ordinal);
+
+    public void MarkUnreadable(string occasionDate) => _unreadable.Add(occasionDate);
 
     public Task<OccasionMarkerReadResult> GetAsync(string occasionDate, CancellationToken cancellationToken = default)
-        => Task.FromResult<OccasionMarkerReadResult>(
+    {
+        if (_unreadable.Contains(occasionDate))
+        {
+            return Task.FromResult<OccasionMarkerReadResult>(new OccasionMarkerReadResult.Unreadable());
+        }
+
+        return Task.FromResult<OccasionMarkerReadResult>(
             _markers.TryGetValue(occasionDate, out var marker)
                 ? new OccasionMarkerReadResult.Found(marker)
                 : new OccasionMarkerReadResult.NotFound());
+    }
 
     public Task<OccasionMarkerWriteResult> TryCreateAsync(OccasionMarker marker, CancellationToken cancellationToken = default)
     {

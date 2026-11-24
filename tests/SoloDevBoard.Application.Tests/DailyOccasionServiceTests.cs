@@ -153,6 +153,79 @@ public sealed class DailyOccasionServiceTests
     }
 
     [Fact]
+    public async Task RepairMissingInitialMessages_WhenNoMarker_EnqueuesForQueuedSnapshot()
+    {
+        var time = new FixedTimeProvider(OccasionDay);
+        var queue = new RecordingDailyQueuePublisher();
+        var signIns = new InMemoryHostedSignInRecordStore();
+        signIns.Seed(EligibleSignIn("octocat"));
+        var snapshots = new InMemoryOperatorSnapshotStore();
+        snapshots.Seed("octocat", new OperatorSnapshotDocument
+        {
+            OperatorLogin = "octocat",
+            QueuedOccasion = "2026-11-23",
+            Run = new OperatorSnapshotRun { Status = OperatorSnapshotRunStatus.Failed },
+        });
+        var sut = DailyOccasionServiceTestFactory.Create(
+            time,
+            snapshots,
+            signIns,
+            queue,
+            new InMemoryOccasionMarkerStore());
+
+        await sut.RepairMissingInitialMessagesAsync(TestContext.Current.CancellationToken);
+
+        var message = Assert.Single(queue.Messages);
+        Assert.Equal("octocat", message.OperatorLogin);
+        Assert.Equal("2026-11-23", message.OccasionDate);
+    }
+
+    [Fact]
+    public async Task RepairMissingInitialMessages_WhenQueuedOccasionUnset_DoesNotEnqueue()
+    {
+        var time = new FixedTimeProvider(OccasionDay);
+        var queue = new RecordingDailyQueuePublisher();
+        var signIns = new InMemoryHostedSignInRecordStore();
+        signIns.Seed(EligibleSignIn("octocat"));
+        var snapshots = new InMemoryOperatorSnapshotStore();
+        snapshots.Seed("octocat", new OperatorSnapshotDocument
+        {
+            OperatorLogin = "octocat",
+            Run = new OperatorSnapshotRun { Status = OperatorSnapshotRunStatus.Failed },
+        });
+        var sut = DailyOccasionServiceTestFactory.Create(
+            time,
+            snapshots,
+            signIns,
+            queue,
+            new InMemoryOccasionMarkerStore());
+
+        await sut.RepairMissingInitialMessagesAsync(TestContext.Current.CancellationToken);
+
+        Assert.Empty(queue.Messages);
+    }
+
+    [Fact]
+    public async Task TryFillDailyOccasion_WhenMarkerUnreadable_AlreadyFilled()
+    {
+        var markers = new InMemoryOccasionMarkerStore();
+        markers.MarkUnreadable("2026-11-23");
+        var time = new FixedTimeProvider(OccasionDay);
+        var queue = new RecordingDailyQueuePublisher();
+        var signIns = new InMemoryHostedSignInRecordStore();
+        signIns.Seed(EligibleSignIn("octocat"));
+        var sut = DailyOccasionServiceTestFactory.Create(
+            time,
+            new InMemoryOperatorSnapshotStore(),
+            signIns,
+            queue,
+            markers);
+
+        Assert.Equal(DailyOccasionFillResult.AlreadyFilled, await sut.TryFillDailyOccasionAsync(TestContext.Current.CancellationToken));
+        Assert.Empty(queue.Messages);
+    }
+
+    [Fact]
     public async Task TryFillDailyOccasion_RunnerLeaseBusy_LostRace()
     {
         var time = new FixedTimeProvider(OccasionDay);
