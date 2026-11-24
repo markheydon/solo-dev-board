@@ -45,6 +45,63 @@ public sealed class OperatorSnapshotCollectionCoordinatorTests
     }
 
     [Fact]
+    public async Task Walk_Success_WithDailyTrigger_RecordsSameRepositoryFactsAsHandStart()
+    {
+        var store = new InMemoryOperatorSnapshotStore();
+        store.Seed(Login, new OperatorSnapshotDocument
+        {
+            OperatorLogin = Login,
+            Revision = 5,
+            Trigger = OperatorSnapshotCollectionTrigger.Daily,
+            AttemptsUsed = 1,
+            Repositories = [],
+            Run = new OperatorSnapshotRun
+            {
+                Status = OperatorSnapshotRunStatus.InProgress,
+                StartedAt = DateTimeOffset.Parse("2026-06-01T12:00:00Z"),
+                RepositoriesRecorded = 0,
+            },
+        });
+
+        var github = Substitute.For<IGitHubService>();
+        github.GetRepositoriesAsync(
+                Arg.Any<CancellationToken>(),
+                Arg.Any<bool>(),
+                Arg.Any<IProgress<int>?>())
+            .Returns(
+            [
+                new Domain.Entities.Repositories.Repository
+                {
+                    GitHubId = 42,
+                    OwnerLogin = Login,
+                    Name = "catalogue",
+                    FullName = $"{Login}/catalogue",
+                    Url = "https://example.com/octocat/catalogue",
+                    IsPrivate = false,
+                },
+            ]);
+
+        var coordinator = CreateCoordinator(store, github);
+        Assert.True(coordinator.TryBegin(
+            Login,
+            Login,
+            "token",
+            new OperatorSnapshotConcurrencyToken(5, null),
+            (login, ct) => store.GetAsync(login, ct),
+            (login, doc, token, ct) => SaveAsync(store, login, doc, token, ct)));
+
+        await WaitForIdleAsync(coordinator);
+
+        var document = store.GetDocument(Login);
+        Assert.NotNull(document);
+        Assert.Equal(OperatorSnapshotRunStatus.Succeeded, document.Run.Status);
+        var entry = Assert.Single(document.Repositories);
+        Assert.Equal(42, entry.GitHubId);
+        Assert.Equal("catalogue", entry.Name);
+        Assert.Equal("public", entry.Visibility);
+    }
+
+    [Fact]
     public async Task Walk_Success_PreservesLaterFacts()
     {
         var store = new InMemoryOperatorSnapshotStore();

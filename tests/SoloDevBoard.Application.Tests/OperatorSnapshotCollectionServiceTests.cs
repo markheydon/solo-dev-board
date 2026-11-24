@@ -173,6 +173,54 @@ public sealed class OperatorSnapshotCollectionServiceTests
     }
 
     [Fact]
+    public async Task StartAsync_WhenQueuedOccasionSet_ReturnsAlreadyInProgress()
+    {
+        var store = new InMemoryOperatorSnapshotStore();
+        store.Seed("octocat", new OperatorSnapshotDocument
+        {
+            OperatorLogin = "octocat",
+            QueuedOccasion = "2026-11-23",
+            PassExecuting = false,
+            Run = new OperatorSnapshotRun { Status = OperatorSnapshotRunStatus.Failed },
+        });
+
+        var userContext = Substitute.For<ICurrentUserContext>();
+        userContext.OwnerLogin.Returns("octocat");
+        userContext.GetAccessToken().Returns("token");
+        var service = CreateService(userContext, store);
+
+        var result = await service.StartAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(OperatorSnapshotStartResult.AlreadyInProgress, result);
+    }
+
+    [Fact]
+    public async Task StartAsync_WhenDailyRetryWaitInProgress_ReturnsAlreadyInProgress()
+    {
+        var store = new InMemoryOperatorSnapshotStore();
+        store.Seed("octocat", new OperatorSnapshotDocument
+        {
+            OperatorLogin = "octocat",
+            Trigger = OperatorSnapshotCollectionTrigger.Daily,
+            PassExecuting = false,
+            Run = new OperatorSnapshotRun
+            {
+                Status = OperatorSnapshotRunStatus.InProgress,
+                Reason = OperatorSnapshotRunReason.RateLimit,
+            },
+        });
+
+        var userContext = Substitute.For<ICurrentUserContext>();
+        userContext.OwnerLogin.Returns("octocat");
+        userContext.GetAccessToken().Returns("token");
+        var service = CreateService(userContext, store);
+
+        Assert.Equal(
+            OperatorSnapshotStartResult.AlreadyInProgress,
+            await service.StartAsync(TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
     public async Task GetStatusAsync_FailedRun_KeepsLastSuccessfulSnapshotMetadata()
     {
         var store = new InMemoryOperatorSnapshotStore();

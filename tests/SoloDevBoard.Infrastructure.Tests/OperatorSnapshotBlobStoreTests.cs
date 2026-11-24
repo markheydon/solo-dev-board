@@ -119,6 +119,65 @@ public sealed class OperatorSnapshotBlobStoreTests
     }
 
     [Fact]
+    public async Task GetAsync_DailyPassExecutingWithExpiredLease_BecomesScheduledCollectionStopped()
+    {
+        var container = new FakeOperatorSnapshotBlobContainer();
+        var registry = new TestLiveTaskRegistry();
+        var time = new MutableTimeProvider(DateTimeOffset.Parse("2026-11-23T06:00:00Z"));
+        var store = new BlobOperatorSnapshotStore(
+            container,
+            registry,
+            time,
+            NullLogger<BlobOperatorSnapshotStore>.Instance);
+
+        var started = new OperatorSnapshotDocument
+        {
+            OperatorLogin = "octocat",
+            Trigger = OperatorSnapshotCollectionTrigger.Daily,
+            PassExecuting = true,
+            PassLeaseUntil = DateTimeOffset.Parse("2026-11-23T05:59:50Z"),
+            Run = new OperatorSnapshotRun
+            {
+                Status = OperatorSnapshotRunStatus.InProgress,
+                StartedAt = DateTimeOffset.Parse("2026-11-23T05:10:00Z"),
+            },
+        };
+
+        await store.SaveAsync("octocat", started, OperatorSnapshotConcurrencyToken.None, CancellationToken.None);
+        var result = await store.GetAsync("octocat", CancellationToken.None);
+
+        var found = Assert.IsType<OperatorSnapshotGetResult.Found>(result);
+        Assert.Equal(OperatorSnapshotRunStatus.Interrupted, found.Document.Run.Status);
+        Assert.Equal(OperatorSnapshotRunReason.ScheduledCollectionStopped, found.Document.Run.Reason);
+    }
+
+    [Fact]
+    public async Task GetAsync_DailyRetryWaitWithoutPassExecuting_DoesNotBecomeSiteStopped()
+    {
+        var container = new FakeOperatorSnapshotBlobContainer();
+        var store = CreateStore(container, new TestLiveTaskRegistry());
+
+        var retryWait = new OperatorSnapshotDocument
+        {
+            OperatorLogin = "octocat",
+            Trigger = OperatorSnapshotCollectionTrigger.Daily,
+            PassExecuting = false,
+            Run = new OperatorSnapshotRun
+            {
+                Status = OperatorSnapshotRunStatus.InProgress,
+                Reason = OperatorSnapshotRunReason.RateLimit,
+                StartedAt = DateTimeOffset.UtcNow,
+            },
+        };
+
+        await store.SaveAsync("octocat", retryWait, OperatorSnapshotConcurrencyToken.None, CancellationToken.None);
+        var result = await store.GetAsync("octocat", CancellationToken.None);
+        var found = Assert.IsType<OperatorSnapshotGetResult.Found>(result);
+        Assert.Equal(OperatorSnapshotRunStatus.InProgress, found.Document.Run.Status);
+        Assert.Equal(OperatorSnapshotRunReason.RateLimit, found.Document.Run.Reason);
+    }
+
+    [Fact]
     public async Task GetAsync_StaleInProgress_WithoutLiveTask_BecomesInterrupted()
     {
         var container = new FakeOperatorSnapshotBlobContainer();
@@ -166,6 +225,11 @@ public sealed class OperatorSnapshotBlobStoreTests
                 ? [new OperatorSnapshotRepositoryEntry { GitHubId = 1, Owner = login, Name = "demo", Visibility = "public", HtmlUrl = "https://example.com" }]
                 : [],
         };
+
+    private sealed class MutableTimeProvider(DateTimeOffset utcNow) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => utcNow;
+    }
 
     private sealed class TestLiveTaskRegistry : IOperatorSnapshotLiveTaskRegistry
     {

@@ -55,7 +55,7 @@ description: "Task list for scheduled snapshot collection implementation"
 - [X] T015 Extend `OperatorSnapshotStatusDto` with `Trigger`, `SchedulePosture`, `QueuedForOccasion`, `NextOccasionAtUtc`, and `NoScheduleReason` per data-model.md status facts table in `src/SoloDevBoard.Application/Services/Snapshots/`
 - [X] T016 Implement status fact computation (hosted vs lean, next occasion rules) in `src/SoloDevBoard.Application/Services/Snapshots/` using `TimeProvider` and admission options
 - [X] T017 Register new ports and hosted-only adapters in `src/SoloDevBoard.Composition/` without connection-string lookup
-- [ ] T018 [P] Application tests for additive snapshot field defaults and reason parsing in `tests/SoloDevBoard.Application.Tests/`
+- [X] T018 [P] Application tests for additive snapshot field defaults and reason parsing in `tests/SoloDevBoard.Application.Tests/`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -69,9 +69,9 @@ description: "Task list for scheduled snapshot collection implementation"
 
 ### Tests for User Story 1
 
-- [ ] T019 [P] [US1] Unit tests for occasion window and single fill (`TryFillDailyOccasion`) in `tests/SoloDevBoard.Application.Tests/` per quickstart.md section 3 (05:00, 05:10 grace, 05:16 miss, no double fill)
-- [ ] T020 [P] [US1] Unit tests for eligibility: 30-day boundary (`HostedSignInRecord.completedAt`), `credentialUnusable`, admission lists (including both lists empty while admission is on; user or sole admitting organisation removed from lists at fill while inside 30-day window per SC-010), never-signed-in excluded in `tests/SoloDevBoard.Application.Tests/`
-- [ ] T069 [P] [US1] Store or Application test: daily success produces the same catalogue and snapshot facts as hand-started collection for the same operator fixture (FR-003, SC-002) in `tests/SoloDevBoard.Application.Tests/` or `tests/SoloDevBoard.Infrastructure.Tests/`
+- [X] T019 [P] [US1] Unit tests for occasion window and single fill (`TryFillDailyOccasion`) in `tests/SoloDevBoard.Application.Tests/` per quickstart.md section 3 (05:00, 05:10 grace, 05:16 miss, no double fill)
+- [X] T020 [P] [US1] Unit tests for eligibility: 30-day boundary (`HostedSignInRecord.completedAt`), `credentialUnusable`, admission lists (including both lists empty while admission is on; user or sole admitting organisation removed from lists at fill while inside 30-day window per SC-010), never-signed-in excluded in `tests/SoloDevBoard.Application.Tests/`
+- [X] T069 [P] [US1] Store or Application test: daily success produces the same catalogue and snapshot facts as hand-started collection for the same operator fixture (FR-003, SC-002) in `tests/SoloDevBoard.Application.Tests/` or `tests/SoloDevBoard.Infrastructure.Tests/`
 
 ### Implementation for User Story 1
 
@@ -100,8 +100,8 @@ description: "Task list for scheduled snapshot collection implementation"
 
 ### Tests for User Story 2
 
-- [ ] T032 [P] [US2] Application tests that `StartAsync` refuses when `queuedOccasion` is set or daily `inProgress` in `tests/SoloDevBoard.Application.Tests/`
-- [ ] T071 [P] [US2] Application or bUnit tests that loading `/repositories` and live catalogue reload do not enqueue or start a collection (FR-010) in `tests/SoloDevBoard.Application.Tests/` or `tests/SoloDevBoard.Web.Tests/`
+- [X] T032 [P] [US2] Application tests that `StartAsync` refuses when `queuedOccasion` is set or daily `inProgress` in `tests/SoloDevBoard.Application.Tests/`
+- [X] T071 [P] [US2] Application or bUnit tests that loading `/repositories` and live catalogue reload do not enqueue or start a collection (FR-010) in `tests/SoloDevBoard.Application.Tests/` or `tests/SoloDevBoard.Web.Tests/`
 
 ### Implementation for User Story 2
 
@@ -121,7 +121,7 @@ description: "Task list for scheduled snapshot collection implementation"
 
 ### Tests for User Story 3
 
-- [ ] T036 [P] [US3] Application tests with lean posture: no fill and no queue at 05:00 UTC in `tests/SoloDevBoard.Application.Tests/`
+- [X] T036 [P] [US3] Application tests with lean posture: no fill and no queue at 05:00 UTC in `tests/SoloDevBoard.Application.Tests/`
 
 ### Implementation for User Story 3
 
@@ -141,8 +141,8 @@ description: "Task list for scheduled snapshot collection implementation"
 
 ### Tests for User Story 4
 
-- [ ] T040 [P] [US4] Application tests for single flight: two eligible operators, one pass at a time, second starts after first in `tests/SoloDevBoard.Application.Tests/`
-- [ ] T041 [P] [US4] Application tests: fill does not add second entry when `queuedOccasion` or daily `inProgress` already set in `tests/SoloDevBoard.Application.Tests/`
+- [X] T040 [P] [US4] Application tests for single flight: two eligible operators, one pass at a time, second starts after first in `tests/SoloDevBoard.Application.Tests/`
+- [X] T041 [P] [US4] Application tests: fill does not add second entry when `queuedOccasion` or daily `inProgress` already set in `tests/SoloDevBoard.Application.Tests/`
 
 ### Implementation for User Story 4
 
@@ -163,13 +163,13 @@ description: "Task list for scheduled snapshot collection implementation"
 
 ### Tests for User Story 5
 
-- [ ] T046 [P] [US5] bUnit tests for schedule sentences and absence of settings/retry controls in `tests/SoloDevBoard.Web.Tests/` per quickstart.md section 5
+- [X] T046 [P] [US5] bUnit tests for schedule sentences and absence of settings/retry controls in `tests/SoloDevBoard.Web.Tests/` per quickstart.md section 5
 
 ### Implementation for User Story 5
 
 - [X] T047 [US5] Implement `NextOccasionAtUtc` and `NoScheduleReason` rules (today vs following day, queued-before-start, missed window) in `src/SoloDevBoard.Application/Services/Snapshots/` per data-model.md status facts
 - [X] T048 [US5] Add hosted schedule and run clause copy to status alert per contracts/repositories-schedule-copy.md in `src/SoloDevBoard.Web/Components/Features/Repositories/`
-- [ ] T049 [US5] Update `website/content/docs/repositories.md` and `tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md` in the same change
+- [X] T049 [US5] Update `website/content/docs/repositories.md` and `tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md` in the same change
 
 **Checkpoint**: Operator-readable schedule truth on `/repositories`
 
@@ -183,9 +183,9 @@ description: "Task list for scheduled snapshot collection implementation"
 
 ### Tests for User Story 6
 
-- [ ] T050 [P] [US6] Store tests for `scheduledCollectionStopped` interruption branch in `tests/SoloDevBoard.Infrastructure.Tests/`
-- [ ] T072 [P] [US6] Infrastructure tests: etag conditional writes on hosted sign-in and occasion marker blobs; fixtures assert no refresh token in snapshot JSON or queue message bodies (plan.md test scope) in `tests/SoloDevBoard.Infrastructure.Tests/`
-- [ ] T051 [P] [US6] Application tests: rate-limit retry to tail (max 4 attempts), sign-in failure no retry, queued-not-interrupted on worker stop in `tests/SoloDevBoard.Application.Tests/`
+- [X] T050 [P] [US6] Store tests for `scheduledCollectionStopped` interruption branch in `tests/SoloDevBoard.Infrastructure.Tests/`
+- [X] T072 [P] [US6] Infrastructure tests: etag conditional writes on hosted sign-in and occasion marker blobs; fixtures assert no refresh token in snapshot JSON or queue message bodies (plan.md test scope) in `tests/SoloDevBoard.Infrastructure.Tests/`
+- [X] T051 [P] [US6] Application tests: rate-limit retry to tail (max 4 attempts), sign-in failure no retry, queued-not-interrupted on worker stop in `tests/SoloDevBoard.Application.Tests/`
 
 ### Implementation for User Story 6
 
@@ -207,8 +207,8 @@ description: "Task list for scheduled snapshot collection implementation"
 
 ### Tests for User Story 7
 
-- [ ] T057 [P] [US7] Application tests: no fill after 05:15; fill at 05:10 when marker absent; sign-in after fill does not enqueue same day in `tests/SoloDevBoard.Application.Tests/`
-- [ ] T058 [P] [US7] Application tests: organisation allowance from saved logins only (no GitHub membership call) in `tests/SoloDevBoard.Application.Tests/`
+- [X] T057 [P] [US7] Application tests: no fill after 05:15; fill at 05:10 when marker absent; sign-in after fill does not enqueue same day in `tests/SoloDevBoard.Application.Tests/`
+- [X] T058 [P] [US7] Application tests: organisation allowance from saved logins only (no GitHub membership call) in `tests/SoloDevBoard.Application.Tests/`
 
 ### Implementation for User Story 7
 
@@ -229,9 +229,9 @@ description: "Task list for scheduled snapshot collection implementation"
 - [X] T064 Leave `src/SoloDevBoard.AppHost/LeanAppHostGraph.cs` unchanged (no Functions, no extra storage)
 - [X] T065 Re-assert `web` `MinReplicas` 0 and `MaxReplicas` 1 in `src/SoloDevBoard.AppHost/SoloDevBoardAppHost.cs` after any publish callback changes
 - [X] T066 [P] Assign Functions identity storage roles on publish (blob, queue, table, account contributor) per research.md on hosted graph only
-- [ ] T067 [P] Update `docs/getting-started.md`, `docs/deployment.md`, and `src/SoloDevBoard.AppHost/README.md` for new hosted resources
-- [ ] T073 [P] Application tests: two operators cannot read each other's snapshot status or blob paths (daily and hand-started runs) per FR-014 and SC-003 in `tests/SoloDevBoard.Application.Tests/` (extend feature 001 isolation fixtures where applicable)
-- [ ] T068 Run quickstart.md validation commands: `dotnet format`, `dotnet build`, `dotnet test` per specs/002-scheduled-snapshot-collection/quickstart.md section 6
+- [X] T067 [P] Update `docs/getting-started.md`, `docs/deployment.md`, and `src/SoloDevBoard.AppHost/README.md` for new hosted resources
+- [X] T073 [P] Application tests: two operators cannot read each other's snapshot status or blob paths (daily and hand-started runs) per FR-014 and SC-003 in `tests/SoloDevBoard.Application.Tests/` (extend feature 001 isolation fixtures where applicable)
+- [X] T068 Run quickstart.md validation commands: `dotnet format`, `dotnet build`, `dotnet test` per specs/002-scheduled-snapshot-collection/quickstart.md section 6
 
 ---
 

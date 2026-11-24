@@ -457,13 +457,17 @@ Aspire generates and applies Bicep at deploy time. The graph matches **hosted si
 
 | Resource | Purpose |
 |---|---|
-| Azure Storage account and `operator-snapshots` blob container | Durable per-operator repository catalogue snapshots ([ADR-0048](../adr/adr-0048-hosted-operator-snapshot-blob-storage.md)) |
+| Azure Storage account (`operator-snapshot-storage`) | Shared account for snapshots, sign-in records, schedule markers, and the daily queue |
+| `operator-snapshots` blob container | Durable per-operator repository catalogue snapshots ([ADR-0048](../adr/adr-0048-hosted-operator-snapshot-blob-storage.md)) |
+| `hosted-sign-ins` and `collection-schedule` blob containers | Sign-in facts and daily occasion markers for scheduled collection |
+| `operator-snapshot-queues` queue | Work queue for unattended daily snapshot walks |
+| Azure Functions worker (`SoloDevBoard.Functions`) | UTC timer fill and queue consumer; scales to zero when idle ([ADR-0049](../adr/adr-0049-scheduled-collection-functions.md)) |
 
-Staging and Production CD, and local `aspire start` with `hosted-sign-in-enabled` `true`, use this graph. Lean PAT deploy (`hosted-sign-in-enabled` `false`) does not provision storage; snapshots persist under the web content root on disk.
+Staging and Production CD, and local `aspire start` with `hosted-sign-in-enabled` `true`, use this graph. Lean PAT deploy (`hosted-sign-in-enabled` `false`) does not provision storage or the worker; snapshots persist under the web content root on disk.
 
-### Overnight inventory (not deployed)
+### Withdrawn overnight inventory (not deployed)
 
-Overnight inventory (Azure Functions, SQL, and the withdrawn ADR-0046 inventory stack) is **not** provisioned. AppHost does not deploy `functions`, `inventory`, or SQL until a future ADR records a replacement approach ([ADR-0046](../adr/adr-0046-overnight-inventory-functions-and-sql.md) **Withdrawn**).
+The withdrawn ADR-0046 overnight inventory stack (SQL, a separate inventory Functions app, and extra storage) is **not** provisioned. The scheduled snapshot collection worker above is a different, bounded Functions project tied to operator snapshots only.
 
 [PAT self-host](#self-hoster-deployment-pat-only-local-trusted-mode) and hosted sign-in deploy both provision the Container App (`web`) and tier Key Vault. Vault bindings on publish apply to `web` only.
 

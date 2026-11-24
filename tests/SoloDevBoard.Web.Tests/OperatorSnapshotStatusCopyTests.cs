@@ -74,6 +74,61 @@ public sealed class OperatorSnapshotStatusCopyTests
         Assert.Contains("Snapshot saved at", suffix);
     }
 
+    [Fact]
+    public void BuildSnapshotSuffix_HostedEligible_NamesNextOccasionAt0500Utc()
+    {
+        var status = new OperatorSnapshotStatusDto
+        {
+            Kind = OperatorSnapshotStatusKind.NeverRun,
+            DurabilityKind = OperatorSnapshotDurabilityKind.HostedBlob,
+            SchedulePosture = OperatorSnapshotSchedulePosture.Hosted,
+            NoScheduleReason = OperatorSnapshotNoScheduleReason.None,
+            NextOccasionAtUtc = new DateTimeOffset(2026, 11, 24, 5, 0, 0, TimeSpan.Zero),
+        };
+
+        var suffix = OperatorSnapshotStatusCopy.BuildSnapshotSuffix(status, statusUnavailable: false);
+
+        Assert.Contains("Next scheduled collection: 05:00 UTC", suffix);
+        Assert.DoesNotContain("settings", suffix, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("retry", suffix, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void BuildSnapshotSuffix_CredentialUnusable_DoesNotPromiseTonight()
+    {
+        var status = new OperatorSnapshotStatusDto
+        {
+            Kind = OperatorSnapshotStatusKind.Failed,
+            DurabilityKind = OperatorSnapshotDurabilityKind.HostedBlob,
+            SchedulePosture = OperatorSnapshotSchedulePosture.Hosted,
+            NoScheduleReason = OperatorSnapshotNoScheduleReason.CredentialUnusable,
+            Reason = OperatorSnapshotRunReason.SignInOrToken,
+        };
+
+        var suffix = OperatorSnapshotStatusCopy.BuildSnapshotSuffix(status, statusUnavailable: false);
+
+        Assert.Contains("No scheduled collection will run until you sign in again.", suffix);
+        Assert.DoesNotContain("Next scheduled collection: 05:00 UTC", suffix);
+    }
+
+    [Fact]
+    public void BuildSnapshotSuffix_QueuedBeforePass_StartsWithScheduleNotSaving()
+    {
+        var status = new OperatorSnapshotStatusDto
+        {
+            Kind = OperatorSnapshotStatusKind.NeverRun,
+            DurabilityKind = OperatorSnapshotDurabilityKind.HostedBlob,
+            SchedulePosture = OperatorSnapshotSchedulePosture.Hosted,
+            QueuedForOccasion = "2026-11-23",
+            NoScheduleReason = OperatorSnapshotNoScheduleReason.None,
+        };
+
+        var suffix = OperatorSnapshotStatusCopy.BuildSnapshotSuffix(status, statusUnavailable: false);
+
+        Assert.Contains("Next scheduled collection: 05:00 UTC.", suffix);
+        Assert.DoesNotContain("Saving snapshot", suffix, StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData(OperatorSnapshotDurabilityKind.LocalMachine)]
     [InlineData(OperatorSnapshotDurabilityKind.EphemeralContainerDisk)]
