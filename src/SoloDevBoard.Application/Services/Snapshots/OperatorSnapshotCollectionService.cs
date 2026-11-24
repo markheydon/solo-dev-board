@@ -287,9 +287,15 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
         {
             SchemaVersion = priorDocument.SchemaVersion,
             OperatorLogin = priorDocument.OperatorLogin,
+            Revision = found.Document.Revision,
             LastSuccessfulCollectionAt = priorDocument.LastSuccessfulCollectionAt,
             Repositories = priorDocument.Repositories,
             LaterFacts = priorDocument.LaterFacts,
+            Trigger = priorDocument.Trigger,
+            QueuedOccasion = priorDocument.QueuedOccasion,
+            PassExecuting = priorDocument.PassExecuting,
+            PassLeaseUntil = priorDocument.PassLeaseUntil,
+            AttemptsUsed = priorDocument.AttemptsUsed,
             Run = new OperatorSnapshotRun
             {
                 Status = priorDocument.Run.Status,

@@ -137,5 +137,21 @@ internal static class AppHostPublishProfile
         }
 
         host.SetApp(app);
+
+        if (host.UseHostedSignInPosture && host.SnapshotScheduler is { } scheduler)
+        {
+            scheduler = scheduler
+                .WithEnvironment("GitHubAuth__HostedSignInEnabled", resolvedHostedSignInEnabled)
+                .WithEnvironment("GitHubAuth__HostedGitHubAppClientId", resolvedGhAppClientId)
+                .WithEnvironment("HostedAdmissionControl__Enabled", resolvedHostedAdmissionEnabled)
+                .WithEnvironment("HostedAdmissionControl__AllowedUserLogins", resolvedAllowedUserLogins)
+                .WithEnvironment("HostedAdmissionControl__AllowedOrganisationLogins", resolvedAllowedOrgLogins)
+                .WithRoleAssignments(authSecretsVault, KeyVaultBuiltInRole.KeyVaultSecretsUser)
+                .WithReference(authSecretsVault)
+                .WithEnvironment("GitHubAuth__HostedGitHubAppClientSecret", authSecretsVault.GetSecret("gh-app-client-secret"))
+                .WithReference(appInsights);
+
+            host.SetSnapshotScheduler(scheduler);
+        }
     }
 }

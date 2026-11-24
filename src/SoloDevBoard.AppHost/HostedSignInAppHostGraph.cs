@@ -1,3 +1,4 @@
+using Aspire.Hosting.Azure;
 using Aspire.Hosting.Dotnet;
 using Azure.Provisioning.Storage;
 
@@ -30,12 +31,14 @@ internal static class HostedSignInAppHostGraph
             .WithReference(collectionSchedule)
             .WithReference(queues)
             .WaitFor(storage);
+        functions = HostedSnapshotSchedulerBindings.Apply(host, functions);
+        functions = WireLocalHostedGitHubAppClientSecret(host, functions);
 
         var app = host.CreateWebApp();
         app = app.WithReference(snapshots).WithReference(hostedSignIns).WaitFor(snapshots);
         app = WireLocalHostedSignInAuth(host, app);
         app = app.WithEnvironment("GitHubAuth__HostedSignInCallbackBaseUri", app.GetEndpoint("https"));
-        _ = functions;
+        host.SetSnapshotScheduler(functions);
         host.SetApp(app);
     }
 
@@ -63,6 +66,7 @@ internal static class HostedSignInAppHostGraph
             .WithReference(hostedSignIns)
             .WithReference(collectionSchedule)
             .WithReference(queues);
+        functions = HostedSnapshotSchedulerBindings.Apply(host, functions);
 
         functions.WithRoleAssignments(
             storage,
@@ -72,6 +76,7 @@ internal static class HostedSignInAppHostGraph
             StorageBuiltInRole.StorageAccountContributor);
 
         var app = host.CreateWebApp().WithReference(snapshots).WithReference(hostedSignIns);
+        host.SetSnapshotScheduler(functions);
         host.SetApp(app);
     }
 
@@ -135,5 +140,41 @@ internal static class HostedSignInAppHostGraph
         }
 
         return app;
+    }
+
+    internal static IResourceBuilder<AzureFunctionsProjectResource> WireLocalHostedGitHubAppClientSecret(
+        SoloDevBoardAppHost host,
+        IResourceBuilder<AzureFunctionsProjectResource> functions)
+    {
+        var configuration = host.Builder.Configuration;
+        var parameters = host.Parameters;
+
+        var hostedSignIn = AppHostDeployParameterResolver.IsHostedSignInEnabled(configuration);
+        if (!hostedSignIn)
+        {
+            return functions;
+        }
+
+        var resolvedGhAppClientSecret = AppHostDeployParameterResolver.Resolve(configuration, "gh-app-client-secret", string.Empty);
+        var useLocalClientSecret = AppHostDeployParameterResolver.IsActiveParameterValue(resolvedGhAppClientSecret);
+        var vaultConfigured = AppHostDeployParameterResolver.HasConfiguredAuthSecretsVault(configuration);
+        var needVaultForClientSecret = !useLocalClientSecret && vaultConfigured;
+
+        if (needVaultForClientSecret)
+        {
+            var authSecretsVault = host.Builder.AddAzureKeyVault("auth-secrets")
+                .AsExisting(parameters.AuthSecretsVaultName, parameters.AuthSecretsVaultResourceGroup);
+
+            functions = functions.WithReference(authSecretsVault);
+            functions = functions.WithEnvironment(
+                "GitHubAuth__HostedGitHubAppClientSecret",
+                authSecretsVault.GetSecret("gh-app-client-secret"));
+        }
+        else if (useLocalClientSecret)
+        {
+            functions = functions.WithEnvironment("GitHubAuth__HostedGitHubAppClientSecret", parameters.GhAppClientSecret);
+        }
+
+        return functions;
     }
 }

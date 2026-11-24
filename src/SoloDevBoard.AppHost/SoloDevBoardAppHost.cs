@@ -1,3 +1,4 @@
+using Aspire.Hosting.Azure;
 using Aspire.Hosting.Azure.AppContainers;
 using Aspire.Hosting.Dotnet;
 
@@ -26,6 +27,9 @@ internal sealed class SoloDevBoardAppHost
 
     /// <summary>Blazor web compute resource.</summary>
     public IResourceBuilder<DotnetProjectResource> App { get; private set; } = null!;
+
+    /// <summary>Scheduled collection Functions worker when the hosted graph is active.</summary>
+    public IResourceBuilder<AzureFunctionsProjectResource>? SnapshotScheduler { get; private set; }
 
     /// <summary>Azure Container Apps environment when publishing.</summary>
     public IResourceBuilder<AzureContainerAppEnvironmentResource>? ContainerAppEnvironment { get; private set; }
@@ -71,6 +75,11 @@ internal sealed class SoloDevBoardAppHost
     /// <summary>Stores the web app builder.</summary>
     /// <param name="app">Web app resource builder.</param>
     internal void SetApp(IResourceBuilder<DotnetProjectResource> app) => App = app;
+
+    /// <summary>Stores the scheduled collection Functions worker.</summary>
+    /// <param name="functions">Functions project resource builder.</param>
+    internal void SetSnapshotScheduler(IResourceBuilder<AzureFunctionsProjectResource> functions) =>
+        SnapshotScheduler = functions;
 
     /// <summary>Stores the Container Apps environment builder.</summary>
     /// <param name="aca">Container App environment resource builder.</param>
