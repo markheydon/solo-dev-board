@@ -18,23 +18,27 @@ public sealed class DailyOccasionServiceTests
     };
 
     [Fact]
-    public async Task TryFillDailyOccasion_WhenOutsideFillWindow_Skipped()
+    public async Task TryFillDailyOccasion_Before0500Utc_FillsWhenCalled()
     {
         var time = new FixedTimeProvider(OccasionDay.AddMinutes(-1));
+        var queue = new RecordingDailyQueuePublisher();
+        var signIns = new InMemoryHostedSignInRecordStore();
+        signIns.Seed(EligibleSignIn("octocat"));
         var sut = DailyOccasionServiceTestFactory.Create(
           time,
           new InMemoryOperatorSnapshotStore(),
-          new InMemoryHostedSignInRecordStore(),
-          new RecordingDailyQueuePublisher(),
+          signIns,
+          queue,
           new InMemoryOccasionMarkerStore());
 
         var result = await sut.TryFillDailyOccasionAsync(TestContext.Current.CancellationToken);
 
-        Assert.Equal(DailyOccasionFillResult.Skipped, result);
+        Assert.Equal(DailyOccasionFillResult.Filled, result);
+        Assert.Single(queue.Messages);
     }
 
     [Fact]
-    public async Task TryFillDailyOccasion_WhenAfterFillWindow_Skipped()
+    public async Task TryFillDailyOccasion_After0515Utc_StillFills()
     {
         var time = new FixedTimeProvider(OccasionDay.AddMinutes(16));
         var queue = new RecordingDailyQueuePublisher();
@@ -49,8 +53,8 @@ public sealed class DailyOccasionServiceTests
 
         var result = await sut.TryFillDailyOccasionAsync(TestContext.Current.CancellationToken);
 
-        Assert.Equal(DailyOccasionFillResult.Skipped, result);
-        Assert.Empty(queue.Messages);
+        Assert.Equal(DailyOccasionFillResult.Filled, result);
+        Assert.Single(queue.Messages);
     }
 
     [Fact]
@@ -77,7 +81,7 @@ public sealed class DailyOccasionServiceTests
     }
 
     [Fact]
-    public async Task TryFillDailyOccasion_At0510_WhenMarkerAbsent_Fills()
+    public async Task TryFillDailyOccasion_CatchUpAt0510WhenMarkerAbsent_Fills()
     {
         var time = new FixedTimeProvider(OccasionDay.AddMinutes(10));
         var queue = new RecordingDailyQueuePublisher();
@@ -95,22 +99,33 @@ public sealed class DailyOccasionServiceTests
     }
 
     [Fact]
-    public async Task TryFillDailyOccasion_WhenMarkerAlreadyPresent_AlreadyFilled()
+    public async Task TryFillDailyOccasion_WhenMarkerAlreadyPresent_QueuesAfterSuccess()
     {
         var markers = new InMemoryOccasionMarkerStore();
         await markers.TryCreateAsync(
           new OccasionMarker { OccasionDate = "2026-11-23", FilledAt = OccasionDay, Operators = ["octocat"] },
           TestContext.Current.CancellationToken);
 
-        var time = new FixedTimeProvider(OccasionDay.AddMinutes(10));
-        var sut = DailyOccasionServiceTestFactory.Create(
-          time,
-          new InMemoryOperatorSnapshotStore(),
-          new InMemoryHostedSignInRecordStore(),
-          new RecordingDailyQueuePublisher(),
-          markers);
+        var time = new FixedTimeProvider(OccasionDay.AddHours(6));
+        var queue = new RecordingDailyQueuePublisher();
+        var signIns = new InMemoryHostedSignInRecordStore();
+        signIns.Seed(EligibleSignIn("hubot"));
+        var snapshots = new InMemoryOperatorSnapshotStore();
+        snapshots.Seed("octocat", new OperatorSnapshotDocument
+        {
+            OperatorLogin = "octocat",
+            Trigger = OperatorSnapshotCollectionTrigger.Daily,
+            Run = new OperatorSnapshotRun
+            {
+                Status = OperatorSnapshotRunStatus.Succeeded,
+                FinishedAt = OccasionDay.AddHours(1),
+            },
+        });
+        var sut = DailyOccasionServiceTestFactory.Create(time, snapshots, signIns, queue, markers);
 
-        Assert.Equal(DailyOccasionFillResult.AlreadyFilled, await sut.TryFillDailyOccasionAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(DailyOccasionFillResult.Filled, await sut.TryFillDailyOccasionAsync(TestContext.Current.CancellationToken));
+        Assert.Single(queue.Messages);
+        Assert.Equal("hubot", queue.Messages[0].OperatorLogin);
     }
 
     [Fact]

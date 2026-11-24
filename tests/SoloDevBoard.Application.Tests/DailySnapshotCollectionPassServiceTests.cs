@@ -54,7 +54,33 @@ public sealed class DailySnapshotCollectionPassServiceTests
     }
 
     [Fact]
-    public async Task HandleQueueMessage_WhenPassExecutingWithExpiredLease_WritesScheduledCollectionStopped()
+    public async Task HandleQueueMessage_WhenUnmetFillVisible_CallsFill()
+    {
+        var dailyOccasion = Substitute.For<IDailyOccasionService>();
+        dailyOccasion.TryFillDailyOccasionAsync(Arg.Any<CancellationToken>())
+            .Returns(DailyOccasionFillResult.Filled);
+
+        var completed = false;
+        var sut = CreateSut(new InMemoryOperatorSnapshotStore(), dailyOccasion: dailyOccasion);
+        await sut.HandleQueueMessageAsync(
+            new DailySnapshotQueueInvocation
+            {
+                Message = new DailySnapshotQueueMessage { Kind = "unmetFill" },
+                CompleteAsync = _ =>
+                {
+                    completed = true;
+                    return Task.CompletedTask;
+                },
+                UpdateVisibilityAsync = (_, _) => Task.CompletedTask,
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(completed);
+        await dailyOccasion.Received(1).TryFillDailyOccasionAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task HandleQueueMessage_WhenPassExecutingWithExpiredLease_WritesScheduledCollectionStoppedAndUnmetFill()
     {
         var store = new InMemoryOperatorSnapshotStore();
         store.Seed("octocat", new OperatorSnapshotDocument
@@ -71,8 +97,9 @@ public sealed class DailySnapshotCollectionPassServiceTests
             },
         });
 
+        var queue = new RecordingDailyQueuePublisher();
         var completed = false;
-        var sut = CreateSut(store);
+        var sut = CreateSut(store, queue);
         await sut.HandleQueueMessageAsync(
             new DailySnapshotQueueInvocation
             {
@@ -92,6 +119,9 @@ public sealed class DailySnapshotCollectionPassServiceTests
         Assert.Equal(OperatorSnapshotRunStatus.Interrupted, document.Run.Status);
         Assert.Equal(OperatorSnapshotRunReason.ScheduledCollectionStopped, document.Run.Reason);
         Assert.False(document.PassExecuting);
+        var unmet = Assert.Single(queue.Messages);
+        Assert.Equal("unmetFill", unmet.Kind);
+        Assert.False(string.IsNullOrEmpty(unmet.NotBefore));
     }
 
     [Fact]
@@ -182,7 +212,7 @@ public sealed class DailySnapshotCollectionPassServiceTests
     }
 
     [Fact]
-    public async Task HandleQueueMessage_WhenRunRulesFailForQueuedEntry_ClearsQueuedOccasionOnly()
+    public async Task HandleQueueMessage_WhenSignInOutsideWindowAtDequeue_AttemptsPass()
     {
         var lastSuccess = new DateTimeOffset(2026, 11, 20, 8, 0, 0, TimeSpan.Zero);
         var store = new InMemoryOperatorSnapshotStore();
@@ -207,8 +237,9 @@ public sealed class DailySnapshotCollectionPassServiceTests
             CredentialUnusable = false,
         });
 
+        var tokenExchange = CreateDefaultTokenExchange();
         var completed = false;
-        var sut = CreateSut(store, signIns: signIns);
+        var sut = CreateSut(store, signIns: signIns, tokenExchange: tokenExchange);
         await sut.HandleQueueMessageAsync(
             new DailySnapshotQueueInvocation
             {
@@ -228,11 +259,7 @@ public sealed class DailySnapshotCollectionPassServiceTests
             TestContext.Current.CancellationToken);
 
         Assert.True(completed);
-        var document = store.GetDocument("octocat");
-        Assert.NotNull(document);
-        Assert.Null(document.QueuedOccasion);
-        Assert.Equal(OperatorSnapshotRunStatus.Succeeded, document.Run.Status);
-        Assert.Equal(lastSuccess, document.LastSuccessfulCollectionAt);
+        await tokenExchange.Received(1).RefreshAccessTokenAsync("refresh", Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -311,12 +338,19 @@ public sealed class DailySnapshotCollectionPassServiceTests
         signIns.Seed(new HostedSignInRecord
         {
             OperatorLogin = "octocat",
-            CompletedAt = DateTimeOffset.UtcNow.AddDays(-40),
+            CompletedAt = DateTimeOffset.UtcNow.AddDays(-1),
             RefreshToken = "refresh",
         });
 
         var completed = false;
-        var sut = CreateSut(store, signIns: signIns);
+        var sut = CreateSut(
+            store,
+            signIns: signIns,
+            admission: new HostedAdmissionControlOptions
+            {
+                Enabled = true,
+                AllowedUserLogins = "other-user",
+            });
         await sut.HandleQueueMessageAsync(
             new DailySnapshotQueueInvocation
             {
@@ -345,7 +379,7 @@ public sealed class DailySnapshotCollectionPassServiceTests
     }
 
     [Fact]
-    public async Task HandleQueueMessage_WhenSignInRecordMissing_ClearsQueuedOccasionAndCompletes()
+    public async Task HandleQueueMessage_WhenSignInRecordMissing_RecordsSignInOrTokenFailure()
     {
         var store = new InMemoryOperatorSnapshotStore();
         store.Seed("octocat", new OperatorSnapshotDocument
@@ -379,7 +413,8 @@ public sealed class DailySnapshotCollectionPassServiceTests
         Assert.True(completed);
         var document = store.GetDocument("octocat");
         Assert.NotNull(document);
-        Assert.Null(document.QueuedOccasion);
+        Assert.Equal(OperatorSnapshotRunStatus.Failed, document.Run.Status);
+        Assert.Equal(OperatorSnapshotRunReason.SignInOrToken, document.Run.Reason);
     }
 
     [Fact]
@@ -426,7 +461,10 @@ public sealed class DailySnapshotCollectionPassServiceTests
         InMemoryOperatorSnapshotStore store,
         RecordingDailyQueuePublisher? queue = null,
         IDailyCollectionRunnerLease? runner = null,
-        InMemoryHostedSignInRecordStore? signIns = null)
+        InMemoryHostedSignInRecordStore? signIns = null,
+        HostedAdmissionControlOptions? admission = null,
+        IHostedGitHubOAuthTokenExchange? tokenExchange = null,
+        IDailyOccasionService? dailyOccasion = null)
     {
         queue ??= new RecordingDailyQueuePublisher();
         if (signIns is null)
@@ -441,13 +479,9 @@ public sealed class DailySnapshotCollectionPassServiceTests
             });
         }
 
-        var tokenExchange = Substitute.For<IHostedGitHubOAuthTokenExchange>();
-        tokenExchange.RefreshAccessTokenAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(new HostedGitHubRefreshTokenExchangeResult(
-                "access",
-                "refresh",
-                DateTimeOffset.UtcNow.AddDays(1),
-                null));
+        tokenExchange ??= CreateDefaultTokenExchange();
+
+        dailyOccasion ??= CreateDefaultDailyOccasion();
 
         return new DailySnapshotCollectionPassService(
             new TestScheduledCollectionEnvironment(enabled: true),
@@ -456,13 +490,35 @@ public sealed class DailySnapshotCollectionPassServiceTests
             tokenExchange,
             queue,
             runner ?? new AlwaysAvailableRunnerLease(),
+            dailyOccasion,
             new OperatorSnapshotCollectionCoordinator(
                 Substitute.For<ISnapshotCollectionCredentialScopeFactory>(),
                 TimeProvider.System,
                 new OperatorSnapshotApplicationStopping(CancellationToken.None),
                 NullLogger<OperatorSnapshotCollectionCoordinator>.Instance),
-            new HostedCollectionEligibilityEvaluator(Options.Create(new HostedAdmissionControlOptions { Enabled = false })),
+            new HostedCollectionEligibilityEvaluator(
+                Options.Create(admission ?? new HostedAdmissionControlOptions { Enabled = false })),
             TimeProvider.System,
             NullLogger<DailySnapshotCollectionPassService>.Instance);
+    }
+
+    private static IDailyOccasionService CreateDefaultDailyOccasion()
+    {
+        var dailyOccasion = Substitute.For<IDailyOccasionService>();
+        dailyOccasion.TryFillDailyOccasionAsync(Arg.Any<CancellationToken>())
+            .Returns(DailyOccasionFillResult.Filled);
+        return dailyOccasion;
+    }
+
+    private static IHostedGitHubOAuthTokenExchange CreateDefaultTokenExchange()
+    {
+        var tokenExchange = Substitute.For<IHostedGitHubOAuthTokenExchange>();
+        tokenExchange.RefreshAccessTokenAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(new HostedGitHubRefreshTokenExchangeResult(
+                "access",
+                "refresh",
+                DateTimeOffset.UtcNow.AddDays(1),
+                null));
+        return tokenExchange;
     }
 }

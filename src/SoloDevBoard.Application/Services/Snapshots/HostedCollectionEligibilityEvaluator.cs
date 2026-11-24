@@ -27,11 +27,6 @@ public sealed class HostedCollectionEligibilityEvaluator(IOptions<HostedAdmissio
             return false;
         }
 
-        if (signInRecord.CompletedAt > GetOccasionStartUtc(occasionInstant))
-        {
-            return false;
-        }
-
         if (!IsAllowedByAdmission(signInRecord))
         {
             return false;
@@ -57,21 +52,18 @@ public sealed class HostedCollectionEligibilityEvaluator(IOptions<HostedAdmissio
         return true;
     }
 
-    /// <summary>Returns true when the login may start a queued pass at <paramref name="nowUtc"/> (dequeue run rules).</summary>
+    /// <summary>Returns true when the login may start a queued pass (admission lists only at dequeue).</summary>
     public bool IsEligibleAtRun(HostedSignInRecord signInRecord, DateTimeOffset nowUtc)
     {
         ArgumentNullException.ThrowIfNull(signInRecord);
+        _ = nowUtc;
+        return IsAllowedByAdmission(signInRecord);
+    }
 
-        if (signInRecord.CredentialUnusable)
-        {
-            return false;
-        }
-
-        if (!IsInsideSignInWindow(signInRecord.CompletedAt, nowUtc))
-        {
-            return false;
-        }
-
+    /// <summary>Admission verdict only, for schedule refusals.</summary>
+    public bool IsAdmissionAllowed(HostedSignInRecord signInRecord)
+    {
+        ArgumentNullException.ThrowIfNull(signInRecord);
         return IsAllowedByAdmission(signInRecord);
     }
 

@@ -11,12 +11,14 @@ public sealed class DailySnapshotCollectionPassService(
     IHostedGitHubOAuthTokenExchange tokenExchange,
     IDailySnapshotQueuePublisher queuePublisher,
     IDailyCollectionRunnerLease runnerLease,
+    IDailyOccasionService dailyOccasion,
     OperatorSnapshotCollectionCoordinator coordinator,
     HostedCollectionEligibilityEvaluator eligibility,
     TimeProvider timeProvider,
     ILogger<DailySnapshotCollectionPassService> logger) : IDailySnapshotCollectionPassService
 {
     private static readonly TimeSpan VisibilityRenew = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan UnmetFillDelay = TimeSpan.FromMinutes(15);
 
     /// <inheritdoc/>
     public async Task HandleQueueMessageAsync(
@@ -29,6 +31,18 @@ public sealed class DailySnapshotCollectionPassService(
 
         if (!environment.IsHostedScheduleEnabled)
         {
+            await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        if (string.Equals(message.Kind, "unmetFill", StringComparison.Ordinal))
+        {
+            if (await TryDeferForNotBeforeAsync(message, invocation, cancellationToken).ConfigureAwait(false))
+            {
+                return;
+            }
+
+            await dailyOccasion.TryFillDailyOccasionAsync(cancellationToken).ConfigureAwait(false);
             await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -57,6 +71,7 @@ public sealed class DailySnapshotCollectionPassService(
             }
 
             await WriteScheduledInterruptionAsync(found, cancellationToken).ConfigureAwait(false);
+            await EnqueueUnmetFillAsync(cancellationToken).ConfigureAwait(false);
             await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -77,7 +92,14 @@ public sealed class DailySnapshotCollectionPassService(
         var signIn = await signInRecords.GetAsync(message.OperatorLogin, cancellationToken).ConfigureAwait(false);
         if (signIn is not HostedSignInRecordReadResult.Found record)
         {
-            await ClearQueuedOccasionAsync(found, cancellationToken).ConfigureAwait(false);
+            await WriteSignInFailureAsync(found, cancellationToken).ConfigureAwait(false);
+            await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        if (record.Record.CredentialUnusable)
+        {
+            await WriteSignInFailureAsync(found, cancellationToken).ConfigureAwait(false);
             await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -240,6 +262,10 @@ public sealed class DailySnapshotCollectionPassService(
                 {
                     await MarkCredentialUnusableAsync(message.OperatorLogin, cancellationToken).ConfigureAwait(false);
                 }
+                else if (found.Document.Run.Reason is OperatorSnapshotRunReason.RateLimit or OperatorSnapshotRunReason.Unexpected)
+                {
+                    await EnqueueUnmetFillAsync(cancellationToken).ConfigureAwait(false);
+                }
 
                 return;
             }
@@ -251,6 +277,11 @@ public sealed class DailySnapshotCollectionPassService(
                     found.Document.PassExecuting = false;
                     found.Document.PassLeaseUntil = null;
                     await snapshotStore.SaveAsync(message.OperatorLogin, found.Document, found.Token, cancellationToken).ConfigureAwait(false);
+                }
+
+                if (found.Document.Run.Reason == OperatorSnapshotRunReason.ScheduledCollectionStopped)
+                {
+                    await EnqueueUnmetFillAsync(cancellationToken).ConfigureAwait(false);
                 }
 
                 return;
@@ -307,13 +338,30 @@ public sealed class DailySnapshotCollectionPassService(
             or OperatorSnapshotRunStatus.Failed
             or OperatorSnapshotRunStatus.Interrupted;
 
+    private async Task EnqueueUnmetFillAsync(CancellationToken cancellationToken)
+    {
+        var notBefore = timeProvider.GetUtcNow().Add(UnmetFillDelay);
+        await queuePublisher.EnqueueAsync(
+            new DailySnapshotQueueMessage
+            {
+                Kind = "unmetFill",
+                NotBefore = DailySnapshotRetryNotBefore.ToIso8601Utc(notBefore),
+            },
+            cancellationToken).ConfigureAwait(false);
+    }
+
     private async Task<bool> TryDeferForNotBeforeAsync(
         DailySnapshotQueueMessage message,
         DailySnapshotQueueInvocation invocation,
         CancellationToken cancellationToken)
     {
         if (!string.Equals(message.Kind, "retry", StringComparison.Ordinal)
-            || !DailySnapshotRetryNotBefore.TryParseIso8601Utc(message.NotBefore, out var notBefore))
+            && !string.Equals(message.Kind, "unmetFill", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        if (!DailySnapshotRetryNotBefore.TryParseIso8601Utc(message.NotBefore, out var notBefore))
         {
             return false;
         }

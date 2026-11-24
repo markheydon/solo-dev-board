@@ -41,21 +41,13 @@ public sealed class DailyOccasionService(
         }
 
         var utcNow = _timeProvider.GetUtcNow();
-        if (!IsInFillWindow(utcNow))
-        {
-            return DailyOccasionFillResult.Skipped;
-        }
-
         var occasionDate = utcNow.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
-        var existing = await _markerStore.GetAsync(occasionDate, cancellationToken).ConfigureAwait(false);
-        if (existing is OccasionMarkerReadResult.Found)
+        var markerRead = await _markerStore.GetAsync(occasionDate, cancellationToken).ConfigureAwait(false);
+        if (markerRead is OccasionMarkerReadResult.Unreadable)
         {
-            return DailyOccasionFillResult.AlreadyFilled;
-        }
-
-        if (existing is OccasionMarkerReadResult.Unreadable)
-        {
-            _logger.LogWarning("Occasion marker for {OccasionDate} is unreadable; skipping fill until storage is repaired.", occasionDate);
+            _logger.LogWarning(
+                "Occasion marker for {OccasionDate} is unreadable; skipping fill until storage is repaired.",
+                occasionDate);
             return DailyOccasionFillResult.AlreadyFilled;
         }
 
@@ -66,19 +58,17 @@ public sealed class DailyOccasionService(
             return DailyOccasionFillResult.LostRace;
         }
 
-        existing = await _markerStore.GetAsync(occasionDate, cancellationToken).ConfigureAwait(false);
-        if (existing is OccasionMarkerReadResult.Found)
-        {
-            return DailyOccasionFillResult.AlreadyFilled;
-        }
-
-        if (existing is OccasionMarkerReadResult.Unreadable)
+        markerRead = await _markerStore.GetAsync(occasionDate, cancellationToken).ConfigureAwait(false);
+        if (markerRead is OccasionMarkerReadResult.Unreadable)
         {
             _logger.LogWarning("Occasion marker for {OccasionDate} is unreadable after lease; skipping fill.", occasionDate);
             return DailyOccasionFillResult.AlreadyFilled;
         }
 
-        var occasionInstant = GetOccasionInstant(utcNow);
+        var priorOperators = markerRead is OccasionMarkerReadResult.Found foundMarker
+            ? foundMarker.Marker.Operators
+            : [];
+        var occasionInstant = utcNow;
         var signInRecords = await _signInRecordStore.ListAsync(cancellationToken).ConfigureAwait(false);
         var enqueued = new List<string>(signInRecords.Count);
 
@@ -120,19 +110,62 @@ public sealed class DailyOccasionService(
             enqueued.Add(record.OperatorLogin);
         }
 
+        var unionOperators = priorOperators
+            .Concat(enqueued)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
         var marker = new OccasionMarker
         {
             OccasionDate = occasionDate,
             FilledAt = utcNow,
-            Operators = enqueued,
+            Operators = unionOperators,
         };
 
-        var created = await _markerStore.TryCreateAsync(marker, cancellationToken).ConfigureAwait(false);
-        return created switch
+        var persist = await PersistMarkerAsync(marker, markerRead, cancellationToken).ConfigureAwait(false);
+        return persist switch
         {
-            OccasionMarkerWriteResult.AlreadyExists => DailyOccasionFillResult.AlreadyFilled,
+            MarkerPersistOutcome.LostRace => DailyOccasionFillResult.LostRace,
+            MarkerPersistOutcome.Unreadable => DailyOccasionFillResult.AlreadyFilled,
             _ => DailyOccasionFillResult.Filled,
         };
+    }
+
+    private async Task<MarkerPersistOutcome> PersistMarkerAsync(
+        OccasionMarker marker,
+        OccasionMarkerReadResult markerRead,
+        CancellationToken cancellationToken)
+    {
+        if (markerRead is OccasionMarkerReadResult.NotFound)
+        {
+            var created = await _markerStore.TryCreateAsync(marker, cancellationToken).ConfigureAwait(false);
+            if (created is OccasionMarkerWriteResult.Created)
+            {
+                return MarkerPersistOutcome.Ok;
+            }
+
+            var reread = await _markerStore.GetAsync(marker.OccasionDate, cancellationToken).ConfigureAwait(false);
+            return await PersistMarkerAsync(marker, reread, cancellationToken).ConfigureAwait(false);
+        }
+
+        if (markerRead is not OccasionMarkerReadResult.Found found)
+        {
+            return MarkerPersistOutcome.Unreadable;
+        }
+
+        var replace = await _markerStore.TryReplaceAsync(marker, found.Etag, cancellationToken).ConfigureAwait(false);
+        return replace switch
+        {
+            OccasionMarkerWriteResult.Replaced => MarkerPersistOutcome.Ok,
+            OccasionMarkerWriteResult.ConcurrencyConflict => MarkerPersistOutcome.LostRace,
+            _ => MarkerPersistOutcome.Ok,
+        };
+    }
+
+    private enum MarkerPersistOutcome
+    {
+        Ok,
+        LostRace,
+        Unreadable,
     }
 
     /// <summary>Enqueues missing <c>initial</c> messages after a worker restart.</summary>
@@ -230,23 +263,5 @@ public sealed class DailyOccasionService(
 
         var save = await _snapshotStore.SaveAsync(operatorLogin, document, token, cancellationToken).ConfigureAwait(false);
         return save is OperatorSnapshotSaveResult.Succeeded;
-    }
-
-    private static bool IsInFillWindow(DateTimeOffset utcNow)
-    {
-        var occasion = GetTodayOccasionAt(utcNow);
-        return utcNow >= occasion && utcNow <= occasion.AddMinutes(15);
-    }
-
-    private static DateTimeOffset GetOccasionInstant(DateTimeOffset utcNow)
-    {
-        var occasion = GetTodayOccasionAt(utcNow);
-        return utcNow > occasion ? utcNow : occasion;
-    }
-
-    private static DateTimeOffset GetTodayOccasionAt(DateTimeOffset utcNow)
-    {
-        var date = utcNow.UtcDateTime.Date;
-        return new DateTimeOffset(date.Year, date.Month, date.Day, 5, 0, 0, TimeSpan.Zero);
     }
 }

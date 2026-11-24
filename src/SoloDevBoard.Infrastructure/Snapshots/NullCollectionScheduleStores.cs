@@ -12,6 +12,13 @@ public sealed class NullCollectionOccasionMarkerStore : ICollectionOccasionMarke
     /// <inheritdoc/>
     public Task<OccasionMarkerWriteResult> TryCreateAsync(OccasionMarker marker, CancellationToken cancellationToken = default)
         => Task.FromResult<OccasionMarkerWriteResult>(new OccasionMarkerWriteResult.AlreadyExists());
+
+    /// <inheritdoc/>
+    public Task<OccasionMarkerWriteResult> TryReplaceAsync(
+        OccasionMarker marker,
+        string expectedEtag,
+        CancellationToken cancellationToken = default)
+        => Task.FromResult<OccasionMarkerWriteResult>(new OccasionMarkerWriteResult.ConcurrencyConflict());
 }
 
 /// <summary>No-op queue for lean posture.</summary>

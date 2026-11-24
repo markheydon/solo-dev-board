@@ -167,6 +167,23 @@ public sealed class OperatorSnapshotStatusCopyTests
     }
 
     [Fact]
+    public void BuildScheduleClause_WhenQueuedAfterTodaysAsk_StillNamesTodayAt0500Utc()
+    {
+        var status = new OperatorSnapshotStatusDto
+        {
+            Kind = OperatorSnapshotStatusKind.NeverRun,
+            DurabilityKind = OperatorSnapshotDurabilityKind.HostedBlob,
+            SchedulePosture = OperatorSnapshotSchedulePosture.Hosted,
+            QueuedForOccasion = "2026-11-23",
+            NoScheduleReason = OperatorSnapshotNoScheduleReason.None,
+        };
+
+        var schedule = OperatorSnapshotStatusCopy.BuildScheduleClause(status);
+
+        Assert.Equal("Next scheduled collection: 05:00 UTC.", schedule);
+    }
+
+    [Fact]
     public void BuildSnapshotSuffix_QueuedBeforePass_StartsWithScheduleNotSaving()
     {
         var status = new OperatorSnapshotStatusDto

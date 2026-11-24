@@ -267,44 +267,44 @@ description: "Task list for scheduled snapshot collection implementation"
 
 ### Tests for Phase 12
 
-- [ ] T097 [P] [US7] Replace fill-window tests in `tests/SoloDevBoard.Application.Tests/DailyOccasionServiceTests.cs`: no fill before 05:00 on worker start; fill at 05:00 when marker absent; catch-up at 05:10 when marker absent; later fill when marker present queues after success; no refusal after 05:15 per quickstart.md section 3
-- [ ] T098 [P] [US7] Application tests: sign-in at 06:00 UTC queued by fill at 06:30; fill uses `TimeProvider` instant not capped 05:00 for `HostedSignInRecord.completedAt` window in `tests/SoloDevBoard.Application.Tests/HostedCollectionEligibilityEvaluatorTests.cs`
-- [ ] T099 [P] [US1] Application tests: queued message still runs when `completedAt` is older than 30 days at dequeue; not-allowed still withdraws without failed collection in `tests/SoloDevBoard.Application.Tests/` per quickstart.md section 3
-- [ ] T100 [P] [US6] Application tests: after fourth failed attempt or interruption, one `unmetFill` with 15-minute hide then fill includes idle eligible operators in `tests/SoloDevBoard.Application.Tests/`; no `unmetFill` on `signInOrToken`
-- [ ] T082 [P] [US6] Infrastructure tests: occasion marker replace under etag; `unmetFill` and `retry` visibility per data-model.md `QueueMessage.notBefore` in `tests/SoloDevBoard.Infrastructure.Tests/`
-- [ ] T101 [P] [US5] Application tests: `NextOccasionAtUtc` and `NoScheduleReason` order (`notAllowed`, `credentialUnusable`, `outsideWindow`); following day at 05:00 after ask passed whether or not today's scan succeeded; queued keeps today after 05:00 in `tests/SoloDevBoard.Application.Tests/OperatorSnapshotScheduleFactsServiceTests.cs` (add file if missing)
-- [ ] T110 [P] [US5] bUnit: schedule copy per contracts/repositories-schedule-copy.md after today's ask passed and when queued in `tests/SoloDevBoard.Web.Tests/`
+- [X] T097 [P] [US7] Replace fill-window tests in `tests/SoloDevBoard.Application.Tests/DailyOccasionServiceTests.cs`: no fill before 05:00 on worker start; fill at 05:00 when marker absent; catch-up at 05:10 when marker absent; later fill when marker present queues after success; no refusal after 05:15 per quickstart.md section 3
+- [X] T098 [P] [US7] Application tests: sign-in at 06:00 UTC queued by fill at 06:30; fill uses `TimeProvider` instant not capped 05:00 for `HostedSignInRecord.completedAt` window in `tests/SoloDevBoard.Application.Tests/HostedCollectionEligibilityEvaluatorTests.cs`
+- [X] T099 [P] [US1] Application tests: queued message still runs when `completedAt` is older than 30 days at dequeue; not-allowed still withdraws without failed collection in `tests/SoloDevBoard.Application.Tests/` per quickstart.md section 3
+- [X] T100 [P] [US6] Application tests: after fourth failed attempt or interruption, one `unmetFill` with 15-minute hide then fill includes idle eligible operators in `tests/SoloDevBoard.Application.Tests/`; no `unmetFill` on `signInOrToken`
+- [X] T082 [P] [US6] Infrastructure tests: occasion marker replace under etag; `unmetFill` and `retry` visibility per data-model.md `QueueMessage.notBefore` in `tests/SoloDevBoard.Infrastructure.Tests/`
+- [X] T101 [P] [US5] Application tests: `NextOccasionAtUtc` and `NoScheduleReason` order (`notAllowed`, `credentialUnusable`, `outsideWindow`); following day at 05:00 after ask passed whether or not today's scan succeeded; queued keeps today after 05:00 in `tests/SoloDevBoard.Application.Tests/OperatorSnapshotScheduleFactsServiceTests.cs` (add file if missing)
+- [X] T110 [P] [US5] bUnit: schedule copy per contracts/repositories-schedule-copy.md after today's ask passed and when queued in `tests/SoloDevBoard.Web.Tests/`
 
 ### Fill and occasion marker (US1, US7)
 
-- [ ] T103 [US1] Remove `IsInFillWindow` and `AlreadyFilled` when marker exists from `src/SoloDevBoard.Application/Services/Snapshots/DailyOccasionService.cs`; use fill instant `utcNow` for eligibility; always run fill logic when hosted schedule enabled and caller invokes the method
-- [ ] T104 [US7] Remove `HostedSignInRecord.completedAt` after 05:00 UTC exclusion from `IsEligibleAtFill` in `src/SoloDevBoard.Application/Services/Snapshots/HostedCollectionEligibilityEvaluator.cs` (data-model.md hosted sign-in window at fill instant)
-- [ ] T105 [US1] Add `ICollectionOccasionMarkerStore.TryReplaceAsync` (etag) and implement in `src/SoloDevBoard.Infrastructure/Snapshots/BlobCollectionOccasionMarkerStore.cs` so later fills the same UTC date union `OccasionMarker.operators` and update `OccasionMarker.filledAt` per data-model.md
-- [ ] T106 [US1] On fill, queue every eligible person not already queued or in progress, including after a same-day success, in `DailyOccasionService.cs`; lost fill lease retries fill without duplicating queue entries
+- [X] T103 [US1] Remove `IsInFillWindow` and `AlreadyFilled` when marker exists from `src/SoloDevBoard.Application/Services/Snapshots/DailyOccasionService.cs`; use fill instant `utcNow` for eligibility; always run fill logic when hosted schedule enabled and caller invokes the method
+- [X] T104 [US7] Remove `HostedSignInRecord.completedAt` after 05:00 UTC exclusion from `IsEligibleAtFill` in `src/SoloDevBoard.Application/Services/Snapshots/HostedCollectionEligibilityEvaluator.cs` (data-model.md hosted sign-in window at fill instant)
+- [X] T105 [US1] Add `ICollectionOccasionMarkerStore.TryReplaceAsync` (etag) and implement in `src/SoloDevBoard.Infrastructure/Snapshots/BlobCollectionOccasionMarkerStore.cs` so later fills the same UTC date union `OccasionMarker.operators` and update `OccasionMarker.filledAt` per data-model.md
+- [X] T106 [US1] On fill, queue every eligible person not already queued or in progress, including after a same-day success, in `DailyOccasionService.cs`; lost fill lease retries fill without duplicating queue entries
 
 ### Timer, startup, and `unmetFill` (US7, US6)
 
-- [ ] T107 [US7] Change timer NCRONTAB to `0 0 5 * * *` in `src/SoloDevBoard.Functions/DailyCollectionFunctions.cs`
-- [ ] T108 [US7] On Functions host start in `src/SoloDevBoard.Functions/Program.cs` or a dedicated startup service: run `RepairMissingInitialMessagesAsync`, then call `TryFillDailyOccasionAsync` only when clock is at or after 05:00 UTC and today's occasion marker is absent; do not fill before 05:00; do not use timer `RunOnStartup` to fill overnight per research.md
-- [ ] T109 [US6] Extend `DailySnapshotQueueMessage` and publisher for `kind` `unmetFill` with required `QueueMessage.notBefore` (15 minutes) per data-model.md in `src/SoloDevBoard.Application/Services/Snapshots/` and `src/SoloDevBoard.Infrastructure/Snapshots/AzureDailySnapshotQueuePublisher.cs`
-- [ ] T111 [US6] Enqueue `unmetFill` after terminal `rateLimit`/`unexpected` with no tries left and after `scheduledCollectionStopped` interruption in `src/SoloDevBoard.Application/Services/Snapshots/DailySnapshotCollectionPassService.cs`; never on `signInOrToken`
-- [ ] T113 [US7] Handle `unmetFill` in `DailySnapshotCollectionPassService.HandleQueueMessageAsync` or thin branch in `DailyCollectionFunctions.cs`: complete message and call `IDailyOccasionService.TryFillDailyOccasionAsync` without walking GitHub per contracts/daily-collection-schedule.md
+- [X] T107 [US7] Change timer NCRONTAB to `0 0 5 * * *` in `src/SoloDevBoard.Functions/DailyCollectionFunctions.cs`
+- [X] T108 [US7] On Functions host start in `src/SoloDevBoard.Functions/Program.cs` or a dedicated startup service: run `RepairMissingInitialMessagesAsync`, then call `TryFillDailyOccasionAsync` only when clock is at or after 05:00 UTC and today's occasion marker is absent; do not fill before 05:00; do not use timer `RunOnStartup` to fill overnight per research.md
+- [X] T109 [US6] Extend `DailySnapshotQueueMessage` and publisher for `kind` `unmetFill` with required `QueueMessage.notBefore` (15 minutes) per data-model.md in `src/SoloDevBoard.Application/Services/Snapshots/` and `src/SoloDevBoard.Infrastructure/Snapshots/AzureDailySnapshotQueuePublisher.cs`
+- [X] T111 [US6] Enqueue `unmetFill` after terminal `rateLimit`/`unexpected` with no tries left and after `scheduledCollectionStopped` interruption in `src/SoloDevBoard.Application/Services/Snapshots/DailySnapshotCollectionPassService.cs`; never on `signInOrToken`
+- [X] T113 [US7] Handle `unmetFill` in `DailySnapshotCollectionPassService.HandleQueueMessageAsync` or thin branch in `DailyCollectionFunctions.cs`: complete message and call `IDailyOccasionService.TryFillDailyOccasionAsync` without walking GitHub per contracts/daily-collection-schedule.md
 
 ### Dequeue run rules (US1)
 
-- [ ] T114 [US1] Replace dequeue gating in `src/SoloDevBoard.Application/Services/Snapshots/DailySnapshotCollectionPassService.cs`: use admission-only check at dequeue (not 30-day window); attempt scan when allowed even if `HostedSignInRecord.completedAt` is outside 30 days; remove silent skip on `credentialUnusable` and missing record in favour of `signInOrToken` failed run per contracts/daily-collection-schedule.md
-- [ ] T115 [US1] Refactor or narrow `HostedCollectionEligibilityEvaluator.IsEligibleAtRun` in `src/SoloDevBoard.Application/Services/Snapshots/HostedCollectionEligibilityEvaluator.cs` to admission lists only; keep fill-time rules in `IsEligibleAtFill`
-- [ ] T116 [US1] Stop using `IsEligibleAtRun` for schedule facts in `src/SoloDevBoard.Application/Services/Snapshots/OperatorSnapshotScheduleFactsService.cs`; use `WouldBeEligibleForSchedule` at the instant the page names (today at 05:00 before ask, else following day at 05:00) per data-model.md `NoScheduleReason` and `NextOccasionAtUtc`
+- [X] T114 [US1] Replace dequeue gating in `src/SoloDevBoard.Application/Services/Snapshots/DailySnapshotCollectionPassService.cs`: use admission-only check at dequeue (not 30-day window); attempt scan when allowed even if `HostedSignInRecord.completedAt` is outside 30 days; remove silent skip on `credentialUnusable` and missing record in favour of `signInOrToken` failed run per contracts/daily-collection-schedule.md
+- [X] T115 [US1] Refactor or narrow `HostedCollectionEligibilityEvaluator.IsEligibleAtRun` in `src/SoloDevBoard.Application/Services/Snapshots/HostedCollectionEligibilityEvaluator.cs` to admission lists only; keep fill-time rules in `IsEligibleAtFill`
+- [X] T116 [US1] Stop using `IsEligibleAtRun` for schedule facts in `src/SoloDevBoard.Application/Services/Snapshots/OperatorSnapshotScheduleFactsService.cs`; use `WouldBeEligibleForSchedule` at the instant the page names (today at 05:00 before ask, else following day at 05:00) per data-model.md `NoScheduleReason` and `NextOccasionAtUtc`
 
 ### Schedule facts and copy (US5)
 
-- [ ] T117 [US5] Rewrite `TryComputeNextOccasion` and remove 15-minute grace / `completedAt <= 05:00` rules in `src/SoloDevBoard.Application/Services/Snapshots/OperatorSnapshotScheduleFactsService.cs` per data-model.md and contracts/repositories-schedule-copy.md
-- [ ] T118 [US5] Align `src/SoloDevBoard.Web/Components/Features/Repositories/OperatorSnapshotStatusCopy.cs` with updated facts (following UTC day sentence, queued-today row, refusal precedence); confirm no occasion list, run history, or try list is added (FR-018)
-- [ ] T119 [US5] Update `website/content/docs/repositories.md` and `tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md` with T110 in the same change
+- [X] T117 [US5] Rewrite `TryComputeNextOccasion` and remove 15-minute grace / `completedAt <= 05:00` rules in `src/SoloDevBoard.Application/Services/Snapshots/OperatorSnapshotScheduleFactsService.cs` per data-model.md and contracts/repositories-schedule-copy.md
+- [X] T118 [US5] Align `src/SoloDevBoard.Web/Components/Features/Repositories/OperatorSnapshotStatusCopy.cs` with updated facts (following UTC day sentence, queued-today row, refusal precedence); confirm no occasion list, run history, or try list is added (FR-018)
+- [X] T119 [US5] Update `website/content/docs/repositories.md` and `tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md` with T110 in the same change
 
 ### Validation
 
-- [ ] T112 Re-run quickstart.md section 6 commands after Phase 12 in `specs/002-scheduled-snapshot-collection/quickstart.md`
+- [X] T112 Re-run quickstart.md section 6 commands after Phase 12 in `specs/002-scheduled-snapshot-collection/quickstart.md`
 
 **Checkpoint**: Code matches FR-001, FR-006, FR-012, FR-015, FR-016, FR-017, FR-020, FR-021, and worker outcome rows in contracts/daily-collection-schedule.md and quickstart.md sections 3–6
 

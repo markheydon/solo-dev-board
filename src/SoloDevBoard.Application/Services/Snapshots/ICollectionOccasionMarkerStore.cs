@@ -8,6 +8,12 @@ public interface ICollectionOccasionMarkerStore
 
     /// <summary>Creates the marker when absent.</summary>
     Task<OccasionMarkerWriteResult> TryCreateAsync(OccasionMarker marker, CancellationToken cancellationToken = default);
+
+    /// <summary>Replaces an existing marker when <paramref name="expectedEtag"/> matches.</summary>
+    Task<OccasionMarkerWriteResult> TryReplaceAsync(
+        OccasionMarker marker,
+        string expectedEtag,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>Occasion marker document.</summary>
@@ -27,7 +33,7 @@ public sealed class OccasionMarker
 public abstract record OccasionMarkerReadResult
 {
     /// <summary>Marker exists.</summary>
-    public sealed record Found(OccasionMarker Marker) : OccasionMarkerReadResult;
+    public sealed record Found(OccasionMarker Marker, string Etag = "") : OccasionMarkerReadResult;
 
     /// <summary>Marker absent.</summary>
     public sealed record NotFound : OccasionMarkerReadResult;
@@ -44,4 +50,10 @@ public abstract record OccasionMarkerWriteResult
 
     /// <summary>Another copy created it first.</summary>
     public sealed record AlreadyExists : OccasionMarkerWriteResult;
+
+    /// <summary>Marker updated.</summary>
+    public sealed record Replaced : OccasionMarkerWriteResult;
+
+    /// <summary>Optimistic concurrency check failed.</summary>
+    public sealed record ConcurrencyConflict : OccasionMarkerWriteResult;
 }

@@ -27,6 +27,22 @@ public sealed class DailySnapshotQueueMessageJsonTests
     }
 
     [Fact]
+    public void Serialise_UnmetFillMessage_IncludesNotBeforeWithoutOperator()
+    {
+        var message = new DailySnapshotQueueMessage
+        {
+            Kind = "unmetFill",
+            NotBefore = "2026-11-23T06:15:00.0000000Z",
+        };
+
+        var json = JsonSerializer.Serialize(message, JsonOptions);
+
+        Assert.Contains("unmetFill", json, StringComparison.Ordinal);
+        Assert.Contains("notBefore", json, StringComparison.Ordinal);
+        Assert.Contains("\"operatorLogin\":\"\"", json, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Serialise_DailySnapshotQueueMessage_ExcludesRefreshToken()
     {
         var message = new DailySnapshotQueueMessage

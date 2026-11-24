@@ -20,7 +20,7 @@ public sealed class DailyCollectionFunctions(
 
     [Function(nameof(DailyOccasionFillTimer))]
     public async Task DailyOccasionFillTimer(
-        [TimerTrigger("0 0-15 5 * * *")] TimerInfo timerInfo,
+        [TimerTrigger("0 0 5 * * *")] TimerInfo timerInfo,
         FunctionContext context)
     {
         _ = timerInfo;

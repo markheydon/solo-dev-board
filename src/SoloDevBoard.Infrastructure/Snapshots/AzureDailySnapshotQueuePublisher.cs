@@ -29,7 +29,12 @@ public sealed class AzureDailySnapshotQueuePublisher(
     private TimeSpan? ComputeInitialVisibility(DailySnapshotQueueMessage message)
     {
         if (!string.Equals(message.Kind, "retry", StringComparison.Ordinal)
-            || !DailySnapshotRetryNotBefore.TryParseIso8601Utc(message.NotBefore, out var notBefore))
+            && !string.Equals(message.Kind, "unmetFill", StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        if (!DailySnapshotRetryNotBefore.TryParseIso8601Utc(message.NotBefore, out var notBefore))
         {
             return null;
         }

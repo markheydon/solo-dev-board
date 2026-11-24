@@ -36,7 +36,9 @@ internal sealed class RecordingDailyQueuePublisher : IDailySnapshotQueuePublishe
 internal sealed class InMemoryOccasionMarkerStore : ICollectionOccasionMarkerStore
 {
     private readonly Dictionary<string, OccasionMarker> _markers = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string> _etags = new(StringComparer.Ordinal);
     private readonly HashSet<string> _unreadable = new(StringComparer.Ordinal);
+    private int _etagCounter;
 
     public void MarkUnreadable(string occasionDate) => _unreadable.Add(occasionDate);
 
@@ -49,7 +51,7 @@ internal sealed class InMemoryOccasionMarkerStore : ICollectionOccasionMarkerSto
 
         return Task.FromResult<OccasionMarkerReadResult>(
             _markers.TryGetValue(occasionDate, out var marker)
-                ? new OccasionMarkerReadResult.Found(marker)
+                ? new OccasionMarkerReadResult.Found(marker, _etags[occasionDate])
                 : new OccasionMarkerReadResult.NotFound());
     }
 
@@ -66,7 +68,30 @@ internal sealed class InMemoryOccasionMarkerStore : ICollectionOccasionMarkerSto
             FilledAt = marker.FilledAt,
             Operators = [.. marker.Operators],
         };
+        _etags[marker.OccasionDate] = $"etag-{_etagCounter++}";
         return Task.FromResult<OccasionMarkerWriteResult>(new OccasionMarkerWriteResult.Created());
+    }
+
+    public Task<OccasionMarkerWriteResult> TryReplaceAsync(
+        OccasionMarker marker,
+        string expectedEtag,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_markers.TryGetValue(marker.OccasionDate, out _)
+            || !_etags.TryGetValue(marker.OccasionDate, out var etag)
+            || !string.Equals(etag, expectedEtag, StringComparison.Ordinal))
+        {
+            return Task.FromResult<OccasionMarkerWriteResult>(new OccasionMarkerWriteResult.ConcurrencyConflict());
+        }
+
+        _markers[marker.OccasionDate] = new OccasionMarker
+        {
+            OccasionDate = marker.OccasionDate,
+            FilledAt = marker.FilledAt,
+            Operators = [.. marker.Operators],
+        };
+        _etags[marker.OccasionDate] = $"etag-{_etagCounter++}";
+        return Task.FromResult<OccasionMarkerWriteResult>(new OccasionMarkerWriteResult.Replaced());
     }
 }
 

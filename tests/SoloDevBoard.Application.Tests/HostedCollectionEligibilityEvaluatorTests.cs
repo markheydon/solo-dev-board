@@ -66,15 +66,15 @@ public sealed class HostedCollectionEligibilityEvaluatorTests
     }
 
     [Fact]
-    public void IsEligibleAtFill_WhenSignInCompletedAfterTodaysOccasionStart_ReturnsFalse()
+    public void IsEligibleAtFill_WhenSignInAt0600_QueuedByFillAt0630()
     {
-        var fillInstant = new DateTimeOffset(2026, 11, 23, 5, 10, 0, TimeSpan.Zero);
+        var fillInstant = new DateTimeOffset(2026, 11, 23, 6, 30, 0, TimeSpan.Zero);
         var signIn = EligibleSignIn();
-        signIn.CompletedAt = fillInstant;
+        signIn.CompletedAt = new DateTimeOffset(2026, 11, 23, 6, 0, 0, TimeSpan.Zero);
 
         var eligible = CreateSut().IsEligibleAtFill(signIn, snapshot: null, fillInstant);
 
-        Assert.False(eligible);
+        Assert.True(eligible);
     }
 
     [Fact]
@@ -156,24 +156,12 @@ public sealed class HostedCollectionEligibilityEvaluatorTests
     }
 
     [Fact]
-    public void IsEligibleAtRun_UsesCurrentInstant_NotOccasionInstant()
+    public void IsEligibleAtRun_IgnoresSignInWindowAtDequeue()
     {
-        var fillInstant = new DateTimeOffset(2026, 11, 23, 5, 10, 0, TimeSpan.Zero);
         var runInstant = new DateTimeOffset(2026, 11, 24, 6, 0, 0, TimeSpan.Zero);
         var signIn = EligibleSignIn();
-        signIn.CompletedAt = fillInstant.AddDays(-30);
+        signIn.CompletedAt = runInstant.AddDays(-40);
 
-        Assert.True(CreateSut().IsEligibleAtFill(signIn, snapshot: null, fillInstant));
-        Assert.False(CreateSut().IsEligibleAtRun(signIn, runInstant));
-    }
-
-    [Fact]
-    public void IsEligibleAtRun_WhenInsideThirtyDaysOfNow_ReturnsTrue()
-    {
-        var now = new DateTimeOffset(2026, 11, 24, 6, 0, 0, TimeSpan.Zero);
-        var signIn = EligibleSignIn();
-        signIn.CompletedAt = now.AddDays(-30);
-
-        Assert.True(CreateSut().IsEligibleAtRun(signIn, now));
+        Assert.True(CreateSut().IsEligibleAtRun(signIn, runInstant));
     }
 }

@@ -32,18 +32,15 @@ public sealed class OperatorSnapshotScheduleFactsService(
 
         var trigger = document.Trigger;
         var queued = document.QueuedOccasion;
+        var todayOccasion = GetTodayOccasionAt(utcNow);
+        var todayDate = utcNow.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
 
-        var occasionInstant = GetOccasionInstantForFacts(utcNow);
-        var nextOccasion = default(DateTimeOffset?);
         var noSchedule = OperatorSnapshotNoScheduleReason.None;
+        DateTimeOffset? nextOccasion = null;
 
         if (signInRecord is null)
         {
             noSchedule = OperatorSnapshotNoScheduleReason.OutsideWindow;
-        }
-        else if (signInRecord.CredentialUnusable)
-        {
-            noSchedule = OperatorSnapshotNoScheduleReason.CredentialUnusable;
         }
         else
         {
@@ -54,33 +51,32 @@ public sealed class OperatorSnapshotScheduleFactsService(
                 CredentialUnusable = signInRecord.CredentialUnusable,
                 OrganisationLogins = signInRecord.OrganisationLogins,
             };
-            if (!_eligibility.IsEligibleAtRun(scheduleRecord, utcNow))
+
+            var nameInstant = utcNow < todayOccasion ? todayOccasion : todayOccasion.AddDays(1);
+
+            if (!_eligibility.IsAdmissionAllowed(scheduleRecord))
             {
-                noSchedule = !IsInsideSignInWindow(signInRecord.CompletedAt, utcNow)
-                    ? OperatorSnapshotNoScheduleReason.OutsideWindow
-                    : OperatorSnapshotNoScheduleReason.NotAllowed;
+                noSchedule = OperatorSnapshotNoScheduleReason.NotAllowed;
             }
-            else if (TryComputeNextOccasion(utcNow, signInRecord, occasionInstant, out var next))
+            else if (signInRecord.CredentialUnusable)
             {
-                nextOccasion = next;
+                noSchedule = OperatorSnapshotNoScheduleReason.CredentialUnusable;
             }
-            else
+            else if (!_eligibility.WouldBeEligibleForSchedule(scheduleRecord, nameInstant))
             {
                 noSchedule = OperatorSnapshotNoScheduleReason.OutsideWindow;
             }
-        }
-
-        if (noSchedule == OperatorSnapshotNoScheduleReason.None && nextOccasion is null
-            && TryComputeNextOccasion(utcNow, signInRecord!, occasionInstant, out var computed))
-        {
-            nextOccasion = computed;
-        }
-        if (queued is not null && noSchedule == OperatorSnapshotNoScheduleReason.None)
-        {
-            var today = utcNow.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
-            if (string.Equals(queued, today, StringComparison.Ordinal))
+            else if (queued is not null && string.Equals(queued, todayDate, StringComparison.Ordinal))
             {
-                nextOccasion = GetTodayOccasionAt(utcNow);
+                nextOccasion = todayOccasion;
+            }
+            else if (utcNow < todayOccasion)
+            {
+                nextOccasion = todayOccasion;
+            }
+            else
+            {
+                nextOccasion = todayOccasion.AddDays(1);
             }
         }
 
@@ -97,49 +93,9 @@ public sealed class OperatorSnapshotScheduleFactsService(
             trigger);
     }
 
-    private static bool TryComputeNextOccasion(
-        DateTimeOffset utcNow,
-        HostedSignInRecordForSchedule signInRecord,
-        DateTimeOffset occasionInstant,
-        out DateTimeOffset nextOccasion)
-    {
-        var todayOccasion = GetTodayOccasionAt(utcNow);
-        if (utcNow <= todayOccasion.AddMinutes(15)
-            && signInRecord.CompletedAt <= todayOccasion
-            && IsInsideSignInWindow(signInRecord.CompletedAt, utcNow <= todayOccasion ? todayOccasion : utcNow))
-        {
-            nextOccasion = todayOccasion;
-            return true;
-        }
-
-        var tomorrowOccasion = todayOccasion.AddDays(1);
-        if (IsInsideSignInWindow(signInRecord.CompletedAt, tomorrowOccasion))
-        {
-            nextOccasion = tomorrowOccasion;
-            return true;
-        }
-
-        nextOccasion = default;
-        return false;
-    }
-
     private static DateTimeOffset GetTodayOccasionAt(DateTimeOffset utcNow)
     {
         var date = utcNow.UtcDateTime.Date;
         return new DateTimeOffset(date.Year, date.Month, date.Day, 5, 0, 0, TimeSpan.Zero);
     }
-
-    private static DateTimeOffset GetOccasionInstantForFacts(DateTimeOffset utcNow)
-    {
-        var todayOccasion = GetTodayOccasionAt(utcNow);
-        if (utcNow <= todayOccasion.AddMinutes(15))
-        {
-            return utcNow > todayOccasion ? utcNow : todayOccasion;
-        }
-
-        return todayOccasion.AddDays(1);
-    }
-
-    private static bool IsInsideSignInWindow(DateTimeOffset completedAt, DateTimeOffset occasionInstant)
-        => completedAt >= occasionInstant.AddDays(-30);
 }
