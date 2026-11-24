@@ -62,7 +62,7 @@ public sealed class DailySnapshotCollectionPassService(
             return;
         }
 
-        await using var runner = await runnerLease.TryAcquireAsync(TimeSpan.FromMinutes(30), cancellationToken).ConfigureAwait(false);
+        await using var runner = await runnerLease.TryAcquireAsync(TimeSpan.FromSeconds(60), cancellationToken).ConfigureAwait(false);
         if (runner is null)
         {
             await queuePublisher.EnqueueAsync(message, cancellationToken).ConfigureAwait(false);
@@ -145,13 +145,14 @@ public sealed class DailySnapshotCollectionPassService(
             return;
         }
 
-        await WaitForTerminalOrRetryAsync(message, invocation, cancellationToken).ConfigureAwait(false);
+        await WaitForTerminalOrRetryAsync(message, invocation, runner, cancellationToken).ConfigureAwait(false);
         await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
     }
 
     private async Task WaitForTerminalOrRetryAsync(
         DailySnapshotQueueMessage message,
         DailySnapshotQueueInvocation invocation,
+        IDailyCollectionRunnerLeaseHandle runner,
         CancellationToken cancellationToken)
     {
         for (var i = 0; ; i++)
@@ -221,6 +222,7 @@ public sealed class DailySnapshotCollectionPassService(
                 found.Document.PassLeaseUntil = timeProvider.GetUtcNow().Add(VisibilityRenew);
                 await snapshotStore.SaveAsync(message.OperatorLogin, found.Document, found.Token, cancellationToken).ConfigureAwait(false);
                 await invocation.UpdateVisibilityAsync(VisibilityRenew + VisibilityRenew, cancellationToken).ConfigureAwait(false);
+                await runner.TryRenewAsync(cancellationToken).ConfigureAwait(false);
             }
         }
     }

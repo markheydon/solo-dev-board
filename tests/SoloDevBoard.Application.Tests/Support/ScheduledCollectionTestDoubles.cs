@@ -96,18 +96,41 @@ internal sealed class InMemoryHostedSignInRecordStore : IHostedSignInRecordStore
 
 internal sealed class AlwaysAvailableRunnerLease : IDailyCollectionRunnerLease
 {
-    public Task<IAsyncDisposable?> TryAcquireAsync(TimeSpan duration, CancellationToken cancellationToken = default)
-        => Task.FromResult<IAsyncDisposable?>(new NoOpAsyncDisposable());
+    public Task<IDailyCollectionRunnerLeaseHandle?> TryAcquireAsync(TimeSpan duration, CancellationToken cancellationToken = default)
+        => Task.FromResult<IDailyCollectionRunnerLeaseHandle?>(new NoOpRunnerLeaseHandle());
 }
 
 internal sealed class NeverAvailableRunnerLease : IDailyCollectionRunnerLease
 {
-    public Task<IAsyncDisposable?> TryAcquireAsync(TimeSpan duration, CancellationToken cancellationToken = default)
-        => Task.FromResult<IAsyncDisposable?>(null);
+    public Task<IDailyCollectionRunnerLeaseHandle?> TryAcquireAsync(TimeSpan duration, CancellationToken cancellationToken = default)
+        => Task.FromResult<IDailyCollectionRunnerLeaseHandle?>(null);
 }
 
-internal sealed class NoOpAsyncDisposable : IAsyncDisposable
+internal sealed class NoOpRunnerLeaseHandle : IDailyCollectionRunnerLeaseHandle
 {
+    public Task TryRenewAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+}
+
+internal sealed class RecordingRunnerLease : IDailyCollectionRunnerLease
+{
+    public int RenewCount { get; private set; }
+
+    public Task<IDailyCollectionRunnerLeaseHandle?> TryAcquireAsync(TimeSpan duration, CancellationToken cancellationToken = default)
+        => Task.FromResult<IDailyCollectionRunnerLeaseHandle?>(new RecordingRunnerLeaseHandle(this));
+
+    internal void RecordRenew() => RenewCount++;
+}
+
+internal sealed class RecordingRunnerLeaseHandle(RecordingRunnerLease lease) : IDailyCollectionRunnerLeaseHandle
+{
+    public Task TryRenewAsync(CancellationToken cancellationToken = default)
+    {
+        lease.RecordRenew();
+        return Task.CompletedTask;
+    }
+
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }
 

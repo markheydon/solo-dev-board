@@ -26,6 +26,6 @@ public sealed class NullDailySnapshotQueuePublisher : IDailySnapshotQueuePublish
 public sealed class NullDailyCollectionRunnerLease : IDailyCollectionRunnerLease
 {
     /// <inheritdoc/>
-    public Task<IAsyncDisposable?> TryAcquireAsync(TimeSpan duration, CancellationToken cancellationToken = default)
-        => Task.FromResult<IAsyncDisposable?>(null);
+    public Task<IDailyCollectionRunnerLeaseHandle?> TryAcquireAsync(TimeSpan duration, CancellationToken cancellationToken = default)
+        => Task.FromResult<IDailyCollectionRunnerLeaseHandle?>(null);
 }

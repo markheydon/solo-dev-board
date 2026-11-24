@@ -226,6 +226,42 @@ public sealed class DailyOccasionServiceTests
     }
 
     [Fact]
+    public async Task TryFillDailyOccasion_RenewsRunnerLeaseOncePerSignInRecord()
+    {
+        var time = new FixedTimeProvider(OccasionDay);
+        var queue = new RecordingDailyQueuePublisher();
+        var signIns = new InMemoryHostedSignInRecordStore();
+        signIns.Seed(EligibleSignIn("eligible"));
+        signIns.Seed(EligibleSignIn("skipped-a"));
+        signIns.Seed(EligibleSignIn("skipped-b"));
+        var snapshots = new InMemoryOperatorSnapshotStore();
+        snapshots.Seed("skipped-a", new OperatorSnapshotDocument
+        {
+            OperatorLogin = "skipped-a",
+            QueuedOccasion = "2026-11-23",
+            Run = new OperatorSnapshotRun { Status = OperatorSnapshotRunStatus.Failed },
+        });
+        snapshots.Seed("skipped-b", new OperatorSnapshotDocument
+        {
+            OperatorLogin = "skipped-b",
+            QueuedOccasion = "2026-11-23",
+            Run = new OperatorSnapshotRun { Status = OperatorSnapshotRunStatus.Failed },
+        });
+        var runner = new RecordingRunnerLease();
+        var sut = DailyOccasionServiceTestFactory.Create(
+            time,
+            snapshots,
+            signIns,
+            queue,
+            new InMemoryOccasionMarkerStore(),
+            runner: runner);
+
+        await sut.TryFillDailyOccasionAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(3, runner.RenewCount);
+    }
+
+    [Fact]
     public async Task TryFillDailyOccasion_RunnerLeaseBusy_LostRace()
     {
         var time = new FixedTimeProvider(OccasionDay);

@@ -4,5 +4,5 @@ namespace SoloDevBoard.Application.Services.Snapshots;
 public interface IDailyCollectionRunnerLease
 {
     /// <summary>Tries to acquire the runner lease for a short fill or pass operation.</summary>
-    Task<IAsyncDisposable?> TryAcquireAsync(TimeSpan duration, CancellationToken cancellationToken = default);
+    Task<IDailyCollectionRunnerLeaseHandle?> TryAcquireAsync(TimeSpan duration, CancellationToken cancellationToken = default);
 }

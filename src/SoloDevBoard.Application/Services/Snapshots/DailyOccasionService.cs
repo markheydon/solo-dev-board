@@ -53,7 +53,7 @@ public sealed class DailyOccasionService(
             return DailyOccasionFillResult.AlreadyFilled;
         }
 
-        await using var runner = await _runnerLease.TryAcquireAsync(TimeSpan.FromMinutes(10), cancellationToken)
+        await using var runner = await _runnerLease.TryAcquireAsync(TimeSpan.FromSeconds(60), cancellationToken)
             .ConfigureAwait(false);
         if (runner is null)
         {
@@ -72,6 +72,8 @@ public sealed class DailyOccasionService(
 
         foreach (var record in signInRecords)
         {
+            await runner.TryRenewAsync(cancellationToken).ConfigureAwait(false);
+
             var snapshotGet = await _snapshotStore.GetAsync(record.OperatorLogin, cancellationToken).ConfigureAwait(false);
             OperatorSnapshotDocument? snapshot = snapshotGet is OperatorSnapshotGetResult.Found found
                 ? found.Document

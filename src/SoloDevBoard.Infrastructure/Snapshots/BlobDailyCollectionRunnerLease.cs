@@ -9,10 +9,14 @@ namespace SoloDevBoard.Infrastructure.Snapshots;
 public sealed class BlobDailyCollectionRunnerLease(CollectionScheduleBlobContainer container) : IDailyCollectionRunnerLease
 {
     /// <inheritdoc/>
-    public async Task<IAsyncDisposable?> TryAcquireAsync(TimeSpan duration, CancellationToken cancellationToken = default)
+    private static readonly TimeSpan MaxBlobLeaseDuration = TimeSpan.FromSeconds(60);
+
+    /// <inheritdoc/>
+    public async Task<IDailyCollectionRunnerLeaseHandle?> TryAcquireAsync(TimeSpan duration, CancellationToken cancellationToken = default)
     {
         var blob = container.Client.GetBlobClient("runner");
         var leaseClient = blob.GetBlobLeaseClient();
+        var leaseDuration = duration > MaxBlobLeaseDuration ? MaxBlobLeaseDuration : duration;
         try
         {
             if (!await blob.ExistsAsync(cancellationToken).ConfigureAwait(false))
@@ -24,8 +28,8 @@ public sealed class BlobDailyCollectionRunnerLease(CollectionScheduleBlobContain
                     .ConfigureAwait(false);
             }
 
-            await leaseClient.AcquireAsync(duration, cancellationToken: cancellationToken).ConfigureAwait(false);
-            return new ReleaseOnDispose(leaseClient);
+            await leaseClient.AcquireAsync(leaseDuration, cancellationToken: cancellationToken).ConfigureAwait(false);
+            return new RunnerLeaseHandle(leaseClient);
         }
         catch (RequestFailedException)
         {
@@ -33,15 +37,27 @@ public sealed class BlobDailyCollectionRunnerLease(CollectionScheduleBlobContain
         }
     }
 
-    private sealed class ReleaseOnDispose(BlobLeaseClient leaseClient) : IAsyncDisposable
+    private sealed class RunnerLeaseHandle(BlobLeaseClient leaseClient) : IDailyCollectionRunnerLeaseHandle
     {
+        public async Task TryRenewAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                await leaseClient.RenewAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+            }
+            catch (RequestFailedException)
+            {
+                // Best effort renew.
+            }
+        }
+
         public async ValueTask DisposeAsync()
         {
             try
             {
                 await leaseClient.ReleaseAsync().ConfigureAwait(false);
             }
-            catch (Azure.RequestFailedException)
+            catch (RequestFailedException)
             {
                 // Best effort release.
             }
