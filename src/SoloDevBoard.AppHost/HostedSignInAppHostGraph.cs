@@ -32,11 +32,13 @@ internal static class HostedSignInAppHostGraph
             .WithReference(queues)
             .WaitFor(storage);
         functions = HostedSnapshotSchedulerBindings.Apply(host, functions);
-        functions = WireLocalHostedGitHubAppClientSecret(host, functions);
+
+        var authSecretsVault = TryAddLocalAuthSecretsVault(host);
+        functions = WireLocalHostedGitHubAppClientSecret(host, functions, authSecretsVault);
 
         var app = host.CreateWebApp();
         app = app.WithReference(snapshots).WithReference(hostedSignIns).WaitFor(snapshots);
-        app = WireLocalHostedSignInAuth(host, app);
+        app = WireLocalHostedSignInAuth(host, app, authSecretsVault);
         app = app.WithEnvironment("GitHubAuth__HostedSignInCallbackBaseUri", app.GetEndpoint("https"));
         host.SetSnapshotScheduler(functions);
         host.SetApp(app);
@@ -80,9 +82,7 @@ internal static class HostedSignInAppHostGraph
         host.SetApp(app);
     }
 
-    private static IResourceBuilder<DotnetProjectResource> WireLocalHostedSignInAuth(
-        SoloDevBoardAppHost host,
-        IResourceBuilder<DotnetProjectResource> app)
+    private static IResourceBuilder<AzureKeyVaultResource>? TryAddLocalAuthSecretsVault(SoloDevBoardAppHost host)
     {
         var configuration = host.Builder.Configuration;
         var parameters = host.Parameters;
@@ -97,13 +97,37 @@ internal static class HostedSignInAppHostGraph
         var needVaultForPat = !hostedSignIn && !useLocalPat && vaultConfigured;
         var needVaultForClientSecret = hostedSignIn && !useLocalClientSecret && vaultConfigured;
 
-        if (needVaultForPat || needVaultForClientSecret)
+        if (!needVaultForPat && !needVaultForClientSecret)
         {
-            var authSecretsVault = host.Builder.AddAzureKeyVault("auth-secrets")
-                .AsExisting(parameters.AuthSecretsVaultName, parameters.AuthSecretsVaultResourceGroup);
+            return null;
+        }
 
-            // Path B local dev: operators grant Key Vault Secrets User manually (see docs/azure-key-vault-setup.md).
-            // Skip WithRoleAssignments here to avoid auth-secrets-roles ARM provisioning on every aspire start.
+        // Path B local dev: operators grant Key Vault Secrets User manually (see docs/azure-key-vault-setup.md).
+        // Skip WithRoleAssignments here to avoid auth-secrets-roles ARM provisioning on every aspire start.
+        return host.Builder.AddAzureKeyVault("auth-secrets")
+            .AsExisting(parameters.AuthSecretsVaultName, parameters.AuthSecretsVaultResourceGroup);
+    }
+
+    private static IResourceBuilder<DotnetProjectResource> WireLocalHostedSignInAuth(
+        SoloDevBoardAppHost host,
+        IResourceBuilder<DotnetProjectResource> app,
+        IResourceBuilder<AzureKeyVaultResource>? authSecretsVault)
+    {
+        var configuration = host.Builder.Configuration;
+        var parameters = host.Parameters;
+
+        var hostedSignIn = AppHostDeployParameterResolver.IsHostedSignInEnabled(configuration);
+        var resolvedGithubPat = AppHostDeployParameterResolver.Resolve(configuration, "gh-pat", string.Empty);
+        var resolvedGhAppClientSecret = AppHostDeployParameterResolver.Resolve(configuration, "gh-app-client-secret", string.Empty);
+        var useLocalPat = AppHostDeployParameterResolver.IsActiveParameterValue(resolvedGithubPat);
+        var useLocalClientSecret = AppHostDeployParameterResolver.IsActiveParameterValue(resolvedGhAppClientSecret);
+        var vaultConfigured = AppHostDeployParameterResolver.HasConfiguredAuthSecretsVault(configuration);
+
+        var needVaultForPat = !hostedSignIn && !useLocalPat && vaultConfigured;
+        var needVaultForClientSecret = hostedSignIn && !useLocalClientSecret && vaultConfigured;
+
+        if (authSecretsVault is not null)
+        {
             app = app.WithReference(authSecretsVault);
 
             if (needVaultForPat)
@@ -144,7 +168,8 @@ internal static class HostedSignInAppHostGraph
 
     internal static IResourceBuilder<AzureFunctionsProjectResource> WireLocalHostedGitHubAppClientSecret(
         SoloDevBoardAppHost host,
-        IResourceBuilder<AzureFunctionsProjectResource> functions)
+        IResourceBuilder<AzureFunctionsProjectResource> functions,
+        IResourceBuilder<AzureKeyVaultResource>? authSecretsVault)
     {
         var configuration = host.Builder.Configuration;
         var parameters = host.Parameters;
@@ -160,11 +185,8 @@ internal static class HostedSignInAppHostGraph
         var vaultConfigured = AppHostDeployParameterResolver.HasConfiguredAuthSecretsVault(configuration);
         var needVaultForClientSecret = !useLocalClientSecret && vaultConfigured;
 
-        if (needVaultForClientSecret)
+        if (needVaultForClientSecret && authSecretsVault is not null)
         {
-            var authSecretsVault = host.Builder.AddAzureKeyVault("auth-secrets")
-                .AsExisting(parameters.AuthSecretsVaultName, parameters.AuthSecretsVaultResourceGroup);
-
             functions = functions.WithReference(authSecretsVault);
             functions = functions.WithEnvironment(
                 "GitHubAuth__HostedGitHubAppClientSecret",

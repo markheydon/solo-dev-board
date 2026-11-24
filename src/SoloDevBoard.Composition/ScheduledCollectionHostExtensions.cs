@@ -1,51 +1,37 @@
 using Azure.Storage.Blobs;
-using Azure.Storage.Queues;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Hosting;
 using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Infrastructure.Identity;
 using SoloDevBoard.Infrastructure.Snapshots;
 
 namespace SoloDevBoard.Composition;
 
-/// <summary>Registers hosted scheduled collection storage adapters from connection strings.</summary>
+/// <summary>Registers hosted scheduled-collection adapters from Aspire-injected storage clients.</summary>
 public static class ScheduledCollectionHostExtensions
 {
-    /// <summary>Registers the sign-in blob store when <c>hosted-sign-ins</c> is configured.</summary>
-    public static void AddHostedSignInRecordBlobIfConfigured(this IHostApplicationBuilder builder)
+    /// <summary>
+    /// Registers sign-in blob adapters after <c>AddKeyedAzureBlobContainerClient</c> for
+    /// <see cref="AspireHostedStorageReferenceNames.HostedSignIns" />.
+    /// </summary>
+    public static IServiceCollection RegisterHostedSignInBlobStore(this IServiceCollection services)
     {
-        ArgumentNullException.ThrowIfNull(builder);
-        var connectionString = builder.Configuration.GetConnectionString("hosted-sign-ins");
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            return;
-        }
+        ArgumentNullException.ThrowIfNull(services);
 
-        builder.Services.RemoveAll<IHostedSignInRecordStore>();
-        builder.Services.AddSingleton(new HostedSignInsBlobContainer(new BlobContainerClient(connectionString, "hosted-sign-ins")));
-        builder.Services.AddSingleton<IHostedSignInRecordStore, BlobHostedSignInRecordStore>();
+        services.RemoveAll<IHostedSignInRecordStore>();
+        services.AddSingleton(sp => new HostedSignInsBlobContainer(
+            sp.GetRequiredKeyedService<BlobContainerClient>(AspireHostedStorageReferenceNames.HostedSignIns)));
+        services.AddSingleton<IHostedSignInRecordStore, BlobHostedSignInRecordStore>();
+        return services;
     }
 
-    /// <summary>Registers queue and schedule adapters for the Functions worker.</summary>
-    public static void AddHostedScheduledCollectionWorkerIfConfigured(this IHostApplicationBuilder builder)
+    /// <summary>
+    /// Registers worker schedule and queue adapters after keyed blob clients and
+    /// <c>AddAzureQueueServiceClient</c> for <see cref="AspireHostedStorageReferenceNames.OperatorSnapshotQueues" />.
+    /// </summary>
+    public static IServiceCollection RegisterHostedScheduledCollectionWorkerAdapters(this IServiceCollection services)
     {
-        ArgumentNullException.ThrowIfNull(builder);
-        var configuration = builder.Configuration;
-        var signIns = configuration.GetConnectionString("hosted-sign-ins");
-        var schedule = configuration.GetConnectionString("collection-schedule");
-        var queue = configuration.GetConnectionString("operator-snapshot-queues");
-        if (string.IsNullOrWhiteSpace(signIns)
-            || string.IsNullOrWhiteSpace(schedule)
-            || string.IsNullOrWhiteSpace(queue))
-        {
-            return;
-        }
-
-        var hostedClient = new BlobContainerClient(signIns, "hosted-sign-ins");
-        var scheduleClient = new BlobContainerClient(schedule, "collection-schedule");
-        var queueClient = new QueueServiceClient(queue);
-        builder.Services.AddHostedScheduledCollection(hostedClient, scheduleClient, queueClient);
+        ArgumentNullException.ThrowIfNull(services);
+        return services.AddHostedScheduledCollectionWorkerAdapters();
     }
 }

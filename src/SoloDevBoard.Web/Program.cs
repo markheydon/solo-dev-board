@@ -89,12 +89,14 @@ if (hostedSignInEnabled)
 var useOperatorSnapshotBlob = !string.IsNullOrWhiteSpace(builder.Configuration["ConnectionStrings:operator-snapshots"]);
 if (useOperatorSnapshotBlob)
 {
-    builder.AddAzureBlobContainerClient("operator-snapshots");
+    builder.AddKeyedAzureBlobContainerClient(AspireHostedStorageReferenceNames.OperatorSnapshots);
+    builder.Services.AddOperatorSnapshotKeyedBlobStore(AspireHostedStorageReferenceNames.OperatorSnapshots);
 }
 
 if (hostedSignInEnabled && useOperatorSnapshotBlob)
 {
-    builder.AddHostedSignInRecordBlobIfConfigured();
+    builder.AddKeyedAzureBlobContainerClient(AspireHostedStorageReferenceNames.HostedSignIns);
+    builder.Services.RegisterHostedSignInBlobStore();
 }
 
 builder.AddOperatorSnapshotHost(useOperatorSnapshotBlob);
