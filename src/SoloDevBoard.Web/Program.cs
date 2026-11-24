@@ -242,7 +242,11 @@ if (hostedSignInEnabled)
                 RefreshTokenExpiresAt = session.RefreshTokenExpiresAtUtc,
                 CredentialUnusable = false,
             };
-            await signInRecords.UpsertAsync(record, expectedEtag: null, context.RequestAborted).ConfigureAwait(false);
+            var existingSignIn = await signInRecords.GetAsync(sanitised, context.RequestAborted).ConfigureAwait(false);
+            var expectedEtag = existingSignIn is HostedSignInRecordReadResult.Found existing
+                ? existing.Etag
+                : null;
+            await signInRecords.UpsertAsync(record, expectedEtag, context.RequestAborted).ConfigureAwait(false);
         }
 
         return Results.Redirect(returnUrl);

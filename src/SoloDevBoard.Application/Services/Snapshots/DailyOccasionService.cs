@@ -132,38 +132,56 @@ public sealed class DailyOccasionService(
         var utcNow = _timeProvider.GetUtcNow();
         var occasionDate = utcNow.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
         var existing = await _markerStore.GetAsync(occasionDate, cancellationToken).ConfigureAwait(false);
-        if (existing is not OccasionMarkerReadResult.Found found)
+        var markerOperators = existing is OccasionMarkerReadResult.Found found
+            ? found.Marker.Operators
+            : [];
+
+        foreach (var login in markerOperators)
         {
-            return;
+            await TryRepairQueueMessageForLoginAsync(occasionDate, login, cancellationToken).ConfigureAwait(false);
         }
 
-        foreach (var login in found.Marker.Operators)
+        var signInRecords = await _signInRecordStore.ListAsync(cancellationToken).ConfigureAwait(false);
+        foreach (var record in signInRecords)
         {
-            var snapshotGet = await _snapshotStore.GetAsync(login, cancellationToken).ConfigureAwait(false);
-            if (snapshotGet is not OperatorSnapshotGetResult.Found doc
-                || !string.Equals(doc.Document.QueuedOccasion, occasionDate, StringComparison.Ordinal)
-                || doc.Document.PassExecuting
-                || doc.Document.Run.Status == OperatorSnapshotRunStatus.InProgress)
+            if (markerOperators.Contains(record.OperatorLogin))
             {
                 continue;
             }
 
-            try
-            {
-                await _queuePublisher.EnqueueAsync(
-                        new DailySnapshotQueueMessage
-                        {
-                            OccasionDate = occasionDate,
-                            OperatorLogin = login,
-                            Kind = "initial",
-                        },
-                        cancellationToken)
-                    .ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to repair queue message for {Login}.", login);
-            }
+            await TryRepairQueueMessageForLoginAsync(occasionDate, record.OperatorLogin, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private async Task TryRepairQueueMessageForLoginAsync(
+        string occasionDate,
+        string login,
+        CancellationToken cancellationToken)
+    {
+        var snapshotGet = await _snapshotStore.GetAsync(login, cancellationToken).ConfigureAwait(false);
+        if (snapshotGet is not OperatorSnapshotGetResult.Found doc
+            || !string.Equals(doc.Document.QueuedOccasion, occasionDate, StringComparison.Ordinal)
+            || doc.Document.PassExecuting
+            || doc.Document.Run.Status == OperatorSnapshotRunStatus.InProgress)
+        {
+            return;
+        }
+
+        try
+        {
+            await _queuePublisher.EnqueueAsync(
+                    new DailySnapshotQueueMessage
+                    {
+                        OccasionDate = occasionDate,
+                        OperatorLogin = login,
+                        Kind = "initial",
+                    },
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to repair queue message for {Login}.", login);
         }
     }
 

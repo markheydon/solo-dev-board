@@ -41,7 +41,23 @@ public sealed class DailySnapshotCollectionPassService(
 
         if (found.Document.PassExecuting)
         {
+            var nowUtc = timeProvider.GetUtcNow();
+            if (found.Document.PassLeaseUntil is { } activeLease && activeLease > nowUtc)
+            {
+                await queuePublisher.EnqueueAsync(message, cancellationToken).ConfigureAwait(false);
+                await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
+                return;
+            }
+
             await WriteScheduledInterruptionAsync(found, cancellationToken).ConfigureAwait(false);
+            await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        if (found.Document.Run.Status == OperatorSnapshotRunStatus.InProgress
+            && !(string.Equals(message.Kind, "retry", StringComparison.Ordinal)
+                && IsDailyRetryWaitState(found.Document)))
+        {
             await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -116,6 +132,12 @@ public sealed class DailySnapshotCollectionPassService(
 
         if (!started)
         {
+            var afterStart = await snapshotStore.GetAsync(message.OperatorLogin, cancellationToken).ConfigureAwait(false);
+            if (afterStart is OperatorSnapshotGetResult.Found afterFound)
+            {
+                await TryRevertFailedPassStartAsync(found.Document, afterFound, cancellationToken).ConfigureAwait(false);
+            }
+
             await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -129,7 +151,7 @@ public sealed class DailySnapshotCollectionPassService(
         DailySnapshotQueueInvocation invocation,
         CancellationToken cancellationToken)
     {
-        for (var i = 0; i < 7200; i++)
+        for (var i = 0; ; i++)
         {
             await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken).ConfigureAwait(false);
             var read = await snapshotStore.GetAsync(message.OperatorLogin, cancellationToken).ConfigureAwait(false);
@@ -191,6 +213,27 @@ public sealed class DailySnapshotCollectionPassService(
                 await invocation.UpdateVisibilityAsync(VisibilityRenew + VisibilityRenew, cancellationToken).ConfigureAwait(false);
             }
         }
+    }
+
+    private static bool IsDailyRetryWaitState(OperatorSnapshotDocument document) =>
+        document.Trigger == OperatorSnapshotCollectionTrigger.Daily
+        && document.Run.Status == OperatorSnapshotRunStatus.InProgress
+        && !document.PassExecuting
+        && document.Run.Reason is OperatorSnapshotRunReason.RateLimit or OperatorSnapshotRunReason.Unexpected;
+
+    private async Task TryRevertFailedPassStartAsync(
+        OperatorSnapshotDocument priorDocument,
+        OperatorSnapshotGetResult.Found current,
+        CancellationToken cancellationToken)
+    {
+        if (current.Document.Run.Status != OperatorSnapshotRunStatus.InProgress
+            || !current.Document.PassExecuting)
+        {
+            return;
+        }
+
+        var restored = Clone(priorDocument);
+        await snapshotStore.SaveAsync(current.Document.OperatorLogin, restored, current.Token, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task WriteScheduledInterruptionAsync(OperatorSnapshotGetResult.Found found, CancellationToken cancellationToken)

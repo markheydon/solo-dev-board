@@ -9,7 +9,7 @@ namespace SoloDevBoard.Application.Tests;
 public sealed class DailySnapshotCollectionPassServiceTests
 {
     [Fact]
-    public async Task HandleQueueMessage_WhenPassExecutingAlreadyTrue_WritesScheduledCollectionStopped()
+    public async Task HandleQueueMessage_WhenPassExecutingWithActiveLease_RequeuesWithoutInterrupting()
     {
         var store = new InMemoryOperatorSnapshotStore();
         store.Seed("octocat", new OperatorSnapshotDocument
@@ -19,6 +19,50 @@ public sealed class DailySnapshotCollectionPassServiceTests
             Trigger = OperatorSnapshotCollectionTrigger.Daily,
             PassExecuting = true,
             PassLeaseUntil = DateTimeOffset.UtcNow.AddMinutes(1),
+            Run = new OperatorSnapshotRun
+            {
+                Status = OperatorSnapshotRunStatus.InProgress,
+                StartedAt = DateTimeOffset.UtcNow,
+            },
+        });
+
+        var queue = new RecordingDailyQueuePublisher();
+        var completed = false;
+        var sut = CreateSut(store, queue);
+        var message = new DailySnapshotQueueMessage { OperatorLogin = "octocat", OccasionDate = "2026-11-23", Kind = "initial" };
+        await sut.HandleQueueMessageAsync(
+            new DailySnapshotQueueInvocation
+            {
+                Message = message,
+                CompleteAsync = _ =>
+                {
+                    completed = true;
+                    return Task.CompletedTask;
+                },
+                UpdateVisibilityAsync = (_, _) => Task.CompletedTask,
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(completed);
+        var requeued = Assert.Single(queue.Messages);
+        Assert.Equal(message.OperatorLogin, requeued.OperatorLogin);
+        var document = store.GetDocument("octocat");
+        Assert.NotNull(document);
+        Assert.Equal(OperatorSnapshotRunStatus.InProgress, document.Run.Status);
+        Assert.True(document.PassExecuting);
+    }
+
+    [Fact]
+    public async Task HandleQueueMessage_WhenPassExecutingWithExpiredLease_WritesScheduledCollectionStopped()
+    {
+        var store = new InMemoryOperatorSnapshotStore();
+        store.Seed("octocat", new OperatorSnapshotDocument
+        {
+            OperatorLogin = "octocat",
+            Revision = 2,
+            Trigger = OperatorSnapshotCollectionTrigger.Daily,
+            PassExecuting = true,
+            PassLeaseUntil = DateTimeOffset.UtcNow.AddMinutes(-1),
             Run = new OperatorSnapshotRun
             {
                 Status = OperatorSnapshotRunStatus.InProgress,
@@ -47,6 +91,48 @@ public sealed class DailySnapshotCollectionPassServiceTests
         Assert.Equal(OperatorSnapshotRunStatus.Interrupted, document.Run.Status);
         Assert.Equal(OperatorSnapshotRunReason.ScheduledCollectionStopped, document.Run.Reason);
         Assert.False(document.PassExecuting);
+    }
+
+    [Fact]
+    public async Task HandleQueueMessage_WhenOperatorTriggeredInProgress_CompletesWithoutStartingPass()
+    {
+        var store = new InMemoryOperatorSnapshotStore();
+        store.Seed("octocat", new OperatorSnapshotDocument
+        {
+            OperatorLogin = "octocat",
+            Trigger = OperatorSnapshotCollectionTrigger.Operator,
+            Run = new OperatorSnapshotRun
+            {
+                Status = OperatorSnapshotRunStatus.InProgress,
+                StartedAt = DateTimeOffset.UtcNow,
+            },
+        });
+
+        var queue = new RecordingDailyQueuePublisher();
+        var completed = false;
+        var sut = CreateSut(store, queue);
+        await sut.HandleQueueMessageAsync(
+            new DailySnapshotQueueInvocation
+            {
+                Message = new DailySnapshotQueueMessage
+                {
+                    OperatorLogin = "octocat",
+                    OccasionDate = "2026-11-23",
+                    Kind = "initial",
+                },
+                CompleteAsync = _ =>
+                {
+                    completed = true;
+                    return Task.CompletedTask;
+                },
+                UpdateVisibilityAsync = (_, _) => Task.CompletedTask,
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(completed);
+        Assert.Empty(queue.Messages);
+        var document = store.GetDocument("octocat");
+        Assert.Equal(OperatorSnapshotRunStatus.InProgress, document!.Run.Status);
     }
 
     [Fact]

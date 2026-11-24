@@ -40,8 +40,7 @@ public sealed class DailyCollectionFunctions(
         var message = JsonSerializer.Deserialize<DailySnapshotQueueMessage>(rawMessage, JsonOptions);
         if (message is null)
         {
-            logger.LogWarning("Ignored daily snapshot queue message with invalid JSON.");
-            return;
+            throw new InvalidOperationException("Daily snapshot queue message was not valid JSON.");
         }
 
         var queueClient = queueServiceClient.GetQueueClient(QueueName);
