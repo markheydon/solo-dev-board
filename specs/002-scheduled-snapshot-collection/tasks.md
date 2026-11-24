@@ -13,6 +13,8 @@ description: "Task list for scheduled snapshot collection implementation"
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
+**Scheduling model (2026-11-24 spec)**: Queue **fill** is bounded by 05:00 UTC and the 15-minute grace window. **Processing** runs whenever the scheduled collection process is running, with no time-of-day gate on the queue consumer. **Run rules** (allowance and 30-day window at dequeue time) differ from **fill rules** (FR-021).
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -63,14 +65,14 @@ description: "Task list for scheduled snapshot collection implementation"
 
 ## Phase 3: User Story 1 - Collect overnight without the operator waiting (Priority: P1) 🎯 MVP
 
-**Goal**: Hosted sign-in queues and runs the existing snapshot collection once per UTC day at 05:00 UTC, one account at a time, while the operator is away and `web` is scaled to zero.
+**Goal**: Hosted sign-in fills the scheduled scan queue once per UTC day (05:00 UTC default, 15-minute grace), then processes entries whenever the worker runs. One pass at a time. Run rules at dequeue may skip a queued person without recording failure.
 
-**Independent Test**: Per spec.md US1 independent test: two eligible signed-out operators receive queued daily collections; ineligible operators do not; snapshots match hand-started results.
+**Independent Test**: Per spec.md US1: two eligible signed-out operators are queued at fill and collected when the queue is processed (any time); ineligible operators are not queued; snapshots match hand-started results; queued scan removed at run time when allowance or 30-day window fails.
 
 ### Tests for User Story 1
 
 - [X] T019 [P] [US1] Unit tests for occasion window and single fill (`TryFillDailyOccasion`) in `tests/SoloDevBoard.Application.Tests/` per quickstart.md section 3 (05:00, 05:10 grace, 05:16 miss, no double fill)
-- [X] T020 [P] [US1] Unit tests for eligibility: 30-day boundary (`HostedSignInRecord.completedAt`), `credentialUnusable`, admission lists (including both lists empty while admission is on; user or sole admitting organisation removed from lists at fill while inside 30-day window per SC-010), never-signed-in excluded in `tests/SoloDevBoard.Application.Tests/`
+- [X] T020 [P] [US1] Unit tests for fill eligibility: 30-day boundary (`HostedSignInRecord.completedAt`), `credentialUnusable`, admission lists in `tests/SoloDevBoard.Application.Tests/`
 - [X] T069 [P] [US1] Store or Application test: daily success produces the same catalogue and snapshot facts as hand-started collection for the same operator fixture (FR-003, SC-002) in `tests/SoloDevBoard.Application.Tests/` or `tests/SoloDevBoard.Infrastructure.Tests/`
 
 ### Implementation for User Story 1
@@ -82,7 +84,7 @@ description: "Task list for scheduled snapshot collection implementation"
 - [X] T025 [US1] Implement daily collection pass orchestration reusing existing snapshot walk in `src/SoloDevBoard.Application/Services/Snapshots/` (`trigger` = `daily`, `attemptsUsed` starts at 1 per data-model.md)
 - [X] T026 [US1] Implement `runner` blob lease in `collection-schedule` so only one daily pass runs at a time across worker copies in `src/SoloDevBoard.Infrastructure/Snapshots/`
 - [X] T027 [US1] Queue consumer: start pass (`passExecuting`, `passLeaseUntil` renewal ~10s), complete message after pass, per contracts/daily-collection-schedule.md in `src/SoloDevBoard.Application/Services/Snapshots/`
-- [X] T028 [US1] Timer trigger NCRONTAB `0 0-15 5 * * *` calling fill in `src/SoloDevBoard.Functions/` (UTC, no `WEBSITE_TIME_ZONE`)
+- [X] T028 [US1] Timer trigger NCRONTAB `0 0-15 5 * * *` calling fill only in `src/SoloDevBoard.Functions/` (UTC, no `WEBSITE_TIME_ZONE`; queue trigger has no fill-clock gate per FR-021)
 - [X] T029 [US1] Queue trigger with `batchSize` 1 wired to daily pass handler in `src/SoloDevBoard.Functions/`
 - [X] T030 [US1] Register `AddAzureQueueServiceClient("operator-snapshot-queues")` and snapshot/sign-in clients in `src/SoloDevBoard.Functions/Program.cs` then `AddSoloDevBoard`
 - [X] T031 [US1] Set `credentialUnusable` on sign-in record after daily `signInOrToken` failure per data-model.md `HostedSignInRecord.credentialUnusable` in Application/Infrastructure
@@ -155,11 +157,11 @@ description: "Task list for scheduled snapshot collection implementation"
 
 ---
 
-## Phase 7: User Story 5 - See that the day has a fixed collection time (Priority: P2)
+## Phase 7: User Story 5 - See when the next scheduled queue fill is (Priority: P2)
 
-**Goal**: Repositories page states next 05:00 UTC occasion or why no schedule runs; no settings for time, frequency, or 30 days.
+**Goal**: Repositories page states the next 05:00 UTC **queue fill** that will include them, or why no scheduled collection will run, including after a queued entry is removed at run rules. No settings for time, frequency, or 30 days.
 
-**Independent Test**: Per spec.md US5: next occasion, credential failure copy, no edit controls.
+**Independent Test**: Per spec.md US5: next occasion, credential failure copy, no edit controls; removed queue entry shows reason without in-progress copy.
 
 ### Tests for User Story 5
 
@@ -177,9 +179,9 @@ description: "Task list for scheduled snapshot collection implementation"
 
 ## Phase 8: User Story 6 - Keep the last success when the overnight run does not finish cleanly (Priority: P2)
 
-**Goal**: Retries (up to 3 further tries), interruptions, credential wait, no retry button; prior success unchanged on failure.
+**Goal**: Retries (up to 3 further tries with minimum wall-clock waits), interruptions, credential wait, no retry button; prior success unchanged on failure.
 
-**Independent Test**: Per spec.md US6 independent test and quickstart.md section 4.
+**Independent Test**: Per spec.md US6 and quickstart.md section 4, including staggered unexpected-error waits and solo-account minimum wait.
 
 ### Tests for User Story 6
 
@@ -201,9 +203,9 @@ description: "Task list for scheduled snapshot collection implementation"
 
 ## Phase 9: User Story 7 - Skip a missed day, and follow recent sign-ins (Priority: P2)
 
-**Goal**: 15-minute fill grace only; no catch-up same UTC day; sign-in after 05:00 waits for next occasion; admission and window rules at fill.
+**Goal**: 15-minute fill grace only; no catch-up same UTC day; sign-in after fill waits for next occasion; admission and window rules at fill only for queuing.
 
-**Independent Test**: Per spec.md US7 and quickstart.md occasion table rows for 05:16 miss and 05:10 fill.
+**Independent Test**: Per spec.md US7 and quickstart.md occasion table rows for 05:16 miss, 05:10 fill, and queued work after 05:15.
 
 ### Tests for User Story 7
 
@@ -215,7 +217,7 @@ description: "Task list for scheduled snapshot collection implementation"
 - [X] T059 [US7] Enforce no marker and no fill after 05:15:00 UTC same day in `TryFillDailyOccasion`
 - [X] T060 [US7] Functions worker start repair (or first fill tick after restart): enqueue missing `initial` only for logins on existing marker still `queuedOccasion` without message per data-model.md occasion marker paragraph and contracts/daily-collection-schedule.md (not web; web does not reference `collection-schedule`)
 - [X] T061 [US7] Apply `HostedAdmissionControl` lists at fill without full allow-list scan in Application eligibility
-- [X] T062 [US7] Exclude operators outside 30-day window (`completedAt` exactly 30 days inside, older outside per data-model.md sign-in window rules)
+- [X] T062 [US7] Exclude operators outside 30-day window at fill (`completedAt` exactly 30 days inside, older outside per data-model.md sign-in window rules at occasion instant)
 
 **Checkpoint**: All user stories independently functional
 
@@ -235,6 +237,49 @@ description: "Task list for scheduled snapshot collection implementation"
 
 ---
 
+## Phase 11: Prior convergence (delivered)
+
+- [X] T074 Extend `HostedCollectionEligibilityEvaluator.IsEligibleAtFill` in `src/SoloDevBoard.Application/Services/Snapshots/HostedCollectionEligibilityEvaluator.cs` to refuse fill when any collection is `inProgress` or when `queuedOccasion` is set (FR-008)
+- [X] T075 Wire `DailySnapshotQueueInvocation.UpdateVisibilityAsync` in `src/SoloDevBoard.Functions/DailyCollectionFunctions.cs` to renew Azure queue visibility while `passExecuting`
+- [X] T076 Exclude operators whose `HostedSignInRecord.completedAt` is after today's occasion start from that UTC day's fill and from naming today as `NextOccasionAtUtc` before the following day (FR-016)
+- [X] T077 Keep daily retry-wait `inProgress` with `passExecuting` false from being rewritten to `siteStopped` on web read (FR-020)
+- [X] T078 Present queue-waiting status (not in progress) when `queuedOccasion` is set and `passExecuting` is false (FR-006, US5)
+
+---
+
+## Phase 12: Spec revision 2026-11-24 (run rules, retainedRun, notBefore)
+
+**Purpose**: Close gaps between delivered code and the updated spec, plan, and data-model (`retainedRun`, dequeue run rules, FR-021, FR-020 minimum waits).
+
+**⚠️ CRITICAL**: Phase 12 blocks declaring the feature converged against the current spec.
+
+### Tests
+
+- [ ] T079 [P] [US1] Application tests: `IsEligibleAtRun` at current UTC (not occasion instant); message processed after 05:15 when still allowed and inside 30 days; fill instant must not apply at dequeue in `tests/SoloDevBoard.Application.Tests/` per quickstart.md section 3
+- [ ] T080 [P] [US1] Application tests: run-rule withdrawal clears `queuedOccasion` only when pass never started; no `failed` run; `repositories` and `lastSuccessfulCollectionAt` unchanged in `tests/SoloDevBoard.Application.Tests/`
+- [ ] T081 [P] [US6] Application tests: further try respects `notBefore` when alone on queue (2 min rate limit default; 3/6/12 min stagger for unexpected); another visible account runs first; minimum still applies in `tests/SoloDevBoard.Application.Tests/` per SC-012 and quickstart.md section 4
+- [ ] T082 [P] [US6] Infrastructure or store tests: `retainedRun` restore when further try withdrawn by run rules in `tests/SoloDevBoard.Infrastructure.Tests/` per data-model.md `SnapshotDocument.retainedRun`
+- [ ] T083 [P] [US5] bUnit: after queued entry removed (`NoScheduleReason` `notAllowed` or `outsideWindow`), alert shows reason and does not show in progress, failed, or interrupted for that removal per contracts/repositories-schedule-copy.md schedule clause row
+
+### Implementation
+
+- [ ] T084 Add `retainedRun` object to snapshot document types and JSON serialization in `src/SoloDevBoard.Application/Services/Snapshots/OperatorSnapshotDocument.cs` and Infrastructure serializers per data-model.md `SnapshotDocument.retainedRun`
+- [ ] T085 [US1] Add `IsEligibleAtRun(HostedSignInRecord, DateTimeOffset nowUtc)` to `src/SoloDevBoard.Application/Services/Snapshots/HostedCollectionEligibilityEvaluator.cs` using current allow lists and `completedAt` inside 30 days of now (dequeue, not fill instant)
+- [ ] T086 [US1] Before starting a pass in `src/SoloDevBoard.Application/Services/Snapshots/DailySnapshotCollectionPassService.cs`, apply run rules; on failure complete message without GitHub walk and withdraw per contracts/daily-collection-schedule.md (clear `SnapshotDocument.queuedOccasion` when pass not started; do not set `trigger` daily until a pass starts)
+- [ ] T087 [US6] On first daily pass start, set `SnapshotDocument.retainedRun` to prior terminal `run` and `trigger` when replacing a terminal run; clear `retainedRun` on success, terminal failure, or interruption in `DailySnapshotCollectionPassService` and coordinator paths
+- [ ] T088 [US6] When a further try is withdrawn by run rules, restore from `SnapshotDocument.retainedRun`, clear attempt fields and daily in-progress presentation in `DailySnapshotCollectionPassService.cs`
+- [ ] T089 Add `NotBefore` (ISO-8601 UTC) to `DailySnapshotQueueMessage` in `src/SoloDevBoard.Application/Services/Snapshots/IDailySnapshotCollectionPassService.cs` per data-model.md `QueueMessage.notBefore`
+- [ ] T090 [US6] In `src/SoloDevBoard.Infrastructure/Snapshots/AzureDailySnapshotQueuePublisher.cs`, set initial visibility timeout to `notBefore - now` when positive (cap 7 days); serialize `notBefore` on `retry` messages only
+- [ ] T091 [US6] When enqueueing a `retry`, set `notBefore` from the failed attempt: GitHub retry delay from the failed HTTP response when present (`Retry-After` or `X-RateLimit-Reset`), else 2 minutes for rate limit; 3, 6, then 12 minutes for unexpected errors by `attemptsUsed` per research.md minimum-wait table (thread from existing rate-limit mapping in `OperatorSnapshotFailureMapper` or GitHub client, no extra GitHub call)
+- [ ] T092 [US6] If a message is received before `notBefore`, re-queue with remaining invisibility and complete the current delivery without starting a pass in `DailySnapshotCollectionPassService.cs`
+- [ ] T093 [US4] When re-sending to tail after losing `runner` lease, preserve `notBefore` visibility for `retry` messages in queue handler and publisher paths
+- [ ] T094 [US5] Ensure `OperatorSnapshotScheduleFactsService` sets `NoScheduleReason` `notAllowed` or `outsideWindow` when run rules would fail at page read time, including when `queuedOccasion` was just cleared, per data-model.md status facts (`QueuedForOccasion` does not override those reasons)
+- [ ] T095 Re-run quickstart.md section 6 commands after Phase 12 changes in `specs/002-scheduled-snapshot-collection/quickstart.md`
+
+**Checkpoint**: Code matches FR-021, FR-020 minimum waits, and contracts/daily-collection-schedule.md worker outcome rows for run-rule removal
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -242,47 +287,38 @@ description: "Task list for scheduled snapshot collection implementation"
 - **Setup (Phase 1)**: No dependencies - start with T001 (ADR gate before T063 AppHost edits)
 - **Foundational (Phase 2)**: Depends on Phase 1 packages and Functions project shell
 - **User Stories (Phases 3–9)**: All depend on Foundational completion
-  - US1 (Phase 3) is the MVP and blocks meaningful validation of US4–US7 worker behaviour
-  - US2–US4 can proceed soon after US1 core queue path exists
-  - US5–US7 layer on status, failure, and eligibility rules
-- **Polish (Phase 10)**: Depends on ADR-0049 and core Application/Functions code; T063 can run after T028–T030 are sketched but must ship before hosted manual validation
+- **Prior convergence (Phase 11)**: Delivered on branch; superseded in part by Phase 12
+- **Spec revision (Phase 12)**: Depends on Phases 3–9 core queue path; **blocks** spec-complete validation
+- **Polish (Phase 10)**: AppHost shipped; re-validate after Phase 12
 
 ### User Story Dependencies
 
-- **User Story 1 (P1)**: After Foundational - no dependency on other stories (MVP)
+- **User Story 1 (P1)**: After Foundational - MVP; T085–T086 extend US1 for dequeue run rules
 - **User Story 2 (P1)**: After Foundational; integrates with US1 queue flags
-- **User Story 3 (P1)**: After Foundational; parallel with US1 implementation where posture gates are clear
-- **User Story 4 (P1)**: After US1 queue and runner exist
-- **User Story 5 (P2)**: After Foundational status facts (T015–T016); full copy after US1–US4 behaviour stable
-- **User Story 6 (P2)**: After US1 pass and queue consumer
-- **User Story 7 (P2)**: Overlaps US1 fill; dedicated tests after eligibility service exists
-
-### Within Each User Story
-
-- Tests marked [P] can be written against interfaces as implementations land; quickstart scenarios are the acceptance checklists
-- Application services before Functions triggers
-- Infrastructure adapters before end-to-end queue tests
-- Page copy after status DTO fields exist
+- **User Story 3 (P1)**: After Foundational; parallel with US1 where posture gates are clear
+- **User Story 4 (P1)**: After US1 queue and runner exist; T093 extends lease loser behaviour
+- **User Story 5 (P2)**: T083, T094 after run-rule withdrawal (T086, T088)
+- **User Story 6 (P2)**: T087–T092 after T089–T090 message shape
+- **User Story 7 (P2)**: Fill rules delivered; dequeue 30-day re-check is T085 (run time, not fill)
 
 ### Parallel Opportunities
 
-- T003, T004, T005, T006 in Phase 1 after T002
-- T010, T011, T018 in Phase 2 in parallel after T007 starts
-- T019, T020 parallel in US1
-- T032–T041 test tasks parallel with sibling implementation where files differ
-- T046–T051 bUnit and store tests parallel with Application retry work
-- T066, T067 parallel in Polish
+- T079–T083 test tasks in parallel once T084–T085 exist
+- T089–T090 queue message shape before T091–T092 retry timing
+- T084 `retainedRun` schema before T087–T088
 
 ---
 
-## Parallel Example: User Story 1
+## Parallel Example: Phase 12
 
 ```bash
-# Eligibility and occasion window tests together:
-tests/SoloDevBoard.Application.Tests/   # T019, T020
+# Schema and evaluator first:
+src/SoloDevBoard.Application/Services/Snapshots/OperatorSnapshotDocument.cs  # T084
+src/SoloDevBoard.Application/Services/Snapshots/HostedCollectionEligibilityEvaluator.cs  # T085
 
-# Storage adapters in parallel after Application contracts exist:
-src/SoloDevBoard.Infrastructure/Snapshots/   # T022 occasion marker, T023 queue publisher, T026 runner lease
+# Then dequeue handler and publisher in parallel:
+src/SoloDevBoard.Application/Services/Snapshots/DailySnapshotCollectionPassService.cs  # T086–T088, T092
+src/SoloDevBoard.Infrastructure/Snapshots/AzureDailySnapshotQueuePublisher.cs  # T090–T091
 ```
 
 ---
@@ -293,27 +329,20 @@ src/SoloDevBoard.Infrastructure/Snapshots/   # T022 occasion marker, T023 queue 
 
 1. Complete Phase 1: Setup (ADR-0049 Accepted before AppHost)
 2. Complete Phase 2: Foundational
-3. Complete Phase 3: User Story 1 (timer, fill, queue, single pass, daily success)
-4. **STOP and VALIDATE**: quickstart section 3 Application tests and manual hosted `aspire start` smoke (no production GitHub)
-5. Deploy/demo if ready
+3. Complete Phase 3: User Story 1 (timer fill, queue, single pass, daily success)
+4. Complete **Phase 12** for spec-complete US1 (run rules at dequeue, queue processing without fill clock)
+5. **STOP and VALIDATE**: quickstart section 3 Application tests and hosted `aspire start` smoke (no production GitHub)
 
 ### Incremental Delivery
 
-1. Setup + Foundational → schema and sign-in blob ready
-2. US1 → unattended collection → MVP
-3. US2 + US3 + US4 → hand start, lean copy, concurrency
-4. US5 → operator-visible schedule sentences
-5. US6 + US7 → failures, retries, missed day, admission
-6. Polish → AppHost, docs, CI commands
+1. Delivered: Setup through Polish and Phase 11 convergence
+2. **Next**: Phase 12 (spec revision 2026-11-24)
+3. Re-run T095 and full PR checklist
 
-### Parallel Team Strategy
+### Suggested MVP scope
 
-1. Team completes Setup + Foundational together
-2. After Foundational:
-   - Developer A: US1 Functions triggers and queue consumer
-   - Developer B: US2–US4 Web start control and poll
-   - Developer C: US5–US7 status, copy, eligibility edge tests
-3. One developer owns AppHost polish (T063–T066) after ADR-0049
+- **Shippable MVP**: User Story 1 with Phase 12 complete (unattended queue fill and process, run rules, minimum retry waits)
+- **Already on branch**: US2–US7 and AppHost polish (Phases 4–10)
 
 ---
 
@@ -325,20 +354,3 @@ src/SoloDevBoard.Infrastructure/Snapshots/   # T022 occasion marker, T023 queue 
 - Do not unit-test AppHost graph (constitution); review graphs against research.md
 - UK English in operator-facing strings; no em dash
 - Tokens must not appear in snapshot JSON, queue messages, or logs
-
-## Phase 11: Convergence
-
-- [X] T074 Extend `HostedCollectionEligibilityEvaluator.IsEligibleAtFill` in `src/SoloDevBoard.Application/Services/Snapshots/HostedCollectionEligibilityEvaluator.cs` to refuse fill when any collection is `inProgress` (not only `trigger` daily) or when `queuedOccasion` is set for any date (previous occasion still queued) per FR-008, US4/AC1, and `data-model.md` fill rule (contradicts)
-- [X] T075 Wire `DailySnapshotQueueInvocation.UpdateVisibilityAsync` (and explicit completion if required) in `src/SoloDevBoard.Functions/DailyCollectionFunctions.cs` to renew Azure queue visibility while `passExecuting` per `specs/002-scheduled-snapshot-collection/research.md` queue table and `contracts/daily-collection-schedule.md`; stop using no-op delegates so long passes are not misclassified as redelivery interruptions (partial)
-
-## Phase 12: Convergence
-
-- [X] T076 Exclude operators whose `HostedSignInRecord.completedAt` is after today's 05:00 UTC occasion from that UTC day's fill (`HostedCollectionEligibilityEvaluator.IsEligibleAtFill`) and from naming today as `NextOccasionAtUtc` before the following day (`OperatorSnapshotScheduleFactsService.TryComputeNextOccasion`); add Application unit tests for late fill (e.g. 05:10) and in-window page facts per FR-016, US7/AC4, and SC-008 (partial)
-
-## Phase 13: Convergence
-
-- [X] T077 When a daily pass fails with `rateLimit` or `unexpected` and `attemptsUsed` &lt; 4, persist `run.status` `inProgress` with `passExecuting` false (not terminal `failed`) before enqueueing a `retry` message in `src/SoloDevBoard.Application/Services/Snapshots/DailySnapshotCollectionPassService.cs` (and the shared walk failure path if required); update `src/SoloDevBoard.Infrastructure/Snapshots/BlobOperatorSnapshotStore.MaybeRewriteInterruptedAsync` so a daily document in that retry-wait state is not rewritten to `siteStopped` on web read per `data-model.md` transitions, `contracts/daily-collection-schedule.md`, `research.md`, FR-008, FR-020, US6/AC12, and SC-012 (contradicts)
-
-## Phase 14: Convergence
-
-- [X] T078 When `queuedOccasion` is set and `passExecuting` is false, present queue-waiting status (not `OperatorSnapshotStatusKind.InProgress`) in `OperatorSnapshotCollectionService.MapFoundAsync` and stop persisting default `run.status` `inProgress` on queue-only snapshot creates in `DailyOccasionService.TrySetQueuedOccasionAsync` per `data-model.md` queued-not-started row, FR-006, US5/AC9, and `contracts/repositories-schedule-copy.md` (contradicts)
