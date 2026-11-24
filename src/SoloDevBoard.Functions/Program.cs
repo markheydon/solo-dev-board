@@ -7,6 +7,7 @@ using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Application.Services.Planning;
 using SoloDevBoard.Application.Services.Snapshots;
 using SoloDevBoard.Composition;
+using SoloDevBoard.Functions;
 using SoloDevBoard.Infrastructure.Planning;
 var builder = FunctionsApplication.CreateBuilder(args);
 
@@ -32,6 +33,7 @@ if (useHostedWorker)
     builder.AddKeyedAzureBlobContainerClient(AspireHostedStorageReferenceNames.CollectionSchedule);
     builder.AddAzureQueueServiceClient(AspireHostedStorageReferenceNames.OperatorSnapshotQueues);
     builder.Services.RegisterHostedScheduledCollectionWorkerAdapters();
+    builder.Services.AddHostedService<DailyOccasionStartupRepairHostedService>();
 }
 
 builder.Services.TryAddSingleton<IPlanningSettingsStorage, WorkerPlanningSettingsStorage>();

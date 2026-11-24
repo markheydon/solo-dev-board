@@ -10,6 +10,7 @@ using SoloDevBoard.Web.Components.Features.Repositories.Pages;
 namespace SoloDevBoard.Web.Tests;
 
 /// <summary>Component tests for the <see cref="Repositories"/> page.</summary>
+[Collection(nameof(RepositoriesTestsCollection))]
 public sealed class RepositoriesTests
 {
     private readonly IRepositoryService _repositoryService = Substitute.For<IRepositoryService>();
@@ -414,30 +415,37 @@ public sealed class RepositoriesTests
         await using var ctx = CreateContext();
 
         var statusReads = 0;
+        var collectionStarted = 0;
+        _snapshotCollectionService.StartAsync(Arg.Any<CancellationToken>())
+            .Returns(_ =>
+            {
+                Interlocked.Exchange(ref collectionStarted, 1);
+                return OperatorSnapshotStartResult.Started;
+            });
+
         _snapshotCollectionService.GetStatusAsync(Arg.Any<CancellationToken>())
             .Returns(_ =>
             {
-                statusReads++;
-                return statusReads switch
+                if (Volatile.Read(ref collectionStarted) == 0)
                 {
-                    1 => new OperatorSnapshotStatusDto { Kind = OperatorSnapshotStatusKind.NeverRun },
-                    2 or 3 => new OperatorSnapshotStatusDto
+                    return new OperatorSnapshotStatusDto { Kind = OperatorSnapshotStatusKind.NeverRun };
+                }
+
+                var read = Interlocked.Increment(ref statusReads);
+                return read < 3
+                    ? new OperatorSnapshotStatusDto
                     {
                         Kind = OperatorSnapshotStatusKind.InProgress,
                         RunStartedAt = DateTimeOffset.Parse("2025-06-01T12:00:00Z"),
                         RepositoriesRecordedThisRun = 1,
-                    },
-                    _ => new OperatorSnapshotStatusDto
+                    }
+                    : new OperatorSnapshotStatusDto
                     {
                         Kind = OperatorSnapshotStatusKind.Succeeded,
                         LastSuccessfulCollectionAt = DateTimeOffset.Parse("2025-06-01T12:00:01Z"),
                         SnapshotRepositoryCount = 1,
-                    },
-                };
+                    };
             });
-
-        _snapshotCollectionService.StartAsync(Arg.Any<CancellationToken>())
-            .Returns(OperatorSnapshotStartResult.Started);
 
         var cut = ctx.Render<Repositories>();
 

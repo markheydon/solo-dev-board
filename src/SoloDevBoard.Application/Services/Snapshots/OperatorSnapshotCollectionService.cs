@@ -241,10 +241,14 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
             }
         }
 
+        var utcNow = _timeProvider.GetUtcNow();
         var facts = _scheduleFacts.Compute(
             document ?? new OperatorSnapshotDocument(),
             signIn,
-            _timeProvider.GetUtcNow());
+            utcNow);
+
+        var nextOnFollowingDay = facts.NextOccasionAtUtc is { } next
+            && next.UtcDateTime.Date > utcNow.UtcDateTime.Date;
 
         return new OperatorSnapshotStatusDto
         {
@@ -261,6 +265,7 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
             SchedulePosture = facts.SchedulePosture,
             QueuedForOccasion = facts.QueuedForOccasion,
             NextOccasionAtUtc = facts.NextOccasionAtUtc,
+            NextOccasionOnFollowingUtcDay = nextOnFollowingDay,
             NoScheduleReason = facts.NoScheduleReason,
         };
     }

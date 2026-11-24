@@ -77,6 +77,7 @@ public sealed class DailySnapshotCollectionPassService(
         var signIn = await signInRecords.GetAsync(message.OperatorLogin, cancellationToken).ConfigureAwait(false);
         if (signIn is not HostedSignInRecordReadResult.Found record)
         {
+            await ClearQueuedOccasionAsync(found, cancellationToken).ConfigureAwait(false);
             await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -148,6 +149,7 @@ public sealed class DailySnapshotCollectionPassService(
         var saveStart = await snapshotStore.SaveAsync(message.OperatorLogin, inProgress, found.Token, cancellationToken).ConfigureAwait(false);
         if (saveStart is not OperatorSnapshotSaveResult.Succeeded)
         {
+            await queuePublisher.EnqueueAsync(message, cancellationToken).ConfigureAwait(false);
             await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -324,6 +326,18 @@ public sealed class DailySnapshotCollectionPassService(
         await queuePublisher.EnqueueAsync(message, cancellationToken).ConfigureAwait(false);
         await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
         return true;
+    }
+
+    private async Task ClearQueuedOccasionAsync(OperatorSnapshotGetResult.Found found, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(found.Document.QueuedOccasion) || found.Document.PassExecuting)
+        {
+            return;
+        }
+
+        var document = Clone(found.Document);
+        document.QueuedOccasion = null;
+        await snapshotStore.SaveAsync(found.Document.OperatorLogin, document, found.Token, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task WithdrawByRunRulesAsync(OperatorSnapshotGetResult.Found found, CancellationToken cancellationToken)

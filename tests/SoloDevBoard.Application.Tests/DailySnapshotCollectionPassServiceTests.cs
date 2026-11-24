@@ -345,6 +345,44 @@ public sealed class DailySnapshotCollectionPassServiceTests
     }
 
     [Fact]
+    public async Task HandleQueueMessage_WhenSignInRecordMissing_ClearsQueuedOccasionAndCompletes()
+    {
+        var store = new InMemoryOperatorSnapshotStore();
+        store.Seed("octocat", new OperatorSnapshotDocument
+        {
+            OperatorLogin = "octocat",
+            QueuedOccasion = "2026-11-23",
+            Run = new OperatorSnapshotRun { Status = OperatorSnapshotRunStatus.Failed },
+        });
+
+        var signIns = new InMemoryHostedSignInRecordStore();
+        var completed = false;
+        var sut = CreateSut(store, signIns: signIns);
+        await sut.HandleQueueMessageAsync(
+            new DailySnapshotQueueInvocation
+            {
+                Message = new DailySnapshotQueueMessage
+                {
+                    OperatorLogin = "octocat",
+                    OccasionDate = "2026-11-23",
+                    Kind = "initial",
+                },
+                CompleteAsync = _ =>
+                {
+                    completed = true;
+                    return Task.CompletedTask;
+                },
+                UpdateVisibilityAsync = (_, _) => Task.CompletedTask,
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(completed);
+        var document = store.GetDocument("octocat");
+        Assert.NotNull(document);
+        Assert.Null(document.QueuedOccasion);
+    }
+
+    [Fact]
     public async Task HandleQueueMessage_WhenRunnerLeaseBusy_RequeuesSamePayload()
     {
         var store = new InMemoryOperatorSnapshotStore();

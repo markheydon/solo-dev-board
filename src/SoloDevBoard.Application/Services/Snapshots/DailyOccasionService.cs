@@ -48,8 +48,14 @@ public sealed class DailyOccasionService(
 
         var occasionDate = utcNow.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
         var existing = await _markerStore.GetAsync(occasionDate, cancellationToken).ConfigureAwait(false);
-        if (existing is OccasionMarkerReadResult.Found or OccasionMarkerReadResult.Unreadable)
+        if (existing is OccasionMarkerReadResult.Found)
         {
+            return DailyOccasionFillResult.AlreadyFilled;
+        }
+
+        if (existing is OccasionMarkerReadResult.Unreadable)
+        {
+            _logger.LogWarning("Occasion marker for {OccasionDate} is unreadable; skipping fill until storage is repaired.", occasionDate);
             return DailyOccasionFillResult.AlreadyFilled;
         }
 
@@ -61,8 +67,14 @@ public sealed class DailyOccasionService(
         }
 
         existing = await _markerStore.GetAsync(occasionDate, cancellationToken).ConfigureAwait(false);
-        if (existing is OccasionMarkerReadResult.Found or OccasionMarkerReadResult.Unreadable)
+        if (existing is OccasionMarkerReadResult.Found)
         {
+            return DailyOccasionFillResult.AlreadyFilled;
+        }
+
+        if (existing is OccasionMarkerReadResult.Unreadable)
+        {
+            _logger.LogWarning("Occasion marker for {OccasionDate} is unreadable after lease; skipping fill.", occasionDate);
             return DailyOccasionFillResult.AlreadyFilled;
         }
 

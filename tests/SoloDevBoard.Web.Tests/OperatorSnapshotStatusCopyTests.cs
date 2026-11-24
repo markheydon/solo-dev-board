@@ -94,6 +94,24 @@ public sealed class OperatorSnapshotStatusCopyTests
     }
 
     [Fact]
+    public void BuildScheduleClause_WhenNextOccasionIsFollowingUtcDay_NamesFollowingDay()
+    {
+        var status = new OperatorSnapshotStatusDto
+        {
+            Kind = OperatorSnapshotStatusKind.Succeeded,
+            DurabilityKind = OperatorSnapshotDurabilityKind.HostedBlob,
+            SchedulePosture = OperatorSnapshotSchedulePosture.Hosted,
+            NoScheduleReason = OperatorSnapshotNoScheduleReason.None,
+            NextOccasionAtUtc = new DateTimeOffset(2026, 11, 25, 5, 0, 0, TimeSpan.Zero),
+            NextOccasionOnFollowingUtcDay = true,
+        };
+
+        var schedule = OperatorSnapshotStatusCopy.BuildScheduleClause(status);
+
+        Assert.Equal("Next scheduled collection: 05:00 UTC on the following UTC day.", schedule);
+    }
+
+    [Fact]
     public void BuildSnapshotSuffix_CredentialUnusable_DoesNotPromiseTonight()
     {
         var status = new OperatorSnapshotStatusDto

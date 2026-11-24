@@ -42,6 +42,9 @@ public sealed class OperatorSnapshotStatusDto
     /// <summary>Next 05:00 UTC that would queue them, if any.</summary>
     public DateTimeOffset? NextOccasionAtUtc { get; init; }
 
+    /// <summary>When <see cref="NextOccasionAtUtc"/> falls on the UTC calendar day after evaluation.</summary>
+    public bool NextOccasionOnFollowingUtcDay { get; init; }
+
     /// <summary>Why no next occasion is scheduled, when applicable.</summary>
     public OperatorSnapshotNoScheduleReason NoScheduleReason { get; init; }
 }

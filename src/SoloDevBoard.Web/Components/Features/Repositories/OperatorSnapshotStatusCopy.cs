@@ -36,9 +36,9 @@ internal static class OperatorSnapshotStatusCopy
             _ when status.QueuedForOccasion is not null && status.Kind != OperatorSnapshotStatusKind.InProgress =>
                 "Next scheduled collection: 05:00 UTC.",
             _ when status.NextOccasionAtUtc is { } next && next.UtcDateTime.TimeOfDay == TimeSpan.FromHours(5) =>
-                next.UtcDateTime.Date == DateTime.UtcNow.Date
-                    ? "Next scheduled collection: 05:00 UTC."
-                    : "Next scheduled collection: 05:00 UTC on the following UTC day.",
+                status.NextOccasionOnFollowingUtcDay
+                    ? "Next scheduled collection: 05:00 UTC on the following UTC day."
+                    : "Next scheduled collection: 05:00 UTC.",
             _ => null,
         };
     }
