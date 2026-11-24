@@ -1,14 +1,14 @@
 # Implementation Plan: Scheduled snapshot collection
 
-**Branch**: `002-scheduled-snapshot-collection` | **Date**: 2026-11-23 | **Spec**: [spec.md](spec.md)
+**Branch**: `002-scheduled-snapshot-collection` | **Date**: 2026-11-24 | **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `/specs/002-scheduled-snapshot-collection/spec.md`
 
 ## Summary
 
-In hosted sign-in, the existing operator snapshot collection is queued once each UTC day at 05:00 UTC and run one account at a time, including while the operator is signed out and the site is not running. The lean local posture, including a personal deployment that stays in that posture, has no schedule. Hand-started collection stays on `/repositories`.
+In hosted sign-in, the existing operator snapshot collection is placed on a queue once each UTC day at 05:00 UTC, with the 15-minute grace window, and that queue is drained whenever the scheduled collection process is running. Time of day does not drop an entry already on the queue. When an entry is about to run, it is removed without a failed collection if that person is no longer allowed or their latest completed sign-in is outside 30 days. A further try after a rate limit or an unexpected error still goes to the back of the queue, and it also waits a minimum time before it may start. The lean local posture, including a personal deployment that stays in that posture, has no schedule. Hand-started collection stays on `/repositories`.
 
-Technical approach: keep `web` as the Azure Container App with minimum replicas 0 and maximum replicas 1. Add an Azure Functions isolated worker only on the hosted sign-in AppHost graph. It uses a UTC timer for the 15-minute fill window and an Azure Storage queue for the work that must survive the worker stopping. Sign-in facts the cookie cannot provide while the site is down are a blob on the storage account ADR-0048 already added. No SQL, no Durable Task Scheduler, and no scheduled Container App Job. ADR-0046 stays withdrawn.
+Technical approach: keep `web` as the Azure Container App with minimum replicas 0 and maximum replicas 1. The hosted sign-in AppHost graph keeps the Azure Functions isolated worker from the first plan. The UTC timer only fills the queue. An Azure Storage queue, with an initial invisibility on further tries, holds work that must survive the worker stopping and must not start before the minimum wait. Sign-in facts the cookie cannot provide while the site is down stay a blob on the storage account ADR-0048 already added. No SQL, no Durable Task Scheduler, and no scheduled Container App Job. ADR-0046 stays withdrawn. This revision does not add a second worker, a settings page, or a per-operator schedule.
 
 ## Technical Context
 
@@ -26,7 +26,7 @@ Technical approach: keep `web` as the Azure Container App with minimum replicas 
 
 **Performance Goals**: One daily GitHub walk at a time. The site stays usable during a daily run. Status on `/repositories` still refreshes about once a second while a run is in progress. The worker must not require the site to scale up.
 
-**Constraints**: Lean `aspire start` gains no Functions, storage, or SQL. Web `MinReplicas` stays 0 and `MaxReplicas` stays 1. No HTTP between `web` and the worker. Tokens stay out of the snapshot, the queue, and logs. UK English. No em dash. A binding ADR (ADR-0049) is Accepted before AppHost edits. Do not edit `.aspire/modules/`.
+**Constraints**: Lean `aspire start` gains no Functions, storage, or SQL. Web `MinReplicas` stays 0 and `MaxReplicas` stays 1. No HTTP between `web` and the worker. Tokens stay out of the snapshot, the queue, and logs. The 05:00 UTC window bounds queue fill only. Run rules and further-try waits are enforced in Application when a message is handled. UK English. No em dash. A binding ADR (ADR-0049) is Accepted before AppHost edits. Do not edit `.aspire/modules/`.
 
 **Scale/Scope**: One snapshot per operator, one sign-in blob per hosted operator, one occasion marker per UTC date, one shared queue. The Repositories page is the only UI surface. No settings page and no retry button.
 
@@ -59,7 +59,7 @@ Re-checked against [research.md](research.md), [data-model.md](data-model.md), [
 | --- | --- |
 | Principle VI | Still pass. Design names `AddAzureFunctionsProject`, `WithHostStorage` on `operator-snapshot-storage`, `AddQueues("operator-snapshot-queues")`, and `AddAzureQueueServiceClient`. `web` does not reference the worker. Scale on `web` stays minimum 0 and maximum 1. ADR-0049 is required before those edits. |
 | Principle VII | Still pass. Quickstart requires a lean start with no Functions resource and no fill at 05:00 UTC. Hosted local run includes the worker because that posture has the schedule. |
-| Proportionality | Still pass. Container App Jobs and Durable Task Scheduler were rejected in research. The queue and the sign-in blob are the smallest durable pieces that let the site scale to zero. |
+| Proportionality | Still pass. Container App Jobs and Durable Task Scheduler stay rejected. Run-rule removal and the further-try wait use the existing queue and snapshot document. `retainedRun` is one optional object so a refused further try can put the previous run back. It is not a history of occasions. |
 | ADR-0046 | Still pass. No Azure SQL and no inventory database. |
 
 Gates pass. No NEEDS CLARIFICATION remains.
@@ -115,10 +115,11 @@ Order:
 2. Add the Aspire 17.0.0 packages named in research, after the usual package-add approval. Resolve Functions worker package versions then. Do not add them in planning.
 3. Extend the snapshot document and the read-path interruption rule. Daily passes must not become `siteStopped` because the web process has no live task.
 4. Sign-in record port and blob adapter. Web writes it when hosted sign-in completes. Sign-out does not delete it. Move token exchange behind the shared port.
-5. Occasion fill, queue, runner lease, and daily pass, including the three further tries and redelivery-as-interruption. `functionTimeout` `02:00:00`. Timer `0 0-15 5 * * *` UTC.
-6. Repositories copy, bUnit, and the user guide.
-7. Hosted AppHost graph only: `WithHostStorage(operator-snapshot-storage)`, `AddBlobContainer` for `hosted-sign-ins` and `collection-schedule`, `AddQueues("operator-snapshot-queues")`, `AddAzureFunctionsProject` by project path, `WithReference` from the worker, `WaitFor` the emulator locally. `web` references `hosted-sign-ins` only. No `WithExternalHttpEndpoints`. Publish assigns the four storage roles on the Functions identity. Lean graph untouched. Re-apply web scale (minimum 0, maximum 1) if the custom-domain callback replaces it.
-8. Update `docs/getting-started.md`, `docs/deployment.md`, and `src/SoloDevBoard.AppHost/README.md` for the new hosted resources.
+5. Occasion fill, queue, runner lease, and daily pass, including the three further tries and redelivery-as-interruption. `functionTimeout` `02:00:00`. Timer `0 0-15 5 * * *` UTC fills only. The queue trigger has no time-of-day gate.
+6. Before a pass starts, re-check allowance and the 30-day window at the current UTC time. On failure, complete the message, restore the previous operator-visible run, and do not record a failed collection. Further tries carry `notBefore` and an initial queue invisibility (GitHub retry delay or 2 minutes for a rate limit; 3, 6, then 12 minutes for an unexpected error).
+7. Repositories copy, bUnit, and the user guide. The page states the no-schedule reason when the next fill will not include them, including after a queued entry was removed.
+8. Hosted AppHost graph only: `WithHostStorage(operator-snapshot-storage)`, `AddBlobContainer` for `hosted-sign-ins` and `collection-schedule`, `AddQueues("operator-snapshot-queues")`, `AddAzureFunctionsProject` by project path, `WithReference` from the worker, `WaitFor` the emulator locally. `web` references `hosted-sign-ins` only. No `WithExternalHttpEndpoints`. Publish assigns the four storage roles on the Functions identity. Lean graph untouched. Re-apply web scale (minimum 0, maximum 1) if the custom-domain callback replaces it.
+9. Update `docs/getting-started.md`, `docs/deployment.md`, and `src/SoloDevBoard.AppHost/README.md` for the new hosted resources.
 
 Validation before a pull request is in [quickstart.md](quickstart.md).
 

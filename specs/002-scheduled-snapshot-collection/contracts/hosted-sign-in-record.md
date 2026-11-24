@@ -37,4 +37,4 @@ Conditional replace uses the blob etag. A stale writer does not publish over a n
 
 ## Reads
 
-The worker lists this container at occasion fill. It does not call GitHub to discover who signed in or which organisations they belong to. Admission uses `organisationLogins` on the blob and the allow lists in the worker's configuration at fill time.
+The worker lists this container at occasion fill. It reads one blob again when that person's queue message is about to run. It does not call GitHub to discover who signed in or which organisations they belong to. Admission uses `organisationLogins` on the blob and the allow lists in the worker's configuration. Fill uses the lists and the 30-day window at the occasion instant. Running a queued entry uses the lists and the 30-day window at the current UTC time. A failure of those run checks does not write `credentialUnusable` and does not change `completedAt`.

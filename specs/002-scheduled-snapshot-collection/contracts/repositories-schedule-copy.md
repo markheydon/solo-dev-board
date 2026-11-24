@@ -24,7 +24,8 @@ One schedule sentence is included in the same `MudAlert` as the catalogue line a
 | --- | --- |
 | Lean posture | Nothing collects on a schedule. The snapshot is kept on this machine rather than promised on another machine. |
 | Hosted, next occasion will queue them | Next scheduled collection: 05:00 UTC. |
-| Hosted, queued for today and the pass has not started | Next scheduled collection: 05:00 UTC. Do not say the day was missed. Do not show the run as in progress until the pass starts. |
+| Hosted, queued for today, the pass has not started, and they are still eligible | Next scheduled collection: 05:00 UTC. Do not say the day was missed. Do not show the run as in progress until the pass starts. |
+| Hosted, queued or previously queued, and they are not allowed or are outside 30 days | No scheduled collection will run, with the matching reason below. Do not show that removed run as in progress, failed, or interrupted. A previous successful snapshot stays. Being outside the fill hour is not this row. |
 | Hosted, `credentialUnusable` | No scheduled collection will run until you sign in again. Show the failed daily run and the sign-in or token reason. Do not say a collection will run tonight or at the next 05:00 UTC. |
 | Hosted, outside the 30-day window | No scheduled collection will run until you sign in again. |
 | Hosted, not allowed | No scheduled collection will run because you are not allowed to use the product. |
@@ -38,7 +39,8 @@ There is no control to change the time, how often, or the 30 days.
 | --- | --- |
 | In progress, trigger `daily` | Say the daily occasion started it. |
 | In progress, trigger `operator` | Say you started it. Do not call it the daily occasion. |
-| Further try waiting | Same in-progress sentence. Do not list tries. Do not show failed. |
+| Further try waiting | Same in-progress sentence. Do not list tries. Do not show failed. The minimum wait is not shown as its own state. |
+| Further try removed because they are not allowed or are outside 30 days | Stop the in-progress sentence. Do not replace it with a failed or interrupted sentence for that removal. Show the restored previous run when one exists. |
 | Interrupted, `scheduledCollectionStopped` | The scheduled collection stopped before it finished. Do not say the site stopped. |
 | Interrupted, `siteStopped` | Unchanged: the site stopped before it completed. |
 | Succeeded or failed | Keep the feature 001 sentence. Where the run has a trigger, the operator can tell which start it was from the in-progress and terminal copy above. A successful daily run uses the same saved-at sentence as a hand-started success. |
