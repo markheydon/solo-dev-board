@@ -5,4 +5,4 @@ alwaysApply: true
 
 # Project Skills
 
-Project-authored agent skills live in `.agents/skills/`. Aspire workflow skills load from the `aspire-skills/aspire` Cursor plugin (see `.cursor/settings.json` and `AGENTS.md`). When a task matches a skill's description, read that skill's `SKILL.md` before proceeding. See `AGENTS.md` for the skill index and task routing.
+Project-authored agent skills live in `.agents/skills/`. Cursor plugin skills load from [`.cursor/settings.json`](../settings.json): five **dotnet-agent-skills** bundles, **aspire-skills/aspire**, and the **github** plugin (MCP only, no `SKILL.md`). Plugin content is cached under the Cursor plugins directory, not under `.agents/skills/`. When a task matches a skill's description, read that skill's `SKILL.md` before proceeding. Read `AGENTS.md` for precedence when a plugin skill overlaps repository guidance (for example `mudblazor` before generic Blazor plugin skills).

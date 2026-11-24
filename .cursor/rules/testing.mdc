@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Testing Conventions
 
-Follow the **Testing** section in `CONVENTIONS.md`.
+Follow the **Testing** section in `CONVENTIONS.md`. For test command and platform discovery, use the `run-tests` and `platform-detection` plugin skills per `AGENTS.md` (repository assert and mock rules still apply).
 
 - xUnit v3 only; built-in `Assert` methods only.
 - NSubstitute for mocks when needed; prefer `QueuedHttpMessageHandler` and JSON fixtures for HTTP/SDK tests.

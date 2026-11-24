@@ -24,7 +24,22 @@ UK English in documentation, comments, and user-facing text. Do not use the em d
 
 ## Skills
 
-**Project skills** (authored for this repository) live in [`.agents/skills/`](.agents/skills/). **Aspire workflow skills** (`aspire`, `aspire-init`, `aspireify`, `aspire-orchestration`, `aspire-monitoring`, `aspire-deployment`, `aspire-project-v2-migration`, `aspire-terminals`) load from the Cursor **aspire-skills** plugin pinned in [`.cursor/settings.json`](.cursor/settings.json) (Aspire 17 marketplace model). Bump the plugin `gitRef` per [`docs/maintaining-agent-skills.md`](docs/maintaining-agent-skills.md). **`dotnet-inspect`** remains vendored under `.agents/skills/dotnet-inspect/`. **Spec Kit workflow skills** live in [`.cursor/skills/`](.cursor/skills/) (`speckit-*`); invoke them via `/speckit-specify`, `/speckit-plan`, and the other `/speckit-*` commands.
+### Configuration inventory
+
+[`.cursor/settings.json`](.cursor/settings.json) is the enablement list for Cursor plugins. Plugin skills load from the Cursor plugin cache (for example `~/.cursor/plugins/cache/...` on a dev machine), **not** from `.agents/skills/`.
+
+| Source | Upstream | In this repo |
+| --- | --- | --- |
+| Project skills | [`.agents/skills/`](.agents/skills/) | Authored in git (see table below) |
+| .NET plugin bundles | [dotnet/skills](https://github.com/dotnet/skills) | `dotnet`, `dotnet-blazor`, `dotnet-test`, `dotnet-data`, `dotnet-nuget` |
+| Aspire workflow bundle | [microsoft/aspire-skills](https://github.com/microsoft/aspire-skills) | `aspire-skills/aspire` (eight skills) |
+| GitHub integration | [GitHub MCP](https://docs.github.com/en/copilot/how-tos/context/use-mcp/use-the-github-mcp-server) via Cursor **github** plugin | MCP tools only (no `SKILL.md`) |
+| Spec Kit | [`.cursor/skills/`](.cursor/skills/) (`speckit-*`) | Invoke via `/speckit-specify`, `/speckit-plan`, and other `/speckit-*` commands |
+| `dotnet-inspect` companion | [richlander/dotnet-inspect](https://github.com/richlander/dotnet-inspect) | Vendored [`.agents/skills/dotnet-inspect/`](.agents/skills/dotnet-inspect/) |
+
+Bump plugin `gitRef` values per [`docs/maintaining-agent-skills.md`](docs/maintaining-agent-skills.md). Full plugin catalogues: [dotnet/skills README](https://github.com/dotnet/skills), [microsoft/aspire-skills](https://github.com/microsoft/aspire-skills). Official Aspire product reference: [aspire.dev](https://aspire.dev/).
+
+### Project skills
 
 | Skill | Use when |
 | --- | --- |
@@ -33,9 +48,43 @@ UK English in documentation, comments, and user-facing text. Do not use the em d
 | `code-review` | PR or branch review before merge (see [`.cursor/commands/loop-code-review.md`](.cursor/commands/loop-code-review.md)) |
 | `implementation-guardrails` | Non-trivial implementation: architecture fit, proportionality, root-cause fixes, build/test discipline |
 | `mudblazor` | Blazor UI pages and components (MudBlazor patterns) |
-| Aspire plugin skills (see above) | AppHost wiring, CLI lifecycle, logs and deploy, terminals |
+| `dotnet-inspect` | Evidence-first .NET package and API investigation |
 
-Official Aspire reference: [aspire.dev](https://aspire.dev/).
+### Precedence (repository guidance wins)
+
+When a plugin skill overlaps project rules, follow this order.
+
+| Topic | Use first | Plugin skill only when |
+| --- | --- | --- |
+| Blazor / MudBlazor UI | `mudblazor` | Generic component architecture (`author-component`, `use-js-interop`) **after** mudblazor constraints |
+| Implementation / architecture | `implementation-guardrails` + ADRs | `csharp-refactoring`, `csharp-expert`, `msbuild` for mechanical or build-specific work |
+| Pre-merge review | `code-review` | — |
+| Tests | `CONVENTIONS.md`, [`.cursor/rules/testing.mdc`](.cursor/rules/testing.mdc), test commands below | `run-tests`, `platform-detection`, `code-testing`, `test-gap-analysis`, and related **dotnet-test** skills; not `writing-mstest-tests` |
+| NuGet / CPM | Explicit user approval in this file | `convert-to-cpm` when maintaining `Directory.Packages.props` |
+| EF Core | ADRs + conventions | `optimizing-ef-core-queries` |
+| Aspire / AppHost | `aspire` plugin router + `dotnet-inspect` | — |
+
+### Curated plugin routing
+
+Repo-relevant plugin skills only; see upstream READMEs for the full skill lists.
+
+| Skill or bundle | Use when |
+| --- | --- |
+| `run-tests` | Choosing correct `dotnet test` / MTP flags for this solution |
+| `platform-detection` | Uncertain test platform before running or filtering |
+| `code-testing` | Writing or repairing xUnit tests (respect repo assert and mock rules) |
+| `test-gap-analysis` | Checking whether tests would catch a production change |
+| `csharp-refactoring` | Behaviour-preserving refactors (pair with `dotnet-breaking-changes` if public API) |
+| `msbuild` | Build failures, targets, binlogs (not routine feature work) |
+| `convert-to-cpm` | Central package management changes |
+| `optimizing-ef-core-queries` | EF performance review |
+| `aspire`, `aspire-init`, `aspireify`, `aspire-orchestration`, `aspire-monitoring`, `aspire-deployment`, `aspire-project-v2-migration`, `aspire-terminals` | AppHost wiring, CLI lifecycle, logs, deploy, terminals |
+| GitHub **plugin** (MCP) | GitHub API, search, or Actions via MCP when `gh` is insufficient |
+
+### GitHub plugin vs `gh`
+
+- **Pull requests, issues, and releases in this workflow:** use `gh` per [`plan/PULL_REQUEST_POLICY.md`](plan/PULL_REQUEST_POLICY.md).
+- **GitHub MCP plugin:** optional; set a personal access token in **Cursor → Plugins → GitHub** (separate from AppHost `gh-pat`; see [`docs/maintaining-agent-skills.md`](docs/maintaining-agent-skills.md)). Use for rich GitHub API exploration in agent sessions. Do not commit tokens.
 
 ## Task Routing
 
