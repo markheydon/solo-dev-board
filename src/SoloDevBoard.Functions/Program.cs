@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Application.Services.Planning;
 using SoloDevBoard.Application.Services.Snapshots;
 using SoloDevBoard.Composition;
@@ -12,13 +13,12 @@ var builder = FunctionsApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
 var configuration = builder.Configuration;
-var useHostedSnapshots = !string.IsNullOrWhiteSpace(configuration.GetConnectionString(AspireHostedStorageReferenceNames.OperatorSnapshots));
-var useHostedWorker = useHostedSnapshots
-    && !string.IsNullOrWhiteSpace(configuration.GetConnectionString(AspireHostedStorageReferenceNames.HostedSignIns))
-    && !string.IsNullOrWhiteSpace(configuration.GetConnectionString(AspireHostedStorageReferenceNames.CollectionSchedule))
-    && !string.IsNullOrWhiteSpace(configuration.GetConnectionString(AspireHostedStorageReferenceNames.OperatorSnapshotQueues));
+var hostedSignInEnabled = configuration.GetValue<bool>(
+    $"{GitHubAuthOptions.SectionName}:{nameof(GitHubAuthOptions.HostedSignInEnabled)}");
+var useOperatorSnapshotBlob = !string.IsNullOrWhiteSpace(configuration["ConnectionStrings:operator-snapshots"]);
+var useHostedWorker = hostedSignInEnabled && useOperatorSnapshotBlob;
 
-if (useHostedSnapshots)
+if (useOperatorSnapshotBlob)
 {
     builder.AddKeyedAzureBlobContainerClient(AspireHostedStorageReferenceNames.OperatorSnapshots);
     builder.Services.AddOperatorSnapshotKeyedBlobStore(AspireHostedStorageReferenceNames.OperatorSnapshots);
