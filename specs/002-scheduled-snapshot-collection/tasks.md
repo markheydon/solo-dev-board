@@ -15,6 +15,8 @@ description: "Task list for scheduled snapshot collection implementation"
 
 **Scheduling model (2026-11-24 spec)**: Queue **fill** is bounded by 05:00 UTC and the 15-minute grace window. **Processing** runs whenever the scheduled collection process is running, with no time-of-day gate on the queue consumer. **Run rules** (allowance and 30-day window at dequeue time) differ from **fill rules** (FR-021).
 
+**Artifact vs code**: Phases 1–11 are marked complete on the feature branch. Phase 12 (T079–T095) is the open implementation backlog for the 2026-11-24 revision; FR/SC task coverage is complete, including `data-model.md` fields `SnapshotDocument.retainedRun` and `QueueMessage.notBefore` via Phase 12 tasks.
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -203,7 +205,7 @@ description: "Task list for scheduled snapshot collection implementation"
 
 ## Phase 9: User Story 7 - Skip a missed day, and follow recent sign-ins (Priority: P2)
 
-**Goal**: 15-minute fill grace only; no catch-up same UTC day; sign-in after fill waits for next occasion; admission and window rules at fill only for queuing.
+**Goal**: 15-minute fill grace only; no catch-up same UTC day; sign-in after fill waits for next occasion; admission and 30-day window at **fill** for queuing (dequeue and page run rules are Phase 12).
 
 **Independent Test**: Per spec.md US7 and quickstart.md occasion table rows for 05:16 miss, 05:10 fill, and queued work after 05:15.
 
@@ -219,7 +221,7 @@ description: "Task list for scheduled snapshot collection implementation"
 - [X] T061 [US7] Apply `HostedAdmissionControl` lists at fill without full allow-list scan in Application eligibility
 - [X] T062 [US7] Exclude operators outside 30-day window at fill (`completedAt` exactly 30 days inside, older outside per data-model.md sign-in window rules at occasion instant)
 
-**Checkpoint**: All user stories independently functional
+**Checkpoint**: Fill-path and occasion rules functional; Phase 12 closes dequeue run rules for full spec conformance
 
 ---
 
@@ -275,6 +277,7 @@ description: "Task list for scheduled snapshot collection implementation"
 - [ ] T093 [US4] When re-sending to tail after losing `runner` lease, preserve `notBefore` visibility for `retry` messages in queue handler and publisher paths
 - [ ] T094 [US5] Ensure `OperatorSnapshotScheduleFactsService` sets `NoScheduleReason` `notAllowed` or `outsideWindow` when run rules would fail at page read time, including when `queuedOccasion` was just cleared, per data-model.md status facts (`QueuedForOccasion` does not override those reasons)
 - [ ] T095 Re-run quickstart.md section 6 commands after Phase 12 changes in `specs/002-scheduled-snapshot-collection/quickstart.md`
+- [ ] T096 [US5] Update `website/content/docs/repositories.md` and `tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md` in the same change as T083 and T094 per contracts/repositories-schedule-copy.md guide section
 
 **Checkpoint**: Code matches FR-021, FR-020 minimum waits, and contracts/daily-collection-schedule.md worker outcome rows for run-rule removal
 

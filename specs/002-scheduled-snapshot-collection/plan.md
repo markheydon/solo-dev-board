@@ -121,6 +121,8 @@ Order:
 8. Hosted AppHost graph only: `WithHostStorage(operator-snapshot-storage)`, `AddBlobContainer` for `hosted-sign-ins` and `collection-schedule`, `AddQueues("operator-snapshot-queues")`, `AddAzureFunctionsProject` by project path, `WithReference` from the worker, `WaitFor` the emulator locally. `web` references `hosted-sign-ins` only. No `WithExternalHttpEndpoints`. Publish assigns the four storage roles on the Functions identity. Lean graph untouched. Re-apply web scale (minimum 0, maximum 1) if the custom-domain callback replaces it.
 9. Update `docs/getting-started.md`, `docs/deployment.md`, and `src/SoloDevBoard.AppHost/README.md` for the new hosted resources.
 
+Steps 6–7 map to **Phase 12** in [tasks.md](tasks.md) (2026-11-24 spec revision). Steps 1–5 and 8–9 are delivered in Phases 1–11 on the feature branch.
+
 Validation before a pull request is in [quickstart.md](quickstart.md).
 
 ## Complexity Tracking
