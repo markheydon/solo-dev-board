@@ -82,15 +82,11 @@ public sealed class DailySnapshotCollectionPassService(
         {
             var exchange = await tokenExchange.RefreshAccessTokenAsync(record.Record.RefreshToken, cancellationToken).ConfigureAwait(false);
             accessToken = exchange.AccessToken;
-            record.Record.RefreshToken = exchange.RefreshToken;
-            record.Record.RefreshTokenExpiresAt = exchange.RefreshTokenExpiresAtUtc;
-            var upsert = await signInRecords.UpsertAsync(record.Record, record.Etag, cancellationToken).ConfigureAwait(false);
-            if (upsert is HostedSignInRecordWriteResult.ConcurrencyConflict)
+            if (!await TryPersistRefreshTokenAsync(message.OperatorLogin, record, exchange, cancellationToken).ConfigureAwait(false))
             {
-                logger.LogWarning("Daily pass could not persist refreshed token for {Login}.", message.OperatorLogin);
-                await WriteSignInFailureAsync(found, cancellationToken).ConfigureAwait(false);
-                await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
-                return;
+                logger.LogWarning(
+                    "Daily pass persisted refreshed token for {Login} only after conflict; continuing with exchanged access token.",
+                    message.OperatorLogin);
             }
         }
         catch (Exception ex)
@@ -283,6 +279,43 @@ public sealed class DailySnapshotCollectionPassService(
         };
         await snapshotStore.SaveAsync(found.Document.OperatorLogin, document, found.Token, cancellationToken).ConfigureAwait(false);
         await MarkCredentialUnusableAsync(found.Document.OperatorLogin, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<bool> TryPersistRefreshTokenAsync(
+        string login,
+        HostedSignInRecordReadResult.Found record,
+        HostedGitHubRefreshTokenExchangeResult exchange,
+        CancellationToken cancellationToken)
+    {
+        record.Record.RefreshToken = exchange.RefreshToken;
+        record.Record.RefreshTokenExpiresAt = exchange.RefreshTokenExpiresAtUtc;
+
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            var upsert = await signInRecords.UpsertAsync(record.Record, record.Etag, cancellationToken).ConfigureAwait(false);
+            if (upsert is HostedSignInRecordWriteResult.Succeeded)
+            {
+                return true;
+            }
+
+            if (upsert is not HostedSignInRecordWriteResult.ConcurrencyConflict)
+            {
+                return false;
+            }
+
+            var reread = await signInRecords.GetAsync(login, cancellationToken).ConfigureAwait(false);
+            if (reread is not HostedSignInRecordReadResult.Found retry)
+            {
+                return false;
+            }
+
+            record = retry;
+            record.Record.RefreshToken = exchange.RefreshToken;
+            record.Record.RefreshTokenExpiresAt = exchange.RefreshTokenExpiresAtUtc;
+            record.Record.CredentialUnusable = false;
+        }
+
+        return false;
     }
 
     private async Task MarkCredentialUnusableAsync(string login, CancellationToken cancellationToken)
