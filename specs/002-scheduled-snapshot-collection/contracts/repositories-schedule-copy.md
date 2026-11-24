@@ -23,13 +23,12 @@ One schedule sentence is included in the same `MudAlert` as the catalogue line a
 | Facts | Sentence |
 | --- | --- |
 | Lean posture | Nothing collects on a schedule. The snapshot is kept on this machine rather than promised on another machine. |
-| Hosted, next occasion will queue them | Next scheduled collection: 05:00 UTC. |
-| Hosted, queued for today, the pass has not started, and they are still eligible | Next scheduled collection: 05:00 UTC. Do not say the day was missed. Do not show the run as in progress until the pass starts. |
-| Hosted, queued or previously queued, and they are not allowed or are outside 30 days | No scheduled collection will run, with the matching reason below. Do not show that removed run as in progress, failed, or interrupted. A previous successful snapshot stays. Being outside the fill hour is not this row. |
-| Hosted, `credentialUnusable` | No scheduled collection will run until you sign in again. Show the failed daily run and the sign-in or token reason. Do not say a collection will run tonight or at the next 05:00 UTC. |
-| Hosted, outside the 30-day window | No scheduled collection will run until you sign in again. |
-| Hosted, not allowed | No scheduled collection will run because you are not allowed to use the product. |
-| Hosted, today's window missed or skipped, still eligible tomorrow | Next scheduled collection: 05:00 UTC on the following UTC day. The sentence still says 05:00 UTC. |
+| Hosted, before 05:00 UTC, and the next ask will queue them | Next scheduled collection: 05:00 UTC. |
+| Hosted, queued for today, the pass has not started, and no refusal applies | Next scheduled collection: 05:00 UTC. Do not say the day was missed. Do not show the run as in progress until the pass starts. |
+| Hosted, after today's 05:00 UTC ask has passed, not queued, and they would be eligible at the following 05:00 UTC | Next scheduled collection: 05:00 UTC on the following UTC day. The sentence still says 05:00 UTC. Use this row whether or not today's scan succeeded. It names the next ask. It does not say a sooner fill is forbidden. |
+| Hosted, not allowed | No scheduled collection will run because you are not allowed to use the product. This row wins when the 30-day window is also closed or a stored-access wait is set. Do not show a removed queue wait as in progress, failed, or interrupted. When a stored-access wait is set, still show that failed run and the sign-in or token reason. A previous successful snapshot stays. |
+| Hosted, allowed, and `credentialUnusable` | No scheduled collection will run until you sign in again. Show the failed daily run and the sign-in or token reason. Do not add a second sentence for a closed 30-day window. Do not say a collection will run tonight or at the next 05:00 UTC. |
+| Hosted, allowed, not in a stored-access wait, outside the 30-day window | No scheduled collection will run until you sign in again. |
 
 There is no control to change the time, how often, or the 30 days.
 
@@ -40,7 +39,8 @@ There is no control to change the time, how often, or the 30 days.
 | In progress, trigger `daily` | Say the daily occasion started it. |
 | In progress, trigger `operator` | Say you started it. Do not call it the daily occasion. |
 | Further try waiting | Same in-progress sentence. Do not list tries. Do not show failed. The minimum wait is not shown as its own state. |
-| Further try removed because they are not allowed or are outside 30 days | Stop the in-progress sentence. Do not replace it with a failed or interrupted sentence for that removal. Show the restored previous run when one exists. |
+| Further try removed because they are not allowed | Stop the in-progress sentence. Do not replace it with a failed or interrupted sentence for that removal. Show the restored previous run when one exists. |
+| Stored access cannot be used | Show the failed run and the sign-in or token reason. Do not restore the previous run in place of that failure. |
 | Interrupted, `scheduledCollectionStopped` | The scheduled collection stopped before it finished. Do not say the site stopped. |
 | Interrupted, `siteStopped` | Unchanged: the site stopped before it completed. |
 | Succeeded or failed | Keep the feature 001 sentence. Where the run has a trigger, the operator can tell which start it was from the in-progress and terminal copy above. A successful daily run uses the same saved-at sentence as a hand-started success. |

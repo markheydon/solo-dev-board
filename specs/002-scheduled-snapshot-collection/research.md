@@ -17,7 +17,7 @@ Use the path overload, matching `AddDotnetProject` for `web`. Do not use `AddAzu
 **Alternatives considered:**
 
 - **Timer inside the web Container App.** Rejected. It only runs while `web` is up, and keeping `MinReplicas` at 1 would abandon scale-to-zero.
-- **`PublishAsScheduledAzureContainerAppJob`.** Rejected for this feature. A cron job is a good fit for a single finite batch, and Aspire documents it. It is a poor fit for a process that must notice it is back at any moment from 05:00:00 UTC through 05:15:00 UTC, then keep draining a queue that survives that process stopping, including after 05:15. The user asked for Functions. Jobs stay unused.
+- **`PublishAsScheduledAzureContainerAppJob`.** Rejected for this feature. A cron job is a good fit for a single finite batch, and Aspire documents it. It is a poor fit for a process that must fill again when it is back later the same UTC day, then keep draining a queue that survives that process stopping. The user asked for Functions. Jobs stay unused.
 - **Durable Task Scheduler (`AddDurableTaskScheduler`).** Rejected. The API is experimental (`ASPIREDURABLETASK001`), and Aspire documents that deployment support is not included yet.
 - **Reviving ADR-0046 (Functions plus Azure SQL).** Rejected. ADR-0046 stays withdrawn. The snapshot remains the JSON blob from ADR-0048. SQL and EF Core are not added.
 
@@ -55,27 +55,44 @@ Both hosts get the same hosted auth and admission environment already applied to
 - **Implicit Functions host storage (second account).** Rejected. A second storage account duplicates the account ADR-0048 already added.
 - **Omitting the worker from local hosted sign-in.** Rejected. Hosted sign-in is the posture that has the schedule, including local hosted sign-in. Lean remains the path without it.
 
-## Occasion clock and the 15-minute grace
+## When this delivery asks, and what a fill selects
 
-**Decision:** One timer trigger, NCRONTAB `0 0-15 5 * * *` (six fields, UTC). That fires at 05:00, 05:01, ... 05:15 UTC. Each tick calls one Application method, `TryFillDailyOccasion`. The method fills the queue only when the UTC clock is inside that closed window and the occasion marker blob does not already exist. A second copy, or a later tick in the same window, sees the marker and does not fill again. A host that is down for every tick in the window does not fill later that UTC day. There is no `RunOnStartup` catch-up and no Functions default late timer outside the window.
+**Decision:** `TryFillDailyOccasion` does not contain a clock window, a once-per-day lock, or a cooldown. Any caller may run it at any UTC time. The 30-day comparison uses that call's instant (exactly 30 days is inside). A person is queued when, at that instant, all of the following hold:
 
-Do not set a local `WEBSITE_TIME_ZONE` or `TZ`. The Azure Functions default is UTC, which is the spec's clock.
+- Latest completed hosted sign-in is inside 30 days, they are currently allowed, and the sign-in record is not `credentialUnusable`.
+- They are not already queued and no collection for them is in progress. `passExecuting` still true counts as in progress. A further try waiting at the back (`inProgress`, pass not executing) also counts as in progress.
+- A scan that already succeeded, including earlier the same UTC day, does not exclude them. A finished scan does not start a waiting period. Signing in after 05:00 UTC does not exclude them when this instant is after that sign-in.
 
-The occasion marker is blob `occasions/{yyyy-MM-dd}.json` in `collection-schedule`, created with `IfNoneMatch = *` so two copies cannot both become the filler. The filler holds blob lease `runner` only for the fill, then releases it.
+A `signInOrToken` failure does not publish `unmetFill` and is not queued again until a completed sign-in clears `credentialUnusable`. An interrupted pass is not put back on the queue. The later fill sends a new `initial` message. The filler holds blob lease `runner` only for the fill, then releases it. A copy that loses the lease retries the same fill after the lease is free. That retry still skips anyone already queued or in progress. Completing sign-in does not call the fill.
 
-**Rationale:** A single `0 0 5 * * *` trigger misses the spec's rule that a process which is back by 05:15 still fills that day. An all-day timer would wake the worker overnight and fight scale-to-zero. The sixteen UTC ticks are the grace window itself.
+This delivery asks on three paths only. None of them is an all-day timer, and none of them is a setting:
+
+- One timer trigger, NCRONTAB `0 0 5 * * *` (six fields, UTC). That is 05:00:00 UTC, once. Replace the branch's `0 0-15 5 * * *` schedule. Those extra minutes were the grace window the spec removed. Keeping them would ask sixteen times in a quarter of an hour.
+- Worker start, after repair of missing `initial` messages, only when the clock is at or after 05:00:00 UTC that day and today's occasion marker is absent. That is the catch-up when the process was down at 05:00, including after 05:15. A start before 05:00 does not fill. A start after a marker already exists does not fill, so a cold start after a completed ask does not scan everyone again. Repair of a login that is still `queuedOccasion` still runs.
+- An `unmetFill` queue message, published after a terminal technical outcome (rate limit or unexpected error with no further tries left, or an interruption) and hidden for 15 minutes. The handler calls `TryFillDailyOccasion` and does not walk GitHub. It may run before 05:00 UTC. The 15 minutes is how soon this delivery asks again after that outcome. It is not an eligibility rule, and it does not skip someone whose scan succeeded when the fill runs.
+
+Do not set a local `WEBSITE_TIME_ZONE` or `TZ`. The Azure Functions default is UTC. Do not enable the Functions host's "run a missed timer whenever the process starts" behaviour. Startup uses the marker check above so a missed timer is not also run on the next UTC day before 05:00.
+
+The occasion marker remains blob `occasions/{yyyy-MM-dd}.json` in `collection-schedule`. The first fill of that date creates it. A later fill the same date replaces it under the etag. `filledAt` is the latest fill instant and may be any time of day. `operators` is the union of logins queued for that date so far. The blob existing is not a reason to skip the fill.
+
+**Rationale:** FR-001, FR-015, FR-016, and FR-021 say 05:00 UTC is how often this delivery asks, not a window and not a cap. Each fill uses the same eligibility, including after a success and after a sign-in later that day. FR-015 also says a technical failure must not postpone the next unattended attempt until the following 05:00 UTC, which is what `unmetFill` is for. An all-day timer would wake the worker when this delivery is not asking. Filling on every worker start would rescan every operator on every cold start after a success. The marker-absent catch-up covers "down at 05:00, back later" without that loop. The spec forbids an extra wait after a finished scan inside the fill rules. It does not require the failure path to ask again in the same second.
 
 **Alternatives considered:**
 
-- **Functions timer catch-up after a long outage.** Rejected. The platform can run a missed timer hours later. The spec misses the day after 05:15.
-- **Wall-clock check only at host start.** Rejected as the only mechanism. A host that stayed up through 05:00 still needs the 05:00 tick. The cron above covers both a host that is already up and a host that returns inside the window. A host that returns after 05:15 does not get a tick until the next day.
-- **A timer that also gates queue draining.** Rejected. The 2026-11-24 spec limits 05:00 UTC and the grace window to filling the queue. Entries already queued, including further tries, run at any time the worker is up.
+- **Keep `0 0-15 5 * * *`.** Rejected. The spec removed the grace window. Sixteen asks would queue a person again as soon as their scan finished inside that quarter-hour, which is not "once per UTC day".
+- **Miss the UTC day after 05:15.** Rejected. A process that returns later still runs the fill.
+- **Treat the occasion marker as a once-per-day lock.** Rejected. That is what the branch does today (`AlreadyFilled` when the marker exists). A later fill must be able to queue someone whose scan already succeeded.
+- **Skip anyone whose daily run already succeeded today.** Rejected. The 2026-11-24 clarification says a success does not remove them from the next fill.
+- **Skip anyone who completed sign-in after 05:00 UTC until the next day.** Rejected. That rule is in `HostedCollectionEligibilityEvaluator` today. FR-016 includes them when a fill runs after that sign-in.
+- **Functions platform catch-up of a missed 05:00 timer, with no Application rule.** Rejected. The platform can run a missed timer on a later UTC day, before 05:00.
+- **An all-day timer, or a fill on every sign-in.** Rejected. How often this delivery asks stays the timer, the missed-ask catch-up, and `unmetFill`. Sign-in does not itself start a scan.
+- **A timer that also gates queue draining.** Rejected. Entries already queued, including further tries, run at any time the worker is up.
 
 ## Queue draining is not the fill clock
 
-**Decision:** The queue trigger stays registered at all times. It has no NCRONTAB and no check that the UTC clock is inside 05:00 to 05:15. A visible message is taken whenever the worker is running, including after 05:15:00 UTC, overnight, and on a later UTC day. Passing the fill window is not a reason to delete a message or to skip a person who is still allowed and still inside 30 days. The timer function remains the only place that calls `TryFillDailyOccasion`. A later feature may change how often the queue is filled. This delivery does not add a schedule setting, and the consumer does not embed "once per day" in its run rules.
+**Decision:** The queue trigger stays registered at all times. It has no NCRONTAB and no check against 05:00 UTC. A visible message is taken whenever the worker is running, including before 05:00, after 05:15, overnight, and on a later UTC day. Clock time is not a reason to delete a message. The 30-day sign-in window is not re-checked at dequeue. Collection messages do not call `TryFillDailyOccasion`. The timer, the missed-ask startup fill, and an `unmetFill` message are the only callers in this delivery. A later feature may ask several times a day, including every 10 minutes. This delivery does not add a schedule setting, and the consumer does not embed "once per day" in its run rules.
 
-**Rationale:** FR-021 splits queuing from running. The fill cron already matches the grace window. The queue trigger is what keeps work alive when the worker stops and comes back. Putting the same clock on the consumer would drop work the spec now says must still run.
+**Rationale:** FR-021 splits queuing from running. The queue trigger keeps work alive when the worker stops and comes back. Putting a fill clock on every collection message would drop work the spec says must still run. `unmetFill` is a fill signal, not a collection.
 
 **Alternatives considered:**
 
@@ -84,14 +101,12 @@ The occasion marker is blob `occasions/{yyyy-MM-dd}.json` in `collection-schedul
 
 ## Run rules when a message is about to run
 
-**Decision:** Queuing and running use different checks. Fill-time eligibility is unchanged: 30 days and allowance at the occasion instant, saved organisation logins, no GitHub membership call, and not `credentialUnusable`. When a message is received and a pass has not yet started (an `initial` message, or a `retry` whose further try has not entered the walk), Application evaluates two run rules at `TimeProvider.GetUtcNow()`:
+**Decision:** Queuing and running use different checks. Fill-time eligibility is the list in the previous section. When a message is received and a pass has not yet started (an `initial` message, or a `retry` whose further try has not entered the walk), Application does the following at `TimeProvider.GetUtcNow()`:
 
-- The person is currently allowed. Admission uses the lists in configuration now and the organisation logins saved on the sign-in record. There is still no GitHub membership call.
-- `completedAt` is still inside 30 days of that instant. Exactly 30 days is inside (`completedAt >= now - 30 days`).
+- If the person is not currently allowed, withdraw without a failed collection. Admission uses the lists in configuration now and the organisation logins saved on the sign-in record. There is still no GitHub membership call. The 30-day window is not part of this check.
+- Otherwise attempt the scan, including when `completedAt` is now older than 30 days because the message waited. If stored access cannot be used (no sign-in record, `credentialUnusable` already set, or token exchange fails), record `failed` with `signInOrToken`, set `credentialUnusable` when a record exists, stop further tries, and do not enqueue `unmetFill`. That is a real run, not a silent skip. The branch's `IsEligibleAtRun` still treats a closed window and `credentialUnusable` as the silent withdrawal. That method must stop doing both.
 
-The fill-only rule that a sign-in completed after 05:00 UTC is too late for that day's fill does not apply here. `credentialUnusable` is not this drop. A pass that actually runs and cannot use stored access still fails with `signInOrToken`, as FR-013.
-
-If either run rule fails, or the sign-in record is missing:
+Withdrawal when they are not allowed:
 
 - Complete the message. Do not enqueue another.
 - Do not call GitHub and do not take the runner lease.
@@ -100,16 +115,18 @@ If either run rule fails, or the sign-in record is missing:
 - If the pass has not started (`queuedOccasion` set, `run.status` not `inProgress`), clear `queuedOccasion` only. Do not set `trigger` to `daily` until a pass starts, so the previous run keeps its start.
 - If a further try is waiting (`inProgress`, `passExecuting` false), restore the previous terminal run from `retainedRun` and clear the attempt fields. The page then stops showing that run as in progress.
 
-`retainedRun` is written when the first pass of the occasion replaces a terminal run. It holds that run and its `trigger`. It is cleared when this occasion succeeds, fails, or is interrupted. It is not a log of past occasions. When the first pass had no prior terminal run, withdrawal leaves the document in the never-run reading (no finished failure, no interruption, no in-progress run).
+`retainedRun` is written when the first pass of the occasion replaces a terminal run. It holds that run and its `trigger`. It is cleared when this occasion succeeds, fails, or is interrupted. It is not a log of past occasions. When the first pass had no prior terminal run, withdrawal leaves the document in the never-run reading (no finished failure, no interruption, no in-progress run). A token failure does not restore `retainedRun`. It replaces the run with the failed daily run.
 
-A pass already executing (`passExecuting` true) is not withdrawn by these rules. Redelivery of that pass remains an interruption.
+A pass already executing (`passExecuting` true) is not withdrawn by the not-allowed rule. Redelivery of that pass remains an interruption.
 
-**Rationale:** The spec evaluates eligibility when the queue is filled and when the page names the next occasion. It evaluates allowance and the 30-day window again when a queued entry is about to run. Those later failures are not a collection outcome. The page already has `notAllowed` and `outsideWindow` sentences. Restoring one previous run avoids inventing a failed daily run and avoids a history list, which FR-018 forbids.
+**Rationale:** FR-021 attempts the scan unless the person is not allowed. The 30-day window applies at fill and on the Repositories page, not at dequeue. The 2026-11-24 clarification records a sign-in or token failure when stored access cannot be used, and removes the queue entry with no failed collection only when they are not allowed. Restoring one previous run on that withdrawal avoids inventing a failed daily run and avoids a history list, which FR-018 forbids.
 
 **Alternatives considered:**
 
 - **Record a failed collection when the person is no longer allowed.** Rejected. The spec says remove the entry and do not record a failed collection.
-- **Leave the further try in progress until the next fill.** Rejected. The page must not keep showing that run as in progress.
+- **Drop the queue entry with no failed collection when stored access cannot be used.** Rejected. That was the previous plan. The clarification requires a `signInOrToken` failure and the stored-access wait.
+- **Re-check the 30-day window at dequeue and skip when it is closed.** Rejected. The branch still does this in `IsEligibleAtRun`. FR-001 and FR-017 forbid it.
+- **Leave the further try in progress until the next fill.** Rejected. The page must not keep showing that run as in progress after a not-allowed withdrawal.
 - **Call GitHub to refresh organisation membership at dequeue.** Rejected. The same saved logins used at fill are the membership set.
 
 ## Minimum wait before a further try
@@ -151,18 +168,19 @@ Message handling:
 
 | Snapshot state when the message is received | Action |
 | --- | --- |
-| Not allowed now, or latest sign-in outside 30 days of now, and no pass is executing | Complete the message. Do not walk GitHub. Withdraw the queued presentation as in the run-rule section. No failed collection. |
+| Not allowed now, and no pass is executing | Complete the message. Do not walk GitHub. Withdraw as in the run-rule section. No failed collection. Do not apply the 30-day window here. |
+| Stored access cannot be used, and no pass is executing | Complete the message. Do not walk the catalogue. Record `failed` / `signInOrToken`, set `credentialUnusable`, no retry, no `unmetFill`. |
 | `notBefore` still in the future | Re-queue with the remaining invisibility. Do not start a pass. |
-| Queued for this occasion, pass not started, run rules pass | Set `passExecuting`, renew visibility, run the collection, then complete the message. |
-| Retry waiting at the back (`inProgress`, pass not executing), run rules pass, `notBefore` has passed | Same as a start. This is the next try of the same run. |
+| Queued, pass not started, still allowed | Set `passExecuting`, renew visibility, run the collection, then complete the message. A previous success the same day does not take this row. |
+| Retry waiting at the back (`inProgress`, pass not executing), still allowed, `notBefore` has passed | Same as a start. This is the next try of the same run. |
 | `passExecuting` already true (redelivery after the worker died) | Do not walk GitHub again. Write interrupted with the scheduled-collection reason, then complete the message. The pass does not rejoin the queue. |
-| Occasion already finished for that login | Complete the message and do nothing. |
+| Not queued, not a retry wait, and no pass is executing | Complete the message and do nothing. This is a duplicate, not "already succeeded today". |
 
 Visibility starts at 30 seconds. The executing pass renews it about every 10 seconds, and renews `passLeaseUntil` on the snapshot document at the same cadence. A dead worker stops renewing. The next delivery, or a web read that sees `passExecuting` with `passLeaseUntil` in the past, writes the interruption. A queued login that has not started a pass has no `passExecuting` flag, so a dead worker does not interrupt it. Those messages stay on the queue and run when a worker is back, including after 05:15.
 
 `functionTimeout` in the Functions `host.json` is `02:00:00`. This publish path is the ACA Functions host, not the Consumption plan's 10-minute cap. A timeout, scale-in, or host stop while a pass is executing is an interruption, not one of the three further tries.
 
-Product retries (rate limit or unexpected error, up to three further tries) are a new tail message written by Application code, invisible until `notBefore`. They are not the platform poison queue. A sign-in or token failure completes the message and does not enqueue another. Hand-started collections do not use this queue and do not get those tries. A message is not dropped because the clock has moved past 05:15 UTC.
+Product retries (rate limit or unexpected error, up to three further tries) are a new tail message written by Application code, invisible until `notBefore`. They are not the platform poison queue. When those tries are exhausted, or a pass is interrupted, Application also enqueues one `unmetFill` message hidden for 15 minutes. That message runs the same fill. It is not a fourth try and not a rejoin of the interrupted pass. People whose scan already succeeded are included when they are eligible and idle. A sign-in or token failure completes the message and does not enqueue a retry or an `unmetFill`. Hand-started collections do not use this queue and do not get those tries. A message is not dropped because of the clock.
 
 **Rationale:** Completing a message only after a successful pass would put the pass back on the queue when the host dies, which the spec forbids. Deleting before the walk, without a redelivery rule, would lose the crash signal. The `passExecuting` flag plus a short visibility timeout distinguishes "never started" from "died mid-pass". The runner lease is what keeps two copies from walking GitHub at once. KEDA keeps the replica for the active invocation, then scales to zero when the queue is idle.
 
@@ -178,7 +196,7 @@ Product retries (rate limit or unexpected error, up to three further tries) are 
 
 Token exchange moves behind an Application port implemented in Infrastructure, shared by the existing web gateway and the worker. The Functions trigger methods do not call GitHub. A refresh that returns a new refresh token is written back with the blob etag. `credentialUnusable` is set when a daily pass fails with the sign-in or token reason, and cleared only when a later hosted sign-in completes.
 
-Eligibility at fill time is Application code: list sign-in blobs, keep those with `completedAt` no older than 30 days at that occasion (exactly 30 days is inside), drop `credentialUnusable`, then apply the admission lists from configuration. Organisation allowance compares the saved logins with `HostedAdmissionControl__AllowedOrganisationLogins` as injected at fill time. There is no GitHub membership request. The same record is read again when a queued message is about to run. That check uses the current UTC time and the allow lists as they stand then. It does not use the 05:00 UTC occasion instant.
+Eligibility at fill time is Application code: list sign-in blobs, keep those with `completedAt` no older than 30 days at that fill instant (exactly 30 days is inside), drop `credentialUnusable`, then apply the admission lists from configuration. Do not also require `completedAt` to be at or before 05:00 UTC that day. Organisation allowance compares the saved logins with `HostedAdmissionControl__AllowedOrganisationLogins` as injected at fill time. There is no GitHub membership request. The same record is read again when a queued message is about to run. Allowance is the only skip. A missing record or unusable stored access fails the run with `signInOrToken`. The 30-day window is not applied at dequeue.
 
 **Rationale:** Today's refresh token and organisation logins live in the auth cookie (`HostedGitHubAuthGateway`). A scaled-to-zero web app and a signed-out operator have no cookie for the worker to read. A second store is the smallest way to keep the schedule off the site. Private blob RBAC plus the existing storage account matches ADR-0045 (no new in-app Key Vault client).
 
@@ -221,6 +239,6 @@ Functions worker packages (`Microsoft.Azure.Functions.Worker`, `Microsoft.Azure.
 
 ## Tests and docs
 
-**Decision:** Occasion window, single fill, one pass at a time, redelivery-versus-queue, the three further tries, the minimum waits, run-rule removal without a failed collection, admission from saved organisations, and the 30-day boundary at fill time and at dequeue time are Application unit tests with `TimeProvider`. Store tests cover the new interruption branch and `retainedRun` restore. bUnit covers the Repositories copy, including the no-schedule sentences after a queued entry is removed. Do not unit-test the AppHost graph. Do not add a Playwright journey that walks GitHub. Update `website/content/docs/repositories.md` and the locking tests in the same implementation change, because the page gains schedule copy.
+**Decision:** Fill selection at any clock time, a second fill after a success, missed-ask catch-up when the marker is absent, one pass at a time, redelivery-versus-queue, the three further tries, the minimum waits, `unmetFill` after a terminal technical outcome, not-allowed removal without a failed collection, `signInOrToken` when stored access cannot be used, admission from saved organisations, the 30-day boundary at fill time only, and one schedule sentence in the order not allowed, then stored-access wait, then closed window, are Application unit tests with `TimeProvider`. Store tests cover the interruption branch, `retainedRun` restore on a not-allowed withdrawal, and no restore on a token failure. bUnit covers the Repositories copy: before 05:00 UTC the named occasion is today; after the ask has passed it is the following day at 05:00 UTC even when today's scan has not succeeded; a queued wait still names today; the not-allowed sentence wins when several reasons apply, and the failed token run stays visible. Do not unit-test the AppHost graph. Do not add a Playwright journey that walks GitHub. Update `website/content/docs/repositories.md` and the locking tests in the same implementation change when the page copy changes.
 
 **Rationale:** Principle III. The schedule rules are deterministic once the clock and the stores are fakes.

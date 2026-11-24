@@ -26,33 +26,36 @@ On the hosted publish model, confirm the web Container App still has minimum rep
 
 There is no unit test of the AppHost graph. Review `HostedSignInAppHostGraph` and `LeanAppHostGraph` against [research.md](research.md).
 
-## 3. Occasion window
+## 3. Asks and fill selection
 
-Application tests, fake clock, no Azure:
+Application tests, fake clock, no Azure. The timer under test is `0 0 5 * * *`, not `0 0-15 5 * * *`.
 
 | Clock (UTC) | Marker | Expected |
 | --- | --- | --- |
-| 04:59 | absent | No fill. |
-| 05:00 | absent | Marker created. Each eligible login queued once. |
-| 05:10 | absent | Fill at 05:10. |
-| 05:10 | already present | No second fill. |
-| 05:16 | absent | No fill. The day is missed. |
-| After 05:15, marker present, messages still queued, person still allowed and inside 30 days | present | No new marker. Existing messages still run, including on a later UTC day. The clock is not a reason to drop them. |
-| Message received after the person is no longer allowed, or their sign-in is now outside 30 days | present or absent | Message completed. No failed run. Previous success unchanged. Page states that no scheduled collection will run, and why. |
+| 04:59, including worker start | absent | No fill. |
+| 05:00 | absent | Marker created. Each eligible person who is not queued or in progress is queued once, including someone whose scan already succeeded. |
+| 05:10, worker starts, marker absent | absent | Catch-up fill. The day is not missed. |
+| 05:10, worker starts, marker present, person still queued | present | No second entry. No extra fill from startup. Repair may send a missing `initial`. |
+| After 05:00, a fill is invoked again, previous scan succeeded, person idle and eligible | present | They are queued again. No cooldown. |
+| Message still queued, person still allowed, sign-in now older than 30 days | present | The message still runs, including on a later UTC day. The clock and the 30-day window are not reasons to drop it. |
+| Worker stays up, technical failure has exhausted further tries | present | One `unmetFill`, hidden for 15 minutes, then the same fill. Not a fourth try of the same run. A person who already succeeded is included when they are idle and eligible. |
+| Message received after the person is no longer allowed | present or absent | Message completed. No failed run. Previous success unchanged. Page states that no scheduled collection will run because they are not allowed. |
+| Message received and stored access cannot be used | present or absent | Failed run, sign-in or token reason, no further try. |
 
-Include two eligible people and assert one pass at a time. Include a login allowed but never signed in, a login outside 30 days, a login no longer allowed, and a login with `credentialUnusable`. None of those are queued. A sign-in exactly 30 days before the occasion is queued. Organisation allowance uses the saved logins, with no GitHub membership call.
+Include two eligible people and assert one pass at a time. Include a login allowed but never signed in, a login outside 30 days at the fill instant, a login no longer allowed, and a login with `credentialUnusable`. None of those are queued. A sign-in exactly 30 days before the fill instant is queued. A sign-in at 06:00 UTC is queued by a fill at 06:30 UTC. Organisation allowance uses the saved logins, with no GitHub membership call. Completing sign-in does not itself enqueue a scan.
 
 ## 4. Crash, retry, and the start control
 
 Store and Application tests:
 
-- Worker stops while a pass is executing: next read is `interrupted` with `scheduledCollectionStopped`, and no new queue message.
+- Worker stops while a pass is executing: next read is `interrupted` with `scheduledCollectionStopped`, the interrupted pass does not rejoin, and one `unmetFill` is hidden for 15 minutes.
 - Worker stops while the login is only queued, or waiting at the back: not interrupted, and the message still runs.
 - Web process stops during a daily pass that is still renewing its lease: the snapshot is not rewritten to `siteStopped`.
 - Rate limit then success on the next try: one run, one snapshot. The retry message is not visible until at least 2 minutes after the failure when GitHub sent no retry delay, or until the delay GitHub already indicated. Another queued login that is already visible runs first, and the minimum wait still applies.
 - Unexpected error with only one account queued: the three further tries wait at least 3, 6, and 12 minutes from each failed attempt. The pass does not start on the next loop with no wait.
-- Four failed attempts (`rateLimit` or `unexpected`): one failed run, next eligible day can start.
-- Queued entry, or a further try waiting, when the person is no longer allowed or is outside 30 days: message removed, no failed collection, previous success unchanged, in-progress copy gone. A pass that is already executing is not withdrawn this way.
+- Four failed attempts (`rateLimit` or `unexpected`): one failed run, then the same fill after 15 minutes. That fill includes them when they are eligible and idle, and it also includes someone whose scan already succeeded. The following 05:00 UTC can still ask if that later fill does not succeed.
+- Queued entry, or a further try waiting, when the person is no longer allowed: message removed, no failed collection, previous success unchanged, in-progress copy gone. A sign-in older than 30 days does not remove that message. A pass that is already executing is not withdrawn this way.
+- Queued entry, or a further try waiting, when stored access cannot be used: failed run with the sign-in or token reason, further tries stop, previous success's snapshot entries unchanged. Do not restore `retainedRun` over that failure.
 - `signInOrToken`: no retry message, later occasions skip until a completed sign-in clears the flag.
 - `StartAsync` while queued or in progress does not start a second walk. After the terminal state, a hand-started success replaces the daily snapshot and does not get three further tries.
 
@@ -60,11 +63,14 @@ Store and Application tests:
 
 bUnit, hosted posture:
 
-- Before any run, eligible: the alert names 05:00 UTC and does not pretend a snapshot exists.
-- After a credential failure: the failure is shown and the alert does not promise tonight.
-- Queued before the pass starts: not "Saving snapshot…".
+- Before 05:00 UTC, eligible, no run yet: the alert names 05:00 UTC and does not pretend a snapshot exists.
+- After a credential failure, and they are allowed: the failure is shown and the alert does not promise tonight.
+- Not allowed, including when a stored-access wait is also set or the window is closed: the one schedule sentence is the not-allowed sentence. When the wait is set, the failed run and the sign-in or token reason are still shown.
+- Allowed, stored-access wait set, window also closed: one sentence, until they sign in again, plus the failed run. No second sentence for the window.
+- Queued before the pass starts: not "Saving snapshot…", and the named occasion stays today at 05:00 UTC.
 - Retry waiting: in progress, no try list, and no sentence that names the 3, 6, or 12 minute wait.
-- After a queued entry is removed because they are not allowed, or because the sign-in window has closed: the alert gives that reason and does not show that run as in progress, failed, or interrupted.
+- After today's 05:00 UTC ask has passed, not queued, eligible tomorrow: the alert names 05:00 UTC on the following UTC day, whether or not today's scan succeeded.
+- After a queued entry is removed because they are not allowed: the alert gives that reason and does not show that run as in progress, failed, or interrupted.
 - No button changes the time, the frequency, or the 30 days. No retry button.
 
 Update `website/content/docs/repositories.md` in the same change as the page. Do not add a Playwright test that waits for the clock or calls GitHub.
