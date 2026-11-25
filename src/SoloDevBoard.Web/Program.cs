@@ -96,7 +96,9 @@ if (useOperatorSnapshotBlob)
 if (hostedSignInEnabled && useOperatorSnapshotBlob)
 {
     builder.AddKeyedAzureBlobContainerClient(AspireHostedStorageReferenceNames.HostedSignIns);
+    builder.AddKeyedAzureBlobContainerClient(AspireHostedStorageReferenceNames.AccountScanStatus);
     builder.Services.RegisterHostedSignInBlobStore();
+    builder.Services.RegisterAccountScanStatusBlobStore();
 }
 
 builder.AddOperatorSnapshotHost(useOperatorSnapshotBlob);
@@ -172,6 +174,7 @@ if (hostedSignInEnabled)
         HttpContext context,
         HostedGitHubAuthGateway authGateway,
         IHostedSignInRecordStore signInRecords,
+        AccountScanStatusTransitionService accountScanStatus,
         ILogger<Program> logger) =>
     {
         if (!TryReadAndClearStateCookie(context, out var state, out var returnUrl))
@@ -231,33 +234,9 @@ if (hostedSignInEnabled)
                 authenticationProperties)
             .ConfigureAwait(false);
 
-        var sanitised = OperatorLoginSanitiser.Sanitise(session.OwnerLogin);
-        if (sanitised is not null)
-        {
-            var record = new HostedSignInRecord
-            {
-                SchemaVersion = 1,
-                OperatorLogin = sanitised,
-                CompletedAt = DateTimeOffset.UtcNow,
-                OrganisationLogins = session.OrganisationLogins,
-                RefreshToken = session.RefreshToken,
-                RefreshTokenExpiresAt = session.RefreshTokenExpiresAtUtc,
-                CredentialUnusable = false,
-            };
-            var existingSignIn = await signInRecords.GetAsync(sanitised, context.RequestAborted).ConfigureAwait(false);
-            var expectedEtag = existingSignIn is HostedSignInRecordReadResult.Found existing
-                ? existing.Etag
-                : null;
-            var upsert = await signInRecords.UpsertAsync(record, expectedEtag, context.RequestAborted).ConfigureAwait(false);
-            if (upsert is HostedSignInRecordWriteResult.ConcurrencyConflict)
-            {
-                var reread = await signInRecords.GetAsync(sanitised, context.RequestAborted).ConfigureAwait(false);
-                if (reread is HostedSignInRecordReadResult.Found found)
-                {
-                    await signInRecords.UpsertAsync(record, found.Etag, context.RequestAborted).ConfigureAwait(false);
-                }
-            }
-        }
+        await HostedSignInPersistence
+            .PersistCompletedSignInAsync(session, signInRecords, accountScanStatus, context.RequestAborted)
+            .ConfigureAwait(false);
 
         return Results.Redirect(returnUrl);
     }).AllowAnonymous();

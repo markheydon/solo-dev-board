@@ -28,7 +28,7 @@ public sealed class OperatorSnapshotScheduleFactsServiceTests
             Run = new OperatorSnapshotRun { Status = OperatorSnapshotRunStatus.Failed },
         };
 
-        var facts = CreateSut().Compute(document, signIn, utcNow);
+        var facts = CreateSut().Compute(document, signIn, null, utcNow);
 
         Assert.Equal(TodayOccasion.AddDays(1), facts.NextOccasionAtUtc);
         Assert.Equal(OperatorSnapshotNoScheduleReason.None, facts.NoScheduleReason);
@@ -54,9 +54,26 @@ public sealed class OperatorSnapshotScheduleFactsServiceTests
             new StubScheduledCollectionEnvironment { IsHostedScheduleEnabled = true },
             admission);
 
-        var facts = sut.Compute(document, signIn, utcNow);
+        var facts = sut.Compute(document, signIn, null, utcNow);
 
         Assert.Equal(OperatorSnapshotNoScheduleReason.NotAllowed, facts.NoScheduleReason);
+    }
+
+    [Fact]
+    public void Compute_RefusalOrder_CredentialUnusableBeforeOutsideWindow()
+    {
+        var utcNow = TodayOccasion.AddHours(2);
+        var signIn = new HostedSignInRecordForSchedule(
+            "octocat",
+            CompletedAt: TodayOccasion.AddDays(-45),
+            CredentialUnusable: true,
+            OrganisationLogins: []);
+        var document = new OperatorSnapshotDocument { OperatorLogin = "octocat" };
+
+        var facts = CreateSut().Compute(document, signIn, null, utcNow);
+
+        Assert.Equal(OperatorSnapshotNoScheduleReason.CredentialUnusable, facts.NoScheduleReason);
+        Assert.Null(facts.NextOccasionAtUtc);
     }
 
     [Fact]
@@ -78,14 +95,14 @@ public sealed class OperatorSnapshotScheduleFactsServiceTests
             new StubScheduledCollectionEnvironment { IsHostedScheduleEnabled = true },
             admission);
 
-        var facts = sut.Compute(new OperatorSnapshotDocument(), signIn, utcNow);
+        var facts = sut.Compute(new OperatorSnapshotDocument(), signIn, null, utcNow);
 
         Assert.Equal(OperatorSnapshotNoScheduleReason.None, facts.NoScheduleReason);
         Assert.Equal(TodayOccasion, facts.NextOccasionAtUtc);
     }
 
     [Fact]
-    public void Compute_WhenQueuedAfter0500_KeepsTodayOccasion()
+    public void Compute_WhenScheduledAfter0500_KeepsTodayOccasion()
     {
         var utcNow = TodayOccasion.AddHours(6);
         var signIn = new HostedSignInRecordForSchedule(
@@ -93,15 +110,82 @@ public sealed class OperatorSnapshotScheduleFactsServiceTests
             CompletedAt: TodayOccasion.AddDays(-1),
             CredentialUnusable: false,
             OrganisationLogins: []);
-        var document = new OperatorSnapshotDocument
-        {
-            OperatorLogin = "octocat",
-            QueuedOccasion = "2026-11-23",
-        };
+        var document = new OperatorSnapshotDocument { OperatorLogin = "octocat" };
 
-        var facts = CreateSut().Compute(document, signIn, utcNow);
+        var facts = CreateSut().Compute(document, signIn, ReportedAccountScanStatus.Scheduled, utcNow);
 
         Assert.Equal(TodayOccasion, facts.NextOccasionAtUtc);
+    }
+
+    [Fact]
+    public void Compute_ScheduledWithSignInOlderThanThirtyDays_KeepsTodayAndDoesNotRefuse()
+    {
+        var utcNow = TodayOccasion.AddHours(1);
+        var signIn = new HostedSignInRecordForSchedule(
+            "octocat",
+            CompletedAt: TodayOccasion.AddDays(-45),
+            CredentialUnusable: false,
+            OrganisationLogins: []);
+
+        var facts = CreateSut().Compute(new OperatorSnapshotDocument(), signIn, ReportedAccountScanStatus.Scheduled, utcNow);
+
+        Assert.Equal(OperatorSnapshotNoScheduleReason.None, facts.NoScheduleReason);
+        Assert.Equal(TodayOccasion, facts.NextOccasionAtUtc);
+    }
+
+    [Fact]
+    public void Compute_ScheduledButNotAllowed_NotAllowedWins()
+    {
+        var signIn = new HostedSignInRecordForSchedule(
+            "octocat",
+            CompletedAt: TodayOccasion.AddDays(-1),
+            CredentialUnusable: false,
+            OrganisationLogins: []);
+        var sut = new OperatorSnapshotScheduleFactsService(
+            new StubScheduledCollectionEnvironment { IsHostedScheduleEnabled = true },
+            new HostedCollectionEligibilityEvaluator(Options.Create(new HostedAdmissionControlOptions
+            {
+                Enabled = true,
+                AllowedUserLogins = "other-user",
+            })));
+
+        var facts = sut.Compute(new OperatorSnapshotDocument(), signIn, ReportedAccountScanStatus.Scheduled, TodayOccasion.AddHours(1));
+
+        Assert.Equal(OperatorSnapshotNoScheduleReason.NotAllowed, facts.NoScheduleReason);
+        Assert.Null(facts.NextOccasionAtUtc);
+    }
+
+    [Fact]
+    public void Compute_AllowedNotScheduledOutsideWindowAtNamedInstant_ReportsOutsideWindow()
+    {
+        var signIn = new HostedSignInRecordForSchedule(
+            "octocat",
+            CompletedAt: TodayOccasion.AddDays(-45),
+            CredentialUnusable: false,
+            OrganisationLogins: []);
+
+        var facts = CreateSut().Compute(
+            new OperatorSnapshotDocument(),
+            signIn,
+            ReportedAccountScanStatus.Finished,
+            TodayOccasion.AddHours(1));
+
+        Assert.Equal(OperatorSnapshotNoScheduleReason.OutsideWindow, facts.NoScheduleReason);
+        Assert.Null(facts.NextOccasionAtUtc);
+    }
+
+    [Fact]
+    public void Compute_LeanPosture_ReportsLeanWithNoNextOccasion()
+    {
+        var sut = new OperatorSnapshotScheduleFactsService(
+            new StubScheduledCollectionEnvironment { IsHostedScheduleEnabled = false },
+            new HostedCollectionEligibilityEvaluator(Options.Create(new HostedAdmissionControlOptions())));
+
+        var facts = sut.Compute(new OperatorSnapshotDocument(), null, null, TodayOccasion.AddHours(1));
+
+        Assert.Equal(OperatorSnapshotSchedulePosture.Lean, facts.SchedulePosture);
+        Assert.Equal(OperatorSnapshotNoScheduleReason.Lean, facts.NoScheduleReason);
+        Assert.Null(facts.NextOccasionAtUtc);
     }
 
     private sealed class StubScheduledCollectionEnvironment : IScheduledCollectionEnvironment

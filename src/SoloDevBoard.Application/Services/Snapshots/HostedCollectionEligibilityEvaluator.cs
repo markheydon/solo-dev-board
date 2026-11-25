@@ -12,7 +12,7 @@ public sealed class HostedCollectionEligibilityEvaluator(IOptions<HostedAdmissio
     /// <summary>Returns true when the login may be queued for <paramref name="occasionInstant"/>.</summary>
     public bool IsEligibleAtFill(
         HostedSignInRecord signInRecord,
-        OperatorSnapshotDocument? snapshot,
+        ReportedAccountScanStatus? reportedScanStatus,
         DateTimeOffset occasionInstant)
     {
         ArgumentNullException.ThrowIfNull(signInRecord);
@@ -32,19 +32,7 @@ public sealed class HostedCollectionEligibilityEvaluator(IOptions<HostedAdmissio
             return false;
         }
 
-        if (snapshot is null)
-        {
-            return true;
-        }
-
-        var occasionDate = occasionInstant.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
-        if (!string.IsNullOrEmpty(snapshot.QueuedOccasion)
-            && string.Equals(snapshot.QueuedOccasion, occasionDate, StringComparison.Ordinal))
-        {
-            return false;
-        }
-
-        if (snapshot.Run.Status == OperatorSnapshotRunStatus.InProgress)
+        if (reportedScanStatus is ReportedAccountScanStatus.Scheduled or ReportedAccountScanStatus.Running)
         {
             return false;
         }

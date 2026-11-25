@@ -30,6 +30,7 @@ if (useOperatorSnapshotBlob)
 if (useHostedWorker)
 {
     builder.AddKeyedAzureBlobContainerClient(AspireHostedStorageReferenceNames.HostedSignIns);
+    builder.AddKeyedAzureBlobContainerClient(AspireHostedStorageReferenceNames.AccountScanStatus);
     builder.AddKeyedAzureBlobContainerClient(AspireHostedStorageReferenceNames.CollectionSchedule);
     builder.AddAzureQueueServiceClient(AspireHostedStorageReferenceNames.OperatorSnapshotQueues);
     builder.Services.RegisterHostedScheduledCollectionWorkerAdapters();

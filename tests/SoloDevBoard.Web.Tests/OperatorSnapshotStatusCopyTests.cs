@@ -174,7 +174,8 @@ public sealed class OperatorSnapshotStatusCopyTests
             Kind = OperatorSnapshotStatusKind.NeverRun,
             DurabilityKind = OperatorSnapshotDurabilityKind.HostedBlob,
             SchedulePosture = OperatorSnapshotSchedulePosture.Hosted,
-            QueuedForOccasion = "2026-11-23",
+            ReportedScanStatus = ReportedAccountScanStatus.Scheduled,
+            NextOccasionAtUtc = new DateTimeOffset(2026, 11, 23, 5, 0, 0, TimeSpan.Zero),
             NoScheduleReason = OperatorSnapshotNoScheduleReason.None,
         };
 
@@ -191,7 +192,8 @@ public sealed class OperatorSnapshotStatusCopyTests
             Kind = OperatorSnapshotStatusKind.NeverRun,
             DurabilityKind = OperatorSnapshotDurabilityKind.HostedBlob,
             SchedulePosture = OperatorSnapshotSchedulePosture.Hosted,
-            QueuedForOccasion = "2026-11-23",
+            ReportedScanStatus = ReportedAccountScanStatus.Scheduled,
+            NextOccasionAtUtc = new DateTimeOffset(2026, 11, 23, 5, 0, 0, TimeSpan.Zero),
             NoScheduleReason = OperatorSnapshotNoScheduleReason.None,
         };
 

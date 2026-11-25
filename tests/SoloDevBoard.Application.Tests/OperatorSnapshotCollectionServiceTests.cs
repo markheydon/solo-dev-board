@@ -145,103 +145,170 @@ public sealed class OperatorSnapshotCollectionServiceTests
     }
 
     [Fact]
-    public async Task GetStatusAsync_QueuedForToday_DoesNotShowInProgress()
+    public async Task GetStatusAsync_HostedScheduled_ReportsScheduledWithoutTrigger()
     {
+        var statuses = new InMemoryAccountScanStatusStore();
+        statuses.Seed(AccountScanStatusTestFactory.Document("octocat", AccountScanStatusDocumentConstants.StatusScheduled, 1, true));
         var store = new InMemoryOperatorSnapshotStore();
         store.Seed("octocat", new OperatorSnapshotDocument
         {
             OperatorLogin = "octocat",
-            QueuedOccasion = "2026-11-23",
-            PassExecuting = false,
             Trigger = OperatorSnapshotCollectionTrigger.Daily,
-            Repositories = [],
-            Run = new OperatorSnapshotRun
-            {
-                Status = OperatorSnapshotRunStatus.Failed,
-                FinishedAt = null,
-            },
+            Run = new OperatorSnapshotRun { Status = OperatorSnapshotRunStatus.Succeeded },
         });
 
-        var userContext = Substitute.For<ICurrentUserContext>();
-        userContext.OwnerLogin.Returns("octocat");
-        var service = CreateService(userContext, store);
+        var service = CreateHostedService(store, statuses, new FixedTimeProvider(HostedNow));
 
         var status = await service.GetStatusAsync(TestContext.Current.CancellationToken);
 
-        Assert.NotEqual(OperatorSnapshotStatusKind.InProgress, status.Kind);
-        Assert.Equal(OperatorSnapshotStatusKind.NeverRun, status.Kind);
+        Assert.Equal(ReportedAccountScanStatus.Scheduled, status.ReportedScanStatus);
+        Assert.Null(status.Trigger);
+        Assert.Equal(OperatorSnapshotSchedulePosture.Hosted, status.SchedulePosture);
     }
 
     [Fact]
-    public async Task StartAsync_WhenQueuedOccasionSetForToday_ReturnsAlreadyInProgress()
+    public async Task OperatorSnapshotCollectionService_StartWhileScheduledOrRunning_DoesNotStart()
     {
-        var todayOccasion = DateTimeOffset.UtcNow.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
-        var store = new InMemoryOperatorSnapshotStore();
-        store.Seed("octocat", new OperatorSnapshotDocument
+        foreach (var storedStatus in new[]
+                 {
+                     AccountScanStatusDocumentConstants.StatusScheduled,
+                     AccountScanStatusDocumentConstants.StatusRunning,
+                 })
         {
-            OperatorLogin = "octocat",
-            QueuedOccasion = todayOccasion,
-            PassExecuting = false,
-            Run = new OperatorSnapshotRun { Status = OperatorSnapshotRunStatus.Failed },
-        });
+            var statuses = new InMemoryAccountScanStatusStore();
+            statuses.Seed(AccountScanStatusTestFactory.Document(
+                "octocat",
+                storedStatus,
+                generation: 2,
+                queueMessagePending: storedStatus == AccountScanStatusDocumentConstants.StatusScheduled,
+                livenessAt: HostedNow,
+                runningSince: HostedNow));
+            var store = new InMemoryOperatorSnapshotStore();
+            var service = CreateHostedService(store, statuses, new FixedTimeProvider(HostedNow));
 
-        var userContext = Substitute.For<ICurrentUserContext>();
-        userContext.OwnerLogin.Returns("octocat");
-        userContext.GetAccessToken().Returns("token");
-        var service = CreateService(userContext, store);
+            var result = await service.StartAsync(TestContext.Current.CancellationToken);
 
-        var result = await service.StartAsync(TestContext.Current.CancellationToken);
-
-        Assert.Equal(OperatorSnapshotStartResult.AlreadyInProgress, result);
+            Assert.Equal(OperatorSnapshotStartResult.AlreadyInProgress, result);
+            Assert.Equal(2, statuses.Peek("octocat")!.ScanGeneration);
+            Assert.Equal(storedStatus, statuses.Peek("octocat")!.Status);
+            Assert.Null(store.GetDocument("octocat"));
+        }
     }
 
     [Fact]
-    public async Task StartAsync_WhenQueuedOccasionSetForAnotherDay_StartsCollection()
+    public async Task OperatorSnapshotCollectionService_StartWhileStalled_SetsRunningAndLivenessMark()
     {
-        var staleOccasion = DateTimeOffset.UtcNow.AddDays(-1).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
-        var store = new InMemoryOperatorSnapshotStore();
-        store.Seed("octocat", new OperatorSnapshotDocument
-        {
-            OperatorLogin = "octocat",
-            QueuedOccasion = staleOccasion,
-            PassExecuting = false,
-            Run = new OperatorSnapshotRun { Status = OperatorSnapshotRunStatus.Failed },
-        });
-
-        var userContext = Substitute.For<ICurrentUserContext>();
-        userContext.OwnerLogin.Returns("octocat");
-        userContext.GetAccessToken().Returns("token");
-        var service = CreateService(userContext, store);
+        var time = new FixedTimeProvider(HostedNow);
+        var statuses = new InMemoryAccountScanStatusStore();
+        statuses.Seed(AccountScanStatusTestFactory.Document(
+            "octocat",
+            AccountScanStatusDocumentConstants.StatusRunning,
+            generation: 3,
+            queueMessagePending: true,
+            livenessAt: HostedNow.AddMinutes(-6),
+            runningSince: HostedNow.AddMinutes(-9)));
+        var walkGate = new TaskCompletionSource();
+        var github = GatedGitHub(walkGate);
+        var service = CreateHostedService(new InMemoryOperatorSnapshotStore(), statuses, time, CreateCoordinatorWithGithub(github));
 
         var result = await service.StartAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(OperatorSnapshotStartResult.Started, result);
+        var stored = statuses.Peek("octocat")!;
+        Assert.Equal(AccountScanStatusDocumentConstants.StatusRunning, stored.Status);
+        Assert.Equal(4, stored.ScanGeneration);
+        Assert.Equal(HostedNow, stored.LivenessAt);
+        Assert.Equal(HostedNow, stored.RunningSince);
+        Assert.False(stored.QueueMessagePending);
+        Assert.Null(stored.SuspensionReason);
+
+        walkGate.SetResult();
+        await WaitForStatusAsync(statuses, AccountScanStatusDocumentConstants.StatusFinished);
     }
 
     [Fact]
-    public async Task StartAsync_WhenDailyRetryWaitInProgress_ReturnsAlreadyInProgress()
+    public async Task OperatorSnapshotCollectionService_HandStartedScanPastSixtySeconds_WritesAnotherLivenessMark()
     {
-        var store = new InMemoryOperatorSnapshotStore();
-        store.Seed("octocat", new OperatorSnapshotDocument
+        var time = new FixedTimeProvider(HostedNow);
+        var statuses = new InMemoryAccountScanStatusStore();
+        statuses.Seed(AccountScanStatusTestFactory.Document("octocat", AccountScanStatusDocumentConstants.StatusNeverRun));
+        var walkGate = new TaskCompletionSource();
+        var service = CreateHostedService(
+            new InMemoryOperatorSnapshotStore(),
+            statuses,
+            time,
+            CreateCoordinatorWithGithub(GatedGitHub(walkGate)));
+
+        Assert.Equal(OperatorSnapshotStartResult.Started, await service.StartAsync(TestContext.Current.CancellationToken));
+        var generation = statuses.Peek("octocat")!.ScanGeneration;
+
+        time.SetUtcNow(HostedNow.AddSeconds(45));
+        var deadline = DateTimeOffset.UtcNow.AddSeconds(5);
+        while (statuses.Peek("octocat")!.LivenessAt == HostedNow && DateTimeOffset.UtcNow < deadline)
+        {
+            await Task.Delay(10, TestContext.Current.CancellationToken);
+        }
+
+        Assert.Equal(HostedNow.AddSeconds(45), statuses.Peek("octocat")!.LivenessAt);
+        Assert.Equal(generation, statuses.Peek("octocat")!.ScanGeneration);
+
+        walkGate.SetResult();
+        await WaitForStatusAsync(statuses, AccountScanStatusDocumentConstants.StatusFinished);
+        var finished = statuses.Peek("octocat")!;
+        Assert.Equal(AccountScanStatusDocumentConstants.LastResultSuccess, finished.LastResult);
+        Assert.Null(finished.LivenessAt);
+    }
+
+    [Fact]
+    public async Task OperatorSnapshotCollectionService_HandStartAndFillRaceOnStalled_ExactlyOneScanStarts()
+    {
+        var time = new FixedTimeProvider(HostedNow);
+        var statuses = new InMemoryAccountScanStatusStore();
+        statuses.Seed(AccountScanStatusTestFactory.Document(
+            "octocat",
+            AccountScanStatusDocumentConstants.StatusRunning,
+            generation: 1,
+            livenessAt: HostedNow.AddMinutes(-10),
+            runningSince: HostedNow.AddMinutes(-12)));
+        var snapshots = new InMemoryOperatorSnapshotStore();
+        var signIns = new InMemoryHostedSignInRecordStore();
+        signIns.Seed(new HostedSignInRecord
         {
             OperatorLogin = "octocat",
-            Trigger = OperatorSnapshotCollectionTrigger.Daily,
-            PassExecuting = false,
-            Run = new OperatorSnapshotRun
-            {
-                Status = OperatorSnapshotRunStatus.InProgress,
-                Reason = OperatorSnapshotRunReason.RateLimit,
-            },
+            CompletedAt = HostedNow.AddDays(-1),
+            RefreshToken = "refresh",
         });
+        var queue = new RecordingDailyQueuePublisher();
+        var fill = DailyOccasionServiceTestFactory.Create(
+            time,
+            snapshots,
+            signIns,
+            queue,
+            new InMemoryOccasionMarkerStore(),
+            accountScanStatus: statuses);
+        var walkGate = new TaskCompletionSource();
+        var service = CreateHostedService(snapshots, statuses, time, CreateCoordinatorWithGithub(GatedGitHub(walkGate)));
 
-        var userContext = Substitute.For<ICurrentUserContext>();
-        userContext.OwnerLogin.Returns("octocat");
-        userContext.GetAccessToken().Returns("token");
-        var service = CreateService(userContext, store);
+        var handStart = service.StartAsync(TestContext.Current.CancellationToken);
+        var fillTask = fill.TryFillDailyOccasionAsync(TestContext.Current.CancellationToken);
+        var start = await handStart;
+        await fillTask;
 
-        Assert.Equal(
-            OperatorSnapshotStartResult.AlreadyInProgress,
-            await service.StartAsync(TestContext.Current.CancellationToken));
+        var stored = statuses.Peek("octocat")!;
+        if (start == OperatorSnapshotStartResult.Started)
+        {
+            Assert.Equal(AccountScanStatusDocumentConstants.StatusRunning, stored.Status);
+            Assert.Empty(queue.Messages);
+        }
+        else
+        {
+            Assert.Equal(AccountScanStatusDocumentConstants.StatusScheduled, stored.Status);
+            Assert.Single(queue.Messages);
+        }
+
+        Assert.Equal(2, stored.ScanGeneration);
+
+        walkGate.SetResult();
     }
 
     [Fact]
@@ -294,6 +361,77 @@ public sealed class OperatorSnapshotCollectionServiceTests
         return [];
     }
 
+    private static readonly DateTimeOffset HostedNow = new(2026, 11, 25, 6, 0, 0, TimeSpan.Zero);
+
+    private static IGitHubService GatedGitHub(TaskCompletionSource walkGate)
+    {
+        var github = Substitute.For<IGitHubService>();
+        github.GetRepositoriesAsync(
+                Arg.Any<CancellationToken>(),
+                Arg.Any<bool>(),
+                Arg.Any<IProgress<int>?>())
+            .Returns(call => WaitForWalkThenReturnEmptyAsync(walkGate, call.Arg<CancellationToken>()));
+        return github;
+    }
+
+    private static async Task WaitForStatusAsync(InMemoryAccountScanStatusStore statuses, string expected)
+    {
+        var deadline = DateTimeOffset.UtcNow.AddSeconds(5);
+        while (DateTimeOffset.UtcNow < deadline)
+        {
+            if (statuses.Peek("octocat")?.Status == expected)
+            {
+                return;
+            }
+
+            await Task.Delay(10);
+        }
+
+        Assert.Fail($"Status did not become {expected}.");
+    }
+
+    private static OperatorSnapshotCollectionService CreateHostedService(
+        IOperatorSnapshotStore store,
+        InMemoryAccountScanStatusStore statuses,
+        FixedTimeProvider time,
+        OperatorSnapshotCollectionCoordinator? coordinator = null)
+    {
+        var userContext = Substitute.For<ICurrentUserContext>();
+        userContext.OwnerLogin.Returns("octocat");
+        userContext.GetAccessToken().Returns("token");
+        coordinator ??= new OperatorSnapshotCollectionCoordinator(
+            Substitute.For<ISnapshotCollectionCredentialScopeFactory>(),
+            TimeProvider.System,
+            new OperatorSnapshotApplicationStopping(CancellationToken.None),
+            NullLogger<OperatorSnapshotCollectionCoordinator>.Instance);
+        var environment = new TestScheduledCollectionEnvironment(enabled: true);
+        var signIns = new InMemoryHostedSignInRecordStore();
+        signIns.Seed(new HostedSignInRecord
+        {
+            OperatorLogin = "octocat",
+            CompletedAt = HostedNow.AddDays(-1),
+            RefreshToken = "refresh",
+        });
+
+        return new OperatorSnapshotCollectionService(
+            userContext,
+            store,
+            coordinator,
+            Options.Create(new OperatorSnapshotDurabilityOptions { DurabilityKind = OperatorSnapshotDurabilityKind.HostedBlob }),
+            time,
+            new OperatorSnapshotScheduleFactsService(
+                environment,
+                new HostedCollectionEligibilityEvaluator(Options.Create(new HostedAdmissionControlOptions { Enabled = false }))),
+            signIns,
+            environment,
+            AccountScanStatusTestFactory.CreateTransitions(statuses, time),
+            NullLogger<OperatorSnapshotCollectionService>.Instance)
+        {
+            MonitorPollInterval = TimeSpan.FromMilliseconds(10),
+            LivenessEveryPolls = 1,
+        };
+    }
+
     private static OperatorSnapshotCollectionService CreateService(
         ICurrentUserContext userContext,
         IOperatorSnapshotStore store,
@@ -316,7 +454,10 @@ public sealed class OperatorSnapshotCollectionServiceTests
                     Options.Create(new GitHubAuthOptions()),
                     Options.Create(new OperatorSnapshotDurabilityOptions { DurabilityKind = OperatorSnapshotDurabilityKind.LocalMachine })),
                 new HostedCollectionEligibilityEvaluator(Options.Create(new HostedAdmissionControlOptions()))),
-            new TestHostedSignInRecordStore());
+            new TestHostedSignInRecordStore(),
+            new TestScheduledCollectionEnvironment(enabled: false),
+            AccountScanStatusTestFactory.CreateTransitions(new InMemoryAccountScanStatusStore(), TimeProvider.System),
+            NullLogger<OperatorSnapshotCollectionService>.Instance);
     }
 
     private static OperatorSnapshotCollectionCoordinator CreateCoordinatorWithGithub(IGitHubService github)

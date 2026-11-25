@@ -648,6 +648,184 @@ public sealed class RepositoriesTests
             () => Assert.Contains("could not be stored safely", cut.Markup, StringComparison.OrdinalIgnoreCase));
     }
 
+    [Fact]
+    public async Task Repositories_HostedNeverRun_ShowsNeverRunWithoutLastRunFacts()
+    {
+        await using var ctx = CreateContext();
+        var cut = RenderHosted(ctx, HostedStatus(ReportedAccountScanStatus.NeverRun));
+
+        cut.WaitForAssertion(() => Assert.Contains("Never run.", cut.Markup));
+        Assert.DoesNotContain("Snapshot saved", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("could not be saved", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Last successful", cut.Markup, StringComparison.Ordinal);
+        Assert.False(cut.Find("[data-testid='repositories-collect-snapshot-button']").HasAttribute("disabled"));
+    }
+
+    [Fact]
+    public async Task Repositories_HostedScheduled_ShowsScheduledNotRunning()
+    {
+        await using var ctx = CreateContext();
+        var cut = RenderHosted(ctx, HostedStatus(ReportedAccountScanStatus.Scheduled));
+
+        cut.WaitForAssertion(() => Assert.Contains("Scheduled.", cut.Markup));
+        Assert.Contains("Next scheduled collection: 05:00 UTC.", cut.Markup);
+        Assert.DoesNotContain("Running.", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Saving snapshot", cut.Markup, StringComparison.Ordinal);
+        Assert.True(cut.Find("[data-testid='repositories-collect-snapshot-button']").HasAttribute("disabled"));
+    }
+
+    [Fact]
+    public async Task Repositories_HostedScheduledAsRetryWait_ShowsNoTryListOrWaits()
+    {
+        var status = HostedStatus(
+            ReportedAccountScanStatus.Scheduled,
+            lastSuccess: DateTimeOffset.Parse("2025-06-01T12:00:00Z"));
+        await using var ctx = CreateContext();
+        var cut = RenderHosted(ctx, status);
+
+        cut.WaitForAssertion(() => Assert.Contains("Scheduled.", cut.Markup));
+        Assert.Contains("Last successful snapshot:", cut.Markup);
+        Assert.DoesNotContain("could not be saved", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("attempt", cut.Markup, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("retry", cut.Markup, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("minutes", cut.Markup, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData(OperatorSnapshotCollectionTrigger.Daily, "The daily occasion started it.")]
+    [InlineData(OperatorSnapshotCollectionTrigger.Operator, "You started it.")]
+    public async Task Repositories_HostedRunning_ShowsWhoStartedTheRun(
+        OperatorSnapshotCollectionTrigger trigger,
+        string expected)
+    {
+        await using var ctx = CreateContext();
+        var cut = RenderHosted(ctx, HostedStatus(ReportedAccountScanStatus.Running, trigger: trigger));
+
+        cut.WaitForAssertion(() => Assert.Contains("Running.", cut.Markup));
+        Assert.Contains(expected, cut.Markup);
+        Assert.Contains("recorded so far", cut.Markup);
+        Assert.True(cut.Find("[data-testid='repositories-collect-snapshot-button']").HasAttribute("disabled"));
+    }
+
+    [Fact]
+    public async Task Repositories_HostedStalled_ShowsStalledAndCollectSnapshot()
+    {
+        var status = HostedStatus(
+            ReportedAccountScanStatus.Stalled,
+            lastSuccess: DateTimeOffset.Parse("2025-06-01T12:00:00Z"));
+        await using var ctx = CreateContext();
+        var cut = RenderHosted(ctx, status);
+
+        cut.WaitForAssertion(() => Assert.Contains("Stalled.", cut.Markup));
+        Assert.Contains("Last successful snapshot:", cut.Markup);
+        Assert.DoesNotContain("Running.", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("site stopped", cut.Markup, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Something went wrong", cut.Markup, StringComparison.Ordinal);
+        Assert.False(cut.Find("[data-testid='repositories-collect-snapshot-button']").HasAttribute("disabled"));
+    }
+
+    [Fact]
+    public async Task Repositories_HostedNotAllowed_UsesNotAllowedSentenceOnly()
+    {
+        var status = HostedStatus(
+            ReportedAccountScanStatus.Suspended,
+            suspension: AccountScanSuspensionReason.NotAllowed,
+            noScheduleReason: OperatorSnapshotNoScheduleReason.NotAllowed,
+            resultComment: "Should not appear");
+        await using var ctx = CreateContext();
+        var cut = RenderHosted(ctx, status);
+
+        cut.WaitForAssertion(() => Assert.Contains("Suspended.", cut.Markup));
+        Assert.Contains("You are not allowed to use the product.", cut.Markup);
+        Assert.Contains("No scheduled collection will run because you are not allowed to use the product.", cut.Markup);
+        Assert.DoesNotContain("Should not appear", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Running.", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("sign in again", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Repositories_HostedCredentialUnusable_ShowsSuspendedFailureAndSignInAgain()
+    {
+        var status = HostedStatus(
+            ReportedAccountScanStatus.Suspended,
+            noScheduleReason: OperatorSnapshotNoScheduleReason.CredentialUnusable,
+            lastResult: AccountScanStatusDocumentConstants.LastResultFailure,
+            resultComment: "Could not reach GitHub with your current sign-in.",
+            lastScanAt: DateTimeOffset.Parse("2025-06-02T12:00:00Z"));
+        await using var ctx = CreateContext();
+        var cut = RenderHosted(ctx, status);
+
+        cut.WaitForAssertion(() => Assert.Contains("Suspended.", cut.Markup));
+        Assert.Contains("No scheduled collection will run until you sign in again.", cut.Markup);
+        Assert.Contains("Could not reach GitHub with your current sign-in.", cut.Markup);
+        Assert.DoesNotContain("not allowed", cut.Markup, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Repositories_LeanPosture_ShowsNoWorkerStatusWords()
+    {
+        var status = new OperatorSnapshotStatusDto
+        {
+            Kind = OperatorSnapshotStatusKind.NeverRun,
+            DurabilityKind = OperatorSnapshotDurabilityKind.LocalMachine,
+            SchedulePosture = OperatorSnapshotSchedulePosture.Lean,
+            NoScheduleReason = OperatorSnapshotNoScheduleReason.Lean,
+        };
+        await using var ctx = CreateContext();
+        var cut = RenderHosted(ctx, status);
+
+        cut.WaitForAssertion(() => Assert.Contains("Nothing collects on a schedule.", cut.Markup));
+        Assert.Contains("No snapshot exists.", cut.Markup);
+        foreach (var word in new[] { "Never run.", "Scheduled.", "Running.", "Stalled.", "Suspended.", "05:00 UTC" })
+        {
+            Assert.DoesNotContain(word, cut.Markup, StringComparison.Ordinal);
+        }
+    }
+
+    private IRenderedComponent<Repositories> RenderHosted(BunitContext ctx, OperatorSnapshotStatusDto status)
+    {
+        _repositoryService.GetRepositoriesAsync(Arg.Any<CancellationToken>(), Arg.Any<bool>())
+            .Returns([CreateRepository("owner", "repo-a")]);
+        _snapshotCollectionService.GetStatusAsync(Arg.Any<CancellationToken>()).Returns(status);
+
+        var cut = ctx.Render<Repositories>();
+        cut.WaitForAssertion(() => Assert.Contains("Loaded 1 repositories.", cut.Markup));
+        return cut;
+    }
+
+    private static OperatorSnapshotStatusDto HostedStatus(
+        ReportedAccountScanStatus reported,
+        OperatorSnapshotCollectionTrigger? trigger = null,
+        DateTimeOffset? lastSuccess = null,
+        AccountScanSuspensionReason suspension = AccountScanSuspensionReason.None,
+        OperatorSnapshotNoScheduleReason noScheduleReason = OperatorSnapshotNoScheduleReason.None,
+        string? lastResult = null,
+        string? resultComment = null,
+        DateTimeOffset? lastScanAt = null)
+    {
+        var running = reported == ReportedAccountScanStatus.Running;
+        return new OperatorSnapshotStatusDto
+        {
+            Kind = running ? OperatorSnapshotStatusKind.InProgress : OperatorSnapshotStatusKind.NeverRun,
+            DurabilityKind = OperatorSnapshotDurabilityKind.HostedBlob,
+            SchedulePosture = OperatorSnapshotSchedulePosture.Hosted,
+            ReportedScanStatus = reported,
+            Trigger = trigger,
+            RunStartedAt = running ? DateTimeOffset.Parse("2025-06-01T12:00:00Z") : null,
+            RepositoriesRecordedThisRun = running ? 3 : 0,
+            LastSuccessfulCollectionAt = lastSuccess,
+            SnapshotRepositoryCount = lastSuccess is null ? 0 : 1,
+            ScanSuspensionReason = suspension,
+            NoScheduleReason = noScheduleReason,
+            LastScanResult = lastResult,
+            ResultComment = resultComment,
+            LastScanAt = lastScanAt,
+            NextOccasionAtUtc = noScheduleReason == OperatorSnapshotNoScheduleReason.None
+                ? new DateTimeOffset(2026, 11, 26, 5, 0, 0, TimeSpan.Zero)
+                : null,
+        };
+    }
+
     private static RepositoryDto CreateRepository(string owner, string name)
         => new(1, name, $"{owner}/{name}", string.Empty, string.Empty, false, false, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, [], false);
 

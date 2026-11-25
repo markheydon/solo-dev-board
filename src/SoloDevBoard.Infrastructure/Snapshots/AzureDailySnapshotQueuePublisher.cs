@@ -26,6 +26,42 @@ public sealed class AzureDailySnapshotQueuePublisher(
         await client.SendMessageAsync(payload, visibility, cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
+    /// <inheritdoc/>
+    public async Task<bool> HasVisibleMessageAsync(string operatorLogin, CancellationToken cancellationToken = default)
+    {
+        var client = queueServiceClient.GetQueueClient(QueueName);
+        if (!await client.ExistsAsync(cancellationToken).ConfigureAwait(false))
+        {
+            return false;
+        }
+
+        var peeked = await client.PeekMessagesAsync(maxMessages: 32, cancellationToken).ConfigureAwait(false);
+        foreach (var peekedMessage in peeked.Value)
+        {
+            var text = peekedMessage.MessageText;
+            if (string.IsNullOrEmpty(text))
+            {
+                continue;
+            }
+
+            try
+            {
+                var parsed = JsonSerializer.Deserialize<DailySnapshotQueueMessage>(text, JsonOptions);
+                if (parsed is not null
+                    && string.Equals(parsed.OperatorLogin, operatorLogin, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+            catch (JsonException)
+            {
+                // Ignore malformed messages when peeking.
+            }
+        }
+
+        return false;
+    }
+
     private TimeSpan? ComputeInitialVisibility(DailySnapshotQueueMessage message)
     {
         if (!string.Equals(message.Kind, "retry", StringComparison.Ordinal)

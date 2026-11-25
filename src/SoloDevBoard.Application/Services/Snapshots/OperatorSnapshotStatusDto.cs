@@ -36,8 +36,23 @@ public sealed class OperatorSnapshotStatusDto
     /// <summary>Whether scheduled collection is modelled.</summary>
     public OperatorSnapshotSchedulePosture SchedulePosture { get; init; }
 
-    /// <summary>UTC date when waiting to start today's daily occasion, if any.</summary>
-    public string? QueuedForOccasion { get; init; }
+    /// <summary>Stored account scan status, if hosted.</summary>
+    public string? AccountScanStatus { get; init; }
+
+    /// <summary>Reported scan status including computed <c>stalled</c>.</summary>
+    public ReportedAccountScanStatus? ReportedScanStatus { get; init; }
+
+    /// <summary>Last scan finish time from the status blob.</summary>
+    public DateTimeOffset? LastScanAt { get; init; }
+
+    /// <summary>Last scan result from the status blob.</summary>
+    public string? LastScanResult { get; init; }
+
+    /// <summary>Last scan comment from the status blob.</summary>
+    public string? ResultComment { get; init; }
+
+    /// <summary>Not-allowed suspension when set.</summary>
+    public AccountScanSuspensionReason ScanSuspensionReason { get; init; }
 
     /// <summary>Next 05:00 UTC that would queue them, if any.</summary>
     public DateTimeOffset? NextOccasionAtUtc { get; init; }

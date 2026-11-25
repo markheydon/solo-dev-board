@@ -24,22 +24,29 @@ public sealed class OperatorSnapshotOperatorIsolationTests
         {
             OperatorLogin = "bob",
             Trigger = OperatorSnapshotCollectionTrigger.Daily,
-            QueuedOccasion = "2026-11-23",
             Run = new OperatorSnapshotRun { Status = OperatorSnapshotRunStatus.Failed },
         });
+
+        var statuses = new InMemoryAccountScanStatusStore();
+        statuses.Seed(AccountScanStatusTestFactory.Document(
+            "bob",
+            AccountScanStatusDocumentConstants.StatusScheduled,
+            generation: 1,
+            queueMessagePending: true));
 
         var aliceContext = Substitute.For<ICurrentUserContext>();
         aliceContext.OwnerLogin.Returns("alice");
         var bobContext = Substitute.For<ICurrentUserContext>();
         bobContext.OwnerLogin.Returns("bob");
 
-        var aliceStatus = await CreateService(aliceContext, store).GetStatusAsync(TestContext.Current.CancellationToken);
-        var bobStatus = await CreateService(bobContext, store).GetStatusAsync(TestContext.Current.CancellationToken);
+        var aliceStatus = await CreateService(aliceContext, store, statuses).GetStatusAsync(TestContext.Current.CancellationToken);
+        var bobStatus = await CreateService(bobContext, store, statuses).GetStatusAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(OperatorSnapshotStatusKind.Succeeded, aliceStatus.Kind);
         Assert.Equal(1, aliceStatus.SnapshotRepositoryCount);
-        Assert.Equal(OperatorSnapshotStatusKind.NeverRun, bobStatus.Kind);
-        Assert.Equal("2026-11-23", bobStatus.QueuedForOccasion);
+        Assert.Equal(OperatorSnapshotStatusKind.Failed, bobStatus.Kind);
+        Assert.Equal(ReportedAccountScanStatus.Scheduled, bobStatus.ReportedScanStatus);
+        Assert.Equal(ReportedAccountScanStatus.NeverRun, aliceStatus.ReportedScanStatus);
     }
 
     private static OperatorSnapshotRepositoryEntry CreateEntry(string owner, string name) => new()
@@ -53,7 +60,8 @@ public sealed class OperatorSnapshotOperatorIsolationTests
 
     private static OperatorSnapshotCollectionService CreateService(
         ICurrentUserContext userContext,
-        IOperatorSnapshotStore store)
+        IOperatorSnapshotStore store,
+        InMemoryAccountScanStatusStore statuses)
         => new(
             userContext,
             store,
@@ -69,7 +77,10 @@ public sealed class OperatorSnapshotOperatorIsolationTests
                     Options.Create(new GitHubAuthOptions { HostedSignInEnabled = true }),
                     Options.Create(new OperatorSnapshotDurabilityOptions { DurabilityKind = OperatorSnapshotDurabilityKind.HostedBlob })),
                 new HostedCollectionEligibilityEvaluator(Options.Create(new HostedAdmissionControlOptions()))),
-            new TestHostedSignInRecordStore());
+            new TestHostedSignInRecordStore(),
+            new TestScheduledCollectionEnvironment(enabled: true),
+            AccountScanStatusTestFactory.CreateTransitions(statuses, TimeProvider.System),
+            NullLogger<OperatorSnapshotCollectionService>.Instance);
 
     private sealed class TestHostedSignInRecordStore : IHostedSignInRecordStore
     {

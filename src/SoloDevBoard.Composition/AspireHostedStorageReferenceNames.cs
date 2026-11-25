@@ -9,6 +9,9 @@ public static class AspireHostedStorageReferenceNames
     /// <summary>Durable hosted sign-in records.</summary>
     public const string HostedSignIns = "hosted-sign-ins";
 
+    /// <summary>Per-account scan status blobs.</summary>
+    public const string AccountScanStatus = "account-scan-status";
+
     /// <summary>Occasion markers and runner lease blobs.</summary>
     public const string CollectionSchedule = "collection-schedule";
 

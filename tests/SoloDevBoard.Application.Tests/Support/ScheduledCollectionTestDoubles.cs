@@ -20,8 +20,22 @@ internal sealed class RecordingDailyQueuePublisher : IDailySnapshotQueuePublishe
 {
     public List<DailySnapshotQueueMessage> Messages { get; } = [];
 
+    /// <summary>Logins reported as having a visible message when peeked.</summary>
+    public HashSet<string> VisibleLogins { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>When set, <see cref="EnqueueAsync"/> throws.</summary>
+    public bool ThrowOnEnqueue { get; set; }
+
+    public Task<bool> HasVisibleMessageAsync(string operatorLogin, CancellationToken cancellationToken = default)
+        => Task.FromResult(VisibleLogins.Contains(operatorLogin));
+
     public Task EnqueueAsync(DailySnapshotQueueMessage message, CancellationToken cancellationToken = default)
     {
+        if (ThrowOnEnqueue)
+        {
+            throw new InvalidOperationException("Enqueue failed.");
+        }
+
         Messages.Add(new DailySnapshotQueueMessage
         {
             OccasionDate = message.OccasionDate,
@@ -92,6 +106,104 @@ internal sealed class InMemoryOccasionMarkerStore : ICollectionOccasionMarkerSto
         };
         _etags[marker.OccasionDate] = $"etag-{_etagCounter++}";
         return Task.FromResult<OccasionMarkerWriteResult>(new OccasionMarkerWriteResult.Replaced());
+    }
+}
+
+internal sealed class InMemoryAccountScanStatusStore : IAccountScanStatusStore
+{
+    private readonly Dictionary<string, (AccountScanStatusDocument Document, string Etag)> _documents = new(StringComparer.OrdinalIgnoreCase);
+    private int _etagCounter;
+
+    public void Seed(AccountScanStatusDocument document)
+    {
+        _documents[document.OperatorLogin] = (document, $"etag-{_etagCounter++}");
+    }
+
+    /// <summary>When true the next replace reports a lost etag (once).</summary>
+    public bool ConflictOnNextReplace { get; set; }
+
+    /// <summary>Number of successful creates and replaces.</summary>
+    public int WriteCount { get; private set; }
+
+    public AccountScanStatusDocument? Peek(string operatorLogin)
+        => _documents.TryGetValue(operatorLogin, out var entry) ? entry.Document : null;
+
+    public Task<AccountScanStatusReadResult> GetAsync(string operatorLogin, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult<AccountScanStatusReadResult>(
+            _documents.TryGetValue(operatorLogin, out var entry)
+                ? new AccountScanStatusReadResult.Found(entry.Document, entry.Etag)
+                : new AccountScanStatusReadResult.NotFound());
+    }
+
+    public Task<AccountScanStatusWriteResult> TryCreateAsync(
+        AccountScanStatusDocument document,
+        CancellationToken cancellationToken = default)
+    {
+        if (_documents.ContainsKey(document.OperatorLogin))
+        {
+            return Task.FromResult<AccountScanStatusWriteResult>(new AccountScanStatusWriteResult.AlreadyExists());
+        }
+
+        _documents[document.OperatorLogin] = (document, $"etag-{_etagCounter++}");
+        WriteCount++;
+        return Task.FromResult<AccountScanStatusWriteResult>(new AccountScanStatusWriteResult.Succeeded(_documents[document.OperatorLogin].Etag));
+    }
+
+    public Task<AccountScanStatusWriteResult> TryReplaceAsync(
+        AccountScanStatusDocument document,
+        string expectedEtag,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_documents.TryGetValue(document.OperatorLogin, out var existing)
+            || !string.Equals(existing.Etag, expectedEtag, StringComparison.Ordinal))
+        {
+            return Task.FromResult<AccountScanStatusWriteResult>(new AccountScanStatusWriteResult.ConcurrencyConflict());
+        }
+
+        if (ConflictOnNextReplace)
+        {
+            ConflictOnNextReplace = false;
+            return Task.FromResult<AccountScanStatusWriteResult>(new AccountScanStatusWriteResult.ConcurrencyConflict());
+        }
+
+        var etag = $"etag-{_etagCounter++}";
+        _documents[document.OperatorLogin] = (document, etag);
+        WriteCount++;
+        return Task.FromResult<AccountScanStatusWriteResult>(new AccountScanStatusWriteResult.Succeeded(etag));
+    }
+}
+
+internal static class AccountScanStatusTestFactory
+{
+    public static AccountScanStatusTransitionService CreateTransitions(
+        IAccountScanStatusStore store,
+        TimeProvider time)
+        => new(
+            store,
+            new AccountScanStatusReporter(time),
+            time,
+            NullLogger<AccountScanStatusTransitionService>.Instance);
+
+    public static AccountScanStatusDocument Document(
+        string login,
+        string status,
+        int generation = 0,
+        bool queueMessagePending = false,
+        string? lastResult = null,
+        DateTimeOffset? livenessAt = null,
+        DateTimeOffset? runningSince = null,
+        DateTimeOffset? queueVisibleAfter = null)
+    {
+        var document = AccountScanStatusDocumentConstants.CreateNeverRun(login);
+        document.Status = status;
+        document.ScanGeneration = generation;
+        document.QueueMessagePending = queueMessagePending;
+        document.LastResult = lastResult;
+        document.LivenessAt = livenessAt;
+        document.RunningSince = runningSince;
+        document.QueueVisibleAfter = queueVisibleAfter;
+        return document;
     }
 }
 
@@ -170,9 +282,17 @@ internal static class DailyOccasionServiceTestFactory
         InMemoryOccasionMarkerStore markers,
         IDailyCollectionRunnerLease? runner = null,
         bool hostedScheduleEnabled = true,
-        HostedAdmissionControlOptions? admission = null)
+        HostedAdmissionControlOptions? admission = null,
+        InMemoryAccountScanStatusStore? accountScanStatus = null)
     {
         var environment = new TestScheduledCollectionEnvironment(hostedScheduleEnabled);
+        var statusStore = accountScanStatus ?? new InMemoryAccountScanStatusStore();
+        var reporter = new AccountScanStatusReporter(time);
+        var transitions = new AccountScanStatusTransitionService(
+            statusStore,
+            reporter,
+            time,
+            NullLogger<AccountScanStatusTransitionService>.Instance);
         return new DailyOccasionService(
             environment,
             time,
@@ -180,7 +300,8 @@ internal static class DailyOccasionServiceTestFactory
             runner ?? new AlwaysAvailableRunnerLease(),
             queue,
             signIns,
-            snapshots,
+            statusStore,
+            transitions,
             new HostedCollectionEligibilityEvaluator(Options.Create(admission ?? new HostedAdmissionControlOptions { Enabled = false })),
             NullLogger<DailyOccasionService>.Instance);
     }

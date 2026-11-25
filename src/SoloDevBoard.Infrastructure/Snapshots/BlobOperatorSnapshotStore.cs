@@ -140,24 +140,9 @@ public sealed class BlobOperatorSnapshotStore : IOperatorSnapshotStore
             return document;
         }
 
-        var isDailyPassExecuting = document.Trigger == OperatorSnapshotCollectionTrigger.Daily
-            && (document.PassExecuting
-                || (document.PassLeaseUntil is { } leaseUntil && leaseUntil > _timeProvider.GetUtcNow()));
-
-        if (isDailyPassExecuting)
-        {
-            if (document.PassExecuting
-                && document.PassLeaseUntil is { } expired
-                && expired <= _timeProvider.GetUtcNow())
-            {
-                return await RewriteDailyPassInterruptedAsync(document, sanitisedLogin, etag, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-
-            return document;
-        }
-
-        if (document.Trigger == OperatorSnapshotCollectionTrigger.Daily && !document.PassExecuting)
+        // A hosted daily pass runs in the Functions host, so web never has a live task for it. Its liveness
+        // is the account scan status blob, and a reader tells stalled; it is never rewritten as siteStopped here.
+        if (document.Trigger == OperatorSnapshotCollectionTrigger.Daily)
         {
             return document;
         }
@@ -171,9 +156,6 @@ public sealed class BlobOperatorSnapshotStore : IOperatorSnapshotStore
             Repositories = document.Repositories,
             LaterFacts = document.LaterFacts,
             Trigger = document.Trigger,
-            QueuedOccasion = document.QueuedOccasion,
-            PassExecuting = false,
-            PassLeaseUntil = null,
             AttemptsUsed = document.AttemptsUsed,
             RetainedRun = document.RetainedRun,
             PendingRetryNotBeforeUtc = document.PendingRetryNotBeforeUtc,
@@ -184,53 +166,6 @@ public sealed class BlobOperatorSnapshotStore : IOperatorSnapshotStore
                 FinishedAt = _timeProvider.GetUtcNow(),
                 RepositoriesRecorded = document.Run.RepositoriesRecorded,
                 Reason = OperatorSnapshotRunReason.SiteStopped,
-                Detail = null,
-            },
-        };
-
-        var save = await SaveAsync(
-                sanitisedLogin,
-                interrupted,
-                new OperatorSnapshotConcurrencyToken(document.Revision, etag),
-                cancellationToken)
-            .ConfigureAwait(false);
-        if (save is OperatorSnapshotSaveResult.Succeeded)
-        {
-            interrupted.Revision = document.Revision + 1;
-            return interrupted;
-        }
-
-        return document;
-    }
-
-    private async Task<OperatorSnapshotDocument> RewriteDailyPassInterruptedAsync(
-        OperatorSnapshotDocument document,
-        string sanitisedLogin,
-        string etag,
-        CancellationToken cancellationToken)
-    {
-        var interrupted = new OperatorSnapshotDocument
-        {
-            SchemaVersion = document.SchemaVersion,
-            OperatorLogin = document.OperatorLogin,
-            Revision = document.Revision,
-            LastSuccessfulCollectionAt = document.LastSuccessfulCollectionAt,
-            Repositories = document.Repositories,
-            LaterFacts = document.LaterFacts,
-            Trigger = document.Trigger,
-            QueuedOccasion = null,
-            PassExecuting = false,
-            PassLeaseUntil = null,
-            AttemptsUsed = document.AttemptsUsed,
-            RetainedRun = null,
-            PendingRetryNotBeforeUtc = null,
-            Run = new OperatorSnapshotRun
-            {
-                Status = OperatorSnapshotRunStatus.Interrupted,
-                StartedAt = document.Run.StartedAt,
-                FinishedAt = _timeProvider.GetUtcNow(),
-                RepositoriesRecorded = document.Run.RepositoriesRecorded,
-                Reason = OperatorSnapshotRunReason.ScheduledCollectionStopped,
                 Detail = null,
             },
         };

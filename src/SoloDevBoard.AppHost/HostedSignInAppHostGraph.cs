@@ -18,6 +18,7 @@ internal static class HostedSignInAppHostGraph
             .RunAsEmulator(azurite => azurite.WithDataVolume());
         var snapshots = storage.AddBlobContainer("operator-snapshots", "operator-snapshots");
         var hostedSignIns = storage.AddBlobContainer("hosted-sign-ins", "hosted-sign-ins");
+        var accountScanStatus = storage.AddBlobContainer("account-scan-status", "account-scan-status");
         var collectionSchedule = storage.AddBlobContainer("collection-schedule", "collection-schedule");
         var queues = storage.AddQueues("operator-snapshot-queues");
 
@@ -28,6 +29,7 @@ internal static class HostedSignInAppHostGraph
             .WithHostStorage(storage)
             .WithReference(snapshots)
             .WithReference(hostedSignIns)
+            .WithReference(accountScanStatus)
             .WithReference(collectionSchedule)
             .WithReference(queues)
             .WaitFor(storage);
@@ -37,7 +39,7 @@ internal static class HostedSignInAppHostGraph
         functions = WireLocalHostedGitHubAppClientSecret(host, functions, authSecretsVault);
 
         var app = host.CreateWebApp();
-        app = app.WithReference(snapshots).WithReference(hostedSignIns).WaitFor(snapshots);
+        app = app.WithReference(snapshots).WithReference(hostedSignIns).WithReference(accountScanStatus).WaitFor(snapshots);
         app = WireLocalHostedSignInAuth(host, app, authSecretsVault);
         app = app.WithEnvironment("GitHubAuth__HostedSignInCallbackBaseUri", app.GetEndpoint("https"));
         host.SetSnapshotScheduler(functions);
@@ -56,6 +58,7 @@ internal static class HostedSignInAppHostGraph
         var storage = host.Builder.AddAzureStorage("operator-snapshot-storage");
         var snapshots = storage.AddBlobContainer("operator-snapshots", "operator-snapshots");
         var hostedSignIns = storage.AddBlobContainer("hosted-sign-ins", "hosted-sign-ins");
+        var accountScanStatus = storage.AddBlobContainer("account-scan-status", "account-scan-status");
         var collectionSchedule = storage.AddBlobContainer("collection-schedule", "collection-schedule");
         var queues = storage.AddQueues("operator-snapshot-queues");
 
@@ -66,6 +69,7 @@ internal static class HostedSignInAppHostGraph
             .WithHostStorage(storage)
             .WithReference(snapshots)
             .WithReference(hostedSignIns)
+            .WithReference(accountScanStatus)
             .WithReference(collectionSchedule)
             .WithReference(queues);
         functions = HostedSnapshotSchedulerBindings.Apply(host, functions);
@@ -77,7 +81,7 @@ internal static class HostedSignInAppHostGraph
             StorageBuiltInRole.StorageTableDataContributor,
             StorageBuiltInRole.StorageAccountContributor);
 
-        var app = host.CreateWebApp().WithReference(snapshots).WithReference(hostedSignIns);
+        var app = host.CreateWebApp().WithReference(snapshots).WithReference(hostedSignIns).WithReference(accountScanStatus);
         host.SetSnapshotScheduler(functions);
         host.SetApp(app);
     }

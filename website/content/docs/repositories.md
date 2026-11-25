@@ -34,7 +34,7 @@ Key goals of the Repositories page:
 1. Open **Repositories** from the left navigation menu.
 2. Use the search field to filter repositories by name if needed.
 3. Use **Reload from GitHub** to reload the catalogue after connectivity changes without clearing your search or filter.
-4. Use **Collect snapshot** when you want a durable copy of the catalogue for later analysis across sign-in sessions (hosted deployments) or on disk (local PAT). **Collect snapshot** always starts a hand collection; opening the page or choosing **Reload from GitHub** does not start one. On **hosted sign-in** deployments, the schedule asks once per UTC day at **05:00 UTC**, with catch-up when the worker was down at that time and another ask after some technical failures. Eligibility uses your latest sign-in and allowance when the queue is filled; queued work still runs when the worker is up, including when a sign-in has aged past 30 days. The status alert names the next **05:00 UTC** occasion or why no schedule runs. PAT-only mode has no schedule. While any collection is running, status updates in the feedback alert below the command strip and the button stays disabled until the run finishes or is interrupted.
+4. Use **Collect snapshot** when you want a durable copy of the catalogue for later analysis across sign-in sessions (hosted deployments) or on disk (local PAT). **Collect snapshot** always starts a hand collection; opening the page or choosing **Reload from GitHub** does not start one. On **hosted sign-in** deployments, the schedule asks once per UTC day at **05:00 UTC**, with catch-up when the worker was down at that time and another ask after some technical failures. Eligibility uses your latest sign-in and allowance when the queue is filled; queued work still runs when the worker is up, including when a sign-in has aged past 30 days. The status alert names the next **05:00 UTC** occasion or why no schedule runs. PAT-only mode has no schedule. On hosted sign-in the alert also shows one status word for your account (see **Scan status** below). The button stays disabled while the status is **Scheduled** or **Running**; while a scan is running, progress updates in the feedback alert below the command strip.
 5. Review status chips (Connected or Archived) and visibility chips (Public or Private).
 
 ### Filter open-source project repositories
@@ -68,13 +68,28 @@ Until those ship, each control opens an informational snackbar stating that the 
 
 {{% /steps %}}
 
+### Scan status
+
+On hosted sign-in deployments the feedback alert shows one status word for your account scan. The words below are what the page shows. PAT-only mode shows none of them.
+
+| Status | What the alert shows |
+| --- | --- |
+| **Never run** | No scan has run yet. No last-run time, result, or comment. |
+| **Scheduled** | A scan is queued, including while it waits to try again after a technical problem. It is not running and not finished. Tries and waits are not listed. **Collect snapshot** stays disabled. |
+| **Running** | A scan is working. The alert says whether you or the daily occasion started it, and how many repositories are recorded so far. **Collect snapshot** stays disabled. |
+| **Finished** | The last scan finished. A successful scan shows when it finished and how many repositories the snapshot includes. A failed scan shows one short reason and when it failed, beside your last successful snapshot time when you have one. |
+| **Suspended** | No scan will start. When you are not allowed to use the product the alert says so and keeps your earlier snapshot. When stored sign-in access no longer works the alert shows the failed result and the sign-in reason; sign in again to resume. |
+| **Stalled** | A running scan has not reported progress for more than five minutes. The alert does not say it is running and does not say the site stopped. Your last successful snapshot stays, and **Collect snapshot** is available again. |
+
+The schedule sentence is one of: "Next scheduled collection: 05:00 UTC.", "Next scheduled collection: 05:00 UTC on the following UTC day.", "No scheduled collection will run because you are not allowed to use the product.", or "No scheduled collection will run until you sign in again." PAT-only mode shows "Nothing collects on a schedule." instead.
+
 ### Page layout
 
 - **Command strip** — **Reload from GitHub** and **Collect snapshot** (live), plus Add, Remove, and Bulk actions (stubs). On mobile the stub actions are grouped into a compact actions menu; **Collect snapshot** stays visible, not only inside the overflow menu.
 - **Search field** — Filter repositories by name.
 - **Catalogue filter** — Exclusive toggle group with **All**, **Open source**, and **Not open source**. The filter is not persisted across page reloads.
 - **Data grid** — Repository name, status chips, visibility chips, and stub row actions. On phone-width viewports the grid stacks each field so names wrap, chips stay fully visible, and row actions remain tappable without horizontal overflow.
-- **Feedback region** — One alert under the command card carries catalogue load messages and snapshot collection status (for example whether a snapshot exists, is in progress, succeeded, failed, or was interrupted). Placeholder stub actions use snackbar toasts only.
+- **Feedback region** - One alert under the command card carries catalogue load messages and snapshot collection status (for example whether a snapshot exists, a scan is scheduled, running, stalled, finished, or suspended on hosted sign-in, or whether a snapshot succeeded, failed, or was interrupted in PAT-only mode). Placeholder stub actions use snackbar toasts only.
 
 ### Empty and error states
 
@@ -100,5 +115,6 @@ If **Collect snapshot** fails or looks stuck:
 
 - Confirm GitHub authentication is working (the live catalogue loaded successfully).
 - Read the snapshot sentence in the feedback alert. Failures mention rate limits, sign-in problems, or an unexpected error; fix connectivity and try again.
-- If the app stopped before a run finished, status shows interrupted. Use **Collect snapshot** again. A previous successful snapshot is kept when one existed.
+- If the app stopped before a PAT-only run finished, status shows interrupted. Use **Collect snapshot** again. A previous successful snapshot is kept when one existed.
+- On hosted sign-in, **Stalled** means the scan has not reported progress for more than five minutes. Use **Collect snapshot** to start again. **Scheduled** means a scan is queued and will start without any action from you.
 - The snapshot is catalogue metadata for later product features. The grid still shows the live GitHub list, not a separate snapshot-only view.

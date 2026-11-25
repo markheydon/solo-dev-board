@@ -14,11 +14,17 @@ public sealed class DailySnapshotCollectionPassService(
     IDailyOccasionService dailyOccasion,
     OperatorSnapshotCollectionCoordinator coordinator,
     HostedCollectionEligibilityEvaluator eligibility,
+    AccountScanStatusTransitionService accountScanStatus,
     TimeProvider timeProvider,
     ILogger<DailySnapshotCollectionPassService> logger) : IDailySnapshotCollectionPassService
 {
-    private static readonly TimeSpan VisibilityRenew = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan UnmetFillDelay = TimeSpan.FromMinutes(15);
+
+    /// <summary>Delay between polls of the snapshot document while a pass is working.</summary>
+    internal TimeSpan PollInterval { get; init; } = TimeSpan.FromSeconds(1);
+
+    /// <summary>Polls between liveness checks (about every ten seconds at the default interval).</summary>
+    internal int LivenessEveryPolls { get; init; } = 10;
 
     /// <inheritdoc/>
     public async Task HandleQueueMessageAsync(
@@ -47,38 +53,25 @@ public sealed class DailySnapshotCollectionPassService(
             return;
         }
 
-        var get = await snapshotStore.GetAsync(message.OperatorLogin, cancellationToken).ConfigureAwait(false);
-        if (get is not OperatorSnapshotGetResult.Found found)
+        var login = message.OperatorLogin;
+        await accountScanStatus.EnsureNeverRunIfAbsentAsync(login, cancellationToken).ConfigureAwait(false);
+        var status = await accountScanStatus.GetDocumentAsync(login, cancellationToken).ConfigureAwait(false);
+        if (status is null)
         {
             await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
             return;
         }
 
-        if (IsOccasionAlreadyFinished(found.Document, message))
+        if (string.Equals(status.Status, AccountScanStatusDocumentConstants.StatusRunning, StringComparison.Ordinal))
         {
+            // The owning process died or this is a duplicate: complete, leave running, clear pending for that generation only.
+            await accountScanStatus.ClearQueuePendingForGenerationAsync(login, status.ScanGeneration, cancellationToken)
+                .ConfigureAwait(false);
             await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
             return;
         }
 
-        if (found.Document.PassExecuting)
-        {
-            var nowUtc = timeProvider.GetUtcNow();
-            if (found.Document.PassLeaseUntil is { } activeLease && activeLease > nowUtc)
-            {
-                await queuePublisher.EnqueueAsync(message, cancellationToken).ConfigureAwait(false);
-                await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
-                return;
-            }
-
-            await WriteScheduledInterruptionAsync(found, cancellationToken).ConfigureAwait(false);
-            await EnqueueUnmetFillAsync(cancellationToken).ConfigureAwait(false);
-            await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
-            return;
-        }
-
-        if (found.Document.Run.Status == OperatorSnapshotRunStatus.InProgress
-            && !(string.Equals(message.Kind, "retry", StringComparison.Ordinal)
-                && IsDailyRetryWaitState(found.Document)))
+        if (!string.Equals(status.Status, AccountScanStatusDocumentConstants.StatusScheduled, StringComparison.Ordinal))
         {
             await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
             return;
@@ -89,24 +82,33 @@ public sealed class DailySnapshotCollectionPassService(
             return;
         }
 
-        var signIn = await signInRecords.GetAsync(message.OperatorLogin, cancellationToken).ConfigureAwait(false);
+        var generation = status.ScanGeneration;
+        var get = await snapshotStore.GetAsync(login, cancellationToken).ConfigureAwait(false);
+        var found = get as OperatorSnapshotGetResult.Found;
+
+        var signIn = await signInRecords.GetAsync(login, cancellationToken).ConfigureAwait(false);
         if (signIn is not HostedSignInRecordReadResult.Found record)
         {
-            await WriteSignInFailureAsync(found, cancellationToken).ConfigureAwait(false);
-            await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
-            return;
-        }
-
-        if (record.Record.CredentialUnusable)
-        {
-            await WriteSignInFailureAsync(found, cancellationToken).ConfigureAwait(false);
+            await FailSignInAsync(login, generation, found, cancellationToken).ConfigureAwait(false);
             await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
             return;
         }
 
         if (!eligibility.IsEligibleAtRun(record.Record, timeProvider.GetUtcNow()))
         {
-            await WithdrawByRunRulesAsync(found, cancellationToken).ConfigureAwait(false);
+            await accountScanStatus.RecordNotAllowedSuspensionAsync(login, generation, cancellationToken).ConfigureAwait(false);
+            if (found is not null && string.Equals(message.Kind, "retry", StringComparison.Ordinal))
+            {
+                await RestoreRetryWaitAsync(found, cancellationToken).ConfigureAwait(false);
+            }
+
+            await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        if (record.Record.CredentialUnusable)
+        {
+            await FailSignInAsync(login, generation, found, cancellationToken).ConfigureAwait(false);
             await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -119,32 +121,43 @@ public sealed class DailySnapshotCollectionPassService(
             return;
         }
 
+        var win = await accountScanStatus
+            .TryWinRunningAsync(login, OperatorSnapshotCollectionTrigger.Daily, fromHandStart: false, cancellationToken)
+            .ConfigureAwait(false);
+        if (win is not AccountScanRunningWinResult.Won)
+        {
+            await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
         string accessToken;
         try
         {
             var exchange = await tokenExchange.RefreshAccessTokenAsync(record.Record.RefreshToken, cancellationToken).ConfigureAwait(false);
             accessToken = exchange.AccessToken;
-            if (!await TryPersistRefreshTokenAsync(message.OperatorLogin, record, exchange, cancellationToken).ConfigureAwait(false))
+            if (!await TryPersistRefreshTokenAsync(login, record, exchange, cancellationToken).ConfigureAwait(false))
             {
                 logger.LogWarning(
                     "Daily pass persisted refreshed token for {Login} only after conflict; continuing with exchanged access token.",
-                    message.OperatorLogin);
+                    login);
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            logger.LogWarning(ex, "Daily pass token exchange failed for {Login}.", message.OperatorLogin);
-            await WriteSignInFailureAsync(found, cancellationToken).ConfigureAwait(false);
+            logger.LogWarning(ex, "Daily pass token exchange failed for {Login}.", login);
+            await FailSignInAsync(login, generation, found, cancellationToken).ConfigureAwait(false);
             await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
             return;
         }
 
         var now = timeProvider.GetUtcNow();
-        var attempts = found.Document.AttemptsUsed ?? 0;
-        attempts = string.Equals(message.Kind, "retry", StringComparison.Ordinal) ? attempts + 1 : 1;
+        var baseDocument = found?.Document ?? NewBaseDocument(login);
+        var token = found?.Token ?? OperatorSnapshotConcurrencyToken.None;
+        var isRetry = string.Equals(message.Kind, "retry", StringComparison.Ordinal);
+        var attempts = isRetry ? (baseDocument.AttemptsUsed ?? 0) + 1 : 1;
 
-        var inProgress = Clone(found.Document);
-        if (!string.Equals(message.Kind, "retry", StringComparison.Ordinal) && IsTerminalRun(inProgress.Run))
+        var inProgress = Clone(baseDocument);
+        if (!isRetry && IsTerminalRun(inProgress.Run))
         {
             inProgress.RetainedRun = new OperatorSnapshotRetainedRun
             {
@@ -154,63 +167,68 @@ public sealed class DailySnapshotCollectionPassService(
         }
 
         inProgress.Trigger = OperatorSnapshotCollectionTrigger.Daily;
-        inProgress.QueuedOccasion = null;
-        inProgress.PassExecuting = true;
-        inProgress.PassLeaseUntil = now.Add(VisibilityRenew);
         inProgress.AttemptsUsed = attempts;
+        inProgress.PendingRetryNotBeforeUtc = null;
         inProgress.Run = new OperatorSnapshotRun
         {
             Status = OperatorSnapshotRunStatus.InProgress,
-            StartedAt = inProgress.Run.Status == OperatorSnapshotRunStatus.InProgress
-                ? inProgress.Run.StartedAt
-                : now,
+            StartedAt = now,
             FinishedAt = null,
-            RepositoriesRecorded = inProgress.Run.RepositoriesRecorded,
+            RepositoriesRecorded = 0,
         };
 
-        var saveStart = await snapshotStore.SaveAsync(message.OperatorLogin, inProgress, found.Token, cancellationToken).ConfigureAwait(false);
+        var saveStart = await snapshotStore.SaveAsync(login, inProgress, token, cancellationToken).ConfigureAwait(false);
         if (saveStart is not OperatorSnapshotSaveResult.Succeeded)
         {
+            await accountScanStatus.ScheduleFurtherTryAsync(login, generation, now, cancellationToken).ConfigureAwait(false);
             await queuePublisher.EnqueueAsync(message, cancellationToken).ConfigureAwait(false);
             await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
             return;
         }
 
-        var startToken = new OperatorSnapshotConcurrencyToken(inProgress.Revision + 1, found.Token.BlobEtag);
+        var startToken = new OperatorSnapshotConcurrencyToken(inProgress.Revision + 1, token.BlobEtag);
         var started = coordinator.TryBegin(
-            found.Document.OperatorLogin,
-            message.OperatorLogin,
+            OperatorLoginSanitiser.Sanitise(login) ?? login,
+            login,
             accessToken,
             startToken,
             ReadAsync,
-            PersistAsync);
+            (loginKey, document, writeToken, ct) => PersistGuardedAsync(loginKey, document, writeToken, generation, ct),
+            dailyPass: true);
 
         if (!started)
         {
-            var afterStart = await snapshotStore.GetAsync(message.OperatorLogin, cancellationToken).ConfigureAwait(false);
-            if (afterStart is OperatorSnapshotGetResult.Found afterFound)
-            {
-                await TryRevertFailedPassStartAsync(found.Document, afterFound, cancellationToken).ConfigureAwait(false);
-            }
-
             await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
             return;
         }
 
-        await WaitForTerminalOrRetryAsync(message, invocation, runner, cancellationToken).ConfigureAwait(false);
+        await WaitForTerminalOrRetryAsync(message, generation, runner, cancellationToken).ConfigureAwait(false);
         await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
     }
 
     private async Task WaitForTerminalOrRetryAsync(
         DailySnapshotQueueMessage message,
-        DailySnapshotQueueInvocation invocation,
+        int generation,
         IDailyCollectionRunnerLeaseHandle runner,
         CancellationToken cancellationToken)
     {
-        for (var i = 0; ; i++)
+        var login = message.OperatorLogin;
+        for (var i = 1; ; i++)
         {
-            await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken).ConfigureAwait(false);
-            var read = await snapshotStore.GetAsync(message.OperatorLogin, cancellationToken).ConfigureAwait(false);
+            await Task.Delay(PollInterval, cancellationToken).ConfigureAwait(false);
+
+            if (i % LivenessEveryPolls == 0)
+            {
+                if (!await accountScanStatus.IsGenerationCurrentAsync(login, generation, cancellationToken).ConfigureAwait(false))
+                {
+                    return;
+                }
+
+                await accountScanStatus.TouchLivenessIfDueAsync(login, generation, cancellationToken).ConfigureAwait(false);
+                await runner.TryRenewAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            var read = await snapshotStore.GetAsync(login, cancellationToken).ConfigureAwait(false);
             if (read is not OperatorSnapshotGetResult.Found found)
             {
                 return;
@@ -218,32 +236,43 @@ public sealed class DailySnapshotCollectionPassService(
 
             if (found.Document.Run.Status is OperatorSnapshotRunStatus.Succeeded)
             {
-                found.Document.PassExecuting = false;
-                found.Document.PassLeaseUntil = null;
+                if (!await accountScanStatus.IsGenerationCurrentAsync(login, generation, cancellationToken).ConfigureAwait(false))
+                {
+                    return;
+                }
+
                 found.Document.AttemptsUsed = null;
                 found.Document.RetainedRun = null;
                 found.Document.PendingRetryNotBeforeUtc = null;
                 found.Document.Trigger = OperatorSnapshotCollectionTrigger.Daily;
-                await snapshotStore.SaveAsync(message.OperatorLogin, found.Document, found.Token, cancellationToken).ConfigureAwait(false);
+                await snapshotStore.SaveAsync(login, found.Document, found.Token, cancellationToken).ConfigureAwait(false);
+                await accountScanStatus.RecordSuccessAsync(login, generation, cancellationToken).ConfigureAwait(false);
                 return;
             }
 
             if (found.Document.Trigger == OperatorSnapshotCollectionTrigger.Daily
                 && found.Document.Run.Status == OperatorSnapshotRunStatus.InProgress
-                && !found.Document.PassExecuting
-                && !coordinator.HasLiveTask(message.OperatorLogin)
+                && !coordinator.HasLiveTask(login)
                 && found.Document.Run.Reason is OperatorSnapshotRunReason.RateLimit or OperatorSnapshotRunReason.Unexpected
                 && (found.Document.AttemptsUsed ?? 1) < 4)
             {
+                if (!await accountScanStatus.IsGenerationCurrentAsync(login, generation, cancellationToken).ConfigureAwait(false))
+                {
+                    return;
+                }
+
                 var notBeforeUtc = found.Document.PendingRetryNotBeforeUtc ?? timeProvider.GetUtcNow();
                 var notBeforeIso = DailySnapshotRetryNotBefore.ToIso8601Utc(notBeforeUtc);
                 found.Document.PendingRetryNotBeforeUtc = null;
-                await snapshotStore.SaveAsync(message.OperatorLogin, found.Document, found.Token, cancellationToken).ConfigureAwait(false);
+                RestoreRunForRetryWait(found.Document);
+                await snapshotStore.SaveAsync(login, found.Document, found.Token, cancellationToken).ConfigureAwait(false);
+                await accountScanStatus.ScheduleFurtherTryAsync(login, generation, notBeforeUtc, cancellationToken)
+                    .ConfigureAwait(false);
                 await queuePublisher.EnqueueAsync(
                     new DailySnapshotQueueMessage
                     {
                         OccasionDate = message.OccasionDate,
-                        OperatorLogin = message.OperatorLogin,
+                        OperatorLogin = login,
                         Kind = "retry",
                         NotBefore = notBeforeIso,
                     },
@@ -253,17 +282,25 @@ public sealed class DailySnapshotCollectionPassService(
 
             if (found.Document.Run.Status is OperatorSnapshotRunStatus.Failed)
             {
-                found.Document.PassExecuting = false;
-                found.Document.PassLeaseUntil = null;
+                if (!await accountScanStatus.IsGenerationCurrentAsync(login, generation, cancellationToken).ConfigureAwait(false))
+                {
+                    return;
+                }
+
                 found.Document.RetainedRun = null;
+                found.Document.AttemptsUsed = null;
                 found.Document.PendingRetryNotBeforeUtc = null;
-                await snapshotStore.SaveAsync(message.OperatorLogin, found.Document, found.Token, cancellationToken).ConfigureAwait(false);
+                await snapshotStore.SaveAsync(login, found.Document, found.Token, cancellationToken).ConfigureAwait(false);
+                var comment = AccountScanResultComment.ForFailure(found.Document.Run.Reason, found.Document.Run.Detail);
                 if (found.Document.Run.Reason == OperatorSnapshotRunReason.SignInOrToken)
                 {
-                    await MarkCredentialUnusableAsync(message.OperatorLogin, cancellationToken).ConfigureAwait(false);
+                    await accountScanStatus.RecordTokenFailureAsync(login, generation, comment, cancellationToken).ConfigureAwait(false);
+                    await MarkCredentialUnusableAsync(login, cancellationToken).ConfigureAwait(false);
                 }
-                else if (found.Document.Run.Reason is OperatorSnapshotRunReason.RateLimit or OperatorSnapshotRunReason.Unexpected)
+                else
                 {
+                    await accountScanStatus.RecordExhaustedFailureAsync(login, generation, comment, cancellationToken)
+                        .ConfigureAwait(false);
                     await EnqueueUnmetFillAsync(cancellationToken).ConfigureAwait(false);
                 }
 
@@ -272,66 +309,34 @@ public sealed class DailySnapshotCollectionPassService(
 
             if (found.Document.Run.Status is OperatorSnapshotRunStatus.Interrupted)
             {
-                if (found.Document.PassExecuting)
-                {
-                    found.Document.PassExecuting = false;
-                    found.Document.PassLeaseUntil = null;
-                    await snapshotStore.SaveAsync(message.OperatorLogin, found.Document, found.Token, cancellationToken).ConfigureAwait(false);
-                }
-
-                if (found.Document.Run.Reason == OperatorSnapshotRunReason.ScheduledCollectionStopped)
-                {
-                    await EnqueueUnmetFillAsync(cancellationToken).ConfigureAwait(false);
-                }
-
+                // A stopped host leaves the status as running; readers tell stalled after five minutes.
                 return;
             }
-
-            if (found.Document.PassExecuting && i % 10 == 0)
-            {
-                found.Document.PassLeaseUntil = timeProvider.GetUtcNow().Add(VisibilityRenew);
-                await snapshotStore.SaveAsync(message.OperatorLogin, found.Document, found.Token, cancellationToken).ConfigureAwait(false);
-                await invocation.UpdateVisibilityAsync(VisibilityRenew + VisibilityRenew, cancellationToken).ConfigureAwait(false);
-                await runner.TryRenewAsync(cancellationToken).ConfigureAwait(false);
-            }
         }
     }
 
-    private static bool IsOccasionAlreadyFinished(OperatorSnapshotDocument document, DailySnapshotQueueMessage message)
+    private static void RestoreRunForRetryWait(OperatorSnapshotDocument document)
     {
-        if (document.Run.Status != OperatorSnapshotRunStatus.Succeeded
-            || document.Trigger != OperatorSnapshotCollectionTrigger.Daily
-            || !string.IsNullOrEmpty(document.QueuedOccasion))
+        if (document.RetainedRun is { } retained)
         {
-            return false;
+            document.Trigger = retained.Trigger;
+            document.Run = CloneRun(retained.Run);
         }
-
-        if (document.LastSuccessfulCollectionAt is not { } finishedAt
-            || !TryGetOccasionStartUtc(message.OccasionDate, out var occasionStart))
+        else
         {
-            return false;
+            document.Run = new OperatorSnapshotRun();
         }
-
-        return finishedAt >= occasionStart;
     }
 
-    private static bool TryGetOccasionStartUtc(string occasionDate, out DateTimeOffset occasionStart)
+    private static OperatorSnapshotDocument NewBaseDocument(string login) => new()
     {
-        if (!DateOnly.TryParse(occasionDate, System.Globalization.CultureInfo.InvariantCulture, out var date))
-        {
-            occasionStart = default;
-            return false;
-        }
-
-        occasionStart = new DateTimeOffset(date.Year, date.Month, date.Day, 5, 0, 0, TimeSpan.Zero);
-        return true;
-    }
-
-    private static bool IsDailyRetryWaitState(OperatorSnapshotDocument document) =>
-        document.Trigger == OperatorSnapshotCollectionTrigger.Daily
-        && document.Run.Status == OperatorSnapshotRunStatus.InProgress
-        && !document.PassExecuting
-        && document.Run.Reason is OperatorSnapshotRunReason.RateLimit or OperatorSnapshotRunReason.Unexpected;
+        SchemaVersion = OperatorSnapshotDocumentConstants.CurrentSchemaVersion,
+        OperatorLogin = OperatorLoginSanitiser.Sanitise(login) ?? login,
+        Revision = 0,
+        Repositories = [],
+        LaterFacts = [],
+        Run = new OperatorSnapshotRun(),
+    };
 
     private static bool IsTerminalRun(OperatorSnapshotRun run) =>
         run.Status is OperatorSnapshotRunStatus.Succeeded
@@ -376,36 +381,9 @@ public sealed class DailySnapshotCollectionPassService(
         return true;
     }
 
-    private async Task ClearQueuedOccasionAsync(OperatorSnapshotGetResult.Found found, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrEmpty(found.Document.QueuedOccasion) || found.Document.PassExecuting)
-        {
-            return;
-        }
-
-        var document = Clone(found.Document);
-        document.QueuedOccasion = null;
-        await snapshotStore.SaveAsync(found.Document.OperatorLogin, document, found.Token, cancellationToken).ConfigureAwait(false);
-    }
-
-    private async Task WithdrawByRunRulesAsync(OperatorSnapshotGetResult.Found found, CancellationToken cancellationToken)
+    private async Task RestoreRetryWaitAsync(OperatorSnapshotGetResult.Found found, CancellationToken cancellationToken)
     {
         var document = Clone(found.Document);
-
-        if (IsDailyRetryWaitState(document))
-        {
-            RestoreFromRetainedRun(document);
-        }
-        else if (!string.IsNullOrEmpty(document.QueuedOccasion) && !document.PassExecuting)
-        {
-            document.QueuedOccasion = null;
-        }
-
-        await snapshotStore.SaveAsync(found.Document.OperatorLogin, document, found.Token, cancellationToken).ConfigureAwait(false);
-    }
-
-    private static void RestoreFromRetainedRun(OperatorSnapshotDocument document)
-    {
         if (document.RetainedRun is { } retained)
         {
             document.Trigger = retained.Trigger;
@@ -419,64 +397,41 @@ public sealed class DailySnapshotCollectionPassService(
 
         document.RetainedRun = null;
         document.AttemptsUsed = null;
-        document.PassExecuting = false;
-        document.PassLeaseUntil = null;
         document.PendingRetryNotBeforeUtc = null;
-        document.QueuedOccasion = null;
+        await snapshotStore.SaveAsync(found.Document.OperatorLogin, document, found.Token, cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task TryRevertFailedPassStartAsync(
-        OperatorSnapshotDocument priorDocument,
-        OperatorSnapshotGetResult.Found current,
+    private async Task FailSignInAsync(
+        string login,
+        int generation,
+        OperatorSnapshotGetResult.Found? found,
         CancellationToken cancellationToken)
     {
-        if (current.Document.Run.Status != OperatorSnapshotRunStatus.InProgress
-            || !current.Document.PassExecuting)
+        if (found is not null)
         {
-            return;
+            var document = Clone(found.Document);
+            document.RetainedRun = null;
+            document.AttemptsUsed = null;
+            document.PendingRetryNotBeforeUtc = null;
+            document.Run = new OperatorSnapshotRun
+            {
+                Status = OperatorSnapshotRunStatus.Failed,
+                StartedAt = found.Document.Run.StartedAt,
+                FinishedAt = timeProvider.GetUtcNow(),
+                RepositoriesRecorded = found.Document.Run.RepositoriesRecorded,
+                Reason = OperatorSnapshotRunReason.SignInOrToken,
+            };
+            await snapshotStore.SaveAsync(found.Document.OperatorLogin, document, found.Token, cancellationToken).ConfigureAwait(false);
         }
 
-        var restored = Clone(priorDocument);
-        await snapshotStore.SaveAsync(current.Document.OperatorLogin, restored, current.Token, cancellationToken).ConfigureAwait(false);
-    }
-
-    private async Task WriteScheduledInterruptionAsync(OperatorSnapshotGetResult.Found found, CancellationToken cancellationToken)
-    {
-        var document = Clone(found.Document);
-        document.PassExecuting = false;
-        document.PassLeaseUntil = null;
-        document.QueuedOccasion = null;
-        document.RetainedRun = null;
-        document.PendingRetryNotBeforeUtc = null;
-        document.Run = new OperatorSnapshotRun
-        {
-            Status = OperatorSnapshotRunStatus.Interrupted,
-            StartedAt = found.Document.Run.StartedAt,
-            FinishedAt = timeProvider.GetUtcNow(),
-            RepositoriesRecorded = found.Document.Run.RepositoriesRecorded,
-            Reason = OperatorSnapshotRunReason.ScheduledCollectionStopped,
-        };
-        await snapshotStore.SaveAsync(found.Document.OperatorLogin, document, found.Token, cancellationToken).ConfigureAwait(false);
-    }
-
-    private async Task WriteSignInFailureAsync(OperatorSnapshotGetResult.Found found, CancellationToken cancellationToken)
-    {
-        var document = Clone(found.Document);
-        document.PassExecuting = false;
-        document.PassLeaseUntil = null;
-        document.QueuedOccasion = null;
-        document.RetainedRun = null;
-        document.PendingRetryNotBeforeUtc = null;
-        document.Run = new OperatorSnapshotRun
-        {
-            Status = OperatorSnapshotRunStatus.Failed,
-            StartedAt = found.Document.Run.StartedAt,
-            FinishedAt = timeProvider.GetUtcNow(),
-            RepositoriesRecorded = found.Document.Run.RepositoriesRecorded,
-            Reason = OperatorSnapshotRunReason.SignInOrToken,
-        };
-        await snapshotStore.SaveAsync(found.Document.OperatorLogin, document, found.Token, cancellationToken).ConfigureAwait(false);
-        await MarkCredentialUnusableAsync(found.Document.OperatorLogin, cancellationToken).ConfigureAwait(false);
+        await accountScanStatus
+            .RecordTokenFailureAsync(
+                login,
+                generation,
+                AccountScanResultComment.ForFailure(OperatorSnapshotRunReason.SignInOrToken, null),
+                cancellationToken)
+            .ConfigureAwait(false);
+        await MarkCredentialUnusableAsync(login, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<bool> TryPersistRefreshTokenAsync(
@@ -540,12 +495,19 @@ public sealed class DailySnapshotCollectionPassService(
     private Task<OperatorSnapshotGetResult> ReadAsync(string login, CancellationToken cancellationToken)
         => snapshotStore.GetAsync(login, cancellationToken);
 
-    private async Task<bool> PersistAsync(
+    private async Task<bool> PersistGuardedAsync(
         string login,
         OperatorSnapshotDocument document,
         OperatorSnapshotConcurrencyToken token,
+        int generation,
         CancellationToken cancellationToken)
     {
+        // An earlier pass must not overwrite the snapshot once a newer scan has won.
+        if (!await accountScanStatus.IsGenerationCurrentAsync(login, generation, cancellationToken).ConfigureAwait(false))
+        {
+            return false;
+        }
+
         var result = await snapshotStore.SaveAsync(login, document, token, cancellationToken).ConfigureAwait(false);
         return result is OperatorSnapshotSaveResult.Succeeded;
     }
@@ -559,9 +521,6 @@ public sealed class DailySnapshotCollectionPassService(
         Repositories = source.Repositories,
         LaterFacts = source.LaterFacts,
         Trigger = source.Trigger,
-        QueuedOccasion = source.QueuedOccasion,
-        PassExecuting = source.PassExecuting,
-        PassLeaseUntil = source.PassLeaseUntil,
         AttemptsUsed = source.AttemptsUsed,
         RetainedRun = source.RetainedRun is null
             ? null

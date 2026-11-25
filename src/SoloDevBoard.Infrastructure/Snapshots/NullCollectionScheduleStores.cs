@@ -27,6 +27,10 @@ public sealed class NullDailySnapshotQueuePublisher : IDailySnapshotQueuePublish
     /// <inheritdoc/>
     public Task EnqueueAsync(DailySnapshotQueueMessage message, CancellationToken cancellationToken = default)
         => Task.CompletedTask;
+
+    /// <inheritdoc/>
+    public Task<bool> HasVisibleMessageAsync(string operatorLogin, CancellationToken cancellationToken = default)
+        => Task.FromResult(false);
 }
 
 /// <summary>No-op runner lease for lean posture.</summary>

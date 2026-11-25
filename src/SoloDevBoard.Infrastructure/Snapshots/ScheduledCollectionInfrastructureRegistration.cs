@@ -13,6 +13,9 @@ public static class ScheduledCollectionInfrastructureRegistration
     /// <summary>AppHost reference name for sign-in blobs (must match keyed client registration).</summary>
     public const string HostedSignInsConnectionName = "hosted-sign-ins";
 
+    /// <summary>AppHost reference name for account scan status blobs.</summary>
+    public const string AccountScanStatusConnectionName = "account-scan-status";
+
     /// <summary>AppHost reference name for schedule blobs (must match keyed client registration).</summary>
     public const string CollectionScheduleConnectionName = "collection-schedule";
 
@@ -20,6 +23,7 @@ public static class ScheduledCollectionInfrastructureRegistration
     public static IServiceCollection AddLeanScheduledCollection(this IServiceCollection services)
     {
         services.TryAddSingleton<IHostedSignInRecordStore, NullHostedSignInRecordStore>();
+        services.TryAddSingleton<IAccountScanStatusStore, NullAccountScanStatusStore>();
         services.TryAddSingleton<ICollectionOccasionMarkerStore, NullCollectionOccasionMarkerStore>();
         services.TryAddSingleton<IDailySnapshotQueuePublisher, NullDailySnapshotQueuePublisher>();
         services.TryAddSingleton<IDailyCollectionRunnerLease, NullDailyCollectionRunnerLease>();
@@ -37,9 +41,12 @@ public static class ScheduledCollectionInfrastructureRegistration
 
         services.AddSingleton(sp => new HostedSignInsBlobContainer(
             sp.GetRequiredKeyedService<BlobContainerClient>(HostedSignInsConnectionName)));
+        services.AddSingleton(sp => new AccountScanStatusBlobContainer(
+            sp.GetRequiredKeyedService<BlobContainerClient>(AccountScanStatusConnectionName)));
         services.AddSingleton(sp => new CollectionScheduleBlobContainer(
             sp.GetRequiredKeyedService<BlobContainerClient>(CollectionScheduleConnectionName)));
         services.TryAddSingleton<IHostedSignInRecordStore, BlobHostedSignInRecordStore>();
+        services.TryAddSingleton<IAccountScanStatusStore, BlobAccountScanStatusStore>();
         services.TryAddSingleton<ICollectionOccasionMarkerStore, BlobCollectionOccasionMarkerStore>();
         services.TryAddSingleton<IDailySnapshotQueuePublisher, AzureDailySnapshotQueuePublisher>();
         services.TryAddSingleton<IDailyCollectionRunnerLease, BlobDailyCollectionRunnerLease>();

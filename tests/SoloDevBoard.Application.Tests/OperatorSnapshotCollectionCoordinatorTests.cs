@@ -155,7 +155,6 @@ public sealed class OperatorSnapshotCollectionCoordinatorTests
             OperatorLogin = Login,
             Revision = 5,
             Trigger = OperatorSnapshotCollectionTrigger.Daily,
-            PassExecuting = true,
             AttemptsUsed = 1,
             Repositories = [],
             Run = new OperatorSnapshotRun
@@ -174,20 +173,20 @@ public sealed class OperatorSnapshotCollectionCoordinatorTests
             "token",
             new OperatorSnapshotConcurrencyToken(5, null),
             (login, ct) => store.GetAsync(login, ct),
-            (login, doc, token, ct) => SaveAsync(store, login, doc, token, ct)));
+            (login, doc, token, ct) => SaveAsync(store, login, doc, token, ct),
+            dailyPass: true));
 
         await WaitForIdleAsync(coordinator);
 
         var document = store.GetDocument(Login);
         Assert.NotNull(document);
         Assert.Equal(OperatorSnapshotRunStatus.InProgress, document.Run.Status);
-        Assert.False(document.PassExecuting);
         Assert.Equal(OperatorSnapshotRunReason.RateLimit, document.Run.Reason);
         Assert.Null(document.Run.FinishedAt);
     }
 
     [Fact]
-    public async Task Walk_DailyShutdown_ClearsPassExecutingAndRecordsScheduledStop()
+    public async Task Walk_DailyShutdown_LeavesInProgressWithoutWritingStop()
     {
         using var stoppingCts = new CancellationTokenSource();
         var store = new InMemoryOperatorSnapshotStore();
@@ -196,9 +195,6 @@ public sealed class OperatorSnapshotCollectionCoordinatorTests
             OperatorLogin = Login,
             Revision = 5,
             Trigger = OperatorSnapshotCollectionTrigger.Daily,
-            PassExecuting = true,
-            PassLeaseUntil = DateTimeOffset.UtcNow.AddMinutes(5),
-            QueuedOccasion = "2026-11-23",
             Repositories = [],
             Run = new OperatorSnapshotRun
             {
@@ -235,7 +231,8 @@ public sealed class OperatorSnapshotCollectionCoordinatorTests
             "token",
             new OperatorSnapshotConcurrencyToken(5, null),
             (login, ct) => store.GetAsync(login, ct),
-            (login, doc, token, ct) => SaveAsync(store, login, doc, token, ct)));
+            (login, doc, token, ct) => SaveAsync(store, login, doc, token, ct),
+            dailyPass: true));
 
         await Task.Delay(50, TestContext.Current.CancellationToken);
         stoppingCts.Cancel();
@@ -243,11 +240,9 @@ public sealed class OperatorSnapshotCollectionCoordinatorTests
 
         var document = store.GetDocument(Login);
         Assert.NotNull(document);
-        Assert.Equal(OperatorSnapshotRunStatus.Interrupted, document.Run.Status);
-        Assert.Equal(OperatorSnapshotRunReason.ScheduledCollectionStopped, document.Run.Reason);
-        Assert.False(document.PassExecuting);
-        Assert.Null(document.PassLeaseUntil);
-        Assert.Null(document.QueuedOccasion);
+        Assert.Equal(OperatorSnapshotRunStatus.InProgress, document.Run.Status);
+        Assert.Null(document.Run.Reason);
+        Assert.Null(document.Run.FinishedAt);
     }
 
     [Fact]

@@ -46,14 +46,18 @@ public sealed class OperatorSnapshotCollectionCoordinator : IOperatorSnapshotLiv
         return false;
     }
 
-    /// <summary>Starts a walk when none is live for the sanitised login.</summary>
+    /// <summary>
+    /// Starts a walk when none is live for the sanitised login. A daily pass does not write an interrupted run
+    /// when the host stops; the account scan status goes on reporting <c>running</c> until a reader tells <c>stalled</c>.
+    /// </summary>
     public bool TryBegin(
         string sanitisedLogin,
         string ownerLogin,
         string accessToken,
         OperatorSnapshotConcurrencyToken startToken,
         Func<string, CancellationToken, Task<OperatorSnapshotGetResult>> readDocumentAsync,
-        Func<string, OperatorSnapshotDocument, OperatorSnapshotConcurrencyToken, CancellationToken, Task<bool>> persistTerminalAsync)
+        Func<string, OperatorSnapshotDocument, OperatorSnapshotConcurrencyToken, CancellationToken, Task<bool>> persistTerminalAsync,
+        bool dailyPass = false)
     {
         if (!_liveRuns.TryAdd(sanitisedLogin, new LiveRun(_timeProvider.GetUtcNow(), 0)))
         {
@@ -66,7 +70,8 @@ public sealed class OperatorSnapshotCollectionCoordinator : IOperatorSnapshotLiv
             accessToken,
             startToken,
             readDocumentAsync,
-            persistTerminalAsync);
+            persistTerminalAsync,
+            dailyPass);
         return true;
     }
 
@@ -76,7 +81,8 @@ public sealed class OperatorSnapshotCollectionCoordinator : IOperatorSnapshotLiv
         string accessToken,
         OperatorSnapshotConcurrencyToken startToken,
         Func<string, CancellationToken, Task<OperatorSnapshotGetResult>> readDocumentAsync,
-        Func<string, OperatorSnapshotDocument, OperatorSnapshotConcurrencyToken, CancellationToken, Task<bool>> persistTerminalAsync)
+        Func<string, OperatorSnapshotDocument, OperatorSnapshotConcurrencyToken, CancellationToken, Task<bool>> persistTerminalAsync,
+        bool dailyPass)
     {
         var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(_applicationStopping.Token);
         var cancellationToken = linkedCts.Token;
@@ -108,7 +114,11 @@ public sealed class OperatorSnapshotCollectionCoordinator : IOperatorSnapshotLiv
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                await WriteInterruptedAsync(sanitisedLogin, readDocumentAsync, persistTerminalAsync, cancellationToken).ConfigureAwait(false);
+                if (!dailyPass)
+                {
+                    await WriteInterruptedAsync(sanitisedLogin, readDocumentAsync, persistTerminalAsync, cancellationToken).ConfigureAwait(false);
+                }
+
                 return;
             }
 
@@ -144,9 +154,6 @@ public sealed class OperatorSnapshotCollectionCoordinator : IOperatorSnapshotLiv
                         successDocument.OperatorLogin = sanitisedLogin;
                         successDocument.LaterFacts = doc.LaterFacts;
                         successDocument.Trigger = doc.Trigger ?? OperatorSnapshotCollectionTrigger.Operator;
-                        successDocument.QueuedOccasion = null;
-                        successDocument.PassExecuting = false;
-                        successDocument.PassLeaseUntil = null;
                         successDocument.AttemptsUsed = null;
                         successDocument.RetainedRun = null;
                         successDocument.PendingRetryNotBeforeUtc = null;
@@ -188,12 +195,8 @@ public sealed class OperatorSnapshotCollectionCoordinator : IOperatorSnapshotLiv
                 {
                     var attempts = doc.AttemptsUsed ?? 1;
                     var retryableDaily = doc.Trigger == OperatorSnapshotCollectionTrigger.Daily
-                        && doc.PassExecuting
                         && reason is OperatorSnapshotRunReason.RateLimit or OperatorSnapshotRunReason.Unexpected
                         && attempts < 4;
-
-                    doc.PassExecuting = false;
-                    doc.PassLeaseUntil = null;
 
                     if (retryableDaily)
                     {
@@ -216,7 +219,6 @@ public sealed class OperatorSnapshotCollectionCoordinator : IOperatorSnapshotLiv
                     {
                         if (doc.Trigger == OperatorSnapshotCollectionTrigger.Daily)
                         {
-                            doc.QueuedOccasion = null;
                             doc.RetainedRun = null;
                             doc.PendingRetryNotBeforeUtc = null;
                         }
@@ -253,25 +255,13 @@ public sealed class OperatorSnapshotCollectionCoordinator : IOperatorSnapshotLiv
                 cancellationToken,
                 (doc, currentToken) =>
                 {
-                    var dailyPass = doc.Trigger == OperatorSnapshotCollectionTrigger.Daily && doc.PassExecuting;
-                    if (dailyPass)
-                    {
-                        doc.PassExecuting = false;
-                        doc.PassLeaseUntil = null;
-                        doc.QueuedOccasion = null;
-                        doc.RetainedRun = null;
-                        doc.PendingRetryNotBeforeUtc = null;
-                    }
-
                     doc.Run = new OperatorSnapshotRun
                     {
                         Status = OperatorSnapshotRunStatus.Interrupted,
                         StartedAt = doc.Run.StartedAt,
                         FinishedAt = finishedAt,
                         RepositoriesRecorded = doc.Run.RepositoriesRecorded,
-                        Reason = dailyPass
-                            ? OperatorSnapshotRunReason.ScheduledCollectionStopped
-                            : OperatorSnapshotRunReason.SiteStopped,
+                        Reason = OperatorSnapshotRunReason.SiteStopped,
                         Detail = null,
                     };
                     doc.Revision++;

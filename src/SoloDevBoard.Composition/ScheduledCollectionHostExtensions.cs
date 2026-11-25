@@ -2,6 +2,7 @@ using Azure.Storage.Blobs;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using SoloDevBoard.Application.Authentication;
+using SoloDevBoard.Application.Services.Snapshots;
 using SoloDevBoard.Infrastructure.Identity;
 using SoloDevBoard.Infrastructure.Snapshots;
 
@@ -22,6 +23,21 @@ public static class ScheduledCollectionHostExtensions
         services.AddSingleton(sp => new HostedSignInsBlobContainer(
             sp.GetRequiredKeyedService<BlobContainerClient>(AspireHostedStorageReferenceNames.HostedSignIns)));
         services.AddSingleton<IHostedSignInRecordStore, BlobHostedSignInRecordStore>();
+        return services;
+    }
+
+    /// <summary>
+    /// Registers account scan status adapters after <c>AddKeyedAzureBlobContainerClient</c> for
+    /// <see cref="AspireHostedStorageReferenceNames.AccountScanStatus" />.
+    /// </summary>
+    public static IServiceCollection RegisterAccountScanStatusBlobStore(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        services.RemoveAll<IAccountScanStatusStore>();
+        services.AddSingleton(sp => new AccountScanStatusBlobContainer(
+            sp.GetRequiredKeyedService<BlobContainerClient>(AspireHostedStorageReferenceNames.AccountScanStatus)));
+        services.AddSingleton<IAccountScanStatusStore, BlobAccountScanStatusStore>();
         return services;
     }
 

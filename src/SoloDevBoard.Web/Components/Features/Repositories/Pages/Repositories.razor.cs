@@ -48,8 +48,7 @@ public partial class Repositories : ComponentBase, IAsyncDisposable
     private bool IsCollectSnapshotDisabled =>
         isLoading
         || awaitingInitialSnapshotStatus
-        || snapshotStatus?.Kind == OperatorSnapshotStatusKind.InProgress
-        || !string.IsNullOrEmpty(snapshotStatus?.QueuedForOccasion);
+        || OperatorSnapshotStatusCopy.IsCollectBlocked(snapshotStatus);
 
     private IReadOnlyList<RepositoryDto> FilteredRepositories
     {
@@ -245,13 +244,13 @@ public partial class Repositories : ComponentBase, IAsyncDisposable
 
     private async Task WaitForSnapshotSettlementOnUiAsync()
     {
-        if (snapshotStatus?.Kind != OperatorSnapshotStatusKind.InProgress)
+        if (!OperatorSnapshotStatusCopy.IsScanWorking(snapshotStatus))
         {
             return;
         }
 
         var deadline = DateTimeOffset.UtcNow.AddMinutes(2);
-        while (snapshotStatus?.Kind == OperatorSnapshotStatusKind.InProgress && DateTimeOffset.UtcNow < deadline)
+        while (OperatorSnapshotStatusCopy.IsScanWorking(snapshotStatus) && DateTimeOffset.UtcNow < deadline)
         {
             await Task.Delay(SnapshotUiPollInterval);
             await RefreshSnapshotStatusOnUiAsync();
@@ -262,7 +261,7 @@ public partial class Repositories : ComponentBase, IAsyncDisposable
 
     private async Task EnsureStatusPollingAsync()
     {
-        if (snapshotStatus?.Kind != OperatorSnapshotStatusKind.InProgress)
+        if (!OperatorSnapshotStatusCopy.IsScanWorking(snapshotStatus))
         {
             await StopStatusPollingAsync();
             return;
@@ -285,7 +284,7 @@ public partial class Repositories : ComponentBase, IAsyncDisposable
             do
             {
                 await InvokeAsync(RefreshSnapshotStatusOnUiAsync);
-                if (snapshotStatus?.Kind != OperatorSnapshotStatusKind.InProgress)
+                if (!OperatorSnapshotStatusCopy.IsScanWorking(snapshotStatus))
                 {
                     await StopStatusPollingAsync();
                     break;

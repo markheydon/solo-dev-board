@@ -23,6 +23,9 @@ public static class OperatorSnapshotServiceCollectionExtensions
         services.AddScoped<IOperatorSnapshotCollectionService, OperatorSnapshotCollectionService>();
         services.AddSingleton<IScheduledCollectionEnvironment, ScheduledCollectionEnvironment>();
         services.AddSingleton<HostedCollectionEligibilityEvaluator>();
+        services.AddSingleton<AccountScanStatusReporter>();
+        services.AddSingleton<AccountScanStatusTransitionService>();
+        services.AddSingleton<DailyQueueVisibilityRenewer>();
         services.AddSingleton<IOperatorSnapshotScheduleFactsService, OperatorSnapshotScheduleFactsService>();
         return services;
     }

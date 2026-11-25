@@ -16,6 +16,7 @@ public sealed class OperatorSnapshotScheduleFactsService(
     public OperatorSnapshotScheduleFacts Compute(
         OperatorSnapshotDocument document,
         HostedSignInRecordForSchedule? signInRecord,
+        ReportedAccountScanStatus? reportedScanStatus,
         DateTimeOffset utcNow)
     {
         ArgumentNullException.ThrowIfNull(document);
@@ -26,14 +27,12 @@ public sealed class OperatorSnapshotScheduleFactsService(
                 OperatorSnapshotSchedulePosture.Lean,
                 OperatorSnapshotNoScheduleReason.Lean,
                 null,
-                null,
                 document.Trigger);
         }
 
         var trigger = document.Trigger;
-        var queued = document.QueuedOccasion;
         var todayOccasion = GetTodayOccasionAt(utcNow);
-        var todayDate = utcNow.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+        var scheduled = reportedScanStatus == ReportedAccountScanStatus.Scheduled;
 
         var noSchedule = OperatorSnapshotNoScheduleReason.None;
         DateTimeOffset? nextOccasion = null;
@@ -62,21 +61,18 @@ public sealed class OperatorSnapshotScheduleFactsService(
             {
                 noSchedule = OperatorSnapshotNoScheduleReason.CredentialUnusable;
             }
+            else if (scheduled)
+            {
+                // A queued wait stays today; the 30-day window does not clear it.
+                nextOccasion = todayOccasion;
+            }
             else if (!_eligibility.WouldBeEligibleForSchedule(scheduleRecord, nameInstant))
             {
                 noSchedule = OperatorSnapshotNoScheduleReason.OutsideWindow;
             }
-            else if (queued is not null && string.Equals(queued, todayDate, StringComparison.Ordinal))
-            {
-                nextOccasion = todayOccasion;
-            }
-            else if (utcNow < todayOccasion)
-            {
-                nextOccasion = todayOccasion;
-            }
             else
             {
-                nextOccasion = todayOccasion.AddDays(1);
+                nextOccasion = nameInstant;
             }
         }
 
@@ -88,7 +84,6 @@ public sealed class OperatorSnapshotScheduleFactsService(
         return new OperatorSnapshotScheduleFacts(
             OperatorSnapshotSchedulePosture.Hosted,
             noSchedule,
-            queued,
             nextOccasion,
             trigger);
     }

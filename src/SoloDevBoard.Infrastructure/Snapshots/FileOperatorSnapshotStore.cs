@@ -131,7 +131,7 @@ public sealed class FileOperatorSnapshotStore : IOperatorSnapshotStore
             return document;
         }
 
-        if (document.Trigger == OperatorSnapshotCollectionTrigger.Daily && !document.PassExecuting)
+        if (document.Trigger == OperatorSnapshotCollectionTrigger.Daily)
         {
             return document;
         }

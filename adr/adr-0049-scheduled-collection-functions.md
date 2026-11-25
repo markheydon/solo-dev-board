@@ -22,10 +22,10 @@ ADR-0048 added one blob container on the hosted graph for snapshot JSON. This fe
 
 ## Decision
 
-- Add `src/SoloDevBoard.Functions`, a .NET isolated Azure Functions worker that references `SoloDevBoard.Composition` and `SoloDevBoard.ServiceDefaults`. Triggers are thin: a UTC timer (`0 0-15 5 * * *`) for the 15-minute fill window and a storage queue trigger with `batchSize` 1 on `daily-snapshot-collection`. No HTTP trigger.
-- Wire the worker only in `HostedSignInAppHostGraph` using Aspire 17.0.0: `AddAzureFunctionsProject`, `WithHostStorage` on `operator-snapshot-storage`, `AddBlobContainer` for `hosted-sign-ins` and `collection-schedule`, `AddQueues("operator-snapshot-queues")`, `WithReference`, and local `WaitFor` the emulator. `LeanAppHostGraph` is unchanged.
+- Add `src/SoloDevBoard.Functions`, a .NET isolated Azure Functions worker that references `SoloDevBoard.Composition` and `SoloDevBoard.ServiceDefaults`. Triggers are thin: a UTC timer (`0 0 5 * * *`) for the daily fill ask and a storage queue trigger with `batchSize` 1 on `daily-snapshot-collection`. No HTTP trigger.
+- Wire the worker only in `HostedSignInAppHostGraph` using Aspire 17.0.0: `AddAzureFunctionsProject`, `WithHostStorage` on `operator-snapshot-storage`, `AddBlobContainer` for `operator-snapshots`, `hosted-sign-ins`, `account-scan-status`, and `collection-schedule`, `AddQueues("operator-snapshot-queues")`, `WithReference`, and local `WaitFor` the emulator. `LeanAppHostGraph` is unchanged.
 - Publish assigns `StorageBlobDataContributor`, `StorageQueueDataContributor`, `StorageTableDataContributor`, and `StorageAccountContributor` on `operator-snapshot-storage` to the Functions identity.
-- `web` keeps `MinReplicas` 0 and `MaxReplicas` 1. `web` references `operator-snapshots` and `hosted-sign-ins`. It does not reference the queue or `collection-schedule`.
+- `web` keeps `MinReplicas` 0 and `MaxReplicas` 1. `web` references `operator-snapshots`, `hosted-sign-ins`, and `account-scan-status`. It does not reference the queue or `collection-schedule`.
 - Occasion fill, eligibility, queue handling, and the daily pass live in Application. Infrastructure holds blob, queue, and lease adapters. Tokens stay out of snapshot JSON, queue messages, and logs.
 - `functionTimeout` in `host.json` is `02:00:00`. The timer does not set `WEBSITE_TIME_ZONE`; execution is UTC.
 

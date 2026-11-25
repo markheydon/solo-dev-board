@@ -119,23 +119,16 @@ public sealed class OperatorSnapshotBlobStoreTests
     }
 
     [Fact]
-    public async Task GetAsync_DailyPassExecutingWithExpiredLease_BecomesScheduledCollectionStopped()
+    public async Task GetAsync_DailyInProgressWithoutLiveTask_IsNotRewrittenToSiteStopped()
     {
         var container = new FakeOperatorSnapshotBlobContainer();
         var registry = new TestLiveTaskRegistry();
-        var time = new MutableTimeProvider(DateTimeOffset.Parse("2026-11-23T06:00:00Z"));
-        var store = new BlobOperatorSnapshotStore(
-            container,
-            registry,
-            time,
-            NullLogger<BlobOperatorSnapshotStore>.Instance);
+        var store = CreateStore(container, registry);
 
-        var started = new OperatorSnapshotDocument
+        var workerRun = new OperatorSnapshotDocument
         {
             OperatorLogin = "octocat",
             Trigger = OperatorSnapshotCollectionTrigger.Daily,
-            PassExecuting = true,
-            PassLeaseUntil = DateTimeOffset.Parse("2026-11-23T05:59:50Z"),
             Run = new OperatorSnapshotRun
             {
                 Status = OperatorSnapshotRunStatus.InProgress,
@@ -143,16 +136,16 @@ public sealed class OperatorSnapshotBlobStoreTests
             },
         };
 
-        await store.SaveAsync("octocat", started, OperatorSnapshotConcurrencyToken.None, CancellationToken.None);
+        await store.SaveAsync("octocat", workerRun, OperatorSnapshotConcurrencyToken.None, CancellationToken.None);
         var result = await store.GetAsync("octocat", CancellationToken.None);
 
         var found = Assert.IsType<OperatorSnapshotGetResult.Found>(result);
-        Assert.Equal(OperatorSnapshotRunStatus.Interrupted, found.Document.Run.Status);
-        Assert.Equal(OperatorSnapshotRunReason.ScheduledCollectionStopped, found.Document.Run.Reason);
+        Assert.Equal(OperatorSnapshotRunStatus.InProgress, found.Document.Run.Status);
+        Assert.Null(found.Document.Run.Reason);
     }
 
     [Fact]
-    public async Task GetAsync_DailyRetryWaitWithoutPassExecuting_DoesNotBecomeSiteStopped()
+    public async Task GetAsync_DailyRetryWait_DoesNotBecomeSiteStopped()
     {
         var container = new FakeOperatorSnapshotBlobContainer();
         var store = CreateStore(container, new TestLiveTaskRegistry());
@@ -161,7 +154,6 @@ public sealed class OperatorSnapshotBlobStoreTests
         {
             OperatorLogin = "octocat",
             Trigger = OperatorSnapshotCollectionTrigger.Daily,
-            PassExecuting = false,
             Run = new OperatorSnapshotRun
             {
                 Status = OperatorSnapshotRunStatus.InProgress,

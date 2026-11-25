@@ -11,6 +11,7 @@ namespace SoloDevBoard.Functions;
 public sealed class DailyCollectionFunctions(
     IDailyOccasionService dailyOccasion,
     IDailySnapshotCollectionPassService passService,
+    DailyQueueVisibilityRenewer visibilityRenewer,
     QueueServiceClient queueServiceClient,
     ILogger<DailyCollectionFunctions> logger)
 {
@@ -52,20 +53,62 @@ public sealed class DailyCollectionFunctions(
         var queueClient = queueServiceClient.GetQueueClient(QueueName);
         var receipt = new QueueReceipt(queueMessage.MessageId, queueMessage.PopReceipt);
 
+        // Complete and renew share a gate so a renewal can never change the pop receipt mid-delete.
+        using var gate = new SemaphoreSlim(1, 1);
+        var completed = false;
+
         var invocation = new DailySnapshotQueueInvocation
         {
             Message = message,
-            CompleteAsync = ct => queueClient.DeleteMessageAsync(receipt.MessageId, receipt.PopReceipt, ct),
+            CompleteAsync = async ct =>
+            {
+                await gate.WaitAsync(ct).ConfigureAwait(false);
+                try
+                {
+                    completed = true;
+                    await queueClient.DeleteMessageAsync(receipt.MessageId, receipt.PopReceipt, ct).ConfigureAwait(false);
+                }
+                finally
+                {
+                    gate.Release();
+                }
+            },
             UpdateVisibilityAsync = async (visibility, ct) =>
             {
-                var updated = await queueClient
-                    .UpdateMessageAsync(receipt.MessageId, receipt.PopReceipt, rawMessage, visibility, ct)
-                    .ConfigureAwait(false);
-                receipt.PopReceipt = updated.Value.PopReceipt;
+                await gate.WaitAsync(ct).ConfigureAwait(false);
+                try
+                {
+                    if (completed)
+                    {
+                        return;
+                    }
+
+                    var updated = await queueClient
+                        .UpdateMessageAsync(receipt.MessageId, receipt.PopReceipt, rawMessage, visibility, ct)
+                        .ConfigureAwait(false);
+                    receipt.PopReceipt = updated.Value.PopReceipt;
+                }
+                finally
+                {
+                    gate.Release();
+                }
             },
         };
 
-        await passService.HandleQueueMessageAsync(invocation, cancellationToken).ConfigureAwait(false);
+        using var renewCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var renewTask = string.IsNullOrEmpty(message.OperatorLogin)
+            ? Task.CompletedTask
+            : visibilityRenewer.RunAsync(message.OperatorLogin, invocation.UpdateVisibilityAsync, renewCts.Token);
+
+        try
+        {
+            await passService.HandleQueueMessageAsync(invocation, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            await renewCts.CancelAsync().ConfigureAwait(false);
+            await renewTask.ConfigureAwait(false);
+        }
     }
 
     private sealed class QueueReceipt(string messageId, string popReceipt)

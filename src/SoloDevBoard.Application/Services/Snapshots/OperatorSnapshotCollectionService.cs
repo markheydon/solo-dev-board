@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SoloDevBoard.Application.Authentication;
 using SoloDevBoard.Application.Identity;
@@ -14,6 +15,15 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
     private readonly TimeProvider _timeProvider;
     private readonly IOperatorSnapshotScheduleFactsService _scheduleFacts;
     private readonly IHostedSignInRecordStore _signInRecords;
+    private readonly IScheduledCollectionEnvironment _environment;
+    private readonly AccountScanStatusTransitionService _accountScanStatus;
+    private readonly ILogger<OperatorSnapshotCollectionService> _logger;
+
+    /// <summary>Delay between polls while a hand-started hosted scan is working.</summary>
+    internal TimeSpan MonitorPollInterval { get; init; } = TimeSpan.FromSeconds(1);
+
+    /// <summary>Polls between liveness marks (about every ten seconds at the default interval).</summary>
+    internal int LivenessEveryPolls { get; init; } = 10;
 
     /// <summary>Initialises the service.</summary>
     public OperatorSnapshotCollectionService(
@@ -23,7 +33,10 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
         IOptions<OperatorSnapshotDurabilityOptions> durabilityOptions,
         TimeProvider timeProvider,
         IOperatorSnapshotScheduleFactsService scheduleFacts,
-        IHostedSignInRecordStore signInRecords)
+        IHostedSignInRecordStore signInRecords,
+        IScheduledCollectionEnvironment environment,
+        AccountScanStatusTransitionService accountScanStatus,
+        ILogger<OperatorSnapshotCollectionService> logger)
     {
         _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
         _store = store ?? throw new ArgumentNullException(nameof(store));
@@ -32,6 +45,9 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
         _scheduleFacts = scheduleFacts ?? throw new ArgumentNullException(nameof(scheduleFacts));
         _signInRecords = signInRecords ?? throw new ArgumentNullException(nameof(signInRecords));
+        _environment = environment ?? throw new ArgumentNullException(nameof(environment));
+        _accountScanStatus = accountScanStatus ?? throw new ArgumentNullException(nameof(accountScanStatus));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <inheritdoc/>
@@ -50,11 +66,26 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
             return OperatorSnapshotStartResult.AlreadyInProgress;
         }
 
-        var todayOccasionDate = _timeProvider.GetUtcNow().ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
-        if (get is OperatorSnapshotGetResult.Found foundBeforeStart
-            && ((!string.IsNullOrEmpty(foundBeforeStart.Document.QueuedOccasion)
-                  && string.Equals(foundBeforeStart.Document.QueuedOccasion, todayOccasionDate, StringComparison.Ordinal))
-                || foundBeforeStart.Document.Run.Status == OperatorSnapshotRunStatus.InProgress))
+        var hosted = _environment.IsHostedScheduleEnabled;
+        var generation = 0;
+        AccountScanStatusDocument? previousStatus = null;
+        if (hosted)
+        {
+            // The status record is the authority in hosted sign-in: refuse while told scheduled or running.
+            await _accountScanStatus.EnsureNeverRunIfAbsentAsync(ownerLogin, cancellationToken).ConfigureAwait(false);
+            previousStatus = await _accountScanStatus.GetDocumentAsync(ownerLogin, cancellationToken).ConfigureAwait(false);
+            var win = await _accountScanStatus
+                .TryWinRunningAsync(ownerLogin, OperatorSnapshotCollectionTrigger.Operator, fromHandStart: true, cancellationToken)
+                .ConfigureAwait(false);
+            if (win is not AccountScanRunningWinResult.Won won)
+            {
+                return OperatorSnapshotStartResult.AlreadyInProgress;
+            }
+
+            generation = won.Generation;
+        }
+        else if (get is OperatorSnapshotGetResult.Found foundBeforeStart
+                 && foundBeforeStart.Document.Run.Status == OperatorSnapshotRunStatus.InProgress)
         {
             return OperatorSnapshotStartResult.AlreadyInProgress;
         }
@@ -91,9 +122,6 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
             Repositories = baseDocument.Repositories,
             LaterFacts = baseDocument.LaterFacts,
             Trigger = OperatorSnapshotCollectionTrigger.Operator,
-            QueuedOccasion = null,
-            PassExecuting = false,
-            PassLeaseUntil = null,
             AttemptsUsed = null,
             Run = new OperatorSnapshotRun
             {
@@ -109,11 +137,13 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
         var save = await _store.SaveAsync(ownerLogin, inProgress, token, cancellationToken).ConfigureAwait(false);
         if (save is OperatorSnapshotSaveResult.UnsafeKey)
         {
+            await RestoreStatusAsync(ownerLogin, generation, previousStatus, cancellationToken).ConfigureAwait(false);
             return OperatorSnapshotStartResult.UnsafeOperatorLogin;
         }
 
         if (save is OperatorSnapshotSaveResult.ConcurrencyConflict)
         {
+            await RestoreStatusAsync(ownerLogin, generation, previousStatus, cancellationToken).ConfigureAwait(false);
             return OperatorSnapshotStartResult.AlreadyInProgress;
         }
 
@@ -123,10 +153,11 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
             accessToken,
             new OperatorSnapshotConcurrencyToken(inProgress.Revision, token.BlobEtag),
             ReadForCoordinatorAsync,
-            PersistTerminalAsync);
+            (login, document, writeToken, ct) => PersistTerminalAsync(login, document, writeToken, hosted ? generation : null, ct));
 
         if (!started)
         {
+            await RestoreStatusAsync(ownerLogin, generation, previousStatus, cancellationToken).ConfigureAwait(false);
             await TryRevertStrayInProgressStartAsync(
                     ownerLogin,
                     baseDocument,
@@ -136,7 +167,82 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
             return OperatorSnapshotStartResult.AlreadyInProgress;
         }
 
+        if (hosted)
+        {
+            _ = MonitorHandStartedScanAsync(sanitised, ownerLogin, generation);
+        }
+
         return OperatorSnapshotStartResult.Started;
+    }
+
+    private async Task RestoreStatusAsync(
+        string ownerLogin,
+        int generation,
+        AccountScanStatusDocument? previousStatus,
+        CancellationToken cancellationToken)
+    {
+        if (previousStatus is null)
+        {
+            return;
+        }
+
+        await _accountScanStatus.RestoreAfterFailedStartAsync(ownerLogin, generation, previousStatus, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Writes liveness marks while a hand-started hosted walk is live, then records the outcome on the status record.
+    /// A stopped site leaves <c>running</c> in place; readers tell <c>stalled</c> after five minutes.
+    /// </summary>
+    private async Task MonitorHandStartedScanAsync(string sanitisedLogin, string ownerLogin, int generation)
+    {
+        try
+        {
+            for (var poll = 1; ; poll++)
+            {
+                await Task.Delay(MonitorPollInterval, _timeProvider).ConfigureAwait(false);
+
+                if (_coordinator.HasLiveTask(sanitisedLogin))
+                {
+                    if (poll % LivenessEveryPolls == 0)
+                    {
+                        await _accountScanStatus.TouchLivenessIfDueAsync(ownerLogin, generation).ConfigureAwait(false);
+                    }
+
+                    continue;
+                }
+
+                var read = await _store.GetAsync(ownerLogin).ConfigureAwait(false);
+                if (read is not OperatorSnapshotGetResult.Found found)
+                {
+                    return;
+                }
+
+                var run = found.Document.Run;
+                if (run.Status == OperatorSnapshotRunStatus.Succeeded)
+                {
+                    await _accountScanStatus.RecordSuccessAsync(ownerLogin, generation).ConfigureAwait(false);
+                }
+                else if (run.Status == OperatorSnapshotRunStatus.Failed)
+                {
+                    var comment = AccountScanResultComment.ForFailure(run.Reason, run.Detail);
+                    if (run.Reason == OperatorSnapshotRunReason.SignInOrToken)
+                    {
+                        await _accountScanStatus.RecordTokenFailureAsync(ownerLogin, generation, comment).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        await _accountScanStatus.RecordExhaustedFailureAsync(ownerLogin, generation, comment).ConfigureAwait(false);
+                    }
+                }
+
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Hand-started scan monitor stopped for {Login}.", sanitisedLogin);
+        }
     }
 
     /// <inheritdoc/>
@@ -230,7 +336,8 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
         CancellationToken cancellationToken)
     {
         HostedSignInRecordForSchedule? signIn = null;
-        if (_durabilityOptions.DurabilityKind == OperatorSnapshotDurabilityKind.HostedBlob)
+        AccountScanStatusReport? scanReport = null;
+        if (_environment.IsHostedScheduleEnabled)
         {
             var read = await _signInRecords.GetAsync(ownerLogin, cancellationToken).ConfigureAwait(false);
             if (read is HostedSignInRecordReadResult.Found found)
@@ -241,16 +348,30 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
                     found.Record.CredentialUnusable,
                     found.Record.OrganisationLogins);
             }
+
+            scanReport = await _accountScanStatus
+                .GetReportAsync(ownerLogin, hostedSignInRecordExists: signIn is not null, cancellationToken)
+                .ConfigureAwait(false);
         }
 
         var utcNow = _timeProvider.GetUtcNow();
         var facts = _scheduleFacts.Compute(
             document ?? new OperatorSnapshotDocument(),
             signIn,
+            scanReport?.Reported,
             utcNow);
 
         var nextOnFollowingDay = facts.NextOccasionAtUtc is { } next
             && next.UtcDateTime.Date > utcNow.UtcDateTime.Date;
+
+        // Hosted: the trigger is only a fact while a scan is running or has finished.
+        var trigger = scanReport?.Reported is null
+            ? facts.Trigger ?? document?.Trigger
+            : scanReport.Reported is ReportedAccountScanStatus.Running
+                or ReportedAccountScanStatus.Stalled
+                or ReportedAccountScanStatus.Finished
+                ? document?.Trigger
+                : null;
 
         return new OperatorSnapshotStatusDto
         {
@@ -263,9 +384,14 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
             Reason = dto.Reason,
             Detail = dto.Detail,
             DurabilityKind = dto.DurabilityKind,
-            Trigger = facts.Trigger ?? document?.Trigger,
+            Trigger = trigger,
             SchedulePosture = facts.SchedulePosture,
-            QueuedForOccasion = facts.QueuedForOccasion,
+            AccountScanStatus = scanReport?.StoredStatus,
+            ReportedScanStatus = scanReport?.Reported,
+            LastScanAt = scanReport?.LastScanAt,
+            LastScanResult = scanReport?.LastResult,
+            ResultComment = scanReport?.ResultComment,
+            ScanSuspensionReason = scanReport?.SuspensionReason ?? AccountScanSuspensionReason.None,
             NextOccasionAtUtc = facts.NextOccasionAtUtc,
             NextOccasionOnFollowingUtcDay = nextOnFollowingDay,
             NoScheduleReason = facts.NoScheduleReason,
@@ -299,9 +425,6 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
             Repositories = priorDocument.Repositories,
             LaterFacts = priorDocument.LaterFacts,
             Trigger = priorDocument.Trigger,
-            QueuedOccasion = priorDocument.QueuedOccasion,
-            PassExecuting = priorDocument.PassExecuting,
-            PassLeaseUntil = priorDocument.PassLeaseUntil,
             AttemptsUsed = priorDocument.AttemptsUsed,
             Run = new OperatorSnapshotRun
             {
@@ -324,28 +447,22 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
         string sanitisedLogin,
         OperatorSnapshotDocument document,
         OperatorSnapshotConcurrencyToken token,
+        int? hostedGeneration,
         CancellationToken cancellationToken)
     {
-        var result = await _store.SaveAsync(sanitisedLogin, document, token, cancellationToken);
+        // A scan from an earlier generation must not overwrite the snapshot once a newer scan has won.
+        if (hostedGeneration is { } generation
+            && !await _accountScanStatus.IsGenerationCurrentAsync(sanitisedLogin, generation, cancellationToken).ConfigureAwait(false))
+        {
+            return false;
+        }
+
+        var result = await _store.SaveAsync(sanitisedLogin, document, token, cancellationToken).ConfigureAwait(false);
         return result is OperatorSnapshotSaveResult.Succeeded;
     }
 
-    private static OperatorSnapshotStatusKind ResolveStatusKind(OperatorSnapshotDocument document)
-    {
-        if (!string.IsNullOrEmpty(document.QueuedOccasion) && !document.PassExecuting)
-        {
-            return document.Run.Status switch
-            {
-                OperatorSnapshotRunStatus.Succeeded => OperatorSnapshotStatusKind.Succeeded,
-                OperatorSnapshotRunStatus.Failed when document.LastSuccessfulCollectionAt is not null
-                    || document.Run.FinishedAt is not null
-                    => OperatorSnapshotStatusKind.Failed,
-                OperatorSnapshotRunStatus.Interrupted => OperatorSnapshotStatusKind.Interrupted,
-                _ => OperatorSnapshotStatusKind.NeverRun,
-            };
-        }
-
-        return document.Run.Status switch
+    private static OperatorSnapshotStatusKind ResolveStatusKind(OperatorSnapshotDocument document) =>
+        document.Run.Status switch
         {
             OperatorSnapshotRunStatus.InProgress => OperatorSnapshotStatusKind.InProgress,
             OperatorSnapshotRunStatus.Succeeded => OperatorSnapshotStatusKind.Succeeded,
@@ -353,5 +470,4 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
             OperatorSnapshotRunStatus.Interrupted => OperatorSnapshotStatusKind.Interrupted,
             _ => OperatorSnapshotStatusKind.NeverRun,
         };
-    }
 }

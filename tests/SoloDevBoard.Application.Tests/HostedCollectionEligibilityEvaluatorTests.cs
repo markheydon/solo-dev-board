@@ -21,48 +21,47 @@ public sealed class HostedCollectionEligibilityEvaluatorTests
     };
 
     [Fact]
-    public void IsEligibleAtFill_WhenQueuedOccasionSetForAnotherDay_ReturnsTrue()
+    public void IsEligibleAtFill_WhenReportedFinished_ReturnsTrue()
     {
-        var snapshot = new OperatorSnapshotDocument
-        {
-            OperatorLogin = "octocat",
-            QueuedOccasion = "2026-11-22",
-            Run = new OperatorSnapshotRun { Status = OperatorSnapshotRunStatus.Succeeded },
-        };
-
-        var eligible = CreateSut().IsEligibleAtFill(EligibleSignIn(), snapshot, Occasion);
+        var eligible = CreateSut().IsEligibleAtFill(
+            EligibleSignIn(),
+            ReportedAccountScanStatus.Finished,
+            Occasion);
 
         Assert.True(eligible);
     }
 
     [Fact]
-    public void IsEligibleAtFill_WhenQueuedOccasionSetForToday_ReturnsFalse()
+    public void IsEligibleAtFill_WhenReportedScheduled_ReturnsFalse()
     {
-        var snapshot = new OperatorSnapshotDocument
-        {
-            OperatorLogin = "octocat",
-            QueuedOccasion = "2026-11-23",
-            Run = new OperatorSnapshotRun { Status = OperatorSnapshotRunStatus.Succeeded },
-        };
-
-        var eligible = CreateSut().IsEligibleAtFill(EligibleSignIn(), snapshot, Occasion);
+        var eligible = CreateSut().IsEligibleAtFill(
+            EligibleSignIn(),
+            ReportedAccountScanStatus.Scheduled,
+            Occasion);
 
         Assert.False(eligible);
     }
 
     [Fact]
-    public void IsEligibleAtFill_WhenHandStartedInProgress_ReturnsFalse()
+    public void IsEligibleAtFill_WhenReportedRunning_ReturnsFalse()
     {
-        var snapshot = new OperatorSnapshotDocument
-        {
-            OperatorLogin = "octocat",
-            Trigger = OperatorSnapshotCollectionTrigger.Operator,
-            Run = new OperatorSnapshotRun { Status = OperatorSnapshotRunStatus.InProgress },
-        };
-
-        var eligible = CreateSut().IsEligibleAtFill(EligibleSignIn(), snapshot, Occasion);
+        var eligible = CreateSut().IsEligibleAtFill(
+            EligibleSignIn(),
+            ReportedAccountScanStatus.Running,
+            Occasion);
 
         Assert.False(eligible);
+    }
+
+    [Fact]
+    public void IsEligibleAtFill_WhenReportedStalled_ReturnsTrue()
+    {
+        var eligible = CreateSut().IsEligibleAtFill(
+            EligibleSignIn(),
+            ReportedAccountScanStatus.Stalled,
+            Occasion);
+
+        Assert.True(eligible);
     }
 
     [Fact]
@@ -72,21 +71,18 @@ public sealed class HostedCollectionEligibilityEvaluatorTests
         var signIn = EligibleSignIn();
         signIn.CompletedAt = new DateTimeOffset(2026, 11, 23, 6, 0, 0, TimeSpan.Zero);
 
-        var eligible = CreateSut().IsEligibleAtFill(signIn, snapshot: null, fillInstant);
+        var eligible = CreateSut().IsEligibleAtFill(signIn, reportedScanStatus: null, fillInstant);
 
         Assert.True(eligible);
     }
 
     [Fact]
-    public void IsEligibleAtFill_WhenEligibleAndNoBlockingFlags_ReturnsTrue()
+    public void IsEligibleAtFill_WhenEligibleAndNoBlockingReport_ReturnsTrue()
     {
-        var snapshot = new OperatorSnapshotDocument
-        {
-            OperatorLogin = "octocat",
-            Run = new OperatorSnapshotRun { Status = OperatorSnapshotRunStatus.Succeeded },
-        };
-
-        var eligible = CreateSut().IsEligibleAtFill(EligibleSignIn(), snapshot, Occasion);
+        var eligible = CreateSut().IsEligibleAtFill(
+            EligibleSignIn(),
+            ReportedAccountScanStatus.NeverRun,
+            Occasion);
 
         Assert.True(eligible);
     }
@@ -97,7 +93,7 @@ public sealed class HostedCollectionEligibilityEvaluatorTests
         var signIn = EligibleSignIn();
         signIn.CredentialUnusable = true;
 
-        Assert.False(CreateSut().IsEligibleAtFill(signIn, snapshot: null, Occasion));
+        Assert.False(CreateSut().IsEligibleAtFill(signIn, reportedScanStatus: null, Occasion));
     }
 
     [Fact]
@@ -106,7 +102,7 @@ public sealed class HostedCollectionEligibilityEvaluatorTests
         var signIn = EligibleSignIn();
         signIn.CompletedAt = Occasion.AddDays(-31);
 
-        Assert.False(CreateSut().IsEligibleAtFill(signIn, snapshot: null, Occasion));
+        Assert.False(CreateSut().IsEligibleAtFill(signIn, reportedScanStatus: null, Occasion));
     }
 
     [Fact]
@@ -115,7 +111,7 @@ public sealed class HostedCollectionEligibilityEvaluatorTests
         var signIn = EligibleSignIn();
         signIn.CompletedAt = Occasion.AddDays(-30);
 
-        Assert.True(CreateSut().IsEligibleAtFill(signIn, snapshot: null, Occasion));
+        Assert.True(CreateSut().IsEligibleAtFill(signIn, reportedScanStatus: null, Occasion));
     }
 
     [Fact]
@@ -124,7 +120,7 @@ public sealed class HostedCollectionEligibilityEvaluatorTests
         var sut = new HostedCollectionEligibilityEvaluator(
             Options.Create(new HostedAdmissionControlOptions { Enabled = true }));
 
-        Assert.False(sut.IsEligibleAtFill(EligibleSignIn(), snapshot: null, Occasion));
+        Assert.False(sut.IsEligibleAtFill(EligibleSignIn(), reportedScanStatus: null, Occasion));
     }
 
     [Fact]
@@ -139,20 +135,7 @@ public sealed class HostedCollectionEligibilityEvaluatorTests
                 AllowedOrganisationLogins = "my-org",
             }));
 
-        Assert.True(sut.IsEligibleAtFill(signIn, snapshot: null, Occasion));
-    }
-
-    [Fact]
-    public void IsEligibleAtFill_WhenDailyInProgress_ReturnsFalse()
-    {
-        var snapshot = new OperatorSnapshotDocument
-        {
-            OperatorLogin = "octocat",
-            Trigger = OperatorSnapshotCollectionTrigger.Daily,
-            Run = new OperatorSnapshotRun { Status = OperatorSnapshotRunStatus.InProgress },
-        };
-
-        Assert.False(CreateSut().IsEligibleAtFill(EligibleSignIn(), snapshot, Occasion));
+        Assert.True(sut.IsEligibleAtFill(signIn, reportedScanStatus: null, Occasion));
     }
 
     [Fact]

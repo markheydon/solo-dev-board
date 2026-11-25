@@ -7,7 +7,7 @@ The AppHost models **two resource graphs** (constitution Principle VII). Selecti
 | Posture | When | Resources modelled |
 |---|---|---|
 | **Lean AppHost graph** | `hosted-sign-in-enabled` is `false` (default) | `web` only locally; optional dev Key Vault (`auth-secrets`) on Path B |
-| **Hosted sign-in graph** | `hosted-sign-in-enabled` is `true` | `web`, operator snapshot storage on `operator-snapshot-storage`, queue `operator-snapshot-queues`, blob containers `hosted-sign-ins` and `collection-schedule`, and the scheduled collection Functions worker ([ADR-0048](../../adr/adr-0048-hosted-operator-snapshot-blob-storage.md), [ADR-0049](../../adr/adr-0049-scheduled-collection-functions.md)); Azurite locally via `RunAsEmulator()` with `WithDataVolume()` |
+| **Hosted sign-in graph** | `hosted-sign-in-enabled` is `true` | `web`, operator snapshot storage on `operator-snapshot-storage`, queue `operator-snapshot-queues`, blob containers `hosted-sign-ins`, `collection-schedule` and `account-scan-status`, and the scheduled collection Functions worker ([ADR-0048](../../adr/adr-0048-hosted-operator-snapshot-blob-storage.md), [ADR-0049](../../adr/adr-0049-scheduled-collection-functions.md)); Azurite locally via `RunAsEmulator()` with `WithDataVolume()` |
 
 Withdrawn [ADR-0046](../../adr/adr-0046-overnight-inventory-functions-and-sql.md) overnight inventory SQL and the planned inventory stack are **not** modelled. Hosted staging and production CD deploy **web**, the snapshot storage account, the scheduled collection worker, and admission control on the Container App. Lean graphs stay **web** only; snapshot files live under the web content root.
 
