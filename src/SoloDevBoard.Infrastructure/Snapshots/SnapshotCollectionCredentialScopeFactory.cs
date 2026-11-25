@@ -14,6 +14,18 @@ public sealed class SnapshotCollectionCredentialScopeFactory(IServiceScopeFactor
         var scope = _serviceScopeFactory.CreateScope();
         var slot = scope.ServiceProvider.GetRequiredService<SnapshotCollectionCredentialSlot>();
         slot.Set(ownerLogin, accessToken);
-        return scope;
+        SnapshotCollectionCredentialAmbient.Set(ownerLogin, accessToken);
+        return new SnapshotCollectionCredentialScope(scope);
+    }
+
+    private sealed class SnapshotCollectionCredentialScope(IServiceScope inner) : IServiceScope
+    {
+        public IServiceProvider ServiceProvider => inner.ServiceProvider;
+
+        public void Dispose()
+        {
+            SnapshotCollectionCredentialAmbient.Clear();
+            inner.Dispose();
+        }
     }
 }
