@@ -46,7 +46,7 @@ public sealed class OperatorSnapshotScheduleFactsService(
         {
             var scheduleRecord = new HostedSignInRecord
             {
-                OperatorLogin = document.OperatorLogin,
+                OperatorLogin = signInRecord.OperatorLogin,
                 CompletedAt = signInRecord.CompletedAt,
                 CredentialUnusable = signInRecord.CredentialUnusable,
                 OrganisationLogins = signInRecord.OrganisationLogins,

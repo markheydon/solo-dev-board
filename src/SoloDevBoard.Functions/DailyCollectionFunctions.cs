@@ -40,7 +40,9 @@ public sealed class DailyCollectionFunctions(
         FunctionContext context)
     {
         var cancellationToken = context.CancellationToken;
-        var rawMessage = queueMessage.Body.ToString();
+        var rawMessage = string.IsNullOrEmpty(queueMessage.MessageText)
+            ? queueMessage.Body.ToString()
+            : queueMessage.MessageText;
         var message = JsonSerializer.Deserialize<DailySnapshotQueueMessage>(rawMessage, JsonOptions);
         if (message is null)
         {

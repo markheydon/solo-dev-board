@@ -128,7 +128,13 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IMilestoneRepository, GitHubMilestoneRepository>();
         services.AddScoped<IProjectBoardStructureRepository, GitHubProjectBoardStructureRepository>();
         services.AddScoped<IWorkflowFileRepository, GitHubWorkflowFileRepository>();
-        services.AddHttpClient("HostedGitHubOAuthClient");
+        services.AddHttpClient("HostedGitHubOAuthClient", static (serviceProvider, client) =>
+        {
+            var appVersionService = serviceProvider.GetRequiredService<IAppVersionService>();
+            client.BaseAddress = new Uri("https://github.com");
+            client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+            client.DefaultRequestHeaders.UserAgent.ParseAdd(appVersionService.UserAgent);
+        });
         services.TryAddSingleton<IHostedGitHubOAuthTokenExchange, HostedGitHubOAuthTokenExchange>();
 
         return services;

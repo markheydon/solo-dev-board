@@ -4,7 +4,8 @@
   "extensions": {
     "queues": {
       "batchSize": 1,
-      "newBatchThreshold": 0
+      "newBatchThreshold": 0,
+      "messageEncoding": "none"
     }
   },
   "logging": {

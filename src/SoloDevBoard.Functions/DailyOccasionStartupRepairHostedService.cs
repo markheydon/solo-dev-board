@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SoloDevBoard.Application.Services.Snapshots;
@@ -6,7 +7,7 @@ namespace SoloDevBoard.Functions;
 
 /// <summary>Repairs queue messages and runs catch-up fill when the worker starts after 05:00 UTC with no marker.</summary>
 internal sealed class DailyOccasionStartupRepairHostedService(
-    IDailyOccasionService dailyOccasion,
+    IServiceScopeFactory scopeFactory,
     ICollectionOccasionMarkerStore markerStore,
     TimeProvider timeProvider,
     ILogger<DailyOccasionStartupRepairHostedService> logger) : IHostedService
@@ -15,6 +16,9 @@ internal sealed class DailyOccasionStartupRepairHostedService(
     {
         try
         {
+            await using var scope = scopeFactory.CreateAsyncScope();
+            var dailyOccasion = scope.ServiceProvider.GetRequiredService<IDailyOccasionService>();
+
             await dailyOccasion.RepairMissingInitialMessagesAsync(cancellationToken).ConfigureAwait(false);
 
             var utcNow = timeProvider.GetUtcNow();

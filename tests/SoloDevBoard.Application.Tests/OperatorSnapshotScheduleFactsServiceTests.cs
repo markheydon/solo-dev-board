@@ -60,6 +60,31 @@ public sealed class OperatorSnapshotScheduleFactsServiceTests
     }
 
     [Fact]
+    public void Compute_WhenSnapshotNotYetCreated_UsesSignInLoginForAdmission()
+    {
+        var utcNow = TodayOccasion.AddHours(-2);
+        var signIn = new HostedSignInRecordForSchedule(
+            "markheydon",
+            CompletedAt: TodayOccasion.AddDays(-1),
+            CredentialUnusable: false,
+            OrganisationLogins: []);
+        var admission = new HostedCollectionEligibilityEvaluator(
+            Options.Create(new HostedAdmissionControlOptions
+            {
+                Enabled = true,
+                AllowedUserLogins = "markheydon",
+            }));
+        var sut = new OperatorSnapshotScheduleFactsService(
+            new StubScheduledCollectionEnvironment { IsHostedScheduleEnabled = true },
+            admission);
+
+        var facts = sut.Compute(new OperatorSnapshotDocument(), signIn, utcNow);
+
+        Assert.Equal(OperatorSnapshotNoScheduleReason.None, facts.NoScheduleReason);
+        Assert.Equal(TodayOccasion, facts.NextOccasionAtUtc);
+    }
+
+    [Fact]
     public void Compute_WhenQueuedAfter0500_KeepsTodayOccasion()
     {
         var utcNow = TodayOccasion.AddHours(6);
