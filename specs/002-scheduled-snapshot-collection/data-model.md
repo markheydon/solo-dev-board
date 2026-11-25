@@ -1,70 +1,99 @@
 # Data model: Scheduled snapshot collection
 
-The operator snapshot document from [specs/001-operator-snapshot-scanner/data-model.md](../001-operator-snapshot-scanner/data-model.md) stays the single current snapshot per operator. This feature adds fields on that document, a hosted sign-in blob, and schedule blobs the worker uses. There is still no application database and no run history.
+The operator snapshot document from [specs/001-operator-snapshot-scanner/data-model.md](../001-operator-snapshot-scanner/data-model.md) stays the single current catalogue snapshot per operator. Hosted sign-in also stores one account scan status blob per account. That blob is the current scan state. There is still no application database and no run history.
 
-Lean posture uses the file adapter only. It does not write sign-in blobs, occasion markers, or queue messages. Hand-started collection is unchanged there.
+Lean posture uses the file adapter only. It does not write sign-in blobs, status blobs, occasion markers, or queue messages. Hand-started collection there stays the feature 001 run. It has no account scan status and no `stalled` report.
 
-## Snapshot document (additive)
+## Account scan status
 
-`schemaVersion` stays `1`. New properties are absent on documents written before this feature. Readers treat absence as the hand-started behaviour from feature 001.
+One JSON blob per hosted account in container `account-scan-status`. Blob name `{sanitised-login}.json`. Same login grammar as the snapshot. Created when that account is first recorded for later scanning. The completed hosted sign-in path creates it when it stores the refresh token, if the blob is absent. A fill may create it for a sign-in record that has no status blob yet. A later sign-in does not reset a blob that already exists. The record stays after the 30-day window closes. Not created in lean posture. Not deleted on sign-out. Conditional write on etag. No refresh token.
+
+`schemaVersion` is `1`.
 
 | Field | JSON | Type | Rules |
 | --- | --- | --- | --- |
-| Trigger | `trigger` | string or absent | `operator` or `daily`. Absent means `operator` for documents already stored. Set to `daily` when a daily pass starts, not when the login is only queued. A newer run replaces it. |
-| Queued occasion | `queuedOccasion` | string (`yyyy-MM-dd`) or `null` | The UTC date of the daily occasion this operator is waiting on, before their pass has started. `null` when they are not waiting to start. Not set for a hand-started run. Cleared when the entry is removed because a run rule failed, without changing `run`. |
-| Pass executing | `passExecuting` | boolean | `true` only while a daily pass is inside the worker. `false` when they are queued and have not started, when a further try is waiting at the back, and when the run is terminal. Absent means `false`. |
-| Pass lease until | `passLeaseUntil` | string (ISO-8601 UTC) or `null` | Renewed about every 10 seconds while `passExecuting` is `true`. A reader treats the pass as dead when this is missing or earlier than now. `null` when no pass is executing. |
-| Attempts used | `attemptsUsed` | number | Daily run only. `1` on the first pass. Each further try increments it, up to `4` (first pass plus 3 further tries). Absent means no daily attempt accounting. Not used for a hand-started run. Cleared when a further try is removed by a run rule. |
-| Retained run | `retainedRun` | object or `null` | Copy of the terminal `run` and its `trigger` taken when this occasion's first pass replaces that run. Restored if a later further try is removed because the person is not allowed. Cleared when this occasion succeeds, fails (including `signInOrToken`), or is interrupted. Absent when no daily pass has replaced a terminal run. Not a history. |
+| Operator login | `operatorLogin` | string | Sanitised GitHub login. |
+| Status | `status` | string | `neverRun`, `scheduled`, `running`, `finished`, or `suspended`. `stalled` is not stored. |
+| Last scan at | `lastScanAt` | string (ISO-8601 UTC) or `null` | When the last completed scan ran. Null when none has run. Not changed when no scan ran. |
+| Last result | `lastResult` | string or `null` | `success`, `failure`, or null. Null when none has run. |
+| Result comment | `resultComment` | string | `Success` when the last run succeeded. The failure detail when it failed. Empty when none has run. Not changed when no scan ran. |
+| Suspension reason | `suspensionReason` | string or `null` | `notAllowed` or null. Set to `notAllowed` only when dequeue refuses because they are not allowed. Null on a stored-access suspension, and null whenever status is not that refusal. Cleared when a new scan is set to `scheduled` or `running`, and on `finished`. A fact, not a sentence. The page maps `notAllowed` to the fixed comment. |
+| Liveness at | `livenessAt` | string (ISO-8601 UTC) or `null` | Latest mark while `status` is `running`. Null otherwise. |
+| Running since | `runningSince` | string (ISO-8601 UTC) or `null` | When this `running` generation started. Used only when `livenessAt` is null. |
+| Scan generation | `scanGeneration` | number | Starts at 0. Incremented when a new scan wins (`scheduled` from a fill, or `running` from a hand start). |
+| Queue message pending | `queueMessagePending` | boolean | True only after a queue message for this account has been accepted and not yet completed, including a message that is not yet visible. |
+| Queue visible after | `queueVisibleAfter` | string (ISO-8601 UTC) or `null` | Copy of the message `notBefore`. Null on an `initial` message. A winning fill that enqueues an `initial` sets this null. |
 
-`run.status` values stay `inProgress`, `succeeded`, `failed`, and `interrupted`.
+### Reported status
 
-`run.reason` gains `scheduledCollectionStopped`. Existing values stay `signInOrToken`, `rateLimit`, `siteStopped`, and `unexpected`.
+Readers use `TimeProvider.GetUtcNow()`. They do not write. When a hosted sign-in record exists and this blob is absent, readers report `never run` and do not create the blob. The next completed sign-in, or the next fill before eligibility, creates the `neverRun` shape. That report is not an inference of `running`, `finished`, `failed`, or `suspended`.
 
-### How the page should read the combination
+| Stored `status` | Extra test | Told to callers |
+| --- | --- | --- |
+| `neverRun` | | `never run` |
+| `scheduled` | | `scheduled` |
+| `running` | Latest of `livenessAt`, or `runningSince` when the mark is null, is 5 minutes old or newer | `running` |
+| `running` | That instant is strictly more than 5 minutes ago | `stalled` |
+| `finished` | | `finished` |
+| `suspended` | | `suspended` |
 
-| `queuedOccasion` | `passExecuting` | `run.status` | Operator-visible state |
-| --- | --- | --- | --- |
-| today, not started | `false` | previous terminal status, or absent run | Not in progress. While they remain allowed and are not in a stored-access wait, the page still names today's 05:00 UTC. If they are no longer allowed, the one schedule sentence is the not-allowed sentence, and this wait is not shown as in progress. A sign-in older than 30 days does not, by itself, change this row while they are still queued. Start control does not start another while `queuedOccasion` is set. |
-| set | `true` | `inProgress` | In progress. Daily occasion started it. |
-| `null` | `false` | `inProgress` | In progress, further try waiting at the back. Tries are not listed. |
-| `null` | `false` | `interrupted` and reason `scheduledCollectionStopped` | Interrupted because the scheduled collection stopped. Does not rejoin the queue. |
-| `null` | `false` | `interrupted` and reason `siteStopped` | Hand-started run. The site stopped. |
-| `null` | `false` | `failed` or `succeeded` | Terminal, as feature 001, plus trigger copy. |
+Already queued means told `scheduled`. In progress means told `running`. A reported `stalled` account is neither. An entry that exists but is not yet visible is `scheduled` with `queueMessagePending` true.
 
-Waiting on the queue is not a new `run.status`. The previous run stays visible until the pass starts. A further try keeps `inProgress` so the page does not show a failure between tries.
-
-### Transitions (daily)
+### Transitions
 
 ```text
-eligible at fill --> queuedOccasion = today (status and trigger unchanged)
-                 --> pass starts --> inProgress, passExecuting, trigger = daily
-                       retainedRun = previous terminal run, when there was one
-                       --> success --> succeeded, clear queue flags, attempts, retainedRun
-                       --> signInOrToken --> failed, no requeue, credentialUnusable, clear retainedRun
-                       --> rateLimit or unexpected, attemptsUsed < 4
-                             --> inProgress, passExecuting false
-                             --> tail message with notBefore (invisible until then)
-                       --> rateLimit or unexpected, attemptsUsed = 4
-                             --> failed, clear retainedRun, enqueue unmetFill hidden for 15 minutes
-                       --> worker dies while passExecuting
-                             --> interrupted / scheduledCollectionStopped, no rejoin, clear retainedRun
-                             --> enqueue unmetFill hidden for 15 minutes
-queued, not started, not allowed
-                 --> clear queuedOccasion only, no failed run, message completed
-retry waiting, not allowed
-                 --> restore retainedRun, clear attempt fields, no failed run, message completed
-queued or retry waiting, stored access cannot be used
-                 --> failed / signInOrToken, credentialUnusable, no retry, no unmetFill, retainedRun cleared
-queued or retry waiting, worker dies --> flags unchanged, message remains, not interrupted
-message received before notBefore --> re-queue for the remaining wait, pass does not start
+sign-in completes, blob absent --> neverRun, empty last scan, suspensionReason null, generation 0
+sign-in completes, blob present --> blob unchanged (credentialUnusable is on the sign-in record)
+fill, sign-in record present, blob absent --> same neverRun insert before eligibility; do not reset a blob that exists
+
+before fill, scheduled and queueMessagePending false
+    lastResult null --> neverRun, last scan fields unchanged, no failure comment
+    lastResult set --> finished, last scan fields unchanged, no failure comment
+    then the same fill applies eligibility and may set scheduled
+
+eligible at fill, first etag wins --> scheduled, suspensionReason null, generation + 1, queueVisibleAfter null, then enqueue, queueMessagePending true
+lost etag --> no enqueue, no snapshot change
+
+worker takes entry --> running, livenessAt = now, runningSince = now
+    still working --> livenessAt at least every 60 seconds, same generation
+    --> success --> finished, lastResult success, comment Success, snapshot replaced
+    --> signInOrToken --> suspended, lastResult failure, sign-in or token comment, credentialUnusable
+    --> rateLimit or unexpected, attempts left
+          --> scheduled, queueMessagePending true, queueVisibleAfter = notBefore
+          last result unchanged until the try sequence ends
+    --> rateLimit or unexpected, no tries left
+          --> finished, lastResult failure, that comment
+          --> unmetFill hidden for 15 minutes
+    --> worker dies --> stored status stays running, message completed, no unmetFill
+          after more than 5 minutes callers are told stalled
+          same generation may still commit a real result
+          a newer generation must not be overwritten by that pass
+
+dequeue, not allowed, scan not started
+    --> suspended, suspensionReason notAllowed
+    lastResult, lastScanAt, resultComment, and the successful snapshot unchanged
+dequeue, stored access cannot be used, token exchange failed before the catalogue walk
+    --> suspended, lastResult failure, sign-in or token comment, suspensionReason null, credentialUnusable, no unmetFill
+
+hand start, first etag wins --> running, suspensionReason null, and a new liveness mark (no queue message)
+hand start or fill loses the etag --> no second scan
 ```
 
-A hand-started start is refused while `queuedOccasion` is set or `run.status` is `inProgress` (including a retry waiting at the back). A daily fill does not add a second entry when they are already queued or a collection for them is in progress. A successful run does not block a later fill. There is no cooldown after a finished scan. A `credentialUnusable` sign-in record is not queued. The 15-minute hide on `unmetFill` is the next ask after a terminal technical outcome. It is not a filter inside eligibility.
+A hand start is refused while callers are told `scheduled` or `running`. It is allowed while they are told `stalled`, `finished`, `suspended`, or `never run`, subject to the existing permission to use the product. A successful scan does not block a later fill. A `credentialUnusable` sign-in record is not queued. `unmetFill` is only the next ask after a finished rate-limit or unexpected-error outcome. A liveness lapse does not publish it.
 
-Run rules at dequeue attempt the scan when the person is still allowed, including when the sign-in is now older than 30 days. They do not re-check that window. A message is not removed because of the clock. Allowance uses the saved organisation logins and the allow lists as they stand at dequeue. When stored access cannot be used, the run fails with `signInOrToken`. A `failed` run with no `finishedAt`, no `reason`, and no `lastSuccessfulCollectionAt` is read as never run, so a not-allowed withdrawal does not invent a failure. That reading also covers a document created only to hold `queuedOccasion` for someone who has never been collected.
+## Snapshot document
 
-Repositories and `lastSuccessfulCollectionAt` still change only on success. Identity, sanitised keys, and etag rules are unchanged. Unsafe keys are not queued.
+`schemaVersion` stays `1`. The catalogue fields from feature 001 stay. This feature still records who started a finished run.
+
+| Field | JSON | Type | Rules |
+| --- | --- | --- | --- |
+| Trigger | `trigger` | string or absent | `operator` or `daily`. Set to `daily` when a daily pass starts, not when the account is only `scheduled`. |
+| Attempts used | `attemptsUsed` | number | Daily run only. `1` on the first pass. Each further try increments it, up to `4`. Cleared when a further try is removed because they are not allowed. Not used for a hand-started run. |
+| Retained run | `retainedRun` | object or `null` | Copy of the terminal `run` and its `trigger` taken when this occasion's first pass replaces that run. Restored if a further try is removed because the person is not allowed, and while a further try waits so the page does not show a failure between tries. Cleared when this occasion succeeds or fails. Not a history. |
+
+Do not write `queuedOccasion`, `passExecuting`, or `passLeaseUntil` for new behaviour. Do not add `scheduledCollectionStopped`. Existing `run.reason` values stay `signInOrToken`, `rateLimit`, `siteStopped`, and `unexpected`. `siteStopped` remains the lean hand-started stop. A hosted worker death does not write it and does not write `interrupted` on the snapshot.
+
+Repositories and `lastSuccessfulCollectionAt` still change only on success. Partial recordings are not a new successful snapshot, including when callers are told `stalled`. Identity, sanitised keys, and etag rules are unchanged. Unsafe keys are not queued. The status blob does not contain a token.
 
 ## Hosted sign-in record
 
@@ -76,11 +105,11 @@ One JSON blob per operator in container `hosted-sign-ins`. Blob name `{sanitised
 | Operator login | `operatorLogin` | string | Sanitised GitHub login. |
 | Completed at | `completedAt` | string (ISO-8601 UTC) | Latest completed hosted sign-in. A sign-in that does not complete does not write. |
 | Organisation logins | `organisationLogins` | array of strings | Logins saved from that completed sign-in. Replaced on the next completed sign-in. Not refreshed from GitHub at 05:00 UTC. |
-| Refresh token | `refreshToken` | string | Secret. Never copied to the snapshot, the queue, or logs. |
+| Refresh token | `refreshToken` | string | Secret. Never copied to the snapshot, the account scan status, the queue, or logs. |
 | Refresh token expires | `refreshTokenExpiresAt` | string or `null` | UTC expiry when GitHub sent one. |
 | Credential unusable | `credentialUnusable` | boolean | `true` after a daily pass fails with `signInOrToken`. Cleared only by the next completed sign-in, which also sets `completedAt`. |
 
-At fill, the 30-day window is `completedAt` compared with the instant that fill runs. A fill at 05:00 UTC uses 05:00 UTC. A fill at another time uses that later instant. A sign-in after 05:00 UTC is inside a fill that runs after that sign-in. Dequeue does not apply this comparison. A `completedAt` exactly 30 days before the fill instant is inside. Older is outside. A successful collection does not change `completedAt`. The page names today at 05:00 UTC when that instant has not yet passed and they would be eligible then, and it keeps today while they are queued and still allowed. After today's 05:00 UTC ask has passed, and they are not still queued, it names the following day at 05:00 UTC when they would be eligible then. A success does not change that name. That name is the next planned ask. It does not forbid a fill that runs sooner.
+At fill, the 30-day window is `completedAt` compared with the instant that fill runs. A fill at 05:00 UTC uses 05:00 UTC. A fill at another time uses that later instant. A sign-in after 05:00 UTC is inside a fill that runs after that sign-in. Dequeue does not apply this comparison. A `completedAt` exactly 30 days before the fill instant is inside. Older is outside. A successful collection does not change `completedAt`. The page names today at 05:00 UTC when that instant has not yet passed and they would be eligible then, and it keeps today while status is `scheduled` and they are still allowed. After today's 05:00 UTC ask has passed, and they are not `scheduled`, it names the following day at 05:00 UTC when they would be eligible then. A success does not change that name. That name is the next planned ask. It does not forbid a fill that runs sooner.
 
 ## Occasion marker
 
@@ -94,7 +123,7 @@ One JSON blob per UTC date in container `collection-schedule`, name `occasions/{
 
 A UTC date with no fill has no blob. The marker is not an operator-visible log. The Repositories page does not list it.
 
-If a login is still `queuedOccasion` for that date with no queue message (worker died during fill), host start may enqueue that missing `initial` message again. It must not add a second message for someone already queued or in progress. Host start at or after 05:00 UTC also runs a fill when today's marker is absent. It does not run a fill when the marker is already there.
+If status is `scheduled`, `queueMessagePending` is true, `queueVisibleAfter` is null or already passed, and a peek finds no visible message for that login, host start may enqueue the missing `initial` again. It must not do that when `queueVisibleAfter` is still ahead, and it must not add a second message for someone already queued or in progress. Host start at or after 05:00 UTC also runs a fill when today's marker is absent. It does not run a fill when the marker is already there.
 
 ## Queue message
 
@@ -114,31 +143,38 @@ Both blobs live in `collection-schedule`. They are lease targets, not operator-f
 | Blob | Holder | Rule |
 | --- | --- | --- |
 | `runner` | The fill tick, then whichever copy is running the one daily pass | Only one filler and only one daily pass at a time. Released between passes so the next account can run. A copy that cannot acquire it re-sends its message to the tail. A retry keeps the same `notBefore` and stays invisible until that instant. |
-| (none per login) | `passLeaseUntil` on the snapshot | Liveness of the executing pass. Avoids a second blob per operator. |
+
+Operator-facing liveness is `livenessAt` on the account scan status blob, not a lease in this container. `web` does not reference `collection-schedule`.
 
 ## Status facts returned to the page
 
-`OperatorSnapshotStatusDto` gains facts. The page owns UK English. Application does not return sentences.
+`OperatorSnapshotStatusDto` gains the account scan facts. The page owns UK English. Application does not return sentences. In hosted sign-in the page reads these facts and does not derive the current scan state from the snapshot `run` or from the clock.
 
 | Fact | Meaning |
 | --- | --- |
-| `Trigger` | `operator`, `daily`, or none when never run. |
 | `SchedulePosture` | `lean` or `hosted`. |
-| `QueuedForOccasion` | UTC date when they are waiting to start, else none. |
+| `AccountScanStatus` | Stored status, or none in lean posture. |
+| `ReportedScanStatus` | Stored status, except `stalled` when the liveness rule says so. None in lean posture. |
+| `LastScanAt` | From the status blob. Null when none has run. |
+| `LastScanResult` | `success`, `failure`, or none. |
+| `ResultComment` | From the status blob. Empty when none has run. Not the not-allowed comment. |
+| `SuspensionReason` | `notAllowed` or none. From `AccountScanStatus.suspensionReason`. The page maps `notAllowed` to the fixed comment. |
+| `Trigger` | `operator`, `daily`, or none. Set when a scan is `running` or has `finished`. None otherwise, including `never run`, `scheduled`, and `suspended`. |
 | `NextOccasionAtUtc` | The next 05:00 UTC that will queue them, or none. |
 | `NoScheduleReason` | None, `lean`, `credentialUnusable`, `outsideWindow`, `notAllowed`. |
 
-`NextOccasionAtUtc` is today at 05:00 UTC when that instant has not yet passed and they would be eligible at that instant. After that instant, it is the following day at 05:00 UTC when they would be eligible then, including when today's scan has not succeeded and including when it has. It stays today while they are queued for today and the schedule sentence is not a refusal. It is none when a refusal applies.
+`NextOccasionAtUtc` is today at 05:00 UTC when that instant has not yet passed and they would be eligible at that instant. After that instant, it is the following day at 05:00 UTC when they would be eligible then, including when today's scan has not succeeded and including when it has. It stays today while they are `scheduled` for today and the schedule sentence is not a refusal. It is none when a refusal applies.
 
-`NoScheduleReason` is chosen in this order, before the next-occasion time: `notAllowed`, otherwise `credentialUnusable`, otherwise `outsideWindow`. `notAllowed` wins when they are also in a stored-access wait or outside the window. The page still shows that failed run when `credentialUnusable` is set. `outsideWindow` is judged at the instant the page would name (today at 05:00 UTC before that instant, otherwise the following day at 05:00 UTC). A queued wait does not override `notAllowed`. A sign-in older than 30 days does not, by itself, clear a queued wait. Time of day alone does not set `outsideWindow`. Lean posture always uses `SchedulePosture = lean`, `NoScheduleReason = lean`, and no next occasion, including a personal Azure deploy that did not model the worker.
+`NoScheduleReason` is chosen in this order, before the next-occasion time: `notAllowed`, otherwise `credentialUnusable`, otherwise `outsideWindow`. `notAllowed` wins when they are also in a stored-access wait or outside the window. The page still shows the suspended failure when `credentialUnusable` is set. `outsideWindow` is judged at the instant the page would name (today at 05:00 UTC before that instant, otherwise the following day at 05:00 UTC). A `scheduled` wait does not override `notAllowed`. A sign-in older than 30 days does not, by itself, clear a queued wait. Time of day alone does not set `outsideWindow`. Lean posture always uses `SchedulePosture = lean`, `NoScheduleReason = lean`, no account scan status, and no next occasion, including a personal Azure deploy that did not model the worker.
 
 ## Who writes what
 
 | Type | Home | Notes |
 | --- | --- | --- |
-| Snapshot fields above | Application document, Infrastructure store | Same port as feature 001. |
-| Sign-in record | Application model, Infrastructure blob adapter | Web writes on completed sign-in. Worker updates token rotation and `credentialUnusable`. |
+| Snapshot catalogue | Application document, Infrastructure store | Same port as feature 001. Not the scan status. |
+| Account scan status | Application model, Infrastructure blob adapter | Web and the Functions host. Etag on every transition and liveness mark. |
+| Sign-in record | Application model, Infrastructure blob adapter | Web writes on completed sign-in, from `src/SoloDevBoard.Web/Authentication/`, and creates a missing status blob there. The fill also inserts a missing `neverRun` blob for a sign-in record before eligibility. Worker updates token rotation and `credentialUnusable`. It does not write liveness here. |
 | Occasion marker and `runner` lease | Infrastructure, Functions host only | Web does not reference `collection-schedule`. |
-| Queue messages | Infrastructure via injected `QueueServiceClient` | Functions host only. Further tries pass `notBefore` through to the initial visibility timeout. |
-| Eligibility and fill | Application | `TimeProvider`, sign-in records, admission options, snapshot flags. |
+| Queue messages | Infrastructure via injected `QueueServiceClient` | Functions host only. Further tries pass `notBefore` through to the initial visibility timeout and to `queueVisibleAfter`. |
+| Eligibility, fill, and reported status | Application | `TimeProvider`, sign-in records, admission options, status blob. |
 | Token exchange | Application port, Infrastructure HTTP | Shared by web and the worker. Triggers stay thin. |

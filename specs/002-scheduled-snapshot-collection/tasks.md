@@ -15,9 +15,15 @@ description: "Task list for scheduled snapshot collection implementation"
 
 **Scheduling model (2026-11-24 spec and plan)**: This delivery **asks** for a queue fill once per UTC day at 05:00 UTC, plus catch-up when the worker is back after 05:00 with no occasion marker, and `unmetFill` 15 minutes after a terminal technical outcome. A fill may run at any UTC time; it is not limited to a 15-minute window and the occasion marker is not a once-per-day lock. **Queue processing** runs whenever the worker is up, with no time-of-day gate. **Fill rules** (30-day window at fill instant, admission, not queued or in progress, no `credentialUnusable`) differ from **run rules** at dequeue (attempt unless not allowed; do not re-check the 30-day window; `signInOrToken` when stored access cannot be used).
 
-**Artifact vs code**: Phases 1–11 are marked complete on the feature branch (pre-revision behaviour). Phase 12 is the **open** backlog to align code and tests with the 2026-11-24 spec, plan, data-model, and quickstart. It supersedes the earlier Phase 12 pass that enforced a 05:00–05:15 fill window, marker skip, sign-in-after-05:00 fill exclusion, and 30-day checks at dequeue.
+**Account scan status (2026-11-25 spec and plan)**: One stored record per hosted account in container `account-scan-status`. The page reads that record. `stalled` is reported only. A reported `stalled` account is not queued and is not in progress. Phases 13–22 are the open backlog. Do not treat `queuedOccasion`, `passExecuting`, or `run.status` as the implementation of FR-022.
 
-**Pre-implement analyze gate**: All FR and SC items map to at least one task. Unchecked Phase 12 rows are expected implementation work, not missing specification coverage.
+**Artifact vs code**: Phases 1–12 are marked complete on the feature branch. Phase 12 aligned the 2026-11-24 ask, catch-up, dequeue, and `unmetFill` rules. It supersedes the earlier Phase 12 pass that enforced a 05:00–05:15 fill window, marker skip, sign-in-after-05:00 fill exclusion, and 30-day checks at dequeue. Phases 13–22 align code and tests with FR-022, FR-023, and the 2026-11-25 plan, data-model, contracts, and quickstart.
+
+**Pre-implement analyze gate**: All FR and SC items map to at least one task. Unchecked rows in Phases 13–22 are expected implementation work, not missing specification coverage.
+
+**Tests for Phases 13–22**: xUnit v3, Microsoft.Testing.Platform, built-in asserts, NSubstitute only where a port double is required. Names follow `MethodUnderTest_Scenario_ExpectedOutcome`. Use `TimeProvider`. The exactly-5-minutes case and the more-than-5-minutes case are separate tests. Write tests in the same change as the behaviour. Do not unit-test the AppHost graph. No Playwright journey that waits for 05:00 UTC or collects against GitHub.
+
+**Aspire for Phases 13–22**: The hosted graph is already wired. Add one blob container on `operator-snapshot-storage` with `AddBlobContainer` and `WithReference`. Do not add a NuGet package. Do not edit `.aspire/modules/` (this AppHost has none). Do not pass endpoint URLs through `WithEnvironment`. Do not add `WaitFor` between `web` and the Functions project. Leave `src/SoloDevBoard.AppHost/LeanAppHostGraph.cs` unchanged.
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -50,15 +56,15 @@ description: "Task list for scheduled snapshot collection implementation"
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [X] T007 Extend snapshot JSON model with `trigger`, `queuedOccasion`, `passExecuting`, `passLeaseUntil`, and `attemptsUsed` per data-model.md (`SnapshotDocument.trigger`, `SnapshotDocument.queuedOccasion`, `SnapshotDocument.passExecuting`, `SnapshotDocument.passLeaseUntil`, `SnapshotDocument.attemptsUsed`) in `src/SoloDevBoard.Application/` snapshot types and serializers
-- [X] T008 Add `scheduledCollectionStopped` to run reason enum and parsing in `src/SoloDevBoard.Application/Services/Snapshots/` (data-model.md `run.reason`)
-- [X] T009 Update `src/SoloDevBoard.Infrastructure/Snapshots/BlobOperatorSnapshotStore.MaybeRewriteInterruptedAsync` so daily passes with `passExecuting` are not rewritten to `siteStopped` when the web process has no live task (research.md interruption table)
+- [X] T007 Extend snapshot JSON model with `trigger` and `attemptsUsed` per data-model.md `SnapshotDocument.trigger` and `SnapshotDocument.attemptsUsed` in `src/SoloDevBoard.Application/` snapshot types and serializers. Historical code also stored `queuedOccasion`, `passExecuting`, and `passLeaseUntil`. Those names are not fields to write for new behaviour (data-model.md). T133 and T143 replace them.
+- [X] T008 Add `scheduledCollectionStopped` to run reason enum and parsing in `src/SoloDevBoard.Application/Services/Snapshots/` (data-model.md `run.reason`). Superseded for new behaviour by T143: do not add `scheduledCollectionStopped`. Data-model.md forbids it.
+- [X] T009 Update `src/SoloDevBoard.Infrastructure/Snapshots/BlobOperatorSnapshotStore.MaybeRewriteInterruptedAsync` so daily passes with `passExecuting` are not rewritten to `siteStopped` when the web process has no live task (research.md interruption table). Superseded by T143: do not read `passExecuting` for new behaviour.
 - [X] T010 [P] Introduce hosted sign-in record model matching data-model.md (`HostedSignInRecord.schemaVersion`, `HostedSignInRecord.operatorLogin`, `HostedSignInRecord.completedAt`, `HostedSignInRecord.organisationLogins`, `HostedSignInRecord.refreshToken`, `HostedSignInRecord.refreshTokenExpiresAt`, `HostedSignInRecord.credentialUnusable`) in `src/SoloDevBoard.Application/Authentication/`
 - [X] T011 [P] Add `IHostedSignInRecordStore` port and blob adapter for container `hosted-sign-ins` in `src/SoloDevBoard.Infrastructure/Identity/` with etag conditional writes per contracts/hosted-sign-in-record.md
 - [X] T012 Extract shared GitHub refresh token exchange behind an Application port in `src/SoloDevBoard.Application/Authentication/` and move existing web gateway usage to `src/SoloDevBoard.Infrastructure/Identity/`
 - [X] T013 Write hosted sign-in blob on completed sign-in from `src/SoloDevBoard.Web/Authentication/` (set `schemaVersion`, `operatorLogin`, clear `credentialUnusable`, set `completedAt`, `organisationLogins`, `refreshToken`, and `refreshTokenExpiresAt` per data-model.md and contracts/hosted-sign-in-record.md write table); sign-out does not delete the blob
 - [X] T014 Register blob container client for `hosted-sign-ins` in `src/SoloDevBoard.Web/Program.cs` via Aspire reference (no queue or `collection-schedule` on web)
-- [X] T015 Extend `OperatorSnapshotStatusDto` with `Trigger`, `SchedulePosture`, `QueuedForOccasion`, `NextOccasionAtUtc`, and `NoScheduleReason` per data-model.md status facts table in `src/SoloDevBoard.Application/Services/Snapshots/`
+- [X] T015 Extend `OperatorSnapshotStatusDto` with `SchedulePosture`, `NextOccasionAtUtc`, and `NoScheduleReason` per the data-model.md status facts table in `src/SoloDevBoard.Application/Services/Snapshots/`. A historical queue-occasion flag on that DTO is not in the current status facts table. Do not treat it as a data-model field. Current facts, including data-model.md `OperatorSnapshotStatusDto.Trigger`, are T123.
 - [X] T016 Implement status fact computation (hosted vs lean, next occasion rules) in `src/SoloDevBoard.Application/Services/Snapshots/` using `TimeProvider` and admission options
 - [X] T017 Register new ports and hosted-only adapters in `src/SoloDevBoard.Composition/` without connection-string lookup
 - [X] T018 [P] Application tests for additive snapshot field defaults and reason parsing in `tests/SoloDevBoard.Application.Tests/`
@@ -84,10 +90,10 @@ description: "Task list for scheduled snapshot collection implementation"
 - [X] T021 [US1] Implement `IDailyOccasionService.TryFillDailyOccasion` with 05:00–05:15 UTC window, occasion marker create `IfNoneMatch *`, and enqueue each eligible login once in `src/SoloDevBoard.Application/Services/Snapshots/` (revised in Phase 12)
 - [X] T022 [US1] Implement occasion marker blob adapter (`collection-schedule/occasions/{yyyy-MM-dd}.json`) per data-model.md `OccasionMarker.occasionDate`, `OccasionMarker.filledAt`, `OccasionMarker.operators` in `src/SoloDevBoard.Infrastructure/Snapshots/`
 - [X] T023 [US1] Implement queue publisher for `daily-snapshot-collection` messages per data-model.md `QueueMessage.occasionDate`, `QueueMessage.operatorLogin`, `QueueMessage.kind` in `src/SoloDevBoard.Infrastructure/Snapshots/` (no tokens in body)
-- [X] T024 [US1] On fill, set snapshot `queuedOccasion` to today's UTC date per data-model.md `SnapshotDocument.queuedOccasion` without starting the pass
+- [X] T024 [US1] On fill, set snapshot `queuedOccasion` to today's UTC date per data-model.md `SnapshotDocument.queuedOccasion` without starting the pass. Superseded for new behaviour by T133: do not write `queuedOccasion`. Queued and in progress for new work are `AccountScanStatus.status` plus the reported-status table.
 - [X] T025 [US1] Implement daily collection pass orchestration reusing existing snapshot walk in `src/SoloDevBoard.Application/Services/Snapshots/` (`trigger` = `daily`, `attemptsUsed` starts at 1 per data-model.md)
 - [X] T026 [US1] Implement `runner` blob lease in `collection-schedule` so only one daily pass runs at a time across worker copies in `src/SoloDevBoard.Infrastructure/Snapshots/`
-- [X] T027 [US1] Queue consumer: start pass (`passExecuting`, `passLeaseUntil` renewal ~10s), complete message after pass, per contracts/daily-collection-schedule.md in `src/SoloDevBoard.Application/Services/Snapshots/`
+- [X] T027 [US1] Queue consumer: start pass (`passExecuting`, `passLeaseUntil` renewal ~10s), complete message after pass, per contracts/daily-collection-schedule.md in `src/SoloDevBoard.Application/Services/Snapshots/`. Superseded for new behaviour by T142 and T143: do not write `passExecuting` or `passLeaseUntil`.
 - [X] T028 [US1] Timer trigger NCRONTAB `0 0-15 5 * * *` calling fill only in `src/SoloDevBoard.Functions/` (revised to `0 0 5 * * *` in Phase 12)
 - [X] T029 [US1] Queue trigger with `batchSize` 1 wired to daily pass handler in `src/SoloDevBoard.Functions/`
 - [X] T030 [US1] Register `AddAzureQueueServiceClient("operator-snapshot-queues")` and snapshot/sign-in clients in `src/SoloDevBoard.Functions/Program.cs` then `AddSoloDevBoard`
@@ -106,12 +112,12 @@ description: "Task list for scheduled snapshot collection implementation"
 
 ### Tests for User Story 2
 
-- [X] T032 [P] [US2] Application tests that `StartAsync` refuses when `queuedOccasion` is set or daily `inProgress` in `tests/SoloDevBoard.Application.Tests/`
+- [X] T032 [P] [US2] Application tests that `StartAsync` refuses when `queuedOccasion` is set or daily `inProgress` in `tests/SoloDevBoard.Application.Tests/`. Superseded by T136: refuse only while callers are told `scheduled` or `running`. A retry wait is `scheduled`. `queuedOccasion` and `run.status` `inProgress` are not the hand-start gate.
 - [X] T071 [P] [US2] Application or bUnit tests that loading `/repositories` and live catalogue reload do not enqueue or start a collection (FR-010) in `tests/SoloDevBoard.Application.Tests/` or `tests/SoloDevBoard.Web.Tests/`
 
 ### Implementation for User Story 2
 
-- [X] T033 [US2] Enforce hand-start refusal in `src/SoloDevBoard.Application/Services/Snapshots/` when data-model.md queue flags apply (`queuedOccasion` or `run.status` `inProgress` including retry wait)
+- [X] T033 [US2] Enforce hand-start refusal in `src/SoloDevBoard.Application/Services/Snapshots/` when data-model.md queue flags apply (`queuedOccasion` or `run.status` `inProgress` including retry wait). Superseded by T136. T136 replaces this gate.
 - [X] T034 [US2] Disable **Collect snapshot** in `src/SoloDevBoard.Web/Components/Features/Repositories/` when status facts show queued or in-progress (contracts/repositories-schedule-copy.md actions table)
 - [X] T035 [US2] Ensure hand-started runs keep `trigger` `operator` and do not enqueue or use `runner` lease in Application snapshot start path
 
@@ -148,13 +154,13 @@ description: "Task list for scheduled snapshot collection implementation"
 ### Tests for User Story 4
 
 - [X] T040 [P] [US4] Application tests for single flight: two eligible operators, one pass at a time, second starts after first in `tests/SoloDevBoard.Application.Tests/`
-- [X] T041 [P] [US4] Application tests: fill does not add second entry when `queuedOccasion` or daily `inProgress` already set in `tests/SoloDevBoard.Application.Tests/`
+- [X] T041 [P] [US4] Application tests: fill does not add second entry when `queuedOccasion` or daily `inProgress` already set in `tests/SoloDevBoard.Application.Tests/`. Superseded for the duplicate gate by T131 and T133: already queued is told `scheduled`, and in progress is told `running`.
 
 ### Implementation for User Story 4
 
 - [X] T042 [US4] When `runner` lease is held by another copy, re-send same queue payload to tail and complete current message per research.md in queue handler
 - [X] T043 [US4] Prevent duplicate enqueue for same occasion and operator in fill and consumer paths
-- [X] T044 [US4] Expose current run trigger (`operator` vs `daily`) in status DTO and in-progress poll in `src/SoloDevBoard.Web/Components/Features/Repositories/`
+- [X] T044 [US4] Expose the current run trigger in the status DTO and in-progress poll in `src/SoloDevBoard.Web/Components/Features/Repositories/`, per data-model.md `OperatorSnapshotStatusDto.Trigger` (`operator`, `daily`, or none). Set it when a scan is `running` or has `finished`. None otherwise, including `never run`, `scheduled`, and `suspended`. T123 keeps this fact on the DTO. This is not data-model.md `SnapshotDocument.trigger`.
 - [X] T045 [US4] Keep ~1s in-progress poll showing recorded count and trigger without full reload per contracts/repositories-schedule-copy.md; bUnit or Web test that navigation away from `/repositories` during an in-progress daily run still works (FR-011)
 
 **Checkpoint**: Concurrency and UI concurrency rules satisfied
@@ -189,19 +195,19 @@ description: "Task list for scheduled snapshot collection implementation"
 
 ### Tests for User Story 6
 
-- [X] T050 [P] [US6] Store tests for `scheduledCollectionStopped` interruption branch in `tests/SoloDevBoard.Infrastructure.Tests/`
+- [X] T050 [P] [US6] Store tests for `scheduledCollectionStopped` interruption branch in `tests/SoloDevBoard.Infrastructure.Tests/`. Superseded by T141 and T143: do not write `scheduledCollectionStopped` or `interrupted` when the worker dies.
 - [X] T072 [P] [US6] Infrastructure tests: etag conditional writes on hosted sign-in and occasion marker blobs; fixtures assert no refresh token in snapshot JSON or queue message bodies in `tests/SoloDevBoard.Infrastructure.Tests/`
 - [X] T051 [P] [US6] Application tests: rate-limit retry to tail (max 4 attempts), sign-in failure no retry, queued-not-interrupted on worker stop in `tests/SoloDevBoard.Application.Tests/`
 
 ### Implementation for User Story 6
 
-- [X] T052 [US6] On rate limit or unexpected with `attemptsUsed` < 4, complete message, enqueue `kind` `retry`, clear `passExecuting`, keep `inProgress` per data-model.md transitions
-- [X] T053 [US6] On redelivery with `passExecuting` true, write `interrupted` with `scheduledCollectionStopped` and complete message (no requeue) per contracts/daily-collection-schedule.md
-- [X] T054 [US6] Web read path: when `passLeaseUntil` is past and `passExecuting`, write interruption same as worker redelivery in `src/SoloDevBoard.Infrastructure/Snapshots/BlobOperatorSnapshotStore.cs`
-- [X] T055 [US6] Show failed/interrupted runs with last success finish time and daily trigger copy in `src/SoloDevBoard.Web/Components/Features/Repositories/`
+- [X] T052 [US6] On rate limit or unexpected with `attemptsUsed` < 4, complete message, enqueue `kind` `retry`, clear `passExecuting`, keep `inProgress` per data-model.md transitions. Superseded by T142: a waiting further try is `scheduled`, not `running` and not `finished`.
+- [X] T053 [US6] On redelivery with `passExecuting` true, write `interrupted` with `scheduledCollectionStopped` and complete message (no requeue) per contracts/daily-collection-schedule.md. Superseded by T143: redelivery while `running` completes the message and leaves stored status `running`. Do not write `interrupted` or `scheduledCollectionStopped`.
+- [X] T054 [US6] Web read path: when `passLeaseUntil` is past and `passExecuting`, write interruption same as worker redelivery in `src/SoloDevBoard.Infrastructure/Snapshots/BlobOperatorSnapshotStore.cs`. Superseded by T143: that read path must not write the interruption.
+- [X] T055 [US6] Show failed/interrupted runs with last success finish time and daily trigger copy in `src/SoloDevBoard.Web/Components/Features/Repositories/`. Superseded by T147: show the reported status words. Do not show an interrupted run for a worker death.
 - [X] T056 [US6] Confirm no separate retry control is added anywhere under `src/SoloDevBoard.Web/`
 - [X] T084 Add `retainedRun` object to snapshot document types and JSON serialization in `src/SoloDevBoard.Application/Services/Snapshots/OperatorSnapshotDocument.cs` and Infrastructure serializers per data-model.md `SnapshotDocument.retainedRun`
-- [X] T087 [US6] On first daily pass start, set `SnapshotDocument.retainedRun` to prior terminal `run` and `trigger` when replacing a terminal run; clear `retainedRun` on success, terminal failure, or interruption in `DailySnapshotCollectionPassService` and coordinator paths
+- [X] T087 [US6] On first daily pass start, set `SnapshotDocument.retainedRun` to prior terminal `run` and `trigger` when replacing a terminal run; clear `retainedRun` on success or terminal failure in `DailySnapshotCollectionPassService` and coordinator paths. Do not clear it on worker death. That case is T143, which must not write `interrupted`.
 - [X] T088 [US6] When a further try is withdrawn by run rules, restore from `SnapshotDocument.retainedRun`, clear attempt fields and daily in-progress presentation in `src/SoloDevBoard.Application/Services/Snapshots/DailySnapshotCollectionPassService.cs`
 - [X] T089 Add `NotBefore` (ISO-8601 UTC) to `DailySnapshotQueueMessage` in `src/SoloDevBoard.Application/Services/Snapshots/` per data-model.md `QueueMessage.notBefore`
 - [X] T090 [US6] In `src/SoloDevBoard.Infrastructure/Snapshots/AzureDailySnapshotQueuePublisher.cs`, set initial visibility timeout to `notBefore - now` when positive (cap 7 days); serialize `notBefore` on `retry` messages
@@ -227,7 +233,7 @@ description: "Task list for scheduled snapshot collection implementation"
 ### Implementation for User Story 7
 
 - [X] T059 [US7] Enforce no marker and no fill after 05:15:00 UTC same day in `TryFillDailyOccasion` (removed in Phase 12)
-- [X] T060 [US7] Functions worker start repair: enqueue missing `initial` for logins still `queuedOccasion` in `src/SoloDevBoard.Application/Services/Snapshots/DailyOccasionService.cs` (extend startup fill in Phase 12)
+- [X] T060 [US7] Functions worker start repair: enqueue missing `initial` for logins still `queuedOccasion` in `src/SoloDevBoard.Application/Services/Snapshots/DailyOccasionService.cs` (extend startup fill in Phase 12). The `queuedOccasion` clause is superseded by T153.
 - [X] T061 [US7] Apply `HostedAdmissionControl` lists at fill without GitHub membership call in `src/SoloDevBoard.Application/Services/Snapshots/HostedCollectionEligibilityEvaluator.cs`
 - [X] T062 [US7] Exclude operators outside 30-day window at fill (`HostedSignInRecord.completedAt` exactly 30 days inside per data-model.md) at fill instant in `HostedCollectionEligibilityEvaluator.cs`
 
@@ -251,26 +257,26 @@ description: "Task list for scheduled snapshot collection implementation"
 
 ## Phase 11: Prior convergence (delivered; partly superseded)
 
-- [X] T074 [US4] Extend `HostedCollectionEligibilityEvaluator.IsEligibleAtFill` to refuse fill for **this operator** when **their** collection is `inProgress` or when **their** `queuedOccasion` is set; other operators may still be queued on the same fill (FR-008, per-operator gate)
-- [X] T075 Wire `DailySnapshotQueueInvocation.UpdateVisibilityAsync` in `src/SoloDevBoard.Functions/DailyCollectionFunctions.cs` to renew Azure queue visibility while `passExecuting`
+- [X] T074 [US4] Extend `HostedCollectionEligibilityEvaluator.IsEligibleAtFill` to refuse fill for **this operator** when **their** collection is `inProgress` or when **their** `queuedOccasion` is set; other operators may still be queued on the same fill (FR-008, per-operator gate). Superseded by T145: already queued is told `scheduled`, and in progress is told `running`. Do not read `queuedOccasion`.
+- [X] T075 Wire `DailySnapshotQueueInvocation.UpdateVisibilityAsync` in `src/SoloDevBoard.Functions/DailyCollectionFunctions.cs` to renew Azure queue visibility while `passExecuting`. Superseded by T154: renew visibility while stored status is `running` for that generation. Do not key the renewal on `passExecuting` or `passLeaseUntil`.
 - [X] T076 Exclude operators whose `HostedSignInRecord.completedAt` is after today's occasion start from that UTC day's fill and from naming today as `NextOccasionAtUtc` (reversed in Phase 12 via T101, T104, T117–T119)
-- [X] T077 Keep daily retry-wait `inProgress` with `passExecuting` false from being rewritten to `siteStopped` on web read (FR-020)
-- [X] T078 Present queue-waiting status when `queuedOccasion` is set and `passExecuting` is false (FR-006, US5)
+- [X] T077 Keep daily retry-wait `inProgress` with `passExecuting` false from being rewritten to `siteStopped` on web read (FR-020). Superseded by T143: a retry wait is `scheduled`, and the web read path must not rewrite it from `passExecuting`.
+- [X] T078 Present queue-waiting status when `queuedOccasion` is set and `passExecuting` is false (FR-006, US5). Superseded by T147: the page reads reported status. A waiting entry is `scheduled`. Do not read `queuedOccasion` or `passExecuting`.
 
 ---
 
-## Phase 12: Spec and plan revision 2026-11-24 (open delta)
+## Phase 12: Spec and plan revision 2026-11-24 (delivered)
 
-**Purpose**: Align implementation with [plan.md](plan.md) implementation notes, updated [spec.md](spec.md), [data-model.md](data-model.md), [quickstart.md](quickstart.md), and contracts. **Blocks** declaring the feature converged against the current spec.
+**Purpose**: Align implementation with the 2026-11-24 ask, catch-up, dequeue, and `unmetFill` rules. Delivered on this branch. FR-022 and FR-023 are Phases 13–22.
 
-**⚠️ CRITICAL**: Complete Phase 12 before merge-readiness review against the updated spec.
+**⚠️ CRITICAL**: Phase 12 is the baseline for the account scan status delta. Do not reopen its checked tasks unless a Phase 13–22 task names that replacement.
 
 ### Tests for Phase 12
 
 - [X] T097 [P] [US7] Replace fill-window tests in `tests/SoloDevBoard.Application.Tests/DailyOccasionServiceTests.cs`: no fill before 05:00 on worker start; fill at 05:00 when marker absent; catch-up at 05:10 when marker absent; later fill when marker present queues after success; no refusal after 05:15 per quickstart.md section 3
 - [X] T098 [P] [US7] Application tests: sign-in at 06:00 UTC queued by fill at 06:30; fill uses `TimeProvider` instant not capped 05:00 for `HostedSignInRecord.completedAt` window in `tests/SoloDevBoard.Application.Tests/HostedCollectionEligibilityEvaluatorTests.cs`
 - [X] T099 [P] [US1] Application tests: queued message still runs when `completedAt` is older than 30 days at dequeue; not-allowed still withdraws without failed collection in `tests/SoloDevBoard.Application.Tests/` per quickstart.md section 3
-- [X] T100 [P] [US6] Application tests: after fourth failed attempt or interruption, one `unmetFill` with 15-minute hide then fill includes idle eligible operators in `tests/SoloDevBoard.Application.Tests/`; no `unmetFill` on `signInOrToken`
+- [X] T100 [P] [US6] Application tests: after fourth failed attempt or interruption, one `unmetFill` with 15-minute hide then fill includes idle eligible operators in `tests/SoloDevBoard.Application.Tests/`; no `unmetFill` on `signInOrToken`. The interruption branch is superseded by T141 and T142. `unmetFill` follows only a finished `rateLimit` or `unexpected` with no tries left, never a lapse, redelivery, or `scheduledCollectionStopped`.
 - [X] T082 [P] [US6] Infrastructure tests: occasion marker replace under etag; `unmetFill` and `retry` visibility per data-model.md `QueueMessage.notBefore` in `tests/SoloDevBoard.Infrastructure.Tests/`
 - [X] T101 [P] [US5] Application tests: `NextOccasionAtUtc` and `NoScheduleReason` order (`notAllowed`, `credentialUnusable`, `outsideWindow`); following day at 05:00 after ask passed whether or not today's scan succeeded; queued keeps today after 05:00 in `tests/SoloDevBoard.Application.Tests/OperatorSnapshotScheduleFactsServiceTests.cs` (add file if missing)
 - [X] T110 [P] [US5] bUnit: schedule copy per contracts/repositories-schedule-copy.md after today's ask passed and when queued in `tests/SoloDevBoard.Web.Tests/`
@@ -285,9 +291,9 @@ description: "Task list for scheduled snapshot collection implementation"
 ### Timer, startup, and `unmetFill` (US7, US6)
 
 - [X] T107 [US7] Change timer NCRONTAB to `0 0 5 * * *` in `src/SoloDevBoard.Functions/DailyCollectionFunctions.cs`
-- [X] T108 [US7] On Functions host start in `src/SoloDevBoard.Functions/Program.cs` or a dedicated startup service: run `RepairMissingInitialMessagesAsync`, then call `TryFillDailyOccasionAsync` only when clock is at or after 05:00 UTC and today's occasion marker is absent; do not fill before 05:00; do not use timer `RunOnStartup` to fill overnight per research.md
+- [X] T108 [US7] On Functions host start in `src/SoloDevBoard.Functions/Program.cs` or a dedicated startup service: run `RepairMissingInitialMessagesAsync`, then call `TryFillDailyOccasionAsync` only when clock is at or after 05:00 UTC and today's occasion marker is absent; do not fill before 05:00; do not use timer `RunOnStartup` to fill overnight per research.md. Repair from `queuedOccasion` is superseded by T153. The fill-when-marker-absent rule stays.
 - [X] T109 [US6] Extend `DailySnapshotQueueMessage` and publisher for `kind` `unmetFill` with required `QueueMessage.notBefore` (15 minutes) per data-model.md in `src/SoloDevBoard.Application/Services/Snapshots/` and `src/SoloDevBoard.Infrastructure/Snapshots/AzureDailySnapshotQueuePublisher.cs`
-- [X] T111 [US6] Enqueue `unmetFill` after terminal `rateLimit`/`unexpected` with no tries left and after `scheduledCollectionStopped` interruption in `src/SoloDevBoard.Application/Services/Snapshots/DailySnapshotCollectionPassService.cs`; never on `signInOrToken`
+- [X] T111 [US6] Enqueue `unmetFill` after terminal `rateLimit`/`unexpected` with no tries left and after `scheduledCollectionStopped` interruption in `src/SoloDevBoard.Application/Services/Snapshots/DailySnapshotCollectionPassService.cs`; never on `signInOrToken`. Superseded in part by T142: enqueue `unmetFill` only after a finished `rateLimit` or `unexpected` with no tries left. Do not enqueue it after `scheduledCollectionStopped`, a liveness lapse, or redelivery.
 - [X] T113 [US7] Handle `unmetFill` in `DailySnapshotCollectionPassService.HandleQueueMessageAsync` or thin branch in `DailyCollectionFunctions.cs`: complete message and call `IDailyOccasionService.TryFillDailyOccasionAsync` without walking GitHub per contracts/daily-collection-schedule.md
 
 ### Dequeue run rules (US1)
@@ -306,7 +312,190 @@ description: "Task list for scheduled snapshot collection implementation"
 
 - [X] T112 Re-run quickstart.md section 6 commands after Phase 12 in `specs/002-scheduled-snapshot-collection/quickstart.md`
 
-**Checkpoint**: Code matches FR-001, FR-006, FR-012, FR-015, FR-016, FR-017, FR-020, FR-021, and worker outcome rows in contracts/daily-collection-schedule.md and quickstart.md sections 3–6
+**Checkpoint**: 2026-11-24 ask and dequeue rules are on the branch. FR-022 and FR-023 are not done until Phases 13–22 complete.
+
+---
+
+## Phase 13: Foundational account scan status (Blocking)
+
+**Purpose**: Container, model, blob adapter, and reported-status reader that every 2026-11-25 story uses.
+
+**⚠️ CRITICAL**: No Phase 14+ work until this phase is complete.
+
+- [ ] T120 Amend `adr/adr-0049-scheduled-collection-functions.md` in the same change as the graph edit (addendum or status history; do not add a new ADR file): name container `account-scan-status`, the `web` reference, and timer `0 0 5 * * *`. In `src/SoloDevBoard.AppHost/HostedSignInAppHostGraph.cs`, add `storage.AddBlobContainer("account-scan-status", "account-scan-status")` in both `ConfigureLocalRun` and `ConfigurePublishInfrastructure`, then `WithReference` from `web` and from the Functions project. Do not add `WaitFor` between `web` and the worker. Do not pass an endpoint URL through `WithEnvironment`. `web` still does not reference `operator-snapshot-queues` or `collection-schedule`. Do not edit `src/SoloDevBoard.AppHost/LeanAppHostGraph.cs` or `.aspire/modules/`. Do not add a NuGet package. Do not unit-test the AppHost graph. Re-assert `web` `MinReplicas` 0 and `MaxReplicas` 1 in `src/SoloDevBoard.AppHost/SoloDevBoardAppHost.cs`.
+- [ ] T121 [P] Add `AspireHostedStorageReferenceNames.AccountScanStatus` (`account-scan-status`) in `src/SoloDevBoard.Composition/AspireHostedStorageReferenceNames.cs`.
+- [ ] T122 [P] Add the account scan status model and JSON serializer in `src/SoloDevBoard.Application/Services/Snapshots/` for data-model.md `AccountScanStatus.schemaVersion` (1), `AccountScanStatus.operatorLogin`, `AccountScanStatus.status` (`neverRun`, `scheduled`, `running`, `finished`, `suspended`; `stalled` is not stored), `AccountScanStatus.lastScanAt`, `AccountScanStatus.lastResult` (`success`, `failure`, or null), `AccountScanStatus.resultComment`, `AccountScanStatus.suspensionReason` (`notAllowed` or null), `AccountScanStatus.livenessAt`, `AccountScanStatus.runningSince`, `AccountScanStatus.scanGeneration` (starts at 0), `AccountScanStatus.queueMessagePending`, and `AccountScanStatus.queueVisibleAfter`. The blob must not contain a refresh token.
+- [ ] T123 [P] Extend `src/SoloDevBoard.Application/Services/Snapshots/OperatorSnapshotStatusDto.cs` with data-model.md `OperatorSnapshotStatusDto.AccountScanStatus`, `OperatorSnapshotStatusDto.ReportedScanStatus`, `OperatorSnapshotStatusDto.LastScanAt`, `OperatorSnapshotStatusDto.LastScanResult`, `OperatorSnapshotStatusDto.ResultComment`, `OperatorSnapshotStatusDto.SuspensionReason` (`notAllowed` or none; from data-model.md `AccountScanStatus.suspensionReason`), and data-model.md `OperatorSnapshotStatusDto.Trigger` (`operator`, `daily`, or none; set when a scan is `running` or has `finished`; none otherwise). Application returns facts, not sentences. Lean posture leaves the account scan facts empty.
+- [ ] T124 Add `IAccountScanStatusStore` and an etag blob adapter for container `account-scan-status` in `src/SoloDevBoard.Infrastructure/Snapshots/` per `specs/002-scheduled-snapshot-collection/contracts/account-scan-status.md` (depends on T122).
+- [ ] T125 Register `AddKeyedAzureBlobContainerClient(AspireHostedStorageReferenceNames.AccountScanStatus)` in `src/SoloDevBoard.Web/Program.cs` and `src/SoloDevBoard.Functions/Program.cs` before `AddSoloDevBoard`, and register the store from that keyed client in `src/SoloDevBoard.Composition/ScheduledCollectionHostExtensions.cs` for both hosts. No connection-string lookup (depends on T121, T124).
+- [ ] T126 Implement the reported-status reader in `src/SoloDevBoard.Application/Services/Snapshots/AccountScanStatusReporter.cs` using `TimeProvider.GetUtcNow()` per the data-model.md reported status table. Exactly 5 minutes is `running`. Strictly more than 5 minutes is `stalled`. When `AccountScanStatus.livenessAt` is null, use `AccountScanStatus.runningSince`. Do not persist `stalled`. When a hosted sign-in record exists and the status blob is absent, report `never run` and do not write the blob (spec.md FR-022) (depends on T122, T123).
+
+**Checkpoint**: Hosted hosts can read and write the status blob. Callers can be told `stalled` without a stored `stalled` value.
+
+---
+
+## Phase 14: User Story 8 - Read the real scan status at any time (Priority: P1)
+
+**Goal**: The stored record is created when hosted access is stored, the page can show `never run`, and a hosted scan that is still working refreshes `AccountScanStatus.livenessAt` at least every 60 seconds for the generation captured when that scan began.
+
+**Independent Test**: Per spec.md US8 for the record itself: a new hosted account is `never run` with empty last-run time, result, and comment before any queue entry; a later sign-in does not reset a blob that already exists and does not enqueue a scan; a mark exactly 5 minutes old is told `running` and a mark strictly older than 5 minutes is told `stalled` while stored status stays `running` (separate tests); a hosted scan that is still working writes another mark before 60 seconds of fake time elapse. Queue, hand-start, and crash outcomes in that same spec test are completed in Phases 15, 16, and 18.
+
+### Tests for User Story 8
+
+- [ ] T127 [P] [US8] Add separate tests `AccountScanStatusReporter_MarkAgeExactlyFiveMinutes_ReportsRunning` and `AccountScanStatusReporter_MarkAgeMoreThanFiveMinutes_ReportsStalled`, plus `AccountScanStatusReporter_MissingMarkUsesRunningSinceOlderThanFiveMinutes_ReportsStalled` and `AccountScanStatusReporter_SignInRecordWithoutStatusBlob_ReportsNeverRunAndDoesNotWrite`, in `tests/SoloDevBoard.Application.Tests/AccountScanStatusReporterTests.cs`. Assert the stored status remains `running` and `stalled` is not written. The missing-blob test asserts callers are told `never run` and the store is not written.
+- [ ] T128 [P] [US8] Add `AccountScanStatusTransitionService_SignInWhenBlobAbsent_InsertsNeverRun`, `AccountScanStatusTransitionService_SignInWhenBlobPresent_LeavesBlobUnchanged`, and `AccountScanStatusTransitionService_StillWorkingPastSixtySeconds_WritesAnotherLivenessMark` in `tests/SoloDevBoard.Application.Tests/AccountScanStatusTransitionServiceTests.cs`. The absent case matches the `neverRun` example in `specs/002-scheduled-snapshot-collection/contracts/account-scan-status.md`. The cadence test uses `TimeProvider` and asserts another `AccountScanStatus.livenessAt` before 60 seconds elapse, without incrementing `AccountScanStatus.scanGeneration`.
+
+### Implementation for User Story 8
+
+- [ ] T129 [US8] Add `AccountScanStatusTransitionService` in `src/SoloDevBoard.Application/Services/Snapshots/AccountScanStatusTransitionService.cs`. On completed hosted sign-in, insert `AccountScanStatus.status` `neverRun` with empty `AccountScanStatus.lastScanAt`, `AccountScanStatus.lastResult`, and `AccountScanStatus.resultComment`, `AccountScanStatus.suspensionReason` null, `AccountScanStatus.scanGeneration` 0, and `AccountScanStatus.queueMessagePending` false when the blob is absent. Do not change an existing blob. Do not call fill. Call that Application port from the completed hosted sign-in path in `src/SoloDevBoard.Web/Authentication/`. `src/SoloDevBoard.Web/Program.cs` only registers the keyed blob client (depends on T124, T125).
+- [ ] T130 [US8] Add liveness writes on that transition service: while the scan is still working, set `AccountScanStatus.livenessAt` at least once every 60 seconds without incrementing `AccountScanStatus.scanGeneration`. Ignore the write when the stored generation is newer. Clear `AccountScanStatus.livenessAt` and `AccountScanStatus.runningSince` when status is not `running`. Wire the cadence into the hosted pass in `src/SoloDevBoard.Application/Services/Snapshots/DailySnapshotCollectionPassService.cs` and the hand-started hosted scan in `src/SoloDevBoard.Application/Services/Snapshots/OperatorSnapshotCollectionService.cs` (depends on T129).
+
+**Checkpoint**: A hosted account can be read as `never run`, and a live scan can refresh its own liveness mark.
+
+---
+
+## Phase 15: User Story 1 - Collect overnight without the operator waiting (Priority: P1)
+
+**Goal**: Fill restores an orphan `scheduled` row, then queues eligible people by setting `scheduled` and enqueueing. Dequeue records `running`, success, not-allowed, or unusable stored access on that same blob. New behaviour does not write `SnapshotDocument.queuedOccasion`, `SnapshotDocument.passExecuting`, or `SnapshotDocument.passLeaseUntil`.
+
+**Independent Test**: Per spec.md US1, using the status blob: two eligible signed-out people are `scheduled` at fill and each run finishes as `finished` with result success when the queue is processed; a person who is not allowed is not queued; a reported `stalled` account can be queued; a person told `running` is not queued again.
+
+### Tests for User Story 1
+
+- [ ] T131 [P] [US1] Extend `tests/SoloDevBoard.Application.Tests/DailyOccasionServiceTests.cs` with `DailyOccasionService_OrphanScheduledWithNullLastResult_RestoresNeverRunBeforeEligibility`, `DailyOccasionService_OrphanScheduledWithLastResult_RestoresFinishedWithoutFailureComment`, `DailyOccasionService_ReportedStalledAndEligible_QueuesAndSetsScheduled`, `DailyOccasionService_ToldRunning_DoesNotQueue`, and `DailyOccasionService_LostEtag_DoesNotEnqueueOrChangeSnapshot`, and `DailyOccasionService_SignInRecordWithoutStatusBlob_InsertsNeverRunBeforeEligibility`.
+- [ ] T132 [P] [US1] Extend `tests/SoloDevBoard.Application.Tests/DailySnapshotCollectionPassServiceTests.cs` with `DailySnapshotCollectionPassService_DequeueAllowed_SetsRunningAndLivenessMark`, `DailySnapshotCollectionPassService_NotAllowed_SetsSuspendedWithoutRunningAndClearsQueueMessagePending`, and `DailySnapshotCollectionPassService_StoredAccessUnusable_SetsSuspendedFailureAndCredentialUnusable`.
+
+### Implementation for User Story 1
+
+- [ ] T152 [US1] In `src/SoloDevBoard.Application/Services/Snapshots/DailyOccasionService.cs`, before eligibility, if a hosted sign-in record has no `account-scan-status` blob, insert the `neverRun` shape from `specs/002-scheduled-snapshot-collection/contracts/account-scan-status.md`: data-model.md `AccountScanStatus.status` `neverRun`, empty `AccountScanStatus.lastScanAt`, `AccountScanStatus.lastResult`, and `AccountScanStatus.resultComment`, `AccountScanStatus.suspensionReason` null, `AccountScanStatus.scanGeneration` 0, and `AccountScanStatus.queueMessagePending` false. Do not reset a blob that already exists. Do not enqueue because of that insert alone (depends on T129).
+- [ ] T133 [US1] In `src/SoloDevBoard.Application/Services/Snapshots/DailyOccasionService.cs`, before eligibility, restore each account whose `AccountScanStatus.status` is `scheduled` and whose `AccountScanStatus.queueMessagePending` is false: null `AccountScanStatus.lastResult` becomes `neverRun`; any set `AccountScanStatus.lastResult` becomes `finished`. Do not change `AccountScanStatus.lastScanAt`, `AccountScanStatus.lastResult`, or `AccountScanStatus.resultComment` on that restore, and do not add a failure comment. `scheduled` is already queued. Told `running` is in progress. A reported `stalled` account is neither. The winning write sets `scheduled`, clears `AccountScanStatus.suspensionReason`, sets `AccountScanStatus.queueVisibleAfter` null for that `initial`, increments `AccountScanStatus.scanGeneration`, then enqueues. Set `AccountScanStatus.queueMessagePending` true only after the queue accepts the message. If enqueue fails, leave that flag false. A lost etag does not enqueue and does not change the snapshot. Do not write `SnapshotDocument.queuedOccasion` for this path. This replaces T024 (depends on T152).
+- [ ] T134 [US1] In `src/SoloDevBoard.Application/Services/Snapshots/DailySnapshotCollectionPassService.cs`, when the worker takes an entry for an account that is still allowed, set `AccountScanStatus.status` `running` and set `AccountScanStatus.livenessAt` and `AccountScanStatus.runningSince` to now in that same update. Do not set `running` on a not-allowed pickup. Not allowed, scan not started: one write to `suspended`, set data-model.md `AccountScanStatus.suspensionReason` to `notAllowed`, set `AccountScanStatus.queueMessagePending` false, and leave `AccountScanStatus.lastScanAt`, `AccountScanStatus.lastResult`, `AccountScanStatus.resultComment`, and the successful snapshot unchanged. Stored access cannot be used, token exchange failed before the catalogue walk: `suspended`, `AccountScanStatus.lastResult` `failure`, sign-in or token `AccountScanStatus.resultComment`, `AccountScanStatus.suspensionReason` null, set `AccountScanStatus.lastScanAt`, clear `AccountScanStatus.queueMessagePending`, and set data-model.md `HostedSignInRecord.credentialUnusable`, with no further try and no `unmetFill`. Taking the entry for an allowed account clears `AccountScanStatus.suspensionReason`. Success: `finished`, `AccountScanStatus.lastResult` `success`, `AccountScanStatus.resultComment` `Success`, set `AccountScanStatus.lastScanAt`, and clear the mark and `AccountScanStatus.queueMessagePending`. Do not re-check the 30-day window at dequeue (depends on T130, T133).
+
+**Checkpoint**: Eligible hosted accounts are queued and collected through the status blob. User Story 1 can be validated without the hand-start race.
+
+---
+
+## Phase 16: User Story 2 - Keep starting a collection by hand (Priority: P1)
+
+**Goal**: A hand-started hosted collection updates the same status blob. It does not use the queue. **Collect snapshot** stays available when callers are told `stalled`.
+
+**Independent Test**: Per spec.md US2, with status facts: hand start is refused while callers are told `scheduled` or `running`; hand start while told `stalled` sets `running` and writes a liveness mark; a hand-started success replaces the snapshot and does not get three further tries.
+
+### Tests for User Story 2
+
+- [ ] T135 [P] [US2] Extend `tests/SoloDevBoard.Application.Tests/OperatorSnapshotCollectionServiceTests.cs` with `OperatorSnapshotCollectionService_StartWhileScheduledOrRunning_DoesNotStart`, `OperatorSnapshotCollectionService_StartWhileStalled_SetsRunningAndLivenessMark`, and `OperatorSnapshotCollectionService_HandStartedScanPastSixtySeconds_WritesAnotherLivenessMark`.
+
+### Implementation for User Story 2
+
+- [ ] T136 [US2] In `src/SoloDevBoard.Application/Services/Snapshots/OperatorSnapshotCollectionService.cs`, a winning hand start sets `AccountScanStatus.status` `running`, clears `AccountScanStatus.suspensionReason`, increments `AccountScanStatus.scanGeneration`, writes a new liveness mark, and leaves `AccountScanStatus.queueMessagePending` false. This replaces T032 and T033. Finish sets `finished` or `suspended` on that same record. Refuse `StartAsync` while callers are told `scheduled` or `running`. Allow it while they are told `stalled`, `finished`, `suspended`, or `never run`, subject to permission to use the product. Do not enqueue. In `src/SoloDevBoard.Web/Components/Features/Repositories/Pages/Repositories.razor`, keep **Collect snapshot** disabled only while callers are told `scheduled` or `running` (depends on T129, T130).
+
+**Checkpoint**: Hand-started hosted collection and the daily pass share one status record.
+
+---
+
+## Phase 17: User Story 4 - Run one collection at a time (Priority: P1)
+
+**Goal**: When a fill and a hand start both meet a reported `stalled` account, one conditional write wins and one scan starts.
+
+**Independent Test**: Per spec.md US4 and quickstart.md section 4: two eligible people still run one at a time; a stalled race starts exactly one scan; the loser does not enqueue and does not change the snapshot.
+
+### Tests for User Story 4
+
+- [ ] T137 [P] [US4] Add `OperatorSnapshotCollectionService_HandStartAndFillRaceOnStalled_ExactlyOneScanStarts` in `tests/SoloDevBoard.Application.Tests/OperatorSnapshotCollectionServiceTests.cs`, using the fill path from `src/SoloDevBoard.Application/Services/Snapshots/DailyOccasionService.cs`.
+
+### Implementation for User Story 4
+
+- [ ] T138 [US4] In `src/SoloDevBoard.Application/Services/Snapshots/AccountScanStatusTransitionService.cs`, make the first etag that sets `scheduled` or a new `running` the only winner. Every other attempt must not start a second scan, must not add a second queue entry, and must not change the stored status, the liveness mark, or the snapshot. After a newer `AccountScanStatus.scanGeneration` has won, the earlier pass must not change the status, the mark, or the snapshot. Until that newer scan wins, the earlier pass may still record its real success or failure (depends on T133, T136).
+
+**Checkpoint**: One new scan wins when a fill and a hand start race on a stalled account.
+
+---
+
+## Phase 18: User Story 3 - Leave the operator's own machine unscheduled (Priority: P1)
+
+**Goal**: Lean posture still has no schedule, no status blob, and no worker status words.
+
+**Independent Test**: Per spec.md US3 and quickstart.md section 1: no fill at 05:00 UTC, the two lean sentences, no `scheduled`, `running`, `stalled`, or `suspended` from a worker, and **Collect snapshot** still works.
+
+### Tests for User Story 3
+
+- [ ] T139 [US3] Extend lean cases in `tests/SoloDevBoard.Application.Tests/OperatorSnapshotScheduleFactsServiceTests.cs` and `tests/SoloDevBoard.Web.Tests/RepositoriesTests.cs` so a lean posture writes no account scan status, does not fill at 05:00 UTC, and does not show worker status words.
+
+### Implementation for User Story 3
+
+- [ ] T140 [US3] Keep status blob writes and the reporter off the lean posture in `src/SoloDevBoard.Composition/` and `src/SoloDevBoard.Application/Services/Snapshots/OperatorSnapshotScheduleFactsService.cs`. Lean facts stay data-model.md `OperatorSnapshotStatusDto.SchedulePosture` `lean` and `OperatorSnapshotStatusDto.NoScheduleReason` `lean`, with no account scan status and no `OperatorSnapshotStatusDto.NextOccasionAtUtc` (depends on T125, T126).
+
+**Checkpoint**: Lean local behaviour is unchanged apart from the absence of the new status record.
+
+---
+
+## Phase 19: User Story 6 - Keep the last success when the overnight run does not finish cleanly (Priority: P2)
+
+**Goal**: Further tries wait as `scheduled`. A liveness lapse or a dead worker does not write `finished`, does not enqueue `unmetFill`, and does not write `scheduledCollectionStopped` or `siteStopped`. Exhausted rate-limit or unexpected error still finishes, then asks again with `unmetFill`.
+
+**Independent Test**: Per spec.md US6 and quickstart.md section 4: a waiting retry is `scheduled`; rate-limit and unexpected waits stay 2 minutes (or the GitHub delay) and 3, 6, and 12 minutes; worker death while `running` completes the message and leaves stored status `running`; after more than 5 minutes callers are told `stalled`; `web` stopping does not rewrite that blob to `siteStopped`.
+
+### Tests for User Story 6
+
+- [ ] T141 [US6] Extend `tests/SoloDevBoard.Application.Tests/DailySnapshotCollectionPassServiceTests.cs` with `DailySnapshotCollectionPassService_RetryWaiting_SetsScheduledNotRunning`, `DailySnapshotCollectionPassService_AttemptsExhausted_SetsFinishedThenUnmetFill`, `DailySnapshotCollectionPassService_WorkerRedeliveryWhileRunning_CompletesMessageAndLeavesRunning`, `DailySnapshotCollectionPassService_LivenessLapse_DoesNotEnqueueUnmetFill`, `DailySnapshotCollectionPassService_EarlierGenerationAfterNewerScan_DoesNotOverwriteStatusMarkOrSnapshot`, and `DailySnapshotCollectionPassService_WebStopDuringRunningPass_DoesNotWriteSiteStopped`.
+
+### Implementation for User Story 6
+
+- [ ] T142 [US6] In `src/SoloDevBoard.Application/Services/Snapshots/DailySnapshotCollectionPassService.cs`, a further try sets `AccountScanStatus.status` `scheduled`, sets `AccountScanStatus.queueMessagePending` true, and sets `AccountScanStatus.queueVisibleAfter` from data-model.md `QueueMessage.notBefore`. Leave `AccountScanStatus.lastResult` unchanged until the try sequence ends. Restore the previous terminal snapshot run from data-model.md `SnapshotDocument.retainedRun` so the wait is not shown as a failure, and keep `SnapshotDocument.attemptsUsed` until the try sequence ends or the try is removed because they are not allowed. Do not present that wait as `running` or `finished`. When no tries remain, set `finished`, `AccountScanStatus.lastResult` `failure`, the failure `AccountScanStatus.resultComment`, and `AccountScanStatus.lastScanAt`, clear `AccountScanStatus.queueMessagePending`, then enqueue one `unmetFill` hidden for 15 minutes. Do not enqueue `unmetFill` because a liveness mark lapsed. This replaces T052 and the Phase 8 path that wrote `scheduledCollectionStopped` on redelivery. `unmetFill` follows only that finished technical failure (depends on T134).
+- [ ] T154 [US6] While a hosted pass is stored as `running` for the `AccountScanStatus.scanGeneration` that started it, renew Azure queue visibility about every 10 seconds (visibility about 30 seconds) from `src/SoloDevBoard.Functions/DailyCollectionFunctions.cs` so a live pass is not redelivered. Do not key that renewal on `passExecuting` or `passLeaseUntil`. Stop renewing when the pass records `finished` or `suspended`, or when a newer generation has won. This replaces T075 (depends on T134).
+- [ ] T143 [US6] On redelivery after the worker died while status is `running`: complete the message, leave `AccountScanStatus.status` `running`, and do not write `finished`, `interrupted`, `scheduledCollectionStopped`, or `siteStopped`, and do not clear data-model.md `SnapshotDocument.retainedRun`. Clear `AccountScanStatus.queueMessagePending` for that same generation only. Do not change `AccountScanStatus.status`, `AccountScanStatus.lastResult`, or the snapshot in that clear. A stop while status is only `scheduled` leaves it `scheduled`. In `src/SoloDevBoard.Infrastructure/Snapshots/BlobOperatorSnapshotStore.cs`, a hosted pass must not be rewritten to `siteStopped` because `web` has no live task. Do not write `SnapshotDocument.passExecuting` or `SnapshotDocument.passLeaseUntil` for this behaviour (depends on T142).
+
+**Checkpoint**: Failure, retry, and worker death match FR-022 and FR-023. The earlier success stays in place.
+
+---
+
+## Phase 20: User Story 7 - Run the fill whenever it is asked, and follow recent sign-ins (Priority: P2)
+
+**Goal**: Sign-in does not start a scan. A later fill includes a reported `stalled` account and a person whose scan already succeeded, using the same eligibility rules at any UTC time.
+
+**Independent Test**: Per spec.md US7: completing sign-in does not enqueue; a fill after success queues an idle eligible person again; a reported `stalled` account is queued when the other rules allow; `HostedSignInRecord.credentialUnusable` is not queued until the next completed sign-in.
+
+### Tests for User Story 7
+
+- [ ] T144 [P] [US7] Extend `tests/SoloDevBoard.Application.Tests/DailyOccasionServiceTests.cs` and `tests/SoloDevBoard.Application.Tests/HostedCollectionEligibilityEvaluatorTests.cs` so a completed sign-in does not enqueue, a second fill after success queues an idle eligible person, a reported `stalled` account is eligible, `HostedSignInRecord.credentialUnusable` is not queued, and `DailyOccasionService_HostStartRepair_ReenqueuesMissingInitialOnlyWhenDue` covers T153.
+
+### Implementation for User Story 7
+
+- [ ] T145 [US7] In `src/SoloDevBoard.Application/Services/Snapshots/HostedCollectionEligibilityEvaluator.cs`, treat told `scheduled` as already queued and told `running` as in progress. Treat a reported `stalled` account as neither. Keep the 30-day comparison on `HostedSignInRecord.completedAt` at the fill instant only. Do not call fill from the sign-in path in `src/SoloDevBoard.Web/Authentication/` (depends on T126, T133).
+- [ ] T153 [US7] Replace the `queuedOccasion` repair from T060 and T108. On Functions host start, re-enqueue a missing `initial` only when data-model.md `AccountScanStatus.status` is `scheduled`, `AccountScanStatus.queueMessagePending` is true, `AccountScanStatus.queueVisibleAfter` is null or already passed, and a peek finds no visible message for that login. Do not re-enqueue when `AccountScanStatus.queueVisibleAfter` is still ahead. Do not add a second message for someone already queued or told `running`. Do not read `queuedOccasion` (depends on T133).
+
+**Checkpoint**: Later fills follow the status record and recent sign-ins without starting a scan at sign-in.
+
+---
+
+## Phase 21: User Story 5 - See when the next scheduled queue fill is (Priority: P2)
+
+**Goal**: `/repositories` shows the reported status word and one schedule sentence from the status facts. It does not infer the scan from the clock, from a missing visit, or from whether the worker seems absent.
+
+**Independent Test**: Per spec.md US5 and quickstart.md section 5, including `never run`, `scheduled`, `running`, retry waiting, `stalled`, `suspended`, and the refusal order `notAllowed`, then `credentialUnusable`, then `outsideWindow`.
+
+### Tests for User Story 5
+
+- [ ] T146 [US5] Extend `tests/SoloDevBoard.Web.Tests/RepositoriesTests.cs` for the rows in `specs/002-scheduled-snapshot-collection/contracts/repositories-schedule-copy.md`: `Repositories_HostedNeverRun_ShowsNeverRunWithoutLastRunFacts`, `Repositories_HostedScheduled_ShowsScheduledNotRunning`, `Repositories_HostedRunning_ShowsWhoStartedTheRun`, `Repositories_HostedStalled_ShowsStalledAndCollectSnapshot`, and `Repositories_HostedNotAllowed_UsesNotAllowedSentenceOnly`. Keep `Repositories_InitialRender_DoesNotStartCollection`. Also cover a waiting retry as `scheduled` with no try list, and data-model.md `OperatorSnapshotStatusDto.NoScheduleReason` order `notAllowed`, then `credentialUnusable`, then `outsideWindow`, including data-model.md `OperatorSnapshotStatusDto.NextOccasionAtUtc` after today's ask has passed.
+
+### Implementation for User Story 5
+
+- [ ] T147 [US5] Read `OperatorSnapshotStatusDto.ReportedScanStatus` in `src/SoloDevBoard.Web/Components/Features/Repositories/OperatorSnapshotStatusCopy.cs` and `src/SoloDevBoard.Web/Components/Features/Repositories/Pages/Repositories.razor`. Use the status words and the single schedule sentence in `specs/002-scheduled-snapshot-collection/contracts/repositories-schedule-copy.md`, including data-model.md `OperatorSnapshotStatusDto.NextOccasionAtUtc`, `OperatorSnapshotStatusDto.NoScheduleReason`, and `OperatorSnapshotStatusDto.SuspensionReason`. Map `notAllowed` to the fixed comment. Do not read that comment from `OperatorSnapshotStatusDto.ResultComment`. Do not list tries, occasions, or the 3, 6, or 12 minute waits. Do not add a settings or retry control. UK English. No em dash (depends on T126, T136).
+- [ ] T148 [US5] Update `website/content/docs/repositories.md` and the locking row in `tests/SoloDevBoard.E2E.Tests/USER_DOCS_ALIGNMENT.md` in the same change as T146 and T147. Describe shipped status words and schedule sentences only. Do not add a Playwright test that waits for 05:00 UTC or collects against GitHub.
+
+**Checkpoint**: The Repositories page tells the truth from the stored record.
+
+---
+
+## Phase 22: Polish and cross-cutting validation
+
+**Purpose**: Store safety, operator docs that name the container, and the pull-request commands.
+
+- [ ] T149 [P] Add `BlobAccountScanStatusStore_LostEtag_DoesNotOverwrite` and `BlobAccountScanStatusStore_SerialisedBlob_ContainsNoRefreshToken` in `tests/SoloDevBoard.Infrastructure.Tests/`.
+- [ ] T150 [P] Name container `account-scan-status` beside the existing hosted containers in `docs/getting-started.md`, `docs/deployment.md`, and `src/SoloDevBoard.AppHost/README.md`. UK English. No em dash.
+- [ ] T151 Run the commands in `specs/002-scheduled-snapshot-collection/quickstart.md` section 6. Review `HostedSignInAppHostGraph` and `LeanAppHostGraph` against `specs/002-scheduled-snapshot-collection/research.md` section "Account scan status (2026-11-25)". Do not unit-test the AppHost graph.
+
+**Checkpoint**: FR-022 and FR-023 are covered by tests, and the hosted graph review matches research.md.
 
 ---
 
@@ -314,66 +503,89 @@ description: "Task list for scheduled snapshot collection implementation"
 
 ### Phase Dependencies
 
-- **Setup (Phase 1)**: No dependencies
-- **Foundational (Phase 2)**: Depends on Phase 1
-- **User Stories (Phases 3–9)**: Delivered on branch; behaviour corrected in Phase 12
-- **Polish (Phase 10)**: Delivered; re-validate after Phase 12 (T112)
-- **Prior convergence (Phase 11)**: Superseded in part by Phase 12 (T076, fill/dequeue split)
-- **Spec revision (Phase 12)**: Depends on Phases 1–11 baseline; **blocks** spec-complete validation
+- **Phases 1–12**: Delivered on this branch. Do not redo them.
+- **Phase 13 (account scan status foundation)**: Depends on that baseline. Blocks Phases 14–22.
+- **Phases 14–21**: Depend on Phase 13. Follow the order below where they share a file.
+- **Phase 22**: Depends on the stories you intend to ship. T151 is the last check.
 
-### User Story Dependencies (Phase 12)
+### User Story Dependencies (Phases 13–22)
 
-- **US1**: T103–T106 fill; T114–T115 dequeue; tests T099
-- **US5**: T116–T119 after T117 facts; tests T101, T110
-- **US6**: T109–T111 `unmetFill` after T089 message shape; test T100
-- **US7**: T103–T108 ask paths; tests T097–T098
+- **US8 (Phase 14)**: After T120–T126. Creates the transition service and the 60-second liveness write. Later stories call that service.
+- **US1 (Phase 15)**: After US8. Fill and dequeue write the status blob. T152 then T133 edit `DailyOccasionService.cs` in that order. T130, T134, T142, and T143 all edit `DailySnapshotCollectionPassService.cs` and must stay in that order.
+- **US2 (Phase 16)**: After US8. T136 edits `OperatorSnapshotCollectionService.cs` and `Repositories.razor`.
+- **US4 (Phase 17)**: After US1 and US2. T138 tightens the single winner on the transition service those stories call.
+- **US3 (Phase 18)**: After Phase 13. Can proceed in parallel with US1 once T125 and T126 are done, except T139 edits `RepositoriesTests.cs`, which T146 also edits, so finish T139 before T146.
+- **US6 (Phase 19)**: After US1 dequeue (T134). Replaces the old redelivery failure write.
+- **US7 (Phase 20)**: After T126 and T133. T144 edits `DailyOccasionServiceTests.cs` after T131. T153 replaces the host-start repair after T133.
+- **US5 (Phase 21)**: After T126 and T136 so the page can show reported status and the start control together.
 
-### Parallel Opportunities (Phase 12)
+### Parallel Opportunities (Phases 13–22)
 
-- **Order**: Complete fill and dequeue implementation (T103–T106, T114–T115) before T097–T099 dequeue/fill tests; complete T117 schedule facts before T101 and T110
-- T097–T098 may run in parallel once T103–T106 behaviour is stable; T099 needs T114–T115
-- T082 may run in parallel with T109 once queue message shape is fixed in T089
-- T107 timer and T105 marker store in parallel after T103 fill contract is clear
-- T118 copy after T117 schedule facts
+- T121, T122, and T123 can run together. T120 is the same change as the graph and stays on its own.
+- T124 waits for T122. T125 waits for T121 and T124. T126 waits for T122 and T123.
+- T127 and T128 can run together after T126 and T129 respectively. They are different test files.
+- T131 and T132 can run together. They are different test files.
+- T137 can be written with T135 in `OperatorSnapshotCollectionServiceTests.cs` only after T136, and not at the same time as each other.
+- T149 and T150 can run together. They do not share files.
+- Do not run T130, T134, T142, and T143 in parallel. They edit `DailySnapshotCollectionPassService.cs`.
 
 ---
 
-## Parallel Example: Phase 12
+## Parallel Example: Phase 13
 
 ```bash
-# Fill behaviour first:
-src/SoloDevBoard.Application/Services/Snapshots/DailyOccasionService.cs           # T103, T106
-src/SoloDevBoard.Application/Services/Snapshots/HostedCollectionEligibilityEvaluator.cs  # T104, T115
+# Different files, no shared edit:
+src/SoloDevBoard.Composition/AspireHostedStorageReferenceNames.cs          # T121
+src/SoloDevBoard.Application/Services/Snapshots/                             # T122 model
+src/SoloDevBoard.Application/Services/Snapshots/OperatorSnapshotStatusDto.cs # T123
 
-# Infrastructure marker replace:
-src/SoloDevBoard.Infrastructure/Snapshots/BlobCollectionOccasionMarkerStore.cs    # T105
+# Same change, after the model name is fixed:
+src/SoloDevBoard.AppHost/HostedSignInAppHostGraph.cs                         # T120
+adr/adr-0049-scheduled-collection-functions.md                               # T120
+```
 
-# Worker asks and later fill:
-src/SoloDevBoard.Functions/DailyCollectionFunctions.cs                            # T107
-src/SoloDevBoard.Functions/Program.cs                                             # T108
+---
+
+## Parallel Example: User Story 8
+
+```bash
+tests/SoloDevBoard.Application.Tests/AccountScanStatusReporterTests.cs       # T127
+tests/SoloDevBoard.Application.Tests/AccountScanStatusTransitionServiceTests.cs  # T128
+```
+
+---
+
+## Parallel Example: User Story 1
+
+```bash
+tests/SoloDevBoard.Application.Tests/DailyOccasionServiceTests.cs             # T131
+tests/SoloDevBoard.Application.Tests/DailySnapshotCollectionPassServiceTests.cs  # T132
 ```
 
 ---
 
 ## Implementation Strategy
 
-### MVP First (User Story 1 Only)
+### MVP First (account scan status)
 
-1. Complete Phases 1–2 (already on branch)
-2. Complete Phase 12 fill and dequeue tasks (T103–T106, T114–T115) with T097–T099
-3. Complete timer and startup (T107–T108)
-4. **STOP and VALIDATE**: quickstart section 3 Application tests
+1. Phases 1–12 are already on the branch.
+2. Complete Phase 13 (T120–T126) and Phase 14 (T127–T130).
+3. **STOP and VALIDATE**: `never run` on sign-in, the two liveness ages as separate tests, and a mark before 60 seconds.
+4. Complete Phase 15 (T131, T132, T152, T133, T134) so a fill and a dequeue write the same record.
+5. **STOP and VALIDATE**: quickstart.md section 3 rows for orphan `scheduled`, reported `stalled`, and dequeue.
 
 ### Incremental Delivery
 
-1. **Delivered**: Phases 1–11 infrastructure and hosted schedule (pre-revision semantics)
-2. **Next**: Phase 12 entire backlog (T097–T119, T112)
-3. Re-run T112 and full PR checklist
+1. Add US2 and US4 (hand start and the single winner).
+2. Add US3 so lean still has no status blob.
+3. Add US6 (retry, crash, no `unmetFill` on a liveness lapse).
+4. Add US7 and US5 (eligibility wording and the Repositories alert).
+5. Run Phase 22, including T151.
 
 ### Suggested MVP scope
 
-- **Spec-complete MVP**: User Story 1 with Phase 12 fill, dequeue, timer, and catch-up (T103–T108, T114–T115, T097–T099)
-- **Full feature**: All Phase 12 tasks including `unmetFill`, schedule copy, and docs
+- **This revision's MVP**: Phase 13 and User Story 8 (T120–T130), then User Story 1 (T131, T132, T152, T133, T134). That is the stored record, the reported `stalled` rule, and an unattended fill that writes it.
+- **Full revision**: T120–T154, including hand start, the single winner, lean posture, retries, visibility renewal, page copy, host-start repair, and the guide.
 
 ---
 
@@ -382,6 +594,11 @@ src/SoloDevBoard.Functions/Program.cs                                           
 - [P] tasks = different files, no dependencies on incomplete siblings
 - [Story] label maps task to spec.md user scenarios for traceability
 - data-model.md field citations in task descriptions are normative for constrained fields
-- Do not unit-test AppHost graph (constitution); review graphs against research.md
+- Do not unit-test the AppHost graph (constitution); review graphs against research.md
 - UK English in operator-facing strings; no em dash
-- Tokens must not appear in snapshot JSON, queue messages, or logs
+- Tokens must not appear in the snapshot JSON, the status blob, queue messages, or logs
+- T130, T134, T142, and T143 edit `DailySnapshotCollectionPassService.cs` in that order
+- T154 renews queue visibility from `DailyCollectionFunctions.cs` after T134 and replaces T075
+- T152 then T133 edit `DailyOccasionService.cs`. T153 replaces the host-start repair from T060 and T108
+- T136 and T147 both edit `Repositories.razor`; finish T136 first
+- T139 and T146 both edit `RepositoriesTests.cs`; finish T139 first

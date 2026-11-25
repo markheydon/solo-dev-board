@@ -31,6 +31,7 @@
 
 ## Notes
 
+- Validation passed on 2026-11-25 (seventh iteration: stored account scan status is the only source for the current scan state; statuses are never run, scheduled, running, finished, and suspended; a worker crash after pickup records finished with a failure comment and does not leave the account running; daily fill eligibility is unchanged).
 - Validation passed on 2026-11-24 (sixth iteration: once a day at 05:00 UTC is the normal cadence, not a cap; a missed or technically failed scan may be queued and run again the same UTC day; duplicate entries while already queued or in progress remain forbidden).
 - Validation passed on 2026-11-24 (fifth iteration: queue fill at 05:00 UTC default separated from time-agnostic queue processing; FR-021 added).
 - Validation passed on 2026-11-23 (fourth iteration, after the next-occasion and admission revision).

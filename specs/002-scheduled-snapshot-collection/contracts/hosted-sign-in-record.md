@@ -26,7 +26,7 @@ Lean posture does not write this blob. Sign-out does not delete it.
 
 | Event | Writer | Effect |
 | --- | --- | --- |
-| Hosted sign-in completes | Web | Insert or replace `completedAt`, `organisationLogins`, refresh token fields. Set `credentialUnusable` false. |
+| Hosted sign-in completes | Web | Insert or replace `completedAt`, `organisationLogins`, refresh token fields. Set `credentialUnusable` false. If the account scan status blob is absent, create it as `neverRun` with an empty last scan. Do not reset a status blob that already exists. |
 | Sign-in does not complete | None | No write. Window and wait flag unchanged. |
 | Sign-out | None | Cookie cleared. Blob kept. |
 | Daily pass fails `signInOrToken` | Functions worker | Set `credentialUnusable` true. Do not change `completedAt`. |
@@ -37,4 +37,4 @@ Conditional replace uses the blob etag. A stale writer does not publish over a n
 
 ## Reads
 
-The worker lists this container at occasion fill. It reads one blob again when that person's queue message is about to run. It does not call GitHub to discover who signed in or which organisations they belong to. Admission uses `organisationLogins` on the blob and the allow lists in the worker's configuration. Fill uses the lists and the 30-day window at that fill instant, including a fill after 05:00 UTC and a fill after a successful scan. Running a queued entry uses the allow lists only. It does not re-check the 30-day window. When the person is not allowed, the entry is removed and `credentialUnusable` is not set. When stored access cannot be used, the run fails with `signInOrToken` and `credentialUnusable` is set. Neither case changes `completedAt`.
+The worker lists this container at occasion fill. It reads one blob again when that person's queue message is about to run. It does not call GitHub to discover who signed in or which organisations they belong to. Admission uses `organisationLogins` on the blob and the allow lists in the worker's configuration. Fill uses the lists and the 30-day window at that fill instant, including a fill after 05:00 UTC and a fill after a successful scan. Running a queued entry uses the allow lists only. It does not re-check the 30-day window. When the person is not allowed, the entry is removed, the account scan status becomes `suspended` with `suspensionReason` `notAllowed`, without changing the last scan time, result, or result comment, and `credentialUnusable` is not set. When stored access cannot be used, the token exchange fails before the catalogue walk. The account scan status becomes `suspended` with a failure result, the sign-in or token comment, and `suspensionReason` null, and `credentialUnusable` is set. Neither case changes `completedAt`. The scan status itself is [account-scan-status.md](account-scan-status.md), not this blob.
