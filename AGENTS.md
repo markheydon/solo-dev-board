@@ -128,6 +128,15 @@ Do **not** edit `.specify/` templates, integration manifests, or Spec Kit skill 
 - Modify CI/CD behaviour.
 - Commit secrets or API keys.
 
+## Signed commits
+
+Every commit in this repository must be signed. Unsigned commits are rejected.
+
+- Use ordinary `git commit` and leave signing enabled.
+- Do not pass `--no-gpg-sign`, `-c commit.gpgsign=false`, or any other option that turns signing off.
+- Do not amend or rewrite history to remove a signature.
+- If signing fails because no key is available, stop and tell the user. Do not commit unsigned so the command can succeed.
+
 ## Pull Request Workflow
 
 Follow [`plan/PULL_REQUEST_POLICY.md`](plan/PULL_REQUEST_POLICY.md) and [`.github/pull_request_template.md`](.github/pull_request_template.md).

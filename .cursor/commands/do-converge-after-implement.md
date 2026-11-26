@@ -49,7 +49,7 @@ Repeat this cycle until converge reports **converged** (no new tasks appended) o
 
 When the outcome was `converged`, skip step 2 and finish.
 
-Invoking this command is explicit permission to **commit** implementation work on the feature branch when a loop produced code changes (messages should describe the convergence tasks addressed).
+Invoking this command is explicit permission to **commit** implementation work on the feature branch when a loop produced code changes (messages should describe the convergence tasks addressed). Every commit must be signed. Do not pass `--no-gpg-sign` or disable `commit.gpgsign`. If signing fails, stop and report it.
 
 Start the next loop only after steps 2–3 are done (or step 1 reported `converged`).
 

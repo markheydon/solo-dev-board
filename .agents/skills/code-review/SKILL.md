@@ -91,3 +91,4 @@ If no significant issues are found, say so explicitly. Mention residual risks or
 
 - Do not implement fixes, commit, or push unless the user explicitly asks.
 - If the user asks to fix findings, apply minimal correct diffs, match existing conventions, then run the AGENTS.md build/test commands before claiming the review is clear.
+- If you commit, every commit must be signed. Do not pass `--no-gpg-sign` or disable `commit.gpgsign`. If signing fails, stop and report it.

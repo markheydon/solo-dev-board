@@ -39,7 +39,7 @@ Read and follow [.cursor/skills/speckit-implement/SKILL.md](../skills/speckit-im
 ### Feature branch and clean starting point
 
 1. If the current branch is `main` (or the repository default branch), create and check out the feature branch named in `spec.md` (for example `001-feature-slug`).
-2. Commit or stash any outstanding work so implementation starts from a clean, feature-branch baseline. Invoking this command is explicit permission to **commit** preparatory changes on the feature branch when needed (messages should describe the prep work, not implementation yet).
+2. Commit or stash any outstanding work so implementation starts from a clean, feature-branch baseline. Invoking this command is explicit permission to **commit** preparatory changes on the feature branch when needed (messages should describe the prep work, not implementation yet). Every commit must be signed. Do not pass `--no-gpg-sign` or disable `commit.gpgsign`. If signing fails, stop and report it.
 
 ### Implementation execution
 
@@ -61,7 +61,7 @@ When implementation is complete per the skill’s completion criteria:
 - If no PR exists for this branch, open one using [plan/PULL_REQUEST_POLICY.md](../../plan/PULL_REQUEST_POLICY.md) and [`.github/PULL_REQUEST_TEMPLATE.md`](../../.github/PULL_REQUEST_TEMPLATE.md): title, labels, linked issue (from the feature issue or `spec.md` if present), and milestone when applicable.
 - If a PR already exists, commit and push remaining work to that branch so CI can run.
 
-Invoking this command is explicit permission to **commit and push** implementation work on the feature branch.
+Invoking this command is explicit permission to **commit and push** implementation work on the feature branch. Every commit must be signed. Do not pass `--no-gpg-sign` or disable `commit.gpgsign`. If signing fails, stop and report it.
 
 For merge readiness after implementation, the user may run [loop-code-review.md](./loop-code-review.md) separately; do not substitute that loop unless asked.
 

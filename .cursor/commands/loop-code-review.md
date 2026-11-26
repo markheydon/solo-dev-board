@@ -15,7 +15,7 @@ Repeat this cycle until the review is clear of actionable findings:
    ```
 
    Fix any failures before the next loop.
-4. **Commit** - When a loop produced code changes, create a commit with a message that reflects the review fixes (invoking this command counts as explicit permission to commit).
+4. **Commit** - When a loop produced code changes, create a commit with a message that reflects the review fixes (invoking this command counts as explicit permission to commit). Every commit must be signed. Do not pass `--no-gpg-sign` or disable `commit.gpgsign`. If signing fails, stop and report it.
 
 Start the next loop only after steps 2–4 are done (or step 1 returned no significant issues).
 
