@@ -1,0 +1,26 @@
+---
+description: Aspire AppHost conventions and skill routing
+globs: "src/SoloDevBoard.AppHost/**"
+alwaysApply: false
+---
+
+# Aspire AppHost
+
+Follow `CONVENTIONS.md`, the constitution (no unit tests of the AppHost application graph), and [`docs/getting-started.md`](../../docs/getting-started.md) for parameters and local orchestration. Do not vendor Aspire plugin skills into `.agents/skills/`; use the **aspire-skills/aspire** Cursor plugin.
+
+## Skills
+
+Start with the **`aspire`** router skill (`aspire-skills/aspire` plugin), then the narrowest sub-skill:
+
+| When | Skill |
+| --- | --- |
+| First-run or add Aspire to the repo | `aspire-init` |
+| Wire or repair AppHost projects | `aspireify` |
+| Start, stop, lifecycle locally | `aspire-orchestration` |
+| Logs, traces, dashboard | `aspire-monitoring` |
+| Publish and deploy | `aspire-deployment` |
+| Project v2 migration | `aspire-project-v2-migration` |
+| Terminals and automation | `aspire-terminals` |
+| Package or CLI evidence | `dotnet-inspect` (`.agents/skills/`) |
+
+Other production `src/**/*.cs` → [csharp.mdc](csharp.mdc). Tests → [testing.mdc](testing.mdc) (graph modelling is not unit-tested).

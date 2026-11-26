@@ -16,9 +16,10 @@ Solo Dev Board keeps **project-authored** agent skills in git under [`.agents/sk
 | `dotnet-inspect` companion | `.agents/skills/dotnet-inspect/` | Regenerate `SKILL.md` via `dnx dotnet-inspect` (below) |
 | `playwright-cli` companion | **Not used** | See [Playwright: E2E vs agent CLI](#playwright-e2e-vs-agent-cli) |
 | Project-authored skills | e.g. `mudblazor`, `code-review`, `implementation-guardrails` | Edit in-repo; never overwrite with upstream bundles |
+| `dotnet-test` repository overlay | [`.agents/skill-overlays/dotnet-test/run-tests.md`](../.agents/skill-overlays/dotnet-test/run-tests.md) | Keep aligned with [`.cursor/rules/testing.mdc`](../.cursor/rules/testing.mdc) and `scripts/test-unit.*` when commands change |
 | Spec Kit workflow skills | [`.cursor/skills/`](../.cursor/skills/) (`speckit-*`) | Managed by Spec Kit; independent of marketplace plugins |
 
-Cursor also loads skills from [`.cursor/rules/skills-location.mdc`](../.cursor/rules/skills-location.mdc). Built-in Cursor skills live in `~/.cursor/skills-cursor/`; never commit or edit those.
+Cursor also loads skills from [`.cursor/rules/skills-location.mdc`](../.cursor/rules/skills-location.mdc). Scoped rules ([`csharp.mdc`](../.cursor/rules/csharp.mdc), [`blazor.mdc`](../.cursor/rules/blazor.mdc), [`apphost.mdc`](../.cursor/rules/apphost.mdc), [`testing.mdc`](../.cursor/rules/testing.mdc)) should stay consistent with skill routing in [`AGENTS.md`](../AGENTS.md). Built-in Cursor skills live in `~/.cursor/skills-cursor/`; never commit or edit those.
 
 Plugin skills are cached under the Cursor plugins directory (for example `~/.cursor/plugins/cache/dotnet-agent-skills/` or `.../aspire-skills/aspire/` on a dev machine). Agents should use the loaded plugin skill content, not assume paths under `.agents/skills/` for plugin bundles. Precedence when skills overlap is in [`AGENTS.md`](../AGENTS.md).
 

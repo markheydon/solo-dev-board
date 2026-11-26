@@ -130,7 +130,7 @@ solo-dev-board/
 ├── .agents/
 │   └── skills/                  # Agent skills (code review, ADRs, MudBlazor, etc.)
 ├── .cursor/
-│   ├── rules/                   # Cursor rules (C#, testing, ADR, markdown)
+│   ├── rules/                   # Cursor rules (C#, Blazor, AppHost, testing, ADR, markdown, skills)
 │   └── commands/                # Cursor commands (code review loop, dependabot)
 └── AGENTS.md                    # Agent operating instructions
 ```

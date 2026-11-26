@@ -88,7 +88,7 @@ Repo-relevant plugin skills only; see upstream READMEs for the full skill lists.
 
 ## Task Routing
 
-- **Code** (`src/`, `tests/`): [`CONVENTIONS.md`](CONVENTIONS.md).
+- **Code** (`src/`, `tests/`): [`CONVENTIONS.md`](CONVENTIONS.md). Path-scoped skill triggers live in [`.cursor/rules/`](.cursor/rules/) (`csharp.mdc`, `blazor.mdc`, `apphost.mdc`, `testing.mdc`; overview in `skills-location.mdc`).
 - **New product work:** Spec Kit (`specs/<feature>/`) and the [constitution](.specify/memory/constitution.md). Product code still follows `CONVENTIONS.md` and `implementation-guardrails`. Do not mint Epic → Feature → Story trees from planning prompts ([`plan/SPEC_KIT_MIGRATION.md`](plan/SPEC_KIT_MIGRATION.md)).
 - **Shipped increments** (including `v1.4` chrome and branding): historical issues and [`plan/archive/`](plan/archive/README.md). Do not reopen those bundles or mint new children unless the user explicitly asks.
 - **Documentation** (`**/*.md` except `adr/`): `project-documentation` skill.

@@ -1,0 +1,24 @@
+---
+description: Blazor and MudBlazor UI conventions and skill routing
+globs: "src/**/*.razor*"
+alwaysApply: false
+---
+
+# Blazor UI
+
+Follow **Blazor and MudBlazor** in `CONVENTIONS.md` and `AGENTS.md`. Sole UI library: MudBlazor; business logic belongs in Application services, not Razor. Use code-behind (`.razor.cs`) for non-trivial logic. Use `ISnackbar` for transient feedback. Theme and chrome tokens live in `SoloDevBoardTheme` and related types (see `mudblazor` skill references), not ad hoc hex in Razor.
+
+## Skills
+
+Read the **`mudblazor`** project skill (`.agents/skills/mudblazor/SKILL.md`) before new or changed UI. Repository MudBlazor guidance wins over generic Blazor plugin skills.
+
+| When | Skill (after `mudblazor` when UI is involved) |
+| --- | --- |
+| Forms and validation | `collect-user-input` (`dotnet-blazor` plugin) |
+| HTTP and async data loading in components | `fetch-and-send-data` (`dotnet-blazor` plugin) |
+| JavaScript interop or browser APIs | `use-js-interop` (`dotnet-blazor` plugin) |
+| Prerendering / duplicate load issues | `support-prerendering` (`dotnet-blazor` plugin) |
+| State across unrelated components | `coordinate-components` (`dotnet-blazor` plugin) |
+| Generic component structure (parameters, lifecycle) | `author-component` (`dotnet-blazor` plugin) last among Blazor plugin skills |
+
+Production C# outside Razor → [csharp.mdc](csharp.mdc). Tests → [testing.mdc](testing.mdc).
