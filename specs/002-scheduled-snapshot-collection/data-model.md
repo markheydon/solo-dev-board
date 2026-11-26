@@ -6,7 +6,7 @@ Lean posture uses the file adapter only. It does not write sign-in blobs, status
 
 ## Account scan status
 
-One JSON blob per hosted account in container `account-scan-status`. Blob name `{sanitised-login}.json`. Same login grammar as the snapshot. Created when that account is first recorded for later scanning. The completed hosted sign-in path creates it when it stores the refresh token, if the blob is absent. A fill may create it for a sign-in record that has no status blob yet. A later sign-in does not reset a blob that already exists. The record stays after the 30-day window closes. Not created in lean posture. Not deleted on sign-out. Conditional write on etag. No refresh token.
+One JSON blob per hosted account in container `account-scan-status`. Blob name `{sanitised-login}.json`. Same login grammar as the snapshot. Created when that account is first recorded for later scanning. The completed hosted sign-in path creates it when the browser refresh token is stored, if the blob is absent, including when the worker token is not stored. A fill may create it for a sign-in record that has no status blob yet. A later sign-in does not reset a blob that already exists. The record stays after the 30-day window closes. Not created in lean posture. Not deleted on sign-out. Conditional write on etag. No refresh token.
 
 `schemaVersion` is `1`.
 
@@ -57,7 +57,11 @@ lost etag --> no enqueue, no snapshot change
 worker takes entry --> running, livenessAt = now, runningSince = now
     still working --> livenessAt at least every 60 seconds, same generation
     --> success --> finished, lastResult success, comment Success, snapshot replaced
-    --> signInOrToken --> suspended, lastResult failure, sign-in or token comment, credentialUnusable
+    --> signInOrToken, no newer worker token stored
+          --> suspended, lastResult failure, sign-in or token comment, credentialUnusable
+    --> signInOrToken, newer worker token already stored
+          --> finished, lastResult failure, sign-in or token comment, suspensionReason null
+          credentialUnusable stays false, no further try
     --> rateLimit or unexpected, attempts left
           --> scheduled, queueMessagePending true, queueVisibleAfter = notBefore
           last result unchanged until the try sequence ends
@@ -72,18 +76,26 @@ worker takes entry --> running, livenessAt = now, runningSince = now
 dequeue, not allowed, scan not started
     --> suspended, suspensionReason notAllowed
     lastResult, lastScanAt, resultComment, and the successful snapshot unchanged
-dequeue, stored access cannot be used, token exchange failed before the catalogue walk
+dequeue, worker token missing or unusable, before the catalogue walk, no newer worker token
     --> suspended, lastResult failure, sign-in or token comment, suspensionReason null, credentialUnusable, no unmetFill
+dequeue, same failure, newer worker token already stored
+    --> finished, lastResult failure, sign-in or token comment, suspensionReason null, wait not set, no unmetFill
+
+worker token stored, and status is suspended for that token failure
+    --> finished, keep lastResult failure and the sign-in or token comment, suspensionReason null
+worker token stored, status is suspended for notAllowed
+    --> status unchanged
 
 hand start, first etag wins --> running, suspensionReason null, and a new liveness mark (no queue message)
+    uses the signed-in session access token, not the worker token
 hand start or fill loses the etag --> no second scan
 ```
 
-A hand start is refused while callers are told `scheduled` or `running`. It is allowed while they are told `stalled`, `finished`, `suspended`, or `never run`, subject to the existing permission to use the product. A successful scan does not block a later fill. A `credentialUnusable` sign-in record is not queued. `unmetFill` is only the next ask after a finished rate-limit or unexpected-error outcome. A liveness lapse does not publish it.
+A hand start is refused while callers are told `scheduled` or `running`. It is allowed while they are told `stalled`, `finished`, `suspended`, or `never run`, subject to the existing permission to use the product. A missing worker token does not refuse it. A successful scan does not block a later fill. A `credentialUnusable` sign-in record is not queued. A missing worker token with `credentialUnusable` false is still queued, and that scan then fails. `unmetFill` is only the next ask after a finished rate-limit or unexpected-error outcome. A liveness lapse does not publish it. A token failure does not publish it.
 
 ## Snapshot document
 
-`schemaVersion` stays `1`. The catalogue fields from feature 001 stay. This feature still records who started a finished run.
+`schemaVersion` stays `1`. The catalogue fields from feature 001 stay. `trigger` may still say `operator` or `daily`. The account scan status does not copy that fact, and FR-025 text does not read it.
 
 | Field | JSON | Type | Rules |
 | --- | --- | --- | --- |
@@ -97,19 +109,19 @@ Repositories and `lastSuccessfulCollectionAt` still change only on success. Part
 
 ## Hosted sign-in record
 
-One JSON blob per operator in container `hosted-sign-ins`. Blob name `{sanitised-login}.json`. Same login grammar as the snapshot. Written only by the web host when a hosted sign-in completes. Updated by the worker when a refresh token rotates or a daily pass sets `credentialUnusable`. Conditional write on etag. Not created in lean posture. Not deleted on sign-out.
+One JSON blob per operator in container `hosted-sign-ins`. Blob name `{sanitised-login}.json`. Same login grammar as the snapshot. Schema version 2. The browser refresh token is not a field on this blob. It stays in the auth cookie. Conditional write on etag. Not created in lean posture. Not deleted on sign-out.
 
 | Field | JSON | Type | Rules |
 | --- | --- | --- | --- |
-| Schema version | `schemaVersion` | number | `1`. |
+| Schema version | `schemaVersion` | number | `2` on write. A stored `1` is read as worker token absent. Its `refreshToken` is not copied and is not exchanged. |
 | Operator login | `operatorLogin` | string | Sanitised GitHub login. |
-| Completed at | `completedAt` | string (ISO-8601 UTC) | Latest completed hosted sign-in. A sign-in that does not complete does not write. |
-| Organisation logins | `organisationLogins` | array of strings | Logins saved from that completed sign-in. Replaced on the next completed sign-in. Not refreshed from GitHub at 05:00 UTC. |
-| Refresh token | `refreshToken` | string | Secret. Never copied to the snapshot, the account scan status, the queue, or logs. |
-| Refresh token expires | `refreshTokenExpiresAt` | string or `null` | UTC expiry when GitHub sent one. |
-| Credential unusable | `credentialUnusable` | boolean | `true` after a daily pass fails with `signInOrToken`. Cleared only by the next completed sign-in, which also sets `completedAt`. |
+| Completed at | `completedAt` | string (ISO-8601 UTC) | Latest completed hosted sign-in. Set when the browser refresh token is stored, including when the worker token is not. A worker-token refresh does not change it. A sign-in that does not complete does not write. |
+| Organisation logins | `organisationLogins` | array of strings | Logins saved from that completed sign-in. Replaced on the next completed sign-in. Not replaced by a worker-token refresh. Not refreshed from GitHub at 05:00 UTC. |
+| Worker refresh token | `workerRefreshToken` | string or absent | Secret for overnight collection only. Absent when no second authorisation has been kept. Never copied to the snapshot, the account scan status, the queue, or logs. |
+| Worker refresh token expires | `workerRefreshTokenExpiresAt` | string or `null` | UTC expiry when GitHub sent one. |
+| Credential unusable | `credentialUnusable` | boolean | `true` after an overnight scan fails with `signInOrToken` and no newer worker token is stored. Cleared only when a worker token is kept. A completed sign-in that does not store a worker token does not clear it. |
 
-At fill, the 30-day window is `completedAt` compared with the instant that fill runs. A fill at 05:00 UTC uses 05:00 UTC. A fill at another time uses that later instant. A sign-in after 05:00 UTC is inside a fill that runs after that sign-in. Dequeue does not apply this comparison. A `completedAt` exactly 30 days before the fill instant is inside. Older is outside. A successful collection does not change `completedAt`. The page names today at 05:00 UTC when that instant has not yet passed and they would be eligible then, and it keeps today while status is `scheduled` and they are still allowed. After today's 05:00 UTC ask has passed, and they are not `scheduled`, it names the following day at 05:00 UTC when they would be eligible then. A success does not change that name. That name is the next planned ask. It does not forbid a fill that runs sooner.
+At fill, the 30-day window is `completedAt` compared with the instant that fill runs. A fill at 05:00 UTC uses 05:00 UTC. A fill at another time uses that later instant. A sign-in after 05:00 UTC is inside a fill that runs after that sign-in. Dequeue does not apply this comparison. A `completedAt` exactly 30 days before the fill instant is inside. Older is outside. A successful collection does not change `completedAt`. Whether the next ask will queue them is still judged at today 05:00 UTC before that instant, and at the following 05:00 UTC after it, including while they are `scheduled`. That judgement is not shown as a clock time. The schedule sentence is the overnight sentence when that ask will include them, otherwise one FR-025 refusal. A success does not change the sentence. The sentence does not forbid a fill that runs sooner.
 
 ## Occasion marker
 
@@ -148,7 +160,7 @@ Operator-facing liveness is `livenessAt` on the account scan status blob, not a 
 
 ## Status facts returned to the page
 
-`OperatorSnapshotStatusDto` gains the account scan facts. The page owns UK English. Application does not return sentences. In hosted sign-in the page reads these facts and does not derive the current scan state from the snapshot `run` or from the clock.
+`OperatorSnapshotStatusDto` gains the account scan facts and the two FR-025 strings. Application builds those strings. Web renders them and does not assemble its own status or schedule wording. In hosted sign-in the page does not derive the current scan state from the snapshot `run` or from the clock.
 
 | Fact | Meaning |
 | --- | --- |
@@ -158,14 +170,17 @@ Operator-facing liveness is `livenessAt` on the account scan status blob, not a 
 | `LastScanAt` | From the status blob. Null when none has run. |
 | `LastScanResult` | `success`, `failure`, or none. |
 | `ResultComment` | From the status blob. Empty when none has run. Not the not-allowed comment. |
-| `SuspensionReason` | `notAllowed` or none. From `AccountScanStatus.suspensionReason`. The page maps `notAllowed` to the fixed comment. |
-| `Trigger` | `operator`, `daily`, or none. Set when a scan is `running` or has `finished`. None otherwise, including `never run`, `scheduled`, and `suspended`. |
-| `NextOccasionAtUtc` | The next 05:00 UTC that will queue them, or none. |
-| `NoScheduleReason` | None, `lean`, `credentialUnusable`, `outsideWindow`, `notAllowed`. |
+| `SuspensionReason` | `notAllowed` or none. From `AccountScanStatus.suspensionReason`. The formatter maps `notAllowed` to the FR-025 sentence. |
+| `NoScheduleReason` | None, `lean`, `credentialUnusable`, `outsideWindow`, `notAllowed`. Input to the schedule sentence. Not rendered as its own label. |
+| `StatusSentence` | The FR-025 sentence for the reported status. None in lean posture. |
+| `ScheduleSentence` | The one FR-025 schedule sentence, or none when the next ask will not be named because posture is lean. |
+| `WorkerTokenRefreshOffered` | True in hosted sign-in when the worker token is absent or `credentialUnusable` is set. False in lean posture. The page shows the control only when this is true and the operator is signed in. |
+| `Trigger` | `operator`, `daily`, or none on the snapshot facts. Not stored on the account scan status. Not used to build either sentence. |
+| `NextAskIncludesAccount` | True when the next 05:00 UTC ask would queue them. Not a timestamp and not rendered as a clock time. |
 
-`NextOccasionAtUtc` is today at 05:00 UTC when that instant has not yet passed and they would be eligible at that instant. After that instant, it is the following day at 05:00 UTC when they would be eligible then, including when today's scan has not succeeded and including when it has. It stays today while they are `scheduled` for today and the schedule sentence is not a refusal. It is none when a refusal applies.
+The next ask is today at 05:00 UTC when that instant has not yet passed and they would be eligible at that instant. After that instant, it is the following day at 05:00 UTC when they would be eligible then, including when today's scan has not succeeded and including when it has. It stays the current day's ask while they are `scheduled` and the schedule sentence is not a refusal. `NextAskIncludesAccount` is false when a refusal applies.
 
-`NoScheduleReason` is chosen in this order, before the next-occasion time: `notAllowed`, otherwise `credentialUnusable`, otherwise `outsideWindow`. `notAllowed` wins when they are also in a stored-access wait or outside the window. The page still shows the suspended failure when `credentialUnusable` is set. `outsideWindow` is judged at the instant the page would name (today at 05:00 UTC before that instant, otherwise the following day at 05:00 UTC). A `scheduled` wait does not override `notAllowed`. A sign-in older than 30 days does not, by itself, clear a queued wait. Time of day alone does not set `outsideWindow`. Lean posture always uses `SchedulePosture = lean`, `NoScheduleReason = lean`, no account scan status, and no next occasion, including a personal Azure deploy that did not model the worker.
+`NoScheduleReason` is chosen in this order: `notAllowed`, otherwise `credentialUnusable`, otherwise `outsideWindow`. `notAllowed` wins when they are also in a stored-access wait or outside the window. The status sentence still shows the stored-access failure when `credentialUnusable` is set. `outsideWindow` is judged at the next ask instant. A `scheduled` wait does not override `notAllowed`. A sign-in older than 30 days does not, by itself, clear a queued wait. Time of day alone does not set `outsideWindow`. Lean posture always uses `SchedulePosture = lean`, `NoScheduleReason = lean`, no account scan status, no schedule sentence from this catalogue, and `WorkerTokenRefreshOffered` false, including a personal Azure deploy that did not model the worker.
 
 ## Who writes what
 
@@ -173,7 +188,7 @@ Operator-facing liveness is `livenessAt` on the account scan status blob, not a 
 | --- | --- | --- |
 | Snapshot catalogue | Application document, Infrastructure store | Same port as feature 001. Not the scan status. |
 | Account scan status | Application model, Infrastructure blob adapter | Web and the Functions host. Etag on every transition and liveness mark. |
-| Sign-in record | Application model, Infrastructure blob adapter | Web writes on completed sign-in, from `src/SoloDevBoard.Web/Authentication/`, and creates a missing status blob there. The fill also inserts a missing `neverRun` blob for a sign-in record before eligibility. Worker updates token rotation and `credentialUnusable`. It does not write liveness here. |
+| Sign-in record | Application model, Infrastructure blob adapter | Web writes `completedAt` and organisations when the browser token is stored, and writes the worker token only from a kept second authorisation or a worker-token refresh. The fill also inserts a missing `neverRun` blob for a sign-in record before eligibility. The worker updates worker-token rotation and `credentialUnusable`. It does not write the cookie token and it does not write liveness here. |
 | Occasion marker and `runner` lease | Infrastructure, Functions host only | Web does not reference `collection-schedule`. |
 | Queue messages | Infrastructure via injected `QueueServiceClient` | Functions host only. Further tries pass `notBefore` through to the initial visibility timeout and to `queueVisibleAfter`. |
 | Eligibility, fill, and reported status | Application | `TimeProvider`, sign-in records, admission options, status blob. |

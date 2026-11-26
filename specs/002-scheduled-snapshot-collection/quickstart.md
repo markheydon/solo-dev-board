@@ -16,7 +16,7 @@ Validation for this feature. Shapes live in [data-model.md](data-model.md) and [
 2. Confirm the resource list has `web` and does not have the Functions project, `operator-snapshot-storage`, `account-scan-status`, or a queue.
 3. Open `/repositories`. Confirm the status alert says that nothing collects on a schedule, and that the snapshot is kept on this machine rather than promised on another machine. Confirm it does not show a worker status (`scheduled`, `running`, `stalled`, or `suspended`).
 4. Leave the page open across a test clock at 05:00 UTC without choosing **Collect snapshot**. Confirm no run starts.
-5. Choose **Collect snapshot** and confirm a hand-started collection can still finish, and the run is not described as the daily occasion.
+5. Choose **Collect snapshot** and confirm a hand-started collection can still finish. Confirm the alert does not name 05:00 UTC, does not say who started the run, and does not show **Refresh overnight access**.
 
 Automated stand-in: Application tests with a lean posture flag and `TimeProvider` set to 05:00 UTC assert no fill and no queue message. bUnit asserts the two sentences and that **Collect snapshot** still calls start.
 
@@ -40,7 +40,8 @@ Application tests, fake clock, no Azure. The timer under test is `0 0 5 * * *`, 
 | Message still queued, person still allowed, sign-in now older than 30 days | present | The message still runs, including on a later UTC day. The clock and the 30-day window are not reasons to drop it. |
 | Worker stays up, technical failure has exhausted further tries | present | One `unmetFill`, hidden for 15 minutes, then the same fill. Not a fourth try of the same run. A person who already succeeded is included when they are idle and eligible. |
 | Message received after the person is no longer allowed | present or absent | Message completed. Status `suspended`. Last result unchanged. No failed snapshot. Page states that no scheduled collection will run because they are not allowed. |
-| Message received and stored access cannot be used | present or absent | Status `suspended`, result failure, sign-in or token comment, no further try. |
+| Message received and the worker token is missing or cannot be used, no newer worker token stored | present or absent | Status `suspended`, result failure, sign-in or token comment, no further try. The cookie token is not exchanged. |
+| Same failure, and a newer worker token is already stored | present or absent | Status `finished`, result failure, sign-in or token comment. The wait is not set. |
 | Status `scheduled` and `queueMessagePending` false | present | Restored before eligibility: empty last result becomes `never run`; any other last result becomes `finished`. No failure comment is added. The same fill may then queue them. |
 | Reported `stalled`, other rules allow | present | Queued. The winning write sets `scheduled`. |
 
@@ -62,30 +63,43 @@ Application tests with `TimeProvider`. Keep the exactly-5-minutes case and the m
 - Unexpected error with only one account queued: the three further tries wait at least 3, 6, and 12 minutes from each failed attempt. The pass does not start on the next loop with no wait.
 - Four failed attempts (`rateLimit` or `unexpected`): status `finished` with that failure, then the same fill after 15 minutes. That fill includes them when they are eligible and idle, and it also includes someone whose scan already succeeded. The following 05:00 UTC can still ask if that later fill does not succeed.
 - Queued entry, or a further try waiting, when the person is no longer allowed: message removed, status `suspended`, last result unchanged, previous success unchanged. A sign-in older than 30 days does not remove that message. A pass that is already `running` is not withdrawn this way.
-- Queued entry, or a further try waiting, when stored access cannot be used: status `suspended`, result failure, sign-in or token comment, further tries stop, previous success's snapshot entries unchanged.
-- `signInOrToken`: no retry message, later occasions skip until a completed sign-in clears the flag. That sign-in does not reset a status blob that has already left `neverRun`.
-- `StartAsync` while `scheduled` or told `running` does not start a second walk. `StartAsync` while told `stalled` sets `running` and writes a mark. A hand-started success does not get three further tries.
+- Queued entry, or a further try waiting, when the worker token cannot be used and no newer worker token is stored: status `suspended`, result failure, sign-in or token comment, further tries stop, previous success's snapshot entries unchanged.
+- The same failure when a newer worker token is already stored: status `finished`, the wait is not set, and further tries stop.
+- `signInOrToken` with no newer worker token: no retry message, later occasions skip until a kept worker token clears the flag. A completed sign-in that does not store a worker token does not clear it and does not reset a status blob that has already left `neverRun`.
+- `StartAsync` while `scheduled` or told `running` does not start a second walk. `StartAsync` while told `stalled` sets `running` and writes a mark. `StartAsync` while the worker token is missing still starts and uses the session access token. A hand-started success does not get three further tries.
 
 ## 5. Page
 
-bUnit, hosted posture:
+bUnit, hosted posture. Assert the sentences in [contracts/repositories-schedule-copy.md](contracts/repositories-schedule-copy.md). None of them contain "05:00 UTC", "daily occasion", "today", "tonight", or "the following day", and none say who started the run.
 
-- Before 05:00 UTC, eligible, no run yet: the alert names 05:00 UTC and does not pretend a snapshot exists.
-- After a credential failure, and they are allowed: the failure is shown and the alert does not promise tonight.
+- Eligible, no run yet, including before 05:00 UTC and after that ask when the following ask would include them: "The next collection runs overnight." The alert does not pretend a snapshot exists.
+- Worker token missing, wait not set, and the next ask will queue them: the overnight sentence, plus **Refresh overnight access**.
+- After a credential failure, and they are allowed: the suspended token sentence, and the schedule sentence says no scheduled collection will run until you refresh the access used for the overnight collection. **Refresh overnight access** is shown when they are signed in.
 - Not allowed, including when a stored-access wait is also set or the window is closed: the one schedule sentence is the not-allowed sentence. When the wait is set, the failed run and the sign-in or token reason are still shown.
-- Allowed, stored-access wait set, window also closed: one sentence, until they sign in again, plus the failed run. No second sentence for the window.
-- A new hosted account before any queue entry: `never run`, with no last-run time, result, or comment.
-- Queued before the worker takes the entry: `scheduled`, not running, and the named occasion stays today at 05:00 UTC.
-- Worker has taken the entry and the mark is fresh: `running`, and the alert says the daily occasion started it when that is why.
-- Retry waiting: `scheduled`, not running and not finished, no try list, and no sentence that names the 3, 6, or 12 minute wait.
-- After today's 05:00 UTC ask has passed, not `scheduled`, eligible tomorrow: the alert names 05:00 UTC on the following UTC day, whether or not today's scan succeeded.
-- After a queued entry is removed because they are not allowed: `suspended`, the not-allowed reason, and the previous last result unchanged. Not running and not a failed snapshot.
-- Reported `stalled`: the word stalled, not running, not a finished failure, and not "the site stopped". **Collect snapshot** can start.
-- No button changes the time, the frequency, or the 30 days. No retry button.
+- Allowed, stored-access wait set, window also closed: one schedule sentence, the refresh sentence, plus the failed run. No second sentence for the window.
+- A new hosted account before any queue entry: "No collection has run yet."
+- Queued before the worker takes the entry: "A collection is waiting to start." The schedule sentence stays the overnight sentence. The running sentence is not shown.
+- Worker has taken the entry and the mark is fresh: the running sentence, including the start time and the recorded count, with no starter.
+- Retry waiting: the scheduled sentence. No try list, and no sentence that names the 3, 6, or 12 minute wait.
+- After a queued entry is removed because they are not allowed: the not-allowed sentence, and the previous last result unchanged. Not the running sentence and not a failed snapshot.
+- Reported `stalled`: "This collection has stopped reporting progress." Not the running sentence, not a finished failure, and not "the site stopped". **Collect snapshot** can start.
+- No button changes the time, the frequency, or the 30 days. No retry button. **Refresh overnight access** is not that retry.
 
 Update `website/content/docs/repositories.md` in the same change as the page. Do not add a Playwright test that waits for the clock or calls GitHub.
 
-## 6. Commands before a pull request
+## 6. Worker token
+
+Application tests with a fake token exchange. No live GitHub call.
+
+- Schema version 1 with `refreshToken` set: the worker token is absent, and the exchange is not called with that value. The overnight pass fails `signInOrToken` and sets the wait.
+- First authorisation stores `completedAt` and the organisation list and does not clear `credentialUnusable`. The second authorisation, when the session access token is accepted, stores `workerRefreshToken` and clears the wait. It does not change `completedAt`.
+- Second authorisation when the session access token is rejected: the candidate is discarded, and the browser-restore write does not store a worker token and does not change `completedAt`.
+- Worker-token refresh stores the worker token, does not change `completedAt` or the organisation list, and does not enqueue a scan. If status was `suspended` for the token failure, it becomes `finished` with that failure kept.
+- A queued scan that has not started uses the worker token stored when it is taken.
+- A running scan keeps the token it started with. A rotated replacement is stored only while that token is still the stored value. A newer stored token is left in place.
+- Hand-started `StartAsync` with no worker token uses the session access token and can finish.
+
+## 7. Commands before a pull request
 
 ```bash
 dotnet format SoloDevBoard.slnx --verify-no-changes

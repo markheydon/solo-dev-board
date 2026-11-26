@@ -54,7 +54,7 @@ A new account, written when the hosted sign-in record is first stored:
 | `scheduled` | A queue entry is waiting, including a further try that is not yet visible. |
 | `running` | The worker, or a hand-started hosted scan, has started and has not recorded a terminal status. |
 | `finished` | The try sequence ended in a real success or failure. |
-| `suspended` | The scan will not run again until the block is resolved. Not allowed sets `suspensionReason` to `notAllowed` and leaves `lastScanAt`, `lastResult`, and `resultComment` unchanged. Unusable stored access sets `lastResult` to `failure`, writes the sign-in or token `resultComment`, and leaves `suspensionReason` null. |
+| `suspended` | The scan will not run again until the block is resolved. Not allowed sets `suspensionReason` to `notAllowed` and leaves `lastScanAt`, `lastResult`, and `resultComment` unchanged. Unusable worker access, when no newer worker token is stored, sets `lastResult` to `failure`, writes the sign-in or token `resultComment`, and leaves `suspensionReason` null. When a newer worker token is already stored, that same failure is `finished`, not `suspended`. |
 
 `stalled` is not a legal stored value. A reader reports it when `status` is `running` and the latest of `livenessAt`, or `runningSince` when `livenessAt` is null, is strictly more than 5 minutes before the clock. An age of exactly 5 minutes is reported `running`.
 
@@ -75,7 +75,9 @@ Every write uses the blob etag. A stale `scanGeneration` does not overwrite a ne
 | Further try queued | `scheduled`, `queueMessagePending` true. Do not change `lastResult`. Set `queueVisibleAfter` from `notBefore`. |
 | Tries exhausted | `finished`, `lastResult` `failure`, comment states why, set `lastScanAt`, clear `queueMessagePending`. |
 | Not allowed before a scan starts | One write to `suspended`. Set `suspensionReason` to `notAllowed` and `queueMessagePending` false. Do not set `running`. Do not change `lastScanAt`, `lastResult`, or `resultComment`. |
-| Stored access cannot be used, token exchange failed before the catalogue walk | `suspended`, `lastResult` `failure`, sign-in or token comment, `suspensionReason` null, set `lastScanAt`, clear `queueMessagePending`. |
+| Worker token missing or unusable before the catalogue walk, and no newer worker token is stored | `suspended`, `lastResult` `failure`, sign-in or token comment, `suspensionReason` null, set `lastScanAt`, clear `queueMessagePending`. |
+| Same failure, and a newer worker token is already stored | `finished`, `lastResult` `failure`, sign-in or token comment, `suspensionReason` null, set `lastScanAt`, clear `queueMessagePending`. Do not set the stored-access wait. |
+| Worker token stored while status is `suspended` for that token failure | `finished`. Keep `lastResult` failure and the sign-in or token comment. `suspensionReason` null. |
 | Hand-started hosted scan starts | `running`, clear `suspensionReason`, new generation, new liveness mark. `queueMessagePending` stays false. |
 | Redelivery after the owning process died | Complete the message. Leave `status` `running`. Clear `queueMessagePending` only, and only for that same generation. Do not change `status`, `lastResult`, `resultComment`, or the snapshot. Do not clear `retainedRun`. |
 
