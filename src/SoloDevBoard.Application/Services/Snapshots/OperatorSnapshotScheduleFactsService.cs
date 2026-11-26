@@ -27,7 +27,9 @@ public sealed class OperatorSnapshotScheduleFactsService(
                 OperatorSnapshotSchedulePosture.Lean,
                 OperatorSnapshotNoScheduleReason.Lean,
                 null,
-                document.Trigger);
+                document.Trigger,
+                NextAskIncludesAccount: false,
+                WorkerTokenRefreshOffered: false);
         }
 
         var trigger = document.Trigger;
@@ -81,11 +83,19 @@ public sealed class OperatorSnapshotScheduleFactsService(
             nextOccasion = null;
         }
 
+        var nextAskIncludes = noSchedule == OperatorSnapshotNoScheduleReason.None
+            && signInRecord is not null
+            && (scheduled || nextOccasion is not null);
+        var workerOffered = signInRecord is { CredentialUnusable: var cu, HasWorkerRefreshToken: var hasWorker }
+            && (!hasWorker || cu);
+
         return new OperatorSnapshotScheduleFacts(
             OperatorSnapshotSchedulePosture.Hosted,
             noSchedule,
             nextOccasion,
-            trigger);
+            trigger,
+            nextAskIncludes,
+            workerOffered);
     }
 
     private static DateTimeOffset GetTodayOccasionAt(DateTimeOffset utcNow)

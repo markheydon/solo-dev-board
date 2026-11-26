@@ -76,12 +76,12 @@ On hosted sign-in deployments the feedback alert shows one status word for your 
 | --- | --- |
 | **Never run** | No scan has run yet. No last-run time, result, or comment. |
 | **Scheduled** | A scan is queued, including while it waits to try again after a technical problem. It is not running and not finished. Tries and waits are not listed. **Collect snapshot** stays disabled. |
-| **Running** | A scan is working. The alert says whether you or the daily occasion started it, and how many repositories are recorded so far. **Collect snapshot** stays disabled. |
+| **Running** | A scan is working. The alert says when it started and how many repositories are recorded so far. It does not say who started the run. **Collect snapshot** stays disabled. |
 | **Finished** | The last scan finished. A successful scan shows when it finished and how many repositories the snapshot includes. A failed scan shows one short reason and when it failed, beside your last successful snapshot time when you have one. |
 | **Suspended** | No scan will start. When you are not allowed to use the product the alert says so and keeps your earlier snapshot. When stored sign-in access no longer works the alert shows the failed result and the sign-in reason; sign in again to resume. |
 | **Stalled** | A running scan has not reported progress for more than five minutes. The alert does not say it is running and does not say the site stopped. Your last successful snapshot stays, and **Collect snapshot** is available again. |
 
-The schedule sentence is one of: "Next scheduled collection: 05:00 UTC.", "Next scheduled collection: 05:00 UTC on the following UTC day.", "No scheduled collection will run because you are not allowed to use the product.", or "No scheduled collection will run until you sign in again." PAT-only mode shows "Nothing collects on a schedule." instead.
+The schedule sentence is one of: "The next collection runs overnight.", "No scheduled collection will run because you are not allowed to use the product.", "No scheduled collection will run until you refresh the access used for the overnight collection.", or "No scheduled collection will run until you sign in again." The page does not name a clock time. When the worker token for overnight collection is missing, **Refresh overnight access** appears while you are signed in; it sends you through GitHub to store only that token and does not start a scan. PAT-only mode shows "Nothing collects on a schedule." instead.
 
 ### Page layout
 

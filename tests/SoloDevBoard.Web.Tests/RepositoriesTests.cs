@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using Bunit;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
 using MudBlazor.Services;
@@ -654,7 +656,7 @@ public sealed class RepositoriesTests
         await using var ctx = CreateContext();
         var cut = RenderHosted(ctx, HostedStatus(ReportedAccountScanStatus.NeverRun));
 
-        cut.WaitForAssertion(() => Assert.Contains("Never run.", cut.Markup));
+        cut.WaitForAssertion(() => Assert.Contains("No collection has run yet.", cut.Markup));
         Assert.DoesNotContain("Snapshot saved", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("could not be saved", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Last successful", cut.Markup, StringComparison.Ordinal);
@@ -667,9 +669,9 @@ public sealed class RepositoriesTests
         await using var ctx = CreateContext();
         var cut = RenderHosted(ctx, HostedStatus(ReportedAccountScanStatus.Scheduled));
 
-        cut.WaitForAssertion(() => Assert.Contains("Scheduled.", cut.Markup));
-        Assert.Contains("Next scheduled collection: 05:00 UTC.", cut.Markup);
-        Assert.DoesNotContain("Running.", cut.Markup, StringComparison.Ordinal);
+        cut.WaitForAssertion(() => Assert.Contains("A collection is waiting to start.", cut.Markup));
+        Assert.Contains("The next collection runs overnight.", cut.Markup);
+        Assert.DoesNotContain("A collection is running.", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Saving snapshot", cut.Markup, StringComparison.Ordinal);
         Assert.True(cut.Find("[data-testid='repositories-collect-snapshot-button']").HasAttribute("disabled"));
     }
@@ -683,27 +685,27 @@ public sealed class RepositoriesTests
         await using var ctx = CreateContext();
         var cut = RenderHosted(ctx, status);
 
-        cut.WaitForAssertion(() => Assert.Contains("Scheduled.", cut.Markup));
-        Assert.Contains("Last successful snapshot:", cut.Markup);
+        cut.WaitForAssertion(() => Assert.Contains("A collection is waiting to start.", cut.Markup));
+        Assert.Contains("The last successful snapshot was saved at", cut.Markup);
         Assert.DoesNotContain("could not be saved", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("attempt", cut.Markup, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("retry", cut.Markup, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("minutes", cut.Markup, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Theory]
-    [InlineData(OperatorSnapshotCollectionTrigger.Daily, "The daily occasion started it.")]
-    [InlineData(OperatorSnapshotCollectionTrigger.Operator, "You started it.")]
-    public async Task Repositories_HostedRunning_ShowsWhoStartedTheRun(
-        OperatorSnapshotCollectionTrigger trigger,
-        string expected)
+    [Fact]
+    public async Task Repositories_HostedRunning_ShowsRunningSentenceWithoutStarter()
     {
         await using var ctx = CreateContext();
-        var cut = RenderHosted(ctx, HostedStatus(ReportedAccountScanStatus.Running, trigger: trigger));
+        var cut = RenderHosted(
+            ctx,
+            HostedStatus(ReportedAccountScanStatus.Running, trigger: OperatorSnapshotCollectionTrigger.Daily));
 
-        cut.WaitForAssertion(() => Assert.Contains("Running.", cut.Markup));
-        Assert.Contains(expected, cut.Markup);
-        Assert.Contains("recorded so far", cut.Markup);
+        cut.WaitForAssertion(() => Assert.Contains("A collection is running.", cut.Markup));
+        Assert.Contains("repositories recorded so far", cut.Markup);
+        Assert.DoesNotContain("You started", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("daily occasion", cut.Markup, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("05:00 UTC", cut.Markup, StringComparison.Ordinal);
         Assert.True(cut.Find("[data-testid='repositories-collect-snapshot-button']").HasAttribute("disabled"));
     }
 
@@ -716,9 +718,9 @@ public sealed class RepositoriesTests
         await using var ctx = CreateContext();
         var cut = RenderHosted(ctx, status);
 
-        cut.WaitForAssertion(() => Assert.Contains("Stalled.", cut.Markup));
-        Assert.Contains("Last successful snapshot:", cut.Markup);
-        Assert.DoesNotContain("Running.", cut.Markup, StringComparison.Ordinal);
+        cut.WaitForAssertion(() => Assert.Contains("stopped reporting progress.", cut.Markup));
+        Assert.Contains("The last successful snapshot was saved at", cut.Markup);
+        Assert.DoesNotContain("A collection is running.", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("site stopped", cut.Markup, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Something went wrong", cut.Markup, StringComparison.Ordinal);
         Assert.False(cut.Find("[data-testid='repositories-collect-snapshot-button']").HasAttribute("disabled"));
@@ -735,8 +737,8 @@ public sealed class RepositoriesTests
         await using var ctx = CreateContext();
         var cut = RenderHosted(ctx, status);
 
-        cut.WaitForAssertion(() => Assert.Contains("Suspended.", cut.Markup));
-        Assert.Contains("You are not allowed to use the product.", cut.Markup);
+        cut.WaitForAssertion(() => Assert.Contains("paused because you are not allowed to use the product.", cut.Markup));
+        Assert.Contains("not allowed to use the product", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("No scheduled collection will run because you are not allowed to use the product.", cut.Markup);
         Assert.DoesNotContain("Should not appear", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Running.", cut.Markup, StringComparison.Ordinal);
@@ -755,10 +757,42 @@ public sealed class RepositoriesTests
         await using var ctx = CreateContext();
         var cut = RenderHosted(ctx, status);
 
-        cut.WaitForAssertion(() => Assert.Contains("Suspended.", cut.Markup));
-        Assert.Contains("No scheduled collection will run until you sign in again.", cut.Markup);
-        Assert.Contains("Could not reach GitHub with your current sign-in.", cut.Markup);
+        cut.WaitForAssertion(() => Assert.Contains("paused until you refresh the access", cut.Markup, StringComparison.OrdinalIgnoreCase));
+        Assert.Contains("No scheduled collection will run until you refresh the access", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("sign-in or token problem", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("not allowed", cut.Markup, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Repositories_HostedMissingWorker_ShowsRefreshOvernightAccessWhenSignedIn()
+    {
+        var status = HostedStatus(
+            ReportedAccountScanStatus.NeverRun,
+            workerTokenRefreshOffered: true);
+        await using var ctx = CreateAuthenticatedContext();
+        var cut = RenderHosted(ctx, status);
+
+        cut.WaitForAssertion(() => cut.Find("[data-testid='repositories-refresh-overnight-access-button']").Matches("[href]"));
+        Assert.Contains("The next collection runs overnight.", cut.Markup);
+        await _snapshotCollectionService.DidNotReceive().StartAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Repositories_HostedCredentialUnusable_ShowsRefreshWithoutRepeatingScheduleSentence()
+    {
+        var status = HostedStatus(
+            ReportedAccountScanStatus.Suspended,
+            noScheduleReason: OperatorSnapshotNoScheduleReason.CredentialUnusable,
+            lastResult: AccountScanStatusDocumentConstants.LastResultFailure,
+            resultComment: "token",
+            lastScanAt: DateTimeOffset.Parse("2025-06-02T12:00:00Z"),
+            workerTokenRefreshOffered: true);
+        await using var ctx = CreateAuthenticatedContext();
+        var cut = RenderHosted(ctx, status);
+
+        cut.WaitForAssertion(() => cut.Find("[data-testid='repositories-refresh-overnight-access-button']").Matches("[href]"));
+        var refreshSentence = "No scheduled collection will run until you refresh the access used for the overnight collection.";
+        Assert.DoesNotContain($"{refreshSentence} {refreshSentence}", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -776,6 +810,8 @@ public sealed class RepositoriesTests
 
         cut.WaitForAssertion(() => Assert.Contains("Nothing collects on a schedule.", cut.Markup));
         Assert.Contains("No snapshot exists.", cut.Markup);
+        Assert.Contains("The snapshot is kept on this machine", cut.Markup);
+        Assert.DoesNotContain("Refresh overnight access", cut.Markup, StringComparison.Ordinal);
         foreach (var word in new[] { "Never run.", "Scheduled.", "Running.", "Stalled.", "Suspended.", "05:00 UTC" })
         {
             Assert.DoesNotContain(word, cut.Markup, StringComparison.Ordinal);
@@ -801,10 +837,30 @@ public sealed class RepositoriesTests
         OperatorSnapshotNoScheduleReason noScheduleReason = OperatorSnapshotNoScheduleReason.None,
         string? lastResult = null,
         string? resultComment = null,
-        DateTimeOffset? lastScanAt = null)
+        DateTimeOffset? lastScanAt = null,
+        bool? workerTokenRefreshOffered = null)
     {
         var running = reported == ReportedAccountScanStatus.Running;
-        return new OperatorSnapshotStatusDto
+        var credentialUnusable = noScheduleReason == OperatorSnapshotNoScheduleReason.CredentialUnusable;
+        var hasWorker = workerTokenRefreshOffered != true;
+        var workerOffered = workerTokenRefreshOffered
+            ?? (credentialUnusable || (noScheduleReason == OperatorSnapshotNoScheduleReason.None && !hasWorker));
+        var nextAskIncludes = noScheduleReason == OperatorSnapshotNoScheduleReason.None;
+
+        var scanReport = new AccountScanStatusReport(
+            reported,
+            null,
+            lastScanAt,
+            lastResult,
+            resultComment,
+            suspension);
+        var signIn = new HostedSignInRecordForSchedule(
+            "octocat",
+            CompletedAt: DateTimeOffset.UtcNow.AddDays(-1),
+            CredentialUnusable: credentialUnusable,
+            HasWorkerRefreshToken: hasWorker,
+            OrganisationLogins: []);
+        var runtimeBeforeFormat = new OperatorSnapshotStatusDto
         {
             Kind = running ? OperatorSnapshotStatusKind.InProgress : OperatorSnapshotStatusKind.NeverRun,
             DurabilityKind = OperatorSnapshotDurabilityKind.HostedBlob,
@@ -823,18 +879,58 @@ public sealed class RepositoriesTests
             NextOccasionAtUtc = noScheduleReason == OperatorSnapshotNoScheduleReason.None
                 ? new DateTimeOffset(2026, 11, 26, 5, 0, 0, TimeSpan.Zero)
                 : null,
+            NextAskIncludesAccount = nextAskIncludes,
+            WorkerTokenRefreshOffered = workerOffered,
+        };
+        var (statusSentence, scheduleSentence) = AccountScanStatusSentenceFormatter.Format(
+            OperatorSnapshotSchedulePosture.Hosted,
+            noScheduleReason,
+            reported,
+            scanReport,
+            runtimeBeforeFormat,
+            signIn,
+            nextAskIncludes,
+            workerOffered);
+
+        return new OperatorSnapshotStatusDto
+        {
+            Kind = runtimeBeforeFormat.Kind,
+            DurabilityKind = runtimeBeforeFormat.DurabilityKind,
+            SchedulePosture = runtimeBeforeFormat.SchedulePosture,
+            ReportedScanStatus = runtimeBeforeFormat.ReportedScanStatus,
+            Trigger = runtimeBeforeFormat.Trigger,
+            RunStartedAt = runtimeBeforeFormat.RunStartedAt,
+            RepositoriesRecordedThisRun = runtimeBeforeFormat.RepositoriesRecordedThisRun,
+            LastSuccessfulCollectionAt = runtimeBeforeFormat.LastSuccessfulCollectionAt,
+            SnapshotRepositoryCount = runtimeBeforeFormat.SnapshotRepositoryCount,
+            ScanSuspensionReason = runtimeBeforeFormat.ScanSuspensionReason,
+            NoScheduleReason = runtimeBeforeFormat.NoScheduleReason,
+            LastScanResult = runtimeBeforeFormat.LastScanResult,
+            ResultComment = runtimeBeforeFormat.ResultComment,
+            LastScanAt = runtimeBeforeFormat.LastScanAt,
+            NextOccasionAtUtc = runtimeBeforeFormat.NextOccasionAtUtc,
+            NextAskIncludesAccount = runtimeBeforeFormat.NextAskIncludesAccount,
+            WorkerTokenRefreshOffered = runtimeBeforeFormat.WorkerTokenRefreshOffered,
+            StatusSentence = statusSentence,
+            ScheduleSentence = scheduleSentence,
         };
     }
 
     private static RepositoryDto CreateRepository(string owner, string name)
         => new(1, name, $"{owner}/{name}", string.Empty, string.Empty, false, false, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, [], false);
 
-    private BunitContext CreateContext()
+    private BunitContext CreateAuthenticatedContext() => CreateContext(authenticated: true);
+
+    private BunitContext CreateContext(bool authenticated = false)
     {
         var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddMudServices();
         ctx.Services.AddTestGitHubAuthenticationRecovery();
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(
+            authenticated
+                ? new SignedInAuthenticationStateProvider()
+                : new AnonymousAuthenticationStateProvider());
         ctx.Services.AddScoped(_ => _repositoryService);
         _snapshotCollectionService.GetStatusAsync(Arg.Any<CancellationToken>())
             .Returns(new OperatorSnapshotStatusDto { Kind = OperatorSnapshotStatusKind.NeverRun });
@@ -845,5 +941,18 @@ public sealed class RepositoriesTests
         ctx.Render<MudSnackbarProvider>();
 
         return ctx;
+    }
+
+    private sealed class SignedInAuthenticationStateProvider : AuthenticationStateProvider
+    {
+        public override Task<AuthenticationState> GetAuthenticationStateAsync() =>
+            Task.FromResult(new AuthenticationState(
+                new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Name, "octocat")], "test"))));
+    }
+
+    private sealed class AnonymousAuthenticationStateProvider : AuthenticationStateProvider
+    {
+        public override Task<AuthenticationState> GetAuthenticationStateAsync() =>
+            Task.FromResult(new AuthenticationState(new ClaimsPrincipal()));
     }
 }

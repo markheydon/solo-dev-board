@@ -41,6 +41,14 @@ Hosted authentication will:
 - Admission control is enforced via operator-managed allow-lists.
 - Hosted token lifecycle handling becomes a first-class part of the production authentication design.
 
+## Addendum (2026-11-26): Worker credential for overnight collection
+
+**Status:** Accepted (amendment recorded with scheduled snapshot collection delivery)
+
+Overnight snapshot collection uses a **second** GitHub App user authorisation during hosted sign-in. The browser auth cookie keeps the refresh token from the first authorisation. The durable sign-in blob (schema version 2) stores only `workerRefreshToken` and `workerRefreshTokenExpiresAt` from that second grant. A schema 1 blob `refreshToken` field was the interactive grant and is not copied or exchanged as the worker token.
+
+The worker exchanges `workerRefreshToken` only. Hand-started collection uses the signed-in session access token. Operators may refresh the worker token from `/repositories` (**Refresh overnight access**) without moving the 30-day sign-in window or replacing saved organisation logins.
+
 ## References
 
 - [ADR-0005](0005-github-api-strategy.md)

@@ -346,6 +346,7 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
                     found.Record.OperatorLogin,
                     found.Record.CompletedAt,
                     found.Record.CredentialUnusable,
+                    found.Record.HasWorkerRefreshToken,
                     found.Record.OrganisationLogins);
             }
 
@@ -373,7 +374,7 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
                 ? document?.Trigger
                 : null;
 
-        return new OperatorSnapshotStatusDto
+        var runtime = new OperatorSnapshotStatusDto
         {
             Kind = dto.Kind,
             RunStartedAt = dto.RunStartedAt,
@@ -395,6 +396,46 @@ public sealed class OperatorSnapshotCollectionService : IOperatorSnapshotCollect
             NextOccasionAtUtc = facts.NextOccasionAtUtc,
             NextOccasionOnFollowingUtcDay = nextOnFollowingDay,
             NoScheduleReason = facts.NoScheduleReason,
+            NextAskIncludesAccount = facts.NextAskIncludesAccount,
+            WorkerTokenRefreshOffered = facts.WorkerTokenRefreshOffered,
+        };
+
+        var (statusSentence, scheduleSentence) = AccountScanStatusSentenceFormatter.Format(
+            facts.SchedulePosture,
+            facts.NoScheduleReason,
+            scanReport?.Reported,
+            scanReport,
+            runtime,
+            signIn,
+            facts.NextAskIncludesAccount,
+            facts.WorkerTokenRefreshOffered);
+
+        return new OperatorSnapshotStatusDto
+        {
+            Kind = runtime.Kind,
+            RunStartedAt = runtime.RunStartedAt,
+            RunFinishedAt = runtime.RunFinishedAt,
+            RepositoriesRecordedThisRun = runtime.RepositoriesRecordedThisRun,
+            LastSuccessfulCollectionAt = runtime.LastSuccessfulCollectionAt,
+            SnapshotRepositoryCount = runtime.SnapshotRepositoryCount,
+            Reason = runtime.Reason,
+            Detail = runtime.Detail,
+            DurabilityKind = runtime.DurabilityKind,
+            Trigger = runtime.Trigger,
+            SchedulePosture = runtime.SchedulePosture,
+            AccountScanStatus = runtime.AccountScanStatus,
+            ReportedScanStatus = runtime.ReportedScanStatus,
+            LastScanAt = runtime.LastScanAt,
+            LastScanResult = runtime.LastScanResult,
+            ResultComment = runtime.ResultComment,
+            ScanSuspensionReason = runtime.ScanSuspensionReason,
+            NextOccasionAtUtc = runtime.NextOccasionAtUtc,
+            NextOccasionOnFollowingUtcDay = runtime.NextOccasionOnFollowingUtcDay,
+            NoScheduleReason = runtime.NoScheduleReason,
+            NextAskIncludesAccount = runtime.NextAskIncludesAccount,
+            WorkerTokenRefreshOffered = runtime.WorkerTokenRefreshOffered,
+            StatusSentence = statusSentence,
+            ScheduleSentence = scheduleSentence,
         };
     }
 

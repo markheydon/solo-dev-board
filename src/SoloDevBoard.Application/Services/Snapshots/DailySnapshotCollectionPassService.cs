@@ -89,7 +89,7 @@ public sealed class DailySnapshotCollectionPassService(
         var signIn = await signInRecords.GetAsync(login, cancellationToken).ConfigureAwait(false);
         if (signIn is not HostedSignInRecordReadResult.Found record)
         {
-            await FailSignInAsync(login, generation, found, cancellationToken).ConfigureAwait(false);
+            await FailSignInAsync(login, generation, found, capturedWorkerToken: null, cancellationToken).ConfigureAwait(false);
             await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -106,12 +106,7 @@ public sealed class DailySnapshotCollectionPassService(
             return;
         }
 
-        if (record.Record.CredentialUnusable)
-        {
-            await FailSignInAsync(login, generation, found, cancellationToken).ConfigureAwait(false);
-            await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
-            return;
-        }
+        var capturedWorkerToken = record.Record.WorkerRefreshTokenForExchange;
 
         await using var runner = await runnerLease.TryAcquireAsync(TimeSpan.FromSeconds(60), cancellationToken).ConfigureAwait(false);
         if (runner is null)
@@ -130,22 +125,29 @@ public sealed class DailySnapshotCollectionPassService(
             return;
         }
 
+        if (string.IsNullOrWhiteSpace(capturedWorkerToken))
+        {
+            await FailSignInAsync(login, generation, found, capturedWorkerToken, cancellationToken).ConfigureAwait(false);
+            await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
         string accessToken;
         try
         {
-            var exchange = await tokenExchange.RefreshAccessTokenAsync(record.Record.RefreshToken, cancellationToken).ConfigureAwait(false);
+            var exchange = await tokenExchange.RefreshAccessTokenAsync(capturedWorkerToken, cancellationToken).ConfigureAwait(false);
             accessToken = exchange.AccessToken;
-            if (!await TryPersistRefreshTokenAsync(login, record, exchange, cancellationToken).ConfigureAwait(false))
+            if (!await TryPersistWorkerRefreshTokenAsync(login, record, capturedWorkerToken, exchange, cancellationToken).ConfigureAwait(false))
             {
                 logger.LogWarning(
-                    "Daily pass persisted refreshed token for {Login} only after conflict; continuing with exchanged access token.",
+                    "Daily pass persisted worker token for {Login} only after conflict; continuing with exchanged access token.",
                     login);
             }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            logger.LogWarning(ex, "Daily pass token exchange failed for {Login}.", login);
-            await FailSignInAsync(login, generation, found, cancellationToken).ConfigureAwait(false);
+            logger.LogWarning(ex, "Daily pass worker token exchange failed for {Login}.", login);
+            await FailSignInAsync(login, generation, found, capturedWorkerToken, cancellationToken).ConfigureAwait(false);
             await invocation.CompleteAsync(cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -294,8 +296,7 @@ public sealed class DailySnapshotCollectionPassService(
                 var comment = AccountScanResultComment.ForFailure(found.Document.Run.Reason, found.Document.Run.Detail);
                 if (found.Document.Run.Reason == OperatorSnapshotRunReason.SignInOrToken)
                 {
-                    await accountScanStatus.RecordTokenFailureAsync(login, generation, comment, cancellationToken).ConfigureAwait(false);
-                    await MarkCredentialUnusableAsync(login, cancellationToken).ConfigureAwait(false);
+                    await RecordSignInOrTokenFailureAsync(login, generation, comment, cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {
@@ -401,10 +402,21 @@ public sealed class DailySnapshotCollectionPassService(
         await snapshotStore.SaveAsync(found.Document.OperatorLogin, document, found.Token, cancellationToken).ConfigureAwait(false);
     }
 
+    private async Task RecordSignInOrTokenFailureAsync(
+        string login,
+        int generation,
+        string comment,
+        CancellationToken cancellationToken)
+    {
+        await accountScanStatus.RecordTokenFailureAsync(login, generation, comment, cancellationToken).ConfigureAwait(false);
+        await MarkCredentialUnusableAsync(login, cancellationToken).ConfigureAwait(false);
+    }
+
     private async Task FailSignInAsync(
         string login,
         int generation,
         OperatorSnapshotGetResult.Found? found,
+        string? capturedWorkerToken,
         CancellationToken cancellationToken)
     {
         if (found is not null)
@@ -424,24 +436,39 @@ public sealed class DailySnapshotCollectionPassService(
             await snapshotStore.SaveAsync(found.Document.OperatorLogin, document, found.Token, cancellationToken).ConfigureAwait(false);
         }
 
-        await accountScanStatus
-            .RecordTokenFailureAsync(
-                login,
-                generation,
-                AccountScanResultComment.ForFailure(OperatorSnapshotRunReason.SignInOrToken, null),
-                cancellationToken)
-            .ConfigureAwait(false);
-        await MarkCredentialUnusableAsync(login, cancellationToken).ConfigureAwait(false);
+        var comment = AccountScanResultComment.ForFailure(OperatorSnapshotRunReason.SignInOrToken, null);
+        var currentSignIn = await signInRecords.GetAsync(login, cancellationToken).ConfigureAwait(false);
+        var hasNewerWorkerToken = currentSignIn is HostedSignInRecordReadResult.Found foundRecord
+            && foundRecord.Record.HasWorkerRefreshToken
+            && !string.IsNullOrWhiteSpace(capturedWorkerToken)
+            && !string.Equals(foundRecord.Record.WorkerRefreshToken, capturedWorkerToken, StringComparison.Ordinal);
+
+        if (hasNewerWorkerToken)
+        {
+            await accountScanStatus.RecordTokenFailureFinishedAsync(login, generation, comment, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        else
+        {
+            await accountScanStatus.RecordTokenFailureAsync(login, generation, comment, cancellationToken).ConfigureAwait(false);
+            await MarkCredentialUnusableAsync(login, cancellationToken).ConfigureAwait(false);
+        }
     }
 
-    private async Task<bool> TryPersistRefreshTokenAsync(
+    private async Task<bool> TryPersistWorkerRefreshTokenAsync(
         string login,
         HostedSignInRecordReadResult.Found record,
+        string capturedWorkerToken,
         HostedGitHubRefreshTokenExchangeResult exchange,
         CancellationToken cancellationToken)
     {
-        record.Record.RefreshToken = exchange.RefreshToken;
-        record.Record.RefreshTokenExpiresAt = exchange.RefreshTokenExpiresAtUtc;
+        if (!string.Equals(record.Record.WorkerRefreshToken, capturedWorkerToken, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        record.Record.WorkerRefreshToken = exchange.RefreshToken;
+        record.Record.WorkerRefreshTokenExpiresAt = exchange.RefreshTokenExpiresAtUtc;
 
         for (var attempt = 0; attempt < 2; attempt++)
         {
@@ -462,9 +489,14 @@ public sealed class DailySnapshotCollectionPassService(
                 return false;
             }
 
+            if (!string.Equals(retry.Record.WorkerRefreshToken, capturedWorkerToken, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
             record = retry;
-            record.Record.RefreshToken = exchange.RefreshToken;
-            record.Record.RefreshTokenExpiresAt = exchange.RefreshTokenExpiresAtUtc;
+            record.Record.WorkerRefreshToken = exchange.RefreshToken;
+            record.Record.WorkerRefreshTokenExpiresAt = exchange.RefreshTokenExpiresAtUtc;
             record.Record.CredentialUnusable = false;
         }
 

@@ -18,6 +18,7 @@ public sealed record HostedSignInRecordForSchedule(
     string OperatorLogin,
     DateTimeOffset CompletedAt,
     bool CredentialUnusable,
+    bool HasWorkerRefreshToken,
     IReadOnlyList<string> OrganisationLogins);
 
 /// <summary>Schedule fields merged into <see cref="OperatorSnapshotStatusDto"/>.</summary>
@@ -25,4 +26,6 @@ public sealed record OperatorSnapshotScheduleFacts(
     OperatorSnapshotSchedulePosture SchedulePosture,
     OperatorSnapshotNoScheduleReason NoScheduleReason,
     DateTimeOffset? NextOccasionAtUtc,
-    OperatorSnapshotCollectionTrigger? Trigger);
+    OperatorSnapshotCollectionTrigger? Trigger,
+    bool NextAskIncludesAccount,
+    bool WorkerTokenRefreshOffered);

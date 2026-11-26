@@ -58,5 +58,6 @@ public sealed class DailySnapshotQueueMessageJsonTests
         Assert.Contains("operatorLogin", json, StringComparison.Ordinal);
         Assert.DoesNotContain("refreshToken", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("token", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("workerRefreshToken", json, StringComparison.OrdinalIgnoreCase);
     }
 }

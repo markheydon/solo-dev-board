@@ -16,7 +16,8 @@ public sealed class HostedCollectionEligibilityEvaluatorTests
         OperatorLogin = "octocat",
         CompletedAt = Occasion.AddDays(-1),
         OrganisationLogins = [],
-        RefreshToken = "token",
+        SchemaVersion = 2,
+        WorkerRefreshToken = "token",
         CredentialUnusable = false,
     };
 

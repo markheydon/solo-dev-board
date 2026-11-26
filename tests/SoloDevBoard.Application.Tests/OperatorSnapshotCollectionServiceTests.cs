@@ -276,7 +276,8 @@ public sealed class OperatorSnapshotCollectionServiceTests
         {
             OperatorLogin = "octocat",
             CompletedAt = HostedNow.AddDays(-1),
-            RefreshToken = "refresh",
+            SchemaVersion = 2,
+            WorkerRefreshToken = "refresh",
         });
         var queue = new RecordingDailyQueuePublisher();
         var fill = DailyOccasionServiceTestFactory.Create(
@@ -309,6 +310,77 @@ public sealed class OperatorSnapshotCollectionServiceTests
         Assert.Equal(2, stored.ScanGeneration);
 
         walkGate.SetResult();
+    }
+
+    [Fact]
+    public async Task OperatorSnapshotCollectionService_StartAsync_MissingWorkerToken_UsesSessionAccessToken()
+    {
+        const string sessionToken = "session-access-token";
+        var signIns = new TrackingHostedSignInRecordStore();
+        var store = new InMemoryOperatorSnapshotStore();
+        var walkGate = new TaskCompletionSource();
+        string? tokenPassed = null;
+        var scopeFactory = Substitute.For<ISnapshotCollectionCredentialScopeFactory>();
+        scopeFactory.CreateScope(Arg.Any<string>(), Arg.Any<string>())
+            .Returns(call =>
+            {
+                tokenPassed = call.ArgAt<string>(1);
+                return new GitHubServiceScope(GatedGitHub(walkGate));
+            });
+
+        var userContext = Substitute.For<ICurrentUserContext>();
+        userContext.OwnerLogin.Returns("octocat");
+        userContext.GetAccessToken().Returns(sessionToken);
+
+        var coordinator = new OperatorSnapshotCollectionCoordinator(
+            scopeFactory,
+            TimeProvider.System,
+            new OperatorSnapshotApplicationStopping(CancellationToken.None),
+            NullLogger<OperatorSnapshotCollectionCoordinator>.Instance);
+        var service = new OperatorSnapshotCollectionService(
+            userContext,
+            store,
+            coordinator,
+            Options.Create(new OperatorSnapshotDurabilityOptions { DurabilityKind = OperatorSnapshotDurabilityKind.HostedBlob }),
+            new FixedTimeProvider(HostedNow),
+            new OperatorSnapshotScheduleFactsService(
+                new TestScheduledCollectionEnvironment(enabled: true),
+                new HostedCollectionEligibilityEvaluator(Options.Create(new HostedAdmissionControlOptions { Enabled = false }))),
+            signIns,
+            new TestScheduledCollectionEnvironment(enabled: true),
+            AccountScanStatusTestFactory.CreateTransitions(new InMemoryAccountScanStatusStore(), new FixedTimeProvider(HostedNow)),
+            NullLogger<OperatorSnapshotCollectionService>.Instance);
+
+        var start = await service.StartAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(OperatorSnapshotStartResult.Started, start);
+        Assert.Equal(sessionToken, tokenPassed);
+        Assert.Equal(0, signIns.GetCallCount);
+
+        walkGate.SetResult();
+        await WaitForCoordinatorIdleAsync(coordinator);
+
+        var statuses = new InMemoryAccountScanStatusStore();
+        statuses.Seed(AccountScanStatusTestFactory.Document(
+            "octocat",
+            AccountScanStatusDocumentConstants.StatusScheduled,
+            generation: 2,
+            queueMessagePending: true));
+        Assert.Equal(
+            OperatorSnapshotStartResult.AlreadyInProgress,
+            await CreateHostedService(store, statuses, new FixedTimeProvider(HostedNow))
+                .StartAsync(TestContext.Current.CancellationToken));
+
+        statuses.Seed(AccountScanStatusTestFactory.Document(
+            "octocat",
+            AccountScanStatusDocumentConstants.StatusRunning,
+            generation: 3,
+            livenessAt: HostedNow,
+            runningSince: HostedNow));
+        Assert.Equal(
+            OperatorSnapshotStartResult.AlreadyInProgress,
+            await CreateHostedService(store, statuses, new FixedTimeProvider(HostedNow))
+                .StartAsync(TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -410,7 +482,8 @@ public sealed class OperatorSnapshotCollectionServiceTests
         {
             OperatorLogin = "octocat",
             CompletedAt = HostedNow.AddDays(-1),
-            RefreshToken = "refresh",
+            SchemaVersion = 2,
+            WorkerRefreshToken = "refresh",
         });
 
         return new OperatorSnapshotCollectionService(
@@ -502,6 +575,26 @@ public sealed class OperatorSnapshotCollectionServiceTests
     {
         public object? GetService(Type serviceType)
             => serviceType == typeof(IGitHubService) ? github : null;
+    }
+
+    private sealed class TrackingHostedSignInRecordStore : IHostedSignInRecordStore
+    {
+        public int GetCallCount { get; private set; }
+
+        public Task<IReadOnlyList<HostedSignInRecord>> ListAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<HostedSignInRecord>>([]);
+
+        public Task<HostedSignInRecordReadResult> GetAsync(string operatorLogin, CancellationToken cancellationToken = default)
+        {
+            GetCallCount++;
+            return Task.FromResult<HostedSignInRecordReadResult>(new HostedSignInRecordReadResult.NotFound());
+        }
+
+        public Task<HostedSignInRecordWriteResult> UpsertAsync(
+            HostedSignInRecord record,
+            string? expectedEtag,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<HostedSignInRecordWriteResult>(new HostedSignInRecordWriteResult.Succeeded(string.Empty));
     }
 
     private sealed class TestHostedSignInRecordStore : IHostedSignInRecordStore

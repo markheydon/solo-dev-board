@@ -229,7 +229,32 @@ internal sealed class InMemoryHostedSignInRecordStore : IHostedSignInRecordStore
         HostedSignInRecord record,
         string? expectedEtag,
         CancellationToken cancellationToken = default)
-        => Task.FromResult<HostedSignInRecordWriteResult>(new HostedSignInRecordWriteResult.Succeeded("etag"));
+    {
+        var index = _records.FindIndex(
+            r => string.Equals(r.OperatorLogin, record.OperatorLogin, StringComparison.OrdinalIgnoreCase));
+        if (index < 0)
+        {
+            _records.Add(Clone(record));
+        }
+        else
+        {
+            _records[index] = Clone(record);
+        }
+
+        return Task.FromResult<HostedSignInRecordWriteResult>(new HostedSignInRecordWriteResult.Succeeded("etag"));
+    }
+
+    private static HostedSignInRecord Clone(HostedSignInRecord source) => new()
+    {
+        SchemaVersion = source.SchemaVersion,
+        OperatorLogin = source.OperatorLogin,
+        CompletedAt = source.CompletedAt,
+        OrganisationLogins = source.OrganisationLogins.ToList(),
+        WorkerRefreshToken = source.WorkerRefreshToken,
+        WorkerRefreshTokenExpiresAt = source.WorkerRefreshTokenExpiresAt,
+        LegacyRefreshToken = source.LegacyRefreshToken,
+        CredentialUnusable = source.CredentialUnusable,
+    };
 }
 
 internal sealed class AlwaysAvailableRunnerLease : IDailyCollectionRunnerLease

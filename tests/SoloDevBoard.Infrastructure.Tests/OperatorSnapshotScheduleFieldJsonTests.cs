@@ -100,6 +100,7 @@ public sealed class OperatorSnapshotScheduleFieldJsonTests
         var json = await File.ReadAllTextAsync(Path.Combine(root, "octocat.json"), TestContext.Current.CancellationToken);
         Assert.Contains("scheduledCollectionStopped", json, StringComparison.Ordinal);
         Assert.DoesNotContain("refreshToken", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("workerRefreshToken", json, StringComparison.OrdinalIgnoreCase);
     }
 
     private static FileOperatorSnapshotStore CreateStore(string root)

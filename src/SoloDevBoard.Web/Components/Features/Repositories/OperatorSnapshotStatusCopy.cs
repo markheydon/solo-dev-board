@@ -71,6 +71,12 @@ internal static class OperatorSnapshotStatusCopy
             return string.Empty;
         }
 
+        if (status.SchedulePosture == OperatorSnapshotSchedulePosture.Hosted
+            && (!string.IsNullOrEmpty(status.StatusSentence) || !string.IsNullOrEmpty(status.ScheduleSentence)))
+        {
+            return Join(status.ScheduleSentence, status.StatusSentence ?? string.Empty);
+        }
+
         var schedule = BuildScheduleClause(status);
 
         if (status.ReportedScanStatus is { } reported)

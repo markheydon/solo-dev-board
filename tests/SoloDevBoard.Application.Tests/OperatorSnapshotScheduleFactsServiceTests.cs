@@ -21,6 +21,7 @@ public sealed class OperatorSnapshotScheduleFactsServiceTests
             "octocat",
             CompletedAt: TodayOccasion.AddDays(-1),
             CredentialUnusable: false,
+            HasWorkerRefreshToken: false,
             OrganisationLogins: []);
         var document = new OperatorSnapshotDocument
         {
@@ -42,6 +43,7 @@ public sealed class OperatorSnapshotScheduleFactsServiceTests
             "octocat",
             CompletedAt: TodayOccasion.AddDays(-1),
             CredentialUnusable: true,
+            HasWorkerRefreshToken: false,
             OrganisationLogins: []);
         var document = new OperatorSnapshotDocument { OperatorLogin = "octocat" };
         var admission = new HostedCollectionEligibilityEvaluator(
@@ -67,6 +69,7 @@ public sealed class OperatorSnapshotScheduleFactsServiceTests
             "octocat",
             CompletedAt: TodayOccasion.AddDays(-45),
             CredentialUnusable: true,
+            HasWorkerRefreshToken: false,
             OrganisationLogins: []);
         var document = new OperatorSnapshotDocument { OperatorLogin = "octocat" };
 
@@ -84,6 +87,7 @@ public sealed class OperatorSnapshotScheduleFactsServiceTests
             "markheydon",
             CompletedAt: TodayOccasion.AddDays(-1),
             CredentialUnusable: false,
+            HasWorkerRefreshToken: false,
             OrganisationLogins: []);
         var admission = new HostedCollectionEligibilityEvaluator(
             Options.Create(new HostedAdmissionControlOptions
@@ -109,6 +113,7 @@ public sealed class OperatorSnapshotScheduleFactsServiceTests
             "octocat",
             CompletedAt: TodayOccasion.AddDays(-1),
             CredentialUnusable: false,
+            HasWorkerRefreshToken: false,
             OrganisationLogins: []);
         var document = new OperatorSnapshotDocument { OperatorLogin = "octocat" };
 
@@ -125,6 +130,7 @@ public sealed class OperatorSnapshotScheduleFactsServiceTests
             "octocat",
             CompletedAt: TodayOccasion.AddDays(-45),
             CredentialUnusable: false,
+            HasWorkerRefreshToken: false,
             OrganisationLogins: []);
 
         var facts = CreateSut().Compute(new OperatorSnapshotDocument(), signIn, ReportedAccountScanStatus.Scheduled, utcNow);
@@ -140,6 +146,7 @@ public sealed class OperatorSnapshotScheduleFactsServiceTests
             "octocat",
             CompletedAt: TodayOccasion.AddDays(-1),
             CredentialUnusable: false,
+            HasWorkerRefreshToken: false,
             OrganisationLogins: []);
         var sut = new OperatorSnapshotScheduleFactsService(
             new StubScheduledCollectionEnvironment { IsHostedScheduleEnabled = true },
@@ -162,6 +169,7 @@ public sealed class OperatorSnapshotScheduleFactsServiceTests
             "octocat",
             CompletedAt: TodayOccasion.AddDays(-45),
             CredentialUnusable: false,
+            HasWorkerRefreshToken: false,
             OrganisationLogins: []);
 
         var facts = CreateSut().Compute(
@@ -186,6 +194,36 @@ public sealed class OperatorSnapshotScheduleFactsServiceTests
         Assert.Equal(OperatorSnapshotSchedulePosture.Lean, facts.SchedulePosture);
         Assert.Equal(OperatorSnapshotNoScheduleReason.Lean, facts.NoScheduleReason);
         Assert.Null(facts.NextOccasionAtUtc);
+        Assert.False(facts.NextAskIncludesAccount);
+        Assert.False(facts.WorkerTokenRefreshOffered);
+
+        var (statusSentence, scheduleSentence) = AccountScanStatusSentenceFormatter.Format(
+            facts.SchedulePosture,
+            facts.NoScheduleReason,
+            null,
+            null,
+            new OperatorSnapshotStatusDto(),
+            null,
+            facts.NextAskIncludesAccount,
+            facts.WorkerTokenRefreshOffered);
+        Assert.Null(statusSentence);
+        Assert.Null(scheduleSentence);
+    }
+
+    [Fact]
+    public void Compute_HostedEligibleMissingWorker_OffersRefreshAndNextAsk()
+    {
+        var signIn = new HostedSignInRecordForSchedule(
+            "octocat",
+            CompletedAt: TodayOccasion.AddDays(-1),
+            CredentialUnusable: false,
+            HasWorkerRefreshToken: false,
+            OrganisationLogins: []);
+
+        var facts = CreateSut().Compute(new OperatorSnapshotDocument(), signIn, null, TodayOccasion.AddHours(-2));
+
+        Assert.True(facts.NextAskIncludesAccount);
+        Assert.True(facts.WorkerTokenRefreshOffered);
     }
 
     private sealed class StubScheduledCollectionEnvironment : IScheduledCollectionEnvironment

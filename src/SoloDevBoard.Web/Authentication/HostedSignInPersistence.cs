@@ -3,54 +3,30 @@ using SoloDevBoard.Application.Services.Snapshots;
 
 namespace SoloDevBoard.Web.Authentication;
 
-/// <summary>Stores the hosted sign-in record and the missing account scan status after a completed sign-in.</summary>
+/// <summary>Stores the hosted sign-in record after the browser leg of sign-in.</summary>
 internal static class HostedSignInPersistence
 {
     /// <summary>
-    /// Upserts the sign-in record, then inserts a <c>neverRun</c> status blob when none exists.
-    /// A blob that already exists is left unchanged, and nothing is queued or collected.
+    /// Upserts schema 2 sign-in facts without a worker token, then inserts a <c>neverRun</c> status blob when none exists.
     /// </summary>
-    internal static async Task PersistCompletedSignInAsync(
+    internal static Task PersistBrowserSignInAsync(
         HostedGitHubAuthSession session,
-        IHostedSignInRecordStore signInRecords,
-        AccountScanStatusTransitionService accountScanStatus,
+        HostedCredentialGrantService credentialGrants,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(session);
-        ArgumentNullException.ThrowIfNull(signInRecords);
-        ArgumentNullException.ThrowIfNull(accountScanStatus);
+        ArgumentNullException.ThrowIfNull(credentialGrants);
 
         var sanitised = OperatorLoginSanitiser.Sanitise(session.OwnerLogin);
         if (sanitised is null)
         {
-            return;
+            return Task.CompletedTask;
         }
 
-        var record = new HostedSignInRecord
-        {
-            SchemaVersion = 1,
-            OperatorLogin = sanitised,
-            CompletedAt = DateTimeOffset.UtcNow,
-            OrganisationLogins = session.OrganisationLogins,
-            RefreshToken = session.RefreshToken,
-            RefreshTokenExpiresAt = session.RefreshTokenExpiresAtUtc,
-            CredentialUnusable = false,
-        };
-
-        var existingSignIn = await signInRecords.GetAsync(sanitised, cancellationToken).ConfigureAwait(false);
-        var expectedEtag = existingSignIn is HostedSignInRecordReadResult.Found existing
-            ? existing.Etag
-            : null;
-        var upsert = await signInRecords.UpsertAsync(record, expectedEtag, cancellationToken).ConfigureAwait(false);
-        if (upsert is HostedSignInRecordWriteResult.ConcurrencyConflict)
-        {
-            var reread = await signInRecords.GetAsync(sanitised, cancellationToken).ConfigureAwait(false);
-            if (reread is HostedSignInRecordReadResult.Found found)
-            {
-                await signInRecords.UpsertAsync(record, found.Etag, cancellationToken).ConfigureAwait(false);
-            }
-        }
-
-        await accountScanStatus.EnsureNeverRunIfAbsentAsync(sanitised, cancellationToken).ConfigureAwait(false);
+        return credentialGrants.PersistBrowserSignInAsync(
+            sanitised,
+            DateTimeOffset.UtcNow,
+            session.OrganisationLogins,
+            cancellationToken);
     }
 }

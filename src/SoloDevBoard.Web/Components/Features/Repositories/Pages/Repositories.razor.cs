@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.WebUtilities;
 using MudBlazor;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.Repositories;
@@ -31,7 +33,11 @@ public partial class Repositories : ComponentBase, IAsyncDisposable
     [Inject]
     public IGitHubAuthenticationRecoveryService GitHubAuthRecovery { get; set; } = default!;
 
+    [Inject]
+    public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+
     private IReadOnlyList<RepositoryDto> repositories = [];
+    private bool isSignedIn;
     private bool isLoading = true;
     private string? errorMessage;
     private string feedbackMessage = "Loading repositories...";
@@ -49,6 +55,12 @@ public partial class Repositories : ComponentBase, IAsyncDisposable
         isLoading
         || awaitingInitialSnapshotStatus
         || OperatorSnapshotStatusCopy.IsCollectBlocked(snapshotStatus);
+
+    private bool showRefreshOvernightAccess =>
+        isSignedIn && snapshotStatus?.WorkerTokenRefreshOffered == true;
+
+    private string refreshOvernightAccessHref =>
+        QueryHelpers.AddQueryString("/auth/refresh-worker", new Dictionary<string, string?> { ["returnUrl"] = "/repositories" });
 
     private IReadOnlyList<RepositoryDto> FilteredRepositories
     {
@@ -77,6 +89,8 @@ public partial class Repositories : ComponentBase, IAsyncDisposable
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync().ConfigureAwait(false);
+        isSignedIn = authState.User.Identity?.IsAuthenticated == true;
         await RefreshSnapshotStatusAsync();
         await LoadRepositoriesAsync();
         ApplyCombinedFeedback();

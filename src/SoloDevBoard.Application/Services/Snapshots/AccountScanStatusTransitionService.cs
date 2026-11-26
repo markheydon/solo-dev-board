@@ -321,6 +321,65 @@ public sealed class AccountScanStatusTransitionService(
             .ConfigureAwait(false);
     }
 
+    /// <summary>Records token failure as finished when a newer worker token is already stored.</summary>
+    public async Task RecordTokenFailureFinishedAsync(
+        string operatorLogin,
+        int generation,
+        string comment,
+        CancellationToken cancellationToken = default)
+    {
+        var now = _timeProvider.GetUtcNow();
+        await MutateWhenGenerationMatchesAsync(
+                operatorLogin,
+                generation,
+                document =>
+                {
+                    document.Status = AccountScanStatusDocumentConstants.StatusFinished;
+                    document.LastScanAt = now;
+                    document.LastResult = AccountScanStatusDocumentConstants.LastResultFailure;
+                    document.ResultComment = comment;
+                    document.SuspensionReason = null;
+                    document.QueueMessagePending = false;
+                    document.QueueVisibleAfter = null;
+                    document.LivenessAt = null;
+                    document.RunningSince = null;
+                },
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// After a kept worker refresh token, lifts a suspended token wait to finished without changing the failure comment.
+    /// </summary>
+    public async Task LiftSuspendedTokenWaitAfterWorkerRefreshAsync(
+        string operatorLogin,
+        CancellationToken cancellationToken = default)
+    {
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            var read = await _store.GetAsync(operatorLogin, cancellationToken).ConfigureAwait(false);
+            if (read is not AccountScanStatusReadResult.Found found)
+            {
+                return;
+            }
+
+            if (!string.Equals(found.Document.Status, AccountScanStatusDocumentConstants.StatusSuspended, StringComparison.Ordinal)
+                || found.Document.SuspensionReason is not null)
+            {
+                return;
+            }
+
+            var next = Clone(found.Document);
+            next.Status = AccountScanStatusDocumentConstants.StatusFinished;
+            next.SuspensionReason = null;
+            var write = await _store.TryReplaceAsync(next, found.Etag, cancellationToken).ConfigureAwait(false);
+            if (write is AccountScanStatusWriteResult.Succeeded)
+            {
+                return;
+            }
+        }
+    }
+
     /// <summary>Queues a further try as <c>scheduled</c>.</summary>
     public async Task ScheduleFurtherTryAsync(
         string operatorLogin,

@@ -427,6 +427,200 @@ public sealed class DailySnapshotCollectionPassServiceTests
     }
 
     [Fact]
+    public async Task HostedSignInRecord_Schema1RefreshToken_IsNotCopiedOrExchanged()
+    {
+        const string legacyRefresh = "schema1-browser-refresh-token";
+        var harness = new Harness { SeedSignIn = false };
+        harness.SignInStore.Seed(new HostedSignInRecord
+        {
+            SchemaVersion = 1,
+            OperatorLogin = Login,
+            CompletedAt = DateTimeOffset.UtcNow.AddDays(-1),
+            LegacyRefreshToken = legacyRefresh,
+            CredentialUnusable = false,
+        });
+        var signIn = harness.SignIns.Single();
+        Assert.Null(signIn.WorkerRefreshToken);
+        Assert.Null(signIn.WorkerRefreshTokenForExchange);
+        Assert.Equal(legacyRefresh, signIn.LegacyRefreshToken);
+
+        harness.Statuses.Seed(Scheduled(generation: 2));
+        harness.Snapshots.Seed(Login, SucceededSnapshot());
+        var completed = false;
+
+        await harness.CreateSut().HandleQueueMessageAsync(
+            Invocation(Initial(), () => completed = true),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(completed);
+        await harness.TokenExchange.DidNotReceive()
+            .RefreshAccessTokenAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await harness.TokenExchange.DidNotReceive()
+            .RefreshAccessTokenAsync(legacyRefresh, Arg.Any<CancellationToken>());
+        Assert.Equal(AccountScanStatusDocumentConstants.StatusSuspended, harness.Statuses.Peek(Login)!.Status);
+        Assert.True(harness.SignIns.Single().CredentialUnusable);
+    }
+
+    [Fact]
+    public async Task DailySnapshotCollectionPassService_MissingWorkerToken_SetsSuspendedWithoutCookieExchange()
+    {
+        var harness = new Harness { SeedSignIn = false };
+        harness.SignInStore.Seed(new HostedSignInRecord
+        {
+            SchemaVersion = 2,
+            OperatorLogin = Login,
+            CompletedAt = DateTimeOffset.UtcNow.AddDays(-1),
+            CredentialUnusable = false,
+        });
+        harness.Statuses.Seed(Scheduled(generation: 2));
+        harness.Snapshots.Seed(Login, SucceededSnapshot());
+        var completed = false;
+
+        await harness.CreateSut().HandleQueueMessageAsync(
+            Invocation(Initial(), () => completed = true),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(completed);
+        await harness.TokenExchange.DidNotReceive()
+            .RefreshAccessTokenAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+        Assert.Equal(AccountScanStatusDocumentConstants.StatusSuspended, harness.Statuses.Peek(Login)!.Status);
+        Assert.True(harness.SignIns.Single().CredentialUnusable);
+    }
+
+    [Fact]
+    public async Task DailySnapshotCollectionPassService_QueuedScan_UsesWorkerTokenStoredWhenTaken()
+    {
+        var harness = new Harness { SeedSignIn = false };
+        harness.SignInStore.Seed(new HostedSignInRecord
+        {
+            SchemaVersion = 2,
+            OperatorLogin = Login,
+            CompletedAt = DateTimeOffset.UtcNow.AddDays(-1),
+            CredentialUnusable = false,
+        });
+        harness.Statuses.Seed(Scheduled(generation: 2));
+        harness.Snapshots.Seed(Login, SucceededSnapshot());
+
+        var storedRecord = harness.SignIns.Single();
+        storedRecord.WorkerRefreshToken = "worker-at-dequeue";
+        await harness.SignInStore.UpsertAsync(storedRecord, "etag", TestContext.Current.CancellationToken);
+
+        var gate = new TaskCompletionSource();
+        harness.Coordinator = CoordinatorTestFactory.CreateWithGithub(CoordinatorTestFactory.Gated(gate));
+        var completed = false;
+
+        var handling = harness.CreateSut().HandleQueueMessageAsync(
+            Invocation(Initial(), () => completed = true),
+            TestContext.Current.CancellationToken);
+
+        await harness.TokenExchange.Received(1)
+            .RefreshAccessTokenAsync("worker-at-dequeue", Arg.Any<CancellationToken>());
+        gate.SetResult();
+        await handling;
+        Assert.True(completed);
+    }
+
+    [Fact]
+    public async Task DailySnapshotCollectionPassService_RunningScan_DoesNotOverwriteNewerWorkerToken()
+    {
+        const string captured = "worker-captured";
+        const string newer = "worker-newer";
+        var harness = new Harness { SeedSignIn = false };
+        harness.SignInStore.Seed(new HostedSignInRecord
+        {
+            SchemaVersion = 2,
+            OperatorLogin = Login,
+            CompletedAt = DateTimeOffset.UtcNow.AddDays(-1),
+            WorkerRefreshToken = captured,
+            CredentialUnusable = false,
+        });
+        harness.Statuses.Seed(Scheduled(generation: 2));
+        harness.Snapshots.Seed(Login, SucceededSnapshot());
+
+        var gate = new TaskCompletionSource();
+        harness.Coordinator = CoordinatorTestFactory.CreateWithGithub(CoordinatorTestFactory.Gated(gate));
+        harness.TokenExchange.RefreshAccessTokenAsync(captured, Arg.Any<CancellationToken>())
+            .Returns(async call =>
+            {
+                var record = harness.SignIns.Single();
+                record.WorkerRefreshToken = newer;
+                await harness.SignInStore.UpsertAsync(record, "etag", call.Arg<CancellationToken>());
+                await Task.Delay(50, call.Arg<CancellationToken>());
+                return new HostedGitHubRefreshTokenExchangeResult(
+                    "access",
+                    "rotated",
+                    DateTimeOffset.UtcNow.AddDays(1),
+                    null);
+            });
+
+        var handling = harness.CreateSut().HandleQueueMessageAsync(
+            Invocation(Initial(), () => { }),
+            TestContext.Current.CancellationToken);
+        await WaitUntilAsync(() => harness.Statuses.Peek(Login)!.Status == AccountScanStatusDocumentConstants.StatusRunning);
+
+        gate.SetResult();
+        await handling;
+
+        Assert.Equal(newer, harness.SignIns.Single().WorkerRefreshToken);
+    }
+
+    [Fact]
+    public async Task DailySnapshotCollectionPassService_TokenFailureWithNewerToken_SetsFinishedWithoutWait()
+    {
+        const string captured = "worker-old";
+        var harness = new Harness { SeedSignIn = false };
+        harness.SignInStore.Seed(new HostedSignInRecord
+        {
+            SchemaVersion = 2,
+            OperatorLogin = Login,
+            CompletedAt = DateTimeOffset.UtcNow.AddDays(-1),
+            WorkerRefreshToken = captured,
+            CredentialUnusable = false,
+        });
+        harness.Statuses.Seed(Scheduled(generation: 2));
+        harness.Snapshots.Seed(Login, SucceededSnapshot());
+        harness.TokenExchange.RefreshAccessTokenAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns<Task<HostedGitHubRefreshTokenExchangeResult>>(async call =>
+            {
+                var storedRecord = harness.SignIns.Single();
+                storedRecord.WorkerRefreshToken = "worker-newer";
+                await harness.SignInStore.UpsertAsync(storedRecord, "etag", call.Arg<CancellationToken>());
+                throw new InvalidOperationException("expired");
+            });
+
+        var completed = false;
+        await harness.CreateSut().HandleQueueMessageAsync(
+            Invocation(Initial(), () => completed = true),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(completed);
+        var stored = harness.Statuses.Peek(Login)!;
+        Assert.Equal(AccountScanStatusDocumentConstants.StatusFinished, stored.Status);
+        Assert.Equal(AccountScanStatusDocumentConstants.LastResultFailure, stored.LastResult);
+        Assert.False(harness.SignIns.Single().CredentialUnusable);
+    }
+
+    [Fact]
+    public async Task DailySnapshotCollectionPassService_TokenFailureWithoutNewerToken_SetsSuspendedAndWait()
+    {
+        var harness = new Harness();
+        harness.Statuses.Seed(Scheduled(generation: 2));
+        harness.Snapshots.Seed(Login, SucceededSnapshot());
+        harness.TokenExchange.RefreshAccessTokenAsync("refresh", Arg.Any<CancellationToken>())
+            .Returns<Task<HostedGitHubRefreshTokenExchangeResult>>(_ => throw new InvalidOperationException("expired"));
+        var completed = false;
+
+        await harness.CreateSut().HandleQueueMessageAsync(
+            Invocation(Initial(), () => completed = true),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(completed);
+        var stored = harness.Statuses.Peek(Login)!;
+        Assert.Equal(AccountScanStatusDocumentConstants.StatusSuspended, stored.Status);
+        Assert.True(harness.SignIns.Single().CredentialUnusable);
+    }
+
+    [Fact]
     public async Task DailySnapshotCollectionPassService_WebStopDuringRunningPass_DoesNotWriteSiteStopped()
     {
         var gate = new TaskCompletionSource();
@@ -525,6 +719,8 @@ public sealed class DailySnapshotCollectionPassServiceTests
 
         public bool SeedSignIn { get; init; } = true;
 
+        public HostedSignInRecord? CustomSignIn { get; init; }
+
         public DateTimeOffset SignInCompletedAt { get; init; } = DateTimeOffset.UtcNow.AddDays(-1);
 
         public OperatorSnapshotCollectionCoordinator? Coordinator { get; set; }
@@ -537,11 +733,12 @@ public sealed class DailySnapshotCollectionPassServiceTests
         {
             if (SeedSignIn)
             {
-                SignInStore.Seed(new HostedSignInRecord
+                SignInStore.Seed(CustomSignIn ?? new HostedSignInRecord
                 {
                     OperatorLogin = Login,
                     CompletedAt = SignInCompletedAt,
-                    RefreshToken = "refresh",
+                    SchemaVersion = 2,
+                    WorkerRefreshToken = "refresh",
                     CredentialUnusable = false,
                 });
             }

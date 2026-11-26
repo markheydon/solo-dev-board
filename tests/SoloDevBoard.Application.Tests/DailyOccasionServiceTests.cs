@@ -13,7 +13,8 @@ public sealed class DailyOccasionServiceTests
         OperatorLogin = login,
         CompletedAt = OccasionDay.AddDays(-1),
         OrganisationLogins = [],
-        RefreshToken = "token",
+        SchemaVersion = 2,
+        WorkerRefreshToken = "token",
         CredentialUnusable = false,
     };
 

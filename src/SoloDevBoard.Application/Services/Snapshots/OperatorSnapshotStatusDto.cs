@@ -62,4 +62,16 @@ public sealed class OperatorSnapshotStatusDto
 
     /// <summary>Why no next occasion is scheduled, when applicable.</summary>
     public OperatorSnapshotNoScheduleReason NoScheduleReason { get; init; }
+
+    /// <summary>FR-025 status sentence from Application.</summary>
+    public string? StatusSentence { get; init; }
+
+    /// <summary>FR-025 schedule sentence from Application.</summary>
+    public string? ScheduleSentence { get; init; }
+
+    /// <summary>True when the next 05:00 UTC ask would queue this account (not a rendered clock).</summary>
+    public bool NextAskIncludesAccount { get; init; }
+
+    /// <summary>True when the Repositories page may offer overnight access refresh.</summary>
+    public bool WorkerTokenRefreshOffered { get; init; }
 }

@@ -60,6 +60,7 @@ public sealed class BlobAccountScanStatusStoreTests
         Assert.NotNull(uploaded);
         Assert.DoesNotContain("refresh", uploaded, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("token", uploaded, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("workerRefreshToken", uploaded, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("\"status\":\"neverRun\"", uploaded, StringComparison.Ordinal);
         Assert.Contains("\"scanGeneration\":0", uploaded, StringComparison.Ordinal);
         Assert.Contains("\"lastResult\":null", uploaded, StringComparison.Ordinal);
