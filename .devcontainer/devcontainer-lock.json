@@ -16,9 +16,9 @@
       "integrity": "sha256:bd7ab48a832228f633239277552c30b353867fef2e5b037e064b4e64f0b843f2"
     },
     "ghcr.io/markheydon/devcontainer-features/aspire-cli:1": {
-      "version": "1.0.1",
-      "resolved": "ghcr.io/markheydon/devcontainer-features/aspire-cli@sha256:0199dc49a5a831a1d0b9adc96ab9114722e6c9a261b5a58840c5e27308678947",
-      "integrity": "sha256:0199dc49a5a831a1d0b9adc96ab9114722e6c9a261b5a58840c5e27308678947"
+      "version": "1.0.3",
+      "resolved": "ghcr.io/markheydon/devcontainer-features/aspire-cli@sha256:e93612871b07cba049df1dd504f1e2c9debd2e94f8e0cc11689c9b9e75999311",
+      "integrity": "sha256:e93612871b07cba049df1dd504f1e2c9debd2e94f8e0cc11689c9b9e75999311"
     },
     "ghcr.io/markheydon/devcontainer-features/dev-agent-tools:1": {
       "version": "1.1.0",
