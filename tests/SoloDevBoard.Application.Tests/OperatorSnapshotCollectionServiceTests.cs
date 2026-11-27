@@ -164,6 +164,8 @@ public sealed class OperatorSnapshotCollectionServiceTests
         Assert.Equal(ReportedAccountScanStatus.Scheduled, status.ReportedScanStatus);
         Assert.Null(status.Trigger);
         Assert.Equal(OperatorSnapshotSchedulePosture.Hosted, status.SchedulePosture);
+        Assert.False(string.IsNullOrEmpty(status.StatusSentence));
+        Assert.False(string.IsNullOrEmpty(status.ScheduleSentence));
     }
 
     [Fact]

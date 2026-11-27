@@ -12,9 +12,6 @@ internal static class OperatorSnapshotStatusCopy
     internal static string FormatLocalTime(DateTimeOffset utc)
         => utc.ToLocalTime().ToString("g", UnitedKingdomCulture);
 
-    /// <summary>Fixed comment shown when the account is suspended because it is not allowed.</summary>
-    internal const string NotAllowedComment = "You are not allowed to use the product.";
-
     /// <summary>True while a scan is working (hosted: told running; lean: the file run is in progress).</summary>
     internal static bool IsScanWorking(OperatorSnapshotStatusDto? status) =>
         status is not null
@@ -29,7 +26,7 @@ internal static class OperatorSnapshotStatusCopy
             ? reported is ReportedAccountScanStatus.Scheduled or ReportedAccountScanStatus.Running
             : status.Kind == OperatorSnapshotStatusKind.InProgress);
 
-    /// <summary>Schedule sentence for the status alert.</summary>
+    /// <summary>Schedule sentence for lean posture in the status alert.</summary>
     internal static string? BuildScheduleClause(OperatorSnapshotStatusDto? status)
     {
         if (status is null)
@@ -42,20 +39,7 @@ internal static class OperatorSnapshotStatusCopy
             return "Nothing collects on a schedule. The snapshot is kept on this machine rather than promised on another machine.";
         }
 
-        return status.NoScheduleReason switch
-        {
-            OperatorSnapshotNoScheduleReason.CredentialUnusable =>
-                "No scheduled collection will run until you sign in again.",
-            OperatorSnapshotNoScheduleReason.OutsideWindow =>
-                "No scheduled collection will run until you sign in again.",
-            OperatorSnapshotNoScheduleReason.NotAllowed =>
-                "No scheduled collection will run because you are not allowed to use the product.",
-            _ when status.NextOccasionAtUtc is { } next && next.UtcDateTime.TimeOfDay == TimeSpan.FromHours(5) =>
-                status.NextOccasionOnFollowingUtcDay
-                    ? "Next scheduled collection: 05:00 UTC on the following UTC day."
-                    : "Next scheduled collection: 05:00 UTC.",
-            _ => null,
-        };
+        return null;
     }
 
     /// <summary>Short clause appended to the catalogue feedback line (same alert).</summary>
@@ -71,18 +55,12 @@ internal static class OperatorSnapshotStatusCopy
             return string.Empty;
         }
 
-        if (status.SchedulePosture == OperatorSnapshotSchedulePosture.Hosted
-            && (!string.IsNullOrEmpty(status.StatusSentence) || !string.IsNullOrEmpty(status.ScheduleSentence)))
+        if (status.SchedulePosture == OperatorSnapshotSchedulePosture.Hosted)
         {
             return Join(status.ScheduleSentence, status.StatusSentence ?? string.Empty);
         }
 
         var schedule = BuildScheduleClause(status);
-
-        if (status.ReportedScanStatus is { } reported)
-        {
-            return Join(schedule, BuildHostedStatusClause(status, reported));
-        }
 
         var runClause = status.Kind switch
         {
@@ -116,75 +94,6 @@ internal static class OperatorSnapshotStatusCopy
         }
 
         return $"{schedule} {runClause}";
-    }
-
-    private static string BuildHostedStatusClause(OperatorSnapshotStatusDto status, ReportedAccountScanStatus reported)
-    {
-        switch (reported)
-        {
-            case ReportedAccountScanStatus.NeverRun:
-                return "Never run.";
-
-            case ReportedAccountScanStatus.Scheduled:
-                return AppendLastSuccessSuffix(status, "Scheduled.");
-
-            case ReportedAccountScanStatus.Running:
-                var trigger = status.Trigger == OperatorSnapshotCollectionTrigger.Daily
-                    ? "The daily occasion started it."
-                    : "You started it.";
-                return status.RunStartedAt is { } started
-                    ? $"Running. {BuildInProgressSuffix(status, started)}"
-                    : $"Running. {trigger}";
-
-            case ReportedAccountScanStatus.Stalled:
-                return AppendLastSuccessSuffix(
-                    status,
-                    "Stalled. The scan has not reported progress for more than five minutes. "
-                    + "Collect snapshot is still available.");
-
-            case ReportedAccountScanStatus.Finished:
-                return BuildHostedFinishedClause(status);
-
-            case ReportedAccountScanStatus.Suspended:
-                return BuildHostedSuspendedClause(status);
-
-            default:
-                return string.Empty;
-        }
-    }
-
-    private static string BuildHostedFinishedClause(OperatorSnapshotStatusDto status)
-    {
-        var at = status.LastScanAt is { } scanAt ? FormatLocalTime(scanAt) : null;
-        if (string.Equals(status.LastScanResult, AccountScanStatusDocumentConstants.LastResultFailure, StringComparison.Ordinal))
-        {
-            var failed = at is null ? "Snapshot could not be saved." : $"Snapshot could not be saved at {at}.";
-            return AppendLastSuccessSuffix(status, $"Finished. {failed} {status.ResultComment}".TrimEnd());
-        }
-
-        var saved = at is null
-            ? $"Snapshot saved ({status.SnapshotRepositoryCount} repositories included)."
-            : $"Snapshot saved at {at} ({status.SnapshotRepositoryCount} repositories included).";
-        return $"Finished. {status.ResultComment} {saved}".Replace("  ", " ", StringComparison.Ordinal);
-    }
-
-    private static string BuildHostedSuspendedClause(OperatorSnapshotStatusDto status)
-    {
-        if (status.ScanSuspensionReason == AccountScanSuspensionReason.NotAllowed)
-        {
-            var message = $"Suspended. {NotAllowedComment}";
-            if (status.LastScanAt is { } previous
-                && !string.IsNullOrEmpty(status.LastScanResult))
-            {
-                message += $" Last scan: {status.LastScanResult} at {FormatLocalTime(previous)}.";
-            }
-
-            return AppendLastSuccessSuffix(status, message);
-        }
-
-        var at = status.LastScanAt is { } scanAt ? FormatLocalTime(scanAt) : null;
-        var failed = at is null ? "Snapshot could not be saved." : $"Snapshot could not be saved at {at}.";
-        return AppendLastSuccessSuffix(status, $"Suspended. {failed} {status.ResultComment}".TrimEnd());
     }
 
     internal static Severity ResolveCombinedSeverity(
@@ -231,11 +140,15 @@ internal static class OperatorSnapshotStatusCopy
 
     private static string BuildInProgressSuffix(OperatorSnapshotStatusDto status, DateTimeOffset started)
     {
-        var trigger = status.Trigger == OperatorSnapshotCollectionTrigger.Daily
-            ? "The daily occasion started it."
-            : "You started it.";
-        return
-            $"{trigger} Saving snapshot… started at {FormatLocalTime(started)}; {status.RepositoriesRecordedThisRun} recorded so far.";
+        var progress =
+            $"Saving snapshot… started at {FormatLocalTime(started)}; {status.RepositoriesRecordedThisRun} recorded so far.";
+
+        if (status.Trigger == OperatorSnapshotCollectionTrigger.Daily)
+        {
+            return progress;
+        }
+
+        return $"You started it. {progress}";
     }
 
     private static string BuildFailedSuffix(OperatorSnapshotStatusDto status, DateTimeOffset failedAt)
