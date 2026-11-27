@@ -21,6 +21,23 @@ public static class OperatorSnapshotServiceCollectionExtensions
         services.AddSingleton<IOperatorSnapshotLiveTaskRegistry>(static sp =>
             sp.GetRequiredService<OperatorSnapshotCollectionCoordinator>());
         services.AddScoped<IOperatorSnapshotCollectionService, OperatorSnapshotCollectionService>();
+        services.AddSingleton<IScheduledCollectionEnvironment, ScheduledCollectionEnvironment>();
+        services.AddSingleton<HostedCollectionEligibilityEvaluator>();
+        services.AddSingleton<AccountScanStatusReporter>();
+        services.AddSingleton<AccountScanStatusTransitionService>();
+        services.AddSingleton<DailyQueueVisibilityRenewer>();
+        services.AddSingleton<IOperatorSnapshotScheduleFactsService, OperatorSnapshotScheduleFactsService>();
+        return services;
+    }
+
+    /// <summary>Registers timer and queue workers that depend on scoped snapshot storage.</summary>
+    /// <param name="services">Service collection.</param>
+    public static IServiceCollection AddOperatorSnapshotScheduledCollectionWorkerServices(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        services.AddScoped<IDailyOccasionService, DailyOccasionService>();
+        services.AddScoped<IDailySnapshotCollectionPassService, DailySnapshotCollectionPassService>();
         return services;
     }
 }

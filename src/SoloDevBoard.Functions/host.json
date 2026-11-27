@@ -1,5 +1,13 @@
 {
   "version": "2.0",
+  "functionTimeout": "02:00:00",
+  "extensions": {
+    "queues": {
+      "batchSize": 1,
+      "newBatchThreshold": 0,
+      "messageEncoding": "none"
+    }
+  },
   "logging": {
     "applicationInsights": {
       "samplingSettings": {

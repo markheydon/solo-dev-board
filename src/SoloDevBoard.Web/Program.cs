@@ -1,9 +1,6 @@
-using System.Security.Cryptography;
-using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using MudBlazor;
 using MudBlazor.Services;
@@ -15,8 +12,6 @@ using SoloDevBoard.Web.Components.Features.Planning;
 using SoloDevBoard.Web.Components.Shell;
 using SoloDevBoard.Web.Planning;
 using SoloDevBoard.Web.Theming;
-
-const string HostedSignInStateCookieName = "solo-dev-board.hosted-sign-in-state";
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
@@ -67,6 +62,8 @@ if (hostedSignInEnabled)
 {
     builder.Services.AddHostedGitHubAuthHttpClients();
     builder.Services.AddScoped<HostedGitHubAuthGateway>();
+    builder.Services.AddSingleton<IHostedGitHubSessionAccessValidator, SoloDevBoard.Infrastructure.Identity.HostedGitHubSessionAccessValidator>();
+    builder.Services.AddSingleton<HostedCredentialGrantService>();
 
     var hostedAuthOptions = builder.Configuration.GetSection(GitHubAuthOptions.SectionName).Get<GitHubAuthOptions>()
         ?? new GitHubAuthOptions();
@@ -88,7 +85,16 @@ if (hostedSignInEnabled)
 var useOperatorSnapshotBlob = !string.IsNullOrWhiteSpace(builder.Configuration["ConnectionStrings:operator-snapshots"]);
 if (useOperatorSnapshotBlob)
 {
-    builder.AddAzureBlobContainerClient("operator-snapshots");
+    builder.AddKeyedAzureBlobContainerClient(AspireHostedStorageReferenceNames.OperatorSnapshots);
+    builder.Services.AddOperatorSnapshotKeyedBlobStore(AspireHostedStorageReferenceNames.OperatorSnapshots);
+}
+
+if (hostedSignInEnabled && useOperatorSnapshotBlob)
+{
+    builder.AddKeyedAzureBlobContainerClient(AspireHostedStorageReferenceNames.HostedSignIns);
+    builder.AddKeyedAzureBlobContainerClient(AspireHostedStorageReferenceNames.AccountScanStatus);
+    builder.Services.RegisterHostedSignInBlobStore();
+    builder.Services.RegisterAccountScanStatusBlobStore();
 }
 
 builder.AddOperatorSnapshotHost(useOperatorSnapshotBlob);
@@ -135,95 +141,7 @@ if (hostedSignInEnabled)
         return Results.Content(page.Html, "text/html; charset=utf-8", statusCode: page.StatusCode);
     }).AllowAnonymous();
 
-    app.MapGet("/auth/sign-in", static (HttpContext context, HostedGitHubAuthGateway authGateway, IOptions<GitHubAuthOptions> optionsAccessor) =>
-    {
-        var returnUrl = GetReturnUrlFromQuery(context.Request.Query);
-        var state = WebEncoders.Base64UrlEncode(RandomNumberGenerator.GetBytes(24));
-
-        var options = optionsAccessor.Value;
-        var callbackUri = BuildCallbackUri(context, options);
-        var authoriseUrl = authGateway.BuildAuthoriseUrl(state, callbackUri);
-
-        context.Response.Cookies.Append(
-            HostedSignInStateCookieName,
-            BuildStatePayload(state, returnUrl),
-            new CookieOptions
-            {
-                HttpOnly = true,
-                IsEssential = true,
-                Path = "/",
-                SameSite = SameSiteMode.None,
-                Secure = true,
-                MaxAge = TimeSpan.FromMinutes(10),
-            });
-
-        return Results.Redirect(authoriseUrl);
-    }).AllowAnonymous();
-
-    app.MapGet("/auth/callback", static async (
-        HttpContext context,
-        HostedGitHubAuthGateway authGateway,
-        ILogger<Program> logger) =>
-    {
-        if (!TryReadAndClearStateCookie(context, out var state, out var returnUrl))
-        {
-            return Results.Redirect(HostedAuthErrorRoutes.BuildErrorUrl(HostedAuthErrorRoutes.SignInStateInvalid));
-        }
-
-        var returnedState = context.Request.Query["state"].ToString();
-        if (!string.Equals(state, returnedState, StringComparison.Ordinal))
-        {
-            return Results.Redirect(HostedAuthErrorRoutes.BuildErrorUrl(HostedAuthErrorRoutes.SignInStateInvalid));
-        }
-
-        var signInError = context.Request.Query["error"].ToString();
-        if (!string.IsNullOrWhiteSpace(signInError))
-        {
-            return Results.Redirect(HostedAuthErrorRoutes.BuildErrorUrl(HostedAuthErrorRoutes.SignInDenied));
-        }
-
-        var code = context.Request.Query["code"].ToString();
-        if (string.IsNullOrWhiteSpace(code))
-        {
-            return Results.Redirect(HostedAuthErrorRoutes.BuildErrorUrl(HostedAuthErrorRoutes.SignInIncomplete));
-        }
-
-        HostedGitHubAuthSession session;
-        try
-        {
-            session = await authGateway.ExchangeCodeForSessionAsync(code, context.RequestAborted).ConfigureAwait(false);
-        }
-        catch (InvalidOperationException ex)
-        {
-            logger.LogWarning(ex, "Hosted sign-in failed while establishing a session.");
-            return Results.Redirect(HostedAuthErrorRoutes.BuildErrorUrl(HostedAuthErrorRoutes.SignInFailed));
-        }
-        catch (HttpRequestException ex)
-        {
-            logger.LogWarning(ex, "Hosted sign-in failed because GitHub returned an unexpected HTTP response.");
-            return Results.Redirect(HostedAuthErrorRoutes.BuildErrorUrl(HostedAuthErrorRoutes.SignInUnavailable));
-        }
-
-        var principal = authGateway.CreatePrincipal(session);
-        var authenticationProperties = new AuthenticationProperties
-        {
-            IsPersistent = false,
-            AllowRefresh = true,
-        };
-
-        if (session.TokenExpiresAtUtc is { } expiresAtUtc)
-        {
-            authenticationProperties.ExpiresUtc = expiresAtUtc;
-        }
-
-        await context.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                principal,
-                authenticationProperties)
-            .ConfigureAwait(false);
-
-        return Results.Redirect(returnUrl);
-    }).AllowAnonymous();
+    app.MapHostedSignInRoutes();
 
     app.MapGet("/auth/sign-out", (Delegate)SignOutHostedSession).AllowAnonymous();
     app.MapPost("/auth/sign-out", (Delegate)SignOutHostedSession).DisableAntiforgery().AllowAnonymous();
@@ -265,32 +183,15 @@ static async Task<IResult> SignOutHostedSession(HttpContext context)
     return Results.Redirect("/welcome");
 }
 
-static string BuildCallbackUri(HttpContext context, GitHubAuthOptions options)
+static string GetReturnUrlFromQuery(IQueryCollection query)
 {
-    ArgumentNullException.ThrowIfNull(options);
-
-    var callbackPath = options.HostedSignInCallbackPath;
-    if (string.IsNullOrWhiteSpace(callbackPath))
+    var returnUrl = query["returnUrl"].FirstOrDefault();
+    if (!string.IsNullOrWhiteSpace(returnUrl))
     {
-        callbackPath = "/auth/callback";
+        return GetSafeReturnUrl(returnUrl);
     }
 
-    if (!callbackPath.StartsWith("/", StringComparison.Ordinal))
-    {
-        callbackPath = $"/{callbackPath}";
-    }
-
-    if (!string.IsNullOrWhiteSpace(options.HostedSignInCallbackBaseUri))
-    {
-        if (!Uri.TryCreate(options.HostedSignInCallbackBaseUri, UriKind.Absolute, out var callbackBaseUri))
-        {
-            throw new InvalidOperationException("HostedSignInCallbackBaseUri must be a valid absolute URI when configured.");
-        }
-
-        return new Uri(callbackBaseUri, callbackPath).ToString();
-    }
-
-    return $"{context.Request.Scheme}://{context.Request.Host}{callbackPath}";
+    return GetSafeReturnUrl(query["ReturnUrl"].FirstOrDefault());
 }
 
 static string GetSafeReturnUrl(string? returnUrl)
@@ -306,68 +207,6 @@ static string GetSafeReturnUrl(string? returnUrl)
     }
 
     return returnUrl;
-}
-
-static string GetReturnUrlFromQuery(IQueryCollection query)
-{
-    var returnUrl = query["returnUrl"].FirstOrDefault();
-    if (!string.IsNullOrWhiteSpace(returnUrl))
-    {
-        return GetSafeReturnUrl(returnUrl);
-    }
-
-    return GetSafeReturnUrl(query["ReturnUrl"].FirstOrDefault());
-}
-
-static string BuildStatePayload(string state, string returnUrl)
-{
-    return WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes($"{state}|{returnUrl}"));
-}
-
-static bool TryReadAndClearStateCookie(HttpContext context, out string state, out string returnUrl)
-{
-    state = string.Empty;
-    returnUrl = "/";
-
-    if (!context.Request.Cookies.TryGetValue(HostedSignInStateCookieName, out var payload) || string.IsNullOrWhiteSpace(payload))
-    {
-        return false;
-    }
-
-    DeleteHostedSignInStateCookie(context);
-
-    string decoded;
-    try
-    {
-        decoded = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(payload));
-    }
-    catch (FormatException)
-    {
-        return false;
-    }
-
-    var separatorIndex = decoded.IndexOf('|');
-    if (separatorIndex <= 0 || separatorIndex == decoded.Length - 1)
-    {
-        return false;
-    }
-
-    state = decoded[..separatorIndex];
-    returnUrl = GetSafeReturnUrl(decoded[(separatorIndex + 1)..]);
-
-    return true;
-}
-
-static void DeleteHostedSignInStateCookie(HttpContext context)
-{
-    context.Response.Cookies.Delete(
-        HostedSignInStateCookieName,
-        new CookieOptions
-        {
-            Path = "/",
-            Secure = true,
-            SameSite = SameSiteMode.None,
-        });
 }
 
 static bool TryGetConfiguredHttpsPort(string? callbackBaseUri, out int httpsPort)

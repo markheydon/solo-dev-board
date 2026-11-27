@@ -1,0 +1,13 @@
+---
+description: Require signed commits and forbid bypassing commit signing
+alwaysApply: true
+---
+
+# Signed commits
+
+Every commit in this repository must be signed. Unsigned commits are rejected.
+
+- Use ordinary `git commit` and leave signing enabled.
+- Do not pass `--no-gpg-sign`, `-c commit.gpgsign=false`, or any other option that turns signing off.
+- Do not amend or rewrite history to remove a signature.
+- If signing fails because no key is available, stop and tell the user. Do not commit unsigned so the command can succeed.

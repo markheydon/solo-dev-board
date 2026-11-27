@@ -1,38 +1,100 @@
 > **Audience:** Maintainers and agents refreshing AI skill sources. Contributor how-to; not part of the published user site.
 
-# Maintaining project agent skills (Aspire 17 + Cursor)
+# Maintaining agent skills (Cursor plugins + in-repo)
 
-Solo Dev Board keeps **project-authored** agent skills in git under [`.agents/skills/`](../.agents/skills/). The **Aspire workflow bundle** (eight skills) is **not** copied into that tree; Cursor loads it from the [microsoft/aspire-skills](https://github.com/microsoft/aspire-skills) plugin pinned in [`.cursor/settings.json`](../.cursor/settings.json) (Aspire 17 marketplace model).
+Solo Dev Board keeps **project-authored** agent skills in git under [`.agents/skills/`](../.agents/skills/). **Aspire**, **.NET**, and **GitHub** capabilities for Cursor agents load from plugins enabled in [`.cursor/settings.json`](../.cursor/settings.json); those bundles are **not** copied into `.agents/skills/`.
 
-**Typical agent request:** bump the aspire-skills plugin pin or regenerate the `dotnet-inspect` companion per this guide.
+**Typical maintainer requests:** bump plugin `gitRef` pins, configure the GitHub MCP plugin PAT, or regenerate the `dotnet-inspect` companion per this guide.
 
 ## What lives where
 
 | Area | Location | Maintenance |
 | --- | --- | --- |
-| Aspire workflow bundle (8 skills) | Cursor plugin `aspire-skills/aspire` in [`.cursor/settings.json`](../.cursor/settings.json) | Bump `gitRef` (commit or tag) from [microsoft/aspire-skills](https://github.com/microsoft/aspire-skills); reopen or reload Cursor so the plugin cache refreshes |
+| .NET plugin bundles (5) | Cursor plugins `dotnet-agent-skills/dotnet`, `dotnet-blazor`, `dotnet-test`, `dotnet-data`, `dotnet-nuget` in [`.cursor/settings.json`](../.cursor/settings.json) | Bump shared `gitRef` (commit or tag) from [dotnet/skills](https://github.com/dotnet/skills); reload Cursor |
+| Aspire workflow bundle (8 skills) | Cursor plugin `aspire-skills/aspire` | Bump `gitRef` from [microsoft/aspire-skills](https://github.com/microsoft/aspire-skills); reload Cursor |
+| GitHub MCP | Cursor plugin `github` (enabled only; marketplace-managed) | Personal access token in **Cursor → Plugins → GitHub** (see [GitHub Cursor plugin](#github-cursor-plugin-mcp)); not committed |
 | `dotnet-inspect` companion | `.agents/skills/dotnet-inspect/` | Regenerate `SKILL.md` via `dnx dotnet-inspect` (below) |
 | `playwright-cli` companion | **Not used** | See [Playwright: E2E vs agent CLI](#playwright-e2e-vs-agent-cli) |
 | Project-authored skills | e.g. `mudblazor`, `code-review`, `implementation-guardrails` | Edit in-repo; never overwrite with upstream bundles |
-| Spec Kit workflow skills | [`.cursor/skills/`](../.cursor/skills/) (`speckit-*`) | Managed by Spec Kit; independent of aspire-skills |
+| `dotnet-test` repository overlay | [`.agents/skill-overlays/dotnet-test/run-tests.md`](../.agents/skill-overlays/dotnet-test/run-tests.md) | Keep aligned with [`.cursor/rules/testing.mdc`](../.cursor/rules/testing.mdc) and `scripts/test-unit.*` when commands change |
+| Spec Kit workflow skills | [`.cursor/skills/`](../.cursor/skills/) (`speckit-*`) | Managed by Spec Kit; independent of marketplace plugins |
 
-Cursor also loads skills from [`.cursor/rules/skills-location.mdc`](../.cursor/rules/skills-location.mdc). Built-in Cursor skills live in `~/.cursor/skills-cursor/`; never commit or edit those.
+Cursor also loads skills from [`.cursor/rules/skills-location.mdc`](../.cursor/rules/skills-location.mdc). Scoped rules ([`csharp.mdc`](../.cursor/rules/csharp.mdc), [`blazor.mdc`](../.cursor/rules/blazor.mdc), [`apphost.mdc`](../.cursor/rules/apphost.mdc), [`testing.mdc`](../.cursor/rules/testing.mdc)) should stay consistent with skill routing in [`AGENTS.md`](../AGENTS.md). Built-in Cursor skills live in `~/.cursor/skills-cursor/`; never commit or edit those.
 
-Plugin skills are cached under the Cursor plugins directory (for example `~/.cursor/plugins/cache/aspire-skills/aspire/` on a dev machine). Agents should use the loaded plugin skill content, not assume paths under `.agents/skills/aspire*`.
+Plugin skills are cached under the Cursor plugins directory (for example `~/.cursor/plugins/cache/dotnet-agent-skills/` or `.../aspire-skills/aspire/` on a dev machine). Agents should use the loaded plugin skill content, not assume paths under `.agents/skills/` for plugin bundles. Precedence when skills overlap is in [`AGENTS.md`](../AGENTS.md).
 
 ## When to run this
 
-- After a tagged release of [microsoft/aspire-skills](https://github.com/microsoft/aspire-skills) you want to adopt (update `gitRef` in `.cursor/settings.json`).
+- After a release or commit of [dotnet/skills](https://github.com/dotnet/skills) you want to adopt (update the shared `gitRef` on all five enabled dotnet plugins).
+- After a tagged release of [microsoft/aspire-skills](https://github.com/microsoft/aspire-skills) you want to adopt (update `gitRef` for `aspire-skills/aspire`).
 - After upgrading **dotnet-inspect** when the embedded skill content has changed.
-- When agent sessions show stale Aspire CLI behaviour relative to upstream skill guidance.
+- When agent sessions show stale Aspire CLI or .NET test guidance relative to upstream skill content.
+- When onboarding a contributor who needs the **GitHub** MCP plugin in Cursor (PAT setup).
 
-You do **not** need to refresh the plugin pin on every Aspire CLI bump unless the aspire-skills release notes justify it.
+You do **not** need to refresh plugin pins on every Aspire CLI or .NET SDK bump unless upstream release notes justify it.
+
+---
+
+## Update .NET workflow skills (Cursor plugin)
+
+All five enabled plugins share one monorepo pin from [dotnet/skills](https://github.com/dotnet/skills).
+
+**Configuration** (excerpt; keys must stay in sync):
+
+```json
+"plugins": {
+  "dotnet-agent-skills/dotnet": {
+    "enabled": true,
+    "gitUrl": "https://github.com/dotnet/skills",
+    "gitRef": "<commit-or-tag>"
+  },
+  "dotnet-agent-skills/dotnet-blazor": {
+    "enabled": true,
+    "gitUrl": "https://github.com/dotnet/skills",
+    "gitRef": "<commit-or-tag>"
+  },
+  "dotnet-agent-skills/dotnet-test": {
+    "enabled": true,
+    "gitUrl": "https://github.com/dotnet/skills",
+    "gitRef": "<commit-or-tag>"
+  },
+  "dotnet-agent-skills/dotnet-data": {
+    "enabled": true,
+    "gitUrl": "https://github.com/dotnet/skills",
+    "gitRef": "<commit-or-tag>"
+  },
+  "dotnet-agent-skills/dotnet-nuget": {
+    "enabled": true,
+    "gitUrl": "https://github.com/dotnet/skills",
+    "gitRef": "<commit-or-tag>"
+  }
+}
+```
+
+**Procedure:**
+
+1. Choose an upstream **tag or commit** from [dotnet/skills](https://github.com/dotnet/skills) (record it in the PR or commit message).
+2. Set the **same** `gitRef` on all five `dotnet-agent-skills/*` entries in `.cursor/settings.json`.
+3. Commit the settings change only (no copies under `.agents/skills/` for plugin skills).
+4. Reload the Cursor window or reopen the project so the plugin cache picks up the pin.
+
+**Plugins enabled in this repository:**
+
+| Plugin | Typical skills (upstream) |
+| --- | --- |
+| `dotnet` | `csharp-expert`, `csharp-refactoring`, `msbuild`, `dotnet-breaking-changes`, `setup-local-sdk` |
+| `dotnet-blazor` | `author-component`, `use-js-interop`, `collect-user-input`, and related Blazor skills |
+| `dotnet-test` | `run-tests`, `platform-detection`, `code-testing`, `test-gap-analysis`, and related test skills |
+| `dotnet-data` | `optimizing-ef-core-queries`, `create-datadriven-aspnetcore` |
+| `dotnet-nuget` | `convert-to-cpm` |
+
+Repository-specific routing and precedence (for example `mudblazor` before generic Blazor skills) are in [`AGENTS.md`](../AGENTS.md).
 
 ---
 
 ## Update Aspire workflow skills (Cursor plugin)
 
-**Configuration:** [`.cursor/settings.json`](../.cursor/settings.json) enables the plugin and pins upstream:
+**Configuration:**
 
 ```json
 "plugins": {
@@ -75,6 +137,28 @@ You do **not** need to refresh the plugin pin on every Aspire CLI bump unless th
 ### `aspire doctor` and duplicate copies
 
 Do **not** re-vendor the eight Aspire skills under `.agents/skills/`. If `aspire doctor` suggests syncing skills into the repo, ignore that for Cursor when the plugin pin in `.cursor/settings.json` is present and enabled.
+
+---
+
+## GitHub Cursor plugin (MCP)
+
+The **github** entry in [`.cursor/settings.json`](../.cursor/settings.json) enables Cursor's GitHub plugin. It exposes GitHub's remote MCP server; it does **not** ship agent `SKILL.md` files.
+
+**Separate from application auth:** the AppHost parameter `gh-pat` and hosted sign-in described in [`docs/getting-started.md`](getting-started.md) authenticate **Solo Dev Board** against GitHub. The Cursor plugin PAT authenticates **the agent in your IDE** only.
+
+**Setup:**
+
+1. Ensure `"github": { "enabled": true }` in `.cursor/settings.json` (already committed for this repo).
+2. In Cursor, open **Settings → Plugins → GitHub** and set **GitHub personal access token** to a fine-grained or classic PAT from [GitHub token settings](https://github.com/settings/tokens).
+3. Grant only scopes the agent needs (typical: repository contents, issues, pull requests, metadata; Actions if CI inspection is required).
+4. Never commit the token. Rotate from GitHub Settings if it is exposed.
+
+**Agent routing:** prefer `gh` for pull requests, issues, and releases per [`AGENTS.md`](../AGENTS.md). Use the GitHub MCP plugin when richer API or search access is needed in chat.
+
+**References:**
+
+- [Use the GitHub MCP server](https://docs.github.com/en/copilot/how-tos/context/use-mcp/use-the-github-mcp-server)
+- [Cursor plugins repository](https://github.com/cursor/plugins) (`cursor-public/github`)
 
 ---
 
@@ -129,8 +213,10 @@ The upstream **aspire-monitoring** skill (via the plugin) may reference browser 
 
 After a refresh:
 
+- [ ] `.cursor/settings.json` has the intended shared `gitRef` and `enabled: true` on all five `dotnet-agent-skills/*` plugins.
 - [ ] `.cursor/settings.json` has the intended `gitRef` and `enabled: true` for `aspire-skills/aspire`.
-- [ ] No new or restored paths under `.agents/skills/aspire*` (Aspire bundle stays plugin-only).
+- [ ] `github` remains `enabled: true` (no secret values in git).
+- [ ] No new or restored paths under `.agents/skills/aspire*` or vendored copies of marketplace .NET plugin skills.
 - [ ] Each touched project skill directory still contains `SKILL.md` with valid frontmatter where applicable.
 - [ ] No accidental changes under project-authored skills (`mudblazor`, `code-review`, Spec Kit paths, etc.).
 - [ ] No new files under `.cursor/skills-cursor/` or wholesale replacement of `.cursor/skills/speckit-*`.
@@ -141,14 +227,15 @@ After a refresh:
 
 | Path | Reason |
 | --- | --- |
-| `.cursor/skills/speckit-*` | Spec Kit workflow; not upstream Aspire |
+| `.cursor/skills/speckit-*` | Spec Kit workflow; not upstream marketplace bundles |
 | `.agents/skills/mudblazor`, `code-review`, `implementation-guardrails`, `project-documentation`, `create-architectural-decision-record` | Authored for Solo Dev Board |
 | `~/.cursor/skills-cursor/` | Cursor-managed built-ins |
 | `.agents/skills/playwright-cli/` | Not used in this repository |
-| `.agents/skills/aspire*` | Use plugin pin instead; do not reintroduce vendored copies |
+| `.agents/skills/aspire*` or vendored dotnet plugin skills | Use plugin pins instead; do not reintroduce copies |
 
 ## See also
 
-- [`AGENTS.md`](../AGENTS.md) - task routing and skills index
+- [`AGENTS.md`](../AGENTS.md) - task routing, precedence, and skills index
+- [dotnet/skills](https://github.com/dotnet/skills)
 - [Aspire skills (official)](https://aspire.dev/get-started/aspire-skills/)
-- [`docs/getting-started.md`](getting-started.md) - local setup, dev containers, and Codespaces
+- [`docs/getting-started.md`](getting-started.md) - local setup, dev containers, Codespaces, and application GitHub auth

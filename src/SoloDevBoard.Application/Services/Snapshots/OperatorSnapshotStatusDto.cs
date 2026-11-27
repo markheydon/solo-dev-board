@@ -29,4 +29,49 @@ public sealed class OperatorSnapshotStatusDto
 
     /// <summary>Where the snapshot is kept for operator copy.</summary>
     public OperatorSnapshotDurabilityKind DurabilityKind { get; init; }
+
+    /// <summary>What started the current or last run, if known.</summary>
+    public OperatorSnapshotCollectionTrigger? Trigger { get; init; }
+
+    /// <summary>Whether scheduled collection is modelled.</summary>
+    public OperatorSnapshotSchedulePosture SchedulePosture { get; init; }
+
+    /// <summary>Stored account scan status, if hosted.</summary>
+    public string? AccountScanStatus { get; init; }
+
+    /// <summary>Reported scan status including computed <c>stalled</c>.</summary>
+    public ReportedAccountScanStatus? ReportedScanStatus { get; init; }
+
+    /// <summary>Last scan finish time from the status blob.</summary>
+    public DateTimeOffset? LastScanAt { get; init; }
+
+    /// <summary>Last scan result from the status blob.</summary>
+    public string? LastScanResult { get; init; }
+
+    /// <summary>Last scan comment from the status blob.</summary>
+    public string? ResultComment { get; init; }
+
+    /// <summary>Not-allowed suspension when set.</summary>
+    public AccountScanSuspensionReason ScanSuspensionReason { get; init; }
+
+    /// <summary>Next 05:00 UTC that would queue them, if any.</summary>
+    public DateTimeOffset? NextOccasionAtUtc { get; init; }
+
+    /// <summary>When <see cref="NextOccasionAtUtc"/> falls on the UTC calendar day after evaluation.</summary>
+    public bool NextOccasionOnFollowingUtcDay { get; init; }
+
+    /// <summary>Why no next occasion is scheduled, when applicable.</summary>
+    public OperatorSnapshotNoScheduleReason NoScheduleReason { get; init; }
+
+    /// <summary>FR-025 status sentence from Application.</summary>
+    public string? StatusSentence { get; init; }
+
+    /// <summary>FR-025 schedule sentence from Application.</summary>
+    public string? ScheduleSentence { get; init; }
+
+    /// <summary>True when the next 05:00 UTC ask would queue this account (not a rendered clock).</summary>
+    public bool NextAskIncludesAccount { get; init; }
+
+    /// <summary>True when the Repositories page may offer overnight access refresh.</summary>
+    public bool WorkerTokenRefreshOffered { get; init; }
 }

@@ -140,6 +140,13 @@ public sealed class BlobOperatorSnapshotStore : IOperatorSnapshotStore
             return document;
         }
 
+        // A hosted daily pass runs in the Functions host, so web never has a live task for it. Its liveness
+        // is the account scan status blob, and a reader tells stalled; it is never rewritten as siteStopped here.
+        if (document.Trigger == OperatorSnapshotCollectionTrigger.Daily)
+        {
+            return document;
+        }
+
         var interrupted = new OperatorSnapshotDocument
         {
             SchemaVersion = document.SchemaVersion,
@@ -148,6 +155,10 @@ public sealed class BlobOperatorSnapshotStore : IOperatorSnapshotStore
             LastSuccessfulCollectionAt = document.LastSuccessfulCollectionAt,
             Repositories = document.Repositories,
             LaterFacts = document.LaterFacts,
+            Trigger = document.Trigger,
+            AttemptsUsed = document.AttemptsUsed,
+            RetainedRun = document.RetainedRun,
+            PendingRetryNotBeforeUtc = document.PendingRetryNotBeforeUtc,
             Run = new OperatorSnapshotRun
             {
                 Status = OperatorSnapshotRunStatus.Interrupted,

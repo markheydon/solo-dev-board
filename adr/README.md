@@ -93,3 +93,4 @@ A future hygiene pass may converge labels; do not relabel existing ADRs without 
 | [0046](adr-0046-overnight-inventory-functions-and-sql.md) | Overnight inventory (Functions and Azure SQL) | Withdrawn | Historical only — do not implement |
 | [0047](adr-0047-apphost-blazor-resource-name-web.md) | AppHost Blazor resource name `web` | Accepted | Binding |
 | [0048](adr-0048-hosted-operator-snapshot-blob-storage.md) | Hosted operator snapshot blob storage | Accepted | Binding |
+| [0049](adr-0049-scheduled-collection-functions.md) | Scheduled snapshot collection Functions worker | Accepted | Binding |

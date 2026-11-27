@@ -12,7 +12,7 @@ Release notes live in [`CHANGELOG.md`](../CHANGELOG.md) at the repository root.
 | Document | Description |
 |----------|-------------|
 | [Getting Started](getting-started.md) | Prerequisites, Aspire-first local setup, and authentication modes. |
-| [Maintaining agent skills](maintaining-agent-skills.md) | Aspire plugin pin in `.cursor/settings.json` and in-repo project skills (including `dotnet-inspect`). |
+| [Maintaining agent skills](maintaining-agent-skills.md) | Cursor plugin pins (dotnet/skills, aspire-skills), GitHub MCP PAT setup, and in-repo project skills (including `dotnet-inspect`). |
 | [Deployment](deployment.md) | Azure Container Apps via Aspire, including the self-hoster PAT path. |
 | [Hosted Authentication](hosted-authentication.md) | Hosted sign-in, operator allow-lists, and fallback modes. |
 | [GitHub App listing](github-app.md) | Logo, callback URLs, permissions, and listing copy for the hosted-sign-in GitHub App. |

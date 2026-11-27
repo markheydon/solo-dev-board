@@ -51,7 +51,7 @@ Do **not** edit `.specify/` or Spec Kit skill files unless the user explicitly a
 
 4. **Next steps** — Summarise what you changed in `spec.md`. Suggest [loop-code-review.md](./loop-code-review.md) if the branch may not be merge-ready. Do **not** open or update a PR unless the user explicitly asked in this chat.
 
-Invoking this command is explicit permission to **commit** the `spec.md` status update on the feature branch when step 2 ran (message should describe close-out, not implementation).
+Invoking this command is explicit permission to **commit** the `spec.md` status update on the feature branch when step 2 ran (message should describe close-out, not implementation). Every commit must be signed. Do not pass `--no-gpg-sign` or disable `commit.gpgsign`. If signing fails, stop and report it.
 
 ## Stop condition
 

@@ -1,14 +1,28 @@
 ---
-description: C# unit test conventions for this repository
-globs: "**/*Tests/**/*.cs"
+description: C# unit test conventions and skill routing for tests/
+globs: "tests/**/*.cs"
 alwaysApply: false
 ---
 
 # Testing Conventions
 
-Follow the **Testing** section in `CONVENTIONS.md`.
+Follow the **Testing** section in `CONVENTIONS.md`. Repository assert, mock, and naming rules override portable **dotnet-test** skill defaults. Commands for this repo are also in [`.agents/skill-overlays/dotnet-test/run-tests.md`](../../.agents/skill-overlays/dotnet-test/run-tests.md).
 
 - xUnit v3 only; built-in `Assert` methods only.
 - NSubstitute for mocks when needed; prefer `QueuedHttpMessageHandler` and JSON fixtures for HTTP/SDK tests.
 - Do not add FluentAssertions, AwesomeAssertions, Shouldly, Moq, NUnit, or MSTest.
-- No Playwright or AppHost tests unless explicitly scoped in a future change.
+- Do not use the `writing-mstest-tests` plugin skill (MSTest is not used here).
+- Naming: `MethodUnderTest_Scenario_ExpectedOutcome`; Arrange / Act / Assert with blank lines.
+- **bUnit** only in `SoloDevBoard.Web.Tests`; follow MudBlazor test patterns in the `mudblazor` project skill when UI is involved.
+- Do not unit-test Aspire AppHost resource modelling or orchestration.
+- **Playwright** E2E lives in `tests/SoloDevBoard.E2E.Tests` only; do not add new Playwright specs unless the user or feature scope explicitly requires it. Default agent verification uses `SoloDevBoard.UnitTests.slnf`, not the full solution (see overlay).
+
+## Skills
+
+| When | Skill |
+| --- | --- |
+| Before running tests or quoting a `dotnet test` command | `run-tests` (`dotnet-test` plugin); apply the repository overlay when present |
+| Uncertain test platform or MTP/VSTest mode | `platform-detection` (`dotnet-test` plugin) |
+| Write, repair, or strengthen tests | `code-testing` (`dotnet-test` plugin) bound to xUnit v3, built-in `Assert`, and NSubstitute above; **default to focused scope** (one behaviour, type, or file). Use the broad `test-engineer` pipeline only when the user explicitly requests suite-wide or multi-module generation |
+| After a meaningful production change, check coverage gaps | `test-gap-analysis` (`dotnet-test` plugin) |
+| Static time, I/O, or similar blocking deterministic tests | `testability-obstacle` or `migrate-static-to-wrapper` (`dotnet-test` plugin) |

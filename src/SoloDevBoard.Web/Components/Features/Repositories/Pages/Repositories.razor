@@ -30,6 +30,17 @@
                     </MudButton>
                 </MudTooltip>
 
+                @if (showRefreshOvernightAccess)
+                {
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Secondary"
+                               Href="@refreshOvernightAccessHref"
+                               data-testid="repositories-refresh-overnight-access-button"
+                               aria-label="Refresh overnight access">
+                        Refresh overnight access
+                    </MudButton>
+                }
+
                 <MudHidden Breakpoint="Breakpoint.SmAndDown">
                     <MudButton Variant="Variant.Outlined"
                                Color="Color.Primary"

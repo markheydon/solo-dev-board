@@ -120,7 +120,7 @@ Governance text MUST use **PAT-only local trusted mode**, **hosted sign-in**, **
 - **Pull requests:** MUST follow `plan/PULL_REQUEST_POLICY.md` (title shape, template body, labels). Agent-authored PRs MUST receive human review before merge.
 - **Pre-merge verification (minimum):** `dotnet format` verify, Release build with warnings as errors, `dotnet test SoloDevBoard.UnitTests.slnf -c Release --no-build` when code or tests change. Run or update Playwright E2E (`playwright.yml`) when the PR touches shell chrome, auth entry, the axe route list, theme script or storage, narrow-viewport layout checks, or docs-capture assets; otherwise the unit filter remains the default gate.
 - **Historical artefacts:** Material under `plan/archive/` (Copilot-era bundles, weekly PM notes, retired implementation plans) MAY inform context but MUST NOT be mandated as ongoing process. Open work lives in GitHub Issues and Project #8, not new archive bundles.
-- **Agent skills:** Project skills in `.agents/skills/` (e.g. `implementation-guardrails`, `mudblazor`, `code-review`) and Aspire workflow skills from the Cursor aspire-skills plugin (`.cursor/settings.json`) supplement the constitution during implementation; they do not replace ADRs or quality gates. Aspireify ceremony, aspire-orchestration CLI troubleshooting, and Playwright port differences remain operational detail in skills and docs, not constitution text.
+- **Agent skills:** Project skills in `.agents/skills/` (e.g. `implementation-guardrails`, `mudblazor`, `code-review`), .NET and Aspire workflow skills from Cursor plugins in `.cursor/settings.json`, and the optional GitHub MCP plugin supplement the constitution during implementation; they do not replace ADRs or quality gates. Aspireify ceremony, aspire-orchestration CLI troubleshooting, and Playwright port differences remain operational detail in skills and docs, not constitution text.
 
 ## Governance
 
@@ -138,6 +138,6 @@ This constitution is the **non-negotiable governance layer** for Spec Kit-driven
 
 **Compliance review:** Authors and reviewers MUST verify feature specs, tasks, and PRs against relevant principles. Complexity beyond existing patterns MUST be justified in the spec or an ADR. Constitution violations MUST be fixed or explicitly escalated for amendment, not silently ignored.
 
-**Runtime guidance:** Use `AGENTS.md` and `CONVENTIONS.md` for command sequences, file placement, and documentation sync tables; use `adr/` for decision history; use project skills in `.agents/skills/` and Aspire plugin skills per `AGENTS.md` during implementation.
+**Runtime guidance:** Use `AGENTS.md` and `CONVENTIONS.md` for command sequences, file placement, and documentation sync tables; use `adr/` for decision history; use project skills and Cursor plugin skills per `AGENTS.md` during implementation.
 
 **Version**: 1.3.0 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-23

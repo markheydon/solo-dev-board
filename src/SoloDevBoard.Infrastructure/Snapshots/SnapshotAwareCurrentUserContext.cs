@@ -11,8 +11,18 @@ public sealed class SnapshotAwareCurrentUserContext(
     private readonly ICurrentUserContext _inner = inner ?? throw new ArgumentNullException(nameof(inner));
 
     /// <inheritdoc/>
-    public string OwnerLogin => _credentialSlot.HasCapture ? _credentialSlot.OwnerLogin : _inner.OwnerLogin;
+    public string OwnerLogin =>
+        SnapshotCollectionCredentialAmbient.TryGet(out var ambientLogin, out _)
+            ? ambientLogin
+            : _credentialSlot.HasCapture
+                ? _credentialSlot.OwnerLogin
+                : _inner.OwnerLogin;
 
     /// <inheritdoc/>
-    public string GetAccessToken() => _credentialSlot.HasCapture ? _credentialSlot.AccessToken : _inner.GetAccessToken();
+    public string GetAccessToken() =>
+        SnapshotCollectionCredentialAmbient.TryGet(out _, out var ambientToken)
+            ? ambientToken
+            : _credentialSlot.HasCapture
+                ? _credentialSlot.AccessToken
+                : _inner.GetAccessToken();
 }

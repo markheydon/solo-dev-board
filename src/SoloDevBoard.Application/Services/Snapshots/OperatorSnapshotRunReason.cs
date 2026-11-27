@@ -12,6 +12,9 @@ public enum OperatorSnapshotRunReason
     /// <summary>The site stopped before the collection finished.</summary>
     SiteStopped,
 
+    /// <summary>The scheduled collection process stopped before a daily pass finished.</summary>
+    ScheduledCollectionStopped,
+
     /// <summary>Unexpected error.</summary>
     Unexpected,
 }

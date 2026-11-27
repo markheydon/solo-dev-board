@@ -10,18 +10,13 @@ public static class OperatorSnapshotWebHostExtensions
 {
     /// <summary>Configures file or blob storage, durability options, and collection services.</summary>
     /// <param name="builder">Web application builder.</param>
-    /// <param name="useBlobStore">When true, registers the blob store (call after <c>AddAzureBlobContainerClient</c> in the web host).</param>
+    /// <param name="useBlobStore">When true, expects the blob store to be registered via Aspire keyed client helpers in the web host.</param>
     public static WebApplicationBuilder AddOperatorSnapshotHost(this WebApplicationBuilder builder, bool useBlobStore)
     {
         ArgumentNullException.ThrowIfNull(builder);
 
         var snapshotDirectory = Path.Combine(builder.Environment.ContentRootPath, "data", "operator-snapshots");
         builder.Services.Configure<OperatorSnapshotFileStoreOptions>(options => options.SnapshotDirectory = snapshotDirectory);
-
-        if (useBlobStore)
-        {
-            builder.Services.AddOperatorSnapshotBlobStore();
-        }
 
         var durabilityKind = useBlobStore
             ? OperatorSnapshotDurabilityKind.HostedBlob

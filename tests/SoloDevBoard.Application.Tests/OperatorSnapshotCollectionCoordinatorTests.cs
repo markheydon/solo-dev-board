@@ -45,6 +45,63 @@ public sealed class OperatorSnapshotCollectionCoordinatorTests
     }
 
     [Fact]
+    public async Task Walk_Success_WithDailyTrigger_RecordsSameRepositoryFactsAsHandStart()
+    {
+        var store = new InMemoryOperatorSnapshotStore();
+        store.Seed(Login, new OperatorSnapshotDocument
+        {
+            OperatorLogin = Login,
+            Revision = 5,
+            Trigger = OperatorSnapshotCollectionTrigger.Daily,
+            AttemptsUsed = 1,
+            Repositories = [],
+            Run = new OperatorSnapshotRun
+            {
+                Status = OperatorSnapshotRunStatus.InProgress,
+                StartedAt = DateTimeOffset.Parse("2026-06-01T12:00:00Z"),
+                RepositoriesRecorded = 0,
+            },
+        });
+
+        var github = Substitute.For<IGitHubService>();
+        github.GetRepositoriesAsync(
+                Arg.Any<CancellationToken>(),
+                Arg.Any<bool>(),
+                Arg.Any<IProgress<int>?>())
+            .Returns(
+            [
+                new Domain.Entities.Repositories.Repository
+                {
+                    GitHubId = 42,
+                    OwnerLogin = Login,
+                    Name = "catalogue",
+                    FullName = $"{Login}/catalogue",
+                    Url = "https://example.com/octocat/catalogue",
+                    IsPrivate = false,
+                },
+            ]);
+
+        var coordinator = CreateCoordinator(store, github);
+        Assert.True(coordinator.TryBegin(
+            Login,
+            Login,
+            "token",
+            new OperatorSnapshotConcurrencyToken(5, null),
+            (login, ct) => store.GetAsync(login, ct),
+            (login, doc, token, ct) => SaveAsync(store, login, doc, token, ct)));
+
+        await WaitForIdleAsync(coordinator);
+
+        var document = store.GetDocument(Login);
+        Assert.NotNull(document);
+        Assert.Equal(OperatorSnapshotRunStatus.Succeeded, document.Run.Status);
+        var entry = Assert.Single(document.Repositories);
+        Assert.Equal(42, entry.GitHubId);
+        Assert.Equal("catalogue", entry.Name);
+        Assert.Equal("public", entry.Visibility);
+    }
+
+    [Fact]
     public async Task Walk_Success_PreservesLaterFacts()
     {
         var store = new InMemoryOperatorSnapshotStore();
@@ -87,6 +144,105 @@ public sealed class OperatorSnapshotCollectionCoordinatorTests
         Assert.NotNull(document);
         Assert.Equal(OperatorSnapshotRunStatus.Succeeded, document.Run.Status);
         Assert.Equal("keep-me", document.LaterFacts["extension"]);
+    }
+
+    [Fact]
+    public async Task Walk_DailyRateLimit_KeepsInProgressForRetry()
+    {
+        var store = new InMemoryOperatorSnapshotStore();
+        store.Seed(Login, new OperatorSnapshotDocument
+        {
+            OperatorLogin = Login,
+            Revision = 5,
+            Trigger = OperatorSnapshotCollectionTrigger.Daily,
+            AttemptsUsed = 1,
+            Repositories = [],
+            Run = new OperatorSnapshotRun
+            {
+                Status = OperatorSnapshotRunStatus.InProgress,
+                StartedAt = DateTimeOffset.Parse("2026-06-01T12:00:00Z"),
+                RepositoriesRecorded = 0,
+            },
+        });
+
+        var coordinator = CreateCoordinator(store, CreateFailingGitHub(HttpStatusCode.TooManyRequests));
+
+        Assert.True(coordinator.TryBegin(
+            Login,
+            Login,
+            "token",
+            new OperatorSnapshotConcurrencyToken(5, null),
+            (login, ct) => store.GetAsync(login, ct),
+            (login, doc, token, ct) => SaveAsync(store, login, doc, token, ct),
+            dailyPass: true));
+
+        await WaitForIdleAsync(coordinator);
+
+        var document = store.GetDocument(Login);
+        Assert.NotNull(document);
+        Assert.Equal(OperatorSnapshotRunStatus.InProgress, document.Run.Status);
+        Assert.Equal(OperatorSnapshotRunReason.RateLimit, document.Run.Reason);
+        Assert.Null(document.Run.FinishedAt);
+    }
+
+    [Fact]
+    public async Task Walk_DailyShutdown_LeavesInProgressWithoutWritingStop()
+    {
+        using var stoppingCts = new CancellationTokenSource();
+        var store = new InMemoryOperatorSnapshotStore();
+        store.Seed(Login, new OperatorSnapshotDocument
+        {
+            OperatorLogin = Login,
+            Revision = 5,
+            Trigger = OperatorSnapshotCollectionTrigger.Daily,
+            Repositories = [],
+            Run = new OperatorSnapshotRun
+            {
+                Status = OperatorSnapshotRunStatus.InProgress,
+                StartedAt = DateTimeOffset.Parse("2026-06-01T12:00:00Z"),
+                RepositoriesRecorded = 0,
+            },
+        });
+
+        var github = Substitute.For<IGitHubService>();
+        github.GetRepositoriesAsync(
+                Arg.Any<CancellationToken>(),
+                Arg.Any<bool>(),
+                Arg.Any<IProgress<int>?>())
+            .Returns(async callInfo =>
+            {
+                await Task.Delay(Timeout.Infinite, callInfo.Arg<CancellationToken>()).ConfigureAwait(false);
+                return [];
+            });
+
+        var scopeFactory = Substitute.For<ISnapshotCollectionCredentialScopeFactory>();
+        scopeFactory.CreateScope(Arg.Any<string>(), Arg.Any<string>())
+            .Returns(_ => new GitHubServiceScope(github));
+
+        var coordinator = new OperatorSnapshotCollectionCoordinator(
+            scopeFactory,
+            TimeProvider.System,
+            new OperatorSnapshotApplicationStopping(stoppingCts.Token),
+            NullLogger<OperatorSnapshotCollectionCoordinator>.Instance);
+
+        Assert.True(coordinator.TryBegin(
+            Login,
+            Login,
+            "token",
+            new OperatorSnapshotConcurrencyToken(5, null),
+            (login, ct) => store.GetAsync(login, ct),
+            (login, doc, token, ct) => SaveAsync(store, login, doc, token, ct),
+            dailyPass: true));
+
+        await Task.Delay(50, TestContext.Current.CancellationToken);
+        stoppingCts.Cancel();
+        await WaitForIdleAsync(coordinator);
+
+        var document = store.GetDocument(Login);
+        Assert.NotNull(document);
+        Assert.Equal(OperatorSnapshotRunStatus.InProgress, document.Run.Status);
+        Assert.Null(document.Run.Reason);
+        Assert.Null(document.Run.FinishedAt);
     }
 
     [Fact]

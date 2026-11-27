@@ -5,4 +5,20 @@ alwaysApply: true
 
 # Project Skills
 
-Project-authored agent skills live in `.agents/skills/`. Aspire workflow skills load from the `aspire-skills/aspire` Cursor plugin (see `.cursor/settings.json` and `AGENTS.md`). When a task matches a skill's description, read that skill's `SKILL.md` before proceeding. See `AGENTS.md` for the skill index and task routing.
+Project-authored agent skills live in `.agents/skills/`. Cursor plugin skills load from [`.cursor/settings.json`](../settings.json): five **dotnet-agent-skills** bundles, **aspire-skills/aspire**, and the **github** plugin (MCP only, no `SKILL.md`). Plugin content is cached under the Cursor plugins directory, not under `.agents/skills/`. When a task matches a skill's description, read that skill's `SKILL.md` before proceeding. Read `AGENTS.md` for precedence when a plugin skill overlaps repository guidance (for example `mudblazor` before generic Blazor plugin skills).
+
+Repository-specific **dotnet-test** overlays (optional) live under `.agents/skill-overlays/dotnet-test/`; the `run-tests` skill reads [run-tests.md](../../.agents/skill-overlays/dotnet-test/run-tests.md) when present.
+
+## Path → rule → primary skills
+
+| Path | Cursor rule | Primary skills |
+| --- | --- | --- |
+| `src/**/*.cs` (non-Razor) | [csharp.mdc](csharp.mdc) | `implementation-guardrails`, `csharp-refactoring`, `dotnet-inspect`, `msbuild`, plugin skills per table in rule |
+| `src/**/*.razor`, `src/**/*.razor.cs` | [blazor.mdc](blazor.mdc) | `mudblazor`, then `dotnet-blazor` plugin skills as needed |
+| `src/SoloDevBoard.AppHost/**` | [apphost.mdc](apphost.mdc) | `aspire` router and aspire sub-skills, `dotnet-inspect` |
+| `tests/**/*.cs` | [testing.mdc](testing.mdc) | `run-tests`, `code-testing`, `platform-detection`; `mudblazor` for bUnit/MudBlazor tests |
+| `**/*.md` (except `adr/`) | [markdown.mdc](markdown.mdc) | `project-documentation` |
+| `adr/*.md` | [adr.mdc](adr.mdc) | `create-architectural-decision-record` |
+| `specs/**` | (no glob rule) | Spec Kit: `.cursor/skills/speckit-*` via `/speckit-*` or [do-implement](../commands/do-implement.md) commands |
+
+Precedence and the full plugin catalogue: [`AGENTS.md`](../../AGENTS.md) (Skills).

@@ -1,6 +1,12 @@
+---
+description: C# production code conventions and skill routing for src/
+globs: "src/**/*.cs"
+alwaysApply: false
+---
+
 # C# Conventions
 
-Follow `CONVENTIONS.md` and `AGENTS.md`.
+Follow `CONVENTIONS.md` and `AGENTS.md`. Plugin skills load from [`.cursor/settings.json`](../settings.json); read each skill's `SKILL.md` when triggered below. Repository guidance wins over portable plugin defaults (see **Skills → Precedence** in `AGENTS.md`).
 
 - Use async/await for I/O; propagate `CancellationToken`.
 - Do not use `.Result`, `.Wait()`, or sync-over-async.
@@ -8,3 +14,18 @@ Follow `CONVENTIONS.md` and `AGENTS.md`.
 - Prefer property-based `record` types for immutable DTOs; use `class` for services and exceptions.
 - Do not add NuGet packages or change architecture without an ADR and explicit instruction.
 - Do not log secrets, API keys, or tokens.
+
+## Skills
+
+| When | Skill |
+| --- | --- |
+| Non-trivial implementation, refactors, build or EF changes | `implementation-guardrails` (`.agents/skills/`) |
+| Behaviour-preserving refactor | `csharp-refactoring` (`dotnet` plugin); public or shipped API → `dotnet-breaking-changes` |
+| Build failures, targets, binlogs | `msbuild` (`dotnet` plugin); not routine feature work |
+| Package or API evidence (versions, behaviour) | `dotnet-inspect` (`.agents/skills/`) |
+| Unclear which plugin skill owns the task | `csharp-expert` (`dotnet` plugin), then obey `AGENTS.md` precedence before invoking a downstream skill |
+| EF Core performance or query review | `optimizing-ef-core-queries` (`dotnet-data` plugin) after ADRs and conventions |
+| Central package versions in `Directory.Packages.props` (user approved) | `convert-to-cpm` (`dotnet-nuget` plugin) |
+| Pre-merge branch review | `code-review` (`.agents/skills/`), not `implementation-guardrails` |
+
+**Scoped rules:** Blazor UI (`.razor`, `.razor.cs`) → [blazor.mdc](blazor.mdc). AppHost → [apphost.mdc](apphost.mdc). Tests → [testing.mdc](testing.mdc).

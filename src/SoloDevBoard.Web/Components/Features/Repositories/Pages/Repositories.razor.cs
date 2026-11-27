@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.WebUtilities;
 using MudBlazor;
 using SoloDevBoard.Application.Identity;
 using SoloDevBoard.Application.Services.Repositories;
@@ -9,7 +11,7 @@ namespace SoloDevBoard.Web.Components.Features.Repositories.Pages;
 /// <summary>Displays repositories available to the authenticated GitHub account.</summary>
 public partial class Repositories : ComponentBase, IAsyncDisposable
 {
-    private static readonly TimeSpan SnapshotUiPollInterval = TimeSpan.FromMilliseconds(400);
+    private static readonly TimeSpan SnapshotUiPollInterval = TimeSpan.FromSeconds(1);
 
     /// <summary>Gets or sets the application service used to retrieve repositories.</summary>
     [Inject]
@@ -31,7 +33,11 @@ public partial class Repositories : ComponentBase, IAsyncDisposable
     [Inject]
     public IGitHubAuthenticationRecoveryService GitHubAuthRecovery { get; set; } = default!;
 
+    [Inject]
+    public AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+
     private IReadOnlyList<RepositoryDto> repositories = [];
+    private bool isSignedIn;
     private bool isLoading = true;
     private string? errorMessage;
     private string feedbackMessage = "Loading repositories...";
@@ -46,7 +52,15 @@ public partial class Repositories : ComponentBase, IAsyncDisposable
     private CancellationTokenSource? statusPollCts;
 
     private bool IsCollectSnapshotDisabled =>
-        isLoading || awaitingInitialSnapshotStatus || snapshotStatus?.Kind == OperatorSnapshotStatusKind.InProgress;
+        isLoading
+        || awaitingInitialSnapshotStatus
+        || OperatorSnapshotStatusCopy.IsCollectBlocked(snapshotStatus);
+
+    private bool showRefreshOvernightAccess =>
+        isSignedIn && snapshotStatus?.WorkerTokenRefreshOffered == true;
+
+    private string refreshOvernightAccessHref =>
+        QueryHelpers.AddQueryString("/auth/refresh-worker", new Dictionary<string, string?> { ["returnUrl"] = "/repositories" });
 
     private IReadOnlyList<RepositoryDto> FilteredRepositories
     {
@@ -75,6 +89,8 @@ public partial class Repositories : ComponentBase, IAsyncDisposable
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync().ConfigureAwait(false);
+        isSignedIn = authState.User.Identity?.IsAuthenticated == true;
         await RefreshSnapshotStatusAsync();
         await LoadRepositoriesAsync();
         ApplyCombinedFeedback();
@@ -242,13 +258,13 @@ public partial class Repositories : ComponentBase, IAsyncDisposable
 
     private async Task WaitForSnapshotSettlementOnUiAsync()
     {
-        if (snapshotStatus?.Kind != OperatorSnapshotStatusKind.InProgress)
+        if (!OperatorSnapshotStatusCopy.IsScanWorking(snapshotStatus))
         {
             return;
         }
 
         var deadline = DateTimeOffset.UtcNow.AddMinutes(2);
-        while (snapshotStatus?.Kind == OperatorSnapshotStatusKind.InProgress && DateTimeOffset.UtcNow < deadline)
+        while (OperatorSnapshotStatusCopy.IsScanWorking(snapshotStatus) && DateTimeOffset.UtcNow < deadline)
         {
             await Task.Delay(SnapshotUiPollInterval);
             await RefreshSnapshotStatusOnUiAsync();
@@ -259,7 +275,7 @@ public partial class Repositories : ComponentBase, IAsyncDisposable
 
     private async Task EnsureStatusPollingAsync()
     {
-        if (snapshotStatus?.Kind != OperatorSnapshotStatusKind.InProgress)
+        if (!OperatorSnapshotStatusCopy.IsScanWorking(snapshotStatus))
         {
             await StopStatusPollingAsync();
             return;
@@ -282,7 +298,7 @@ public partial class Repositories : ComponentBase, IAsyncDisposable
             do
             {
                 await InvokeAsync(RefreshSnapshotStatusOnUiAsync);
-                if (snapshotStatus?.Kind != OperatorSnapshotStatusKind.InProgress)
+                if (!OperatorSnapshotStatusCopy.IsScanWorking(snapshotStatus))
                 {
                     await StopStatusPollingAsync();
                     break;

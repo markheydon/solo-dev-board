@@ -131,6 +131,11 @@ public sealed class FileOperatorSnapshotStore : IOperatorSnapshotStore
             return document;
         }
 
+        if (document.Trigger == OperatorSnapshotCollectionTrigger.Daily)
+        {
+            return document;
+        }
+
         var interrupted = new OperatorSnapshotDocument
         {
             SchemaVersion = document.SchemaVersion,
